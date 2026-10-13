@@ -10,7 +10,7 @@ pub fn read_program_container_kind(term: &str) -> String {
     } else if term == "program mapping" {
         String::from("map")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -19,9 +19,7 @@ pub fn read_program_container_kind(term: &str) -> String {
 pub fn accept_program_container_fields(kind: &str, has_fields: bool) -> bool {
     if kind == "record" {
         true
-    } else if kind == "array" {
-        !has_fields
-    } else if kind == "map" {
+    } else if kind == "array" || kind == "map" {
         !has_fields
     } else {
         false
@@ -44,7 +42,7 @@ pub fn read_program_scalar_kind(term: &str) -> String {
     } else if term == "undefined value" {
         String::from("undefined")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -62,7 +60,7 @@ pub fn read_program_reference_role(term: &str) -> String {
     } else if term == "datatype declaration reference" {
         String::from("datatype")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -80,20 +78,14 @@ pub fn read_program_pattern_binding_form(kind: &str) -> String {
     } else if kind == "ctor" {
         String::from("fields")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
 /// Read the corresponding decision of the shared typed program links schema.
 #[must_use]
 pub fn read_program_expression_operand_fields(kind: &str) -> String {
-    if kind == "call" {
-        String::from("args")
-    } else if kind == "ctor" {
-        String::from("args")
-    } else if kind == "math" {
-        String::from("args")
-    } else if kind == "recur" {
+    if ((kind == "call" || kind == "ctor") || kind == "math") || kind == "recur" {
         String::from("args")
     } else if kind == "apply" {
         String::from("fn args")
@@ -109,39 +101,23 @@ pub fn read_program_expression_operand_fields(kind: &str) -> String {
         String::from("value")
     } else if kind == "referenceRead" {
         String::from("reference")
-    } else if kind == "recordField" {
+    } else if kind == "recordField" || kind == "tupleIndex" {
         String::from("object")
-    } else if kind == "tupleIndex" {
-        String::from("object")
-    } else if kind == "tuple" {
+    } else if kind == "tuple" || kind == "array" {
         String::from("items")
-    } else if kind == "array" {
-        String::from("items")
-    } else if kind == "some" {
+    } else if kind == "some" || kind == "flattenOption" {
         String::from("value")
-    } else if kind == "flattenOption" {
-        String::from("value")
-    } else if kind == "nullishNumber" {
-        String::from("arg")
-    } else if kind == "optionalIndexNumber" {
-        String::from("arg")
-    } else if kind == "truthy" {
+    } else if (kind == "nullishNumber" || kind == "optionalIndexNumber") || kind == "truthy" {
         String::from("arg")
     } else if kind == "strictEqual" {
         String::from("left right")
-    } else if kind == "optionalTypeOf" {
-        String::from("arg")
-    } else if kind == "optionalText" {
-        String::from("arg")
-    } else if kind == "unwrapOption" {
-        String::from("arg")
-    } else if kind == "optionalPredicate" {
+    } else if ((kind == "optionalTypeOf" || kind == "optionalText") || kind == "unwrapOption")
+        || kind == "optionalPredicate"
+    {
         String::from("arg")
     } else if kind == "coalesce" {
         String::from("left right")
-    } else if kind == "optionalField" {
-        String::from("object")
-    } else if kind == "optionalProject" {
+    } else if kind == "optionalField" || kind == "optionalProject" {
         String::from("object")
     } else if kind == "optionalIndex" {
         String::from("array index")
@@ -180,7 +156,7 @@ pub fn read_program_expression_operand_fields(kind: &str) -> String {
     } else if kind == "length" {
         String::from("array")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -191,37 +167,36 @@ pub fn read_program_reference_source_field(
     construct_kind: &str,
     type_kind: &str,
 ) -> String {
-    if (label == "binding reference" && (construct_kind == "var")) && (type_kind == "") {
+    if (label == "binding reference" && construct_kind == "var") && (type_kind.is_empty()) {
         String::from("name")
-    } else if (label == "declaration reference" && (construct_kind == "call")) && (type_kind == "")
+    } else if ((label == "declaration reference" && construct_kind == "call")
+        && (type_kind.is_empty()))
+        || ((label == "declaration reference" && construct_kind == "functionRef")
+            && (type_kind.is_empty()))
     {
         String::from("fn")
-    } else if (label == "declaration reference" && (construct_kind == "functionRef"))
-        && (type_kind == "")
-    {
-        String::from("fn")
-    } else if (label == "data type declaration reference" && (construct_kind == ""))
-        && (type_kind == "data")
+    } else if (label == "data type declaration reference" && (construct_kind.is_empty()))
+        && type_kind == "data"
     {
         String::from("name")
-    } else if (label == "data type declaration reference" && (construct_kind == "ctor"))
-        && (type_kind == "")
+    } else if (label == "data type declaration reference" && construct_kind == "ctor")
+        && (type_kind.is_empty())
     {
         String::from("data")
-    } else if (label == "constructor declaration reference" && (construct_kind == "ctor"))
-        && (type_kind == "")
+    } else if (label == "constructor declaration reference" && construct_kind == "ctor")
+        && (type_kind.is_empty())
     {
         String::from("ctor")
-    } else if (label == "datatype declaration reference" && (construct_kind == ""))
-        && (type_kind == "data")
+    } else if (label == "datatype declaration reference" && (construct_kind.is_empty()))
+        && type_kind == "data"
     {
         String::from("name")
-    } else if (label == "datatype declaration reference" && (construct_kind == "ctor"))
-        && (type_kind == "")
+    } else if (label == "datatype declaration reference" && construct_kind == "ctor")
+        && (type_kind.is_empty())
     {
         String::from("data")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -230,29 +205,27 @@ pub fn read_program_reference_source_field(
 pub fn read_program_reference_target_field(label: &str) -> String {
     if label == "binding reference" {
         String::from("name")
-    } else if label == "declaration reference" {
-        String::from("fullName")
-    } else if label == "data type declaration reference" {
+    } else if label == "declaration reference" || label == "data type declaration reference" {
         String::from("fullName")
     } else if label == "constructor declaration reference" {
         String::from("name")
     } else if label == "datatype declaration reference" {
         String::from("fullName")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
 /// Read the corresponding decision of the shared typed program links schema.
 #[must_use]
 pub fn read_program_neutral_field_default(context: &str, field: &str) -> String {
-    if context == "program" && field == "imports" {
+    if (context == "program" && field == "imports")
+        || (context == "program" && field == "externals")
+    {
         String::from("empty-array")
-    } else if context == "program" && field == "externals" {
-        String::from("empty-array")
-    } else if context == "program" && field == "outputThreaded" {
-        String::from("false")
-    } else if context == "program" && field == "abortsThreaded" {
+    } else if (context == "program" && field == "outputThreaded")
+        || (context == "program" && field == "abortsThreaded")
+    {
         String::from("false")
     } else if context == "program" && field == "main" {
         String::from("null")
@@ -260,37 +233,35 @@ pub fn read_program_neutral_field_default(context: &str, field: &str) -> String 
         String::from("false")
     } else if context == "main" && field == "span" {
         String::from("null")
-    } else if context == "declaration:fn" && field == "mutual" {
+    } else if (context == "declaration:fn" && field == "mutual")
+        || (context == "declaration:fn" && field == "generated")
+    {
         String::from("false")
-    } else if context == "declaration:fn" && field == "generated" {
-        String::from("false")
-    } else if context == "declaration:fn" && field == "decreasing" {
+    } else if (context == "declaration:fn" && field == "decreasing")
+        || (context == "declaration:fn" && field == "span")
+    {
         String::from("null")
-    } else if context == "declaration:fn" && field == "span" {
-        String::from("null")
-    } else if context == "declaration:data" && field == "generated" {
-        String::from("false")
-    } else if context == "declaration:data" && field == "output" {
+    } else if (context == "declaration:data" && field == "generated")
+        || (context == "declaration:data" && field == "output")
+    {
         String::from("false")
     } else if context == "declaration:data" && field == "span" {
         String::from("null")
-    } else if context == "expression:ctor" && field == "frozen" {
+    } else if ((context == "expression:ctor" && field == "frozen")
+        || (context == "expression:toString" && field == "console"))
+        || (context == "expression:tuple" && field == "frozen")
+    {
         String::from("false")
-    } else if context == "expression:toString" && field == "console" {
-        String::from("false")
-    } else if context == "expression:tuple" && field == "frozen" {
-        String::from("false")
-    } else if context == "parameter" && field == "guard" {
-        String::from("null")
-    } else if context == "parameter" && field == "default" {
+    } else if (context == "parameter" && field == "guard")
+        || (context == "parameter" && field == "default")
+    {
         String::from("null")
     } else if context == "effect:let" && field == "constant" {
         String::from("false")
-    } else if context == "effect:let" && field == "span" {
-        String::from("null")
-    } else if context == "declaration:module" && field == "span" {
-        String::from("null")
-    } else if context == "effect:print" && field == "span" {
+    } else if ((context == "effect:let" && field == "span")
+        || (context == "declaration:module" && field == "span"))
+        || (context == "effect:print" && field == "span")
+    {
         String::from("null")
     } else if field == "span"
         && ((((((((((((((((((((((context == "expression:lit"
@@ -319,7 +290,7 @@ pub fn read_program_neutral_field_default(context: &str, field: &str) -> String 
     {
         String::from("null")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -412,7 +383,7 @@ pub fn read_program_expression_projection(term: &str) -> String {
     } else if term == "tupleIndex" {
         String::from("tupleIndex")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -478,39 +449,38 @@ pub fn accept_program_expression_operation(kind: &str, operation: &str) -> bool 
 /// Read the corresponding decision of the shared typed program links schema.
 #[must_use]
 pub fn accept_program_reference_field(label: &str) -> bool {
-    label == "binding reference"
-        || label == "declaration reference"
-        || label == "data type declaration reference"
-        || label == "constructor declaration reference"
+    (((label == "binding reference" || label == "declaration reference")
+        || label == "data type declaration reference")
+        || label == "constructor declaration reference")
         || label == "datatype declaration reference"
 }
 
 /// Read the corresponding decision of the shared typed program links schema.
 #[must_use]
 pub fn is_unsafe_program_field(name: &str) -> bool {
-    name == "__proto__" || name == "constructor" || name == "prototype"
+    (name == "__proto__" || name == "constructor") || name == "prototype"
 }
 
 /// Read the corresponding decision of the shared typed program links schema.
 #[must_use]
 pub fn accept_program_schema_root(term: &str, revision: &str, arity: &str) -> bool {
-    term == "typed program" && revision == "1" && arity == "1"
+    (term == "typed program" && revision == "1") && arity == "1"
 }
 
 /// Read the corresponding decision of the shared typed program links schema.
 #[must_use]
 pub fn accept_program_machine_integer_width(width: &str) -> bool {
-    width == "8" || width == "16" || width == "32" || width == "64" || width == "128"
+    (((width == "8" || width == "16") || width == "32") || width == "64") || width == "128"
 }
 
 /// Read the corresponding decision of the shared typed program links schema.
 #[must_use]
 pub fn accept_program_optional_absence(absence: &str) -> bool {
-    absence == "null" || absence == "undefined" || absence == "both"
+    (absence == "null" || absence == "undefined") || absence == "both"
 }
 
 /// Read the corresponding decision of the shared typed program links schema.
 #[must_use]
 pub fn accept_program_division_rounding(rounding: &str) -> bool {
-    rounding == "trunc" || rounding == "euclid" || rounding == "floor"
+    (rounding == "trunc" || rounding == "euclid") || rounding == "floor"
 }

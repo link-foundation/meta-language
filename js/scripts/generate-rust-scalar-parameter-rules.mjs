@@ -25,6 +25,11 @@ if (process.argv.includes('--update-styles')) {
     actions.push({ op: 'replace', field: 'source', from: `pub fn ${name}`, to: `/// Evaluate the selected unwritten scalar parameter premise.\n#[must_use]\npub fn ${name}` });
     actions.push({ op: 'replace', field: 'source', from: lines[0].trim(), to: bodies[index] });
   }
+  const styled = new DecoratorSet([{ id: 'rust-scalar-parameter-source-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }]).decorate('emitter', { format: 'Rust', source: raw }).source;
+  const header = /pub fn accept_rust_unwritten_scalar_parameter\([^)]*\) -> bool \{/u.exec(styled)?.[0];
+  if (!header) throw new Error('the checked scalar parameter declaration is absent');
+  actions.push({ op: 'replace', field: 'source', from: header,
+    to: 'pub fn accept_rust_unwritten_scalar_parameter(kind: &str, (direct_copy, shadowed, closed, possible_write): (bool, bool, bool, bool)) -> bool {' });
   writeFileSync(style, new DecoratorSet([{ id: 'rust-scalar-parameter-source-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }]).toLino());
 }
 const decorated = DecoratorSet.fromLino(readFileSync(style, 'utf8')).decorate('emitter', { format: 'Rust', source: raw }).source;

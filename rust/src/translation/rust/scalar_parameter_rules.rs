@@ -4,10 +4,7 @@
 #[must_use]
 pub fn accept_rust_unwritten_scalar_parameter(
     kind: &str,
-    direct_copy: bool,
-    shadowed: bool,
-    closed: bool,
-    possible_write: bool,
+    (direct_copy, shadowed, closed, possible_write): (bool, bool, bool, bool),
 ) -> bool {
     direct_copy
         && !shadowed

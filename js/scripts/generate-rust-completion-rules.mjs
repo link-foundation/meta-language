@@ -8,14 +8,23 @@ import {emitRust} from '../src/translation/emit-rust.js';
 import {DecoratorSet} from '../src/decorators.js';
 const policyFile=new URL('../src/translation/data/rust-completions.lino',import.meta.url);
 const policy=readProjectData(policyFile);
+// Preserve source-table priority: merge only adjacent equal result branches.
+const decisionRows=rows=>{
+ const grouped=[];
+ for(const [condition,result]of rows){
+  if(grouped.at(-1)?.result===result)grouped.at(-1).conditions.push(condition);
+  else grouped.push({conditions:[condition],result});
+ }
+ return grouped.map(({conditions,result})=>'  if ('+conditions.map(condition=>'('+condition+')').join(' || ')+') return '+JSON.stringify(result)+';').join('\n');
+};
 const source='// Generated from linked Rust completion policy. Do not edit by hand.\n'
  +'/** @param {string} model @returns {boolean} */\nexport function acceptRustCompletionModel(model) {\n  return model === "" || model === '+JSON.stringify(policy.model)+';\n}\n\n'
  +'/** @param {boolean} proven @param {boolean} indirected @returns {boolean} */\nexport function acceptRustReturnOwnership(proven, indirected) {\n  return proven && !indirected;\n}\n\n'
  +'/** @param {string} thenKind @param {string} otherwiseKind @param {boolean} hasElse @param {boolean} continuation @returns {string} */\nexport function readRustConditionalCompletion(thenKind, otherwiseKind, hasElse, continuation) {\n'
- +policy.actions.map(row=>'  if (thenKind === '+JSON.stringify(row.then)+' && otherwiseKind === '+JSON.stringify(row.otherwise)+' && hasElse === '+row.hasElse+' && continuation === '+row.continuation+') return '+JSON.stringify(row.action)+';').join('\n')
+ +decisionRows(policy.actions.map(row=>['thenKind === '+JSON.stringify(row.then)+' && otherwiseKind === '+JSON.stringify(row.otherwise)+' && hasElse === '+row.hasElse+' && continuation === '+row.continuation,row.action]))
  +'\n  return "unsupported completion";\n}\n\n'
  +'/** @param {string} action @param {string} thenKind @param {string} otherwiseKind @returns {string} */\nexport function readRustCompletionKind(action, thenKind, otherwiseKind) {\n'
- +policy.resultKinds.map(row=>'  if (action === '+JSON.stringify(row.action)+' && thenKind === '+JSON.stringify(row.then)+' && otherwiseKind === '+JSON.stringify(row.otherwise)+') return '+JSON.stringify(row.result)+';').join('\n')
+ +decisionRows(policy.resultKinds.map(row=>['action === '+JSON.stringify(row.action)+' && thenKind === '+JSON.stringify(row.then)+' && otherwiseKind === '+JSON.stringify(row.otherwise),row.result]))
  +'\n  return "unsupported completion";\n}\n\n'
  +'/** @param {string} model @param {string} macroName @param {string} firstKind @param {string} firstValue @param {string} secondKind @param {string} count @returns {boolean} */\nexport function acceptRustCompletionPanicArguments(model, macroName, firstKind, firstValue, secondKind, count) {\n  return model === '+JSON.stringify(policy.model)+' && macroName === '+JSON.stringify(policy.panic.macro)+' && firstKind === '+JSON.stringify(policy.panic.firstKind)+' && firstValue === '+JSON.stringify(policy.panic.template)+' && secondKind === '+JSON.stringify(policy.panic.secondKind)+' && count === '+JSON.stringify(policy.panic.arity)+';\n}\n';
 const javascript=new URL('../src/translation/rust-completion-rules.js',import.meta.url);
@@ -39,6 +48,7 @@ if(process.argv.includes('--update-styles')){
   replace(name+' == false','!'+name);replace(name+' == true',name);
  }
  for(const name of ['model','otherwise_kind'])replace(name+' == ""',name+'.is_empty()');
+ replace('pub fn accept_rust_return_ownership(', 'pub const fn accept_rust_return_ownership(');
  // Record the exact nested-conditional flattening as an emitter decorator.
  while(/\} else \{\n\s+if /u.test(styled)){
   const match=styled.match(/\} else \{\n(\s+)if /u),start=match.index;

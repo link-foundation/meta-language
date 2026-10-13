@@ -81,6 +81,38 @@ if (process.argv.includes('--update-styles')) {
     return condition[1] + expression + condition[3];
   }).join('\n');
   if (normalizedClassifier !== sourceClassifier) actions.push({ op: 'replace', field: 'source', from: sourceClassifier, to: normalizedClassifier });
+  // Reviewed CI 38396327542 library-boundary signatures retain the exact
+  // named Boolean premises in one destructured Copy product.
+  let styled = new DecoratorSet([{ id: 'rust-indirection-source-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }]).decorate('emitter', { format: 'Rust', source: raw }).source;
+  const replace = (from, to) => {
+    if (!styled.includes(from)) throw new Error('the reviewed indirection source span changed');
+    actions.push({ op: 'replace', field: 'source', from, to });
+    styled = styled.split(from).join(to);
+  };
+  for (const [name, parameters, constant] of [
+    ['accept_rust_source_indirection_argument', '(indirected, exact, borrowed, coerced): (bool, bool, bool, bool)', true],
+    ['accept_rust_source_text_equality', 'operation: &str, (left_direct_string, right_direct_string, left_borrowed_slice, right_borrowed_slice): (bool, bool, bool, bool)', false],
+  ]) {
+    const header = new RegExp(`pub fn ${name}\\([^)]*\\) -> bool \\{`, 'u').exec(styled)?.[0];
+    if (!header) throw new Error('the checked indirection declaration is absent');
+    replace(header, `pub ${constant ? 'const ' : ''}fn ${name}(${parameters}) -> bool {`);
+  }
+  replace('pub fn accept_rust_source_lifetime_result(', 'pub const fn accept_rust_source_lifetime_result(');
+  for (;;) {
+    const match = /\} else \{\n\s+if /u.exec(styled);
+    if (!match) break;
+    const opening = match.index + '} else '.length;
+    let depth = 1, cursor = opening + 1, quoted = false;
+    for (; cursor < styled.length && depth; cursor += 1) {
+      const character = styled[cursor];
+      if (quoted && character === '\\') { cursor += 1; continue; }
+      if (character === '"') quoted = !quoted;
+      if (!quoted && character === '{') depth += 1;
+      if (!quoted && character === '}') depth -= 1;
+    }
+    if (depth) throw new Error('the indirection classifier has an unclosed else block');
+    replace(styled.slice(match.index, cursor), `} else ${styled.slice(opening + 1, cursor - 1).trim()}`);
+  }
   writeFileSync(style, new DecoratorSet([{ id: 'rust-indirection-source-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }]).toLino());
 }
 const decorated = DecoratorSet.fromLino(readFileSync(style, 'utf8')).decorate('emitter', { format: 'Rust', source: raw }).source;

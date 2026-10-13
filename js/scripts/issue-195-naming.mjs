@@ -429,7 +429,7 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'Rust completion admission operations',
     files: ['js/src/translation/rust-completion-rules.js', 'rust/src/translation/rust/completion_rules.rs'],
-    extract: (text) => captures(text, /^(?:export function|pub fn) ([a-zA-Z_]+)\(/gmu)
+    extract: (text) => captures(text, /^(?:export function|pub(?: const)? fn) ([a-zA-Z_]+)\(/gmu)
       .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
     recordOf: (name) => `translation.${name}`,
   },
