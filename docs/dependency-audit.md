@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 99 | 98 | 1 | 0 |
+| Generators | 104 | 103 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 29 | 0 | 0 | 29 |
+| Published artifact contents | 32 | 0 | 0 | 32 |
 
 ## JavaScript engines
 
@@ -621,12 +621,17 @@ they are.
 | `js/scripts/generate-rust-function-lifetime-fixtures.mjs` | `js/scripts/generate-rust-function-lifetime-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-indirection-rules.mjs` | `js/scripts/generate-rust-indirection-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-product-rules.mjs` | `js/scripts/generate-rust-product-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-read-only-query-fixtures.mjs` | `js/scripts/generate-rust-read-only-query-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-read-only-query-rules.mjs` | `js/scripts/generate-rust-read-only-query-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-scalar-parameter-fixtures.mjs` | `js/scripts/generate-rust-scalar-parameter-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-scalar-parameter-rules.mjs` | `js/scripts/generate-rust-scalar-parameter-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-source-header-emission-fixtures.mjs` | `js/scripts/generate-rust-source-header-emission-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-source-header-emission-rules.mjs` | `js/scripts/generate-rust-source-header-emission-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-source-indirection-fixtures.mjs` | `js/scripts/generate-rust-source-indirection-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-source-signature-fixtures.mjs` | `js/scripts/generate-rust-source-signature-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-source-signature-rules.mjs` | `js/scripts/generate-rust-source-signature-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-string-rules.mjs` | `js/scripts/generate-rust-string-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-scalar-loop-rules.mjs` | `js/scripts/generate-scalar-loop-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-cases.mjs` | `js/scripts/generate-self-translation-cases.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-report.mjs` | `js/scripts/generate-self-translation-report.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-shared-numeric-function-fixtures.mjs` | `js/scripts/generate-shared-numeric-function-fixtures.mjs` | `script` |  | derived | current |  |
@@ -731,6 +736,9 @@ they are.
 | `src/data/reference-operations.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/resource-description-ntriples-profile.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/resource-description-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-read-only-queries.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-scalar-loops.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-source-header-emission.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-source-signatures.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/semantic-lexicon.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/typed-program-links-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
