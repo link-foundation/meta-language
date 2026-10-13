@@ -13,18 +13,18 @@ use super::ir::{Decl, Expr, Node, Param, Program, Semantics};
 use super::source_header_emission_rules::{
     accept_rust_source_header_emission_context, accept_rust_source_header_emission_declaration,
     accept_rust_source_header_emission_expression, accept_rust_source_header_emission_model,
-    accept_rust_source_header_emission_position, accept_rust_source_header_lifetime_character,
-    read_rust_source_header_primitive, render_rust_source_header_copy,
-    render_rust_source_header_dereference, render_rust_source_header_function,
-    render_rust_source_header_lifetime, render_rust_source_header_parameter,
-    render_rust_source_header_reference,
+    accept_rust_source_header_emission_parameter, accept_rust_source_header_emission_position,
+    accept_rust_source_header_lifetime_character, read_rust_source_header_primitive,
+    render_rust_source_header_copy, render_rust_source_header_dereference,
+    render_rust_source_header_function, render_rust_source_header_lifetime,
+    render_rust_source_header_parameter, render_rust_source_header_reference,
 };
 use super::source_signatures::{SourceSignature, validate_source_signature};
 use super::surface::UnaryOp;
 use super::types::Type;
 use crate::shared_numeric_function_rules::{
     accept_shared_numeric_binary, accept_shared_numeric_expression_shape,
-    accept_shared_numeric_parameter, accept_shared_numeric_type_shape, accept_shared_numeric_unary,
+    accept_shared_numeric_type_shape, accept_shared_numeric_unary,
 };
 
 fn fail(detail: &str) -> super::diagnostics::TranslationError {
@@ -136,12 +136,15 @@ pub fn read_rust_source_header_emission(
         value_type(&function.ret)?;
         for parameter in &function.params {
             value_type(&parameter.ty)?;
-            if !accept_shared_numeric_parameter(
+            // Param has an exhaustive field set; strict linked decoding rejects
+            // unrepresented parameter facets before constructing this program.
+            if !accept_rust_source_header_emission_parameter(
                 parameter.guard.is_some(),
                 parameter.default_value.is_some(),
+                false,
             ) {
                 return Err(fail(
-                    "parameter defaults and guards need a separate interface proof",
+                    "parameter defaults, guards and unrepresented fields need a separate interface proof",
                 ));
             }
         }
