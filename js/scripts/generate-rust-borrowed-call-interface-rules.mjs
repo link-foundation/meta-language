@@ -41,9 +41,10 @@ if (process.argv.includes('--javascript-only')) {
     };
     for (const name of ['model', 'kind', 'lifetime', 'inner', 'value', 'head', 'arguments_text', 'body']) replace(`${name}: String`, `${name}: &str`);
     for (const match of raw.matchAll(/^pub fn (\w+)/gmu)) replace(`pub fn ${match[1]}`, `/// Apply the shared closed primitive borrowed call interface policy.\n#[must_use]\npub fn ${match[1]}`);
+    for (const name of ['accept_rust_borrowed_call_target', 'accept_rust_borrowed_call_inventory', 'accept_rust_borrowed_call_type']) replace(`pub fn ${name}`, `pub const fn ${name}`);
     replace('lifetime == ""', 'lifetime.is_empty()'); replace('String::from("")', 'String::new()');
     replace('if (lifetime.is_empty())', 'if lifetime.is_empty()'); replace('if (inner_reference)', 'if inner_reference');
-    for (const definition of current.matchAll(/pub fn accept_rust_borrowed_call_[\s\S]*?\n\}/gu)) {
+    for (const definition of current.matchAll(/pub (?:const )?fn accept_rust_borrowed_call_[\s\S]*?\n\}/gu)) {
       const block = definition[0]; const open = block.indexOf('{');
       let expression = stripRustSourceHeaderStyleParentheses(block.slice(open + 1, -1));
       expression = expression.replace(/\((\w+\s*==\s*"[^"]*")\)/gu, '$1');

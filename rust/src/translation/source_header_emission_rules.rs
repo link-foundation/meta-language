@@ -25,7 +25,7 @@ pub fn accept_rust_source_header_emission_declaration(
 #[must_use]
 /// Apply the shared primitive borrowed header emission policy.
 #[must_use]
-pub fn accept_rust_source_header_emission_declaration_fields(unrepresented: bool) -> bool {
+pub const fn accept_rust_source_header_emission_declaration_fields(unrepresented: bool) -> bool {
     !unrepresented
 }
 
@@ -91,7 +91,7 @@ pub fn accept_rust_source_header_emission_semantics(semantics: &str) -> bool {
 
 /// Apply the shared primitive borrowed header emission policy.
 #[must_use]
-pub fn accept_rust_source_header_emission_parameter(
+pub const fn accept_rust_source_header_emission_parameter(
     guarded: bool,
     defaulted: bool,
     unrepresented: bool,

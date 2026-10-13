@@ -7,7 +7,11 @@ pub fn accept_rust_borrowed_call_interface_model(model: &str) -> bool {
 
 /// Apply the shared closed primitive borrowed call interface policy.
 #[must_use]
-pub fn accept_rust_borrowed_call_target(owned: bool, leaf: bool, static_lifetime: bool) -> bool {
+pub const fn accept_rust_borrowed_call_target(
+    owned: bool,
+    leaf: bool,
+    static_lifetime: bool,
+) -> bool {
     (owned && leaf) && !static_lifetime
 }
 
@@ -23,13 +27,13 @@ pub fn accept_rust_borrowed_call_shape(
 
 /// Apply the shared closed primitive borrowed call interface policy.
 #[must_use]
-pub fn accept_rust_borrowed_call_inventory(has_caller: bool) -> bool {
+pub const fn accept_rust_borrowed_call_inventory(has_caller: bool) -> bool {
     has_caller
 }
 
 /// Apply the shared closed primitive borrowed call interface policy.
 #[must_use]
-pub fn accept_rust_borrowed_call_type(argument_types: bool, result_types: bool) -> bool {
+pub const fn accept_rust_borrowed_call_type(argument_types: bool, result_types: bool) -> bool {
     argument_types && result_types
 }
 

@@ -51,6 +51,7 @@ if (process.argv.includes('--javascript-only')) {
     };
     for (const name of ['model', 'language', 'kind', 'field', 'semantics', 'owner_kind', 'owner_path', 'lifetime', 'inner', 'name', 'type_', 'dereferenced', 'lifetimes', 'parameters', 'result', 'body']) replace(`${name}: String`, `${name}: &str`);
     for (const match of raw.matchAll(/^pub fn (\w+)/gmu)) replace(`pub fn ${match[1]}`, `/// Apply the shared primitive borrowed header emission policy.\n#[must_use]\npub fn ${match[1]}`);
+    for (const name of ['accept_rust_source_header_emission_declaration_fields', 'accept_rust_source_header_emission_parameter']) replace(`pub fn ${name}`, `pub const fn ${name}`);
     replace('lifetime == ""', 'lifetime.is_empty()'); replace('lifetimes == ""', 'lifetimes.is_empty()');
     for (const condition of ['kind == "float"', 'kind == "bool"', 'lifetime.is_empty()', 'lifetimes.is_empty()']) replace(`if (${condition})`, `if ${condition}`);
     replace('String::from("")', 'String::new()');
@@ -60,7 +61,7 @@ if (process.argv.includes('--javascript-only')) {
       for (; end < current.length; end += 1) { if (current[end] === '{') depth += 1; else if (current[end] === '}' && --depth === 0) break; }
       const from = current.slice(start, end + 1); replace(from, from.replace(/\} else \{\n\s+if /u, '} else if ').slice(0, -1));
     }
-    for (const definition of current.matchAll(/pub fn accept_rust_source_header_[\s\S]*?\n\}/gu)) {
+    for (const definition of current.matchAll(/pub (?:const )?fn accept_rust_source_header_[\s\S]*?\n\}/gu)) {
       const block = definition[0]; const open = block.indexOf('{');
       let expression = stripRustSourceHeaderStyleParentheses(block.slice(open + 1, -1));
       expression = expression.replace(/\(([0-9]+f64)\)/gu, '$1').replace(/\((\w+\s*(?:==|>=|<=)\s*(?:"[^"]*"|[0-9]+f64))\)/gu, '$1');
