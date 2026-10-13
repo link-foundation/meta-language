@@ -83,7 +83,7 @@ fn ctor_object(ctor: &Ctor, args: &[String], language: Language, explicit_frozen
     };
     let object = format!("{{ $: {}{fields} }}", json_string(&ctor.name));
     if super::primitive_value_rules::require_data_object_freeze(
-        language.as_str().to_owned(),
+        language.as_str(),
         explicit_frozen,
     ) {
         format!("Object.freeze({object})")

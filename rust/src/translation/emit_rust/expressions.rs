@@ -191,7 +191,7 @@ impl RustEmitter<'_> {
                         self.preludes.insert(Prelude::Number);
                         let function =
                             crate::translation::primitive_value_rules::read_number_display_function(
-                                arg.ty.kind().to_owned(),
+                                arg.ty.kind(),
                                 *console,
                             );
                         return Ok(format!("crate::ml_number::{function}({})", self.expr(arg)?));
