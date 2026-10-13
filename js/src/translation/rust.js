@@ -37,6 +37,9 @@ import { acceptRustScalarLoopModel, readRustScalarLoop } from './rust-scalar-loo
 import { checkProgram } from './check.js';
 import {acceptRustPrimitiveOwnerModel} from './rust-primitive-owner-rules.js';
 import {readRustStandardPrimitivePosition,createRustPrimitiveOwnerProof,acceptRustPrimitiveOwnerImportName} from './rust-primitive-owners.js';
+import {acceptRustOwnedLocalStateModel} from './rust-owned-local-state-rules.js';
+import {readRustOwnedLocalStateBody} from './rust-owned-local-state-reader.js';
+import {RUST_OWNED_LOCAL_STATE_POLICY} from './rust-owned-local-state.js';
 
 const ACCEPTED_DERIVES = new Set(['Clone', 'Copy', 'Debug', 'PartialEq', 'Eq', 'Hash', 'PartialOrd', 'Ord']);
 const ACCEPTED_LINTS = new Set(['allow', 'warn', 'deny', 'expect', 'must_use', 'inline']);
@@ -45,8 +48,10 @@ const ADDITIVE = { '+': 'add', '-': 'sub' };
 const MULTIPLICATIVE = { '*': 'mul', '/': 'div', '%': 'rem' };
 const RESERVED_ITEMS = new Set(['impl', 'trait', 'struct', 'union', 'static', 'type', 'extern', 'macro_rules', 'async', 'unsafe']);
 
-export function parseRust(source, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '', pureUnitCallModel = '' } = {}) {
+export function parseRust(source, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '', pureUnitCallModel = '', localValueStateModel = '' } = {}) {
   if (!acceptRustTypeNamespaceModel(typeNamespaceModel)) throw unsupported('Rust type namespace model', 'select the legacy model or resolved Rust type namespace 1');
+  if(!acceptRustOwnedLocalStateModel(localValueStateModel))throw unsupported('Rust owned local state model','select the original move profile or canonical String copy profile');
+  if(localValueStateModel&&(arrayResultModel||completionModel||scalarLoopModel||primitiveOwnerModel))throw unsupported('Rust owned local state model','other source state and completion profiles require independent composition proofs');
   if(!acceptRustPrimitiveOwnerModel(primitiveOwnerModel))throw unsupported('Rust primitive owner model','select the legacy model or standard primitive Rust binary64 owner 1');
   if (!acceptRustScalarLoopModel(scalarLoopModel)) throw unsupported('Rust scalar loop model', 'select the legacy model or closed primitive scalar loop 1');
   if (!acceptRustSourceArrayResultModel(arrayResultModel)) throw unsupported('Rust array result model', 'select the legacy model or immutable fresh scalar vector results 1');
@@ -57,10 +62,10 @@ export function parseRust(source, { arrayResultModel = '', completionModel = '',
   if(!acceptRustPureUnitCallModel(pureUnitCallModel))throw unsupported('Rust pure Unit-call model','select the legacy model, closed pure Rust unit calls 1 or closed public pure Rust unit calls 1');
   if(pureUnitCallModel&&[arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel].some(Boolean))throw unsupported('Rust pure Unit-call model','the closed Unit-call interpretation requires its independent source profile');
   const { tokens } = tokenize(source, 'Rust');
-  const declarations = new RustParser(tokens, null, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel);
+  const declarations = new RustParser(tokens, null, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel);
   declarations.file();
   declarations.origins.resolveTypes((segments, path) => declarations.resolve(segments, path));
-  const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel);
+  const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel);
   syntax.origins.collecting = true;
   syntax.aliases = declarations.aliases;
   const surface = syntax.file();
@@ -70,19 +75,20 @@ export function parseRust(source, { arrayResultModel = '', completionModel = '',
     if (!(error instanceof TranslationError)) throw error;
     return surface;
   }
-  const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel);
+  const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel);
   parser.aliases = syntax.aliases;
   return parser.file();
 }
 
 class RustParser {
-  constructor(tokens, catalog = null, arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '',primitiveOwnerModel='',emptyOptionSourceModel='',typeNamespaceModel='',pureUnitCallModel='') {
+  constructor(tokens, catalog = null, arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '',primitiveOwnerModel='',emptyOptionSourceModel='',typeNamespaceModel='',pureUnitCallModel='',localValueStateModel='') {
     this.cursor = new TokenCursor([...tokens], 'Rust');
     // `use` aliases, per module path.
     this.aliases = new Map();
     this.modulePath = [];
     this.crateDeclarations = new Set();
-    this.origins = new RustSourceOrigins(catalog, arrayResultModel);
+    this.origins = new RustSourceOrigins(catalog, arrayResultModel,localValueStateModel);
+    this.localValueStateModel=localValueStateModel;
     this.completionModel = completionModel;
     this.sourceSignatureModel = sourceSignatureModel || (typeNamespaceModel ? 'Rust source function signature 1' : '');
     this.typeNamespaceModel = typeNamespaceModel;
@@ -112,6 +118,7 @@ class RustParser {
     this.innerAttributes();
     this.items(root, root.items, [], () => this.cursor.atEnd());
     if(this.primitiveOwnerModel&&(root.items.some(item=>item.k!=='fn')||root.main?.effects.length))throw unsupported('Rust primitive owner profile','only flat primitive leaf functions and an empty main are admitted');
+    if(this.localValueStateModel&&(!root.items.length||root.items.some(item=>item.k!=='fn'||!Object.hasOwn(item,'sourceLocalState')||RUST_OWNED_LOCAL_STATE_POLICY.reservedOwners.includes(item.name))||root.main?.effects.length))throw unsupported('Rust owned local state','only flat functions with an empty main and unshadowed standard owners are admitted');
     if (!root.main) throw new TranslationError('syntax', 'a Rust program needs fn main', this.cursor.peek());
     finishRustEmptyOptionSource(this,root);
     finishRustPureUnitSource(this,root);
@@ -195,6 +202,7 @@ class RustParser {
       }
       if (path.length === 0 && c.is('extern') && c.is('crate', 1) && c.is('alloc', 2) && c.is(';', 3)) {
         if(this.typeNamespaceModel)throw unsupported('Rust type namespace imports','external crate declarations require a separate source binding proof',span(start,start));
+        if(this.localValueStateModel)throw unsupported('Rust owned local state','external crate declarations require a separate namespace interpretation');
         const key = [...path, 'alloc'].join('.');
         if (this.crateDeclarations.has(key)) throw unsupported('extern crate alloc', 'each source crate declaration must be unique in its module', span(start, start));
         this.crateDeclarations.add(key);
@@ -246,6 +254,7 @@ class RustParser {
    */
   use(path) {
     requireRustTypeNamespaceWithoutImports(this.typeNamespaceModel);
+    if(this.localValueStateModel)throw unsupported('Rust owned local state','imports require a separate actual owner and namespace interpretation');
     const c = this.cursor;
     const start = c.next();
     const key = path.join('.');
@@ -417,7 +426,7 @@ class RustParser {
       }
       c.expect(')', 'tuple type');
       const result = this.origins.typed(tuple(elements), this.modulePath, [], fields);
-      if (!this.origins.immutableProduct(this.origins.type)) {
+      if (!this.origins.immutableProduct(this.origins.type)&&!this.origins.ownedLocalProduct(this.origins.type)) {
         throw unsupported('immutable Rust tuple product', 'every field requires a direct recursively immutable scalar Copy source value', span(token, c.peek()));
       }
       return result;
@@ -531,6 +540,7 @@ class RustParser {
       const ret = this.type();
       const sourceResult = this.origins.type;
       if(this.emptyOptionSourceModel && (!sourceResult.emptyOptionResult || sourceResult.wrappers.length || sourceResult.emptyOptionResult.span.start!==resultToken.start)) throw unsupported('Rust empty option source', 'the result needs an exact direct standard Option<f64> owner', span(start,c.peek()));
+      if(this.localValueStateModel&&(mutableParams.length||this.lifetimeBindings.size))throw unsupported('Rust owned local state','mutable parameters and lifetimes require a separate interface proof');
       if(this.primitiveOwnerModel&&(mutableParams.length||this.lifetimeBindings.size))throw unsupported('Rust primitive owner context','mutable parameters and named lifetime binders require a separate owned context proof');
       const scalarLoop = Boolean(this.scalarLoopModel && c.is('{') && c.is('loop', 1));
       if (scalarLoop && path.length) throw unsupported('Rust scalar loop', 'the selected scalar state model requires a flat function', span(start, c.peek()));
@@ -549,12 +559,13 @@ class RustParser {
       if (c.is('where')) throw unsupported('where clause', 'trait bounds are outside the portable core', span(start, c.peek()));
       this.lifetimeHeader = false;
       const previous = this.origins.enter(new Map(params.map((param, index) => [param.name, sourceParams[index]])));
-      const signature = scalarLoop ? createRustSourceSignature('Rust source function signature 1', sourceParams, sourceResult, this.lifetimeBindings) : null;
+      const signature = scalarLoop||this.localValueStateModel ? createRustSourceSignature('Rust source function signature 1', sourceParams, sourceResult, this.lifetimeBindings) : null;
       let lowered = null;
       const previousLoop = this.scalarLoopActive;
       this.scalarLoopActive = scalarLoop;
       try {
         if (scalarLoop) lowered = readRustScalarLoop(this, path, name, params, ret, signature, mutableParams.map(param => param.name));
+        else if(this.localValueStateModel)lowered=readRustOwnedLocalStateBody(this,path,name,params,ret,signature);
       } finally { this.scalarLoopActive = previousLoop; }
       const emptyOptionBody=this.emptyOptionSourceModel?readRustEmptyOptionBody(this,path):null;
       const body = emptyOptionBody?.body ?? lowered?.body ?? (this.completionModel ? readRustFunctionCompletion(this, path) : this.block(path));
@@ -568,6 +579,7 @@ class RustParser {
       return { k: 'fn', name, params, ret, body, span: emptyOptionBody?{start:start.start,end:c.tokens[c.index-1].end}:span(start, c.peek()),
         ...(emptyOptionBody?{sourceEmptyOption:createRustEmptyOptionProof(this,name,sourceResult.emptyOptionResult,emptyOptionBody.construction)}:{}),
         ...(this.typeNamespaceModel ? {sourceTypeNamespace: createRustTypeNamespaceProof(sourceParams, sourceResult)} : {}),
+        ...(this.localValueStateModel?{sourceSignature:signature,sourceLocalState:lowered.proof}:{}),
         ...(this.primitiveOwnerModel?{sourcePrimitiveOwners:createRustPrimitiveOwnerProof(this,sourceParams,sourceResult,{span:span(start,c.peek())})}:{}),
         ...(scalarLoop ? {sourceSignature: signature, sourceLoop: lowered.proof} : this.sourceSignatureModel ? { sourceSignature: createRustSourceSignature(this.sourceSignatureModel, sourceParams, sourceResult, this.lifetimeBindings) } : {}),
       };
@@ -677,22 +689,23 @@ class RustParser {
     return name;
   }
 
-  productBindingPattern() {
+  productBindingPattern(allowMutable=false) {
     const c = this.cursor;
     const token = c.peek();
+    const mutable=Boolean(allowMutable&&this.localValueStateModel&&c.eat('mut'));
     if (c.is('mut')) throw unsupported('mutable tuple binding', 'mutation is outside the immutable product model', span(token, token));
     if (c.is('ref') || c.is('&')) throw unsupported('reference tuple binding', 'product bindings must retain direct Copy values', span(token, token));
     if (c.eat('_')) return { k: 'wild', span: { start: token.start, end: token.end } };
     if (c.eat('(')) {
       if (c.eat(')')) return { k: 'unit', span: { start: token.start, end: c.tokens[c.index - 1].end } };
-      const first = this.productBindingPattern();
+      const first = this.productBindingPattern(allowMutable);
       if (!c.eat(',')) {
         c.expect(')', 'parenthesised binding');
         return first;
       }
       const items = [first];
       while (!c.is(')')) {
-        items.push(this.productBindingPattern());
+        items.push(this.productBindingPattern(allowMutable));
         if (!c.eat(',')) break;
       }
       const close = c.expect(')', 'tuple binding');
@@ -701,7 +714,7 @@ class RustParser {
     const name = c.identifier('let');
     if (name.value === 'true' || name.value === 'false') throw unsupported('refutable product binding', 'only immutable names, ignored fields and anonymous tuple products are admitted', { start: name.start, end: name.end });
     if (c.is('::') || c.is('(') || c.is('{') || c.is('@')) throw unsupported('refutable product binding', 'only immutable names, ignored fields and anonymous tuple products are admitted', span(token, c.peek()));
-    return { k: 'name', name: name.value, span: { start: name.start, end: name.end } };
+    return { k: 'name', name: name.value, ...(mutable?{mutable:true}:{}),span: { start: name.start, end: name.end } };
   }
 
   lowerProductBinding(pattern, value, path, bindings) {
@@ -1080,6 +1093,10 @@ class RustParser {
       case 'to_owned': {
         expect(0);
         const origin = this.origins.origin(receiver, this.modulePath);
+        if(this.localValueStateModel){
+          if(this.localValueStateModel!==RUST_OWNED_LOCAL_STATE_POLICY.models.copies||method.value!=='clone'||!['name','tupleIndex'].includes(receiver.k)||origin.type?.kind!=='string'||origin.wrappers.length||origin.textSourceModel!=='owned string')throw unsupported('Rust owned local state','only actual standard String clone is admitted by the canonical copy interpretation',range);
+          return this.origins.mark({...receiver,span:{start:receiver.span?.start??range.start,end:range.end}},{...origin,localValueCopy:true});
+        }
         if (origin.arraySourceModel) throw unsupported('Rust array clone', 'array cloning needs a separate source allocation and ownership proof', range);
         if (origin.wrappers[0] === 'reference') origin.wrappers.shift();
         if (method.value === 'to_owned' && origin.type?.kind === 'string') origin.textSourceModel = 'owned string';
@@ -1140,7 +1157,7 @@ class RustParser {
         if (!c.eat(',')) break;
       }
       const close = c.expect(')', 'tuple expression');
-      return this.origins.product({ k: 'tuple', items, frozen: true, productModel: 'immutable value product', span: { start: token.start, end: close.end } }, path);
+      return this.origins.product({ k: 'tuple', items, ...(this.localValueStateModel?{}:{frozen:true,productModel:'immutable value product'}),span: { start: token.start, end: close.end } }, path);
     }
     if (c.is('{')) {
       const block = this.block(path);

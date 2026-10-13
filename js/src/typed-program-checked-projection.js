@@ -65,6 +65,7 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
       ...(entry.sourcePrimitiveOwners!==undefined?{sourcePrimitiveOwners:entry.sourcePrimitiveOwners}:{}),
       ...(entry.sourceEmptyOption!==undefined?{sourceEmptyOption:entry.sourceEmptyOption}:{}),
       ...(entry.sourcePureUnit!==undefined?{sourcePureUnit:entry.sourcePureUnit}:{}),
+      ...(entry.sourceLocalState!==undefined?{sourceLocalState:entry.sourceLocalState}:{}),
     };
   }
   const surface = { language: program.sourceLanguage, items: program.items.map(projectItem),
