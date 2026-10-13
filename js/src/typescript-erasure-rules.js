@@ -21,3 +21,8 @@ export function renderErasedTypeScriptScalar(carriageReturn, lineFeed) {
   if (lineFeed) return '\n';
   return ' ';
 }
+
+/** @param {string} pattern @returns {string} */
+export function renderTypeScriptDocumentationPattern(pattern) {
+  return pattern.replaceAll('*/', '*\\/');
+}

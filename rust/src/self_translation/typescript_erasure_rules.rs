@@ -29,3 +29,10 @@ pub fn render_erased_type_script_scalar(carriage_return: bool, line_feed: bool) 
         String::from(" ")
     }
 }
+
+/// Escape a comment terminator only in supplemental documentation pattern text.
+/// Original executable patterns remain authoritative; this display has no inverse claim.
+#[must_use]
+pub fn render_type_script_documentation_pattern(pattern: &str) -> String {
+    pattern.replace("*/", "*\\/")
+}

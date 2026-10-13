@@ -5,6 +5,7 @@ import { Parser } from 'links-notation';
 import { parseProgrammingLanguage } from './programming-language-parser.js';
 import { eraseTypeScript } from './typescript-erasure.js';
 import { TranslationError } from './translation/diagnostics.js';
+import { renderTypeScriptDocumentationPattern } from './typescript-erasure-rules.js';
 
 const rules = new Map(new Parser().parse(readFileSync(new URL('./data/typescript-portable-typing.lino', import.meta.url), 'utf8'))
   .map(({ values }) => {
@@ -30,12 +31,19 @@ export function projectTypeScriptTyping(source) {
     const operation = rules.get(node.term);
     const owner = parent?.term === 'export_statement' ? parent : node;
     const tags = [];
+    const parameterPatterns = [];
     if (operation === 'function') {
       const parameters = node.children.find((child) => child.field === 'parameters');
       for (const parameter of parameters?.children ?? []) {
         const annotation = parameter.children.find((child) => child.field === 'type');
         const name = parameter.children.find((child) => child.field === 'pattern' || child.field === 'name');
-        if (annotation && name) tags.push(`@param {${type(annotation)}} ${parameter.term === 'optional_parameter' ? `[${text(name)}]` : text(name)}`);
+        if (annotation && name) {
+          const annotationType = type(annotation);
+          const sourceText = text(name);
+          const documentationText = renderTypeScriptDocumentationPattern(sourceText);
+          parameterPatterns.push({ sourceText, documentationText, sourceSpan: { ...name.span.byteRange } });
+          tags.push(`@param {${annotationType}} ${parameter.term === 'optional_parameter' ? `[${documentationText}]` : documentationText}`);
+        }
       }
       const returns = node.children.find((child) => child.field === 'return_type');
       if (returns) tags.push(`@returns {${type(returns)}}`);
@@ -44,7 +52,7 @@ export function projectTypeScriptTyping(source) {
       const name = node.children.find((child) => child.field === 'name');
       if (value && name) tags.push(`@typedef {${type(value)}} ${text(name)}`);
     }
-    if (tags.length) projections.push({ offset: owner.span.byteRange.start, term: node.term,
+    if (tags.length) projections.push({ offset: owner.span.byteRange.start, term: node.term, parameterPatterns,
       annotation: `/**\n${tags.map((tag) => ` * ${tag}`).join('\n')}\n */\n` });
     for (const child of node.children) visit(child, node);
   }

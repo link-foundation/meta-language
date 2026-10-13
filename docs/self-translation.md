@@ -31,6 +31,15 @@ existing typed frontend. It does not establish support for arbitrary TypeScript
 types or runtime constructs, and does not retain the complete source provenance
 provided by `selfTranslate` and `self_translate`.
 
+Supplemental documentation parameter patterns encode each literal comment
+terminator `*/` as the visible text `*\/`. The executable parameter pattern is
+unchanged. Internal projection records retain that original text and its UTF-8
+byte span separately from the documentation text. This display encoding has no
+inverse claim: a pre-existing escaped slash can have the same documentation
+spelling, while its authoritative executable source remains distinct. Encoding
+the display does not establish semantic typing support for arbitrary destructured
+parameters; unsupported type annotations keep their existing source obligation.
+
 ## The output
 
 A translation starts with a header that records the source language and the

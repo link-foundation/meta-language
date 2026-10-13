@@ -1,5 +1,6 @@
 //! Native TypeScript annotation spans projected into the common typed frontend.
 use super::typescript_erasure::{ErasedTypeScript, erase_type_script};
+use super::typescript_erasure_rules::render_type_script_documentation_pattern;
 use crate::native_grammar_parser::{NativeNode, parse_native};
 use crate::translation::Span;
 use crate::translation::diagnostics::{ErrorKind, TranslationError};
@@ -107,11 +108,12 @@ fn visit(
                         field(parameter, &["type"]),
                         field(parameter, &["pattern", "name"]),
                     ) {
-                        let name = &source[name.start..name.end];
+                        let name =
+                            render_type_script_documentation_pattern(&source[name.start..name.end]);
                         let name = if parameter.term == "optional_parameter" {
                             format!("[{name}]")
                         } else {
-                            name.to_owned()
+                            name
                         };
                         tags.push(format!(
                             "@param {{{}}} {name}",
