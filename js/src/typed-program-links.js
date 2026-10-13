@@ -348,7 +348,8 @@ export function emitTypedProgramLinks(network, root, target, options = {}) {
   const emit = /^(?:rust|rs)$/iu.test(target) ? emitRust : /^(?:javascript|js|mjs)$/iu.test(target) ? emitJavaScript : null;
   if (!emit) throw new TypeError('typed linked emission currently writes JavaScript and Rust');
   if (options.rustSourceHeaderEmissionModel !== undefined && emit !== emitRust) throw new TypeError('a Rust source header emission model requires Rust target');
-  const emitted = emit === emitRust ? emit(program, { sourceHeaderModel: options.rustSourceHeaderEmissionModel }) : emit(program);
+  if (options.javaScriptScopedBindingEmissionModel !== undefined && emit !== emitJavaScript) throw new TypeError('a JavaScript scoped binding emission model requires JavaScript target');
+  const emitted = emit === emitRust ? emit(program, { sourceHeaderModel: options.rustSourceHeaderEmissionModel }) : emit(program, {scopedBindingModel: options.javaScriptScopedBindingEmissionModel});
   return { code: emitted.text, language: emitted.language, mappings: emitted.mappings,
     assumptions: emitted.assumptions, encodings: emitted.encodings, theorems: emitted.theorems };
 }

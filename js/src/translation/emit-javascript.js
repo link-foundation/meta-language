@@ -14,6 +14,7 @@ import { acceptProgramTupleProductModel } from '../typed-program-link-rules.js';
 import { unsupported } from './diagnostics.js';
 import { fixedBounds, typeKey } from './types.js';
 import { renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
+import {readJavaScriptScopedBindingEmission} from './javascript-scoped-binding-emission.js';
 import { EmitState, withParts } from './emit-common.js';
 
 const KEYWORDS = new Set([
@@ -102,15 +103,17 @@ function ident(name) {
   return result;
 }
 
-export function emitJavaScript(program) {
+export function emitJavaScript(program, options = {}) {
+  const scopedBindings = options.scopedBindingModel === undefined ? null : readJavaScriptScopedBindingEmission(program, options.scopedBindingModel);
   const state = new EmitState(program, 'JavaScript', ident, KEYWORDS, { modulesShareTermSpace: true, typeSpace: true });
-  return new JavaScriptEmitter(program, state).file();
+  return new JavaScriptEmitter(program, state, scopedBindings).file();
 }
 
 class JavaScriptEmitter {
-  constructor(program, state) {
+  constructor(program, state, scopedBindings = null) {
     this.program = program;
     this.state = state;
+    this.scopedBindings = scopedBindings;
     this.helpers = new Set();
     this.temporaries = 0;
     this.theoremChecks = [];
@@ -190,7 +193,8 @@ class JavaScriptEmitter {
   }
 
   fn(entry) {
-    const { params, body } = renameFunction(entry, ident, this.state.localReserved());
+    const local = this.scopedBindings ? name => ident(this.scopedBindings(name, entry)) : ident;
+    const { params, body } = renameFunction(entry, local, this.state.localReserved());
     if (params.some((param) => param.type.kind === 'float') || entry.ret.kind === 'float') this.usesFloat = true;
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
@@ -615,7 +619,8 @@ class JavaScriptEmitter {
   }
 
   main(main) {
-    const { effects } = renameMain(main, ident, this.state.localReserved());
+    const local = this.scopedBindings ? name => ident(this.scopedBindings(name, main)) : ident;
+    const { effects } = renameMain(main, local, this.state.localReserved());
     const lines = [];
     let assertion = 0;
     for (const effect of effects) {
