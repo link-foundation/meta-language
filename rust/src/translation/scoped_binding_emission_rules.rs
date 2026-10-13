@@ -207,13 +207,13 @@ pub fn accept_java_script_scoped_binding_empty_sequence(
 
 /// Apply the shared owned scoped binding emission policy.
 #[must_use]
-pub fn accept_java_script_scoped_binding_defined_field(undefined_value: bool) -> bool {
+pub const fn accept_java_script_scoped_binding_defined_field(undefined_value: bool) -> bool {
     !undefined_value
 }
 
 /// Apply the shared owned scoped binding emission policy.
 #[must_use]
-pub fn reserve_java_script_scoped_binding_declaration_names(preserve: bool) -> bool {
+pub const fn reserve_java_script_scoped_binding_declaration_names(preserve: bool) -> bool {
     !preserve
 }
 

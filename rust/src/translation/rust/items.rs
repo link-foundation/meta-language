@@ -702,10 +702,10 @@ impl RustParser {
             body,
             span: span(&start, self.cursor.peek()),
             generated: false,
-            source_signature,
+            source_signature: source_signature.map(Box::new),
             source_primitive_owners,
             source_empty_option: None,
-            source_loop,
+            source_loop: source_loop.map(Box::new),
         })
     }
 

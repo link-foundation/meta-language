@@ -11,7 +11,7 @@ use serde_json::{Value, json};
 use std::sync::LazyLock;
 
 #[must_use]
-pub(crate) fn policy() -> &'static Value {
+pub fn policy() -> &'static Value {
     static POLICY: LazyLock<Value> = LazyLock::new(|| {
         crate::read_structured_data_lino(include_str!("../data/rust-primitive-owners.lino"))
             .expect("the shared primitive owner policy is valid")
@@ -109,10 +109,7 @@ fn body_sites(body: &Value) -> Result<Vec<(&Value, Vec<Value>)>> {
     }
     Ok(sites)
 }
-pub(crate) fn prepare_primitive_owner_proof(
-    proof: &Value,
-    body: &super::ir::Expr,
-) -> Result<Value> {
+pub fn prepare_primitive_owner_proof(proof: &Value, body: &super::ir::Expr) -> Result<Value> {
     let mut result = proof.clone();
     let body = serde_json::to_value(body).map_err(|_| fail("a checked leaf body is required"))?;
     let sites = body_sites(&body)?;
@@ -199,7 +196,7 @@ fn position(value: &Value, ty: &Value, signature: Option<&Value>, imports: &[Val
     Ok(())
 }
 /// Validate raw field shapes before native serde can normalize unknown fields.
-pub(crate) fn validate_primitive_owner_records(value: &Value) -> Result<()> {
+pub fn validate_primitive_owner_records(value: &Value) -> Result<()> {
     let declarations = array(&value["declarations"], "owner declarations are not ordered")?;
     if !declarations
         .iter()
@@ -447,7 +444,7 @@ pub(crate) fn validate_primitive_owner_records(value: &Value) -> Result<()> {
     Ok(())
 }
 /// Check actual declaration and context premises after ordinary semantic typing.
-pub(crate) fn validate_source_primitive_owners(program: &Program) -> Result<()> {
+pub fn validate_source_primitive_owners(program: &Program) -> Result<()> {
     if !program.declarations.iter().any(
         |entry| matches!(entry,Decl::Fn(function)if function.source_primitive_owners.is_some()),
     ) {
