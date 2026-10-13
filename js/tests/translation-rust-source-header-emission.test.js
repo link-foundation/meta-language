@@ -8,6 +8,7 @@ import { LinkNetwork } from '../src/network.js';
 import { parseRust } from '../src/translation/rust.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
+import { acceptRustSourceHeaderLifetimeCharacter } from '../src/translation/rust-source-header-emission-rules.js';
 const fixture = readProjectData(new URL('../../parity/fixtures/rust-source-header-emission.lino', import.meta.url));
 const capture = { rustSourceSignatureModel: fixture.sourceSignatureModel };
 const options = { rustSourceHeaderEmissionModel: fixture.model };
@@ -123,4 +124,8 @@ test('editable lifetime identifiers cannot inject syntax through the selected he
     const network = LinkNetwork.fromLino(encoded.network.toLino());
     assert.throws(() => emitTypedProgramLinks(network, encoded.root, 'Rust', options), /ASCII identifier/u, text);
   }
+});
+
+test('the declared ASCII lifetime boundary keeps digits separate from first-position letters and underscore', () => {
+  for (const [character, first, expected] of [[65, true, true], [90, true, true], [97, true, true], [122, true, true], [95, true, true], [48, true, false], [57, false, true], [47, false, false], [58, false, false], [64, true, false], [91, true, false], [96, true, false], [123, true, false], [945, false, false], [NaN, false, false], [Infinity, false, false], [-0, true, false]]) assert.equal(acceptRustSourceHeaderLifetimeCharacter(character, first), expected);
 });
