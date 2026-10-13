@@ -53,7 +53,7 @@ fn binary_network_native_bytes_preserve_full_graph_and_observable_state() {
             .expect("encode native network"),
         source
     );
-    let mut edited = restored.clone();
+    let mut edited = restored;
     assert_eq!(
         edited
             .insert_link([], meta_language::LinkMetadata::new())
