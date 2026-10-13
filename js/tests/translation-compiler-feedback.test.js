@@ -34,6 +34,14 @@ test('retained compiler feedback stores inspectable LiNo without altering diagno
       'the retained snapshot has the structured data graph root');
     assert.equal(readCompilerFeedbackCorrections({ feedback: stored, allowedPaths: [relativePath] }).actions.length, 0,
       'storing genuine diagnostics cannot promote an unproven suggestion');
+    retainCompilerFeedback({ root, group: 'decimal-format-draft', round: 0, compiler: 'rustc',
+      stderr: diagnostics.map(item => JSON.stringify(item)).join('\n') + '\n', inputs: [{ path, relativePath }] });
+    const native = readProjectData(join(root, 'issue-195-artifacts/compiler-feedback/decimal-format-draft/round-0.lino'));
+    assert.equal(native.compiler, 'rustc', 'native feedback must not claim that Clippy produced it');
+    assert.deepEqual(native.diagnostics, diagnostics);
+    assert.deepEqual(native.sources[path], stored.sources[path]);
+    assert.throws(() => retainCompilerFeedback({ root, group: 'unknown', round: 0, compiler: 'invented',
+      stderr: '', inputs: [] }), /actual compiler kind/u);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 

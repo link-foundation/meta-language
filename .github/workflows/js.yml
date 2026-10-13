@@ -208,6 +208,17 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node scripts/test-groups.mjs --run "$TEST_GROUP"
         working-directory: js
 
+      - name: Retain translation compiler feedback and native observations
+        if: ${{ !cancelled() && matrix.group == 'translation' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: translation-test-feedback-${{ github.sha }}
+          path: |
+            issue-195-artifacts/compiler-feedback
+            issue-195-results/artifacts/decimal-format-draft-native.lino
+          retention-days: 7
+          if-no-files-found: error
+
       - name: Remove the temporary external grammar inputs
         if: ${{ !cancelled() }}
         working-directory: ${{ github.workspace }}

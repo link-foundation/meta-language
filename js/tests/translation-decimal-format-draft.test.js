@@ -111,7 +111,7 @@ pub fn run_decimal_oracle() {
     const compiled = spawnSync('rustc', ['--edition', '2024', '-O', '-D', 'warnings', '--error-format=json', source, '-o', executable], {
       encoding: 'utf8', timeout: 120_000, maxBuffer: 8 * 1024 * 1024,
     });
-    retainCompilerFeedback({ root, group: 'decimal-format-draft', round: 0, stderr: compiled.stderr ?? '',
+    retainCompilerFeedback({ root, group: 'decimal-format-draft', round: 0, compiler: 'rustc', stderr: compiled.stderr ?? '',
       inputs: [{ path: source, relativePath: 'generated/decimal-format-draft.rs' }] });
     assert.equal(compiled.status, 0, compiled.error?.message ?? compiled.stderr);
     const executed = spawnSync(executable, [], { encoding: 'utf8', timeout: 120_000, maxBuffer: 1024 * 1024 });

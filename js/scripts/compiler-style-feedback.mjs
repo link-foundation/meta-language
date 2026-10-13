@@ -10,7 +10,8 @@ import { readProjectData, writeProjectData } from './project-data.mjs';
 
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 
-export function retainCompilerFeedback({ root, group, round, stderr, inputs }) {
+export function retainCompilerFeedback({ root, group, round, stderr, inputs, compiler = 'clippy-driver' }) {
+  if (!['clippy-driver', 'rustc'].includes(compiler)) throw new TypeError('compiler feedback needs its actual compiler kind');
   const diagnostics = stderr.trim().split('\n').filter(Boolean).map((line) => JSON.parse(line));
   const sources = Object.fromEntries(inputs.map(({ path, relativePath }) => {
     const bytes = readFileSync(path);
@@ -19,7 +20,7 @@ export function retainCompilerFeedback({ root, group, round, stderr, inputs }) {
   const output = join(root, 'issue-195-artifacts/compiler-feedback', group, `round-${round}.lino`);
   writeProjectData(output, { schemaVersion: 1, head: process.env.GITHUB_SHA ?? null,
     runId: process.env.GITHUB_RUN_ID ?? null, job: process.env.GITHUB_JOB ?? null,
-    compiler: 'clippy-driver', diagnostics, sources });
+    compiler, diagnostics, sources });
   return diagnostics;
 }
 
