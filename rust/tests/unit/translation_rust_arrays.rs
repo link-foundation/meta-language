@@ -1,5 +1,6 @@
 //! Bounded read-only Rust array source projection and actual definition replay.
 
+use std::fmt::Write as _;
 use std::fs;
 use std::process::Command;
 
@@ -113,41 +114,39 @@ fn original_and_reparsed_array_policies_observe_the_same_bounded_inputs() {
             ("generated", generated),
             ("replayed", replayed.as_str()),
         ] {
-            let calls = case["inputs"]
-                .as_array()
-                .unwrap()
-                .iter()
-                .map(|input| {
-                    let values = input
-                        .as_array()
-                        .unwrap()
-                        .iter()
-                        .map(|value| {
-                            if let Some(text) = value.as_str() {
-                                format!("String::from({text:?})")
-                            } else if floating {
-                                if value.as_i64().is_some() {
-                                    format!("{value}.0f64")
-                                } else {
-                                    format!("{value}f64")
-                                }
+            let mut calls = String::new();
+            for input in case["inputs"].as_array().unwrap() {
+                let values = input
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|value| {
+                        if let Some(text) = value.as_str() {
+                            format!("String::from({text:?})")
+                        } else if floating {
+                            if value.as_i64().is_some() {
+                                format!("{value}.0f64")
                             } else {
-                                value.to_string()
+                                format!("{value}f64")
                             }
-                        })
-                        .collect::<Vec<_>>()
-                        .join(",");
-                    let borrow = if variant == "original" && borrowed {
-                        "&"
-                    } else {
-                        ""
-                    };
-                    format!(
-                        "println!(\"{{}}\",{}({borrow}vec![{values}]));",
-                        case["name"].as_str().unwrap()
-                    )
-                })
-                .collect::<String>();
+                        } else {
+                            value.to_string()
+                        }
+                    })
+                    .collect::<Vec<_>>()
+                    .join(",");
+                let borrow = if variant == "original" && borrowed {
+                    "&"
+                } else {
+                    ""
+                };
+                write!(
+                    calls,
+                    "println!(\"{{}}\",{}({borrow}vec![{values}]));",
+                    case["name"].as_str().unwrap()
+                )
+                .unwrap();
+            }
             let source = directory.0.join(format!("array_{case_index}_{variant}.rs"));
             let binary = directory.0.join(format!(
                 "array_{case_index}_{variant}{}",
