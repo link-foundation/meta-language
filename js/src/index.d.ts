@@ -667,6 +667,7 @@ export class LinkFlags {
 }
 
 export class LinkMetadata {
+  term?: string;
   static new(): LinkMetadata;
   definition?: string;
   span?: SourceSpan;
