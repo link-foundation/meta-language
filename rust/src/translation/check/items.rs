@@ -34,7 +34,11 @@ impl Checker {
             if let SItem::Fn(function) = item
                 && function.source_loop.is_some()
             {
-                super::super::source_loops::validate_source_loop(function, self.language.as_str())?;
+                super::super::source_loops::validate_source_loop_at(
+                    function,
+                    self.language.as_str(),
+                    &full_name,
+                )?;
             }
             let owned_loop = matches!(item, SItem::Fn(function) if function.source_loop.is_some());
             if name.starts_with("ml_") && !generated && !owned_loop {

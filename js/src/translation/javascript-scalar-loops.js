@@ -36,7 +36,9 @@ export function readJavaScriptScalarLoop(parser, name, params, isAsync) {
 
   function block() {
     const start = c.expect('{', 'scalar loop block'), outer = parser.scope;
-    parser.scope = {locals: new Set(outer.locals), tdz: new Set(), mutable: new Set(outer.mutable)};
+    const tdz = new Set(outer.tdz);
+    for (const binding of parser.blockDeclarations(c.index, () => c.is('}'))) tdz.add(binding);
+    parser.scope = {locals: new Set(outer.locals), tdz, mutable: new Set(outer.mutable)};
     try {
       const bindings = [];
       while (c.eat('const')) {

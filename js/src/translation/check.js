@@ -146,7 +146,7 @@ class Checker {
       if (item.k !== 'module' && scope.names.has(item.name)) {
         throw typeError(`duplicate declaration ${fullName}`, item.span);
       }
-      if (item.sourceLoop !== undefined) checkRustScalarLoopProof(item, this.language);
+      if (item.sourceLoop !== undefined) checkRustScalarLoopProof(item, this.language, fullName);
       if (/^ml_/u.test(item.name) && !item.generated && item.sourceLoop === undefined) {
         throw unsupported('reserved identifier', `${item.name} uses the translator's reserved ml_ prefix`, item.span);
       }

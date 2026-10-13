@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 mod validation;
-pub(crate) use validation::validate_source_loop;
+pub(crate) use validation::{validate_source_loop, validate_source_loop_at};
 
 /// One actual function parameter participating in the owned loop state.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

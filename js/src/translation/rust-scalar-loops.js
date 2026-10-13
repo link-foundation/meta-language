@@ -21,7 +21,7 @@ function header(signature, params, ret, language) {
   }
 }
 
-export function checkRustScalarLoopProof(item, language) {
+export function checkRustScalarLoopProof(item, language, declaredName = item.fullName ?? item.name) {
   const proof = item.sourceLoop;
   const exact = (value, fields) => value && typeof value === 'object' && !Array.isArray(value)
     && Object.keys(value).length === fields.length && fields.every(field => Object.hasOwn(value, field));
@@ -31,6 +31,9 @@ export function checkRustScalarLoopProof(item, language) {
     || proof.sourceName !== item.name || proof.lowering !== policy.lowering
     || (item.generated !== undefined && item.generated !== false)
     || !Array.isArray(proof.state) || !Array.isArray(proof.transitions)) fail('the owned loop proof has an inconsistent model, name or layout', item.span);
+  if (item.fullName !== undefined && item.fullName !== declaredName
+    || item.modulePath !== undefined && (!Array.isArray(item.modulePath) || item.modulePath.some(segment => typeof segment !== 'string')
+      || [...item.modulePath, item.name].join('.') !== declaredName)) fail('the loop identity disagrees with its actual declaration scope', item.span);
   if (language === 'Rust') header(item.sourceSignature, item.params, item.ret, language);
   else {
     const signature = proof.interface;
@@ -69,7 +72,8 @@ export function checkRustScalarLoopProof(item, language) {
     } else if (node.k === 'app' || node.k === 'call') {
       const target = node.k === 'call' ? node.fn : node.fn?.path?.join('.');
       const transition = proof.transitions[calls++];
-      if (!tail || target !== (item.fullName ?? item.name) || !exact(transition, ['writes', 'arguments'])
+      const ownedTarget = target === declaredName || node.k === 'app' && (target === item.name || target === 'crate.' + declaredName);
+      if (!tail || !ownedTarget || !exact(transition, ['writes', 'arguments'])
         || !Array.isArray(transition.writes) || !Array.isArray(transition.arguments)
         || node.args.length !== proof.state.length || transition.arguments.length !== proof.state.length) fail('only an owned tail continuation is admitted', node.span);
       const writes = new Map();

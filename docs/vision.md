@@ -173,7 +173,11 @@ signature; emitted JavaScript reimport retains a distinct inferred Number and
 Boolean interface and checks each reserved snapshot binding against its actual
 state write. Checked Links reload and scalar transition edits exercise the
 complete original 512-byte binary integer-byte helper and ordinary-name cases.
-The native adapters and tests remain a draft requiring compilation and runtime
+Rust source admission remains flat. Structured module edits of the checked loop
+graph retain the original source name while rechecking actual module bindings
+and the full checked declaration identity. State bindings that capture the
+function name require a future anchored declaration reference and retain their
+explicit refusal. The native adapters and tests remain a draft requiring compilation and runtime
 parity evidence. The selected JavaScript realm assumes its standard unmodified
 array iterator for transient assignment snapshots. General heap mutation,
 references, effects, nested loops, full generated modules, termination and

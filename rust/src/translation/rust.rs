@@ -181,7 +181,7 @@ pub(crate) fn parse_rust_with_loop_profiles(
     if !super::scalar_loop_rules::accept_rust_scalar_loop_model(scalar_loop_model) {
         return Err(unsupported(
             "Rust scalar loop model",
-            "the selected model is not registered",
+            "select the legacy model or closed primitive scalar loop 1",
             None,
         ));
     }

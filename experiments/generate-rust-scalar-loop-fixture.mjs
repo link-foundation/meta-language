@@ -1,5 +1,6 @@
 // Isolated JavaScript-first prototype. No native execution or full-module claim.
 import assert from 'node:assert/strict';
+import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {rustFunctionDefinitions} from '../js/scripts/generate-self-translation-report.mjs';
 import {parseRust} from '../js/src/translation/rust.js';
@@ -36,4 +37,34 @@ const fixture = {model, originalName, actualSource:authentic, sourceOracle:'rust
  const reverse=checkProgram(parseJavaScript(javaScriptDefinitions,options));
  return {name:entry.name,source:entry.source+suffix,originalJavaScript:entry.original,observations:entry.observations.map(([args,expected])=>({arguments:args.map(scalar),expected:scalar(expected)})),surface,javaScriptDefinitions,rustDefinitions:emitRust(program).definitions.join('\n\n'),javaScriptReverseSurface:parseJavaScript(javaScriptDefinitions,options),reverseRustDefinitions:emitRust(reverse).definitions.join('\n\n')};
 })};
+const relocatedInput=createTypedProgramLinks(cases[1].source+suffix,'Rust',linkedOptions);
+const relocatedProgram=decodeTypedProgramLinks(relocatedInput.network,relocatedInput.root);
+const relocatedEntry=relocatedProgram.declarations.get('swap');
+relocatedEntry.modulePath=['nested'];relocatedEntry.fullName='nested.swap';
+function qualifyCalls(value){if(!value||typeof value!=='object')return;if(value.k==='call'&&value.fn==='swap')value.fn='nested.swap';for(const [key,child] of Object.entries(value))if(!['type','span','domain'].includes(key)){if(Array.isArray(child))child.forEach(qualifyCalls);else qualifyCalls(child);}}
+qualifyCalls(relocatedEntry.body);relocatedProgram.declarations.delete('swap');relocatedProgram.declarations.set('nested.swap',relocatedEntry);
+relocatedProgram.items=[{k:'module',name:'nested',fullName:'nested',items:[relocatedEntry],span:null}];
+const relocated=encodeTypedProgramLinks(relocatedProgram),reloaded=decodeTypedProgramLinks(LinkNetwork.fromLino(relocated.network.toLino()),relocated.root);
+const relocatedJavaScript=emitJavaScript(reloaded).definitions.join('\n\n');
+assert.equal(vm.runInNewContext(relocatedJavaScript+'\nnested.swap(1,2,1,0);',{}, {timeout:1000}),2);
+assert.equal(vm.runInNewContext(relocatedJavaScript+'\nnested.swap(1,2,2,0);',{}, {timeout:1000}),1);
+fixture.qualifiedLoopGraph={network:relocated.network.toLino(),root:relocated.root.toString(),sourceName:'swap',fullName:'nested.swap',javaScriptDefinitions:relocatedJavaScript,rustDefinitions:emitRust(reloaded).definitions.join('\n\n')};
+const bindingCaptureJavaScript='/** @param {number} run @param {number} limit @returns {number} */function run(run,limit){for(;;){if(run<limit){const ml_scalar_write0=run+1;[run,limit]=[ml_scalar_write0,limit];continue;}else{return run;}}}';
+assert.equal(vm.runInNewContext(bindingCaptureJavaScript+'\nrun(0,2);',{}, {timeout:1000}),2);
+fixture.bindingCaptureRefusals=[
+ {language:'Rust',source:'fn run(mut run:f64,limit:f64)->f64{loop{return if run<limit{(run,)=(run+1f64,);continue;}else{run};}}fn main(){}'},
+ {language:'JavaScript',source:bindingCaptureJavaScript},
+].map(entry=>{let refusal;assert.throws(()=>createTypedProgramLinks(entry.source,entry.language,{[entry.language==='Rust'?'rustScalarLoopModel':'javaScriptScalarLoopModel']:model}),error=>{refusal=error;return error.reason==='higher-order application: local run is not a function in the portable core';});return {...entry,reason:refusal.reason,span:refusal.span};});
+fixture.bindingCapturePremise='A scalar continuation currently resolves an unshadowed source declaration; state bindings capturing that name require an anchored declaration reference proof';
+const emittedAuthentic=fixture.cases.find(entry=>entry.name===originalName).javaScriptDefinitions;
+fixture.javaScriptLexicalRefusals=[
+ {id:'authentic-helper-current-Math-binding',source:emittedAuthentic.replaceAll('value_2','Math')},
+ {id:'authentic-helper-future-Math-binding',source:emittedAuthentic.replace('const at_2','const Math = value;\n      const at_2')},
+].map(entry=>{
+ const invocation=originalName+'(65536,1,0);';
+ assert.throws(()=>vm.runInNewContext(entry.source+'\n'+invocation,{}, {timeout:1000}), error=>error.name==='ReferenceError');
+ let refusal;
+ assert.throws(()=>createTypedProgramLinks(entry.source,'JavaScript',{javaScriptScalarLoopModel:model}),error=>{refusal=error;return error.reason.startsWith('use of Math before its declaration:');});
+ return {...entry,invocation,originalErrorName:'ReferenceError',reason:refusal.reason,span:refusal.span};
+});
 (process.argv.includes('--check') ? checkProjectData : writeProjectData)(new URL('../parity/fixtures/rust-scalar-loops.lino',import.meta.url),JSON.parse(JSON.stringify(fixture)));

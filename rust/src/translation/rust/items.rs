@@ -593,7 +593,7 @@ impl RustParser {
             if !path.is_empty() {
                 return Err(unsupported(
                     "Rust scalar loop",
-                    "qualified loop state requires a separate scope model",
+                    "the selected scalar state model requires a flat function",
                     span(&start, self.cursor.peek()),
                 ));
             }

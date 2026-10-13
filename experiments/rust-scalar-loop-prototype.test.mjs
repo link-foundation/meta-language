@@ -155,7 +155,7 @@ test('default and existing profiles retain exact refusal boundaries and unproved
   ];
   for (const source of refused) assert.throws(() => checkProgram(parseRust(source + suffix, options)), source);
   assert.throws(() => createTypedProgramLinks('function keep(){return 1;}', 'JavaScript', linkedOptions), /requires Rust source/u);
-  assert.throws(() => parseRust(cases[0].source + suffix, {scalarLoopModel: 'another model'}), /scalar loop model/u);
+  assert.throws(() => parseRust(cases[0].source + suffix, {scalarLoopModel: 'another model'}), error => {assert.equal(error.reason, 'Rust scalar loop model: select the legacy model or closed primitive scalar loop 1');assert.equal(error.span, null);return true;});
 });
 test('forged name, state, continuation, write order and previous-state claims cannot survive graph checking', () => {
   const imported = createTypedProgramLinks(cases[1].source + suffix, 'Rust', linkedOptions);
@@ -202,5 +202,43 @@ test('paired draft fixtures retain actual complete sources, surfaces and definit
   assert.deepEqual(stored.javaScriptReverseSurface,JSON.parse(JSON.stringify(parseJavaScript(definitions,options))));
   assert.equal(stored.rustDefinitions,emitRust(program).definitions.join('\n\n'));
   assert.equal(stored.reverseRustDefinitions,emitRust(checkProgram(parseJavaScript(definitions,options))).definitions.join('\n\n'));
+ }
+});
+
+test('the authentic emitted helper refuses current and future Math lexical shadowing', () => {
+ const fixture=readProjectData(new URL('../parity/fixtures/rust-scalar-loops.lino',import.meta.url));
+ const actual=emitJavaScript(checkProgram(parseRust(authentic+suffix,options))).definitions.join('\n\n');
+ const sources=[actual.replaceAll('value_2','Math'),actual.replace('const at_2','const Math = value;\n      const at_2')];
+ assert.equal(fixture.javaScriptLexicalRefusals.length,sources.length);
+ for(const [index,source] of sources.entries()) {
+  const entry=fixture.javaScriptLexicalRefusals[index];assert.equal(entry.source,source);
+  assert.throws(()=>vm.runInNewContext(source+'\n'+entry.invocation,{}, {timeout:1000}),error=>error.name===entry.originalErrorName);
+  for(const read of [()=>checkProgram(parseJavaScript(source,options)),()=>createTypedProgramLinks(source,'JavaScript',{javaScriptScalarLoopModel:model})]) {
+   assert.throws(read,error=>{assert.equal(error.reason,entry.reason);assert.deepEqual(error.span,entry.span);return true;});
+  }
+ }
+});
+
+test('source-free namespace relocation keeps the actual owned function identity', () => {
+ const data=readProjectData(new URL('../parity/fixtures/rust-scalar-loops.lino',import.meta.url));
+ const row=data.qualifiedLoopGraph,network=LinkNetwork.fromLino(row.network),root=row.root;
+ const program=decodeTypedProgramLinks(network,root),entry=program.declarations.get('nested.swap');
+ assert.equal(entry.sourceLoop.sourceName,'swap');assert.equal(entry.fullName,'nested.swap');assert.deepEqual(entry.modulePath,['nested']);
+ const javascript=emitJavaScript(program).definitions.join('\n\n');assert.equal(javascript,row.javaScriptDefinitions);
+ assert.equal(emitRust(program).definitions.join('\n\n'),row.rustDefinitions);
+ assert.equal(vm.runInNewContext(javascript+'\nnested.swap(1,2,1,0);',{}, {timeout:1000}),2);
+ assert.equal(vm.runInNewContext(javascript+'\nnested.swap(1,2,2,0);',{}, {timeout:1000}),1);
+ assert.equal(emitTypedProgramLinks(network,root,'JavaScript').code,emitJavaScript(program).text);
+ for(const mutate of [value=>{value.modulePath=['other'];},value=>{value.fullName='other.swap';},value=>{value.sourceLoop.sourceName='nested.swap';}]) {
+  const forged=decodeTypedProgramLinks(LinkNetwork.fromLino(row.network),root);mutate(forged.declarations.get('nested.swap'));assert.throws(()=>encodeTypedProgramLinks(forged));
+ }
+ assert.throws(()=>parseRust(row.rustDefinitions+suffix,options),/flat function/u);
+});
+test('a state binding capturing the function name remains an explicit declaration-reference boundary', () => {
+ const data=readProjectData(new URL('../parity/fixtures/rust-scalar-loops.lino',import.meta.url));
+ assert.equal(data.bindingCaptureRefusals.length,2);
+ for(const entry of data.bindingCaptureRefusals) {
+  if(entry.language==='JavaScript')assert.equal(vm.runInNewContext(entry.source+'\nrun(0,2);',{}, {timeout:1000}),2);
+  assert.throws(()=>createTypedProgramLinks(entry.source,entry.language,{[entry.language==='Rust'?'rustScalarLoopModel':'javaScriptScalarLoopModel']:model}),error=>{assert.equal(error.reason,entry.reason);assert.deepEqual(error.span,entry.span);return true;});
  }
 });
