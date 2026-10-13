@@ -1,5 +1,6 @@
 import {checkRustSourceSignature} from './translation/rust-source-signatures.js';
 import {checkRustScalarLoopProof} from './translation/rust-scalar-loops.js';
+import {checkRustPrimitiveOwnerProof} from './translation/rust-primitive-owners.js';
 // Validate the source-free checked IR boundary before any target emission.
 import { fixedBounds, sameType } from './translation/types.js';
 import { checkLinkedMatchCoverage } from './translation/check.js';
@@ -35,6 +36,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     active.delete(value);
   }
   bounded(program);
+  checkRustPrimitiveOwnerProof(program);
   // Shared records can describe exponentially many expression paths. Bound
   // the semantic walk as well as the number of unique structural records.
   let semanticVisits = 0;
