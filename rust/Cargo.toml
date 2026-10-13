@@ -41,6 +41,7 @@ include = [
     "src/data/rust-scalar-loops.lino",
     "src/data/rust-source-header-emission.lino",
     "src/data/javascript-scoped-binding-emission.lino",
+    "src/data/rust-empty-options.lino",
     "src/translation/rust/float-predicates.lino",
     "src/translation/rust/completions.lino",
     "src/translation/runtime/array-*.txt",
