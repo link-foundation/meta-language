@@ -4,3 +4,4 @@
 (decorator product-emission-continuation-module (level emitter) (order 3) (when (format Rust)) (replace line crate%3A%3AMlJoinProductItems crate%3A%3Atranslation%3A%3Aproduct_emission_rules%3A%3AMlJoinProductItems))
 (decorator product-emission-copy-loop-module (level emitter) (order 4) (when (format Rust)) (replace line crate%3A%3Aml_accept_tuple_copy_type crate%3A%3Atranslation%3A%3Aproduct_emission_rules%3A%3Aml_accept_tuple_copy_type))
 (decorator product-emission-copy-continuation-module (level emitter) (order 5) (when (format Rust)) (replace line crate%3A%3AMlAcceptTupleCopyType crate%3A%3Atranslation%3A%3Aproduct_emission_rules%3A%3AMlAcceptTupleCopyType))
+(decorator reviewed-ci-38346650821-product-literal-style (level emitter) (order 1000) (when (format Rust)) (replace line 9007199254740992.0 9_007_199_254_740_992.0))

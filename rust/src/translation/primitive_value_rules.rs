@@ -142,7 +142,7 @@ pub fn accept_immutable_product_kind(kind: String) -> bool {
 }
 
 pub fn accept_tuple_index(index: f64, length: f64) -> bool {
-    ((((index >= (0f64)) && (index <= (9007199254740991f64))) && ((index % 1f64) == (0f64)))
+    ((((index >= (0f64)) && (index <= (9_007_199_254_740_991_f64))) && ((index % 1f64) == (0f64)))
         && (index < length))
 }
 

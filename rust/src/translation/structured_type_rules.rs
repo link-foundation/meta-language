@@ -25,7 +25,7 @@ pub mod ml_array {
 
     /// The index a Number names: a non-negative integer, -0 included.
     pub fn number_index(index: f64) -> Option<usize> {
-        if index >= 0.0 && index.fract() == 0.0 && index < 9007199254740992.0 {
+        if index >= 0.0 && index.fract() == 0.0 && index < 9_007_199_254_740_992.0 {
             Some(index as usize)
         } else {
             None

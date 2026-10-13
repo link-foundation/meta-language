@@ -2,3 +2,4 @@
 (decorator structured-type-join-module (level emitter) (order 1) (when (format Rust)) (replace line crate%3A%3Ajoin_type_names crate%3A%3Atranslation%3A%3Astructured_type_rules%3A%3Ajoin_type_names))
 (decorator structured-type-loop-module (level emitter) (order 2) (when (format Rust)) (replace line crate%3A%3Aml_join_type_names crate%3A%3Atranslation%3A%3Astructured_type_rules%3A%3Aml_join_type_names))
 (decorator structured-type-continuation-module (level emitter) (order 3) (when (format Rust)) (replace line crate%3A%3AMlJoinTypeNames crate%3A%3Atranslation%3A%3Astructured_type_rules%3A%3AMlJoinTypeNames))
+(decorator reviewed-ci-38346650821-structured-type-literal-style (level emitter) (order 1000) (when (format Rust)) (replace line 9007199254740992.0 9_007_199_254_740_992.0))
