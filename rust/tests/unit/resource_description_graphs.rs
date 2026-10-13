@@ -42,8 +42,8 @@ fn decode(graph: &ResourceDescriptionLinks) -> Value {
     decode_resource_description_graph(&graph.network, graph.root).unwrap()
 }
 
-fn statements(source: &str, triples: Value) -> ResourceDescriptionLinks {
-    import_resource_description_graph(&triples, source).unwrap()
+fn statements(source: &str, triples: &Value) -> ResourceDescriptionLinks {
+    import_resource_description_graph(triples, source).unwrap()
 }
 
 fn identifier(text: &str) -> Value {
@@ -53,7 +53,7 @@ fn literal(text: &str) -> Value {
     json!({"kind":"literal","value":text})
 }
 fn triple(subject: Value, object: Value) -> Value {
-    json!([subject, identifier("urn:property"), object])
+    Value::Array(vec![subject, identifier("urn:property"), object])
 }
 
 fn replace_references(network: &LinkNetwork, id: LinkId, references: &[LinkId]) -> LinkNetwork {
@@ -116,7 +116,7 @@ fn shared_resource_graph_reloads_and_matches_native_import_merge() {
         .map(|input| {
             statements(
                 input["sourceIdentifier"].as_str().unwrap(),
-                input["triples"].clone(),
+                &input["triples"],
             )
         })
         .collect::<Vec<_>>();
@@ -130,7 +130,7 @@ fn shared_resource_graph_reloads_and_matches_native_import_merge() {
 fn source_free_unicode_terms_keep_ill_typed_lexical_forms_and_language_provenance() {
     let graph = statements(
         "source A",
-        json!([
+        &json!([
             triple(
                 identifier("urn:subject"),
                 json!({"kind":"literal","value":"hello","language":"EN-gb"})
@@ -182,7 +182,7 @@ fn source_free_unicode_terms_keep_ill_typed_lexical_forms_and_language_provenanc
 #[test]
 fn actual_duplicate_statement_and_term_links_keep_ordered_occurrences() {
     let statement = triple(identifier("urn:subject"), literal("same"));
-    let graph = statements("source A", json!([statement, statement]));
+    let graph = statements("source A", &json!([statement, statement]));
     assert_eq!(role(&graph.network, "statement").len(), 1);
     assert_eq!(role(&graph.network, "literal").len(), 1);
     assert_eq!(role(&graph.network, "occurrence").len(), 2);
@@ -203,7 +203,7 @@ fn actual_duplicate_statement_and_term_links_keep_ordered_occurrences() {
 fn actual_linked_lexical_edit_changes_decoding_after_reload() {
     let graph = statements(
         "source A",
-        json!([triple(identifier("urn:subject"), literal("before"))]),
+        &json!([triple(identifier("urn:subject"), literal("before"))]),
     );
     let term = graph
         .network
@@ -226,7 +226,7 @@ fn scope_and_exact_literal_identity_preserve_owl_axioms_without_entailing_identi
         .map(|input| {
             statements(
                 input["sourceIdentifier"].as_str().unwrap(),
-                input["triples"].clone(),
+                &input["triples"],
             )
         })
         .collect::<Vec<_>>();
@@ -258,7 +258,7 @@ fn scope_and_exact_literal_identity_preserve_owl_axioms_without_entailing_identi
 fn counterfeit_witness_dangling_reference_and_foreign_model_are_rejected() {
     let graph = statements(
         "source A",
-        json!([triple(identifier("urn:subject"), literal("one"))]),
+        &json!([triple(identifier("urn:subject"), literal("one"))]),
     );
     let merged = merge_resource_description_graphs(std::slice::from_ref(&graph)).unwrap();
     let witness = merged
@@ -359,7 +359,7 @@ fn lexical_rules_keep_spelling_and_refuse_malformed_or_unsupported_inputs() {
     ] {
         let graph = statements(
             "source A",
-            json!([triple(identifier(value), literal("value"))]),
+            &json!([triple(identifier(value), literal("value"))]),
         );
         assert_eq!(decode(&graph)["triples"][0][0]["value"], value);
     }
@@ -390,7 +390,7 @@ fn lexical_rules_keep_spelling_and_refuse_malformed_or_unsupported_inputs() {
     ] {
         statements(
             "source A",
-            json!([triple(
+            &json!([triple(
                 identifier("urn:subject"),
                 json!({"kind":"literal","value":"text","language":language})
             )]),
@@ -422,7 +422,7 @@ fn lexical_rules_keep_spelling_and_refuse_malformed_or_unsupported_inputs() {
 fn source_cycles_and_explicit_structural_budgets_refuse_promptly() {
     let graph = statements(
         "source A",
-        json!([triple(identifier("urn:subject"), literal("same"))]),
+        &json!([triple(identifier("urn:subject"), literal("same"))]),
     );
     assert!(
         decode_resource_description_graph_with_limit(&graph.network, graph.root, 2)
