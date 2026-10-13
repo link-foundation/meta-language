@@ -20,6 +20,7 @@ import { acceptConstantEmission, constantBindingForm, renderConstantBinding } fr
 import { readNumberDisplayFunction, renderAbsentNumberExpression } from './primitive-value-rules.js';
 import { acceptTupleCopyType, renderTupleProjection, renderTupleValue } from './product-emission-rules.js';
 import { acceptProgramTupleProductModel } from '../typed-program-link-rules.js';
+import { readRustSourceHeaderEmission, renderRustSourceHeaderEmission } from './rust-source-header-emission.js';
 
 const KEYWORDS = new Set([
   'as', 'break', 'const', 'continue', 'crate', 'else', 'enum', 'extern', 'false', 'fn', 'for', 'if', 'impl', 'in',
@@ -620,7 +621,8 @@ export function readRustArrayPrelude(standard = false) {
   return standard ? ARRAY_PRELUDE : LEGACY_ARRAY_PRELUDE;
 }
 
-export function emitRust(program) {
+export function emitRust(program, options = {}) {
+  const sourceHeaders = options.sourceHeaderModel === undefined ? null : readRustSourceHeaderEmission(program, options.sourceHeaderModel);
   const state = new EmitState(program, 'Rust', snake, KEYWORDS, {
     ctorStyle: 'data',
     typeName: camel,
@@ -632,7 +634,7 @@ export function emitRust(program) {
   });
   // A local may not shadow another item of the module that the program calls or reads.
   for (const external of program.externals ?? []) state.claimed.add(externalName(external.k, external.name));
-  return new RustEmitter(program, state).file();
+  return new RustEmitter(program, state, sourceHeaders).file();
 }
 
 /** The Rust name of another item of the module: a function's in snake case, a constant's as it is written. */
@@ -672,9 +674,10 @@ export function emitRustConstants(program) {
 }
 
 class RustEmitter {
-  constructor(program, state) {
+  constructor(program, state, sourceHeaders = null) {
     this.program = program;
     this.state = state;
+    this.sourceHeaders = sourceHeaders;
     // The other items of the module the program calls or reads, which it does not declare.
     this.externals = new Map((program.externals ?? []).filter(({ name }) => !program.declarations.has(name)).map((external) => [external.name, external]));
     this.temporaries = 0;
@@ -855,6 +858,8 @@ class RustEmitter {
     const { params, body } = renameFunction(entry, snake, this.state.localReserved());
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
+    const sourceHeader = this.sourceHeaders?.get(entry.fullName);
+    if (sourceHeader) return renderRustSourceHeaderEmission(sourceHeader, params, name, this.expr(body), indent);
     const loop = tailLoop(entry, body);
     if (loop) {
       // A lifted loop runs as a loop: each iteration assigns the parameters their next values.

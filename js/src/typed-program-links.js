@@ -341,11 +341,12 @@ export function createTypedProgramLinks(source, language, options = {}) {
   return encodeTypedProgramLinks(program, { ...options, provenance });
 }
 
-export function emitTypedProgramLinks(network, root, target) {
+export function emitTypedProgramLinks(network, root, target, options = {}) {
   const program = decodeTypedProgramLinks(network, root);
   const emit = /^(?:rust|rs)$/iu.test(target) ? emitRust : /^(?:javascript|js|mjs)$/iu.test(target) ? emitJavaScript : null;
   if (!emit) throw new TypeError('typed linked emission currently writes JavaScript and Rust');
-  const emitted = emit(program);
+  if (options.rustSourceHeaderEmissionModel !== undefined && emit !== emitRust) throw new TypeError('a Rust source header emission model requires Rust target');
+  const emitted = emit === emitRust ? emit(program, { sourceHeaderModel: options.rustSourceHeaderEmissionModel }) : emit(program);
   return { code: emitted.text, language: emitted.language, mappings: emitted.mappings,
     assumptions: emitted.assumptions, encodings: emitted.encodings, theorems: emitted.theorems };
 }
