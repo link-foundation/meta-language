@@ -55,8 +55,8 @@ test('coherent source-free binding rename updates the real declaration and all a
  assert.match(emitTypedProgramLinks(raw.network,raw.root,'Rust').code,/pub fn renamed\(\) -> \(\)/u);
 });
 
-test('37 complete source refusals preserve exact diagnostics and spans, including std ownership, effects, arguments and runtime wrappers',()=>{
- assert.equal(fixture.invalid.length,37);for(const invalid of fixture.invalid)assert.throws(()=>createTypedProgramLinks(invalid.source,'Rust',options),error=>error.kind===invalid.kind&&error.reason===invalid.reason&&assert.deepEqual(error.span??null,invalid.span)===undefined,invalid.id);
+test('38 complete source refusals preserve exact diagnostics and spans, including std ownership, effects, arguments and runtime wrappers',()=>{
+ assert.equal(fixture.invalid.length,38);for(const invalid of fixture.invalid)assert.throws(()=>createTypedProgramLinks(invalid.source,'Rust',options),error=>error.kind===invalid.kind&&error.reason===invalid.reason&&assert.deepEqual(error.span??null,invalid.span)===undefined,invalid.id);
  assert.throws(()=>createTypedProgramLinks(fixture.cases[0].source,'Rust',{rustPureUnitCallModel:'unknown'}),/Rust pure Unit-call model/u);
  assert.throws(()=>createTypedProgramLinks(fixture.cases[0].source,'Rust',{...options,rustSourceSignatureModel:'Rust source function signature 1'}),/independent source profile/u);
  assert.throws(()=>createTypedProgramLinks('function empty(){}','JavaScript',options),/requires Rust source/u);
