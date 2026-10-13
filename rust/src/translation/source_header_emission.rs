@@ -108,6 +108,7 @@ pub fn read_rust_primitive_source_headers(
     program: &Program,
 ) -> Result<BTreeMap<String, SourceSignature>> {
     super::source_primitive_owners::validate_source_primitive_owners(program)?;
+    super::source_type_namespaces::validate_source_type_namespaces(program)?;
     let forbidden = !program.imports.is_empty()
         || !program.externals.is_empty()
         || program

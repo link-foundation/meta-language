@@ -40,6 +40,7 @@ mod scalar_loops;
 mod scalar_parameter_rules;
 mod scalar_parameters;
 mod source_origins;
+pub(crate) mod type_namespaces;
 
 use source_origins::{SourceDeclaration, SourceOrigin, SourceOrigins};
 
@@ -240,6 +241,70 @@ fn parse_rust_with_admitted_profiles(
     primitive_owner_model: &str,
     empty_option_source_model: &str,
 ) -> Result<SProgram> {
+    parse_rust_with_selected_profiles(
+        source,
+        SourceProfiles {
+            array_result: array_result_model,
+            completion: completion_model,
+            source_signature: source_signature_model,
+            scalar_loop: scalar_loop_model,
+            primitive_owner: primitive_owner_model,
+            empty_option_source: empty_option_source_model,
+            ..SourceProfiles::default()
+        },
+    )
+}
+
+/// Read Rust with actual source type-namespace ownership and ordered spellings.
+///
+/// # Errors
+/// Refuses unknown selectors, unowned source bindings and unsupported positions.
+pub fn parse_rust_with_type_namespace_model(
+    source: &str,
+    model: &str,
+    source_signature_model: &str,
+) -> Result<SProgram> {
+    parse_rust_with_selected_profiles(
+        source,
+        SourceProfiles {
+            type_namespace: model,
+            source_signature: source_signature_model,
+            ..SourceProfiles::default()
+        },
+    )
+}
+
+#[derive(Clone, Copy, Default)]
+struct SourceProfiles<'a> {
+    array_result: &'a str,
+    completion: &'a str,
+    source_signature: &'a str,
+    scalar_loop: &'a str,
+    primitive_owner: &'a str,
+    empty_option_source: &'a str,
+    type_namespace: &'a str,
+}
+
+fn parse_rust_with_selected_profiles(
+    source: &str,
+    profiles: SourceProfiles<'_>,
+) -> Result<SProgram> {
+    let SourceProfiles {
+        array_result: array_result_model,
+        completion: completion_model,
+        source_signature: source_signature_model,
+        scalar_loop: scalar_loop_model,
+        primitive_owner: primitive_owner_model,
+        empty_option_source: empty_option_source_model,
+        type_namespace: type_namespace_model,
+    } = profiles;
+    if !super::type_namespace_rules::accept_rust_type_namespace_model(type_namespace_model) {
+        return Err(unsupported(
+            "Rust type namespace model",
+            "select the legacy model or resolved Rust type namespace 1",
+            None,
+        ));
+    }
     if !primitive_owner_rules::accept_rust_primitive_owner_model(primitive_owner_model) {
         return Err(unsupported(
             "Rust primitive owner model",
@@ -289,6 +354,7 @@ fn parse_rust_with_admitted_profiles(
             source_signature_model,
             scalar_loop_model,
             primitive_owner_model,
+            type_namespace_model,
         ]
         .iter()
         .any(|model| !model.is_empty())
@@ -303,11 +369,7 @@ fn parse_rust_with_admitted_profiles(
     let mut declarations = RustParser::new(
         tokens.clone(),
         SourceOrigins::new(None, array_result_model),
-        completion_model,
-        source_signature_model,
-        scalar_loop_model,
-        primitive_owner_model,
-        empty_option_source_model,
+        profiles,
     );
     declarations.file()?;
     let mut origins = std::mem::replace(
@@ -317,15 +379,7 @@ fn parse_rust_with_admitted_profiles(
     origins.resolve_catalog_types(|segments, path| declarations.resolve(segments, path));
     let mut source_origins = SourceOrigins::new(Some(origins.catalog), array_result_model);
     source_origins.collecting = true;
-    let mut syntax = RustParser::new(
-        tokens.clone(),
-        source_origins,
-        completion_model,
-        source_signature_model,
-        scalar_loop_model,
-        primitive_owner_model,
-        empty_option_source_model,
-    );
+    let mut syntax = RustParser::new(tokens.clone(), source_origins, profiles);
     syntax.aliases = declarations.aliases;
     syntax.primitive_imports = declarations.primitive_imports;
     let surface = syntax.file()?;
@@ -337,11 +391,7 @@ fn parse_rust_with_admitted_profiles(
     let mut parser = RustParser::new(
         tokens,
         SourceOrigins::new(Some(syntax.origins.catalog), array_result_model),
-        completion_model,
-        source_signature_model,
-        scalar_loop_model,
-        primitive_owner_model,
-        empty_option_source_model,
+        profiles,
     );
     parser.aliases = syntax.aliases;
     parser.primitive_imports = syntax.primitive_imports;
@@ -413,6 +463,8 @@ struct RustParser {
     scalar_loop_model: String,
     primitive_owner_model: String,
     empty_option_source_model: String,
+    type_namespace_model: String,
+    type_namespace_frames: Vec<Vec<Vec<String>>>,
     empty_option_result: Option<serde_json::Value>,
     empty_option_main_seen: bool,
     primitive_owner_frames: Vec<Vec<Option<serde_json::Value>>>,
@@ -428,15 +480,7 @@ struct RustParser {
 }
 
 impl RustParser {
-    fn new(
-        tokens: Vec<Token>,
-        origins: SourceOrigins,
-        completion_model: &str,
-        source_signature_model: &str,
-        scalar_loop_model: &str,
-        primitive_owner_model: &str,
-        empty_option_source_model: &str,
-    ) -> Self {
+    fn new(tokens: Vec<Token>, origins: SourceOrigins, profiles: SourceProfiles<'_>) -> Self {
         let reserved_binding_names = tokens
             .iter()
             .filter(|token| token.kind == TokenKind::Identifier)
@@ -449,11 +493,19 @@ impl RustParser {
             crate_declarations: HashSet::new(),
             main: None,
             origins,
-            completion_model: completion_model.to_owned(),
-            source_signature_model: source_signature_model.to_owned(),
-            scalar_loop_model: scalar_loop_model.to_owned(),
-            primitive_owner_model: primitive_owner_model.to_owned(),
-            empty_option_source_model: empty_option_source_model.to_owned(),
+            completion_model: profiles.completion.to_owned(),
+            source_signature_model: if profiles.source_signature.is_empty()
+                && !profiles.type_namespace.is_empty()
+            {
+                "Rust source function signature 1".to_owned()
+            } else {
+                profiles.source_signature.to_owned()
+            },
+            scalar_loop_model: profiles.scalar_loop.to_owned(),
+            primitive_owner_model: profiles.primitive_owner.to_owned(),
+            empty_option_source_model: profiles.empty_option_source.to_owned(),
+            type_namespace_model: profiles.type_namespace.to_owned(),
+            type_namespace_frames: Vec::new(),
             empty_option_result: None,
             empty_option_main_seen: false,
             primitive_owner_frames: Vec::new(),
