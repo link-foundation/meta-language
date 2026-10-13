@@ -6,6 +6,7 @@ import {checkProgram} from '../src/translation/check.js';
 import {emitRust} from '../src/translation/emit-rust.js';
 import {formatProductRuleSource} from './product-rule-style-corrections.mjs';
 import {stripRustSourceHeaderStyleParentheses} from './rust-source-header-library-style.mjs';
+import assert from 'node:assert/strict';
 
 const policyFile=new URL('../src/translation/data/rust-pure-unit-calls.lino',import.meta.url),policy=readProjectData(policyFile);
 const source='// Generated from linked pure Rust Unit-call policy. Do not edit.\n'
@@ -31,6 +32,12 @@ if(!process.argv.includes('--javascript-only')){
    expression=expression.replace(/\((!?\w+\.(?:is_empty|starts_with)\((?:"[^"]*")?\))\)/gu,'$1');
    for(const [from,to] of [[95,95],[65,90],[97,122],[48,57]])expression=expression.replaceAll('code >= '+from+'f64 && code <= '+to+'f64','('+from+'f64..='+to+'f64).contains(&code)');
    expression=expression.replace('(!first && code >= 48f64) && code <= 57f64','!first && (48f64..=57f64).contains(&code)');
+   // A flat pattern replaces only the generated pure equality disjunction.
+   // Validate every literal against the authored policy before recording it.
+   if(block.startsWith('pub fn accept_rust_pure_unit_name(')){
+    const excluded=[...block.matchAll(/name == ("[^"\\]*")/gu)].map(match=>JSON.parse(match[1]));assert.deepEqual(excluded,policy.forbiddenNames);
+    expression='!name.is_empty() && name != "_" && !name.starts_with("ml_") && !matches!(name, '+excluded.map(value=>JSON.stringify(value)).join(' | ')+')';
+   }
    expression=stripRustSourceHeaderStyleParentheses(expression);
    replace(block,block.slice(0,open+1)+'\n    '+expression+'\n}');
   }

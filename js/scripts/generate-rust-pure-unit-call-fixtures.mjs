@@ -52,6 +52,7 @@ export const pureUnitRefusedSources=[
  ['duplicate-helper','fn empty(){}fn empty(){}fn main(){}'],
  ['missing-main','fn empty(){}'],
  ['reserved-translator','fn ml_main(){}fn main(){ml_main();}'],
+ ['reserved-2024','fn gen(){}fn main(){gen();}'],
  ['unicode-profile','fn κενό(){}fn main(){κενό();}'],
  ['thread-wrapper','fn empty(){}fn main(){std::thread::Builder::new().spawn(move||empty());}'],
  ['exit-wrapper','fn empty(){}fn main(){std::process::exit(101);}'],
