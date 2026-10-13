@@ -1222,6 +1222,22 @@ export const NAME_INVENTORIES = Object.freeze([
     recordOf: (name) => `repository.${name}`,
   },
   {
+    inventory: 'partitioned JavaScript suite evidence operations',
+    files: ['js/scripts/issue-195-javascript-suite-partitions.mjs', 'js/scripts/issue-195-evidence-execution-records.mjs',
+      'js/scripts/issue-195-evidence-command-logs.mjs'],
+    extract: (text) => captures(text, /^export (?:async )?function ([a-zA-Z_]+)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `repository.${({
+      'javascript-suite-test-groups': 'read-javascript-suite-test-groups',
+      'javascript-suite-partition': 'create-javascript-suite-partition',
+      'javascript-suite-selection': 'read-javascript-suite-selection',
+      'javascript-suite-group-entries': 'read-javascript-suite-group-entries',
+      'javascript-suite-command-arguments': 'read-javascript-suite-command-arguments',
+      'is-java-script-suite-partition-name': 'detect-javascript-suite-partition-name',
+      'merge-java-script-suite-partitions': 'merge-javascript-suite-partitions',
+    })[name] ?? name}`,
+  },
+  {
     inventory: 'source constructor prototype definitions',
     files: ['js/src/translation/javascript.js', 'rust/src/translation/surface.rs'],
     extract: (text) => captures(text, /(?:let |^pub struct )(prototypeDefinition|ConstructorPrototypeDefinition)(?: = null;| \{)/gmu)
