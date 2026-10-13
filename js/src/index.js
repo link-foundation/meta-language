@@ -20,6 +20,9 @@ export * from './concept-records.js';
 export * from './concept-distinctions.js';
 export * from './global-concept-space.js';
 export { createDiscoveredConceptLinks, readDiscoveredConceptLinks } from './discovered-concept-links.js';
+export { createConceptViews, readConceptOntology, readConceptTaxonomy } from './concept-ontology.js';
+export { BinaryLinksError, encodeLinkNetworkBinary, decodeLinkNetworkBinary } from './link-network-binary.js';
+export { ResourceDescriptionNTriplesError, importResourceDescriptionNTriples, emitResourceDescriptionNTriples, readResourceDescriptionNTriplesSource } from './resource-description-ntriples.js';
 export { importResourceDescriptionGraph, decodeResourceDescriptionGraph,
   mergeResourceDescriptionGraphs, verifyResourceDescriptionGraphWitnesses } from './resource-description-graphs.js';
 export { verifyGlobalConceptCorrespondence } from './global-concept-rules.js';

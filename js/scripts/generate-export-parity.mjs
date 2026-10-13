@@ -31,6 +31,9 @@ const rustItemsPath = path.join(root, 'rust/tests/unit/javascript_export_parity/
  * spells the item for the compiler where a generic needs its parameters.
  */
 export const OVERRIDES = Object.freeze({
+  importResourceDescriptionNTriples: { rust: 'import_resource_description_ntriples' },
+  emitResourceDescriptionNTriples: { rust: 'emit_resource_description_ntriples' },
+  readResourceDescriptionNTriplesSource: { rust: 'read_resource_description_ntriples_source' },
   // The enum whose variants are the fixture kinds.
   ApiStyleFixtureKind: { rust: 'ApiStyleFixture' },
   // One error enum carries every rename and transformation failure.

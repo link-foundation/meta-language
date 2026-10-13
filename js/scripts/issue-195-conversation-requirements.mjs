@@ -62,6 +62,13 @@ const runtimeEntryPoints = {
     javascript: ['js/src/discovered-concept-links.js'],
     rust: ['rust/src/discovered_concept_links.rs'],
   },
+  ...Object.fromEntries([
+    'I195-ONTOLOGY-LIBRARY-ENTRYPOINT', 'I195-TAXONOMY-LIBRARY-ENTRYPOINT',
+    'I195-ONTOLOGY-TAXONOMY-MEMBERSHIP', 'I195-ONTOLOGY-TAXONOMY-RELATION-DISTINCTION',
+    'I195-ONTOLOGY-MULTIPLE-LINK-ROOTS', 'I195-TAXONOMY-MULTIPLE-LINK-ROOTS',
+  ].map(id => [id, {
+    javascript: ['js/src/concept-views.js'], rust: ['rust/src/concept_ontology/views.rs'],
+  }])),
 };
 
 function rows(sourceKey, fixture, specification, area, declarations, tooling = false) {

@@ -60,19 +60,19 @@ they are.
 | Category | Items | Current | Behind | Not applicable |
 |---|---|---|---|---|
 | JavaScript engines | 1 | 1 | 0 | 0 |
-| npm packages | 17 | 17 | 0 | 0 |
+| npm packages | 38 | 38 | 0 | 0 |
 | Rust package settings | 9 | 9 | 0 | 0 |
 | Rust crates | 309 | 282 | 24 | 3 |
 | Experiment manifests | 6 | 6 | 0 | 0 |
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 70 | 69 | 1 | 0 |
+| Generators | 82 | 81 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 24 | 0 | 0 | 24 |
+| Published artifact contents | 26 | 0 | 0 | 26 |
 
 ## JavaScript engines
 
@@ -87,6 +87,26 @@ they are.
 | `@pdf-lib/standard-fonts` | `js/package-lock.json` | `js/package-lock.json` | `1.0.0` | transitive, development |  | 1.0.0 (npm registry, @pdf-lib/standard-fonts latest) | version | current |  |
 | `@pdf-lib/upng` | `js/package-lock.json` | `js/package-lock.json` | `1.0.1` | transitive, development |  | 1.0.1 (npm registry, @pdf-lib/upng latest) | version | current |  |
 | `@peggyjs/from-mem` | `js/package-lock.json` | `js/package-lock.json` | `3.1.4` | transitive, development |  | 3.1.4 (npm registry, @peggyjs/from-mem latest) | version | current |  |
+| `@typescript/typescript-aix-ppc64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-aix-ppc64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-darwin-arm64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-darwin-arm64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-darwin-x64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-darwin-x64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-freebsd-arm64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-freebsd-arm64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-freebsd-x64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-freebsd-x64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-linux-arm` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-linux-arm latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-linux-arm64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-linux-arm64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-linux-loong64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-linux-loong64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-linux-mips64el` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-linux-mips64el latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-linux-ppc64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-linux-ppc64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-linux-riscv64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-linux-riscv64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-linux-s390x` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-linux-s390x latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-linux-x64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-linux-x64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-netbsd-arm64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-netbsd-arm64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-netbsd-x64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-netbsd-x64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-openbsd-arm64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-openbsd-arm64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-openbsd-x64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-openbsd-x64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-sunos-x64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-sunos-x64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-win32-arm64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-win32-arm64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-win32-x64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-win32-x64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
 | `collapse-white-space` | `js/package-lock.json` | `js/package-lock.json` | `2.1.0` | transitive, development |  | 2.1.0 (npm registry, collapse-white-space latest) | version | current |  |
 | `commander` | `js/package-lock.json` | `js/package-lock.json` | `15.0.0` | transitive, development |  | 15.0.0 (npm registry, commander latest) | version | current |  |
 | `franc-min` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `6.2.0` | direct, development | `6.2.0` | 6.2.0 (npm registry, franc-min latest) | version | current |  |
@@ -99,6 +119,7 @@ they are.
 | `source-map-generator` | `js/package-lock.json` | `js/package-lock.json` | `2.0.7` | transitive, development |  | 2.0.7 (npm registry, source-map-generator latest) | version | current |  |
 | `trigram-utils` | `js/package-lock.json` | `js/package-lock.json` | `2.0.1` | transitive, development |  | 2.0.1 (npm registry, trigram-utils latest) | version | current |  |
 | `tslib` | `js/package-lock.json` | `js/package-lock.json` | `2.8.1` | transitive, development |  | 2.8.1 (npm registry, tslib latest) | version | current |  |
+| `typescript` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `7.0.2` | direct, development | `7.0.2` | 7.0.2 (npm registry, typescript latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
 | `web-tree-sitter` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `0.27.0` | direct, runtime | `0.27.0` | 0.27.0 (npm registry, web-tree-sitter latest) | version | current |  |
 | `wordnet-db` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `3.1.14` | direct, development | `3.1.14` | 3.1.14 (npm registry, wordnet-db latest) | version | current |  |
 
@@ -536,11 +557,14 @@ they are.
 | `js/scripts/build-merge-quality-evidence.mjs` | `js/scripts/build-merge-quality-evidence.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-native-grammar-concept-reuse.mjs` | `js/scripts/build-native-grammar-concept-reuse.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-native-text-grammars.mjs` | `js/scripts/build-native-text-grammars.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-rust-string-continuation-fixtures.mjs` | `js/scripts/build-rust-string-continuation-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-translation-stage-fixtures.mjs` | `js/scripts/build-translation-stage-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-unicode-identifier-properties.mjs` | `js/scripts/build-unicode-identifier-properties.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-vendored-grammars.mjs` | `js/scripts/build-vendored-grammars.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-web-tree-sitter-runtime.mjs` | `js/scripts/build-web-tree-sitter-runtime.mjs` | `script` |  | derived | behind | Built from `image emscripten/emsdk@4.0.15`, which is behind (see its reason). |
 | `js/scripts/generate-builtin-cst-expectations.mjs` | `js/scripts/generate-builtin-cst-expectations.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-concept-view-fixture.mjs` | `js/scripts/generate-concept-view-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-concept-view-rules.mjs` | `js/scripts/generate-concept-view-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-csharp-pattern-fixture.mjs` | `js/scripts/generate-csharp-pattern-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-default-cst-expectations.mjs` | `js/scripts/generate-default-cst-expectations.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-discovered-concept-fixture.mjs` | `js/scripts/generate-discovered-concept-fixture.mjs` | `script` |  | derived | current |  |
@@ -558,6 +582,8 @@ they are.
 | `js/scripts/generate-grammar-merge-decisions.mjs` | `js/scripts/generate-grammar-merge-decisions.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-issue-195-conformance.mjs` | `js/scripts/generate-issue-195-conformance.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-issue-195-generative.mjs` | `js/scripts/generate-issue-195-generative.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-link-network-binary-fixtures.mjs` | `js/scripts/generate-link-network-binary-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-link-network-binary-rules.mjs` | `js/scripts/generate-link-network-binary-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-lino-grammar-cases.mjs` | `js/scripts/generate-lino-grammar-cases.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-native-grammar-fixtures.mjs` | `js/scripts/generate-native-grammar-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-native-recovery.mjs` | `js/scripts/generate-native-recovery.mjs` | `script` |  | derived | current |  |
@@ -570,16 +596,22 @@ they are.
 | `js/scripts/generate-product-unit-fixture.mjs` | `js/scripts/generate-product-unit-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-project-data-tooling-fixture.mjs` | `js/scripts/generate-project-data-tooling-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-resource-description-fixture.mjs` | `js/scripts/generate-resource-description-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-resource-description-ntriples-characters.mjs` | `js/scripts/generate-resource-description-ntriples-characters.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-resource-description-ntriples-fixture.mjs` | `js/scripts/generate-resource-description-ntriples-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-resource-description-ntriples-rules.mjs` | `js/scripts/generate-resource-description-ntriples-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-resource-description-rules.mjs` | `js/scripts/generate-resource-description-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-ruby-expression-syntax-fixture.mjs` | `js/scripts/generate-ruby-expression-syntax-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-ruby-heredoc-fixture.mjs` | `js/scripts/generate-ruby-heredoc-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-ruby-literal-ci-regressions.mjs` | `js/scripts/generate-ruby-literal-ci-regressions.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-ruby-pattern-fixture.mjs` | `js/scripts/generate-ruby-pattern-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-array-rules.mjs` | `js/scripts/generate-rust-array-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-array-runtime.mjs` | `js/scripts/generate-rust-array-runtime.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-array-source-fixtures.mjs` | `js/scripts/generate-rust-array-source-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-function-lifetime-fixtures.mjs` | `js/scripts/generate-rust-function-lifetime-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-indirection-rules.mjs` | `js/scripts/generate-rust-indirection-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-product-rules.mjs` | `js/scripts/generate-rust-product-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-source-indirection-fixtures.mjs` | `js/scripts/generate-rust-source-indirection-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-string-rules.mjs` | `js/scripts/generate-rust-string-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-cases.mjs` | `js/scripts/generate-self-translation-cases.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-report.mjs` | `js/scripts/generate-self-translation-report.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-stateful-extra-fixtures.mjs` | `js/scripts/generate-stateful-extra-fixtures.mjs` | `script` |  | derived | current |  |
@@ -588,6 +620,7 @@ they are.
 | `js/scripts/generate-structured-scanner-fixtures.mjs` | `js/scripts/generate-structured-scanner-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-structured-type-fixtures.mjs` | `js/scripts/generate-structured-type-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-structured-type-rules.mjs` | `js/scripts/generate-structured-type-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-translation-stage-refresh-receipt.mjs` | `js/scripts/generate-translation-stage-refresh-receipt.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typed-program-algebraic-fixtures.mjs` | `js/scripts/generate-typed-program-algebraic-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typed-program-link-rules.mjs` | `js/scripts/generate-typed-program-link-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typed-program-links-fixtures.mjs` | `js/scripts/generate-typed-program-links-fixtures.mjs` | `script` |  | derived | current |  |
@@ -674,10 +707,12 @@ they are.
 | `src/data/grammar-lock.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/language-catalog.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/language-trigrams.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/link-network-binary-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/native-grammars/*.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/native-text-grammar.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/native-text-metadata.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/reference-operations.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/resource-description-ntriples-profile.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/resource-description-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/semantic-lexicon.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/typed-program-links-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |

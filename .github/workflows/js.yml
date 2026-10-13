@@ -479,6 +479,22 @@ jobs:
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-discovered-concept-fixture.mjs --check
 
+      - name: Check generated concept view admission rules
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-concept-view-rules.mjs --check
+
+      - name: Check shared ontology and taxonomy view fixtures
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-concept-view-fixture.mjs --check
+
+      - name: Check generated binary link network rules
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-link-network-binary-rules.mjs --check
+
+      - name: Check shared binary link network fixtures
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-link-network-binary-fixtures.mjs --check
+
       - name: Check the generated Resource Description Framework rules
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-resource-description-rules.mjs --check
@@ -486,6 +502,18 @@ jobs:
       - name: Check shared Resource Description Framework graph fixtures
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-resource-description-fixture.mjs --check
+
+      - name: Check generated resource triple syntax character rules
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-resource-description-ntriples-characters.mjs --check
+
+      - name: Check generated resource triple syntax token rules
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-resource-description-ntriples-rules.mjs --check
+
+      - name: Check shared resource triple syntax fixtures
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-resource-description-ntriples-fixture.mjs --check
 
       - name: Check the generated grammar merge decisions against JavaScript
         if: ${{ !cancelled() }}
@@ -519,9 +547,29 @@ jobs:
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-rust-function-lifetime-fixtures.mjs --check
 
+      - name: Check generated Rust array admission rules
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-rust-array-rules.mjs --check
+
+      - name: Check shared Rust array source fixtures
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-rust-array-source-fixtures.mjs --check
+
+      - name: Check generated Rust string continuation rules
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-rust-string-rules.mjs --check
+
+      - name: Check shared Rust string continuation fixtures
+        if: ${{ !cancelled() }}
+        run: node js/scripts/build-rust-string-continuation-fixtures.mjs --check
+
       - name: Check shared TypeScript documentation pattern fixtures
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-typescript-documentation-fixtures.mjs --check
+
+      - name: Check strict public declaration consumers
+        if: ${{ !cancelled() }}
+        run: node js/scripts/check-public-declaration-contracts.mjs --compiler js/node_modules/.bin/tsc
 
       - name: Authenticate reviewed generated-stage migration refreshes
         if: ${{ !cancelled() }}

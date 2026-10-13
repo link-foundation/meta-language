@@ -132,6 +132,12 @@ Scoped lifetime-only function headers now retain ordered input binders and
 immutable reference spelling. Reference-bearing results with named binders still
 require an instantiation and outlives proof before admission. Type and constant
 generics, lifetime bounds and mutable references remain separate obligations.
+Unshadowed standard vectors and immutable slices now have bounded source
+admission for direct scalar and string elements, with read-only empty checks and
+length conversion explicitly projected to the Number model. Ownership moves,
+borrowed results, mutable arrays and full generated runtime wrappers still need
+their separate obligations. Rust string continuations and CRLF normalization
+use shared checked rules while preserving original source-token spans.
 Its shared schema gives abbreviated host fields readable English
 relation names, including the Unicode code unit string model. The finite formal
 definition adapter checks closed recursive correspondences under supported
@@ -172,6 +178,11 @@ global identity or formal definition. Each view can have several independently
 selectable roots, all represented explicitly as links. A root may also be a type
 when the selected model declares that role; root membership does not imply a
 type role or a universal `Type : Type` axiom.
+The current paired view APIs retain actual concept, recursive definition and
+provenance links, including explicit orphan concepts. Ontology and taxonomy roots
+are independently selectable; associations, axioms, classification and subsumption
+carry declared model links. These declarations preserve assumptions and do not
+establish arbitrary hierarchy or type entailment.
 
 ### Links as fundamental entities and relationships
 
@@ -201,6 +212,13 @@ exact-term merge witnesses as inspectable links. Its selected RDF 1.1 model
 retains literal lexical forms and original language-tag provenance; it does not
 normalize datatype values. Full concrete-syntax import and export, unsupported
 identifier forms and OWL reasoning remain required work.
+The selected N-Triples syntax adapter imports concrete triples through shared
+generated token, scalar and grammar decisions. Canonical output reads current
+linked resource terms, while a separate syntax graph reconstructs historical raw
+spelling and trivia. Explicit blank-node correspondences retain source scopes
+through export and reimport. Unsupported identifier forms and full RDF syntax
+coverage remain separate obligations; historical provenance cannot supply current
+semantic output after the graph changes.
 
 A shipped prepared snapshot is a starting point. Users can reconstruct the full
 CST and concept space dynamically through link-cli or text and binary Links
@@ -211,6 +229,14 @@ Full reconstruction records latency and resource use on pinned inputs, with the
 representation, input size and execution environment attached to the measurements.
 Lazy loading and token-only envelopes do not count as a measured complete rebuild;
 the qualitative speed requirement does not invent a numeric deadline.
+The current binary graph primitive writes a versioned meta-language archive of
+actual link identities, references, supported metadata, exact term-map keys,
+selected syntax and the next allocation identity. Shared framing rules are
+automatically translated into Rust. Its interoperable profile refuses unsafe
+integer values and isolated surrogate strings before corruption. Legacy archives
+can be read, but information absent from their format cannot be restored. This
+graph primitive does not populate missing definitions, implement every link-cli
+path or establish the required complete reconstruction performance measurements.
 Automatic grammar inference and discovery have the separately tracked
 [issue #224](https://github.com/link-foundation/meta-language/issues/224), with
 modern primary research, concrete algorithms, pinned assumptions and independent

@@ -371,6 +371,95 @@ const nativeRuleConcepts = (text) => [...text.matchAll(/^\(rule ([a-z0-9_]+) [^\
  */
 export const NAME_INVENTORIES = Object.freeze([
   {
+    inventory: 'resource triple syntax operations',
+    files: ['js/src/resource-description-ntriples.js', 'js/src/resource-description-ntriples-rules.js',
+      'js/src/resource-description-ntriples-characters.js', 'rust/src/resource_description_ntriples.rs',
+      'rust/src/resource_description_ntriples/provenance.rs', 'rust/src/resource_description_ntriples_rules/part_0.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub fn) ([a-zA-Z_]+)\(/gmu)
+      .filter(name => /NTriples|n_triples|ntriples|ScalarEscape|scalar_escape/u.test(name))
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase().replaceAll('n-triples', 'ntriples')),
+    recordOf: (name) => `knowledge.${({
+      'resource-description-ntriples-name': 'accept-resource-description-triple-syntax-name',
+      'resource-description-ntriples-escape': 'decode-resource-description-character-escape',
+    })[name] ?? name.replaceAll('ntriples', 'triple-syntax')}`,
+  },
+  {
+    inventory: 'resource triple syntax boundary types',
+    files: ['js/src/resource-description-ntriples.js', 'rust/src/resource_description_ntriples.rs'],
+    extract: (text) => captures(text, /^(?:export class|pub struct) (ResourceDescriptionNTriples[A-Za-z]+)/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `knowledge.${name.replaceAll('ntriples', 'triple-syntax')}`,
+  },
+  {
+    inventory: 'resource triple syntax graph roles',
+    files: ['js/src/data/resource-description-ntriples-profile.json', 'rust/src/data/resource-description-ntriples-profile.json'],
+    extract: (text) => Object.values(JSON.parse(text).terms).map(name => name.replaceAll(' ', '-')),
+    recordOf: (name) => `knowledge.resource-triple-${name === 'blank-node-identity-correspondences' ? 'blank-node-identity-correspondence-collection' : name}`,
+  },
+  {
+    inventory: 'binary link network operations',
+    files: ['js/src/link-network-binary.js', 'js/src/link-network-binary-rules.js',
+      'rust/src/link_network_binary.rs', ...readdirSync(path.join(repositoryRoot, 'rust/src/link_network_binary_rules'))
+        .filter(file => /^part_\d+\.rs$/u.test(file))
+        .map(file => `rust/src/link_network_binary_rules/${file}`)
+        .filter(file => /^pub fn (?:link_network_binary|accept_link_network|read_link_network|render_link_network|transcode_link_network)/mu.test(readFileSync(path.join(repositoryRoot, file), 'utf8')))],
+    extract: (text) => captures(text, /^(?:export function|pub fn) ((?:linkNetworkBinary|acceptLinkNetworkBinary|readLinkNetworkBinary|renderLinkNetworkBinary|transcodeLinkNetworkBinary|encodeLinkNetworkBinary|decodeLinkNetworkBinary)[A-Za-z]*|(?:link_network_binary|accept_link_network_binary|read_link_network_binary|render_link_network_binary|transcode_link_network_binary|encode_link_network_binary|decode_link_network_binary)[a-z_]*)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `links.${({
+      'link-network-binary-unit': 'read-link-network-binary-unit',
+      'link-network-binary-integer-byte': 'read-link-network-binary-integer-byte',
+      'transcode-link-network-binary': 'convert-link-network-binary-encoding',
+    })[name] ?? name}`,
+  },
+  {
+    inventory: 'binary link network boundary types',
+    files: ['js/src/link-network-binary.js', 'rust/src/link_network_binary.rs'],
+    extract: (text) => captures(text, /^(?:export class|pub struct) (BinaryLinks[A-Za-z]+)/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `links.${name}`,
+  },
+  {
+    inventory: 'binary network fixture generator',
+    files: ['js/scripts/generate-link-network-binary-fixtures.mjs'],
+    extract: (text) => captures(text, /^export function (createBinaryNetworkFixture)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: () => 'repository.create-binary-network-fixture',
+  },
+  {
+    inventory: 'concept view operations',
+    files: ['js/src/concept-views.js', 'js/src/concept-view-rules.js',
+      'rust/src/concept_ontology/views.rs', 'rust/src/concept_ontology/view_rules.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub fn) ((?:create|read|accept)[a-zA-Z_]+)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `ontology.${name}`,
+  },
+  {
+    inventory: 'concept view roles',
+    files: ['js/src/concept-view-rules.js', 'rust/src/concept_ontology/view_rules.rs'],
+    extract: (text) => [...new Set(captures(text, /role ===? ['"]([^'"]+)['"]/gu))].map(name => name.replaceAll(' ', '-')),
+    recordOf: (name) => `ontology.${name}`,
+  },
+  {
+    inventory: 'concept view relation declarations',
+    files: ['js/src/concept-view-rules.js', 'rust/src/concept_ontology/view_rules.rs'],
+    extract: (text) => [...new Set(captures(text, /kind ===? ['"]([^'"]+)['"]/gu))],
+    recordOf: (name) => `ontology.declared-concept-${name}`,
+  },
+  {
+    inventory: 'Rust source array admission operations',
+    files: ['js/src/translation/rust-array-rules.js', 'rust/src/translation/rust/array_rules.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub fn) ([a-zA-Z_]+)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${name}`,
+  },
+  {
+    inventory: 'Rust string continuation operations',
+    files: ['js/src/translation/rust-string-rules.js', 'rust/src/translation/frontend_rules/rust_strings.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub fn) ((?:accept|read)[a-zA-Z_]+)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${name}`,
+  },
+  {
     inventory: 'resource description graph roles',
     files: ['js/src/data/resource-description-schema.json', 'rust/src/data/resource-description-schema.json'],
     extract: (text) => Object.values(JSON.parse(text).terms).map(name => name.toLowerCase().replaceAll(' ', '-')),

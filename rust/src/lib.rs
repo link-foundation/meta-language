@@ -30,6 +30,8 @@ pub mod language_support;
 mod line_index;
 pub mod link_flags;
 pub mod link_network;
+mod link_network_binary;
+mod link_network_binary_rules;
 mod lino_grammar;
 mod lino_parser;
 pub mod lino_serialization;
@@ -50,6 +52,8 @@ pub mod query_algebra;
 pub mod query_plan;
 mod reconstruction;
 mod resource_description_graphs;
+mod resource_description_ntriples;
+mod resource_description_ntriples_rules;
 mod resource_description_rules;
 pub mod rust_codec;
 mod self_translation;
@@ -84,8 +88,9 @@ pub use concept_distinctions::{
     grammar_precedence_concepts, source_meanings_in,
 };
 pub use concept_ontology::{
-    ConceptOntologyImportReport, ConceptOntologySeedReport, ConceptRecordSeedReport,
-    FORMER_CONCEPT_ID_VOCABULARY, FORMER_CONCEPT_IDS, current_concept_id,
+    ConceptOntologyImportReport, ConceptOntologySeedReport, ConceptRecordSeedReport, ConceptViews,
+    FORMER_CONCEPT_ID_VOCABULARY, FORMER_CONCEPT_IDS, create_concept_views, current_concept_id,
+    read_concept_ontology, read_concept_taxonomy,
 };
 pub use concept_records::{
     ConceptDistinction, ConceptRecord, ConceptRole, SourceAlias, concept_record, concept_records,
@@ -243,6 +248,9 @@ pub use language_support::{
 };
 pub use link_flags::LinkFlags;
 pub use link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType, NetworkProjection};
+pub use link_network_binary::{
+    BinaryLinksError, BinaryLinksOptions, decode_link_network_binary, encode_link_network_binary,
+};
 pub use lino_parser::LinksNotationReading;
 pub use lino_serialization::LinoSerializationError;
 pub use mixed_regions::{
@@ -295,6 +303,11 @@ pub use resource_description_graphs::{
     ResourceDescriptionLinks, decode_resource_description_graph,
     decode_resource_description_graph_with_limit, import_resource_description_graph,
     merge_resource_description_graphs, verify_resource_description_graph_witnesses,
+};
+pub use resource_description_ntriples::{
+    ResourceDescriptionNTriplesError, ResourceDescriptionNTriplesLinks,
+    ResourceDescriptionNTriplesOutput, emit_resource_description_ntriples,
+    import_resource_description_ntriples, read_resource_description_ntriples_source,
 };
 pub use rust_codec::{
     FromLinks, LinksCodecError, LinksDecoder, LinksEncoder, LinksObject, RustFieldShape,

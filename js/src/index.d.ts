@@ -1619,6 +1619,39 @@ export function createDiscoveredConceptLinks(
 ): DiscoveredConceptLinks;
 export function readDiscoveredConceptLinks(network: LinkNetwork, root: LinkIdValue): DiscoveredConceptGraph;
 
+export interface ConceptViews {
+  network: LinkNetwork;
+  root: LinkId;
+  ontology: LinkId;
+  taxonomy: LinkId;
+}
+export interface ConceptViewDeclaration<Kind extends string> {
+  members?: readonly string[];
+  roots?: readonly { identity: string; typeModel?: FormalConceptArchive | PortableFormalConceptArchive }[];
+  relations?: readonly { source: string; target: string; kind: Kind; model: FormalConceptArchive | PortableFormalConceptArchive }[];
+}
+export interface ConceptViewOptions {
+  orphans?: readonly { identity: string; definition: FormalConceptArchive | PortableFormalConceptArchive; provenance?: unknown }[];
+  ontology?: ConceptViewDeclaration<'association' | 'axiom'>;
+  taxonomy?: ConceptViewDeclaration<'classification' | 'subsumption'>;
+}
+export interface ConceptViewResult {
+  view: number;
+  concepts: Array<{ identity: string; link: number; definitionRoots: number[]; provenanceRoots: number[]; provenance: unknown }>;
+  roots: Array<{ link: number; concept: number; typeModel: number | null }>;
+  relations: Array<{ link: number; source: number; target: number; kind: string; model: number }>;
+  selectedRoots: number[];
+  reachable: number[];
+}
+export function createConceptViews(base?: DiscoveredConceptLinks | null, options?: ConceptViewOptions): ConceptViews;
+export function readConceptOntology(network: LinkNetwork, root: LinkIdValue, options?: { selectedRoot?: LinkIdValue }): ConceptViewResult;
+export function readConceptTaxonomy(network: LinkNetwork, root: LinkIdValue, options?: { selectedRoot?: LinkIdValue }): ConceptViewResult;
+
+export interface BinaryLinksOptions { recordLimit?: number; byteLimit?: number }
+export class BinaryLinksError extends TypeError { constructor(message: string) }
+export function encodeLinkNetworkBinary(network: LinkNetwork, options?: BinaryLinksOptions): Uint8Array;
+export function decodeLinkNetworkBinary(bytes: Uint8Array | readonly number[], options?: BinaryLinksOptions): LinkNetwork;
+
 /** Structured RDF 1.1 terms; syntax import and OWL entailment are separate operations. */
 export type ResourceDescriptionTerm =
   | { kind: 'identifier'; value: string }
@@ -1650,6 +1683,19 @@ export function decodeResourceDescriptionGraph(
 ): ResourceDescriptionGraph;
 export function mergeResourceDescriptionGraphs(inputs: readonly ResourceDescriptionLinks[]): ResourceDescriptionLinks;
 export function verifyResourceDescriptionGraphWitnesses(network: LinkNetwork, root: LinkIdValue): boolean;
+
+export interface ResourceDescriptionNTriplesLinks extends ResourceDescriptionLinks { syntaxRoot: LinkId }
+export interface ResourceDescriptionNTriplesOutput { source: string; correspondence: ResourceDescriptionLinks }
+export class ResourceDescriptionNTriplesError extends TypeError {
+  constructor(kind: string, offset: number, message: string);
+  kind: string;
+  offset: number;
+}
+export function importResourceDescriptionNTriples(source: string, options: {
+  sourceIdentifier: string; network?: LinkNetwork; correspondence?: ResourceDescriptionLinks;
+}): ResourceDescriptionNTriplesLinks;
+export function emitResourceDescriptionNTriples(network: LinkNetwork, root: LinkIdValue): ResourceDescriptionNTriplesOutput;
+export function readResourceDescriptionNTriplesSource(network: LinkNetwork, syntaxRoot: LinkIdValue): string;
 
 export interface FormalConceptArchive {
   readonly network: LinkNetwork;

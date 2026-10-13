@@ -30,6 +30,7 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("ApiStyleCell", "ApiStyleCell", "type"),
     ("ApiStyleFixture", "ApiStyleFixture", "type"),
     ("ApiStyleFixtureKind", "ApiStyleFixture", "type"),
+    ("BinaryLinksError", "BinaryLinksError", "type"),
     ("BindingRenameError", "ProgramRepresentationError", "type"),
     ("ByteRange", "ByteRange", "type"),
     ("CONCEPT_RECORDS", "concept_records", "function"),
@@ -193,6 +194,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("ReplacementRule", "ReplacementRule", "type"),
     ("RepresentationLevel", "RepresentationLevel", "type"),
     (
+        "ResourceDescriptionNTriplesError",
+        "ResourceDescriptionNTriplesError",
+        "type",
+    ),
+    (
         "SELF_TRANSLATION_LANGUAGES",
         "SELF_TRANSLATION_LANGUAGES",
         "constant",
@@ -284,6 +290,7 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "construct_program_from_fragments",
         "function",
     ),
+    ("createConceptViews", "create_concept_views", "function"),
     (
         "createDiscoveredConceptLinks",
         "create_discovered_concept_links",
@@ -306,6 +313,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     ("currentConceptId", "current_concept_id", "function"),
+    (
+        "decodeLinkNetworkBinary",
+        "decode_link_network_binary",
+        "function",
+    ),
     (
         "decodeProgramTranslation",
         "decode_program_translation",
@@ -361,6 +373,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("emitLark", "emit_lark", "function"),
     ("emitPeggy", "emit_peggy", "function"),
     ("emitPest", "emit_pest", "function"),
+    (
+        "emitResourceDescriptionNTriples",
+        "emit_resource_description_ntriples",
+        "function",
+    ),
     ("emitTreeSitterJson", "emit_tree_sitter_json", "function"),
     (
         "emitTypedProgramLinks",
@@ -378,6 +395,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     (
         "encodeFormalConceptDefinition",
         "encode_formal_concept_definition",
+        "function",
+    ),
+    (
+        "encodeLinkNetworkBinary",
+        "encode_link_network_binary",
         "function",
     ),
     (
@@ -428,6 +450,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     (
         "importResourceDescriptionGraph",
         "import_resource_description_graph",
+        "function",
+    ),
+    (
+        "importResourceDescriptionNTriples",
+        "import_resource_description_ntriples",
         "function",
     ),
     (
@@ -538,6 +565,8 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     ("queryByConceptTerm", "query_by_concept_term", "function"),
+    ("readConceptOntology", "read_concept_ontology", "function"),
+    ("readConceptTaxonomy", "read_concept_taxonomy", "function"),
     (
         "readDiscoveredConceptLinks",
         "read_discovered_concept_links",
@@ -557,6 +586,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "readProgramSnapshot",
         "ProgramRepresentation::from_snapshot",
         "method",
+    ),
+    (
+        "readResourceDescriptionNTriplesSource",
+        "read_resource_description_ntriples_source",
+        "function",
     ),
     (
         "readStructuredDataLino",
