@@ -27,6 +27,7 @@ pub(super) fn project_function(function: &FnDecl, program: &Program) -> Result<S
         span: function.span,
         generated: function.generated,
         source_signature: function.source_signature.clone(),
+        source_primitive_owners: function.source_primitive_owners.clone(),
         source_loop: function.source_loop.clone(),
     }))
 }

@@ -773,6 +773,13 @@ pub struct SFn {
         skip_serializing_if = "Option::is_none"
     )]
     pub source_loop: Option<super::source_loops::SourceLoop>,
+    /// Owned actual standard primitive paths, imported aliases and body sites.
+    #[serde(
+        default,
+        rename = "sourcePrimitiveOwners",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub source_primitive_owners: Option<serde_json::Value>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

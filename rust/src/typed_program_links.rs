@@ -8,7 +8,9 @@ use crate::translation::emit_javascript::emit_javascript;
 use crate::translation::emit_rust::{RustEmissionOptions, emit_rust_with_options};
 use crate::translation::ir::Program;
 use crate::translation::javascript::{parse_javascript, parse_javascript_with_scalar_loop_model};
-use crate::translation::rust::{parse_rust, parse_rust_with_loop_profiles};
+use crate::translation::rust::{
+    parse_rust, parse_rust_with_loop_profiles, parse_rust_with_primitive_owner_model,
+};
 use crate::{LinkId, LinkMetadata, LinkNetwork, LinkType};
 use serde_json::Value;
 use std::fmt;
@@ -302,6 +304,47 @@ pub fn create_typed_program_links_with_rust_source_signature_model(
         Some(model),
         provenance,
     )
+}
+
+/// Import a complete primitive leaf program with owned standard binary64 paths.
+///
+/// Canonical primitive types stay separate from the actual qualified path,
+/// import resolution and source-signature reference evidence. Caller provenance
+/// is stored separately from these checked source facts.
+///
+/// # Errors
+/// Refuses non-Rust sources, unknown models and unproved owners or leaf contexts.
+pub fn create_typed_program_links_with_rust_primitive_owner_model(
+    source: &str,
+    language: &str,
+    model: &str,
+    source_signature_model: Option<&str>,
+    provenance: Option<&Value>,
+) -> Result<TypedProgramLinks> {
+    if !matches!(language.to_ascii_lowercase().as_str(), "rust" | "rs") {
+        return Err(error("a Rust primitive owner model requires Rust source"));
+    }
+    let surface =
+        parse_rust_with_primitive_owner_model(source, model, source_signature_model.unwrap_or(""))
+            .map_err(|failure| error(failure.to_string()))?;
+    let program = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
+    let mut profile = serde_json::Map::new();
+    profile.insert("language".into(), Value::String("Rust".into()));
+    profile.insert(
+        "rustPrimitiveOwnerModel".into(),
+        Value::String(model.into()),
+    );
+    if let Some(model) = source_signature_model {
+        profile.insert(
+            "rustSourceSignatureModel".into(),
+            Value::String(model.into()),
+        );
+    }
+    let selected = serde_json::json!({
+        "sourceProfile": profile,
+        "userProvenance": provenance,
+    });
+    encode_typed_program_links_with_provenance(&program, Some(&selected))
 }
 
 /// Select independent source profiles while keeping caller provenance separate.

@@ -4,6 +4,7 @@ import {unsupported,typeError} from './diagnostics.js';
 import {acceptRustStandardPrimitiveOwner,acceptRustPrimitiveOwnerValueType,acceptRustPrimitiveOwnerExpression,readRustPrimitiveOwnerConstantValue} from './rust-primitive-owner-rules.js';
 import {RUST_SOURCE_SIGNATURE_POLICY} from './rust-source-signatures.js';
 import {acceptRustSourceLifetimeBinding} from './rust-indirection-rules.js';
+import {acceptSharedNumericContextFlag} from '../shared-numeric-function-rules.js';
 export const RUST_PRIMITIVE_OWNER_POLICY=readRuntimeProjectData(new URL('./data/rust-primitive-owners.lino',import.meta.url));
 const fail=detail=>{throw typeError('Rust primitive owner proof: '+detail);};
 const same=(left,right)=>JSON.stringify(left)===JSON.stringify(right);
@@ -62,10 +63,14 @@ export function prepareRustPrimitiveOwnerProof(proof,body){
 
 export function checkRustPrimitiveOwnerProof(program){
  const entries=[...program.declarations.values()];
- if(!entries.some(entry=>entry.sourcePrimitiveOwners!==undefined))return;
- if(program.sourceLanguage!=='Rust'||program.imports?.length||program.externals?.length||program.main?.effects?.length||['outputThreaded','abortsThreaded','referenceSemantics','utf16Strings'].some(field=>Object.hasOwn(program,field)&&program[field]!==false)||program.items.some(item=>item.k!=='fn')||entries.some(entry=>entry.k!=='fn'||entry.modulePath?.length||entry.generated||entry.sourceLoop!==undefined))fail('the selected model requires a complete flat primitive leaf program without declared types, imports or effects');
+ if(!entries.some(entry=>Object.hasOwn(entry,'sourcePrimitiveOwners')))return;
+ if(program.sourceLanguage!=='Rust'||program.imports?.length||program.externals?.length||program.main?.effects?.length||['outputThreaded','abortsThreaded','referenceSemantics','utf16Strings'].some(field=>Object.hasOwn(program,field)&&program[field]!==false)||program.items.some(item=>item.k!=='fn')||entries.some(entry=>entry.k!=='fn'||entry.modulePath?.length||!acceptSharedNumericContextFlag(Object.hasOwn(entry,'generated'),typeof entry.generated==='boolean',entry.generated===false)||Object.hasOwn(entry,'sourceLoop')))fail('the selected model requires a complete flat primitive leaf program without declared types, imports or effects');
  let importTable=null;
  for(const entry of entries){
+  if(Object.keys(entry).some(field=>!RUST_PRIMITIVE_OWNER_POLICY.declarationFields.includes(field)))fail('a primitive function has unrepresented own fields');
+  if(Object.values(entry).some(value=>value===undefined))fail('an owned primitive function field has no paired native representation');
+  if(Object.hasOwn(entry,'sourceSignature')&&(!entry.sourceSignature||typeof entry.sourceSignature!=='object'||Array.isArray(entry.sourceSignature)))fail('a present source signature must retain its owned record');
+  if(!Array.isArray(entry.modulePath)||entry.recursive!==false||entry.decreasing!=null||!acceptSharedNumericContextFlag(Object.hasOwn(entry,'mutual'),typeof entry.mutual==='boolean',entry.mutual===false))fail('the declared function context contradicts its primitive leaf ownership');
   const proof=entry.sourcePrimitiveOwners;
   exact(proof,['model','language','namespace','parameters','result','constants']);
   if(proof.model!==RUST_PRIMITIVE_OWNER_POLICY.model||proof.language!=='Rust')fail('unknown selected source interpretation');
@@ -96,6 +101,8 @@ export function checkRustPrimitiveOwnerProof(program){
   };
   if(!Array.isArray(proof.parameters)||proof.parameters.length!==entry.params.length||!Array.isArray(proof.constants))fail('owner positions differ from their declaration');
   entry.params.forEach((parameter,index)=>{
+   if(Object.keys(parameter).some(field=>!RUST_PRIMITIVE_OWNER_POLICY.parameterFields.includes(field)))fail('a primitive parameter has unrepresented own fields');
+   if(Object.values(parameter).some(value=>value===undefined))fail('an owned primitive parameter field has no paired native representation');
    if(parameter.guard!=null||parameter.default!=null||parameter.optional)fail('parameter guards, defaults and optionality need a separate owner interface proof');
    position(proof.parameters[index],parameter.type,entry.sourceSignature?.parameters[index]);
   });
@@ -104,6 +111,8 @@ export function checkRustPrimitiveOwnerProof(program){
   const sites=bodySites(entry.body),visited=new Set();
   for(const constant of proof.constants){
    exact(constant,['owner','name','span','path']);owner(constant.owner);
+   exact(constant.span,['start','end']);
+   if(!Number.isSafeInteger(constant.span.start)||!Number.isSafeInteger(constant.span.end)||constant.span.start<0||constant.span.end<=constant.span.start)fail('an actual constant source span is malformed');
    if(!readRustPrimitiveOwnerConstantValue(constant.name)||!Array.isArray(constant.path)||constant.path.some(part=>typeof part!=='string'&&!Number.isSafeInteger(part))||visited.has(JSON.stringify(constant.path)))fail('a constant has an invalid or duplicate owned body site');
    visited.add(JSON.stringify(constant.path));
    const site=sites.find(site=>same(site.path,constant.path));
@@ -114,6 +123,8 @@ export function checkRustPrimitiveOwnerProof(program){
    if(++visits>100000)fail('the primitive leaf body exceeds its resource limit');
    const node=pending.pop();
    if(!node||!acceptRustPrimitiveOwnerExpression(node.k)||!acceptRustPrimitiveOwnerValueType(node.type?.kind??'')||Object.keys(node.type).length!==1)fail('the source profile requires primitive leaf value expressions');
+   if(Object.keys(node).some(field=>!RUST_PRIMITIVE_OWNER_POLICY.expressionFields[node.k].includes(field)))fail('a primitive body expression has unrepresented own fields');
+   if(Object.values(node).some(value=>value===undefined))fail('an owned primitive body field has no paired native representation');
    for(const child of [node.arg,node.left,node.right,node.value,node.body,node.cond,node.then,node.else,...(node.args??[])])if(child&&typeof child==='object')pending.push(child);
   }
  }

@@ -30,6 +30,8 @@ mod float_predicate_rules;
 mod float_predicates;
 pub(super) mod indirection_rules;
 mod items;
+pub(crate) mod primitive_owner_rules;
+pub(crate) mod primitive_owners;
 mod product_rules;
 mod read_only_query_rules;
 mod scalar_loops;
@@ -178,6 +180,43 @@ pub(crate) fn parse_rust_with_loop_profiles(
     source_signature_model: &str,
     scalar_loop_model: &str,
 ) -> Result<SProgram> {
+    parse_rust_with_primitive_profiles(
+        source,
+        array_result_model,
+        completion_model,
+        source_signature_model,
+        scalar_loop_model,
+        "",
+    )
+}
+
+/// Read the explicitly selected standard binary64 source owner interpretation.
+///
+/// # Errors
+/// Refuses unproved qualified paths, aliases, ownership and primitive contexts.
+pub fn parse_rust_with_primitive_owner_model(
+    source: &str,
+    model: &str,
+    source_signature_model: &str,
+) -> Result<SProgram> {
+    parse_rust_with_primitive_profiles(source, "", "", source_signature_model, "", model)
+}
+
+fn parse_rust_with_primitive_profiles(
+    source: &str,
+    array_result_model: &str,
+    completion_model: &str,
+    source_signature_model: &str,
+    scalar_loop_model: &str,
+    primitive_owner_model: &str,
+) -> Result<SProgram> {
+    if !primitive_owner_rules::accept_rust_primitive_owner_model(primitive_owner_model) {
+        return Err(unsupported(
+            "Rust primitive owner model",
+            "select the legacy model or standard primitive Rust binary64 owner 1",
+            None,
+        ));
+    }
     if !super::scalar_loop_rules::accept_rust_scalar_loop_model(scalar_loop_model) {
         return Err(unsupported(
             "Rust scalar loop model",
@@ -213,6 +252,7 @@ pub(crate) fn parse_rust_with_loop_profiles(
         completion_model,
         source_signature_model,
         scalar_loop_model,
+        primitive_owner_model,
     );
     declarations.file()?;
     let mut origins = std::mem::replace(
@@ -228,8 +268,10 @@ pub(crate) fn parse_rust_with_loop_profiles(
         completion_model,
         source_signature_model,
         scalar_loop_model,
+        primitive_owner_model,
     );
     syntax.aliases = declarations.aliases;
+    syntax.primitive_imports = declarations.primitive_imports;
     let surface = syntax.file()?;
     // Preserve the existing checker's rejection and syntax-tree contract;
     // every public Rust source pipeline checks this identical Surface again.
@@ -242,8 +284,10 @@ pub(crate) fn parse_rust_with_loop_profiles(
         completion_model,
         source_signature_model,
         scalar_loop_model,
+        primitive_owner_model,
     );
     parser.aliases = syntax.aliases;
+    parser.primitive_imports = syntax.primitive_imports;
     parser.file()
 }
 
@@ -310,6 +354,11 @@ struct RustParser {
     completion_model: String,
     source_signature_model: String,
     scalar_loop_model: String,
+    primitive_owner_model: String,
+    primitive_owner_frames: Vec<Vec<Option<serde_json::Value>>>,
+    primitive_constant_sites: Vec<serde_json::Value>,
+    primitive_import_names: HashSet<String>,
+    primitive_imports: Vec<serde_json::Value>,
     scalar_loop_active: bool,
     source_owner_frames: Vec<Vec<super::source_signatures::SourceOwner>>,
     reserved_binding_names: HashSet<String>,
@@ -325,6 +374,7 @@ impl RustParser {
         completion_model: &str,
         source_signature_model: &str,
         scalar_loop_model: &str,
+        primitive_owner_model: &str,
     ) -> Self {
         let reserved_binding_names = tokens
             .iter()
@@ -341,6 +391,11 @@ impl RustParser {
             completion_model: completion_model.to_owned(),
             source_signature_model: source_signature_model.to_owned(),
             scalar_loop_model: scalar_loop_model.to_owned(),
+            primitive_owner_model: primitive_owner_model.to_owned(),
+            primitive_owner_frames: Vec::new(),
+            primitive_constant_sites: Vec::new(),
+            primitive_import_names: HashSet::new(),
+            primitive_imports: Vec::new(),
             scalar_loop_active: false,
             source_owner_frames: Vec::new(),
             reserved_binding_names,

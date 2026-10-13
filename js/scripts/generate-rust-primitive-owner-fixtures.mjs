@@ -27,6 +27,11 @@ export function rustPrimitiveOwnerFixture(){
  }
  specimens.push({id:'immutable-explicit-dereference',source:'use core::primitive::f64 as Float;fn apply(value:&Float)->Float{(*value).ceil()}fn main(){}',originalJavaScript:'function apply(value){return Math.ceil(value);}',observations:[{javascriptArguments:['-0.5'],expectedBits:'8000000000000000'}]});
  specimens.push({id:'editable-value-body',source:'fn apply(value:std::primitive::f64)->std::primitive::f64{value+1.0}fn main(){}',originalJavaScript:'function apply(value){return value+1;}',observations:[{javascriptArguments:['3'],expectedBits:'4010000000000000'}]});
+ for(const[id,imports]of[
+  ['two-alias-source-order',['use core::primitive::f64 as Zebra;','use std::primitive::f64 as Alpha;']],
+  ['two-alias-reverse-order',['use std::primitive::f64 as Alpha;','use core::primitive::f64 as Zebra;']],
+ ])specimens.push({id,source:imports.join('')+'fn apply(value:Zebra)->Alpha{value.floor()}fn other(value:Alpha)->Zebra{value.ceil()}fn main(){}',originalJavaScript:'function apply(value){return Math.floor(value);}function other(value){return Math.ceil(value);}',observations:[{javascriptArguments:['-0.5'],expectedBits:'bff0000000000000'}]});
+ specimens.push({id:'later-import-source-order',source:'fn apply(value:Zebra)->Alpha{value.floor()}use core::primitive::f64 as Zebra;use std::primitive::f64 as Alpha;fn other(value:Alpha)->Zebra{value.ceil()}fn main(){}',originalJavaScript:'function apply(value){return Math.floor(value);}function other(value){return Math.ceil(value);}',observations:[{javascriptArguments:['-0.5'],expectedBits:'bff0000000000000'}]});
  const invalid=[
  ['custom-root','mod std{}fn apply(value:std::primitive::f64)->bool{value.is_nan()}fn main(){}'],
  ['custom-type','enum f64{V}fn apply(value:f64)->bool{value.is_nan()}fn main(){}'],

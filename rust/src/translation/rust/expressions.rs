@@ -204,6 +204,30 @@ impl RustParser {
     }
 
     fn accept_float_receiver_origin(&self, origin: &SourceOrigin, arguments_count: usize) -> bool {
+        if !self.primitive_owner_model.is_empty()
+            && let Some(position) = &origin.primitive_owner_position
+            && position["resolvedPath"]
+                .as_array()
+                .is_some_and(|path| path.len() > 1)
+        {
+            let source = position["sourcePath"]
+                .as_array()
+                .expect("source owner path")
+                .iter()
+                .map(|value| value.as_str().expect("owner path segment").to_owned())
+                .collect::<Vec<_>>();
+            return self
+                .read_standard_primitive_position(&source, &origin.path)
+                .is_ok_and(|owner| owner.is_some())
+                && super::float_predicate_rules::accept_rust_float_predicate_receiver(
+                    origin.ty.as_ref().map_or("", Type::kind),
+                    origin.float_source_model.unwrap_or(""),
+                    origin.proven,
+                    !origin.wrappers.is_empty(),
+                    false,
+                    &arguments_count.to_string(),
+                );
+        }
         let source_owner = vec!["f64".to_owned()];
         let owner = self.resolve(&source_owner, &origin.path);
         let shadowed = self.origins.lookup(&source_owner, &origin.path).is_some()
@@ -687,6 +711,39 @@ impl RustParser {
         let segments = self.path_segments("expression")?;
         let name = segments.join("::");
         let resolved = self.resolve(&segments, path);
+        if !self.primitive_owner_model.is_empty()
+            && segments.len() > 1
+            && super::float_predicate_rules::accept_rust_float_constant_name(
+                segments.last().unwrap(),
+            )
+            && let Some(owner) =
+                self.read_standard_primitive_position(&segments[..segments.len() - 1], path)?
+        {
+            let range = Some(Span::new(
+                token.start,
+                self.cursor.tokens[self.cursor.index - 1].end,
+            ));
+            if self.cursor.is("(") || self.origins.scope.contains_key(&segments[0]) {
+                return Err(unsupported(
+                    "Rust primitive constant owner",
+                    "an associated constant needs its actual unshadowed type path and value syntax",
+                    range,
+                ));
+            }
+            let name = segments.last().unwrap();
+            let result = super::float_predicates::constant_expression(name, range)?;
+            self.primitive_constant_sites
+                .push(serde_json::json!({"owner":owner,"name":name,"span":range}));
+            let mut origin = SourceOrigin::with_type(FLOAT, path, Vec::new());
+            origin.source_owner = Some(crate::translation::source_signatures::SourceOwner {
+                kind: "primitive".to_owned(),
+                path: vec!["f64".to_owned()],
+                arguments: Vec::new(),
+            });
+            origin.primitive_owner_position = Some(owner);
+            self.origins.mark(&result, origin);
+            return Ok(result);
+        }
         if segments.len() == 2
             && segments[0] == "f64"
             && super::float_predicate_rules::accept_rust_float_constant_name(&segments[1])
