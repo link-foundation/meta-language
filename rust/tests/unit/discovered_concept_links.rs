@@ -141,7 +141,7 @@ fn discovered_candidates_reload_and_parse_without_original_sources() {
         "the recursive production references its actual global concept point"
     );
     let unproved = &loaded.formal_definitions["alternative:root"];
-    let formal = LinkNetwork::from_lino(unproved["links"].as_str().unwrap()).unwrap();
+    let formal = &unproved.network;
     assert!(
         formal
             .links()
@@ -205,15 +205,28 @@ fn native_discovery_copy_retains_every_production_and_formal_alternative() {
         bare_space(&data["expectedSpace"])
     );
     assert_eq!(
-        loaded.formal_definitions.as_object().unwrap().len(),
+        loaded.formal_definitions.len(),
         data["formalDefinitions"].as_object().unwrap().len()
     );
-    for (alias, archive) in loaded.formal_definitions.as_object().unwrap() {
-        let actual = LinkNetwork::from_lino(archive["links"].as_str().unwrap()).unwrap();
+    for (alias, archive) in &loaded.formal_definitions {
+        let actual = &archive.network;
         let original =
             LinkNetwork::from_lino(data["formalDefinitions"][alias]["links"].as_str().unwrap())
                 .unwrap();
         assert_eq!(actual.len(), original.len());
+        for link in original.links() {
+            if let Some(term) = link.metadata().term()
+                && let Some(original_id) = original.find_term(term)
+            {
+                let actual_id = actual
+                    .find_term(term)
+                    .expect("registered term survives reload");
+                assert_eq!(
+                    actual.definition_for(actual_id),
+                    original.definition_for(original_id)
+                );
+            }
+        }
     }
 }
 

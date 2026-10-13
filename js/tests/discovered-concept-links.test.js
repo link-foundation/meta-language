@@ -38,6 +38,8 @@ test('formal definitions remain actual links and unsupported interpretations sur
     const original = LinkNetwork.fromLino(fixture.formalDefinitions[alias].links);
     assert.equal(definition.network.links().length, original.links().length);
     assert.ok(definition.network.link(definition.root));
+    assert.deepEqual([...definition.network._terms.keys()].sort(), [...original._terms.keys()].sort());
+    for (const term of original._terms.keys()) assert.ok(definition.network.findTerm(term), 'source-owned term lookup survives reload');
   }
   assert.ok(loaded.formalDefinitions['alternative:root'].network.links().some(link => link.metadata().definition === 'unresolved interpretation'));
   assert.ok(!Object.hasOwn(loaded.space.formalDefinitions, 'alternative:root'));
@@ -50,6 +52,28 @@ test('copying and source-free revalidation are deterministic for all explicit ca
   assert.equal(packet.root.asU64(), fixture.root);
   assert.equal(packet.network.toLino(), fixture.links);
   assert.deepEqual(readDiscoveredConceptLinks(packet.network, packet.root).space, fixture.expectedSpace);
+});
+
+test('formal registrations remain owned and unambiguous after source-free reload', () => {
+  for (const edit of [
+    (network, registration) => registration.setReferences([...registration.references(), registration.references()[0]]),
+    (network, registration, root) => registration.setReferences([root]),
+  ]) {
+    const { network, root } = reload();
+    const declaration = role(network, 'discovered formal definition')[0];
+    const registration = network.link(declaration.references()[2]);
+    assert.ok(registration.references().length > 0);
+    edit(network, registration, root);
+    assert.throws(() => readDiscoveredConceptLinks(network, root), /registered definition point/u);
+  }
+  const sources = fixture.sources.map(({ grammar, ...source }) => ({ ...source, grammar: deserializeGrammar(grammar) }));
+  const alias = 'fixture.recursive-expression';
+  const original = LinkNetwork.fromLino(fixture.formalDefinitions[alias].links);
+  const point = original.insertPoint('original registration');
+  original.setTerm(point, 'changed metadata');
+  assert.throws(() => createDiscoveredConceptLinks(sources, { ...fixture, formalDefinitions: {
+    ...fixture.formalDefinitions, [alias]: { network: original, root: fixture.formalDefinitions[alias].root },
+  } }), /inconsistent registered definition term/u);
 });
 
 test('foreign origins, recursive identities and definition inventories are refused', () => {

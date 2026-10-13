@@ -8,7 +8,7 @@ use std::sync::Arc;
 use serde_json::{Map, Value, json};
 
 use crate::discovered_concept_rules::accept_discovered_concept_shape;
-use crate::formal_concept_definition::read_formal_concept_definition;
+use crate::formal_concept_definition::{FormalConceptArchive, read_formal_concept_definition};
 use crate::global_concept_space::{
     GlobalConceptOptions, GlobalConceptSource, create_global_concept_space,
 };
@@ -39,7 +39,7 @@ pub struct DiscoveredConceptGraph {
     /// Revalidated global identities, proofs and unresolved obligations.
     pub space: Value,
     /// Preserved graph archives, including unsupported interpretations.
-    pub formal_definitions: Value,
+    pub formal_definitions: BTreeMap<String, FormalConceptArchive>,
 }
 
 fn fail(message: &str) -> String {
@@ -151,7 +151,12 @@ fn copy_network(
     Ok(ids)
 }
 
-fn island(network: &LinkNetwork, ids: &[LinkId], root: LinkId) -> Result<LinkNetwork, String> {
+fn island(
+    network: &LinkNetwork,
+    ids: &[LinkId],
+    root: LinkId,
+    registered: &[LinkId],
+) -> Result<LinkNetwork, String> {
     let members: BTreeSet<_> = ids.iter().copied().collect();
     if members.len() != ids.len() || !members.contains(&root) {
         return Err(fail("invalid definition node inventory"));
@@ -170,6 +175,21 @@ fn island(network: &LinkNetwork, ids: &[LinkId], root: LinkId) -> Result<LinkNet
         }
         result.links.insert(*id, Arc::new(link.clone()));
         result.next_id = result.next_id.max(id.as_u64().saturating_add(1));
+    }
+    let registrations: BTreeSet<_> = registered.iter().copied().collect();
+    if registrations.len() != registered.len() {
+        return Err(fail("duplicate registered definition point"));
+    }
+    for id in registered {
+        let term = result
+            .link(*id)
+            .and_then(|link| link.metadata().term())
+            .ok_or_else(|| fail("foreign or ambiguous registered definition point"))?;
+        if result.terms.contains_key(term) {
+            return Err(fail("foreign or ambiguous registered definition point"));
+        }
+        let term = Arc::from(term);
+        result.terms.insert(term, *id);
     }
     Ok(result)
 }
@@ -190,7 +210,7 @@ fn data_island(network: &LinkNetwork, root: LinkId) -> Result<LinkNetwork, Strin
         }
         pending.extend_from_slice(link.references());
     }
-    island(network, &seen.into_iter().collect::<Vec<_>>(), root)
+    island(network, &seen.into_iter().collect::<Vec<_>>(), root, &[])
 }
 
 fn encode_data(network: &mut LinkNetwork, value: &Value) -> Result<LinkId, String> {
@@ -333,6 +353,10 @@ fn source_from_data(value: &Value) -> Result<GlobalConceptSource, String> {
 
 /// Copy explicit discovery outputs and retain every provided formal graph.
 /// Sharing is decided by the existing checked global concept verifier.
+///
+/// # Errors
+/// Returns an error for invalid candidate grammars, malformed formal archives,
+/// unsupported graph records or exceeded resource bounds.
 pub fn create_discovered_concept_links(
     sources: &[GlobalConceptSource],
     options: &GlobalConceptOptions,
@@ -384,6 +408,13 @@ pub fn create_discovered_concept_links(
     for (alias, definition) in &definitions {
         let original = LinkNetwork::from_lino(text(&definition["links"])?)
             .map_err(|error| error.to_string())?;
+        if original.terms.len() > original.len()
+            || original.terms.iter().any(|(term, id)| {
+                original.link(*id).and_then(|link| link.metadata().term()) != Some(term.as_ref())
+            })
+        {
+            return Err(fail("inconsistent formal term registration"));
+        }
         let ids = copy_network(&mut network, &original)?;
         let root = LinkId::from_u64(
             definition["root"]
@@ -394,12 +425,20 @@ pub fn create_discovered_concept_links(
             .get(&root)
             .ok_or_else(|| fail("missing formal definition root"))?;
         let inventory = sequence(&mut network, &ids.values().copied().collect::<Vec<_>>());
-        let reserved = sequence(&mut network, &[]);
+        let registered = original
+            .terms
+            .values()
+            .copied()
+            .collect::<BTreeSet<_>>()
+            .into_iter()
+            .map(|id| ids[&id])
+            .collect::<Vec<_>>();
+        let registration = sequence(&mut network, &registered);
         definition_ids.insert(
             alias.clone(),
             node(
                 &mut network,
-                &[root, inventory, reserved],
+                &[root, inventory, registration],
                 "discovered formal definition",
                 Some(alias),
             ),
@@ -521,6 +560,10 @@ impl<'a> Reader<'a> {
 }
 
 /// Reload complete candidate grammars, then revalidate every identity and proof.
+///
+/// # Errors
+/// Returns an error for malformed graph records, foreign references, changed
+/// formal premises, inconsistent term registrations or exceeded resource bounds.
 pub fn read_discovered_concept_links(
     network: &LinkNetwork,
     root: LinkId,
@@ -560,6 +603,7 @@ pub fn read_discovered_concept_links(
         return Err(fail("invalid discovery data envelope"));
     }
     let mut definitions = Map::new();
+    let mut formal_archives = BTreeMap::new();
     let mut definition_ids = BTreeMap::new();
     for id in reader.list(*formal_root)? {
         let record = reader.inspect(id, "discovered formal definition")?;
@@ -567,14 +611,12 @@ pub fn read_discovered_concept_links(
         if alias.is_empty() || definitions.contains_key(alias) {
             return Err(fail("duplicate formal interpretation"));
         }
-        let [definition, inventory, reserved] = record.references() else {
+        let [definition, inventory, registration] = record.references() else {
             return Err(fail("invalid formal interpretation"));
         };
-        if !reader.list(*reserved)?.is_empty() {
-            return Err(fail("unknown formal interpretation extension"));
-        }
         let members = reader.list(*inventory)?;
-        let formal = island(network, &members, *definition)?;
+        let registered = reader.list(*registration)?;
+        let formal = island(network, &members, *definition, &registered)?;
         for link in formal.links() {
             if reader.owned.contains(&link.id()) || link.metadata().language() == Some(LANGUAGE) {
                 return Err(fail("formal interpretations share foreign graph nodes"));
@@ -584,6 +626,13 @@ pub fn read_discovered_concept_links(
         definitions.insert(
             alias.to_owned(),
             json!({"links": formal.to_lino(), "root": definition.as_u64()}),
+        );
+        formal_archives.insert(
+            alias.to_owned(),
+            FormalConceptArchive {
+                network: formal,
+                root: *definition,
+            },
         );
         definition_ids.insert(id, alias.to_owned());
     }
@@ -704,6 +753,6 @@ pub fn read_discovered_concept_links(
     Ok(DiscoveredConceptGraph {
         sources,
         space,
-        formal_definitions: Value::Object(definitions),
+        formal_definitions: formal_archives,
     })
 }

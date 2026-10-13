@@ -47,7 +47,7 @@ function copyNetwork(target, source) {
 
 // Explicit node inventories retain semantic reference cycles and disconnected
 // provenance without permitting references into another candidate archive.
-function island(network, ids, root) {
+function island(network, ids, root, registered = []) {
   const result = new LinkNetwork();
   const members = new Set(ids.map(key));
   if (members.size !== ids.length || !members.has(key(root))) fail('invalid definition node inventory');
@@ -55,6 +55,12 @@ function island(network, ids, root) {
     const link = network.link(id);
     if (!link || link.references().some(reference => !members.has(key(reference)))) fail('foreign or dangling definition reference');
     result.insertLinkWithOptionalId(id, link.references(), link.metadata().clone());
+  }
+  if (new Set(registered.map(key)).size !== registered.length) fail('duplicate registered definition point');
+  for (const id of registered) {
+    const term = result.link(id)?.metadata().term;
+    if (typeof term !== 'string' || result._terms.has(term)) fail('foreign or ambiguous registered definition point');
+    result._terms.set(term, LinkId.from(id));
   }
   return result;
 }
@@ -150,7 +156,12 @@ export function createDiscoveredConceptLinks(sources, options = {}) {
     const ids = copyNetwork(network, original);
     const root = ids.get(key(declared.root));
     if (!root) fail('missing formal definition root');
-    definitionIds.set(alias, network.insertLink([root, sequence([...ids.values()]), sequence([])], metadata('discovered formal definition', alias)));
+    if (original._terms.size > ids.size) fail('invalid registered definition points');
+    for (const [term, id] of original._terms) {
+      if (original.link(id)?.metadata().term !== term) fail('inconsistent registered definition term');
+    }
+    const registered = [...original._terms.values()].sort((first, second) => key(first) - key(second)).map(id => ids.get(key(id)));
+    definitionIds.set(alias, network.insertLink([root, sequence([...ids.values()]), sequence(registered)], metadata('discovered formal definition', alias)));
   }
   const identities = new Map(space.concepts.map(concept => [concept.id, network.insertLink([], metadata('discovered concept identity', concept.id))]));
   const prepared = preparedDefinitions(definitions);
@@ -202,10 +213,9 @@ export function readDiscoveredConceptLinks(network, root) {
     const record = inspect(id, 'discovered formal definition');
     const alias = record.metadata().definition;
     if (!alias || Object.hasOwn(formalDefinitions, alias)) fail('duplicate formal interpretation');
-    const [definition, inventory, reserved] = record.references();
-    if (list(reserved).length !== 0) fail('unknown formal interpretation extension');
+    const [definition, inventory, registration] = record.references();
     const members = list(inventory);
-    const formal = island(network, members, definition);
+    const formal = island(network, members, definition, list(registration));
     for (const link of formal.links()) {
       if (owned.has(key(link.id())) || link.metadata().language === language) fail('formal interpretations share foreign graph nodes');
       owned.add(key(link.id()));
