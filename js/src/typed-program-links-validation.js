@@ -67,12 +67,16 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
   }
   const declarations = new Map(program.declarations);
   const orderedDeclarations = new Set();
+  const containsOwnedLoop = item => item?.k === 'module' ? item.items?.some(containsOwnedLoop) : item?.sourceLoop !== undefined;
   function orderedItems(items, path = []) {
     if (!Array.isArray(items)) throw new TypeError('a linked module has no ordered items');
     for (const item of items) {
       visit();
       if (!item || typeof item.name !== 'string' || item.fullName !== [...path, item.name].join('.')) throw new TypeError('the linked ordered item has inconsistent qualified spelling');
-      if (item.k === 'module') orderedItems(item.items, [...path, item.name]);
+      if (item.k === 'module') {
+        if (containsOwnedLoop(item) && Object.keys(item).some(field => !['k', 'name', 'fullName', 'items', 'span'].includes(field))) throw new TypeError('an owned scalar loop module has an unrecognized namespace field');
+        orderedItems(item.items, [...path, item.name]);
+      }
       else {
         if (declarations.get(item.fullName) !== item || orderedDeclarations.has(item)) throw new TypeError('the linked ordered items contain a duplicate or unowned declaration');
         if (!Array.isArray(item.modulePath) || item.modulePath.length !== path.length || item.modulePath.some((name, index) => name !== path[index])) throw new TypeError('the linked declaration has inconsistent module ownership');

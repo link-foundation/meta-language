@@ -254,6 +254,12 @@ fn owned_structured_module_relocation_checks_actual_function_and_namespace_bindi
             .code,
         emit_rust(&program).unwrap().text
     );
+    let encoded = meta_language::encode_typed_program_links(&program).unwrap();
+    let round_trip = LinkNetwork::from_lino(&encoded.network.to_lino()).unwrap();
+    assert_eq!(
+        decode_typed_program_links(&round_trip, encoded.root).unwrap(),
+        program
+    );
     for altered in ["other.swap", "swap"] {
         let mut forged = program.clone();
         let meta_language::translation::ir::Decl::Fn(function) = &mut forged.declarations[0] else {
@@ -293,4 +299,103 @@ fn a_parameter_capturing_its_continuation_declaration_requires_an_anchored_refer
         assert_eq!(error.reason, row["reason"].as_str().unwrap());
         assert_eq!(serde_json::to_value(error.span).unwrap(), row["span"]);
     }
+}
+
+fn field_relation(
+    network: &LinkNetwork,
+    parent: meta_language::LinkId,
+    label: &str,
+) -> [meta_language::LinkId; 3] {
+    network
+        .links()
+        .find_map(|link| match link.references() {
+            [owner, name, child]
+                if link.metadata().link_type() == Some(meta_language::LinkType::Field)
+                    && *owner == parent
+                    && network.link(*name).and_then(|name| name.metadata().term())
+                        == Some(label) =>
+            {
+                Some([*owner, *name, *child])
+            }
+            _ => None,
+        })
+        .expect("the exact owned field relation exists")
+}
+fn scalar_link(
+    network: &mut LinkNetwork,
+    kind: &str,
+    value: Option<&str>,
+) -> meta_language::LinkId {
+    let schema = meta_language::typed_program_links_schema();
+    let mut metadata = meta_language::LinkMetadata::new()
+        .with_link_type(meta_language::LinkType::Semantic)
+        .with_named(true)
+        .with_term(schema["scalars"][kind].as_str().unwrap())
+        .with_language(schema["language"].as_str().unwrap());
+    if let Some(value) = value {
+        metadata = metadata.with_definition(value);
+    }
+    network.insert_link([], metadata)
+}
+
+#[test]
+fn raw_linked_loop_and_interface_nulls_and_module_fields_cannot_disappear_during_decoding() {
+    let data = fixture();
+    let model = data["model"].as_str().unwrap();
+    let input = create_typed_program_links_with_javascript_scalar_loop_model(
+        data["cases"][1]["javaScriptDefinitions"].as_str().unwrap(),
+        "JavaScript",
+        model,
+        None,
+    )
+    .unwrap();
+    for nested in [false, true] {
+        let mut network = LinkNetwork::from_lino(&input.network.to_lino()).unwrap();
+        let owner = network
+            .links()
+            .find_map(|link| match link.references() {
+                [parent, label, _]
+                    if link.metadata().link_type() == Some(meta_language::LinkType::Field)
+                        && network
+                            .link(*label)
+                            .and_then(|label| label.metadata().term())
+                            == Some("source loop proof") =>
+                {
+                    Some(*parent)
+                }
+                _ => None,
+            })
+            .unwrap();
+        let proof = field_relation(&network, owner, "source loop proof")[2];
+        let original = if nested {
+            field_relation(&network, proof, "interface")
+        } else {
+            field_relation(&network, owner, "source loop proof")
+        };
+        let null = scalar_link(&mut network, "null", None);
+        let report = network.apply_substitution(&meta_language::SubstitutionRule::new(
+            original,
+            [original[0], original[1], null],
+        ));
+        assert_eq!(report.updated.len(), 1);
+        let reloaded = LinkNetwork::from_lino(&network.to_lino()).unwrap();
+        let refused = decode_typed_program_links(&reloaded, input.root).unwrap_err();
+        assert!(
+            refused
+                .to_string()
+                .contains(if nested { "interface" } else { "sourceLoop" }),
+            "{refused}"
+        );
+    }
+    let row = &data["qualifiedLoopGraph"];
+    let mut network = LinkNetwork::from_lino(row["network"].as_str().unwrap()).unwrap();
+    let root = meta_language::LinkId::from_u64(row["root"].as_str().unwrap().parse().unwrap());
+    let body = network.link(root).unwrap().references()[0];
+    let items = field_relation(&network, body, "items")[2];
+    let module = network.link(items).unwrap().references()[0];
+    let unknown = scalar_link(&mut network, "boolean", Some("false"));
+    network.insert_field(module, "generated", unknown);
+    let reloaded = LinkNetwork::from_lino(&network.to_lino()).unwrap();
+    let refused = decode_typed_program_links(&reloaded, root).unwrap_err();
+    assert!(refused.to_string().contains("generated"), "{refused}");
 }
