@@ -62,3 +62,8 @@ test('source indirection refusal archives retain exact full source diagnostics f
  const recorded=readProjectData(new URL('./rust-owned-local-source-operation-fixture.lino',import.meta.url));
  for(const entry of recorded.cases)assert.throws(()=>createTypedProgramLinks(entry.source,'Rust',{rustOwnedLocalStateModel:entry.model}),error=>{assert.equal(error.kind,entry.kind,entry.name);assert.equal(error.reason,entry.reason,entry.name);assert.deepEqual(error.span??null,entry.span,entry.name);return true;});
 });
+
+test('standard String slice methods retain the same pre-erasure borrow refusal',()=>{
+ const data=readProjectData(new URL('./rust-owned-local-source-operation-fixture.lino',import.meta.url));assert.equal(data.borrowedMethodRefusals.length,2);
+ for(const entry of data.borrowedMethodRefusals)assert.throws(()=>createTypedProgramLinks(entry.source,'Rust',{rustOwnedLocalStateModel:entry.model}),error=>{assert.equal(error.kind,entry.kind);assert.equal(error.reason,entry.reason);assert.deepEqual(error.span??null,entry.span);return true;});
+});

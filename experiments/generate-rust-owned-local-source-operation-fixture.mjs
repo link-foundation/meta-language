@@ -13,11 +13,15 @@ const sources=[
  ['double borrowed immutable text',policy.models.copies,'let borrowed=&&text;String::from("value")'],
 ];
 export function rustOwnedLocalSourceOperationFixture(){
- return {schemaVersion:1,cases:sources.map(([name,model,body])=>{
+ const refusal=([name,model,body])=>{
   const source=`fn bad(text:String,count:i32,flag:bool)->String{${body}}fn main(){}`;
   try{checkProgram(parseRust(source,{localValueStateModel:model}));}catch(error){return{name,model,source,kind:error.kind,reason:error.reason,span:error.span??null};}
   throw new Error('unexpected selected source-operation admission '+name);
- })};
+ };
+ return {schemaVersion:1,cases:sources.map(refusal),borrowedMethodRefusals:[
+  ['mutable String slice',policy.models.moves,'let(mut digits,n)=(text,count);let view=digits.as_str();digits=String::from(\"new\");digits'],
+  ['immutable String slice',policy.models.copies,'let view=text.as_str();String::from(\"safe\")'],
+ ].map(refusal)};
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){
  const file=new URL('./rust-owned-local-source-operation-fixture.lino',import.meta.url),data=rustOwnedLocalSourceOperationFixture();
