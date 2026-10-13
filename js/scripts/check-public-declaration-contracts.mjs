@@ -85,6 +85,19 @@ const definition:FormalConceptArchive = encodeFormalFunctionDefinition(packet,'v
       source: `import { createTypedProgramLinks } from ${module};\ncreateTypedProgramLinks('fn main(){}','Rust',{rustArrayResultModel:'unknown model'});\n`,
     },
     {
+      name: 'valid-combined-guarded-completion-and-vector-profiles', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, encodeFormalFunctionDefinition } from ${module};
+import type { FormalConceptArchive } from ${module};
+const packet = createTypedProgramLinks('fn values(n:f64)->Vec<f64>{if n < 0f64{return vec![n];}vec![n.abs()]} fn main(){}','Rust',
+  {rustCompletionModel:'closed guarded function returns 1',rustArrayResultModel:'immutable fresh scalar vector results 1'});
+const definition:FormalConceptArchive = encodeFormalFunctionDefinition(packet,'values');
+`,
+    },
+    {
+      name: 'reject-unknown-guarded-completion-profile', expectedDiagnostics: ['TS2322'],
+      source: `import { createTypedProgramLinks } from ${module};\ncreateTypedProgramLinks('fn main(){}','Rust',{rustCompletionModel:'unknown model'});\n`,
+    },
+    {
       name: 'reject-source-text-in-place-of-formal-function-graph', expectedDiagnostics: ['TS2345'],
       source: `import { encodeFormalFunctionDefinition } from ${module};\nencodeFormalFunctionDefinition('opaque source text','function');\n`,
     },

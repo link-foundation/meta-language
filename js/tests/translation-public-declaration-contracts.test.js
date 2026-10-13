@@ -27,3 +27,15 @@ test('required compiler checks fail explicitly when no executable was supplied o
   assert.throws(() => checkPublicDeclarationContracts('/__missing_meta_language_typescript_compiler__'),
     /Cannot execute the required TypeScript compiler/u);
 });
+
+test('the declared combined Rust source profiles execute through the public entry point', async (context) => {
+  const source = publicDeclarationConsumers().find(({ name }) =>
+    name === 'valid-combined-guarded-completion-and-vector-profiles').source;
+  const directory = mkdtempSync(join(tmpdir(), 'meta-language-profile-consumer-'));
+  context.after(() => rmSync(directory, { recursive: true, force: true }));
+  const file = join(directory, 'consumer.mjs');
+  writeFileSync(file, eraseTypeScript(`${source}\nexport { packet, definition };`).code);
+  const { packet, definition } = await import(pathToFileURL(file).href);
+  assert.ok(packet.network.link(packet.root));
+  assert.ok(definition.network.link(definition.root));
+});

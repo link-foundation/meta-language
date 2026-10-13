@@ -891,7 +891,8 @@ export function createTypedProgramLinks(
   source: string,
   language: string,
   options?: { provenance?: unknown; utf16Strings?: boolean; context?: object;
-    rustArrayResultModel?: 'immutable fresh scalar vector results 1' },
+    rustArrayResultModel?: 'immutable fresh scalar vector results 1';
+    rustCompletionModel?: 'closed guarded function returns 1' },
 ): TypedProgramLinks;
 export function encodeTypedProgramLinks(
   program: CheckedTypedProgram,
