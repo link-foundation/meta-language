@@ -176,7 +176,7 @@ fn link_atom(node: &LiNo<String>) -> Result<&str, String> {
             id: Some(word),
             values,
         } if values.is_empty() => Ok(word),
-        _ => Err("expected a global concept word".to_owned()),
+        LiNo::Link { .. } => Err("expected a global concept word".to_owned()),
     }
 }
 
@@ -602,13 +602,15 @@ pub fn read_global_concept_space_links(
                     .ok_or("invalid global concept proof witness")?,
             );
         }
+        let number = |index: usize| serde_json::Number::from(index).as_f64().unwrap();
+        let to_numbers = |values: &[usize]| values.iter().map(|index| number(*index)).collect();
         if !verify_global_concept_correspondence(
             graph.shapes.clone(),
             graph.meanings.clone(),
-            graph.offsets.iter().map(|value| *value as f64).collect(),
-            graph.edges.iter().map(|value| *value as f64).collect(),
-            first.iter().map(|value| *value as f64).collect(),
-            second.iter().map(|value| *value as f64).collect(),
+            to_numbers(&graph.offsets),
+            to_numbers(&graph.edges),
+            to_numbers(&first),
+            to_numbers(&second),
         ) {
             return Err("unproved global concept correspondence".to_owned());
         }

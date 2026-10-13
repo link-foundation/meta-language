@@ -2,6 +2,7 @@
 //! verifier translated automatically from the JavaScript implementation.
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::fmt::Write as _;
 
 use serde_json::{Map, Value, json};
 use sha2::{Digest, Sha256};
@@ -192,13 +193,14 @@ fn shape(
                 let value = if value["kind"] == "ref" && key == "name" && entry.is_string() {
                     let target =
                         aliases.get(&format!("{source}:{}", entry.as_str().unwrap_or_default()));
-                    if let Some(target) = target {
-                        let index = edges.len();
-                        edges.push(*target);
-                        json!({"reference":index})
-                    } else {
-                        json!({"unresolved":source,"name":entry})
-                    }
+                    target.map_or_else(
+                        || json!({"unresolved":source,"name":entry}),
+                        |target| {
+                            let index = edges.len();
+                            edges.push(*target);
+                            json!({"reference":index})
+                        },
+                    )
                 } else {
                     shape(entry, source, aliases, edges)
                 };
@@ -244,19 +246,20 @@ fn correspondence(graph: &Graph, first: usize, second: usize) -> Option<Vec<(usi
             ));
         }
     }
-    let to_numbers = |values: &[usize]| values.iter().map(|index| *index as f64).collect();
+    let number = |index: usize| serde_json::Number::from(index).as_f64().unwrap();
+    let to_numbers = |values: &[usize]| values.iter().map(|index| number(*index)).collect();
     let verified = verify_global_concept_correspondence(
         graph.shapes.clone(),
         graph.meanings.clone(),
         to_numbers(&graph.offsets),
         to_numbers(&graph.edges),
-        witness.iter().map(|(left, _)| *left as f64).collect(),
-        witness.iter().map(|(_, right)| *right as f64).collect(),
+        witness.iter().map(|(left, _)| number(*left)).collect(),
+        witness.iter().map(|(_, right)| number(*right)).collect(),
     );
     verified.then_some(witness)
 }
 
-fn representative(parents: &[usize], mut index: usize) -> usize {
+const fn representative(parents: &[usize], mut index: usize) -> usize {
     while parents[index] != index {
         index = parents[index];
     }
@@ -357,7 +360,7 @@ fn create_global_concept_space_in(
         options
             .records
             .as_ref()
-            .unwrap_or(&default_records["concepts"]),
+            .unwrap_or_else(|| &default_records["concepts"]),
     )?;
     let catalog: Value = crate::structured_data_links::read_structured_data_lino(include_str!(
         "data/language-catalog.lino"
@@ -468,10 +471,10 @@ fn create_global_concept_space_in(
                 .iter()
                 .map(|index| records[*index]["id"].clone())
                 .collect();
-            if let Some(concept) = rule.get("concept") {
-                if !meanings.contains(concept) {
-                    meanings.push(concept.clone());
-                }
+            if let Some(concept) = rule.get("concept")
+                && !meanings.contains(concept)
+            {
+                meanings.push(concept.clone());
             }
             meanings.sort_by(|first, second| {
                 first
@@ -636,8 +639,10 @@ fn create_global_concept_space_in(
         let id = established.first().cloned().unwrap_or_else(|| {
             let digest = Sha256::digest(canonical(&origins[0]).as_bytes())
                 .iter()
-                .map(|byte| format!("{byte:02x}"))
-                .collect::<String>();
+                .fold(String::new(), |mut text, byte| {
+                    let _ = write!(text, "{byte:02x}");
+                    text
+                });
             format!("global-concept.{digest}")
         });
         for old in established.iter().skip(1) {

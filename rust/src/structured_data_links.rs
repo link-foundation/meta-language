@@ -1,4 +1,5 @@
 //! Inspectable structured values with ordered entries and exact UTF-16 strings.
+//!
 //! The generated shared rules select node kinds and structural shapes; this
 //! adapter supplies native graph identities and JSON interoperability.
 
@@ -80,7 +81,7 @@ fn write_number(value: f64) -> Result<String, String> {
     if !value.is_finite() {
         return Err(fail("a number must be finite binary64"));
     }
-    if value.to_bits() & 0x7fff_ffff_ffff_ffff == 0 {
+    if value.to_bits().trailing_zeros() >= 63 {
         return Ok(if value.is_sign_negative() { "-0" } else { "0" }.to_owned());
     }
     let shortest = value.abs().to_string();
@@ -625,7 +626,7 @@ fn preflight_statement(node: &LiNo<String>) -> Result<LinkId, String> {
             } if label == "meta" && metadata.is_none() => {
                 metadata = Some(values);
             }
-            _ => {
+            LiNo::Link { .. } => {
                 return Err(fail(
                     "a network statement has malformed metadata or references",
                 ));

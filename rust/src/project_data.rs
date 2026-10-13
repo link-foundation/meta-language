@@ -96,12 +96,12 @@ pub fn read_project_file_bytes(file: impl AsRef<Path>) -> Result<Vec<u8>, String
 ///
 /// # Errors
 /// Returns a storage conflict, unsupported extension, read, decoding or host
-/// deserialization error. Malformed LiNo never falls back to JSON.
+/// deserialization error. Malformed `LiNo` never falls back to JSON.
 pub fn read_project_data_file<T: DeserializeOwned>(file: impl AsRef<Path>) -> Result<T, String> {
     read_project_data_file_with_format(file, ProjectDataFormat::Auto)
 }
 
-/// Read data with an explicitly chosen external JSON or LiNo representation.
+/// Read data with an explicitly chosen external JSON or `LiNo` representation.
 ///
 /// # Errors
 /// Returns a storage conflict, unsupported format, read or decoding error.
