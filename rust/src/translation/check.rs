@@ -420,7 +420,7 @@ impl Checker {
             .filter_map(|name| self.decls.remove(name))
             .collect();
         analyse_recursion(&mut declarations);
-        Ok(Program {
+        let program = Program {
             schema_version: 1,
             source_language: self.language,
             items,
@@ -430,7 +430,9 @@ impl Checker {
             aborts_threaded: false,
             imports: surface.imports.clone(),
             externals: self.externals,
-        })
+        };
+        super::source_primitive_owners::validate_source_primitive_owners(&program)?;
+        Ok(program)
     }
 
     fn scope_mut(&mut self, path: &[String]) -> &mut Scope {

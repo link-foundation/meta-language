@@ -864,6 +864,7 @@ impl Lowering {
                 .collect(),
             ret: None,
             source_signature: None,
+            source_primitive_owners: None,
             source_loop: None,
             body: fn_body,
             span: Some(place),

@@ -203,6 +203,7 @@ mod translation_rust_float_predicates;
 mod translation_rust_frontend;
 mod translation_rust_indirection;
 mod translation_rust_lifetimes;
+mod translation_rust_primitive_owners;
 mod translation_rust_products;
 mod translation_rust_read_only_queries;
 mod translation_rust_scalar_loop_declarations;

@@ -122,16 +122,40 @@ impl RustParser {
         // header facet remains independently opt-in.
         let head = self.source_type_head();
         self.source_owner_frames.push(Vec::new());
+        self.primitive_owner_frames.push(Vec::new());
         let result = self.parse_type_value();
         let children = self
             .source_owner_frames
             .pop()
             .expect("the source type frame is owned");
         let ty = result?;
-        let owner = self.source_type_owner(&head, children, &ty);
+        let primitive_children = self
+            .primitive_owner_frames
+            .pop()
+            .expect("the primitive owner frame is owned");
+        let primitive = self
+            .read_standard_primitive_position(&head, &self.module_path)?
+            .or_else(|| {
+                ((head[0] == "&" || head[0] == "(") && primitive_children.len() == 1)
+                    .then(|| primitive_children[0].clone())
+                    .flatten()
+            });
+        self.origins.current_type.primitive_owner_position = primitive.clone();
+        let owner = if primitive.is_some() {
+            SourceOwner {
+                kind: "primitive".to_owned(),
+                path: vec!["f64".to_owned()],
+                arguments: Vec::new(),
+            }
+        } else {
+            self.source_type_owner(&head, children, &ty)
+        };
         self.origins.current_type.source_owner = Some(owner.clone());
         if let Some(parent) = self.source_owner_frames.last_mut() {
             parent.push(owner);
+        }
+        if let Some(parent) = self.primitive_owner_frames.last_mut() {
+            parent.push(primitive);
         }
         Ok(ty)
     }

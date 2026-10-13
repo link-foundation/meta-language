@@ -554,6 +554,8 @@ pub(super) fn decode_with_binding_identities(
     value["declarations"] = Value::Array(ordered_declarations);
     validate_spans(&value)?;
     scopes::restore_patterns(&mut value)?;
+    crate::translation::source_primitive_owners::validate_primitive_owner_records(&value)
+        .map_err(|failure| error(failure.to_string()))?;
     let program: Program = serde_json::from_value(value.clone()).map_err(|failure| {
         error(format!(
             "the Rust typed links adapter cannot decode this construct: {failure}"
@@ -563,5 +565,8 @@ pub(super) fn decode_with_binding_identities(
         &value,
         &serde_json::to_value(&program).map_err(|failure| error(failure.to_string()))?,
     )?;
+    if program.declarations.iter().any(|entry|matches!(entry,crate::translation::ir::Decl::Fn(function)if function.source_primitive_owners.is_some())){
+        crate::shared_numeric_function_model::validate_shared_numeric_origin_context(network,root).map_err(error)?;
+    }
     Ok((program, traversal.identities.into_iter().collect()))
 }

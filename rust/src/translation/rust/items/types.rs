@@ -126,6 +126,14 @@ impl RustParser {
         let segments = self.path_segments("type")?;
         let name = segments.join("::");
         let resolved = self.resolve(&segments, &self.module_path);
+        if self
+            .read_standard_primitive_position(&segments, &self.module_path)?
+            .is_some()
+        {
+            return Ok(self
+                .origins
+                .typed(super::FLOAT, &self.module_path, Vec::new()));
+        }
         if accept_rust_source_array_owner(&name, false)
             || accept_rust_source_array_owner(&resolved.join("::"), false)
         {

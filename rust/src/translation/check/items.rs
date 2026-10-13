@@ -91,6 +91,7 @@ impl Checker {
                     decreasing: None,
                     mutual: false,
                     source_signature: None,
+                    source_primitive_owners: function.source_primitive_owners.clone(),
                     source_loop: function.source_loop.clone(),
                 }),
                 SItem::Theorem(theorem) => Decl::Theorem(TheoremDecl {
@@ -235,6 +236,9 @@ impl Checker {
                     let body = self.coerce(body, &ret, item.span)?;
                     if let Some(Decl::Fn(entry)) = self.decls.get_mut(&name) {
                         entry.body = body;
+                        if let Some(proof) = &entry.source_primitive_owners {
+                            entry.source_primitive_owners=Some(super::super::source_primitive_owners::prepare_primitive_owner_proof(proof,&entry.body)?);
+                        }
                         if entry.source_loop.is_some() {
                             super::super::source_loops::validate_source_loop(
                                 entry,

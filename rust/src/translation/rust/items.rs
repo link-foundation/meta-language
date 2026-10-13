@@ -30,6 +30,15 @@ impl RustParser {
                 Some(self.cursor.peek().span()),
             ));
         };
+        if !self.primitive_owner_model.is_empty()
+            && (items.iter().any(|item| !matches!(item, SItem::Fn(_))) || !main.effects.is_empty())
+        {
+            return Err(unsupported(
+                "Rust primitive owner profile",
+                "only flat primitive leaf functions and an empty main are admitted",
+                None,
+            ));
+        }
         Ok(SProgram {
             language: Language::Rust,
             items,
@@ -262,10 +271,23 @@ impl RustParser {
             full.len() > 1 && accept_rust_source_array_owner(&full.join("::"), false);
         let standard_string =
             accept_rust_read_only_query_owner("string empty", "library", &full.join("::"));
+        let query_span = span(start, c.peek());
+        let standard_primitive = self
+            .read_standard_primitive_position(&full, path)?
+            .is_some();
+        let c = &mut self.cursor;
+        if !self.primitive_owner_model.is_empty() && !standard_primitive {
+            return Err(unsupported(
+                "Rust primitive owner import",
+                "only the two actual standard primitive reexports can be imported",
+                query_span,
+            ));
+        }
         if !["crate", "super", "self"].contains(&full[0].as_str())
             && !standard_box
             && !standard_vector
             && !standard_string
+            && !standard_primitive
         {
             return Err(unsupported(
                 &format!("use {}", full.join("::")),
@@ -286,11 +308,30 @@ impl RustParser {
         } else {
             segment
         };
-        let target = if standard_box || standard_vector || standard_string {
+        if !self.primitive_owner_model.is_empty()
+            && (!super::primitive_owners::accept_import_name(&alias)
+                || !self.primitive_import_names.insert(alias.clone()))
+        {
+            return Err(unsupported(
+                "Rust primitive owner alias",
+                "each import needs one distinct ASCII identifier outside the standard crate namespace",
+                span(start, c.peek()),
+            ));
+        }
+        let target = if standard_box || standard_vector || standard_string || standard_primitive {
             full
         } else {
             absolute(&full, path, span(start, c.peek()))?
         };
+        if standard_primitive
+            && !self
+                .primitive_imports
+                .iter()
+                .any(|record| record["name"].as_str() == Some(alias.as_str()))
+        {
+            self.primitive_imports
+                .push(serde_json::json!({"name":alias,"target":target}));
+        }
         self.aliases
             .entry(path.join("."))
             .or_default()
@@ -514,6 +555,15 @@ impl RustParser {
             .iter()
             .map(|(_, _, _, name)| name.clone())
             .collect::<Vec<_>>();
+        if !self.primitive_owner_model.is_empty()
+            && (!mutable_params.is_empty() || !self.lifetime_bindings.is_empty())
+        {
+            return Err(unsupported(
+                "Rust primitive owner context",
+                "mutable parameters and named lifetime binders require a separate owned context proof",
+                None,
+            ));
+        }
         if !scalar_loop && !mutable_params.is_empty() {
             let (closed, possible_write) = read_rust_scalar_parameter_body(&self.cursor);
             for (token, type_token, origin, _) in mutable_params {
@@ -584,7 +634,7 @@ impl RustParser {
         self.lifetime_header = false;
         let scope = params
             .iter()
-            .zip(source_params)
+            .zip(source_params.iter().cloned())
             .map(|(parameter, origin)| (parameter.name.clone(), origin))
             .collect();
         let previous = self.origins.enter(Some(scope));
@@ -629,6 +679,13 @@ impl RustParser {
         self.origins
             .argument(&self.origins.origin(&body, path), &source_result, body.span)?;
         self.origins.scope = previous;
+        let source_primitive_owners = (!self.primitive_owner_model.is_empty()).then(|| {
+            self.create_primitive_owner_proof(
+                &source_params,
+                &source_result,
+                span(&start, self.cursor.peek()),
+            )
+        });
         Ok(SFn {
             name,
             params,
@@ -637,6 +694,7 @@ impl RustParser {
             span: span(&start, self.cursor.peek()),
             generated: false,
             source_signature,
+            source_primitive_owners,
             source_loop,
         })
     }
@@ -676,6 +734,7 @@ impl RustParser {
             span: span(&start, self.cursor.peek()),
             generated: false,
             source_signature: None,
+            source_primitive_owners: None,
             source_loop: None,
         })
     }

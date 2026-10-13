@@ -728,6 +728,9 @@ pub struct FnDecl {
     /// Optional owned source-header facts, checked against this signature.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_signature: Option<super::source_signatures::SourceSignature>,
+    /// Actual standard primitive source owners, retained independently of value identity.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_primitive_owners: Option<serde_json::Value>,
     /// Optional owned scalar loop state and checked continuation interpretation.
     #[serde(
         default,
