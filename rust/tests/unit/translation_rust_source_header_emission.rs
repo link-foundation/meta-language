@@ -289,6 +289,16 @@ fn actual_owner_generated_and_linked_context_premises_cannot_be_erased() {
                 .is_err(),
             "{label}"
         );
+        let unknown = TypedProgramLinksEmissionOptions {
+            rust_source_header_emission_model: Some("unknown".to_owned()),
+        };
+        assert!(
+            emit_typed_program_links_with_options(&restored, root, "Rust", &unknown)
+                .unwrap_err()
+                .message
+                .contains("Rust source header emission model"),
+            "an unknown model precedes the forbidden {label} context"
+        );
     }
 }
 
