@@ -2,7 +2,7 @@
 /// Apply the shared resolved type namespace policy.
 #[must_use]
 pub fn accept_rust_type_namespace_model(model: &str) -> bool {
-    (model.is_empty()) || model == "resolved Rust type namespace 1"
+    model.is_empty() || model == "resolved Rust type namespace 1"
 }
 
 /// Apply the shared resolved type namespace policy.
