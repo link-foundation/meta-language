@@ -52,7 +52,7 @@ test('grammar and runtime evidence stages explicitly provision pinned inputs bef
   const ci = jobs('ci.yml');
   for (const [id, selection, command] of [
     ['grammar-bulk-pipeline', /--all\b/u, /run-grammar-bulk-pipeline\.mjs/u],
-    ['runtime-parity', /--group wasm\b/u, /run-issue-195-evidence\.mjs/u],
+    ['runtime-parity', /--group wasm --group native-oracles\b/u, /run-issue-195-evidence\.mjs/u],
     ['javascript-suite', /--all\b/u, /run-issue-195-evidence\.mjs/u],
     ['rust-suite', /--all\b/u, /run-issue-195-evidence\.mjs/u],
   ]) {
@@ -75,6 +75,11 @@ test('temporary package grammar staging preserves script-free offline clean cons
   assert.ok(provision >= 0 && pack > provision, 'compiled package assets are staged before packaging');
   assert.match(candidate.steps[provision].run, /--group wasm --materialize/u);
   assert.match(candidate.steps[provision].text, /github\.event_name != 'release'/u, 'published release artifacts are consumed intact');
+  const feedback = candidate.steps.findIndex((step) => step.name === 'Retain delivery candidate execution logs');
+  assert.ok(feedback > pack, 'package execution logs are uploaded after the packaging attempt');
+  assert.ok(candidate.steps[feedback].afterFailure, 'failed packaging retains its actual compiler diagnostics');
+  assert.match(candidate.steps[feedback].text, /path: issue-195-results\/logs\/\*\.log/u);
+  assert.match(candidate.steps[feedback].text, /if-no-files-found: error/u);
   teardown(candidate);
   assert.ok(ci.get('consumers').steps.every((step) => !step.run.includes(downloader)), 'installed consumers receive only their exact package artifacts');
   const consumer = read('js/scripts/run-issue-195-consumer.mjs');

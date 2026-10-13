@@ -282,6 +282,15 @@ jobs:
           --commit "$GITHUB_SHA"
           --prepare-candidates .issue-195-work/candidates
 
+      - name: Retain delivery candidate execution logs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-candidate-feedback-${{ github.sha }}
+          path: issue-195-results/logs/*.log
+          if-no-files-found: error
+          retention-days: 7
+
       - uses: actions/upload-artifact@v7
         with:
           name: issue-195-candidates-${{ github.sha }}
@@ -618,7 +627,7 @@ jobs:
         working-directory: js
 
       - name: Provision the pinned runtime comparison grammars
-        run: node js/scripts/external-grammar-cache.mjs --group wasm --materialize
+        run: node js/scripts/external-grammar-cache.mjs --group wasm --group native-oracles --materialize
 
       - name: Compare the JavaScript and Rust runtimes
         env:
