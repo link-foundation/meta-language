@@ -149,14 +149,19 @@ The source profile, independent vector-result selection and user provenance
 survive source-free Links reload. Returns escaping value expressions, mixed or
 incomplete branch completions and unreachable statements require further proofs;
 the existing default-profile return diagnostics remain exact.
+Under this explicit completion profile, the emitter's exact two-literal
+`panic!("{}", "message")` form retains the second literal as message data,
+including braces, escapes, empty text and Unicode. Dynamic formatting, other
+templates and custom `Display` behavior require separate source proofs.
 Proven unshadowed primitive binary64 (`f64`) receivers use shared linked
 expression templates for predicates and `abs`, `floor`, `ceil` and `trunc`, with
 one receiver evaluation. Operation fixtures compare non-NaN results by exact
 bits, including signed zero, subnormal values and infinities; NaN is compared by
-class. Actual emitted function definitions reimport in both directions,
-including typed negative-zero bindings and explicit array-length conversion to
-unshadowed `f64` under the Number length model. Source-free operation-link edits
-alter emitted behavior. Custom or shadowed owners, `f32`, implicit indirect
+class. Shared operation fixtures exercise reimport of their actual emitted
+function definitions in both directions, including typed negative-zero bindings
+and explicit array-length conversion to unshadowed `f64` under the Number length
+model. Source-free operation-link edits alter emitted behavior. Custom or
+shadowed owners, `f32`, implicit indirect
 receivers and other numeric methods retain their separate obligations.
 Read-only scalar `mut` parameters require a complete assignment-free body and
 ordinary source-owner validation. Mutable writes, generated runtime wrappers
