@@ -11,6 +11,7 @@ import { acceptArgumentCount, acceptCheckedTypeQueryOperand, acceptTypeQueryOper
 import { normaliseProof } from './proof.js';
 import { referenceOperation } from './reference-model.js';
 import { acceptTupleIndex, readNumberDisplayRefusal, readScalarCellOperation, readTuplePosition } from './primitive-value-rules.js';
+import { checkRustScalarLoopProof } from './rust-scalar-loops.js';
 import { acceptOptionalAbsence } from './structured-type-rules.js';
 import { acceptProgramTupleProductModel } from '../typed-program-link-rules.js';
 import {
@@ -145,7 +146,8 @@ class Checker {
       if (item.k !== 'module' && scope.names.has(item.name)) {
         throw typeError(`duplicate declaration ${fullName}`, item.span);
       }
-      if (/^ml_/u.test(item.name) && !item.generated) {
+      if (item.sourceLoop !== undefined) checkRustScalarLoopProof(item, this.language);
+      if (/^ml_/u.test(item.name) && !item.generated && item.sourceLoop === undefined) {
         throw unsupported('reserved identifier', `${item.name} uses the translator's reserved ml_ prefix`, item.span);
       }
       if (item.k === 'module') {
@@ -204,6 +206,7 @@ class Checker {
       if (item.k === 'fn') {
         const env = new Map(entry.params.map((param) => [param.name, param.type]));
         entry.body = coerce(this.expr(item.body, env, itemPath, entry.ret), entry.ret, this.language, item.span);
+        if (entry.sourceLoop !== undefined) checkRustScalarLoopProof(entry, this.language);
       } else if (item.k === 'theorem') {
         entry.binders = item.binders.map((binder) => ({ name: binder.name, type: this.resolveType(binder.type, itemPath, item.span) }));
         let prop = this.prop(item.prop, new Map(entry.binders.map((binder) => [binder.name, binder.type])), itemPath);
