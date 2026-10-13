@@ -119,3 +119,29 @@ test('the namespace selector is independent and leaves legacy capture refusals a
   assert.throws(()=>createTypedProgramLinks('function keep(value){return value;}','JavaScript',{rustTypeNamespaceModel:fixture.typeNamespaceModel}),/requires Rust source/u);
   assert.throws(()=>parseRust(source,{...options,sourceSignatureModel:'unknown'}),/Rust source signature model/u);
 });
+
+test('actual primitive namespace proofs compose with both strict header models and scoped emission', () => {
+  const sources = [
+    ['fn keep(value:&f64)->f64{*value}fn main(){}', 'primitive borrowed Rust function header 1'],
+    ['fn keep(value:&f64)->f64{*value}fn call(value:f64)->f64{keep(&value)}fn main(){}', 'closed primitive borrowed Rust call interface 1'],
+  ];
+  for (const [source, model] of sources) {
+    const packet = createTypedProgramLinks(source, 'Rust', {rustTypeNamespaceModel:fixture.typeNamespaceModel});
+    const network = LinkNetwork.fromLino(packet.network.toLino());
+    const program = decodeTypedProgramLinks(network, packet.root);
+    const original = emitRust(program, {sourceHeaderModel:model});
+    assert.match(original.definitions.join('\n'), /value: &f64/u);
+    const linked = emitTypedProgramLinks(network, packet.root, 'Rust', {rustSourceHeaderEmissionModel:model});
+    assert.equal(linked.code, original.text);
+    const scoped = emitTypedProgramLinks(network, packet.root, 'JavaScript', {javaScriptScopedBindingEmissionModel:'owned JavaScript scoped bindings 1'});
+    const functionName = source.includes('fn call(') ? 'call' : 'keep';
+    const caller = scoped.mappings.find(mapping => mapping.source === functionName).target;
+    assert.equal(vm.runInNewContext(`${scoped.code}\n${caller}(3)`, {}, {timeout:1000}), 3);
+    const replay = createTypedProgramLinks(`${original.definitions.join('\n')}\nfn main(){}`, 'Rust', {rustTypeNamespaceModel:fixture.typeNamespaceModel});
+    const replayProgram = decodeTypedProgramLinks(LinkNetwork.fromLino(replay.network.toLino()), replay.root);
+    assert.equal(replayProgram.declarations.get('keep').sourceTypeNamespace.model, fixture.typeNamespaceModel);
+    const malformed = structuredClone(program);
+    malformed.declarations.get('keep').sourceTypeNamespace = true;
+    assert.throws(() => encodeTypedProgramLinks(malformed), /malformed or missing selected facts/u);
+  }
+});
