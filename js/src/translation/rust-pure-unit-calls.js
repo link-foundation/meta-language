@@ -2,15 +2,44 @@
 import {readRuntimeProjectData} from '../project-data-loader.js';
 import {unsupported,typeError} from './diagnostics.js';
 import {UNIT} from './types.js';
-import {acceptRustPureUnitCallModel,acceptRustPureUnitNameCharacter,acceptRustPureUnitName,acceptRustPureUnitHeaderForm,acceptRustPureUnitBodyForm,acceptRustPureUnitPathForm,acceptRustPureUnitContext} from './rust-pure-unit-call-rules.js';
+import {acceptRustPureUnitCallModel,acceptRustPureUnitNameCharacter,acceptRustPureUnitName,acceptRustPureUnitHeaderForm,acceptRustPureUnitBodyForm,acceptRustPureUnitPathForm,acceptRustPureUnitContext,acceptRustPureUnitContainer} from './rust-pure-unit-call-rules.js';
 export const RUST_PURE_UNIT_CALL_POLICY=readRuntimeProjectData(new URL('./data/rust-pure-unit-calls.lino',import.meta.url));
 const policy=RUST_PURE_UNIT_CALL_POLICY;
 const same=(left,right)=>JSON.stringify(left)===JSON.stringify(right);
 const fail=detail=>{throw typeError('Rust pure Unit-call proof: '+detail);};
 const sourceFail=(detail,span)=>{throw unsupported('Rust pure Unit-call source',detail,span);};
 const range=(start,end)=>({start:start.start,end:end.end});
-function exact(value,fields){if(!value||typeof value!=='object'||Array.isArray(value)||!same(Object.keys(value).sort(),[...fields].sort())||Object.values(value).some(value=>value===undefined))fail('unrecognized or missing owned fields');}
-function allowed(value,fields){if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(field=>!fields.includes(field))||Object.values(value).some(value=>value===undefined))fail('unrepresented own fields');}
+function ownFields(value){
+ if(!value||typeof value!=='object'||Array.isArray(value))fail('unrecognized owned record');
+ const keys=Reflect.ownKeys(value);
+ if(keys.some(key=>typeof key!=='string'||!Object.getOwnPropertyDescriptor(value,key).enumerable||!Object.hasOwn(Object.getOwnPropertyDescriptor(value,key),'value')))fail('unrepresented own fields');
+ return keys;
+}
+function exact(value,fields){if(!same(ownFields(value).sort(),[...fields].sort())||Object.values(value).some(value=>value===undefined))fail('unrecognized or missing owned fields');}
+function allowed(value,fields){if(ownFields(value).some(field=>!fields.includes(field))||Object.values(value).some(value=>value===undefined))fail('unrepresented own fields');}
+function checkOwnedContainers(root){
+ const visited=new WeakSet();let visits=0;
+ function visit(value,depth=0){
+  if(!value||typeof value!=='object'||visited.has(value))return;
+  if(depth>256||++visits>100_000)fail('the owned container graph exceeds its resource limit');
+  visited.add(value);
+  const keys=Reflect.ownKeys(value);
+  if(value instanceof Map){
+   if(!acceptRustPureUnitContainer('map',true,keys.length>0||Object.getPrototypeOf(value)!==Map.prototype))fail('a declaration Map has unrepresented own fields');
+   for(const [key,child] of Map.prototype.entries.call(value)){visit(key,depth+1);visit(child,depth+1);}
+  }else if(Array.isArray(value)){
+   const length=Object.getOwnPropertyDescriptor(value,'length').value;
+   const dense=keys.length===length+1&&keys.every(key=>key==='length'||typeof key==='string'&&/^(?:0|[1-9][0-9]*)$/u.test(key)&&Number(key)<length&&String(Number(key))===key);
+   const unrepresented=Object.getPrototypeOf(value)!==Array.prototype||keys.some(key=>{const descriptor=Object.getOwnPropertyDescriptor(value,key);return !Object.hasOwn(descriptor,'value')||key!=='length'&&!descriptor.enumerable;});
+   if(!acceptRustPureUnitContainer('array',dense,unrepresented))fail('an ordered container has unrepresented own fields or sparse positions');
+   for(let index=0;index<length;index++)visit(value[index],depth+1);
+  }else{
+   if(Object.getPrototypeOf(value)!==Object.prototype&&Object.getPrototypeOf(value)!==null)fail('an owned record has an unrepresented prototype');
+   for(const key of ownFields(value))visit(Object.getOwnPropertyDescriptor(value,key).value,depth+1);
+  }
+ }
+ visit(root);
+}
 function validSpan(value){exact(value,['start','end']);if(!Number.isSafeInteger(value.start)||!Number.isSafeInteger(value.end)||value.start<0||value.end<=value.start)fail('an actual source span is malformed');}
 function inside(inner,outer){return inner.start>=outer.start&&inner.end<=outer.end;}
 function nameAccepted(name){return typeof name==='string'&&acceptRustPureUnitName(name)&&[...name].every((character,index)=>acceptRustPureUnitNameCharacter(character.codePointAt(0),index===0));}
@@ -54,8 +83,11 @@ export function finishRustPureUnitSource(parser,root){
 }
 
 export function checkRustPureUnitCalls(program){
- const entries=[...program.declarations.values()],effects=program.main?.effects;
- if(!Object.hasOwn(program,'sourcePureUnitCalls')&&!entries.some(entry=>Object.hasOwn(entry,'sourcePureUnit'))&&!effects?.some(effect=>Object.hasOwn(effect,'sourcePureUnitCall')))return;
+ const marked=Object.hasOwn(program,'sourcePureUnitCalls');
+ if(marked)checkOwnedContainers(program);
+ const entries=[...Map.prototype.values.call(program.declarations)],effects=program.main?.effects;
+ if(!marked&&!entries.some(entry=>Object.hasOwn(entry,'sourcePureUnit'))&&!Array.prototype.some.call(effects??[],effect=>effect&&Object.hasOwn(effect,'sourcePureUnitCall')))return;
+ if(!marked)checkOwnedContainers(program);
  const forbidden=!program.main||!Array.isArray(effects)||['imports','externals'].some(field=>Object.hasOwn(program,field)&&(!Array.isArray(program[field])||program[field].length>0))
   ||['outputThreaded','abortsThreaded','referenceSemantics','utf16Strings'].some(field=>Object.hasOwn(program,field)&&program[field]!==false)
   ||!Array.isArray(program.items)||program.items.some(item=>item.k!=='fn')||entries.length!==program.items.length;

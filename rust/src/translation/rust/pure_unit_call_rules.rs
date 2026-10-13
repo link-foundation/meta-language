@@ -100,3 +100,9 @@ pub fn accept_rust_pure_unit_path_form(form: &str) -> bool {
 pub fn accept_rust_pure_unit_context(language: &str, forbidden: bool) -> bool {
     language == "Rust" && !forbidden
 }
+
+/// Read a shared pure Rust Unit-call admission.
+#[must_use]
+pub fn accept_rust_pure_unit_container(kind: &str, dense: bool, unrepresented: bool) -> bool {
+    !unrepresented && ((kind == "array" && dense) || kind == "map")
+}

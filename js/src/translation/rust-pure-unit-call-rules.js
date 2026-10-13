@@ -13,3 +13,5 @@ export function acceptRustPureUnitBodyForm(form){return form === "empty block" |
 export function acceptRustPureUnitPathForm(form){return form === "unqualified name" || form === "absolute crate path";}
 /** @param {string} language @param {boolean} forbidden @returns {boolean} */
 export function acceptRustPureUnitContext(language,forbidden){return language === "Rust" && !forbidden;}
+/** @param {string} kind @param {boolean} dense @param {boolean} unrepresented @returns {boolean} */
+export function acceptRustPureUnitContainer(kind,dense,unrepresented){return !unrepresented && (kind === "array" && dense || kind === "map");}
