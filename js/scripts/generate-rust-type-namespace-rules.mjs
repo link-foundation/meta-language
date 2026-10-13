@@ -37,6 +37,7 @@ if (!process.argv.includes('--javascript-only')) {
       replace(block, `${block.slice(0, open + 1)}\n    ${expression}\n}`);
     }
     replace('((kind == "primitive" || kind == "declaration") && !invalid_wrappers) && !borrowed_result', '(kind == "primitive" || kind == "declaration") && !invalid_wrappers && !borrowed_result');
+    replace('(model.is_empty())', 'model.is_empty()');
     writeFileSync(style, new DecoratorSet([{ id: 'rust-type-namespace-library-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }]).toLino());
   }
   const decorated = DecoratorSet.fromLino(readFileSync(style, 'utf8')).decorate('emitter', { format: 'Rust', source: raw }).source;
