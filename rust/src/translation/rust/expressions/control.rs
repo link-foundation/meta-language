@@ -1,5 +1,7 @@
 //! Expression macros, conditional values, matches and source patterns.
 
+mod completions;
+
 use super::{
     Alias, Options, Result, RustParser, SArrayItem, SExpr, SNode, SPattern, SPatternNode, SRow,
     SourceOrigin, Span, Token, TokenKind, Type, accept_rust_source_array_element, describe, format,

@@ -8,7 +8,7 @@ use crate::translation::emit_javascript::emit_javascript;
 use crate::translation::emit_rust::emit_rust;
 use crate::translation::ir::Program;
 use crate::translation::javascript::parse_javascript;
-use crate::translation::rust::{parse_rust, parse_rust_with_array_result_model};
+use crate::translation::rust::{parse_rust, parse_rust_with_source_models};
 use crate::{LinkId, LinkMetadata, LinkNetwork, LinkType};
 use serde_json::Value;
 use std::fmt;
@@ -225,14 +225,89 @@ pub fn create_typed_program_links_with_rust_array_result_model(
     model: &str,
     provenance: Option<&Value>,
 ) -> Result<TypedProgramLinks> {
-    if !matches!(language.to_ascii_lowercase().as_str(), "rust" | "rs") {
-        return Err(error("a Rust array result model requires Rust source"));
+    create_typed_program_links_with_rust_source_models(
+        source,
+        language,
+        Some(model),
+        None,
+        provenance,
+    )
+}
+
+/// Import under the explicit closed guarded-return source profile.
+///
+/// # Errors
+/// Refuses non-Rust sources, unknown profiles and unsupported completions.
+pub fn create_typed_program_links_with_rust_completion_model(
+    source: &str,
+    language: &str,
+    model: &str,
+    provenance: Option<&Value>,
+) -> Result<TypedProgramLinks> {
+    create_typed_program_links_with_rust_source_models(
+        source,
+        language,
+        None,
+        Some(model),
+        provenance,
+    )
+}
+
+/// Import with independent source models and inspectable caller provenance.
+///
+/// Only selected models are stored. Selecting either Rust model for JavaScript
+/// is refused; no selection preserves its original source-admission contract.
+///
+/// # Errors
+/// Propagates language, model, source, checker and linked-adapter diagnostics.
+pub fn create_typed_program_links_with_rust_source_models(
+    source: &str,
+    language: &str,
+    array_result_model: Option<&str>,
+    completion_model: Option<&str>,
+    provenance: Option<&Value>,
+) -> Result<TypedProgramLinks> {
+    let canonical = match language.to_ascii_lowercase().as_str() {
+        "rust" | "rs" => "Rust",
+        "javascript" | "js" | "mjs" => "JavaScript",
+        _ => {
+            return Err(error(
+                "typed linked source import currently reads JavaScript and Rust",
+            ));
+        }
+    };
+    if canonical != "Rust" {
+        if array_result_model.is_some() {
+            return Err(error("a Rust array result model requires Rust source"));
+        }
+        if completion_model.is_some() {
+            return Err(error("a Rust completion model requires Rust source"));
+        }
     }
-    let surface = parse_rust_with_array_result_model(source, model)
-        .map_err(|failure| error(failure.to_string()))?;
+    let surface = if canonical == "Rust" {
+        parse_rust_with_source_models(
+            source,
+            array_result_model.unwrap_or(""),
+            completion_model.unwrap_or(""),
+        )
+    } else {
+        parse_javascript(source)
+    }
+    .map_err(|failure| error(failure.to_string()))?;
     let program = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
+    if array_result_model.is_none() && completion_model.is_none() {
+        return encode_typed_program_links_with_provenance(&program, provenance);
+    }
+    let mut profile = serde_json::Map::new();
+    profile.insert("language".into(), Value::String("Rust".into()));
+    if let Some(model) = array_result_model {
+        profile.insert("rustArrayResultModel".into(), Value::String(model.into()));
+    }
+    if let Some(model) = completion_model {
+        profile.insert("rustCompletionModel".into(), Value::String(model.into()));
+    }
     let selected_provenance = serde_json::json!({
-        "sourceProfile": { "language": "Rust", "rustArrayResultModel": model },
+        "sourceProfile": profile,
         "userProvenance": provenance,
     });
     encode_typed_program_links_with_provenance(&program, Some(&selected_provenance))

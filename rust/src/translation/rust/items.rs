@@ -570,7 +570,11 @@ impl RustParser {
             .map(|(parameter, origin)| (parameter.name.clone(), origin))
             .collect();
         let previous = self.origins.enter(Some(scope));
-        let body = self.block(path)?;
+        let body = if self.completion_model.is_empty() {
+            self.block(path)?
+        } else {
+            self.closed_function_completion(path)?
+        };
         if let Type::Array { element, .. } = &ret {
             if !accept_rust_source_array_result(
                 &self.origins.array_result_model,

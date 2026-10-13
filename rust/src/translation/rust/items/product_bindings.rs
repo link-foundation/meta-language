@@ -6,7 +6,7 @@ use super::super::{
 };
 
 impl RustParser {
-    pub(super) fn let_statement(&mut self, path: &[String]) -> Result<Vec<Binding>> {
+    pub(in super::super) fn let_statement(&mut self, path: &[String]) -> Result<Vec<Binding>> {
         let start = self.cursor.advance();
         if self.cursor.is("mut") {
             return Err(unsupported(

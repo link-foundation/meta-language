@@ -318,12 +318,15 @@ export function readTypedProgramBindingIdentities(network, root) {
 export function createTypedProgramLinks(source, language, options = {}) {
   const canonical = /^(?:rust|rs)$/iu.test(language) ? 'Rust' : /^(?:javascript|js|mjs)$/iu.test(language) ? 'JavaScript' : null;
   if (!canonical) throw new TypeError('typed linked source import currently reads JavaScript and Rust');
-  const selected = options.rustArrayResultModel !== undefined;
-  if (selected && canonical !== 'Rust') throw new TypeError('a Rust array result model requires Rust source');
-  const program = checkProgram(canonical === 'Rust' ? parseRust(source, { arrayResultModel: options.rustArrayResultModel }) : parseJavaScript(source, options.context));
+  const arraySelected = options.rustArrayResultModel !== undefined;
+  const completionSelected = options.rustCompletionModel !== undefined;
+  const selected = arraySelected || completionSelected;
+  if (arraySelected && canonical !== 'Rust') throw new TypeError('a Rust array result model requires Rust source');
+  if (completionSelected && canonical !== 'Rust') throw new TypeError('a Rust completion model requires Rust source');
+  const program = checkProgram(canonical === 'Rust' ? parseRust(source, { arrayResultModel: options.rustArrayResultModel, completionModel: options.rustCompletionModel }) : parseJavaScript(source, options.context));
   if (options.utf16Strings) program.utf16Strings = true;
   const provenance = selected ? {
-    sourceProfile: { language: 'Rust', rustArrayResultModel: options.rustArrayResultModel },
+    sourceProfile: { language: 'Rust', ...(arraySelected ? { rustArrayResultModel: options.rustArrayResultModel } : {}), ...(completionSelected ? { rustCompletionModel: options.rustCompletionModel } : {}) },
     userProvenance: options.provenance ?? null,
   } : options.provenance;
   return encodeTypedProgramLinks(program, { ...options, provenance });

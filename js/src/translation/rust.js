@@ -1,5 +1,7 @@
 import { acceptRustFloatPredicateMethod, acceptRustFloatPredicateReceiver } from './rust-float-predicate-rules.js';
 import { createRustFloatPredicateExpression } from './rust-float-predicates.js';
+import { acceptRustCompletionModel } from './rust-completion-rules.js';
+import { readRustFunctionCompletion } from './rust-completions.js';
 import { readStringMapOperation, readStringTestOperation } from './frontend-rules.js';
 // Rust frontend for the portable core. It reads the subset of Rust the core
 // can represent faithfully: modules with `use` of crate items, enums with
@@ -28,13 +30,14 @@ const ADDITIVE = { '+': 'add', '-': 'sub' };
 const MULTIPLICATIVE = { '*': 'mul', '/': 'div', '%': 'rem' };
 const RESERVED_ITEMS = new Set(['impl', 'trait', 'struct', 'union', 'static', 'type', 'extern', 'macro_rules', 'async', 'unsafe']);
 
-export function parseRust(source, { arrayResultModel = '' } = {}) {
+export function parseRust(source, { arrayResultModel = '', completionModel = '' } = {}) {
   if (!acceptRustSourceArrayResultModel(arrayResultModel)) throw unsupported('Rust array result model', 'select the legacy model or immutable fresh scalar vector results 1');
+  if (!acceptRustCompletionModel(completionModel)) throw unsupported('Rust completion model', 'select the legacy model or closed guarded function returns 1');
   const { tokens } = tokenize(source, 'Rust');
-  const declarations = new RustParser(tokens, null, arrayResultModel);
+  const declarations = new RustParser(tokens, null, arrayResultModel, completionModel);
   declarations.file();
   declarations.origins.resolveTypes((segments, path) => declarations.resolve(segments, path));
-  const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel);
+  const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel, completionModel);
   syntax.origins.collecting = true;
   syntax.aliases = declarations.aliases;
   const surface = syntax.file();
@@ -44,19 +47,20 @@ export function parseRust(source, { arrayResultModel = '' } = {}) {
     if (!(error instanceof TranslationError)) throw error;
     return surface;
   }
-  const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel);
+  const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel, completionModel);
   parser.aliases = syntax.aliases;
   return parser.file();
 }
 
 class RustParser {
-  constructor(tokens, catalog = null, arrayResultModel = '') {
+  constructor(tokens, catalog = null, arrayResultModel = '', completionModel = '') {
     this.cursor = new TokenCursor([...tokens], 'Rust');
     // `use` aliases, per module path.
     this.aliases = new Map();
     this.modulePath = [];
     this.crateDeclarations = new Set();
     this.origins = new RustSourceOrigins(catalog, arrayResultModel);
+    this.completionModel = completionModel;
     this.reservedNames = new Set(tokens.filter(token => token.kind === 'identifier').map(token => token.value));
     this.productBindingCount = 0;
     this.lifetimeBindings = new Set();
@@ -430,7 +434,7 @@ class RustParser {
       if (c.is('where')) throw unsupported('where clause', 'trait bounds are outside the portable core', span(start, c.peek()));
       this.lifetimeHeader = false;
       const previous = this.origins.enter(new Map(params.map((param, index) => [param.name, sourceParams[index]])));
-      const body = this.block(path);
+      const body = this.completionModel ? readRustFunctionCompletion(this, path) : this.block(path);
       if (ret.kind === 'array') {
         if (!acceptRustSourceArrayResult(this.origins.arrayResultModel, ret.element.kind, sourceResult.arraySourceModel === 'owned vector' && sourceResult.wrappers.length === 0, this.origins.freshArrayResult(body, path))) throw unsupported('fresh Rust array result', 'every returning tail must construct a new vector of direct scalar Copy values; vector names, calls, clones and borrowed results need separate consumption proofs', body.span);
         sourceResult.freshArrayValue = true;

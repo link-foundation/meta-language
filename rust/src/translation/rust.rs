@@ -24,6 +24,7 @@ use super::types::{BOOL, FLOAT, STRING, Type, UNIT, rust_fixed_type};
 use super::{Language, Span};
 
 mod array_rules;
+mod completion_rules;
 mod expressions;
 mod float_predicate_rules;
 mod float_predicates;
@@ -108,21 +109,57 @@ pub fn parse_rust(source: &str) -> Result<SProgram> {
 /// # Errors
 /// On unknown models, syntax errors and unsupported ownership or result proofs.
 pub fn parse_rust_with_array_result_model(source: &str, model: &str) -> Result<SProgram> {
-    if !array_rules::accept_rust_source_array_result_model(model) {
+    parse_rust_with_source_models(source, model, "")
+}
+
+/// Read closed guarded returns under an explicitly selected source profile.
+///
+/// # Errors
+/// Refuses unknown models and unsupported or escaping completions.
+pub fn parse_rust_with_completion_model(source: &str, model: &str) -> Result<SProgram> {
+    parse_rust_with_source_models(source, "", model)
+}
+
+/// Read Rust with independently selected array-result and completion profiles.
+///
+/// Empty strings retain each corresponding legacy source-admission contract.
+///
+/// # Errors
+/// Refuses unknown models and propagates precise source-admission diagnostics.
+pub fn parse_rust_with_source_models(
+    source: &str,
+    array_result_model: &str,
+    completion_model: &str,
+) -> Result<SProgram> {
+    if !array_rules::accept_rust_source_array_result_model(array_result_model) {
         return Err(unsupported(
             "Rust array result model",
             "select the legacy model or immutable fresh scalar vector results 1",
             None,
         ));
     }
+    if !completion_rules::accept_rust_completion_model(completion_model) {
+        return Err(unsupported(
+            "Rust completion model",
+            "select the legacy model or closed guarded function returns 1",
+            None,
+        ));
+    }
     let tokens = tokenize(source, Language::Rust)?.tokens;
-    let mut declarations = RustParser::new(tokens.clone(), SourceOrigins::new(None, model));
+    let mut declarations = RustParser::new(
+        tokens.clone(),
+        SourceOrigins::new(None, array_result_model),
+        completion_model,
+    );
     declarations.file()?;
-    let mut origins = std::mem::replace(&mut declarations.origins, SourceOrigins::new(None, model));
+    let mut origins = std::mem::replace(
+        &mut declarations.origins,
+        SourceOrigins::new(None, array_result_model),
+    );
     origins.resolve_catalog_types(|segments, path| declarations.resolve(segments, path));
-    let mut source_origins = SourceOrigins::new(Some(origins.catalog), model);
+    let mut source_origins = SourceOrigins::new(Some(origins.catalog), array_result_model);
     source_origins.collecting = true;
-    let mut syntax = RustParser::new(tokens.clone(), source_origins);
+    let mut syntax = RustParser::new(tokens.clone(), source_origins, completion_model);
     syntax.aliases = declarations.aliases;
     let surface = syntax.file()?;
     // Preserve the existing checker's rejection and syntax-tree contract;
@@ -132,7 +169,8 @@ pub fn parse_rust_with_array_result_model(source: &str, model: &str) -> Result<S
     }
     let mut parser = RustParser::new(
         tokens,
-        SourceOrigins::new(Some(syntax.origins.catalog), model),
+        SourceOrigins::new(Some(syntax.origins.catalog), array_result_model),
+        completion_model,
     );
     parser.aliases = syntax.aliases;
     parser.file()
@@ -198,6 +236,7 @@ struct RustParser {
     crate_declarations: HashSet<String>,
     main: Option<SMain>,
     origins: SourceOrigins,
+    completion_model: String,
     reserved_binding_names: HashSet<String>,
     next_product_binding: usize,
     lifetime_bindings: HashSet<String>,
@@ -205,7 +244,7 @@ struct RustParser {
 }
 
 impl RustParser {
-    fn new(tokens: Vec<Token>, origins: SourceOrigins) -> Self {
+    fn new(tokens: Vec<Token>, origins: SourceOrigins, completion_model: &str) -> Self {
         let reserved_binding_names = tokens
             .iter()
             .filter(|token| token.kind == TokenKind::Identifier)
@@ -218,6 +257,7 @@ impl RustParser {
             crate_declarations: HashSet::new(),
             main: None,
             origins,
+            completion_model: completion_model.to_owned(),
             reserved_binding_names,
             next_product_binding: 0,
             lifetime_bindings: HashSet::new(),
