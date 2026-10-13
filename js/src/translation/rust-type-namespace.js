@@ -2,11 +2,22 @@ import { readRuntimeProjectData } from '../project-data-loader.js';
 import { unsupported, typeError } from './diagnostics.js';
 import { RustSourceOrigins } from './rust-source-origins.js';
 import { RUST_SOURCE_SIGNATURE_POLICY } from './rust-source-signatures.js';
+import { acceptRustSourceHeaderLifetimeCharacter } from './rust-source-header-emission-rules.js';
+import {checkRustUnitCloneDerivation} from './rust-unit-clone.js';
 import { acceptRustTypeNamespaceModel, acceptRustTypeNamespacePosition,
   acceptRustTypeNamespaceDeclaration, acceptRustTypeNamespaceFields, acceptRustTypeNamespaceAnchor } from './rust-type-namespace-rules.js';
 
 export const RUST_TYPE_NAMESPACE_POLICY = readRuntimeProjectData(new URL('./data/rust-type-namespace.lino', import.meta.url));
 const fail = detail => { throw typeError(`an owned Rust type namespace ${detail}`); };
+
+/** Reuse the shared character predicate matching the actual Rust lexer. */
+export function acceptRustTypeNamespaceSpellingSegment(value) {
+  if (typeof value !== 'string' || value.length === 0) return false;
+  for (let index = 0; index < value.length; index += 1) {
+    if (!acceptRustSourceHeaderLifetimeCharacter(value.charCodeAt(index), index === 0)) return false;
+  }
+  return true;
+}
 
 /** Capture actual ordered source spellings alongside the existing signature. */
 export function createRustTypeNamespaceProof(parameters, result) {
@@ -23,13 +34,16 @@ export function requireRustTypeNamespaceAnchor(source, path) {
 
 /** Use the existing anchored, filtered lookup over actual checked declarations. */
 export function validateRustTypeNamespace(program) {
-  const selected = [...program.declarations.values()].some(entry => Object.hasOwn(entry, 'sourceTypeNamespace'));
+  const selected = [...program.declarations.values()].some(entry => Object.hasOwn(entry, 'sourceTypeNamespace')||Object.hasOwn(entry,'sourceUnitCloneDerivation'));
   if (!selected) return;
   if (program.sourceLanguage !== RUST_TYPE_NAMESPACE_POLICY.language || program.imports?.length || program.externals?.length) fail('requires a Rust program without imported aliases or externals');
   const catalog = new Map();
   for (const [name, declaration] of program.declarations) {
+    if (!acceptRustTypeNamespaceSpellingSegment(declaration.name) || !declaration.modulePath.every(acceptRustTypeNamespaceSpellingSegment)) fail('catalog contains an invalid Rust identifier segment');
+    if(Object.hasOwn(declaration,'sourceUnitCloneDerivation'))checkRustUnitCloneDerivation(declaration.sourceUnitCloneDerivation,declaration);
     catalog.set(name, { k: declaration.k });
     if (declaration.k === 'data') for (const constructor of declaration.ctors) {
+      if (!acceptRustTypeNamespaceSpellingSegment(constructor.name)) fail('catalog contains an invalid constructor identifier segment');
       const key = `${name}.${constructor.name}`;
       if (catalog.has(key) || program.declarations.has(key)) fail('cannot admit a constructor-overwritten declaration identity');
       catalog.set(key, { k: 'ctor' });
@@ -39,12 +53,13 @@ export function validateRustTypeNamespace(program) {
   for (let index = 0; index < modules.length; index += 1) {
     const item = modules[index];
     if (item.k === 'module') {
+      if (!acceptRustTypeNamespaceSpellingSegment(item.name)) fail('catalog contains an invalid module identifier segment');
       if (catalog.has(item.fullName)) fail('cannot admit a shared module/declaration identity');
       catalog.set(item.fullName, { k: 'module' }); modules.push(...item.items);
     }
   }
   const origins = new RustSourceOrigins(catalog);
-  const spelling = value => Array.isArray(value) && value.length > 0 && value.every(part => typeof part === 'string' && part.length > 0);
+  const spelling = value => Array.isArray(value) && value.length > 0 && value.every(acceptRustTypeNamespaceSpellingSegment);
   const position = (source, signature, path, result) => {
     if (!spelling(source) || !acceptRustTypeNamespacePosition(signature.owner.kind,
       signature.wrappers.some(wrapper => !RUST_TYPE_NAMESPACE_POLICY.parameterWrappers.includes(wrapper)), result && signature.wrappers.length > 0)) fail('position needs an actual primitive or datatype spelling and a proved direct result');

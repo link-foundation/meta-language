@@ -7,5 +7,15 @@ export function acceptRustTypeNamespaceDeclaration(kind) { return kind === "data
 export function acceptRustTypeNamespaceFields(invalidFields) { return !invalidFields; }
 /** @param {boolean} aboveCrate @returns {boolean} */
 export function acceptRustTypeNamespaceAnchor(aboveCrate) { return !aboveCrate; }
+/** @param {boolean} selected @param {string} constructorName @returns {boolean} */
+export function acceptRustTypeNamespaceBodyConstructor(selected, constructorName) { return !selected || (constructorName !== "String::from" && constructorName !== "i8::from" && constructorName !== "u8::from" && constructorName !== "i16::from" && constructorName !== "u16::from" && constructorName !== "i32::from" && constructorName !== "u32::from" && constructorName !== "i64::from" && constructorName !== "u64::from" && constructorName !== "i128::from" && constructorName !== "u128::from" && constructorName !== "usize::from" && constructorName !== "isize::from"); }
+/** @param {boolean} selected @param {string} methodName @param {boolean} ownedUnitClone @returns {boolean} */
+export function acceptRustTypeNamespaceBodyMethod(selected, methodName, ownedUnitClone) { return !selected || (methodName === "clone" && ownedUnitClone) || (methodName !== "clone" && methodName !== "to_owned" && methodName !== "to_string" && methodName !== "as_str"); }
+/** @param {boolean} discovery @param {string} methodName @returns {boolean} */
+export function acceptRustTypeNamespaceMethodDiscovery(discovery, methodName) { return discovery && (methodName === "clone"); }
+/** @param {boolean} ownedDerivation @param {boolean} fieldFree @param {boolean} directReceiver @returns {boolean} */
+export function acceptRustTypeNamespaceUnitClone(ownedDerivation, fieldFree, directReceiver) { return ownedDerivation && fieldFree && directReceiver; }
+/** @param {boolean} discovery @param {string} typeName @returns {boolean} */
+export function acceptRustTypeNamespaceDiscoveryType(discovery, typeName) { return discovery && (typeName === "str"); }
 /** @param {string} kind @param {boolean} invalidWrappers @param {boolean} borrowedResult @returns {boolean} */
 export function acceptRustTypeNamespacePosition(kind, invalidWrappers, borrowedResult) { return (kind === "primitive" || kind === "declaration") && !invalidWrappers && !borrowedResult; }
