@@ -146,3 +146,36 @@ test('unrepresented call fields and malformed target interfaces refuse through a
     });
   }
 });
+
+test('both selected header models refuse unrepresented caller declaration facets while defaults remain exact', () => {
+  const value = reload(fixture.cases[0]);
+  for (const name of ['leaf', 'caller']) {
+    for (const [field, scalar] of [['async', true], ['unsafe', true], ['opaqueInterface', false]]) {
+      const program = decodeTypedProgramLinks(value.network, value.root);
+      const defaultCode = emitRust(program).text;
+      program.declarations.get(name)[field] = scalar;
+      const archive = encodeTypedProgramLinks(program);
+      const network = LinkNetwork.fromLino(archive.network.toLino());
+      assert.equal(emitTypedProgramLinks(network, archive.root, 'Rust').code, defaultCode);
+      assert.throws(() => emitTypedProgramLinks(network, archive.root, 'Rust', options), /unrepresented source interface fields/u, `${name}:${field}`);
+      assert.throws(() => emitTypedProgramLinks(network, archive.root, 'Rust', leafOptions), /unrepresented source interface fields/u);
+    }
+  }
+});
+
+test('both selected models refuse source-free parameter spans without dropping supported source-node spans', () => {
+  const value = reload(fixture.cases[0]);
+  for (const name of ['leaf', 'caller']) {
+    for (const span of [null, { start: 0, end: 1 }]) {
+      const program = decodeTypedProgramLinks(value.network, value.root);
+      const defaultCode = emitRust(program).text;
+      const sourceSpan = program.declarations.get(name).span;
+      program.declarations.get(name).params[0].span = span;
+      const archive = encodeTypedProgramLinks(program);
+      const network = LinkNetwork.fromLino(archive.network.toLino());
+      assert.deepEqual(decodeTypedProgramLinks(network, archive.root).declarations.get(name).span, sourceSpan);
+      assert.equal(emitTypedProgramLinks(network, archive.root, 'Rust').code, defaultCode);
+      for (const selection of [options, leafOptions]) assert.throws(() => emitTypedProgramLinks(network, archive.root, 'Rust', selection), /parameter defaults, guards and unrepresented fields/u, name);
+    }
+  }
+});

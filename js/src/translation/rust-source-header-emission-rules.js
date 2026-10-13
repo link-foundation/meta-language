@@ -5,6 +5,8 @@ export function acceptRustSourceHeaderEmissionModel(model) { return model === "p
 export function acceptRustSourceHeaderEmissionContext(language, forbidden) { return language === "Rust" && !forbidden; }
 /** @param {string} kind @param {boolean} nonFlat @param {boolean} generated @returns {boolean} */
 export function acceptRustSourceHeaderEmissionDeclaration(kind, nonFlat, generated) { return kind === "fn" && !nonFlat && !generated; }
+/** @param {boolean} unrepresented @returns {boolean} */
+export function acceptRustSourceHeaderEmissionDeclarationFields(unrepresented) { return !unrepresented; }
 /** @param {string} kind @param {string} ownerKind @param {string} ownerPath @param {boolean} invalidArguments @param {boolean} invalidWrappers @param {boolean} borrowedResult @returns {boolean} */
 export function acceptRustSourceHeaderEmissionPosition(kind, ownerKind, ownerPath, invalidArguments, invalidWrappers, borrowedResult) { return !invalidArguments && !invalidWrappers && !borrowedResult && ownerKind === "primitive" && ((kind === "float" && ownerPath === "f64") || (kind === "bool" && ownerPath === "bool")); }
 /** @param {string} kind @returns {boolean} */

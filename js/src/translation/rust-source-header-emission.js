@@ -8,6 +8,7 @@ import { acceptSharedNumericTypeShape,
   acceptSharedNumericBinary } from '../shared-numeric-function-rules.js';
 import { acceptRustSourceHeaderEmissionModel, acceptRustSourceHeaderEmissionContext,
   acceptRustSourceHeaderEmissionDeclaration, acceptRustSourceHeaderEmissionPosition,
+  acceptRustSourceHeaderEmissionDeclarationFields,
   acceptRustSourceHeaderEmissionExpression, readRustSourceHeaderPrimitive,
   acceptRustSourceHeaderEmissionParameter,
   acceptRustSourceHeaderLifetimeCharacter,
@@ -29,6 +30,7 @@ export function readRustPrimitiveSourceHeaders(program) {
     if (!value || !acceptSharedNumericTypeShape(value.kind, Object.keys(value).length === 1)) fail('only primitive binary64 and Boolean value types are admitted');
   };
   for (const declaration of program.declarations.values()) {
+    if (!acceptRustSourceHeaderEmissionDeclarationFields(Object.keys(declaration).some(field => !policy.declarationFields.includes(field)))) fail('function declarations cannot carry unrepresented source interface fields');
     const generated = Object.hasOwn(declaration, 'generated') && declaration.generated !== false;
     if (!acceptRustSourceHeaderEmissionDeclaration(declaration.k, Boolean(declaration.modulePath?.length), generated)) fail('only flat original leaf function declarations are admitted');
     if (!declaration.sourceSignature) fail('every original function needs its owned source signature facet');
