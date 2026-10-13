@@ -104,7 +104,7 @@ pub fn ml_accept_resource_description_language_loop21(
                             {
                                 let equal_2 = super::ml_accept_resource_description_language_loop22(
                                     units,
-                                    starts,
+                                    starts.clone(),
                                     lengths.clone(),
                                     part,
                                     earlier,
