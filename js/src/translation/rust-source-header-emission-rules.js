@@ -9,6 +9,8 @@ export function acceptRustSourceHeaderEmissionDeclaration(kind, nonFlat, generat
 export function acceptRustSourceHeaderEmissionPosition(kind, ownerKind, ownerPath, invalidArguments, invalidWrappers, borrowedResult) { return !invalidArguments && !invalidWrappers && !borrowedResult && ownerKind === "primitive" && ((kind === "float" && ownerPath === "f64") || (kind === "bool" && ownerPath === "bool")); }
 /** @param {string} kind @returns {boolean} */
 export function acceptRustSourceHeaderEmissionExpression(kind) { return kind === "lit" || kind === "var" || kind === "let" || kind === "if" || kind === "unary" || kind === "binary"; }
+/** @param {boolean} guarded @param {boolean} defaulted @param {boolean} unrepresented @returns {boolean} */
+export function acceptRustSourceHeaderEmissionParameter(guarded, defaulted, unrepresented) { return !guarded && !defaulted && !unrepresented; }
 /** @param {number} character @param {boolean} first @returns {boolean} */
 export function acceptRustSourceHeaderLifetimeCharacter(character, first) { return (character >= 95 && character <= 95) || (character >= 65 && character <= 90) || (character >= 97 && character <= 122) || (!first && (character >= 48 && character <= 57)); }
 /** @param {string} kind @returns {string} */

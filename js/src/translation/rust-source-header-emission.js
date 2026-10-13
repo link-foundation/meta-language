@@ -3,12 +3,13 @@
 import { readRuntimeProjectData } from '../project-data-loader.js';
 import { unsupported } from './diagnostics.js';
 import { checkRustSourceSignature } from './rust-source-signatures.js';
-import { acceptSharedNumericTypeShape, acceptSharedNumericParameter,
+import { acceptSharedNumericTypeShape,
   acceptSharedNumericExpressionShape, acceptSharedNumericUnary,
   acceptSharedNumericBinary } from '../shared-numeric-function-rules.js';
 import { acceptRustSourceHeaderEmissionModel, acceptRustSourceHeaderEmissionContext,
   acceptRustSourceHeaderEmissionDeclaration, acceptRustSourceHeaderEmissionPosition,
   acceptRustSourceHeaderEmissionExpression, readRustSourceHeaderPrimitive,
+  acceptRustSourceHeaderEmissionParameter,
   acceptRustSourceHeaderLifetimeCharacter,
   renderRustSourceHeaderReference, renderRustSourceHeaderParameter,
   renderRustSourceHeaderLifetime, renderRustSourceHeaderDereference,
@@ -30,7 +31,8 @@ export function readRustSourceHeaderEmission(program, model) {
     if (!value || !acceptSharedNumericTypeShape(value.kind, Object.keys(value).length === 1)) fail('only primitive binary64 and Boolean value types are admitted');
   };
   for (const declaration of program.declarations.values()) {
-    if (!acceptRustSourceHeaderEmissionDeclaration(declaration.k, Boolean(declaration.modulePath?.length), Boolean(declaration.generated))) fail('only flat original leaf function declarations are admitted');
+    const generated = Object.hasOwn(declaration, 'generated') && declaration.generated !== false;
+    if (!acceptRustSourceHeaderEmissionDeclaration(declaration.k, Boolean(declaration.modulePath?.length), generated)) fail('only flat original leaf function declarations are admitted');
     if (!declaration.sourceSignature) fail('every original function needs its owned source signature facet');
     const signature = checkRustSourceSignature(declaration.sourceSignature, declaration.params.map(parameter => parameter.type), declaration.ret, program.sourceLanguage);
     for (const lifetime of signature.lifetimeBindings) {
@@ -42,7 +44,8 @@ export function readRustSourceHeaderEmission(program, model) {
     type(declaration.ret);
     for (const parameter of declaration.params) {
       type(parameter.type);
-      if (!acceptSharedNumericParameter(parameter.guard != null, parameter.default != null)) fail('parameter defaults and guards need a separate interface proof');
+      const unrepresented = Object.keys(parameter).some(field => !policy.parameterFields.includes(field));
+      if (!acceptRustSourceHeaderEmissionParameter(parameter.guard != null, parameter.default != null, unrepresented)) fail('parameter defaults, guards and unrepresented fields need a separate interface proof');
     }
     for (const [position, result] of [...signature.parameters.map(value => [value, false]), [signature.result, true]]) {
       type(position.type);

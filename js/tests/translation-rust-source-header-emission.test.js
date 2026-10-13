@@ -48,6 +48,10 @@ test('existing captured-profile defaults remain exact and explicit unknown model
   const value = reload(fixture.cases[1]);
   assert.match(emitTypedProgramLinks(value.network, value.root, 'Rust').code, /value: f64/u);
   assert.throws(() => emitTypedProgramLinks(value.network, value.root, 'Rust', { rustSourceHeaderEmissionModel: 'unknown' }), /Rust source header emission model/u);
+  const incompatible = decodeTypedProgramLinks(value.network, value.root);
+  incompatible.referenceSemantics = true;
+  const incompatibleArchive = encodeTypedProgramLinks(incompatible);
+  assert.throws(() => emitTypedProgramLinks(incompatibleArchive.network, incompatibleArchive.root, 'Rust', { rustSourceHeaderEmissionModel: 'unknown' }), /Rust source header emission model/u, 'an unknown explicit model is diagnosed before unrelated context admission');
   assert.throws(() => emitTypedProgramLinks(value.network, value.root, 'JavaScript', options), /requires Rust target/u);
   const absent = createTypedProgramLinks(fixture.cases[1].source, 'Rust');
   assert.throws(() => emitTypedProgramLinks(absent.network, absent.root, 'Rust', options), /owned source signature facet/u);
@@ -128,4 +132,42 @@ test('editable lifetime identifiers cannot inject syntax through the selected he
 
 test('the declared ASCII lifetime boundary keeps digits separate from first-position letters and underscore', () => {
   for (const [character, first, expected] of [[65, true, true], [90, true, true], [97, true, true], [122, true, true], [95, true, true], [48, true, false], [57, false, true], [47, false, false], [58, false, false], [64, true, false], [91, true, false], [96, true, false], [123, true, false], [945, false, false], [NaN, false, false], [Infinity, false, false], [-0, true, false]]) assert.equal(acceptRustSourceHeaderLifetimeCharacter(character, first), expected);
+});
+
+test('source-free generated metadata requires absence or the exact Boolean false value', () => {
+  const value = reload(fixture.cases[1]);
+  const original = emitTypedProgramLinks(value.network, value.root, 'Rust').code;
+  const unchanged = decodeTypedProgramLinks(value.network, value.root);
+  unchanged.declarations.get('keep').generated = false;
+  const accepted = encodeTypedProgramLinks(unchanged);
+  const restored = LinkNetwork.fromLino(accepted.network.toLino());
+  assert.equal(decodeTypedProgramLinks(restored, accepted.root).declarations.get('keep').generated, false);
+  assert.ok(emitTypedProgramLinks(restored, accepted.root, 'Rust', options).code.includes(fixture.cases[1].header));
+  assert.equal(emitTypedProgramLinks(restored, accepted.root, 'Rust').code, original);
+  for (const generated of [true, null, 0, '', 'false', 'true', 1, undefined, [], {}]) {
+    const program = decodeTypedProgramLinks(value.network, value.root);
+    program.declarations.get('keep').generated = generated;
+    const archive = encodeTypedProgramLinks(program);
+    const network = LinkNetwork.fromLino(archive.network.toLino());
+    const declaration = decodeTypedProgramLinks(network, archive.root).declarations.get('keep');
+    assert.ok(Object.hasOwn(declaration, 'generated'));
+    assert.deepEqual(declaration.generated, generated);
+    assert.throws(() => emitTypedProgramLinks(network, archive.root, 'Rust', options), /only flat original leaf function declarations are admitted/u);
+  }
+});
+
+test('source-free optional parameter metadata has no declared neutral value in the selected header profile', () => {
+  const value = reload(fixture.cases[1]);
+  const original = emitTypedProgramLinks(value.network, value.root, 'Rust').code;
+  for (const [name, optional] of [['optional', false], ['optional', true], ['optional', undefined], ['unrepresentedHeaderField', false]]) {
+    const program = decodeTypedProgramLinks(value.network, value.root);
+    program.declarations.get('keep').params[0][name] = optional;
+    const archive = encodeTypedProgramLinks(program);
+    const network = LinkNetwork.fromLino(archive.network.toLino());
+    const parameter = decodeTypedProgramLinks(network, archive.root).declarations.get('keep').params[0];
+    assert.ok(Object.hasOwn(parameter, name));
+    assert.equal(parameter[name], optional);
+    assert.throws(() => emitTypedProgramLinks(network, archive.root, 'Rust', options), /unrepresented fields need a separate interface proof/u);
+    assert.equal(emitTypedProgramLinks(network, archive.root, 'Rust').code, original);
+  }
 });
