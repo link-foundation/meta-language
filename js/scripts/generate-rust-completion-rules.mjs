@@ -6,6 +6,7 @@ import {parseJavaScript} from '../src/translation/javascript.js';
 import {checkProgram} from '../src/translation/check.js';
 import {emitRust} from '../src/translation/emit-rust.js';
 import {DecoratorSet} from '../src/decorators.js';
+import {tokenize} from '../src/translation/lexer.js';
 const policyFile=new URL('../src/translation/data/rust-completions.lino',import.meta.url);
 const policy=readProjectData(policyFile);
 // Preserve source-table priority: merge only adjacent equal result branches.
@@ -15,7 +16,18 @@ const decisionRows=rows=>{
   if(grouped.at(-1)?.result===result)grouped.at(-1).conditions.push(condition);
   else grouped.push({conditions:[condition],result});
  }
- return grouped.map(({conditions,result})=>'  if ('+conditions.map(condition=>'('+condition+')').join(' || ')+') return '+JSON.stringify(result)+';').join('\n');
+ return grouped.map(({conditions,result})=>{
+  // Table clauses read immutable primitive parameters. Share their identical
+  // leading comparisons while retaining adjacent result and table priority.
+  const clauses=conditions.map(condition=>condition.split(' && '));
+  const prefix=[];
+  while(clauses.length>1&&clauses.every(clause=>clause.length>1&&clause[0]===clauses[0][0])){
+   prefix.push(clauses[0][0]);clauses.forEach(clause=>clause.shift());
+  }
+  const alternatives=clauses.map(clause=>'('+clause.join(' && ')+')').join(' || ');
+  const condition=prefix.length?prefix.join(' && ')+' && ('+alternatives+')':alternatives;
+  return '  if ('+condition+') return '+JSON.stringify(result)+';';
+ }).join('\n');
 };
 const source='// Generated from linked Rust completion policy. Do not edit by hand.\n'
  +'/** @param {string} model @returns {boolean} */\nexport function acceptRustCompletionModel(model) {\n  return model === "" || model === '+JSON.stringify(policy.model)+';\n}\n\n'
@@ -32,6 +44,34 @@ const native=new URL('../../rust/src/translation/rust/completion_rules.rs',impor
 const decorators=new URL('../../parity/self-translation/rust-completion-rules-decorators.lino',import.meta.url);
 if(process.argv.includes('--check')){if(readFileSync(javascript,'utf8')!==source)throw new Error('JavaScript completion rules are stale');}else writeFileSync(javascript,source);
 const raw=emitRust(checkProgram(parseJavaScript(source))).definitions.join('\n\n');
+// Preserve required grouping around OR under AND. Literal parentheses and
+// future method/call arguments are lexical tokens, not grouping to erase.
+function removeRedundantBooleanGrouping(line){
+ for(let round=0;round<1000;round++){
+  const tokens=tokenize(line,'Rust').tokens,stack=[],pairs=[];
+  for(let index=0;index<tokens.length;index++){
+   if(tokens[index].kind!=='punct')continue;
+   if(tokens[index].value==='(')stack.push(index);
+   else if(tokens[index].value===')')pairs.push([stack.pop(),index]);
+  }
+  let changed=false;
+  const precedence=value=>({'||':1,'&&':2,'==':3,'!=':3,'!':4}[value]??0);
+  for(const[open,close]of pairs){
+   if(open===undefined||tokens[open-1]?.kind==='identifier'&&tokens[open-1].value!=='if'||tokens[close-1]?.value==='(')continue;
+   let depth=0,minimum=Infinity;
+   for(let index=open+1;index<close;index++){
+    if(tokens[index].kind!=='punct')continue;
+    if(tokens[index].value==='(')depth++;else if(tokens[index].value===')')depth--;
+    else if(depth===0&&precedence(tokens[index].value))minimum=Math.min(minimum,precedence(tokens[index].value));
+   }
+   if(minimum<Math.max(precedence(tokens[open-1]?.value),precedence(tokens[close+1]?.value)))continue;
+   line=line.slice(0,tokens[open].start)+line.slice(tokens[open].end,tokens[close].start)+line.slice(tokens[close].end);
+   changed=true;break;
+  }
+  if(!changed)return line;
+ }
+ throw new Error('completion Boolean grouping did not converge');
+}
 if(process.argv.includes('--update-styles')){
  const actions=[];
  let styled=raw;
@@ -42,7 +82,7 @@ if(process.argv.includes('--update-styles')){
  // result. Flatten grouping and nested else-if without changing execution.
  for(const line of styled.split('\n')){
   if(!line.trim().startsWith('if (') && !/^\s*\(*model/u.test(line) && !/^\s*\(*proven/u.test(line))continue;
-  replace(line,line.replace(/[()]/gu,''));
+  replace(line,removeRedundantBooleanGrouping(line));
  }
  for(const name of ['has_else','continuation']){
   replace(name+' == false','!'+name);replace(name+' == true',name);

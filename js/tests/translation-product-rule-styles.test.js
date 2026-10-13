@@ -9,7 +9,7 @@ import { checkProgram } from '../src/translation/check.js';
 import { emitJavaScript } from '../src/translation/emit-javascript.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { decorateEmitted } from '../src/grammar-emitters/common.js';
-import { formatProductRuleSource, readProductRuleStyleCorrections } from '../scripts/product-rule-style-corrections.mjs';
+import { formatProductRuleSource, readProductRuleStyleCorrections, readProductSourceConditionStyleCorrections } from '../scripts/product-rule-style-corrections.mjs';
 
 const provider = readFileSync(new URL('../../rust/src/translation/frontend_rules.rs', import.meta.url), 'utf8');
 const styleId = 'reviewed-product-native-lints-285c8b13';
@@ -109,4 +109,27 @@ test('two emitted loop expectations retain the exact JavaScript array-length and
   assert.match(raw, /index \+ 1f64/u);
   assert.match(raw, /index < \(items\.len\(\) as f64\)/u);
   assert.match(raw, /index < \(fields\.len\(\) as f64\)/u);
+});
+
+test('CI18 callback condition bindings preserve branch scope, evaluation order and local name hygiene', () => {
+  const before = 'fn take_first(value:bool)->bool{value} fn take_second(value:bool)->bool{value} pub fn choose(outer:bool,first:bool,second:bool)->bool{let ml_product_condition_1=outer;if !outer{false}else if ({let local=take_first(first);local}){if ({let local=take_second(second);local}){true}else{false}}else{false}}';
+  const actions=readProductSourceConditionStyleCorrections(before);
+  assert.equal(actions.length,1);assert.match(actions[0].from,/^pub fn choose\(/u);
+  assert.doesNotMatch(actions[0].to,/if \(\{/u);assert.match(actions[0].to,/let ml_product_condition_2/u);assert.match(actions[0].to,/let ml_product_condition_3/u);
+  const after=before.replace(actions[0].from,actions[0].to);
+  const read=source=>{
+    const code=emitJavaScript(checkProgram(parseRust(source+' fn main(){}'))).text;
+    const counter=[],context={counter};
+    vm.runInNewContext(code.replace('function take_first(value) {','function take_first(value) { counter.push("first");').replace('function take_second(value) {','function take_second(value) { counter.push("second");'),context,{timeout:1000});
+    return {counter,call:context.choose};
+  };
+  for(const outer of[false,true])for(const first of[false,true])for(const second of[false,true]){
+    const original=read(before),transformed=read(after),expected=outer&&first&&second;
+    assert.equal(original.call(outer,first,second),expected);assert.equal(transformed.call(outer,first,second),expected);
+    const order=outer?(first?['first','second']:['first']):[];
+    assert.deepEqual(original.counter,order);assert.deepEqual(transformed.counter,order);
+  }
+  const {styles}=source('source'),record=styles.decorators.find(decorator=>decorator.id==='reviewed-product-source-condition-lints-26667280');
+  assert.equal(record.actions.length,1);assert.deepEqual(record.when,[['format','Rust'],['scope','formatted-product-source-conditions']]);
+  assert.match(record.actions[0].from,/^pub fn solve_product_source_facts\(/u);assert.doesNotMatch(record.actions[0].to,/if \(\{/u);
 });
