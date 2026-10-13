@@ -237,7 +237,13 @@ impl Checker {
         let Type::Tuple { elements } = &object.ty else {
             return Err(type_error("tuple projection requires a tuple value", span));
         };
-        if !accept_tuple_index(index as f64, elements.len() as f64) {
+        let position = serde_json::Number::from(index)
+            .as_f64()
+            .expect("a host tuple position has a finite binary64 projection");
+        let length = serde_json::Number::from(elements.len())
+            .as_f64()
+            .expect("a host tuple cardinality has a finite binary64 projection");
+        if !accept_tuple_index(position, length) {
             return Err(type_error("tuple index out of range", span));
         }
         let ty = elements[index].clone();
@@ -265,13 +271,16 @@ impl Checker {
                 value, negative, ..
             } = &index.node
         {
+            let length = serde_json::Number::from(elements.len())
+                .as_f64()
+                .expect("a host tuple cardinality has a finite binary64 projection");
             let index = value
                 .parse::<f64>()
                 .ok()
                 .map(|value| if *negative { -value } else { value })
-                .filter(|value| accept_tuple_index(*value, elements.len() as f64))
-                .ok_or_else(|| type_error("tuple index out of range", span))?
-                as usize;
+                .filter(|value| accept_tuple_index(*value, length))
+                .and_then(crate::translation::frontend_rules::ml_array::number_index)
+                .ok_or_else(|| type_error("tuple index out of range", span))?;
             let ty = elements[index].clone();
             return Ok(Expr::new(
                 Node::TupleIndex {

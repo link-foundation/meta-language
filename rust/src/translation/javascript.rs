@@ -154,7 +154,7 @@ pub(crate) fn parse_javascript_bound_in(
     let tokens = tokenize(source, Language::JavaScript)?;
     let mut parser = JavaScriptParser::new(source, tokens.tokens, &tokens.comments);
     parser.literal_bindings.clone_from(literal_bindings);
-    parser.readonly_module_constants = readonly_module_constants;
+    parser.readonly_constants.module = readonly_module_constants;
     parser.externals.clone_from(&context.externals);
     parser
         .module_directory
@@ -320,6 +320,12 @@ enum ScanEnd {
     Brace,
 }
 
+#[derive(Default)]
+struct ReadonlyConstants {
+    module: bool,
+    initializer: bool,
+}
+
 struct JavaScriptParser {
     source: Source,
     cursor: TokenCursor,
@@ -339,8 +345,7 @@ struct JavaScriptParser {
     jumps: Jumps,
     /// Whether a top-level statement is being read, where `return` is a syntax error.
     top_level: bool,
-    readonly_module_constants: bool,
-    readonly_constant_initializer: bool,
+    readonly_constants: ReadonlyConstants,
     /// Functions and data types that loops and joins of statements lower to, and their count.
     generated: Vec<SItem>,
     generated_count: usize,
@@ -375,8 +380,7 @@ impl JavaScriptParser {
             sequential_async: false,
             jumps: Jumps::default(),
             top_level: false,
-            readonly_module_constants: false,
-            readonly_constant_initializer: false,
+            readonly_constants: ReadonlyConstants::default(),
             generated: Vec::new(),
             generated_count: 0,
             externals: Vec::new(),

@@ -154,7 +154,7 @@ impl JavaScriptParser {
             return self.array_destructuring(&start);
         }
         let (name, value, span) =
-            self.const_binding(&start, self.top_level && self.readonly_module_constants)?;
+            self.const_binding(&start, self.top_level && self.readonly_constants.module)?;
         Ok(Stmt::Const { name, value, span })
     }
 
@@ -279,10 +279,10 @@ impl JavaScriptParser {
         if self.cursor.eat("=").is_none() {
             return Err(self.fail_here("expected = in const"));
         }
-        let previous = self.readonly_constant_initializer;
-        self.readonly_constant_initializer = readonly;
+        let previous = self.readonly_constants.initializer;
+        self.readonly_constants.initializer = readonly;
         let result = self.expr();
-        self.readonly_constant_initializer = previous;
+        self.readonly_constants.initializer = previous;
         let value = result?;
         if self.cursor.is(",") {
             return Err(unsupported(
@@ -663,7 +663,7 @@ impl JavaScriptParser {
                     .collect());
             }
             let start = self.cursor.advance();
-            let (name, value, span) = self.const_binding(&start, self.readonly_module_constants)?;
+            let (name, value, span) = self.const_binding(&start, self.readonly_constants.module)?;
             return Ok(vec![SEffect::Let {
                 name,
                 ty: None,

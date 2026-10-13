@@ -60,8 +60,7 @@ impl JavaScriptParser {
                 }
                 self.cursor.advance();
             }
-            if !accept_object_property_definition(key.value.clone(), computed, self.cursor.is(":"))
-            {
+            if !accept_object_property_definition(&key.value, computed, self.cursor.is(":")) {
                 if prototype_definition.is_some() {
                     return Err(Self::fail("duplicate object prototype definition", &key));
                 }
@@ -161,10 +160,10 @@ impl JavaScriptParser {
             SNode::Array { .. } => "array",
             _ => "other",
         };
-        let readonly_literal = self.readonly_constant_initializer
+        let readonly_literal = self.readonly_constants.initializer
             && expression == "array"
             && literal_array_value(&arg);
-        if self.readonly_constant_initializer && expression == "array" && !readonly_literal {
+        if self.readonly_constants.initializer && expression == "array" && !readonly_literal {
             return Err(unsupported(
                 "Object.freeze operand",
                 "readonly module constants require literal values; evaluated elements need a separate module initialization model",
@@ -192,7 +191,7 @@ impl JavaScriptParser {
                 called,
             ));
         }
-        if !accept_object_freeze_operand(expression.to_owned(), readonly_literal) {
+        if !accept_object_freeze_operand(expression, readonly_literal) {
             return Err(unsupported(
                 "Object.freeze operand",
                 "freezing this value needs an explicit property-descriptor operation; only direct tagged objects and readonly literal module constants are represented",
