@@ -114,6 +114,7 @@ export function checkRustOwnedLocalStateProof(program){
     if(node.type.kind==='string')readValue(node,path,scope);return;
    }
    if(node.k==='tupleIndex'){
+    if(!node.object||Object.keys(node.object).some(field=>!policy.expressions.var.includes(field))||Object.values(node.object).some(value=>value===undefined))fail('tuple field layout or lexical ownership changed');
     if(node.object.k!=='var'||![0,1].includes(node.index)||!ownedLocalPair(node.object.type)||!scope.has(node.object.name)||!sameType(scope.get(node.object.name).type,node.object.type)||!sameType(node.type,node.object.type.elements[node.index]))fail('tuple field layout or lexical ownership changed');
     if(node.type.kind==='string')readValue(node,path,scope);return;
    }
