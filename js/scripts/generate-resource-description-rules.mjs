@@ -24,6 +24,19 @@ const format = value => {
   if (result.error || result.status !== 0) throw result.error ?? new Error(result.stderr);
   return result.stdout;
 };
+const formatItems = values => {
+  // Format the same complete declarations together to avoid a formatter process
+  // for every item. Checked boundaries retain every original per-item gate.
+  const marker = '// resource description formatted item ';
+  if (values.some(value => value.includes(marker))) throw new Error('a formatter boundary occurs in its input');
+  const formatted = format(values.map((value, index) => marker + index + '\n' + value).join('\n\n'));
+  const pieces = formatted.split(/^\/\/ resource description formatted item ([0-9]+)\n/gmu);
+  if (pieces.length !== values.length * 2 + 1 || pieces[0].trim()) throw new Error('the formatter changed its item boundaries');
+  return values.map((_, index) => {
+    if (pieces[index * 2 + 1] !== String(index)) throw new Error('the formatter changed item order');
+    return pieces[index * 2 + 2].trimEnd() + '\n';
+  });
+};
 if (process.argv.includes('--update-styles')) {
   const actions = [];
   const replace = (from, to) => { if (raw.includes(from)) actions.push({ op: 'replace', field: 'source', from, to }); };
@@ -97,10 +110,8 @@ if (process.argv.includes('--update-styles')) {
     when: [['format', 'Rust'], ['scope', 'formatted-item']], actions }]);
   writeFileSync(stylesFile, styles.toLino());
 }
-const styledItems = items.map(item => {
-  const initial = format(styles.decorate('emitter', { format: 'Rust', scope: 'raw-item', source: item }).source);
-  return format(styles.decorate('emitter', { format: 'Rust', scope: 'formatted-item', source: initial }).source);
-});
+const initialItems = formatItems(items.map(item => styles.decorate('emitter', { format: 'Rust', scope: 'raw-item', source: item }).source));
+const styledItems = formatItems(initialItems.map(initial => styles.decorate('emitter', { format: 'Rust', scope: 'formatted-item', source: initial }).source));
 const groups = [];
 let group = [];
 let size = 0;

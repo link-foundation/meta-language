@@ -12,6 +12,8 @@ const inner = node => node?.term === 'expression_statement' ? children(node).fin
 const alternative = node => inner(children(field(node, 'alternative') ?? {}).find(child => child.term !== 'else'));
 const operator = node => children(node).find(child => child.field === 'operator' || ['&&', '||', '>=', '<=', '<', '>', '==', '!='].includes(child.term))?.term;
 const tokenText = text => tokenize(text, 'Rust').tokens.map(token => token.kind === 'number' ? token.raw.replaceAll('_', '') : token.raw).join('');
+const repeats = node => ['loop_expression', 'while_expression', 'for_expression'].includes(node.term)
+  || (node.children ?? []).some(repeats);
 
 export function reuseResourceArrayPrelude(source, provider) {
   const normalize = text => tokenText(text.replace(/#\[must_use\]\s*/gu, '').replace(/\bconst fn integer\b/gu, 'fn integer'))
@@ -67,7 +69,10 @@ function reviewedPass(source) {
       const tokens = tokenize(original, 'Rust').tokens;
       let changed = original;
       for (const name of ['starts', 'lengths', 'variants', 'singletons']) {
-        if (tokens.filter(token => token.kind === 'identifier' && token.raw === name).length === 2) changed = changed.replace(new RegExp('\\b' + name + '\\.clone\\(\\)', 'gu'), name);
+        // A single written use in a repeated body can execute again after a
+        // continuation. Keep its owned read-only argument available next time;
+        // syntactic occurrence count alone is not an ownership proof.
+        if (!repeats(node) && tokens.filter(token => token.kind === 'identifier' && token.raw === name).length === 2) changed = changed.replace(new RegExp('\\b' + name + '\\.clone\\(\\)', 'gu'), name);
       }
       // The loop's Done arm returns its two owned position arrays immediately.
       if (text(field(node, 'name')) === 'ml_accept_resource_description_language_loop11') changed = changed.replace('MlAcceptResourceDescriptionLanguageLoop11Done(starts.clone(), lengths.clone())', 'MlAcceptResourceDescriptionLanguageLoop11Done(starts, lengths)');
