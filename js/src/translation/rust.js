@@ -7,7 +7,8 @@ import { readRustFunctionCompletion } from './rust-completions.js';
 import { readRustCompletionPanicMessage } from './rust-completion-panic.js';
 import { acceptRustSourceSignatureModel } from './rust-source-signature-rules.js';
 import { readRustSourceTypeHead, readRustSourceTypeOwner, createRustSourceSignature, RUST_SOURCE_SIGNATURE_POLICY } from './rust-source-signatures.js';
-import { acceptRustTypeNamespaceModel, acceptRustTypeNamespaceDeclaration } from './rust-type-namespace-rules.js';
+import { acceptRustTypeNamespaceModel, acceptRustTypeNamespaceDeclaration, acceptRustTypeNamespaceBodyConstructor, acceptRustTypeNamespaceBodyMethod, acceptRustTypeNamespaceMethodDiscovery, acceptRustTypeNamespaceDiscoveryType } from './rust-type-namespace-rules.js';
+import { captureRustUnitCloneDerivation, acceptRustUnitCloneReceiver } from './rust-unit-clone.js';
 import { createRustTypeNamespaceProof, requireRustTypeNamespaceWithoutImports, requireRustTypeNamespaceAnchor } from './rust-type-namespace.js';
 import { readRustInclusiveRangeQuery, readRustStringEmptyQuery, readRustEmptyStringConstructor } from './rust-read-only-queries.js';
 import { acceptRustReadOnlyQueryOwner } from './rust-read-only-query-rules.js';
@@ -81,6 +82,7 @@ class RustParser {
     this.completionModel = completionModel;
     this.sourceSignatureModel = sourceSignatureModel || (typeNamespaceModel ? 'Rust source function signature 1' : '');
     this.typeNamespaceModel = typeNamespaceModel;
+    this.typeNamespaceDiscovery = Boolean(typeNamespaceModel && catalog === null);
     this.typeNamespaceFrames = [];
     this.scalarLoopModel = scalarLoopModel;
     this.emptyOptionSourceModel=emptyOptionSourceModel;
@@ -122,11 +124,14 @@ class RustParser {
 
   attributes() {
     const c = this.cursor;
+    const derivations=[];
     if (this.emptyOptionSourceModel && c.is('#')) throw unsupported('Rust empty option source', 'attributes require a separate compilation context proof', span(c.peek(),c.peek()));
     while (c.is('#') && c.is('[', 1)) {
       const start = c.next();
-      this.attributeBody(start);
+      const derivation=this.attributeBody(start);
+      if(derivation)derivations.push(derivation);
     }
+    return derivations;
   }
 
   /** `#[derive(Clone, …)]` and lint attributes do not change behaviour. */
@@ -134,10 +139,12 @@ class RustParser {
     const c = this.cursor;
     c.expect('[', 'attribute');
     const name = c.identifier('attribute').value;
+    const traits=[];
     if (name === 'derive') {
       c.expect('(', 'derive');
       while (!c.is(')')) {
         const trait = c.identifier('derive');
+        traits.push(trait.value);
         if (!ACCEPTED_DERIVES.has(trait.value)) throw unsupported(`derive(${trait.value})`, 'only derives that add no behaviour are portable', span(trait, trait));
         if (!c.eat(',')) break;
       }
@@ -152,16 +159,18 @@ class RustParser {
     } else {
       throw unsupported(`#[${name}]`, 'attributes that change compilation are outside the portable core', span(start, c.peek()));
     }
-    c.expect(']', 'attribute');
+    const close=c.expect(']', 'attribute');
+    return name==='derive'?{name,traits,span:{start:start.start,end:close.end}}:null;
   }
 
   items(root, items, path, done) {
     const c = this.cursor;
     while (!done()) {
-      this.attributes();
+      const derivations=this.attributes();
       const start = c.peek();
       this.modulePath = path;
       this.visibility();
+      if(this.typeNamespaceModel&&derivations.some(attribute=>attribute.traits.includes('Clone'))&&!c.is('enum'))throw unsupported('Rust unit Clone derivation','a Clone derive must be attached to an actual datatype',span(start,c.peek()));
       if (this.emptyOptionSourceModel && (path.length || !c.is('fn'))) throw unsupported('Rust empty option source', 'only flat zero-argument empty leaf functions and an empty main are admitted', span(start,c.peek()));
       if (c.is('mod')) {
         c.next();
@@ -176,6 +185,7 @@ class RustParser {
         continue;
       }
       if (path.length === 0 && c.is('extern') && c.is('crate', 1) && c.is('alloc', 2) && c.is(';', 3)) {
+        if(this.typeNamespaceModel)throw unsupported('Rust type namespace imports','external crate declarations require a separate source binding proof',span(start,start));
         const key = [...path, 'alloc'].join('.');
         if (this.crateDeclarations.has(key)) throw unsupported('extern crate alloc', 'each source crate declaration must be unique in its module', span(start, start));
         this.crateDeclarations.add(key);
@@ -188,7 +198,7 @@ class RustParser {
         continue;
       }
       if (c.is('enum')) {
-        items.push(this.enumItem(path));
+        items.push(this.enumItem(path,derivations));
         continue;
       }
       if (c.is('fn') || c.is('const')) {
@@ -274,7 +284,7 @@ class RustParser {
     return aliases?.has(segments[0]) ? [...aliases.get(segments[0]), ...segments.slice(1)] : segments;
   }
 
-  enumItem(path) {
+  enumItem(path,derivations=[]) {
     const c = this.cursor;
     const start = c.next();
     const name = c.identifier('enum').value;
@@ -284,7 +294,8 @@ class RustParser {
     const owner = [...path, name].join('.');
     this.origins.declaration(name, path, { k: 'data' });
     while (!c.is('}')) {
-      this.attributes();
+      const variantAttributes=this.attributes();
+      if(this.typeNamespaceModel&&variantAttributes.some(attribute=>attribute.traits.includes('Clone')))throw unsupported('Rust unit Clone derivation','a Clone derive must be attached to its datatype',span(c.peek(),c.peek()));
       const variant = c.identifier('variant');
       const fields = [];
       const sourceFields = [];
@@ -305,7 +316,11 @@ class RustParser {
       if (!c.eat(',')) break;
     }
     c.expect('}', 'enum');
-    return { k: 'data', name, ctors, span: span(start, c.peek()) };
+    const declaration={ k: 'data', name, ctors, span: span(start, c.peek()) };
+    const proof=this.typeNamespaceModel?captureRustUnitCloneDerivation(derivations,declaration,path):null;
+    if(proof)declaration.sourceUnitCloneDerivation=proof;
+    this.origins.declaration(name,path,{k:'data',unitFields:ctors.every(constructor=>constructor.fields.length===0),...(proof?{sourceUnitCloneDerivation:proof}:{})});
+    return declaration;
   }
 
   /**
@@ -439,6 +454,7 @@ class RustParser {
     if (name === 'String' || resolved.join('::') === 'std::string::String') return this.origins.typed(STRING, this.modulePath);
     if (name === 'f64') return this.origins.typed(FLOAT, this.modulePath);
     if (['str', 'char', 'f32', 'Vec', 'Option', 'Result', 'Rc', 'Arc', 'HashMap', 'Self'].includes(name)) {
+      if (acceptRustTypeNamespaceDiscoveryType(this.typeNamespaceDiscovery, name)) return this.origins.typed({kind:'named',path:resolved,span:span(token,token)},this.modulePath);
       throw unsupported(`Rust type ${name}`, 'outside the portable core', span(token, token));
     }
     return this.origins.typed({ kind: 'named', path: this.resolve(segments, this.modulePath), span: span(token, token) }, this.modulePath);
@@ -996,6 +1012,8 @@ class RustParser {
   }
 
   method(receiver, method, args, range) {
+    const discovery=acceptRustTypeNamespaceMethodDiscovery(this.typeNamespaceDiscovery,method.value);
+    if (!acceptRustTypeNamespaceBodyMethod(Boolean(this.typeNamespaceModel)&&!discovery, method.value, acceptRustUnitCloneReceiver(this,receiver))) throw unsupported('Rust type namespace body method', `${method.value} requires a separate actual method owner proof`, range);
     const expect = (count) => {
       if (args.length !== count) throw new TranslationError('type', `${method.value} expects ${count} arguments but got ${args.length}`, range);
     };
@@ -1179,10 +1197,12 @@ class RustParser {
         return this.origins.wrap(args[0], path, 'box');
       }
       if (name === 'String::from') {
+        if (!acceptRustTypeNamespaceBodyConstructor(Boolean(this.typeNamespaceModel), name)) throw unsupported('Rust type namespace body constructor', 'String::from requires a separate actual owner and argument proof', range);
         if (args.length !== 1) throw new TranslationError('type', 'String::from expects 1 argument', range);
         return this.origins.conversion({ k: 'toString', arg: args[0], span: range }, path);
       }
       if (segments.length === 2 && segments[1] === 'from' && rustFixedType(segments[0])) {
+        if (!acceptRustTypeNamespaceBodyConstructor(Boolean(this.typeNamespaceModel), name)) throw unsupported('Rust type namespace body constructor', `${name} requires a separate actual owner and argument proof`, range);
         if (args.length !== 1) throw new TranslationError('type', `${name} expects 1 argument`, range);
         return { k: 'cast', arg: args[0], to: rustFixedType(segments[0]), flavor: 'exact', span: range };
       }
