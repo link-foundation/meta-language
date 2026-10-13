@@ -118,3 +118,57 @@ test('the observed undefined optional type retains its tag and refuses other ele
   value.body={k:'some',value:{k:'lit',value:'1',type:{kind:'float'}},type:value.ret};
   assert.throws(()=>emitJavaScript(program,{scopedBindingModel:fixture.model}),/ownership role/u);
 });
+
+test('every admitted record role refuses unrepresented ownership facts after actual graph reload',()=>{
+  const base=createTypedProgramLinks('function keep(x){return x+1;}keep(2);','JavaScript');
+  const roles={program:program=>program,main:program=>program.main,declaration:program=>program.declarations.get('keep'),parameter:program=>program.declarations.get('keep').params[0],effect:program=>program.main.effects[0],expression:program=>program.declarations.get('keep').body};
+  for(const [role,owner]of Object.entries(roles))for(const field of ['borrowEscape','opaqueBinding','sourceEmptyOption']){
+    const program=decodeTypedProgramLinks(base.network,base.root);
+    owner(program)[field]=field==='opaqueBinding'?(role==='parameter'?program.declarations.get('keep').body:program.declarations.get('keep').params[0]):true;
+    const attempt=()=>{const encoded=encodeTypedProgramLinks(program);const network=LinkNetwork.fromLino(encoded.network.toLino());return emitTypedProgramLinks(network,encoded.root,'JavaScript',options);};
+    if(field==='sourceEmptyOption')assert.throws(attempt,undefined,role+':'+field);
+    else assert.throws(attempt,/unrepresented own fields/u,role+':'+field);
+  }
+});
+
+test('known source facet names still require their actual independently checked owner records',()=>{
+  const base=createTypedProgramLinks('function keep(x){return x+1;}keep(2);','JavaScript');
+  for(const name of ['sourceSignature','sourceLoop','sourcePrimitiveOwners'])for(const value of [undefined,null,{},true]){
+    const program=decodeTypedProgramLinks(base.network,base.root);
+    program.declarations.get('keep')[name]=value;
+    assert.throws(()=>emitJavaScript(program,{scopedBindingModel:fixture.model}),/signature|loop|owner|source profile|primitive|source facet|explicitly undefined field/u,name);
+  }
+});
+
+test('actual source signatures and qualified primitive owners compose with strict selected scoped emission',()=>{
+  const base=createTypedProgramLinks('fn apply(value:&std::primitive::f64)->std::primitive::f64{*value}fn main(){}','Rust',{rustPrimitiveOwnerModel:'standard primitive Rust binary64 owner 1',rustSourceSignatureModel:'Rust source function signature 1'});
+  const network=LinkNetwork.fromLino(base.network.toLino());const before=network.toLino();
+  const program=decodeTypedProgramLinks(network,base.root);const declaration=program.declarations.get('apply');
+  assert.ok(declaration.sourceSignature);assert.ok(declaration.sourcePrimitiveOwners);
+  const code=emitTypedProgramLinks(network,base.root,'JavaScript',options).code;
+  for(const input of [-0,NaN,Infinity,1.75])assert.ok(Object.is(vm.runInNewContext(`${code}\napply(input)`,{input},{timeout:1000}),input));
+  assert.equal(network.toLino(),before);
+});
+
+test('present empty-context sequences and represented Boolean slots retain exact scalar shapes',()=>{
+  const base=createTypedProgramLinks('function keep(x){return x+1;}keep(2);','JavaScript');
+  for(const field of ['imports','externals'])for(const value of [null,{},false,'',0,undefined]){
+    const program=decodeTypedProgramLinks(base.network,base.root);program[field]=value;
+    const attempt=()=>{const encoded=encodeTypedProgramLinks(program);const network=LinkNetwork.fromLino(encoded.network.toLino());return emitTypedProgramLinks(network,encoded.root,'JavaScript',options);};
+    assert.throws(attempt,/actual empty import and external sequences|explicitly undefined field|not iterable/u,field);
+  }
+  for(const [role,field]of [['main','sequentialAsync'],['function','recursive'],['function','mutual'],['effect','constant']])for(const value of [null,0,'',{},undefined]){
+    const program=decodeTypedProgramLinks(base.network,base.root);const owner=role==='main'?program.main:role==='function'?program.declarations.get('keep'):program.main.effects[0];owner[field]=value;
+    const encoded=encodeTypedProgramLinks(program);const network=LinkNetwork.fromLino(encoded.network.toLino());
+    assert.throws(()=>emitTypedProgramLinks(network,encoded.root,'JavaScript',options),/exact Boolean fields|explicitly undefined field/u,role+':'+field);
+  }
+});
+
+test('explicit undefined guard, default and source-span facts differ from absent or null fields',()=>{
+  const base=createTypedProgramLinks('function keep(x){return x+1;}keep(2);','JavaScript');
+  for(const field of ['guard','default','span']){
+    const program=decodeTypedProgramLinks(base.network,base.root);const owner=field==='span'?program.declarations.get('keep').body:program.declarations.get('keep').params[0];owner[field]=undefined;
+    const encoded=encodeTypedProgramLinks(program);const network=LinkNetwork.fromLino(encoded.network.toLino());
+    assert.throws(()=>emitTypedProgramLinks(network,encoded.root,'JavaScript',options),/explicitly undefined field/u,field);
+  }
+});

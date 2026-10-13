@@ -24,6 +24,13 @@ source += definition('acceptJavaScriptScopedBindingEmissionAbsentExpression', st
 source += definition('acceptJavaScriptScopedBindingEmissionExpression', strings(['kind']), 'boolean', `return ${member('kind', policy.expressions)};`);
 source += definition('acceptJavaScriptScopedBindingEmissionEffect', strings(['kind']), 'boolean', `return ${member('kind', policy.effects)};`);
 source += definition('acceptJavaScriptScopedBindingEmissionRole', strings(['role', 'owner']), 'boolean', `return ${policy.roles.map(value => `(role === ${JSON.stringify(value.role)} && owner === ${JSON.stringify(value.owner)})`).join(' || ')};`);
+const ownedFields = Object.entries(policy.ownedFields).flatMap(([role, kinds]) => Array.isArray(kinds)
+  ? [{role,kind:'',fields:kinds}] : Object.entries(kinds).map(([kind,fields])=>({role,kind,fields})));
+source += definition('acceptJavaScriptScopedBindingOwnField', strings(['role','kind','field']), 'boolean', `return ${ownedFields.map(value=>`(role === ${JSON.stringify(value.role)} && kind === ${JSON.stringify(value.kind)} && (${member('field',value.fields)}))`).join(' || ')};`);
+source += definition('acceptJavaScriptScopedBindingSourceFacet', `${strings(['field'])} @param {boolean} record`, 'boolean', `return (${member('field',policy.validatedSourceFacets)}) && record;`);
+source += definition('acceptJavaScriptScopedBindingBooleanField', strings(['role','kind','field']), 'boolean', `return ${policy.booleanFields.map(value=>`(role === ${JSON.stringify(value.role)} && kind === ${JSON.stringify(value.kind)} && (${member('field',value.fields)}))`).join(' || ')};`);
+source += definition('acceptJavaScriptScopedBindingEmptySequence', `${strings(['field'])} @param {boolean} present @param {boolean} sequence @param {boolean} empty`, 'boolean', `return !(${member('field',policy.emptySequenceFields)}) || !present || (sequence && empty);`);
+source += definition('acceptJavaScriptScopedBindingDefinedField', '@param {boolean} undefinedValue', 'boolean', policy.allowUndefinedFieldValues?'return true;':'return !undefinedValue;');
 if (typeof policy.preservedScopeReserveDeclarations !== 'boolean') throw new Error('the owned scope reservation premise must be Boolean');
 source += definition('reserveJavaScriptScopedBindingDeclarationNames', '@param {boolean} preserve', 'boolean', policy.preservedScopeReserveDeclarations ? 'return true;' : 'return !preserve;');
 source += definition('renderJavaScriptScopedBindingIdentifier', `${strings(['name'])} @param {boolean} preserve`, 'string', `if (preserve) return name; return ${JSON.stringify(policy.prefix)} + name;`);
@@ -40,7 +47,7 @@ if (!process.argv.includes('--javascript-only')) {
   if (process.argv.includes('--update-styles')) {
     const actions = []; let current = raw;
     const replace = (from, to) => { if (current.includes(from)) { actions.push({op: 'replace', field: 'source', from, to}); current = current.split(from).join(to); } };
-    for (const name of ['model', 'language', 'form', 'kind', 'element', 'absence', 'role', 'owner', 'name']) replace(`${name}: String`, `${name}: &str`);
+    for (const name of ['model', 'language', 'form', 'kind', 'element', 'absence', 'role', 'owner', 'name','field']) replace(`${name}: String`, `${name}: &str`);
     for (const match of [...current.matchAll(/^pub fn (\w+)/gmu)]) replace(`pub fn ${match[1]}`, `/// Apply the shared owned scoped binding emission policy.\n#[must_use]\npub fn ${match[1]}`);
     for (const match of [...current.matchAll(/pub fn accept_java_script_scoped_binding_[\s\S]*?\n\}/gu)]) {
       const block = match[0]; const open = block.indexOf('{'); let expression = block.slice(open + 1, -1).trim();
