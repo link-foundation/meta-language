@@ -22,6 +22,38 @@ const format = input => {
 if (process.argv.includes('--update-styles')) {
   const actions = [];
   const replace = (from, to) => { if (raw.includes(from)) actions.push({ op: 'replace', field: 'source', from, to }); };
+  // Recorded style changes preserve every emitted branch and fallback.
+  let flattened = raw;
+  for (;;) {
+    const match = /\} else \{\n\s+if /u.exec(flattened);
+    if (!match) break;
+    const opening = match.index + '} else '.length;
+    let depth = 1;
+    let cursor = opening + 1;
+    let quoted = false;
+    for (; cursor < flattened.length && depth; cursor += 1) {
+      const character = flattened[cursor];
+      if (quoted && character === '\\') { cursor += 1; continue; }
+      if (character === '"') quoted = !quoted;
+      if (!quoted && character === '{') depth += 1;
+      if (!quoted && character === '}') depth -= 1;
+    }
+    if (depth) throw new Error('a translated binary framing decision has an unclosed branch');
+    const from = flattened.slice(match.index, cursor);
+    const to = '} else ' + flattened.slice(opening + 1, cursor - 1).trim();
+    actions.push({ op: 'replace', field: 'source', from, to });
+    flattened = flattened.split(from).join(to);
+  }
+  // These generated owned continuation values occur only at their binding
+  // and single match/result use; moving retains their checked semantics.
+  for (const match of raw.matchAll(/\blet (ml_s[0-9]+|ml_result[0-9]+) = /gu)) {
+    const name = match[1];
+    const occurrences = [...raw.matchAll(new RegExp('\\b' + name + '\\b', 'gu'))].length;
+    if (occurrences === 2) replace(name + '.clone()', name);
+  }
+  // optional_at over the checked numeric input returns Copy Option<f64>.
+  replace('(crate::ml_array::optional_at(&input, crate::ml_array::number_index(index))).clone().unwrap_or_else(|| (-1f64))',
+    '(crate::ml_array::optional_at(&input, crate::ml_array::number_index(index))).unwrap_or(-1f64)');
   for (const name of names) replace(`crate::${name}`, `super::${name}`);
   // The source never mutates these arrays. Generated continuations can borrow
   // them instead of cloning the complete byte buffer at every field.

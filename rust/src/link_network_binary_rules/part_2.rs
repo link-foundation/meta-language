@@ -74,7 +74,7 @@ pub fn ml_transcode_link_network_binary_loop9(
                                         entries,
                                         entry,
                                     );
-                                    match ml_s14.clone() {
+                                    match ml_s14 {
                                         super::MlTranscodeLinkNetworkBinaryLoop11Result::MlTranscodeLinkNetworkBinaryLoop11Done(output_5, cursor_3) => {
                                             {
                                                 let section_2 = (section + 1f64);
@@ -440,7 +440,7 @@ pub fn ml_transcode_link_network_binary_loop22(
                                                     let index_2 = 0f64;
                                                     {
                                                         let ml_s15 = super::ml_transcode_link_network_binary_loop28(input, binary, output_5.clone(), cursor_3, length, index_2);
-                                                        match ml_s15.clone() {
+                                                        match ml_s15 {
                                                             super::MlTranscodeLinkNetworkBinaryLoop28Result::MlTranscodeLinkNetworkBinaryLoop28Done(output_6, cursor_4) => {
                                                                 {
                                                                     let text_2 = (text + 1f64);
@@ -504,33 +504,29 @@ pub fn ml_transcode_link_network_binary_loop21(
                 let value = super::read_link_network_binary_integer(input, cursor, 1f64, binary);
                 if ((value < (0f64)) || (value > (255f64))) {
                     super::MlTranscodeLinkNetworkBinaryLoop21Result::MlTranscodeLinkNetworkBinaryLoop21Return(((super::ml_string::Text::from_units(vec![45, 49, 50, 44])).concat(&super::ml_string::Text::from_text(&super::ml_number::js_number(cursor)))).concat(&super::ml_string::Text::from_units(vec![44])))
+                } else if ((((((field == (0f64)) && (value != (1f64)))
+                    || ((field == (1f64)) && (value > (15f64))))
+                    || (((field == (2f64)) || (field == (4f64))) && (value > (1f64))))
+                    || ((field == (5f64)) && (value != (0f64))))
+                    || ((field == (3f64))
+                        && (((value > (15f64))
+                            || (((value % 2f64) == (1f64))
+                                && (((value / 2f64).floor() % 2f64) != (1f64))))
+                            || ((((value / 4f64).floor() % 2f64) == (1f64))
+                                && (((value / 2f64).floor() % 2f64) != (1f64))))))
+                {
+                    super::MlTranscodeLinkNetworkBinaryLoop21Result::MlTranscodeLinkNetworkBinaryLoop21Return(((super::ml_string::Text::from_units(vec![45, 49, 51, 44])).concat(&super::ml_string::Text::from_text(&super::ml_number::js_number(cursor)))).concat(&super::ml_string::Text::from_units(vec![44])))
                 } else {
-                    if ((((((field == (0f64)) && (value != (1f64)))
-                        || ((field == (1f64)) && (value > (15f64))))
-                        || (((field == (2f64)) || (field == (4f64))) && (value > (1f64))))
-                        || ((field == (5f64)) && (value != (0f64))))
-                        || ((field == (3f64))
-                            && (((value > (15f64))
-                                || (((value % 2f64) == (1f64))
-                                    && (((value / 2f64).floor() % 2f64) != (1f64))))
-                                || ((((value / 4f64).floor() % 2f64) == (1f64))
-                                    && (((value / 2f64).floor() % 2f64) != (1f64))))))
                     {
-                        super::MlTranscodeLinkNetworkBinaryLoop21Result::MlTranscodeLinkNetworkBinaryLoop21Return(((super::ml_string::Text::from_units(vec![45, 49, 51, 44])).concat(&super::ml_string::Text::from_text(&super::ml_number::js_number(cursor)))).concat(&super::ml_string::Text::from_units(vec![44])))
-                    } else {
+                        let cursor_2 = (cursor + 1f64);
                         {
-                            let cursor_2 = (cursor + 1f64);
+                            let output_2 = output
+                                .concat(&super::render_link_network_binary_field(value, binary));
                             {
-                                let output_2 = output.concat(
-                                    &super::render_link_network_binary_field(value, binary),
-                                );
+                                let field_2 = (field + 1f64);
                                 {
-                                    let field_2 = (field + 1f64);
-                                    {
-                                        (output, cursor, field) =
-                                            (output_2.clone(), cursor_2, field_2);
-                                        continue;
-                                    }
+                                    (output, cursor, field) = (output_2.clone(), cursor_2, field_2);
+                                    continue;
                                 }
                             }
                         }

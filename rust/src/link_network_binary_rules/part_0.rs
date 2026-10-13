@@ -610,9 +610,7 @@ pub mod ml_string {
 /// Execute the checked shared binary-network framing algorithm.
 #[must_use]
 pub fn link_network_binary_unit(input: &[f64], index: f64) -> f64 {
-    (super::ml_array::optional_at(input, super::ml_array::number_index(index)))
-        .clone()
-        .unwrap_or_else(|| (-1f64))
+    (super::ml_array::optional_at(input, super::ml_array::number_index(index))).unwrap_or(-1f64)
 }
 
 /// Execute the checked shared binary-network framing algorithm.
@@ -638,21 +636,20 @@ pub fn read_link_network_binary_integer(
                 (-1f64)
             }
         }
+    } else if ((cursor + width) > (input.len() as f64)) {
+        (-1f64)
     } else {
-        if ((cursor + width) > (input.len() as f64)) {
-            (-1f64)
-        } else {
+        {
+            let value_2 = 0f64;
             {
-                let value_2 = 0f64;
+                let factor = 1f64;
                 {
-                    let factor = 1f64;
+                    let index = 0f64;
                     {
-                        let index = 0f64;
-                        {
-                            let ml_s1 = super::ml_read_link_network_binary_integer_loop1(
-                                input, cursor, width, value_2, factor, index,
-                            );
-                            match ml_s1.clone() {
+                        let ml_s1 = super::ml_read_link_network_binary_integer_loop1(
+                            input, cursor, width, value_2, factor, index,
+                        );
+                        match ml_s1 {
                                 super::MlReadLinkNetworkBinaryIntegerLoop1Result::MlReadLinkNetworkBinaryIntegerLoop1Done(value_3) => {
                                     value_3
                                 }
@@ -660,7 +657,6 @@ pub fn read_link_network_binary_integer(
                                     ml_result1
                                 }
                             }
-                        }
                     }
                 }
             }
@@ -687,7 +683,7 @@ pub fn accept_link_network_binary_unicode(units: &[f64]) -> bool {
         let index = 0f64;
         {
             let ml_s2 = super::ml_accept_link_network_binary_unicode_loop3(units, index);
-            match ml_s2.clone() {
+            match ml_s2 {
                 super::MlAcceptLinkNetworkBinaryUnicodeLoop3Result::MlAcceptLinkNetworkBinaryUnicodeLoop3Done => {
                     true
                 }
@@ -704,72 +700,38 @@ pub fn accept_link_network_binary_unicode(units: &[f64]) -> bool {
 pub fn render_link_network_binary_hexadecimal_digit(value: f64) -> super::ml_string::Text {
     if (value == (0f64)) {
         super::ml_string::Text::from_units(vec![48])
+    } else if (value == (1f64)) {
+        super::ml_string::Text::from_units(vec![49])
+    } else if (value == (2f64)) {
+        super::ml_string::Text::from_units(vec![50])
+    } else if (value == (3f64)) {
+        super::ml_string::Text::from_units(vec![51])
+    } else if (value == (4f64)) {
+        super::ml_string::Text::from_units(vec![52])
+    } else if (value == (5f64)) {
+        super::ml_string::Text::from_units(vec![53])
+    } else if (value == (6f64)) {
+        super::ml_string::Text::from_units(vec![54])
+    } else if (value == (7f64)) {
+        super::ml_string::Text::from_units(vec![55])
+    } else if (value == (8f64)) {
+        super::ml_string::Text::from_units(vec![56])
+    } else if (value == (9f64)) {
+        super::ml_string::Text::from_units(vec![57])
+    } else if (value == (10f64)) {
+        super::ml_string::Text::from_units(vec![97])
+    } else if (value == (11f64)) {
+        super::ml_string::Text::from_units(vec![98])
+    } else if (value == (12f64)) {
+        super::ml_string::Text::from_units(vec![99])
+    } else if (value == (13f64)) {
+        super::ml_string::Text::from_units(vec![100])
+    } else if (value == (14f64)) {
+        super::ml_string::Text::from_units(vec![101])
+    } else if (value == (15f64)) {
+        super::ml_string::Text::from_units(vec![102])
     } else {
-        if (value == (1f64)) {
-            super::ml_string::Text::from_units(vec![49])
-        } else {
-            if (value == (2f64)) {
-                super::ml_string::Text::from_units(vec![50])
-            } else {
-                if (value == (3f64)) {
-                    super::ml_string::Text::from_units(vec![51])
-                } else {
-                    if (value == (4f64)) {
-                        super::ml_string::Text::from_units(vec![52])
-                    } else {
-                        if (value == (5f64)) {
-                            super::ml_string::Text::from_units(vec![53])
-                        } else {
-                            if (value == (6f64)) {
-                                super::ml_string::Text::from_units(vec![54])
-                            } else {
-                                if (value == (7f64)) {
-                                    super::ml_string::Text::from_units(vec![55])
-                                } else {
-                                    if (value == (8f64)) {
-                                        super::ml_string::Text::from_units(vec![56])
-                                    } else {
-                                        if (value == (9f64)) {
-                                            super::ml_string::Text::from_units(vec![57])
-                                        } else {
-                                            if (value == (10f64)) {
-                                                super::ml_string::Text::from_units(vec![97])
-                                            } else {
-                                                if (value == (11f64)) {
-                                                    super::ml_string::Text::from_units(vec![98])
-                                                } else {
-                                                    if (value == (12f64)) {
-                                                        super::ml_string::Text::from_units(vec![99])
-                                                    } else {
-                                                        if (value == (13f64)) {
-                                                            super::ml_string::Text::from_units(
-                                                                vec![100],
-                                                            )
-                                                        } else {
-                                                            if (value == (14f64)) {
-                                                                super::ml_string::Text::from_units(
-                                                                    vec![101],
-                                                                )
-                                                            } else {
-                                                                if (value == (15f64)) {
-                                                                    super::ml_string::Text::from_units(vec![102])
-                                                                } else {
-                                                                    super::ml_string::Text::from_units(vec![])
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        super::ml_string::Text::from_units(vec![])
     }
 }
 

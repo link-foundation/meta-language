@@ -36,83 +36,80 @@ pub fn ml_transcode_link_network_binary_loop7(
                     || ((version == (2f64)) && (identity >= next_identity)))
                 {
                     super::MlTranscodeLinkNetworkBinaryLoop7Result::MlTranscodeLinkNetworkBinaryLoop7Return(((super::ml_string::Text::from_units(vec![45, 55, 44])).concat(&super::ml_string::Text::from_text(&super::ml_number::js_number(cursor)))).concat(&super::ml_string::Text::from_units(vec![44])))
+                } else if identities.contains(
+                    &((super::ml_string::Text::from_units(vec![44])).concat(
+                        &super::ml_string::Text::from_text(&super::ml_number::js_number(identity)),
+                    ))
+                    .concat(&super::ml_string::Text::from_units(vec![44])),
+                ) {
+                    super::MlTranscodeLinkNetworkBinaryLoop7Result::MlTranscodeLinkNetworkBinaryLoop7Return(((super::ml_string::Text::from_units(vec![45, 56, 44])).concat(&super::ml_string::Text::from_text(&super::ml_number::js_number(cursor)))).concat(&super::ml_string::Text::from_units(vec![44])))
                 } else {
-                    if identities.contains(
-                        &((super::ml_string::Text::from_units(vec![44])).concat(
-                            &super::ml_string::Text::from_text(&super::ml_number::js_number(
+                    {
+                        let identities_2 = identities.concat(
+                            &(super::ml_string::Text::from_text(&super::ml_number::js_number(
                                 identity,
-                            )),
-                        ))
-                        .concat(&super::ml_string::Text::from_units(vec![44])),
-                    ) {
-                        super::MlTranscodeLinkNetworkBinaryLoop7Result::MlTranscodeLinkNetworkBinaryLoop7Return(((super::ml_string::Text::from_units(vec![45, 56, 44])).concat(&super::ml_string::Text::from_text(&super::ml_number::js_number(cursor)))).concat(&super::ml_string::Text::from_units(vec![44])))
-                    } else {
+                            )))
+                            .concat(&super::ml_string::Text::from_units(vec![44])),
+                        );
                         {
-                            let identities_2 = identities.concat(
-                                &(super::ml_string::Text::from_text(&super::ml_number::js_number(
-                                    identity,
-                                )))
-                                .concat(&super::ml_string::Text::from_units(vec![44])),
-                            );
+                            let cursor_2 = (cursor + if binary { 8f64 } else { 1f64 });
                             {
-                                let cursor_2 = (cursor + if binary { 8f64 } else { 1f64 });
-                                {
-                                    let output_4 = if binary {
+                                let output_4 = if binary {
+                                    {
+                                        let output_2 = output.concat(
+                                            &super::render_link_network_binary_field(
+                                                identity, binary,
+                                            ),
+                                        );
+                                        output_2.clone()
+                                    }
+                                } else {
+                                    {
+                                        let index = 0f64;
                                         {
-                                            let output_2 = output.concat(
-                                                &super::render_link_network_binary_field(
-                                                    identity, binary,
-                                                ),
-                                            );
-                                            output_2.clone()
+                                            let output_3 =
+                                                super::ml_transcode_link_network_binary_loop17(
+                                                    binary,
+                                                    output.clone(),
+                                                    identity,
+                                                    index,
+                                                );
+                                            output_3.clone()
                                         }
+                                    }
+                                };
+                                {
+                                    let references = super::read_link_network_binary_integer(
+                                        input, cursor_2, 8f64, binary,
+                                    );
+                                    if ((references < (0f64))
+                                        || (references > (input.len() as f64)))
+                                    {
+                                        super::MlTranscodeLinkNetworkBinaryLoop7Result::MlTranscodeLinkNetworkBinaryLoop7Return(((super::ml_string::Text::from_units(vec![45, 57, 44])).concat(&super::ml_string::Text::from_text(&super::ml_number::js_number(cursor_2)))).concat(&super::ml_string::Text::from_units(vec![44])))
                                     } else {
                                         {
-                                            let index = 0f64;
+                                            let cursor_3 =
+                                                (cursor_2 + if binary { 8f64 } else { 1f64 });
                                             {
-                                                let output_3 =
-                                                    super::ml_transcode_link_network_binary_loop17(
-                                                        binary,
-                                                        output.clone(),
-                                                        identity,
-                                                        index,
-                                                    );
-                                                output_3.clone()
-                                            }
-                                        }
-                                    };
-                                    {
-                                        let references = super::read_link_network_binary_integer(
-                                            input, cursor_2, 8f64, binary,
-                                        );
-                                        if ((references < (0f64))
-                                            || (references > (input.len() as f64)))
-                                        {
-                                            super::MlTranscodeLinkNetworkBinaryLoop7Result::MlTranscodeLinkNetworkBinaryLoop7Return(((super::ml_string::Text::from_units(vec![45, 57, 44])).concat(&super::ml_string::Text::from_text(&super::ml_number::js_number(cursor_2)))).concat(&super::ml_string::Text::from_units(vec![44])))
-                                        } else {
-                                            {
-                                                let cursor_3 =
-                                                    (cursor_2 + if binary { 8f64 } else { 1f64 });
-                                                {
-                                                    let output_7 = if binary {
-                                                        {
-                                                            let output_5 = output_4.concat(&super::render_link_network_binary_field(references, binary));
-                                                            output_5.clone()
-                                                        }
-                                                    } else {
-                                                        {
-                                                            let index_2 = 0f64;
-                                                            {
-                                                                let output_6 = super::ml_transcode_link_network_binary_loop18(binary, output_4.clone(), references, index_2);
-                                                                output_6.clone()
-                                                            }
-                                                        }
-                                                    };
+                                                let output_7 = if binary {
                                                     {
-                                                        let reference = 0f64;
+                                                        let output_5 = output_4.concat(&super::render_link_network_binary_field(references, binary));
+                                                        output_5.clone()
+                                                    }
+                                                } else {
+                                                    {
+                                                        let index_2 = 0f64;
                                                         {
-                                                            let ml_s16 = super::ml_transcode_link_network_binary_loop19(input, binary, output_7.clone(), cursor_3, references, reference);
-                                                            match ml_s16.clone() {
+                                                            let output_6 = super::ml_transcode_link_network_binary_loop18(binary, output_4.clone(), references, index_2);
+                                                            output_6.clone()
+                                                        }
+                                                    }
+                                                };
+                                                {
+                                                    let reference = 0f64;
+                                                    {
+                                                        let ml_s16 = super::ml_transcode_link_network_binary_loop19(input, binary, output_7.clone(), cursor_3, references, reference);
+                                                        match ml_s16 {
                                                                 super::MlTranscodeLinkNetworkBinaryLoop19Result::MlTranscodeLinkNetworkBinaryLoop19Done(output_8, cursor_4) => {
                                                                     {
                                                                         let metadata_end = 0f64;
@@ -143,7 +140,7 @@ pub fn ml_transcode_link_network_binary_loop7(
                                                                                         }
                                                                                     }
                                                                                 };
-                                                                                match ml_s17.clone() {
+                                                                                match ml_s17 {
                                                                                     super::MlTranscodeLinkNetworkBinaryJoin20::MlTranscodeLinkNetworkBinaryJoin20Next(output_10, cursor_6, metadata_end_3) => {
                                                                                         {
                                                                                             let metadata_start = output_10.length();
@@ -151,13 +148,13 @@ pub fn ml_transcode_link_network_binary_loop7(
                                                                                                 let field = 0f64;
                                                                                                 {
                                                                                                     let ml_s18 = super::ml_transcode_link_network_binary_loop21(input, binary, output_10.clone(), cursor_6, field);
-                                                                                                    match ml_s18.clone() {
+                                                                                                    match ml_s18 {
                                                                                                         super::MlTranscodeLinkNetworkBinaryLoop21Result::MlTranscodeLinkNetworkBinaryLoop21Done(output_11, cursor_7) => {
                                                                                                             {
                                                                                                                 let text = 0f64;
                                                                                                                 {
                                                                                                                     let ml_s19 = super::ml_transcode_link_network_binary_loop22(input, binary, output_11.clone(), cursor_7, text);
-                                                                                                                    match ml_s19.clone() {
+                                                                                                                    match ml_s19 {
                                                                                                                         super::MlTranscodeLinkNetworkBinaryLoop22Result::MlTranscodeLinkNetworkBinaryLoop22Done(output_12, cursor_8) => {
                                                                                                                             {
                                                                                                                                 let span = super::read_link_network_binary_integer(input, cursor_8, 1f64, binary);
@@ -174,7 +171,7 @@ pub fn ml_transcode_link_network_binary_loop7(
                                                                                                                                                         let field_2 = 0f64;
                                                                                                                                                         {
                                                                                                                                                             let ml_s22 = super::ml_transcode_link_network_binary_loop25(input, binary, output_13.clone(), cursor_9, field_2);
-                                                                                                                                                            match ml_s22.clone() {
+                                                                                                                                                            match ml_s22 {
                                                                                                                                                                 super::MlTranscodeLinkNetworkBinaryLoop25Result::MlTranscodeLinkNetworkBinaryLoop25Done(output_14, cursor_10) => {
                                                                                                                                                                     super::MlTranscodeLinkNetworkBinaryJoin23::MlTranscodeLinkNetworkBinaryJoin23Next(output_14.clone(), cursor_10)
                                                                                                                                                                 }
@@ -187,7 +184,7 @@ pub fn ml_transcode_link_network_binary_loop7(
                                                                                                                                                 } else {
                                                                                                                                                     super::MlTranscodeLinkNetworkBinaryJoin23::MlTranscodeLinkNetworkBinaryJoin23Next(output_13.clone(), cursor_9)
                                                                                                                                                 };
-                                                                                                                                                match ml_s21.clone() {
+                                                                                                                                                match ml_s21 {
                                                                                                                                                     super::MlTranscodeLinkNetworkBinaryJoin23::MlTranscodeLinkNetworkBinaryJoin23Next(output_15, cursor_11) => {
                                                                                                                                                         if (binary && (cursor_11 != metadata_end_3)) {
                                                                                                                                                             super::MlTranscodeLinkNetworkBinaryLoop7Result::MlTranscodeLinkNetworkBinaryLoop7Return(((super::ml_string::Text::from_units(vec![45, 49, 57, 44])).concat(&super::ml_string::Text::from_text(&super::ml_number::js_number(cursor_11)))).concat(&super::ml_string::Text::from_units(vec![44])))
@@ -268,7 +265,6 @@ pub fn ml_transcode_link_network_binary_loop7(
                                                                     super::MlTranscodeLinkNetworkBinaryLoop7Result::MlTranscodeLinkNetworkBinaryLoop7Return(ml_result29.clone())
                                                                 }
                                                             }
-                                                        }
                                                     }
                                                 }
                                             }
