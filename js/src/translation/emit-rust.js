@@ -12,7 +12,7 @@ import { renderStringLengthExpression, renderStringMapExpression, renderStringTe
 import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
 import { unsupported } from './diagnostics.js';
 import { typeKey } from './types.js';
-import { renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
+import { Scope, renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
 import { EmitState, typeContains, withParts } from './emit-common.js';
 import { STRING_PRELUDE } from './string-runtime.js';
 import { readRustOptionalPrelude, renderRustCompoundType, renderRustReferenceType } from './structured-type-rules.js';
@@ -21,6 +21,8 @@ import { readNumberDisplayFunction, renderAbsentNumberExpression } from './primi
 import { acceptTupleCopyType, renderTupleProjection, renderTupleValue } from './product-emission-rules.js';
 import { acceptProgramTupleProductModel } from '../typed-program-link-rules.js';
 import { readRustSourceHeaderEmission, renderRustSourceHeaderEmission } from './rust-source-header-emission.js';
+import { RUST_BORROWED_CALL_INTERFACE_POLICY, readRustBorrowedCallInterface, renderRustBorrowedCall } from './rust-borrowed-call-interface.js';
+import { acceptRustBorrowedCallInterfaceModel, renderRustBorrowedCallHeaderReference } from './rust-borrowed-call-interface-rules.js';
 
 const KEYWORDS = new Set([
   'as', 'break', 'const', 'continue', 'crate', 'else', 'enum', 'extern', 'false', 'fn', 'for', 'if', 'impl', 'in',
@@ -622,7 +624,8 @@ export function readRustArrayPrelude(standard = false) {
 }
 
 export function emitRust(program, options = {}) {
-  const sourceHeaders = options.sourceHeaderModel === undefined ? null : readRustSourceHeaderEmission(program, options.sourceHeaderModel);
+  const borrowedCalls = acceptRustBorrowedCallInterfaceModel(options.sourceHeaderModel) ? readRustBorrowedCallInterface(program, options.sourceHeaderModel) : null;
+  const sourceHeaders = borrowedCalls?.headers ?? (options.sourceHeaderModel === undefined ? null : readRustSourceHeaderEmission(program, options.sourceHeaderModel));
   const state = new EmitState(program, 'Rust', snake, KEYWORDS, {
     ctorStyle: 'data',
     typeName: camel,
@@ -634,7 +637,7 @@ export function emitRust(program, options = {}) {
   });
   // A local may not shadow another item of the module that the program calls or reads.
   for (const external of program.externals ?? []) state.claimed.add(externalName(external.k, external.name));
-  return new RustEmitter(program, state, sourceHeaders).file();
+  return new RustEmitter(program, state, sourceHeaders, borrowedCalls?.targets).file();
 }
 
 /** The Rust name of another item of the module: a function's in snake case, a constant's as it is written. */
@@ -674,10 +677,11 @@ export function emitRustConstants(program) {
 }
 
 class RustEmitter {
-  constructor(program, state, sourceHeaders = null) {
+  constructor(program, state, sourceHeaders = null, borrowedCallTargets = null) {
     this.program = program;
     this.state = state;
     this.sourceHeaders = sourceHeaders;
+    this.borrowedCallTargets = borrowedCallTargets;
     // The other items of the module the program calls or reads, which it does not declare.
     this.externals = new Map((program.externals ?? []).filter(({ name }) => !program.declarations.has(name)).map((external) => [external.name, external]));
     this.temporaries = 0;
@@ -859,7 +863,29 @@ class RustEmitter {
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
     const sourceHeader = this.sourceHeaders?.get(entry.fullName);
-    if (sourceHeader) return renderRustSourceHeaderEmission(sourceHeader, params, name, this.expr(body), indent);
+    if (sourceHeader) {
+      if (this.borrowedCallTargets) {
+        // The fresh scalar names cannot capture a parameter, local binder or
+        // free variable of any later argument. Keep checked input names intact.
+        const reserved = this.state.localReserved();
+        for (const parameter of params) reserved.add(parameter.name);
+        const pending = [body];
+        for (let at = 0; at < pending.length; at += 1) {
+          const node = pending[at];
+          if (node.k === 'var' || node.k === 'let') reserved.add(node.name);
+          for (const [key, value] of Object.entries(node)) {
+            if (key === 'type' || key === 'domain' || key === 'span') continue;
+            if (Array.isArray(value)) pending.push(...value.filter(item => item?.k));
+            else if (value?.k) pending.push(value);
+          }
+        }
+        this.borrowedCallScope = new Scope(snake, reserved);
+        const text = this.expr(body);
+        this.borrowedCallScope = null;
+        return renderRustSourceHeaderEmission(sourceHeader, params, name, text, indent, renderRustBorrowedCallHeaderReference);
+      }
+      return renderRustSourceHeaderEmission(sourceHeader, params, name, this.expr(body), indent);
+    }
     const loop = tailLoop(entry, body);
     if (loop) {
       // A lifted loop runs as a loop: each iteration assigns the parameters their next values.
@@ -1172,6 +1198,12 @@ class RustEmitter {
       case 'var':
         return this.own(e.name, e.type);
       case 'call':
+        if (this.borrowedCallTargets) {
+          const signature = this.borrowedCallTargets.get(e.fn);
+          const values = e.args.map(argument => this.expr(argument));
+          const names = values.map(() => this.borrowedCallScope.fresh(RUST_BORROWED_CALL_INTERFACE_POLICY.argumentName));
+          return renderRustBorrowedCall(signature, `crate::${this.state.ref(e.fn, '::')}`, values, names, indent);
+        }
         if (this.externals.has(e.fn)) return this.external(e, this.externals.get(e.fn));
         return `crate::${this.state.ref(e.fn, '::')}(${e.args.map((arg) => this.expr(arg)).join(', ')})`;
       case 'functionRef':
