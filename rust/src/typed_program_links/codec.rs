@@ -558,6 +558,8 @@ pub(super) fn decode_with_binding_identities(
         .map_err(|failure| error(failure.to_string()))?;
     crate::translation::source_empty_options::validate_empty_option_records(&value)
         .map_err(|failure| error(failure.to_string()))?;
+    crate::translation::source_type_namespaces::validate_type_namespace_records(&value)
+        .map_err(|failure| error(failure.to_string()))?;
     let program: Program = serde_json::from_value(value.clone()).map_err(|failure| {
         error(format!(
             "the Rust typed links adapter cannot decode this construct: {failure}"

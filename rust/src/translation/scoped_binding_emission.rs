@@ -264,6 +264,7 @@ fn value_type(ty: &Type) -> Result<()> {
 pub fn validate_program(program: &Program, model: &str) -> Result<()> {
     validate_model(model)?;
     super::source_empty_options::validate_source_empty_options(program)?;
+    super::source_type_namespaces::validate_source_type_namespaces(program)?;
     crate::typed_program_links::validate_checked_program(program)
         .map_err(|error| super::diagnostics::type_error(error.to_string(), None))?;
     let forbidden = !program.imports.is_empty()

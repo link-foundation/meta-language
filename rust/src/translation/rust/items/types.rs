@@ -65,7 +65,13 @@ impl RustParser {
                 self.origins.current_type.source_lifetimes = vec![source_lifetime];
                 return Ok(result);
             }
-            if self.cursor.is("str") {
+            if self.cursor.is("str")
+                && (self.type_namespace_model.is_empty()
+                    || self
+                        .origins
+                        .lookup_type_owner(&["str".to_owned()], &self.module_path)
+                        .is_none())
+            {
                 self.cursor.advance();
                 let result =
                     self.origins
@@ -128,6 +134,38 @@ impl RustParser {
         let resolved = self.resolve(&segments, &self.module_path);
         if let Some(empty) = self.read_empty_option_result(&segments, &token)? {
             return Ok(empty);
+        }
+        if !self.type_namespace_model.is_empty() {
+            super::super::type_namespaces::require_anchor(&segments, &self.module_path)?;
+            if let Some(declared) = self.origins.lookup_type_owner(&segments, &self.module_path) {
+                let kind = if matches!(declared.declaration, super::super::SourceDeclaration::Data)
+                {
+                    "data"
+                } else {
+                    ""
+                };
+                if !crate::translation::type_namespace_rules::accept_rust_type_namespace_declaration(
+                    kind,
+                ) || self.cursor.is("<")
+                {
+                    return Err(unsupported(
+                        "Rust type namespace binding",
+                        "the selected source position needs an actual datatype without generic arguments",
+                        span(&token, self.cursor.peek()),
+                    ));
+                }
+                let path = std::iter::once("crate".to_owned())
+                    .chain(declared.full_name.split('.').map(str::to_owned))
+                    .collect();
+                return Ok(self.origins.typed(
+                    Type::Named {
+                        path,
+                        span: span(&token, &token),
+                    },
+                    &self.module_path,
+                    Vec::new(),
+                ));
+            }
         }
         if self
             .read_standard_primitive_position(&segments, &self.module_path)?

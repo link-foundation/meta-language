@@ -42,6 +42,7 @@ pub(super) struct SourceOrigin {
     pub(super) source_lifetimes: Vec<Option<String>>,
     pub(super) source_owner: Option<super::super::source_signatures::SourceOwner>,
     pub(super) primitive_owner_position: Option<serde_json::Value>,
+    pub(super) namespace_spelling: Vec<String>,
 }
 
 impl SourceOrigin {
@@ -61,6 +62,7 @@ impl SourceOrigin {
             source_lifetimes: Vec::new(),
             source_owner: None,
             primitive_owner_position: None,
+            namespace_spelling: Vec::new(),
             fresh_array_value: None,
         }
     }
@@ -96,6 +98,7 @@ impl SourceOrigin {
             source_lifetimes: Vec::new(),
             source_owner: None,
             primitive_owner_position: None,
+            namespace_spelling: Vec::new(),
             fresh_array_value: None,
         }
     }

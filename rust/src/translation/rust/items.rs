@@ -234,6 +234,7 @@ impl RustParser {
     /// `use super::Tree;`, `use crate::a::{b, c as d};`: each imported name is
     /// an alias for its absolute path inside the importing module.
     pub(super) fn use_declaration(&mut self, path: &[String]) -> Result<()> {
+        self.require_type_namespace_without_imports()?;
         let start = self.cursor.advance();
         self.aliases.entry(path.join(".")).or_default();
         self.use_tree(&[], &start, path)?;
@@ -695,6 +696,9 @@ impl RustParser {
                 span(&start, self.cursor.peek()),
             )
         });
+        let source_type_namespace = self
+            .capture_type_namespace(&source_params, &source_result)
+            .map(Box::new);
         Ok(SFn {
             name,
             params,
@@ -705,12 +709,14 @@ impl RustParser {
             source_signature: source_signature.map(Box::new),
             source_primitive_owners,
             source_empty_option: None,
+            source_type_namespace,
             source_loop: source_loop.map(Box::new),
         })
     }
 
     /// `const N: T = e;` is a function without parameters.
     pub(super) fn const_item(&mut self, path: &[String]) -> Result<SFn> {
+        self.require_type_namespace_without_constant()?;
         let start = self.cursor.advance();
         let name = self.cursor.identifier(Some("const"))?.value;
         self.cursor.expect(":", Some("const"))?;
@@ -746,6 +752,7 @@ impl RustParser {
             source_signature: None,
             source_primitive_owners: None,
             source_empty_option: None,
+            source_type_namespace: None,
             source_loop: None,
         })
     }

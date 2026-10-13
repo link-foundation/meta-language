@@ -1,5 +1,5 @@
 //! Checked declaration records, re-exported through the unchanged IR API.
-use super::{Expr, Guard, Proof, Prop, Span, Type};
+use super::{Binder, Expr, Guard, Proof, Prop, Span, Type};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -71,6 +71,9 @@ pub struct FnDecl {
     /// Optional owned standard empty-option source interpretation.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_empty_option: Option<serde_json::Value>,
+    /// Optional actual Rust type spellings with rechecked scoped ownership.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_type_namespace: Option<serde_json::Value>,
     /// Optional owned scalar loop state and checked continuation interpretation.
     #[serde(
         default,

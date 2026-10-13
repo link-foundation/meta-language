@@ -792,6 +792,13 @@ pub struct SFn {
         skip_serializing_if = "Option::is_none"
     )]
     pub source_empty_option: Option<Box<serde_json::Value>>,
+    /// Optional actual Rust type spellings with rechecked scoped ownership.
+    #[serde(
+        default,
+        rename = "sourceTypeNamespace",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub source_type_namespace: Option<Box<serde_json::Value>>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
