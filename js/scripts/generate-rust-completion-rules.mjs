@@ -6,7 +6,8 @@ import {parseJavaScript} from '../src/translation/javascript.js';
 import {checkProgram} from '../src/translation/check.js';
 import {emitRust} from '../src/translation/emit-rust.js';
 import {DecoratorSet} from '../src/decorators.js';
-const policy=readProjectData(new URL('../src/translation/data/rust-completions.lino',import.meta.url));
+const policyFile=new URL('../src/translation/data/rust-completions.lino',import.meta.url);
+const policy=readProjectData(policyFile);
 const source='// Generated from linked Rust completion policy. Do not edit by hand.\n'
  +'/** @param {string} model @returns {boolean} */\nexport function acceptRustCompletionModel(model) {\n  return model === "" || model === '+JSON.stringify(policy.model)+';\n}\n\n'
  +'/** @param {boolean} proven @param {boolean} indirected @returns {boolean} */\nexport function acceptRustReturnOwnership(proven, indirected) {\n  return proven && !indirected;\n}\n\n'
@@ -50,5 +51,9 @@ const styled=DecoratorSet.fromLino(readFileSync(decorators,'utf8')).decorate('em
 const formatted=spawnSync('rustfmt',['--edition','2024','--emit','stdout'],{input:styled,encoding:'utf8'});
 if(formatted.error||formatted.status!==0)throw formatted.error??new Error(formatted.stderr);
 const generated='// Generated from linked completion policy through the checked JavaScript translator.\n// Do not edit by hand.\n'+formatted.stdout;
-if(process.argv.includes('--check')){if(readFileSync(native,'utf8')!==generated)throw new Error('Native completion rules are stale');}else writeFileSync(native,generated);
+const nativePolicy=new URL('../../rust/src/translation/rust/completions.lino',import.meta.url);
+if(process.argv.includes('--check')){
+ if(readFileSync(native,'utf8')!==generated)throw new Error('Native completion rules are stale');
+ if(!readFileSync(nativePolicy).equals(readFileSync(policyFile)))throw new Error('Native completion policy is stale');
+}else{writeFileSync(native,generated);writeFileSync(nativePolicy,readFileSync(policyFile));}
 console.log('Rust completions: closed function profile and five conditional decisions');
