@@ -27,6 +27,7 @@ fn fixture() -> Value {
 fn options(data: &Value) -> TypedProgramLinksEmissionOptions {
     TypedProgramLinksEmissionOptions {
         rust_source_header_emission_model: Some(data["model"].as_str().unwrap().to_owned()),
+        ..TypedProgramLinksEmissionOptions::default()
     }
 }
 
@@ -202,6 +203,7 @@ fn unknown_models_wrong_targets_absent_facets_and_eight_interfaces_refuse() {
     );
     let unknown = TypedProgramLinksEmissionOptions {
         rust_source_header_emission_model: Some("unknown".to_owned()),
+        ..TypedProgramLinksEmissionOptions::default()
     };
     assert!(
         emit_typed_program_links_with_options(&network, root, "Rust", &unknown)
@@ -291,6 +293,7 @@ fn actual_owner_generated_and_linked_context_premises_cannot_be_erased() {
         );
         let unknown = TypedProgramLinksEmissionOptions {
             rust_source_header_emission_model: Some("unknown".to_owned()),
+            ..TypedProgramLinksEmissionOptions::default()
         };
         assert!(
             emit_typed_program_links_with_options(&restored, root, "Rust", &unknown)

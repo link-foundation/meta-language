@@ -4,7 +4,9 @@
 use crate::translation::Language;
 use crate::translation::check::check_program;
 use crate::translation::emit_common::{Assumption, Encoding, Mapping, TheoremRecord};
-use crate::translation::emit_javascript::emit_javascript;
+use crate::translation::emit_javascript::{
+    JavaScriptEmissionOptions, emit_javascript_with_options,
+};
 use crate::translation::emit_rust::{RustEmissionOptions, emit_rust_with_options};
 use crate::translation::ir::Program;
 use crate::translation::javascript::{parse_javascript, parse_javascript_with_scalar_loop_model};
@@ -85,6 +87,12 @@ pub struct TypedProgramLinksEmission {
 pub struct TypedProgramLinksEmissionOptions {
     /// Selected primitive immutable-reference source-header interpretation.
     pub rust_source_header_emission_model: Option<String>,
+    /// Canonical aliases for checked JavaScript local binding scopes.
+    pub java_script_scoped_binding_emission_model: Option<String>,
+}
+
+pub(super) fn validate_checked_program(program: &Program) -> Result<()> {
+    checked::validate(program)
 }
 /// Exact schema shared by both packages.
 #[must_use]
@@ -546,9 +554,17 @@ pub fn emit_typed_program_links_with_options(
                     "a Rust source header emission model requires Rust target",
                 ));
             }
-            emit_javascript(&program)
+            let scoped_binding_model = options.java_script_scoped_binding_emission_model.as_deref();
+            if let Some(model) = scoped_binding_model {
+                crate::translation::scoped_binding_emission::validate_program(&program, model)
+                    .map_err(|failure| error(failure.to_string()))?;
+                crate::translation::scoped_binding_emission::validate_origin_context(network, root, &program)
+                    .map_err(|failure| error(failure.to_string()))?;
+            }
+            emit_javascript_with_options(&program, JavaScriptEmissionOptions { scoped_binding_model })
         }
         "rust" | "rs" => {
+            if options.java_script_scoped_binding_emission_model.is_some() { return Err(error("a JavaScript scoped binding emission model requires JavaScript target")); }
             if let Some(model) = source_header_model {
                 crate::translation::source_header_emission::validate_rust_source_header_emission_model(model)
                     .map_err(|failure| error(failure.to_string()))?;

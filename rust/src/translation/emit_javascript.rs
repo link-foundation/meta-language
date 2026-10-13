@@ -95,6 +95,27 @@ fn ctor_object(ctor: &Ctor, args: &[String], language: Language, explicit_frozen
 /// # Errors
 /// On constructs the target cannot express faithfully.
 pub fn emit_javascript(program: &Program) -> Result<Emitted> {
+    emit_javascript_with_options(program, JavaScriptEmissionOptions::default())
+}
+
+/// Explicit checked local-scope models for JavaScript emission.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct JavaScriptEmissionOptions<'a> {
+    /// Canonical aliases for owned local binding records.
+    pub scoped_binding_model: Option<&'a str>,
+}
+
+/// Emit using a selected scoped binding interpretation.
+///
+/// # Errors
+/// Refuses unknown models and unsupported or invalid ownership scopes.
+pub fn emit_javascript_with_options(
+    program: &Program,
+    options: JavaScriptEmissionOptions<'_>,
+) -> Result<Emitted> {
+    if let Some(model) = options.scoped_binding_model {
+        super::scoped_binding_emission::validate_program(program, model)?;
+    }
     let state = EmitState::new(
         program,
         Language::JavaScript,
@@ -114,6 +135,7 @@ pub fn emit_javascript(program: &Program) -> Result<Emitted> {
         theorem_checks: Vec::new(),
         uses_float: false,
         loop_params: None,
+        scoped_bindings: options.scoped_binding_model.is_some(),
     }
     .file()
 }
@@ -142,6 +164,8 @@ struct JavaScriptEmitter<'p> {
     /// The lifted loop being emitted as a loop, and its parameters, which
     /// each call to it assigns before the next iteration.
     loop_params: Option<(String, Vec<String>)>,
+    /// Selection is validated before any existing lexical allocator runs.
+    scoped_bindings: bool,
 }
 
 impl<'p> JavaScriptEmitter<'p> {
@@ -273,7 +297,28 @@ impl<'p> JavaScriptEmitter<'p> {
     }
 
     fn function(&mut self, entry: &Decl, function: &FnDecl) -> Result<String> {
-        let (params, body) = rename_function(function, &ident, &self.state.local_reserved());
+        let preserve = if self.scoped_bindings {
+            super::scoped_binding_emission::function_role(self.program, function)?
+        } else {
+            false
+        };
+        let local = |name: &str| {
+            if self.scoped_bindings {
+                ident(&super::scoped_binding_emission_rules::render_java_script_scoped_binding_identifier(name, preserve))
+            } else {
+                ident(name)
+            }
+        };
+        // The revalidated closed loop has no global declaration reads: its
+        // only call is its own tail continuation, lowered to writes/continue.
+        let reserved = if self.scoped_bindings
+            && !super::scoped_binding_emission_rules::reserve_java_script_scoped_binding_declaration_names(preserve)
+        {
+            KEYWORDS.iter().map(|name| (*name).to_owned()).collect()
+        } else {
+            self.state.local_reserved()
+        };
+        let (params, body) = rename_function(function, &local, &reserved);
         if params.iter().any(|param| param.ty.is_float()) || function.ret.is_float() {
             self.uses_float = true;
         }
@@ -488,6 +533,12 @@ impl<'p> JavaScriptEmitter<'p> {
         }
         match &e.node {
             Node::Lit { value } => literal(&e.ty, value),
+            Node::None { absence } => Ok(if absence == "null" {
+                "null"
+            } else {
+                "undefined"
+            }
+            .to_owned()),
             Node::Unit => Ok(super::product_emission_rules::render_java_script_unit(
                 self.program.source_language.as_str(),
             )),
@@ -753,7 +804,17 @@ impl<'p> JavaScriptEmitter<'p> {
     }
 
     fn main(&mut self, main: &Main) -> Result<String> {
-        let effects = rename_main(main, &ident, &self.state.local_reserved());
+        if self.scoped_bindings {
+            super::scoped_binding_emission::main_role(self.program, main)?;
+        }
+        let local = |name: &str| {
+            if self.scoped_bindings {
+                ident(&super::scoped_binding_emission_rules::render_java_script_scoped_binding_identifier(name, false))
+            } else {
+                ident(name)
+            }
+        };
+        let effects = rename_main(main, &local, &self.state.local_reserved());
         let mut lines = Vec::new();
         let mut assertion = 0;
         for effect in &effects {
