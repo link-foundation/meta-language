@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
-import { compareRustDefinitions, createModuleContext, measureSelfTranslationModule, rustFunctionDefinitions, sourceCoverage } from '../scripts/generate-self-translation-report.mjs';
+import { compareRustDefinitions, createModuleContext, measureSelfTranslationModule, readModuleHeaderBindings, rustFunctionDefinitions, sourceCoverage } from '../scripts/generate-self-translation-report.mjs';
 import { createReportMeasurementWorker } from '../scripts/self-translation-report-worker-host.mjs';
 import { DecoratorSet } from '../src/decorators.js';
 import { selfTranslate } from '../src/self-translation.js';
@@ -42,6 +42,18 @@ test('report import resolution checks callable candidates and avoids dependencie
   const source = modules.get('consumer.js');
   const translation = selfTranslate(source, 'JavaScript', 'Rust', context);
   assert.equal(translation.items.find(item => source.slice(item.start, item.end).includes('function twice')).status, 'translated');
+});
+
+test('lexical report headers agree with independent grammar headers despite opaque and nested syntax', () => {
+  const sources = [
+    "import { plus as add, count, } from './provider.js';export function result(){return add(count,count);}",
+    "import Default from './default.js';import * as namespace from './namespace.js';import './effects.js';export { plus } from './forward.js';export default function original(){}",
+    "// import { fake } from './comment.js'\nconst text=\"export function fake(){}\";const template=`import { fake } from './template.js' ${ { value:'}' }.value }`;const pattern=/export [(){}]/;export const real=3;export async function next(){return real;}",
+    "class Box { read(){return import('./dynamic.js');} }function nested(){const value={export:3,import:4};return value;}export class Carried{};export function* generator(){yield 1;}export const first=1,second=2;",
+    "import /* between */ { plus /* name */ as add } from /* source */ './provider.js'\nexport\nfunction second(){return add(1,2)}",
+    "import { café } from './unicode.js';export function café(){return 1;}",
+  ];
+  for (const source of sources) assert.deepEqual(readModuleHeaderBindings(source), readModuleHeaderBindings(source, true), source);
 });
 
 test('self-translation report reads individual UTF-8 function ranges and exact CST names', () => {

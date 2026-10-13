@@ -9,6 +9,7 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 const definitions = {
   'repository.read-temporary-grammar-inputs': 'Authenticate materialized foreign grammar JSON against exact byte pins and actual Git evidence that each registered input is ignored and untracked.',
   'repository.read-portable-export-bindings': 'Read declaration names admitted by the existing checked source binder so imports with no callable candidates do not trigger unrelated dependency translation.',
+  'repository.read-module-header-bindings': 'Read top-level import and export candidates with the shared lexer while preserving opaque literals and nested delimiter scope, falling back to grammar parsing when lexical syntax cannot be read; every candidate signature still requires checked translation.',
   'repository.partition-group-files': 'Divide one complete ordered test group into nonempty disjoint file partitions whose union preserves every original file exactly once.',
   'repository.measure-self-translation-module': 'Measure complete generic and decorated source translation, byte coverage, source hashes and Rust definition comparisons for one explicitly selected source module.',
   'repository.create-report-measurement-worker': 'Run one actual module measurement in an isolated JavaScript worker with Links message records while the parent resolves the following module imports, retaining source order and all report checks.',

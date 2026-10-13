@@ -861,7 +861,7 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'bounded repository input and CI operations',
     files: ['js/scripts/project-data-storage.mjs', 'js/scripts/generate-self-translation-report.mjs', 'js/scripts/test-groups.mjs', 'js/scripts/self-translation-report-worker-host.mjs'],
-    extract: (text) => captures(text, /^(?:export )?(?:async )?function (readTemporaryGrammarInputs|readPortableExportBindings|partitionGroupFiles|measureSelfTranslationModule|createReportMeasurementWorker)\(/gmu)
+    extract: (text) => captures(text, /^(?:export )?(?:async )?function (readTemporaryGrammarInputs|readPortableExportBindings|readModuleHeaderBindings|partitionGroupFiles|measureSelfTranslationModule|createReportMeasurementWorker)\(/gmu)
       .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
     recordOf: (name) => `repository.${name}`,
   },

@@ -69,15 +69,20 @@ async function readTemporaryGrammarInputs(root, files) {
   }
   const candidates = files.filter(path => Object.hasOwn(manifest.assets, path));
   if (!candidates.length) return { verified, problems };
-  const git = args => execFileSync('git', args, { cwd: root, encoding: 'utf8',
-    stdio: ['pipe', 'pipe', 'pipe'], input: candidates.join('\0') + '\0' }).split('\0');
+  const git = (args, paths) => execFileSync('git', args, { cwd: root, encoding: 'utf8',
+    stdio: ['pipe', 'pipe', 'pipe'], ...(paths ? { input: paths.join('\0') + '\0' } : {}) }).split('\0');
   let tracked, ignored;
   try {
     tracked = new Set(git(['ls-files', '-z', '--', ...candidates]));
-    try { ignored = new Set(git(['check-ignore', '--no-index', '-z', '--stdin'])); }
+    const untracked = candidates.filter(path => !tracked.has(path));
+    // Index evidence already rejects tracked inputs. Only check-ignore reads
+    // stdin; sending input to ls-files can race its exit and produce EPIPE.
+    try { ignored = untracked.length ? new Set(git(['check-ignore', '--no-index', '-z', '--stdin'], untracked)) : new Set(); }
     catch (error) { if (error.status === 1) ignored = new Set(); else throw error; }
-  } catch {
-    return { verified, problems: ['temporary grammar inputs need Git evidence that they are ignored and untracked'] };
+  } catch (error) {
+    return { verified, problems: ['temporary grammar inputs need Git evidence that they are ignored and untracked: '
+      + (String(error.stderr ?? '').trim() || String(error.message)), ...candidates.filter(path => tracked?.has(path))
+        .map(path => `temporary grammar input must be untracked: ${path}`)] };
   }
   for (const path of candidates) {
     const asset = manifest.assets[path];

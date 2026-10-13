@@ -190,6 +190,11 @@ export function createModuleContext(readSource) {
   const contexts = new Map();
   const signatures = new Map();
   const portableExports = new Map();
+  const headers = new Map();
+  const header = (module) => {
+    if (!headers.has(module)) headers.set(module, readModuleHeaderBindings(read(module)));
+    return headers.get(module);
+  };
   const visiting = new Set();
   const context = (module) => {
     if (contexts.has(module)) return contexts.get(module);
@@ -201,32 +206,13 @@ export function createModuleContext(readSource) {
     if (source === null || visiting.has(module)) return result;
     visiting.add(module);
     try {
-      const bytes = Buffer.from(source, 'utf8');
-      const tree = parseProgrammingLanguage(source, 'JavaScript')?.tree;
-      for (const item of tree?.children ?? []) {
-        if (item.term !== 'import_statement') continue;
-        const range = item.span.byteRange;
-        const tokens = tokenize(bytes.subarray(range.start, range.end).toString('utf8'), 'JavaScript').tokens;
-        // The checked binder accepts named imports. Default, namespace and
-        // side-effect imports remain carried and cannot supply signatures.
-        if (tokens[1]?.value !== '{') continue;
-        const requested = [];
-        for (let index = 2; tokens[index]?.kind === 'identifier';) {
-          requested.push(tokens[index].value);
-          index += tokens[index + 1]?.value === 'as' ? 3 : 1;
-          if (tokens[index]?.value !== ',') break;
-          index += 1;
-        }
-        const name = item.children.find((child) => child.field === 'source');
-        if (!name) continue;
-        const text = bytes.subarray(name.span.byteRange.start, name.span.byteRange.end).toString('utf8');
-        const specifier = tokenize(text, 'JavaScript').tokens[0]?.value;
+      for (const { requested, specifier } of header(module).imports) {
         if (!specifier || !/^\.\.?\//u.test(specifier)) continue;
         const target = posix.normalize(posix.join(directory, specifier));
         if (target === '..' || target.startsWith('../') || visiting.has(target)) continue;
         const provider = read(target);
         if (provider === null) continue;
-        if (!portableExports.has(target)) portableExports.set(target, readPortableExportBindings(provider));
+        if (!portableExports.has(target)) portableExports.set(target, readPortableExportBindings(provider, header(target)));
         if (!requested.some(name => portableExports.get(target).has(name))) {
           imports[specifier] = [];
           continue;
@@ -252,22 +238,77 @@ export function createModuleContext(readSource) {
 // Match the declaration names used by self-translation's checked binder.
 // Classes and export forwarding have no declared callable signature today.
 // This is only an absence check; every candidate still undergoes full checking.
-function readPortableExportBindings(source) {
+function readPortableExportBindings(source, header = readModuleHeaderBindings(source)) {
+  return new Set(header.exports);
+}
+
+// Only collect candidates here: checked translation still proves each
+// signature. Opaque lexer tokens protect strings, templates, comments and
+// regular expressions, and delimiter depth excludes nested declarations.
+export function readModuleHeaderBindings(source, useGrammar = false) {
+  if (!useGrammar) {
+    try {
+      const { tokens } = tokenize(source, 'JavaScript');
+      if (tokens.some(token => token.kind === 'punct' && (/[^\x00-\x7f]/u.test(token.value) || token.value === '\\'))) throw new Error('module header needs grammar identifier handling');
+      const imports = [], exports = [], delimiters = [];
+      const closing = { '}': '{', ')': '(', ']': '[' };
+      for (let index = 0; index < tokens.length; index += 1) {
+        const token = tokens[index];
+        if (!delimiters.length && token.kind === 'identifier') {
+          if (token.value === 'export') {
+            let next = index + 1;
+            if (tokens[next]?.value === 'async' && tokens[next + 1]?.value === 'function') next += 1;
+            if (tokens[next]?.value === 'function' && tokens[next + 1]?.kind === 'identifier'
+              || tokens[next]?.value === 'const' && tokens[next + 1]?.kind === 'identifier' && tokens[next + 2]?.value === '=') exports.push(tokens[next + 1].value);
+          } else if (token.value === 'import' && tokens[index + 1]?.value === '{') {
+            const requested = [];
+            let next = index + 2;
+            while (tokens[next]?.kind === 'identifier') {
+              requested.push(tokens[next].value);
+              next += tokens[next + 1]?.value === 'as' ? 3 : 1;
+              if (tokens[next]?.value !== ',') break;
+              next += 1;
+            }
+            if (tokens[next]?.value === '}' && tokens[next + 1]?.value === 'from' && tokens[next + 2]?.kind === 'string') imports.push({ requested, specifier: tokens[next + 2].value });
+          }
+        }
+        if (token.kind !== 'punct') continue;
+        if (['{', '(', '['].includes(token.value)) delimiters.push(token.value);
+        else if (Object.hasOwn(closing, token.value) && delimiters.pop() !== closing[token.value]) throw new Error('unbalanced module delimiters');
+      }
+      if (delimiters.length) throw new Error('unclosed module delimiters');
+      return { imports, exports };
+    } catch {
+      // Unsupported lexical syntax retains the original grammar path.
+      return readModuleHeaderBindings(source, true);
+    }
+  }
   const bytes = Buffer.from(source);
   const tree = parseProgrammingLanguage(source, 'JavaScript')?.tree;
-  const names = new Set();
+  const imports = [], exports = [];
   for (const item of tree?.children ?? []) {
-    if (item.term !== 'export_statement') continue;
     const range = item.span.byteRange;
     const tokens = tokenize(bytes.subarray(range.start, range.end).toString('utf8'), 'JavaScript').tokens;
+    if (item.term === 'import_statement' && tokens[1]?.value === '{') {
+      const requested = [];
+      for (let index = 2; tokens[index]?.kind === 'identifier';) {
+        requested.push(tokens[index].value);
+        index += tokens[index + 1]?.value === 'as' ? 3 : 1;
+        if (tokens[index]?.value !== ',') break;
+        index += 1;
+      }
+      const name = item.children.find(child => child.field === 'source');
+      if (name) imports.push({ requested, specifier: tokenize(bytes.subarray(name.span.byteRange.start, name.span.byteRange.end).toString('utf8'), 'JavaScript').tokens[0]?.value });
+    }
+    if (item.term !== 'export_statement') continue;
     let index = 1;
     if (tokens[index]?.value === 'async' && tokens[index + 1]?.value === 'function') index += 1;
     if (tokens[index]?.value === 'function' && tokens[index + 1]?.kind === 'identifier'
       || tokens[index]?.value === 'const' && tokens[index + 1]?.kind === 'identifier' && tokens[index + 2]?.value === '=') {
-      names.add(tokens[index + 1].value);
+      exports.push(tokens[index + 1].value);
     }
   }
-  return names;
+  return { imports, exports };
 }
 
 export function measureSelfTranslationModule(module, decorators, context) {

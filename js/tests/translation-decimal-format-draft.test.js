@@ -75,14 +75,18 @@ fn format_declared_bits(bits: u64, model: &str) -> String {
     let exponent = if biased_exponent == 0 { -1074 } else { i128::from(biased_exponent) - 1075 };
     render_finite_binary_double_precision(ml::Big::from_u128(u128::from(mantissa)), ml::Big::from_i128(exponent), negative, model.to_owned())
 }
-fn main() {
+pub fn run_decimal_oracle() {
     for bits in [${inputs.map(value => '0x' + bitPattern(value) + 'u64').join(', ')}] {
         println!("{:016x}\\t{}\\t{}\\t{}\\t{}", bits, f64::from_bits(bits), format_declared_bits(bits,"${models[0]}"), format_declared_bits(bits,"${models[1]}"), format_declared_bits(bits,"${models[2]}"));
     }
 }
 `;
   try {
-    writeFileSync(source, generated + bridge);
+    // Keep the source-free generated program intact in its own Rust module.
+    // Its generated entry point and this oracle's host entry point have
+    // separate namespaces, while the bit bridge can call private definitions.
+    const nativeSource = `mod decimal_rules {\n${generated}${bridge}\n}\nfn main() { decimal_rules::run_decimal_oracle(); }\n`;
+    writeFileSync(source, nativeSource);
     const compiler = spawnSync('rustc', ['--version'], { encoding: 'utf8', timeout: 30_000 });
     assert.equal(compiler.status, 0, compiler.stderr);
     const compiled = spawnSync('rustc', ['--edition', '2024', '-O', '-D', 'warnings', '--error-format=json', source, '-o', executable], {
@@ -105,7 +109,7 @@ fn main() {
     });
     writeProjectData(join(root, 'issue-195-results/artifacts/decimal-format-draft-native.lino'), {
       schemaVersion: 1, compiler: compiler.stdout.trim(), algorithmSha256: hash(readFileSync(new URL('../../experiments/issue-199-decimal-number-rules.mjs', import.meta.url))),
-      generatedSourceSha256: hash(generated + bridge), models, rows,
+      generatedSourceSha256: hash(nativeSource), models, rows,
       scope: 'explicit 92-pattern draft; no project-wide formatting or completion observation',
     });
   } finally { rmSync(directory, { recursive: true, force: true }); }

@@ -1128,6 +1128,10 @@ Report import resolution checks every candidate callable and avoids resolving
 dependencies of classes and forwarded names that the current source binder
 cannot bind. Every source module still receives its complete measurement and
 byte-coverage check.
+Import and export candidate discovery uses the shared lexer, retaining opaque
+literals and nested scopes. Unsupported lexical identifiers or syntax use the
+original grammar scan. Every candidate signature still requires checked
+translation; this optimization cannot supply an unchecked signature.
 In CI one JavaScript worker measures a module while the coordinator resolves
 the following module's imports. Contexts and results travel as LiNo records;
 completed rows retain their original order. Local reports remain sequential,
