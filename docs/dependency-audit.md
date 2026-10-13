@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 89 | 88 | 1 | 0 |
+| Generators | 94 | 93 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 27 | 0 | 0 | 27 |
+| Published artifact contents | 28 | 0 | 0 | 28 |
 
 ## JavaScript engines
 
@@ -610,6 +610,11 @@ they are.
 | `js/scripts/generate-rust-array-rules.mjs` | `js/scripts/generate-rust-array-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-array-runtime.mjs` | `js/scripts/generate-rust-array-runtime.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-array-source-fixtures.mjs` | `js/scripts/generate-rust-array-source-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-completion-fixtures.mjs` | `js/scripts/generate-rust-completion-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-completion-panic-fixtures.mjs` | `js/scripts/generate-rust-completion-panic-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-completion-rules.mjs` | `js/scripts/generate-rust-completion-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-float-constant-fixtures.mjs` | `js/scripts/generate-rust-float-constant-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-float-operation-fixtures.mjs` | `js/scripts/generate-rust-float-operation-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-float-predicate-fixtures.mjs` | `js/scripts/generate-rust-float-predicate-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-float-predicate-rules.mjs` | `js/scripts/generate-rust-float-predicate-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-function-lifetime-fixtures.mjs` | `js/scripts/generate-rust-function-lifetime-fixtures.mjs` | `script` |  | derived | current |  |
@@ -726,6 +731,7 @@ they are.
 | `src/data/typescript-erasure.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/typescript-portable-typing.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/translation/runtime/array-*.txt` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/translation/rust/completions.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/translation/rust/float-predicates.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `README.md` | `npm` | `js/package.json` | `files` |  | unversioned | not applicable |  |
 | `src` | `npm` | `js/package.json` | `files` |  | unversioned | not applicable |  |
