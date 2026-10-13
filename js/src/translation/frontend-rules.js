@@ -600,3 +600,14 @@ export function acceptLexicalCacheContext(inToken, quiet, repairing) {
 export function acceptLexicalCacheReservation(cells, count, limit) {
   return count <= limit - cells;
 }
+
+/**
+ * A suffix can use an operand's precedence only after that actual first child
+ * matches a source operand rule or an inspectable reduction to that rule.
+ * An alternative's anonymous prefix cannot borrow another alternative's slot.
+ * @param {boolean} sourceRuleMatches @param {boolean} sourceReductionMatches
+ * @returns {boolean}
+ */
+export function acceptPrecedenceOperandHead(sourceRuleMatches, sourceReductionMatches) {
+  return sourceRuleMatches || sourceReductionMatches;
+}

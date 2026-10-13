@@ -729,9 +729,11 @@ pub(super) fn shift_preferred(
         }
         progress = inner;
     }
-    let shifted = if first_meaningful(&progress.children).is_some_and(|head| head.end == short.end)
+    let shifted = if let Some(head) = first_meaningful(&progress.children)
+        && head.end == short.end
         && let Some(lookahead) = lookahead
-        && let Some(suffix) = grammar.operand_shift(progress.rule.as_ref(), lookahead, orders)
+        && let Some(suffix) =
+            grammar.operand_shift(progress.rule.as_ref(), &head, lookahead, orders)
     {
         suffix
     } else {

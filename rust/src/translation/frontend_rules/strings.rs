@@ -342,3 +342,11 @@ pub const fn accept_lexical_cache_context(in_token: bool, quiet: bool, repairing
 pub const fn accept_lexical_cache_reservation(cells: f64, count: f64, limit: f64) -> bool {
     (count <= (limit - cells))
 }
+
+#[must_use]
+pub const fn accept_precedence_operand_head(
+    source_rule_matches: bool,
+    source_reduction_matches: bool,
+) -> bool {
+    source_rule_matches || source_reduction_matches
+}

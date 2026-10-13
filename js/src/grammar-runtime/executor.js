@@ -21,7 +21,7 @@ import { columnOf, decodeAt, encodeText, quoteText, textOf, utf16View } from './
 import { acceptFixedLexicalExpression } from './lexical-cache.js';
 import { releaseLexicalCaches, retainLexicalCache } from './lexical-cache-memory.js';
 import { completeRuleContexts } from './precedence-contexts.js';
-import { acceptLexicalCacheContext, acceptLexicalCacheReservation, acceptPrecedenceOperandContext, acceptScannerPreemptionBoundary, readScannerContinuationAction } from '../translation/frontend-rules.js';
+import { acceptLexicalCacheContext, acceptLexicalCacheReservation, acceptPrecedenceOperandContext, acceptPrecedenceOperandHead, acceptScannerPreemptionBoundary, readScannerContinuationAction } from '../translation/frontend-rules.js';
 
 /** Thrown when the rule nesting exceeds `maxDepth`; the driver turns it into an `ERROR` root. */
 export class NestingTooDeep extends Error {}
@@ -1858,7 +1858,11 @@ function shiftPreferred(long, short, orders, grammar, lookahead = null) {
     grammar.first ??= firstSets(grammar.rules);
     const rule = grammar.rules.get(progress.rule);
     const slots = rule ? directEdge(rule.expression, 'right', rule.name).map(([slot]) => slot) : [];
-    const shifts = slots.flatMap((slot) => shiftItems(grammar, slot))
+    const operand = acceptPrecedenceOperandHead(
+      slots.some((slot) => head.kind === slot || head.rule === slot),
+      slots.some((slot) => head.reducedTo?.includes(slot)),
+    );
+    const shifts = (operand ? slots : []).flatMap((slot) => shiftItems(grammar, slot))
       .filter((item) => firstOf({ kind: 'seq', items: item.rest }, grammar.rules, grammar.first).has(lookahead));
     if (shifts.length && !shifts.some((item) => item.rule === progress.rule)) {
       shifted = shifts.reduce((best, item) => comparePrecedence(item.tag, best, orders) > 0 ? item.tag : best, shifts[0].tag);

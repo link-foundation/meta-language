@@ -20,6 +20,7 @@ use super::program::{
 use super::results::{ChildList, Children, Tree, TreeType};
 use super::walk::{first_meaningful, meaningful, same_tree};
 use crate::grammar::{PrecedenceEntry, RuleKind};
+use crate::translation::frontend_rules::accept_precedence_operand_head;
 use lead_sets::{first_of, first_sets, keyword_texts, literal_follow_sets};
 pub(super) use reductions::Reductions;
 use reductions::reduction_facts;
@@ -241,13 +242,20 @@ impl GrammarFacts {
     pub(super) fn operand_shift(
         &self,
         rule: Option<&Name>,
+        head: &Tree,
         lookahead: &Lead,
         orders: &[Vec<PrecedenceEntry>],
     ) -> Option<PrecedenceTag> {
         let rule = rule?;
-        let shifts: Vec<_> = self
-            .heads
-            .get(rule)?
+        let slots = self.heads.get(rule)?;
+        if !accept_precedence_operand_head(
+            head.kind.as_ref().is_some_and(|name| slots.contains(name))
+                || head.rule.as_ref().is_some_and(|name| slots.contains(name)),
+            head.reduced_to.iter().any(|name| slots.contains(name)),
+        ) {
+            return None;
+        }
+        let shifts: Vec<_> = slots
             .iter()
             .flat_map(|slot| shift_items(self, slot))
             .filter(|(_, item)| item.rest.contains(lookahead))
