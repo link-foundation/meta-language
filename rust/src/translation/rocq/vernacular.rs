@@ -271,6 +271,7 @@ impl RocqParser {
             ctors,
             span: Some(span(&start, self.peek())),
             generated: false,
+            source_unit_clone_derivation: None,
         })
     }
 

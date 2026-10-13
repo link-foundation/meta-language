@@ -112,6 +112,7 @@ pub(in crate::translation::javascript) fn lower_top_level(
                     }],
                     span: Some(place),
                     generated: true,
+                    source_unit_clone_derivation: None,
                 }));
                 let whole = format!("{data}_value");
                 let names: Vec<String> = carried.iter().map(|entry| entry.ir.clone()).collect();

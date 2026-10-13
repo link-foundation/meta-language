@@ -86,10 +86,10 @@ fn expected(entry: &Value) -> Vec<String> {
 }
 
 #[test]
-fn fourteen_actual_source_headers_retain_distinct_type_and_value_bindings() {
+fn fifteen_actual_source_headers_retain_distinct_type_and_value_bindings() {
     let data = fixture();
     let model = data["typeNamespaceModel"].as_str().unwrap();
-    assert_eq!(data["cases"].as_array().unwrap().len(), 14);
+    assert_eq!(data["cases"].as_array().unwrap().len(), 15);
     for entry in data["cases"].as_array().unwrap() {
         let id = entry["id"].as_str().unwrap();
         let source = entry["source"].as_str().unwrap();
@@ -240,10 +240,10 @@ fn every_actual_emitted_definition_reimports_with_its_projected_datatype_identit
 }
 
 #[test]
-fn seventeen_precise_source_refusals_and_twenty_four_malformed_graphs_remain_closed() {
+fn twenty_four_precise_source_refusals_and_twenty_five_malformed_graphs_remain_closed() {
     let data = fixture();
     let model = data["typeNamespaceModel"].as_str().unwrap();
-    assert_eq!(data["invalid"].as_array().unwrap().len(), 17);
+    assert_eq!(data["invalid"].as_array().unwrap().len(), 24);
     for entry in data["invalid"].as_array().unwrap() {
         let failure =
             parse_rust_with_type_namespace_model(entry["source"].as_str().unwrap(), model, "")
@@ -268,7 +268,7 @@ fn seventeen_precise_source_refusals_and_twenty_four_malformed_graphs_remain_clo
             entry["id"]
         );
     }
-    assert_eq!(data["malformed"].as_array().unwrap().len(), 24);
+    assert_eq!(data["malformed"].as_array().unwrap().len(), 25);
     for entry in data["malformed"].as_array().unwrap() {
         let (network, root) = archive(entry);
         for target in ["JavaScript", "Rust"] {
@@ -555,7 +555,7 @@ fn namespace_proofs_compose_with_both_strict_headers_and_actual_scoped_emission(
 }
 
 #[test]
-fn native_emitted_modules_execute_all_fourteen_shared_observations_in_ci() {
+fn native_emitted_modules_execute_all_fifteen_shared_observations_in_ci() {
     let data = fixture();
     let temporary = TemporaryDirectory::new("owned-type-namespace");
     for entry in data["cases"].as_array().unwrap() {
@@ -592,4 +592,202 @@ fn native_emitted_modules_execute_all_fourteen_shared_observations_in_ci() {
             "{id}"
         );
     }
+}
+
+#[test]
+fn actual_unit_clone_derivations_retain_attached_traits_and_reject_foreign_facts() {
+    let data = meta_language::read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/rust-type-namespace-traits.lino"
+    ))
+    .unwrap();
+    let model = data["typeNamespaceModel"].as_str().unwrap();
+    assert_eq!(data["cases"].as_array().unwrap().len(), 2);
+    for entry in data["cases"].as_array().unwrap() {
+        let selected = create_typed_program_links_with_rust_type_namespace_model(
+            entry["source"].as_str().unwrap(),
+            "Rust",
+            model,
+            None,
+            None,
+        )
+        .unwrap();
+        let native = LinkNetwork::from_lino(&selected.network.to_lino()).unwrap();
+        let (shared, shared_root) = archive(entry);
+        for (network, root) in [(&native, selected.root), (&shared, shared_root)] {
+            let decoded = decode_typed_program_links(network, root).unwrap();
+            let Some(Decl::Data(datatype)) = decoded.declaration("Choice") else {
+                panic!("the actual datatype exists");
+            };
+            assert_eq!(
+                datatype.source_unit_clone_derivation.as_ref().unwrap(),
+                &entry["expected"]
+            );
+            assert_eq!(
+                observe(
+                    &emit_typed_program_links(network, root, "JavaScript")
+                        .unwrap()
+                        .code
+                ),
+                expected(entry)
+            );
+            let emitted = emit_rust(&decoded).unwrap();
+            let source = format!("{}\nfn main(){{}}", emitted.definitions.join("\n"));
+            let selected = create_typed_program_links_with_rust_type_namespace_model(
+                &source, "Rust", model, None, None,
+            )
+            .unwrap();
+            let loaded = decode_typed_program_links(&selected.network, selected.root).unwrap();
+            assert!(loaded.declarations.iter().any(|entry| matches!(entry, Decl::Data(data) if data.source_unit_clone_derivation.is_some())));
+        }
+    }
+    assert_eq!(data["invalid"].as_array().unwrap().len(), 6);
+    for entry in data["invalid"].as_array().unwrap() {
+        assert!(
+            parse_rust(entry["source"].as_str().unwrap())
+                .and_then(|surface| check_program(&surface))
+                .is_ok(),
+            "{}: legacy",
+            entry["id"]
+        );
+        let failure =
+            parse_rust_with_type_namespace_model(entry["source"].as_str().unwrap(), model, "")
+                .and_then(|surface| check_program(&surface))
+                .unwrap_err();
+        assert_eq!(
+            failure.kind.as_str(),
+            entry["kind"].as_str().unwrap(),
+            "{}",
+            entry["id"]
+        );
+        assert_eq!(
+            failure.reason,
+            entry["reason"].as_str().unwrap(),
+            "{}",
+            entry["id"]
+        );
+        assert_eq!(
+            serde_json::to_value(failure.span).unwrap(),
+            entry["span"],
+            "{}",
+            entry["id"]
+        );
+    }
+    assert_eq!(data["malformed"].as_array().unwrap().len(), 3);
+    for entry in data["malformed"].as_array().unwrap() {
+        let (network, root) = archive(entry);
+        for target in ["JavaScript", "Rust"] {
+            let failure = emit_typed_program_links(&network, root, target).unwrap_err();
+            assert!(
+                failure.to_string().contains("unit Clone derivation"),
+                "{}:{target}: {failure}",
+                entry["id"]
+            );
+        }
+    }
+}
+
+fn container_at(network: &LinkNetwork, mut current: LinkId, path: &[Value]) -> LinkId {
+    let schema = meta_language::typed_program_links_schema();
+    for segment in path {
+        if let Some(index) = segment.as_u64() {
+            current = network.link(current).unwrap().references()[usize::try_from(index).unwrap()];
+        } else if network.link(current).unwrap().metadata().term()
+            == schema["containers"]["map"].as_str()
+        {
+            current = network
+                .link(current)
+                .unwrap()
+                .references()
+                .iter()
+                .find_map(|pair| {
+                    let children = network.link(*pair).unwrap().references();
+                    (network.link(children[0]).unwrap().metadata().definition() == segment.as_str())
+                        .then_some(children[1])
+                })
+                .unwrap();
+        } else {
+            let name = segment.as_str().unwrap();
+            current = field(
+                network,
+                current,
+                schema["fields"][name].as_str().unwrap_or(name),
+            );
+        }
+    }
+    current
+}
+
+#[test]
+fn raw_links_preserve_every_shared_container_location_before_rendering() {
+    let data = meta_language::read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/rust-type-namespace-containers.lino"
+    ))
+    .unwrap();
+    assert_eq!(data["cases"].as_array().unwrap().len(), 2);
+    assert_eq!(data["locations"].as_array().unwrap().len(), 27);
+    for location in data["locations"].as_array().unwrap() {
+        let entry = data["cases"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|entry| entry["id"] == location["caseId"])
+            .unwrap();
+        let (mut network, root) = archive(entry);
+        assert!(decode_typed_program_links(&network, root).is_ok());
+        let container = container_at(&network, root, location["path"].as_array().unwrap());
+        let kind = location["kind"].as_str().unwrap();
+        assert_eq!(
+            network.link(container).unwrap().metadata().term(),
+            meta_language::typed_program_links_schema()["containers"][kind].as_str()
+        );
+        let scalar = field(&network, root, "source language");
+        network.insert_field(container, "opaque container fact", scalar);
+        let loaded = LinkNetwork::from_lino(&network.to_lino()).unwrap();
+        for target in ["JavaScript", "Rust"] {
+            let failure = emit_typed_program_links(&loaded, root, target).unwrap_err();
+            if kind != "record" {
+                assert!(
+                    failure
+                        .to_string()
+                        .contains("ordered program container contains named fields"),
+                    "{location}:{target}: {failure}"
+                );
+            }
+        }
+        assert!(
+            decode_typed_program_links(&loaded, root).is_err(),
+            "{location}"
+        );
+    }
+}
+
+#[test]
+fn selected_module_datatypes_and_functions_recheck_without_relaxing_legacy_modules() {
+    let source = "mod nested{enum Choice{Only}fn keep(value:Choice)->Choice{value}}fn main(){}";
+    let legacy = check_program(&parse_rust(source).unwrap()).unwrap();
+    assert!(
+        encode_typed_program_links(&legacy)
+            .unwrap_err()
+            .to_string()
+            .contains("does not yet recheck module items")
+    );
+    let selected = create_typed_program_links_with_rust_type_namespace_model(
+        source,
+        "Rust",
+        "resolved Rust type namespace 1",
+        None,
+        None,
+    )
+    .unwrap();
+    let loaded = LinkNetwork::from_lino(&selected.network.to_lino()).unwrap();
+    let decoded = decode_typed_program_links(&loaded, selected.root).unwrap();
+    assert!(matches!(
+        decoded.declaration("nested.Choice"),
+        Some(Decl::Data(_))
+    ));
+    assert!(
+        function(&decoded, "nested.keep")
+            .source_type_namespace
+            .is_some()
+    );
 }
