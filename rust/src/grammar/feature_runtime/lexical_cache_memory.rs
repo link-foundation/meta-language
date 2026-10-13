@@ -17,6 +17,12 @@ pub(super) struct LexicalCache {
 pub(super) type LexicalCaches = Rc<RefCell<Vec<Rc<LexicalCache>>>>;
 
 impl Executor<'_> {
+    // Reservation decisions share the JavaScript Number model. Retain its
+    // integer-to-binary64 rounding even when a caller selects a large budget.
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "The shared reservation rule deliberately uses the JavaScript Number model"
+    )]
     pub(super) fn accepts_lexical_cache_reservation(&self, count: usize) -> bool {
         accept_lexical_cache_reservation(
             self.shared.cells.get() as f64,

@@ -11,7 +11,7 @@ impl Executor<'_> {
     pub(super) fn accept_fixed_lexical_expression(&mut self, expression: &Expr) -> bool {
         let mut pending = vec![(expression, false)];
         while let Some((item, finished)) = pending.pop() {
-            let identity = item as *const Expr as usize;
+            let identity = std::ptr::from_ref(item) as usize;
             if self.lexical_cache_forms.contains_key(&identity) {
                 continue;
             }
@@ -63,7 +63,7 @@ impl Executor<'_> {
             if finished {
                 let allowed = children.iter().all(|child| {
                     self.lexical_cache_forms
-                        .get(&(*child as *const Expr as usize))
+                        .get(&(std::ptr::from_ref(*child) as usize))
                         .copied()
                         .unwrap_or(false)
                 });
@@ -74,7 +74,7 @@ impl Executor<'_> {
             }
         }
         self.lexical_cache_forms
-            .get(&(expression as *const Expr as usize))
+            .get(&(std::ptr::from_ref(expression) as usize))
             .copied()
             .unwrap_or(false)
     }
@@ -94,7 +94,7 @@ impl Executor<'_> {
             self.suppressed > 0,
             self.repair_points.is_some(),
         ) && self.accept_fixed_lexical_expression(expr))
-        .then(|| (expr as *const Expr as usize, position, state.clone()));
+        .then(|| (std::ptr::from_ref(expr) as usize, position, state.clone()));
         if let Some(cached) = key
             .as_ref()
             .and_then(|key| self.lexical_cache.entries.borrow().get(key).cloned())

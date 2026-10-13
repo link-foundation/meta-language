@@ -729,16 +729,17 @@ pub(super) fn shift_preferred(
         }
         progress = inner;
     }
-    let mut shifted = progress
-        .precedence
-        .clone()
-        .unwrap_or_else(|| PrecedenceTag::unranked(progress.rule.clone()));
-    if first_meaningful(&progress.children).is_some_and(|head| head.end == short.end)
+    let shifted = if first_meaningful(&progress.children).is_some_and(|head| head.end == short.end)
         && let Some(lookahead) = lookahead
         && let Some(suffix) = grammar.operand_shift(progress.rule.as_ref(), lookahead, orders)
     {
-        shifted = suffix;
-    }
+        suffix
+    } else {
+        progress
+            .precedence
+            .clone()
+            .unwrap_or_else(|| PrecedenceTag::unranked(progress.rule.clone()))
+    };
     let reduced = reduced_before(short, &progress, grammar);
     if let Some(before) = shift_reduction(short, &progress, grammar) {
         let order = compare_precedence(&PrecedenceTag::unranked(Some(before)), &reduced, orders);

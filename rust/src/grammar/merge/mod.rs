@@ -601,7 +601,6 @@ pub fn merge_grammars(
             equivalences: options.global_equivalences.clone(),
             records: options.concept_records.clone(),
             formal_definitions: options.formal_definitions.clone(),
-            ..crate::global_concept_space::GlobalConceptOptions::default()
         },
     )
     .map_err(GrammarMergeError::new)?;

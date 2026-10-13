@@ -4,13 +4,13 @@
 
 /// Retain each source production when correspondence lacks an equivalence proof.
 #[must_use]
-pub fn preserve_source_alternatives(proven: bool, multiple_productions: bool) -> bool {
+pub const fn preserve_source_alternatives(proven: bool, multiple_productions: bool) -> bool {
     !proven && multiple_productions
 }
 
 /// Require unique correspondence and compatible semantic meanings.
 #[must_use]
-pub fn accept_rule_correspondence(
+pub const fn accept_rule_correspondence(
     multiple_sources: bool,
     unambiguous: bool,
     compatible_concepts: bool,
@@ -20,7 +20,7 @@ pub fn accept_rule_correspondence(
 
 /// Preserve lexical token behavior beneath a canonical parser rule.
 #[must_use]
-pub fn wrap_lexical_production(source_token: bool, canonical_token: bool) -> bool {
+pub const fn wrap_lexical_production(source_token: bool, canonical_token: bool) -> bool {
     source_token && !canonical_token
 }
 
