@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
 import {checkProjectData,writeProjectData} from './project-data.mjs';
-import {createTypedProgramLinks,decodeTypedProgramLinks} from '../src/typed-program-links.js';
+import {createTypedProgramLinks,decodeTypedProgramLinks,encodeTypedProgramLinks} from '../src/typed-program-links.js';
 export const RUST_PURE_UNIT_CALL_MODEL='closed pure Rust unit calls 1';
 const specifications=[
  ['implicit-empty','fn empty(){}fn main(){}',['empty'],[]],
@@ -57,6 +57,30 @@ export const pureUnitRefusedSources=[
  ['thread-wrapper','fn empty(){}fn main(){std::thread::Builder::new().spawn(move||empty());}'],
  ['exit-wrapper','fn empty(){}fn main(){std::process::exit(101);}'],
 ];
+const containerRoles=[
+ ['items',['items']],['effects',['main','effects']],['parameters',['declarations','empty','params']],
+ ['module-path',['declarations','empty','modulePath']],['arguments',['main','effects',0,'value','args']],
+ ['imports',['imports']],['externals',['externals']],['declaration-map',['declarations']],
+];
+export const pureUnitContainerMutations=containerRoles.flatMap(([role,path])=>[
+ ...['named','hidden','symbol'].map(mode=>({id:role+'-'+mode,role,path,mode,field:role==='declaration-map'?'opaqueBinding':'borrowEscape'})),
+ ...(role==='declaration-map'?[]:['sparse','accessor','hidden-index','prototype'].map(mode=>({id:role+'-'+mode,role,path,mode,field:'0'}))),
+]);
+export function applyPureUnitContainerMutation(program,mutation){
+ for(const name of ['imports','externals'])if(!Object.hasOwn(program,name))program[name]=[];
+ let container=program;
+ for(const part of mutation.path)container=container instanceof Map?Map.prototype.get.call(container,part):container[part];
+ const value=mutation.role==='declaration-map'?Map.prototype.get.call(program.declarations,'empty'):true;
+ if(mutation.mode==='named')container[mutation.field]=value;
+ else if(mutation.mode==='hidden')Object.defineProperty(container,mutation.field,{value,enumerable:false});
+ else if(mutation.mode==='symbol')container[Symbol.for(mutation.field)]=value;
+ else if(mutation.mode==='sparse'){if(!container.length)container.length=1;else delete container[0];}
+ else if(mutation.mode==='accessor')Object.defineProperty(container,'0',{enumerable:true,get(){throw Error('an unrepresented accessor was executed');}});
+ else if(mutation.mode==='hidden-index')Object.defineProperty(container,'0',{value:container[0]??true,enumerable:false});
+ else if(mutation.mode==='prototype')Object.setPrototypeOf(container,Object.create(Array.prototype));
+ else throw Error('unknown pure Unit container mutation');
+ return program;
+}
 export function rustPureUnitCallFixture(){
  const cases=specifications.map(([id,source,names,calls])=>{
   const packet=createTypedProgramLinks(source,'Rust',{rustPureUnitCallModel:RUST_PURE_UNIT_CALL_MODEL,provenance:{fixture:id}});
@@ -70,7 +94,14 @@ export function rustPureUnitCallFixture(){
   try{createTypedProgramLinks(source,'Rust',{rustPureUnitCallModel:RUST_PURE_UNIT_CALL_MODEL});}catch(error){return{id,source,kind:error.kind,reason:error.reason,span:error.span??null};}
   throw Error('source refusal was admitted: '+id);
  });
- return {schemaVersion:1,model:RUST_PURE_UNIT_CALL_MODEL,scope:'Flat owned zero-argument Unit helpers with empty or Unit bodies and ordered owned call statements in main. No public interfaces, imports, runtime attributes, effects, threads, process exit or full generated wrapper replay.',cases,invalid};
+ const mutationSource='fn empty(){}fn main(){empty();}';
+ const containerMutations=pureUnitContainerMutations.map(mutation=>{
+  const packet=createTypedProgramLinks(mutationSource,'Rust',{rustPureUnitCallModel:RUST_PURE_UNIT_CALL_MODEL}),program=decodeTypedProgramLinks(packet.network,packet.root);
+  applyPureUnitContainerMutation(program,mutation);
+  try{encodeTypedProgramLinks(program);}catch(error){return {...mutation,kind:error.kind,reason:error.reason};}
+  throw Error('container metadata was erased: '+mutation.id);
+ });
+ return {schemaVersion:1,model:RUST_PURE_UNIT_CALL_MODEL,scope:'Flat owned zero-argument Unit helpers with empty or Unit bodies and ordered owned call statements in main. No public interfaces, imports, runtime attributes, effects, threads, process exit or full generated wrapper replay.',cases,invalid,mutationSource,containerMutations};
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){
  const file=new URL('../../parity/fixtures/rust-pure-unit-calls.lino',import.meta.url),fixture=rustPureUnitCallFixture();

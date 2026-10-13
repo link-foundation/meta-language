@@ -1,9 +1,6 @@
 import {readFileSync,writeFileSync} from 'node:fs';
 import {readProjectData} from './project-data.mjs';
 import {DecoratorSet} from '../src/decorators.js';
-import {parseJavaScript} from '../src/translation/javascript.js';
-import {checkProgram} from '../src/translation/check.js';
-import {emitRust} from '../src/translation/emit-rust.js';
 import {formatProductRuleSource} from './product-rule-style-corrections.mjs';
 import {stripRustSourceHeaderStyleParentheses} from './rust-source-header-library-style.mjs';
 import assert from 'node:assert/strict';
@@ -16,14 +13,18 @@ const source='// Generated from linked pure Rust Unit-call policy. Do not edit.\
  +'/** @param {string} form @returns {boolean} */\nexport function acceptRustPureUnitHeaderForm(form){return '+policy.headerForms.map(form=>'form === '+JSON.stringify(form)).join(' || ')+';}\n'
  +'/** @param {string} form @returns {boolean} */\nexport function acceptRustPureUnitBodyForm(form){return '+policy.bodyForms.map(form=>'form === '+JSON.stringify(form)).join(' || ')+';}\n'
  +'/** @param {string} form @returns {boolean} */\nexport function acceptRustPureUnitPathForm(form){return '+policy.pathForms.map(form=>'form === '+JSON.stringify(form)).join(' || ')+';}\n'
- +'/** @param {string} language @param {boolean} forbidden @returns {boolean} */\nexport function acceptRustPureUnitContext(language,forbidden){return language === "Rust" && !forbidden;}\n';
+ +'/** @param {string} language @param {boolean} forbidden @returns {boolean} */\nexport function acceptRustPureUnitContext(language,forbidden){return language === "Rust" && !forbidden;}\n'
+ +'/** @param {string} kind @param {boolean} dense @param {boolean} unrepresented @returns {boolean} */\nexport function acceptRustPureUnitContainer(kind,dense,unrepresented){return !unrepresented && (kind === '+JSON.stringify(policy.containerKinds.array)+' && dense || kind === '+JSON.stringify(policy.containerKinds.map)+');}\n';
 const js=new URL('../src/translation/rust-pure-unit-call-rules.js',import.meta.url),native=new URL('../../rust/src/translation/rust/pure_unit_call_rules.rs',import.meta.url),copy=new URL('../../rust/src/data/rust-pure-unit-calls.lino',import.meta.url),style=new URL('../../parity/self-translation/rust-pure-unit-call-rules-decorators.lino',import.meta.url);
 if(process.argv.includes('--check')){if(readFileSync(js,'utf8')!==source)throw Error('JavaScript pure Unit-call rules are stale');}else writeFileSync(js,source);
 if(!process.argv.includes('--javascript-only')){
+ const {parseJavaScript}=await import('../src/translation/javascript.js');
+ const {checkProgram}=await import('../src/translation/check.js');
+ const {emitRust}=await import('../src/translation/emit-rust.js');
  const raw=emitRust(checkProgram(parseJavaScript(source))).definitions.join('\n\n');
  if(process.argv.includes('--update-styles')){
   const actions=[];let current=raw;const replace=(from,to)=>{if(current.includes(from)){actions.push({op:'replace',field:'source',from,to});current=current.split(from).join(to);}};
-  for(const parameter of ['model','name','form','language'])replace(parameter+': String',parameter+': &str');
+  for(const parameter of ['model','name','form','language','kind'])replace(parameter+': String',parameter+': &str');
   for(const match of raw.matchAll(/^pub fn (\w+)\(/gmu))replace('pub fn '+match[1]+'(','/// Read a shared pure Rust Unit-call admission.\n#[must_use]\npub fn '+match[1]+'(');
   replace('model == ""','model.is_empty()');replace('name != ""','!name.is_empty()');
   for(const definition of current.matchAll(/pub fn accept_rust_pure_unit_[\s\S]*?\n\}/gu)){

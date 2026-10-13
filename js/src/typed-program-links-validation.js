@@ -37,10 +37,10 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     for (const child of values) bounded(child, depth + 1);
     active.delete(value);
   }
+  checkRustPureUnitCalls(program);
   bounded(program);
   checkRustPrimitiveOwnerProof(program);
   checkRustEmptyOptionProof(program);
-  checkRustPureUnitCalls(program);
   // Shared records can describe exponentially many expression paths. Bound
   // the semantic walk as well as the number of unique structural records.
   let semanticVisits = 0;

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import vm from 'node:vm';
 import {readProjectData} from '../scripts/project-data.mjs';
-import {rustPureUnitCallFixture} from '../scripts/generate-rust-pure-unit-call-fixtures.mjs';
+import {rustPureUnitCallFixture,applyPureUnitContainerMutation} from '../scripts/generate-rust-pure-unit-call-fixtures.mjs';
 import {createTypedProgramLinks,decodeTypedProgramLinks,encodeTypedProgramLinks,emitTypedProgramLinks,TYPED_PROGRAM_LINKS_SCHEMA} from '../src/typed-program-links.js';
 import {recheckLinkedTypedProgram} from '../src/typed-program-checked-projection.js';
 import {parseRust} from '../src/translation/rust.js';
@@ -10,7 +10,7 @@ import {checkProgram} from '../src/translation/check.js';
 import {emitRust} from '../src/translation/emit-rust.js';
 import {LinkNetwork} from '../src/network.js';
 import {LinkMetadata} from '../src/primitives.js';
-import {acceptRustPureUnitCallModel,acceptRustPureUnitNameCharacter,acceptRustPureUnitHeaderForm,acceptRustPureUnitBodyForm,acceptRustPureUnitPathForm} from '../src/translation/rust-pure-unit-call-rules.js';
+import {acceptRustPureUnitCallModel,acceptRustPureUnitNameCharacter,acceptRustPureUnitHeaderForm,acceptRustPureUnitBodyForm,acceptRustPureUnitPathForm,acceptRustPureUnitContainer} from '../src/translation/rust-pure-unit-call-rules.js';
 const fixture=readProjectData(new URL('../../parity/fixtures/rust-pure-unit-calls.lino',import.meta.url));
 const options={rustPureUnitCallModel:fixture.model};
 const reload=entry=>({network:LinkNetwork.fromLino(entry.links),root:entry.root});
@@ -96,4 +96,28 @@ test('selected model provenance and automatically translated policy boundaries s
  assert.equal(acceptRustPureUnitCallModel(''),true);assert.equal(acceptRustPureUnitCallModel(fixture.model),true);assert.equal(acceptRustPureUnitCallModel('unknown'),false);
  for(let code=0;code<128;code++)for(const first of [false,true])assert.equal(acceptRustPureUnitNameCharacter(code,first),code===95||code>=65&&code<=90||code>=97&&code<=122||!first&&code>=48&&code<=57);
  for(const [accept,values] of [[acceptRustPureUnitHeaderForm,['implicit unit','explicit unit']],[acceptRustPureUnitBodyForm,['empty block','unit expression']],[acceptRustPureUnitPathForm,['unqualified name','absolute crate path']]]){for(const value of values)assert.equal(accept(value),true);assert.equal(accept('unknown'),false);}
+ for(const kind of ['array','map','unknown'])for(const dense of [false,true])for(const unrepresented of [false,true])assert.equal(acceptRustPureUnitContainer(kind,dense,unrepresented),!unrepresented&&(kind==='array'&&dense||kind==='map'));
+});
+
+test('all selected ordered containers and the actual declaration Map refuse own metadata before the codec can erase it',()=>{
+ assert.equal(fixture.containerMutations.length,52);
+ for(const mutation of fixture.containerMutations){
+  const packet=createTypedProgramLinks(fixture.mutationSource,'Rust',options),network=LinkNetwork.fromLino(packet.network.toLino()),program=decodeTypedProgramLinks(network,packet.root);
+  applyPureUnitContainerMutation(program,mutation);
+  assert.throws(()=>encodeTypedProgramLinks(program),error=>error.kind===mutation.kind&&error.reason===mutation.reason,mutation.id);
+ }
+ const packet=createTypedProgramLinks(fixture.mutationSource,'Rust',options),program=decodeTypedProgramLinks(packet.network,packet.root);
+ program.imports=[];program.externals=[];
+ const clean=encodeTypedProgramLinks(program),raw=LinkNetwork.fromLino(clean.network.toLino());
+ assert.equal(observe({network:raw,root:clean.root}).output,'');assert.deepEqual(decodeTypedProgramLinks(raw,clean.root).main.effects.map(effect=>effect.value.fn),['empty']);
+});
+
+test('hidden record fields and callback-shaped ordered fields cannot be normalized as an absent ownership fact',()=>{
+ for(const role of ['marker','function','proof','statement']){
+  const packet=createTypedProgramLinks(fixture.mutationSource,'Rust',options),program=decodeTypedProgramLinks(packet.network,packet.root),fn=program.declarations.get('empty'),owner={marker:program.sourcePureUnitCalls,function:fn,proof:fn.sourcePureUnit,statement:program.main.effects[0].sourcePureUnitCall}[role];
+  Object.defineProperty(owner,'borrowEscape',{value:true,enumerable:false});assert.throws(()=>encodeTypedProgramLinks(program),/unrepresented own fields/u,role);
+ }
+ const packet=createTypedProgramLinks(fixture.mutationSource,'Rust',options),program=decodeTypedProgramLinks(packet.network,packet.root);
+ let executed=0;Object.defineProperty(program.main.effects,'0',{get(){executed++;throw Error('unrepresented callback was invoked');},enumerable:true});
+ assert.throws(()=>encodeTypedProgramLinks(program),/unrepresented own fields or sparse positions/u);assert.equal(executed,0);
 });
