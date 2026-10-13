@@ -140,13 +140,30 @@ their separate obligations. Rust string continuations and CRLF normalization
 use shared checked rules while preserving original source-token spans.
 The explicit fresh scalar vector result profile admits owned constructor tails
 and preserves its source profile and caller provenance through typed links.
-Existing default-profile refusals remain available. Proven primitive binary
-floating point predicate receivers use shared linked expression templates with
-one receiver evaluation. Read-only scalar `mut` parameters require a complete
-assignment-free body and ordinary source-owner validation; mutable writes and
-full generated-source reimport remain separate obligations.
-Its shared schema gives abbreviated host fields readable English
-relation names, including the Unicode code unit string model. The finite formal
+Existing default-profile refusals remain available. The independently selected
+`closed guarded function returns 1` profile admits direct function returns and
+closed conditional guards with proved direct value ownership. Shared completion
+decisions lower them into the existing conditional, binding and abort model,
+retaining condition order, branch scope, binding identities and source spans.
+The source profile, independent vector-result selection and user provenance
+survive source-free Links reload. Returns escaping value expressions, mixed or
+incomplete branch completions and unreachable statements require further proofs;
+the existing default-profile return diagnostics remain exact.
+Proven unshadowed primitive binary64 (`f64`) receivers use shared linked
+expression templates for predicates and `abs`, `floor`, `ceil` and `trunc`, with
+one receiver evaluation. Operation fixtures compare non-NaN results by exact
+bits, including signed zero, subnormal values and infinities; NaN is compared by
+class. Actual emitted function definitions reimport in both directions,
+including typed negative-zero bindings and explicit array-length conversion to
+unshadowed `f64` under the Number length model. Source-free operation-link edits
+alter emitted behavior. Custom or shadowed owners, `f32`, implicit indirect
+receivers and other numeric methods retain their separate obligations.
+Read-only scalar `mut` parameters require a complete assignment-free body and
+ordinary source-owner validation. Mutable writes, generated runtime wrappers
+and general mutable flow remain required work; full binary-codec source reimport
+still has an emitted mutable tuple binding gap.
+The typed-program adapter's shared schema gives abbreviated host fields readable
+English relation names, including the Unicode code unit string model. The finite formal
 definition adapter checks closed recursive correspondences under supported
 typed-program, literal source-text and source-trivia primitive models. A
 certificate carries both premises and every node pair; counterfeit or missing
