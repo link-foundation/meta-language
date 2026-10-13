@@ -354,7 +354,7 @@ fn tokenize_region(
     // Encode lazily once; copying each suffix is quadratic in modules with
     // many regular-expression literals. The shared rule uses absolute offsets.
     let mut scopes = Vec::new();
-    let mut braces = Vec::new();
+    let mut statement_blocks = Vec::new();
     let mut closed = false;
     let mut declaration_body = false;
     let mut depth = 0usize;
@@ -609,7 +609,7 @@ fn tokenize_region(
                         },
                     );
                 let value = tokens.last().map_or("", |token| token.value.as_str());
-                braces.push(accept_statement_brace(
+                statement_blocks.push(accept_statement_brace(
                     kind,
                     value,
                     control_closed,
@@ -617,7 +617,7 @@ fn tokenize_region(
                 ));
                 declaration_body = false;
             } else if text == "}" {
-                closed = braces.pop().unwrap_or(false);
+                closed = statement_blocks.pop().unwrap_or(false);
             } else {
                 declaration_body = false;
             }

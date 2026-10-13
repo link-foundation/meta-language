@@ -639,10 +639,10 @@ impl Executor<'_> {
             scanner.consults.then_some(context),
             state.clone(),
         );
-        if let Some(scanned) = self.scanner_memo.get(&key) {
-            return Ok(scanned.clone());
+        if let Some(cached_result) = self.scanner_memo.get(&key) {
+            return Ok(cached_result.clone());
         }
-        let scanned = (|| {
+        let outcome = (|| {
             let mut machine = ScannerMachine {
                 executor: self,
                 requested: name.clone(),
@@ -672,8 +672,8 @@ impl Executor<'_> {
                 state: machine.working.settle(),
             })))
         })()?;
-        self.scanner_memo.insert(key, scanned.clone());
-        Ok(scanned)
+        self.scanner_memo.insert(key, outcome.clone());
+        Ok(outcome)
     }
 
     /// Parses the whole range from `start_rule`: the tree, or the farthest

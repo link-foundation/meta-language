@@ -67,8 +67,8 @@ pub(crate) fn read_checked_match_pattern_bindings(
         .map(|declaration| (declaration.full_name().to_owned(), declaration.clone()))
         .collect();
     let mut environment = Env::default();
-    let checked = checker.pattern(&surface, ty, &mut environment, None)?;
-    if checked != *pattern {
+    let verified_pattern = checker.pattern(&surface, ty, &mut environment, None)?;
+    if verified_pattern != *pattern {
         return Err(type_error(
             "a checked pattern has inconsistent ownership",
             None,

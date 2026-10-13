@@ -136,7 +136,7 @@ fn copy_tuple(ty: &Type) -> bool {
 }
 
 fn children(node: &SExpr) -> Vec<&SExpr> {
-    let mut values = match &node.node {
+    let mut values: Vec<&SExpr> = match &node.node {
         SNode::App { func, args } => {
             let mut values = vec![func.as_ref()];
             values.extend(args);

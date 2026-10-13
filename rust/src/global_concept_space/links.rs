@@ -79,11 +79,11 @@ pub fn global_concept_space_to_links(space: &Value) -> Result<String, String> {
             let root = definition["root"]
                 .as_u64()
                 .ok_or("a formal origin needs a root")?;
-            let links = string(&definition["links"])?;
+            let definition_text = string(&definition["links"])?;
             lines.push(format!(
                 "(formal-origin-definition {} {root} (links {}))",
                 percent_encode_links_text(alias),
-                links.trim().replace('\n', " ")
+                definition_text.trim().replace('\n', " ")
             ));
         }
     }

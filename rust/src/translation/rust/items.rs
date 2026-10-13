@@ -343,7 +343,7 @@ impl RustParser {
             let mut constructor_path = path.to_vec();
             constructor_path.push(name.clone());
             let mut type_path = vec!["crate".to_owned()];
-            type_path.extend(&constructor_path);
+            type_path.extend(constructor_path.iter().cloned());
             self.origins.declaration(
                 &variant.value,
                 &constructor_path,

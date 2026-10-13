@@ -3,7 +3,7 @@
 use super::{
     ASSIGNMENTS, BinaryOp, External, FLOAT, GLOBALS, JavaScriptParser, Language, ROOT, Result,
     SArrayItem, SData, SExpr, SNode, SPattern, SPatternNode, SRow, STagTest, ShowStyle, Span,
-    Token, TokenCursor, TokenKind, UnaryOp, binary, describe, has_ctor, is_tag_field, joined, node,
+    Token, TokenCursor, TokenKind, UnaryOp, binary, has_ctor, is_tag_field, joined, node,
     number_literal, span, tokenize, type_error, unsupported, wild,
 };
 

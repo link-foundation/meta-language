@@ -71,7 +71,7 @@ impl SourceOrigin {
         }
     }
 
-    pub(super) const fn value() -> Self {
+    pub(super) fn value() -> Self {
         Self {
             proven: true,
             ..Self::unknown()
@@ -114,7 +114,7 @@ impl SourceOrigin {
             && self.wrappers[0] == "reference"
     }
 
-    const fn uncertain() -> Self {
+    fn uncertain() -> Self {
         Self {
             uncertain: true,
             ..Self::unknown()
