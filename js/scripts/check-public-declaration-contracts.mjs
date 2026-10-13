@@ -17,6 +17,7 @@ export function publicDeclarationConsumers(moduleSpecifier = publicModule) {
   const semanticRecord = `id:'fixture.consumer-atom',phrase:'consumer atom',role:'concept',
     definition:'A source-owned consumer atom.',constraints:['The declared formal archive remains inspectable.'],
     sourceAliases:[{source:'consumer',name:'root'}],formerNames:[]`;
+  const scalarLoopSource = JSON.stringify('fn advance(mut value:f64,limit:f64,mut at:f64)->f64{loop{return if at<limit{(value,at)=(value+1f64,at+1f64);continue;}else{value};}}fn main(){}');
   return [
     {
       name: 'valid-readonly-triples-and-formal-records',
@@ -129,6 +130,46 @@ export const contractEvidence = {matched:verifyFormalConceptEquivalence(first,se
     {
       name: 'reject-undeclared-shared-numeric-function-selector', expectedDiagnostics: ['TS2353'],
       source: `import { createTypedProgramLinks, encodeSharedNumericFunctionDefinition } from ${module};\nencodeSharedNumericFunctionDefinition(createTypedProgramLinks('fn f()->bool{true}fn main(){}','Rust'),{identity:'f'});\n`,
+    },
+    {
+      name: 'valid-selected-Rust-scalar-loop-profile', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks, LinkNetwork } from ${module};
+import type { TypedProgramLinksEmission } from ${module};
+const packet = createTypedProgramLinks(${scalarLoopSource},'Rust',
+  {rustScalarLoopModel:'closed primitive scalar loop 1',provenance:{consumer:'typed scalar loop'}});
+const network = LinkNetwork.fromLino(packet.network.toLino());
+const checked = decodeTypedProgramLinks(network,packet.root);
+const javascript:TypedProgramLinksEmission = emitTypedProgramLinks(network,packet.root,'JavaScript');
+const rust:TypedProgramLinksEmission = emitTypedProgramLinks(network,packet.root,'Rust');
+export const contractEvidence = {language:javascript.language,code:javascript.code,rustCode:rust.code,
+  declaration:checked.declarations.has('advance'),root:!!network.link(packet.root),
+  proof:network.links().some(link=>link.metadata().term === 'source loop proof')};
+`,
+    },
+    {
+      name: 'valid-selected-JavaScript-scalar-loop-profile', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks, LinkNetwork } from ${module};
+import type { TypedProgramLinksEmission } from ${module};
+const original = createTypedProgramLinks(${scalarLoopSource},'Rust',{rustScalarLoopModel:'closed primitive scalar loop 1'});
+const actualSource = emitTypedProgramLinks(original.network,original.root,'JavaScript').code;
+const packet = createTypedProgramLinks(actualSource,'JavaScript',
+  {javaScriptScalarLoopModel:'closed primitive scalar loop 1',provenance:{consumer:'typed reverse scalar loop'}});
+const network = LinkNetwork.fromLino(packet.network.toLino());
+const checked = decodeTypedProgramLinks(network,packet.root);
+const javascript:TypedProgramLinksEmission = emitTypedProgramLinks(network,packet.root,'JavaScript');
+const rust:TypedProgramLinksEmission = emitTypedProgramLinks(network,packet.root,'Rust');
+export const contractEvidence = {language:javascript.language,code:javascript.code,rustCode:rust.code,
+  declaration:checked.declarations.has('advance'),root:!!network.link(packet.root),
+  proof:network.links().some(link=>link.metadata().term === 'source loop proof')};
+`,
+    },
+    {
+      name: 'reject-unknown-Rust-scalar-loop-profile', expectedDiagnostics: ['TS2322'],
+      source: `import { createTypedProgramLinks } from ${module};\ncreateTypedProgramLinks('fn main(){}','Rust',{rustScalarLoopModel:'unknown model'});\n`,
+    },
+    {
+      name: 'reject-unknown-JavaScript-scalar-loop-profile', expectedDiagnostics: ['TS2322'],
+      source: `import { createTypedProgramLinks } from ${module};\ncreateTypedProgramLinks('function keep(){return 1;}','JavaScript',{javaScriptScalarLoopModel:'unknown model'});\n`,
     },
   ];
 }
