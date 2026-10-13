@@ -1,11 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
+import { readFileSync } from 'node:fs';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { rustSourceHeaderEmissionFixture } from '../scripts/generate-rust-source-header-emission-fixtures.mjs';
 import { createTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks, encodeTypedProgramLinks, TYPED_PROGRAM_LINKS_SCHEMA } from '../src/typed-program-links.js';
 import { LinkNetwork } from '../src/network.js';
 import { parseRust } from '../src/translation/rust.js';
+import { parseJavaScript } from '../src/translation/javascript.js';
+import { DecoratorSet } from '../src/decorators.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { acceptRustSourceHeaderLifetimeCharacter } from '../src/translation/rust-source-header-emission-rules.js';
@@ -16,6 +19,25 @@ const reload = value => ({ network: LinkNetwork.fromLino(value.links), root: val
 const scalar = value => value === '-0' ? -0 : value === 'NaN' ? NaN : value === 'Infinity' ? Infinity : value;
 const run = (code, name, args) => vm.runInNewContext(`${code}\n${name}(...argumentsList)`, { argumentsList: args.map(scalar) }, { timeout: 1000 });
 const field = (network, parent, name) => network.fieldRelations().find(value => value.parent.equals(parent) && value.label === (TYPED_PROGRAM_LINKS_SCHEMA.fields[name] ?? name));
+
+test('recorded native header styles decorate complete function names once and remain stable on replay', () => {
+  const source = readFileSync(new URL('../src/translation/rust-source-header-emission-rules.js', import.meta.url), 'utf8');
+  const definitions = emitRust(checkProgram(parseJavaScript(source))).definitions;
+  const raw = '\n\n' + definitions.join('\n\n');
+  const styles = DecoratorSet.fromLino(readFileSync(new URL('../../parity/self-translation/rust-source-header-emission-rules-decorators.lino', import.meta.url), 'utf8'));
+  const decorated = styles.decorate('emitter', { format: 'Rust', source: raw }).source;
+  assert.equal(styles.decorate('emitter', { format: 'Rust', source: decorated }).source, decorated, 'reapplying the same recorded style cannot duplicate attributes');
+  const names = new Set();
+  for (const text of [decorated, readFileSync(new URL('../../rust/src/translation/source_header_emission_rules.rs', import.meta.url), 'utf8')]) {
+    const functions = [...text.matchAll(/((?:(?:\/\/\/[^\n]*|#\[[^\n]*\])\n)*)(?:pub (?:const )?fn) (\w+)/gu)];
+    assert.equal(functions.length, definitions.length);
+    for (const match of functions) {
+      names.add(match[2]);
+      assert.equal([...match[1].matchAll(/#\[must_use\]/gu)].length, 1, match[2]);
+    }
+  }
+  for (const name of ['accept_rust_source_header_emission_declaration', 'accept_rust_source_header_emission_declaration_fields', 'accept_rust_source_header_emission_expression', 'accept_rust_source_header_emission_expression_field']) assert.ok(names.has(name), name);
+});
 
 test('selected leaf headers refuse source-free unrepresented function facets while defaults retain exact output', () => {
   const value = reload(fixture.cases[1]);
