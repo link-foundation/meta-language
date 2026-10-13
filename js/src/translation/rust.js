@@ -28,6 +28,8 @@ import { acceptRustUnwrittenScalarParameter } from './rust-scalar-parameter-rule
 import { readRustScalarParameterBody } from './rust-scalar-parameters.js';
 import { acceptRustScalarLoopModel, readRustScalarLoop } from './rust-scalar-loops.js';
 import { checkProgram } from './check.js';
+import {acceptRustPrimitiveOwnerModel} from './rust-primitive-owner-rules.js';
+import {readRustStandardPrimitivePosition,createRustPrimitiveOwnerProof,acceptRustPrimitiveOwnerImportName} from './rust-primitive-owners.js';
 
 const ACCEPTED_DERIVES = new Set(['Clone', 'Copy', 'Debug', 'PartialEq', 'Eq', 'Hash', 'PartialOrd', 'Ord']);
 const ACCEPTED_LINTS = new Set(['allow', 'warn', 'deny', 'expect', 'must_use', 'inline']);
@@ -36,16 +38,17 @@ const ADDITIVE = { '+': 'add', '-': 'sub' };
 const MULTIPLICATIVE = { '*': 'mul', '/': 'div', '%': 'rem' };
 const RESERVED_ITEMS = new Set(['impl', 'trait', 'struct', 'union', 'static', 'type', 'extern', 'macro_rules', 'async', 'unsafe']);
 
-export function parseRust(source, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '' } = {}) {
+export function parseRust(source, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '' } = {}) {
+  if(!acceptRustPrimitiveOwnerModel(primitiveOwnerModel))throw unsupported('Rust primitive owner model','select the legacy model or standard primitive Rust binary64 owner 1');
   if (!acceptRustScalarLoopModel(scalarLoopModel)) throw unsupported('Rust scalar loop model', 'select the legacy model or closed primitive scalar loop 1');
   if (!acceptRustSourceArrayResultModel(arrayResultModel)) throw unsupported('Rust array result model', 'select the legacy model or immutable fresh scalar vector results 1');
   if (!acceptRustCompletionModel(completionModel)) throw unsupported('Rust completion model', 'select the legacy model or closed guarded function returns 1');
   if (!acceptRustSourceSignatureModel(sourceSignatureModel)) throw unsupported('Rust source signature model', 'select the legacy model or Rust source function signature 1');
   const { tokens } = tokenize(source, 'Rust');
-  const declarations = new RustParser(tokens, null, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel);
+  const declarations = new RustParser(tokens, null, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel);
   declarations.file();
   declarations.origins.resolveTypes((segments, path) => declarations.resolve(segments, path));
-  const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel);
+  const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel);
   syntax.origins.collecting = true;
   syntax.aliases = declarations.aliases;
   const surface = syntax.file();
@@ -55,13 +58,13 @@ export function parseRust(source, { arrayResultModel = '', completionModel = '',
     if (!(error instanceof TranslationError)) throw error;
     return surface;
   }
-  const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel);
+  const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel);
   parser.aliases = syntax.aliases;
   return parser.file();
 }
 
 class RustParser {
-  constructor(tokens, catalog = null, arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '') {
+  constructor(tokens, catalog = null, arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '',primitiveOwnerModel='') {
     this.cursor = new TokenCursor([...tokens], 'Rust');
     // `use` aliases, per module path.
     this.aliases = new Map();
@@ -71,6 +74,10 @@ class RustParser {
     this.completionModel = completionModel;
     this.sourceSignatureModel = sourceSignatureModel;
     this.scalarLoopModel = scalarLoopModel;
+    this.primitiveOwnerModel=primitiveOwnerModel;
+    this.primitiveOwnerFrames=[];
+    this.primitiveConstantSites=[];
+    this.primitiveImportNames=new Set();
     this.sourceOwnerFrames = [];
     this.reservedNames = new Set(tokens.filter(token => token.kind === 'identifier').map(token => token.value));
     this.productBindingCount = 0;
@@ -86,6 +93,7 @@ class RustParser {
     const root = { items: [], main: null };
     this.innerAttributes();
     this.items(root, root.items, [], () => this.cursor.atEnd());
+    if(this.primitiveOwnerModel&&(root.items.some(item=>item.k!=='fn')||root.main?.effects.length))throw unsupported('Rust primitive owner profile','only flat primitive leaf functions and an empty main are admitted');
     if (!root.main) throw new TranslationError('syntax', 'a Rust program needs fn main', this.cursor.peek());
     return { language: 'Rust', items: root.items, main: root.main };
   }
@@ -224,13 +232,19 @@ class RustParser {
       const standardBox = full.length > 1 && acceptRustSourceBoxOwner(full.join('::'), false);
       const standardVector = full.length > 1 && acceptRustSourceArrayOwner(full.join('::'), false);
       const standardString = acceptRustReadOnlyQueryOwner('string empty', 'library', full.join('::'));
-      if (!['crate', 'super', 'self'].includes(full[0]) && !standardBox && !standardVector && !standardString) {
+      const standardPrimitive=Boolean(readRustStandardPrimitivePosition(this,full,path));
+      if(this.primitiveOwnerModel&&!standardPrimitive)throw unsupported('Rust primitive owner import','only the two actual standard primitive reexports can be imported',span(start,c.peek()));
+      if (!['crate', 'super', 'self'].includes(full[0]) && !standardBox && !standardVector && !standardString&&!standardPrimitive) {
         throw unsupported(`use ${full.join('::')}`, 'only items of this crate can be imported; the standard library is outside the portable core', span(start, c.peek()));
       }
       if (standardBox) this.origins.box(full, full, path, span(start, c.peek()));
       if (standardVector) this.origins.vector(full, full, path, span(start, c.peek()));
       const alias = c.eat('as') ? c.identifier('use alias').value : segment;
-      aliases.set(alias, standardBox || standardVector || standardString ? full : absolute(full, path, span(start, c.peek())));
+      if(this.primitiveOwnerModel){
+        if(!acceptRustPrimitiveOwnerImportName(alias)||this.primitiveImportNames.has(alias))throw unsupported('Rust primitive owner alias','each import needs one distinct ASCII identifier outside the standard crate namespace',span(start,c.peek()));
+        this.primitiveImportNames.add(alias);
+      }
+      aliases.set(alias, standardBox || standardVector || standardString||standardPrimitive ? full : absolute(full, path, span(start, c.peek())));
     };
     tree([]);
     c.expect(';', 'use');
@@ -286,14 +300,19 @@ class RustParser {
     // public source-signature facet remains opt-in, independently of this fact.
     const head = readRustSourceTypeHead(this.cursor);
     const children = [];
+    const primitiveChildren=[];
     this.sourceOwnerFrames.push(children);
+    this.primitiveOwnerFrames.push(primitiveChildren);
     try {
       const result = this.typeValue();
-      const owner = readRustSourceTypeOwner(this, head, children, result);
+      const position=readRustStandardPrimitivePosition(this,head)??(['&','('].includes(head[0])&&primitiveChildren.length===1?primitiveChildren[0]:null);
+      this.origins.type.primitiveOwnerPosition=position;
+      const owner = position?{kind:'primitive',path:['f64'],arguments:[]}:readRustSourceTypeOwner(this, head, children, result);
       this.origins.type.sourceOwner = owner;
       this.sourceOwnerFrames.at(-2)?.push(owner);
+      this.primitiveOwnerFrames.at(-2)?.push(position);
       return result;
-    } finally { this.sourceOwnerFrames.pop(); }
+    } finally { this.sourceOwnerFrames.pop();this.primitiveOwnerFrames.pop(); }
   }
 
   typeValue() {
@@ -357,6 +376,7 @@ class RustParser {
     const segments = this.pathSegments('type');
     const name = segments.join('::');
     const resolved = this.resolve(segments, this.modulePath);
+    if(readRustStandardPrimitivePosition(this,segments))return this.origins.typed(FLOAT,this.modulePath);
     if (acceptRustSourceArrayOwner(name, false) || acceptRustSourceArrayOwner(resolved.join('::'), false)) {
       this.origins.vector(segments, resolved, this.modulePath, span(token, c.peek()));
       c.expect('<', 'Vec');
@@ -446,6 +466,7 @@ class RustParser {
       if (!c.eat('->')) throw unsupported('function without a result', `${name} returns (); only value-returning functions are portable`, span(start, c.peek()));
       const ret = this.type();
       const sourceResult = this.origins.type;
+      if(this.primitiveOwnerModel&&(mutableParams.length||this.lifetimeBindings.size))throw unsupported('Rust primitive owner context','mutable parameters and named lifetime binders require a separate owned context proof');
       const scalarLoop = Boolean(this.scalarLoopModel && c.is('{') && c.is('loop', 1));
       if (scalarLoop && path.length) throw unsupported('Rust scalar loop', 'the selected scalar state model requires a flat function', span(start, c.peek()));
       if (mutableParams.length && !scalarLoop) {
@@ -479,6 +500,7 @@ class RustParser {
       this.origins.argument(this.origins.origin(body, path), sourceResult, body.span);
       this.origins.scope = previous;
       return { k: 'fn', name, params, ret, body, span: span(start, c.peek()),
+        ...(this.primitiveOwnerModel?{sourcePrimitiveOwners:createRustPrimitiveOwnerProof(this,sourceParams,sourceResult,{span:span(start,c.peek())})}:{}),
         ...(scalarLoop ? {sourceSignature: signature, sourceLoop: lowered.proof} : this.sourceSignatureModel ? { sourceSignature: createRustSourceSignature(this.sourceSignatureModel, sourceParams, sourceResult, this.lifetimeBindings) } : {}),
       };
     } finally {
@@ -915,6 +937,10 @@ class RustParser {
   }
 
   acceptFloatReceiverOrigin(origin, argumentsCount) {
+    if(this.primitiveOwnerModel&&origin.primitiveOwnerPosition?.resolvedPath.length>1){
+      const actual=readRustStandardPrimitivePosition(this,origin.primitiveOwnerPosition.sourcePath,origin.path);
+      return Boolean(actual)&&acceptRustFloatPredicateReceiver(origin.type?.kind??'',origin.floatSourceModel??'',origin.proven,origin.wrappers.length>0,false,String(argumentsCount));
+    }
     const owner = this.resolve(['f64'], origin.path);
     const shadowed = Boolean(this.origins.lookup(['f64'], origin.path) || this.origins.lookup(owner, origin.path));
     return acceptRustFloatPredicateReceiver(origin.type?.kind ?? '', origin.floatSourceModel ?? '', origin.proven, origin.wrappers.length > 0, shadowed, String(argumentsCount));
@@ -1062,6 +1088,16 @@ class RustParser {
       const segments = this.pathSegments('expression');
       const name = segments.join('::');
       const resolved = this.resolve(segments, path);
+      if(this.primitiveOwnerModel&&segments.length>1&&acceptRustFloatConstantName(segments.at(-1))){
+        const owner=readRustStandardPrimitivePosition(this,segments.slice(0,-1),path);
+        if(owner){
+          const range={start:token.start,end:c.tokens[c.index-1].end};
+          if(c.is('(')||this.origins.scope.has(segments[0]))throw unsupported('Rust primitive constant owner','an associated constant needs its actual unshadowed type path and value syntax',range);
+          const node=createRustFloatConstantExpression(segments.at(-1),range);
+          this.primitiveConstantSites.push({owner,name:segments.at(-1),span:range});
+          return this.origins.mark(node,{...this.origins.typeOrigin(FLOAT,path),sourceOwner:{kind:'primitive',path:['f64'],arguments:[]},primitiveOwnerPosition:owner});
+        }
+      }
       if (segments.length === 2 && segments[0] === 'f64' && acceptRustFloatConstantName(segments[1])) {
         const range = { start: token.start, end: c.tokens[c.index - 1].end };
         const owner = this.resolve(['f64'], path);
