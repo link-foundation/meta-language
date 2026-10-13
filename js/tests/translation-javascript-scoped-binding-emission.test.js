@@ -13,7 +13,7 @@ const scalar=value=>value==='-0'?-0:value;
 const reload=value=>({network:LinkNetwork.fromLino(value.links),root:value.root});
 const field=(network,parent,name)=>network.fieldRelations().find(value=>value.parent.equals(parent)&&value.label===(TYPED_PROGRAM_LINKS_SCHEMA.fields[name]??name));
 
-test('four independently specified complete modules preserve calls, prints, aliases and shadowing over four source-free replay cycles',()=>{
+test('five independently specified complete modules preserve calls, prints, aliases and shadowing over four source-free replay cycles',()=>{
   assert.deepEqual(javaScriptScopedBindingEmissionFixture(),fixture);
   for(const specification of fixture.cases) {
     let archive=reload(specification);
@@ -26,12 +26,17 @@ test('four independently specified complete modules preserve calls, prints, alia
       const output=[];const context=vm.createContext({console:{log:value=>output.push(String(value))}});
       vm.runInContext(emitted.code,context,{timeout:1000});
       assert.deepEqual(output,specification.output,`${specification.id}:${cycle}`);
-      for(let index=0;index<specification.inputs.length;index+=1) {
-        context.input=specification.inputs[index].map(scalar);
-        assert.ok(Object.is(vm.runInContext(`${specification.entry}(...input)`,context,{timeout:1000}),scalar(specification.expected[index])),`${specification.id}:${cycle}:${index}`);
+      for(const observations of [specification,...(specification.additionalObservations??[])])for(let index=0;index<observations.inputs.length;index+=1) {
+        context.input=observations.inputs[index].map(scalar);
+        assert.ok(Object.is(vm.runInContext(`${observations.entry}(...input)`,context,{timeout:1000}),scalar(observations.expected[index])),`${specification.id}:${cycle}:${index}:${observations.entry}`);
       }
       assert.ok(program.declarations.has(specification.entry));
       if(specification.id==='declaration-loop')assert.ok(emitted.code.includes('const ml_scalar_write0 ='));
+      if(specification.id==='scalar-snapshot-declaration-collision'){
+        assert.ok(emitted.code.includes('function ml_scalar_write0('));
+        assert.ok(emitted.code.includes('const ml_scalar_write0 ='));
+        assert.ok(!emitted.code.includes('const ml_scalar_write0_2 ='));
+      }
       const next=createTypedProgramLinks(emitted.code,'JavaScript',{javaScriptScalarLoopModel:fixture.loopModel});
       archive={network:LinkNetwork.fromLino(next.network.toLino()),root:next.root};
     }

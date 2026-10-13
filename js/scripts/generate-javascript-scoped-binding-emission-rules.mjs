@@ -24,6 +24,8 @@ source += definition('acceptJavaScriptScopedBindingEmissionAbsentExpression', st
 source += definition('acceptJavaScriptScopedBindingEmissionExpression', strings(['kind']), 'boolean', `return ${member('kind', policy.expressions)};`);
 source += definition('acceptJavaScriptScopedBindingEmissionEffect', strings(['kind']), 'boolean', `return ${member('kind', policy.effects)};`);
 source += definition('acceptJavaScriptScopedBindingEmissionRole', strings(['role', 'owner']), 'boolean', `return ${policy.roles.map(value => `(role === ${JSON.stringify(value.role)} && owner === ${JSON.stringify(value.owner)})`).join(' || ')};`);
+if (typeof policy.preservedScopeReserveDeclarations !== 'boolean') throw new Error('the owned scope reservation premise must be Boolean');
+source += definition('reserveJavaScriptScopedBindingDeclarationNames', '@param {boolean} preserve', 'boolean', policy.preservedScopeReserveDeclarations ? 'return true;' : 'return !preserve;');
 source += definition('renderJavaScriptScopedBindingIdentifier', `${strings(['name'])} @param {boolean} preserve`, 'string', `if (preserve) return name; return ${JSON.stringify(policy.prefix)} + name;`);
 if (check) {
   if (readFileSync(javascript, 'utf8') !== source) throw new Error('JavaScript scoped binding rules are stale');

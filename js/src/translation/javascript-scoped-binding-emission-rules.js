@@ -19,5 +19,7 @@ export function acceptJavaScriptScopedBindingEmissionExpression(kind) { return k
 export function acceptJavaScriptScopedBindingEmissionEffect(kind) { return kind === "let" || kind === "print"; }
 /** @param {string} role @param {string} owner @returns {boolean} */
 export function acceptJavaScriptScopedBindingEmissionRole(role, owner) { return (role === "function binding" && owner === "function declaration") || (role === "main binding" && owner === "main effect container") || (role === "scalar loop binding" && owner === "scalar loop declaration"); }
+/** @param {boolean} preserve @returns {boolean} */
+export function reserveJavaScriptScopedBindingDeclarationNames(preserve) { return !preserve; }
 /** @param {string} name @param {boolean} preserve @returns {string} */
 export function renderJavaScriptScopedBindingIdentifier(name, preserve) { if (preserve) return name; return "binding_" + name; }
