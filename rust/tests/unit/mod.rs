@@ -174,6 +174,7 @@ mod storage;
 mod structured_data_links;
 mod structured_data_records;
 mod substitution;
+mod translation;
 mod translation_arrays;
 mod translation_console_format;
 mod translation_constructor_tags;
