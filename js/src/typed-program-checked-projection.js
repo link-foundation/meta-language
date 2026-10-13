@@ -64,6 +64,7 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
       ...(entry.sourceLoop !== undefined ? { sourceLoop: entry.sourceLoop } : {}),
       ...(entry.sourcePrimitiveOwners!==undefined?{sourcePrimitiveOwners:entry.sourcePrimitiveOwners}:{}),
       ...(entry.sourceEmptyOption!==undefined?{sourceEmptyOption:entry.sourceEmptyOption}:{}),
+      ...(entry.sourcePureUnit!==undefined?{sourcePureUnit:entry.sourcePureUnit}:{}),
     };
   }
   const surface = { language: program.sourceLanguage, items: program.items.map(projectItem),
@@ -73,6 +74,7 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
         if (effect.k === 'print') return { k: 'print', expr: projectExpression(effect.expr), style: 'js-console', span: effect.span };
         if (effect.k === 'let') return { k: 'let', name: effect.name, type: projectType(effect.value.type),
           value: projectExpression(effect.value), span: effect.span, ...(effect.constant !== undefined ? { constant: effect.constant } : {}),
+          ...(effect.sourcePureUnitCall!==undefined?{sourcePureUnitCall:effect.sourcePureUnitCall}:{}),
         };
         throw new TypeError(`the linked effect ${effect.k} has no checked surface projection`);
       }),
@@ -80,6 +82,7 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
     ...(program.imports !== undefined ? { imports: program.imports } : {}),
     ...(program.externals !== undefined ? { externals: program.externals } : {}),
     ...(program.referenceSemantics !== undefined ? { referenceSemantics: program.referenceSemantics } : {}),
+    ...(program.sourcePureUnitCalls!==undefined?{sourcePureUnitCalls:program.sourcePureUnitCalls}:{}),
   };
   const checked = checkProgram(surface);
   const compared = new WeakMap();
