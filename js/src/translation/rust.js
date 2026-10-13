@@ -1,3 +1,5 @@
+import {acceptRustEmptyOptionSourceModel} from './rust-empty-option-rules.js';
+import {readRustEmptyOptionResult,readRustEmptyOptionBody,createRustEmptyOptionProof,finishRustEmptyOptionSource} from './rust-empty-options.js';
 import { acceptRustFloatPredicateMethod, acceptRustFloatOperationMethod, acceptRustFloatConstantName, acceptRustFloatConstantOwner, acceptRustFloatPredicateReceiver } from './rust-float-predicate-rules.js';
 import { createRustFloatPredicateExpression, createRustFloatOperationExpression, createRustFloatConstantExpression } from './rust-float-predicates.js';
 import { acceptRustCompletionModel } from './rust-completion-rules.js';
@@ -38,17 +40,19 @@ const ADDITIVE = { '+': 'add', '-': 'sub' };
 const MULTIPLICATIVE = { '*': 'mul', '/': 'div', '%': 'rem' };
 const RESERVED_ITEMS = new Set(['impl', 'trait', 'struct', 'union', 'static', 'type', 'extern', 'macro_rules', 'async', 'unsafe']);
 
-export function parseRust(source, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '' } = {}) {
+export function parseRust(source, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '' } = {}) {
   if(!acceptRustPrimitiveOwnerModel(primitiveOwnerModel))throw unsupported('Rust primitive owner model','select the legacy model or standard primitive Rust binary64 owner 1');
   if (!acceptRustScalarLoopModel(scalarLoopModel)) throw unsupported('Rust scalar loop model', 'select the legacy model or closed primitive scalar loop 1');
   if (!acceptRustSourceArrayResultModel(arrayResultModel)) throw unsupported('Rust array result model', 'select the legacy model or immutable fresh scalar vector results 1');
   if (!acceptRustCompletionModel(completionModel)) throw unsupported('Rust completion model', 'select the legacy model or closed guarded function returns 1');
   if (!acceptRustSourceSignatureModel(sourceSignatureModel)) throw unsupported('Rust source signature model', 'select the legacy model or Rust source function signature 1');
+  if (!acceptRustEmptyOptionSourceModel(emptyOptionSourceModel)) throw unsupported('Rust empty option source model', 'select the legacy model or closed empty primitive Rust option 1');
+  if (emptyOptionSourceModel && [arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel].some(Boolean)) throw unsupported('Rust empty option source model', 'the closed empty interpretation requires its independent source profile');
   const { tokens } = tokenize(source, 'Rust');
-  const declarations = new RustParser(tokens, null, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel);
+  const declarations = new RustParser(tokens, null, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel);
   declarations.file();
   declarations.origins.resolveTypes((segments, path) => declarations.resolve(segments, path));
-  const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel);
+  const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel);
   syntax.origins.collecting = true;
   syntax.aliases = declarations.aliases;
   const surface = syntax.file();
@@ -58,13 +62,13 @@ export function parseRust(source, { arrayResultModel = '', completionModel = '',
     if (!(error instanceof TranslationError)) throw error;
     return surface;
   }
-  const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel);
+  const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel);
   parser.aliases = syntax.aliases;
   return parser.file();
 }
 
 class RustParser {
-  constructor(tokens, catalog = null, arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '',primitiveOwnerModel='') {
+  constructor(tokens, catalog = null, arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '',primitiveOwnerModel='',emptyOptionSourceModel='') {
     this.cursor = new TokenCursor([...tokens], 'Rust');
     // `use` aliases, per module path.
     this.aliases = new Map();
@@ -74,6 +78,8 @@ class RustParser {
     this.completionModel = completionModel;
     this.sourceSignatureModel = sourceSignatureModel;
     this.scalarLoopModel = scalarLoopModel;
+    this.emptyOptionSourceModel=emptyOptionSourceModel;
+    this.emptyOptionMainSeen=false;
     this.primitiveOwnerModel=primitiveOwnerModel;
     this.primitiveOwnerFrames=[];
     this.primitiveConstantSites=[];
@@ -95,11 +101,13 @@ class RustParser {
     this.items(root, root.items, [], () => this.cursor.atEnd());
     if(this.primitiveOwnerModel&&(root.items.some(item=>item.k!=='fn')||root.main?.effects.length))throw unsupported('Rust primitive owner profile','only flat primitive leaf functions and an empty main are admitted');
     if (!root.main) throw new TranslationError('syntax', 'a Rust program needs fn main', this.cursor.peek());
+    finishRustEmptyOptionSource(this,root);
     return { language: 'Rust', items: root.items, main: root.main };
   }
 
   innerAttributes() {
     const c = this.cursor;
+    if (this.emptyOptionSourceModel && c.is('#')) throw unsupported('Rust empty option source', 'attributes require a separate compilation context proof', span(c.peek(),c.peek()));
     while (c.is('#') && c.is('!', 1)) {
       const start = c.next();
       c.next();
@@ -109,6 +117,7 @@ class RustParser {
 
   attributes() {
     const c = this.cursor;
+    if (this.emptyOptionSourceModel && c.is('#')) throw unsupported('Rust empty option source', 'attributes require a separate compilation context proof', span(c.peek(),c.peek()));
     while (c.is('#') && c.is('[', 1)) {
       const start = c.next();
       this.attributeBody(start);
@@ -148,6 +157,7 @@ class RustParser {
       const start = c.peek();
       this.modulePath = path;
       this.visibility();
+      if (this.emptyOptionSourceModel && (path.length || !c.is('fn'))) throw unsupported('Rust empty option source', 'only flat zero-argument empty leaf functions and an empty main are admitted', span(start,c.peek()));
       if (c.is('mod')) {
         c.next();
         const name = c.identifier('mod').value;
@@ -178,6 +188,8 @@ class RustParser {
       }
       if (c.is('fn') || c.is('const')) {
         if (c.is('fn') && c.is('main', 1) && path.length === 0) {
+          if(this.emptyOptionSourceModel && this.emptyOptionMainSeen) throw unsupported('Rust empty option source', 'the complete source must have one owned main declaration', span(start,c.peek()));
+          this.emptyOptionMainSeen=true;
           root.main = this.main();
           continue;
         }
@@ -376,6 +388,8 @@ class RustParser {
     const segments = this.pathSegments('type');
     const name = segments.join('::');
     const resolved = this.resolve(segments, this.modulePath);
+    const emptyOption=readRustEmptyOptionResult(this,segments,token);
+    if(emptyOption)return emptyOption;
     if(readRustStandardPrimitivePosition(this,segments))return this.origins.typed(FLOAT,this.modulePath);
     if (acceptRustSourceArrayOwner(name, false) || acceptRustSourceArrayOwner(resolved.join('::'), false)) {
       this.origins.vector(segments, resolved, this.modulePath, span(token, c.peek()));
@@ -434,6 +448,7 @@ class RustParser {
     this.lifetimeBindings = new Set();
     this.lifetimeHeader = true;
     try {
+      if(this.emptyOptionSourceModel && c.is('<')) throw unsupported('Rust empty option source', 'generic functions and lifetime binders require a separate interpretation', span(start,c.peek()));
       if (c.is('<')) {
         const generic = c.next();
         while (!c.is('>')) {
@@ -447,6 +462,7 @@ class RustParser {
         if (!this.lifetimeBindings.size) throw unsupported('function lifetime binding', 'a lifetime parameter list must contain a named binding', span(generic, c.peek()));
       }
       c.expect('(', 'fn');
+      if(this.emptyOptionSourceModel && !c.is(')')) throw unsupported('Rust empty option source', 'the closed empty interpretation admits zero parameters', span(start,c.peek()));
       const params = [];
       const sourceParams = [];
       const mutableParams = [];
@@ -464,8 +480,10 @@ class RustParser {
       }
       c.expect(')', 'fn');
       if (!c.eat('->')) throw unsupported('function without a result', `${name} returns (); only value-returning functions are portable`, span(start, c.peek()));
+      const resultToken=c.peek();
       const ret = this.type();
       const sourceResult = this.origins.type;
+      if(this.emptyOptionSourceModel && (!sourceResult.emptyOptionResult || sourceResult.wrappers.length || sourceResult.emptyOptionResult.span.start!==resultToken.start)) throw unsupported('Rust empty option source', 'the result needs an exact direct standard Option<f64> owner', span(start,c.peek()));
       if(this.primitiveOwnerModel&&(mutableParams.length||this.lifetimeBindings.size))throw unsupported('Rust primitive owner context','mutable parameters and named lifetime binders require a separate owned context proof');
       const scalarLoop = Boolean(this.scalarLoopModel && c.is('{') && c.is('loop', 1));
       if (scalarLoop && path.length) throw unsupported('Rust scalar loop', 'the selected scalar state model requires a flat function', span(start, c.peek()));
@@ -491,7 +509,8 @@ class RustParser {
       try {
         if (scalarLoop) lowered = readRustScalarLoop(this, path, name, params, ret, signature, mutableParams.map(param => param.name));
       } finally { this.scalarLoopActive = previousLoop; }
-      const body = lowered?.body ?? (this.completionModel ? readRustFunctionCompletion(this, path) : this.block(path));
+      const emptyOptionBody=this.emptyOptionSourceModel?readRustEmptyOptionBody(this,path):null;
+      const body = emptyOptionBody?.body ?? lowered?.body ?? (this.completionModel ? readRustFunctionCompletion(this, path) : this.block(path));
       if (ret.kind === 'array') {
         if (!acceptRustSourceArrayResult(this.origins.arrayResultModel, ret.element.kind, sourceResult.arraySourceModel === 'owned vector' && sourceResult.wrappers.length === 0, this.origins.freshArrayResult(body, path))) throw unsupported('fresh Rust array result', 'every returning tail must construct a new vector of direct scalar Copy values; vector names, calls, clones and borrowed results need separate consumption proofs', body.span);
         sourceResult.freshArrayValue = true;
@@ -499,7 +518,8 @@ class RustParser {
       }
       this.origins.argument(this.origins.origin(body, path), sourceResult, body.span);
       this.origins.scope = previous;
-      return { k: 'fn', name, params, ret, body, span: span(start, c.peek()),
+      return { k: 'fn', name, params, ret, body, span: emptyOptionBody?{start:start.start,end:c.tokens[c.index-1].end}:span(start, c.peek()),
+        ...(emptyOptionBody?{sourceEmptyOption:createRustEmptyOptionProof(this,name,sourceResult.emptyOptionResult,emptyOptionBody.construction)}:{}),
         ...(this.primitiveOwnerModel?{sourcePrimitiveOwners:createRustPrimitiveOwnerProof(this,sourceParams,sourceResult,{span:span(start,c.peek())})}:{}),
         ...(scalarLoop ? {sourceSignature: signature, sourceLoop: lowered.proof} : this.sourceSignatureModel ? { sourceSignature: createRustSourceSignature(this.sourceSignatureModel, sourceParams, sourceResult, this.lifetimeBindings) } : {}),
       };
@@ -685,7 +705,7 @@ class RustParser {
     }
     c.expect('}', 'fn main');
     this.origins.scope = previous;
-    return { effects, span: span(start, c.peek()) };
+    return { effects, span: this.emptyOptionSourceModel?{start:start.start,end:c.tokens[c.index-1].end}:span(start, c.peek()) };
   }
 
   mainMacro() {

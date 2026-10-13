@@ -326,18 +326,20 @@ export function createTypedProgramLinks(source, language, options = {}) {
   const signatureSelected = options.rustSourceSignatureModel !== undefined;
   const loopSelected = options.rustScalarLoopModel !== undefined;
   const javaScriptLoopSelected = options.javaScriptScalarLoopModel !== undefined;
+  const emptyOptionSelected=options.rustEmptyOptionSourceModel!==undefined;
   const primitiveSelected=options.rustPrimitiveOwnerModel!==undefined;
-  const selected = arraySelected || completionSelected || signatureSelected || loopSelected || javaScriptLoopSelected||primitiveSelected;
+  const selected = arraySelected || completionSelected || signatureSelected || loopSelected || javaScriptLoopSelected||primitiveSelected||emptyOptionSelected;
+  if(emptyOptionSelected&&canonical!=='Rust')throw new TypeError('a Rust empty option source model requires Rust source');
   if(primitiveSelected&&canonical!=='Rust')throw new TypeError('a Rust primitive owner model requires Rust source');
   if (arraySelected && canonical !== 'Rust') throw new TypeError('a Rust array result model requires Rust source');
   if (completionSelected && canonical !== 'Rust') throw new TypeError('a Rust completion model requires Rust source');
   if (signatureSelected && canonical !== 'Rust') throw new TypeError('a Rust source signature model requires Rust source');
   if (loopSelected && canonical !== 'Rust') throw new TypeError('a Rust scalar loop model requires Rust source');
   if (javaScriptLoopSelected && canonical !== 'JavaScript') throw new TypeError('a JavaScript scalar loop model requires JavaScript source');
-  const program = checkProgram(canonical === 'Rust' ? parseRust(source, { arrayResultModel: options.rustArrayResultModel, completionModel: options.rustCompletionModel, sourceSignatureModel: options.rustSourceSignatureModel, scalarLoopModel: options.rustScalarLoopModel,primitiveOwnerModel:options.rustPrimitiveOwnerModel }) : parseJavaScript(source, {...options.context, ...(javaScriptLoopSelected ? {scalarLoopModel: options.javaScriptScalarLoopModel} : {})}));
+  const program = checkProgram(canonical === 'Rust' ? parseRust(source, { arrayResultModel: options.rustArrayResultModel, completionModel: options.rustCompletionModel, sourceSignatureModel: options.rustSourceSignatureModel, scalarLoopModel: options.rustScalarLoopModel,primitiveOwnerModel:options.rustPrimitiveOwnerModel,emptyOptionSourceModel:options.rustEmptyOptionSourceModel }) : parseJavaScript(source, {...options.context, ...(javaScriptLoopSelected ? {scalarLoopModel: options.javaScriptScalarLoopModel} : {})}));
   if (options.utf16Strings) program.utf16Strings = true;
   const provenance = selected ? {
-    sourceProfile: { language: canonical, ...(arraySelected ? { rustArrayResultModel: options.rustArrayResultModel } : {}), ...(completionSelected ? { rustCompletionModel: options.rustCompletionModel } : {}), ...(signatureSelected ? { rustSourceSignatureModel: options.rustSourceSignatureModel } : {}), ...(loopSelected ? {rustScalarLoopModel: options.rustScalarLoopModel} : {}), ...(javaScriptLoopSelected ? {javaScriptScalarLoopModel: options.javaScriptScalarLoopModel} : {}),...(primitiveSelected?{rustPrimitiveOwnerModel:options.rustPrimitiveOwnerModel}:{}) },
+    sourceProfile: { language: canonical, ...(arraySelected ? { rustArrayResultModel: options.rustArrayResultModel } : {}), ...(completionSelected ? { rustCompletionModel: options.rustCompletionModel } : {}), ...(signatureSelected ? { rustSourceSignatureModel: options.rustSourceSignatureModel } : {}), ...(loopSelected ? {rustScalarLoopModel: options.rustScalarLoopModel} : {}), ...(javaScriptLoopSelected ? {javaScriptScalarLoopModel: options.javaScriptScalarLoopModel} : {}),...(primitiveSelected?{rustPrimitiveOwnerModel:options.rustPrimitiveOwnerModel}:{}),...(emptyOptionSelected?{rustEmptyOptionSourceModel:options.rustEmptyOptionSourceModel}:{}) },
     userProvenance: options.provenance ?? null,
   } : options.provenance;
   return encodeTypedProgramLinks(program, { ...options, provenance });

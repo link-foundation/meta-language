@@ -1,3 +1,4 @@
+import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 // Resolves names, checks types, and fixes the exact operator semantics of a
 // surface program produced by one of the language frontends. The result is
 // the portable-core program the emitters consume: every expression carries
@@ -138,6 +139,7 @@ class Checker {
     }
     analyseRecursion(program);
     checkRustPrimitiveOwnerProof(program);
+    checkRustEmptyOptionProof(program);
     return program;
   }
 
