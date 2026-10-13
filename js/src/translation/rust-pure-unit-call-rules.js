@@ -1,0 +1,15 @@
+// Generated from linked pure Rust Unit-call policy. Do not edit.
+/** @param {string} model @returns {boolean} */
+export function acceptRustPureUnitCallModel(model){return model === "" || model === "closed pure Rust unit calls 1";}
+/** @param {number} code @param {boolean} first @returns {boolean} */
+export function acceptRustPureUnitNameCharacter(code,first){return code >= 95 && code <= 95 || code >= 65 && code <= 90 || code >= 97 && code <= 122 || !first && code >= 48 && code <= 57;}
+/** @param {string} name @returns {boolean} */
+export function acceptRustPureUnitName(name){return name !== "" && name !== "_" && !name.startsWith("ml_") && !(name === "main" || name === "as" || name === "async" || name === "await" || name === "break" || name === "const" || name === "continue" || name === "crate" || name === "dyn" || name === "else" || name === "enum" || name === "extern" || name === "false" || name === "fn" || name === "for" || name === "if" || name === "impl" || name === "in" || name === "let" || name === "loop" || name === "match" || name === "mod" || name === "move" || name === "mut" || name === "pub" || name === "ref" || name === "return" || name === "self" || name === "Self" || name === "static" || name === "struct" || name === "super" || name === "trait" || name === "true" || name === "type" || name === "unsafe" || name === "use" || name === "where" || name === "while" || name === "abstract" || name === "become" || name === "box" || name === "do" || name === "final" || name === "macro" || name === "override" || name === "priv" || name === "try" || name === "typeof" || name === "unsized" || name === "virtual" || name === "yield");}
+/** @param {string} form @returns {boolean} */
+export function acceptRustPureUnitHeaderForm(form){return form === "implicit unit" || form === "explicit unit";}
+/** @param {string} form @returns {boolean} */
+export function acceptRustPureUnitBodyForm(form){return form === "empty block" || form === "unit expression";}
+/** @param {string} form @returns {boolean} */
+export function acceptRustPureUnitPathForm(form){return form === "unqualified name" || form === "absolute crate path";}
+/** @param {string} language @param {boolean} forbidden @returns {boolean} */
+export function acceptRustPureUnitContext(language,forbidden){return language === "Rust" && !forbidden;}

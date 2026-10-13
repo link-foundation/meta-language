@@ -1,3 +1,4 @@
+import {checkRustPureUnitCalls} from './translation/rust-pure-unit-calls.js';
 import {checkRustEmptyOptionProof} from './translation/rust-empty-options.js';
 import {checkRustSourceSignature} from './translation/rust-source-signatures.js';
 import {checkRustScalarLoopProof} from './translation/rust-scalar-loops.js';
@@ -39,6 +40,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
   bounded(program);
   checkRustPrimitiveOwnerProof(program);
   checkRustEmptyOptionProof(program);
+  checkRustPureUnitCalls(program);
   // Shared records can describe exponentially many expression paths. Bound
   // the semantic walk as well as the number of unique structural records.
   let semanticVisits = 0;

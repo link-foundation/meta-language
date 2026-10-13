@@ -1,3 +1,4 @@
+import {checkRustPureUnitCalls} from './rust-pure-unit-calls.js';
 import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 // Resolves names, checks types, and fixes the exact operator semantics of a
 // surface program produced by one of the language frontends. The result is
@@ -133,6 +134,7 @@ class Checker {
     };
     if (surface.imports) program.imports = surface.imports;
     if (surface.externals) program.externals = surface.externals;
+    if(Object.hasOwn(surface,'sourcePureUnitCalls'))program.sourcePureUnitCalls=surface.sourcePureUnitCalls;
     if (this.referenceSemantics) program.referenceSemantics = true;
     for (const entry of this.items.values()) {
       if (entry.k === 'fn') entry.body = reuseSuccessors(entry.body, new Map());
@@ -140,6 +142,7 @@ class Checker {
     analyseRecursion(program);
     checkRustPrimitiveOwnerProof(program);
     checkRustEmptyOptionProof(program);
+    checkRustPureUnitCalls(program);
     return program;
   }
 
@@ -316,7 +319,7 @@ class Checker {
         let value = this.expr(effect.value, env, [], expected);
         if (expected) value = coerce(value, expected, this.language, effect.span);
         bindLocal(env, effect.name, value.type, value.type.kind === 'tuple' && immutableProductValue(value, env.get(PRODUCT_VALUES)));
-        effects.push({ k: 'let', name: effect.name, value, ...(effect.constant ? { constant: true } : {}), span: effect.span });
+        effects.push({ k: 'let', name: effect.name, value, ...(effect.constant ? { constant: true } : {}), span: effect.span,...(Object.hasOwn(effect,'sourcePureUnitCall')?{sourcePureUnitCall:effect.sourcePureUnitCall}:{}) });
         continue;
       }
       if (effect.k === 'assert') {
