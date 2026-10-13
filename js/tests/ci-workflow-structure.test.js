@@ -489,6 +489,12 @@ const EMPTY_OPTION_PACKAGE_STEPS = [
   ["Check shared Rust empty option fixtures", "node scripts/generate-rust-empty-option-fixtures.mjs --check", '9807ef1905742ff2f8007ecdb76455b8f6d0517a134d1b243cb421b60d848762', 'generated'],
 ];
 
+// Type-namespace gates have their own additive freeze; all earlier rows remain.
+const TYPE_NAMESPACE_PACKAGE_STEPS = [
+  ["Check generated Rust type namespace rules", "node scripts/generate-rust-type-namespace-rules.mjs --check", 'f120089b51fd5288836e249a56302588790551560b20c3087df4db3b6655f4d6', 'generated'],
+  ["Check shared Rust type namespace fixtures", "node scripts/generate-rust-type-namespace-fixtures.mjs --check", '5f3554013a2366dfb14e6e6d63013aaa183d7b011ae8db0969ef4977b19053b0', 'generated'],
+];
+
 function packageStepSignature(step, includeGroup = false) {
   const fields = includeGroup ? step.text : step.text.replace(/ && matrix\.group == '[a-z-]+'/gu, '');
   const text = fields
@@ -498,7 +504,7 @@ function packageStepSignature(step, includeGroup = false) {
 }
 
 function checkPackageStepConservation(parsed) {
-  const additions = [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS];
+  const additions = [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS, ...TYPE_NAMESPACE_PACKAGE_STEPS];
   const expected = new Map([
     ...ORIGINAL_PACKAGE_STEPS.map(([name, hash, owner]) => [name, { hash, owner }]),
     ...additions.map(([name, command, hash, owner]) => [name, { hash, owner, command, addition: true }]),
@@ -625,7 +631,7 @@ test('every frozen generator addition rejects omission, duplication, condition, 
     change(steps, index);
     assert.throws(() => checkPackageStepConservation(parsed), assert.AssertionError, name);
   };
-  for (const [name] of [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS]) {
+  for (const [name] of [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS, ...TYPE_NAMESPACE_PACKAGE_STEPS]) {
     mutate(name, (steps, index) => steps.splice(index, 1));
     mutate(name, (steps, index) => steps.push({ ...steps[index] }));
     for (const [before, after] of [

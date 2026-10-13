@@ -631,6 +631,16 @@ jobs:
         working-directory: js
         run: node scripts/generate-rust-primitive-owner-fixtures.mjs --check
 
+      - name: Check generated Rust type namespace rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/generate-rust-type-namespace-rules.mjs --check
+
+      - name: Check shared Rust type namespace fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/generate-rust-type-namespace-fixtures.mjs --check
+
       - name: Check generated Rust empty option rules
         if: ${{ !cancelled() && matrix.group == 'generated' }}
         working-directory: js
