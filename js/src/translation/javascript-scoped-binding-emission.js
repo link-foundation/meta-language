@@ -1,5 +1,6 @@
 import {readRuntimeProjectData} from '../project-data-loader.js';
 import {validateLinkedTypedProgram} from '../typed-program-links-validation.js';
+import {recheckLinkedTypedProgram} from '../typed-program-checked-projection.js';
 import {checkRustScalarLoopProof} from './rust-scalar-loops.js';
 import {checkRustSourceSignature} from './rust-source-signatures.js';
 import {unsupported} from './diagnostics.js';
@@ -76,6 +77,7 @@ export function readJavaScriptScopedBindingEmission(program, model) {
     else if (node.k === 'print') pending.push(node.text, node.body);
     else if (node.k === 'call' || node.k === 'math') pending.push(...node.args);
   }
+  recheckLinkedTypedProgram(program,{wholeProgram:true});
   return (name, scope) => {
     let role; let owner;
     if (scope === program.main) { role = 'main binding'; owner = 'main effect container'; }

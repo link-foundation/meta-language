@@ -172,3 +172,12 @@ test('explicit undefined guard, default and source-span facts differ from absent
     assert.throws(()=>emitTypedProgramLinks(network,encoded.root,'JavaScript',options),/explicitly undefined field/u,field);
   }
 });
+
+test('whole scoped projection refuses stale recursive, mutual and decreasing facts',()=>{
+  const base=createTypedProgramLinks('function keep(x){return x+1;}keep(2);','JavaScript');
+  for(const [field,value]of [['recursive',true],['mutual',true],['decreasing',0]]){
+    const program=decodeTypedProgramLinks(base.network,base.root);program.declarations.get('keep')[field]=value;
+    const encoded=encodeTypedProgramLinks(program);const network=LinkNetwork.fromLino(encoded.network.toLino());
+    assert.throws(()=>emitTypedProgramLinks(network,encoded.root,'JavaScript',options),/inconsistent types, bindings or operation semantics after checked surface projection/u,field);
+  }
+});
