@@ -8,6 +8,9 @@ use std::sync::OnceLock;
 use serde_json::{Value, json};
 
 use crate::link_network::{LinkId, LinkMetadata, LinkNetwork, LinkType};
+use crate::shared_numeric_function_model::{
+    SHARED_NUMERIC_FUNCTION_MODEL, read_shared_numeric_function_model,
+};
 use crate::translation::ir::Program;
 use crate::typed_program_links::{
     emit_typed_program_links, encode_typed_program_links_with_provenance,
@@ -172,7 +175,7 @@ fn checked(value: &FormalConceptArchive) -> Result<Checked, String> {
         return Err("the formal primitive model differs from its supported declaration".to_owned());
     }
     let mut exclusions = std::collections::BTreeSet::from([(value.root, "provenance".to_owned())]);
-    if model == "checked typed program" {
+    if model == "checked typed program" || model == SHARED_NUMERIC_FUNCTION_MODEL {
         let bindings = read_typed_program_binding_identities(network, body)
             .map_err(|error| error.to_string())?;
         // Supported operations must have both actual target interpretations.
@@ -193,6 +196,10 @@ fn checked(value: &FormalConceptArchive) -> Result<Checked, String> {
         // by the checked scope walk. Unreachable relation links cannot mark
         // semantic field names or public declarations as lexical bindings.
         exclude_binding_names(network, body, &mut exclusions, &bindings)?;
+        if model == SHARED_NUMERIC_FUNCTION_MODEL {
+            let shared = read_shared_numeric_function_model(network, body, true)?;
+            exclusions.insert((shared.language_parent, shared.language_label));
+        }
     } else if correspondence(&graph(network, body, &Default::default())?, &expected_graph).is_none()
     {
         return Err(
@@ -218,34 +225,35 @@ pub fn encode_formal_concept_definition(
     let declaration = models()
         .get(model)
         .ok_or("unsupported formal primitive model")?;
-    let (mut network, body) = if model == "checked typed program" {
-        match value {
-            FormalConceptDefinitionInput::Program(program) => {
-                let archive = encode_typed_program_links_with_provenance(
-                    program,
-                    options.provenance.as_ref(),
-                )
-                .map_err(|error| error.to_string())?;
-                (archive.network, archive.root)
+    let (mut network, body) =
+        if model == "checked typed program" || model == SHARED_NUMERIC_FUNCTION_MODEL {
+            match value {
+                FormalConceptDefinitionInput::Program(program) => {
+                    let archive = encode_typed_program_links_with_provenance(
+                        program,
+                        options.provenance.as_ref(),
+                    )
+                    .map_err(|error| error.to_string())?;
+                    (archive.network, archive.root)
+                }
+                FormalConceptDefinitionInput::LinkedProgram { network, root } => {
+                    (network.clone(), root)
+                }
+                FormalConceptDefinitionInput::Declaration(_) => {
+                    return Err("a checked model needs a typed operational program".to_owned());
+                }
             }
-            FormalConceptDefinitionInput::LinkedProgram { network, root } => {
-                (network.clone(), root)
+        } else {
+            let FormalConceptDefinitionInput::Declaration(value) = value else {
+                return Err("a source primitive has no declared formal interpretation".to_owned());
+            };
+            if value.is_some_and(|value| value != declaration) {
+                return Err("a source primitive has no declared formal interpretation".to_owned());
             }
-            FormalConceptDefinitionInput::Declaration(_) => {
-                return Err("a checked model needs a typed operational program".to_owned());
-            }
-        }
-    } else {
-        let FormalConceptDefinitionInput::Declaration(value) = value else {
-            return Err("a source primitive has no declared formal interpretation".to_owned());
+            let mut network = LinkNetwork::new();
+            let body = data(&mut network, declaration)?;
+            (network, body)
         };
-        if value.is_some_and(|value| value != declaration) {
-            return Err("a source primitive has no declared formal interpretation".to_owned());
-        }
-        let mut network = LinkNetwork::new();
-        let body = data(&mut network, declaration)?;
-        (network, body)
-    };
     let declaration_root = data(&mut network, declaration)?;
     let basis = network.insert_link(
         [declaration_root],

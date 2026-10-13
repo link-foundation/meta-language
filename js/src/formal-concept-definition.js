@@ -6,6 +6,7 @@ import { LinkId, LinkMetadata, LinkType } from './primitives.js';
 import { decodeTypedProgramLinks, encodeTypedProgramLinks, emitTypedProgramLinks, readTypedProgramBindingIdentities } from './typed-program-links.js';
 import { verifyGlobalConceptCorrespondence } from './global-concept-rules.js';
 import { acceptFormalRelationEdgeIdentity, acceptFormalRelationIdentity, acceptFormalRelationLabelIdentity } from './formal-relation-rules.js';
+import { readSharedNumericFunctionModel, SHARED_NUMERIC_FUNCTION_MODEL } from './shared-numeric-function-model.js';
 
 const LANGUAGE = 'meta-language formal definition';
 const SCHEMA = '1';
@@ -182,7 +183,7 @@ function checked(value) {
   const expectedRoot = data(expected, MODELS[model]);
   if (!correspondence(graph(network, modelLink.references()[0]), graph(expected, expectedRoot))) throw new TypeError('the formal primitive model differs from its supported declaration');
   const exclusions = new Set([`${key(root)}:provenance`]);
-  if (model === 'checked typed program') {
+  if (model === 'checked typed program' || model === SHARED_NUMERIC_FUNCTION_MODEL) {
     decodeTypedProgramLinks(network, body);
     // Both emitters interpret this exact checked model. An unsupported IR
     // construct is an unknown formal basis, even if its host data is alike.
@@ -192,6 +193,10 @@ function checked(value) {
       if (relation.label === 'source span' || key(relation.parent) === key(body) && relation.label === 'provenance') exclusions.add(`${key(relation.parent)}:${relation.label}`);
     }
     bindingExclusions(network, body, exclusions, readTypedProgramBindingIdentities(network, body));
+    if (model === SHARED_NUMERIC_FUNCTION_MODEL) {
+      const profile = readSharedNumericFunctionModel(network, body);
+      exclusions.add(`${key(profile.languageParent)}:${profile.languageLabel}`);
+    }
   } else {
     const expectedBody = data(expected, MODELS[model]);
     if (!correspondence(graph(network, body), graph(expected, expectedBody))) throw new TypeError('a source interpretation differs from its declared primitive meaning');
@@ -204,7 +209,7 @@ export function encodeFormalConceptDefinition(value, { model = 'checked typed pr
   if (!Object.hasOwn(MODELS, model)) throw new TypeError('unsupported formal primitive model');
   let network;
   let body;
-  if (model === 'checked typed program') {
+  if (model === 'checked typed program' || model === SHARED_NUMERIC_FUNCTION_MODEL) {
     const input = value?.network || value?.links ? archive(value) : encodeTypedProgramLinks(value);
     network = LinkNetwork.fromLino(input.network.toLino());
     body = input.root;
