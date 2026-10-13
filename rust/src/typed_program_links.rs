@@ -135,7 +135,7 @@ pub(super) fn label_of(name: &str) -> String {
             str::to_owned,
         )
 }
-fn field_of(label: &str) -> String {
+pub(super) fn field_of(label: &str) -> String {
     if let Some((field, _)) = typed_program_links_schema()["fields"]
         .as_object()
         .unwrap()
@@ -574,6 +574,15 @@ pub fn emit_typed_program_links_with_options(
     target: &str,
     options: &TypedProgramLinksEmissionOptions,
 ) -> Result<TypedProgramLinksEmission> {
+    if matches!(
+        target.to_ascii_lowercase().as_str(),
+        "javascript" | "js" | "mjs"
+    ) && options.rust_source_header_emission_model.is_none()
+        && let Some(model) = options.java_script_scoped_binding_emission_model.as_deref()
+    {
+        crate::translation::scoped_binding_emission::validate_raw_program(network, root, model)
+            .map_err(|failure| error(failure.to_string()))?;
+    }
     let program = decode_typed_program_links(network, root)?;
     let source_header_model = options.rust_source_header_emission_model.as_deref();
     let emitted = match target.to_ascii_lowercase().as_str() {

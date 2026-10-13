@@ -38,6 +38,63 @@ fn reload(case: &Value) -> (LinkNetwork, LinkId) {
     )
 }
 
+fn raw_field(network: &LinkNetwork, parent: LinkId, label: &str) -> LinkId {
+    network
+        .links()
+        .find_map(|link| match link.references() {
+            [owner, name, child]
+                if *owner == parent
+                    && link.metadata().link_type() == Some(LinkType::Field)
+                    && network.link(*name).and_then(|name| name.metadata().term())
+                        == Some(label) =>
+            {
+                Some(*child)
+            }
+            _ => None,
+        })
+        .unwrap()
+}
+
+fn replace_raw_field(
+    network: &LinkNetwork,
+    parent: LinkId,
+    label: &str,
+    child: LinkId,
+) -> LinkNetwork {
+    let existing = network.links().find_map(|link| match link.references() {
+        [owner, name, value]
+            if *owner == parent
+                && link.metadata().link_type() == Some(LinkType::Field)
+                && network.link(*name).and_then(|name| name.metadata().term()) == Some(label) =>
+        {
+            Some((link.id(), *name, *value))
+        }
+        _ => None,
+    });
+    let Some((relation, name, previous)) = existing else {
+        let mut changed = network.clone();
+        changed.insert_field(parent, label, child);
+        return changed;
+    };
+    let old = format!("({relation}: {parent} {name} {previous} ");
+    let replacement = format!("({relation}: {parent} {name} {child} ");
+    let text = network
+        .to_lino()
+        .lines()
+        .map(|line| {
+            if line.starts_with(&old) {
+                line.replacen(&old, &replacement, 1)
+            } else {
+                line.to_owned()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+    let changed = LinkNetwork::from_lino(&text).unwrap();
+    assert_eq!(raw_field(&changed, parent, label), child);
+    changed
+}
+
 fn observe_complete_module(code: &str, case: &Value) {
     let directory = TemporaryDirectory::new("scoped-bindings");
     let script = directory.0.join("complete.js");
@@ -393,6 +450,175 @@ fn the_exact_empty_optional_shape_does_not_admit_other_elements_tags_or_some_val
                 }
             )
             .is_err()
+        );
+    }
+}
+
+#[test]
+fn actual_raw_linked_records_refuse_opaque_ownership_before_native_normalization() {
+    let data = fixture();
+    let (network, root) = reload(&data["cases"][2]);
+    let program = network.link(root).unwrap().references()[0];
+    let directory = raw_field(&network, program, "declaration mapping");
+    let pair = network.link(directory).unwrap().references()[0];
+    let function = network.link(pair).unwrap().references()[1];
+    let parameters = raw_field(&network, function, "parameters");
+    let parameter = network.link(parameters).unwrap().references()[0];
+    let body = raw_field(&network, function, "body");
+    let main = raw_field(&network, program, "main");
+    let effects = raw_field(&network, main, "effects");
+    let effect = network.link(effects).unwrap().references()[0];
+    for (role, owner) in [
+        ("program", program),
+        ("main", main),
+        ("declaration", function),
+        ("parameter", parameter),
+        ("effect", effect),
+        ("expression", body),
+    ] {
+        for field in ["borrow escape", "opaque binding", "source empty option"] {
+            let mut changed = network.clone();
+            let child = if field == "opaque binding" {
+                if owner == parameter { body } else { parameter }
+            } else {
+                changed.insert_link(
+                    [],
+                    LinkMetadata::new()
+                        .with_link_type(LinkType::Semantic)
+                        .with_named(true)
+                        .with_language("meta-language typed program")
+                        .with_term("boolean value")
+                        .with_definition("true"),
+                )
+            };
+            changed.insert_field(owner, field, child);
+            let restored = LinkNetwork::from_lino(&changed.to_lino()).unwrap();
+            let failure = emit_typed_program_links_with_options(
+                &restored,
+                root,
+                "JavaScript",
+                &options(&data),
+            )
+            .unwrap_err();
+            assert!(!failure.message.is_empty());
+            if field != "source empty option" {
+                assert!(
+                    failure
+                        .message
+                        .contains(&format!("a checked {role} has unrepresented own fields")),
+                    "{field}:{}",
+                    failure.message
+                );
+            }
+        }
+    }
+    for field in [
+        "source function signature",
+        "source loop proof",
+        "source primitive owners",
+    ] {
+        let mut changed = network.clone();
+        let child = changed.insert_link(
+            [],
+            LinkMetadata::new()
+                .with_link_type(LinkType::Semantic)
+                .with_named(true)
+                .with_language("meta-language typed program")
+                .with_term("null value")
+                .with_definition(""),
+        );
+        changed.insert_field(function, field, child);
+        let restored = LinkNetwork::from_lino(&changed.to_lino()).unwrap();
+        let failure =
+            emit_typed_program_links_with_options(&restored, root, "JavaScript", &options(&data))
+                .unwrap_err();
+        assert!(
+            failure
+                .message
+                .contains("an owned source facet must retain its actual checked record"),
+            "{field}:{}",
+            failure.message
+        );
+    }
+}
+
+#[test]
+fn actual_qualified_primitive_owner_and_signature_records_compose_after_strict_raw_admission() {
+    let owners = meta_language::read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/rust-primitive-owners.lino"
+    ))
+    .unwrap();
+    let case = owners["cases"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|case| case["id"] == "qualified-standard-floor")
+        .unwrap();
+    let (network, root) = reload(case);
+    let before = network.to_lino();
+    let program = decode_typed_program_links(&network, root).unwrap();
+    let Decl::Fn(function) = program.declaration("apply").unwrap() else {
+        panic!("owned function")
+    };
+    assert!(function.source_signature.is_some());
+    assert!(function.source_primitive_owners.is_some());
+    let code =
+        emit_typed_program_links_with_options(&network, root, "JavaScript", &options(&fixture()))
+            .unwrap()
+            .code;
+    observe_complete_module(
+        &code,
+        &serde_json::json!({"id":"qualified-standard-floor","entry":"apply","inputs":[["-0"],[1.75]],"expected":["-0",1],"output":[]}),
+    );
+    assert_eq!(network.to_lino(), before);
+}
+
+#[test]
+fn actual_raw_known_slots_refuse_malformed_sequences_booleans_and_explicit_undefined() {
+    let data = fixture();
+    let (network, root) = reload(&data["cases"][2]);
+    let program = network.link(root).unwrap().references()[0];
+    let directory = raw_field(&network, program, "declaration mapping");
+    let pair = network.link(directory).unwrap().references()[0];
+    let function = network.link(pair).unwrap().references()[1];
+    let parameters = raw_field(&network, function, "parameters");
+    let parameter = network.link(parameters).unwrap().references()[0];
+    let body = raw_field(&network, function, "body");
+    let main = raw_field(&network, program, "main");
+    let effects = raw_field(&network, main, "effects");
+    let effect = network.link(effects).unwrap().references()[0];
+    for (owner, label, term, definition) in [
+        (program, "imports", "null value", ""),
+        (program, "externals", "null value", ""),
+        (main, "sequential async", "null value", ""),
+        (main, "sequential async", "number value", "0"),
+        (main, "sequential async", "string value", ""),
+        (function, "recursive definition", "null value", ""),
+        (function, "mutual", "null value", ""),
+        (function, "recursive definition", "boolean value", "true"),
+        (function, "mutual", "boolean value", "true"),
+        (function, "decreasing", "number value", "0"),
+        (effect, "constant", "null value", ""),
+        (parameter, "guard", "undefined value", ""),
+        (parameter, "default", "undefined value", ""),
+        (body, "source span", "undefined value", ""),
+    ] {
+        let mut changed = network.clone();
+        let child = changed.insert_link(
+            [],
+            LinkMetadata::new()
+                .with_link_type(LinkType::Semantic)
+                .with_named(true)
+                .with_language("meta-language typed program")
+                .with_term(term)
+                .with_definition(definition),
+        );
+        let changed = replace_raw_field(&changed, owner, label, child);
+        let restored = LinkNetwork::from_lino(&changed.to_lino()).unwrap();
+        assert!(
+            emit_typed_program_links_with_options(&restored, root, "JavaScript", &options(&data))
+                .is_err(),
+            "{label}:{term}"
         );
     }
 }
