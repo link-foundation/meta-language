@@ -370,8 +370,9 @@ pub use translation_rules::{
 };
 pub use tree_sitter_adapter::{GrammarNames, grammar_names};
 pub use typed_program_links::{
-    TypedProgramLinks, TypedProgramLinksEmission, TypedProgramLinksError, TypedProgramLinksLimits,
-    create_typed_program_links, create_typed_program_links_with_javascript_scalar_loop_model,
+    TypedProgramLinks, TypedProgramLinksEmission, TypedProgramLinksEmissionOptions,
+    TypedProgramLinksError, TypedProgramLinksLimits, create_typed_program_links,
+    create_typed_program_links_with_javascript_scalar_loop_model,
     create_typed_program_links_with_rust_array_result_model,
     create_typed_program_links_with_rust_completion_model,
     create_typed_program_links_with_rust_scalar_loop_model,
@@ -379,7 +380,7 @@ pub use typed_program_links::{
     create_typed_program_links_with_rust_source_profiles,
     create_typed_program_links_with_rust_source_signature_model,
     create_typed_program_links_with_scalar_loop_profiles, decode_typed_program_links,
-    emit_typed_program_links, encode_typed_program_links,
+    emit_typed_program_links, emit_typed_program_links_with_options, encode_typed_program_links,
 };
 pub use verification::{VerificationIssue, VerificationIssueKind, VerificationReport};
 

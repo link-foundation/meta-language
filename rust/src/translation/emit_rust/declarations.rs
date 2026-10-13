@@ -244,6 +244,14 @@ impl<'p> RustEmitter<'p> {
         let (params, body) = rename_function(function, &snake, &self.state.local_reserved());
         let name = self.state.local_name(&function.full_name).to_owned();
         self.state.map(entry, &name);
+        if let Some(signature) = self.source_headers.get(&function.full_name).cloned() {
+            let body = self.expr(&body)?;
+            return Ok(
+                crate::translation::source_header_emission::render_rust_source_header_emission(
+                    &signature, &params, &name, &body,
+                ),
+            );
+        }
         if tail_loop(function) {
             // A lifted loop runs as a loop: each iteration assigns the parameters their next values.
             let names = params.iter().map(|param| param.name.clone()).collect();

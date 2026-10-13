@@ -5,7 +5,7 @@ use crate::translation::Language;
 use crate::translation::check::check_program;
 use crate::translation::emit_common::{Assumption, Encoding, Mapping, TheoremRecord};
 use crate::translation::emit_javascript::emit_javascript;
-use crate::translation::emit_rust::emit_rust;
+use crate::translation::emit_rust::{RustEmissionOptions, emit_rust_with_options};
 use crate::translation::ir::Program;
 use crate::translation::javascript::{parse_javascript, parse_javascript_with_scalar_loop_model};
 use crate::translation::rust::{parse_rust, parse_rust_with_loop_profiles};
@@ -76,6 +76,13 @@ pub struct TypedProgramLinksEmission {
     pub encodings: Vec<Encoding>,
     /// Proof obligations.
     pub theorems: Vec<TheoremRecord>,
+}
+
+/// Optional explicit models for emission from the current checked links.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct TypedProgramLinksEmissionOptions {
+    /// Selected primitive immutable-reference source-header interpretation.
+    pub rust_source_header_emission_model: Option<String>,
 }
 /// Exact schema shared by both packages.
 #[must_use]
@@ -469,10 +476,49 @@ pub fn emit_typed_program_links(
     root: LinkId,
     target: &str,
 ) -> Result<TypedProgramLinksEmission> {
+    emit_typed_program_links_with_options(
+        network,
+        root,
+        target,
+        &TypedProgramLinksEmissionOptions::default(),
+    )
+}
+
+/// Emit from checked links with an explicitly selected target-interface model.
+///
+/// # Errors
+/// As [`emit_typed_program_links`], including unsupported selected interfaces.
+pub fn emit_typed_program_links_with_options(
+    network: &LinkNetwork,
+    root: LinkId,
+    target: &str,
+    options: &TypedProgramLinksEmissionOptions,
+) -> Result<TypedProgramLinksEmission> {
     let program = decode_typed_program_links(network, root)?;
+    let source_header_model = options.rust_source_header_emission_model.as_deref();
     let emitted = match target.to_ascii_lowercase().as_str() {
-        "javascript" | "js" | "mjs" => emit_javascript(&program),
-        "rust" | "rs" => emit_rust(&program),
+        "javascript" | "js" | "mjs" => {
+            if source_header_model.is_some() {
+                return Err(error(
+                    "a Rust source header emission model requires Rust target",
+                ));
+            }
+            emit_javascript(&program)
+        }
+        "rust" | "rs" => {
+            if source_header_model.is_some() {
+                crate::shared_numeric_function_model::validate_shared_numeric_origin_context(
+                    network, root,
+                )
+                .map_err(|failure| error(format!("Rust source header emission: {failure}")))?;
+            }
+            emit_rust_with_options(
+                &program,
+                RustEmissionOptions {
+                    source_header_model,
+                },
+            )
+        }
         _ => {
             return Err(error(
                 "typed linked emission currently writes JavaScript and Rust",
