@@ -44,6 +44,16 @@ pub fn accept_rust_source_header_emission_expression(kind: &str) -> bool {
 
 /// Apply the shared primitive borrowed header emission policy.
 #[must_use]
+pub fn accept_rust_source_header_emission_parameter(
+    guarded: bool,
+    defaulted: bool,
+    unrepresented: bool,
+) -> bool {
+    (!guarded && !defaulted) && !unrepresented
+}
+
+/// Apply the shared primitive borrowed header emission policy.
+#[must_use]
 pub fn accept_rust_source_header_lifetime_character(character: f64, first: bool) -> bool {
     ((((95f64..=95f64).contains(&character)) || ((65f64..=90f64).contains(&character)))
         || ((97f64..=122f64).contains(&character)))
