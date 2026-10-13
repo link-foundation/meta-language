@@ -14,7 +14,7 @@
 )]
 /// JavaScript's Number operations that Rust's f64 does not share.
 pub mod ml_number {
-    /// ECMAScript Number::toString: the shortest decimal that reads back as
+    /// ECMAScript `Number::toString`: the shortest decimal that reads back as
     /// the value, the even one on a tie, laid out as JavaScript prints it.
     pub fn js_number(x: f64) -> String {
         if x.is_nan() {
@@ -45,7 +45,7 @@ pub mod ml_number {
                 }
             }
         }
-        let k = digits.len() as i32;
+        let k = i32::try_from(digits.len()).expect("binary64 significand length fits i32");
         let body = if k <= n && n <= 21 {
             format!("{digits}{}", "0".repeat((n - k) as usize))
         } else if 0 < n && n <= 21 {
@@ -73,9 +73,9 @@ pub mod ml_number {
         }
     }
 
-    /// SameValue, as Object.is and assert.strictEqual compare: NaN equals
+    /// `SameValue`, as Object.is and assert.strictEqual compare: NaN equals
     /// NaN, and 0 differs from -0.
-    pub fn same_value(a: f64, b: f64) -> bool {
+    pub const fn same_value(a: f64, b: f64) -> bool {
         if a.is_nan() || b.is_nan() {
             a.is_nan() && b.is_nan()
         } else {
@@ -123,14 +123,14 @@ pub mod ml_math {
         if x > 0.0 && x < 0.5 {
             return 0.0;
         }
-        if x < 0.0 && x >= -0.5 {
+        if (-0.5..0.0).contains(&x) {
             return -0.0;
         }
         let floor = x.floor();
         if x - floor >= 0.5 { floor + 1.0 } else { floor }
     }
 
-    /// Math.sign, which keeps -0, 0 and NaN, where f64::signum does not.
+    /// Math.sign, which keeps -0, 0 and NaN, where `f64::signum` does not.
     pub fn sign(x: f64) -> f64 {
         if x > 0.0 {
             1.0
@@ -185,113 +185,7 @@ pub mod ml_math {
 }
 
 /// Reads of JavaScript arrays, which the portable core never mutates.
-pub mod ml_array {
-    pub fn optional_at<T: Clone>(values: &[T], index: Option<usize>) -> Option<T> {
-        index.and_then(|index| values.get(index)).cloned()
-    }
-    /// The element at an index; a read outside the array, undefined in
-    /// JavaScript, aborts.
-    pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {
-        match index.and_then(|index| values.get(index)) {
-            Some(value) => value.clone(),
-            None => panic!("array index out of range"),
-        }
-    }
-
-    /// The index a Number names: a non-negative integer, -0 included.
-    pub fn number_index(index: f64) -> Option<usize> {
-        if index >= 0.0 && index.fract() == 0.0 && index < 9_007_199_254_740_992.0 {
-            Some(index as usize)
-        } else {
-            None
-        }
-    }
-
-    pub fn append<T>(mut left: Vec<T>, right: Vec<T>) -> Vec<T> {
-        left.extend(right);
-        left
-    }
-    fn integer(value: f64) -> f64 {
-        if value.is_nan() { 0.0 } else { value.trunc() }
-    }
-    fn relative(value: f64, length: usize) -> usize {
-        let value = integer(value);
-        if value < 0.0 {
-            (length as f64 + value).max(0.0) as usize
-        } else {
-            value.min(length as f64) as usize
-        }
-    }
-    pub fn slice<T: Clone>(values: &[T], start: f64, end: f64) -> Vec<T> {
-        let start = relative(start, values.len());
-        let end = relative(end, values.len());
-        values[start..end.max(start)].to_vec()
-    }
-    pub fn index_of<T, F: Fn(&T, &T) -> bool>(
-        values: &[T],
-        search: &T,
-        from: f64,
-        reverse: bool,
-        equal: F,
-    ) -> f64 {
-        if values.is_empty() {
-            return -1.0;
-        }
-        let from = integer(from);
-        if reverse {
-            if from < -(values.len() as f64) {
-                return -1.0;
-            }
-            let start = if from < 0.0 {
-                (values.len() as f64 + from) as usize
-            } else {
-                from.min((values.len() - 1) as f64) as usize
-            };
-            (0..=start)
-                .rev()
-                .find(|&index| equal(&values[index], search))
-                .map_or(-1.0, |index| index as f64)
-        } else {
-            let start = if from < 0.0 {
-                (values.len() as f64 + from).max(0.0) as usize
-            } else {
-                from.min(values.len() as f64) as usize
-            };
-            (start..values.len())
-                .find(|&index| equal(&values[index], search))
-                .map_or(-1.0, |index| index as f64)
-        }
-    }
-    pub fn includes<T, F: Fn(&T, &T) -> bool>(
-        values: &[T],
-        search: &T,
-        from: f64,
-        reverse: bool,
-        equal: F,
-    ) -> bool {
-        index_of(values, search, from, reverse, equal) >= 0.0
-    }
-    pub fn set<T, F: Fn(&T, &T) -> bool>(values: Vec<T>, equal: F) -> Vec<T> {
-        let mut out = Vec::new();
-        for value in values {
-            if !out.iter().any(|previous| equal(previous, &value)) {
-                out.push(value);
-            }
-        }
-        out
-    }
-    pub fn map<K, V, F: Fn(&K, &K) -> bool>(values: Vec<(K, V)>, equal: F) -> Vec<(K, V)> {
-        let mut out: Vec<(K, V)> = Vec::new();
-        for (key, value) in values {
-            if let Some(index) = out.iter().position(|(previous, _)| equal(previous, &key)) {
-                out[index].1 = value;
-            } else {
-                out.push((key, value));
-            }
-        }
-        out
-    }
-}
+pub use crate::translation::frontend_rules::ml_array;
 
 /// JavaScript strings retain every UTF-16 code unit, including isolated surrogates.
 pub mod ml_string {
@@ -308,10 +202,10 @@ pub mod ml_string {
         pub fn from_text(text: &str) -> Self {
             Self(text.encode_utf16().collect())
         }
-        pub fn from_units(units: Vec<u16>) -> Self {
+        pub const fn from_units(units: Vec<u16>) -> Self {
             Self(units)
         }
-        pub fn length(&self) -> f64 {
+        pub const fn length(&self) -> f64 {
             self.0.len() as f64
         }
         pub fn concat(&self, other: &Self) -> Self {
@@ -368,9 +262,8 @@ pub mod ml_string {
             if maximum == 0 {
                 return Vec::new();
             }
-            let separator = match separator {
-                Some(value) => value,
-                None => return vec![self.clone()],
+            let Some(separator) = separator else {
+                return vec![self.clone()];
             };
             if separator.0.is_empty() {
                 return self
@@ -403,17 +296,15 @@ pub mod ml_string {
             }
             let index = index as usize;
             let first = self.0[index];
-            if (0xd800..=0xdbff).contains(&first) {
-                if let Some(&second) = self.0.get(index + 1) {
-                    if (0xdc00..=0xdfff).contains(&second) {
-                        return Some(
-                            ((first as u32 - 0xd800) * 1024 + second as u32 - 0xdc00 + 0x10000)
-                                as f64,
-                        );
-                    }
-                }
+            if (0xd800..=0xdbff).contains(&first)
+                && let Some(&second) = self.0.get(index + 1)
+                && (0xdc00..=0xdfff).contains(&second)
+            {
+                return Some(f64::from(
+                    (u32::from(first) - 0xd800) * 1024 + u32::from(second) - 0xdc00 + 0x10000,
+                ));
             }
-            Some(first as f64)
+            Some(f64::from(first))
         }
         pub fn code_points(&self) -> Vec<Self> {
             let mut out = Vec::new();
@@ -424,7 +315,7 @@ pub mod ml_string {
                     && self
                         .0
                         .get(index + 1)
-                        .map_or(false, |second| (0xdc00..=0xdfff).contains(second))
+                        .is_some_and(|second| (0xdc00..=0xdfff).contains(second))
                 {
                     2
                 } else {
@@ -437,16 +328,15 @@ pub mod ml_string {
         }
         pub fn repeat(&self, count: f64) -> Self {
             let count = integer(count);
-            if count < 0.0 || !count.is_finite() {
-                panic!("Invalid count value: {}", count);
-            }
+            assert!(
+                count >= 0.0 && count.is_finite(),
+                "Invalid count value: {count}"
+            );
             if self.0.is_empty() {
                 return Self(Vec::new());
             }
             let size = count * self.0.len() as f64;
-            if size > 536_870_888.0 {
-                panic!("Invalid string length");
-            }
+            assert!(size <= 536_870_888.0, "Invalid string length");
             Self(self.0.repeat(count as usize))
         }
         pub fn pad(&self, length: f64, fill: &Self, start: bool) -> Self {
@@ -454,9 +344,7 @@ pub mod ml_string {
             if length <= self.0.len() as f64 || fill.0.is_empty() {
                 return self.clone();
             }
-            if length > 536_870_888.0 {
-                panic!("Invalid string length");
-            }
+            assert!(length <= 536_870_888.0, "Invalid string length");
             let count = length as usize - self.0.len();
             let padding: Vec<u16> = fill.0.iter().copied().cycle().take(count).collect();
             let pad = Self(padding);
@@ -489,7 +377,7 @@ pub mod ml_string {
         }
         pub fn trim(&self, start: bool, end: bool, rust: bool) -> Self {
             let whitespace = |unit: u16| {
-                char::from_u32(unit as u32).map_or(false, |c| {
+                char::from_u32(u32::from(unit)).is_some_and(|c| {
                     if rust {
                         c.is_whitespace()
                     } else {
@@ -546,7 +434,7 @@ pub mod ml_string {
         }
         Text(units)
     }
-    pub fn integer(value: f64) -> f64 {
+    pub const fn integer(value: f64) -> f64 {
         if value.is_nan() { 0.0 } else { value.trunc() }
     }
     pub fn absolute(value: f64, length: usize) -> usize {
@@ -743,7 +631,7 @@ pub fn render_link_network_binary_field(value: f64, binary: bool) -> super::ml_s
             .concat(&super::ml_string::Text::from_units(vec![44]))
     } else {
         (super::render_link_network_binary_hexadecimal_digit((value / 16f64).floor())).concat(
-            &super::render_link_network_binary_hexadecimal_digit((value % 16f64)),
+            &super::render_link_network_binary_hexadecimal_digit(value % 16f64),
         )
     }
 }
