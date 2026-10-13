@@ -290,7 +290,7 @@ impl<'a> TreeAdapter<'a> {
                 self.expression(&node["right"], scope, false)?;
             }
             "unary" if accept_scalar_loop_unary_operation(text(node, "op")?) => {
-                self.expression(&node["arg"], scope, false)?
+                self.expression(&node["arg"], scope, false)?;
             }
             "math" if accept_scalar_loop_math_operation(text(node, "op")?) => {
                 for arg in node["args"]

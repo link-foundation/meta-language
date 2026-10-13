@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
+import {readFileSync} from 'node:fs';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {rustCompletionFixture} from '../scripts/generate-rust-completion-fixtures.mjs';
 import {parseRust} from '../src/translation/rust.js';
@@ -12,6 +13,7 @@ import {LinkNetwork} from '../src/network.js';
 import {acceptRustCompletionModel,acceptRustReturnOwnership,readRustConditionalCompletion,readRustCompletionKind} from '../src/translation/rust-completion-rules.js';
 
 const fixture=readProjectData(new URL('../../parity/fixtures/rust-completions.lino',import.meta.url));
+const policy=readProjectData(new URL('../src/translation/data/rust-completions.lino',import.meta.url));
 const options=entry=>({completionModel:fixture.completionModel,...(entry.arrayResultModel?{arrayResultModel:entry.arrayResultModel}:{})});
 function run(code,extra={}) {
   const output=[],context={console:{log:(...values)=>output.push(values.map(String).join(' '))},...extra};
@@ -30,6 +32,29 @@ function exactRefusal(entry,selected) {
     assert.equal(error.kind,entry.kind,entry.id);assert.equal(error.reason,entry.reason,entry.id);assert.deepEqual(error.span??null,entry.span,entry.id);return true;
   });
 }
+
+test('factored completion predicates retain every table priority and unknown primitive input result',()=>{
+ const nativeSource=readFileSync(new URL('../../rust/src/translation/rust/completion_rules.rs',import.meta.url),'utf8');
+ const functions=['read_rust_conditional_completion','read_rust_completion_kind'].map(name=>{
+  const start=nativeSource.indexOf('pub fn '+name+'(');assert.ok(start>=0);
+  const end=nativeSource.indexOf('\n///',start),source=nativeSource.slice(start,end<0?undefined:end).trim();assert.ok(source.endsWith('}'));return source;
+ });
+ // Check the actual complete changed functions. The separate const-fn source
+ // item elsewhere in this generated library still needs its own admission.
+ const native=run(emitJavaScript(checkProgram(parseRust(functions.join('\n\n')+'\nfn main(){}'))).text).context;
+ const kinds=['','returned','value','aborted','unknown'];
+ for(const then of kinds)for(const otherwise of kinds)for(const hasElse of[false,true])for(const continuation of[false,true]){
+  const expected=policy.actions.find(row=>row.then===then&&row.otherwise===otherwise&&row.hasElse===hasElse&&row.continuation===continuation)?.action??'unsupported completion';
+  assert.equal(readRustConditionalCompletion(then,otherwise,hasElse,continuation),expected);
+  assert.equal(native.read_rust_conditional_completion(then,otherwise,hasElse,continuation),expected);
+ }
+ const actions=[...new Set(policy.resultKinds.map(row=>row.action)),'unknown'];
+ for(const action of actions)for(const then of kinds)for(const otherwise of kinds){
+  const expected=policy.resultKinds.find(row=>row.action===action&&row.then===then&&row.otherwise===otherwise)?.result??'unsupported completion';
+  assert.equal(readRustCompletionKind(action,then,otherwise),expected);
+  assert.equal(native.read_rust_completion_kind(action,then,otherwise),expected);
+ }
+});
 
 test('closed Rust completions preserve ten independent original pairs and source-free target behavior',()=>{
   assert.deepEqual(rustCompletionFixture(),fixture);

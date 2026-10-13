@@ -76,6 +76,17 @@ test('native solver keeps emitted helper dependencies and relocates exact genera
   assert.match(adapted, /self::ml_array::optional_at/u);
   assert.match(adapted, /self::MlClosure1Loop2Result/u);
   for (const decorator of style.decorators) {
+    if (decorator.id === 'reviewed-product-source-condition-lints-26667280') {
+      assert.deepEqual(decorator.when, [['format', 'Rust'], ['scope', 'formatted-product-source-conditions']]);
+      assert.equal(decorator.actions.length, 1);
+      const action = decorator.actions[0];
+      assert.equal(action.op, 'replace');assert.equal(action.field, 'source');
+      assert.match(action.from, /^pub fn solve_product_source_facts\(/u);
+      assert.equal([...action.from.matchAll(/if \(\{/gu)].length, 2);
+      assert.doesNotMatch(action.to, /if \(\{|#\[allow|mul_add/u);
+      assert.equal([...action.to.matchAll(/let ml_product_condition_/gu)].length, 2);
+      continue;
+    }
     if (decorator.id === 'reviewed-product-native-lints-285c8b13') {
       assert.deepEqual(decorator.when, [['format', 'Rust'], ['scope', 'formatted-product-library']]);
       assert.ok(decorator.actions.every(action => action.op === 'replace' && action.field === 'source'));
