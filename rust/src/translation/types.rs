@@ -20,8 +20,8 @@ use super::structured_type_rules::{
 fn default_absence() -> std::string::String {
     "both".to_owned()
 }
-const fn is_false(value: &bool) -> bool {
-    !*value
+fn is_false(value: impl std::ops::Not<Output = bool>) -> bool {
+    !value
 }
 
 /// A present product model must be a string; null cannot erase its semantics.
