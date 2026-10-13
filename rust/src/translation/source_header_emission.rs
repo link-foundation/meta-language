@@ -9,7 +9,7 @@ use serde_json::Value;
 
 use super::diagnostics::{Result, unsupported};
 use super::emit_rust::indent;
-use super::ir::{Binder, Decl, Expr, Node, Program, Semantics};
+use super::ir::{Decl, Expr, Node, Param, Program, Semantics};
 use super::source_header_emission_rules::{
     accept_rust_source_header_emission_context, accept_rust_source_header_emission_declaration,
     accept_rust_source_header_emission_expression, accept_rust_source_header_emission_model,
@@ -58,6 +58,17 @@ const fn semantics_name(semantics: Option<Semantics>) -> &'static str {
     }
 }
 
+pub(crate) fn validate_rust_source_header_emission_model(model: &str) -> Result<()> {
+    if !accept_rust_source_header_emission_model(model) {
+        return Err(unsupported(
+            "Rust source header emission model",
+            "select primitive borrowed Rust function header 1",
+            None,
+        ));
+    }
+    Ok(())
+}
+
 /// Validate every original declaration before changing any function interface.
 ///
 /// # Errors
@@ -66,13 +77,7 @@ pub fn read_rust_source_header_emission(
     program: &Program,
     model: &str,
 ) -> Result<BTreeMap<String, SourceSignature>> {
-    if !accept_rust_source_header_emission_model(model) {
-        return Err(unsupported(
-            "Rust source header emission model",
-            "select primitive borrowed Rust function header 1",
-            None,
-        ));
-    }
+    validate_rust_source_header_emission_model(model)?;
     let forbidden = !program.imports.is_empty()
         || !program.externals.is_empty()
         || program
@@ -237,7 +242,7 @@ pub fn read_rust_source_header_emission(
 #[must_use]
 pub fn render_rust_source_header_emission(
     signature: &SourceSignature,
-    parameters: &[Binder],
+    parameters: &[Param],
     name: &str,
     body: &str,
 ) -> String {

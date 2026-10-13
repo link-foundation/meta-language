@@ -506,7 +506,9 @@ pub fn emit_typed_program_links_with_options(
             emit_javascript(&program)
         }
         "rust" | "rs" => {
-            if source_header_model.is_some() {
+            if let Some(model) = source_header_model {
+                crate::translation::source_header_emission::validate_rust_source_header_emission_model(model)
+                    .map_err(|failure| error(failure.to_string()))?;
                 crate::shared_numeric_function_model::validate_shared_numeric_origin_context(
                     network, root,
                 )
