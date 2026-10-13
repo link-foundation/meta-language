@@ -40,18 +40,42 @@ fn instantiate(template: &Value, receiver: &Value, span: Option<Span>) -> Value 
     }
 }
 pub(super) fn expression(method: &str, receiver: &SExpr, range: Option<Span>) -> Result<SExpr> {
-    let template = policy()["templates"].get(method).ok_or_else(|| {
+    selected_expression(&policy()["templates"], "predicate", method, receiver, range)
+}
+
+pub(super) fn operation_expression(
+    method: &str,
+    receiver: &SExpr,
+    range: Option<Span>,
+) -> Result<SExpr> {
+    selected_expression(
+        &policy()["operationTemplates"],
+        "operation",
+        method,
+        receiver,
+        range,
+    )
+}
+
+fn selected_expression(
+    templates: &Value,
+    kind: &str,
+    method: &str,
+    receiver: &SExpr,
+    range: Option<Span>,
+) -> Result<SExpr> {
+    let template = templates.get(method).ok_or_else(|| {
         unsupported(
-            "Rust binary64 predicate",
-            "the shared predicate template is unknown",
+            &format!("Rust binary64 {kind}"),
+            &format!("the shared {kind} template is unknown"),
             range,
         )
     })?;
     let receiver = serde_json::to_value(receiver).expect("a parsed surface expression serializes");
     serde_json::from_value(instantiate(template, &receiver, range)).map_err(|_| {
         unsupported(
-            "Rust binary64 predicate",
-            "the shared predicate template is not a representable expression",
+            &format!("Rust binary64 {kind}"),
+            &format!("the shared {kind} template is not a representable expression"),
             range,
         )
     })

@@ -139,13 +139,18 @@ impl RustParser {
         for (symbol, op) in [("-", UnaryOp::Neg), ("!", UnaryOp::Not)] {
             if self.cursor.eat(symbol).is_some() {
                 let arg = self.unary(path, Options::default())?;
-                return Ok(SExpr::new(
+                let origin = self.origins.origin(&arg, path);
+                let result = SExpr::new(
                     SNode::Unary {
                         op,
                         arg: Box::new(arg),
                     },
                     span(&token, self.cursor.peek()),
-                ));
+                );
+                if op == UnaryOp::Neg && self.accept_float_receiver_origin(&origin, 0) {
+                    self.origins.mark(&result, origin);
+                }
+                return Ok(result);
             }
         }
         // Source evidence proves immutable indirection before projecting its value.
@@ -172,6 +177,21 @@ impl RustParser {
             return Ok(arg);
         }
         self.postfix(path, options)
+    }
+
+    fn accept_float_receiver_origin(&self, origin: &SourceOrigin, arguments_count: usize) -> bool {
+        let source_owner = vec!["f64".to_owned()];
+        let owner = self.resolve(&source_owner, &origin.path);
+        let shadowed = self.origins.lookup(&source_owner, &origin.path).is_some()
+            || self.origins.lookup(&owner, &origin.path).is_some();
+        super::float_predicate_rules::accept_rust_float_predicate_receiver(
+            origin.ty.as_ref().map_or("", Type::kind),
+            origin.float_source_model.unwrap_or(""),
+            origin.proven,
+            !origin.wrappers.is_empty(),
+            shadowed,
+            &arguments_count.to_string(),
+        )
     }
 
     pub(super) fn postfix(&mut self, path: &[String], options: Options) -> Result<SExpr> {
@@ -223,7 +243,11 @@ impl RustParser {
                 self.cursor.expect(")", Some(&method.value))?;
                 let mut origin = self.origins.origin(&value, path);
                 let method_name = method.value.as_str();
-                if super::float_predicate_rules::accept_rust_float_predicate_method(method_name) {
+                let float_operation =
+                    super::float_predicate_rules::accept_rust_float_operation_method(method_name);
+                if float_operation
+                    || super::float_predicate_rules::accept_rust_float_predicate_method(method_name)
+                {
                     let range = span(&token, self.cursor.peek());
                     if !args.is_empty() {
                         return Err(type_error(
@@ -235,29 +259,34 @@ impl RustParser {
                             range,
                         ));
                     }
-                    let source_owner = vec!["f64".to_owned()];
-                    let owner = self.resolve(&source_owner, &origin.path);
-                    let shadowed = self.origins.lookup(&source_owner, &origin.path).is_some()
-                        || self.origins.lookup(&owner, &origin.path).is_some();
                     if !self.origins.collecting
-                        && !super::float_predicate_rules::accept_rust_float_predicate_receiver(
-                            origin.ty.as_ref().map_or("", Type::kind),
-                            origin.float_source_model.unwrap_or(""),
-                            origin.proven,
-                            !origin.wrappers.is_empty(),
-                            shadowed,
-                            &args.len().to_string(),
-                        )
+                        && !self.accept_float_receiver_origin(&origin, args.len())
                     {
                         return Err(unsupported(
-                            "Rust binary64 predicate",
+                            if float_operation {
+                                "Rust binary64 operation"
+                            } else {
+                                "Rust binary64 predicate"
+                            },
                             "the receiver needs a proven direct unshadowed primitive f64 source type",
                             range,
                         ));
                     }
-                    value = super::float_predicates::expression(method_name, &value, range)?;
-                    self.origins
-                        .mark(&value, SourceOrigin::with_type(BOOL, path, Vec::new()));
+                    if float_operation {
+                        value = super::float_predicates::operation_expression(
+                            method_name,
+                            &value,
+                            range,
+                        )?;
+                        // Preserve the admitted receiver's actual source owner/model;
+                        // an inferred FLOAT alone cannot establish this evidence.
+                        origin.ty = Some(FLOAT);
+                        self.origins.mark(&value, origin);
+                    } else {
+                        value = super::float_predicates::expression(method_name, &value, range)?;
+                        self.origins
+                            .mark(&value, SourceOrigin::with_type(BOOL, path, Vec::new()));
+                    }
                     continue;
                 }
                 if ["len", "is_empty"].contains(&method_name) {

@@ -4,8 +4,16 @@ import { readRuntimeProjectData } from '../project-data-loader.js';
 export const RUST_FLOAT_PREDICATE_POLICY = readRuntimeProjectData(new URL('./data/rust-float-predicates.lino', import.meta.url));
 
 export function createRustFloatPredicateExpression(method, receiver, span) {
-  const template = RUST_FLOAT_PREDICATE_POLICY.templates[method];
   if (!Object.hasOwn(RUST_FLOAT_PREDICATE_POLICY.templates, method)) throw new TypeError('unknown Rust float predicate template');
+  return createRustFloatTemplateExpression(RUST_FLOAT_PREDICATE_POLICY.templates[method], receiver, span);
+}
+
+export function createRustFloatOperationExpression(method, receiver, span) {
+  if (!Object.hasOwn(RUST_FLOAT_PREDICATE_POLICY.operationTemplates, method)) throw new TypeError('unknown Rust float operation template');
+  return createRustFloatTemplateExpression(RUST_FLOAT_PREDICATE_POLICY.operationTemplates[method], receiver, span);
+}
+
+function createRustFloatTemplateExpression(template, receiver, span) {
   const instantiate = value => {
     if (value?.slot === 'receiver') return receiver;
     if (Array.isArray(value)) return value.map(instantiate);

@@ -1,5 +1,5 @@
-import { acceptRustFloatPredicateMethod, acceptRustFloatPredicateReceiver } from './rust-float-predicate-rules.js';
-import { createRustFloatPredicateExpression } from './rust-float-predicates.js';
+import { acceptRustFloatPredicateMethod, acceptRustFloatOperationMethod, acceptRustFloatPredicateReceiver } from './rust-float-predicate-rules.js';
+import { createRustFloatPredicateExpression, createRustFloatOperationExpression } from './rust-float-predicates.js';
 import { acceptRustCompletionModel } from './rust-completion-rules.js';
 import { readRustFunctionCompletion } from './rust-completions.js';
 import { readStringMapOperation, readStringTestOperation } from './frontend-rules.js';
@@ -805,7 +805,9 @@ class RustParser {
     const token = c.peek();
     if (c.eat('-')) {
       const arg = this.unary(path, {});
-      return { k: 'unary', op: 'neg', arg, span: span(token, c.peek()) };
+      const result = { k: 'unary', op: 'neg', arg, span: span(token, c.peek()) };
+      const origin = this.origins.origin(arg, path);
+      return this.acceptFloatReceiverOrigin(origin, 0) ? this.origins.mark(result, origin) : result;
     }
     if (c.eat('!')) {
       const arg = this.unary(path, {});
@@ -873,19 +875,29 @@ class RustParser {
     return number;
   }
 
+  acceptFloatReceiverOrigin(origin, argumentsCount) {
+    const owner = this.resolve(['f64'], origin.path);
+    const shadowed = Boolean(this.origins.lookup(['f64'], origin.path) || this.origins.lookup(owner, origin.path));
+    return acceptRustFloatPredicateReceiver(origin.type?.kind ?? '', origin.floatSourceModel ?? '', origin.proven, origin.wrappers.length > 0, shadowed, String(argumentsCount));
+  }
+
   method(receiver, method, args, range) {
     const expect = (count) => {
       if (args.length !== count) throw new TranslationError('type', `${method.value} expects ${count} arguments but got ${args.length}`, range);
     };
-    if (acceptRustFloatPredicateMethod(method.value)) {
+    const floatOperation = acceptRustFloatOperationMethod(method.value);
+    if (floatOperation || acceptRustFloatPredicateMethod(method.value)) {
       expect(0);
       const origin = this.origins.origin(receiver, this.modulePath);
-      const owner = this.resolve(['f64'], origin.path);
-      const shadowed = Boolean(this.origins.lookup(['f64'], origin.path) || this.origins.lookup(owner, origin.path));
-      if (!this.origins.collecting && !acceptRustFloatPredicateReceiver(origin.type?.kind ?? '', origin.floatSourceModel ?? '', origin.proven, origin.wrappers.length > 0, shadowed, String(args.length))) {
-        throw unsupported('Rust binary64 predicate', 'the receiver needs a proven direct unshadowed primitive f64 source type', range);
+      if (!this.origins.collecting && !this.acceptFloatReceiverOrigin(origin, args.length)) {
+        throw unsupported(floatOperation ? 'Rust binary64 operation' : 'Rust binary64 predicate', 'the receiver needs a proven direct unshadowed primitive f64 source type', range);
       }
-      return this.origins.mark(createRustFloatPredicateExpression(method.value, receiver, range), this.origins.typeOrigin(BOOL, this.modulePath));
+      const expression = floatOperation ? createRustFloatOperationExpression(method.value, receiver, range)
+        : createRustFloatPredicateExpression(method.value, receiver, range);
+      // The operation result retains the admitted primitive owner's evidence;
+      // a generic inferred FLOAT never establishes a source receiver proof.
+      return this.origins.mark(expression, floatOperation ? { ...origin, type: FLOAT }
+        : this.origins.typeOrigin(BOOL, this.modulePath));
     }
     const mapOperation = readStringMapOperation('Rust', method.value);
     if (['len', 'is_empty'].includes(method.value)) {
@@ -900,7 +912,7 @@ class RustParser {
         if (!c.is('as') || !c.is('f64', 1)) throw unsupported('Rust array length', 'the selected Number length model requires an explicit as f64 conversion', range);
         c.next(); c.next();
       } else node = { k: 'binary', op: 'eq', left: length, right: { k: 'num', value: '0', type: FLOAT, span: range }, span: range };
-      return this.origins.mark(node, { type: method.value === 'len' ? FLOAT : BOOL, path: [...this.modulePath], wrappers: [], textSourceModel: null, fields: null, proven: true, copyEvidence: true });
+      return this.origins.mark(node, { type: method.value === 'len' ? FLOAT : BOOL, floatSourceModel: method.value === 'len' ? 'binary64 scalar' : null, path: [...this.modulePath], wrappers: [], textSourceModel: null, fields: null, proven: true, copyEvidence: true });
     }
     if (mapOperation) {
       expect(0);
