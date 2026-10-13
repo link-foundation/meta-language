@@ -38634,7 +38634,7 @@
 (38634: 38639 (meta: (t: semantic) (n: 1) (term: object%20value) (lang: meta-language%20structured%20data)))
 (38635: 38636 38638 (meta: (t: semantic) (n: 1) (term: object%20value) (lang: meta-language%20structured%20data)))
 (38636: 27 28 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(38637: (meta: (t: semantic) (n: 1) (term: string%20value) (def: lifetime%20parameter%3A%20only%20%27static%20references%20are%20portable%20at%208..10) (lang: meta-language%20structured%20data)))
+(38637: (meta: (t: semantic) (n: 1) (term: string%20value) (def: lifetime%20parameter%3A%20a%20reference%20needs%20a%20declared%20function%20lifetime%2C%20an%20elided%20placeholder%2C%20or%20%27static%20at%208..10) (lang: meta-language%20structured%20data)))
 (38638: 30 38637 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (38639: 25 38635 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (38640: 17 38634 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
