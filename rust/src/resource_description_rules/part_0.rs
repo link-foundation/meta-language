@@ -400,7 +400,7 @@ pub mod ml_math {
     }
 
     pub fn is_safe_integer(x: f64) -> bool {
-        is_integer(x) && x.abs() <= 9007199254740991.0
+        is_integer(x) && x.abs() <= 9_007_199_254_740_991.0
     }
 }
 
@@ -420,7 +420,7 @@ pub mod ml_array {
 
     /// The index a Number names: a non-negative integer, -0 included.
     pub fn number_index(index: f64) -> Option<usize> {
-        if index >= 0.0 && index.fract() == 0.0 && index < 9007199254740992.0 {
+        if index >= 0.0 && index.fract() == 0.0 && index < 9_007_199_254_740_992.0 {
             Some(index as usize)
         } else {
             None
@@ -594,14 +594,14 @@ pub fn accept_resource_description_identifier_character(code: f64, query: bool) 
                 {
                     true
                 } else {
-                    if (((code >= (65536f64)) && (code <= (983037f64)))
+                    if (((code >= (65536f64)) && (code <= (983_037f64)))
                         && ((code % 65536f64) <= (65533f64)))
                     {
                         true
                     } else {
                         (query
                             && (((code >= (57344f64)) && (code <= (63743f64)))
-                                || (((code >= (983040f64)) && (code <= (1114109f64)))
+                                || (((code >= (983_040f64)) && (code <= (1_114_109f64)))
                                     && ((code % 65536f64) <= (65533f64)))))
                     }
                 }

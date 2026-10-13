@@ -6,6 +6,7 @@ import { parseJavaScript } from '../src/translation/javascript.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { DecoratorSet } from '../src/decorators.js';
+import { tokenize } from '../src/translation/lexer.js';
 import { readProjectFileBytes } from './project-data.mjs';
 
 const sourceFile = new URL('../src/resource-description-rules.js', import.meta.url);
@@ -26,6 +27,14 @@ if (process.argv.includes('--update-styles')) {
   const actions = [];
   const replace = (from, to) => { if (raw.includes(from)) actions.push({ op: 'replace', field: 'source', from, to }); };
   for (const name of names) replace('crate::' + name, 'super::' + name);
+  // Clippy's pedantic literal style retains every numeric value and suffix.
+  // Discover the actual emitted numeric tokens, avoiding edits to source rules.
+  for (const token of tokenize(raw, 'Rust').tokens) {
+    if (token.kind !== 'number') continue;
+    const digits = /^[0-9]{6,}(?=\.|[a-z]|$)/u.exec(token.raw)?.[0];
+    if (digits) replace(token.raw, digits.replace(/\B(?=(?:[0-9]{3})+$)/gu, '_') + token.raw.slice(digits.length));
+  }
+
   // The input units and equality fields are never assigned. Borrowing them
   // preserves their checked read-only semantics and avoids quadratic cloning.
   for (const name of ['units', 'left_fields', 'right_fields']) {
