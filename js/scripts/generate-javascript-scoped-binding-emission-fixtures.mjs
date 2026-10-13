@@ -1,7 +1,7 @@
 import {isDeepStrictEqual} from 'node:util';
 import {fileURLToPath} from 'node:url';
 import {readProjectData, writeProjectData} from './project-data.mjs';
-import {createTypedProgramLinks} from '../src/typed-program-links.js';
+import {createTypedProgramLinks,emitTypedProgramLinks} from '../src/typed-program-links.js';
 
 export const JAVA_SCRIPT_SCOPED_BINDING_MODEL = 'owned JavaScript scoped bindings 1';
 const loopModel = 'closed declaration scalar loop 1';
@@ -12,10 +12,18 @@ export function javaScriptScopedBindingEmissionFixture() {
     {id:'declaration-alias-collision', language:'JavaScript', source:'function binding_value(x){return x+10;} function choose(value){const shadow=value+1;return binding_value(shadow)+value;}choose(2);', entry:'choose', capture:{}, inputs:[[2],[3]], expected:[15,17], output:[]},
     {id:'lexical-shadow', language:'JavaScript', source:'function choose(value){const previous=value;{const value=previous+1;return value+previous;}}choose(2);', entry:'choose', capture:{}, inputs:[[2],[0]], expected:[5,1], output:[]},
   ];
-  return {schemaVersion:1, model:JAVA_SCRIPT_SCOPED_BINDING_MODEL, loopModel, scope:'Four concrete complete modules and repeated source-free target replay, not a universal runtime-module claim.', cases:specifications.map(specification => {
+  const cases=specifications.map(specification => {
     const archive=createTypedProgramLinks(specification.source,specification.language,specification.capture);
     return {...specification, links:archive.network.toLino(), root:archive.root.asU64()};
-  })};
+  });
+  const replayArchives=[];
+  let current=createTypedProgramLinks(specifications[0].source,'Rust',specifications[0].capture);
+  for(let cycle=0;cycle<3;cycle+=1){
+    const source=emitTypedProgramLinks(current.network,current.root,'JavaScript',{javaScriptScopedBindingEmissionModel:JAVA_SCRIPT_SCOPED_BINDING_MODEL}).code;
+    current=createTypedProgramLinks(source,'JavaScript',{javaScriptScalarLoopModel:loopModel});
+    replayArchives.push({cycle,source,links:current.network.toLino(),root:current.root.asU64()});
+  }
+  return {schemaVersion:1, model:JAVA_SCRIPT_SCOPED_BINDING_MODEL, loopModel, scope:'Four concrete complete modules and repeated source-free target replay, not a universal runtime-module claim.', cases,replayArchives};
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)) {
   const file=new URL('../../parity/fixtures/javascript-scoped-binding-emission.lino',import.meta.url);

@@ -72,6 +72,20 @@ test('foreign declaration objects and counterfeit scalar-loop owners cannot sele
   }
 });
 
+test('authentic JavaScript replay archives retain explicit snapshot context and exact empty-value facts',()=>{
+  assert.equal(fixture.replayArchives.length,3);
+  for(const value of fixture.replayArchives){
+    const archive=reload(value);const program=decodeTypedProgramLinks(archive.network,archive.root);
+    assert.equal(program.referenceSemantics,true);
+    const code=emitTypedProgramLinks(archive.network,archive.root,'JavaScript',options).code;
+    assert.equal(vm.runInNewContext(`${code}\nrun(0,3)`,{},{timeout:1000}),3);
+    for(const flag of [null,0,'',undefined]){
+      const current=decodeTypedProgramLinks(archive.network,archive.root);current.referenceSemantics=flag;
+      assert.throws(()=>emitJavaScript(current,{scopedBindingModel:fixture.model}),/owned local interpretation/u);
+    }
+  }
+});
+
 test('unsupported declaration scopes, values, effects and unowned context premises refuse',()=>{
   for(const source of ['const scope={keep(x){return x;}};scope.keep(2);','function keep(x){return [x];}keep(2);','import assert from "node:assert/strict";function keep(x){return x;}assert.equal(keep(2),2);']) {
     const archive=createTypedProgramLinks(source,'JavaScript');
