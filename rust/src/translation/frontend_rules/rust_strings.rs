@@ -49,7 +49,7 @@ pub fn read_rust_string_continuation_end(units: &[f64], start: f64) -> f64 {
                 } else {
                     end
                 };
-                if !(match (
+                if (match (
                     crate::translation::frontend_rules::ml_array::optional_at(
                         units,
                         crate::translation::frontend_rules::ml_array::number_index(end_3),
@@ -59,14 +59,14 @@ pub fn read_rust_string_continuation_end(units: &[f64], start: f64) -> f64 {
                     (Some(ml_left), ml_right) => ml_left == ml_right,
                     _ => false,
                 }) {
-                    -1f64
-                } else {
                     {
                         let end_4 = end_3 + 1f64;
                         {
                             crate::translation::frontend_rules::ml_read_rust_string_continuation_end_loop1(units, end_4)
                         }
                     }
+                } else {
+                    -1f64
                 }
             }
         }

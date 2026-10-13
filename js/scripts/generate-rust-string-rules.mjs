@@ -1,15 +1,25 @@
 // Generate the Rust string lexer decisions from the checked JavaScript source.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { DecoratorSet } from '../src/decorators.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { tokenize } from '../src/translation/lexer.js';
+import { applyRecordedCompilerFeedback } from './compiler-style-feedback.mjs';
 
 const sourcePath = new URL('../src/translation/rust-string-rules.js', import.meta.url);
 const stylesPath = new URL('../../parity/self-translation/rust-string-rules-decorators.lino', import.meta.url);
 const outputPath = new URL('../../rust/src/translation/frontend_rules/rust_strings.rs', import.meta.url);
+const feedbackIndex = process.argv.indexOf('--feedback');
+if (feedbackIndex >= 0) {
+  const feedbackFile = process.argv[feedbackIndex + 1];
+  if (!feedbackFile || feedbackFile.startsWith('--')) throw new Error('--feedback requires the recorded compiler feedback file');
+  applyRecordedCompilerFeedback({ root: fileURLToPath(new URL('../../', import.meta.url)), feedbackFile,
+    decoratorFile: 'parity/self-translation/rust-string-rules-decorators.lino',
+    allowedPaths: ['rust/src/translation/frontend_rules/rust_strings.rs'] });
+}
 const raw = emitRust(checkProgram(parseJavaScript(readFileSync(sourcePath, 'utf8')))).definitions.join('\n\n');
 const format = input => {
   const result = spawnSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], { input, encoding: 'utf8', maxBuffer: 1024 * 1024 });
@@ -110,7 +120,9 @@ if (process.argv.includes('--update-styles')) {
   formatted = format(simplified);
   if (round === 9) throw new Error('reviewed string expression styles did not converge');
   }
-  writeFileSync(stylesPath, new DecoratorSet(decorators).toLino());
+  const compilerStyles = DecoratorSet.fromLino(readFileSync(stylesPath, 'utf8')).decorators
+    .filter(decorator => decorator.id === 'compiler-feedback-style');
+  writeFileSync(stylesPath, new DecoratorSet([...decorators, ...compilerStyles]).toLino());
 }
 
 const styles = DecoratorSet.fromLino(readFileSync(stylesPath, 'utf8'));
