@@ -5,7 +5,8 @@ import {DecoratorSet} from '../src/decorators.js';
 const policyFile=new URL('../src/translation/data/rust-scalar-loops.lino',import.meta.url),policy=readProjectData(policyFile);
 const choices=(name,parameter,values)=>'/** @param {string} '+parameter+' @returns {boolean} */\nexport function '+name+'('+parameter+') {return '+values.map(value=>parameter+' === '+JSON.stringify(value)).join(' || ')+';}\n';
 const source='// Generated from linked scalar loop source policy.\n'
- +choices('acceptRustScalarLoopModel','model',['',policy.model])
+ +choices('acceptRustScalarLoopModel','model',['',policy.model,policy.declarationModel])
+ +choices('acceptScalarLoopDeclarationModel','model',[policy.declarationModel])
  +choices('acceptScalarLoopLanguage','language',policy.languages)
  +choices('acceptScalarLoopValueKind','kind',Object.keys(policy.types))
  +choices('acceptScalarLoopBinaryOperation','operation',policy.operations.binary)

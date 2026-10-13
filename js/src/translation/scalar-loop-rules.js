@@ -1,6 +1,8 @@
 // Generated from linked scalar loop source policy.
 /** @param {string} model @returns {boolean} */
-export function acceptRustScalarLoopModel(model) {return model === "" || model === "closed primitive scalar loop 1";}
+export function acceptRustScalarLoopModel(model) {return model === "" || model === "closed primitive scalar loop 1" || model === "closed declaration scalar loop 1";}
+/** @param {string} model @returns {boolean} */
+export function acceptScalarLoopDeclarationModel(model) {return model === "closed declaration scalar loop 1";}
 /** @param {string} language @returns {boolean} */
 export function acceptScalarLoopLanguage(language) {return language === "Rust" || language === "JavaScript";}
 /** @param {string} kind @returns {boolean} */

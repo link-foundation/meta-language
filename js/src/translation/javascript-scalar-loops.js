@@ -1,6 +1,7 @@
 // The selected reverse boundary reads actual emitted scalar state loops.
 import {unsupported} from './diagnostics.js';
 import {RUST_SCALAR_LOOP_POLICY, checkRustScalarLoopProof} from './rust-scalar-loops.js';
+import {acceptScalarLoopDeclarationModel} from './scalar-loop-rules.js';
 
 const policy = RUST_SCALAR_LOOP_POLICY;
 const fail = (reason, span) => { throw unsupported('JavaScript scalar loop', reason, span); };
@@ -31,7 +32,8 @@ export function readJavaScriptScalarLoop(parser, name, params, isAsync) {
   c.expect('for', 'scalar loop'); c.expect('(', 'scalar loop');
   c.expect(';', 'scalar loop'); c.expect(';', 'scalar loop'); c.expect(')', 'scalar loop');
   const state = params.map(param => param.name), known = new Set(state), declared = [];
-  const proof = {model: policy.model, language: 'JavaScript', sourceName: name, lowering: policy.lowering,
+  const proof = {model: parser.scalarLoopModel, language: 'JavaScript', sourceName: name, lowering: policy.lowering,
+    ...(acceptScalarLoopDeclarationModel(parser.scalarLoopModel) ? {continuation: {root: policy.continuationRoot, path: [name]}} : {}),
     state: state.map(name => ({name, mutable: true})), transitions: []};
 
   function block() {
@@ -55,7 +57,7 @@ export function readJavaScriptScalarLoop(parser, name, params, isAsync) {
       let result;
       if (c.eat('return')) { result = parser.expr(); c.expect(';', 'scalar loop return'); }
       else if (c.is('if')) result = conditional();
-      else if (c.is('[') || c.is('continue')) result = continuation();
+      else if (c.is('[') || c.is('continue') || proof.continuation && c.peek().kind === 'identifier' && c.is('=', 1)) result = continuation();
       else fail('every loop path explicitly returns a scalar or continues owned state', c.peek());
       const close = c.expect('}', 'scalar loop block');
       return bindings.reduceRight((body, binding) => ({k: 'let', ...binding, body, span: range(start, close)}), result);
@@ -87,9 +89,21 @@ export function readJavaScriptScalarLoop(parser, name, params, isAsync) {
       c.expect(']', 'scalar state snapshots'); c.expect(';', 'scalar state snapshots');
       writes.sort((left, right) => declared.indexOf(left.binding) - declared.indexOf(right.binding));
     }
+    else if (proof.continuation && c.peek().kind === 'identifier' && c.is('=', 1)) {
+      const target = c.identifier('scalar state target').value;
+      const index = state.indexOf(target);
+      if (index < 0) fail('a single write targets its actual scalar parameter slot', start);
+      c.expect('=', 'single scalar state snapshot');
+      const binding = c.identifier('scalar state snapshot').value;
+      if (binding !== target) {
+        if (!snapshot(binding) || !parser.scope.locals.has(binding)) fail('each changed slot reads its actual immutable write snapshot', start);
+        writes.push({target, binding}); arguments_[index] = binding;
+      }
+      c.expect(';', 'single scalar state snapshot');
+    }
     c.expect('continue', 'scalar continuation'); c.expect(';', 'scalar continuation');
     proof.transitions.push({writes, arguments: arguments_});
-    return {k: 'app', fn: {k: 'name', path: [name]}, args: arguments_.map(value => ({k: 'name', path: [value]})), span: range(start, c.peek())};
+    return {k: 'app', fn: {k: 'name', path: proof.continuation ? [proof.continuation.root, ...proof.continuation.path] : [name]}, args: arguments_.map(value => ({k: 'name', path: [value]})), span: range(start, c.peek())};
   }
   const body = block(); c.expect('}', 'scalar loop function');
   return {body, proof, span: range(open, c.peek())};
