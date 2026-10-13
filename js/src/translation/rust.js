@@ -26,6 +26,7 @@ import { acceptRustTupleIndexSpelling } from './rust-product-rules.js';
 import { acceptRustSourceArrayOwner, acceptRustSourceArrayElement, acceptRustSourceArrayResultModel, acceptRustSourceArrayResult } from './rust-array-rules.js';
 import { acceptRustUnwrittenScalarParameter } from './rust-scalar-parameter-rules.js';
 import { readRustScalarParameterBody } from './rust-scalar-parameters.js';
+import { acceptRustScalarLoopModel, readRustScalarLoop } from './rust-scalar-loops.js';
 import { checkProgram } from './check.js';
 
 const ACCEPTED_DERIVES = new Set(['Clone', 'Copy', 'Debug', 'PartialEq', 'Eq', 'Hash', 'PartialOrd', 'Ord']);
@@ -35,15 +36,16 @@ const ADDITIVE = { '+': 'add', '-': 'sub' };
 const MULTIPLICATIVE = { '*': 'mul', '/': 'div', '%': 'rem' };
 const RESERVED_ITEMS = new Set(['impl', 'trait', 'struct', 'union', 'static', 'type', 'extern', 'macro_rules', 'async', 'unsafe']);
 
-export function parseRust(source, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '' } = {}) {
+export function parseRust(source, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '' } = {}) {
+  if (!acceptRustScalarLoopModel(scalarLoopModel)) throw unsupported('Rust scalar loop model', 'select the legacy model or closed primitive scalar loop 1');
   if (!acceptRustSourceArrayResultModel(arrayResultModel)) throw unsupported('Rust array result model', 'select the legacy model or immutable fresh scalar vector results 1');
   if (!acceptRustCompletionModel(completionModel)) throw unsupported('Rust completion model', 'select the legacy model or closed guarded function returns 1');
   if (!acceptRustSourceSignatureModel(sourceSignatureModel)) throw unsupported('Rust source signature model', 'select the legacy model or Rust source function signature 1');
   const { tokens } = tokenize(source, 'Rust');
-  const declarations = new RustParser(tokens, null, arrayResultModel, completionModel, sourceSignatureModel);
+  const declarations = new RustParser(tokens, null, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel);
   declarations.file();
   declarations.origins.resolveTypes((segments, path) => declarations.resolve(segments, path));
-  const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel);
+  const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel);
   syntax.origins.collecting = true;
   syntax.aliases = declarations.aliases;
   const surface = syntax.file();
@@ -53,13 +55,13 @@ export function parseRust(source, { arrayResultModel = '', completionModel = '',
     if (!(error instanceof TranslationError)) throw error;
     return surface;
   }
-  const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel);
+  const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel);
   parser.aliases = syntax.aliases;
   return parser.file();
 }
 
 class RustParser {
-  constructor(tokens, catalog = null, arrayResultModel = '', completionModel = '', sourceSignatureModel = '') {
+  constructor(tokens, catalog = null, arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '') {
     this.cursor = new TokenCursor([...tokens], 'Rust');
     // `use` aliases, per module path.
     this.aliases = new Map();
@@ -68,6 +70,7 @@ class RustParser {
     this.origins = new RustSourceOrigins(catalog, arrayResultModel);
     this.completionModel = completionModel;
     this.sourceSignatureModel = sourceSignatureModel;
+    this.scalarLoopModel = scalarLoopModel;
     this.sourceOwnerFrames = [];
     this.reservedNames = new Set(tokens.filter(token => token.kind === 'identifier').map(token => token.value));
     this.productBindingCount = 0;
@@ -436,14 +439,16 @@ class RustParser {
         const typeToken = c.peek();
         params.push({ name: paramName, type: this.type(), span: span(paramToken, c.peek()) });
         sourceParams.push(this.origins.type);
-        if (mutable) mutableParams.push({ token: paramToken, typeToken, origin: this.origins.type });
+        if (mutable) mutableParams.push({ name: paramName, token: paramToken, typeToken, origin: this.origins.type });
         if (!c.eat(',')) break;
       }
       c.expect(')', 'fn');
       if (!c.eat('->')) throw unsupported('function without a result', `${name} returns (); only value-returning functions are portable`, span(start, c.peek()));
       const ret = this.type();
       const sourceResult = this.origins.type;
-      if (mutableParams.length) {
+      const scalarLoop = Boolean(this.scalarLoopModel && c.is('{') && c.is('loop', 1));
+      if (scalarLoop && path.length) throw unsupported('Rust scalar loop', 'the selected scalar state model requires a flat function', span(start, c.peek()));
+      if (mutableParams.length && !scalarLoop) {
         const bodyEvidence = readRustScalarParameterBody(c);
         for (const { token, typeToken, origin } of mutableParams) {
           const shadowed = typeToken.kind !== 'identifier' || Boolean(this.origins.lookup(this.resolve([typeToken.value], path), path));
@@ -458,7 +463,14 @@ class RustParser {
       if (c.is('where')) throw unsupported('where clause', 'trait bounds are outside the portable core', span(start, c.peek()));
       this.lifetimeHeader = false;
       const previous = this.origins.enter(new Map(params.map((param, index) => [param.name, sourceParams[index]])));
-      const body = this.completionModel ? readRustFunctionCompletion(this, path) : this.block(path);
+      const signature = scalarLoop ? createRustSourceSignature('Rust source function signature 1', sourceParams, sourceResult, this.lifetimeBindings) : null;
+      let lowered = null;
+      const previousLoop = this.scalarLoopActive;
+      this.scalarLoopActive = scalarLoop;
+      try {
+        if (scalarLoop) lowered = readRustScalarLoop(this, path, name, params, ret, signature, mutableParams.map(param => param.name));
+      } finally { this.scalarLoopActive = previousLoop; }
+      const body = lowered?.body ?? (this.completionModel ? readRustFunctionCompletion(this, path) : this.block(path));
       if (ret.kind === 'array') {
         if (!acceptRustSourceArrayResult(this.origins.arrayResultModel, ret.element.kind, sourceResult.arraySourceModel === 'owned vector' && sourceResult.wrappers.length === 0, this.origins.freshArrayResult(body, path))) throw unsupported('fresh Rust array result', 'every returning tail must construct a new vector of direct scalar Copy values; vector names, calls, clones and borrowed results need separate consumption proofs', body.span);
         sourceResult.freshArrayValue = true;
@@ -467,7 +479,7 @@ class RustParser {
       this.origins.argument(this.origins.origin(body, path), sourceResult, body.span);
       this.origins.scope = previous;
       return { k: 'fn', name, params, ret, body, span: span(start, c.peek()),
-        ...(this.sourceSignatureModel ? { sourceSignature: createRustSourceSignature(this.sourceSignatureModel, sourceParams, sourceResult, this.lifetimeBindings) } : {}),
+        ...(scalarLoop ? {sourceSignature: signature, sourceLoop: lowered.proof} : this.sourceSignatureModel ? { sourceSignature: createRustSourceSignature(this.sourceSignatureModel, sourceParams, sourceResult, this.lifetimeBindings) } : {}),
       };
     } finally {
       this.lifetimeBindings = outerLifetimes;
@@ -798,7 +810,7 @@ class RustParser {
       if (options.statement && ['if', 'match', 'block'].includes(left.k)) return left;
       this.cursor.next();
       const right = this.multiplicative(path, {});
-      left = { k: 'binary', op: ADDITIVE[token.value], left, right, span: joined(left, right, token) };
+      left = this.scalarLoopArithmetic({ k: 'binary', op: ADDITIVE[token.value], left, right, span: joined(left, right, token) }, path);
     }
   }
 
@@ -810,7 +822,7 @@ class RustParser {
       if (options.statement && ['if', 'match', 'block'].includes(left.k)) return left;
       this.cursor.next();
       const right = this.cast(path, {});
-      left = { k: 'binary', op: MULTIPLICATIVE[token.value], left, right, span: joined(left, right, token) };
+      left = this.scalarLoopArithmetic({ k: 'binary', op: MULTIPLICATIVE[token.value], left, right, span: joined(left, right, token) }, path);
     }
   }
 
@@ -829,6 +841,7 @@ class RustParser {
   unary(path, options) {
     const c = this.cursor;
     const token = c.peek();
+    if (this.scalarLoopActive && ['&', '&&', '*'].includes(token.value)) throw unsupported('Rust scalar loop', 'references and dereferences require a separate loop state model', span(token, token));
     if (c.eat('-')) {
       const arg = this.unary(path, {});
       const result = { k: 'unary', op: 'neg', arg, span: span(token, c.peek()) };
@@ -905,6 +918,13 @@ class RustParser {
     const owner = this.resolve(['f64'], origin.path);
     const shadowed = Boolean(this.origins.lookup(['f64'], origin.path) || this.origins.lookup(owner, origin.path));
     return acceptRustFloatPredicateReceiver(origin.type?.kind ?? '', origin.floatSourceModel ?? '', origin.proven, origin.wrappers.length > 0, shadowed, String(argumentsCount));
+  }
+
+  scalarLoopArithmetic(node, path) {
+    if (!this.scalarLoopActive) return node;
+    const left = this.origins.origin(node.left, path), right = this.origins.origin(node.right, path);
+    return this.acceptFloatReceiverOrigin(left, 0) && this.acceptFloatReceiverOrigin(right, 0)
+      ? this.origins.mark(node, {...left, type: FLOAT}) : node;
   }
 
   method(receiver, method, args, range) {

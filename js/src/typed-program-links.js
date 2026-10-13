@@ -324,14 +324,16 @@ export function createTypedProgramLinks(source, language, options = {}) {
   const arraySelected = options.rustArrayResultModel !== undefined;
   const completionSelected = options.rustCompletionModel !== undefined;
   const signatureSelected = options.rustSourceSignatureModel !== undefined;
-  const selected = arraySelected || completionSelected || signatureSelected;
+  const loopSelected = options.rustScalarLoopModel !== undefined;
+  const selected = arraySelected || completionSelected || signatureSelected || loopSelected;
   if (arraySelected && canonical !== 'Rust') throw new TypeError('a Rust array result model requires Rust source');
   if (completionSelected && canonical !== 'Rust') throw new TypeError('a Rust completion model requires Rust source');
   if (signatureSelected && canonical !== 'Rust') throw new TypeError('a Rust source signature model requires Rust source');
-  const program = checkProgram(canonical === 'Rust' ? parseRust(source, { arrayResultModel: options.rustArrayResultModel, completionModel: options.rustCompletionModel, sourceSignatureModel: options.rustSourceSignatureModel }) : parseJavaScript(source, options.context));
+  if (loopSelected && canonical !== 'Rust') throw new TypeError('a Rust scalar loop model requires Rust source');
+  const program = checkProgram(canonical === 'Rust' ? parseRust(source, { arrayResultModel: options.rustArrayResultModel, completionModel: options.rustCompletionModel, sourceSignatureModel: options.rustSourceSignatureModel, scalarLoopModel: options.rustScalarLoopModel }) : parseJavaScript(source, options.context));
   if (options.utf16Strings) program.utf16Strings = true;
   const provenance = selected ? {
-    sourceProfile: { language: 'Rust', ...(arraySelected ? { rustArrayResultModel: options.rustArrayResultModel } : {}), ...(completionSelected ? { rustCompletionModel: options.rustCompletionModel } : {}), ...(signatureSelected ? { rustSourceSignatureModel: options.rustSourceSignatureModel } : {}) },
+    sourceProfile: { language: 'Rust', ...(arraySelected ? { rustArrayResultModel: options.rustArrayResultModel } : {}), ...(completionSelected ? { rustCompletionModel: options.rustCompletionModel } : {}), ...(signatureSelected ? { rustSourceSignatureModel: options.rustSourceSignatureModel } : {}), ...(loopSelected ? {rustScalarLoopModel: options.rustScalarLoopModel} : {}) },
     userProvenance: options.provenance ?? null,
   } : options.provenance;
   return encodeTypedProgramLinks(program, { ...options, provenance });

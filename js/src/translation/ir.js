@@ -3,6 +3,8 @@
 // reserved words of the target never change which value a name denotes) and
 // small traversal helpers shared by the emitters.
 
+import { checkRustScalarLoopProof } from './rust-scalar-loops.js';
+
 /** A per-declaration name supply: target-legal, unique, deterministic. */
 export class Scope {
   constructor(ident, reserved = new Set()) {
@@ -124,7 +126,11 @@ export function renameFunction(entry, ident, reserved) {
  * million iterations needs no million stack frames; null otherwise.
  */
 export function tailLoop(entry, body) {
-  if (!entry.generated || !entry.recursive) return null;
+  if (!entry.recursive) return null;
+  if (!entry.generated) {
+    if (entry.sourceLoop === undefined) return null;
+    checkRustScalarLoopProof(entry, 'Rust');
+  }
   const rewrite = (e) => {
     switch (e.k) {
       case 'call':

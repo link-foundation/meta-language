@@ -1,4 +1,5 @@
 import {checkRustSourceSignature} from './translation/rust-source-signatures.js';
+import {checkRustScalarLoopProof} from './translation/rust-scalar-loops.js';
 // Validate the source-free checked IR boundary before any target emission.
 import { fixedBounds, sameType } from './translation/types.js';
 import { checkLinkedMatchCoverage } from './translation/check.js';
@@ -92,7 +93,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
   for (const external of program.externals ?? []) declarations.set(external.name, external);
   for (const [name, entry] of program.declarations) {
     if (!entry || entry.fullName !== name || typeof entry.name !== 'string' || !Array.isArray(entry.modulePath)) throw new TypeError('the linked declaration mapping is inconsistent');
-    if (entry.k === 'fn') { entry.params.forEach((parameter, index) => { ownBinder(parameter, entry, index); type(parameter.type); }); type(entry.ret); if (entry.sourceSignature !== undefined) checkRustSourceSignature(entry.sourceSignature, entry.params.map(parameter => parameter.type), entry.ret, program.sourceLanguage); }
+    if (entry.k === 'fn') { entry.params.forEach((parameter, index) => { ownBinder(parameter, entry, index); type(parameter.type); }); type(entry.ret); if (entry.sourceSignature !== undefined) checkRustSourceSignature(entry.sourceSignature, entry.params.map(parameter => parameter.type), entry.ret, program.sourceLanguage); if (entry.sourceLoop !== undefined) checkRustScalarLoopProof(entry, program.sourceLanguage); }
     if (entry.k === 'const') type(entry.type);
     if (entry.k === 'data') {
       if (!Array.isArray(entry.ctors)) throw new TypeError('a linked datatype has malformed constructors');
