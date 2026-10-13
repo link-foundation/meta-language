@@ -20,6 +20,8 @@ mod patterns;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) struct SourceOrigin {
     pub(super) ty: Option<Type>,
+    /// Explicit primitive f64 annotation or literal evidence, never fallback inference.
+    pub(super) float_source_model: Option<&'static str>,
     pub(super) path: Vec<String>,
     pub(super) wrappers: Vec<String>,
     pub(super) proven: bool,
@@ -38,6 +40,7 @@ impl SourceOrigin {
     pub(super) const fn unknown() -> Self {
         Self {
             ty: None,
+            float_source_model: None,
             path: Vec::new(),
             wrappers: Vec::new(),
             proven: false,
@@ -68,6 +71,7 @@ impl SourceOrigin {
         let text_source_model = (ty == super::STRING).then_some("owned string");
         let array_source_model = matches!(ty, Type::Array { .. }).then_some("owned vector");
         Self {
+            float_source_model: (ty == super::FLOAT).then_some("binary64 scalar"),
             ty: Some(ty),
             path: path.to_vec(),
             wrappers,
@@ -417,6 +421,7 @@ impl SourceOrigins {
             || left.uncertain != right.uncertain
             || left.wrappers != right.wrappers
             || left.copy_evidence != right.copy_evidence
+            || left.float_source_model != right.float_source_model
             || left.text_source_model != right.text_source_model
             || left.array_source_model != right.array_source_model
         {

@@ -1,3 +1,5 @@
+import { acceptRustFloatPredicateMethod, acceptRustFloatPredicateReceiver } from './rust-float-predicate-rules.js';
+import { createRustFloatPredicateExpression } from './rust-float-predicates.js';
 import { readStringMapOperation, readStringTestOperation } from './frontend-rules.js';
 // Rust frontend for the portable core. It reads the subset of Rust the core
 // can represent faithfully: modules with `use` of crate items, enums with
@@ -851,6 +853,16 @@ class RustParser {
     const expect = (count) => {
       if (args.length !== count) throw new TranslationError('type', `${method.value} expects ${count} arguments but got ${args.length}`, range);
     };
+    if (acceptRustFloatPredicateMethod(method.value)) {
+      expect(0);
+      const origin = this.origins.origin(receiver, this.modulePath);
+      const owner = this.resolve(['f64'], origin.path);
+      const shadowed = Boolean(this.origins.lookup(['f64'], origin.path) || this.origins.lookup(owner, origin.path));
+      if (!this.origins.collecting && !acceptRustFloatPredicateReceiver(origin.type?.kind ?? '', origin.floatSourceModel ?? '', origin.proven, origin.wrappers.length > 0, shadowed, String(args.length))) {
+        throw unsupported('Rust binary64 predicate', 'the receiver needs a proven direct unshadowed primitive f64 source type', range);
+      }
+      return this.origins.mark(createRustFloatPredicateExpression(method.value, receiver, range), this.origins.typeOrigin(BOOL, this.modulePath));
+    }
     const mapOperation = readStringMapOperation('Rust', method.value);
     if (['len', 'is_empty'].includes(method.value)) {
       const origin = this.origins.origin(receiver, this.modulePath);
@@ -917,6 +929,7 @@ class RustParser {
         if (!type) throw unsupported(`literal suffix ${token.suffix}`, 'portable numeric literals are integers and IEEE-754 binary64 values', span(token, token));
         node.type = type;
       } else if (token.floating) node.type = FLOAT;
+      if (token.suffix === 'f64') this.origins.mark(node, { ...this.origins.origin(node, path), floatSourceModel: 'binary64 scalar' });
       return node;
     }
     if (token.kind === 'string') {

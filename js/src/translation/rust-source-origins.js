@@ -7,7 +7,7 @@ import { acceptRustImmutableIndirectionLayer, acceptRustSourceIndirectionArgumen
 import { acceptRustImmutableProductType } from './rust-product-rules.js';
 import { acceptRustSourceArrayOwner, acceptRustSourceArrayCoercion } from './rust-array-rules.js';
 
-const unknown = (uncertain = false) => ({ wrappers: [], type: null, path: [], fields: null, textSourceModel: null, copyEvidence: false, proven: false, diverging: false, uncertain });
+const unknown = (uncertain = false) => ({ floatSourceModel: null, wrappers: [], type: null, path: [], fields: null, textSourceModel: null, copyEvidence: false, proven: false, diverging: false, uncertain });
 const value = (copyEvidence = false, type = null) => ({ ...unknown(), proven: true, copyEvidence, type, textSourceModel: type?.kind === 'string' ? 'owned string' : null });
 const clone = origin => origin && ({ proven: true, diverging: false, uncertain: false, copyEvidence: false, fields: null, ...origin, wrappers: [...origin.wrappers], path: [...origin.path], fields: origin.fields?.map(clone) ?? null });
 
@@ -29,13 +29,13 @@ export class RustSourceOrigins {
 
   typed(type, path, wrappers = [], fields = null, textSourceModel = type.kind === 'string' ? 'owned string' : null) {
     fields ??= type.kind === 'tuple' ? type.elements.map(element => this.typeOrigin(element, path)) : null;
-    this.type = { type, path: [...path], wrappers, fields, textSourceModel, ...(type.kind === 'array' && { arraySourceModel: 'owned vector' }), copyEvidence: acceptRustImmutableProductType(type.kind, fields?.every(field => this.immutableProduct(field)) ?? false, false), proven: true, diverging: false, uncertain: false };
+    this.type = { floatSourceModel: type.kind === 'float' ? 'binary64 scalar' : null, type, path: [...path], wrappers, fields, textSourceModel, ...(type.kind === 'array' && { arraySourceModel: 'owned vector' }), copyEvidence: acceptRustImmutableProductType(type.kind, fields?.every(field => this.immutableProduct(field)) ?? false, false), proven: true, diverging: false, uncertain: false };
     return type;
   }
 
   typeOrigin(type, path) {
     const fields = type.kind === 'tuple' ? type.elements.map(element => this.typeOrigin(element, path)) : null;
-    return { ...value(acceptRustImmutableProductType(type.kind, fields?.every(field => this.immutableProduct(field)) ?? false, false), type), path: [...path], fields };
+    return { ...value(acceptRustImmutableProductType(type.kind, fields?.every(field => this.immutableProduct(field)) ?? false, false), type), floatSourceModel: type.kind === 'float' ? 'binary64 scalar' : null, path: [...path], fields };
   }
 
   immutableProduct(origin) {
@@ -103,7 +103,7 @@ export class RustSourceOrigins {
   }
 
   same(left, right) {
-    if (!left || !right || left.proven !== right.proven || left.diverging !== right.diverging || left.uncertain !== right.uncertain || left.copyEvidence !== right.copyEvidence || left.textSourceModel !== right.textSourceModel || left.arraySourceModel !== right.arraySourceModel || JSON.stringify(left.wrappers) !== JSON.stringify(right.wrappers)) return false;
+    if (!left || !right || left.proven !== right.proven || left.diverging !== right.diverging || left.uncertain !== right.uncertain || left.copyEvidence !== right.copyEvidence || (left.floatSourceModel ?? null) !== (right.floatSourceModel ?? null) || left.textSourceModel !== right.textSourceModel || left.arraySourceModel !== right.arraySourceModel || JSON.stringify(left.wrappers) !== JSON.stringify(right.wrappers)) return false;
     if (Boolean(left.fields) !== Boolean(right.fields) || (left.fields && (left.fields.length !== right.fields.length || left.fields.some((field, index) => !this.same(field, right.fields[index]))))) return false;
     if (left.type?.kind === 'named' && right.type?.kind === 'named') {
       const leftOwner = this.lookup(left.type.path, left.path);

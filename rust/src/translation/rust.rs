@@ -25,6 +25,8 @@ use super::{Language, Span};
 
 mod array_rules;
 mod expressions;
+mod float_predicate_rules;
+mod float_predicates;
 mod indirection_rules;
 mod items;
 mod product_rules;

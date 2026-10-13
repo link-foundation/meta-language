@@ -223,6 +223,43 @@ impl RustParser {
                 self.cursor.expect(")", Some(&method.value))?;
                 let mut origin = self.origins.origin(&value, path);
                 let method_name = method.value.as_str();
+                if super::float_predicate_rules::accept_rust_float_predicate_method(method_name) {
+                    let range = span(&token, self.cursor.peek());
+                    if !args.is_empty() {
+                        return Err(type_error(
+                            format!(
+                                "{} expects 0 arguments but got {}",
+                                method.value,
+                                args.len()
+                            ),
+                            range,
+                        ));
+                    }
+                    let source_owner = vec!["f64".to_owned()];
+                    let owner = self.resolve(&source_owner, &origin.path);
+                    let shadowed = self.origins.lookup(&source_owner, &origin.path).is_some()
+                        || self.origins.lookup(&owner, &origin.path).is_some();
+                    if !self.origins.collecting
+                        && !super::float_predicate_rules::accept_rust_float_predicate_receiver(
+                            origin.ty.as_ref().map_or("", Type::kind),
+                            origin.float_source_model.unwrap_or(""),
+                            origin.proven,
+                            !origin.wrappers.is_empty(),
+                            shadowed,
+                            &args.len().to_string(),
+                        )
+                    {
+                        return Err(unsupported(
+                            "Rust binary64 predicate",
+                            "the receiver needs a proven direct unshadowed primitive f64 source type",
+                            range,
+                        ));
+                    }
+                    value = super::float_predicates::expression(method_name, &value, range)?;
+                    self.origins
+                        .mark(&value, SourceOrigin::with_type(BOOL, path, Vec::new()));
+                    continue;
+                }
                 if ["len", "is_empty"].contains(&method_name) {
                     value = self.array_read(
                         value,
@@ -455,7 +492,7 @@ impl RustParser {
                 };
                 Some(fixed)
             };
-            return Ok(SExpr::new(
+            let result = SExpr::new(
                 SNode::Num {
                     value: token.value.clone(),
                     ty,
@@ -463,7 +500,12 @@ impl RustParser {
                     unit: false,
                 },
                 span(&token, &token),
-            ));
+            );
+            if token.suffix == "f64" {
+                self.origins
+                    .mark(&result, SourceOrigin::with_type(FLOAT, path, Vec::new()));
+            }
+            return Ok(result);
         }
         if token.kind == TokenKind::String {
             self.cursor.advance();
