@@ -1598,7 +1598,9 @@ export interface GlobalConceptSpace {
 export interface GlobalConceptOptions {
   previous?: GlobalConceptSpace | null;
   equivalences?: Array<[string, string]>;
-  records?: readonly ConceptRecord[];
+  records?: readonly (ConceptRecord & {
+    readonly formalDefinition?: FormalConceptArchive | PortableFormalConceptArchive;
+  })[];
   formalDefinitions?: Readonly<Record<string, FormalConceptArchive | PortableFormalConceptArchive>>;
 }
 /** Explicit discovery outputs and copied formal archives in one inspectable graph. */
@@ -1630,7 +1632,7 @@ export interface ResourceDescriptionGraph {
   occurrences: Array<{ statementIndex: number; sourceIdentifier: string; position: number; sourceLanguage: string }>;
 }
 export function importResourceDescriptionGraph(
-  triples: readonly ResourceDescriptionStatement[],
+  triples: readonly Readonly<ResourceDescriptionStatement>[],
   options: { sourceIdentifier: string; network?: LinkNetwork },
 ): ResourceDescriptionLinks;
 export function decodeResourceDescriptionGraph(
