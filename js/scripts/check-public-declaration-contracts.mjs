@@ -14,6 +14,7 @@ export function publicDeclarationConsumers(moduleSpecifier = publicModule) {
   const module = JSON.stringify(moduleSpecifier);
   const emptyOptionFixture = readProjectData(new URL('../../parity/fixtures/rust-empty-options.lino', import.meta.url));
   const typeNamespaceFixture = readProjectData(new URL('../../parity/fixtures/rust-type-namespace.lino', import.meta.url));
+  const ownedTextFixture = readProjectData(new URL('../../experiments/rust-owned-local-state-fixture.lino', import.meta.url));
   const imports = `import { importEbnf, encodeFormalConceptDefinition, createDiscoveredConceptLinks,
     readDiscoveredConceptLinks, importResourceDescriptionGraph, decodeResourceDescriptionGraph,
     mergeResourceDescriptionGraphs, verifyResourceDescriptionGraphWitnesses } from ${module};\n`;
@@ -481,6 +482,85 @@ export function createWrongLanguagePacket() {
 export function createComposedEmptyOptionPacket() {
   return createTypedProgramLinks(${JSON.stringify(emptyOptionFixture.cases[0].source)},'Rust',
     {rustTypeNamespaceModel:'resolved Rust type namespace 1',rustEmptyOptionSourceModel:'closed empty primitive Rust option 1'});
+}
+`,
+    },
+    ...ownedTextFixture.cases.flatMap(entry => [
+      ['moves', entry.source, ownedTextFixture.models.moves],
+      ['copies', entry.replaySource, ownedTextFixture.models.copies],
+    ].map(([selection, source, model]) => ({
+      name: `valid-owned-text-${selection}-${entry.name}`, expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks, LinkNetwork } from ${module};
+import type { TypedProgramLinksEmission } from ${module};
+const packet = createTypedProgramLinks(${JSON.stringify(source)},'Rust',
+  {rustOwnedLocalStateModel:${JSON.stringify(model)},provenance:{consumer:${JSON.stringify(entry.name)}}});
+const network = LinkNetwork.fromLino(packet.network.toLino());
+const program = decodeTypedProgramLinks(network,packet.root);
+const javascript:TypedProgramLinksEmission = emitTypedProgramLinks(network,packet.root,'JavaScript');
+const rust:TypedProgramLinksEmission = emitTypedProgramLinks(network,packet.root,'Rust');
+export function reimportActualRustDefinitions(definitions:string) {
+  const packet = createTypedProgramLinks(definitions+'\\nfn main(){}','Rust',
+    {rustOwnedLocalStateModel:${JSON.stringify(ownedTextFixture.models.copies)}});
+  const network = LinkNetwork.fromLino(packet.network.toLino());
+  return {network,root:packet.root,program:decodeTypedProgramLinks(network,packet.root),
+    code:emitTypedProgramLinks(network,packet.root,'JavaScript').code};
+}
+export const contractEvidence = {network,root:packet.root,program,code:javascript.code,rustCode:rust.code};
+`,
+    }))),
+    {
+      name: 'valid-source-free-owned-text-value-edit', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks, LinkNetwork, LinkId } from ${module};
+const packet = createTypedProgramLinks(${JSON.stringify(ownedTextFixture.cases.find(entry => entry.name === 'select').source)},'Rust',
+  {rustOwnedLocalStateModel:${JSON.stringify(ownedTextFixture.models.moves)}});
+const network = LinkNetwork.fromLino(packet.network.toLino());
+const original = emitTypedProgramLinks(network,packet.root,'JavaScript');
+const relations = network.links().filter(link=>link.references().length===3);
+const field = (parent:LinkId,label:string):LinkId => {
+  const relation = relations.find(link=>link.references()[0].equals(parent)
+    &&network.link(link.references()[1])?.metadata().term===label);
+  if(!relation) throw new Error('missing actual owned text field '+label);
+  return relation.references()[2];
+};
+const kind = (node:LinkId) => network.link(field(node,'construct kind'))?.metadata().definition;
+const declaration = relations.find(link=>network.link(link.references()[1])?.metadata().term==='full name'
+  &&network.link(link.references()[2])?.metadata().definition==='select');
+if(!declaration) throw new Error('missing actual owned text declaration');
+let initializer:LinkId|null = null;
+for(let node=field(declaration.references()[0],'body');kind(node)==='let';node=field(node,'body')) {
+  const candidate = field(node,'value');
+  if(kind(candidate)==='if') { initializer=candidate; break; }
+}
+if(!initializer) throw new Error('missing actual owned replacement branch');
+const value = network.link(field(field(field(initializer,'then'),'value'),'value'));
+if(!value||value.metadata().term!=='string value'||value.metadata().definition!=='9') throw new Error('missing actual owned replacement literal');
+value.metadata().definition = 'edited';
+const restored = LinkNetwork.fromLino(network.toLino());
+const javascript = emitTypedProgramLinks(restored,packet.root,'JavaScript');
+const rust = emitTypedProgramLinks(restored,packet.root,'Rust');
+export function reimportActualRustDefinitions(definitions:string) {
+  const packet = createTypedProgramLinks(definitions+'\\nfn main(){}','Rust',
+    {rustOwnedLocalStateModel:${JSON.stringify(ownedTextFixture.models.copies)}});
+  const network = LinkNetwork.fromLino(packet.network.toLino());
+  return {network,root:packet.root,code:emitTypedProgramLinks(network,packet.root,'JavaScript').code};
+}
+export const contractEvidence = {network:restored,root:packet.root,program:decodeTypedProgramLinks(restored,packet.root),
+  originalCode:original.code,code:javascript.code,rustCode:rust.code};
+`,
+    },
+    {
+      name: 'reject-unregistered-owned-text-model-version', expectedDiagnostics: ['TS2820'],
+      source: `import { createTypedProgramLinks } from ${module};
+createTypedProgramLinks(${JSON.stringify(ownedTextFixture.cases[0].source)},'Rust',
+  {rustOwnedLocalStateModel:'closed owned text local state 99'});
+`,
+    },
+    {
+      name: 'valid-owned-text-selection-type-with-wrong-source-language', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks } from ${module};
+export function createWrongLanguagePacket() {
+  return createTypedProgramLinks('function keep(value){return value;}','JavaScript',
+    {rustOwnedLocalStateModel:${JSON.stringify(ownedTextFixture.models.moves)}});
 }
 `,
     },

@@ -905,6 +905,8 @@ export function createTypedProgramLinks(
     rustSourceSignatureModel?: 'Rust source function signature 1',
     /** Resolves qualified and imported standard binary64 owners under explicit source checks. */
     rustPrimitiveOwnerModel?: 'standard primitive Rust binary64 owner 1',
+    /** Retains checked owned text state, source moves and canonical local copies. */
+    rustOwnedLocalStateModel?: 'closed owned text local state 1' | 'canonical owned text local copies 1',
     /** Resolves owned Rust header paths against the separate type namespace. */
     rustTypeNamespaceModel?: 'resolved Rust type namespace 1',
     /** Captures closed zero-argument primitive empty-option Rust functions. */
