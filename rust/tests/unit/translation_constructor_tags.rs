@@ -178,8 +178,13 @@ fn constructor_immutability_preserves_its_source_model_and_checked_marker() {
     assert!(matches!(make.body.node, Node::Ctor { frozen: true, .. }));
     for target in ["Rust", "Lean", "Rocq"] {
         let result = meta_language::translate_program(explicit, "JavaScript", target).unwrap();
+        let diagnostic = result.diagnostic().unwrap();
+        assert_eq!(diagnostic.kind, "unsupported");
         assert_eq!(
-            result.diagnostic().unwrap().construct.as_deref(),
+            diagnostic
+                .message
+                .split_once(": ")
+                .map(|(construct, _)| construct),
             Some("explicit data object freeze")
         );
     }

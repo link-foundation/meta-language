@@ -145,8 +145,12 @@ fn native_rust_source_f64_display_refuses_until_a_faithful_formatter_exists() {
         for target in ["JavaScript", "Lean", "Rocq"] {
             let result = translate_program(&printed, "Rust", target).unwrap();
             let diagnostic = result.diagnostic().unwrap();
-            assert_eq!(diagnostic.kind.as_str(), "unsupported");
-            assert_eq!(diagnostic.reason, reason, "{}:{target}", entry["name"]);
+            assert_eq!(diagnostic.kind, "unsupported");
+            let message = diagnostic.span.map_or_else(
+                || reason.clone(),
+                |span| format!("{reason} at {}..{}", span.start, span.end),
+            );
+            assert_eq!(diagnostic.message, message, "{}:{target}", entry["name"]);
         }
         let nonprinting = format!("pub fn value() -> f64 {{ {expression} }} fn main() {{}}");
         let translated = translate_program(&nonprinting, "Rust", "JavaScript").unwrap();
@@ -177,7 +181,12 @@ fn native_rust_source_f64_display_refuses_until_a_faithful_formatter_exists() {
         "JavaScript",
     )
     .unwrap();
-    assert_eq!(stringified.diagnostic().unwrap().reason, reason);
+    let diagnostic = stringified.diagnostic().unwrap();
+    let message = diagnostic.span.map_or_else(
+        || reason.clone(),
+        |span| format!("{reason} at {}..{}", span.start, span.end),
+    );
+    assert_eq!(diagnostic.message, message);
 }
 
 #[test]
@@ -215,7 +224,7 @@ fn native_javascript_freeze_gap_preserves_source_and_readonly_module_constants()
         translated
             .items
             .iter()
-            .map(|item| item.status.as_str())
+            .map(|item| item.status)
             .collect::<Vec<_>>(),
         vec!["translated", "translated", "translated"]
     );

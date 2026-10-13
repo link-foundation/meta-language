@@ -1,5 +1,5 @@
 //! Shared decimal boundaries and Rust binary64 frontend values.
-use meta_language::Language;
+use meta_language::translation::Language;
 use meta_language::translation::lexer::{TokenKind, tokenize};
 use meta_language::translation::rust::parse_rust;
 use serde_json::json;

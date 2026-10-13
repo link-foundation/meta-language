@@ -309,7 +309,7 @@ fn native_rust_trees_keep_every_byte() {
 fn source_prefixes_retain_their_own_precedence_and_oracle_fields() {
     // These are source-grammar CST controls. Their operator shapes do not
     // establish the compiler's semantic interpretation of Rust ranges.
-    let fixture = super::project_data::read_project_data(include_str!(
+    let fixture: Value = super::project_data::read_project_data(include_str!(
         "../../../parity/fixtures/grammar-prefix-operand-precedence.lino"
     ))
     .expect("the generated prefix operand fixture is Links Notation");
