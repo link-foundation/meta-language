@@ -15,6 +15,7 @@ import { unsupported } from './diagnostics.js';
 import { fixedBounds, typeKey } from './types.js';
 import { renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
 import {readJavaScriptScopedBindingEmission} from './javascript-scoped-binding-emission.js';
+import {reserveJavaScriptScopedBindingDeclarationNames} from './javascript-scoped-binding-emission-rules.js';
 import { EmitState, withParts } from './emit-common.js';
 
 const KEYWORDS = new Set([
@@ -194,7 +195,11 @@ class JavaScriptEmitter {
 
   fn(entry) {
     const local = this.scopedBindings ? name => ident(this.scopedBindings(name, entry)) : ident;
-    const { params, body } = renameFunction(entry, local, this.state.localReserved());
+    // A revalidated closed loop reads only its locals, Math and its own tail
+    // continuation, which becomes writes/continue before JavaScript emission.
+    const reserved = this.scopedBindings && !reserveJavaScriptScopedBindingDeclarationNames(entry.sourceLoop !== undefined)
+      ? KEYWORDS : this.state.localReserved();
+    const { params, body } = renameFunction(entry, local, reserved);
     if (params.some((param) => param.type.kind === 'float') || entry.ret.kind === 'float') this.usesFloat = true;
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
