@@ -483,6 +483,12 @@ const ADDITIONAL_PACKAGE_STEPS = [
   ["Check shared JavaScript scoped binding emission fixtures", "node scripts/generate-javascript-scoped-binding-emission-fixtures.mjs --check", '995a45b9c2a45647b4a877e7b0a6f2814271611f04a77ce6aaf69bacf2663f2d', 'generated'],
 ];
 
+// Empty-option gates are a separate additive freeze; earlier records stay fixed.
+const EMPTY_OPTION_PACKAGE_STEPS = [
+  ["Check generated Rust empty option rules", "node scripts/generate-rust-empty-option-rules.mjs --check", '5be3baca04a57c9e4b2a09659627b3210c4daa64aad47694881a3c6f104139a1', 'generated'],
+  ["Check shared Rust empty option fixtures", "node scripts/generate-rust-empty-option-fixtures.mjs --check", '9807ef1905742ff2f8007ecdb76455b8f6d0517a134d1b243cb421b60d848762', 'generated'],
+];
+
 function packageStepSignature(step, includeGroup = false) {
   const fields = includeGroup ? step.text : step.text.replace(/ && matrix\.group == '[a-z-]+'/gu, '');
   const text = fields
@@ -492,11 +498,12 @@ function packageStepSignature(step, includeGroup = false) {
 }
 
 function checkPackageStepConservation(parsed) {
+  const additions = [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS];
   const expected = new Map([
     ...ORIGINAL_PACKAGE_STEPS.map(([name, hash, owner]) => [name, { hash, owner }]),
-    ...ADDITIONAL_PACKAGE_STEPS.map(([name, command, hash, owner]) => [name, { hash, owner, command, addition: true }]),
+    ...additions.map(([name, command, hash, owner]) => [name, { hash, owner, command, addition: true }]),
   ]);
-  assert.equal(expected.size, ORIGINAL_PACKAGE_STEPS.length + ADDITIONAL_PACKAGE_STEPS.length,
+  assert.equal(expected.size, ORIGINAL_PACKAGE_STEPS.length + additions.length,
     'additive gates cannot shadow an original step or another addition');
   const found = new Map();
   const shared = new Set();
@@ -618,7 +625,7 @@ test('every frozen generator addition rejects omission, duplication, condition, 
     change(steps, index);
     assert.throws(() => checkPackageStepConservation(parsed), assert.AssertionError, name);
   };
-  for (const [name] of ADDITIONAL_PACKAGE_STEPS) {
+  for (const [name] of [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS]) {
     mutate(name, (steps, index) => steps.splice(index, 1));
     mutate(name, (steps, index) => steps.push({ ...steps[index] }));
     for (const [before, after] of [

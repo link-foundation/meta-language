@@ -631,6 +631,16 @@ jobs:
         working-directory: js
         run: node scripts/generate-rust-primitive-owner-fixtures.mjs --check
 
+      - name: Check generated Rust empty option rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/generate-rust-empty-option-rules.mjs --check
+
+      - name: Check shared Rust empty option fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/generate-rust-empty-option-fixtures.mjs --check
+
       - name: Check generated JavaScript scoped binding emission rules
         if: ${{ !cancelled() && matrix.group == 'generated' }}
         working-directory: js
