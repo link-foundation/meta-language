@@ -10,6 +10,7 @@
 //!
 //! Mirrors `js/src/translation/emit-lean.js`.
 
+use super::scoped_binding_emission_rules::accept_java_script_scoped_binding_emission_absent_value_type;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Write as _;
 
@@ -320,6 +321,16 @@ impl LeanEmitter<'_> {
             Type::String => "String".to_owned(),
             Type::Unit => "Unit".to_owned(),
             Type::Output => "List String".to_owned(),
+            Type::Option { element, absence }
+                if accept_java_script_scoped_binding_emission_absent_value_type(
+                    "option",
+                    element.kind(),
+                    absence,
+                    matches!(element.as_ref(), Type::Float),
+                ) =>
+            {
+                format!("(Option {})", self.ty(element)?)
+            }
             Type::Data { name } => self.state.reference(name, "."),
             Type::Array { element, .. } => {
                 self.state.encode(
@@ -610,6 +621,7 @@ impl LeanEmitter<'_> {
                 literal(&e.ty, value)?
             }
             Node::Unit => "()".to_owned(),
+            Node::None { .. } => "none".to_owned(),
             Node::OutNil => "([] : List String)".to_owned(),
             Node::OutCons { head, tail } => {
                 format!(

@@ -264,7 +264,7 @@ pub fn read_program_neutral_field_default(context: &str, field: &str) -> String 
     {
         String::from("null")
     } else if field == "span"
-        && ((((((((((((((((((((((context == "expression:lit"
+        && (((((((((((((((((((((((context == "expression:lit"
             || context == "expression:unit")
             || context == "expression:var")
             || context == "expression:call")
@@ -287,6 +287,7 @@ pub fn read_program_neutral_field_default(context: &str, field: &str) -> String 
             || context == "expression:math")
             || context == "expression:tuple")
             || context == "expression:tupleIndex")
+            || context == "expression:none")
     {
         String::from("null")
     } else {
@@ -382,6 +383,8 @@ pub fn read_program_expression_projection(term: &str) -> String {
         String::from("tuple")
     } else if term == "tupleIndex" {
         String::from("tupleIndex")
+    } else if term == "none" {
+        String::from("none")
     } else {
         String::new()
     }

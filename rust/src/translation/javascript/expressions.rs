@@ -773,7 +773,16 @@ impl JavaScriptParser {
                 span(&token, &token),
             ));
         }
-        if token.value == "null" || (!declared && token.value == "undefined") {
+        if !declared && token.value == "undefined" {
+            self.cursor.advance();
+            return Ok(node(
+                SNode::None {
+                    absence: token.value.clone(),
+                },
+                span(&token, &token),
+            ));
+        }
+        if token.value == "null" {
             return Err(unsupported(&token.value, "outside the portable core", here));
         }
         let expressions = [

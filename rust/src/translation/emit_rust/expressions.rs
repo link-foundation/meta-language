@@ -21,6 +21,16 @@ impl RustEmitter<'_> {
         match &expr.node {
             Node::Lit { value } => Ok(self.literal(expr, value)),
             Node::Unit => Ok("()".to_owned()),
+            Node::None { .. } => {
+                let Type::Option { element, .. } = &expr.ty else {
+                    return Err(unsupported(
+                        "empty optional value",
+                        "the value requires its retained optional type",
+                        expr.span,
+                    ));
+                };
+                Ok(format!("None::<{}>", self.ty(element)))
+            }
             Node::Tuple {
                 items,
                 frozen,

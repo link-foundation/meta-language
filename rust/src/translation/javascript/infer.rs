@@ -22,6 +22,7 @@ use super::{
     BOOL, BinaryOp, FLOAT, INT, ROOT, Result, SCtor, SEffect, SExpr, SFn, SItem, SNode, SPattern,
     SPatternNode, SProgram, SProp, SPropNode, STRING, Span, Type, UnaryOp, type_error,
 };
+use crate::translation::scoped_binding_emission_rules::accept_java_script_scoped_binding_emission_absent_value_type;
 use crate::translation::types::UNIT;
 
 /// Writes the inferred types of the fields the translator makes up back.
@@ -585,6 +586,20 @@ impl Inference {
             SNode::Bool { .. } => Ok(Term::Known(BOOL)),
             SNode::Str { .. } => Ok(Term::Known(STRING)),
             SNode::Unit => Ok(Term::Known(UNIT)),
+            SNode::None { absence } => {
+                if !accept_java_script_scoped_binding_emission_absent_value_type(
+                    "option", "float", absence, true,
+                ) {
+                    return Err(type_error(
+                        "the empty optional value needs its exact undefined Number interpretation",
+                        expr.span,
+                    ));
+                }
+                Ok(Term::Known(crate::translation::types::option(
+                    FLOAT,
+                    absence.clone(),
+                )))
+            }
             SNode::Name { path } => {
                 if let [name] = path.as_slice()
                     && let Some(term) = env.get(name)

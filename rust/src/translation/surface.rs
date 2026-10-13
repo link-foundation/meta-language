@@ -211,6 +211,10 @@ pub enum SNode {
         value: String,
     },
     Unit,
+    /// An explicitly empty optional value with its original absence tag.
+    None {
+        absence: String,
+    },
     Name {
         path: Vec<String>,
     },
@@ -371,6 +375,7 @@ impl SNode {
             Self::Bool { .. } => "bool",
             Self::Str { .. } => "str",
             Self::Unit => "unit",
+            Self::None { .. } => "none",
             Self::Name { .. } => "name",
             Self::DotCtor { .. } => "dotCtor",
             Self::App { .. } => "app",

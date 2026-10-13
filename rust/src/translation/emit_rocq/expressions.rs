@@ -47,6 +47,16 @@ impl RocqEmitter<'_> {
         match &e.node {
             Node::Lit { value } => self.literal(&e.ty, value),
             Node::Unit => Ok("tt".to_owned()),
+            Node::None { .. } => {
+                let Type::Option { element, .. } = &e.ty else {
+                    return Err(unsupported(
+                        "empty optional value",
+                        "the value requires its retained optional type",
+                        e.span,
+                    ));
+                };
+                Ok(format!("(@None {})", self.ty(element)?))
+            }
             Node::OutNil => Ok("(@nil string)".to_owned()),
             Node::OutCons { head, tail } => {
                 Ok(format!("({} :: {})", self.expr(head)?, self.expr(tail)?))

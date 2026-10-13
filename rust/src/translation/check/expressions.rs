@@ -7,6 +7,10 @@ use super::{
     binary_node, cast_to, coerce, comparison, fixed_bounds, negate_number, op_name, plain_binary,
     text_lit, type_error, unsupported,
 };
+use crate::translation::scoped_binding_emission_rules::{
+    accept_java_script_scoped_binding_emission_absent_expression,
+    accept_java_script_scoped_binding_emission_absent_value_type,
+};
 use crate::translation::typed_program_link_rules::accept_program_tuple_product_model;
 
 mod calls;
@@ -98,6 +102,41 @@ impl Checker {
             SNode::Bool { value } => Ok(Expr::lit(BOOL, LitValue::Bool(*value))),
             SNode::Str { value } => Ok(text_lit(STRING, value.clone())),
             SNode::Unit => Ok(Expr::new(Node::Unit, UNIT)),
+            SNode::None { absence } => {
+                let ty = expected
+                    .cloned()
+                    .unwrap_or_else(|| crate::translation::types::option(FLOAT, absence.clone()));
+                let valid = if let Type::Option {
+                    element,
+                    absence: policy,
+                } = &ty
+                {
+                    accept_java_script_scoped_binding_emission_absent_value_type(
+                        ty.kind(),
+                        element.kind(),
+                        policy,
+                        matches!(element.as_ref(), Type::Float),
+                    ) && accept_java_script_scoped_binding_emission_absent_expression(
+                        ty.kind(),
+                        absence,
+                    ) && policy == absence
+                } else {
+                    false
+                };
+                if !valid {
+                    return Err(unsupported(
+                        "empty optional value",
+                        "only the exact undefined Number optional value is admitted",
+                        span,
+                    ));
+                }
+                Ok(Expr::new(
+                    Node::None {
+                        absence: absence.clone(),
+                    },
+                    ty,
+                ))
+            }
             SNode::Name { path: segments } => {
                 if let Some(name) = env.local(node) {
                     return Ok(Expr::var(name, env.vars[name].clone()));
