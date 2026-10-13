@@ -202,7 +202,7 @@ impl RustParser {
             source_signature: None,
             source_loop: None,
             source_primitive_owners: None,
-            source_empty_option: Some(proof),
+            source_empty_option: Some(Box::new(proof)),
         })
     }
 }

@@ -2,7 +2,22 @@
 
 use super::diagnostics::{Result, unsupported};
 use super::ir::{Decl, Effect, Expr, FnDecl, Main, Node, Program};
-use super::scoped_binding_emission_rules::*;
+use super::scoped_binding_emission_rules::{
+    accept_java_script_scoped_binding_boolean_field,
+    accept_java_script_scoped_binding_defined_field,
+    accept_java_script_scoped_binding_emission_absent_expression,
+    accept_java_script_scoped_binding_emission_absent_value_type,
+    accept_java_script_scoped_binding_emission_context,
+    accept_java_script_scoped_binding_emission_declaration,
+    accept_java_script_scoped_binding_emission_effect,
+    accept_java_script_scoped_binding_emission_expression,
+    accept_java_script_scoped_binding_emission_model,
+    accept_java_script_scoped_binding_emission_reference_context,
+    accept_java_script_scoped_binding_emission_role,
+    accept_java_script_scoped_binding_emission_value_type,
+    accept_java_script_scoped_binding_empty_sequence, accept_java_script_scoped_binding_own_field,
+    accept_java_script_scoped_binding_source_facet,
+};
 use super::source_loops::validate_source_loop;
 use super::types::Type;
 use crate::{LinkId, LinkNetwork, LinkType};
@@ -12,7 +27,7 @@ fn fail(detail: &str) -> super::diagnostics::TranslationError {
     unsupported("JavaScript scoped binding emission", detail, None)
 }
 
-pub(crate) fn validate_model(model: &str) -> Result<()> {
+pub fn validate_model(model: &str) -> Result<()> {
     if !accept_java_script_scoped_binding_emission_model(model) {
         return Err(unsupported(
             "JavaScript scoped binding emission model",
@@ -24,7 +39,7 @@ pub(crate) fn validate_model(model: &str) -> Result<()> {
 }
 
 /// Admit actual linked record fields before the native serde projection.
-pub(crate) fn validate_raw_program(network: &LinkNetwork, root: LinkId, model: &str) -> Result<()> {
+pub fn validate_raw_program(network: &LinkNetwork, root: LinkId, model: &str) -> Result<()> {
     use super::typed_program_link_rules::{
         accept_program_schema_root, read_program_expression_operand_fields,
         read_program_reference_role, read_program_reference_source_field,
@@ -246,7 +261,7 @@ fn value_type(ty: &Type) -> Result<()> {
 }
 
 /// Validate the complete checked primitive scope before allocating aliases.
-pub(crate) fn validate_program(program: &Program, model: &str) -> Result<()> {
+pub fn validate_program(program: &Program, model: &str) -> Result<()> {
     validate_model(model)?;
     super::source_empty_options::validate_source_empty_options(program)?;
     crate::typed_program_links::validate_checked_program(program)
@@ -379,7 +394,7 @@ fn flag_form<'a>(network: &'a LinkNetwork, body: LinkId, field: &str) -> Result<
 }
 
 /// Preserve origin flags that the native Program projection cannot represent.
-pub(crate) fn validate_origin_context(
+pub fn validate_origin_context(
     network: &LinkNetwork,
     root: LinkId,
     program: &Program,
@@ -413,7 +428,7 @@ pub(crate) fn validate_origin_context(
     Ok(())
 }
 
-pub(crate) fn function_role(program: &Program, function: &FnDecl) -> Result<bool> {
+pub fn function_role(program: &Program, function: &FnDecl) -> Result<bool> {
     if !program
         .declarations
         .iter()
@@ -437,7 +452,7 @@ pub(crate) fn function_role(program: &Program, function: &FnDecl) -> Result<bool
     Ok(preserve)
 }
 
-pub(crate) fn main_role(program: &Program, main: &Main) -> Result<()> {
+pub fn main_role(program: &Program, main: &Main) -> Result<()> {
     if !program
         .main
         .as_ref()

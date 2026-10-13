@@ -50,6 +50,7 @@ if (!process.argv.includes('--javascript-only')) {
     for (const name of ['model', 'language', 'form', 'kind', 'element', 'absence', 'role', 'owner', 'name','field']) replace(`${name}: String`, `${name}: &str`);
     replace('kind == ""','kind.is_empty()');
     for (const match of [...current.matchAll(/^pub fn (\w+)/gmu)]) replace(`pub fn ${match[1]}`, `/// Apply the shared owned scoped binding emission policy.\n#[must_use]\npub fn ${match[1]}`);
+    for(const name of ['accept_java_script_scoped_binding_defined_field','reserve_java_script_scoped_binding_declaration_names'])replace(`pub fn ${name}`,`pub const fn ${name}`);
     for (const match of [...current.matchAll(/pub fn accept_java_script_scoped_binding_[\s\S]*?\n\}/gu)]) {
       const block = match[0]; const open = block.indexOf('{'); let expression = block.slice(open + 1, -1).trim();
       expression = expression.replace(/\((\w+ == "[^"]*")\)/gu, '$1');

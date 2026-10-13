@@ -26,10 +26,10 @@ pub(super) fn project_function(function: &FnDecl, program: &Program) -> Result<S
         body: expression(&function.body, program)?,
         span: function.span,
         generated: function.generated,
-        source_signature: function.source_signature.clone(),
+        source_signature: function.source_signature.clone().map(Box::new),
         source_primitive_owners: function.source_primitive_owners.clone(),
-        source_empty_option: function.source_empty_option.clone(),
-        source_loop: function.source_loop.clone(),
+        source_empty_option: function.source_empty_option.clone().map(Box::new),
+        source_loop: function.source_loop.clone().map(Box::new),
     }))
 }
 

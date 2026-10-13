@@ -668,7 +668,7 @@ impl JavaScriptParser {
                 source_signature: None,
                 source_primitive_owners: None,
                 source_empty_option: None,
-                source_loop: Some(proof),
+                source_loop: Some(Box::new(proof)),
                 span: Some(self.to_here(doc_token)),
                 generated: false,
             });

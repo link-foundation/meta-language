@@ -770,14 +770,14 @@ pub struct SFn {
         rename = "sourceSignature",
         skip_serializing_if = "Option::is_none"
     )]
-    pub source_signature: Option<super::source_signatures::SourceSignature>,
+    pub source_signature: Option<Box<super::source_signatures::SourceSignature>>,
     /// Optional owned scalar loop state and checked continuation interpretation.
     #[serde(
         default,
         rename = "sourceLoop",
         skip_serializing_if = "Option::is_none"
     )]
-    pub source_loop: Option<super::source_loops::SourceLoop>,
+    pub source_loop: Option<Box<super::source_loops::SourceLoop>>,
     /// Owned actual standard primitive paths, imported aliases and body sites.
     #[serde(
         default,
@@ -791,7 +791,7 @@ pub struct SFn {
         rename = "sourceEmptyOption",
         skip_serializing_if = "Option::is_none"
     )]
-    pub source_empty_option: Option<serde_json::Value>,
+    pub source_empty_option: Option<Box<serde_json::Value>>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

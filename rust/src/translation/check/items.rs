@@ -92,8 +92,8 @@ impl Checker {
                     mutual: false,
                     source_signature: None,
                     source_primitive_owners: function.source_primitive_owners.clone(),
-                    source_empty_option: function.source_empty_option.clone(),
-                    source_loop: function.source_loop.clone(),
+                    source_empty_option: function.source_empty_option.as_deref().cloned(),
+                    source_loop: function.source_loop.as_deref().cloned(),
                 }),
                 SItem::Theorem(theorem) => Decl::Theorem(TheoremDecl {
                     name: name.clone(),
@@ -189,7 +189,7 @@ impl Checker {
                 });
             }
             let ret = self.resolve_type(item.ret.as_ref(), path, item.span)?;
-            let mut source_signature = item.source_signature.clone();
+            let mut source_signature = item.source_signature.as_deref().cloned();
             if let Some(signature) = source_signature.as_mut() {
                 for position in signature
                     .parameters
