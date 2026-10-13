@@ -371,6 +371,35 @@ const nativeRuleConcepts = (text) => [...text.matchAll(/^\(rule ([a-z0-9_]+) [^\
  */
 export const NAME_INVENTORIES = Object.freeze([
   {
+    inventory: 'shared numeric function admission operations',
+    files: ['js/src/shared-numeric-function-rules.js', 'rust/src/shared_numeric_function_rules.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub(?: const)? fn) ([a-zA-Z_]+)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `formal.${name === 'accept-shared-numeric-unary' || name === 'accept-shared-numeric-binary' ? `${name}-operation` : name}`,
+  },
+  {
+    inventory: 'shared numeric function graph operations',
+    files: ['js/src/shared-numeric-function-links.js', 'js/src/shared-numeric-function-model.js',
+      'rust/src/shared_numeric_function_links.rs', 'rust/src/shared_numeric_function_model.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub(?:\(crate\))? fn) (encodeSharedNumericFunctionDefinition|readSharedNumericFunctionModel|normalizeSharedNumericFunctionLiterals|encode_shared_numeric_function_definition|read_shared_numeric_function_model|normalize_shared_numeric_function_literals|validate_shared_numeric_origin_context)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `formal.${name}`,
+  },
+  {
+    inventory: 'shared numeric function model declaration',
+    files: ['js/src/shared-numeric-function-model.js', 'rust/src/shared_numeric_function_model.rs'],
+    extract: (text) => captures(text, /^(?:export|pub\(crate\)) const (SHARED_NUMERIC_FUNCTION_MODEL)\b/gmu)
+      .map(name => name.replaceAll('_', '-').toLowerCase()),
+    recordOf: () => 'translation.closed-binary-floating-point-function',
+  },
+  {
+    inventory: 'shared numeric decision emitter formatting',
+    files: ['js/scripts/generate-shared-numeric-function-rules.mjs'],
+    extract: (text) => captures(text, /^function (formatDecisionExpression)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `repository.${name}`,
+  },
+  {
     inventory: 'formal function graph adapters',
     files: ['js/src/formal-function-links.js', 'rust/src/formal_function_links.rs'],
     extract: (text) => captures(text, /^(?:function|fn) (redirectSignature|redirect_signature|importSelection|import_selection)\(/gmu)
