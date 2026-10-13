@@ -16,6 +16,8 @@ import { fixedBounds, typeKey } from './types.js';
 import { renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
 import {readJavaScriptScopedBindingEmission} from './javascript-scoped-binding-emission.js';
 import {reserveJavaScriptScopedBindingDeclarationNames} from './javascript-scoped-binding-emission-rules.js';
+import {checkRustOwnedLocalStateProof,RUST_OWNED_LOCAL_STATE_POLICY} from './rust-owned-local-state.js';
+import {renderRustOwnedLocalTextInput} from './rust-owned-local-state-rules.js';
 import { EmitState, withParts } from './emit-common.js';
 
 const KEYWORDS = new Set([
@@ -29,6 +31,7 @@ const KEYWORDS = new Set([
 ]);
 
 const HELPERS = {
+  ownedTextInput: renderRustOwnedLocalTextInput(),
   natSub: `function ml_natSub(a, b) {
   return a > b ? a - b : 0n;
 }`,
@@ -105,8 +108,11 @@ function ident(name) {
 }
 
 export function emitJavaScript(program, options = {}) {
+  checkRustOwnedLocalStateProof(program);
   const scopedBindings = options.scopedBindingModel === undefined ? null : readJavaScriptScopedBindingEmission(program, options.scopedBindingModel);
-  const state = new EmitState(program, 'JavaScript', ident, KEYWORDS, { modulesShareTermSpace: true, typeSpace: true });
+  const reserved = new Set(KEYWORDS);
+  if ([...program.declarations.values()].some(entry => Object.hasOwn(entry, 'sourceLocalState'))) reserved.add('ml_ownedTextInput');
+  const state = new EmitState(program, 'JavaScript', ident, reserved, { modulesShareTermSpace: true, typeSpace: true });
   return new JavaScriptEmitter(program, state, scopedBindings).file();
 }
 
@@ -140,7 +146,7 @@ class JavaScriptEmitter {
     }
     const main = this.program.main ? this.main(this.program.main) : null;
     if (this.theoremChecks.length) this.helpers.add('domains').add('forall');
-    const helperOrder = ['natSub', 'fixed', 'divide', 'toNatChecked', 'abort', 'assert', 'equal', 'showNumber', 'showOptional', 'at', 'forall', 'domains'];
+    const helperOrder = ['ownedTextInput', 'natSub', 'fixed', 'divide', 'toNatChecked', 'abort', 'assert', 'equal', 'showNumber', 'showOptional', 'at', 'forall', 'domains'];
     const entry = [
       this.theoremChecks.length ? this.theoremRunner() : null,
       main,
@@ -203,7 +209,11 @@ class JavaScriptEmitter {
     if (params.some((param) => param.type.kind === 'float') || entry.ret.kind === 'float') this.usesFloat = true;
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
-    const guards = params.flatMap((param) => this.parameterGuard(param));
+    const guards = params.flatMap((param) => this.parameterGuard(param, entry.sourceLocalState !== undefined));
+    if (entry.sourceLocalState !== undefined) {
+      this.state.encode('owned-text-input', 'the selected Rust local value model admits primitive Unicode scalar text, Boolean and signed i32 inputs; JavaScript rejects other input values before evaluating the body');
+      this.state.assume(RUST_OWNED_LOCAL_STATE_POLICY.targetInputAssumption);
+    }
     const loop = tailLoop(entry, body);
     // A lifted loop runs as a loop: each iteration assigns the parameters their next values.
     this.loopParams = loop && params.map((param) => param.name);
@@ -213,11 +223,21 @@ class JavaScriptEmitter {
   }
 
   /** Machine-integer parameters are range-checked, as the Rust type guarantees. */
-  parameterGuard(param) {
-    if (param.type.kind !== 'fixed') return [];
+  parameterGuard(param, ownedLocalState = false) {
+    const guards = [];
+    if (ownedLocalState) {
+      if (param.type.kind === 'string') {
+        this.helpers.add('ownedTextInput');
+        guards.push(`if (!ml_ownedTextInput(${param.name})) throw new RangeError(${JSON.stringify(`String argument ${param.name} requires Unicode scalar text`)});`);
+      } else {
+        const type = param.type.kind === 'bool' ? 'boolean' : 'bigint';
+        guards.push(`if (typeof ${param.name} !== ${JSON.stringify(type)}) throw new RangeError(${JSON.stringify(`${typeKey(param.type)} argument ${param.name} requires ${type}`)});`);
+      }
+    }
+    if (param.type.kind !== 'fixed') return guards;
     this.helpers.add('fixed');
     const { min, max } = fixedBounds(param.type);
-    return [`ml_fixed(${param.name}, ${min}n, ${max}n, ${JSON.stringify(`${typeKey(param.type)} argument ${param.name} out of range`)});`];
+    return [...guards, `ml_fixed(${param.name}, ${min}n, ${max}n, ${JSON.stringify(`${typeKey(param.type)} argument ${param.name} out of range`)});`];
   }
 
   theorem(entry) {

@@ -1228,7 +1228,12 @@ class RustParser {
       if (name === 'String::from') {
         if (!acceptRustTypeNamespaceBodyConstructor(Boolean(this.typeNamespaceModel), name)) throw unsupported('Rust type namespace body constructor', 'String::from requires a separate actual owner and argument proof', range);
         if (args.length !== 1) throw new TranslationError('type', 'String::from expects 1 argument', range);
-        return this.origins.conversion({ k: 'toString', arg: args[0], span: range }, path);
+        const expression = this.origins.conversion({ k: 'toString', arg: args[0], span: range }, path);
+        if (this.localValueStateModel) this.origins.mark(expression, {
+          ...this.origins.origin(expression, path), localValueConstructor: 'String::from',
+          localValueConstructorSpan: { start: token.start, end: c.peek(-1).end },
+        });
+        return expression;
       }
       if (segments.length === 2 && segments[1] === 'from' && rustFixedType(segments[0])) {
         if (!acceptRustTypeNamespaceBodyConstructor(Boolean(this.typeNamespaceModel), name)) throw unsupported('Rust type namespace body constructor', `${name} requires a separate actual owner and argument proof`, range);
