@@ -1,5 +1,6 @@
 //! Exact primitive binary64 operations and independent native bit oracles.
 
+use std::fmt::Write as _;
 use std::fs;
 use std::path::Path;
 use std::process::Command;
@@ -153,7 +154,7 @@ fn original_emitted_reparsed_and_reverse_rust_preserve_exact_bits_and_receiver_c
     for variant in ["original", "emitted", "reparsed", "reverse"] {
         let mut modules = Vec::new();
         for (index, case) in cases.iter().enumerate() {
-            let definitions = match variant {
+            let mut definitions = match variant {
                 "original" => case["source"]
                     .as_str()
                     .unwrap()
@@ -181,24 +182,38 @@ fn original_emitted_reparsed_and_reverse_rust_preserve_exact_bits_and_receiver_c
                 }
                 _ => unreachable!(),
             };
-            let calls = case["observations"]
-                .as_array()
-                .unwrap()
-                .iter()
-                .map(|row| {
-                    let field = if variant == "original" {
-                        "originalRustArguments"
-                    } else {
-                        "emittedRustArguments"
-                    };
-                    let observe = if case["surface"]["items"][0]["ret"]["kind"] == "bool" {
-                        "observe_bool"
-                    } else {
-                        "observe"
-                    };
-                    format!("crate::{observe}(apply({}));", row[field].as_str().unwrap())
-                })
-                .collect::<String>();
+            let namespace = format!("ml_case_{index}");
+            if variant != "original" && definitions.contains("crate::") {
+                let helper = Path::new(env!("CARGO_MANIFEST_DIR"))
+                    .join("../experiments/issue-199-generated-rust-namespace.mjs");
+                let adapter = "import{pathToFileURL}from'node:url';const{qualifyGeneratedRustRootPaths}=await import(pathToFileURL(process.argv[1]));process.stdout.write(qualifyGeneratedRustRootPaths(process.argv[2],process.argv[3]));";
+                let qualified = run(Command::new("node")
+                    .args(["--input-type=module", "--eval", adapter])
+                    .arg(helper)
+                    .arg(&definitions)
+                    .arg(&namespace));
+                assert!(qualified.ok, "{index}: {variant}: {}", qualified.stderr);
+                definitions = qualified.stdout;
+            }
+            let mut calls = String::new();
+            for row in case["observations"].as_array().unwrap() {
+                let field = if variant == "original" {
+                    "originalRustArguments"
+                } else {
+                    "emittedRustArguments"
+                };
+                let observe = if case["surface"]["items"][0]["ret"]["kind"] == "bool" {
+                    "observe_bool"
+                } else {
+                    "observe"
+                };
+                write!(
+                    calls,
+                    "crate::{observe}(apply({}));",
+                    row[field].as_str().unwrap()
+                )
+                .expect("formatting a caller into a String succeeds");
+            }
             let (instrumented, count) = if let Some(expected_calls) = case["receiverCalls"].as_u64()
             {
                 let header = if variant == "original" {
@@ -226,12 +241,14 @@ fn original_emitted_reparsed_and_reverse_rust_preserve_exact_bits_and_receiver_c
                 (definitions, String::new())
             };
             modules.push(format!(
-                "mod case_{index}{{{instrumented}\npub fn run(){{{calls}{count}}}}}"
+                "mod {namespace}{{{instrumented}\npub fn run(){{{calls}{count}}}}}"
             ));
         }
-        let calls = (0..cases.len())
-            .map(|index| format!("case_{index}::run();"))
-            .collect::<String>();
+        let mut calls = String::new();
+        for index in 0..cases.len() {
+            write!(calls, "ml_case_{index}::run();")
+                .expect("formatting a caller into a String succeeds");
+        }
         let code = format!(
             "fn observe(value:f64){{if value.is_nan(){{println!(\"NaN\");}}else{{println!(\"{{:016x}}\",value.to_bits());}}}}fn observe_bool(value:bool){{println!(\"{{}}\",value);}}\n{}\nfn main(){{{calls}}}",
             modules.join("\n")
@@ -250,18 +267,16 @@ fn original_emitted_reparsed_and_reverse_rust_preserve_exact_bits_and_receiver_c
             .iter()
             .map(|row| row["expectedBits"].as_str().unwrap().to_owned())
             .collect::<Vec<_>>();
-        let calls = case["observations"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .map(|row| {
-                format!(
-                    "observe(apply({}));",
-                    row["javascriptArguments"]
-                        .as_array()
-                        .unwrap()
-                        .iter()
-                        .map(|value| if let Some(array) = value.as_array() {
+        let mut calls = String::new();
+        for row in case["observations"].as_array().unwrap() {
+            let arguments = row["javascriptArguments"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|value| {
+                    value.as_array().map_or_else(
+                        || value.as_str().unwrap().to_owned(),
+                        |array| {
                             format!(
                                 "[{}]",
                                 array
@@ -270,14 +285,14 @@ fn original_emitted_reparsed_and_reverse_rust_preserve_exact_bits_and_receiver_c
                                     .collect::<Vec<_>>()
                                     .join(",")
                             )
-                        } else {
-                            value.as_str().unwrap().to_owned()
-                        })
-                        .collect::<Vec<_>>()
-                        .join(",")
-                )
-            })
-            .collect::<String>();
+                        },
+                    )
+                })
+                .collect::<Vec<_>>()
+                .join(",");
+            write!(calls, "observe(apply({arguments}));")
+                .expect("formatting a caller into a String succeeds");
+        }
         assert_eq!(
             run_javascript(&format!(
                 "{}\n{tag}\n{calls}",
