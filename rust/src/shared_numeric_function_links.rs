@@ -23,13 +23,13 @@ pub fn encode_shared_numeric_function_definition(
     provenance: Option<&Value>,
 ) -> Result<FormalConceptArchive, String> {
     validate_shared_numeric_origin_context(network, root)?;
-    let mut selected = encode_formal_function_definition(network, root, declaration, None)?;
+    let selected = encode_formal_function_definition(network, root, declaration, None)?;
     let typed_root = selected
         .network
         .link(selected.root)
         .ok_or("missing selected function definition")?
         .references()[0];
-    let model = normalize_shared_numeric_function_literals(&mut selected.network, typed_root)?;
+    let model = normalize_shared_numeric_function_literals(&selected.network, typed_root)?;
     let mut origin = Map::new();
     origin.insert(
         "sourceLanguage".to_owned(),

@@ -50,6 +50,23 @@ fn native_numeric_profile_matches_the_shared_prepared_definitions_and_preserves_
             program.source_language.as_str(),
             case["language"].as_str().unwrap()
         );
+        let checked = serde_json::to_value(&program).unwrap();
+        let declarations = checked["declarations"].as_array().unwrap();
+        let wrapper = declarations
+            .iter()
+            .find(|declaration| declaration["fullName"] == "selected_function_definition")
+            .unwrap();
+        assert!(wrapper.get("sourceSignature").is_none());
+        if case["language"] == "Rust" {
+            let original = declarations
+                .iter()
+                .find(|declaration| declaration["fullName"] == case["declaration"])
+                .unwrap();
+            assert_eq!(
+                original["sourceSignature"]["model"],
+                "Rust source function signature 1"
+            );
+        }
         let restored = FormalConceptArchive {
             network: LinkNetwork::from_lino(&definition.network.to_lino()).unwrap(),
             root: definition.root,
@@ -140,6 +157,7 @@ fn native_profile_refuses_unmodeled_types_defaults_effects_and_operations() {
         .iter()
         .chain(fixture["originRefusals"].as_array().unwrap())
         .chain(fixture["encodedOriginRefusals"].as_array().unwrap())
+        .chain(fixture["literalRefusals"].as_array().unwrap())
     {
         let (network, root) = input(refusal);
         assert!(
@@ -165,4 +183,51 @@ fn native_numeric_model_refuses_counterfeit_basis_and_unsupported_source_premise
         assert!(read_formal_concept_definition(&definition.to_json()).is_err());
         assert!(prove_formal_concept_equivalence(&original, &definition).is_none());
     }
+}
+
+#[test]
+fn ieee_value_views_keep_original_text_ties_and_zero_signs() {
+    let data = fixture();
+    let values: Vec<_> = data["literalCases"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(archive)
+        .collect();
+    for (index, value) in values.iter().enumerate() {
+        let before = value.network.to_lino();
+        assert_eq!(
+            read_formal_concept_definition(&value.to_json()).unwrap(),
+            data["literalCases"][index]["expected"]
+        );
+        assert_eq!(value.network.to_lino(), before);
+        assert!(value.network.links().any(
+            |link| link.metadata().definition() == data["literalCases"][index]["text"].as_str()
+        ));
+        let (network, root) = input(&data["literalCases"][index]);
+        let recreated = encode_shared_numeric_function_definition(
+            &network,
+            root,
+            FormalFunctionSelector::Name("constant"),
+            None,
+        )
+        .unwrap();
+        assert_eq!(
+            read_formal_concept_definition(&recreated.to_json()).unwrap(),
+            data["literalCases"][index]["expected"]
+        );
+    }
+    let proof = prove_formal_concept_equivalence(&values[0], &values[1]).unwrap();
+    let reloaded = FormalConceptArchive {
+        network: LinkNetwork::from_lino(&proof.network.to_lino()).unwrap(),
+        root: proof.root,
+    };
+    assert!(verify_formal_concept_equivalence(
+        &values[0], &values[1], &reloaded
+    ));
+    assert!(!verify_formal_concept_equivalence(
+        &values[0], &values[2], &reloaded
+    ));
+    assert!(prove_formal_concept_equivalence(&values[0], &values[2]).is_none());
+    assert!(prove_formal_concept_equivalence(&values[3], &values[4]).is_none());
 }

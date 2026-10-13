@@ -85,12 +85,10 @@ pub fn accept_shared_numeric_expression_shape(kind: &str, qualified: bool) -> bo
 #[must_use]
 pub fn accept_shared_numeric_literal(
     kind: &str,
-    boolean_value: bool,
-    decimal_value: bool,
-    finite_value: bool,
-    canonical_value: bool,
-    require_canonical: bool,
+    literal_flags: (bool, bool, bool, bool, bool),
 ) -> bool {
+    let (boolean_value, decimal_value, finite_value, canonical_value, require_canonical) =
+        literal_flags;
     if kind == "bool" {
         boolean_value
     } else {
@@ -106,4 +104,31 @@ pub const fn accept_shared_numeric_context_flag(
     false_value: bool,
 ) -> bool {
     !present || boolean_scalar && false_value
+}
+
+/// Read a shared formal function graph decision.
+#[must_use]
+pub fn accept_shared_numeric_source_signature(
+    model: &str,
+    language: &str,
+    matching_layout: bool,
+    qualified: bool,
+) -> bool {
+    model == "Rust source function signature 1"
+        && language == "Rust"
+        && matching_layout
+        && !qualified
+}
+
+/// Read a shared formal function graph decision.
+#[must_use]
+pub fn accept_shared_numeric_source_type(
+    kind: &str,
+    owner_kind: &str,
+    owner_path: &str,
+    qualified: bool,
+) -> bool {
+    owner_kind == "primitive"
+        && !qualified
+        && (kind == "float" && owner_path == "f64" || kind == "bool" && owner_path == "bool")
 }

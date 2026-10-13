@@ -6,7 +6,7 @@ import { LinkId, LinkMetadata, LinkType } from './primitives.js';
 import { decodeTypedProgramLinks, encodeTypedProgramLinks, emitTypedProgramLinks, readTypedProgramBindingIdentities } from './typed-program-links.js';
 import { verifyGlobalConceptCorrespondence } from './global-concept-rules.js';
 import { acceptFormalRelationEdgeIdentity, acceptFormalRelationIdentity, acceptFormalRelationLabelIdentity } from './formal-relation-rules.js';
-import { readSharedNumericFunctionModel, SHARED_NUMERIC_FUNCTION_MODEL } from './shared-numeric-function-model.js';
+import { readSharedNumericFunctionModel, createSharedNumericFunctionMeaning, SHARED_NUMERIC_FUNCTION_MODEL } from './shared-numeric-function-model.js';
 
 const LANGUAGE = 'meta-language formal definition';
 const SCHEMA = '1';
@@ -183,6 +183,7 @@ function checked(value) {
   const expectedRoot = data(expected, MODELS[model]);
   if (!correspondence(graph(network, modelLink.references()[0]), graph(expected, expectedRoot))) throw new TypeError('the formal primitive model differs from its supported declaration');
   const exclusions = new Set([`${key(root)}:provenance`]);
+  let meaning = network;
   if (model === 'checked typed program' || model === SHARED_NUMERIC_FUNCTION_MODEL) {
     decodeTypedProgramLinks(network, body);
     // Both emitters interpret this exact checked model. An unsupported IR
@@ -196,12 +197,14 @@ function checked(value) {
     if (model === SHARED_NUMERIC_FUNCTION_MODEL) {
       const profile = readSharedNumericFunctionModel(network, body);
       exclusions.add(`${key(profile.languageParent)}:${profile.languageLabel}`);
+      for (const field of profile.signatureFields) exclusions.add(`${key(field.parent)}:${field.label}`);
+      meaning = createSharedNumericFunctionMeaning(network, profile);
     }
   } else {
     const expectedBody = data(expected, MODELS[model]);
     if (!correspondence(graph(network, body), graph(expected, expectedBody))) throw new TypeError('a source interpretation differs from its declared primitive meaning');
   }
-  return { network, root, model, graph: graph(network, root, exclusions) };
+  return { network, root, model, graph: graph(meaning, root, exclusions) };
 }
 
 /** Copy a checked operational definition and its supported primitive basis. */

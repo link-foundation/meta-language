@@ -3,13 +3,15 @@
 //! verifier automatically translated from JavaScript; this adapter preserves
 //! network identities, ordered references and labeled relations.
 
+use std::collections::BTreeSet;
 use std::sync::OnceLock;
 
 use serde_json::{Value, json};
 
 use crate::link_network::{LinkId, LinkMetadata, LinkNetwork, LinkType};
 use crate::shared_numeric_function_model::{
-    SHARED_NUMERIC_FUNCTION_MODEL, read_shared_numeric_function_model,
+    SHARED_NUMERIC_FUNCTION_MODEL, create_shared_numeric_function_meaning,
+    read_shared_numeric_function_model,
 };
 use crate::translation::ir::Program;
 use crate::typed_program_links::{
@@ -65,6 +67,7 @@ impl FormalConceptArchive {
 }
 
 /// Host inputs for the same three supported linked interpretation models.
+#[derive(Clone, Copy)]
 pub enum FormalConceptDefinitionInput<'a> {
     /// An operational program already checked by the portable core.
     Program(&'a Program),
@@ -165,16 +168,17 @@ fn checked(value: &FormalConceptArchive) -> Result<Checked, String> {
     }
     let mut expected = LinkNetwork::new();
     let expected_root = data(&mut expected, declaration)?;
-    let expected_graph = graph(&expected, expected_root, &Default::default())?;
+    let expected_graph = graph(&expected, expected_root, &BTreeSet::default())?;
     if correspondence(
-        &graph(network, model_link.references()[0], &Default::default())?,
+        &graph(network, model_link.references()[0], &BTreeSet::default())?,
         &expected_graph,
     )
     .is_none()
     {
         return Err("the formal primitive model differs from its supported declaration".to_owned());
     }
-    let mut exclusions = std::collections::BTreeSet::from([(value.root, "provenance".to_owned())]);
+    let mut exclusions = BTreeSet::from([(value.root, "provenance".to_owned())]);
+    let mut meaning = None;
     if model == "checked typed program" || model == SHARED_NUMERIC_FUNCTION_MODEL {
         let bindings = read_typed_program_binding_identities(network, body)
             .map_err(|error| error.to_string())?;
@@ -197,10 +201,16 @@ fn checked(value: &FormalConceptArchive) -> Result<Checked, String> {
         // semantic field names or public declarations as lexical bindings.
         exclude_binding_names(network, body, &mut exclusions, &bindings)?;
         if model == SHARED_NUMERIC_FUNCTION_MODEL {
-            let shared = read_shared_numeric_function_model(network, body, true)?;
+            let shared = read_shared_numeric_function_model(network, body, false)?;
+            meaning = Some(create_shared_numeric_function_meaning(network, &shared)?);
+            exclusions.extend(shared.signature_fields);
             exclusions.insert((shared.language_parent, shared.language_label));
         }
-    } else if correspondence(&graph(network, body, &Default::default())?, &expected_graph).is_none()
+    } else if correspondence(
+        &graph(network, body, &BTreeSet::default())?,
+        &expected_graph,
+    )
+    .is_none()
     {
         return Err(
             "a source interpretation differs from its declared primitive meaning".to_owned(),
@@ -208,7 +218,7 @@ fn checked(value: &FormalConceptArchive) -> Result<Checked, String> {
     }
     Ok(Checked {
         model: model.to_owned(),
-        graph: graph(network, value.root, &exclusions)?,
+        graph: graph(meaning.as_ref().unwrap_or(network), value.root, &exclusions)?,
     })
 }
 
@@ -329,8 +339,8 @@ fn verify(
     {
         return Ok(false);
     }
-    let left = graph(network, link.references()[0], &Default::default())?;
-    let right = graph(network, link.references()[1], &Default::default())?;
+    let left = graph(network, link.references()[0], &BTreeSet::default())?;
+    let right = graph(network, link.references()[1], &BTreeSet::default())?;
     if !left.same_shape(&one.graph) || !right.same_shape(&other.graph) {
         return Ok(false);
     }

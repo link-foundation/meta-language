@@ -11,6 +11,7 @@ use crate::shared_numeric_function_rules::{
     accept_shared_numeric_context_flag, accept_shared_numeric_declaration,
     accept_shared_numeric_entry, accept_shared_numeric_expression_shape,
     accept_shared_numeric_literal, accept_shared_numeric_parameter,
+    accept_shared_numeric_source_signature, accept_shared_numeric_source_type,
     accept_shared_numeric_type_shape, accept_shared_numeric_unary,
 };
 use crate::structured_data_links::{StructuredDataValue, encode_structured_data_links_ordered};
@@ -157,6 +158,7 @@ pub(crate) struct SharedNumericFunctionModel {
     pub language_parent: LinkId,
     pub language_label: String,
     literals: Vec<Relation>,
+    pub signature_fields: Vec<(LinkId, String)>,
 }
 
 pub(crate) fn read_shared_numeric_function_model(
@@ -220,6 +222,65 @@ pub(crate) fn read_shared_numeric_function_model(
         ) {
             return Err(fail("only flat closed function declarations are admitted"));
         }
+        let signature = &declaration["sourceSignature"];
+        if language == "Rust" {
+            if signature.is_null() && !std::ptr::eq(declaration, entry) {
+                return Err(fail(
+                    "a Rust function needs its owned source signature facet",
+                ));
+            }
+            if !signature.is_null() {
+                let descriptors = signature["parameters"]
+                    .as_array()
+                    .ok_or_else(|| fail("missing source signature parameters"))?;
+                let parameters = declaration["params"]
+                    .as_array()
+                    .ok_or_else(|| fail("missing parameters"))?;
+                if !accept_shared_numeric_source_signature(
+                    string(&signature["model"]),
+                    string(&signature["language"]),
+                    descriptors.len() == parameters.len(),
+                    nonempty(&signature["lifetimeBindings"]),
+                ) {
+                    return Err(fail(
+                        "a Rust source signature has an unsupported model or layout",
+                    ));
+                }
+                for (descriptor, expected) in descriptors
+                    .iter()
+                    .zip(parameters.iter().map(|parameter| &parameter["type"]))
+                    .chain(std::iter::once((&signature["result"], &declaration["ret"])))
+                {
+                    value_type(&descriptor["type"])?;
+                    let path = descriptor["owner"]["path"]
+                        .as_array()
+                        .ok_or_else(|| fail("missing source owner path"))?;
+                    let owner_path = if path.len() == 1 {
+                        string(&path[0])
+                    } else {
+                        ""
+                    };
+                    if descriptor["type"]["kind"] != expected["kind"]
+                        || !accept_shared_numeric_source_type(
+                            string(&descriptor["type"]["kind"]),
+                            string(&descriptor["owner"]["kind"]),
+                            owner_path,
+                            nonempty(&descriptor["wrappers"])
+                                || nonempty(&descriptor["lifetimes"])
+                                || nonempty(&descriptor["owner"]["arguments"]),
+                        )
+                    {
+                        return Err(fail(
+                            "a Rust source signature requires direct primitive f64 or Boolean values",
+                        ));
+                    }
+                }
+            }
+        } else if !signature.is_null() {
+            return Err(fail(
+                "a foreign source signature is outside the JavaScript value premise",
+            ));
+        }
         value_type(&declaration["ret"])?;
         for parameter in declaration["params"]
             .as_array()
@@ -258,11 +319,13 @@ pub(crate) fn read_shared_numeric_function_model(
                 let number = text.parse::<f64>().unwrap_or(f64::NAN);
                 if !accept_shared_numeric_literal(
                     string(&node["type"]["kind"]),
-                    node["value"].is_boolean(),
-                    node["value"].is_string() && decimal(text),
-                    number.is_finite(),
-                    canonical_number(number).is_ok_and(|value| value == text),
-                    canonical,
+                    (
+                        node["value"].is_boolean(),
+                        node["value"].is_string() && decimal(text),
+                        number.is_finite(),
+                        !canonical || canonical_number(number).is_ok_and(|value| value == text),
+                        canonical,
+                    ),
                 ) {
                     return Err(fail(
                         "a literal is not a Boolean or canonical finite binary64",
@@ -305,9 +368,71 @@ pub(crate) fn read_shared_numeric_function_model(
             _ => {}
         }
     }
+    let directory = relation(&fields, body, &label_of("declarations"))
+        .ok_or_else(|| fail("missing declaration mapping"))?
+        .child;
+    let declaration_ids: BTreeSet<_> = network
+        .link(directory)
+        .ok_or_else(|| fail("missing declaration mapping"))?
+        .references()
+        .iter()
+        .map(|id| {
+            network
+                .link(*id)
+                .ok_or_else(|| fail("missing declaration pair"))
+                .and_then(|link| {
+                    link.references()
+                        .get(1)
+                        .copied()
+                        .ok_or_else(|| fail("missing declaration identity"))
+                })
+        })
+        .collect::<Result<_, _>>()?;
+    let entry_id = network
+        .link(directory)
+        .ok_or_else(|| fail("missing declaration mapping"))?
+        .references()
+        .iter()
+        .find_map(|id| {
+            let pair = network.link(*id)?.references();
+            if definition(network, *pair.first()?) == Some("selected_function_definition") {
+                pair.get(1).copied()
+            } else {
+                None
+            }
+        })
+        .ok_or_else(|| fail("missing selected wrapper identity"))?;
+    let child = |id, name: &str| {
+        relation(&fields, id, &label_of(name))
+            .map(|field| field.child)
+            .ok_or_else(|| fail("missing selected wrapper field"))
+    };
+    let entry_body = child(entry_id, "body")?;
+    let params_id = child(entry_id, "params")?;
+    let params = network
+        .link(params_id)
+        .ok_or_else(|| fail("missing selected wrapper parameters"))?
+        .references();
+    let args_id = child(entry_body, "args")?;
+    let args = network
+        .link(args_id)
+        .ok_or_else(|| fail("missing selected wrapper arguments"))?
+        .references();
+    let target = child(entry_body, string(&schema["references"]["declaration"]))?;
+    if target == entry_id
+        || args.len() != params.len()
+        || args.iter().zip(params).any(|(argument, parameter)| {
+            child(*argument, string(&schema["references"]["binding"])) != Ok(*parameter)
+        })
+    {
+        return Err(fail(
+            "the selected wrapper must pass each owned parameter to a distinct declared function",
+        ));
+    }
     let mut seen = BTreeSet::new();
     let mut pending = vec![root];
     let mut literals = Vec::new();
+    let mut signature_fields = Vec::new();
     let mut at = 0;
     while at < pending.len() {
         if pending.len() > 100_000 {
@@ -340,6 +465,23 @@ pub(crate) fn read_shared_numeric_function_model(
                 }
             }
         }
+        if let Some(signature) = relation(&fields, id, &label_of("sourceSignature")) {
+            if !declaration_ids.contains(&id) {
+                return Err(fail(
+                    "a source signature belongs only to its owned declaration",
+                ));
+            }
+            if network
+                .link(signature.child)
+                .and_then(|link| link.metadata().term())
+                != schema["containers"]["record"].as_str()
+            {
+                return Err(fail(
+                    "a present source signature must be an owned structured facet",
+                ));
+            }
+            signature_fields.push((id, signature.label.clone()));
+        }
         let kind = relation(&fields, id, &label_of("k"));
         let value = relation(&fields, id, &label_of("value"));
         if kind.is_some_and(|field| definition(network, field.child) == Some("lit"))
@@ -357,42 +499,50 @@ pub(crate) fn read_shared_numeric_function_model(
         language_parent: body,
         language_label: source.label.clone(),
         literals,
+        signature_fields,
     })
 }
 
 pub(crate) fn normalize_shared_numeric_function_literals(
-    network: &mut LinkNetwork,
+    network: &LinkNetwork,
     root: LinkId,
 ) -> Result<SharedNumericFunctionModel, String> {
-    let model = read_shared_numeric_function_model(network, root, false)?;
+    read_shared_numeric_function_model(network, root, false)
+}
+
+/// The original typed literal strings are never replaced in their archive.
+pub(crate) fn create_shared_numeric_function_meaning(
+    network: &LinkNetwork,
+    model: &SharedNumericFunctionModel,
+) -> Result<LinkNetwork, String> {
+    let mut meaning = network.clone();
     let mut replacements = BTreeMap::new();
-    for relation in model.literals {
+    for relation in &model.literals {
         let original = network
             .link(relation.child)
             .ok_or_else(|| fail("missing numeric literal"))?;
-        let original_text = original
+        let value = original
             .metadata()
             .definition()
-            .ok_or_else(|| fail("missing numeric literal"))?;
-        let value = canonical_number(
-            original_text
-                .parse::<f64>()
-                .map_err(|error| error.to_string())?,
-        )?;
-        if value == original_text {
-            continue;
-        }
-        let metadata = original.metadata().clone().with_definition(value);
+            .ok_or_else(|| fail("missing numeric literal"))?
+            .parse::<f64>()
+            .map_err(|error| error.to_string())?;
+        let metadata = original
+            .metadata()
+            .clone()
+            .with_language("meta-language formal definition")
+            .with_term("binary floating point bit pattern")
+            .with_definition(format!("{:016x}", value.to_bits()));
         let replacement = *replacements
             .entry(relation.child)
-            .or_insert_with(|| network.insert_link([], metadata));
-        let mut references = network
+            .or_insert_with(|| meaning.insert_link([], metadata));
+        let mut references = meaning
             .link(relation.id)
             .ok_or_else(|| fail("missing numeric literal relation"))?
             .references()
             .to_vec();
         references[2] = replacement;
-        network.set_references(relation.id, &references);
+        meaning.set_references(relation.id, &references);
     }
-    read_shared_numeric_function_model(network, root, true)
+    Ok(meaning)
 }

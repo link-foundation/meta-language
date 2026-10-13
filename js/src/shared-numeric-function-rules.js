@@ -39,3 +39,11 @@ export function acceptSharedNumericLiteral(kind, booleanValue, decimalValue, fin
 export function acceptSharedNumericContextFlag(present, booleanScalar, falseValue) {
   return !present || booleanScalar && falseValue;
 }
+/** @param {string} model @param {string} language @param {boolean} matchingLayout @param {boolean} qualified @returns {boolean} */
+export function acceptSharedNumericSourceSignature(model, language, matchingLayout, qualified) {
+  return model === 'Rust source function signature 1' && language === 'Rust' && matchingLayout && !qualified;
+}
+/** @param {string} kind @param {string} ownerKind @param {string} ownerPath @param {boolean} qualified @returns {boolean} */
+export function acceptSharedNumericSourceType(kind, ownerKind, ownerPath, qualified) {
+  return ownerKind === 'primitive' && !qualified && (kind === 'float' && ownerPath === 'f64' || kind === 'bool' && ownerPath === 'bool');
+}

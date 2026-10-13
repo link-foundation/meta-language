@@ -23,7 +23,7 @@ const cases = []; const equivalent = [];
 for (const [declaration, javascript, rust, inputs] of descriptions) {
   const pair = [];
   for (const [language, source] of [['JavaScript', javascript], ['Rust', rust]]) {
-    const input = createTypedProgramLinks(source, language);
+    const input = createTypedProgramLinks(source, language, language === 'Rust' ? { rustSourceSignatureModel: 'Rust source function signature 1' } : {});
     const provenance = { source: `${language} ${declaration}` };
     const definition = encodeSharedNumericFunctionDefinition(input, declaration, { provenance });
     const oldDefinition = encodeFormalFunctionDefinition(input, declaration);
@@ -40,6 +40,8 @@ const changed = createTypedProgramLinks(descriptions[0][1].replace('a+b', 'a-b')
 const definition = encodeSharedNumericFunctionDefinition(changed, 'add', { provenance: { source: 'changed add operation' } });
 cases.push({ name: 'changed add operation', language: 'JavaScript', declaration: 'add', source: descriptions[0][1].replace('a+b', 'a-b'), provenance: { source: 'changed add operation' }, inputs: [[5,2]], programRoot: changed.root.asU64(), programLinks: changed.network.toLino(), root: definition.root.asU64(), links: definition.network.toLino(), expected: readFormalConceptDefinition(definition) });
 const refusals = [
+  { name: 'borrowed scalar signature', language: 'Rust', declaration: 'keep', source: 'fn keep(value:&f64)->f64{*value} fn main(){}' },
+  { name: 'borrowed Boolean signature', language: 'Rust', declaration: 'keep', source: 'fn keep(value:&bool)->bool{*value} fn main(){}' },
   { name: 'fixed width integer premise', language: 'Rust', declaration: 'add', source: 'fn add(a:i32,b:i32)->i32{a+b}fn main(){}' },
   { name: 'string interpretation', language: 'JavaScript', declaration: 'add', source: '/** @param {string} a @returns {string} */ function add(a){return a;}' },
   { name: 'host output effect', language: 'JavaScript', declaration: 'add', source: '/** @param {number} a @returns {number} */ function add(a){console.log(a);return a;}' },
@@ -47,7 +49,7 @@ const refusals = [
   { name: 'undeclared numeric library primitive', language: 'JavaScript', declaration: 'add', source: '/** @param {number} a @returns {number} */ function add(a){return Math.abs(a);}' },
 ];
 for (const refusal of refusals) {
-  const program = createTypedProgramLinks(refusal.source, refusal.language);
+  const program = createTypedProgramLinks(refusal.source, refusal.language, refusal.language === 'Rust' ? { rustSourceSignatureModel: 'Rust source function signature 1' } : {});
   refusal.programRoot = program.root.asU64(); refusal.programLinks = program.network.toLino();
   let refused = false;
   try { encodeSharedNumericFunctionDefinition(program, refusal.declaration); } catch { refused = true; }
@@ -107,12 +109,59 @@ for (const name of ['unsupported source context', 'counterfeit shared premise'])
   if (!refused) throw new Error(`a forged ${name} cannot ground equality`);
   invalidDefinitions.push(value);
 }
+for (const name of ['self-targeted generated wrapper', 'reordered generated wrapper parameters']) {
+  const network = LinkNetwork.fromLino(cases[0].links); const root = cases[0].root;
+  const typedRoot = network.link(root).references()[0];
+  const body = network.link(typedRoot).references()[0];
+  const fields = network.fieldRelations();
+  const child = (id, label) => fields.find(field => field.parent.equals(id) && field.label === label).child;
+  const directory = child(body, TYPED_PROGRAM_LINKS_SCHEMA.fields.declarations);
+  const pair = network.link(directory).references().find(id => network.link(network.link(id).references()[0]).metadata().definition === 'selected_function_definition');
+  const entry = network.link(pair).references()[1];
+  const call = child(entry, TYPED_PROGRAM_LINKS_SCHEMA.fields.body ?? 'body');
+  if (name === 'self-targeted generated wrapper') {
+    const target = fields.find(field => field.parent.equals(call) && field.label === TYPED_PROGRAM_LINKS_SCHEMA.references.declaration);
+    const references = target.link.references(); references[2] = entry; target.link.setReferences(references);
+  } else {
+    const argumentsList = network.link(child(call, TYPED_PROGRAM_LINKS_SCHEMA.fields.args ?? 'args'));
+    argumentsList.setReferences([...argumentsList.references()].reverse());
+  }
+  const value = { name, root, links: network.toLino() };
+  let refused = false; try { readFormalConceptDefinition(value); } catch { refused = true; }
+  if (!refused) throw new Error(`a counterfeit ${name} cannot use the synthetic signature exemption`);
+  invalidDefinitions.push(value);
+}
+const missingSignature = createTypedProgramLinks('fn keep(value:f64)->f64{value}fn main(){}', 'Rust');
+let missingRefused = false; try { encodeSharedNumericFunctionDefinition(missingSignature, 'keep'); } catch { missingRefused = true; }
+if (!missingRefused) throw new Error('an old source graph cannot acquire a fabricated direct signature');
+originRefusals.push({ name: 'missing Rust source signature', declaration: 'keep', programRoot: missingSignature.root.asU64(), programLinks: missingSignature.network.toLino() });
+const literalCases = [];
+for (const text of ['1.0000076293945312', '1.0000076293945313', '1.000007629394531', '0', '-0']) {
+  const input = createTypedProgramLinks('/** @returns {number} */ function constant(){return 0;}', 'JavaScript');
+  const literal = input.network.fieldRelations().find(field => field.label === 'value' && input.network.link(field.child).metadata().definition === '0');
+  const replacement = input.network.insertLink([], input.network.link(literal.child).metadata().withDefinition(text));
+  const references = literal.link.references(); references[2] = replacement; literal.link.setReferences(references);
+  const value = encodeSharedNumericFunctionDefinition(input, 'constant');
+  literalCases.push({ text, programRoot: input.root.asU64(), programLinks: input.network.toLino(), root: value.root.asU64(), links: value.network.toLino(), expected: readFormalConceptDefinition(value) });
+}
+if (!proveFormalConceptEquivalence(literalCases[0], literalCases[1])) throw new Error('two finite decimal spellings of one IEEE value must have the same meaning');
+for (const [first, second] of [[0,2],[3,4]]) if (proveFormalConceptEquivalence(literalCases[first], literalCases[second])) throw new Error('distinct binary64 values, including zero signs, must remain distinct');
+const literalRefusals = [];
+for (const text of ['+1', '.5', '1.', '01']) {
+  const input = { network: LinkNetwork.fromLino(literalCases[3].programLinks), root: literalCases[3].programRoot };
+  const literal = input.network.fieldRelations().find(field => field.label === 'value' && input.network.link(field.child).metadata().definition === '0');
+  const replacement = input.network.insertLink([], input.network.link(literal.child).metadata().withDefinition(text));
+  const references = literal.link.references(); references[2] = replacement; literal.link.setReferences(references);
+  let refused = false; try { encodeSharedNumericFunctionDefinition(input, 'constant'); } catch { refused = true; }
+  if (!refused) throw new Error(`the shared decimal spelling premise must refuse ${text}`);
+  literalRefusals.push({ name: `unsupported decimal spelling ${text}`, declaration: 'constant', programRoot: input.root, programLinks: input.network.toLino() });
+}
 const grammar = JSON.parse(serializeGrammar(new Grammar('function', [['function', { expression: { kind: 'literal', value: 'function' } }]])));
 const globalSources = ['JavaScript', 'Rust'].map(language => ({ id: language.toLowerCase(), language, grammar }));
 const definitions = { 'javascript:function': cases[0], 'rust:function': cases[1] };
 const space = createGlobalConceptSpace(globalSources.map(source => ({ ...source, grammar: new Grammar('function', [['function', { expression: { kind: 'literal', value: 'function' } }]]) })), { records: [], formalDefinitions: definitions });
 if (space.mappings['javascript:function'] !== space.mappings['rust:function']) throw new Error('the checked numeric definitions must ground shared global identity');
-const fixture = { globalSources, schemaVersion: 1, id: 'shared-numeric-function-definitions', model: 'closed binary floating point function', cases, equivalent, distinct: [[0, cases.length - 1]], refusals, originRefusals, encodedOriginRefusals, invalidDefinitions };
+const fixture = { globalSources, schemaVersion: 1, id: 'shared-numeric-function-definitions', model: 'closed binary floating point function', cases, equivalent, distinct: [[0, cases.length - 1]], refusals, originRefusals, encodedOriginRefusals, invalidDefinitions, literalCases, literalRefusals };
 const path = new URL('../../parity/fixtures/shared-numeric-function-definitions.json', import.meta.url);
 if (process.argv.includes('--check')) checkProjectData(path, fixture);
 else writeProjectData(path, fixture);

@@ -11,7 +11,7 @@ import { DecoratorSet } from '../src/decorators.js';
 // This removes emitter parentheses without changing grouped model premises.
 function formatDecisionExpression(source) {
   const tokens = source.match(/"(?:[^"\\]|\\.)*"|[a-zA-Z_][a-zA-Z_0-9:]*|[0-9]+(?:_?f64)?|&&|\|\||==|!=|[!(),]/gu) ?? [];
-  if (tokens.join('') !== source.replaceAll(/\s/gu, '')) throw new Error('unsupported decision style expression');
+  if (tokens.join('') !== source.replace(/"(?:[^"\\]|\\.)*"|\s+/gu, token => token.startsWith('"') ? token : '')) throw new Error('unsupported decision style expression');
   const precedence = { '||': 1, '&&': 2, '==': 3, '!=': 3 };
   let at = 0;
   const expression = (minimum = 0) => {
@@ -50,8 +50,9 @@ if (process.argv.includes('--update-styles')) {
   const replace = (from, to) => {
     if (styled.includes(from)) { actions.push({ op: 'replace', field: 'source', from, to }); styled = styled.split(from).join(to); }
   };
-  for (const parameter of ['kind', 'operation', 'domain', 'semantics', 'language']) replace(`${parameter}: String`, `${parameter}: &str`);
+  for (const parameter of ['kind', 'operation', 'domain', 'semantics', 'language', 'model', 'owner_kind', 'owner_path']) replace(`${parameter}: String`, `${parameter}: &str`);
   for (const match of [...styled.matchAll(/\([a-z_]+ (?:==|!=) "[^"\n]*"\)/gu)]) replace(match[0], match[0].slice(1, -1));
+  for (const match of [...styled.matchAll(/String::from\(("[^"\n]*")\)/gu)]) replace(match[0], match[1]);
   replace('crate::accept_shared_numeric_type(kind.clone())', 'accept_shared_numeric_type(kind)');
   replace('crate::accept_shared_numeric_expression(kind.clone())', 'accept_shared_numeric_expression(kind)');
   replace('(1f64)', '1_f64');
@@ -70,7 +71,7 @@ if (process.argv.includes('--update-styles')) {
     if (depth) throw new Error('a translated formal function decision has an unclosed branch');
     replace(styled.slice(match.index, cursor), `} else ${styled.slice(opening + 1, cursor - 1).trim()}`);
   }
-  for (const name of ['accept_shared_numeric_type', 'accept_shared_numeric_expression', 'accept_shared_numeric_unary', 'accept_shared_numeric_binary', 'accept_shared_numeric_type_shape', 'accept_shared_numeric_context', 'accept_shared_numeric_declaration', 'accept_shared_numeric_parameter', 'accept_shared_numeric_entry', 'accept_shared_numeric_expression_shape', 'accept_shared_numeric_literal', 'accept_shared_numeric_context_flag']) {
+  for (const name of ['accept_shared_numeric_type', 'accept_shared_numeric_expression', 'accept_shared_numeric_unary', 'accept_shared_numeric_binary', 'accept_shared_numeric_type_shape', 'accept_shared_numeric_context', 'accept_shared_numeric_declaration', 'accept_shared_numeric_parameter', 'accept_shared_numeric_entry', 'accept_shared_numeric_expression_shape', 'accept_shared_numeric_literal', 'accept_shared_numeric_context_flag', 'accept_shared_numeric_source_signature', 'accept_shared_numeric_source_type']) {
     replace(`pub fn ${name}(`, `/// Read a shared formal function graph decision.\n#[must_use]\npub fn ${name}(`);
   }
   for (const line of styled.split('\n')) {
@@ -82,6 +83,8 @@ if (process.argv.includes('--update-styles')) {
   replace('semantics == ""', 'semantics.is_empty()');
   replace('pub fn accept_shared_numeric_context_flag(', 'pub const fn accept_shared_numeric_context_flag(');
   replace('pub fn accept_shared_numeric_parameter(', 'pub const fn accept_shared_numeric_parameter(');
+  replace('pub fn accept_shared_numeric_literal(kind: &str, boolean_value: bool, decimal_value: bool, finite_value: bool, canonical_value: bool, require_canonical: bool) -> bool {',
+    'pub fn accept_shared_numeric_literal(kind: &str, literal_flags: (bool, bool, bool, bool, bool)) -> bool {\n    let (boolean_value, decimal_value, finite_value, canonical_value, require_canonical) = literal_flags;');
   writeFileSync(styleFile, new DecoratorSet([{ id: 'shared-numeric-function-library-style', level: 'emitter', order: 0,
     when: [['format', 'Rust']], actions }]).toLino());
 }

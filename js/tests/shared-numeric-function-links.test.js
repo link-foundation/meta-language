@@ -22,7 +22,10 @@ test('the explicit numeric model proves actual Rust and JavaScript recursive val
     const selected = encodeSharedNumericFunctionDefinition(program(value), value.declaration, { provenance: value.provenance });
     assert.deepEqual(readFormalConceptDefinition(restore(selected)), value.expected);
     const typedRoot = selected.network.link(selected.root).references()[0];
-    assert.equal(decodeTypedProgramLinks(selected.network, typedRoot).sourceLanguage, value.language, 'language is retained in the actual linked source context');
+    const checked = decodeTypedProgramLinks(selected.network, typedRoot);
+    assert.equal(checked.sourceLanguage, value.language, 'language is retained in the actual linked source context');
+    assert.equal(Object.hasOwn(checked.declarations.get('selected_function_definition'), 'sourceSignature'), false, 'the generated wrapper has no fabricated original header');
+    if (value.language === 'Rust') assert.equal(checked.declarations.get(value.declaration).sourceSignature.model, 'Rust source function signature 1', 'the owned original header survives source-free extraction');
     const provenance = selected.network.fieldRelations().find(field => field.parent.equals(selected.root) && field.label === 'provenance');
     assert.ok(provenance);
     assert.ok(selected.network.fieldRelations().some(field => field.parent.equals(provenance.child) && field.label === 'sourceLanguage' && selected.network.link(field.child).metadata().definition === value.language));
@@ -68,6 +71,7 @@ test('independent JavaScript sources and both source-free interpretations agree 
 
 test('unsupported types, defaults, effects and undeclared operations cannot acquire the numeric basis', () => {
   for (const refusal of [...fixture.refusals, ...fixture.originRefusals, ...fixture.encodedOriginRefusals]) assert.throws(() => encodeSharedNumericFunctionDefinition(program(refusal), refusal.declaration), /numeric|Boolean|binary64|guard|default|supported|outside|output|effect/iu, refusal.name);
+  for (const refusal of fixture.literalRefusals) assert.throws(() => encodeSharedNumericFunctionDefinition(program(refusal), refusal.declaration), /literal|finite binary64/iu, refusal.name);
   for (const value of fixture.encodedOriginRefusals) {
     const input = program(value); const body = input.network.link(input.root).references()[0];
     assert.ok(input.network.fieldRelations().some(field => field.parent.equals(body) && field.label === value.contextLabel && (value.malformedScalar || input.network.link(field.child).metadata().definition === 'true')));
@@ -99,4 +103,24 @@ test('generated admission premises preserve the domain, operation and source-con
   assert.equal(acceptSharedNumericBinary('eq', 'bool', ''), true);
   assert.equal(acceptSharedNumericBinary('rem', 'float', 'ieee'), true);
   assert.equal(acceptSharedNumericUnary('neg', 'float', ''), false);
+});
+
+test('IEEE literal meaning preserves actual decimal text, resolves shortest-spelling ties and keeps signed zero distinct', () => {
+  const values = fixture.literalCases.map(archive);
+  for (const [index, value] of values.entries()) {
+    const before = value.network.toLino();
+    const prepared = readFormalConceptDefinition(value);
+    assert.deepEqual(prepared, fixture.literalCases[index].expected);
+    assert.equal(value.network.toLino(), before, 'meaning preparation never rewrites the stored program');
+    assert.ok(value.network.fieldRelations().some(field => field.label === 'value' && value.network.link(field.child).metadata().definition === fixture.literalCases[index].text));
+    const recreated = encodeSharedNumericFunctionDefinition(program(fixture.literalCases[index]), 'constant');
+    assert.deepEqual(readFormalConceptDefinition(recreated), prepared);
+    assert.ok(prepared.shapes.some(shape => shape.includes('binary floating point bit pattern')));
+  }
+  const proof = proveFormalConceptEquivalence(values[0], values[1]);
+  assert.ok(proof);
+  assert.equal(verifyFormalConceptEquivalence(values[0], values[1], restore(proof)), true);
+  assert.equal(verifyFormalConceptEquivalence(values[0], values[2], restore(proof)), false, 'a changed actual value invalidates the certificate');
+  assert.equal(proveFormalConceptEquivalence(values[0], values[2]), null);
+  assert.equal(proveFormalConceptEquivalence(values[3], values[4]), null);
 });
