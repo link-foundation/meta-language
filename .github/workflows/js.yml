@@ -307,6 +307,11 @@ jobs:
         run: npm run check:native-imports
         working-directory: js
 
+      - name: Check shared source prefix operand precedence fixtures
+        if: ${{ !cancelled() }}
+        run: node scripts/generate-grammar-prefix-operand-fixtures.mjs --check
+        working-directory: js
+
       - name: Check the pinned Ruby pattern fixtures against their independent oracle
         if: ${{ !cancelled() }}
         run: node scripts/generate-ruby-pattern-fixture.mjs --check

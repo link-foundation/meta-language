@@ -551,6 +551,13 @@ Alias-pattern priorities distinguish explicit conditional directives from generi
 preprocessor extras. Field-selected associativity preserves each source alternative
 while reproducing reference-led chained comparisons. Error-union priorities retain
 optional and pointer type prefixes around their complete operand.
+Shared operand precedence now requires evidence from the actual first child or
+its inspectable reduction. A literal prefix cannot inherit an operand position
+from another production alternative. Thirteen pinned Rust controls preserve
+complete CST rows and field roles, and the affected Formal AI source reproduces
+all 7,321 oracle rows without changing its source grammar or census. This checks
+the imported grammar's concrete structure; it does not establish the compiler's
+semantic interpretation of an ambiguous CST operator.
 The CSS, PowerShell and Erlang imports use shared marked-lookahead, contextual
 token and line-counted delimiter scanner families. Contextual keyword exclusions
 retain every source production and reserve initial statement keywords while
