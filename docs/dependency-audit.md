@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 104 | 103 | 1 | 0 |
+| Generators | 110 | 109 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 32 | 0 | 0 | 32 |
+| Published artifact contents | 35 | 0 | 0 | 35 |
 
 ## JavaScript engines
 
@@ -585,6 +585,8 @@ they are.
 | `js/scripts/generate-grammar-prefix-operand-fixtures.mjs` | `js/scripts/generate-grammar-prefix-operand-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-issue-195-conformance.mjs` | `js/scripts/generate-issue-195-conformance.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-issue-195-generative.mjs` | `js/scripts/generate-issue-195-generative.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-scoped-binding-emission-fixtures.mjs` | `js/scripts/generate-javascript-scoped-binding-emission-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-scoped-binding-emission-rules.mjs` | `js/scripts/generate-javascript-scoped-binding-emission-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-link-network-binary-fixtures.mjs` | `js/scripts/generate-link-network-binary-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-link-network-binary-rules.mjs` | `js/scripts/generate-link-network-binary-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-lino-grammar-cases.mjs` | `js/scripts/generate-lino-grammar-cases.mjs` | `script` |  | derived | current |  |
@@ -611,6 +613,8 @@ they are.
 | `js/scripts/generate-rust-array-rules.mjs` | `js/scripts/generate-rust-array-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-array-runtime.mjs` | `js/scripts/generate-rust-array-runtime.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-array-source-fixtures.mjs` | `js/scripts/generate-rust-array-source-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-borrowed-call-interface-fixtures.mjs` | `js/scripts/generate-rust-borrowed-call-interface-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-borrowed-call-interface-rules.mjs` | `js/scripts/generate-rust-borrowed-call-interface-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-completion-fixtures.mjs` | `js/scripts/generate-rust-completion-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-completion-panic-fixtures.mjs` | `js/scripts/generate-rust-completion-panic-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-completion-rules.mjs` | `js/scripts/generate-rust-completion-rules.mjs` | `script` |  | derived | current |  |
@@ -620,6 +624,8 @@ they are.
 | `js/scripts/generate-rust-float-predicate-rules.mjs` | `js/scripts/generate-rust-float-predicate-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-function-lifetime-fixtures.mjs` | `js/scripts/generate-rust-function-lifetime-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-indirection-rules.mjs` | `js/scripts/generate-rust-indirection-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-primitive-owner-fixtures.mjs` | `js/scripts/generate-rust-primitive-owner-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-primitive-owner-rules.mjs` | `js/scripts/generate-rust-primitive-owner-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-product-rules.mjs` | `js/scripts/generate-rust-product-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-read-only-query-fixtures.mjs` | `js/scripts/generate-rust-read-only-query-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-read-only-query-rules.mjs` | `js/scripts/generate-rust-read-only-query-rules.mjs` | `script` |  | derived | current |  |
@@ -727,6 +733,7 @@ they are.
 | `src/data/formal-concept-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/foundation-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/grammar-lock.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-scoped-binding-emission.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/language-catalog.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/language-trigrams.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/link-network-binary-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
@@ -736,6 +743,8 @@ they are.
 | `src/data/reference-operations.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/resource-description-ntriples-profile.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/resource-description-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-borrowed-call-interface.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-primitive-owners.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-read-only-queries.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-scalar-loops.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-source-header-emission.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |

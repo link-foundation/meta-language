@@ -150,6 +150,19 @@ emission. Retained headers and value copies establish no general pointer,
 resource or ABI equivalence. Effect threading
 refuses a captured interface rewrite until its signature transformation is
 proved.
+The independently selected `closed primitive borrowed Rust call interface 1`
+model retains a flat primitive leaf and an actual caller whose whole body is one
+checked call to that leaf. Each pure primitive argument evaluates once in source
+order into a hygienic scalar binding before the leaf's exact immutable reference
+layers are constructed. Both owned source signatures survive Links reload;
+actual argument, lifetime, reference-layer and body edits exercise the boundary.
+Twelve complete admitted programs and twelve exact source refusals cover this
+draft. Reimport of actual emitted definitions checks the standard semantic
+model; this does not establish that the emitted binding-bodied caller satisfies
+the original direct-call selection. Borrowed results, static lifetime demands,
+recursive or chained calls, imports, effects and general generated runtime
+modules still require their own interface proofs. Both selected header models
+reject unknown function, parameter and expression fields before emission.
 Scoped lifetime-only function headers now retain ordered input binders and
 immutable reference spelling. Reference-bearing results with named binders still
 require an instantiation and outlives proof before admission. Type and constant
@@ -220,6 +233,17 @@ associated value paths `f64::NAN`, `f64::INFINITY` and `f64::NEG_INFINITY`.
 Their lowered numeric expressions inherit binary64 source evidence for predicate
 and operation chains. Qualified or imported owners, custom owners and broader
 constant evaluation require independent source proofs.
+The independently selected `standard primitive Rust binary64 owner 1` source
+model supplies that bounded proof for exact `std::primitive::f64` and
+`core::primitive::f64` paths and actual unshadowed imported aliases. Its owned
+function facet retains ordered imports, source and resolved interface paths,
+constant occurrence paths and source spans through Links reload. Forty-five
+complete flat primitive sources and twenty exact refusals cover the draft.
+Alias, namespace, occurrence and body mutations recheck the complete ownership
+record. This facet composes with the retained primitive borrowed header model
+only when that model's independent body and interface obligations also hold.
+Custom owners, `f32`, broader constant evaluation and general imports remain
+separate obligations.
 Operation fixtures compare non-NaN results by exact bits, including signed zero,
 subnormal values and infinities; NaN is compared by class. Shared operation
 fixtures exercise reimport of their actual emitted function definitions in both
@@ -232,6 +256,24 @@ Read-only scalar `mut` parameters require a complete assignment-free body and
 ordinary source-owner validation. Mutable writes, generated runtime wrappers
 and general mutable flow remain required work; full binary-codec source reimport
 still has an emitted mutable tuple binding gap.
+The independently selected `owned JavaScript scoped bindings 1` emission model
+renames checked local binding records and their actual uses through the existing
+lexical allocator. Declaration ownership, evaluation order and effects remain
+checked semantic links. Five complete modules exercise four whole-output
+emit/import cycles, ordered printing, lexical shadowing, a coherent declaration
+collision and a scalar edit followed by three more cycles. An actual revalidated
+closed scalar-loop owner retains its immutable snapshot protocol and keyword
+reservations without reserving unrelated global declaration names in that
+closed scope. Ordinary scopes retain the full global reservation set. This proof
+does not exempt reserved prefixes or permit counterfeit loop ownership.
+The default repeated-source refusal remains exact. The native adapter also
+retains the exact `Option(Float, undefined)` type and `None(undefined)` value
+observed in genuine JavaScript output, including lexical and temporal binding
+ownership of `undefined`. Optional absence is not coerced to Unit. Other option
+elements, nonempty option values and null remain outside this bridge. Native
+compilation and executable parity for the combined draft await CI; broader
+runtime-module coverage and a complete intermediate-type fixed point remain
+separate obligations.
 The typed-program adapter's shared schema gives abbreviated host fields readable
 English relation names, including the Unicode code unit string model. The finite formal
 definition adapter checks closed recursive correspondences under supported
