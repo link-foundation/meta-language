@@ -120,6 +120,8 @@ fn validate_type_records(
 }
 
 pub(super) fn validate(program: &Program) -> Result<()> {
+    crate::translation::source_empty_options::validate_source_empty_options(program)
+        .map_err(|failure| error(failure.to_string()))?;
     crate::translation::source_primitive_owners::validate_source_primitive_owners(program)
         .map_err(|failure| error(failure.to_string()))?;
     let data_names = program

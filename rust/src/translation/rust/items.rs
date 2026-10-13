@@ -23,7 +23,7 @@ mod types;
 impl RustParser {
     pub(super) fn file(&mut self) -> Result<SProgram> {
         self.inner_attributes()?;
-        let items = self.items(&[], ItemsEnd::File)?;
+        let mut items = self.items(&[], ItemsEnd::File)?;
         let Some(main) = self.main.take() else {
             return Err(TranslationError::syntax(
                 "a Rust program needs fn main",
@@ -39,6 +39,7 @@ impl RustParser {
                 None,
             ));
         }
+        self.finish_empty_option_source(&mut items, &main)?;
         Ok(SProgram {
             language: Language::Rust,
             items,
@@ -49,6 +50,7 @@ impl RustParser {
     }
 
     pub(super) fn inner_attributes(&mut self) -> Result<()> {
+        self.empty_option_attribute_guard()?;
         while self.cursor.is("#") && self.cursor.is_at("!", 1) {
             let start = self.cursor.advance();
             self.cursor.advance();
@@ -58,6 +60,7 @@ impl RustParser {
     }
 
     pub(super) fn attributes(&mut self) -> Result<()> {
+        self.empty_option_attribute_guard()?;
         while self.cursor.is("#") && self.cursor.is_at("[", 1) {
             let start = self.cursor.advance();
             self.attribute_body(&start)?;
@@ -122,6 +125,7 @@ impl RustParser {
             let start = self.peek();
             self.module_path = path.to_vec();
             self.visibility()?;
+            self.empty_option_item_guard(path, &start)?;
             let c = &mut self.cursor;
             if c.is("mod") {
                 c.advance();
@@ -178,6 +182,7 @@ impl RustParser {
             }
             if c.is("fn") || c.is("const") {
                 if c.is("fn") && c.is_at("main", 1) && path.is_empty() {
+                    self.empty_option_main_guard(&start)?;
                     self.main = Some(self.main_fn()?);
                     continue;
                 }
@@ -452,7 +457,11 @@ impl RustParser {
     pub(super) fn function(&mut self, path: &[String]) -> Result<SFn> {
         let outer_lifetimes = std::mem::take(&mut self.lifetime_bindings);
         let outer_header = std::mem::replace(&mut self.lifetime_header, true);
-        let result = self.function_with_lifetimes(path);
+        let result = if self.empty_option_source_model.is_empty() {
+            self.function_with_lifetimes(path)
+        } else {
+            self.empty_option_function(path)
+        };
         self.lifetime_bindings = outer_lifetimes;
         self.lifetime_header = outer_header;
         result
@@ -695,6 +704,7 @@ impl RustParser {
             generated: false,
             source_signature,
             source_primitive_owners,
+            source_empty_option: None,
             source_loop,
         })
     }
@@ -735,6 +745,7 @@ impl RustParser {
             generated: false,
             source_signature: None,
             source_primitive_owners: None,
+            source_empty_option: None,
             source_loop: None,
         })
     }
@@ -866,11 +877,18 @@ impl RustParser {
                 span(&token, &token),
             ));
         }
-        self.cursor.expect("}", Some("fn main"))?;
+        let close = self.cursor.expect("}", Some("fn main"))?;
         self.origins.scope = previous;
         Ok(SMain {
             effects,
-            span: span(&start, self.cursor.peek()),
+            span: if self.empty_option_source_model.is_empty() {
+                span(&start, self.cursor.peek())
+            } else {
+                Some(super::Span {
+                    start: start.start,
+                    end: close.end,
+                })
+            },
             sequential_async: false,
         })
     }

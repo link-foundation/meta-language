@@ -38,6 +38,7 @@ pub mod rust;
 pub(crate) mod scalar_loop_rules;
 pub(crate) mod scoped_binding_emission;
 pub(crate) mod scoped_binding_emission_rules;
+pub(crate) mod source_empty_options;
 pub(crate) mod source_header_emission;
 pub(crate) mod source_header_emission_rules;
 pub mod source_loops;
