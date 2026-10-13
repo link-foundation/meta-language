@@ -14,7 +14,7 @@ import { BOOL, FLOAT, STRING, UNIT, array, rustFixedType, tuple } from './types.
 import { RustSourceOrigins } from './rust-source-origins.js';
 import { acceptRustSourceBoxOwner, acceptRustSourceLifetimeBinding, acceptRustSourceLifetimeReference, acceptRustSourceLifetimeResult } from './rust-indirection-rules.js';
 import { acceptRustTupleIndexSpelling } from './rust-product-rules.js';
-import { acceptRustSourceArrayOwner, acceptRustSourceArrayElement } from './rust-array-rules.js';
+import { acceptRustSourceArrayOwner, acceptRustSourceArrayElement, acceptRustSourceArrayResultModel, acceptRustSourceArrayResult } from './rust-array-rules.js';
 import { checkProgram } from './check.js';
 
 const ACCEPTED_DERIVES = new Set(['Clone', 'Copy', 'Debug', 'PartialEq', 'Eq', 'Hash', 'PartialOrd', 'Ord']);
@@ -24,12 +24,13 @@ const ADDITIVE = { '+': 'add', '-': 'sub' };
 const MULTIPLICATIVE = { '*': 'mul', '/': 'div', '%': 'rem' };
 const RESERVED_ITEMS = new Set(['impl', 'trait', 'struct', 'union', 'static', 'type', 'extern', 'macro_rules', 'async', 'unsafe']);
 
-export function parseRust(source) {
+export function parseRust(source, { arrayResultModel = '' } = {}) {
+  if (!acceptRustSourceArrayResultModel(arrayResultModel)) throw unsupported('Rust array result model', 'select the legacy model or immutable fresh scalar vector results 1');
   const { tokens } = tokenize(source, 'Rust');
-  const declarations = new RustParser(tokens);
+  const declarations = new RustParser(tokens, null, arrayResultModel);
   declarations.file();
   declarations.origins.resolveTypes((segments, path) => declarations.resolve(segments, path));
-  const syntax = new RustParser(tokens, declarations.origins.catalog);
+  const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel);
   syntax.origins.collecting = true;
   syntax.aliases = declarations.aliases;
   const surface = syntax.file();
@@ -39,19 +40,19 @@ export function parseRust(source) {
     if (!(error instanceof TranslationError)) throw error;
     return surface;
   }
-  const parser = new RustParser(tokens, syntax.origins.catalog);
+  const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel);
   parser.aliases = syntax.aliases;
   return parser.file();
 }
 
 class RustParser {
-  constructor(tokens, catalog = null) {
+  constructor(tokens, catalog = null, arrayResultModel = '') {
     this.cursor = new TokenCursor([...tokens], 'Rust');
     // `use` aliases, per module path.
     this.aliases = new Map();
     this.modulePath = [];
     this.crateDeclarations = new Set();
-    this.origins = new RustSourceOrigins(catalog);
+    this.origins = new RustSourceOrigins(catalog, arrayResultModel);
     this.reservedNames = new Set(tokens.filter(token => token.kind === 'identifier').map(token => token.value));
     this.productBindingCount = 0;
     this.lifetimeBindings = new Set();
@@ -407,13 +408,18 @@ class RustParser {
       if (!c.eat('->')) throw unsupported('function without a result', `${name} returns (); only value-returning functions are portable`, span(start, c.peek()));
       const ret = this.type();
       const sourceResult = this.origins.type;
-      if (ret.kind === 'array') throw unsupported('Rust array result', 'returning vectors or borrowed slices needs a separate consumption and outlives proof', span(start, c.peek()));
+      if (ret.kind === 'array' && !acceptRustSourceArrayResult(this.origins.arrayResultModel, ret.element.kind, sourceResult.arraySourceModel === 'owned vector' && sourceResult.wrappers.length === 0, true)) throw unsupported('Rust array result', 'returning vectors or borrowed slices needs a separate consumption and outlives proof', span(start, c.peek()));
       if (!acceptRustSourceLifetimeResult(this.lifetimeBindings.size > 0, sourceResult.wrappers.includes('reference'))) throw unsupported('function lifetime result', 'reference results with lifetime binders require an explicit return-lifetime instantiation and outlives proof', span(start, c.peek()));
       this.origins.declaration(name, path, { k: 'fn', lifetimeBindings: [...this.lifetimeBindings], parameters: sourceParams, result: sourceResult });
       if (c.is('where')) throw unsupported('where clause', 'trait bounds are outside the portable core', span(start, c.peek()));
       this.lifetimeHeader = false;
       const previous = this.origins.enter(new Map(params.map((param, index) => [param.name, sourceParams[index]])));
       const body = this.block(path);
+      if (ret.kind === 'array') {
+        if (!acceptRustSourceArrayResult(this.origins.arrayResultModel, ret.element.kind, sourceResult.arraySourceModel === 'owned vector' && sourceResult.wrappers.length === 0, this.origins.freshArrayResult(body, path))) throw unsupported('fresh Rust array result', 'every returning tail must construct a new vector of direct scalar Copy values; vector names, calls, clones and borrowed results need separate consumption proofs', body.span);
+        sourceResult.freshArrayValue = true;
+        this.origins.mark(body, sourceResult);
+      }
       this.origins.argument(this.origins.origin(body, path), sourceResult, body.span);
       this.origins.scope = previous;
       return { k: 'fn', name, params, ret, body, span: span(start, c.peek()) };

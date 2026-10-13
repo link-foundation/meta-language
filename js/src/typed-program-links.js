@@ -318,9 +318,15 @@ export function readTypedProgramBindingIdentities(network, root) {
 export function createTypedProgramLinks(source, language, options = {}) {
   const canonical = /^(?:rust|rs)$/iu.test(language) ? 'Rust' : /^(?:javascript|js|mjs)$/iu.test(language) ? 'JavaScript' : null;
   if (!canonical) throw new TypeError('typed linked source import currently reads JavaScript and Rust');
-  const program = checkProgram(canonical === 'Rust' ? parseRust(source) : parseJavaScript(source, options.context));
+  const selected = options.rustArrayResultModel !== undefined;
+  if (selected && canonical !== 'Rust') throw new TypeError('a Rust array result model requires Rust source');
+  const program = checkProgram(canonical === 'Rust' ? parseRust(source, { arrayResultModel: options.rustArrayResultModel }) : parseJavaScript(source, options.context));
   if (options.utf16Strings) program.utf16Strings = true;
-  return encodeTypedProgramLinks(program, options);
+  const provenance = selected ? {
+    sourceProfile: { language: 'Rust', rustArrayResultModel: options.rustArrayResultModel },
+    userProvenance: options.provenance ?? null,
+  } : options.provenance;
+  return encodeTypedProgramLinks(program, { ...options, provenance });
 }
 
 export function emitTypedProgramLinks(network, root, target) {

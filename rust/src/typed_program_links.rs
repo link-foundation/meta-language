@@ -8,7 +8,7 @@ use crate::translation::emit_javascript::emit_javascript;
 use crate::translation::emit_rust::emit_rust;
 use crate::translation::ir::Program;
 use crate::translation::javascript::parse_javascript;
-use crate::translation::rust::parse_rust;
+use crate::translation::rust::{parse_rust, parse_rust_with_array_result_model};
 use crate::{LinkId, LinkMetadata, LinkNetwork, LinkType};
 use serde_json::Value;
 use std::fmt;
@@ -210,6 +210,34 @@ pub fn create_typed_program_links(source: &str, language: &str) -> Result<TypedP
         &check_program(&surface).map_err(|failure| error(failure.to_string()))?,
     )
 }
+/// Import Rust with an explicit versioned array result model and provenance.
+///
+/// The selected source profile is serialized separately from caller provenance.
+/// An empty model retains the legacy source admission; the fresh scalar model
+/// checks constructor tails before projection into immutable array values.
+///
+/// # Errors
+/// Refuses non-Rust source languages, unknown models and unproved result tails,
+/// and propagates frontend/checker and supported-adapter diagnostics.
+pub fn create_typed_program_links_with_rust_array_result_model(
+    source: &str,
+    language: &str,
+    model: &str,
+    provenance: Option<&Value>,
+) -> Result<TypedProgramLinks> {
+    if !matches!(language.to_ascii_lowercase().as_str(), "rust" | "rs") {
+        return Err(error("a Rust array result model requires Rust source"));
+    }
+    let surface = parse_rust_with_array_result_model(source, model)
+        .map_err(|failure| error(failure.to_string()))?;
+    let program = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
+    let selected_provenance = serde_json::json!({
+        "sourceProfile": { "language": "Rust", "rustArrayResultModel": model },
+        "userProvenance": provenance,
+    });
+    encode_typed_program_links_with_provenance(&program, Some(&selected_provenance))
+}
+
 /// Emit target-native code from a reloaded semantic graph.
 ///
 /// # Errors
