@@ -57,8 +57,8 @@ if (process.argv.includes('--update-styles')) {
   }
   // A single-use owned continuation is moved into its match/result. The
   // source never accesses it again and its payload has no user-defined Drop.
-  for (const match of raw.matchAll(/\blet (ml_s[0-9]+|ml_result[0-9]+) = /gu)) {
-    const name = match[1];
+  for (const match of raw.matchAll(/\blet (ml_s[0-9]+|ml_result[0-9]+) = |\b[A-Za-z_0-9]+Return\((ml_result[0-9]+)\) => \{/gu)) {
+    const name = match[1] ?? match[2];
     const occurrences = [...raw.matchAll(new RegExp('\\b' + name + '\\b', 'gu'))].length;
     if (occurrences === 2) replace(name + '.clone()', name);
   }

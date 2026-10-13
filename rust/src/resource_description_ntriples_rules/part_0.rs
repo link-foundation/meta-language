@@ -530,7 +530,7 @@ pub fn read_resource_description_n_triples_token(units: &[f64], start: f64) -> V
                                 vec![8f64, index_3, 0f64]
                             }
                             super::MlReadResourceDescriptionNTriplesTokenLoop4Result::MlReadResourceDescriptionNTriplesTokenLoop4Return(ml_result4) => {
-                                ml_result4.clone()
+                                ml_result4
                             }
                         }
                 }
@@ -581,7 +581,7 @@ pub fn read_resource_description_n_triples_token(units: &[f64], start: f64) -> V
                                                         }
                                                     }
                                                     super::MlReadResourceDescriptionNTriplesTokenLoop6Result::MlReadResourceDescriptionNTriplesTokenLoop6Return(ml_result7) => {
-                                                        ml_result7.clone()
+                                                        ml_result7
                                                     }
                                                 }
                         }
@@ -604,7 +604,7 @@ pub fn read_resource_description_n_triples_token(units: &[f64], start: f64) -> V
                                                                 vec![0f64, start, 7f64]
                                                             }
                                                             super::MlReadResourceDescriptionNTriplesTokenLoop8Result::MlReadResourceDescriptionNTriplesTokenLoop8Return(ml_result8) => {
-                                                                ml_result8.clone()
+                                                                ml_result8
                                                             }
                                                         }
                             }
