@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 94 | 93 | 1 | 0 |
+| Generators | 98 | 97 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 28 | 0 | 0 | 28 |
+| Published artifact contents | 29 | 0 | 0 | 29 |
 
 ## JavaScript engines
 
@@ -623,9 +623,13 @@ they are.
 | `js/scripts/generate-rust-scalar-parameter-fixtures.mjs` | `js/scripts/generate-rust-scalar-parameter-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-scalar-parameter-rules.mjs` | `js/scripts/generate-rust-scalar-parameter-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-source-indirection-fixtures.mjs` | `js/scripts/generate-rust-source-indirection-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-source-signature-fixtures.mjs` | `js/scripts/generate-rust-source-signature-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-source-signature-rules.mjs` | `js/scripts/generate-rust-source-signature-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-string-rules.mjs` | `js/scripts/generate-rust-string-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-cases.mjs` | `js/scripts/generate-self-translation-cases.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-report.mjs` | `js/scripts/generate-self-translation-report.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-shared-numeric-function-fixtures.mjs` | `js/scripts/generate-shared-numeric-function-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-shared-numeric-function-rules.mjs` | `js/scripts/generate-shared-numeric-function-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-stateful-extra-fixtures.mjs` | `js/scripts/generate-stateful-extra-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-structured-data-link-rules.mjs` | `js/scripts/generate-structured-data-link-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-structured-data-migration-revisions.mjs` | `js/scripts/generate-structured-data-migration-revisions.mjs` | `script` |  | derived | current |  |
@@ -726,6 +730,7 @@ they are.
 | `src/data/reference-operations.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/resource-description-ntriples-profile.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/resource-description-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-source-signatures.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/semantic-lexicon.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/typed-program-links-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/typescript-erasure.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
