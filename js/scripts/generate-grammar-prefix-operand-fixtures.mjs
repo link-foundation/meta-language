@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { LANGUAGE_CATALOG } from '../src/language-catalog.js';
 import { grammarSourceOf, sourceText } from './import-native-grammars.mjs';
 import { oracleSnapshot } from './native-grammar-rows.mjs';
-import { checkProjectData, writeProjectData } from './project-data.mjs';
+import { checkProjectData, readProjectData, writeProjectData } from './project-data.mjs';
 
 const entry = grammarSourceOf('native-rust');
 const original = JSON.parse(sourceText(entry));
@@ -27,6 +27,20 @@ const controls = [
 const cases = controls.map(([id, expression]) => {
   const source = `fn f(){let x = ${expression};}`;
   const oracle = oracleSnapshot(source, 'Rust');
+  if (oracle.recovers) throw new Error(`the pinned oracle rejects ${id}`);
+  return { id, source, rows: oracle.rows };
+});
+const configurationEntry = grammarSourceOf('native-hcl');
+const configurationOriginal = readProjectData(new URL('../../parity/fixtures/native-grammars/hcl-corpus.lino', import.meta.url)).cases
+  .find(value => value.file === 'real_world.txt' && value.title === 'example 2');
+if (!configurationOriginal) throw new Error('the pinned configuration regression is missing');
+const configurationCases = [
+  ['configuration-property-after-conjunction', 'a=x != "" && x.y == 1\n'],
+  ['configuration-property-inside-arithmetic', 'a=x + y.foo * z\n'],
+  ['configuration-property-before-conjunction', 'a=x.y == 1 && x != ""\n'],
+  ['pinned-configuration-real-world-example-two', configurationOriginal.source],
+].map(([id, source]) => {
+  const oracle = oracleSnapshot(source, 'HCL');
   if (oracle.recovers) throw new Error(`the pinned oracle rejects ${id}`);
   return { id, source, rows: oracle.rows };
 });
@@ -66,6 +80,14 @@ const value = {
   `,
   operandSources: ['x(x)=y', '0(x)=y'],
   cases,
+  configurationSourceGrammar: {
+    revision: configurationEntry.revision,
+    sha256: configurationEntry.sha256,
+    package: configurationEntry.package,
+    explanation: 'The actual first child may instantiate a source operand through complete whole-rule unit alternatives; compound sequences and anonymous operator prefixes supply no such witness.',
+  },
+  configurationProjection: LANGUAGE_CATALOG.nativeGrammars['native-hcl'],
+  configurationCases,
 };
 const path = fileURLToPath(new URL('../../parity/fixtures/grammar-prefix-operand-precedence.lino', import.meta.url));
 if (process.argv.includes('--check')) checkProjectData(path, value);

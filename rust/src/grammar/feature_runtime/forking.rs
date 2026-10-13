@@ -249,8 +249,11 @@ impl GrammarFacts {
         let rule = rule?;
         let slots = self.heads.get(rule)?;
         if !accept_precedence_operand_head(
-            head.kind.as_ref().is_some_and(|name| slots.contains(name))
-                || head.rule.as_ref().is_some_and(|name| slots.contains(name)),
+            slots.iter().any(|slot| {
+                let units = unit_closure(self, slot);
+                head.kind.as_ref().is_some_and(|name| units.contains(name))
+                    || head.rule.as_ref().is_some_and(|name| units.contains(name))
+            }),
             head.reduced_to.iter().any(|name| slots.contains(name)),
         ) {
             return None;

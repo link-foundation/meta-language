@@ -24,8 +24,9 @@ across a rule's alternatives. An anonymous prefix could consequently borrow
 the operand reference of a different alternative.
 
 The repair requires the actual first child's rule, kind or recorded reduction
-to match a source operand reference before considering that operand's suffix
-precedence. A prefix without that evidence retains its production's own
+to match a source operand reference, directly or through complete whole-rule
+unit alternatives, before considering that operand's suffix precedence.
+A prefix without that evidence retains its production's own
 precedence and associativity. The shared Boolean decision is translated from
 JavaScript into Rust and adapted through Links Notation decorators. The source
 grammar, node names, fields, aliases and census expectations stay intact.
@@ -39,6 +40,16 @@ retains 13 independent oracle controls and the source provenance. Additional
 controls retain actual named and anonymously reduced operands, comma contexts
 and scanner precedence. Native compilation and the complete downstream census
 comparison remain CI verification steps.
+
+The complete unit witness also preserves HCL's source grammar choices. Its
+`expression_term` can instantiate a binary or variable node through complete
+alternatives without retaining that intermediate name on the child. The bounded
+configuration controls include the actual failed source
+`a=x != "" && x.y == 1` and its original `real_world.txt: example 2` input.
+Their entire CST rows match the independent oracle. The shared unit-closure
+algorithm follows complete alternatives and excludes compound sequences, so it
+cannot turn a literal operator prefix into a proved operand. The Rust range
+controls and the exact pinned Formal AI source retain their original rows.
 
 Only the pinned source file, its census document and authenticated grammar
 assets were fetched into temporary storage for this investigation. No upstream

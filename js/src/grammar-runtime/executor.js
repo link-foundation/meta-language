@@ -1859,7 +1859,10 @@ function shiftPreferred(long, short, orders, grammar, lookahead = null) {
     const rule = grammar.rules.get(progress.rule);
     const slots = rule ? directEdge(rule.expression, 'right', rule.name).map(([slot]) => slot) : [];
     const operand = acceptPrecedenceOperandHead(
-      slots.some((slot) => head.kind === slot || head.rule === slot),
+      slots.some((slot) => {
+        const units = unitClosure(grammar, slot);
+        return units.has(head.kind) || units.has(head.rule);
+      }),
       slots.some((slot) => head.reducedTo?.includes(slot)),
     );
     const shifts = (operand ? slots : []).flatMap((slot) => shiftItems(grammar, slot))

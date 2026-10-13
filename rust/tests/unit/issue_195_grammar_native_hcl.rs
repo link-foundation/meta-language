@@ -13,6 +13,30 @@ const GRAMMAR: &str = include_str!("../../../parity/grammars/native/hcl.lino");
 const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/hcl.lino");
 const CORPUS: &str = include_str!("../../../parity/fixtures/native-grammars/hcl-corpus.lino");
 
+#[test]
+fn complete_unit_operands_preserve_configuration_operator_fields() {
+    let fixture: Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/grammar-prefix-operand-precedence.lino"
+    ))
+    .expect("the shared prefix and unit operand fixture reads");
+    let parser = parser(GRAMMAR);
+    let rows = Rows::new(&fixture["configurationProjection"]);
+    for case in cases(&fixture, "configurationCases") {
+        let input = source(case);
+        let (expected, recovers) = oracle_rows(&tree_sitter_hcl::LANGUAGE.into(), input);
+        assert!(!recovers, "{}", case["id"]);
+        assert_eq!(Value::Array(expected.clone()), case["rows"]);
+        let outcome = parser
+            .parse_tree(input.as_bytes(), &FeatureParseOptions::default())
+            .expect("the bounded configuration parse runs");
+        assert!(outcome.ok, "{}", case["id"]);
+        assert!(outcome.ambiguities.is_empty(), "{}", case["id"]);
+        let tree = outcome.tree.expect("an accepted source has a tree");
+        assert_eq!(rows.rows(&tree, input), expected);
+        assert_eq!(rebuilt(&tree), input);
+    }
+}
+
 fn observe(assertions: &[&str], test_name: &str) {
     record(&Observation {
         requirement_id: "I195-GRAMMAR-NATIVE-HCL",
