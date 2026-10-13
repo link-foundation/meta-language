@@ -24,12 +24,23 @@ export function checkRustScalarLoopProof(item, language) {
   const proof = item.sourceLoop;
   const exact = (value, fields) => value && typeof value === 'object' && !Array.isArray(value)
     && Object.keys(value).length === fields.length && fields.every(field => Object.hasOwn(value, field));
-  if (!exact(proof, ['model', 'language', 'sourceName', 'lowering', 'state', 'transitions'])
-    || proof.model !== policy.model || proof.language !== language || language !== policy.language
+  const fields = ['model', 'language', 'sourceName', 'lowering', 'state', 'transitions', ...(language === 'JavaScript' ? ['interface'] : [])];
+  if (!exact(proof, fields)
+    || proof.model !== policy.model || proof.language !== language || !policy.languages.includes(language)
     || proof.sourceName !== item.name || proof.lowering !== policy.lowering
     || (item.generated !== undefined && item.generated !== false)
     || !Array.isArray(proof.state) || !Array.isArray(proof.transitions)) fail('the owned loop proof has an inconsistent model, name or layout', item.span);
-  header(item.sourceSignature, item.params, item.ret, language);
+  if (language === 'Rust') header(item.sourceSignature, item.params, item.ret, language);
+  else {
+    const signature = proof.interface;
+    if (item.sourceSignature !== undefined || !exact(signature, ['model', 'parameters', 'result'])
+      || signature.model !== policy.javaScriptInterfaceModel || !Array.isArray(signature.parameters)
+      || signature.parameters.length !== item.params.length) fail('a JavaScript loop needs its distinct Number/Boolean interface', item.span);
+    const actual = [...item.params.map(param => param.type), item.ret];
+    for (const [index, type] of [...signature.parameters, signature.result].entries()) {
+      if (!exact(type, ['kind']) || !Object.hasOwn(policy.types, type.kind) || type.kind !== actual[index]?.kind) fail('a JavaScript loop interface must match actual scalar header types', item.span);
+    }
+  }
   if (item.params.some(param => param.guard != null || param.default != null || param.optional)) fail('loop state excludes guarded, default and optional parameters', item.span);
   if (proof.state.length !== item.params.length || !proof.state.length) fail('loop state must match every function parameter', item.span);
   const names = new Set();
@@ -39,11 +50,16 @@ export function checkRustScalarLoopProof(item, language) {
     names.add(slot.name);
   }
   const mutable = new Set(proof.state.filter(slot => slot.mutable).map(slot => slot.name));
+  const snapshots = new Set(), usedSnapshots = new Set();
   let calls = 0, visits = 0;
   function expression(node, scope, tail = false) {
     if (++visits > 100000 || !node || typeof node !== 'object') fail('loop proof exceeds its expression resource limit', item.span);
     if (node.k === 'let') {
       if (scope.has(node.name)) fail('loop locals must have distinct scalar binding identities', node.span);
+      if (language === 'JavaScript' && /^ml_/u.test(node.name)) {
+        if (!new RegExp(policy.snapshotBindingPattern, 'u').test(node.name)) fail('a reserved local must be an exact checked write snapshot', node.span);
+        snapshots.add(node.name);
+      }
       expression(node.value, scope);
       expression(node.body, new Map(scope).set(node.name, node.value), tail);
     } else if (node.k === 'if') {
@@ -61,6 +77,8 @@ export function checkRustScalarLoopProof(item, language) {
         if (!exact(write, ['target', 'binding']) || !mutable.has(write.target) || writes.has(write.target)
           || !scope.has(write.binding) || names.has(write.binding)) fail('a continuation must write distinct declared mutable state slots', node.span);
         writes.set(write.target, write.binding);
+        usedSnapshots.add(write.binding);
+        if (language === 'JavaScript' && !snapshots.has(write.binding)) fail('a JavaScript write must use its exact scalar snapshot binding', node.span);
         const position = [...scope.keys()].indexOf(write.binding);
         if (position <= order) fail('parallel writes must retain their actual evaluation order', node.span);
         order = position;
@@ -105,6 +123,7 @@ export function checkRustScalarLoopProof(item, language) {
   }
   expression(item.body, new Map([...names].map(name => [name, null])), true);
   if (!calls || calls !== proof.transitions.length) fail('the loop proof must describe every actual continuation', item.span);
+  if ([...snapshots].some(name => !usedSnapshots.has(name))) fail('a reserved snapshot cannot acquire an unrelated local meaning', item.span);
   return proof;
 }
 

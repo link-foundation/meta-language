@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {rustFunctionDefinitions} from '../js/scripts/generate-self-translation-report.mjs';
 import {parseRust} from '../js/src/translation/rust.js';
+import {parseJavaScript} from '../js/src/translation/javascript.js';
 import {checkProgram} from '../js/src/translation/check.js';
 import {emitRust} from '../js/src/translation/emit-rust.js';
 import {emitJavaScript} from '../js/src/translation/emit-javascript.js';
@@ -50,6 +51,15 @@ test('ordinary scalar state lowers iteratively before exact authentic generated-
     const replay = checkProgram(parseRust(definitions + suffix, options));
     assert.equal(replay.items[0].name, entry.name);
     observe(emitJavaScript(replay).text, entry);
+    const actualJavaScriptDefinitions = emitJavaScript(program).definitions.join('\n\n');
+    assert.throws(() => checkProgram(parseJavaScript(actualJavaScriptDefinitions)), /reserved identifier/u);
+    const reverse = checkProgram(parseJavaScript(actualJavaScriptDefinitions, options));
+    assert.equal(reverse.items[0].name, entry.name);
+    assert.equal(reverse.items[0].sourceSignature, undefined);
+    assert.equal(reverse.items[0].sourceLoop.interface.model, 'JavaScript Number and Boolean scalar loop values 1');
+    observe(emitJavaScript(reverse).text, entry);
+    const reverseRust = emitRust(reverse).definitions.join('\n\n');
+    observe(emitJavaScript(checkProgram(parseRust(reverseRust + suffix, options))).text, entry);
   }
 });
 test('owned header, state, write order and profile survive checked source-free Links reload', () => {
@@ -64,7 +74,54 @@ test('owned header, state, write order and profile survive checked source-free L
     assert.ok(emitTypedProgramLinks(network, imported.root, 'Rust').code.includes(`pub fn ${entry.name}(`));
     assert.ok(network.links().some(link => link.metadata().definition === model));
     assert.ok(network.fieldRelations().some(row => row.label === 'source loop proof'));
+    const actualJavaScript = emitJavaScript(decodeTypedProgramLinks(network, imported.root)).definitions.join('\n\n');
+    const reverse = createTypedProgramLinks(actualJavaScript, 'JavaScript', {javaScriptScalarLoopModel: model, provenance: {caller: 'reverse prototype'}});
+    const reverseNetwork = LinkNetwork.fromLino(reverse.network.toLino());
+    assert.equal(decodeTypedProgramLinks(reverseNetwork, reverse.root).declarations.get(entry.name).sourceLoop.language, 'JavaScript');
+    observe(emitTypedProgramLinks(reverseNetwork, reverse.root, 'JavaScript').code, entry);
+    assert.ok(emitTypedProgramLinks(reverseNetwork, reverse.root, 'Rust').code.includes(`pub fn ${entry.name}(`));
   }
+});
+test('JavaScript reverse refuses unproved snapshots, owners, state order and interface meanings', () => {
+  const actual = emitJavaScript(checkProgram(parseRust(cases[1].source + suffix, options))).definitions.join('\n\n');
+  const invalid = [
+    actual.replace('const ml_scalar_write0 = b;', 'const ml_unrelated = b;'),
+    actual.replace('const ml_scalar_write0 = b;', 'const ml_scalar_write9 = b; const ml_scalar_write0 = b;'),
+    actual.replace('const ml_scalar_write1 = a;', 'const ml_scalar_write1 = ml_scalar_write0;'),
+    actual.replace('[a, b, limit, at] =', '[b, a, limit, at] ='),
+    actual.replace('const ml_scalar_write0 = b;', 'const ml_scalar_write0 = [b];'),
+    actual.replace('const ml_scalar_write0 = b;', 'const ml_scalar_write0 = foreign(b);'),
+    actual.replace('const ml_scalar_write0 = b;', 'console.log(b); const ml_scalar_write0 = b;'),
+    actual.replace('for (;;)', 'for (;at<limit;)'),
+    actual.replace('continue;', 'break;'),
+    actual.replace('function swap(a,', 'async function swap(a,'),
+    actual.replace('function swap(a,', 'function swap(a = 0,'),
+  ];
+  for (const source of invalid) assert.throws(() => checkProgram(parseJavaScript(source, options)), source);
+  const imported = createTypedProgramLinks(actual, 'JavaScript', {javaScriptScalarLoopModel: model});
+  for (const edit of [item => {item.sourceLoop.interface.parameters[0].kind = 'bool';},
+    item => {item.sourceLoop.language = 'Rust';}, item => {item.sourceLoop.state[0].name = 'other';},
+    item => {item.sourceLoop.transitions[0].writes[0].binding = 'b';}]) {
+    const program = decodeTypedProgramLinks(LinkNetwork.fromLino(imported.network.toLino()), imported.root);
+    edit(program.declarations.get('swap')); assert.throws(() => encodeTypedProgramLinks(program));
+  }
+  assert.throws(() => parseJavaScript(actual, {scalarLoopModel: 'another model'}), /scalar loop model/u);
+  assert.throws(() => createTypedProgramLinks(cases[1].source + suffix, 'Rust', {javaScriptScalarLoopModel: model}), /requires JavaScript source/u);
+});
+test('source-free checked scalar loop edits change the actual parallel transition', () => {
+  const imported = createTypedProgramLinks(cases[1].source + suffix, 'Rust', linkedOptions);
+  const program = decodeTypedProgramLinks(LinkNetwork.fromLino(imported.network.toLino()), imported.root);
+  const entry = program.declarations.get('swap');
+  assert.equal(entry.body.then.name, 'ml_scalar_write0');
+  entry.body.then.value = {k: 'binary', op: 'add', domain: {kind: 'float'}, semantics: 'ieee', left: {k: 'var', name: 'b', type: {kind: 'float'}},
+    right: {k: 'lit', value: '1', type: {kind: 'float'}}, type: {kind: 'float'}};
+  const edited = encodeTypedProgramLinks(program), network = LinkNetwork.fromLino(edited.network.toLino());
+  const expected = {...cases[1], observations: [[[1,2,1,0],3], [[1,2,2,0],2]]};
+  const javascript = emitJavaScript(decodeTypedProgramLinks(network, edited.root)).definitions.join('\n\n');
+  observe(javascript, expected);
+  const reverse = checkProgram(parseJavaScript(javascript, options));
+  observe(emitJavaScript(reverse).text, expected);
+  observe(emitJavaScript(checkProgram(parseRust(emitRust(reverse).definitions.join('\n\n') + suffix, options))).text, expected);
 });
 test('default and existing profiles retain exact refusal boundaries and unproved owners remain excluded', () => {
   for (const previous of [{}, {arrayResultModel: 'immutable fresh scalar vector results 1', completionModel: 'closed guarded function returns 1'}]) {

@@ -129,7 +129,7 @@ export function tailLoop(entry, body) {
   if (!entry.recursive) return null;
   if (!entry.generated) {
     if (entry.sourceLoop === undefined) return null;
-    checkRustScalarLoopProof(entry, 'Rust');
+    checkRustScalarLoopProof(entry, entry.sourceLoop.language);
   }
   const rewrite = (e) => {
     switch (e.k) {
