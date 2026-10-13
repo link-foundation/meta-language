@@ -35,3 +35,7 @@ export function acceptSharedNumericLiteral(kind, booleanValue, decimalValue, fin
   if (kind === 'bool') return booleanValue;
   return kind === 'float' && decimalValue && finiteValue && (!requireCanonical || canonicalValue);
 }
+/** @param {boolean} present @param {boolean} booleanScalar @param {boolean} falseValue @returns {boolean} */
+export function acceptSharedNumericContextFlag(present, booleanScalar, falseValue) {
+  return !present || booleanScalar && falseValue;
+}

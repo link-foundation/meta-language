@@ -67,7 +67,11 @@ test('independent JavaScript sources and both source-free interpretations agree 
 });
 
 test('unsupported types, defaults, effects and undeclared operations cannot acquire the numeric basis', () => {
-  for (const refusal of [...fixture.refusals, ...fixture.originRefusals]) assert.throws(() => encodeSharedNumericFunctionDefinition(program(refusal), refusal.declaration), /numeric|Boolean|binary64|guard|default|supported|outside|output|effect/iu, refusal.name);
+  for (const refusal of [...fixture.refusals, ...fixture.originRefusals, ...fixture.encodedOriginRefusals]) assert.throws(() => encodeSharedNumericFunctionDefinition(program(refusal), refusal.declaration), /numeric|Boolean|binary64|guard|default|supported|outside|output|effect/iu, refusal.name);
+  for (const value of fixture.encodedOriginRefusals) {
+    const input = program(value); const body = input.network.link(input.root).references()[0];
+    assert.ok(input.network.fieldRelations().some(field => field.parent.equals(body) && field.label === value.contextLabel && (value.malformedScalar || input.network.link(field.child).metadata().definition === 'true')));
+  }
   for (const invalid of fixture.invalidDefinitions) {
     assert.throws(() => readFormalConceptDefinition(archive(invalid)));
     assert.equal(proveFormalConceptEquivalence(archive(fixture.cases[0]), archive(invalid)), null);

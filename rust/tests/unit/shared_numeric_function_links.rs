@@ -139,6 +139,7 @@ fn native_profile_refuses_unmodeled_types_defaults_effects_and_operations() {
         .unwrap()
         .iter()
         .chain(fixture["originRefusals"].as_array().unwrap())
+        .chain(fixture["encodedOriginRefusals"].as_array().unwrap())
     {
         let (network, root) = input(refusal);
         assert!(

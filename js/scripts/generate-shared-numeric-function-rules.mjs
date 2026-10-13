@@ -70,7 +70,7 @@ if (process.argv.includes('--update-styles')) {
     if (depth) throw new Error('a translated formal function decision has an unclosed branch');
     replace(styled.slice(match.index, cursor), `} else ${styled.slice(opening + 1, cursor - 1).trim()}`);
   }
-  for (const name of ['accept_shared_numeric_type', 'accept_shared_numeric_expression', 'accept_shared_numeric_unary', 'accept_shared_numeric_binary', 'accept_shared_numeric_type_shape', 'accept_shared_numeric_context', 'accept_shared_numeric_declaration', 'accept_shared_numeric_parameter', 'accept_shared_numeric_entry', 'accept_shared_numeric_expression_shape', 'accept_shared_numeric_literal']) {
+  for (const name of ['accept_shared_numeric_type', 'accept_shared_numeric_expression', 'accept_shared_numeric_unary', 'accept_shared_numeric_binary', 'accept_shared_numeric_type_shape', 'accept_shared_numeric_context', 'accept_shared_numeric_declaration', 'accept_shared_numeric_parameter', 'accept_shared_numeric_entry', 'accept_shared_numeric_expression_shape', 'accept_shared_numeric_literal', 'accept_shared_numeric_context_flag']) {
     replace(`pub fn ${name}(`, `/// Read a shared formal function graph decision.\n#[must_use]\npub fn ${name}(`);
   }
   for (const line of styled.split('\n')) {
@@ -80,6 +80,7 @@ if (process.argv.includes('--update-styles')) {
     else if (tail) replace(line, line.slice(0, line.length - tail[1].length) + formatDecisionExpression(tail[1]));
   }
   replace('semantics == ""', 'semantics.is_empty()');
+  replace('pub fn accept_shared_numeric_context_flag(', 'pub const fn accept_shared_numeric_context_flag(');
   replace('pub fn accept_shared_numeric_parameter(', 'pub const fn accept_shared_numeric_parameter(');
   writeFileSync(styleFile, new DecoratorSet([{ id: 'shared-numeric-function-library-style', level: 'emitter', order: 0,
     when: [['format', 'Rust']], actions }]).toLino());

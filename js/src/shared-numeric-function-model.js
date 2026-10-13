@@ -1,7 +1,7 @@
 // The profile guard is separate from formal graph comparison. Language is
 // irrelevant only to this closed value interpretation, never by default.
 import { decodeTypedProgramLinks, TYPED_PROGRAM_LINKS_SCHEMA } from './typed-program-links.js';
-import { acceptSharedNumericTypeShape, acceptSharedNumericContext, acceptSharedNumericDeclaration, acceptSharedNumericParameter, acceptSharedNumericEntry, acceptSharedNumericExpressionShape, acceptSharedNumericLiteral, acceptSharedNumericUnary, acceptSharedNumericBinary } from './shared-numeric-function-rules.js';
+import { acceptSharedNumericTypeShape, acceptSharedNumericContext, acceptSharedNumericContextFlag, acceptSharedNumericDeclaration, acceptSharedNumericParameter, acceptSharedNumericEntry, acceptSharedNumericExpressionShape, acceptSharedNumericLiteral, acceptSharedNumericUnary, acceptSharedNumericBinary } from './shared-numeric-function-rules.js';
 import { LinkId } from './primitives.js';
 import { readRuntimeProjectData } from './project-data-loader.js';
 
@@ -19,7 +19,7 @@ function type(type) {
 export function readSharedNumericFunctionModel(network, root, { canonical = true } = {}) {
   const program = decodeTypedProgramLinks(network, root);
   if (!acceptSharedNumericContext(program.sourceLanguage, Boolean(program.externals?.length || program.imports?.length || program.main?.effects?.length
-    || program.outputThreaded || program.abortsThreaded || program.referenceSemantics || program.utf16Strings))) fail('effects, imports and reference interpretations are outside the model');
+    || ['outputThreaded', 'abortsThreaded', 'referenceSemantics', 'utf16Strings'].some(name => !acceptSharedNumericContextFlag(Object.hasOwn(program, name), typeof program[name] === 'boolean', program[name] === false))))) fail('effects, imports and reference interpretations are outside the model');
   const entry = program.declarations.get('selected_function_definition');
   if (!entry || !acceptSharedNumericEntry(Boolean(entry.generated), entry.body.k, program.declarations.has(entry.body.fn))) fail('a checked selected-function wrapper is required');
   const expressions = []; const visited = new WeakSet();

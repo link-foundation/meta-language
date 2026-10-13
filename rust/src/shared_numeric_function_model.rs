@@ -7,13 +7,16 @@ use regex::Regex;
 use serde_json::Value;
 
 use crate::shared_numeric_function_rules::{
-    accept_shared_numeric_binary, accept_shared_numeric_context, accept_shared_numeric_declaration,
+    accept_shared_numeric_binary, accept_shared_numeric_context,
+    accept_shared_numeric_context_flag, accept_shared_numeric_declaration,
     accept_shared_numeric_entry, accept_shared_numeric_expression_shape,
     accept_shared_numeric_literal, accept_shared_numeric_parameter,
     accept_shared_numeric_type_shape, accept_shared_numeric_unary,
 };
 use crate::structured_data_links::{StructuredDataValue, encode_structured_data_links_ordered};
-use crate::typed_program_links::{decode_typed_program_links, typed_program_links_schema};
+use crate::typed_program_links::{
+    decode_typed_program_links, label_of, typed_program_links_schema,
+};
 use crate::{LinkId, LinkNetwork, LinkType};
 
 pub(crate) const SHARED_NUMERIC_FUNCTION_MODEL: &str = "closed binary floating point function";
@@ -106,6 +109,24 @@ fn definition(network: &LinkNetwork, id: LinkId) -> Option<&str> {
     network.link(id)?.metadata().definition()
 }
 
+fn context_flag_supported(
+    network: &LinkNetwork,
+    fields: &Fields,
+    body: LinkId,
+    name: &str,
+) -> bool {
+    let flag = relation(fields, body, &label_of(name));
+    let scalar = flag.and_then(|field| network.link(field.child));
+    accept_shared_numeric_context_flag(
+        flag.is_some(),
+        scalar.is_some_and(|link| {
+            link.metadata().term() == typed_program_links_schema()["scalars"]["boolean"].as_str()
+                && link.references().is_empty()
+        }),
+        scalar.is_some_and(|link| link.metadata().definition() == Some("false")),
+    )
+}
+
 // The native checked Program has no fields for these two JS interpretation
 // flags. Preserve their declared premise before projecting a selected closure.
 pub(crate) fn validate_shared_numeric_origin_context(
@@ -117,18 +138,12 @@ pub(crate) fn validate_shared_numeric_origin_context(
         .and_then(|link| link.references().first())
         .ok_or_else(|| fail("missing checked program"))?;
     let fields = relations(network);
-    let schema = typed_program_links_schema();
-    let language = relation(&fields, body, string(&schema["fields"]["sourceLanguage"]))
+    let language = relation(&fields, body, &label_of("sourceLanguage"))
         .and_then(|field| definition(network, field.child))
         .unwrap_or("");
-    let unsupported = ["referenceSemantics", "utf16Strings"].iter().any(|name| {
-        relation(
-            &fields,
-            body,
-            schema["fields"][*name].as_str().unwrap_or(name),
-        )
-        .is_some_and(|field| definition(network, field.child) == Some("true"))
-    });
+    let unsupported = ["referenceSemantics", "utf16Strings"]
+        .iter()
+        .any(|name| !context_flag_supported(network, &fields, body, name));
     if !accept_shared_numeric_context(language, unsupported) {
         return Err(fail(
             "reference and string interpretations are outside the model",
@@ -159,24 +174,20 @@ pub(crate) fn read_shared_numeric_function_model(
         .and_then(|link| link.references().first())
         .ok_or_else(|| fail("missing checked program"))?;
     let schema = typed_program_links_schema();
-    let label = string(&schema["fields"]["sourceLanguage"]);
+    let label = label_of("sourceLanguage");
     let source =
-        relation(&fields, body, label).ok_or_else(|| fail("missing source-language premise"))?;
-    let context_flag = |field: &str| {
-        relation(
-            &fields,
-            body,
-            schema["fields"][field].as_str().unwrap_or(field),
-        )
-        .is_some_and(|field| definition(network, field.child) == Some("true"))
-    };
+        relation(&fields, body, &label).ok_or_else(|| fail("missing source-language premise"))?;
     let unsupported = nonempty(&program["externals"])
         || nonempty(&program["imports"])
         || nonempty(&program["main"]["effects"])
-        || program["outputThreaded"] == true
-        || program["abortsThreaded"] == true
-        || context_flag("referenceSemantics")
-        || context_flag("utf16Strings");
+        || [
+            "outputThreaded",
+            "abortsThreaded",
+            "referenceSemantics",
+            "utf16Strings",
+        ]
+        .iter()
+        .any(|name| !context_flag_supported(network, &fields, body, name));
     let language = string(&program["sourceLanguage"]);
     if !accept_shared_numeric_context(language, unsupported) {
         return Err(fail(
@@ -321,24 +332,16 @@ pub(crate) fn read_shared_numeric_function_model(
                 let type_fields = fields
                     .get(&field.child)
                     .ok_or_else(|| fail("missing type fields"))?;
-                let type_kind = relation(
-                    &fields,
-                    field.child,
-                    schema["fields"]["kind"].as_str().unwrap_or("kind"),
-                )
-                .and_then(|field| definition(network, field.child))
-                .unwrap_or("");
+                let type_kind = relation(&fields, field.child, &label_of("kind"))
+                    .and_then(|field| definition(network, field.child))
+                    .unwrap_or("");
                 if !accept_shared_numeric_type_shape(type_kind, type_fields.len() == 1) {
                     return Err(fail("only Boolean and binary64 value types are admitted"));
                 }
             }
         }
-        let kind = relation(&fields, id, string(&schema["fields"]["k"]));
-        let value = relation(
-            &fields,
-            id,
-            schema["fields"]["value"].as_str().unwrap_or("value"),
-        );
+        let kind = relation(&fields, id, &label_of("k"));
+        let value = relation(&fields, id, &label_of("value"));
         if kind.is_some_and(|field| definition(network, field.child) == Some("lit"))
             && value.is_some_and(|field| {
                 network.link(field.child).is_some_and(|link| {

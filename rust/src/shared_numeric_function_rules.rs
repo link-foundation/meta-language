@@ -97,3 +97,13 @@ pub fn accept_shared_numeric_literal(
         kind == "float" && decimal_value && finite_value && (!require_canonical || canonical_value)
     }
 }
+
+/// Read a shared formal function graph decision.
+#[must_use]
+pub const fn accept_shared_numeric_context_flag(
+    present: bool,
+    boolean_scalar: bool,
+    false_value: bool,
+) -> bool {
+    !present || boolean_scalar && false_value
+}
