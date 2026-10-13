@@ -99,7 +99,7 @@ export function readResourceDescriptionNTriplesToken(units, start) {
     return [0, start, 7];
   }
   const scalar = readResourceDescriptionNTriplesScalar(units, index, 0);
-  return [0, index, resourceDescriptionUnit(scalar, 2) !== 0 ? 1 : 8];
+  return [0, index, resourceDescriptionUnit(scalar, 2) === 0 ? 8 : 1];
 }
 
 // Canonical ECHAR suffix, or -1 when the scalar is written verbatim.

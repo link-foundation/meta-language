@@ -5,7 +5,7 @@ import { checkProgram } from './translation/check.js';
 import { projectLinkedProgramExpression } from './typed-program-expression-projection.js';
 import { readProgramExpressionProjection, readProgramNeutralFieldDefault } from './typed-program-link-rules.js';
 
-export function recheckLinkedTypedProgram(program) {
+export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
   const visited = new WeakSet();
   const active = new WeakSet();
   let hasTuple = false;
@@ -31,7 +31,7 @@ export function recheckLinkedTypedProgram(program) {
   // Legacy mutable tuples may occur inside collection operations outside the
   // shared native projection boundary. Explicit product qualifiers always
   // require whole-program rechecking, including after a true-to-false edit.
-  if (!hasTuple || (!explicitImmutability && unprojected)) return program;
+  if (!wholeProgram && (!hasTuple || (!explicitImmutability && unprojected))) return program;
   const projectExpression = value => projectLinkedProgramExpression(value, program.declarations);
   function projectType(value) {
     if (value.kind === 'data') return { kind: 'named', path: value.name.split('.') };
@@ -49,6 +49,7 @@ export function recheckLinkedTypedProgram(program) {
       ctors: entry.ctors.map(constructor => ({ name: constructor.name,
         fields: constructor.fields.map(field => ({ name: field.name, type: projectType(field.type) })),
       })), span: entry.span, ...(entry.generated !== undefined ? { generated: entry.generated } : {}),
+      ...(entry.sourceUnitCloneDerivation!==undefined?{sourceUnitCloneDerivation:entry.sourceUnitCloneDerivation}:{}),
     };
     if (entry.k !== 'fn') throw new TypeError(`the linked declaration ${entry.k} has no checked surface projection`);
     return { k: 'fn', name: entry.name,
@@ -56,9 +57,11 @@ export function recheckLinkedTypedProgram(program) {
       ret: projectType(entry.ret), body: projectExpression(entry.body), span: entry.span,
       ...(entry.generated !== undefined ? { generated: entry.generated } : {}),
       ...(entry.sourceSignature !== undefined ? { sourceSignature: entry.sourceSignature } : {}),
+      ...(entry.sourceTypeNamespace !== undefined ? { sourceTypeNamespace: entry.sourceTypeNamespace } : {}),
       ...(entry.sourceLoop !== undefined ? { sourceLoop: entry.sourceLoop } : {}),
       ...(entry.sourcePrimitiveOwners!==undefined?{sourcePrimitiveOwners:entry.sourcePrimitiveOwners}:{}),
       ...(entry.sourceLocalState!==undefined?{sourceLocalState:entry.sourceLocalState}:{}),
+      ...(entry.sourceEmptyOption!==undefined?{sourceEmptyOption:entry.sourceEmptyOption}:{}),
     };
   }
   const surface = { language: program.sourceLanguage, items: program.items.map(projectItem),

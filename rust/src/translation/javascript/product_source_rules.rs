@@ -107,55 +107,61 @@ pub fn solve_product_source_facts(
         || ((targets.len() as f64) != (sources.len() as f64)))
     {
         Vec::<bool>::new()
-    } else if ({
-        let ml_values1 = targets;
-        let ml_callback1 = {
-            std::rc::Rc::new(move |index: f64| -> bool {
-                ((self::ml_math::is_safe_integer(index) && (index >= (0f64)))
-                    && (index < (bases.len() as f64)))
-            })
-        };
-        ml_values1
-            .iter()
-            .copied()
-            .enumerate()
-            .all(|(ml_index1, ml_value1)| ml_callback1(ml_value1))
-    }) {
-        if ({
-            let ml_values2 = sources;
-            let ml_callback2 = {
+    } else {
+        let ml_product_condition_2 = {
+            let ml_values1 = targets;
+            let ml_callback1 = {
                 std::rc::Rc::new(move |index: f64| -> bool {
                     ((self::ml_math::is_safe_integer(index) && (index >= (0f64)))
                         && (index < (bases.len() as f64)))
                 })
             };
-            ml_values2
+            ml_values1
                 .iter()
                 .copied()
                 .enumerate()
-                .all(|(ml_index2, ml_value2)| ml_callback2(ml_value2))
-        }) {
+                .all(|(ml_index1, ml_value1)| ml_callback1(ml_value1))
+        };
+        if ml_product_condition_2 {
             {
-                let flags = bases.to_vec();
-                {
-                    let round = 0f64;
+                let ml_product_condition_1 = {
+                    let ml_values2 = sources;
+                    let ml_callback2 = {
+                        std::rc::Rc::new(move |index: f64| -> bool {
+                            ((self::ml_math::is_safe_integer(index) && (index >= (0f64)))
+                                && (index < (bases.len() as f64)))
+                        })
+                    };
+                    ml_values2
+                        .iter()
+                        .copied()
+                        .enumerate()
+                        .all(|(ml_index2, ml_value2)| ml_callback2(ml_value2))
+                };
+                if ml_product_condition_1 {
                     {
-                        self::ml_solve_product_source_facts_loop3(
-                            bases,
-                            targets,
-                            sources,
-                            conjunctions,
-                            flags,
-                            round,
-                        )
+                        let flags = bases.to_vec();
+                        {
+                            let round = 0f64;
+                            {
+                                self::ml_solve_product_source_facts_loop3(
+                                    bases,
+                                    targets,
+                                    sources,
+                                    conjunctions,
+                                    flags,
+                                    round,
+                                )
+                            }
+                        }
                     }
+                } else {
+                    Vec::<bool>::new()
                 }
             }
         } else {
             Vec::<bool>::new()
         }
-    } else {
-        Vec::<bool>::new()
     }
 }
 

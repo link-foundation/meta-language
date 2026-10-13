@@ -139,8 +139,8 @@ export function acceptResourceDescriptionLanguage(units, grandfathered) {
       for (let index = resourceDescriptionUnit(starts, part); index < resourceDescriptionUnit(starts, part) + 4; index += 1) if (!resourceDescriptionLetter(resourceDescriptionUnit(units, index))) letters = false;
       if (letters) part += 1;
     }
-    if (part < starts.length && resourceDescriptionUnit(lengths, part) === 2 && resourceDescriptionLetter(resourceDescriptionUnit(units, resourceDescriptionUnit(starts, part))) && resourceDescriptionLetter(resourceDescriptionUnit(units, resourceDescriptionUnit(starts, part) + 1))) part += 1;
-    else if (part < starts.length && resourceDescriptionUnit(lengths, part) === 3 && resourceDescriptionDigit(resourceDescriptionUnit(units, resourceDescriptionUnit(starts, part))) && resourceDescriptionDigit(resourceDescriptionUnit(units, resourceDescriptionUnit(starts, part) + 1)) && resourceDescriptionDigit(resourceDescriptionUnit(units, resourceDescriptionUnit(starts, part) + 2))) part += 1;
+    if (part < starts.length && ((resourceDescriptionUnit(lengths, part) === 2 && resourceDescriptionLetter(resourceDescriptionUnit(units, resourceDescriptionUnit(starts, part))) && resourceDescriptionLetter(resourceDescriptionUnit(units, resourceDescriptionUnit(starts, part) + 1)))
+      || (resourceDescriptionUnit(lengths, part) === 3 && resourceDescriptionDigit(resourceDescriptionUnit(units, resourceDescriptionUnit(starts, part))) && resourceDescriptionDigit(resourceDescriptionUnit(units, resourceDescriptionUnit(starts, part) + 1)) && resourceDescriptionDigit(resourceDescriptionUnit(units, resourceDescriptionUnit(starts, part) + 2))))) part += 1;
     let variants = [];
     while (part < starts.length && (resourceDescriptionUnit(lengths, part) >= 5 || resourceDescriptionUnit(lengths, part) === 4 && resourceDescriptionDigit(resourceDescriptionUnit(units, resourceDescriptionUnit(starts, part))))) {
       for (const earlier of variants) {

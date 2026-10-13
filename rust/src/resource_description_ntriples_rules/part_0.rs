@@ -206,26 +206,24 @@ pub fn read_resource_description_n_triples_transition(state: f64, kind: f64) -> 
             || (state == (7f64))))
     {
         state
-    } else if ((state == (0f64)) && (kind == (1f64))) || ((state == (0f64)) && (kind == (2f64))) {
+    } else if (state == (0f64)) && ((kind == (1f64)) || (kind == (2f64))) {
         1f64
     } else if ((state == (1f64)) && (kind == (1f64))) {
         2f64
-    } else if (((state == (2f64)) && (kind == (1f64)))
-        || (((state == (2f64)) && (kind == (2f64)))
-            || (((state == (4f64)) && (kind == (4f64)))
-                || ((state == (5f64)) && (kind == (1f64))))))
+    } else if ((kind == (1f64)) && ((state == (2f64)) || (state == (5f64))))
+        || ((kind == (2f64)) && (state == (2f64)) || (kind == (4f64)) && (state == (4f64)))
     {
         3f64
     } else if ((state == (2f64)) && (kind == (3f64))) {
         4f64
     } else if ((state == (4f64)) && (kind == (6f64))) {
         5f64
-    } else if (((state == (3f64)) && (kind == (5f64)))
-        || (((state == (4f64)) && (kind == (5f64))) || ((state == (7f64)) && (kind == (8f64)))))
+    } else if (((kind == (5f64)) && ((state == (3f64)) || (state == (4f64))))
+        || ((kind == (8f64)) && (state == (7f64))))
     {
         7f64
-    } else if (((state == (0f64)) && (kind == (7f64)))
-        || (((state == (7f64)) && (kind == (7f64))) || ((state == (0f64)) && (kind == (8f64)))))
+    } else if (((kind == (7f64)) && ((state == (0f64)) || (state == (7f64))))
+        || ((kind == (8f64)) && (state == (0f64))))
     {
         0f64
     } else {
@@ -236,19 +234,17 @@ pub fn read_resource_description_n_triples_transition(state: f64, kind: f64) -> 
 /// Execute the checked shared resource-description algorithm.
 #[must_use]
 pub fn read_resource_description_n_triples_role(state: f64, kind: f64) -> f64 {
-    if ((state == (0f64)) && (kind == (1f64))) || ((state == (0f64)) && (kind == (2f64))) {
+    if (state == (0f64)) && ((kind == (1f64)) || (kind == (2f64))) {
         1f64
     } else if ((state == (1f64)) && (kind == (1f64))) {
         2f64
-    } else if (((state == (2f64)) && (kind == (1f64)))
-        || (((state == (2f64)) && (kind == (2f64))) || ((state == (2f64)) && (kind == (3f64)))))
-    {
+    } else if (state == (2f64)) && ((kind == (1f64)) || (kind == (2f64)) || (kind == (3f64))) {
         3f64
     } else if ((state == (4f64)) && (kind == (4f64))) {
         4f64
     } else if ((state == (5f64)) && (kind == (1f64))) {
         5f64
-    } else if (((state == (3f64)) && (kind == (5f64))) || ((state == (4f64)) && (kind == (5f64)))) {
+    } else if (kind == (5f64)) && ((state == (3f64)) || (state == (4f64))) {
         6f64
     } else {
         0f64
@@ -492,10 +488,10 @@ pub fn read_resource_description_n_triples_token(units: &[f64], start: f64) -> V
                     vec![
                         0f64,
                         index,
-                        if ((super::resource_description_unit(&scalar, 2f64)) != (0f64)) {
-                            1f64
-                        } else {
+                        if ((super::resource_description_unit(&scalar, 2f64)) == (0f64)) {
                             8f64
+                        } else {
+                            1f64
                         },
                     ]
                 }

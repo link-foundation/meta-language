@@ -4,7 +4,7 @@ use super::{Result, RustParser, SourceOrigin, Span, unsupported};
 use serde_json::{Value, json};
 
 #[must_use]
-pub(crate) fn accept_import_name(name: &str) -> bool {
+pub fn accept_import_name(name: &str) -> bool {
     let policy = crate::translation::source_primitive_owners::policy();
     regex::Regex::new(policy["aliasPattern"].as_str().expect("alias pattern"))
         .expect("valid shared alias pattern")
@@ -33,7 +33,7 @@ impl RustParser {
             .expect("primitive paths")
             .iter()
             .any(|value| value.as_str() == Some(spelling.as_str()));
-        if !candidate && !(source.len() == 1 && source[0] == "f64") {
+        if !(candidate || source.len() == 1 && source[0] == "f64") {
             return Ok(None);
         }
         let declared = self.origins.lookup_type_owner(source, path).is_some()

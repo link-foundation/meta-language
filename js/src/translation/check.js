@@ -1,3 +1,4 @@
+import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 // Resolves names, checks types, and fixes the exact operator semantics of a
 // surface program produced by one of the language frontends. The result is
 // the portable-core program the emitters consume: every expression carries
@@ -7,6 +8,7 @@
 
 import { typeError, unsupported } from './diagnostics.js';
 import { checkRustSourceSignature } from './rust-source-signatures.js';
+import { validateRustTypeNamespace } from './rust-type-namespace.js';
 import {prepareRustPrimitiveOwnerProof,checkRustPrimitiveOwnerProof} from './rust-primitive-owners.js';
 import {prepareRustOwnedLocalStateProof,checkRustOwnedLocalStateProof} from './rust-owned-local-state.js';
 import { acceptArgumentCount, acceptCheckedTypeQueryOperand, acceptTypeQueryOperand, readTypeQueryResult } from './frontend-rules.js';
@@ -140,6 +142,8 @@ class Checker {
     analyseRecursion(program);
     checkRustPrimitiveOwnerProof(program);
     checkRustOwnedLocalStateProof(program);
+    checkRustEmptyOptionProof(program);
+    validateRustTypeNamespace(program);
     return program;
   }
 

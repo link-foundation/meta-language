@@ -10,7 +10,7 @@ fn optional_lexical_cache_reservations_preserve_the_unchanged_memory_limit() {
     let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
     for entry in fixture["reservations"].as_array().unwrap() {
         assert_eq!(
-            meta_language::translation::frontend_rules::accept_lexical_cache_reservation(
+            crate::translation::frontend_rules::accept_lexical_cache_reservation(
                 entry["cells"].as_f64().unwrap(),
                 entry["count"].as_f64().unwrap(),
                 entry["limit"].as_f64().unwrap(),

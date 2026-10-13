@@ -231,7 +231,7 @@ fn unknown_counterfeit_cyclic_dangling_and_duplicate_bases_are_refused() {
 
 #[test]
 fn namespace_and_label_identities_remain_explicit_in_recursive_premises() {
-    let fixture = super::project_data::read_project_data(include_str!(
+    let fixture: Value = super::project_data::read_project_data(include_str!(
         "../../../parity/fixtures/formal-concept-relation-identities.lino"
     ))
     .unwrap();

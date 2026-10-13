@@ -11,7 +11,8 @@ use crate::translation::emit_rust::{RustEmissionOptions, emit_rust_with_options}
 use crate::translation::ir::Program;
 use crate::translation::javascript::{parse_javascript, parse_javascript_with_scalar_loop_model};
 use crate::translation::rust::{
-    parse_rust, parse_rust_with_loop_profiles, parse_rust_with_primitive_owner_model,
+    parse_rust, parse_rust_with_empty_option_source_model, parse_rust_with_loop_profiles,
+    parse_rust_with_primitive_owner_model,
 };
 use crate::{LinkId, LinkMetadata, LinkNetwork, LinkType};
 use serde_json::Value;
@@ -91,7 +92,7 @@ pub struct TypedProgramLinksEmissionOptions {
     pub java_script_scoped_binding_emission_model: Option<String>,
 }
 
-pub(super) fn validate_checked_program(program: &Program) -> Result<()> {
+pub fn validate_checked_program(program: &Program) -> Result<()> {
     checked::validate(program)
 }
 /// Exact schema shared by both packages.
@@ -115,7 +116,7 @@ fn metadata(term: &str, definition: Option<&str>) -> LinkMetadata {
         result
     }
 }
-pub(super) fn label_of(name: &str) -> String {
+pub fn label_of(name: &str) -> String {
     typed_program_links_schema()["fields"][name]
         .as_str()
         .map_or_else(
@@ -134,7 +135,7 @@ pub(super) fn label_of(name: &str) -> String {
             str::to_owned,
         )
 }
-fn field_of(label: &str) -> String {
+pub fn field_of(label: &str) -> String {
     if let Some((field, _)) = typed_program_links_schema()["fields"]
         .as_object()
         .unwrap()
@@ -199,7 +200,7 @@ pub fn decode_typed_program_links_with_limits(
     Ok(program)
 }
 
-pub(super) fn read_typed_program_binding_identities(
+pub fn read_typed_program_binding_identities(
     network: &LinkNetwork,
     root: LinkId,
 ) -> Result<Vec<LinkId>> {
@@ -351,6 +352,34 @@ pub fn create_typed_program_links_with_rust_primitive_owner_model(
     let selected = serde_json::json!({
         "sourceProfile": profile,
         "userProvenance": provenance,
+    });
+    encode_typed_program_links_with_provenance(&program, Some(&selected))
+}
+
+/// Import the independently selected closed empty primitive option source model.
+///
+/// The original source factories keep their existing type admission. The owned
+/// empty result interpretation and caller provenance remain separate records.
+///
+/// # Errors
+/// Refuses non-Rust sources, unknown models and unproved owners or empty bodies.
+pub fn create_typed_program_links_with_rust_empty_option_source_model(
+    source: &str,
+    language: &str,
+    model: &str,
+    provenance: Option<&Value>,
+) -> Result<TypedProgramLinks> {
+    if !matches!(language.to_ascii_lowercase().as_str(), "rust" | "rs") {
+        return Err(error(
+            "a Rust empty option source model requires Rust source",
+        ));
+    }
+    let surface = parse_rust_with_empty_option_source_model(source, model)
+        .map_err(|failure| error(failure.to_string()))?;
+    let program = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
+    let selected = serde_json::json!({
+        "sourceProfile":{"language":"Rust","rustEmptyOptionSourceModel":model},
+        "userProvenance":provenance,
     });
     encode_typed_program_links_with_provenance(&program, Some(&selected))
 }
@@ -545,6 +574,15 @@ pub fn emit_typed_program_links_with_options(
     target: &str,
     options: &TypedProgramLinksEmissionOptions,
 ) -> Result<TypedProgramLinksEmission> {
+    if matches!(
+        target.to_ascii_lowercase().as_str(),
+        "javascript" | "js" | "mjs"
+    ) && options.rust_source_header_emission_model.is_none()
+        && let Some(model) = options.java_script_scoped_binding_emission_model.as_deref()
+    {
+        crate::translation::scoped_binding_emission::validate_raw_program(network, root, model)
+            .map_err(|failure| error(failure.to_string()))?;
+    }
     let program = decode_typed_program_links(network, root)?;
     let source_header_model = options.rust_source_header_emission_model.as_deref();
     let emitted = match target.to_ascii_lowercase().as_str() {

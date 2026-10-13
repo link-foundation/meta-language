@@ -290,7 +290,7 @@ impl<'a> TreeAdapter<'a> {
                 self.expression(&node["right"], scope, false)?;
             }
             "unary" if accept_scalar_loop_unary_operation(text(node, "op")?) => {
-                self.expression(&node["arg"], scope, false)?
+                self.expression(&node["arg"], scope, false)?;
             }
             "math" if accept_scalar_loop_math_operation(text(node, "op")?) => {
                 for arg in node["args"]
@@ -404,7 +404,9 @@ impl<'a> TreeAdapter<'a> {
                 .iter()
                 .find(|write| write.target == slot.name)
                 .map_or(slot.name.as_str(), |write| write.binding.as_str());
-            if claimed != name || simple_name(arg) != Some(name) {
+            let claimed_matches_slot = claimed == name;
+            let argument_matches_slot = simple_name(arg) == Some(name);
+            if !(claimed_matches_slot && argument_matches_slot) {
                 return Err(fail(
                     "continuation arguments disagree with the complete ordered write proof",
                 ));

@@ -219,13 +219,9 @@ pub fn read_program_reference_target_field(label: &str) -> String {
 /// Read the corresponding decision of the shared typed program links schema.
 #[must_use]
 pub fn read_program_neutral_field_default(context: &str, field: &str) -> String {
-    if (context == "program" && field == "imports")
-        || (context == "program" && field == "externals")
-    {
+    if context == "program" && (field == "imports" || field == "externals") {
         String::from("empty-array")
-    } else if (context == "program" && field == "outputThreaded")
-        || (context == "program" && field == "abortsThreaded")
-    {
+    } else if context == "program" && (field == "outputThreaded" || field == "abortsThreaded") {
         String::from("false")
     } else if context == "program" && field == "main" {
         String::from("null")
@@ -233,38 +229,27 @@ pub fn read_program_neutral_field_default(context: &str, field: &str) -> String 
         String::from("false")
     } else if context == "main" && field == "span" {
         String::from("null")
-    } else if (context == "declaration:fn" && field == "mutual")
-        || (context == "declaration:fn" && field == "generated")
-    {
+    } else if context == "declaration:fn" && (field == "mutual" || field == "generated") {
         String::from("false")
-    } else if (context == "declaration:fn" && field == "decreasing")
-        || (context == "declaration:fn" && field == "span")
-    {
+    } else if context == "declaration:fn" && (field == "decreasing" || field == "span") {
         String::from("null")
-    } else if (context == "declaration:data" && field == "generated")
-        || (context == "declaration:data" && field == "output")
-    {
+    } else if context == "declaration:data" && (field == "generated" || field == "output") {
         String::from("false")
     } else if context == "declaration:data" && field == "span" {
         String::from("null")
-    } else if ((context == "expression:ctor" && field == "frozen")
-        || (context == "expression:toString" && field == "console"))
-        || (context == "expression:tuple" && field == "frozen")
+    } else if (field == "frozen" && (context == "expression:ctor" || context == "expression:tuple"))
+        || (context == "expression:toString" && field == "console")
     {
         String::from("false")
-    } else if (context == "parameter" && field == "guard")
-        || (context == "parameter" && field == "default")
-    {
+    } else if context == "parameter" && (field == "guard" || field == "default") {
         String::from("null")
     } else if context == "effect:let" && field == "constant" {
         String::from("false")
-    } else if ((context == "effect:let" && field == "span")
-        || (context == "declaration:module" && field == "span"))
-        || (context == "effect:print" && field == "span")
-    {
-        String::from("null")
     } else if field == "span"
-        && (((((((((((((((((((((((context == "expression:lit"
+        && ((((((((((((((((((((((((((context == "effect:let"
+            || context == "declaration:module")
+            || context == "effect:print")
+            || context == "expression:lit")
             || context == "expression:unit")
             || context == "expression:var")
             || context == "expression:call")

@@ -69,7 +69,7 @@ fn fixed_lexical_cache_context_retains_automatic_repair_work_accounting() {
     .unwrap();
     for entry in contexts.as_array().unwrap() {
         assert_eq!(
-            meta_language::translation::frontend_rules::accept_lexical_cache_context(
+            crate::translation::frontend_rules::accept_lexical_cache_context(
                 entry["inToken"].as_bool().unwrap(),
                 entry["quiet"].as_bool().unwrap(),
                 entry["repairing"].as_bool().unwrap()

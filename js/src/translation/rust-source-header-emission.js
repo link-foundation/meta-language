@@ -3,6 +3,7 @@
 import { readRuntimeProjectData } from '../project-data-loader.js';
 import { unsupported } from './diagnostics.js';
 import { checkRustPrimitiveOwnerProof } from './rust-primitive-owners.js';
+import { validateRustTypeNamespace } from './rust-type-namespace.js';
 import { checkRustSourceSignature } from './rust-source-signatures.js';
 import { acceptSharedNumericTypeShape,
   acceptSharedNumericExpressionShape, acceptSharedNumericUnary,
@@ -24,6 +25,7 @@ const fail = detail => { throw unsupported('Rust source header emission', detail
 /** Read owned primitive header facts; callers must separately admit bodies. */
 export function readRustPrimitiveSourceHeaders(program) {
   checkRustPrimitiveOwnerProof(program);
+  validateRustTypeNamespace(program);
   const policy = RUST_SOURCE_HEADER_EMISSION_POLICY;
   const forbidden = Boolean(program.imports?.length || program.externals?.length || program.main?.effects?.length
     || policy.forbiddenContextFlags.some(name => Object.hasOwn(program, name) && program[name] !== false));

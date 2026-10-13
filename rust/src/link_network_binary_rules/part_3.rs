@@ -350,9 +350,9 @@ pub fn ml_transcode_link_network_binary_loop32(
                         continue;
                     }
                 }
-            } else {
-                super::MlTranscodeLinkNetworkBinaryLoop32Result::MlTranscodeLinkNetworkBinaryLoop32Return(((super::ml_string::Text::from_units(vec![45, 51, 44])).concat(&super::ml_string::Text::from_text(&super::ml_number::js_number(index)))).concat(&super::ml_string::Text::from_units(vec![44])))
             }
+
+            super::MlTranscodeLinkNetworkBinaryLoop32Result::MlTranscodeLinkNetworkBinaryLoop32Return(((super::ml_string::Text::from_units(vec![45, 51, 44])).concat(&super::ml_string::Text::from_text(&super::ml_number::js_number(index)))).concat(&super::ml_string::Text::from_units(vec![44])))
         } else {
             super::MlTranscodeLinkNetworkBinaryLoop32Result::MlTranscodeLinkNetworkBinaryLoop32Done
         };

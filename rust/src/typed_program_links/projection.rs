@@ -60,7 +60,28 @@ fn expression(value: &Value, program: &Program) -> Result<Value> {
                     .collect::<Result<_>>()?,
             ),
             "name-path" => json!([child]),
-            "function-path" => json!({"k":"name", "path":[child]}),
+            "function-path" => {
+                let path = if let Some(Decl::Fn(function)) =
+                    child.as_str().and_then(|name| program.declaration(name))
+                    && let Some(continuation) = function
+                        .source_loop
+                        .as_ref()
+                        .and_then(|proof| proof.continuation.as_ref())
+                {
+                    crate::translation::source_loops::validate_source_loop_at(
+                        function,
+                        program.source_language.as_str(),
+                        child.as_str().unwrap(),
+                    )
+                    .map_err(|failure| error(failure.to_string()))?;
+                    std::iter::once(Value::String(continuation.root.clone()))
+                        .chain(continuation.path.iter().cloned().map(Value::String))
+                        .collect()
+                } else {
+                    vec![child.clone()]
+                };
+                json!({"k":"name", "path":path})
+            }
             "array-items" => {
                 let spread = plan["spreadOperations"]
                     .as_array()

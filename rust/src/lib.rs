@@ -375,6 +375,7 @@ pub use typed_program_links::{
     create_typed_program_links_with_javascript_scalar_loop_model,
     create_typed_program_links_with_rust_array_result_model,
     create_typed_program_links_with_rust_completion_model,
+    create_typed_program_links_with_rust_empty_option_source_model,
     create_typed_program_links_with_rust_primitive_owner_model,
     create_typed_program_links_with_rust_scalar_loop_model,
     create_typed_program_links_with_rust_source_models,
@@ -382,6 +383,7 @@ pub use typed_program_links::{
     create_typed_program_links_with_rust_source_signature_model,
     create_typed_program_links_with_scalar_loop_profiles, decode_typed_program_links,
     emit_typed_program_links, emit_typed_program_links_with_options, encode_typed_program_links,
+    typed_program_links_schema,
 };
 pub use verification::{VerificationIssue, VerificationIssueKind, VerificationReport};
 

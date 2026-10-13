@@ -205,6 +205,71 @@ function recordReviewedStyles(logPath) {
   writeFileSync(styles, new DecoratorSet([...current.decorators.filter(row => row.id !== reviewed.id), reviewed]).toLino());
   console.log(`Recorded ${corrections.length} reviewed declaration corrections for ${diagnostics.size} authentic binary CI diagnostics`);
 }
+
+function recordFollowupReviewedStyles(logPath) {
+  const log = readFileSync(logPath, 'utf8');
+  const diagnostics = JSON.parse(log).filter(row => /^src\/link_network_binary_rules\/part_[0-3]\.rs$/u.test(row.file));
+  const expected = [
+    ['part_0.rs', 440, 'missing_const_for_fn'],
+    ['part_1.rs', 107, 'let_and_return'], ['part_1.rs', 164, 'let_and_return'], ['part_1.rs', 171, 'let_and_return'],
+    ['part_1.rs', 291, 'redundant_else'], ['part_3.rs', 353, 'redundant_else'],
+  ];
+  if (JSON.stringify(diagnostics.map(row => [row.file.split('/').at(-1), row.line, row.lint])) !== JSON.stringify(expected)) throw new Error('the binary follow-up requires all six authentic diagnostic identities');
+  const revision = spawnSync('git', ['rev-parse', '26667280'], { encoding: 'utf8' });
+  if (revision.error || revision.status !== 0) throw revision.error ?? new Error(revision.stderr);
+  const published = revision.stdout.trim(), snapshots = [], actions = [];
+  for (const path of new Set(diagnostics.map(row => row.file))) {
+    const snapshot = spawnSync('git', ['show', `${published}:rust/${path}`], { encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 });
+    if (snapshot.error || snapshot.status !== 0) throw snapshot.error ?? new Error(snapshot.stderr);
+    const source = snapshot.stdout, lines = source.split('\n'), starts = [0], edits = [];
+    for (const line of lines.slice(0, -1)) starts.push(starts.at(-1) + line.length + 1);
+    snapshots.push(`${path}=${createHash('sha256').update(source).digest('hex')}`);
+    for (const row of diagnostics.filter(row => row.file === path)) {
+      if (!row.block.includes(`${path}:${row.line}:${row.column}`)) throw new Error('an authentic diagnostic source location differs');
+      if (row.lint === 'missing_const_for_fn') {
+        const from = 'pub fn absolute(value: f64, length: usize) -> usize';
+        if (!lines[row.line - 1].includes(from)) throw new Error('the diagnosed constant helper differs');
+        actions.push({ op: 'replace', field: 'source', from, to: from.replace('pub fn ', 'pub const fn ') });
+      } else if (row.lint === 'let_and_return') {
+        const previous = /^(\s*)let (output_[0-9]+) = ([^\n]+);$/u.exec(lines[row.line - 2]);
+        if (!previous || lines[row.line - 1].trim() !== previous[2] || lines[row.line].trim() !== '}') throw new Error('the diagnosed final-use binding differs');
+        const start = starts[row.line - 2], end = starts[row.line - 1] + lines[row.line - 1].length;
+        edits.push({ start, end, replacement: previous[1] + previous[3] });
+      } else if (row.lint === 'redundant_else') {
+        const line = lines[row.line - 1], otherwise = starts[row.line - 1] + line.indexOf('else');
+        if (!/\}\s+else\s*\{/u.test(line)) throw new Error('the diagnosed continuation alternative differs');
+        const start = source.lastIndexOf('if ', otherwise), opening = source.indexOf('{', start), end = pairedEnd(source, opening);
+        if (start < 0 || source.slice(end + 1, otherwise).trim()) throw new Error('the diagnosed conditional owner differs');
+        const first = source.slice(opening + 1, end);
+        if (!/\bcontinue;\s*(?:\}\s*)*$/u.test(first) || /\b(?:if|match|loop|while|for|return|break)\b/u.test(first)) throw new Error('the diagnosed branch is not an unconditional existing continuation');
+        edits.push(reverseCondition(source, start, true));
+      } else throw new Error('an unreviewed binary diagnostic was supplied');
+    }
+    // Store only the exact changed declaration contexts, after the earlier
+    // recorded CI corrections and rustfmt. No executable source is rewritten.
+    const corrected = editSource(source, edits);
+    for (const match of source.matchAll(/^pub (?:fn|mod) ([A-Za-z_0-9]+)\b/gmu)) {
+      const opening = source.indexOf('{', match.index), end = pairedEnd(source, opening);
+      const from = source.slice(match.index, end + 1);
+      const start = corrected.search(new RegExp(`^pub (?:fn|mod) ${match[1]}\\b`, 'mu'));
+      if (start < 0) throw new Error('a reviewed binary declaration was lost');
+      const to = corrected.slice(start, pairedEnd(corrected, corrected.indexOf('{', start)) + 1);
+      if (from !== to) actions.push({ op: 'replace', field: 'source', from, to });
+    }
+  }
+  const current = DecoratorSet.fromLino(readFileSync(styles, 'utf8')), id = 'binary-network-native-reviewed-followup-style';
+  writeFileSync(styles, new DecoratorSet([...current.decorators.filter(row => row.id !== id), {
+    id, level: 'emitter', order: 1000, when: [['format', 'Rust'], ['scope', 'formatted-item']], actions: [
+      { op: 'set', field: 'published-source-revision', value: published },
+      { op: 'set', field: 'diagnostics-sha256', value: createHash('sha256').update(log).digest('hex') },
+      { op: 'set', field: 'diagnostic-evidence-kind', value: 'reviewed rendered compiler log; applicability not recorded' },
+      { op: 'set', field: 'published-input-digests', value: snapshots.join('; ') },
+      { op: 'set', field: 'diagnostic-identities', value: diagnostics.map(row => `${row.file}:${row.line}:${row.column}:${row.lint}`).join('; ') },
+      ...actions,
+    ],
+  }]).toLino());
+  console.log(`Recorded ${actions.length} exact source corrections for six authentic binary follow-up diagnostics`);
+}
 if (process.argv.includes('--update-styles')) {
   const actions = [];
   const replace = (from, to) => { if (raw.includes(from)) actions.push({ op: 'replace', field: 'source', from, to }); };
@@ -276,14 +341,27 @@ if (reviewedIndex >= 0) {
   if (!process.argv[reviewedIndex + 1]) throw new Error('--reviewed-log needs the authentic CI diagnostic file');
   recordReviewedStyles(process.argv[reviewedIndex + 1]);
 }
+const followupIndex = process.argv.indexOf('--reviewed-followup-log');
+if (followupIndex >= 0) {
+  if (!process.argv[followupIndex + 1]) throw new Error('--reviewed-followup-log needs the authentic CI diagnostic file');
+  recordFollowupReviewedStyles(process.argv[followupIndex + 1]);
+}
 const decorators = DecoratorSet.fromLino(readFileSync(styles, 'utf8'));
 const libraryStyles = new DecoratorSet(decorators.decorators.filter(({ when }) => !when.some(([field]) => field === 'scope')));
 const itemStyles = new DecoratorSet(decorators.decorators.filter(({ when }) => when.some(([field, value]) => field === 'scope' && value === 'formatted-item')));
-const formattedItems = items.map(item => format(libraryStyles.decorate('emitter', { format: 'Rust', source: item }).source));
-for (const { actions } of itemStyles.decorators) for (const action of actions) {
-  if (action.op === 'replace' && !formattedItems.some(item => item.includes(action.from))) throw new Error('a reviewed binary declaration context is stale');
+let styled = items.map(item => format(libraryStyles.decorate('emitter', { format: 'Rust', source: item }).source));
+// Follow-up receipts refer to the exact formatted output of the previous
+// authentic round. Validate and apply each reviewed layer sequentially.
+for (const decorator of itemStyles.decorators) {
+  for (const action of decorator.actions) {
+    if (action.op === 'replace' && !styled.some(item => item.includes(action.from))) throw new Error('a reviewed binary declaration context is stale');
+  }
+  const layer = new DecoratorSet([decorator]);
+  styled = styled.map(item => {
+    const corrected = layer.decorate('emitter', { format: 'Rust', scope: 'formatted-item', source: item }).source;
+    return corrected === item ? item : format(corrected);
+  });
 }
-const styled = formattedItems.map(item => format(itemStyles.decorate('emitter', { format: 'Rust', scope: 'formatted-item', source: item }).source));
 const groups = [];
 let current = [], lines = 0;
 for (const item of styled) {
