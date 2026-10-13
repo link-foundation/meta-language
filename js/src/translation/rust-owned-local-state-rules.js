@@ -7,14 +7,13 @@ export function acceptRustOwnedLocalValueType(kind,bits,signed){return kind === 
 export function acceptRustOwnedLocalExpression(kind){return kind === "lit" || kind === "var" || kind === "tuple" || kind === "tupleIndex" || kind === "let" || kind === "if" || kind === "binary" || kind === "toString";}
 /** @param {string} operation @returns {boolean} */
 export function acceptRustOwnedLocalBinaryOperation(operation){return operation === "eq";}
-/** @param {string} text @returns {boolean} */
-export function acceptRustOwnedLocalTextInput(text){
- if(typeof text !== "string")return false;
- for(let index=0;index<text.length;index++){
-  const unit=text.charCodeAt(index);
+/** @param {Array<number>} units @returns {boolean} */
+export function acceptRustOwnedLocalTextUnits(units){
+ for(let index=0;index<units.length;index++){
+  const unit=units[index]??-1;
   if(unit>=55296&&unit<=56319){
    index++;
-   const next=text.charCodeAt(index);
+   const next=units[index]??-1;
    if(!(next>=56320&&next<=57343))return false;
   }else if(unit>=56320&&unit<=57343)return false;
  }
@@ -22,3 +21,11 @@ export function acceptRustOwnedLocalTextInput(text){
 }
 /** @returns {string} */
 export function renderRustOwnedLocalTextInput(){return "function ml_ownedTextInput(text){\n if(typeof text !== \"string\")return false;\n for(let index=0;index<text.length;index++){\n  const unit=text.charCodeAt(index);\n  if(unit>=55296&&unit<=56319){\n   index++;\n   const next=text.charCodeAt(index);\n   if(!(next>=56320&&next<=57343))return false;\n  }else if(unit>=56320&&unit<=57343)return false;\n }\n return true;\n}";}
+/** Convert only actual primitive strings through the selected standard realm. */
+/** @param {string} text @returns {boolean} */
+export function acceptRustOwnedLocalTextInput(text){
+ if(typeof text !== "string")return false;
+ const units=[];
+ for(let index=0;index<text.length;index++)units.push(text.charCodeAt(index));
+ return acceptRustOwnedLocalTextUnits(units);
+}
