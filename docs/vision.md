@@ -183,9 +183,32 @@ source-language equivalence.
 Individual function definitions can now retain the selected declaration's actual
 closed recursive dependencies under that checked model. An interpreted call
 wrapper identifies the selected function; unrelated declarations and main effects
-do not enter this function-specific meaning. Public names, source language,
-types and executable operators remain explicit premises. Captured externals,
-non-flat declarations and broader equivalence require separate proofs.
+do not enter this function-specific meaning. The default function-definition
+model retains public names, source language, types and executable operators as
+meaning premises. Captured externals, non-flat declarations and broader
+equivalence require separate proofs.
+The opt-in `closed binary floating point function` model gives closed Rust and
+JavaScript functions a declared common value interpretation. It guards flat
+function declarations with binary64 and Boolean parameters and results,
+canonical finite literals including signed zero, lexical variables, local
+bindings, conditionals and closed recursive calls. Shared admission rules are
+automatically translated into Rust and accept only declared arithmetic,
+comparisons and Boolean negation. The linked primitive basis states IEEE
+arithmetic, rounding to nearest with ties to even, truncated quotient remainder,
+all binary64 result values and unobservable NaN payloads. Recursive equations
+denote partial functions. The ordinary rounding environment is an assumption;
+host stack exhaustion and machine resource limits lie outside this abstract
+value interpretation.
+Source language remains inspectable in the typed graph and origin provenance.
+Its meaning field is excluded from comparison only after every profile guard
+holds and the linked primitive basis matches its declared model. The original
+source-qualified model keeps its source-language premise. Eight actual
+Rust/JavaScript function pairs exercise recursive certificates and source-free
+reload, including direct and mutual recursion. A checked pair grounds reusable
+global identity; changing an operator preserves distinct identities. Unsupported
+types, effects, defaults, source interpretations and counterfeit premises retain
+their refusals. Cross-ABI behavior, complete effects and resource equivalence,
+and formal definitions for every catalog concept require separate evidence.
 Formal relation comparison also validates the actual label self-points and
 anonymous relation edges under their declared interpretation. Matching spelling
 cannot hide a different namespace, definition or identity premise.
