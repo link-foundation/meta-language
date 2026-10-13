@@ -92,6 +92,7 @@ impl Checker {
                     mutual: false,
                     source_signature: None,
                     source_primitive_owners: function.source_primitive_owners.clone(),
+                    source_empty_option: function.source_empty_option.clone(),
                     source_loop: function.source_loop.clone(),
                 }),
                 SItem::Theorem(theorem) => Decl::Theorem(TheoremDecl {

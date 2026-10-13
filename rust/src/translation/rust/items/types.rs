@@ -126,6 +126,9 @@ impl RustParser {
         let segments = self.path_segments("type")?;
         let name = segments.join("::");
         let resolved = self.resolve(&segments, &self.module_path);
+        if let Some(empty) = self.read_empty_option_result(&segments, &token)? {
+            return Ok(empty);
+        }
         if self
             .read_standard_primitive_position(&segments, &self.module_path)?
             .is_some()
