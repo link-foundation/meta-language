@@ -59,3 +59,17 @@ test('grouped completion decisions retain complete original table priority and u
     assert.equal(readRustCompletionKind(action, then, otherwise), row?.result ?? 'unsupported completion');
   }
 });
+
+test('factored neutral defaults retain every context and field boundary', () => {
+  const expressionContexts = new Set(Object.keys(schema.expressionProjections)
+    .map(kind => `expression:${kind.split(':')[0]}`));
+  const contexts = new Set([...Object.keys(schema.neutralFieldDefaults), ...expressionContexts,
+    'unregistered context', 'expression:unregistered', 'type', 'placeholder', 'root']);
+  const fields = new Set([...Object.values(schema.neutralFieldDefaults).flatMap(Object.keys),
+    'span', 'completeScope', 'model', 'numericSemantics', 'NaN', 'placeholder', 'root']);
+  for (const context of contexts) for (const field of fields) {
+    const expected = schema.neutralFieldDefaults[context]?.[field]
+      ?? (field === 'span' && expressionContexts.has(context) ? 'null' : '');
+    assert.equal(rules.readProgramNeutralFieldDefault(context, field), expected, `${context}/${field}`);
+  }
+});

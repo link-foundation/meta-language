@@ -17,15 +17,38 @@ for (const [label, role] of Object.entries(schema.referenceAliases ?? {})) {
   if (Object.hasOwn(referenceRoles, label) || !Object.hasOwn(schema.references, role)) throw new Error('a shared reference alias must name one existing role and a distinct label');
   referenceRoles[label] = role;
 }
-// Only adjacent equal results are combined. Their tests remain in their
-// original order, so this preserves priority even for overlapping selectors.
+// These clauses contain only pure string selector comparisons. Factoring a
+// repeated comparison within one equal-result group preserves its exact union.
+const combineSelectorConditions = clauses => {
+  if (clauses.some(clause => clause.length === 0)) return 'true';
+  const counts = new Map();
+  for (const clause of clauses) for (const selector of new Set(clause)) {
+    counts.set(selector, (counts.get(selector) ?? 0) + 1);
+  }
+  const shared = [...counts].sort((left, right) => right[1] - left[1])[0];
+  if (!shared || shared[1] === 1) {
+    return clauses.map(clause => `(${clause.join(' && ')})`).join(' || ');
+  }
+  const [selector] = shared;
+  const selected = clauses.filter(clause => clause.includes(selector));
+  const remaining = clauses.filter(clause => !clause.includes(selector));
+  const suffix = combineSelectorConditions(selected.map(clause => clause.filter(part => part !== selector)));
+  const factored = suffix === 'true' ? selector : `(${selector}) && (${suffix})`;
+  return remaining.length ? `(${factored}) || (${combineSelectorConditions(remaining)})` : factored;
+};
+// Only adjacent equal results are combined. Priority between distinct results
+// stays in the original order, including overlapping fallback selectors.
 const decisionRows = rows => {
   const grouped = [];
   for (const [condition, result] of rows) {
     if (grouped.at(-1)?.result === result) grouped.at(-1).conditions.push(condition);
     else grouped.push({ conditions: [condition], result });
   }
-  return grouped.map(({ conditions, result }) => `  if (${conditions.map(condition => `(${condition})`).join(' || ')}) return ${result};`).join('\n');
+  return grouped.map(({ conditions, result }) => {
+    const condition = conditions.every(Array.isArray) ? combineSelectorConditions(conditions)
+      : conditions.map(condition => `(${condition})`).join(' || ');
+    return `  if (${condition}) return ${result};`;
+  }).join('\n');
 };
 const classify = (name, table) => `/** @param {string} term @returns {string} */\nexport function ${name}(term) {\n`
   + decisionRows(Object.entries(table).map(([kind, term]) => [`term === ${JSON.stringify(term)}`, JSON.stringify(kind)]))
@@ -38,9 +61,12 @@ const referenceSource = '/** @param {string} label @param {string} constructKind
     [`label === ${JSON.stringify(label)} && constructKind === ${JSON.stringify(construct)} && typeKind === ${JSON.stringify(type)}`, JSON.stringify(field)])))
   + '\n  return "";\n}\n';
 const neutralFields = '/** @param {string} context @param {string} field @returns {string} */\nexport function readProgramNeutralFieldDefault(context, field) {\n'
-  + decisionRows(Object.entries(schema.neutralFieldDefaults).flatMap(([context, fields]) => Object.entries(fields).map(([field, value]) =>
-    [`context === ${JSON.stringify(context)} && field === ${JSON.stringify(field)}`, JSON.stringify(value)])))
-  + `\n  if (field === "span" && (${[...new Set(Object.keys(schema.expressionProjections).map(key => key.split(':')[0]))].map(kind => `context === ${JSON.stringify(`expression:${kind}`)}`).join(' || ')})) return "null";`
+  + decisionRows([
+    ...Object.entries(schema.neutralFieldDefaults).flatMap(([context, fields]) => Object.entries(fields).map(([field, value]) =>
+      [[`context === ${JSON.stringify(context)}`, `field === ${JSON.stringify(field)}`], JSON.stringify(value)])),
+    ...[...new Set(Object.keys(schema.expressionProjections).map(key => key.split(':')[0]))].map(kind =>
+      [[`field === "span"`, `context === ${JSON.stringify(`expression:${kind}`)}`], '"null"']),
+  ])
   + '\n  return "";\n}\n';
 const source = '// Generated from data/typed-program-links-schema.json. Do not edit by hand.\n\n'
   + classify('readProgramContainerKind', schema.containers) + '\n'

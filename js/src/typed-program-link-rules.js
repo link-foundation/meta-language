@@ -108,20 +108,19 @@ export function readProgramReferenceTargetField(label) {
 
 /** @param {string} context @param {string} field @returns {string} */
 export function readProgramNeutralFieldDefault(context, field) {
-  if ((context === "program" && field === "imports") || (context === "program" && field === "externals")) return "empty-array";
-  if ((context === "program" && field === "outputThreaded") || (context === "program" && field === "abortsThreaded")) return "false";
+  if ((context === "program") && ((field === "imports") || (field === "externals"))) return "empty-array";
+  if ((context === "program") && ((field === "outputThreaded") || (field === "abortsThreaded"))) return "false";
   if ((context === "program" && field === "main")) return "null";
   if ((context === "main" && field === "sequentialAsync")) return "false";
   if ((context === "main" && field === "span")) return "null";
-  if ((context === "declaration:fn" && field === "mutual") || (context === "declaration:fn" && field === "generated")) return "false";
-  if ((context === "declaration:fn" && field === "decreasing") || (context === "declaration:fn" && field === "span")) return "null";
-  if ((context === "declaration:data" && field === "generated") || (context === "declaration:data" && field === "output")) return "false";
+  if ((context === "declaration:fn") && ((field === "mutual") || (field === "generated"))) return "false";
+  if ((context === "declaration:fn") && ((field === "decreasing") || (field === "span"))) return "null";
+  if ((context === "declaration:data") && ((field === "generated") || (field === "output"))) return "false";
   if ((context === "declaration:data" && field === "span")) return "null";
-  if ((context === "expression:ctor" && field === "frozen") || (context === "expression:toString" && field === "console") || (context === "expression:tuple" && field === "frozen")) return "false";
-  if ((context === "parameter" && field === "guard") || (context === "parameter" && field === "default")) return "null";
+  if (((field === "frozen") && ((context === "expression:ctor") || (context === "expression:tuple"))) || ((context === "expression:toString" && field === "console"))) return "false";
+  if ((context === "parameter") && ((field === "guard") || (field === "default"))) return "null";
   if ((context === "effect:let" && field === "constant")) return "false";
-  if ((context === "effect:let" && field === "span") || (context === "declaration:module" && field === "span") || (context === "effect:print" && field === "span")) return "null";
-  if (field === "span" && (context === "expression:lit" || context === "expression:unit" || context === "expression:var" || context === "expression:call" || context === "expression:ctor" || context === "expression:match" || context === "expression:unary" || context === "expression:binary" || context === "expression:if" || context === "expression:let" || context === "expression:toString" || context === "expression:stringMap" || context === "expression:stringTest" || context === "expression:cast" || context === "expression:abort" || context === "expression:print" || context === "expression:array" || context === "expression:append" || context === "expression:index" || context === "expression:length" || context === "expression:math" || context === "expression:tuple" || context === "expression:tupleIndex" || context === "expression:none")) return "null";
+  if ((field === "span") && ((context === "effect:let") || (context === "declaration:module") || (context === "effect:print") || (context === "expression:lit") || (context === "expression:unit") || (context === "expression:var") || (context === "expression:call") || (context === "expression:ctor") || (context === "expression:match") || (context === "expression:unary") || (context === "expression:binary") || (context === "expression:if") || (context === "expression:let") || (context === "expression:toString") || (context === "expression:stringMap") || (context === "expression:stringTest") || (context === "expression:cast") || (context === "expression:abort") || (context === "expression:print") || (context === "expression:array") || (context === "expression:append") || (context === "expression:index") || (context === "expression:length") || (context === "expression:math") || (context === "expression:tuple") || (context === "expression:tupleIndex") || (context === "expression:none"))) return "null";
   return "";
 }
 
