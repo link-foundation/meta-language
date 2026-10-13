@@ -5,8 +5,9 @@ use super::{
 use crate::translation::ir::Program;
 use crate::translation::primitive_value_rules::{accept_tuple_index, read_tuple_position};
 use crate::translation::typed_program_link_rules::{
-    accept_program_container_fields, accept_program_reference_field, accept_program_schema_root,
-    is_unsafe_program_field, read_program_container_kind, read_program_neutral_field_default,
+    accept_program_container_fields, accept_program_expression_field,
+    accept_program_reference_field, accept_program_schema_root, is_unsafe_program_field,
+    read_program_container_kind, read_program_neutral_field_default,
     read_program_reference_source_field, read_program_scalar_kind,
 };
 use crate::{LinkId, LinkNetwork, LinkType};
@@ -100,6 +101,21 @@ impl Decoder<'_> {
                             return Err(error("a program record contains a duplicate field"));
                         }
                     }
+                }
+                if fields.contains_key("type")
+                    && !fields.contains_key("fullName")
+                    && let Some(Data::Scalar(Value::String(kind))) =
+                        fields.get("k").and_then(|id| self.values.get(id))
+                    && typed_program_links_schema()["expressionFields"]
+                        .get(kind)
+                        .is_some()
+                    && fields
+                        .keys()
+                        .any(|field| !accept_program_expression_field(kind, field))
+                {
+                    return Err(error(
+                        "a linked expression contains an unrecognized semantic field",
+                    ));
                 }
                 Data::Record(fields)
             }
@@ -280,7 +296,9 @@ impl Decoder<'_> {
                     && object["type"]["kind"] == "tuple"
                     && let Some(elements) = object["type"]["elements"].as_array()
                     && let Some(index) = record.get("index").and_then(Value::as_f64)
-                    && accept_tuple_index(index, elements.len() as f64)
+                    && serde_json::Number::from(elements.len())
+                        .as_f64()
+                        .is_some_and(|length| accept_tuple_index(index, length))
                 {
                     let position = read_tuple_position(index)
                         .to_string()

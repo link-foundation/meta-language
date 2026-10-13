@@ -116,6 +116,7 @@ export function threadOutput(source) {
       }
     }
   }
+  if (functions.some(entry => entry.sourceSignature !== undefined && effectful.has(entry.fullName))) throw unsupported('owned Rust source signature transformation', 'effect threading changes the captured source header and requires a distinct signature transformation proof');
   // A step of main is a `print` effect itself; what threads is a value that prints or may abort.
   const operand = (effect) => (effect.k === 'let' ? effect.value : effect.k === 'assert' ? effect.prop : effect.expr);
   if (!effectful.size && !(program.main?.effects ?? []).some((effect) => effects(operand(effect)))) return program;

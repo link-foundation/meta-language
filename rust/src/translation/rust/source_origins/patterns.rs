@@ -9,10 +9,10 @@ impl SourceOrigins {
     pub(in super::super) fn reference_pattern(&mut self, pattern: &SPattern) {
         if let Some(span) = pattern.span {
             *self.pattern_references.entry(span).or_default() += 1;
-        } else if matches!(pattern.node, SPatternNode::Wild) {
-            if let Some(references) = self.wildcard_references.back_mut() {
-                *references += 1;
-            }
+        } else if matches!(pattern.node, SPatternNode::Wild)
+            && let Some(references) = self.wildcard_references.back_mut()
+        {
+            *references += 1;
         }
     }
 

@@ -759,6 +759,13 @@ pub struct SFn {
     /// A function the translator made up, such as a lifted loop.
     #[serde(default, skip_serializing_if = "is_false")]
     pub generated: bool,
+    /// Optional owned facts from the actually parsed source function header.
+    #[serde(
+        default,
+        rename = "sourceSignature",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub source_signature: Option<super::source_signatures::SourceSignature>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

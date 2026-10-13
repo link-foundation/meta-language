@@ -51,7 +51,7 @@ impl RustParser {
                 span: range,
             }]);
         }
-        self.lower_product_binding(pattern, value, ty, source_type, path, range)
+        self.lower_product_binding(pattern, value, ty, source_type.as_ref(), path, range)
     }
 
     /// Read irrefutable positional patterns without introducing a pattern core.
@@ -157,13 +157,12 @@ impl RustParser {
         pattern: ProductBindingPattern,
         value: SExpr,
         ty: Option<Type>,
-        source_type: Option<SourceOrigin>,
+        source_type: Option<&SourceOrigin>,
         path: &[String],
         range: Option<Span>,
     ) -> Result<Vec<Binding>> {
         let name = self.fresh_product_binding();
-        self.origins
-            .bind(&name, &value, path, source_type.as_ref())?;
+        self.origins.bind(&name, &value, path, source_type)?;
         let origin = self.origins.scope[&name].clone();
         let mut bindings = vec![Binding {
             name: name.clone(),

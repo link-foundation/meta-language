@@ -7,18 +7,17 @@ use super::super::indirection_rules::{
 use super::super::product_rules::accept_rust_immutable_product_type;
 use super::super::{
     BOOL, Result, RustParser, STRING, SourceOrigin, Token, TokenKind, Type, UNIT,
-    UNSUPPORTED_TYPES, format, rust_fixed_type, span, unsupported,
+    UNSUPPORTED_TYPES, rust_fixed_type, span, unsupported,
 };
 
 impl RustParser {
     /// Types: machine integers, `bool`, `String`, `&str`, `()`, crate types,
     /// and `&T`/`Box<T>`, which denote the value `T` since every portable value
     /// is immutable.
-    pub(in super::super) fn parse_type(&mut self) -> Result<Type> {
+    pub(in super::super) fn parse_type_value(&mut self) -> Result<Type> {
         let token = self.peek();
         if self.cursor.eat("&").is_some() {
-            let mut source_lifetime = None;
-            if self.cursor.is("'") {
+            let source_lifetime = if self.cursor.is("'") {
                 self.cursor.advance();
                 let lifetime = self.cursor.identifier(Some("lifetime"))?;
                 if !accept_rust_source_lifetime_reference(
@@ -38,8 +37,10 @@ impl RustParser {
                         span(&token, &lifetime),
                     ));
                 }
-                source_lifetime = Some(lifetime.value);
-            }
+                Some(lifetime.value)
+            } else {
+                None
+            };
             if self.cursor.is("mut") {
                 return Err(unsupported(
                     "mutable reference",
@@ -118,7 +119,7 @@ impl RustParser {
             let ty = self
                 .origins
                 .typed(Type::Tuple { elements }, &self.module_path, Vec::new());
-            self.origins.current_type.copy_evidence = children_accepted;
+            self.origins.current_type.copy_evidence = children_accepted.then_some(());
             self.origins.current_type.fields = Some(fields);
             return Ok(ty);
         }

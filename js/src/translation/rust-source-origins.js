@@ -85,7 +85,7 @@ export class RustSourceOrigins {
     }
   }
 
-  lookup(segments, path) {
+  lookup(segments, path, kinds = null) {
     let names = [...segments];
     let start = [...path];
     let absolute = false;
@@ -98,7 +98,7 @@ export class RustSourceOrigins {
     for (let depth = start.length; depth >= 0; depth -= 1) {
       const fullName = [...start.slice(0, depth), ...names].join('.');
       const found = this.catalog.get(fullName);
-      if (found) return { ...found, fullName };
+      if (found && (!kinds || kinds.includes(found.k))) return { ...found, fullName };
       if (absolute) break;
     }
     return null;

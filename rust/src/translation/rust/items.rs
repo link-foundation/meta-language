@@ -8,14 +8,15 @@ use super::indirection_rules::{
 use super::scalar_parameter_rules::accept_rust_unwritten_scalar_parameter;
 use super::scalar_parameters::read_rust_scalar_parameter_body;
 use super::{
-    ACCEPTED_DERIVES, ACCEPTED_LINTS, Binding, FLOAT, ItemsEnd, Language, Options, RESERVED_ITEMS,
-    Result, RustParser, SComparison, SCtor, SData, SEffect, SExpr, SField, SFn, SItem, SMain,
-    SModule, SNode, SParam, SProgram, SProp, SPropNode, ShowStyle, SourceDeclaration, SourceOrigin,
-    Token, TokenKind, TranslationError, Type, absolute, format, is_if_or_match, prop_of, span,
+    ACCEPTED_DERIVES, ACCEPTED_LINTS, FLOAT, ItemsEnd, Language, Options, RESERVED_ITEMS, Result,
+    RustParser, SComparison, SCtor, SData, SEffect, SExpr, SField, SFn, SItem, SMain, SModule,
+    SNode, SParam, SProgram, SProp, SPropNode, ShowStyle, SourceDeclaration, SourceOrigin, Token,
+    TokenKind, TranslationError, Type, absolute, format, is_if_or_match, prop_of, span,
     unsupported,
 };
 
 mod product_bindings;
+mod source_headers;
 mod types;
 
 impl RustParser {
@@ -415,6 +416,7 @@ impl RustParser {
     fn function_with_lifetimes(&mut self, path: &[String]) -> Result<SFn> {
         let start = self.cursor.advance();
         let name = self.cursor.identifier(Some("fn"))?.value;
+        let mut source_lifetime_bindings = Vec::new();
         if self.cursor.is("<") {
             let generic = self.cursor.advance();
             while !self.cursor.is(">") {
@@ -437,6 +439,7 @@ impl RustParser {
                         span(&lifetime, self.cursor.peek()),
                     ));
                 }
+                source_lifetime_bindings.push(lifetime.value.clone());
                 self.lifetime_bindings.insert(lifetime.value);
                 if self.cursor.eat(",").is_none() {
                     break;
@@ -507,10 +510,7 @@ impl RustParser {
                     || self.origins.lookup(&resolved, path).is_some();
                 if !accept_rust_unwritten_scalar_parameter(
                     origin.ty.as_ref().map_or("", Type::kind),
-                    origin.direct_copy_value(),
-                    shadowed,
-                    closed,
-                    possible_write,
+                    (origin.direct_copy_value(), shadowed, closed, possible_write),
                 ) {
                     return Err(unsupported(
                         "mutable parameter",
@@ -563,6 +563,11 @@ impl RustParser {
                 span(&start, self.cursor.peek()),
             ));
         }
+        let source_signature = self.capture_source_signature(
+            &source_params,
+            &source_result,
+            source_lifetime_bindings,
+        )?;
         self.lifetime_header = false;
         let scope = params
             .iter()
@@ -603,6 +608,7 @@ impl RustParser {
             body,
             span: span(&start, self.cursor.peek()),
             generated: false,
+            source_signature,
         })
     }
 
@@ -640,6 +646,7 @@ impl RustParser {
             body,
             span: span(&start, self.cursor.peek()),
             generated: false,
+            source_signature: None,
         })
     }
 

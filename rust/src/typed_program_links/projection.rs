@@ -17,8 +17,7 @@ fn expression(value: &Value, program: &Program) -> Result<Value> {
             "{key}:{}",
             discriminator
                 .as_str()
-                .map(str::to_owned)
-                .unwrap_or_else(|| discriminator.to_string())
+                .map_or_else(|| discriminator.to_string(), str::to_owned)
         );
         if !read_program_expression_projection(&variant).is_empty() {
             key = variant;

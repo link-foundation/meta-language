@@ -80,6 +80,7 @@ impl Checker {
                     recursive: false,
                     decreasing: None,
                     mutual: false,
+                    source_signature: None,
                 }),
                 SItem::Theorem(theorem) => Decl::Theorem(TheoremDecl {
                     name: name.clone(),
@@ -175,8 +176,28 @@ impl Checker {
                 });
             }
             let ret = self.resolve_type(item.ret.as_ref(), path, item.span)?;
+            let mut source_signature = item.source_signature.clone();
+            if let Some(signature) = source_signature.as_mut() {
+                for position in signature
+                    .parameters
+                    .iter_mut()
+                    .chain(std::iter::once(&mut signature.result))
+                {
+                    position.ty = self.resolve_type(Some(&position.ty), path, item.span)?;
+                }
+                super::super::source_signatures::validate_source_signature(
+                    signature,
+                    &params
+                        .iter()
+                        .map(|parameter| parameter.ty.clone())
+                        .collect::<Vec<_>>(),
+                    &ret,
+                    self.language.as_str(),
+                )?;
+            }
             let name = full(path, &item.name);
             if let Some(Decl::Fn(entry)) = self.decls.get_mut(&name) {
+                entry.source_signature = source_signature;
                 entry.params = params;
                 entry.ret = ret;
             }
@@ -433,8 +454,8 @@ impl Checker {
     ) -> Result<Expr> {
         let value = self.expr(expr, env, path, None, false)?;
         let refusal = crate::translation::primitive_value_rules::read_number_display_refusal(
-            self.language.as_str().to_owned(),
-            value.ty.kind().to_owned(),
+            self.language.as_str(),
+            value.ty.kind(),
         );
         if !refusal.is_empty() {
             return Err(unsupported("Rust Float display", &refusal, expr.span));

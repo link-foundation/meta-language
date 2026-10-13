@@ -163,12 +163,13 @@ impl Decoder<'_> {
                         (read_program_reference_role(label) == "datatype").then_some(target)
                     })
                 });
-                let owns_type = if let Some(target) = reference {
-                    ownership.datatype_ids.contains(target)
-                } else {
-                    let name = self.tag(*id, "name");
-                    !name.is_empty() && ownership.datatypes.contains_key(name)
-                };
+                let owns_type = reference.map_or_else(
+                    || {
+                        let name = self.tag(*id, "name");
+                        !name.is_empty() && ownership.datatypes.contains_key(name)
+                    },
+                    |target| ownership.datatype_ids.contains(target),
+                );
                 if !owns_type {
                     return Err(error(
                         "a linked data type has no owned datatype declaration",
@@ -506,7 +507,7 @@ fn binder_name(value: &Value) -> Result<Value> {
     if object.len() != 2
         || !object.contains_key("name")
         || !object.contains_key("type")
-        || !value["name"].as_str().is_some_and(|name| !name.is_empty())
+        || value["name"].as_str().is_none_or(str::is_empty)
     {
         return Err(error(
             "a linked pattern binding must be an owned name and type record",

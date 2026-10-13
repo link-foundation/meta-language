@@ -8,7 +8,7 @@ use crate::translation::emit_javascript::emit_javascript;
 use crate::translation::emit_rust::emit_rust;
 use crate::translation::ir::Program;
 use crate::translation::javascript::parse_javascript;
-use crate::translation::rust::{parse_rust, parse_rust_with_source_models};
+use crate::translation::rust::{parse_rust, parse_rust_with_source_profiles};
 use crate::{LinkId, LinkMetadata, LinkNetwork, LinkType};
 use serde_json::Value;
 use std::fmt;
@@ -98,7 +98,7 @@ fn metadata(term: &str, definition: Option<&str>) -> LinkMetadata {
         result
     }
 }
-fn label_of(name: &str) -> String {
+pub(super) fn label_of(name: &str) -> String {
     typed_program_links_schema()["fields"][name]
         .as_str()
         .map_or_else(
@@ -182,7 +182,7 @@ pub fn decode_typed_program_links_with_limits(
     Ok(program)
 }
 
-pub(crate) fn read_typed_program_binding_identities(
+pub(super) fn read_typed_program_binding_identities(
     network: &LinkNetwork,
     root: LinkId,
 ) -> Result<Vec<LinkId>> {
@@ -267,6 +267,48 @@ pub fn create_typed_program_links_with_rust_source_models(
     completion_model: Option<&str>,
     provenance: Option<&Value>,
 ) -> Result<TypedProgramLinks> {
+    create_typed_program_links_with_rust_source_profiles(
+        source,
+        language,
+        array_result_model,
+        completion_model,
+        None,
+        provenance,
+    )
+}
+
+/// Import Rust with an inspectable owned source function signature witness.
+///
+/// # Errors
+/// Refuses non-Rust sources, unknown models and unsupported header facts.
+pub fn create_typed_program_links_with_rust_source_signature_model(
+    source: &str,
+    language: &str,
+    model: &str,
+    provenance: Option<&Value>,
+) -> Result<TypedProgramLinks> {
+    create_typed_program_links_with_rust_source_profiles(
+        source,
+        language,
+        None,
+        None,
+        Some(model),
+        provenance,
+    )
+}
+
+/// Select independent source profiles while keeping caller provenance separate.
+///
+/// # Errors
+/// Propagates source, model, checker and linked-adapter diagnostics.
+pub fn create_typed_program_links_with_rust_source_profiles(
+    source: &str,
+    language: &str,
+    array_result_model: Option<&str>,
+    completion_model: Option<&str>,
+    source_signature_model: Option<&str>,
+    provenance: Option<&Value>,
+) -> Result<TypedProgramLinks> {
     let canonical = match language.to_ascii_lowercase().as_str() {
         "rust" | "rs" => "Rust",
         "javascript" | "js" | "mjs" => "JavaScript",
@@ -283,19 +325,26 @@ pub fn create_typed_program_links_with_rust_source_models(
         if completion_model.is_some() {
             return Err(error("a Rust completion model requires Rust source"));
         }
+        if source_signature_model.is_some() {
+            return Err(error("a Rust source signature model requires Rust source"));
+        }
     }
     let surface = if canonical == "Rust" {
-        parse_rust_with_source_models(
+        parse_rust_with_source_profiles(
             source,
             array_result_model.unwrap_or(""),
             completion_model.unwrap_or(""),
+            source_signature_model.unwrap_or(""),
         )
     } else {
         parse_javascript(source)
     }
     .map_err(|failure| error(failure.to_string()))?;
     let program = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
-    if array_result_model.is_none() && completion_model.is_none() {
+    if array_result_model.is_none()
+        && completion_model.is_none()
+        && source_signature_model.is_none()
+    {
         return encode_typed_program_links_with_provenance(&program, provenance);
     }
     let mut profile = serde_json::Map::new();
@@ -305,6 +354,12 @@ pub fn create_typed_program_links_with_rust_source_models(
     }
     if let Some(model) = completion_model {
         profile.insert("rustCompletionModel".into(), Value::String(model.into()));
+    }
+    if let Some(model) = source_signature_model {
+        profile.insert(
+            "rustSourceSignatureModel".into(),
+            Value::String(model.into()),
+        );
     }
     let selected_provenance = serde_json::json!({
         "sourceProfile": profile,

@@ -104,6 +104,9 @@ function bindingTargets(program) {
   for (const entry of program.declarations.values()) {
     for (const parameter of entry.params ?? entry.binders ?? []) walkType(parameter.type);
     walkType(entry.ret ?? entry.type);
+    if (entry.k === 'fn' && entry.sourceSignature !== undefined) {
+      for (const position of [...entry.sourceSignature.parameters, entry.sourceSignature.result]) walkType(position.type);
+    }
     for (const constructor of entry.ctors ?? []) for (const field of constructor.fields) walkType(field.type);
     const environment = new Map((entry.params ?? []).map((parameter) => [parameter.name, parameter]));
     walk(entry.body ?? entry.value, environment);
@@ -320,13 +323,15 @@ export function createTypedProgramLinks(source, language, options = {}) {
   if (!canonical) throw new TypeError('typed linked source import currently reads JavaScript and Rust');
   const arraySelected = options.rustArrayResultModel !== undefined;
   const completionSelected = options.rustCompletionModel !== undefined;
-  const selected = arraySelected || completionSelected;
+  const signatureSelected = options.rustSourceSignatureModel !== undefined;
+  const selected = arraySelected || completionSelected || signatureSelected;
   if (arraySelected && canonical !== 'Rust') throw new TypeError('a Rust array result model requires Rust source');
   if (completionSelected && canonical !== 'Rust') throw new TypeError('a Rust completion model requires Rust source');
-  const program = checkProgram(canonical === 'Rust' ? parseRust(source, { arrayResultModel: options.rustArrayResultModel, completionModel: options.rustCompletionModel }) : parseJavaScript(source, options.context));
+  if (signatureSelected && canonical !== 'Rust') throw new TypeError('a Rust source signature model requires Rust source');
+  const program = checkProgram(canonical === 'Rust' ? parseRust(source, { arrayResultModel: options.rustArrayResultModel, completionModel: options.rustCompletionModel, sourceSignatureModel: options.rustSourceSignatureModel }) : parseJavaScript(source, options.context));
   if (options.utf16Strings) program.utf16Strings = true;
   const provenance = selected ? {
-    sourceProfile: { language: 'Rust', ...(arraySelected ? { rustArrayResultModel: options.rustArrayResultModel } : {}), ...(completionSelected ? { rustCompletionModel: options.rustCompletionModel } : {}) },
+    sourceProfile: { language: 'Rust', ...(arraySelected ? { rustArrayResultModel: options.rustArrayResultModel } : {}), ...(completionSelected ? { rustCompletionModel: options.rustCompletionModel } : {}), ...(signatureSelected ? { rustSourceSignatureModel: options.rustSourceSignatureModel } : {}) },
     userProvenance: options.provenance ?? null,
   } : options.provenance;
   return encodeTypedProgramLinks(program, { ...options, provenance });

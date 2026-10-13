@@ -64,7 +64,7 @@ fn normalize_expression(value: &mut Value, expression: &Expr, program: &Program)
                             .first()
                             .ok_or_else(|| error("a checked pattern has no binding"))?;
                         pattern["name"] = serde_json::to_value(binding)
-                            .map_err(|failure| error(failure.to_string()))?
+                            .map_err(|failure| error(failure.to_string()))?;
                     }
                     "fields" => {
                         let by_name: BTreeMap<_, _> = bindings

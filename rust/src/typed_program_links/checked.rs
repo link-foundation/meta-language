@@ -49,13 +49,12 @@ fn validate_type_records(
         let kind = value["k"].as_str().unwrap_or_default();
         if kind == "toString" {
             let argument_kind = value["arg"]["type"]["kind"].as_str().unwrap_or_default();
-            if !accept_linked_text_conversion_kind(argument_kind.to_owned()) {
+            if !accept_linked_text_conversion_kind(argument_kind) {
                 return Err(error(
                     "a linked text conversion requires a supported scalar or existing record representation",
                 ));
             }
-            let refusal =
-                read_number_display_refusal(source_language.to_owned(), argument_kind.to_owned());
+            let refusal = read_number_display_refusal(source_language, argument_kind);
             if !refusal.is_empty() {
                 return Err(error(format!("Rust Float display: {refusal}")));
             }
@@ -218,6 +217,7 @@ pub(super) fn validate(program: &Program) -> Result<()> {
             body: expression(&function.body, program)?,
             span: function.span,
             generated: function.generated,
+            source_signature: function.source_signature.clone(),
         }));
     }
     if items.len() != program.declarations.len() {

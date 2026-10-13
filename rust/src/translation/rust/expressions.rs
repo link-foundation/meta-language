@@ -308,10 +308,10 @@ impl RustParser {
                         span(&token, self.cursor.peek()),
                     ));
                 }
-                if ["div_euclid", "rem_euclid"].contains(&method_name) {
-                    if let Some(argument) = args.first() {
-                        self.origins.direct(argument, path, argument.span)?;
-                    }
+                if ["div_euclid", "rem_euclid"].contains(&method_name)
+                    && let Some(argument) = args.first()
+                {
+                    self.origins.direct(argument, path, argument.span)?;
                 }
                 if ["clone", "to_owned"].contains(&method_name)
                     && origin
@@ -377,22 +377,22 @@ impl RustParser {
         {
             let middle = token.start + first.len();
             let mut first_token = token.clone();
-            first_token.value = first.to_owned();
-            first_token.raw = first.to_owned();
+            first.clone_into(&mut first_token.value);
+            first.clone_into(&mut first_token.raw);
             first_token.suffix.clear();
             first_token.floating = false;
             first_token.end = middle;
             let mut separator = token.clone();
             separator.kind = TokenKind::Punct;
-            separator.value = ".".to_owned();
-            separator.raw = ".".to_owned();
+            ".".clone_into(&mut separator.value);
+            ".".clone_into(&mut separator.raw);
             separator.suffix.clear();
             separator.floating = false;
             separator.start = middle;
             separator.end = middle + 1;
             let mut second_token = token.clone();
-            second_token.value = second.to_owned();
-            second_token.raw = second.to_owned();
+            second.clone_into(&mut second_token.value);
+            second.clone_into(&mut second_token.raw);
             second_token.suffix.clear();
             second_token.floating = false;
             second_token.start = middle + 1;

@@ -725,6 +725,9 @@ pub struct FnDecl {
     /// A function the translator made up, such as a lifted loop.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub generated: bool,
+    /// Optional owned source-header facts, checked against this signature.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_signature: Option<super::source_signatures::SourceSignature>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

@@ -59,6 +59,11 @@ pub fn thread_output(source: &Program) -> Result<Cow<'_, Program>> {
             }
         }
     }
+    if program.declarations.iter().any(|entry| matches!(entry,
+        Decl::Fn(function) if function.source_signature.is_some() && effectful.contains(&function.full_name))) {
+        return Err(unsupported("owned Rust source signature transformation",
+            "effect threading changes the captured source header and requires a distinct signature transformation proof", None));
+    }
     let main_effects = program.main.as_ref().is_some_and(|main| {
         main.effects
             .iter()

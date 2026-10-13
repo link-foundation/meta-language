@@ -55,6 +55,7 @@ export function recheckLinkedTypedProgram(program) {
       params: entry.params.map(parameter => ({ ...parameter, type: projectType(parameter.type) })),
       ret: projectType(entry.ret), body: projectExpression(entry.body), span: entry.span,
       ...(entry.generated !== undefined ? { generated: entry.generated } : {}),
+      ...(entry.sourceSignature !== undefined ? { sourceSignature: entry.sourceSignature } : {}),
     };
   }
   const surface = { language: program.sourceLanguage, items: program.items.map(projectItem),

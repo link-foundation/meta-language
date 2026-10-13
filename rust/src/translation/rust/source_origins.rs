@@ -19,6 +19,7 @@ use super::product_rules::accept_rust_immutable_product_type;
 use super::{Result, SExpr, SNode, Span, Type, unsupported};
 
 mod patterns;
+mod type_owners;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) struct SourceOrigin {
@@ -31,7 +32,7 @@ pub(super) struct SourceOrigin {
     pub(super) diverging: bool,
     pub(super) uncertain: bool,
     /// Source Copy evidence does not choose the checker's numeric width.
-    pub(super) copy_evidence: bool,
+    pub(super) copy_evidence: Option<()>,
     pub(super) fields: Option<Vec<Self>>,
     pub(super) text_source_model: Option<&'static str>,
     pub(super) array_source_model: Option<&'static str>,
@@ -39,6 +40,7 @@ pub(super) struct SourceOrigin {
     pub(super) fresh_array_value: Option<Span>,
     /// Spelled source lifetimes, in reference-layer order; None is elision.
     pub(super) source_lifetimes: Vec<Option<String>>,
+    pub(super) source_owner: Option<super::super::source_signatures::SourceOwner>,
 }
 
 impl SourceOrigin {
@@ -51,11 +53,12 @@ impl SourceOrigin {
             proven: false,
             diverging: false,
             uncertain: false,
-            copy_evidence: false,
+            copy_evidence: None,
             fields: None,
             text_source_model: None,
             array_source_model: None,
             source_lifetimes: Vec::new(),
+            source_owner: None,
             fresh_array_value: None,
         }
     }
@@ -84,11 +87,12 @@ impl SourceOrigin {
             proven: true,
             diverging: false,
             uncertain: false,
-            copy_evidence,
+            copy_evidence: copy_evidence.then_some(()),
             fields,
             text_source_model,
             array_source_model,
             source_lifetimes: Vec::new(),
+            source_owner: None,
             fresh_array_value: None,
         }
     }
@@ -102,7 +106,7 @@ impl SourceOrigin {
 
     pub(super) fn direct_copy_value(&self) -> bool {
         self.proven
-            && self.copy_evidence
+            && self.copy_evidence.is_some()
             && self.wrappers.is_empty()
             && self
                 .fields
@@ -113,7 +117,7 @@ impl SourceOrigin {
     fn scalar_copy_value(ty: Option<Type>) -> Self {
         Self {
             ty,
-            copy_evidence: true,
+            copy_evidence: Some(()),
             ..Self::value()
         }
     }
@@ -234,7 +238,10 @@ impl SourceOrigins {
         };
         let fields: Vec<_> = items.iter().map(|item| self.origin(item, path)).collect();
         let origin = SourceOrigin {
-            copy_evidence: fields.iter().all(SourceOrigin::direct_copy_value),
+            copy_evidence: fields
+                .iter()
+                .all(SourceOrigin::direct_copy_value)
+                .then_some(()),
             fields: Some(fields),
             ..SourceOrigin::value()
         };
@@ -315,49 +322,6 @@ impl SourceOrigins {
                 | SourceDeclaration::Data => {}
             }
         }
-    }
-
-    pub(super) fn lookup(&self, segments: &[String], path: &[String]) -> Option<SourceLookup> {
-        let mut names = segments.to_vec();
-        let mut start = path.to_vec();
-        let mut absolute = false;
-        match names.first().map(String::as_str) {
-            Some("crate") => {
-                names.remove(0);
-                start.clear();
-                absolute = true;
-            }
-            Some("self") => {
-                names.remove(0);
-                absolute = true;
-            }
-            Some("super") => {
-                while names.first().is_some_and(|name| name == "super") {
-                    names.remove(0);
-                    start.pop();
-                }
-                absolute = true;
-            }
-            _ => {}
-        }
-        for depth in (0..=start.len()).rev() {
-            let full_name = start[..depth]
-                .iter()
-                .chain(names.iter())
-                .cloned()
-                .collect::<Vec<_>>()
-                .join(".");
-            if let Some(declaration) = self.catalog.get(&full_name) {
-                return Some(SourceLookup {
-                    declaration: declaration.clone(),
-                    full_name,
-                });
-            }
-            if absolute {
-                break;
-            }
-        }
-        None
     }
 
     pub(super) fn box_owner(
@@ -505,14 +469,13 @@ impl SourceOrigins {
                 | SourceDeclaration::Data => {}
             }
         }
-        if let SNode::Name { path: names } = &node.node {
-            if names.len() == 2
-                && self.lookup(&names[..1], path).is_none()
-                && super::rust_fixed_type(&names[0]).is_some()
-                && ["MIN", "MAX"].contains(&names[1].as_str())
-            {
-                return SourceOrigin::scalar_copy_value(super::rust_fixed_type(&names[0]));
-            }
+        if let SNode::Name { path: names } = &node.node
+            && names.len() == 2
+            && self.lookup(&names[..1], path).is_none()
+            && super::rust_fixed_type(&names[0]).is_some()
+            && ["MIN", "MAX"].contains(&names[1].as_str())
+        {
+            return SourceOrigin::scalar_copy_value(super::rust_fixed_type(&names[0]));
         }
         if let SNode::If {
             then, otherwise, ..
@@ -571,10 +534,12 @@ impl SourceOrigins {
                         && operands[0].wrappers != operands[1].wrappers
                         && !accept_rust_source_text_equality(
                             operation,
-                            operands[0].direct_string_value(),
-                            operands[1].direct_string_value(),
-                            operands[0].borrowed_string_slice(),
-                            operands[1].borrowed_string_slice(),
+                            (
+                                operands[0].direct_string_value(),
+                                operands[1].direct_string_value(),
+                                operands[0].borrowed_string_slice(),
+                                operands[1].borrowed_string_slice(),
+                            ),
                         ))
                         || (form == "primitive-operation"
                             && operands.iter().any(|operand| {
@@ -599,10 +564,12 @@ impl SourceOrigins {
                 };
                 let copy_evidence = form != "primitive-operation"
                     || (operation != "concat"
-                        && operands.iter().all(|operand| operand.copy_evidence));
+                        && operands
+                            .iter()
+                            .all(|operand| operand.copy_evidence.is_some()));
                 SourceOrigin {
                     ty,
-                    copy_evidence,
+                    copy_evidence: copy_evidence.then_some(()),
                     text_source_model: (operation == "concat").then_some("owned string"),
                     ..SourceOrigin::value()
                 }
@@ -679,7 +646,10 @@ impl SourceOrigins {
                 .flatten();
             return SourceOrigin {
                 wrappers: first.wrappers.clone(),
-                copy_evidence: returning.iter().all(|origin| origin.copy_evidence),
+                copy_evidence: returning
+                    .iter()
+                    .all(|origin| origin.copy_evidence.is_some())
+                    .then_some(()),
                 fields,
                 ty: text_source_model.map(|_| super::STRING),
                 text_source_model,
@@ -872,7 +842,7 @@ impl SourceOrigins {
                     .chain(actual.iter().skip(removed + 1))
                     .eq(want.iter())
         });
-        if !accept_rust_source_indirection_argument(indirected, exact, borrowed, coerced) {
+        if !accept_rust_source_indirection_argument((indirected, exact, borrowed, coerced)) {
             return Err(unsupported(
                 "source indirection",
                 "source ownership requires an explicit dereference or matching immutable reference or Box type",

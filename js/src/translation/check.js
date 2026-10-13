@@ -6,6 +6,7 @@
 // `Int` division for JavaScript's truncating BigInt division).
 
 import { typeError, unsupported } from './diagnostics.js';
+import { checkRustSourceSignature } from './rust-source-signatures.js';
 import { acceptArgumentCount, acceptCheckedTypeQueryOperand, acceptTypeQueryOperand, readTypeQueryResult } from './frontend-rules.js';
 import { normaliseProof } from './proof.js';
 import { referenceOperation } from './reference-model.js';
@@ -197,6 +198,7 @@ class Checker {
       }));
       entry.ret = this.resolveType(item.semanticRet ?? item.ret, itemPath, item.span);
       if (item.semanticRet) entry.annotatedRet = this.resolveType(item.ret, itemPath, item.span);
+      if (item.sourceSignature !== undefined) entry.sourceSignature = checkRustSourceSignature(item.sourceSignature, entry.params.map(parameter => parameter.type), entry.ret, this.language, value => this.resolveType(value, itemPath, item.span));
     });
     this.walk(items, path, (item, itemPath, entry) => {
       if (item.k === 'fn') {
