@@ -191,34 +191,33 @@ pub fn read_program_reference_source_field(
     construct_kind: &str,
     type_kind: &str,
 ) -> String {
-    if ((label == "binding reference" && (construct_kind == "var")) && (type_kind == "")) {
+    if (label == "binding reference" && (construct_kind == "var")) && (type_kind == "") {
         String::from("name")
-    } else if ((label == "declaration reference" && (construct_kind == "call"))
-        && (type_kind == ""))
+    } else if (label == "declaration reference" && (construct_kind == "call")) && (type_kind == "")
     {
         String::from("fn")
-    } else if ((label == "declaration reference" && (construct_kind == "functionRef"))
-        && (type_kind == ""))
+    } else if (label == "declaration reference" && (construct_kind == "functionRef"))
+        && (type_kind == "")
     {
         String::from("fn")
-    } else if ((label == "data type declaration reference" && (construct_kind == ""))
-        && (type_kind == "data"))
+    } else if (label == "data type declaration reference" && (construct_kind == ""))
+        && (type_kind == "data")
     {
         String::from("name")
-    } else if ((label == "data type declaration reference" && (construct_kind == "ctor"))
-        && (type_kind == ""))
+    } else if (label == "data type declaration reference" && (construct_kind == "ctor"))
+        && (type_kind == "")
     {
         String::from("data")
-    } else if ((label == "constructor declaration reference" && (construct_kind == "ctor"))
-        && (type_kind == ""))
+    } else if (label == "constructor declaration reference" && (construct_kind == "ctor"))
+        && (type_kind == "")
     {
         String::from("ctor")
-    } else if ((label == "datatype declaration reference" && (construct_kind == ""))
-        && (type_kind == "data"))
+    } else if (label == "datatype declaration reference" && (construct_kind == ""))
+        && (type_kind == "data")
     {
         String::from("name")
-    } else if ((label == "datatype declaration reference" && (construct_kind == "ctor"))
-        && (type_kind == ""))
+    } else if (label == "datatype declaration reference" && (construct_kind == "ctor"))
+        && (type_kind == "")
     {
         String::from("data")
     } else {
@@ -247,53 +246,53 @@ pub fn read_program_reference_target_field(label: &str) -> String {
 /// Read the corresponding decision of the shared typed program links schema.
 #[must_use]
 pub fn read_program_neutral_field_default(context: &str, field: &str) -> String {
-    if (context == "program" && field == "imports") {
+    if context == "program" && field == "imports" {
         String::from("empty-array")
-    } else if (context == "program" && field == "externals") {
+    } else if context == "program" && field == "externals" {
         String::from("empty-array")
-    } else if (context == "program" && field == "outputThreaded") {
+    } else if context == "program" && field == "outputThreaded" {
         String::from("false")
-    } else if (context == "program" && field == "abortsThreaded") {
+    } else if context == "program" && field == "abortsThreaded" {
         String::from("false")
-    } else if (context == "program" && field == "main") {
+    } else if context == "program" && field == "main" {
         String::from("null")
-    } else if (context == "main" && field == "sequentialAsync") {
+    } else if context == "main" && field == "sequentialAsync" {
         String::from("false")
-    } else if (context == "main" && field == "span") {
+    } else if context == "main" && field == "span" {
         String::from("null")
-    } else if (context == "declaration:fn" && field == "mutual") {
+    } else if context == "declaration:fn" && field == "mutual" {
         String::from("false")
-    } else if (context == "declaration:fn" && field == "generated") {
+    } else if context == "declaration:fn" && field == "generated" {
         String::from("false")
-    } else if (context == "declaration:fn" && field == "decreasing") {
+    } else if context == "declaration:fn" && field == "decreasing" {
         String::from("null")
-    } else if (context == "declaration:fn" && field == "span") {
+    } else if context == "declaration:fn" && field == "span" {
         String::from("null")
-    } else if (context == "declaration:data" && field == "generated") {
+    } else if context == "declaration:data" && field == "generated" {
         String::from("false")
-    } else if (context == "declaration:data" && field == "output") {
+    } else if context == "declaration:data" && field == "output" {
         String::from("false")
-    } else if (context == "declaration:data" && field == "span") {
+    } else if context == "declaration:data" && field == "span" {
         String::from("null")
-    } else if (context == "expression:ctor" && field == "frozen") {
+    } else if context == "expression:ctor" && field == "frozen" {
         String::from("false")
-    } else if (context == "expression:toString" && field == "console") {
+    } else if context == "expression:toString" && field == "console" {
         String::from("false")
-    } else if (context == "expression:tuple" && field == "frozen") {
+    } else if context == "expression:tuple" && field == "frozen" {
         String::from("false")
-    } else if (context == "parameter" && field == "guard") {
+    } else if context == "parameter" && field == "guard" {
         String::from("null")
-    } else if (context == "parameter" && field == "default") {
+    } else if context == "parameter" && field == "default" {
         String::from("null")
-    } else if (context == "effect:let" && field == "constant") {
+    } else if context == "effect:let" && field == "constant" {
         String::from("false")
-    } else if (context == "effect:let" && field == "span") {
+    } else if context == "effect:let" && field == "span" {
         String::from("null")
-    } else if (context == "declaration:module" && field == "span") {
+    } else if context == "declaration:module" && field == "span" {
         String::from("null")
-    } else if (context == "effect:print" && field == "span") {
+    } else if context == "effect:print" && field == "span" {
         String::from("null")
-    } else if (field == "span"
+    } else if field == "span"
         && ((((((((((((((((((((((context == "expression:lit"
             || context == "expression:unit")
             || context == "expression:var")
@@ -316,7 +315,7 @@ pub fn read_program_neutral_field_default(context: &str, field: &str) -> String 
             || context == "expression:length")
             || context == "expression:math")
             || context == "expression:tuple")
-            || context == "expression:tupleIndex"))
+            || context == "expression:tupleIndex")
     {
         String::from("null")
     } else {
@@ -328,12 +327,12 @@ pub fn read_program_neutral_field_default(context: &str, field: &str) -> String 
 #[must_use]
 pub fn accept_program_expression_field(kind: &str, field: &str) -> bool {
     if kind == "tuple" {
-        (((((field == "k" || field == "type") || field == "span") || field == "items")
+        ((((field == "k" || field == "type") || field == "span") || field == "items")
             || field == "frozen")
-            || field == "productModel")
+            || field == "productModel"
     } else if kind == "tupleIndex" {
-        ((((field == "k" || field == "type") || field == "span") || field == "object")
-            || field == "index")
+        (((field == "k" || field == "type") || field == "span") || field == "object")
+            || field == "index"
     } else {
         false
     }
@@ -421,8 +420,7 @@ pub fn read_program_expression_projection(term: &str) -> String {
 #[must_use]
 pub fn accept_program_expression_operation(kind: &str, operation: &str) -> bool {
     if kind == "math" {
-        ((((((((((((((operation == "abs" || operation == "floor")
-            || operation == "ceil")
+        (((((((((((((operation == "abs" || operation == "floor") || operation == "ceil")
             || operation == "trunc")
             || operation == "round")
             || operation == "sign")
@@ -434,19 +432,18 @@ pub fn accept_program_expression_operation(kind: &str, operation: &str) -> bool 
             || operation == "isInteger")
             || operation == "isSafeInteger")
             || operation == "isFinite")
-            || operation == "isNaN")
+            || operation == "isNaN"
     } else if kind == "stringMap" {
-        (((((((operation == "toLowerCase" || operation == "toUpperCase")
-            || operation == "trim")
+        ((((((operation == "toLowerCase" || operation == "toUpperCase") || operation == "trim")
             || operation == "trimStart")
             || operation == "trimEnd")
             || operation == "rustTrim")
             || operation == "rustTrimStart")
-            || operation == "rustTrimEnd")
+            || operation == "rustTrimEnd"
     } else if kind == "stringTest" {
-        ((operation == "startsWith" || operation == "endsWith") || operation == "includes")
+        (operation == "startsWith" || operation == "endsWith") || operation == "includes"
     } else if kind == "method" {
-        ((((((((((((((((((((operation == "split" || operation == "slice")
+        (((((((((((((((((((operation == "split" || operation == "slice")
             || operation == "indexOf")
             || operation == "lastIndexOf")
             || operation == "replace")
@@ -465,14 +462,14 @@ pub fn accept_program_expression_operation(kind: &str, operation: &str) -> bool 
             || operation == "forEach")
             || operation == "reduce")
             || operation == "join")
-            || operation == "includes")
+            || operation == "includes"
     } else if kind == "collectionRead" {
-        (operation == "get" || operation == "has")
+        operation == "get" || operation == "has"
     } else if kind == "collectionItems" {
-        ((operation == "keys" || operation == "values") || operation == "entries")
+        (operation == "keys" || operation == "values") || operation == "entries"
     } else if kind == "optionalPredicate" {
-        (((operation == "isInteger" || operation == "isSafeInteger") || operation == "isFinite")
-            || operation == "isNaN")
+        ((operation == "isInteger" || operation == "isSafeInteger") || operation == "isFinite")
+            || operation == "isNaN"
     } else {
         false
     }

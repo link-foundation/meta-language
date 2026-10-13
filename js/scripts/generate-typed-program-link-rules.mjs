@@ -6,6 +6,7 @@ import { parseJavaScript } from '../src/translation/javascript.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { DecoratorSet } from '../src/decorators.js';
+import { tokenize } from '../src/translation/lexer.js';
 import { readProjectData, readProjectFileBytes } from './project-data.mjs';
 
 const schemaSource = new URL('../src/data/typed-program-links-schema.json', import.meta.url);
@@ -107,14 +108,64 @@ if (process.argv.includes('--update-styles')) {
   writeFileSync(styleFile, new DecoratorSet([{ id: 'typed-program-link-library-style', level: 'emitter', order: 0,
     when: [['format', 'Rust']], actions }]).toLino());
 }
-const styles = DecoratorSet.fromLino(readFileSync(styleFile, 'utf8'));
-const decorated = styles.decorate('emitter', { format: 'Rust', source: raw }).source;
-const formatted = spawnSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], {
-  input: decorated, encoding: 'utf8', maxBuffer: 1024 * 1024,
-});
-if (formatted.error || formatted.status !== 0) throw formatted.error ?? new Error(formatted.stderr);
+let styles = DecoratorSet.fromLino(readFileSync(styleFile, 'utf8'));
+const format = (input) => {
+  const result = spawnSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], {
+    input, encoding: 'utf8', maxBuffer: 1024 * 1024,
+  });
+  if (result.error || result.status !== 0) throw result.error ?? new Error(result.stderr);
+  return result.stdout;
+};
+let formatted = format(styles.decorate('emitter', { format: 'Rust', source: raw }).source);
+if (process.argv.includes('--update-parenthesis-styles')) {
+  // Reviewed response to CI 38346650821, rather than invented machine-applicable
+  // diagnostics. Remove only groups enclosing a complete condition or the sole
+  // expression of a block; all interior precedence and opaque literals remain.
+  const { tokens } = tokenize(formatted, 'Rust');
+  const openings = [];
+  const closing = new Map();
+  for (let index = 0; index < tokens.length; index += 1) {
+    if (tokens[index].value === '(') openings.push(index);
+    else if (tokens[index].value === ')') closing.set(openings.pop(), index);
+  }
+  if (openings.length || closing.has(undefined)) throw new Error('translated rules have unbalanced parentheses');
+  const removed = new Set();
+  for (let index = 0; index < tokens.length; index += 1) {
+    if (!['if', '{'].includes(tokens[index].value) || tokens[index + 1]?.value !== '(') continue;
+    let start = index + 1;
+    let end = closing.get(start);
+    if (end === undefined || tokens[end + 1]?.value !== (tokens[index].value === 'if' ? '{' : '}')) continue;
+    do {
+      removed.add(start); removed.add(end);
+      start += 1; end -= 1;
+    } while (tokens[start]?.value === '(' && closing.get(start) === end);
+  }
+  if (!removed.size) throw new Error('translated rules have no reviewed complete-expression parentheses');
+  let corrected = formatted;
+  for (const index of [...removed].sort((left, right) => right - left)) {
+    const token = tokens[index];
+    corrected = corrected.slice(0, token.start) + corrected.slice(token.end);
+  }
+  const id = 'reviewed-ci-38346650821-complete-expression-parentheses';
+  const existing = readFileSync(styleFile, 'utf8').split('\n').filter(line => !line.startsWith(`(decorator ${id} `)).join('\n').trimEnd();
+  writeFileSync(styleFile, `${existing}\n\n${new DecoratorSet([{ id, level: 'emitter', order: 1000,
+    when: [['format', 'Rust'], ['scope', 'formatted-module']],
+    actions: [{ op: 'replace', field: 'source', from: formatted, to: corrected }] }]).toLino()}`);
+  styles = DecoratorSet.fromLino(readFileSync(styleFile, 'utf8'));
+}
+// Reviewed multiline corrections share the frontend generator's convergent
+// formatted-module pipeline, so ordinary regeneration replays the Links data.
+// Legacy unscoped signature/documentation actions belong to raw emission only.
+const moduleStyles = new DecoratorSet(styles.decorators.filter(({ when }) =>
+  when.some(([field, value]) => field === 'scope' && value === 'formatted-module')));
+for (let round = 0; round < 10; round += 1) {
+  const next = format(moduleStyles.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source: formatted }).source);
+  if (next === formatted) break;
+  formatted = next;
+  if (round === 9) throw new Error('typed program link style decorators do not converge');
+}
 const rust = '// Generated from the shared typed-program-links schema through\n'
-  + '// js/scripts/generate-typed-program-link-rules.mjs. Do not edit by hand.\n' + formatted.stdout;
+  + '// js/scripts/generate-typed-program-link-rules.mjs. Do not edit by hand.\n' + formatted;
 const artifacts = [
   [new URL('../src/typed-program-link-rules.js', import.meta.url), source],
   [new URL('../../rust/src/translation/typed_program_link_rules.rs', import.meta.url), rust],
