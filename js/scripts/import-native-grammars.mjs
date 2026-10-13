@@ -329,9 +329,9 @@ export function mergeReport(result, register, words) {
 const json = (value) => `${JSON.stringify(value, null, 2)}\n`;
 
 /** Compiles the character-class corpus through the catalog's native importer. */
-export function importCharacterClassFixtures() {
+export function importCharacterClassFixtures({ structured = false } = {}) {
   const fixture = readJson('parity/fixtures/native-character-classes.json');
-  return [['parity/fixtures/native-character-class-grammars.json', json({
+  const value = {
     generatedBy: 'js/scripts/import-native-grammars.mjs --character-class-fixtures',
     cases: fixture.cases.map((entry) => {
       const { id, pattern } = entry;
@@ -339,11 +339,12 @@ export function importCharacterClassFixtures() {
       if (imported.report.unsupported.length > 0) throw new Error(`${id}: ${imported.report.unsupported.join('; ')}`);
       return { ...entry, grammar: renderTreeSitterNative(imported) };
     }),
-  })]];
+  };
+  return [['parity/fixtures/native-character-class-grammars.json', structured ? value : json(value)]];
 }
 
-/** Selected pipeline outputs, or every language by default, `[path, text]`. */
-export function importNativeGrammars(languages = null) {
+/** Pipeline outputs; structured mode retains project-data collection identity. */
+export function importNativeGrammars(languages = null, { structured = false } = {}) {
   const registry = readJson(GRAMMAR_SOURCES);
   const naming = readJson(NAME_EXPANSIONS);
   const words = new Map(naming.words.map(({ word, replacement }) => [word, replacement]));
@@ -356,19 +357,24 @@ export function importNativeGrammars(languages = null) {
   const register = mergeConcepts(readJson(CONCEPT_REGISTER), imports, naming.concepts);
   return [
     ...imports.map((result) => [`${NATIVE_DIRECTORY}/${result.entry.language}.lino`, result.text]),
-    ...imports.map((result) => [`${MERGE_REPORT_DIRECTORY}/${result.entry.language}.json`, json(mergeReport(result, register, words))]),
-    [CONCEPT_REGISTER, json(register)],
+    ...imports.map((result) => {
+      const report = mergeReport(result, register, words);
+      return [`${MERGE_REPORT_DIRECTORY}/${result.entry.language}.json`, structured ? report : json(report)];
+    }),
+    [CONCEPT_REGISTER, structured ? register : json(register)],
   ];
 }
 
 function main() {
   const languageIndex = process.argv.indexOf('--language');
   const languages = languageIndex < 0 ? null : [process.argv[languageIndex + 1]];
-  const files = process.argv.includes('--character-class-fixtures') ? importCharacterClassFixtures() : importNativeGrammars(languages);
+  const files = process.argv.includes('--character-class-fixtures')
+    ? importCharacterClassFixtures({ structured: true })
+    : importNativeGrammars(languages, { structured: true });
   if (process.argv.includes('--check')) {
     const stale = files.filter(([file, text]) => {
       try {
-        if (file.endsWith('.json')) return !checkProjectData(join(root, file), JSON.parse(text));
+        if (file.endsWith('.json')) return !checkProjectData(join(root, file), text);
         return readFileSync(join(root, file), 'utf8') !== text;
       } catch {
         return true;
@@ -383,7 +389,7 @@ function main() {
     return;
   }
   for (const [file, text] of files) {
-    if (file.endsWith('.json')) writeProjectData(join(root, file), JSON.parse(text));
+    if (file.endsWith('.json')) writeProjectData(join(root, file), text);
     else writeFileSync(join(root, file), text);
   }
   console.log(`wrote ${files.length} files`);

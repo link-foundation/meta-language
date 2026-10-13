@@ -8,11 +8,34 @@ import { test } from 'node:test';
 import { nativeCorpusFailure } from '../scripts/native-grammar-rows.mjs';
 import { rememberedDelimiterScanner } from '../scripts/scanner-families.mjs';
 import { transformNativeSource } from '../scripts/native-grammar-transforms.mjs';
-import { GENERATED, corpusFileCases, mergeConcepts, nativeName, ruleConcept } from '../scripts/import-native-grammars.mjs';
+import { GENERATED, corpusFileCases, importCharacterClassFixtures, mergeConcepts, nativeName, ruleConcept } from '../scripts/import-native-grammars.mjs';
+import { readStructuredDataLino, structuredDataToLino } from '../src/structured-data-links.js';
 import { importTreeSitterNative, renderTreeSitterNative } from '../src/grammar-importers/tree-sitter-native.js';
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 
 const rule = (character, length = 80) => character.repeat(length);
+
+test('structured import outputs preserve shared authored metadata through Links storage', () => {
+  const constraints = ['An explicitly shared model premise.'];
+  const register = { concepts: ['first', 'second'].map(name => ({
+    id: `fixture.${name}`, phrase: name, role: 'concept', definition: name,
+    constraints, sourceAliases: [{ source: 'fixture', name }], formerNames: [],
+  })) };
+  const merged = mergeConcepts(register, []);
+  const restored = readStructuredDataLino(structuredDataToLino(merged));
+  assert.deepEqual(restored, register);
+  assert.equal(restored.concepts[0].constraints, restored.concepts[1].constraints,
+    'the authored shared premise retains one collection identity');
+  restored.concepts[0].constraints.push('An additional explicit premise.');
+  assert.equal(restored.concepts[1].constraints.length, 2);
+  assert.equal(register.concepts[0].constraints.length, 1, 'reload owns its copied graph');
+  const legacy = importCharacterClassFixtures();
+  const structured = importCharacterClassFixtures({ structured: true });
+  assert.deepEqual(structured.map(([file, value]) => [file, value]),
+    legacy.map(([file, text]) => [file, JSON.parse(text)]),
+    'both output interfaces retain the same independently compiled tiny corpus');
+  assert.equal(typeof structured[0][1], 'object');
+});
 
 test('source precedence ordering selects a full production and retains its fallback', () => {
   const source = { name: 'arguments', rules: {
