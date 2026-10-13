@@ -12,12 +12,15 @@ use super::emit_rust::indent;
 use super::ir::{Decl, Expr, Node, Param, Program, Semantics};
 use super::source_header_emission_rules::{
     accept_rust_source_header_emission_context, accept_rust_source_header_emission_declaration,
-    accept_rust_source_header_emission_expression, accept_rust_source_header_emission_model,
+    accept_rust_source_header_emission_declaration_fields,
+    accept_rust_source_header_emission_expression,
+    accept_rust_source_header_emission_expression_field, accept_rust_source_header_emission_model,
     accept_rust_source_header_emission_parameter, accept_rust_source_header_emission_position,
-    accept_rust_source_header_lifetime_character, read_rust_source_header_primitive,
-    render_rust_source_header_copy, render_rust_source_header_dereference,
-    render_rust_source_header_function, render_rust_source_header_lifetime,
-    render_rust_source_header_parameter, render_rust_source_header_reference,
+    accept_rust_source_header_emission_semantics, accept_rust_source_header_lifetime_character,
+    read_rust_source_header_primitive, render_rust_source_header_copy,
+    render_rust_source_header_dereference, render_rust_source_header_function,
+    render_rust_source_header_lifetime, render_rust_source_header_parameter,
+    render_rust_source_header_reference,
 };
 use super::source_signatures::{SourceSignature, validate_source_signature};
 use super::surface::UnaryOp;
@@ -59,7 +62,9 @@ const fn semantics_name(semantics: Option<Semantics>) -> &'static str {
 }
 
 pub fn validate_rust_source_header_emission_model(model: &str) -> Result<()> {
-    if !accept_rust_source_header_emission_model(model) {
+    if !accept_rust_source_header_emission_model(model)
+        && !super::borrowed_call_interface_rules::accept_rust_borrowed_call_interface_model(model)
+    {
         return Err(unsupported(
             "Rust source header emission model",
             "select primitive borrowed Rust function header 1",
@@ -77,7 +82,31 @@ pub fn read_rust_source_header_emission(
     program: &Program,
     model: &str,
 ) -> Result<BTreeMap<String, SourceSignature>> {
+    if !accept_rust_source_header_emission_model(model) {
+        return Err(unsupported(
+            "Rust source header emission model",
+            "select primitive borrowed Rust function header 1",
+            None,
+        ));
+    }
     validate_rust_source_header_emission_model(model)?;
+    let headers = read_rust_primitive_source_headers(program)?;
+    validate_rust_primitive_value_expressions(program.declarations.iter().filter_map(
+        |declaration| {
+            if let Decl::Fn(function) = declaration {
+                Some(&function.body)
+            } else {
+                None
+            }
+        },
+    ))?;
+    Ok(headers)
+}
+
+/// Read the actual owned primitive headers; body admission is a separate proof.
+pub fn read_rust_primitive_source_headers(
+    program: &Program,
+) -> Result<BTreeMap<String, SourceSignature>> {
     let forbidden = !program.imports.is_empty()
         || !program.externals.is_empty()
         || program
@@ -92,13 +121,26 @@ pub fn read_rust_source_header_emission(
         ));
     }
     let mut headers = BTreeMap::new();
-    let mut pending: Vec<&Expr> = Vec::new();
     for declaration in &program.declarations {
         let Decl::Fn(function) = declaration else {
             return Err(fail(
                 "only flat original leaf function declarations are admitted",
             ));
         };
+        let fields = serde_json::to_value(declaration)
+            .map_err(|_| fail("the declaration needs its actual checked field inventory"))?;
+        let unrepresented = fields.as_object().unwrap().keys().any(|field| {
+            !policy()["declarationFields"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|allowed| allowed.as_str() == Some(field.as_str()))
+        });
+        if !accept_rust_source_header_emission_declaration_fields(unrepresented) {
+            return Err(fail(
+                "function declarations cannot carry unrepresented source interface fields",
+            ));
+        }
         if !accept_rust_source_header_emission_declaration(
             declaration.kind(),
             !function.module_path.is_empty(),
@@ -180,7 +222,66 @@ pub fn read_rust_source_header_emission(
             }
         }
         headers.insert(function.full_name.clone(), signature.clone());
-        pending.push(&function.body);
+    }
+    Ok(headers)
+}
+
+/// Validate primitive roots without changing their checked declarations.
+pub fn validate_rust_primitive_value_expressions<'a>(
+    roots: impl IntoIterator<Item = &'a Expr>,
+) -> Result<()> {
+    let mut pending = roots.into_iter().collect::<Vec<_>>();
+    // Serialize each root once. Per-subtree serialization would make long
+    // binding chains quadratic; this host walk only inspects actual keys.
+    let actual = pending
+        .iter()
+        .map(serde_json::to_value)
+        .collect::<std::result::Result<Vec<_>, _>>()
+        .map_err(|_| fail("a primitive body needs its actual checked field inventory"))?;
+    let mut field_nodes = actual.iter().collect::<Vec<_>>();
+    let mut field_at = 0;
+    while field_at < field_nodes.len() {
+        if field_at >= 100_000 {
+            return Err(fail("the leaf body exceeds its expression resource limit"));
+        }
+        let node = field_nodes[field_at];
+        field_at += 1;
+        let fields = node.as_object().unwrap();
+        let kind = node["k"].as_str().unwrap();
+        let qualified = node.get("rounding").is_some_and(|value| !value.is_null())
+            || node.get("byZero").is_some_and(|value| !value.is_null());
+        if !accept_rust_source_header_emission_expression(kind)
+            || !accept_shared_numeric_expression_shape(kind, qualified)
+        {
+            continue;
+        }
+        if fields
+            .keys()
+            .any(|field| !accept_rust_source_header_emission_expression_field(kind, field))
+        {
+            return Err(fail(
+                "primitive value expressions cannot carry unrepresented source interface fields",
+            ));
+        }
+        if let Some(semantics) = node.get("semantics")
+            && !semantics
+                .as_str()
+                .is_some_and(accept_rust_source_header_emission_semantics)
+        {
+            return Err(fail(
+                "primitive value expressions require represented arithmetic semantics",
+            ));
+        }
+        for (field, value) in fields {
+            if ["type", "domain", "span"].contains(&field.as_str()) {
+                continue;
+            }
+            if value.get("k").is_some() {
+                field_nodes.push(value);
+            } else if let Some(values) = value.as_array() {
+                field_nodes.extend(values.iter().filter(|value| value.get("k").is_some()));
+            }
+        }
     }
     let mut at = 0;
     while at < pending.len() {
@@ -238,7 +339,7 @@ pub fn read_rust_source_header_emission(
         }
         pending.extend(node.children());
     }
-    Ok(headers)
+    Ok(())
 }
 
 /// Render actual ordered header facts around the checked, renamed value body.
@@ -249,6 +350,24 @@ pub fn render_rust_source_header_emission(
     name: &str,
     body: &str,
 ) -> String {
+    render_rust_source_header_emission_with_reference(
+        signature,
+        parameters,
+        name,
+        body,
+        |lifetime, inner, _| render_rust_source_header_reference(lifetime, inner),
+    )
+}
+
+/// Render exact source headers with the selected shared reference spelling.
+#[must_use]
+pub fn render_rust_source_header_emission_with_reference(
+    signature: &SourceSignature,
+    parameters: &[Param],
+    name: &str,
+    body: &str,
+    reference: fn(&str, &str, bool) -> String,
+) -> String {
     let mut copies = Vec::new();
     let parameters = parameters
         .iter()
@@ -257,9 +376,10 @@ pub fn render_rust_source_header_emission(
             let mut ty = read_rust_source_header_primitive(position.ty.kind());
             let mut dereferenced = parameter.name.clone();
             for layer in (0..position.wrappers.len()).rev() {
-                ty = render_rust_source_header_reference(
+                ty = reference(
                     position.lifetimes[layer].as_deref().unwrap_or(""),
                     &ty,
+                    layer < position.wrappers.len() - 1,
                 );
                 dereferenced = render_rust_source_header_dereference(&dereferenced);
             }

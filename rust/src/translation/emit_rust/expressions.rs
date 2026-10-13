@@ -59,6 +59,39 @@ impl RustEmitter<'_> {
             Node::OutNil | Node::OutCons { .. } => {
                 unreachable!("only the Lean and Rocq emitters thread output")
             }
+            Node::Call { func, args } if self.borrowed_call_targets.is_some() => {
+                let signature = self
+                    .borrowed_call_targets
+                    .as_ref()
+                    .unwrap()
+                    .get(func)
+                    .cloned()
+                    .expect("the selected interface validates every actual callee");
+                let mut values = Vec::with_capacity(args.len());
+                for argument in args {
+                    values.push(self.expr(argument)?);
+                }
+                let names = values
+                    .iter()
+                    .map(|_| {
+                        self.borrowed_call_scope
+                            .as_mut()
+                            .expect("a direct call owns its hygienic function scope")
+                            .fresh(
+                                crate::translation::borrowed_call_interface::borrowed_call_policy()
+                                    ["argumentName"]
+                                    .as_str()
+                                    .unwrap(),
+                            )
+                    })
+                    .collect::<Vec<_>>();
+                let head = format!("crate::{}", self.state.reference(func, "::"));
+                Ok(
+                    crate::translation::borrowed_call_interface::render_rust_borrowed_call(
+                        &signature, &head, &values, &names,
+                    ),
+                )
+            }
             Node::Call { func, args }
                 if self
                     .loop_params

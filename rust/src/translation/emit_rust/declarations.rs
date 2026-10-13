@@ -245,6 +245,28 @@ impl<'p> RustEmitter<'p> {
         let name = self.state.local_name(&function.full_name).to_owned();
         self.state.map(entry, &name);
         if let Some(signature) = self.source_headers.get(&function.full_name).cloned() {
+            if self.borrowed_call_targets.is_some() {
+                let mut reserved = self.state.local_reserved();
+                reserved.extend(params.iter().map(|parameter| parameter.name.clone()));
+                let mut pending = vec![&body];
+                let mut at = 0;
+                while at < pending.len() {
+                    let node = pending[at];
+                    at += 1;
+                    if let Node::Var { name } | Node::Let { name, .. } = &node.node {
+                        reserved.insert(name.clone());
+                    }
+                    pending.extend(node.children());
+                }
+                self.borrowed_call_scope =
+                    Some(crate::translation::ir::Scope::new(&snake, &reserved));
+                let rendered = self.expr(&body);
+                self.borrowed_call_scope = None;
+                return Ok(crate::translation::source_header_emission::render_rust_source_header_emission_with_reference(
+                    &signature, &params, &name, &rendered?,
+                    crate::translation::borrowed_call_interface_rules::render_rust_borrowed_call_header_reference,
+                ));
+            }
             let body = self.expr(&body)?;
             return Ok(
                 crate::translation::source_header_emission::render_rust_source_header_emission(
