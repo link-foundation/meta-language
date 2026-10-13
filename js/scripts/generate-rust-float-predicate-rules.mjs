@@ -11,6 +11,8 @@ const policy=readProjectData(file);
 const source='// Generated from linked Rust float predicate policy. Do not edit by hand.\n'
   +'/** @param {string} method @returns {boolean} */\nexport function acceptRustFloatPredicateMethod(method) {\n  return '
   +Object.keys(policy.templates).map(method=>'method === '+JSON.stringify(method)).join(' || ')+';\n}\n\n'
+  +'/** @param {string} method @returns {boolean} */\nexport function acceptRustFloatOperationMethod(method) {\n  return '
+  +Object.keys(policy.operationTemplates).map(method=>'method === '+JSON.stringify(method)).join(' || ')+';\n}\n\n'
   +'/** @param {string} kind @param {string} model @param {boolean} proven @param {boolean} indirected @param {boolean} shadowed @param {string} argumentsCount @returns {boolean} */\n'
   +'export function acceptRustFloatPredicateReceiver(kind, model, proven, indirected, shadowed, argumentsCount) {\n  return proven && !indirected && !shadowed && kind === '+JSON.stringify(policy.kind)+' && model === '+JSON.stringify(policy.receiverModel)+' && argumentsCount === '+JSON.stringify(policy.arguments)+';\n}\n';
 const javascript=new URL('../src/translation/rust-float-predicate-rules.js',import.meta.url);
@@ -29,7 +31,10 @@ if(process.argv.includes('--update-styles')){
     replace(lines[0].trim(), lines[0].trim().replace(/[()]/gu, ''));
   }
   for(const name of ['method','kind','model','arguments_count'])replace(name+': String',name+': &str');
-  for(const match of raw.matchAll(/^pub fn (\w+)/gmu))replace('pub fn '+match[1],'/// Read the shared Rust binary64 predicate admission.\n#[must_use]\npub fn '+match[1]);
+  for(const match of raw.matchAll(/^pub fn (\w+)/gmu)) {
+    const kind = match[1] === 'accept_rust_float_operation_method' ? 'operation' : 'predicate';
+    replace('pub fn '+match[1],'/// Read the shared Rust binary64 '+kind+' admission.\n#[must_use]\npub fn '+match[1]);
+  }
   writeFileSync(decorators,new DecoratorSet([{id:'rust-float-predicate-library-style',level:'emitter',order:0,when:[['format','Rust']],actions}]).toLino());
 }
 const styled=DecoratorSet.fromLino(readFileSync(decorators,'utf8')).decorate('emitter',{format:'Rust',source:raw}).source;
@@ -41,4 +46,4 @@ if(process.argv.includes('--check')){
  if(readFileSync(native,'utf8')!==generated)throw new Error('Native float predicate rules are stale');
  if(!readFileSync(copy).equals(readFileSync(file)))throw new Error('Native float predicate policy is stale');
 }else{writeFileSync(native,generated);writeFileSync(copy,readFileSync(file));}
-console.log('Rust float predicates: shared receiver proof and three expression templates');
+console.log('Rust float methods: one shared receiver proof, three predicate and four operation templates');
