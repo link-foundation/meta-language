@@ -70,7 +70,7 @@ pub const fn accept_rust_type_namespace_unit_clone(
     field_free: bool,
     direct_receiver: bool,
 ) -> bool {
-    (owned_derivation && field_free && direct_receiver)
+    owned_derivation && field_free && direct_receiver
 }
 
 /// Apply the shared resolved type namespace policy.
