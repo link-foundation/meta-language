@@ -377,7 +377,7 @@ fn raw_linked_loop_and_interface_nulls_and_module_fields_cannot_disappear_during
             original,
             [original[0], original[1], null],
         ));
-        assert_eq!(report.updated.len(), 1);
+        assert_eq!(report.updated().len(), 1);
         let reloaded = LinkNetwork::from_lino(&network.to_lino()).unwrap();
         let refused = decode_typed_program_links(&reloaded, input.root).unwrap_err();
         assert!(
