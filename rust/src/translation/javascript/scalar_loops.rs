@@ -1,12 +1,13 @@
 //! Exact emitted loop and immutable write-snapshot parser adapter.
 use super::{
-    JavaScriptParser, Result, SExpr, SItem, SNode, SParam, SProgram, ScanEnd, Scope, span,
-    unsupported,
+    JavaScriptParser, Result, SExpr, SItem, SNode, SParam, SProgram, ScanEnd, Scope, TokenKind,
+    span, unsupported,
 };
+use crate::translation::scalar_loop_rules::accept_scalar_loop_declaration_model;
 use crate::translation::source_loops::{
-    ScalarLoopInterface, ScalarLoopInterfaceType, ScalarLoopState, ScalarLoopTransition,
-    ScalarLoopWrite, SourceLoop, scalar_loop_policy, scalar_loop_snapshot_binding,
-    validate_source_loop,
+    ScalarLoopContinuation, ScalarLoopInterface, ScalarLoopInterfaceType, ScalarLoopState,
+    ScalarLoopTransition, ScalarLoopWrite, SourceLoop, scalar_loop_policy,
+    scalar_loop_snapshot_binding, validate_source_loop,
 };
 use std::collections::HashSet;
 
@@ -109,7 +110,7 @@ impl JavaScriptParser {
             known: state.iter().cloned().collect(),
             declared: Vec::new(),
             proof: SourceLoop {
-                model: policy["model"].as_str().unwrap().into(),
+                model: self.scalar_loop_model.clone(),
                 language: "JavaScript".into(),
                 source_name: name.into(),
                 lowering: policy["lowering"].as_str().unwrap().into(),
@@ -122,6 +123,12 @@ impl JavaScriptParser {
                     .collect(),
                 transitions: Vec::new(),
                 source_interface: None,
+                continuation: accept_scalar_loop_declaration_model(&self.scalar_loop_model).then(
+                    || ScalarLoopContinuation {
+                        root: policy["continuationRoot"].as_str().unwrap().into(),
+                        path: vec![name.into()],
+                    },
+                ),
             },
             state,
         };
@@ -166,7 +173,12 @@ impl JavaScriptParser {
                 value
             } else if self.cursor.is("if") {
                 self.scalar_loop_conditional(context)?
-            } else if self.cursor.is("[") || self.cursor.is("continue") {
+            } else if self.cursor.is("[")
+                || self.cursor.is("continue")
+                || context.proof.continuation.is_some()
+                    && self.peek().kind == TokenKind::Identifier
+                    && self.cursor.is_at("=", 1)
+            {
                 self.scalar_loop_continuation(context)?
             } else {
                 return Err(unsupported(
@@ -265,6 +277,35 @@ impl JavaScriptParser {
                     .iter()
                     .position(|name| name == &write.binding)
             });
+        } else if context.proof.continuation.is_some()
+            && self.peek().kind == TokenKind::Identifier
+            && self.cursor.is_at("=", 1)
+        {
+            let target = self.cursor.identifier(Some("scalar state target"))?.value;
+            let Some(index) = context.state.iter().position(|name| name == &target) else {
+                return Err(unsupported(
+                    "JavaScript scalar loop",
+                    "a single write targets its actual scalar parameter slot",
+                    Some(start.span()),
+                ));
+            };
+            self.cursor
+                .expect("=", Some("single scalar state snapshot"))?;
+            let binding = self.cursor.identifier(Some("scalar state snapshot"))?.value;
+            if binding != target {
+                if !scalar_loop_snapshot_binding(&binding) || !self.scope.locals.contains(&binding)
+                {
+                    return Err(unsupported(
+                        "JavaScript scalar loop",
+                        "each changed slot reads its actual immutable write snapshot",
+                        Some(start.span()),
+                    ));
+                }
+                arguments[index].clone_from(&binding);
+                writes.push(ScalarLoopWrite { target, binding });
+            }
+            self.cursor
+                .expect(";", Some("single scalar state snapshot"))?;
         }
         self.cursor
             .expect("continue", Some("scalar continuation"))?;
@@ -276,7 +317,19 @@ impl JavaScriptParser {
         });
         Ok(SExpr::new(
             SNode::App {
-                func: Box::new(SExpr::name(&name)),
+                func: Box::new(SExpr::new(
+                    SNode::Name {
+                        path: context.proof.continuation.as_ref().map_or_else(
+                            || vec![name],
+                            |continuation| {
+                                std::iter::once(continuation.root.clone())
+                                    .chain(continuation.path.iter().cloned())
+                                    .collect()
+                            },
+                        ),
+                    },
+                    None,
+                )),
                 args: arguments.iter().map(|name| SExpr::name(name)).collect(),
             },
             Some(self.to_here(&start)),

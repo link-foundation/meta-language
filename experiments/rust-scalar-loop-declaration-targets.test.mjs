@@ -114,3 +114,23 @@ test('source calls, wrong primitive owners and unsupported loop effects remain o
  for(const source of refused)assert.throws(()=>read(source,'Rust'));
  for(const source of [javascript.replace('run+1','run(run,limit)'),javascript.replace('run+1','external(run)'),javascript.replace('run+1','({value:run})'),javascript.replace('continue;','break;')])assert.throws(()=>read(source,'JavaScript'));
 });
+
+test('raw explicit null and unknown continuation fields refuse without serde-style omission',()=>{
+ for(const selected of [model,legacy]){
+  const source=selected===model?rust:'fn plain(mut value:f64,limit:f64)->f64{loop{return if value<limit{(value,)=(value+1f64,);continue;}else{value};}}fn main(){}';
+  const packet=createTypedProgramLinks(source,'Rust',{rustScalarLoopModel:selected});
+  const network=LinkNetwork.fromLino(packet.network.toLino()),proofRelation=network.fieldRelations().find(row=>row.label==='source loop proof');
+  const nullLink=network.insertLink([],network.links().find(link=>link.metadata().term==='null value').metadata().clone());
+  if(selected===model){const relation=network.fieldRelations().find(row=>row.parent.toString()===proofRelation.child.toString()&&row.label==='continuation'),refs=relation.link.references();relation.link.setReferences([refs[0],refs[1],nullLink]);}
+  else{const label=network.insertLink([],network.link(proofRelation.link.references()[1]).metadata().clone().withTerm('continuation'));network.insertLink([proofRelation.child,label,nullLink],proofRelation.link.metadata().clone());}
+  assert.throws(()=>decodeTypedProgramLinks(LinkNetwork.fromLino(network.toLino()),packet.root));
+ }
+ const packet=importCase(inputCases[0]);
+ for(const field of ['root','path','extra']){
+  const network=LinkNetwork.fromLino(packet.network.toLino()),continuation=network.fieldRelations().find(row=>row.label==='continuation');
+  const nullLink=network.insertLink([],network.links().find(link=>link.metadata().term==='null value').metadata().clone());
+  if(field==='extra'){const label=network.insertLink([],network.link(continuation.link.references()[1]).metadata().clone().withTerm(field));network.insertLink([continuation.child,label,nullLink],continuation.link.metadata().clone());}
+  else{const relation=network.fieldRelations().find(row=>row.parent.toString()===continuation.child.toString()&&row.label===field),refs=relation.link.references();relation.link.setReferences([refs[0],refs[1],nullLink]);}
+  assert.throws(()=>decodeTypedProgramLinks(LinkNetwork.fromLino(network.toLino()),packet.root));
+ }
+});
