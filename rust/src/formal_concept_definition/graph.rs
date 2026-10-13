@@ -10,7 +10,7 @@ use super::relation_rules::{
     accept_formal_relation_label_identity,
 };
 use crate::global_concept_rules::verify_global_concept_correspondence;
-use crate::link_network::{LinkId, LinkMetadata, LinkNetwork, LinkType};
+use crate::link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType};
 
 #[derive(Clone)]
 pub(super) struct Field {
@@ -161,7 +161,7 @@ pub(super) fn fields(network: &LinkNetwork) -> BTreeMap<LinkId, Vec<Field>> {
 
 fn admitted_relation(network: &LinkNetwork, field: &Field, same_label_identity: bool) -> bool {
     let label = field.label_id.and_then(|id| network.link(id));
-    let value = label.map(|link| link.metadata());
+    let value = label.map(Link::metadata);
     let edge = network
         .link(field.relation)
         .expect("indexed relation exists");
@@ -172,12 +172,14 @@ fn admitted_relation(network: &LinkNetwork, field: &Field, same_label_identity: 
             ""
         },
         value.and_then(|meta| meta.definition()).unwrap_or_default(),
-        value.is_some_and(|meta| meta.term().is_some()),
-        value.is_some_and(|meta| meta.language().is_some()),
-        value.is_some_and(LinkMetadata::is_named),
-        label.is_some_and(|link| {
-            link.references().len() == 1 && Some(link.references()[0]) == field.label_id
-        }),
+        (
+            value.is_some_and(|meta| meta.term().is_some()),
+            value.is_some_and(|meta| meta.language().is_some()),
+            value.is_some_and(LinkMetadata::is_named),
+            label.is_some_and(|link| {
+                link.references().len() == 1 && Some(link.references()[0]) == field.label_id
+            }),
+        ),
     );
     let relation_admitted = accept_formal_relation_edge_identity(
         if edge.metadata().link_type() == Some(LinkType::Field) {
@@ -185,10 +187,12 @@ fn admitted_relation(network: &LinkNetwork, field: &Field, same_label_identity: 
         } else {
             ""
         },
-        edge.metadata().language().is_some(),
-        edge.metadata().term().is_some(),
-        edge.metadata().definition().is_some(),
-        edge.metadata().is_named(),
+        (
+            edge.metadata().language().is_some(),
+            edge.metadata().term().is_some(),
+            edge.metadata().definition().is_some(),
+            edge.metadata().is_named(),
+        ),
         if edge.references().len() == 3 {
             3.0
         } else {

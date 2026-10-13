@@ -160,9 +160,9 @@ fn statement_identity(triple: &[Value]) -> String {
 
 fn same(left: &Value, right: &Value) -> bool {
     same_resource_description_term(
-        left["kind"].as_str().unwrap().to_owned(),
+        left["kind"].as_str().unwrap(),
         &identity_parts(left),
-        right["kind"].as_str().unwrap().to_owned(),
+        right["kind"].as_str().unwrap(),
         &identity_parts(right),
     )
 }
