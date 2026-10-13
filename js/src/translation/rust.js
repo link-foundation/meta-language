@@ -17,6 +17,8 @@ import { RustSourceOrigins } from './rust-source-origins.js';
 import { acceptRustSourceBoxOwner, acceptRustSourceLifetimeBinding, acceptRustSourceLifetimeReference, acceptRustSourceLifetimeResult } from './rust-indirection-rules.js';
 import { acceptRustTupleIndexSpelling } from './rust-product-rules.js';
 import { acceptRustSourceArrayOwner, acceptRustSourceArrayElement } from './rust-array-rules.js';
+import { acceptRustUnwrittenScalarParameter } from './rust-scalar-parameter-rules.js';
+import { readRustScalarParameterBody } from './rust-scalar-parameters.js';
 import { checkProgram } from './check.js';
 
 const ACCEPTED_DERIVES = new Set(['Clone', 'Copy', 'Debug', 'PartialEq', 'Eq', 'Hash', 'PartialOrd', 'Ord']);
@@ -395,20 +397,32 @@ class RustParser {
       c.expect('(', 'fn');
       const params = [];
       const sourceParams = [];
+      const mutableParams = [];
       while (!c.is(')')) {
         const paramToken = c.peek();
-        if (c.is('mut')) throw unsupported('mutable parameter', 'mutation is outside the portable core', span(paramToken, paramToken));
+        const mutable = Boolean(c.eat('mut'));
         if (c.is('self') || c.is('&')) throw unsupported('method', 'methods are outside the Rust frontend; declare a free function', span(paramToken, paramToken));
         const paramName = c.identifier('parameter').value;
         c.expect(':', 'parameter');
+        const typeToken = c.peek();
         params.push({ name: paramName, type: this.type(), span: span(paramToken, c.peek()) });
         sourceParams.push(this.origins.type);
+        if (mutable) mutableParams.push({ token: paramToken, typeToken, origin: this.origins.type });
         if (!c.eat(',')) break;
       }
       c.expect(')', 'fn');
       if (!c.eat('->')) throw unsupported('function without a result', `${name} returns (); only value-returning functions are portable`, span(start, c.peek()));
       const ret = this.type();
       const sourceResult = this.origins.type;
+      if (mutableParams.length) {
+        const bodyEvidence = readRustScalarParameterBody(c);
+        for (const { token, typeToken, origin } of mutableParams) {
+          const shadowed = typeToken.kind !== 'identifier' || Boolean(this.origins.lookup(this.resolve([typeToken.value], path), path));
+          if (!acceptRustUnwrittenScalarParameter(origin.type?.kind ?? '', this.origins.immutableProduct(origin), shadowed, bodyEvidence.closed, bodyEvidence.possibleWrite)) {
+            throw unsupported('mutable parameter', 'mutation is outside the portable core', span(token, token));
+          }
+        }
+      }
       if (ret.kind === 'array') throw unsupported('Rust array result', 'returning vectors or borrowed slices needs a separate consumption and outlives proof', span(start, c.peek()));
       if (!acceptRustSourceLifetimeResult(this.lifetimeBindings.size > 0, sourceResult.wrappers.includes('reference'))) throw unsupported('function lifetime result', 'reference results with lifetime binders require an explicit return-lifetime instantiation and outlives proof', span(start, c.peek()));
       this.origins.declaration(name, path, { k: 'fn', lifetimeBindings: [...this.lifetimeBindings], parameters: sourceParams, result: sourceResult });
