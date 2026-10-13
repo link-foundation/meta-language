@@ -1433,6 +1433,9 @@ jobs:
         run: npm ci --ignore-scripts
         working-directory: js
 
+      - name: Provision the authenticated grammar input for manifest validation
+        run: node js/scripts/external-grammar-cache.mjs --asset parity/grammars/links-notation-0.22.0.pegjs --materialize
+
       - name: Validate atomic manifest and protected scope baseline
         env:
           BASELINE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || github.event.release.target_commitish }}
@@ -1490,6 +1493,10 @@ jobs:
             issue-195-results/work/native/
           if-no-files-found: error
           retention-days: 30
+
+      - name: Remove the temporary manifest grammar input
+        if: ${{ !cancelled() && hashFiles('js/scripts/external-grammar-cache.mjs') != '' }}
+        run: node js/scripts/external-grammar-cache.mjs --clean-materialized
 
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
