@@ -19,15 +19,17 @@ pub(super) type LexicalCaches = Rc<RefCell<Vec<Rc<LexicalCache>>>>;
 impl Executor<'_> {
     // Reservation decisions share the JavaScript Number model. Retain its
     // integer-to-binary64 rounding even when a caller selects a large budget.
-    #[expect(
-        clippy::cast_precision_loss,
-        reason = "The shared reservation rule deliberately uses the JavaScript Number model"
-    )]
     pub(super) fn accepts_lexical_cache_reservation(&self, count: usize) -> bool {
         accept_lexical_cache_reservation(
-            self.shared.cells.get() as f64,
-            count as f64,
-            self.shared.memory_limit as f64,
+            serde_json::Number::from(self.shared.cells.get())
+                .as_f64()
+                .expect("A native lexical cache cell count is finite"),
+            serde_json::Number::from(count)
+                .as_f64()
+                .expect("A native lexical cache reservation count is finite"),
+            serde_json::Number::from(self.shared.memory_limit)
+                .as_f64()
+                .expect("A native lexical cache memory limit is finite"),
         )
     }
 
