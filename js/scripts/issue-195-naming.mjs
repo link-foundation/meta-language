@@ -381,8 +381,23 @@ export const NAME_INVENTORIES = Object.freeze([
     inventory: 'shared numeric function graph operations',
     files: ['js/src/shared-numeric-function-links.js', 'js/src/shared-numeric-function-model.js',
       'rust/src/shared_numeric_function_links.rs', 'rust/src/shared_numeric_function_model.rs'],
-    extract: (text) => captures(text, /^(?:export function|pub(?:\(crate\))? fn) (encodeSharedNumericFunctionDefinition|readSharedNumericFunctionModel|normalizeSharedNumericFunctionLiterals|encode_shared_numeric_function_definition|read_shared_numeric_function_model|normalize_shared_numeric_function_literals|validate_shared_numeric_origin_context)\(/gmu)
+    extract: (text) => captures(text, /^(?:export function|pub(?:\(crate\))? fn) (encodeSharedNumericFunctionDefinition|readSharedNumericFunctionModel|normalizeSharedNumericFunctionLiterals|createSharedNumericFunctionMeaning|encode_shared_numeric_function_definition|read_shared_numeric_function_model|normalize_shared_numeric_function_literals|create_shared_numeric_function_meaning|validate_shared_numeric_origin_context)\(/gmu)
       .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `formal.${name}`,
+  },
+  {
+    inventory: 'shared numeric linked context flag operation',
+    files: ['rust/src/shared_numeric_function_model.rs'],
+    extract: (text) => captures(text, /^fn (context_flag_supported)\(/gmu)
+      .map(name => name.replaceAll('_', '-')),
+    recordOf: () => 'formal.validate-shared-numeric-linked-context-flag',
+  },
+  {
+    inventory: 'shared numeric value bit pattern',
+    files: ['js/src/shared-numeric-function-model.js', 'rust/src/shared_numeric_function_model.rs'],
+    extract: (text) => [...text.matchAll(/\.with(?:Term\('([^']+)'\)|_term\("([^"]+)"\))/gu)].map(([, javascript, native]) => javascript ?? native)
+      .filter(name => name === 'binary floating point bit pattern')
+      .map(name => name.replaceAll(' ', '-')),
     recordOf: (name) => `formal.${name}`,
   },
   {
@@ -400,6 +415,13 @@ export const NAME_INVENTORIES = Object.freeze([
     recordOf: (name) => `repository.${name}`,
   },
   {
+    inventory: 'reviewed generated policy source style operations',
+    files: ['js/scripts/resource-description-reviewed-styles.mjs', 'js/scripts/product-rule-style-corrections.mjs'],
+    extract: (text) => captures(text, /^export function ([a-zA-Z_]+)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `repository.${name}`,
+  },
+  {
     inventory: 'formal function graph adapters',
     files: ['js/src/formal-function-links.js', 'rust/src/formal_function_links.rs'],
     extract: (text) => captures(text, /^(?:function|fn) (redirectSignature|redirect_signature|importSelection|import_selection)\(/gmu)
@@ -413,6 +435,37 @@ export const NAME_INVENTORIES = Object.freeze([
     extract: (text) => captures(text, /^(?:export function|pub\(super\) fn) ([a-zA-Z_]+)\(/gmu)
       .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
     recordOf: (name) => `translation.${name === 'expression' ? 'create-rust-floating-point-predicate-expression' : name === 'operation-expression' ? 'create-rust-floating-point-operation-expression' : name === 'constant-expression' ? 'create-rust-floating-point-constant-expression' : name.replaceAll('float-predicate', 'floating-point-predicate').replaceAll('float-operation', 'floating-point-operation').replaceAll('float-constant', 'floating-point-constant')}`,
+  },
+  {
+    inventory: 'Rust source signature admission operations',
+    files: ['js/src/translation/rust-source-signature-rules.js', 'rust/src/translation/source_signature_rules.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub(?: const)? fn) ([a-zA-Z_]+)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${name}`,
+  },
+  {
+    inventory: 'Rust source signature adapter operations',
+    files: ['js/src/translation/rust-source-signatures.js', 'rust/src/translation/source_signatures.rs',
+      'rust/src/translation/rust/items/source_headers.rs'],
+    extract: (text) => captures(text, /^\s*(?:export function|(?:pub(?:\([^)]*\))? )?fn) (readRustSourceTypeOwner|readRustSourceTypeHead|createRustSourceSignature|checkRustSourceSignature|validate_source_signature|source_type_head|source_type_owner|named_source_type_owner|capture_source_signature)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${({
+      'source-type-head': 'read-rust-source-type-head',
+      'source-type-owner': 'read-rust-source-type-owner',
+      'named-source-type-owner': 'read-rust-source-type-owner',
+      'capture-source-signature': 'create-rust-source-signature',
+      'validate-source-signature': 'check-rust-source-signature',
+    })[name] ?? name}`,
+  },
+  {
+    inventory: 'Rust source signature entities',
+    files: ['rust/src/translation/source_signatures.rs'],
+    extract: (text) => captures(text, /^pub struct (SourceOwner|SourceTypeSignature|SourceSignature)\b/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `translation.${({
+      'source-owner': 'source-type-owner',
+      'source-signature': 'source-function-signature',
+    })[name] ?? name}`,
   },
   {
     inventory: 'Rust floating point linked template operations',
@@ -463,7 +516,7 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'Rust source model parser entry points',
     files: ['js/src/translation/rust.js', 'rust/src/translation/rust.rs'],
-    extract: (text) => captures(text, /^(?:export function|pub fn) (parseRust|parse_rust|parse_rust_with_array_result_model|parse_rust_with_completion_model|parse_rust_with_source_models)\(/gmu)
+    extract: (text) => captures(text, /^(?:export function|pub fn) (parseRust|parse_rust|parse_rust_with_array_result_model|parse_rust_with_completion_model|parse_rust_with_source_models|parse_rust_with_source_signature_model|parse_rust_with_source_profiles)\(/gmu)
       .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
     recordOf: () => 'translation.parse-rust-source-models',
   },
@@ -721,14 +774,14 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'typed Rust source model factory operations',
     files: ['rust/src/typed_program_links.rs'],
-    extract: (text) => captures(text, /^pub fn (create_typed_program_links_with_rust_array_result_model|create_typed_program_links_with_rust_completion_model|create_typed_program_links_with_rust_source_models)\(/gmu)
+    extract: (text) => captures(text, /^pub fn (create_typed_program_links_with_rust_array_result_model|create_typed_program_links_with_rust_completion_model|create_typed_program_links_with_rust_source_models|create_typed_program_links_with_rust_source_signature_model|create_typed_program_links_with_rust_source_profiles)\(/gmu)
       .map(name => name.replaceAll('_', '-')),
     recordOf: () => 'translation.create-typed-program-links',
   },
   {
     inventory: 'typed program binding identities',
     files: ['rust/src/typed_program_links.rs'],
-    extract: (text) => captures(text, /^pub\(crate\) fn (read_typed_program_binding_identities)\(/gmu)
+    extract: (text) => captures(text, /^pub\((?:crate|super)\) fn (read_typed_program_binding_identities)\(/gmu)
       .map((name) => name.replaceAll('_', '-')),
     recordOf: (name) => `translation.${name}`,
   },
@@ -771,6 +824,16 @@ export const NAME_INVENTORIES = Object.freeze([
       'function-name': 'translation.program-function-name-field',
       'recursive-definition': 'translation.program-recursion-model',
       'unicode-code-unit-strings': 'translation.program-unicode-code-unit-string-model',
+      'source-function-signature': 'translation.program-source-function-signature-field',
+      'source-signature-parameters': 'translation.program-source-signature-parameter-list-field',
+      'source-signature-result': 'translation.program-source-signature-result-field',
+      'source-type-owner': 'translation.program-source-type-owner-field',
+      'source-type-owner-arguments': 'translation.program-source-type-owner-argument-list-field',
+      'source-type-wrappers': 'translation.program-source-type-wrapper-list-field',
+      'source-type-lifetimes': 'translation.program-source-type-lifetime-list-field',
+      'source-lifetime-bindings': 'translation.program-source-lifetime-binding-list-field',
+      'reference-semantics': 'translation.program-reference-semantics-field',
+      'rust-source-signature-model': 'translation.program-rust-source-signature-model-field',
     })[name] ?? `translation.${name}`,
   },
   {
