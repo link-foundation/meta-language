@@ -155,12 +155,7 @@ fn original_emitted_reparsed_and_reverse_rust_preserve_exact_bits_and_receiver_c
         let mut modules = Vec::new();
         for (index, case) in cases.iter().enumerate() {
             let mut definitions = match variant {
-                "original" => case["source"]
-                    .as_str()
-                    .unwrap()
-                    .strip_suffix(" fn main(){}")
-                    .unwrap()
-                    .to_owned(),
+                "original" => case["source"].as_str().unwrap().to_owned(),
                 "emitted" => case["rustDefinitions"].as_str().unwrap().to_owned(),
                 "reparsed" => {
                     let program = check_program(
