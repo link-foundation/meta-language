@@ -371,6 +371,80 @@ const nativeRuleConcepts = (text) => [...text.matchAll(/^\(rule ([a-z0-9_]+) [^\
  */
 export const NAME_INVENTORIES = Object.freeze([
   {
+    inventory: 'closed empty primitive Rust option decisions',
+    files: ['js/src/translation/rust-empty-option-rules.js', 'rust/src/translation/rust/empty_option_rules.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub(?: const)? fn) ([a-zA-Z_]+)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${name}`,
+  },
+  {
+    inventory: 'closed empty primitive Rust option source adapters',
+    files: ['js/src/translation/rust-empty-options.js', 'rust/src/translation/rust/empty_options.rs', 'rust/src/translation/source_empty_options.rs'],
+    extract: (text) => captures(text, /^\s*(?:export function|pub\((?:crate|super)\) fn) (readRustEmptyOptionResult|readRustEmptyOptionBody|createRustEmptyOptionProof|finishRustEmptyOptionSource|checkRustEmptyOptionProof|read_empty_option_result|empty_option_function|empty_option_attribute_guard|empty_option_item_guard|empty_option_main_guard|finish_empty_option_source|validate_empty_option_records|validate_source_empty_options|policy)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${({
+      'read-empty-option-result': 'read-rust-empty-option-result',
+      'empty-option-function': 'read-rust-empty-option-function',
+      'empty-option-attribute-guard': 'check-rust-empty-option-source-attributes',
+      'empty-option-item-guard': 'check-rust-empty-option-source-item',
+      'empty-option-main-guard': 'check-rust-empty-option-main',
+      'finish-empty-option-source': 'finish-rust-empty-option-source',
+      'validate-empty-option-records': 'validate-rust-empty-option-records',
+      'validate-source-empty-options': 'check-rust-empty-option-proof',
+      'policy': 'read-rust-empty-option-policy',
+    })[name] ?? name}`,
+  },
+  {
+    inventory: 'closed empty primitive Rust option fixture builders',
+    files: ['js/scripts/generate-rust-empty-option-fixtures.mjs'],
+    extract: (text) => captures(text, /^export function (rustEmptyOptionFixture)\(/gmu).map(() => 'rust-empty-option-fixture'),
+    recordOf: () => 'repository.create-rust-empty-option-fixture',
+  },
+  {
+    inventory: 'closed empty primitive Rust option model selections',
+    files: ['js/src/translation/rust.js', 'rust/src/translation/rust.rs', 'js/scripts/generate-rust-empty-option-fixtures.mjs'],
+    extract: (text) => captures(text, /\b(emptyOptionSourceModel|empty_option_source_model|RUST_EMPTY_OPTION_SOURCE_MODEL)\b/gu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: () => 'translation.rust-empty-option-source-model-option',
+  },
+  {
+    inventory: 'typed program closed empty primitive Rust option model selection',
+    files: ['js/src/typed-program-links.js'],
+    extract: (text) => captures(text, /\b(rustEmptyOptionSourceModel)\b/gu).map(() => 'rust-empty-option-source-model'),
+    recordOf: () => 'translation.typed-program-rust-empty-option-source-model-option',
+  },
+  {
+    inventory: 'typed program closed empty primitive Rust option proof roles',
+    files: ['js/src/typed-program-checked-projection.js', 'rust/src/translation/ir.rs', 'rust/src/translation/surface.rs'],
+    extract: (text) => captures(text, /\b(sourceEmptyOption|source_empty_option)\b/gu).map(() => 'source-empty-option'),
+    recordOf: () => 'translation.program-source-empty-option-proof-field',
+  },
+  {
+    inventory: 'owned empty primitive Rust option source relation roles',
+    files: ['js/src/translation/rust-empty-options.js', 'rust/src/translation/source_empty_options.rs'],
+    extract: (text) => captures(text, /\b(construction|canonicalPath|externalOptionRoots|declarationNames)\b/gu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
+    recordOf: (name) => `translation.${({
+      'construction': 'program-source-empty-option-constructor-proof-field',
+      'canonical-path': 'program-source-canonical-owner-path-field',
+      'external-option-roots': 'program-source-external-option-root-list-field',
+      'declaration-names': 'program-source-declared-function-name-list-field',
+    })[name]}`,
+  },
+  {
+    inventory: 'native typed program field name reader',
+    files: ['rust/src/typed_program_links.rs'],
+    extract: (text) => captures(text, /^pub\(super\) fn (field_of)\(/gmu).map(() => 'field-of'),
+    recordOf: () => 'translation.read-typed-program-field-name',
+  },
+  {
+    inventory: 'whole linked program checked projection selection',
+    files: ['js/src/typed-program-checked-projection.js'],
+    extract: (text) => captures(text, /\b(wholeProgram)\b/gu).map(() => 'whole-program'),
+    recordOf: () => 'translation.linked-program-whole-projection-option',
+  },
+
+  {
     inventory: 'shared numeric function admission operations',
     files: ['js/src/shared-numeric-function-rules.js', 'rust/src/shared_numeric_function_rules.rs'],
     extract: (text) => captures(text, /^(?:export function|pub(?: const)? fn) ([a-zA-Z_]+)\(/gmu)
@@ -538,8 +612,8 @@ export const NAME_INVENTORIES = Object.freeze([
   },
   {
     inventory: 'selected interface policy entities',
-    files: ['js/src/translation/rust-borrowed-call-interface.js', 'js/src/translation/rust-primitive-owners.js', 'js/src/translation/javascript-scoped-binding-emission.js'],
-    extract: (text) => captures(text, /^export const (RUST_BORROWED_CALL_INTERFACE_POLICY|RUST_PRIMITIVE_OWNER_POLICY|JAVASCRIPT_SCOPED_BINDING_EMISSION_POLICY)\b/gmu)
+    files: ['js/src/translation/rust-borrowed-call-interface.js', 'js/src/translation/rust-primitive-owners.js', 'js/src/translation/javascript-scoped-binding-emission.js', 'js/src/translation/rust-empty-options.js'],
+    extract: (text) => captures(text, /^export const (RUST_BORROWED_CALL_INTERFACE_POLICY|RUST_PRIMITIVE_OWNER_POLICY|JAVASCRIPT_SCOPED_BINDING_EMISSION_POLICY|RUST_EMPTY_OPTION_POLICY)\b/gmu)
       .map(name => name.replaceAll('_', '-').toLowerCase()),
     recordOf: (name) => `translation.${name}`,
   },
@@ -585,7 +659,7 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'owned JavaScript scoped binding adapters',
     files: ['js/src/translation/javascript-scoped-binding-emission.js', 'rust/src/translation/scoped_binding_emission.rs'],
-    extract: (text) => captures(text, /^(?:export function|pub\(crate\) fn|fn) (readJavaScriptScopedBindingEmission|validate_model|validate_program|validate_origin_context|function_role|main_role|value_type|flag_form)(?:<'[^>]+>)?\(/gmu)
+    extract: (text) => captures(text, /^(?:export function|pub\(crate\) fn|fn) (readJavaScriptScopedBindingEmission|validate_model|validate_program|validate_origin_context|function_role|main_role|value_type|flag_form|validate_raw_program)(?:<'[^>]+>)?\(/gmu)
       .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase().replace('java-script', 'javascript')),
     recordOf: (name) => `translation.${({
       'validate-model': 'validate-javascript-scoped-binding-emission-model',
@@ -595,6 +669,7 @@ export const NAME_INVENTORIES = Object.freeze([
       'main-role': 'check-javascript-main-binding-role',
       'value-type': 'check-javascript-scoped-binding-value-type',
       'flag-form': 'read-javascript-scoped-binding-origin-flag',
+      'validate-raw-program': 'validate-javascript-scoped-binding-raw-program',
     })[name] ?? name}`,
   },
   {
@@ -773,7 +848,7 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'Rust source model parser entry points',
     files: ['js/src/translation/rust.js', 'rust/src/translation/rust.rs'],
-    extract: (text) => captures(text, /^(?:export function|pub(?:\(crate\))? fn) (parseRust|parse_rust|parse_rust_with_array_result_model|parse_rust_with_completion_model|parse_rust_with_source_models|parse_rust_with_source_signature_model|parse_rust_with_source_profiles|parse_rust_with_scalar_loop_model|parse_rust_with_primitive_owner_model|parse_rust_with_loop_profiles)\(/gmu)
+    extract: (text) => captures(text, /^(?:export function|pub(?:\(crate\))? fn) (parseRust|parse_rust|parse_rust_with_array_result_model|parse_rust_with_completion_model|parse_rust_with_source_models|parse_rust_with_source_signature_model|parse_rust_with_source_profiles|parse_rust_with_scalar_loop_model|parse_rust_with_primitive_owner_model|parse_rust_with_loop_profiles|parse_rust_with_empty_option_source_model)\(/gmu)
       .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
     recordOf: () => 'translation.parse-rust-source-models',
   },
@@ -1038,7 +1113,7 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'typed Rust source model factory operations',
     files: ['rust/src/typed_program_links.rs'],
-    extract: (text) => captures(text, /^pub fn (create_typed_program_links_with_rust_array_result_model|create_typed_program_links_with_rust_completion_model|create_typed_program_links_with_rust_source_models|create_typed_program_links_with_rust_source_signature_model|create_typed_program_links_with_rust_source_profiles|create_typed_program_links_with_rust_primitive_owner_model)\(/gmu)
+    extract: (text) => captures(text, /^pub fn (create_typed_program_links_with_rust_array_result_model|create_typed_program_links_with_rust_completion_model|create_typed_program_links_with_rust_source_models|create_typed_program_links_with_rust_source_signature_model|create_typed_program_links_with_rust_source_profiles|create_typed_program_links_with_rust_primitive_owner_model|create_typed_program_links_with_rust_empty_option_source_model)\(/gmu)
       .map(name => name.replaceAll('_', '-')),
     recordOf: () => 'translation.create-typed-program-links',
   },
@@ -1113,6 +1188,11 @@ export const NAME_INVENTORIES = Object.freeze([
       'reference-semantics': 'translation.program-reference-semantics-field',
       'rust-source-signature-model': 'translation.program-rust-source-signature-model-field',
       'source-loop-proof': 'translation.program-source-loop-proof-field',
+      'source-empty-option-proof': 'translation.program-source-empty-option-proof-field',
+      'empty-option-constructor-proof': 'translation.program-source-empty-option-constructor-proof-field',
+      'canonical-owner-path': 'translation.program-source-canonical-owner-path-field',
+      'external-option-roots': 'translation.program-source-external-option-root-list-field',
+      'declared-function-names': 'translation.program-source-declared-function-name-list-field',
     })[name] ?? `translation.${name}`,
   },
   {
