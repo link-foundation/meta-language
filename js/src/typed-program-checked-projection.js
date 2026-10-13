@@ -5,7 +5,7 @@ import { checkProgram } from './translation/check.js';
 import { projectLinkedProgramExpression } from './typed-program-expression-projection.js';
 import { readProgramExpressionProjection, readProgramNeutralFieldDefault } from './typed-program-link-rules.js';
 
-export function recheckLinkedTypedProgram(program) {
+export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
   const visited = new WeakSet();
   const active = new WeakSet();
   let hasTuple = false;
@@ -31,7 +31,7 @@ export function recheckLinkedTypedProgram(program) {
   // Legacy mutable tuples may occur inside collection operations outside the
   // shared native projection boundary. Explicit product qualifiers always
   // require whole-program rechecking, including after a true-to-false edit.
-  if (!hasTuple || (!explicitImmutability && unprojected)) return program;
+  if (!wholeProgram && (!hasTuple || (!explicitImmutability && unprojected))) return program;
   const projectExpression = value => projectLinkedProgramExpression(value, program.declarations);
   function projectType(value) {
     if (value.kind === 'data') return { kind: 'named', path: value.name.split('.') };

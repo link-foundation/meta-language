@@ -2,6 +2,7 @@
 // are shared data; the existing checker still owns types and semantics.
 import { TYPED_PROGRAM_LINKS_SCHEMA } from './typed-program-links.js';
 import { acceptProgramExpressionField, acceptProgramExpressionOperation, readProgramExpressionProjection } from './typed-program-link-rules.js';
+import { checkRustScalarLoopProof } from './translation/rust-scalar-loops.js';
 
 export function projectLinkedProgramExpression(value, declarations = new Map()) {
   const plans = TYPED_PROGRAM_LINKS_SCHEMA.expressionProjections;
@@ -27,7 +28,16 @@ export function projectLinkedProgramExpression(value, declarations = new Map()) 
     else if (mode === 'expression') result[target] = project(child);
     else if (mode === 'expressions') result[target] = child.map(project);
     else if (mode === 'name-path') result[target] = [child];
-    else if (mode === 'function-path') result[target] = { k: 'name', path: [child] };
+    else if (mode === 'function-path') {
+      let path=[child];
+      const declaration=declarations.get(child);
+      if(declaration?.sourceLoop?.continuation!==undefined){
+        if(declaration.k!=='fn'||declaration.fullName!==child)throw new TypeError('a projected continuation must target its actual declaration identity');
+        const proof=checkRustScalarLoopProof(declaration,declaration.sourceLoop.language,child);
+        path=[proof.continuation.root,...proof.continuation.path];
+      }
+      result[target]={k:'name',path};
+    }
     else if (mode === 'array-items') result[target] = child.map((item) => ({ value: project(item), spread: plan.spreadOperations?.includes(value.op) ?? false }));
     else if (mode === 'spread-pair') result[target] = [child, value[right]].map((item) => ({ value: project(item), spread: true }));
     else if (mode === 'constructor-path') result[target] = { k: 'name', path: [...value.data.split('.'), child] };
