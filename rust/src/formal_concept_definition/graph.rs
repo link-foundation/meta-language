@@ -167,14 +167,11 @@ fn admitted_relation(network: &LinkNetwork, field: &Field, same_label_identity: 
         .expect("indexed relation exists");
     let label_admitted = accept_formal_relation_label_identity(
         if value.is_some_and(|meta| meta.link_type() == Some(LinkType::Field)) {
-            "Field".to_owned()
+            "Field"
         } else {
-            String::new()
+            ""
         },
-        value
-            .and_then(|meta| meta.definition())
-            .unwrap_or_default()
-            .to_owned(),
+        value.and_then(|meta| meta.definition()).unwrap_or_default(),
         value.is_some_and(|meta| meta.term().is_some()),
         value.is_some_and(|meta| meta.language().is_some()),
         value.is_some_and(LinkMetadata::is_named),
@@ -184,9 +181,9 @@ fn admitted_relation(network: &LinkNetwork, field: &Field, same_label_identity: 
     );
     let relation_admitted = accept_formal_relation_edge_identity(
         if edge.metadata().link_type() == Some(LinkType::Field) {
-            "Field".to_owned()
+            "Field"
         } else {
-            String::new()
+            ""
         },
         edge.metadata().language().is_some(),
         edge.metadata().term().is_some(),
