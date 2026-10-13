@@ -1,3 +1,5 @@
+import {acceptRustPureUnitCallModel} from './rust-pure-unit-call-rules.js';
+import {readRustPureUnitFunction,readRustPureUnitMain,finishRustPureUnitSource} from './rust-pure-unit-calls.js';
 import {acceptRustEmptyOptionSourceModel} from './rust-empty-option-rules.js';
 import {readRustEmptyOptionResult,readRustEmptyOptionBody,createRustEmptyOptionProof,finishRustEmptyOptionSource} from './rust-empty-options.js';
 import { acceptRustFloatPredicateMethod, acceptRustFloatOperationMethod, acceptRustFloatConstantName, acceptRustFloatConstantOwner, acceptRustFloatPredicateReceiver } from './rust-float-predicate-rules.js';
@@ -43,7 +45,7 @@ const ADDITIVE = { '+': 'add', '-': 'sub' };
 const MULTIPLICATIVE = { '*': 'mul', '/': 'div', '%': 'rem' };
 const RESERVED_ITEMS = new Set(['impl', 'trait', 'struct', 'union', 'static', 'type', 'extern', 'macro_rules', 'async', 'unsafe']);
 
-export function parseRust(source, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '' } = {}) {
+export function parseRust(source, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '', pureUnitCallModel = '' } = {}) {
   if (!acceptRustTypeNamespaceModel(typeNamespaceModel)) throw unsupported('Rust type namespace model', 'select the legacy model or resolved Rust type namespace 1');
   if(!acceptRustPrimitiveOwnerModel(primitiveOwnerModel))throw unsupported('Rust primitive owner model','select the legacy model or standard primitive Rust binary64 owner 1');
   if (!acceptRustScalarLoopModel(scalarLoopModel)) throw unsupported('Rust scalar loop model', 'select the legacy model or closed primitive scalar loop 1');
@@ -52,11 +54,13 @@ export function parseRust(source, { arrayResultModel = '', completionModel = '',
   if (!acceptRustSourceSignatureModel(sourceSignatureModel)) throw unsupported('Rust source signature model', 'select the legacy model or Rust source function signature 1');
   if (!acceptRustEmptyOptionSourceModel(emptyOptionSourceModel)) throw unsupported('Rust empty option source model', 'select the legacy model or closed empty primitive Rust option 1');
   if (emptyOptionSourceModel && [arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,typeNamespaceModel].some(Boolean)) throw unsupported('Rust empty option source model', 'the closed empty interpretation requires its independent source profile');
+  if(!acceptRustPureUnitCallModel(pureUnitCallModel))throw unsupported('Rust pure Unit-call model','select the legacy model or closed pure Rust unit calls 1');
+  if(pureUnitCallModel&&[arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel].some(Boolean))throw unsupported('Rust pure Unit-call model','the closed Unit-call interpretation requires its independent source profile');
   const { tokens } = tokenize(source, 'Rust');
-  const declarations = new RustParser(tokens, null, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel);
+  const declarations = new RustParser(tokens, null, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel);
   declarations.file();
   declarations.origins.resolveTypes((segments, path) => declarations.resolve(segments, path));
-  const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel);
+  const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel);
   syntax.origins.collecting = true;
   syntax.aliases = declarations.aliases;
   const surface = syntax.file();
@@ -66,13 +70,13 @@ export function parseRust(source, { arrayResultModel = '', completionModel = '',
     if (!(error instanceof TranslationError)) throw error;
     return surface;
   }
-  const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel);
+  const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel);
   parser.aliases = syntax.aliases;
   return parser.file();
 }
 
 class RustParser {
-  constructor(tokens, catalog = null, arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '',primitiveOwnerModel='',emptyOptionSourceModel='',typeNamespaceModel='') {
+  constructor(tokens, catalog = null, arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '',primitiveOwnerModel='',emptyOptionSourceModel='',typeNamespaceModel='',pureUnitCallModel='') {
     this.cursor = new TokenCursor([...tokens], 'Rust');
     // `use` aliases, per module path.
     this.aliases = new Map();
@@ -86,6 +90,7 @@ class RustParser {
     this.typeNamespaceFrames = [];
     this.scalarLoopModel = scalarLoopModel;
     this.emptyOptionSourceModel=emptyOptionSourceModel;
+    this.pureUnitCallModel=pureUnitCallModel;
     this.emptyOptionMainSeen=false;
     this.primitiveOwnerModel=primitiveOwnerModel;
     this.primitiveOwnerFrames=[];
@@ -109,11 +114,13 @@ class RustParser {
     if(this.primitiveOwnerModel&&(root.items.some(item=>item.k!=='fn')||root.main?.effects.length))throw unsupported('Rust primitive owner profile','only flat primitive leaf functions and an empty main are admitted');
     if (!root.main) throw new TranslationError('syntax', 'a Rust program needs fn main', this.cursor.peek());
     finishRustEmptyOptionSource(this,root);
-    return { language: 'Rust', items: root.items, main: root.main };
+    finishRustPureUnitSource(this,root);
+    return { language: 'Rust', items: root.items, main: root.main,...(this.pureUnitCallModel?{sourcePureUnitCalls:{model:this.pureUnitCallModel,language:'Rust'}}:{}) };
   }
 
   innerAttributes() {
     const c = this.cursor;
+    if(this.pureUnitCallModel&&c.is('#'))throw unsupported('Rust pure Unit-call source','attributes require a separate compilation context proof',span(c.peek(),c.peek()));
     if (this.emptyOptionSourceModel && c.is('#')) throw unsupported('Rust empty option source', 'attributes require a separate compilation context proof', span(c.peek(),c.peek()));
     while (c.is('#') && c.is('!', 1)) {
       const start = c.next();
@@ -125,6 +132,7 @@ class RustParser {
   attributes() {
     const c = this.cursor;
     const derivations=[];
+    if(this.pureUnitCallModel&&c.is('#'))throw unsupported('Rust pure Unit-call source','attributes require a separate compilation context proof',span(c.peek(),c.peek()));
     if (this.emptyOptionSourceModel && c.is('#')) throw unsupported('Rust empty option source', 'attributes require a separate compilation context proof', span(c.peek(),c.peek()));
     while (c.is('#') && c.is('[', 1)) {
       const start = c.next();
@@ -169,6 +177,7 @@ class RustParser {
       const derivations=this.attributes();
       const start = c.peek();
       this.modulePath = path;
+      if(this.pureUnitCallModel&&(path.length||!c.is('fn')))throw unsupported('Rust pure Unit-call source','only flat private pure Unit functions and one ordinary main are admitted',span(start,c.peek()));
       this.visibility();
       if(this.typeNamespaceModel&&derivations.some(attribute=>attribute.traits.includes('Clone'))&&!c.is('enum'))throw unsupported('Rust unit Clone derivation','a Clone derive must be attached to an actual datatype',span(start,c.peek()));
       if (this.emptyOptionSourceModel && (path.length || !c.is('fn'))) throw unsupported('Rust empty option source', 'only flat zero-argument empty leaf functions and an empty main are admitted', span(start,c.peek()));
@@ -203,6 +212,7 @@ class RustParser {
       }
       if (c.is('fn') || c.is('const')) {
         if (c.is('fn') && c.is('main', 1) && path.length === 0) {
+          if(this.pureUnitCallModel&&this.emptyOptionMainSeen)throw unsupported('Rust pure Unit-call source','the complete source must have one owned main declaration',span(start,c.peek()));
           if(this.emptyOptionSourceModel && this.emptyOptionMainSeen) throw unsupported('Rust empty option source', 'the complete source must have one owned main declaration', span(start,c.peek()));
           this.emptyOptionMainSeen=true;
           root.main = this.main();
@@ -479,6 +489,7 @@ class RustParser {
     const c = this.cursor;
     const start = c.next();
     const name = c.identifier('fn').value;
+    if(this.pureUnitCallModel)return readRustPureUnitFunction(this,path,start,name);
     const outerLifetimes = this.lifetimeBindings;
     const outerHeader = this.lifetimeHeader;
     this.lifetimeBindings = new Set();
@@ -718,6 +729,7 @@ class RustParser {
   }
 
   main() {
+    if(this.pureUnitCallModel)return readRustPureUnitMain(this);
     const c = this.cursor;
     const start = c.next();
     c.expect('main', 'fn main');
