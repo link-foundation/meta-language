@@ -178,7 +178,7 @@ pub(super) fn validate(program: &Program) -> Result<()> {
                     "the Rust typed links adapter does not yet recheck qualified declarations",
                 ));
             }
-            items.push(declarations::project_data(data)?);
+            items.push(declarations::project_data(data, program)?);
             continue;
         }
         let Decl::Fn(function) = declaration else {
@@ -218,7 +218,7 @@ pub(super) fn validate(program: &Program) -> Result<()> {
                         span,
                     } => Ok(SEffect::Let {
                         name: name.clone(),
-                        ty: Some(project_type(&value.ty)?),
+                        ty: Some(project_type(&value.ty, program)?),
                         value: expression(value, program)?,
                         constant: *constant,
                         span: *span,

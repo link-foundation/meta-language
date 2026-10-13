@@ -1,9 +1,9 @@
 //! Reuse the existing datatype projection in checked namespace scopes.
 use super::{Result, project_type};
-use crate::translation::ir::DataDecl;
+use crate::translation::ir::{DataDecl, Program};
 use crate::translation::surface::{SCtor, SData, SField, SItem};
 
-pub(super) fn project_data(data: &DataDecl) -> Result<SItem> {
+pub(super) fn project_data(data: &DataDecl, program: &Program) -> Result<SItem> {
     Ok(SItem::Data(SData {
         name: data.name.clone(),
         ctors: data
@@ -18,7 +18,7 @@ pub(super) fn project_data(data: &DataDecl) -> Result<SItem> {
                         .map(|field| -> Result<SField> {
                             Ok(SField {
                                 name: Some(field.name.clone()),
-                                ty: project_type(&field.ty)?,
+                                ty: project_type(&field.ty, program)?,
                                 rocq_type: None,
                                 span: None,
                             })
