@@ -985,7 +985,7 @@ jobs:
         uses: dtolnay/rust-toolchain@1.99.0
         with:
           # JavaScript self-translation acceptance checks the emitted Rust.
-          components: clippy
+          components: rustfmt, clippy
 
       - name: Setup Lean
         env:
@@ -1124,7 +1124,7 @@ jobs:
         uses: dtolnay/rust-toolchain@1.99.0
         with:
           # The self-translation tests check translated Rust with clippy-driver.
-          components: clippy
+          components: rustfmt, clippy
 
       - name: Setup Lean
         env:
