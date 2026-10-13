@@ -12,6 +12,7 @@ use crate::{LinkId, LinkNetwork};
 use serde_json::{Map, Value};
 
 /// Select a closed binary64/Boolean function under the explicit shared model.
+///
 /// Source language remains inspectable origin provenance, after model guards.
 ///
 /// # Errors

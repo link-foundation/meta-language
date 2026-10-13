@@ -20,7 +20,7 @@ use crate::typed_program_links::{
 };
 use crate::{LinkId, LinkNetwork, LinkType};
 
-pub(crate) const SHARED_NUMERIC_FUNCTION_MODEL: &str = "closed binary floating point function";
+pub const SHARED_NUMERIC_FUNCTION_MODEL: &str = "closed binary floating point function";
 
 fn fail(message: &str) -> String {
     format!("shared numeric function: {message}")
@@ -130,7 +130,7 @@ fn context_flag_supported(
 
 // The native checked Program has no fields for these two JS interpretation
 // flags. Preserve their declared premise before projecting a selected closure.
-pub(crate) fn validate_shared_numeric_origin_context(
+pub fn validate_shared_numeric_origin_context(
     network: &LinkNetwork,
     root: LinkId,
 ) -> Result<(), String> {
@@ -153,7 +153,7 @@ pub(crate) fn validate_shared_numeric_origin_context(
     Ok(())
 }
 
-pub(crate) struct SharedNumericFunctionModel {
+pub struct SharedNumericFunctionModel {
     pub source_language: String,
     pub language_parent: LinkId,
     pub language_label: String,
@@ -161,7 +161,7 @@ pub(crate) struct SharedNumericFunctionModel {
     pub signature_fields: Vec<(LinkId, String)>,
 }
 
-pub(crate) fn read_shared_numeric_function_model(
+pub fn read_shared_numeric_function_model(
     network: &LinkNetwork,
     root: LinkId,
     canonical: bool,
@@ -503,7 +503,7 @@ pub(crate) fn read_shared_numeric_function_model(
     })
 }
 
-pub(crate) fn normalize_shared_numeric_function_literals(
+pub fn normalize_shared_numeric_function_literals(
     network: &LinkNetwork,
     root: LinkId,
 ) -> Result<SharedNumericFunctionModel, String> {
@@ -511,7 +511,7 @@ pub(crate) fn normalize_shared_numeric_function_literals(
 }
 
 /// The original typed literal strings are never replaced in their archive.
-pub(crate) fn create_shared_numeric_function_meaning(
+pub fn create_shared_numeric_function_meaning(
     network: &LinkNetwork,
     model: &SharedNumericFunctionModel,
 ) -> Result<LinkNetwork, String> {
