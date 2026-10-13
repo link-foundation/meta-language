@@ -158,7 +158,7 @@ fn visit(
     Ok(())
 }
 
-/// Project supported TypeScript annotations into the shared frontend's JSDoc form.
+/// Project supported TypeScript annotations into the shared frontend's `JSDoc` form.
 ///
 /// # Errors
 /// Returns the existing annotation or syntax obligation when the source cannot

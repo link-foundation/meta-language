@@ -209,7 +209,7 @@ impl Inference {
                     self.unify(&constraint.result, &element, constraint.place)?;
                     progress = true;
                 }
-                object => {
+                object @ Term::Known(_) => {
                     let element = self.fresh(false);
                     self.unify(
                         &object,

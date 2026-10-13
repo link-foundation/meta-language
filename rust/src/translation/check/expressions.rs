@@ -294,8 +294,8 @@ impl Checker {
                 let arg = self.expr(arg, env, path, None, false)?;
                 let refusal =
                     crate::translation::primitive_value_rules::read_number_display_refusal(
-                        self.language.as_str().to_owned(),
-                        arg.ty.kind().to_owned(),
+                        self.language.as_str(),
+                        arg.ty.kind(),
                     );
                 if !refusal.is_empty() {
                     return Err(unsupported("Rust Float display", &refusal, span));
@@ -398,7 +398,7 @@ impl Checker {
                     ..
                 } = &mut value.node
                 {
-                    *checked_model = product_model.clone();
+                    checked_model.clone_from(product_model);
                 }
                 Ok(value)
             }
