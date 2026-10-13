@@ -135,44 +135,45 @@ impl<'p> RustEmitter<'p> {
                     "arrays",
                     "a JavaScript array, which the portable core never mutates, is a Rust Vec; a read outside it panics",
                 );
-                render_rust_compound_type("array".to_owned(), String::new(), vec![self.ty(element)])
+                render_rust_compound_type("array", "", &[self.ty(element)])
             }
-            Type::Cell { element } => {
-                render_rust_compound_type("cell".to_owned(), String::new(), vec![self.ty(element)])
-            }
+            Type::Cell { element } => render_rust_compound_type("cell", "", &[self.ty(element)]),
             Type::Option { element, absence } => {
                 if absence == "both" {
                     self.preludes.insert(Prelude::Optional);
                 }
-                render_rust_compound_type(
-                    "option".to_owned(),
-                    absence.clone(),
-                    vec![self.ty(element)],
-                )
+                render_rust_compound_type("option", absence, &[self.ty(element)])
             }
             Type::Tuple { elements } => {
-                let children = elements.iter().map(|child| self.ty(child)).collect();
-                render_rust_compound_type("tuple".to_owned(), String::new(), children)
+                let children = elements
+                    .iter()
+                    .map(|child| self.ty(child))
+                    .collect::<Vec<_>>();
+                render_rust_compound_type("tuple", "", &children)
             }
             Type::Record { fields, .. } => {
-                let children = fields.iter().map(|field| self.ty(&field.ty)).collect();
-                render_rust_compound_type("record".to_owned(), String::new(), children)
+                let children = fields
+                    .iter()
+                    .map(|field| self.ty(&field.ty))
+                    .collect::<Vec<_>>();
+                render_rust_compound_type("record", "", &children)
             }
-            Type::Set { element, .. } => {
-                render_rust_compound_type("set".to_owned(), String::new(), vec![self.ty(element)])
-            }
+            Type::Set { element, .. } => render_rust_compound_type("set", "", &[self.ty(element)]),
             Type::Map { key, value, .. } => {
                 let children = vec![self.ty(key), self.ty(value)];
-                render_rust_compound_type("map".to_owned(), String::new(), children)
+                render_rust_compound_type("map", "", &children)
             }
             Type::Function { params, ret } => {
-                let children = params.iter().map(|param| self.ty(param)).collect();
+                let children = params
+                    .iter()
+                    .map(|param| self.ty(param))
+                    .collect::<Vec<_>>();
                 let result = self.ty(ret);
-                render_rust_compound_type("function".to_owned(), result, children)
+                render_rust_compound_type("function", &result, &children)
             }
             other => unreachable!("no Rust type for {}", other.kind()),
         };
-        render_rust_reference_type(rendered, ty.is_reference())
+        render_rust_reference_type(&rendered, ty.is_reference())
     }
 
     pub(super) fn field_type(&mut self, ty: &Type) -> String {

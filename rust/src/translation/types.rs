@@ -153,7 +153,7 @@ pub fn option(element: Type, absence: impl Into<std::string::String>) -> Type {
         Type::Option {
             element,
             absence: inner,
-        } => option(*element, merge_optional_absence(inner, absence)),
+        } => option(*element, merge_optional_absence(&inner, &absence)),
         element => Type::Option {
             element: Box::new(element),
             absence,
@@ -170,7 +170,7 @@ impl Type {
     /// Membership in the selected recursive scalar Copy product model.
     #[must_use]
     pub fn immutable_product_type(&self) -> bool {
-        accept_immutable_product_kind(self.kind().to_owned())
+        accept_immutable_product_kind(self.kind())
             && match self {
                 Self::Tuple { elements } => elements.iter().all(Self::immutable_product_type),
                 _ => true,
@@ -277,7 +277,7 @@ impl Type {
                     absence: inner,
                 } = current
                 {
-                    absence = merge_optional_absence(inner.clone(), absence);
+                    absence = merge_optional_absence(inner, &absence);
                     current = element;
                 }
                 (absence, vec![current.key()])
@@ -314,7 +314,7 @@ impl Type {
             _ => (std::string::String::new(), Vec::new()),
         };
         wrap_portable_reference_identity(
-            render_portable_type_identity(self.kind().to_owned(), detail, children),
+            &render_portable_type_identity(self.kind(), &detail, &children),
             self.is_reference(),
         )
     }
@@ -360,16 +360,14 @@ impl Type {
 
     #[must_use]
     pub fn same(&self, other: &Self) -> bool {
-        accept_type_identity(self.key(), other.key())
+        accept_type_identity(&self.key(), &other.key())
     }
 
     /// Whether this optional type admits a particular absence case.
     #[must_use]
     pub fn accepts_absence(&self, actual: &str) -> bool {
         match self {
-            Self::Option { absence, .. } => {
-                accept_optional_absence(absence.clone(), actual.to_owned())
-            }
+            Self::Option { absence, .. } => accept_optional_absence(absence, actual),
             _ => false,
         }
     }

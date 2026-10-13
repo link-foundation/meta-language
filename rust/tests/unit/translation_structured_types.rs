@@ -41,35 +41,32 @@ fn structural_type_adapters_match_every_independent_identity_fixture() {
     for expected in ["null", "undefined", "both"] {
         for actual in ["null", "undefined", "both"] {
             assert_eq!(
-                accept_optional_absence(expected.to_owned(), actual.to_owned()),
+                accept_optional_absence(expected, actual),
                 expected == "both" || expected == actual
             );
             assert_eq!(
-                merge_optional_absence(expected.to_owned(), actual.to_owned()),
+                merge_optional_absence(expected, actual),
                 if expected == actual { expected } else { "both" }
             );
         }
     }
     assert_eq!(
-        wrap_portable_reference_identity("array:bool".to_owned(), true),
+        wrap_portable_reference_identity("array:bool", true),
         "reference:array:bool"
     );
     assert_eq!(
-        wrap_portable_reference_identity("array:bool".to_owned(), false),
+        wrap_portable_reference_identity("array:bool", false),
         "array:bool"
     );
     assert_eq!(
-        render_rust_compound_type("cell".to_owned(), String::new(), vec!["bool".to_owned()]),
+        render_rust_compound_type("cell", "", &["bool".to_owned()]),
         "std::rc::Rc<std::cell::RefCell<bool>>"
     );
     assert_eq!(
-        render_rust_reference_type("Vec<bool>".to_owned(), true),
+        render_rust_reference_type("Vec<bool>", true),
         "std::rc::Rc<std::cell::RefCell<Vec<bool>>>"
     );
-    assert_eq!(
-        render_rust_reference_type("Vec<bool>".to_owned(), false),
-        "Vec<bool>"
-    );
+    assert_eq!(render_rust_reference_type("Vec<bool>", false), "Vec<bool>");
 }
 
 #[test]
@@ -146,18 +143,15 @@ fn portable_identity_decisions_retain_distinct_inference_variable_keys() {
             .unwrap()
             .iter()
             .map(|child| child.as_str().unwrap().to_owned())
-            .collect();
+            .collect::<Vec<_>>();
         assert_eq!(
             render_portable_type_identity(
-                entry["kind"].as_str().unwrap().to_owned(),
-                entry["detail"].as_str().unwrap().to_owned(),
-                children
+                entry["kind"].as_str().unwrap(),
+                entry["detail"].as_str().unwrap(),
+                &children
             ),
             entry["identity"].as_str().unwrap()
         );
     }
-    assert!(!accept_type_identity(
-        "var:0".to_owned(),
-        "var:1".to_owned()
-    ));
+    assert!(!accept_type_identity("var:0", "var:1"));
 }

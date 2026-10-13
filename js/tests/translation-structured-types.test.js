@@ -1,5 +1,8 @@
 import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { runInNewContext } from 'node:vm';
 
 import test from 'node:test';
 import { checkProgram, coerce } from '../src/translation/check.js';
@@ -8,6 +11,11 @@ import { emitLean } from '../src/translation/emit-lean.js';
 import { emitRocq } from '../src/translation/emit-rocq.js';
 import { renderPortableTypeIdentity, acceptOptionalAbsence, mergeOptionalAbsence, readRustOptionalPrelude, renderRustCompoundType, renderRustReferenceType, wrapPortableReferenceIdentity } from '../src/translation/structured-type-rules.js';
 import { BOOL, option, sameType, typeKey } from '../src/translation/types.js';
+import { parseJavaScript } from '../src/translation/javascript.js';
+import { parseRust } from '../src/translation/rust.js';
+import { tokenize } from '../src/translation/lexer.js';
+import { emitJavaScript } from '../src/translation/emit-javascript.js';
+import * as decisions from '../src/translation/structured-type-rules.js';
 
 const fixture = readProjectData(new URL('../../parity/fixtures/translation-structured-types.json', import.meta.url));
 
@@ -67,4 +75,66 @@ test('shared type identities retain distinct unresolved inference variables', ()
   assert.equal(typeKey({ kind: 'var', id: 0 }), 'var:0');
   assert.equal(typeKey({ kind: 'var', id: 1 }), 'var:1');
   assert.equal(sameType({ kind: 'array', element: { kind: 'var', id: 0 } }, { kind: 'array', element: { kind: 'var', id: 1 } }), false);
+});
+
+function rustFunctions(source) {
+  const tokens = tokenize(source, 'Rust').tokens;
+  const functions = new Map();
+  for (let index = 0; index < tokens.length; index += 1) {
+    if (tokens[index].kind !== 'identifier' || tokens[index].value !== 'fn') continue;
+    const start = index;
+    const name = tokens[index + 1].value;
+    while (!(tokens[index].kind === 'punct' && tokens[index].value === '{')) index += 1;
+    const signatureEnd = index;
+    let depth = 1;
+    while (depth) {
+      index += 1;
+      if (tokens[index].kind !== 'punct') continue;
+      if (tokens[index].value === '{') depth += 1;
+      if (tokens[index].value === '}') depth -= 1;
+    }
+    functions.set(name, { source: source.slice(tokens[start].start, tokens[index].end),
+      signature: tokens.slice(start, signatureEnd).map(({ kind, value, suffix }) => [kind, value, suffix]),
+      body: tokens.slice(signatureEnd, index + 1).map(({ kind, value, suffix }) => [kind, value, suffix]) });
+  }
+  return functions;
+}
+
+test('reviewed library generation keeps every function and shares equivalent array helper interfaces', () => {
+  execFileSync(process.execPath, [new URL('../scripts/generate-structured-type-rules.mjs', import.meta.url).pathname, '--check'], { timeout: 20_000 });
+  const source = readFileSync(new URL('../src/translation/structured-type-rules.js', import.meta.url), 'utf8');
+  const translated = emitRust(checkProgram(parseJavaScript(source)));
+  const generated = readFileSync(new URL('../../rust/src/translation/structured_type_rules.rs', import.meta.url), 'utf8');
+  assert.deepEqual([...rustFunctions(generated).keys()], [...rustFunctions(translated.definitions.join('\n')).keys()]);
+  const originalPrelude = translated.preludes.find(prelude => prelude.startsWith('/// Reads of JavaScript arrays'));
+  const original = rustFunctions(execFileSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], {
+    input: originalPrelude, encoding: 'utf8', timeout: 10_000,
+  }));
+  const provider = rustFunctions(readFileSync(new URL('../../rust/src/translation/frontend_rules.rs', import.meta.url), 'utf8'));
+  for (const [name, helper] of original) {
+    assert.deepEqual(provider.get(name)?.signature, helper.signature, name);
+    // The existing at() style performs the same one clone or one panic.
+    // All other complete helper bodies are identical after lexical reload.
+    if (name !== 'at') assert.deepEqual(provider.get(name)?.body, helper.body, name);
+  }
+  assert.ok(generated.includes('pub use crate::translation::frontend_rules::ml_array;'));
+});
+
+test('borrowed scalar structural rules preserve actual generated Rust decisions after semantic replay', () => {
+  const generated = readFileSync(new URL('../../rust/src/translation/structured_type_rules.rs', import.meta.url), 'utf8');
+  const functions = rustFunctions(generated);
+  const selected = ['mergeOptionalAbsence', 'acceptTypeIdentity', 'acceptOptionalAbsence',
+    'readRustOptionalPrelude', 'wrapPortableReferenceIdentity', 'renderRustReferenceType'];
+  const rustName = name => name.replace(/[A-Z]/gu, character => '_' + character.toLowerCase());
+  const replay = {};
+  const source = selected.map(name => functions.get(rustName(name)).source).join('\n') + '\nfn main() {}\n';
+  runInNewContext(emitJavaScript(checkProgram(parseRust(source))).text, replay, { timeout: 1_000 });
+  const values = ['', 'null', 'undefined', 'both', 'array:bool', 'Vec<bool>', '空🦀'];
+  for (const left of values) for (const right of values) {
+    for (const name of selected.slice(0, 3)) assert.equal(replay[rustName(name)](left, right), decisions[name](left, right), name);
+  }
+  for (const value of values) for (const reference of [false, true]) {
+    for (const name of selected.slice(4)) assert.equal(replay[rustName(name)](value, reference), decisions[name](value, reference), name);
+  }
+  assert.equal(replay.read_rust_optional_prelude(), decisions.readRustOptionalPrelude());
 });
