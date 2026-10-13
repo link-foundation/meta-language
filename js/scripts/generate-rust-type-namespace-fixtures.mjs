@@ -1,0 +1,127 @@
+import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import { pathToFileURL } from 'node:url';
+import { readProjectData, writeProjectData, checkProjectData } from './project-data.mjs';
+import { parseRust } from '../src/translation/rust.js';
+import { checkProgram } from '../src/translation/check.js';
+import { createTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks } from '../src/typed-program-links.js';
+import { LinkNetwork } from '../src/network.js';
+
+export const typeNamespaceModel = 'resolved Rust type namespace 1';
+const data = name => ({ kind: 'data', name });
+const bool = { kind: 'bool' }, float = { kind: 'float' };
+const cases = [
+  ['root-type-and-value', 'enum f64{Only}mod nested{fn f64()->bool{true}fn header(value:f64)->bool{true}fn value()->bool{f64()}}fn main(){println!("{}",nested::value());println!("{}",nested::header(f64::Only));}', 'nested.header', data('f64'), ['f64'], ['f64'], bool, ['bool'], ['bool'], ['true','true'], 'nested.value', 'nested.f64'],
+  ['boolean-datatype', 'enum bool{Only}fn keep(value:bool)->bool{value}fn main(){let value=keep(bool::Only);println!("{}",match value{bool::Only=>true});}', 'keep', data('bool'), ['bool'], ['bool'], data('bool'), ['bool'], ['bool'], ['true']],
+  ['closest-type', 'enum f64{Root}mod nested{enum f64{Local}fn header(value:f64)->bool{true}}fn main(){println!("{}",nested::header(nested::f64::Local));}', 'nested.header', data('nested.f64'), ['nested','f64'], ['f64'], bool, ['bool'], ['bool'], ['true']],
+  ['crate-qualified', 'enum f64{Only}mod nested{fn f64()->bool{true}fn header(value:crate::f64)->bool{true}}fn main(){}', 'nested.header', data('f64'), ['f64'], ['crate','f64'], bool, ['bool'], ['bool'], []],
+  ['self-qualified', 'enum f64{Root}mod nested{enum f64{Local}fn header(value:self::f64)->bool{true}}fn main(){}', 'nested.header', data('nested.f64'), ['nested','f64'], ['self','f64'], bool, ['bool'], ['bool'], []],
+  ['super-qualified', 'enum f64{Root}mod nested{enum f64{Local}mod deep{fn header(value:super::f64)->bool{true}}}fn main(){}', 'nested.deep.header', data('nested.f64'), ['nested','f64'], ['super','f64'], bool, ['bool'], ['bool'], []],
+  ['deep-super-qualified', 'enum f64{Root}mod nested{fn f64()->bool{true}mod deep{fn header(value:super::super::f64)->bool{true}}}fn main(){}', 'nested.deep.header', data('f64'), ['f64'], ['super','super','f64'], bool, ['bool'], ['bool'], []],
+  ['forward-datatype', 'fn keep(value:f64)->f64{value}enum f64{Only}fn main(){}', 'keep', data('f64'), ['f64'], ['f64'], data('f64'), ['f64'], ['f64'], []],
+  ['value-function-only', 'fn f64()->bool{true}fn header(value:f64)->f64{value}fn main(){println!("{}",f64());}', 'header', float, ['f64'], ['f64'], float, ['f64'], ['f64'], ['true']],
+  ['boolean-value-only', 'fn bool()->bool{true}fn header(value:bool)->bool{value}fn main(){println!("{}",bool());}', 'header', bool, ['bool'], ['bool'], bool, ['bool'], ['bool'], ['true']],
+  ['borrowed-datatype', 'enum f64{Only}fn header(value:&f64)->bool{true}fn main(){println!("{}",header(&f64::Only));}', 'header', data('f64'), ['f64'], ['f64'], bool, ['bool'], ['bool'], ['true'], null, null, ['reference'], [null]],
+  ['named-reference', "enum f64{Only}fn header<'a>(value:&'a f64)->bool{true}fn main(){}", 'header', data('f64'), ['f64'], ['f64'], bool, ['bool'], ['bool'], [], null, null, ['reference'], ['a']],
+  ['string-token-datatype', 'enum str{Only}fn header(value:&str)->bool{true}fn main(){}', 'header', data('str'), ['str'], ['str'], bool, ['bool'], ['bool'], [], null, null, ['reference'], [null]],
+  ['fixed-token-datatype', 'enum u8{Only}fn keep(value:u8)->u8{value}fn main(){}', 'keep', data('u8'), ['u8'], ['u8'], data('u8'), ['u8'], ['u8'], []],
+];
+const refused = [
+  ['root-super', 'enum f64{Only}fn header(value:super::f64)->bool{true}fn main(){}'],
+  ['above-crate', 'enum f64{Only}mod nested{fn header(value:super::super::f64)->bool{true}}fn main(){}'],
+  ['self-value-only', 'enum f64{Only}mod nested{fn f64()->bool{true}fn header(value:self::f64)->bool{true}}fn main(){}'],
+  ['super-value-only', 'enum f64{Only}mod nested{fn f64()->bool{true}mod deep{fn header(value:super::f64)->bool{true}}}fn main(){}'],
+  ['borrowed-result', 'fn keep(value:&f64)->&f64{value}fn main(){}'],
+  ['named-borrowed-result', "fn keep<'a>(value:&'a f64)->&'a f64{value}fn main(){}"],
+  ['box-input', 'fn keep(value:Box<f64>)->f64{*value}fn main(){}'],
+  ['vector-input', 'fn keep(value:Vec<f64>)->bool{value.is_empty()}fn main(){}'],
+  ['tuple-input', 'fn keep(value:(f64,bool))->bool{value.1}fn main(){}'],
+  ['unit-input', 'fn keep(value:())->bool{true}fn main(){}'],
+  ['slice-input', 'fn keep(value:&[f64])->bool{value.is_empty()}fn main(){}'],
+  ['string-library', 'fn keep(value:String)->bool{true}fn main(){}'],
+  ['imported-type', 'enum Choice{Only}mod nested{use crate::Choice;fn keep(value:Choice)->Choice{value}}fn main(){}'],
+  ['constant-projection', 'const VALUE:f64=1.0;fn keep(value:f64)->f64{value}fn main(){}'],
+  ['constructor-type', 'enum Choice{Only}fn keep(value:Choice::Only)->bool{true}fn main(){}'],
+  ['shared-module-type-identity', 'enum Choice{Only}mod Choice{fn keep(value:crate::Choice)->bool{true}}fn main(){}'],
+  ['same-type-value-identity', 'enum f64{Only}fn f64()->bool{true}fn keep(value:f64)->bool{true}fn main(){}'],
+];
+const output = code => { const lines = []; vm.runInNewContext(code, {console:{log:(...args)=>lines.push(args.map(String).join(' '))}}, {timeout:1000}); return lines; };
+const schema = readProjectData(new URL('../src/data/typed-program-links-schema.lino', import.meta.url));
+export function rustTypeNamespaceField(network, parent, name) {
+  return network.fieldRelations().find(row => row.parent.equals(parent) && row.label === (schema.fields[name] ?? name.replace(/[A-Z]/gu, letter => ` ${letter.toLowerCase()}`)))?.child;
+}
+export function rustTypeNamespaceFixture() {
+  const entries = cases.map(([id, source, functionName, parameterType, parameterOwner, parameterSpelling, resultType, resultOwner, resultSpelling, lines, callFunction, callTarget, wrappers=[], lifetimes=[]]) => {
+    const program = checkProgram(parseRust(source, {typeNamespaceModel})), declaration = program.declarations.get(functionName);
+    const expected = {parameterType, parameterOwner, parameterSpelling, resultType, resultOwner, resultSpelling, wrappers, lifetimes};
+    assert.deepEqual(declaration.params[0].type, parameterType, id);
+    assert.deepEqual(declaration.sourceSignature.parameters[0].owner.path, parameterOwner, id);
+    assert.deepEqual(declaration.sourceSignature.parameters[0].wrappers, wrappers, id);
+    assert.deepEqual(declaration.sourceSignature.parameters[0].lifetimes, lifetimes, id);
+    assert.deepEqual(declaration.ret, resultType, id);
+    assert.deepEqual(declaration.sourceSignature.result.owner.path, resultOwner, id);
+    assert.deepEqual(declaration.sourceTypeNamespace, {model:typeNamespaceModel, language:'Rust', parameters:[parameterSpelling], result:resultSpelling}, id);
+    if (callFunction) assert.equal(program.declarations.get(callFunction).body.fn, callTarget, id);
+    const archive = createTypedProgramLinks(source, 'Rust', {rustTypeNamespaceModel:typeNamespaceModel, provenance:{project:id}});
+    const loaded = LinkNetwork.fromLino(archive.network.toLino());
+    assert.deepEqual(decodeTypedProgramLinks(loaded, archive.root).declarations.get(functionName).sourceTypeNamespace, declaration.sourceTypeNamespace, id);
+    assert.deepEqual(output(emitTypedProgramLinks(loaded, archive.root, 'JavaScript').code), lines, id);
+    return {id, source, functionName, expected, output:lines, callFunction:callFunction??null, callTarget:callTarget??null, archive:archive.network.toLino(), root:archive.root.asU64()};
+  });
+  const invalid = refused.map(([id,source]) => {
+    try { checkProgram(parseRust(source,{typeNamespaceModel})); } catch (error) { return {id,source,kind:error.kind,reason:error.reason,span:error.span??null}; }
+    throw new Error(`selected type namespace refusal was admitted: ${id}`);
+  });
+  const base = entries[0], malformed = [];
+  const set = (network,id,text) => network.link(id).setMetadata(network.link(id).metadata().withDefinition(text));
+  const field = rustTypeNamespaceField;
+  const relation = (network,parent,name) => network.fieldRelations().find(row=>row.parent.equals(parent)&&row.label===(schema.fields[name]??name));
+  const scalar = (network,proof,kind,text) => network.insertLink([],network.link(field(network,proof,'model')).metadata().withTerm(schema.scalars[kind]).withDefinition(text));
+  const edit = (id, mutate) => {
+    const network = LinkNetwork.fromLino(base.archive), program = decodeTypedProgramLinks(network, base.root);
+    const fn = network.fieldRelations().find(row => row.label === 'full name' && network.link(row.child).metadata().definition === base.functionName)?.parent;
+    assert.ok(fn, id);
+    const facet = field(network,fn,'sourceTypeNamespace');
+    mutate(network,fn,facet,program);
+    for (const target of ['JavaScript','Rust']) assert.throws(()=>emitTypedProgramLinks(LinkNetwork.fromLino(network.toLino()),base.root,target),undefined,id);
+    malformed.push({id,archive:network.toLino(),root:base.root});
+  };
+  edit('wrong-model',(n,_fn,p)=>set(n,field(n,p,'model'),'unproved type namespace'));
+  edit('wrong-language',(n,_fn,p)=>set(n,field(n,p,'language'),'JavaScript'));
+  edit('missing-position',(n,_fn,p)=>n.link(field(n,p,'parameters')).setReferences([]));
+  edit('empty-spelling',(n,_fn,p)=>n.link(n.link(field(n,p,'parameters')).references()[0]).setReferences([]));
+  edit('wrong-anchor',(n,_fn,p)=>set(n,n.link(n.link(field(n,p,'parameters')).references()[0]).references()[0],'self'));
+  edit('above-crate',(n,_fn,p)=>{
+    const spelling=n.link(field(n,p,'parameters')).references()[0],old=n.link(spelling).references()[0];
+    const parent=n.insertLink([],n.link(old).metadata().withDefinition('super'));n.link(spelling).setReferences([parent,parent,old]);
+  });
+  edit('forged-datatype',(n,_fn,p)=>set(n,n.link(n.link(field(n,p,'parameters')).references()[0]).references()[0],'bool'));
+  edit('forged-result',(n,_fn,p)=>set(n,n.link(field(n,p,'result')).references()[0],'f64'));
+  edit('opaque-proof-field',(n,_fn,p)=>n.insertFieldRelation(p,'opaque namespace fact',field(n,p,'model')));
+  edit('async-header',(n,fn,p)=>n.insertFieldRelation(fn,'async',field(n,p,'model')));
+  edit('opaque-header',(n,fn,p)=>n.insertFieldRelation(fn,'opaque interface fact',field(n,p,'model')));
+  edit('opaque-parameter',(n,fn,p)=>n.insertFieldRelation(n.link(field(n,fn,'params')).references()[0],'source span',field(n,p,'model')));
+  edit('missing-signature',(n,fn)=>relation(n,fn,'sourceSignature').link.setReferences([]));
+  edit('missing-selected-facts',(n,fn)=>relation(n,fn,'sourceTypeNamespace').link.setReferences([]));
+  for(const [id,kind,text] of [['null','null',''],['zero','number','0'],['empty-string','string',''],['false','boolean','false']]) {
+    edit(`scalar-proof-${id}`,(n,fn,p)=>{const row=relation(n,fn,'sourceTypeNamespace');row.link.setReferences([...row.link.references().slice(0,2),scalar(n,p,kind,text)]);});
+  }
+  for(const [id,kind,text] of [['null','null',''],['zero','number','0'],['empty-string','string',''],['true','boolean','true']]) {
+    edit(`generated-${id}`,(n,fn,p)=>n.insertFieldRelation(fn,'generated',scalar(n,p,kind,text)));
+  }
+  for(const value of ['false','true'])edit(`optional-${value}`,(n,fn,p)=>n.insertFieldRelation(n.link(field(n,fn,'params')).references()[0],'optional',scalar(n,p,'boolean',value)));
+  const network = LinkNetwork.fromLino(base.archive);
+  const fn = network.fieldRelations().find(row => row.label==='full name' && network.link(row.child).metadata().definition===base.functionName).parent;
+  const facet = field(network,fn,'sourceTypeNamespace'), spelling = network.link(field(network,facet,'parameters')).references()[0];
+  const old = network.link(spelling).references()[0];
+  const crate = network.insertLink([], network.link(old).metadata().withDefinition('crate'));
+  network.link(spelling).setReferences([crate,old]);
+  assert.deepEqual(decodeTypedProgramLinks(LinkNetwork.fromLino(network.toLino()),base.root).declarations.get(base.functionName).sourceTypeNamespace.parameters,[['crate','f64']]);
+  assert.deepEqual(output(emitTypedProgramLinks(network,base.root,'JavaScript').code),base.output);
+  return {schemaVersion:1,typeNamespaceModel,scope:'owned source header type bindings before primitive projection; immutable input references retain source facts without outlives, pointer or ABI equivalence',cases:entries,invalid,malformed,spellingEdit:{archive:network.toLino(),root:base.root,functionName:base.functionName,output:base.output}};
+}
+if (process.argv[1] && import.meta.url===pathToFileURL(process.argv[1]).href) {
+  const file=new URL('../../parity/fixtures/rust-type-namespace.lino',import.meta.url),fixture=rustTypeNamespaceFixture();
+  if(process.argv.includes('--check'))checkProjectData(file,fixture);else writeProjectData(file,fixture);
+  console.log(`Rust type namespace: ${fixture.cases.length} actual source bindings, ${fixture.invalid.length} source refusals, ${fixture.malformed.length} source-free corruptions`);
+}
