@@ -33,6 +33,8 @@ pub mod product_emission_rules;
 pub mod proof;
 pub mod rocq;
 pub mod rust;
+pub(crate) mod scalar_loop_rules;
+pub mod source_loops;
 pub(crate) mod source_signature_rules;
 pub mod source_signatures;
 pub mod structured_type_rules;

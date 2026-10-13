@@ -153,7 +153,12 @@ pub fn rename_prop(prop: &Prop, env: &Env, scope: &mut Scope<'_>) -> Prop {
 /// a loop of a million iterations needs no million stack frames.
 #[must_use]
 pub fn tail_loop(entry: &FnDecl) -> bool {
-    entry.generated && entry.recursive && tail_calls_only(&entry.body, &entry.full_name, true)
+    entry.recursive
+        && (entry.generated
+            || entry.source_loop.as_ref().is_some_and(|proof| {
+                super::super::source_loops::validate_source_loop(entry, &proof.language).is_ok()
+            }))
+        && tail_calls_only(&entry.body, &entry.full_name, true)
 }
 
 fn tail_calls_only(expr: &Expr, name: &str, tail: bool) -> bool {

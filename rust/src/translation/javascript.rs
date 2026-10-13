@@ -41,6 +41,7 @@ mod math;
 mod object_properties;
 mod product_source_rules;
 mod products;
+mod scalar_loops;
 mod statements;
 use self::flow::{imperative, statement_uses};
 use self::imperative::lower_imperative;
@@ -123,6 +124,24 @@ enum AssertionKind {
 /// the portable core.
 pub fn parse_javascript(source: &str) -> Result<SProgram> {
     parse_javascript_in(source, &ModuleContext::default())
+}
+
+/// Read actual emitted scalar loops under the selected Number/Boolean interface.
+///
+/// # Errors
+/// Refuses unknown models and unproved state, snapshot or interface semantics.
+pub fn parse_javascript_with_scalar_loop_model(source: &str, model: &str) -> Result<SProgram> {
+    if !super::scalar_loop_rules::accept_rust_scalar_loop_model(model) {
+        return Err(unsupported(
+            "JavaScript scalar loop model",
+            "the selected model is not registered",
+            None,
+        ));
+    }
+    let tokens = tokenize(source, Language::JavaScript)?;
+    let mut parser = JavaScriptParser::new(source, tokens.tokens, &tokens.comments);
+    model.clone_into(&mut parser.scalar_loop_model);
+    parser.file()
 }
 
 /// What self-translation tells the frontend about the module of the item it reads.
@@ -346,6 +365,7 @@ struct JavaScriptParser {
     /// Whether a top-level statement is being read, where `return` is a syntax error.
     top_level: bool,
     readonly_constants: ReadonlyConstants,
+    scalar_loop_model: String,
     /// Functions and data types that loops and joins of statements lower to, and their count.
     generated: Vec<SItem>,
     generated_count: usize,
@@ -381,6 +401,7 @@ impl JavaScriptParser {
             jumps: Jumps::default(),
             top_level: false,
             readonly_constants: ReadonlyConstants::default(),
+            scalar_loop_model: String::new(),
             generated: Vec::new(),
             generated_count: 0,
             externals: Vec::new(),

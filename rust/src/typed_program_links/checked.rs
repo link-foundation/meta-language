@@ -218,6 +218,7 @@ pub(super) fn validate(program: &Program) -> Result<()> {
             span: function.span,
             generated: function.generated,
             source_signature: function.source_signature.clone(),
+            source_loop: function.source_loop.clone(),
         }));
     }
     if items.len() != program.declarations.len() {

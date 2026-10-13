@@ -168,9 +168,12 @@ impl JavaScriptParser {
                 &self.exported_names,
                 &self.nested_product_bindings,
             )?;
+            super::scalar_loops::finish_scalar_loops(&mut program)?;
             Ok(program)
         } else {
-            infer_javascript_types(program)
+            let mut program = infer_javascript_types(program)?;
+            super::scalar_loops::finish_scalar_loops(&mut program)?;
+            Ok(program)
         }
     }
 
@@ -650,6 +653,24 @@ impl JavaScriptParser {
         let outer_async = std::mem::replace(&mut self.in_async, is_async);
         let outer_jumps = std::mem::take(&mut self.jumps);
         let outer_top_level = std::mem::replace(&mut self.top_level, false);
+        if !self.scalar_loop_model.is_empty() && self.is_scalar_loop() {
+            let read = self.read_scalar_loop(&name, &params, is_async);
+            self.scope = outer;
+            self.in_async = outer_async;
+            self.jumps = outer_jumps;
+            self.top_level = outer_top_level;
+            let (body, proof) = read?;
+            return Ok(SFn {
+                name,
+                params,
+                ret,
+                body,
+                source_signature: None,
+                source_loop: Some(proof),
+                span: Some(self.to_here(doc_token)),
+                generated: false,
+            });
+        }
         let statements = match body {
             Body::Arrow if !self.cursor.is("{") => {
                 let token = self.peek();
@@ -710,6 +731,7 @@ impl JavaScriptParser {
             params,
             ret,
             source_signature: None,
+            source_loop: None,
             body,
             span: Some(self.to_here(doc_token)),
             generated: false,

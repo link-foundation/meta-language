@@ -114,7 +114,7 @@ impl RustParser {
     }
 
     pub(in super::super) fn parse_type(&mut self) -> Result<Type> {
-        if self.source_signature_model.is_empty() {
+        if self.source_signature_model.is_empty() && self.scalar_loop_model.is_empty() {
             return self.parse_type_value();
         }
         let head = self.source_type_head();
@@ -138,8 +138,9 @@ impl RustParser {
         parameters: &[SourceOrigin],
         result: &SourceOrigin,
         lifetime_bindings: Vec<String>,
+        scalar_loop: bool,
     ) -> Result<Option<SourceSignature>> {
-        if self.source_signature_model.is_empty() {
+        if self.source_signature_model.is_empty() && !scalar_loop {
             return Ok(None);
         }
         let position = |origin: &SourceOrigin| -> Result<SourceTypeSignature> {
@@ -163,7 +164,11 @@ impl RustParser {
             })
         };
         Ok(Some(SourceSignature {
-            model: self.source_signature_model.clone(),
+            model: if self.source_signature_model.is_empty() {
+                "Rust source function signature 1".into()
+            } else {
+                self.source_signature_model.clone()
+            },
             language: "Rust".to_owned(),
             parameters: parameters.iter().map(position).collect::<Result<_>>()?,
             result: position(result)?,

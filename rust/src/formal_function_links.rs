@@ -371,6 +371,7 @@ pub fn encode_formal_function_definition(
     wrapper.mutual = false;
     wrapper.span = None;
     wrapper.source_signature = None;
+    wrapper.source_loop = None;
     program.declarations.push(Decl::Fn(wrapper));
     program.items = program
         .declarations
