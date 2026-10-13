@@ -438,3 +438,80 @@ fn source_cycles_and_explicit_structural_budgets_refuse_promptly() {
             .contains("cyclic")
     );
 }
+
+#[test]
+fn imported_boundary_graph_reloads_within_the_unchanged_default_node_budget() {
+    // Native capacity checks run in CI. Local verification exercises the
+    // identical production JavaScript cap through a count-only store.
+    let triples = Value::Array(
+        (0..9_998)
+            .map(|index| {
+                triple(
+                    identifier(&format!("urn:subject:{index}")),
+                    literal(&format!("value {index}")),
+                )
+            })
+            .collect(),
+    );
+    let graph = statements("source A", &triples);
+    assert_eq!(graph.network.len(), 99_991);
+    let loaded = reload(&graph);
+    let result = decode(&loaded);
+    assert_eq!(result["triples"].as_array().unwrap().len(), 9_998);
+    assert_eq!(result["occurrences"].as_array().unwrap().len(), 9_998);
+    assert!(verify_resource_description_graph_witnesses(&loaded.network, loaded.root).unwrap());
+    assert!(
+        decode_resource_description_graph_with_limit(&loaded.network, loaded.root, 99_990).is_err()
+    );
+    let mut too_large = triples;
+    too_large.as_array_mut().unwrap().push(triple(
+        identifier("urn:subject:9998"),
+        literal("value 9998"),
+    ));
+    assert!(
+        import_resource_description_graph(&too_large, "source A")
+            .unwrap_err()
+            .contains("output structural node limit")
+    );
+}
+
+#[test]
+fn merge_counts_archived_sources_and_occurrences_before_crossing_the_output_cap() {
+    let statement = triple(identifier("urn:subject"), literal("same"));
+    let source = statements("source A", &Value::Array(vec![statement.clone(); 10_000]));
+    let merged = merge_resource_description_graphs(std::slice::from_ref(&source)).unwrap();
+    assert!(merged.network.len() < 100_000);
+    let result = decode(&merged);
+    assert_eq!(result["triples"].as_array().unwrap().len(), 1);
+    assert_eq!(result["occurrences"].as_array().unwrap().len(), 10_000);
+    assert!(verify_resource_description_graph_witnesses(&merged.network, merged.root).unwrap());
+    assert!(
+        merge_resource_description_graphs(&[source.clone(), source])
+            .unwrap_err()
+            .contains("output structural node limit")
+    );
+    assert!(
+        import_resource_description_graph(&Value::Array(vec![statement; 10_001]), "source A")
+            .unwrap_err()
+            .contains("bounded graph")
+    );
+}
+
+#[test]
+fn accepted_merge_preserves_every_source_at_the_unchanged_source_count_cap() {
+    let input = statements(
+        "source A",
+        &json!([triple(identifier("urn:subject"), literal("same"))]),
+    );
+    let merged = reload(&merge_resource_description_graphs(&vec![input.clone(); 100]).unwrap());
+    let result = decode(&merged);
+    assert_eq!(result["triples"].as_array().unwrap().len(), 1);
+    assert_eq!(result["occurrences"].as_array().unwrap().len(), 100);
+    assert_eq!(role(&merged.network, "root").len(), 101);
+    assert!(verify_resource_description_graph_witnesses(&merged.network, merged.root).unwrap());
+    assert!(
+        merge_resource_description_graphs(&vec![input; 101])
+            .unwrap_err()
+            .contains("bounded source graph list")
+    );
+}

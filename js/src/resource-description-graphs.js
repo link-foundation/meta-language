@@ -54,7 +54,13 @@ function writer(network) {
   const occurrences = [];
   const sources = [];
   const witnesses = [];
-  const insert = (kind, references = [], definition) => network.insertLink(references, metadata(kind, definition));
+  let allocatedNodes = 0;
+  const append = (references, data) => {
+    if (allocatedNodes >= 100000) failure('the output structural node limit is exceeded');
+    allocatedNodes += 1;
+    return network.insertLink(references, data);
+  };
+  const insert = (kind, references = [], definition) => append(references, metadata(kind, definition));
   const scalar = value => insert('text', [], value);
   const model = insert('model', [scalar(schema.specification)], schema.model);
   function term(value) {
@@ -80,7 +86,7 @@ function writer(network) {
     const ordered = [...statements].sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0).map(([, id]) => id);
     return { network, root: insert('root', [model, insert('sequence', ordered), insert('sequence', occurrences), insert('sequence', sources), insert('sequence', witnesses)], String(schema.schemaVersion)) };
   }
-  return { insert, model, scalar, term, statement, occurrence, sources, witnesses, finish };
+  return { insert, append, model, scalar, term, statement, occurrence, sources, witnesses, finish };
 }
 
 /** Import structured triples. Blank node labels are scoped by an explicit source. */
@@ -94,7 +100,9 @@ export function importResourceDescriptionGraph(triples, { sourceIdentifier, netw
     for (const [index, role] of ['subject', 'predicate', 'object'].entries()) if (!schema.positions[role].includes(triple[index].kind)) failure('a term cannot occupy the ' + role + ' position');
     output.occurrence(triple, sourceIdentifier, position, input[2].kind === 'literal' ? input[2].language ?? '' : '');
   }
-  return output.finish();
+  const result = output.finish();
+  decodeResourceDescriptionGraph(result.network, result.root);
+  return result;
 }
 
 function reader(network, nodeLimit = 100000) {
@@ -228,7 +236,7 @@ export function mergeResourceDescriptionGraphs(inputs) {
       if (copied.size >= 100000) failure('the source copy limit is exceeded');
       const link = input.network.link(id);
       if (!link) failure('a source reference is dangling');
-      copied.set(key(id), network.insertLink([], link.metadata().clone()));
+      copied.set(key(id), output.append([], link.metadata().clone()));
       pending.push(...link.references());
     }
     for (const [before, after] of copied) network.link(after).setReferences(input.network.link(LinkId.fromU64(before)).references().map(id => copied.get(key(id))));

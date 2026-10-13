@@ -191,7 +191,7 @@ struct Writer {
 }
 
 impl Writer {
-    fn new() -> Self {
+    fn new() -> Result<Self, String> {
         let mut output = Self {
             network: LinkNetwork::new(),
             terms: BTreeMap::new(),
@@ -201,12 +201,24 @@ impl Writer {
             witnesses: Vec::new(),
             model: LinkId::from_u64(0),
         };
-        let premise = output.text(schema()["specification"].as_str().unwrap());
-        output.model = output.node("model", &[premise], schema()["model"].as_str());
-        output
+        let premise = output.text(schema()["specification"].as_str().unwrap())?;
+        output.model = output.node("model", &[premise], schema()["model"].as_str())?;
+        Ok(output)
     }
 
-    fn node(&mut self, kind: &str, references: &[LinkId], definition: Option<&str>) -> LinkId {
+    fn append(&mut self, references: &[LinkId], data: LinkMetadata) -> Result<LinkId, String> {
+        if self.network.len() >= 100_000 {
+            return Err(fail("the output structural node limit is exceeded"));
+        }
+        Ok(self.network.insert_dynamic_link(references, data))
+    }
+
+    fn node(
+        &mut self,
+        kind: &str,
+        references: &[LinkId],
+        definition: Option<&str>,
+    ) -> Result<LinkId, String> {
         let mut data = LinkMetadata::new()
             .with_link_type(LinkType::Semantic)
             .with_named(true)
@@ -215,74 +227,81 @@ impl Writer {
         if let Some(text) = definition {
             data = data.with_definition(text);
         }
-        self.network.insert_dynamic_link(references, data)
+        self.append(references, data)
     }
 
-    fn text(&mut self, text: &str) -> LinkId {
+    fn text(&mut self, text: &str) -> Result<LinkId, String> {
         self.node("text", &[], Some(text))
     }
 
-    fn term(&mut self, term: &Value) -> LinkId {
+    fn term(&mut self, term: &Value) -> Result<LinkId, String> {
         let signature = identity(term);
         if let Some(id) = self.terms.get(&signature) {
-            return *id;
+            return Ok(*id);
         }
         let kind = term["kind"].as_str().unwrap();
         let references = match kind {
-            "identifier" => vec![self.text(term["value"].as_str().unwrap())],
+            "identifier" => vec![self.text(term["value"].as_str().unwrap())?],
             "blank" => vec![
-                self.text(term["sourceIdentifier"].as_str().unwrap()),
-                self.text(term["value"].as_str().unwrap()),
+                self.text(term["sourceIdentifier"].as_str().unwrap())?,
+                self.text(term["value"].as_str().unwrap())?,
             ],
             _ => vec![
-                self.text(term["value"].as_str().unwrap()),
-                self.term(&json!({"kind":"identifier","value":term["datatype"]})),
-                self.text(term["language"].as_str().unwrap()),
+                self.text(term["value"].as_str().unwrap())?,
+                self.term(&json!({"kind":"identifier","value":term["datatype"]}))?,
+                self.text(term["language"].as_str().unwrap())?,
             ],
         };
-        let id = self.node(kind, &references, None);
+        let id = self.node(kind, &references, None)?;
         self.terms.insert(signature, id);
-        id
+        Ok(id)
     }
 
-    fn statement(&mut self, triple: &[Value]) -> LinkId {
+    fn statement(&mut self, triple: &[Value]) -> Result<LinkId, String> {
         let signature: Vec<u16> = statement_identity(triple).encode_utf16().collect();
         if let Some(id) = self.statements.get(&signature) {
-            return *id;
+            return Ok(*id);
         }
         let references = triple
             .iter()
             .map(|term| self.term(term))
-            .collect::<Vec<_>>();
-        let id = self.node("statement", &references, None);
+            .collect::<Result<Vec<_>, _>>()?;
+        let id = self.node("statement", &references, None)?;
         self.statements.insert(signature, id);
-        id
+        Ok(id)
     }
 
-    fn occurrence(&mut self, triple: &[Value], source: &str, position: u64, language: &str) {
-        let statement = self.statement(triple);
-        let scope = self.text(source);
-        let position = self.node("position", &[], Some(&position.to_string()));
-        let language = self.text(language);
-        let id = self.node("occurrence", &[statement, scope, position, language], None);
+    fn occurrence(
+        &mut self,
+        triple: &[Value],
+        source: &str,
+        position: u64,
+        language: &str,
+    ) -> Result<(), String> {
+        let statement = self.statement(triple)?;
+        let scope = self.text(source)?;
+        let position = self.node("position", &[], Some(&position.to_string()))?;
+        let language = self.text(language)?;
+        let id = self.node("occurrence", &[statement, scope, position, language], None)?;
         self.occurrences.push(id);
+        Ok(())
     }
 
-    fn finish(mut self) -> ResourceDescriptionLinks {
+    fn finish(mut self) -> Result<ResourceDescriptionLinks, String> {
         let ids = self.statements.values().copied().collect::<Vec<_>>();
-        let statements = self.node("sequence", &ids, None);
-        let occurrences = self.node("sequence", &self.occurrences.clone(), None);
-        let sources = self.node("sequence", &self.sources.clone(), None);
-        let witnesses = self.node("sequence", &self.witnesses.clone(), None);
+        let statements = self.node("sequence", &ids, None)?;
+        let occurrences = self.node("sequence", &self.occurrences.clone(), None)?;
+        let sources = self.node("sequence", &self.sources.clone(), None)?;
+        let witnesses = self.node("sequence", &self.witnesses.clone(), None)?;
         let root = self.node(
             "root",
             &[self.model, statements, occurrences, sources, witnesses],
             Some("1"),
-        );
-        ResourceDescriptionLinks {
+        )?;
+        Ok(ResourceDescriptionLinks {
             network: self.network,
             root,
-        }
+        })
     }
 }
 
@@ -303,7 +322,7 @@ pub fn import_resource_description_graph(
             "a bounded graph and a nonempty source identifier are required",
         ));
     }
-    let mut output = Writer::new();
+    let mut output = Writer::new()?;
     for (position, input) in statements.iter().enumerate() {
         let fields = input
             .as_array()
@@ -328,9 +347,11 @@ pub fn import_resource_description_graph(
             source_identifier,
             u64::try_from(position).unwrap(),
             language,
-        );
+        )?;
     }
-    Ok(output.finish())
+    let result = output.finish()?;
+    decode_resource_description_graph(&result.network, result.root)?;
+    Ok(result)
 }
 
 #[derive(Clone)]
@@ -634,7 +655,7 @@ pub fn merge_resource_description_graphs(
     if inputs.len() > 100 {
         return Err(fail("a bounded source graph list is required"));
     }
-    let mut output = Writer::new();
+    let mut output = Writer::new()?;
     for input in inputs {
         let mut reader = Reader::new(&input.network, 100_000);
         let graph = reader.graph(input.root, 0)?;
@@ -651,7 +672,7 @@ pub fn merge_resource_description_graphs(
                 .network
                 .link(id)
                 .ok_or_else(|| fail("a source reference is dangling"))?;
-            copied.insert(id, output.network.insert_link([], link.metadata().clone()));
+            copied.insert(id, output.append(&[], link.metadata().clone())?);
             pending.extend_from_slice(link.references());
         }
         for (before, after) in &copied {
@@ -673,10 +694,10 @@ pub fn merge_resource_description_graphs(
                 occurrence["sourceIdentifier"].as_str().unwrap(),
                 occurrence["position"].as_u64().unwrap(),
                 occurrence["sourceLanguage"].as_str().unwrap(),
-            );
+            )?;
         }
         for triple in &graph.triples {
-            output.statement(triple);
+            output.statement(triple)?;
         }
         let source_terms = graph
             .statement_ids
@@ -692,12 +713,12 @@ pub fn merge_resource_description_graphs(
             })
             .collect::<BTreeSet<_>>();
         for before in source_terms {
-            let target = output.term(&reader.term(before)?);
-            let witness = output.node("witness", &[copied[&before], target, output.model], None);
+            let target = output.term(&reader.term(before)?)?;
+            let witness = output.node("witness", &[copied[&before], target, output.model], None)?;
             output.witnesses.push(witness);
         }
     }
-    let result = output.finish();
+    let result = output.finish()?;
     decode_resource_description_graph(&result.network, result.root)?;
     Ok(result)
 }

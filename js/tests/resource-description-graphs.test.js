@@ -3,7 +3,7 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { LinkNetwork } from '../src/network.js';
-import { LinkId } from '../src/primitives.js';
+import { LinkId, LinkMetadata } from '../src/primitives.js';
 import { importResourceDescriptionGraph, decodeResourceDescriptionGraph, mergeResourceDescriptionGraphs, verifyResourceDescriptionGraphWitnesses, RESOURCE_DESCRIPTION_SCHEMA as schema } from '../src/resource-description-graphs.js';
 import { acceptResourceDescriptionIdentifier, acceptResourceDescriptionLanguage } from '../src/resource-description-rules.js';
 import { readProjectData } from '../scripts/project-data.mjs';
@@ -144,4 +144,53 @@ test('source provenance cycles and explicit graph traversal budgets reject promp
   const sources = malformed.network.link(malformed.network.link(malformed.root).references()[3]);
   sources.setReferences([malformed.root]);
   assert.throws(() => decode(malformed), /cyclic/u);
+});
+
+test('import counts final root links and refuses oversized outputs before allocating beyond the decoder budget', () => {
+  // A count-only storage boundary exercises the unchanged production cap while
+  // avoiding a 100,000-link local allocation. Every accepted semantic fixture
+  // above uses the real network and its source-free decoder.
+  for (const useLiterals of [true, false]) {
+    const network = new LinkNetwork();
+    let allocations = 0;
+    network.insertLink = () => LinkId.fromU64(++allocations);
+    const triples = Array.from({ length: useLiterals ? 9999 : 10000 }, (_, index) => [
+      identifier('urn:subject:' + index), useLiterals ? predicate : identifier('urn:property:' + index),
+      useLiterals ? literal('value ' + index) : identifier('urn:object:' + index),
+    ]);
+    assert.throws(() => importResourceDescriptionGraph(triples, { sourceIdentifier: 'source A', network }), /output structural node limit/u);
+    assert.equal(allocations, 100000, 'the rejected root never allocates beyond the unchanged decoder cap');
+    assert.equal(network.len(), 0, 'the count-only boundary retains no large local graph');
+  }
+});
+
+test('accepted imports count their reachable root separately from unrelated supplied-network links', () => {
+  const network = new LinkNetwork();
+  for (let index = 0; index < 32; index += 1) network.insertLink([], LinkMetadata.new());
+  const graph = importResourceDescriptionGraph([[identifier('urn:subject'), predicate, literal('same')]], { sourceIdentifier: 'source A', network });
+  const reachableNodes = network.len() - 32;
+  const loaded = reload(graph);
+  assert.deepEqual(decodeResourceDescriptionGraph(loaded.network, loaded.root, { nodeLimit: reachableNodes }), decode(graph));
+  assert.throws(() => decodeResourceDescriptionGraph(loaded.network, loaded.root, { nodeLimit: reachableNodes - 1 }), /limit/u);
+  assert.equal(verifyResourceDescriptionGraphWitnesses(loaded.network, loaded.root), true);
+});
+
+test('import validates its returned root under the actual supplied network before reporting acceptance', () => {
+  const network = new LinkNetwork();
+  // Two existing field links point at the following allocation. Once that
+  // identity becomes a graph scalar, it carries a concealed named field.
+  network.insertFieldRelation(LinkId.fromU64(3), 'hidden field', LinkId.fromU64(3));
+  assert.throws(() => importResourceDescriptionGraph([[identifier('urn:subject'), predicate, literal('same')]],
+    { sourceIdentifier: 'source A', network }), /conceal/u);
+});
+
+test('accepted merges retain every source at the unchanged source cap and reload within default bounds', () => {
+  const input = importResourceDescriptionGraph([[identifier('urn:subject'), predicate, literal('same')]], { sourceIdentifier: 'source A' });
+  const merged = reload(mergeResourceDescriptionGraphs(Array(100).fill(input)));
+  const result = decode(merged);
+  assert.equal(result.triples.length, 1);
+  assert.equal(result.occurrences.length, 100);
+  assert.equal(links(merged, 'root').length, 101);
+  assert.equal(verifyResourceDescriptionGraphWitnesses(merged.network, merged.root), true);
+  assert.throws(() => mergeResourceDescriptionGraphs(Array(101).fill(input)), /bounded source graph list/u);
 });
