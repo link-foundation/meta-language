@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readProjectData } from '../scripts/project-data.mjs';
-import { rustTypeNamespaceFixture, rustTypeNamespaceTraitFixture, rustTypeNamespaceField } from '../scripts/generate-rust-type-namespace-fixtures.mjs';
+import { rustTypeNamespaceFixture, rustTypeNamespaceTraitFixture, rustTypeNamespaceContainerFixture, rustTypeNamespaceField } from '../scripts/generate-rust-type-namespace-fixtures.mjs';
 import { parseRust } from '../src/translation/rust.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
@@ -17,6 +17,60 @@ const fixture = readProjectData(new URL('../../parity/fixtures/rust-type-namespa
 const options = {typeNamespaceModel:fixture.typeNamespaceModel};
 const output = code => { const lines=[]; vm.runInNewContext(code,{console:{log:(...args)=>lines.push(args.map(String).join(' '))}},{timeout:1000});return lines; };
 const field = rustTypeNamespaceField;
+
+test('selected owned containers refuse metadata loss before encoding and retain unmodified source-free execution', () => {
+  const containers=readProjectData(new URL('../../parity/fixtures/rust-type-namespace-containers.lino',import.meta.url));
+  assert.deepEqual(rustTypeNamespaceContainerFixture(),containers);
+  const at=(root,path)=>path.reduce((value,key)=>value instanceof Map?Map.prototype.get.call(value,key):value[key],root);
+  const mutate=(value,operation,invoked)=>{
+    if(operation==='own field')value.borrowEscape=true;
+    else if(operation==='hidden field')Object.defineProperty(value,'borrowEscape',{value:true,enumerable:false});
+    else if(operation==='symbol field')value[Symbol('borrowEscape')]=true;
+    else if(operation==='accessor field')Object.defineProperty(value,'borrowEscape',{enumerable:true,get(){invoked.count++;return true;}});
+    else if(operation==='prototype')Object.setPrototypeOf(value,Object.create(Object.getPrototypeOf(value)));
+    else if(operation==='iterator')value[Symbol.iterator]=function(){invoked.count++;throw new Error('overridden declaration iterator ran');};
+    else if(operation==='hole'){value.length=Math.max(1,value.length);delete value[0];}
+    else if(operation==='hidden position'){if(!value.length)value.push('unrepresented');Object.defineProperty(value,'0',{enumerable:false});}
+    else if(operation==='accessor position'){if(!value.length)value.push('unrepresented');Object.defineProperty(value,'0',{enumerable:true,get(){invoked.count++;return 'unrepresented';}});}
+    else assert.fail(`unknown actual container mutation: ${operation}`);
+  };
+  for(const entry of containers.cases){
+    const program=decodeTypedProgramLinks(LinkNetwork.fromLino(entry.archive),entry.root),rebuilt=encodeTypedProgramLinks(program);
+    assert.deepEqual(output(emitTypedProgramLinks(LinkNetwork.fromLino(rebuilt.network.toLino()),rebuilt.root,'JavaScript').code),entry.output,entry.id);
+  }
+  let observed=0;
+  for(const location of containers.locations){
+    const entry=containers.cases.find(value=>value.id===location.caseId),rules=containers.mutations.find(value=>value.kind===location.kind);
+    for(const operation of rules.operations){
+      const program=decodeTypedProgramLinks(LinkNetwork.fromLino(entry.archive),entry.root),value=at(program,location.path),invoked={count:0};
+      assert.equal(location.kind==='map'?value instanceof Map:location.kind==='array'?Array.isArray(value):typeof value==='object',true,JSON.stringify(location));
+      mutate(value,operation,invoked);
+      assert.throws(()=>encodeTypedProgramLinks(program),error=>{assert.equal(error.reason,rules.reason,`${location.path.join('.')}: ${operation}`);return true;});
+      assert.equal(invoked.count,0,`${location.path.join('.')}: descriptor and iterator overrides must not execute`);
+      observed++;
+    }
+  }
+  assert.equal(observed,containers.locations.reduce((count,location)=>count+containers.mutations.find(value=>value.kind===location.kind).operations.length,0));
+});
+
+test('selected source checker rejects erased container properties before surface projection',()=>{
+  const surface=parseRust(fixture.cases[0].source,options);
+  surface.items.borrowEscape=true;
+  assert.throws(()=>checkProgram(surface),/ordered container has unrepresented own fields/u);
+  const legacy=parseRust('fn keep(value:f64)->f64{value}fn main(){}');
+  legacy.items.borrowEscape=true;
+  assert.doesNotThrow(()=>checkProgram(legacy));
+});
+
+test('Clone datatype paths use their distinct Links role while source type owner descriptors retain theirs',()=>{
+  const traits=readProjectData(new URL('../../parity/fixtures/rust-type-namespace-traits.lino',import.meta.url));
+  const network=LinkNetwork.fromLino(traits.cases[0].archive),program=decodeTypedProgramLinks(network,traits.cases[0].root);
+  const proof=program.declarations.get('Choice').sourceUnitCloneDerivation;
+  assert.deepEqual(proof.datatypeOwner,['Choice']);assert.equal(Object.hasOwn(proof,'owner'),false);
+  assert.ok(network.fieldRelations().some(row=>row.label==='source derivation datatype owner'));
+  assert.deepEqual(program.declarations.get('keep').sourceSignature.parameters[0].owner,{kind:'declaration',path:['Choice'],arguments:[]});
+  assert.ok(network.fieldRelations().some(row=>row.label==='source type owner'));
+});
 
 test('fifteen actual source headers distinguish datatype and value namespaces before primitive projection', () => {
   assert.deepEqual(rustTypeNamespaceFixture(), fixture);
@@ -124,12 +178,12 @@ test('an actual attached unit datatype Clone derive is owned, source-free and pe
     const archive=createTypedProgramLinks(source,'Rust',{rustTypeNamespaceModel:fixture.typeNamespaceModel});
     const restored=LinkNetwork.fromLino(archive.network.toLino()),program=decodeTypedProgramLinks(restored,archive.root);
     const proof=program.declarations.get('Choice').sourceUnitCloneDerivation;
-    assert.equal(proof.model,'Rust unit datatype Clone derivation 1');assert.deepEqual(proof.owner,['Choice']);assert.deepEqual(proof.traitOwner,['core','clone','Clone']);assert.deepEqual(proof.constructorNames,['Only']);assert.deepEqual(proof.attribute.traits,traits.split(', '));
+    assert.equal(proof.model,'Rust unit datatype Clone derivation 1');assert.deepEqual(proof.datatypeOwner,['Choice']);assert.deepEqual(proof.traitOwner,['core','clone','Clone']);assert.deepEqual(proof.constructorNames,['Only']);assert.deepEqual(proof.attribute.traits,traits.split(', '));
     assert.equal(proof.attribute.span.start,0);assert.equal(proof.attribute.span.end,source.indexOf('enum'));
     assert.deepEqual(output(emitTypedProgramLinks(restored,archive.root,'JavaScript').code),['true']);
     for(const mutate of [
       value=>value.sourceUnitCloneDerivation=null,
-      value=>value.sourceUnitCloneDerivation.owner=['foreign'],
+      value=>value.sourceUnitCloneDerivation.datatypeOwner=['foreign'],
       value=>value.sourceUnitCloneDerivation.constructorNames=['different'],
       value=>value.sourceUnitCloneDerivation.traitOwner=['foreign','Clone'],
       value=>value.sourceUnitCloneDerivation.attribute.traits=['Debug'],

@@ -4,11 +4,19 @@ import { RustSourceOrigins } from './rust-source-origins.js';
 import { RUST_SOURCE_SIGNATURE_POLICY } from './rust-source-signatures.js';
 import { acceptRustSourceHeaderLifetimeCharacter } from './rust-source-header-emission-rules.js';
 import {checkRustUnitCloneDerivation} from './rust-unit-clone.js';
+import {checkOwnedProgramContainers} from './owned-program-containers.js';
 import { acceptRustTypeNamespaceModel, acceptRustTypeNamespacePosition,
-  acceptRustTypeNamespaceDeclaration, acceptRustTypeNamespaceFields, acceptRustTypeNamespaceAnchor } from './rust-type-namespace-rules.js';
+  acceptRustTypeNamespaceDeclaration, acceptRustTypeNamespaceFields, acceptRustTypeNamespaceAnchor,
+  acceptRustTypeNamespaceContainer } from './rust-type-namespace-rules.js';
 
 export const RUST_TYPE_NAMESPACE_POLICY = readRuntimeProjectData(new URL('./data/rust-type-namespace.lino', import.meta.url));
 const fail = detail => { throw typeError(`an owned Rust type namespace ${detail}`); };
+
+/** Reject erased container facts before the generic encoder or semantic walk. */
+export function checkRustTypeNamespaceContainers(program) {
+  checkOwnedProgramContainers(program, { acceptContainer: acceptRustTypeNamespaceContainer, fail,
+    selectedFields: RUST_TYPE_NAMESPACE_POLICY.containerMarkerFields });
+}
 
 /** Reuse the shared character predicate matching the actual Rust lexer. */
 export function acceptRustTypeNamespaceSpellingSegment(value) {
@@ -34,6 +42,7 @@ export function requireRustTypeNamespaceAnchor(source, path) {
 
 /** Use the existing anchored, filtered lookup over actual checked declarations. */
 export function validateRustTypeNamespace(program) {
+  checkRustTypeNamespaceContainers(program);
   const selected = [...program.declarations.values()].some(entry => Object.hasOwn(entry, 'sourceTypeNamespace')||Object.hasOwn(entry,'sourceUnitCloneDerivation'));
   if (!selected) return;
   if (program.sourceLanguage !== RUST_TYPE_NAMESPACE_POLICY.language || program.imports?.length || program.externals?.length) fail('requires a Rust program without imported aliases or externals');

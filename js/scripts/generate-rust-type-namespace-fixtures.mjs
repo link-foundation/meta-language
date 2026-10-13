@@ -58,12 +58,53 @@ const schema = readProjectData(new URL('../src/data/typed-program-links-schema.l
 export function rustTypeNamespaceField(network, parent, name) {
   return network.fieldRelations().find(row => row.parent.equals(parent) && row.label === (schema.fields[name] ?? name.replace(/[A-Z]/gu, letter => ` ${letter.toLowerCase()}`)))?.child;
 }
+export function rustTypeNamespaceContainerFixture() {
+  const sources = [
+    ['primitive', 'fn keep(value:f64)->f64{value}fn main(){println!("{}",keep(1f64)==1f64);}'],
+    ['unit-clone', '#[derive(Clone)]enum Choice{Only}fn keep(value:Choice)->Choice{value.clone()}fn main(){let value=keep(Choice::Only);println!("{}",match value{Choice::Only=>true});}'],
+  ];
+  const cases = sources.map(([id, source]) => {
+    const archived = createTypedProgramLinks(source, 'Rust', {rustTypeNamespaceModel:typeNamespaceModel});
+    const loaded = LinkNetwork.fromLino(archived.network.toLino());
+    assert.deepEqual(output(emitTypedProgramLinks(loaded, archived.root, 'JavaScript').code), ['true']);
+    return {id, source, archive:archived.network.toLino(), root:archived.root.asU64(), output:['true']};
+  });
+  const locations = [
+    ['primitive', ['declarations'], 'map'],
+    ['primitive', ['items'], 'array'],
+    ['primitive', ['main','effects'], 'array'],
+    ...[['params'], ['modulePath'], ['sourceTypeNamespace','parameters'], ['sourceTypeNamespace','parameters',0], ['sourceTypeNamespace','result'],
+      ['sourceSignature','parameters'], ['sourceSignature','lifetimeBindings'], ['sourceSignature','parameters',0,'wrappers'], ['sourceSignature','parameters',0,'lifetimes'],
+      ['sourceSignature','parameters',0,'owner','path'], ['sourceSignature','parameters',0,'owner','arguments'], ['sourceSignature','result','wrappers'],
+      ['sourceSignature','result','lifetimes'], ['sourceSignature','result','owner','path'], ['sourceSignature','result','owner','arguments']]
+      .map(path => ['primitive', ['declarations','keep',...path], 'array']),
+    ...[['datatypeOwner'], ['traitOwner'], ['constructorNames'], ['attribute','traits']]
+      .map(path => ['unit-clone', ['declarations','Choice','sourceUnitCloneDerivation',...path], 'array']),
+    ['unit-clone', ['declarations','Choice','ctors'], 'array'],
+    ['unit-clone', ['declarations','Choice','ctors',0,'fields'], 'array'],
+    ['unit-clone', ['declarations','Choice','sourceUnitCloneDerivation'], 'record'],
+    ['unit-clone', ['declarations','Choice','sourceUnitCloneDerivation','attribute'], 'record'],
+    ['primitive', ['declarations','keep','sourceTypeNamespace'], 'record'],
+  ].map(([caseId,path,kind]) => ({caseId,path,kind}));
+  for(const location of locations){
+    const entry=cases.find(value=>value.id===location.caseId);
+    const program=decodeTypedProgramLinks(LinkNetwork.fromLino(entry.archive),entry.root);
+    const value=location.path.reduce((record,key)=>record instanceof Map?Map.prototype.get.call(record,key):record?.[key],program);
+    assert.equal(location.kind==='map'?value instanceof Map:location.kind==='array'?Array.isArray(value):value!==null&&typeof value==='object',true,location.path.join('.'));
+  }
+  const mutations = [
+    {kind:'array', operations:['own field','hidden field','symbol field','accessor field','prototype','hole','hidden position','accessor position'], reason:'an owned Rust type namespace an ordered container has unrepresented own fields or sparse positions'},
+    {kind:'map', operations:['own field','hidden field','symbol field','accessor field','prototype','iterator'], reason:'an owned Rust type namespace a declaration Map has unrepresented own fields'},
+    {kind:'record', operations:['hidden field','symbol field','accessor field','prototype'], reason:'an owned Rust type namespace an owned record has unrepresented own fields or a prototype'},
+  ];
+  return {schemaVersion:1,typeNamespaceModel,scope:'selected exact dense host containers and data descriptors before encoding; no host-only metadata may disappear through source-free Links reload',cases,locations,mutations};
+}
 export function rustTypeNamespaceTraitFixture() {
   const cases=['Clone','Clone, Debug, PartialEq, Eq'].map((traits,index)=>{
     const source=`#[derive(${traits})]enum Choice{Only}fn keep(value:Choice)->Choice{value.clone()}fn main(){let value=keep(Choice::Only);println!("{}",match value{Choice::Only=>true});}`;
     const archive=createTypedProgramLinks(source,'Rust',{rustTypeNamespaceModel:typeNamespaceModel}),loaded=LinkNetwork.fromLino(archive.network.toLino());
     const expected=decodeTypedProgramLinks(loaded,archive.root).declarations.get('Choice').sourceUnitCloneDerivation;
-    assert.deepEqual(expected.attribute.traits,traits.split(', '));assert.deepEqual(expected.owner,['Choice']);assert.deepEqual(expected.constructorNames,['Only']);assert.equal(expected.attribute.span.start,0);assert.equal(expected.attribute.span.end,source.indexOf('enum'));
+    assert.deepEqual(expected.attribute.traits,traits.split(', '));assert.deepEqual(expected.datatypeOwner,['Choice']);assert.deepEqual(expected.constructorNames,['Only']);assert.equal(expected.attribute.span.start,0);assert.equal(expected.attribute.span.end,source.indexOf('enum'));
     assert.deepEqual(output(emitTypedProgramLinks(loaded,archive.root,'JavaScript').code),['true']);
     return{id:index?'combined-unit-clone':'single-unit-clone',source,expected,output:['true'],archive:archive.network.toLino(),root:archive.root.asU64()};
   });
@@ -176,6 +217,8 @@ if (process.argv[1] && import.meta.url===pathToFileURL(process.argv[1]).href) {
   if(process.argv.includes('--check'))checkProjectData(file,fixture);else writeProjectData(file,fixture);
   const traitsFile=new URL('../../parity/fixtures/rust-type-namespace-traits.lino',import.meta.url),traits=rustTypeNamespaceTraitFixture();
   if(process.argv.includes('--check'))checkProjectData(traitsFile,traits);else writeProjectData(traitsFile,traits);
+  const containersFile=new URL('../../parity/fixtures/rust-type-namespace-containers.lino',import.meta.url),containers=rustTypeNamespaceContainerFixture();
+  if(process.argv.includes('--check'))checkProjectData(containersFile,containers);else writeProjectData(containersFile,containers);
   console.log(`Rust type namespace: ${fixture.cases.length} actual source bindings, ${fixture.invalid.length} source refusals, ${fixture.malformed.length} source-free corruptions`);
   console.log(`Rust type namespace traits: ${traits.invalid.length} precise unproved method refusals`);
 }
