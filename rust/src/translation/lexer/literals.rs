@@ -163,7 +163,12 @@ fn read_unicode_escape(
     }
 }
 
-fn string_token(source: &Source, index: usize, language: Language) -> Result<Token> {
+fn string_token(
+    source: &Source,
+    index: usize,
+    language: Language,
+    units: &mut Option<Vec<f64>>,
+) -> Result<Token> {
     let quote = source.units[index];
     let mut cursor = index + 1;
     let mut value: Vec<u16> = Vec::new();
@@ -187,6 +192,20 @@ fn string_token(source: &Source, index: usize, language: Language) -> Result<Tok
         }
         if unit == u16::from(b'\\') && language != Language::Rocq {
             let escaped = source.char_at(cursor + 1);
+            if language == Language::Rust {
+                let encoded = units.get_or_insert_with(|| {
+                    source.units().iter().map(|unit| f64::from(*unit)).collect()
+                });
+                // The shared decision addresses a borrowed suffix. Convert its
+                // relative end through the existing checked index adapter,
+                // leaving original UTF-16 token offsets and source bytes intact.
+                if let Some(width) = super::frontend_rules::ml_array::number_index(
+                    read_rust_string_continuation_end(&encoded[cursor..], 0.0),
+                ) {
+                    cursor += width;
+                    continue;
+                }
+            }
             if escaped == Some('u') || (language == Language::JavaScript && escaped == Some('x')) {
                 let (character, end) = read_unicode_escape(source, cursor, language)?;
                 let mut encoded = [0; 2];
@@ -246,6 +265,18 @@ fn string_token(source: &Source, index: usize, language: Language) -> Result<Tok
             value.extend(replacement.encode_utf16());
             cursor += 2;
             continue;
+        }
+        if language == Language::Rust && unit == u16::from(b'\r') {
+            let encoded = units.get_or_insert_with(|| {
+                source.units().iter().map(|unit| f64::from(*unit)).collect()
+            });
+            if let Some(width) = super::frontend_rules::ml_array::number_index(
+                read_rust_source_line_break_end(&encoded[cursor..], 0.0),
+            ) {
+                value.push(u16::from(b'\n'));
+                cursor += width;
+                continue;
+            }
         }
         if (unit == u16::from(b'\n') || unit == u16::from(b'\r'))
             && language == Language::JavaScript

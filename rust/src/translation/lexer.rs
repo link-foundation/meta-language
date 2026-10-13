@@ -14,7 +14,8 @@ use super::decimal::Decimal;
 use super::diagnostics::{ErrorKind, Result, TranslationError};
 use super::frontend_rules::{
     UnicodeEscape, accept_control_parenthesis, accept_statement_brace, decode_unicode_escape,
-    read_rust_number_bounds, regular_expression_end, start_regular_expression,
+    read_rust_number_bounds, read_rust_source_line_break_end, read_rust_string_continuation_end,
+    regular_expression_end, start_regular_expression,
 };
 use super::js_number::js_number_literal;
 use super::{Language, Span};
@@ -445,13 +446,13 @@ fn tokenize_region(
             continue;
         }
         if ch == Some('"') || (language == Language::JavaScript && ch == Some('\'')) {
-            let token = string_token(source, index, language)?;
+            let token = string_token(source, index, language, units)?;
             index = token.end;
             tokens.push(token);
             continue;
         }
         if language == Language::Lean && source.starts_with("s!\"", index) {
-            let mut token = string_token(source, index + 2, language)?;
+            let mut token = string_token(source, index + 2, language, units)?;
             token.kind = TokenKind::Interpolation;
             token.start = start;
             token.raw = source.slice(start, token.end);

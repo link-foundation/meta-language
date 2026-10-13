@@ -944,6 +944,8 @@ pub fn read_string_test_support(target: &str, operation: &str) -> String {
 
 mod strings;
 pub use strings::*;
+mod rust_strings;
+pub use rust_strings::*;
 mod continuations;
 pub use continuations::*;
 mod continuations_2;

@@ -5,6 +5,7 @@
 
 import { TranslationError } from './diagnostics.js';
 import { acceptControlParenthesis, acceptStatementBrace, decodeUnicodeEscape, readRustNumberBounds, regularExpressionEnd, startRegularExpression } from './frontend-rules.js';
+import { readRustSourceLineBreakEnd, readRustStringContinuationEnd } from './rust-string-rules.js';
 
 const OPERATORS = {
   JavaScript: [
@@ -80,13 +81,13 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
       continue;
     }
     if (char === '"' || (language === 'JavaScript' && char === "'")) {
-      const token = stringToken(source, index, language);
+      const token = stringToken(source, index, language, encoding);
       tokens.push(token);
       index = token.end;
       continue;
     }
     if (language === 'Lean' && source.startsWith('s!"', index)) {
-      const token = stringToken(source, index + 2, language);
+      const token = stringToken(source, index + 2, language, encoding);
       tokens.push({ ...token, kind: 'interpolation', start, raw: source.slice(start, token.end) });
       index = token.end;
       continue;
@@ -235,7 +236,7 @@ function unicodeEscape(source, at, language) {
   return { text: String.fromCodePoint(escape.code), end: at + escape.end };
 }
 
-function stringToken(source, index, language) {
+function stringToken(source, index, language, encoding) {
   const quote = source[index];
   let cursor = index + 1;
   let value = '';
@@ -251,6 +252,11 @@ function stringToken(source, index, language) {
     }
     if (char === '\\' && language !== 'Rocq') {
       const escaped = source[cursor + 1];
+      if (language === 'Rust') {
+        encoding.units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
+        const end = readRustStringContinuationEnd(encoding.units, cursor);
+        if (end >= 0) { cursor = end; continue; }
+      }
       if (language === 'JavaScript' && (/[1-9]/u.test(escaped ?? '') || (escaped === '0' && /[0-9]/u.test(source[cursor + 2] ?? '')))) {
         throw new TranslationError('syntax', 'legacy octal string escape', { start: cursor, end: cursor + 2 });
       }
@@ -271,6 +277,11 @@ function stringToken(source, index, language) {
       value += simple[escaped] ?? escaped;
       cursor += 2;
       continue;
+    }
+    if (language === 'Rust' && char === '\r') {
+      encoding.units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
+      const end = readRustSourceLineBreakEnd(encoding.units, cursor);
+      if (end >= 0) { value += '\n'; cursor = end; continue; }
     }
     if ((char === '\n' || char === '\r') && language === 'JavaScript') break;
     value += char;
