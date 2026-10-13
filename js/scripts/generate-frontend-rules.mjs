@@ -10,12 +10,16 @@ import { decorateEmitted } from '../src/grammar-emitters/common.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
+import { tokenize } from '../src/translation/lexer.js';
 
 const sourcePath = new URL('../src/translation/frontend-rules.js', import.meta.url);
 const outputPath = new URL('../../rust/src/translation/frontend_rules.rs', import.meta.url);
 const decoratorsPath = new URL('../../parity/self-translation/frontend-rules-decorators.lino', import.meta.url);
 const source = readFileSync(sourcePath, 'utf8');
-const decorators = DecoratorSet.fromLino(readFileSync(decoratorsPath, 'utf8'));
+const resultStyleId = 'reviewed-public-array-helper-results';
+const updateArrayResults = process.argv.includes('--update-array-result-styles');
+let decorators = DecoratorSet.fromLino(readFileSync(decoratorsPath, 'utf8'));
+if (updateArrayResults) decorators = new DecoratorSet(decorators.decorators.filter(({ id }) => id !== resultStyleId));
 const emitted = emitRust(checkProgram(parseJavaScript(source)));
 const decorated = decorateEmitted('Rust', { source: emitted.text }, decorators).source;
 const formatted = spawnSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], { input: decorated, encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 });
@@ -33,6 +37,41 @@ for (let round = 0; round < 10; round += 1) {
   if (next.stdout === final.stdout) break;
   final = next;
   if (round === 9) throw new Error('frontend style decorators do not converge');
+}
+if (updateArrayResults) {
+  // Public runtime aliases expose these useful query and collection results.
+  // Add attributes only; the checked operations and signatures remain exact.
+  const start = final.stdout.indexOf('pub mod ml_array {');
+  if (start < 0) throw new Error('the reviewed public array helper module is missing');
+  const { tokens } = tokenize(final.stdout.slice(start), 'Rust');
+  let depth = 0;
+  let end = null;
+  for (const token of tokens) {
+    if (token.kind !== 'punct') continue;
+    if (token.value === '{') depth += 1;
+    if (token.value === '}' && --depth === 0) { end = start + token.end; break; }
+  }
+  if (end === null) throw new Error('the reviewed public array helper module is not balanced');
+  const from = final.stdout.slice(start, end);
+  const expected = ['optional_at', 'at', 'number_index', 'append', 'slice', 'index_of', 'includes', 'set', 'map'];
+  const names = [...from.matchAll(/^\s*pub fn ([A-Za-z_][A-Za-z_0-9]*)\b/gmu)].map(match => match[1]);
+  if (JSON.stringify(names) !== JSON.stringify(expected)) throw new Error('the checked public array operation inventory changed');
+  const to = from.replace(/^( *)pub fn /gmu, '$1#[must_use]\n$1pub fn ');
+  if (to.split('\n').filter(line => !/^\s*#\[must_use\]$/u.test(line)).join('\n') !== from) {
+    throw new Error('array helper result styles changed more than attributes');
+  }
+  const resultStyle = { id: resultStyleId, level: 'emitter', order: 2000,
+    when: [['format', 'Rust'], ['scope', 'formatted-module']], actions: [{ op: 'replace', field: 'source', from, to }] };
+  decorators = new DecoratorSet([...decorators.decorators, resultStyle]);
+  const previous = readFileSync(decoratorsPath, 'utf8').split('\n')
+    .filter(line => !line.startsWith('(decorator ' + resultStyleId + ' ')).join('\n').trimEnd();
+  writeFileSync(decoratorsPath, previous + '\n\n' + new DecoratorSet([resultStyle]).toLino());
+  const styled = decorators.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source: final.stdout }).source;
+  final = spawnSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], { input: styled, encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 });
+  if (final.error || final.status !== 0) throw final.error ?? new Error(final.stderr);
+  if (decorators.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source: final.stdout }).source !== final.stdout) {
+    throw new Error('array helper result styles do not converge');
+  }
 }
 const notice = `// Generated from js/src/translation/frontend-rules.js by
 // js/scripts/generate-frontend-rules.mjs. Do not edit by hand.

@@ -18,11 +18,13 @@
 
 /// Reads of JavaScript arrays, which the portable core never mutates.
 pub mod ml_array {
+    #[must_use]
     pub fn optional_at<T: Clone>(values: &[T], index: Option<usize>) -> Option<T> {
         index.and_then(|index| values.get(index)).cloned()
     }
     /// The element at an index; a read outside the array, undefined in
     /// JavaScript, aborts.
+    #[must_use]
     pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {
         index
             .and_then(|index| values.get(index))
@@ -30,6 +32,7 @@ pub mod ml_array {
     }
 
     /// The index a Number names: a non-negative integer, -0 included.
+    #[must_use]
     pub fn number_index(index: f64) -> Option<usize> {
         if index >= 0.0 && index.fract() == 0.0 && index < 9_007_199_254_740_992.0 {
             Some(index as usize)
@@ -38,6 +41,7 @@ pub mod ml_array {
         }
     }
 
+    #[must_use]
     pub fn append<T>(mut left: Vec<T>, right: Vec<T>) -> Vec<T> {
         left.extend(right);
         left
@@ -53,11 +57,13 @@ pub mod ml_array {
             value.min(length as f64) as usize
         }
     }
+    #[must_use]
     pub fn slice<T: Clone>(values: &[T], start: f64, end: f64) -> Vec<T> {
         let start = relative(start, values.len());
         let end = relative(end, values.len());
         values[start..end.max(start)].to_vec()
     }
+    #[must_use]
     pub fn index_of<T, F: Fn(&T, &T) -> bool>(
         values: &[T],
         search: &T,
@@ -93,6 +99,7 @@ pub mod ml_array {
                 .map_or(-1.0, |index| index as f64)
         }
     }
+    #[must_use]
     pub fn includes<T, F: Fn(&T, &T) -> bool>(
         values: &[T],
         search: &T,
@@ -102,6 +109,7 @@ pub mod ml_array {
     ) -> bool {
         index_of(values, search, from, reverse, equal) >= 0.0
     }
+    #[must_use]
     pub fn set<T, F: Fn(&T, &T) -> bool>(values: Vec<T>, equal: F) -> Vec<T> {
         let mut out = Vec::new();
         for value in values {
@@ -111,6 +119,7 @@ pub mod ml_array {
         }
         out
     }
+    #[must_use]
     pub fn map<K, V, F: Fn(&K, &K) -> bool>(values: Vec<(K, V)>, equal: F) -> Vec<(K, V)> {
         let mut out: Vec<(K, V)> = Vec::new();
         for (key, value) in values {
