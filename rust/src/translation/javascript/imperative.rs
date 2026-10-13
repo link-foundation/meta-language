@@ -607,6 +607,7 @@ impl Lowering {
             ctors,
             span: Some(place),
             generated: true,
+            source_unit_clone_derivation: None,
         }));
         let scrutinee = self.compound(statement, &inner, scope)?;
         Ok(node(
@@ -759,6 +760,7 @@ impl Lowering {
                 ctors,
                 span: Some(place),
                 generated: true,
+                source_unit_clone_derivation: None,
             }));
             let call = Rc::clone(&call);
             let site: Site = Box::new(move |_| {

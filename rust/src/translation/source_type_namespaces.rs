@@ -1,7 +1,9 @@
 //! Inspectable source spellings rechecked against the actual scoped catalog.
 use super::diagnostics::{Result, type_error};
 use super::ir::{Decl, Program};
-use super::rust::type_namespaces::{TypeNamespaceCatalog, require_anchor};
+use super::rust::type_namespaces::{
+    TypeNamespaceCatalog, accept_namespace_segment, require_anchor,
+};
 use super::source_signatures::{SourceTypeSignature, validate_source_signature};
 use super::type_namespace_rules::{
     accept_rust_type_namespace_declaration, accept_rust_type_namespace_fields,
@@ -10,7 +12,7 @@ use super::type_namespace_rules::{
 use serde_json::Value;
 use std::sync::LazyLock;
 
-fn policy() -> &'static Value {
+pub(super) fn policy() -> &'static Value {
     static POLICY: LazyLock<Value> = LazyLock::new(|| {
         crate::read_structured_data_lino(include_str!("../data/rust-type-namespace.lino"))
             .expect("the shared type namespace policy is valid")
@@ -39,19 +41,19 @@ pub fn validate_type_namespace_records(value: &Value) -> Result<()> {
     let Some(declarations) = value["declarations"].as_array() else {
         return Ok(());
     };
-    if !declarations
-        .iter()
-        .any(|entry| entry.get("sourceTypeNamespace").is_some())
-    {
+    if !declarations.iter().any(|entry| {
+        entry.get("sourceTypeNamespace").is_some()
+            || entry.get("sourceUnitCloneDerivation").is_some()
+    }) {
         return Ok(());
     }
     if value["sourceLanguage"] != "Rust"
-        || value["imports"]
-            .as_array()
-            .is_some_and(|items| !items.is_empty())
-        || value["externals"]
-            .as_array()
-            .is_some_and(|items| !items.is_empty())
+        || value
+            .get("imports")
+            .is_some_and(|value| value.as_array().is_none_or(|items| !items.is_empty()))
+        || value
+            .get("externals")
+            .is_some_and(|value| value.as_array().is_none_or(|items| !items.is_empty()))
     {
         return Err(fail(
             "requires a Rust program without imported aliases or externals",
@@ -120,7 +122,7 @@ pub fn validate_type_namespace_declaration_record(entry: &Value) -> Result<()> {
 
 fn spelling(value: &Value) -> Result<Vec<String>> {
     let parts = value.as_array().filter(|parts| {
-        !parts.is_empty() && parts.iter().all(|part| part.as_str().is_some_and(|part| !part.is_empty()))
+        !parts.is_empty() && parts.iter().all(|part| part.as_str().is_some_and(accept_namespace_segment))
     }).ok_or_else(|| fail("position needs an actual primitive or datatype spelling and a proved direct result"))?;
     Ok(parts
         .iter()
@@ -174,11 +176,13 @@ fn position(
 
 /// Recheck each selected spelling against the current source-free declarations.
 pub fn validate_source_type_namespaces(program: &Program) -> Result<()> {
-    if !program.declarations.iter().any(
-        |entry| matches!(entry, Decl::Fn(function) if function.source_type_namespace.is_some()),
-    ) {
+    if !program.declarations.iter().any(|entry| {
+        matches!(entry, Decl::Fn(function) if function.source_type_namespace.is_some())
+            || matches!(entry, Decl::Data(data) if data.source_unit_clone_derivation.is_some())
+    }) {
         return Ok(());
     }
+    super::source_unit_clone_derivations::validate_source_unit_clone_derivations(program)?;
     let raw = serde_json::to_value(program)
         .map_err(|_| fail("has malformed or missing selected facts"))?;
     validate_type_namespace_records(&raw)?;

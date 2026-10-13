@@ -180,6 +180,7 @@ pub(super) struct SourceOrigins {
     fresh_calls: HashSet<Span>,
     pub(super) collecting: bool,
     pub(super) catalog: HashMap<String, SourceDeclaration>,
+    pub(super) unit_clone_facts: HashMap<String, (Option<serde_json::Value>, bool)>,
     pub(super) scope: HashMap<String, SourceOrigin>,
     pub(super) current_type: SourceOrigin,
     // Source ranges survive the copies used to construct let chains and rows.
@@ -197,6 +198,7 @@ impl SourceOrigins {
             fresh_calls: HashSet::new(),
             collecting: catalog.is_none(),
             catalog: catalog.unwrap_or_default(),
+            unit_clone_facts: HashMap::new(),
             scope: HashMap::new(),
             current_type: SourceOrigin::unknown(),
             expressions: HashMap::new(),
