@@ -13,6 +13,11 @@ export function createRustFloatOperationExpression(method, receiver, span) {
   return createRustFloatTemplateExpression(RUST_FLOAT_PREDICATE_POLICY.operationTemplates[method], receiver, span);
 }
 
+export function createRustFloatConstantExpression(name, span) {
+  if (!Object.hasOwn(RUST_FLOAT_PREDICATE_POLICY.constantTemplates, name)) throw new TypeError('unknown Rust float constant template');
+  return createRustFloatTemplateExpression(RUST_FLOAT_PREDICATE_POLICY.constantTemplates[name], null, span);
+}
+
 function createRustFloatTemplateExpression(template, receiver, span) {
   const instantiate = value => {
     if (value?.slot === 'receiver') return receiver;

@@ -12,6 +12,18 @@ pub fn accept_rust_float_operation_method(method: &str) -> bool {
     method == "abs" || method == "floor" || method == "ceil" || method == "trunc"
 }
 
+/// Read the shared Rust binary64 constant admission.
+#[must_use]
+pub fn accept_rust_float_constant_name(name: &str) -> bool {
+    name == "NAN" || name == "INFINITY" || name == "NEG_INFINITY"
+}
+
+/// Read the shared Rust binary64 constant admission.
+#[must_use]
+pub fn accept_rust_float_constant_owner(owner: &str, shadowed: bool) -> bool {
+    !shadowed && owner == "f64"
+}
+
 /// Read the shared Rust binary64 predicate admission.
 #[must_use]
 pub fn accept_rust_float_predicate_receiver(

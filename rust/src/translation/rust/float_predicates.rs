@@ -40,7 +40,13 @@ fn instantiate(template: &Value, receiver: &Value, span: Option<Span>) -> Value 
     }
 }
 pub(super) fn expression(method: &str, receiver: &SExpr, range: Option<Span>) -> Result<SExpr> {
-    selected_expression(&policy()["templates"], "predicate", method, receiver, range)
+    selected_expression(
+        &policy()["templates"],
+        "predicate",
+        method,
+        Some(receiver),
+        range,
+    )
 }
 
 pub(super) fn operation_expression(
@@ -52,7 +58,17 @@ pub(super) fn operation_expression(
         &policy()["operationTemplates"],
         "operation",
         method,
-        receiver,
+        Some(receiver),
+        range,
+    )
+}
+
+pub(super) fn constant_expression(name: &str, range: Option<Span>) -> Result<SExpr> {
+    selected_expression(
+        &policy()["constantTemplates"],
+        "constant",
+        name,
+        None,
         range,
     )
 }
@@ -61,7 +77,7 @@ fn selected_expression(
     templates: &Value,
     kind: &str,
     method: &str,
-    receiver: &SExpr,
+    receiver: Option<&SExpr>,
     range: Option<Span>,
 ) -> Result<SExpr> {
     let template = templates.get(method).ok_or_else(|| {
