@@ -7,6 +7,8 @@ export function acceptRustOwnedLocalValueType(kind,bits,signed){return kind === 
 export function acceptRustOwnedLocalExpression(kind){return kind === "lit" || kind === "var" || kind === "tuple" || kind === "tupleIndex" || kind === "let" || kind === "if" || kind === "binary" || kind === "toString";}
 /** @param {string} operation @returns {boolean} */
 export function acceptRustOwnedLocalBinaryOperation(operation){return operation === "eq";}
+/** @param {string} operation @returns {boolean} */
+export function acceptRustOwnedLocalSourceOperation(operation){return operation !== "borrow" && operation !== "dereference" && operation !== "box construction";}
 /** @param {Array<number>} units @returns {boolean} */
 export function acceptRustOwnedLocalTextUnits(units){
  for(let index=0;index<units.length;index++){
