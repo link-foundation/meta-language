@@ -10,7 +10,7 @@ use crate::translation::typed_program_link_rules::{
 };
 use crate::{LinkId, LinkNetwork};
 use serde_json::Value;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 type Reference = (String, String, String);
 type Targets = HashMap<String, Vec<Reference>>;
@@ -329,6 +329,55 @@ struct Encoder {
     pending: Vec<(LinkId, String, String)>,
 }
 impl Encoder {
+    fn ordered_items(
+        &mut self,
+        values: &[Value],
+        path: &str,
+        declarations: &BTreeMap<String, LinkId>,
+        seen: &mut BTreeSet<LinkId>,
+    ) -> Result<LinkId> {
+        let list = self.container("array");
+        let mut children = Vec::new();
+        for (index, item) in values.iter().enumerate() {
+            let item_path = child_path(path, index);
+            if item["k"] == "decl" {
+                let id = item["fullName"]
+                    .as_str()
+                    .and_then(|name| declarations.get(name))
+                    .copied()
+                    .ok_or_else(|| error("a program item has no owned declaration"))?;
+                if !seen.insert(id) {
+                    return Err(error(
+                        "the linked ordered items repeat an owned declaration",
+                    ));
+                }
+                children.push(id);
+            } else if item["k"] == "module" {
+                let id = self.container("record");
+                self.identities.insert(item_path.clone(), id);
+                for (field, value) in item
+                    .as_object()
+                    .ok_or_else(|| error("an owned module needs its actual record"))?
+                {
+                    let child_path = child_path(&item_path, field);
+                    let child = if field == "items" {
+                        let values = value
+                            .as_array()
+                            .ok_or_else(|| error("an owned module needs its ordered items"))?;
+                        self.ordered_items(values, &child_path, declarations, seen)?
+                    } else {
+                        self.value(value, &child_path)?
+                    };
+                    self.network.insert_field(id, &label_of(field), child);
+                }
+                children.push(id);
+            } else {
+                return Err(error("a program item has no owned declaration or module"));
+            }
+        }
+        self.network.set_references(list, &children);
+        Ok(list)
+    }
     fn container(&mut self, kind: &str) -> LinkId {
         self.network.insert_link(
             [],
@@ -562,20 +611,20 @@ pub(super) fn encode(program: &Program, provenance: Option<&Value>) -> Result<Ty
     encoder
         .network
         .insert_field(body, &label_of("declarations"), mapping);
-    let items = encoder.container("array");
-    let ordered = value["items"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .map(|item| {
-            item["fullName"]
-                .as_str()
-                .and_then(|name| declaration_ids.get(name))
-                .copied()
-                .ok_or_else(|| error("a program item has no owned declaration"))
-        })
-        .collect::<Result<Vec<_>>>()?;
-    encoder.network.set_references(items, &ordered);
+    let mut seen_items = BTreeSet::new();
+    let items = encoder.ordered_items(
+        value["items"]
+            .as_array()
+            .ok_or_else(|| error("a checked program needs its ordered items"))?,
+        "/items",
+        &declaration_ids,
+        &mut seen_items,
+    )?;
+    if seen_items.len() != declaration_ids.len() {
+        return Err(error(
+            "the linked declaration mapping and ordered items disagree",
+        ));
+    }
     encoder.network.insert_field(body, "items", items);
     for (parent, label, target) in &encoder.pending {
         let target = encoder

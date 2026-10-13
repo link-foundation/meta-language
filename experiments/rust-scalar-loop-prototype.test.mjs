@@ -232,7 +232,20 @@ test('source-free namespace relocation keeps the actual owned function identity'
  for(const mutate of [value=>{value.modulePath=['other'];},value=>{value.fullName='other.swap';},value=>{value.sourceLoop.sourceName='nested.swap';}]) {
   const forged=decodeTypedProgramLinks(LinkNetwork.fromLino(row.network),root);mutate(forged.declarations.get('nested.swap'));assert.throws(()=>encodeTypedProgramLinks(forged));
  }
+ const unknown=decodeTypedProgramLinks(LinkNetwork.fromLino(row.network),root);unknown.items[0].generated=false;
+ assert.throws(()=>encodeTypedProgramLinks(unknown),/unrecognized namespace field/u);
  assert.throws(()=>parseRust(row.rustDefinitions+suffix,options),/flat function/u);
+});
+test('raw linked null loop facets and interfaces retain their explicit refusal', () => {
+ const imported=createTypedProgramLinks(emitJavaScript(checkProgram(parseRust(cases[1].source+suffix,options))).definitions.join('\n\n'),'JavaScript',{javaScriptScalarLoopModel:model});
+ for(const nested of [false,true]) {
+  const network=LinkNetwork.fromLino(imported.network.toLino());
+  const relation=network.fieldRelations().find(row=>row.label==='source loop proof');
+  const target=nested ? network.fieldRelations().find(row=>row.parent.toString()===relation.child.toString()&&row.label==='interface') : relation;
+  const nullLink=network.insertLink([],network.links().find(link=>link.metadata().term==='null value').metadata().clone());
+  const refs=target.link.references();target.link.setReferences([refs[0],refs[1],nullLink]);
+  assert.throws(()=>decodeTypedProgramLinks(LinkNetwork.fromLino(network.toLino()),imported.root));
+ }
 });
 test('a state binding capturing the function name remains an explicit declaration-reference boundary', () => {
  const data=readProjectData(new URL('../parity/fixtures/rust-scalar-loops.lino',import.meta.url));

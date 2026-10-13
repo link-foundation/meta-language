@@ -208,6 +208,50 @@ impl Decoder<'_> {
                 .ok_or_else(|| error("a declaration has no name"))?,
         )
     }
+    fn ordered_items(
+        &self,
+        list: LinkId,
+        declarations: &BTreeSet<LinkId>,
+        seen_items: &mut BTreeSet<LinkId>,
+        seen_declarations: &mut BTreeSet<LinkId>,
+        remaining: &mut usize,
+        bytes: &mut usize,
+    ) -> Result<Vec<Value>> {
+        let mut items = Vec::new();
+        for id in self.array(list)? {
+            *remaining = remaining
+                .checked_sub(1)
+                .ok_or_else(|| error("the linked program exceeds its ordered item limit"))?;
+            if !seen_items.insert(*id) {
+                return Err(error("the linked ordered items repeat an owned item"));
+            }
+            if declarations.contains(id) {
+                seen_declarations.insert(*id);
+                items.push(json!({"k":"decl", "fullName":self.full_name(*id)?}));
+            } else if self.tag(*id, "k") == "module" {
+                // Preserve the whole owned record: serde and the checked scope
+                // adapter must see every supplied module field and flag.
+                let mut module = self.render(*id, remaining, bytes)?;
+                let children = self
+                    .field(*id, "items")
+                    .ok_or_else(|| error("an owned module has no ordered items"))?;
+                module["items"] = Value::Array(self.ordered_items(
+                    children,
+                    declarations,
+                    seen_items,
+                    seen_declarations,
+                    remaining,
+                    bytes,
+                )?);
+                items.push(module);
+            } else {
+                return Err(error(
+                    "a program item is not an owned declaration or module",
+                ));
+            }
+        }
+        Ok(items)
+    }
     fn tag(&self, id: LinkId, field: &str) -> &str {
         match self
             .field(id, field)
@@ -490,16 +534,18 @@ pub(super) fn decode_with_binding_identities(
     let items_id = decoder
         .field(body, "items")
         .ok_or_else(|| error("the linked program has no ordered items"))?;
-    let mut items = Vec::new();
-    for id in decoder.array(items_id)? {
-        if !declarations.values().any(|entry| entry == id) {
-            return Err(error("a program item is not an owned declaration"));
-        }
-        items.push(json!({"k":"decl", "fullName":decoder.full_name(*id)?}));
-    }
-    let owned_items = decoder.array(items_id)?;
-    let unique_items: BTreeSet<_> = owned_items.iter().copied().collect();
-    if unique_items.len() != owned_items.len() || unique_items.len() != declarations.len() {
+    let owned_declarations = declarations.values().copied().collect::<BTreeSet<_>>();
+    let mut seen_items = BTreeSet::new();
+    let mut seen_declarations = BTreeSet::new();
+    let items = decoder.ordered_items(
+        items_id,
+        &owned_declarations,
+        &mut seen_items,
+        &mut seen_declarations,
+        &mut remaining,
+        &mut bytes,
+    )?;
+    if seen_declarations != owned_declarations {
         return Err(error(
             "the linked declaration mapping and ordered items disagree",
         ));
