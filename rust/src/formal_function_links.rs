@@ -242,6 +242,7 @@ fn redirect_signature(
 }
 
 /// Select a flat owned function and preserve its exact closed recursive context.
+///
 /// The generated typed call wrapper names the entry under the existing checked
 /// program model. Unrelated declarations and main effects stay outside meaning.
 ///
@@ -343,8 +344,8 @@ pub fn encode_formal_function_definition(
         }
     }
     let mut wrapper = chosen.clone();
-    wrapper.name = ENTRY_NAME.to_owned();
-    wrapper.full_name = ENTRY_NAME.to_owned();
+    ENTRY_NAME.clone_into(&mut wrapper.name);
+    ENTRY_NAME.clone_into(&mut wrapper.full_name);
     wrapper.module_path.clear();
     wrapper.body = Expr::new(
         Node::Call {
@@ -369,6 +370,7 @@ pub fn encode_formal_function_definition(
     wrapper.generated = true;
     wrapper.mutual = false;
     wrapper.span = None;
+    wrapper.source_signature = None;
     program.declarations.push(Decl::Fn(wrapper));
     program.items = program
         .declarations
