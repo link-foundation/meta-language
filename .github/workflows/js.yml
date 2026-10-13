@@ -229,9 +229,517 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: node scripts/clean-caches.mjs --event ci-teardown
 
+  # Separate the native import and oracle fixture costs from other package
+  # checks. Every group is required; a failure never cancels its siblings.
+  package-checks:
+    name: JavaScript Package Checks (${{ matrix.group }})
+    needs: [tests, report-assertions]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: check-js-${{ github.ref }}-javascript-package-checks-${{ matrix.group }}
+      cancel-in-progress: true
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [native-imports, native-fixtures, grammar, contracts, generated]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Simulate fresh merge with base branch
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: bash js/scripts/simulate-fresh-merge.sh
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: js
+
+      - name: Provision the pinned external grammar check inputs
+        run: node js/scripts/external-grammar-cache.mjs --all --materialize
+
+      - name: Check grammar-derived default CST expectations
+        if: ${{ !cancelled() && matrix.group == 'grammar' }}
+        run: npm run check:default-cst
+        working-directory: js
+
+      - name: Check the official links-notation LiNo grammar cases
+        if: ${{ !cancelled() && matrix.group == 'grammar' }}
+        run: npm run check:lino-grammar
+        working-directory: js
+
+      - name: Check the pdf-lib PDF grammar cases
+        if: ${{ !cancelled() && matrix.group == 'grammar' }}
+        run: npm run check:pdf-grammar
+        working-directory: js
+
+      - name: Check the native grammars imported from their pinned sources
+        if: ${{ !cancelled() && matrix.group == 'native-imports' }}
+        run: npm run check:native-imports
+        working-directory: js
+
+      - name: Check shared source prefix operand precedence fixtures
+        if: ${{ !cancelled() && matrix.group == 'grammar' }}
+        run: node scripts/generate-grammar-prefix-operand-fixtures.mjs --check
+        working-directory: js
+
+      - name: Check the pinned Ruby pattern fixtures against their independent oracle
+        if: ${{ !cancelled() && matrix.group == 'grammar' }}
+        run: node scripts/generate-ruby-pattern-fixture.mjs --check
+        working-directory: js
+
+      - name: Check the pinned Ruby expression syntax fixtures against their independent oracle
+        if: ${{ !cancelled() && matrix.group == 'grammar' }}
+        run: node scripts/generate-ruby-expression-syntax-fixture.mjs --check
+        working-directory: js
+
+      - name: Check the pinned Ruby heredoc call fixtures against their independent oracle
+        if: ${{ !cancelled() && matrix.group == 'grammar' }}
+        run: node scripts/generate-ruby-heredoc-fixture.mjs --check
+        working-directory: js
+
+      - name: Check the pinned Ruby method declaration fixtures against their independent oracle
+        if: ${{ !cancelled() && matrix.group == 'grammar' }}
+        run: node scripts/generate-ruby-heredoc-fixture.mjs --fixture ruby-method-declaration-context-ci --check
+        working-directory: js
+
+      - name: Check the pinned Ruby literal CI fixtures against their independent oracle
+        if: ${{ !cancelled() && matrix.group == 'grammar' }}
+        run: node scripts/generate-ruby-literal-ci-regressions.mjs --check
+        working-directory: js
+
+      - name: Check the native merged grammar fixtures against their oracles
+        if: ${{ !cancelled() && matrix.group == 'native-fixtures' }}
+        run: npm run check:native-grammars
+        working-directory: js
+
+      - name: Check the independent built-in grammar CST expectations
+        if: ${{ !cancelled() && matrix.group == 'grammar' }}
+        run: npm run check:builtin-cst
+        working-directory: js
+
+      - name: Check the shared language catalog
+        if: ${{ !cancelled() && matrix.group == 'grammar' }}
+        run: npm run check:language-catalog
+        working-directory: js
+
+      - name: Check the shared concept records
+        if: ${{ !cancelled() && matrix.group == 'grammar' }}
+        run: npm run check:concept-records
+        working-directory: js
+
+      - name: Check the native grammar concept reuse report
+        if: ${{ !cancelled() && matrix.group == 'grammar' }}
+        run: npm run check:concept-reuse
+        working-directory: js
+
+      - name: Check the native grammar merge quality evidence
+        if: ${{ !cancelled() && matrix.group == 'grammar' }}
+        run: npm run check:merge-quality
+        working-directory: js
+
+      - name: Run grammar conversion cycles under the actual Peggy target tool
+        if: ${{ !cancelled() && matrix.group == 'grammar' }}
+        run: node js/scripts/run-grammar-interchange-tools.mjs --out issue-195-artifacts/grammar-interchange-tools.lino
+
+      - name: Upload the grammar conversion target-tool report
+        if: ${{ !cancelled() && matrix.group == 'grammar' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: grammar-interchange-tools-${{ github.sha }}
+          path: issue-195-artifacts/grammar-interchange-tools.lino
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Install the pinned independent Lark grammar target tool
+        if: ${{ !cancelled() && matrix.group == 'grammar' }}
+        run: python3 -m pip install --disable-pip-version-check --no-cache-dir lark==1.3.1
+
+      - name: Run grammar conversion cycles under the actual Lark target tool
+        if: ${{ !cancelled() && matrix.group == 'grammar' }}
+        run: node js/scripts/run-grammar-interchange-lark.mjs --out issue-195-artifacts/grammar-interchange-lark.lino
+
+      - name: Upload the independent Lark conversion report
+        if: ${{ !cancelled() && matrix.group == 'grammar' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: grammar-interchange-lark-${{ github.sha }}
+          path: issue-195-artifacts/grammar-interchange-lark.lino
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Check the foundation models are neutral data
+        if: ${{ !cancelled() && matrix.group == 'contracts' }}
+        run: npm run check:foundations
+        working-directory: js
+
+      - name: Check issue 195 atomic requirement manifest
+        if: ${{ !cancelled() && matrix.group == 'contracts' }}
+        run: npm run check:issue-195
+        working-directory: js
+
+      - name: Check issue 195 source register against the ledger
+        if: ${{ !cancelled() && matrix.group == 'contracts' }}
+        run: npm run check:issue-195:sources
+        working-directory: js
+
+      - name: Compare the issue 195 source register with the live discussion (post-merge report)
+        if: ${{ !cancelled() && github.event_name != 'pull_request' && matrix.group == 'contracts' }}
+        continue-on-error: true
+        run: npm run check:issue-195:sources -- --online
+        working-directory: js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check the downstream consumer matrix against the ledger and the tests
+        if: ${{ !cancelled() && matrix.group == 'contracts' }}
+        run: npm run check:downstream-consumers
+        working-directory: js
+
+      - name: Compare the pinned RML audit with the live pull request head (post-merge report)
+        if: ${{ !cancelled() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && matrix.group == 'contracts' }}
+        continue-on-error: true
+        run: node scripts/issue-195-rml-pr184.mjs --online
+        working-directory: js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check that every dependency, toolchain, action and image is inventoried at its current stable release or records why not
+        if: ${{ !cancelled() && matrix.group == 'contracts' }}
+        run: npm run check:dependencies
+        working-directory: js
+
+      - name: Check readable English names against WordNet, the concept records and the source inventory
+        if: ${{ !cancelled() && matrix.group == 'contracts' }}
+        run: npm run check:naming
+        working-directory: js
+
+      - name: Check associative data storage and necessary external JSON interfaces
+        if: ${{ !cancelled() && matrix.group == 'contracts' }}
+        run: node scripts/check-project-data-storage.mjs
+        working-directory: js
+
+      - name: Check that the documentation agrees with the requirement ledger
+        if: ${{ !cancelled() && matrix.group == 'contracts' }}
+        run: npm run check:documentation
+        working-directory: js
+
+      - name: Check the shared self-translation cases
+        if: ${{ !cancelled() && matrix.group == 'contracts' }}
+        run: npm run check:self-translation
+        working-directory: js
+
+      - name: Setup Rust formatting for generated frontend rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Check the generated Rust frontend rules against JavaScript
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: npm run check:frontend-rules
+        working-directory: js
+
+      - name: Check the generated global concept rules against JavaScript
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-global-concept-rules.mjs --check
+
+      - name: Check the generated discovery integration rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-discovered-concept-rules.mjs --check
+
+      - name: Check shared discovered concept graph fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-discovered-concept-fixture.mjs --check
+
+      - name: Check generated concept view admission rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-concept-view-rules.mjs --check
+
+      - name: Check shared ontology and taxonomy view fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-concept-view-fixture.mjs --check
+
+      - name: Check generated binary link network rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-link-network-binary-rules.mjs --check
+
+      - name: Check shared binary link network fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-link-network-binary-fixtures.mjs --check
+
+      - name: Check the generated Resource Description Framework rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-resource-description-rules.mjs --check
+
+      - name: Check shared Resource Description Framework graph fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-resource-description-fixture.mjs --check
+
+      - name: Check generated resource triple syntax character rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-resource-description-ntriples-characters.mjs --check
+
+      - name: Check generated resource triple syntax token rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-resource-description-ntriples-rules.mjs --check
+
+      - name: Check shared resource triple syntax fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-resource-description-ntriples-fixture.mjs --check
+
+      - name: Check the generated grammar merge decisions against JavaScript
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-grammar-merge-decisions.mjs --check
+
+      - name: Check the generated structural type rules against JavaScript
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-structured-type-rules.mjs --check
+
+      - name: Check the generated primitive value rules against JavaScript
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-primitive-value-rules.mjs --check
+
+      - name: Check the shared Rust array runtime artifacts
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-rust-array-runtime.mjs --check
+
+      - name: Check the generated TypeScript erasure rules against JavaScript
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-typescript-erasure-rules.mjs --check
+
+      - name: Check the generated typed program link rules against JavaScript
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-typed-program-link-rules.mjs --check
+
+      - name: Check the generated Rust source indirection rules against JavaScript
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-rust-indirection-rules.mjs --check
+
+      - name: Check shared scoped Rust lifetime fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-rust-function-lifetime-fixtures.mjs --check
+
+      - name: Check generated Rust array admission rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-rust-array-rules.mjs --check
+
+      - name: Check generated Rust floating point predicate rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-rust-float-predicate-rules.mjs --check
+
+      - name: Check shared Rust floating point predicate fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-rust-float-predicate-fixtures.mjs --check
+
+      - name: Check shared Rust floating point operation fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-rust-float-operation-fixtures.mjs --check
+
+      - name: Check shared Rust floating point constant fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-rust-float-constant-fixtures.mjs --check
+
+      - name: Check generated Rust guarded function completion rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-rust-completion-rules.mjs --check
+
+      - name: Check shared Rust guarded function completion fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-rust-completion-fixtures.mjs --check
+
+      - name: Check shared Rust guarded completion panic fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-rust-completion-panic-fixtures.mjs --check
+
+      - name: Check generated read-only Rust scalar parameter rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-rust-scalar-parameter-rules.mjs --check
+
+      - name: Check shared read-only Rust scalar parameter fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-rust-scalar-parameter-fixtures.mjs --check
+
+      - name: Check shared Rust array source fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-rust-array-source-fixtures.mjs --check
+
+      - name: Check shared fresh Rust scalar vector result fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-rust-array-result-fixtures.mjs --check
+
+      - name: Check generated Rust string continuation rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-rust-string-rules.mjs --check
+
+      - name: Check shared Rust string continuation fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/build-rust-string-continuation-fixtures.mjs --check
+
+      - name: Check shared TypeScript documentation pattern fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-typescript-documentation-fixtures.mjs --check
+
+      - name: Check generated formal function selection rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-formal-function-rules.mjs --check
+
+      - name: Check shared formal function definition fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-formal-function-fixtures.mjs --check
+
+      - name: Check generated shared numeric function rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-shared-numeric-function-rules.mjs --check
+
+      - name: Check generated Rust source signature rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-rust-source-signature-rules.mjs --check
+
+      - name: Check shared Rust source signature fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-rust-source-signature-fixtures.mjs --check
+
+      - name: Check generated standard Rust readonly query rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-rust-read-only-query-rules.mjs --check
+
+      - name: Check standard Rust readonly query fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-rust-read-only-query-fixtures.mjs --check
+
+      - name: Check generated shared scalar loop rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-scalar-loop-rules.mjs --check
+
+      - name: Check shared scalar loop source fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node experiments/generate-rust-scalar-loop-fixture.mjs --check
+
+      - name: Check owned declaration scalar loop source fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node experiments/generate-rust-scalar-loop-declaration-fixture.mjs --check
+
+      - name: Check generated primitive borrowed Rust header rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-rust-source-header-emission-rules.mjs --check
+
+      - name: Check primitive borrowed Rust header fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-rust-source-header-emission-fixtures.mjs --check
+
+      - name: Check shared numeric function definition fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-shared-numeric-function-fixtures.mjs --check
+
+      - name: Check strict public declaration consumers
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/check-public-declaration-contracts.mjs --compiler js/node_modules/.bin/tsc
+
+      - name: Authenticate reviewed generated-stage migration refreshes
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-translation-stage-refresh-receipt.mjs --check
+
+      - name: Check the generated Rust source product rules against JavaScript
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-rust-product-rules.mjs --check
+
+      - name: Check the generated immutable product emission rules against JavaScript
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-product-emission-rules.mjs --check
+
+      - name: Check the generated closed product source proofs against JavaScript
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-product-source-rules.mjs --check
+
+      - name: Check shared source-free typed program fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-typed-program-links-fixtures.mjs --check
+
+      - name: Check shared editable algebraic program fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-typed-program-algebraic-fixtures.mjs --check
+
+      - name: Check shared editable immutable product fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-typed-program-tuple-fixtures.mjs --check
+
+      - name: Check shared product unit value fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-product-unit-fixture.mjs --check
+
+      - name: Check the associative data tooling fixture
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-project-data-tooling-fixture.mjs --check
+
+      - name: Check the recorded original structured data conversion revisions
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-structured-data-migration-revisions.mjs --check
+
+      - name: Check shared formal definition and certificate fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-formal-concept-fixtures.mjs --check
+
+      - name: Check generated formal relation identities
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-formal-relation-rules.mjs --check
+
+      - name: Check shared formal relation identity fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-formal-relation-fixtures.mjs --check
+
+      - name: Check generated frontend rule compilation and style
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: npm run check:frontend-rule-styles
+        working-directory: js
+
+      - name: Check generated global concept rule compilation and style
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        run: node js/scripts/generate-global-concept-rule-styles.mjs --check
+
+      - name: Retain exact generated sources and compiler feedback
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: generated-compiler-feedback-${{ github.sha }}
+          path: issue-195-artifacts/compiler-feedback
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Compare the pull request description and the release reports with the requirement ledger (post-merge report)
+        if: ${{ !cancelled() && github.event_name != 'pull_request' && matrix.group == 'contracts' }}
+        continue-on-error: true
+        run: npm run check:documentation -- --online
+        working-directory: js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Remove the temporary external grammar inputs
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --clean-materialized
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
+  # Keep packaging, secret scanning and the final dependency gate after all
+  # required checks, while still reporting each failure independently.
   test:
     name: JavaScript Package
-    needs: [tests, report-assertions]
+    needs: [tests, report-assertions, package-checks]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -287,467 +795,6 @@ jobs:
         run: npm run check:export-parity
         working-directory: js
 
-      - name: Check grammar-derived default CST expectations
-        if: ${{ !cancelled() }}
-        run: npm run check:default-cst
-        working-directory: js
-
-      - name: Check the official links-notation LiNo grammar cases
-        if: ${{ !cancelled() }}
-        run: npm run check:lino-grammar
-        working-directory: js
-
-      - name: Check the pdf-lib PDF grammar cases
-        if: ${{ !cancelled() }}
-        run: npm run check:pdf-grammar
-        working-directory: js
-
-      - name: Check the native grammars imported from their pinned sources
-        if: ${{ !cancelled() }}
-        run: npm run check:native-imports
-        working-directory: js
-
-      - name: Check shared source prefix operand precedence fixtures
-        if: ${{ !cancelled() }}
-        run: node scripts/generate-grammar-prefix-operand-fixtures.mjs --check
-        working-directory: js
-
-      - name: Check the pinned Ruby pattern fixtures against their independent oracle
-        if: ${{ !cancelled() }}
-        run: node scripts/generate-ruby-pattern-fixture.mjs --check
-        working-directory: js
-
-      - name: Check the pinned Ruby expression syntax fixtures against their independent oracle
-        if: ${{ !cancelled() }}
-        run: node scripts/generate-ruby-expression-syntax-fixture.mjs --check
-        working-directory: js
-
-      - name: Check the pinned Ruby heredoc call fixtures against their independent oracle
-        if: ${{ !cancelled() }}
-        run: node scripts/generate-ruby-heredoc-fixture.mjs --check
-        working-directory: js
-
-      - name: Check the pinned Ruby method declaration fixtures against their independent oracle
-        if: ${{ !cancelled() }}
-        run: node scripts/generate-ruby-heredoc-fixture.mjs --fixture ruby-method-declaration-context-ci --check
-        working-directory: js
-
-      - name: Check the pinned Ruby literal CI fixtures against their independent oracle
-        if: ${{ !cancelled() }}
-        run: node scripts/generate-ruby-literal-ci-regressions.mjs --check
-        working-directory: js
-
-      - name: Check the native merged grammar fixtures against their oracles
-        if: ${{ !cancelled() }}
-        run: npm run check:native-grammars
-        working-directory: js
-
-      - name: Check the independent built-in grammar CST expectations
-        if: ${{ !cancelled() }}
-        run: npm run check:builtin-cst
-        working-directory: js
-
-      - name: Check the shared language catalog
-        if: ${{ !cancelled() }}
-        run: npm run check:language-catalog
-        working-directory: js
-
-      - name: Check the shared concept records
-        if: ${{ !cancelled() }}
-        run: npm run check:concept-records
-        working-directory: js
-
-      - name: Check the native grammar concept reuse report
-        if: ${{ !cancelled() }}
-        run: npm run check:concept-reuse
-        working-directory: js
-
-      - name: Check the native grammar merge quality evidence
-        if: ${{ !cancelled() }}
-        run: npm run check:merge-quality
-        working-directory: js
-
-      - name: Run grammar conversion cycles under the actual Peggy target tool
-        if: ${{ !cancelled() }}
-        run: node js/scripts/run-grammar-interchange-tools.mjs --out issue-195-artifacts/grammar-interchange-tools.lino
-
-      - name: Upload the grammar conversion target-tool report
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: grammar-interchange-tools-${{ github.sha }}
-          path: issue-195-artifacts/grammar-interchange-tools.lino
-          retention-days: 7
-          if-no-files-found: error
-
-      - name: Install the pinned independent Lark grammar target tool
-        if: ${{ !cancelled() }}
-        run: python3 -m pip install --disable-pip-version-check --no-cache-dir lark==1.3.1
-
-      - name: Run grammar conversion cycles under the actual Lark target tool
-        if: ${{ !cancelled() }}
-        run: node js/scripts/run-grammar-interchange-lark.mjs --out issue-195-artifacts/grammar-interchange-lark.lino
-
-      - name: Upload the independent Lark conversion report
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: grammar-interchange-lark-${{ github.sha }}
-          path: issue-195-artifacts/grammar-interchange-lark.lino
-          retention-days: 7
-          if-no-files-found: error
-
-      - name: Check the foundation models are neutral data
-        if: ${{ !cancelled() }}
-        run: npm run check:foundations
-        working-directory: js
-
-      - name: Check issue 195 atomic requirement manifest
-        if: ${{ !cancelled() }}
-        run: npm run check:issue-195
-        working-directory: js
-
-      # A pull request checks only what exists before merge: the committed
-      # register. Live comment edits are compared on main as a non-blocking
-      # report and registered in a follow-up commit.
-      - name: Check issue 195 source register against the ledger
-        if: ${{ !cancelled() }}
-        run: npm run check:issue-195:sources
-        working-directory: js
-
-      - name: Compare the issue 195 source register with the live discussion (post-merge report)
-        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
-        continue-on-error: true
-        run: npm run check:issue-195:sources -- --online
-        working-directory: js
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Check the downstream consumer matrix against the ledger and the tests
-        if: ${{ !cancelled() }}
-        run: npm run check:downstream-consumers
-        working-directory: js
-
-      - name: Compare the pinned RML audit with the live pull request head (post-merge report)
-        if: ${{ !cancelled() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
-        continue-on-error: true
-        run: node scripts/issue-195-rml-pr184.mjs --online
-        working-directory: js
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Check that every dependency, toolchain, action and image is inventoried at its current stable release or records why not
-        if: ${{ !cancelled() }}
-        run: npm run check:dependencies
-        working-directory: js
-
-      - name: Check readable English names against WordNet, the concept records and the source inventory
-        if: ${{ !cancelled() }}
-        run: npm run check:naming
-        working-directory: js
-
-      - name: Check associative data storage and necessary external JSON interfaces
-        if: ${{ !cancelled() }}
-        run: node scripts/check-project-data-storage.mjs
-        working-directory: js
-
-      - name: Check that the documentation agrees with the requirement ledger
-        if: ${{ !cancelled() }}
-        run: npm run check:documentation
-        working-directory: js
-
-      - name: Check the shared self-translation cases
-        if: ${{ !cancelled() }}
-        run: npm run check:self-translation
-        working-directory: js
-
-      - name: Setup Rust formatting for generated frontend rules
-        if: ${{ !cancelled() }}
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
-
-      - name: Check the generated Rust frontend rules against JavaScript
-        if: ${{ !cancelled() }}
-        run: npm run check:frontend-rules
-        working-directory: js
-
-      - name: Check the generated global concept rules against JavaScript
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-global-concept-rules.mjs --check
-
-      - name: Check the generated discovery integration rules
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-discovered-concept-rules.mjs --check
-
-      - name: Check shared discovered concept graph fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-discovered-concept-fixture.mjs --check
-
-      - name: Check generated concept view admission rules
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-concept-view-rules.mjs --check
-
-      - name: Check shared ontology and taxonomy view fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-concept-view-fixture.mjs --check
-
-      - name: Check generated binary link network rules
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-link-network-binary-rules.mjs --check
-
-      - name: Check shared binary link network fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-link-network-binary-fixtures.mjs --check
-
-      - name: Check the generated Resource Description Framework rules
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-resource-description-rules.mjs --check
-
-      - name: Check shared Resource Description Framework graph fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-resource-description-fixture.mjs --check
-
-      - name: Check generated resource triple syntax character rules
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-resource-description-ntriples-characters.mjs --check
-
-      - name: Check generated resource triple syntax token rules
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-resource-description-ntriples-rules.mjs --check
-
-      - name: Check shared resource triple syntax fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-resource-description-ntriples-fixture.mjs --check
-
-      - name: Check the generated grammar merge decisions against JavaScript
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-grammar-merge-decisions.mjs --check
-
-      - name: Check the generated structural type rules against JavaScript
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-structured-type-rules.mjs --check
-
-      - name: Check the generated primitive value rules against JavaScript
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-primitive-value-rules.mjs --check
-
-      - name: Check the shared Rust array runtime artifacts
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-rust-array-runtime.mjs --check
-
-      - name: Check the generated TypeScript erasure rules against JavaScript
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-typescript-erasure-rules.mjs --check
-
-      - name: Check the generated typed program link rules against JavaScript
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-typed-program-link-rules.mjs --check
-
-      - name: Check the generated Rust source indirection rules against JavaScript
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-rust-indirection-rules.mjs --check
-
-      - name: Check shared scoped Rust lifetime fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-rust-function-lifetime-fixtures.mjs --check
-
-      - name: Check generated Rust array admission rules
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-rust-array-rules.mjs --check
-
-      - name: Check generated Rust floating point predicate rules
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-rust-float-predicate-rules.mjs --check
-
-      - name: Check shared Rust floating point predicate fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-rust-float-predicate-fixtures.mjs --check
-
-      - name: Check shared Rust floating point operation fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-rust-float-operation-fixtures.mjs --check
-
-      - name: Check shared Rust floating point constant fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-rust-float-constant-fixtures.mjs --check
-
-      - name: Check generated Rust guarded function completion rules
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-rust-completion-rules.mjs --check
-
-      - name: Check shared Rust guarded function completion fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-rust-completion-fixtures.mjs --check
-
-      - name: Check shared Rust guarded completion panic fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-rust-completion-panic-fixtures.mjs --check
-
-      - name: Check generated read-only Rust scalar parameter rules
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-rust-scalar-parameter-rules.mjs --check
-
-      - name: Check shared read-only Rust scalar parameter fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-rust-scalar-parameter-fixtures.mjs --check
-
-      - name: Check shared Rust array source fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-rust-array-source-fixtures.mjs --check
-
-      - name: Check shared fresh Rust scalar vector result fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-rust-array-result-fixtures.mjs --check
-
-      - name: Check generated Rust string continuation rules
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-rust-string-rules.mjs --check
-
-      - name: Check shared Rust string continuation fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/build-rust-string-continuation-fixtures.mjs --check
-
-      - name: Check shared TypeScript documentation pattern fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-typescript-documentation-fixtures.mjs --check
-
-      - name: Check generated formal function selection rules
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-formal-function-rules.mjs --check
-
-      - name: Check shared formal function definition fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-formal-function-fixtures.mjs --check
-
-      - name: Check generated shared numeric function rules
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-shared-numeric-function-rules.mjs --check
-
-      - name: Check generated Rust source signature rules
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-rust-source-signature-rules.mjs --check
-
-      - name: Check shared Rust source signature fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-rust-source-signature-fixtures.mjs --check
-
-      - name: Check generated standard Rust readonly query rules
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-rust-read-only-query-rules.mjs --check
-
-      - name: Check standard Rust readonly query fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-rust-read-only-query-fixtures.mjs --check
-
-      - name: Check generated shared scalar loop rules
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-scalar-loop-rules.mjs --check
-
-      - name: Check shared scalar loop source fixtures
-        if: ${{ !cancelled() }}
-        run: node experiments/generate-rust-scalar-loop-fixture.mjs --check
-
-      - name: Check owned declaration scalar loop source fixtures
-        if: ${{ !cancelled() }}
-        run: node experiments/generate-rust-scalar-loop-declaration-fixture.mjs --check
-
-      - name: Check generated primitive borrowed Rust header rules
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-rust-source-header-emission-rules.mjs --check
-
-      - name: Check primitive borrowed Rust header fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-rust-source-header-emission-fixtures.mjs --check
-
-      - name: Check shared numeric function definition fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-shared-numeric-function-fixtures.mjs --check
-
-      - name: Check strict public declaration consumers
-        if: ${{ !cancelled() }}
-        run: node js/scripts/check-public-declaration-contracts.mjs --compiler js/node_modules/.bin/tsc
-
-      - name: Authenticate reviewed generated-stage migration refreshes
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-translation-stage-refresh-receipt.mjs --check
-
-      - name: Check the generated Rust source product rules against JavaScript
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-rust-product-rules.mjs --check
-
-      - name: Check the generated immutable product emission rules against JavaScript
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-product-emission-rules.mjs --check
-
-      - name: Check the generated closed product source proofs against JavaScript
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-product-source-rules.mjs --check
-
-      - name: Check shared source-free typed program fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-typed-program-links-fixtures.mjs --check
-
-      - name: Check shared editable algebraic program fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-typed-program-algebraic-fixtures.mjs --check
-
-      - name: Check shared editable immutable product fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-typed-program-tuple-fixtures.mjs --check
-
-      - name: Check shared product unit value fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-product-unit-fixture.mjs --check
-
-      - name: Check the associative data tooling fixture
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-project-data-tooling-fixture.mjs --check
-
-      - name: Check the recorded original structured data conversion revisions
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-structured-data-migration-revisions.mjs --check
-
-      - name: Check shared formal definition and certificate fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-formal-concept-fixtures.mjs --check
-
-      - name: Check generated formal relation identities
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-formal-relation-rules.mjs --check
-
-      - name: Check shared formal relation identity fixtures
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-formal-relation-fixtures.mjs --check
-
-      - name: Check generated frontend rule compilation and style
-        if: ${{ !cancelled() }}
-        run: npm run check:frontend-rule-styles
-        working-directory: js
-
-      - name: Check generated global concept rule compilation and style
-        if: ${{ !cancelled() }}
-        run: node js/scripts/generate-global-concept-rule-styles.mjs --check
-
-      - name: Retain exact generated sources and compiler feedback
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: generated-compiler-feedback-${{ github.sha }}
-          path: issue-195-artifacts/compiler-feedback
-          retention-days: 7
-          if-no-files-found: error
-
-      # The pull request description and the release reports are live texts
-      # outside the commit; they are compared on main as a non-blocking report.
-      - name: Compare the pull request description and the release reports with the requirement ledger (post-merge report)
-        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
-        continue-on-error: true
-        run: npm run check:documentation -- --online
-        working-directory: js
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Verify npm package contents
         if: ${{ !cancelled() }}
         run: node ../scripts/with-cache-cleanup.mjs --event package -- npm pack --dry-run
@@ -757,15 +804,18 @@ jobs:
         if: ${{ !cancelled() }}
         run: npx --yes -p secretlint -p @secretlint/secretlint-rule-preset-recommend secretlint --secretlintignore .gitignore "**/*"
 
-      # Checked last, so the package checks above still report their own
-      # failures when a test group failed.
       - name: Require every JavaScript test group
         if: ${{ !cancelled() }}
         env:
+          PACKAGE_CHECKS_RESULT: ${{ needs.package-checks.result }}
           TESTS_RESULT: ${{ needs.tests.result }}
           REPORTS_RESULT: ${{ needs.report-assertions.result }}
           EXTERNAL_REPORTS: ${{ inputs.external_reports }}
         run: |
+          if [ "$PACKAGE_CHECKS_RESULT" != "success" ]; then
+            echo "::error::JavaScript package check groups finished with '$PACKAGE_CHECKS_RESULT'; see the JavaScript Package Checks jobs."
+            exit 1
+          fi
           if [ "$TESTS_RESULT" != "success" ]; then
             echo "::error::JavaScript test groups finished with '$TESTS_RESULT'; see the JavaScript Tests jobs."
             exit 1

@@ -83,7 +83,13 @@ test('CI splits the Rust and JavaScript tests into matrix jobs with their own ti
   assert.match(job(javascriptWorkflow, 'reports'), /\n {4}if: \$\{\{ !inputs\.external_reports \}\}/u);
   assert.match(job(acceptanceWorkflow, 'js'), /external_reports: true/u);
   const packageGate = job(javascriptWorkflow, 'test');
-  assert.deepEqual(needs(packageGate), ['tests', 'report-assertions']);
+  assert.deepEqual(needs(packageGate), ['tests', 'report-assertions', 'package-checks']);
+  const packageChecks = job(javascriptWorkflow, 'package-checks');
+  assert.deepEqual(needs(packageChecks), ['tests', 'report-assertions']);
+  assert.match(packageChecks, /timeout-minutes: 10\n/u);
+  assert.match(packageChecks, /fail-fast: false\n/u);
+  assert.match(packageGate, /PACKAGE_CHECKS_RESULT: \$\{\{ needs\.package-checks\.result \}\}/u);
+  assert.match(packageGate, /if \[ "\$PACKAGE_CHECKS_RESULT" != "success" \]; then[\s\S]*?exit 1/u);
   assert.match(packageGate, /REPORTS_RESULT: \$\{\{ needs\.report-assertions\.result \}\}/u);
   assert.match(packageGate, /EXTERNAL_REPORTS: \$\{\{ inputs\.external_reports \}\}/u);
   assert.match(packageGate, /if \[ "\$TESTS_RESULT" != "success" \]; then[\s\S]*?exit 1/u);

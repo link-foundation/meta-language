@@ -67,7 +67,7 @@ test('native corpora, recovery and scaling checks run independently with every a
 
 test('the JavaScript workflow runs every test group and gates the package check on them', async () => {
   const workflow = await readFile(new URL('../../.github/workflows/js.yml', import.meta.url), 'utf8');
-  const tests = workflow.slice(workflow.indexOf('\n  tests:\n'), workflow.indexOf('\n  test:\n'));
+  const tests = workflow.slice(workflow.indexOf('\n  tests:\n'), workflow.indexOf('\n  package-checks:\n'));
   const groups = tests.match(/group: \[([^\]]+)\]/u)[1].split(',').map((group) => group.trim());
   assert.deepEqual(groups, Object.keys(TEST_GROUPS).filter(group => group !== 'report-artifacts'));
   const reports = workflow.slice(workflow.indexOf('\n  report-assertions:\n'), workflow.indexOf('\n  tests:\n'));
@@ -89,7 +89,9 @@ test('the JavaScript workflow runs every test group and gates the package check 
     /run: node \.\.\/scripts\/with-cache-cleanup\.mjs --event test -- node scripts\/test-groups\.mjs --run "\$TEST_GROUP"\n/u,
   );
   const packageJob = workflow.slice(workflow.indexOf('\n  test:\n'), workflow.indexOf('\n  publish:\n'));
-  assert.match(packageJob, /name: JavaScript Package\n    needs: \[tests, report-assertions\]\n    if: \$\{\{ !cancelled\(\) \}\}\n/u);
+  assert.match(packageJob, /name: JavaScript Package\n    needs: \[tests, report-assertions, package-checks\]\n    if: \$\{\{ !cancelled\(\) \}\}\n/u);
+  assert.match(packageJob, /PACKAGE_CHECKS_RESULT: \$\{\{ needs\.package-checks\.result \}\}\n/u);
+  assert.match(packageJob, /if \[ "\$PACKAGE_CHECKS_RESULT" != "success" \]; then/u);
   assert.match(packageJob, /TESTS_RESULT: \$\{\{ needs\.tests\.result \}\}\n/u);
   assert.match(packageJob, /if \[ "\$TESTS_RESULT" != "success" \]; then/u);
   assert.match(packageJob, /REPORTS_RESULT: \$\{\{ needs\.report-assertions\.result \}\}\n/u);
