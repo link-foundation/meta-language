@@ -10,7 +10,7 @@ export function acceptRustSourceHeaderEmissionPosition(kind, ownerKind, ownerPat
 /** @param {string} kind @returns {boolean} */
 export function acceptRustSourceHeaderEmissionExpression(kind) { return kind === "lit" || kind === "var" || kind === "let" || kind === "if" || kind === "unary" || kind === "binary"; }
 /** @param {number} character @param {boolean} first @returns {boolean} */
-export function acceptRustSourceHeaderLifetimeCharacter(character, first) { return character === 95 || (character >= 65 && character <= 90) || (character >= 97 && character <= 122) || (!first && character >= 48 && character <= 57); }
+export function acceptRustSourceHeaderLifetimeCharacter(character, first) { return (character >= 95 && character <= 95) || (character >= 65 && character <= 90) || (character >= 97 && character <= 122) || (!first && (character >= 48 && character <= 57)); }
 /** @param {string} kind @returns {string} */
 export function readRustSourceHeaderPrimitive(kind) { if (kind === "float") return "f64"; if (kind === "bool") return "bool"; return ""; }
 /** @param {string} lifetime @param {string} inner @returns {string} */
