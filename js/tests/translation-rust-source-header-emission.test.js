@@ -17,6 +17,34 @@ const scalar = value => value === '-0' ? -0 : value === 'NaN' ? NaN : value === 
 const run = (code, name, args) => vm.runInNewContext(`${code}\n${name}(...argumentsList)`, { argumentsList: args.map(scalar) }, { timeout: 1000 });
 const field = (network, parent, name) => network.fieldRelations().find(value => value.parent.equals(parent) && value.label === (TYPED_PROGRAM_LINKS_SCHEMA.fields[name] ?? name));
 
+test('selected leaf headers refuse source-free unrepresented function facets while defaults retain exact output', () => {
+  const value = reload(fixture.cases[1]);
+  for (const [field, scalar] of [['async', true], ['unsafe', true], ['opaqueInterface', false]]) {
+    const program = decodeTypedProgramLinks(value.network, value.root);
+    const defaultCode = emitRust(program).text;
+    program.declarations.get('keep')[field] = scalar;
+    const archive = encodeTypedProgramLinks(program);
+    const network = LinkNetwork.fromLino(archive.network.toLino());
+    assert.equal(emitTypedProgramLinks(network, archive.root, 'Rust').code, defaultCode);
+    assert.throws(() => emitTypedProgramLinks(network, archive.root, 'Rust', options), /unrepresented source interface fields/u, field);
+  }
+});
+
+test('selected leaf headers refuse source-free parameter span fields while declaration spans and defaults remain intact', () => {
+  const value = reload(fixture.cases[1]);
+  for (const span of [null, { start: 0, end: 1 }]) {
+    const program = decodeTypedProgramLinks(value.network, value.root);
+    const defaultCode = emitRust(program).text;
+    const sourceSpan = program.declarations.get('keep').span;
+    program.declarations.get('keep').params[0].span = span;
+    const archive = encodeTypedProgramLinks(program);
+    const network = LinkNetwork.fromLino(archive.network.toLino());
+    assert.deepEqual(decodeTypedProgramLinks(network, archive.root).declarations.get('keep').span, sourceSpan);
+    assert.equal(emitTypedProgramLinks(network, archive.root, 'Rust').code, defaultCode);
+    assert.throws(() => emitTypedProgramLinks(network, archive.root, 'Rust', options), /parameter defaults, guards and unrepresented fields/u);
+  }
+});
+
 test('twelve independently specified headers retain reference/lifetime order with checked scoped copies after source-free reload', () => {
   assert.deepEqual(rustSourceHeaderEmissionFixture(), fixture);
   assert.equal(fixture.cases.length, 12);
