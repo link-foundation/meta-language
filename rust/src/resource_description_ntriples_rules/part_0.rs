@@ -23,14 +23,14 @@ pub mod ml_math {
         if x > 0.0 && x < 0.5 {
             return 0.0;
         }
-        if x < 0.0 && x >= -0.5 {
+        if (-0.5..0.0).contains(&x) {
             return -0.0;
         }
         let floor = x.floor();
         if x - floor >= 0.5 { floor + 1.0 } else { floor }
     }
 
-    /// Math.sign, which keeps -0, 0 and NaN, where f64::signum does not.
+    /// Math.sign, which keeps -0, 0 and NaN, where `f64::signum` does not.
     #[must_use]
     pub fn sign(x: f64) -> f64 {
         if x > 0.0 {
@@ -91,123 +91,7 @@ pub mod ml_math {
     }
 }
 
-/// Reads of JavaScript arrays, which the portable core never mutates.
-pub mod ml_array {
-    #[must_use]
-    pub fn optional_at<T: Clone>(values: &[T], index: Option<usize>) -> Option<T> {
-        index.and_then(|index| values.get(index)).cloned()
-    }
-    /// The element at an index; a read outside the array, undefined in
-    /// JavaScript, aborts.
-    #[must_use]
-    pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {
-        match index.and_then(|index| values.get(index)) {
-            Some(value) => value.clone(),
-            None => panic!("array index out of range"),
-        }
-    }
-
-    /// The index a Number names: a non-negative integer, -0 included.
-    #[must_use]
-    pub fn number_index(index: f64) -> Option<usize> {
-        if index >= 0.0 && index.fract() == 0.0 && index < 9_007_199_254_740_992.0 {
-            Some(index as usize)
-        } else {
-            None
-        }
-    }
-
-    #[must_use]
-    pub fn append<T>(mut left: Vec<T>, right: Vec<T>) -> Vec<T> {
-        left.extend(right);
-        left
-    }
-    fn integer(value: f64) -> f64 {
-        if value.is_nan() { 0.0 } else { value.trunc() }
-    }
-    fn relative(value: f64, length: usize) -> usize {
-        let value = integer(value);
-        if value < 0.0 {
-            (length as f64 + value).max(0.0) as usize
-        } else {
-            value.min(length as f64) as usize
-        }
-    }
-    #[must_use]
-    pub fn slice<T: Clone>(values: &[T], start: f64, end: f64) -> Vec<T> {
-        let start = relative(start, values.len());
-        let end = relative(end, values.len());
-        values[start..end.max(start)].to_vec()
-    }
-    #[must_use]
-    pub fn index_of<T, F: Fn(&T, &T) -> bool>(
-        values: &[T],
-        search: &T,
-        from: f64,
-        reverse: bool,
-        equal: F,
-    ) -> f64 {
-        if values.is_empty() {
-            return -1.0;
-        }
-        let from = integer(from);
-        if reverse {
-            if from < -(values.len() as f64) {
-                return -1.0;
-            }
-            let start = if from < 0.0 {
-                (values.len() as f64 + from) as usize
-            } else {
-                from.min((values.len() - 1) as f64) as usize
-            };
-            (0..=start)
-                .rev()
-                .find(|&index| equal(&values[index], search))
-                .map_or(-1.0, |index| index as f64)
-        } else {
-            let start = if from < 0.0 {
-                (values.len() as f64 + from).max(0.0) as usize
-            } else {
-                from.min(values.len() as f64) as usize
-            };
-            (start..values.len())
-                .find(|&index| equal(&values[index], search))
-                .map_or(-1.0, |index| index as f64)
-        }
-    }
-    #[must_use]
-    pub fn includes<T, F: Fn(&T, &T) -> bool>(
-        values: &[T],
-        search: &T,
-        from: f64,
-        reverse: bool,
-        equal: F,
-    ) -> bool {
-        index_of(values, search, from, reverse, equal) >= 0.0
-    }
-    #[must_use]
-    pub fn set<T, F: Fn(&T, &T) -> bool>(values: Vec<T>, equal: F) -> Vec<T> {
-        let mut out = Vec::new();
-        for value in values {
-            if !out.iter().any(|previous| equal(previous, &value)) {
-                out.push(value);
-            }
-        }
-        out
-    }
-    #[must_use]
-    pub fn map<K, V, F: Fn(&K, &K) -> bool>(values: Vec<(K, V)>, equal: F) -> Vec<(K, V)> {
-        let mut out: Vec<(K, V)> = Vec::new();
-        for (key, value) in values {
-            if let Some(index) = out.iter().position(|(previous, _)| equal(previous, &key)) {
-                out[index].1 = value;
-            } else {
-                out.push((key, value));
-            }
-        }
-        out
-    }
-}
+pub use crate::translation::frontend_rules::ml_array;
 
 /// Execute the checked shared resource-description algorithm.
 #[must_use]
@@ -222,20 +106,20 @@ pub fn resource_description_unit(units: &[f64], index: f64) -> f64 {
 /// Execute the checked shared resource-description algorithm.
 #[must_use]
 pub fn resource_description_letter(unit: f64) -> bool {
-    (((unit >= (65f64)) && (unit <= (90f64))) || ((unit >= (97f64)) && (unit <= (122f64))))
+    (((65f64..=90f64).contains(&unit)) || ((97f64..=122f64).contains(&unit)))
 }
 
 /// Execute the checked shared resource-description algorithm.
 #[must_use]
 pub fn resource_description_digit(unit: f64) -> bool {
-    ((unit >= (48f64)) && (unit <= (57f64)))
+    ((48f64..=57f64).contains(&unit))
 }
 
 /// Execute the checked shared resource-description algorithm.
 #[must_use]
 pub fn resource_description_hexadecimal(unit: f64) -> bool {
-    ((super::resource_description_digit(unit) || ((unit >= (65f64)) && (unit <= (70f64))))
-        || ((unit >= (97f64)) && (unit <= (102f64))))
+    ((super::resource_description_digit(unit) || ((65f64..=70f64).contains(&unit)))
+        || ((97f64..=102f64).contains(&unit)))
 }
 
 /// Execute the checked shared resource-description algorithm.
@@ -260,30 +144,30 @@ pub fn accept_resource_description_unicode(units: &[f64]) -> bool {
 /// Execute the checked shared resource-description algorithm.
 #[must_use]
 pub fn resource_description_n_triples_name(code: f64, first: bool) -> bool {
-    if ((((((((((((((((((code >= (65f64)) && (code <= (90f64)))
-        || ((code >= (97f64)) && (code <= (122f64))))
-        || ((code >= (192f64)) && (code <= (214f64))))
-        || ((code >= (216f64)) && (code <= (246f64))))
-        || ((code >= (248f64)) && (code <= (767f64))))
-        || ((code >= (880f64)) && (code <= (893f64))))
-        || ((code >= (895f64)) && (code <= (8191f64))))
-        || ((code >= (8204f64)) && (code <= (8205f64))))
-        || ((code >= (8304f64)) && (code <= (8591f64))))
-        || ((code >= (11264f64)) && (code <= (12271f64))))
-        || ((code >= (12289f64)) && (code <= (55295f64))))
-        || ((code >= (63744f64)) && (code <= (64975f64))))
-        || ((code >= (65008f64)) && (code <= (65533f64))))
-        || ((code >= (65536f64)) && (code <= (983_039f64))))
+    if ((((((((((((((((((65f64..=90f64).contains(&code))
+        || ((97f64..=122f64).contains(&code)))
+        || ((192f64..=214f64).contains(&code)))
+        || ((216f64..=246f64).contains(&code)))
+        || ((248f64..=767f64).contains(&code)))
+        || ((880f64..=893f64).contains(&code)))
+        || ((895f64..=8191f64).contains(&code)))
+        || ((8204f64..=8205f64).contains(&code)))
+        || ((8304f64..=8591f64).contains(&code)))
+        || ((11264f64..=12271f64).contains(&code)))
+        || ((12289f64..=55295f64).contains(&code)))
+        || ((63744f64..=64975f64).contains(&code)))
+        || ((65008f64..=65533f64).contains(&code)))
+        || ((65536f64..=983_039f64).contains(&code)))
         || (code == (95f64)))
         || (code == (58f64)))
-        || ((code >= (48f64)) && (code <= (57f64))))
+        || ((48f64..=57f64).contains(&code)))
     {
         true
     } else {
         (!first
             && (((((code == (45f64)) || (code == (46f64))) || (code == (183f64)))
-                || ((code >= (768f64)) && (code <= (879f64))))
-                || ((code >= (8255f64)) && (code <= (8256f64)))))
+                || ((768f64..=879f64).contains(&code)))
+                || ((8255f64..=8256f64).contains(&code))))
     }
 }
 
@@ -322,36 +206,28 @@ pub fn read_resource_description_n_triples_transition(state: f64, kind: f64) -> 
             || (state == (7f64))))
     {
         state
-    } else if ((state == (0f64)) && (kind == (1f64))) {
-        1f64
-    } else if ((state == (0f64)) && (kind == (2f64))) {
+    } else if ((state == (0f64)) && (kind == (1f64))) || ((state == (0f64)) && (kind == (2f64))) {
         1f64
     } else if ((state == (1f64)) && (kind == (1f64))) {
         2f64
-    } else if ((state == (2f64)) && (kind == (1f64))) {
-        3f64
-    } else if ((state == (2f64)) && (kind == (2f64))) {
+    } else if (((state == (2f64)) && (kind == (1f64)))
+        || (((state == (2f64)) && (kind == (2f64)))
+            || (((state == (4f64)) && (kind == (4f64)))
+                || ((state == (5f64)) && (kind == (1f64))))))
+    {
         3f64
     } else if ((state == (2f64)) && (kind == (3f64))) {
         4f64
-    } else if ((state == (4f64)) && (kind == (4f64))) {
-        3f64
     } else if ((state == (4f64)) && (kind == (6f64))) {
         5f64
-    } else if ((state == (5f64)) && (kind == (1f64))) {
-        3f64
-    } else if ((state == (3f64)) && (kind == (5f64))) {
+    } else if (((state == (3f64)) && (kind == (5f64)))
+        || (((state == (4f64)) && (kind == (5f64))) || ((state == (7f64)) && (kind == (8f64)))))
+    {
         7f64
-    } else if ((state == (4f64)) && (kind == (5f64))) {
-        7f64
-    } else if ((state == (0f64)) && (kind == (7f64))) {
+    } else if (((state == (0f64)) && (kind == (7f64)))
+        || (((state == (7f64)) && (kind == (7f64))) || ((state == (0f64)) && (kind == (8f64)))))
+    {
         0f64
-    } else if ((state == (7f64)) && (kind == (7f64))) {
-        0f64
-    } else if ((state == (0f64)) && (kind == (8f64))) {
-        0f64
-    } else if ((state == (7f64)) && (kind == (8f64))) {
-        7f64
     } else {
         (-1f64)
     }
@@ -360,25 +236,19 @@ pub fn read_resource_description_n_triples_transition(state: f64, kind: f64) -> 
 /// Execute the checked shared resource-description algorithm.
 #[must_use]
 pub fn read_resource_description_n_triples_role(state: f64, kind: f64) -> f64 {
-    if ((state == (0f64)) && (kind == (1f64))) {
-        1f64
-    } else if ((state == (0f64)) && (kind == (2f64))) {
+    if ((state == (0f64)) && (kind == (1f64))) || ((state == (0f64)) && (kind == (2f64))) {
         1f64
     } else if ((state == (1f64)) && (kind == (1f64))) {
         2f64
-    } else if ((state == (2f64)) && (kind == (1f64))) {
-        3f64
-    } else if ((state == (2f64)) && (kind == (2f64))) {
-        3f64
-    } else if ((state == (2f64)) && (kind == (3f64))) {
+    } else if (((state == (2f64)) && (kind == (1f64)))
+        || (((state == (2f64)) && (kind == (2f64))) || ((state == (2f64)) && (kind == (3f64)))))
+    {
         3f64
     } else if ((state == (4f64)) && (kind == (4f64))) {
         4f64
     } else if ((state == (5f64)) && (kind == (1f64))) {
         5f64
-    } else if ((state == (3f64)) && (kind == (5f64))) {
-        6f64
-    } else if ((state == (4f64)) && (kind == (5f64))) {
+    } else if (((state == (3f64)) && (kind == (5f64))) || ((state == (4f64)) && (kind == (5f64)))) {
         6f64
     } else {
         0f64
@@ -409,7 +279,7 @@ pub fn decode_resource_description_scalar_escape(units: &[f64], start: f64, widt
                     );
                     match ml_s2 {
                         super::MlDecodeResourceDescriptionScalarEscapeLoop2Result::MlDecodeResourceDescriptionScalarEscapeLoop2Done(value_2) => {
-                            if ((value_2 > (1_114_111f64)) || ((value_2 >= (55296f64)) && (value_2 <= (57343f64)))) {
+                            if ((value_2 > (1_114_111f64)) || ((55296f64..=57343f64).contains(&value_2))) {
                                 (-1f64)
                             } else {
                                 value_2
@@ -438,14 +308,14 @@ pub fn read_resource_description_n_triples_scalar(
             vec![0f64, (-1f64), 1f64]
         } else if ((code == (92f64)) && (kind != (0f64))) {
             {
-                let escape = super::resource_description_unit(units, (index + 1f64));
+                let escape = super::resource_description_unit(units, index + 1f64);
                 if ((escape == (117f64)) || (escape == (85f64))) {
                     {
                         let width = if (escape == (117f64)) { 4f64 } else { 8f64 };
                         {
                             let scalar = super::decode_resource_description_scalar_escape(
                                 units,
-                                (index + 2f64),
+                                index + 2f64,
                                 width,
                             );
                             if (scalar < (0f64)) {
@@ -466,20 +336,24 @@ pub fn read_resource_description_n_triples_scalar(
                     }
                 }
             }
-        } else if ((code >= (55296f64)) && (code <= (56319f64))) {
+        } else if ((55296f64..=56319f64).contains(&code)) {
             {
-                let low = super::resource_description_unit(units, (index + 1f64));
+                let low = super::resource_description_unit(units, index + 1f64);
                 if ((low < (56320f64)) || (low > (57343f64))) {
                     vec![0f64, (-1f64), 1f64]
                 } else {
                     vec![
                         2f64,
-                        (((65536f64 + ((code - 55296f64) * 1024f64)) + low) - 56320f64),
+                        ((({
+                            let separately_rounded_product = (code - 55296f64) * 1024f64;
+                            65536f64 + separately_rounded_product
+                        }) + low)
+                            - 56320f64),
                         0f64,
                     ]
                 }
             }
-        } else if ((code >= (56320f64)) && (code <= (57343f64))) {
+        } else if ((56320f64..=57343f64).contains(&code)) {
             vec![0f64, (-1f64), 1f64]
         } else if (((kind == (1f64))
             && ((((((((code <= (32f64)) || (code == (60f64))) || (code == (34f64)))
@@ -537,7 +411,7 @@ pub fn read_resource_description_n_triples_token(units: &[f64], start: f64) -> V
             } else if (code == (46f64)) {
                 vec![5f64, (index + 1f64), 0f64]
             } else if ((code == (94f64))
-                && ((super::resource_description_unit(units, (index + 1f64))) == (94f64)))
+                && ((super::resource_description_unit(units, index + 1f64)) == (94f64)))
             {
                 vec![6f64, (index + 2f64), 0f64]
             } else if (code == (64f64)) {
@@ -549,7 +423,7 @@ pub fn read_resource_description_n_triples_token(units: &[f64], start: f64) -> V
                         );
                         match ml_s4 {
                                             super::MlReadResourceDescriptionNTriplesTokenLoop5Result::MlReadResourceDescriptionNTriplesTokenLoop5Done(index_5, code_2) => {
-                                                if (index_5 == ((start + 1f64))) {
+                                                if (index_5 == (start + 1f64)) {
                                                     vec![0f64, start, 2f64]
                                                 } else {
                                                     vec![4f64, index_5, 0f64]
@@ -559,7 +433,7 @@ pub fn read_resource_description_n_triples_token(units: &[f64], start: f64) -> V
                     }
                 }
             } else if ((code == (95f64))
-                && ((super::resource_description_unit(units, (index + 1f64))) == (58f64)))
+                && ((super::resource_description_unit(units, index + 1f64)) == (58f64)))
             {
                 {
                     let index_6 = (index + 2f64);
@@ -664,7 +538,7 @@ pub fn ml_accept_resource_description_unicode_loop1(
                     || (unit > (65535f64)))
                 {
                     super::MlAcceptResourceDescriptionUnicodeLoop1Result::MlAcceptResourceDescriptionUnicodeLoop1Return(false)
-                } else if ((unit >= (55296f64)) && (unit <= (56319f64))) {
+                } else if ((55296f64..=56319f64).contains(&unit)) {
                     {
                         let index_2 = (index + 1f64);
                         if (((index_2 >= (units.len() as f64))
@@ -682,7 +556,7 @@ pub fn ml_accept_resource_description_unicode_loop1(
                             }
                         }
                     }
-                } else if ((unit >= (56320f64)) && (unit <= (57343f64))) {
+                } else if ((56320f64..=57343f64).contains(&unit)) {
                     super::MlAcceptResourceDescriptionUnicodeLoop1Result::MlAcceptResourceDescriptionUnicodeLoop1Return(false)
                 } else {
                     {
@@ -719,33 +593,36 @@ pub fn ml_decode_resource_description_scalar_escape_loop2(
         return if (index < (start + width)) {
             {
                 let code = super::resource_description_unit(units, index);
-                if !(super::resource_description_hexadecimal(code)) {
-                    super::MlDecodeResourceDescriptionScalarEscapeLoop2Result::MlDecodeResourceDescriptionScalarEscapeLoop2Return((-1f64))
-                } else {
-                    {
-                        let code_3 = if (code >= (97f64)) {
-                            {
-                                let code_2 = (code - 32f64);
-                                code_2
-                            }
-                        } else {
-                            code
-                        };
+                {
+                    if (super::resource_description_hexadecimal(code)) {
                         {
-                            let value_2 = ((value * 16f64)
-                                + if (code_3 >= (65f64)) {
-                                    (code_3 - 55f64)
-                                } else {
-                                    (code_3 - 48f64)
-                                });
+                            let code_3 = if (code >= (97f64)) {
+                                { (code - 32f64) }
+                            } else {
+                                code
+                            };
                             {
-                                let index_2 = (index + 1f64);
+                                let value_2 = ({
+                                    let separately_rounded_product = value * 16f64;
+                                    separately_rounded_product
+                                        + if (code_3 >= (65f64)) {
+                                            (code_3 - 55f64)
+                                        } else {
+                                            (code_3 - 48f64)
+                                        }
+                                });
                                 {
-                                    (value, index) = (value_2, index_2);
-                                    continue;
+                                    let index_2 = (index + 1f64);
+                                    {
+                                        (value, index) = (value_2, index_2);
+                                        continue;
+                                    }
                                 }
                             }
                         }
+                    }
+                    {
+                        super::MlDecodeResourceDescriptionScalarEscapeLoop2Result::MlDecodeResourceDescriptionScalarEscapeLoop2Return(-1f64)
                     }
                 }
             }
@@ -763,23 +640,25 @@ pub fn ml_read_resource_description_n_triples_token_loop3(
     mut kind: f64,
 ) -> f64 {
     loop {
-        return if ((index < (units.len() as f64))
-            && if (kind == (9f64)) {
-                (((super::resource_description_unit(units, index)) == (32f64))
-                    || ((super::resource_description_unit(units, index)) == (9f64)))
-            } else {
-                (((super::resource_description_unit(units, index)) == (10f64))
-                    || ((super::resource_description_unit(units, index)) == (13f64)))
-            }) {
+        return {
+            if ((index < (units.len() as f64))
+                && if (kind == (9f64)) {
+                    (((super::resource_description_unit(units, index)) == (32f64))
+                        || ((super::resource_description_unit(units, index)) == (9f64)))
+                } else {
+                    (((super::resource_description_unit(units, index)) == (10f64))
+                        || ((super::resource_description_unit(units, index)) == (13f64)))
+                })
             {
-                let index_2 = (index + 1f64);
                 {
-                    index = index_2;
-                    continue;
+                    let index_2 = (index + 1f64);
+                    {
+                        index = index_2;
+                        continue;
+                    }
                 }
             }
-        } else {
-            index
+            { index }
         };
     }
 }
@@ -788,4 +667,110 @@ pub fn ml_read_resource_description_n_triples_token_loop3(
 pub enum MlReadResourceDescriptionNTriplesTokenLoop4Result {
     MlReadResourceDescriptionNTriplesTokenLoop4Done(f64),
     MlReadResourceDescriptionNTriplesTokenLoop4Return(Vec<f64>),
+}
+
+/// Execute the checked shared resource-description algorithm.
+#[must_use]
+pub fn ml_read_resource_description_n_triples_token_loop4(
+    units: &[f64],
+    mut index: f64,
+) -> super::MlReadResourceDescriptionNTriplesTokenLoop4Result {
+    loop {
+        return if (((index < (units.len() as f64))
+            && ((super::resource_description_unit(units, index)) != (10f64)))
+            && ((super::resource_description_unit(units, index)) != (13f64)))
+        {
+            {
+                let scalar = super::read_resource_description_n_triples_scalar(units, index, 0f64);
+                {
+                    if (super::resource_description_unit(&scalar, 2f64)) == (0f64) {
+                        {
+                            let index_2 = (index + super::resource_description_unit(&scalar, 0f64));
+                            {
+                                index = index_2;
+                                continue;
+                            }
+                        }
+                    }
+                    {
+                        super::MlReadResourceDescriptionNTriplesTokenLoop4Result::MlReadResourceDescriptionNTriplesTokenLoop4Return(vec![0f64, index, 1f64])
+                    }
+                }
+            }
+        } else {
+            super::MlReadResourceDescriptionNTriplesTokenLoop4Result::MlReadResourceDescriptionNTriplesTokenLoop4Done(index)
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlReadResourceDescriptionNTriplesTokenLoop5Result {
+    MlReadResourceDescriptionNTriplesTokenLoop5Done(f64, f64),
+}
+
+/// Execute the checked shared resource-description algorithm.
+#[must_use]
+pub fn ml_read_resource_description_n_triples_token_loop5(
+    units: &[f64],
+    mut index: f64,
+    mut code: f64,
+) -> super::MlReadResourceDescriptionNTriplesTokenLoop5Result {
+    loop {
+        return if (index < (units.len() as f64)) {
+            {
+                let code_2 = super::resource_description_unit(units, index);
+                {
+                    if (((((65f64..=90f64).contains(&code_2))
+                        || ((97f64..=122f64).contains(&code_2)))
+                        || ((48f64..=57f64).contains(&code_2)))
+                        || (code_2 == (45f64)))
+                    {
+                        {
+                            let index_2 = (index + 1f64);
+                            {
+                                (index, code) = (index_2, code_2);
+                                continue;
+                            }
+                        }
+                    }
+                    {
+                        super::MlReadResourceDescriptionNTriplesTokenLoop5Result::MlReadResourceDescriptionNTriplesTokenLoop5Done(index, code_2)
+                    }
+                }
+            }
+        } else {
+            super::MlReadResourceDescriptionNTriplesTokenLoop5Result::MlReadResourceDescriptionNTriplesTokenLoop5Done(index, code)
+        };
+    }
+}
+
+/// Execute the checked shared resource-description algorithm.
+#[must_use]
+pub fn ml_read_resource_description_n_triples_token_loop7(
+    units: &[f64],
+    mut index: f64,
+    mut beginning: f64,
+) -> f64 {
+    loop {
+        return {
+            if ((index > beginning)
+                && ((super::resource_description_unit(units, index - 1f64)) == (46f64)))
+            {
+                {
+                    let index_2 = (index - 1f64);
+                    {
+                        index = index_2;
+                        continue;
+                    }
+                }
+            }
+            { index }
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlReadResourceDescriptionNTriplesTokenLoop6Result {
+    MlReadResourceDescriptionNTriplesTokenLoop6Done(f64),
+    MlReadResourceDescriptionNTriplesTokenLoop6Return(Vec<f64>),
 }

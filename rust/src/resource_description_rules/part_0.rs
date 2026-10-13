@@ -15,6 +15,7 @@
 pub mod ml {
     use std::cmp::Ordering;
     use std::fmt;
+    use std::fmt::Write as _;
 
     /// Sign and magnitude; the magnitude is little-endian base 2^32 without
     /// leading zero limbs, and zero is never negative.
@@ -105,7 +106,7 @@ pub mod ml {
         let mut remainder: Vec<u32> = Vec::new();
         for bit in (0..a.len() * 32).rev() {
             let mut carry = (a[bit / 32] >> (bit % 32)) & 1;
-            for limb in remainder.iter_mut() {
+            for limb in &mut remainder {
                 let next = *limb >> 31;
                 *limb = (*limb << 1) | carry;
                 carry = next;
@@ -151,10 +152,9 @@ pub mod ml {
 
         /// A decimal literal with an optional leading minus sign.
         pub fn parse(text: &str) -> Self {
-            let (negative, digits) = match text.strip_prefix('-') {
-                Some(rest) => (true, rest),
-                None => (false, text),
-            };
+            let (negative, digits) = text
+                .strip_prefix('-')
+                .map_or((false, text), |rest| (true, rest));
             let ten = Self::from_i128(10);
             let mut value = Self::zero();
             for digit in digits.chars() {
@@ -164,11 +164,11 @@ pub mod ml {
             if negative { value.neg() } else { value }
         }
 
-        pub fn is_zero(&self) -> bool {
+        pub const fn is_zero(&self) -> bool {
             self.magnitude.is_empty()
         }
 
-        pub fn is_negative(&self) -> bool {
+        pub const fn is_negative(&self) -> bool {
             self.negative
         }
 
@@ -265,7 +265,7 @@ pub mod ml {
             }
             text.push_str(&chunks.pop().unwrap_or(0).to_string());
             for chunk in chunks.iter().rev() {
-                text.push_str(&format!("{chunk:09}"));
+                write!(text, "{chunk:09}").expect("formatting a String succeeds");
             }
             formatter.write_str(&text)
         }
@@ -312,9 +312,7 @@ pub mod ml {
     }
 
     pub fn to_nat_checked(value: Big, message: &str) -> Big {
-        if value.is_negative() {
-            panic!("{message}");
-        }
+        assert!(!value.is_negative(), "{message}");
         value
     }
 
@@ -343,14 +341,14 @@ pub mod ml_math {
         if x > 0.0 && x < 0.5 {
             return 0.0;
         }
-        if x < 0.0 && x >= -0.5 {
+        if (-0.5..0.0).contains(&x) {
             return -0.0;
         }
         let floor = x.floor();
         if x - floor >= 0.5 { floor + 1.0 } else { floor }
     }
 
-    /// Math.sign, which keeps -0, 0 and NaN, where f64::signum does not.
+    /// Math.sign, which keeps -0, 0 and NaN, where `f64::signum` does not.
     pub fn sign(x: f64) -> f64 {
         if x > 0.0 {
             1.0
@@ -404,114 +402,7 @@ pub mod ml_math {
     }
 }
 
-/// Reads of JavaScript arrays, which the portable core never mutates.
-pub mod ml_array {
-    pub fn optional_at<T: Clone>(values: &[T], index: Option<usize>) -> Option<T> {
-        index.and_then(|index| values.get(index)).cloned()
-    }
-    /// The element at an index; a read outside the array, undefined in
-    /// JavaScript, aborts.
-    pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {
-        match index.and_then(|index| values.get(index)) {
-            Some(value) => value.clone(),
-            None => panic!("array index out of range"),
-        }
-    }
-
-    /// The index a Number names: a non-negative integer, -0 included.
-    pub fn number_index(index: f64) -> Option<usize> {
-        if index >= 0.0 && index.fract() == 0.0 && index < 9_007_199_254_740_992.0 {
-            Some(index as usize)
-        } else {
-            None
-        }
-    }
-
-    pub fn append<T>(mut left: Vec<T>, right: Vec<T>) -> Vec<T> {
-        left.extend(right);
-        left
-    }
-    fn integer(value: f64) -> f64 {
-        if value.is_nan() { 0.0 } else { value.trunc() }
-    }
-    fn relative(value: f64, length: usize) -> usize {
-        let value = integer(value);
-        if value < 0.0 {
-            (length as f64 + value).max(0.0) as usize
-        } else {
-            value.min(length as f64) as usize
-        }
-    }
-    pub fn slice<T: Clone>(values: &[T], start: f64, end: f64) -> Vec<T> {
-        let start = relative(start, values.len());
-        let end = relative(end, values.len());
-        values[start..end.max(start)].to_vec()
-    }
-    pub fn index_of<T, F: Fn(&T, &T) -> bool>(
-        values: &[T],
-        search: &T,
-        from: f64,
-        reverse: bool,
-        equal: F,
-    ) -> f64 {
-        if values.is_empty() {
-            return -1.0;
-        }
-        let from = integer(from);
-        if reverse {
-            if from < -(values.len() as f64) {
-                return -1.0;
-            }
-            let start = if from < 0.0 {
-                (values.len() as f64 + from) as usize
-            } else {
-                from.min((values.len() - 1) as f64) as usize
-            };
-            (0..=start)
-                .rev()
-                .find(|&index| equal(&values[index], search))
-                .map_or(-1.0, |index| index as f64)
-        } else {
-            let start = if from < 0.0 {
-                (values.len() as f64 + from).max(0.0) as usize
-            } else {
-                from.min(values.len() as f64) as usize
-            };
-            (start..values.len())
-                .find(|&index| equal(&values[index], search))
-                .map_or(-1.0, |index| index as f64)
-        }
-    }
-    pub fn includes<T, F: Fn(&T, &T) -> bool>(
-        values: &[T],
-        search: &T,
-        from: f64,
-        reverse: bool,
-        equal: F,
-    ) -> bool {
-        index_of(values, search, from, reverse, equal) >= 0.0
-    }
-    pub fn set<T, F: Fn(&T, &T) -> bool>(values: Vec<T>, equal: F) -> Vec<T> {
-        let mut out = Vec::new();
-        for value in values {
-            if !out.iter().any(|previous| equal(previous, &value)) {
-                out.push(value);
-            }
-        }
-        out
-    }
-    pub fn map<K, V, F: Fn(&K, &K) -> bool>(values: Vec<(K, V)>, equal: F) -> Vec<(K, V)> {
-        let mut out: Vec<(K, V)> = Vec::new();
-        for (key, value) in values {
-            if let Some(index) = out.iter().position(|(previous, _)| equal(previous, &key)) {
-                out[index].1 = value;
-            } else {
-                out.push((key, value));
-            }
-        }
-        out
-    }
-}
+pub use crate::translation::frontend_rules::ml_array;
 
 /// Execute the checked shared resource-description algorithm.
 #[must_use]
@@ -519,29 +410,27 @@ pub fn resource_description_unit(units: &[f64], index: f64) -> f64 {
     if (!(super::ml_math::is_safe_integer(index)) || (index < (0f64))) {
         (-1f64)
     } else {
-        (super::ml_array::optional_at(units, super::ml_array::number_index(index)))
-            .clone()
-            .unwrap_or_else(|| (-1f64))
+        (super::ml_array::optional_at(units, super::ml_array::number_index(index))).unwrap_or(-1f64)
     }
 }
 
 /// Execute the checked shared resource-description algorithm.
 #[must_use]
 pub fn resource_description_letter(unit: f64) -> bool {
-    (((unit >= (65f64)) && (unit <= (90f64))) || ((unit >= (97f64)) && (unit <= (122f64))))
+    (((65f64..=90f64).contains(&unit)) || ((97f64..=122f64).contains(&unit)))
 }
 
 /// Execute the checked shared resource-description algorithm.
 #[must_use]
 pub fn resource_description_digit(unit: f64) -> bool {
-    ((unit >= (48f64)) && (unit <= (57f64)))
+    ((48f64..=57f64).contains(&unit))
 }
 
 /// Execute the checked shared resource-description algorithm.
 #[must_use]
 pub fn resource_description_hexadecimal(unit: f64) -> bool {
-    ((super::resource_description_digit(unit) || ((unit >= (65f64)) && (unit <= (70f64))))
-        || ((unit >= (97f64)) && (unit <= (102f64))))
+    ((super::resource_description_digit(unit) || ((65f64..=70f64).contains(&unit)))
+        || ((97f64..=102f64).contains(&unit)))
 }
 
 /// Execute the checked shared resource-description algorithm.
@@ -551,7 +440,7 @@ pub fn accept_resource_description_unicode(units: &[f64]) -> bool {
         let index = 0f64;
         {
             let ml_s1 = super::ml_accept_resource_description_unicode_loop1(units, index);
-            match ml_s1.clone() {
+            match ml_s1 {
                 super::MlAcceptResourceDescriptionUnicodeLoop1Result::MlAcceptResourceDescriptionUnicodeLoop1Done => {
                     true
                 }
@@ -565,48 +454,35 @@ pub fn accept_resource_description_unicode(units: &[f64]) -> bool {
 
 /// Execute the checked shared resource-description algorithm.
 #[must_use]
-/// Execute the checked shared resource-description algorithm.
-#[must_use]
-// The checked continuation explicitly carries its lexical state.
-#[allow(clippy::too_many_lines)]
 pub fn accept_resource_description_identifier_character(code: f64, query: bool) -> bool {
     if (super::resource_description_letter(code) || super::resource_description_digit(code)) {
         true
+    } else if ((((code == (45f64)) || (code == (46f64))) || (code == (95f64)))
+        || (code == (126f64)))
+    {
+        true
+    } else if (((((((((((code == (33f64)) || (code == (36f64))) || (code == (38f64)))
+        || (code == (39f64)))
+        || (code == (40f64)))
+        || (code == (41f64)))
+        || (code == (42f64)))
+        || (code == (43f64)))
+        || (code == (44f64)))
+        || (code == (59f64)))
+        || (code == (61f64)))
+    {
+        true
+    } else if ((((160f64..=55295f64).contains(&code)) || ((63744f64..=64975f64).contains(&code)))
+        || ((65008f64..=65519f64).contains(&code)))
+    {
+        true
+    } else if (((65536f64..=983_037f64).contains(&code)) && ((code % 65536f64) <= (65533f64))) {
+        true
     } else {
-        if ((((code == (45f64)) || (code == (46f64))) || (code == (95f64))) || (code == (126f64))) {
-            true
-        } else {
-            if (((((((((((code == (33f64)) || (code == (36f64))) || (code == (38f64)))
-                || (code == (39f64)))
-                || (code == (40f64)))
-                || (code == (41f64)))
-                || (code == (42f64)))
-                || (code == (43f64)))
-                || (code == (44f64)))
-                || (code == (59f64)))
-                || (code == (61f64)))
-            {
-                true
-            } else {
-                if ((((code >= (160f64)) && (code <= (55295f64)))
-                    || ((code >= (63744f64)) && (code <= (64975f64))))
-                    || ((code >= (65008f64)) && (code <= (65519f64))))
-                {
-                    true
-                } else {
-                    if (((code >= (65536f64)) && (code <= (983_037f64)))
-                        && ((code % 65536f64) <= (65533f64)))
-                    {
-                        true
-                    } else {
-                        (query
-                            && (((code >= (57344f64)) && (code <= (63743f64)))
-                                || (((code >= (983_040f64)) && (code <= (1_114_109f64)))
-                                    && ((code % 65536f64) <= (65533f64)))))
-                    }
-                }
-            }
-        }
+        (query
+            && (((57344f64..=63743f64).contains(&code))
+                || (((983_040f64..=1_114_109f64).contains(&code))
+                    && ((code % 65536f64) <= (65533f64)))))
     }
 }
 
@@ -624,9 +500,9 @@ pub fn accept_resource_description_identifier(units: &[f64]) -> bool {
             let start = 1f64;
             {
                 let ml_s2 = super::ml_accept_resource_description_identifier_loop2(units, start);
-                match ml_s2.clone() {
+                match ml_s2 {
                     super::MlAcceptResourceDescriptionIdentifierLoop2Result::MlAcceptResourceDescriptionIdentifierLoop2Done(start_2) => {
-                        if (start_2 == ((units.len() as f64))) {
+                        if (start_2 == (units.len() as f64)) {
                             false
                         } else {
                             {
@@ -636,7 +512,7 @@ pub fn accept_resource_description_identifier(units: &[f64]) -> bool {
                                     {
                                         let authority_end = (-1f64);
                                         {
-                                            let ml_s5 = if (((((start_3 + 1f64)) < ((units.len() as f64))) && ((super::resource_description_unit(units, start_3)) == (47f64))) && ((super::resource_description_unit(units, (start_3 + 1f64))) == (47f64))) {
+                                            let ml_s5 = if ((((start_3 + 1f64) < (units.len() as f64)) && ((super::resource_description_unit(units, start_3)) == (47f64))) && ((super::resource_description_unit(units, start_3 + 1f64)) == (47f64))) {
                                                 {
                                                     let authority_start_2 = (start_3 + 2f64);
                                                     {
@@ -651,7 +527,7 @@ pub fn accept_resource_description_identifier(units: &[f64]) -> bool {
                                                                         let index = authority_start_2;
                                                                         {
                                                                             let ml_s6 = super::ml_accept_resource_description_identifier_loop7(units, authority_end_3, host, found_user, index);
-                                                                            match ml_s6.clone() {
+                                                                            match ml_s6 {
                                                                                 super::MlAcceptResourceDescriptionIdentifierLoop7Result::MlAcceptResourceDescriptionIdentifierLoop7Done(host_2) => {
                                                                                     {
                                                                                         let found_port = false;
@@ -659,7 +535,7 @@ pub fn accept_resource_description_identifier(units: &[f64]) -> bool {
                                                                                             let index_2 = host_2;
                                                                                             {
                                                                                                 let ml_s7 = super::ml_accept_resource_description_identifier_loop8(units, authority_end_3, found_port, index_2);
-                                                                                                match ml_s7.clone() {
+                                                                                                match ml_s7 {
                                                                                                     super::MlAcceptResourceDescriptionIdentifierLoop8Result::MlAcceptResourceDescriptionIdentifierLoop8Done => {
                                                                                                         super::MlAcceptResourceDescriptionIdentifierJoin3::MlAcceptResourceDescriptionIdentifierJoin3Next
                                                                                                     }
@@ -685,7 +561,7 @@ pub fn accept_resource_description_identifier(units: &[f64]) -> bool {
                                             } else {
                                                 super::MlAcceptResourceDescriptionIdentifierJoin3::MlAcceptResourceDescriptionIdentifierJoin3Next
                                             };
-                                            match ml_s5.clone() {
+                                            match ml_s5 {
                                                 super::MlAcceptResourceDescriptionIdentifierJoin3::MlAcceptResourceDescriptionIdentifierJoin3Next => {
                                                     {
                                                         let query = false;
@@ -695,7 +571,7 @@ pub fn accept_resource_description_identifier(units: &[f64]) -> bool {
                                                                 let index_3 = start_3;
                                                                 {
                                                                     let ml_s8 = super::ml_accept_resource_description_identifier_loop4(units, query, fragment, index_3);
-                                                                    match ml_s8.clone() {
+                                                                    match ml_s8 {
                                                                         super::MlAcceptResourceDescriptionIdentifierLoop4Result::MlAcceptResourceDescriptionIdentifierLoop4Done => {
                                                                             true
                                                                         }
@@ -720,6 +596,151 @@ pub fn accept_resource_description_identifier(units: &[f64]) -> bool {
                     }
                     super::MlAcceptResourceDescriptionIdentifierLoop2Result::MlAcceptResourceDescriptionIdentifierLoop2Return(ml_result8_3) => {
                         ml_result8_3
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared resource-description algorithm.
+#[must_use]
+// The checked continuation explicitly carries its lexical state.
+#[allow(clippy::too_many_lines)]
+pub fn accept_resource_description_language(units: &[f64], grandfathered: bool) -> bool {
+    if grandfathered {
+        true
+    } else {
+        {
+            let starts = vec![0f64];
+            {
+                let lengths = Vec::<f64>::new();
+                {
+                    let index = 0f64;
+                    {
+                        let ml_s9 = super::ml_accept_resource_description_language_loop11(
+                            units, starts, lengths, index,
+                        );
+                        match ml_s9 {
+                            super::MlAcceptResourceDescriptionLanguageLoop11Result::MlAcceptResourceDescriptionLanguageLoop11Done(starts_2, lengths_2) => {
+                                {
+                                    let part = 0f64;
+                                    {
+                                        let ml_s13 = if (((super::resource_description_unit(&lengths_2, 0f64)) == (1f64)) && (((super::resource_description_unit(units, 0f64)) == (88f64)) || ((super::resource_description_unit(units, 0f64)) == (120f64)))) {
+                                            {
+                                                let part_2 = 1f64;
+                                                super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Next(part_2)
+                                            }
+                                        } else if ((super::resource_description_unit(&lengths_2, 0f64)) < (2f64)) {
+                                                super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Return(false)
+                                            } else {
+                                                {
+                                                    let index_2 = 0f64;
+                                                    {
+                                                        let ml_s14 = super::ml_accept_resource_description_language_loop13(units, lengths_2.clone(), index_2);
+                                                        match ml_s14 {
+                                                            super::MlAcceptResourceDescriptionLanguageLoop13Result::MlAcceptResourceDescriptionLanguageLoop13Done => {
+                                                                {
+                                                                    let part_3 = 1f64;
+                                                                    {
+                                                                        let part_5 = if ((super::resource_description_unit(&lengths_2, 0f64)) <= (3f64)) {
+                                                                            {
+                                                                                let count = 0f64;
+                                                                                { super::ml_accept_resource_description_language_loop14(units, starts_2.clone(), lengths_2.clone(), part_3, count) }
+                                                                            }
+                                                                        } else {
+                                                                            part_3
+                                                                        };
+                                                                        {
+                                                                            let part_7 = if ((part_5 < (starts_2.len() as f64)) && ((super::resource_description_unit(&lengths_2, part_5)) == (4f64))) {
+                                                                                {
+                                                                                    let letters = true;
+                                                                                    {
+                                                                                        let index_3 = super::resource_description_unit(&starts_2, part_5);
+                                                                                        {
+                                                                                            let letters_2 = super::ml_accept_resource_description_language_loop16(units, starts_2.clone(), part_5, letters, index_3);
+                                                                                            if letters_2 {
+                                                                                                { (part_5 + 1f64) }
+                                                                                            } else {
+                                                                                                part_5
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            } else {
+                                                                                part_5
+                                                                            };
+                                                                            {
+                                                                                let part_10 = if ((((part_7 < (starts_2.len() as f64)) && ((super::resource_description_unit(&lengths_2, part_7)) == (2f64))) && super::resource_description_letter(super::resource_description_unit(units, super::resource_description_unit(&starts_2, part_7)))) && super::resource_description_letter(super::resource_description_unit(units, super::resource_description_unit(&starts_2, part_7) + 1f64))) {
+                                                                                    { (part_7 + 1f64) }
+                                                                                } else if (((((part_7 < (starts_2.len() as f64)) && ((super::resource_description_unit(&lengths_2, part_7)) == (3f64))) && super::resource_description_digit(super::resource_description_unit(units, super::resource_description_unit(&starts_2, part_7)))) && super::resource_description_digit(super::resource_description_unit(units, super::resource_description_unit(&starts_2, part_7) + 1f64))) && super::resource_description_digit(super::resource_description_unit(units, super::resource_description_unit(&starts_2, part_7) + 2f64))) {
+                                                                                        { (part_7 + 1f64) }
+                                                                                    } else {
+                                                                                        part_7
+                                                                                    };
+                                                                                {
+                                                                                    let variants = Vec::<f64>::new();
+                                                                                    {
+                                                                                        let ml_s15 = super::ml_accept_resource_description_language_loop17(units, starts_2.clone(), lengths_2.clone(), part_10, variants);
+                                                                                        match ml_s15 {
+                                                                                            super::MlAcceptResourceDescriptionLanguageLoop17Result::MlAcceptResourceDescriptionLanguageLoop17Done(part_11) => {
+                                                                                                {
+                                                                                                    let singletons = Vec::<f64>::new();
+                                                                                                    {
+                                                                                                        let ml_s16 = super::ml_accept_resource_description_language_loop18(units, starts_2.clone(), lengths_2.clone(), part_11, singletons);
+                                                                                                        match ml_s16 {
+                                                                                                            super::MlAcceptResourceDescriptionLanguageLoop18Result::MlAcceptResourceDescriptionLanguageLoop18Done(part_12) => {
+                                                                                                                if (part_12 == (starts_2.len() as f64)) {
+                                                                                                                    super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Return(true)
+                                                                                                                } else if (((super::resource_description_unit(&lengths_2, part_12)) != (1f64)) || (((super::resource_description_unit(units, super::resource_description_unit(&starts_2, part_12))) != (88f64)) && ((super::resource_description_unit(units, super::resource_description_unit(&starts_2, part_12))) != (120f64)))) {
+                                                                                                                        super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Return(false)
+                                                                                                                    } else {
+                                                                                                                        {
+                                                                                                                            let next_part_position = (part_12 + 1f64);
+                                                                                                                            super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Next(next_part_position)
+                                                                                                                        }
+                                                                                                                    }
+                                                                                                            }
+                                                                                                            super::MlAcceptResourceDescriptionLanguageLoop18Result::MlAcceptResourceDescriptionLanguageLoop18Return(ml_result18) => {
+                                                                                                                super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Return(ml_result18)
+                                                                                                            }
+                                                                                                        }
+                                                                                                    }
+                                                                                                }
+                                                                                            }
+                                                                                            super::MlAcceptResourceDescriptionLanguageLoop17Result::MlAcceptResourceDescriptionLanguageLoop17Return(ml_result20) => {
+                                                                                                super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Return(ml_result20)
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                            super::MlAcceptResourceDescriptionLanguageLoop13Result::MlAcceptResourceDescriptionLanguageLoop13Return(ml_result22) => {
+                                                                super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Return(ml_result22)
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            };
+                                        match ml_s13 {
+                                            super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Next(part_14) => {
+                                                (part_14 < (starts_2.len() as f64))
+                                            }
+                                            super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Return(ml_result12) => {
+                                                ml_result12
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            super::MlAcceptResourceDescriptionLanguageLoop11Result::MlAcceptResourceDescriptionLanguageLoop11Return(ml_result22_2) => {
+                                ml_result22_2
+                            }
+                        }
                     }
                 }
             }

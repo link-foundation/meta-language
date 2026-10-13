@@ -8,6 +8,7 @@ import { emitRust } from '../src/translation/emit-rust.js';
 import { DecoratorSet } from '../src/decorators.js';
 import { tokenize } from '../src/translation/lexer.js';
 import { readProjectFileBytes } from './project-data.mjs';
+import { reviewResourceDescriptionStyles, reuseResourceArrayPrelude } from './resource-description-reviewed-styles.mjs';
 
 const sourceFile = new URL('../src/resource-description-ntriples-rules.js', import.meta.url);
 // Dependency assembly selects real authored function declarations, without
@@ -32,6 +33,9 @@ const format = value => {
 if (process.argv.includes('--update-styles')) {
   const actions = [];
   const replace = (from, to) => { if (raw.includes(from)) actions.push({ op: 'replace', field: 'source', from, to }); };
+  const arrayPrelude = translated.preludes.find(item => item.includes('pub mod ml_array {'));
+  if (arrayPrelude) replace(arrayPrelude, reuseResourceArrayPrelude(arrayPrelude, readFileSync(new URL('../../rust/src/translation/frontend_rules.rs', import.meta.url), 'utf8')));
+  replace('f64::signum does not.', '`f64::signum` does not.');
   // Flatten the actual emitted else-only-if blocks without changing any
   // branch, condition, operation or fallback.
   let flattened = raw;
@@ -102,14 +106,28 @@ if (process.argv.includes('--update-styles')) {
     const attributes = [];
     if (match[2].split(',').length > 7) attributes.push('clippy::too_many_arguments');
     if (format(item).split('\n').length > 100) attributes.push('clippy::too_many_lines');
-    replace('pub fn ' + match[1], '/// Execute the checked shared resource-description algorithm.\n#[must_use]\n'
-      + (attributes.length ? '// The checked continuation explicitly carries its lexical state.\n#[allow(' + attributes.join(', ') + ')]\n' : '') + 'pub fn ' + match[1]);
+    replace('pub fn ' + match[1] + '(', '/// Execute the checked shared resource-description algorithm.\n#[must_use]\n'
+      + (attributes.length ? '// The checked continuation explicitly carries its lexical state.\n#[allow(' + attributes.join(', ') + ')]\n' : '') + 'pub fn ' + match[1] + '(');
   }
   writeFileSync(stylesFile, new DecoratorSet([{ id: 'resource-description-ntriples-library-adapter-style', level: 'emitter', order: 0,
-    when: [['format', 'Rust']], actions }]).toLino());
+    when: [['format', 'Rust'], ['scope', 'raw-item']], actions }]).toLino());
 }
-const styles = DecoratorSet.fromLino(readFileSync(stylesFile, 'utf8'));
-const styledItems = items.map(item => format(styles.decorate('emitter', { format: 'Rust', source: item }).source));
+let styles = DecoratorSet.fromLino(readFileSync(stylesFile, 'utf8'));
+if (process.argv.includes('--update-styles')) {
+  const actions = [];
+  for (const item of items) {
+    const from = format(styles.decorate('emitter', { format: 'Rust', scope: 'raw-item', source: item }).source);
+    const to = reviewResourceDescriptionStyles(from, format).source;
+    if (from !== to) actions.push({ op: 'replace', field: 'source', from, to });
+  }
+  styles = new DecoratorSet([...styles.decorators, { id: 'reviewed-ci14-resource-description-ntriples-functions', level: 'emitter', order: 1000,
+    when: [['format', 'Rust'], ['scope', 'formatted-item']], actions }]);
+  writeFileSync(stylesFile, styles.toLino());
+}
+const styledItems = items.map(item => {
+  const initial = format(styles.decorate('emitter', { format: 'Rust', scope: 'raw-item', source: item }).source);
+  return format(styles.decorate('emitter', { format: 'Rust', scope: 'formatted-item', source: initial }).source);
+});
 const groups = [];
 let group = [];
 let size = 0;

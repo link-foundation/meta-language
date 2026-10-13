@@ -13,181 +13,13 @@
 )]
 /// Execute the checked shared resource-description algorithm.
 #[must_use]
-// The checked continuation explicitly carries its lexical state.
-#[allow(clippy::too_many_lines)]
-pub fn accept_resource_description_language(units: &[f64], grandfathered: bool) -> bool {
-    if grandfathered {
-        true
-    } else {
-        {
-            let starts = vec![0f64];
-            {
-                let lengths = Vec::<f64>::new();
-                {
-                    let index = 0f64;
-                    {
-                        let ml_s9 = super::ml_accept_resource_description_language_loop11(
-                            units,
-                            starts.clone(),
-                            lengths.clone(),
-                            index,
-                        );
-                        match ml_s9.clone() {
-                            super::MlAcceptResourceDescriptionLanguageLoop11Result::MlAcceptResourceDescriptionLanguageLoop11Done(starts_2, lengths_2) => {
-                                {
-                                    let part = 0f64;
-                                    {
-                                        let ml_s13 = if (((super::resource_description_unit(&lengths_2, 0f64)) == (1f64)) && (((super::resource_description_unit(units, 0f64)) == (88f64)) || ((super::resource_description_unit(units, 0f64)) == (120f64)))) {
-                                            {
-                                                let part_2 = 1f64;
-                                                super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Next(part_2)
-                                            }
-                                        } else {
-                                            if ((super::resource_description_unit(&lengths_2, 0f64)) < (2f64)) {
-                                                super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Return(false)
-                                            } else {
-                                                {
-                                                    let index_2 = 0f64;
-                                                    {
-                                                        let ml_s14 = super::ml_accept_resource_description_language_loop13(units, lengths_2.clone(), index_2);
-                                                        match ml_s14.clone() {
-                                                            super::MlAcceptResourceDescriptionLanguageLoop13Result::MlAcceptResourceDescriptionLanguageLoop13Done => {
-                                                                {
-                                                                    let part_3 = 1f64;
-                                                                    {
-                                                                        let part_5 = if ((super::resource_description_unit(&lengths_2, 0f64)) <= (3f64)) {
-                                                                            {
-                                                                                let count = 0f64;
-                                                                                {
-                                                                                    let part_4 = super::ml_accept_resource_description_language_loop14(units, starts_2.clone(), lengths_2.clone(), part_3, count);
-                                                                                    part_4
-                                                                                }
-                                                                            }
-                                                                        } else {
-                                                                            part_3
-                                                                        };
-                                                                        {
-                                                                            let part_7 = if ((part_5 < ((starts_2.len() as f64))) && ((super::resource_description_unit(&lengths_2, part_5)) == (4f64))) {
-                                                                                {
-                                                                                    let letters = true;
-                                                                                    {
-                                                                                        let index_3 = super::resource_description_unit(&starts_2, part_5);
-                                                                                        {
-                                                                                            let letters_2 = super::ml_accept_resource_description_language_loop16(units, starts_2.clone(), part_5, letters, index_3);
-                                                                                            if letters_2 {
-                                                                                                {
-                                                                                                    let part_6 = (part_5 + 1f64);
-                                                                                                    part_6
-                                                                                                }
-                                                                                            } else {
-                                                                                                part_5
-                                                                                            }
-                                                                                        }
-                                                                                    }
-                                                                                }
-                                                                            } else {
-                                                                                part_5
-                                                                            };
-                                                                            {
-                                                                                let part_10 = if ((((part_7 < ((starts_2.len() as f64))) && ((super::resource_description_unit(&lengths_2, part_7)) == (2f64))) && super::resource_description_letter(super::resource_description_unit(units, super::resource_description_unit(&starts_2, part_7)))) && super::resource_description_letter(super::resource_description_unit(units, (super::resource_description_unit(&starts_2, part_7) + 1f64)))) {
-                                                                                    {
-                                                                                        let part_8 = (part_7 + 1f64);
-                                                                                        part_8
-                                                                                    }
-                                                                                } else {
-                                                                                    if (((((part_7 < ((starts_2.len() as f64))) && ((super::resource_description_unit(&lengths_2, part_7)) == (3f64))) && super::resource_description_digit(super::resource_description_unit(units, super::resource_description_unit(&starts_2, part_7)))) && super::resource_description_digit(super::resource_description_unit(units, (super::resource_description_unit(&starts_2, part_7) + 1f64)))) && super::resource_description_digit(super::resource_description_unit(units, (super::resource_description_unit(&starts_2, part_7) + 2f64)))) {
-                                                                                        {
-                                                                                            let part_9 = (part_7 + 1f64);
-                                                                                            part_9
-                                                                                        }
-                                                                                    } else {
-                                                                                        part_7
-                                                                                    }
-                                                                                };
-                                                                                {
-                                                                                    let variants = Vec::<f64>::new();
-                                                                                    {
-                                                                                        let ml_s15 = super::ml_accept_resource_description_language_loop17(units, starts_2.clone(), lengths_2.clone(), part_10, variants.clone());
-                                                                                        match ml_s15.clone() {
-                                                                                            super::MlAcceptResourceDescriptionLanguageLoop17Result::MlAcceptResourceDescriptionLanguageLoop17Done(part_11) => {
-                                                                                                {
-                                                                                                    let singletons = Vec::<f64>::new();
-                                                                                                    {
-                                                                                                        let ml_s16 = super::ml_accept_resource_description_language_loop18(units, starts_2.clone(), lengths_2.clone(), part_11, singletons.clone());
-                                                                                                        match ml_s16.clone() {
-                                                                                                            super::MlAcceptResourceDescriptionLanguageLoop18Result::MlAcceptResourceDescriptionLanguageLoop18Done(part_12) => {
-                                                                                                                if (part_12 == ((starts_2.len() as f64))) {
-                                                                                                                    super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Return(true)
-                                                                                                                } else {
-                                                                                                                    if (((super::resource_description_unit(&lengths_2, part_12)) != (1f64)) || (((super::resource_description_unit(units, super::resource_description_unit(&starts_2, part_12))) != (88f64)) && ((super::resource_description_unit(units, super::resource_description_unit(&starts_2, part_12))) != (120f64)))) {
-                                                                                                                        super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Return(false)
-                                                                                                                    } else {
-                                                                                                                        {
-                                                                                                                            let part_13 = (part_12 + 1f64);
-                                                                                                                            super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Next(part_13)
-                                                                                                                        }
-                                                                                                                    }
-                                                                                                                }
-                                                                                                            }
-                                                                                                            super::MlAcceptResourceDescriptionLanguageLoop18Result::MlAcceptResourceDescriptionLanguageLoop18Return(ml_result18) => {
-                                                                                                                super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Return(ml_result18)
-                                                                                                            }
-                                                                                                        }
-                                                                                                    }
-                                                                                                }
-                                                                                            }
-                                                                                            super::MlAcceptResourceDescriptionLanguageLoop17Result::MlAcceptResourceDescriptionLanguageLoop17Return(ml_result20) => {
-                                                                                                super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Return(ml_result20)
-                                                                                            }
-                                                                                        }
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                            super::MlAcceptResourceDescriptionLanguageLoop13Result::MlAcceptResourceDescriptionLanguageLoop13Return(ml_result22) => {
-                                                                super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Return(ml_result22)
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        };
-                                        match ml_s13.clone() {
-                                            super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Next(part_14) => {
-                                                (part_14 < ((starts_2.len() as f64)))
-                                            }
-                                            super::MlAcceptResourceDescriptionLanguageJoin12::MlAcceptResourceDescriptionLanguageJoin12Return(ml_result12) => {
-                                                ml_result12
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            super::MlAcceptResourceDescriptionLanguageLoop11Result::MlAcceptResourceDescriptionLanguageLoop11Return(ml_result22_2) => {
-                                ml_result22_2
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared resource-description algorithm.
-#[must_use]
 pub fn same_resource_description_term(
-    left_kind: String,
+    left_kind: &str,
     left_fields: &[String],
-    right_kind: String,
+    right_kind: &str,
     right_fields: &[String],
 ) -> bool {
-    if (left_kind != right_kind) {
-        false
-    } else {
+    if left_kind == right_kind {
         {
             let count = 0f64;
             {
@@ -196,33 +28,29 @@ pub fn same_resource_description_term(
                         let count_2 = 1f64;
                         super::MlSameResourceDescriptionTermJoin23::MlSameResourceDescriptionTermJoin23Next(count_2)
                     }
-                } else {
-                    if (left_kind == "blank") {
-                        {
-                            let count_3 = 2f64;
-                            super::MlSameResourceDescriptionTermJoin23::MlSameResourceDescriptionTermJoin23Next(count_3)
-                        }
-                    } else {
-                        if (left_kind == "literal") {
-                            {
-                                let count_4 = 3f64;
-                                super::MlSameResourceDescriptionTermJoin23::MlSameResourceDescriptionTermJoin23Next(count_4)
-                            }
-                        } else {
-                            super::MlSameResourceDescriptionTermJoin23::MlSameResourceDescriptionTermJoin23Return(false)
-                        }
+                } else if (left_kind == "blank") {
+                    {
+                        let count_3 = 2f64;
+                        super::MlSameResourceDescriptionTermJoin23::MlSameResourceDescriptionTermJoin23Next(count_3)
                     }
+                } else if (left_kind == "literal") {
+                    {
+                        let count_4 = 3f64;
+                        super::MlSameResourceDescriptionTermJoin23::MlSameResourceDescriptionTermJoin23Next(count_4)
+                    }
+                } else {
+                    super::MlSameResourceDescriptionTermJoin23::MlSameResourceDescriptionTermJoin23Return(false)
                 };
-                match ml_s17.clone() {
+                match ml_s17 {
                     super::MlSameResourceDescriptionTermJoin23::MlSameResourceDescriptionTermJoin23Next(count_5) => {
-                        if ((((left_fields.len() as f64)) != count_5) || (((right_fields.len() as f64)) != count_5)) {
+                        if (((left_fields.len() as f64) != count_5) || ((right_fields.len() as f64) != count_5)) {
                             false
                         } else {
                             {
                                 let index = 0f64;
                                 {
                                     let ml_s18 = super::ml_same_resource_description_term_loop24(left_fields, right_fields, count_5, index);
-                                    match ml_s18.clone() {
+                                    match ml_s18 {
                                         super::MlSameResourceDescriptionTermLoop24Result::MlSameResourceDescriptionTermLoop24Done => {
                                             true
                                         }
@@ -240,6 +68,8 @@ pub fn same_resource_description_term(
                 }
             }
         }
+    } else {
+        false
     }
 }
 
@@ -263,38 +93,32 @@ pub fn ml_accept_resource_description_unicode_loop1(
                     || (unit > (65535f64)))
                 {
                     super::MlAcceptResourceDescriptionUnicodeLoop1Result::MlAcceptResourceDescriptionUnicodeLoop1Return(false)
-                } else {
-                    if ((unit >= (55296f64)) && (unit <= (56319f64))) {
+                } else if ((55296f64..=56319f64).contains(&unit)) {
+                    {
+                        let index_2 = (index + 1f64);
+                        if (((index_2 >= (units.len() as f64))
+                            || ((super::resource_description_unit(units, index_2)) < (56320f64)))
+                            || ((super::resource_description_unit(units, index_2)) > (57343f64)))
                         {
-                            let index_2 = (index + 1f64);
-                            if (((index_2 >= (units.len() as f64))
-                                || ((super::resource_description_unit(units, index_2))
-                                    < (56320f64)))
-                                || ((super::resource_description_unit(units, index_2))
-                                    > (57343f64)))
-                            {
-                                super::MlAcceptResourceDescriptionUnicodeLoop1Result::MlAcceptResourceDescriptionUnicodeLoop1Return(false)
-                            } else {
-                                {
-                                    let index_3 = (index_2 + 1f64);
-                                    {
-                                        index = index_3;
-                                        continue;
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        if ((unit >= (56320f64)) && (unit <= (57343f64))) {
                             super::MlAcceptResourceDescriptionUnicodeLoop1Result::MlAcceptResourceDescriptionUnicodeLoop1Return(false)
                         } else {
                             {
-                                let index_4 = (index + 1f64);
+                                let index_3 = (index_2 + 1f64);
                                 {
-                                    index = index_4;
+                                    index = index_3;
                                     continue;
                                 }
                             }
+                        }
+                    }
+                } else if ((56320f64..=57343f64).contains(&unit)) {
+                    super::MlAcceptResourceDescriptionUnicodeLoop1Result::MlAcceptResourceDescriptionUnicodeLoop1Return(false)
+                } else {
+                    {
+                        let index_4 = (index + 1f64);
+                        {
+                            index = index_4;
+                            continue;
                         }
                     }
                 }
@@ -349,68 +173,65 @@ pub fn ml_accept_resource_description_identifier_loop4(
                         }
                     }
                 } else {
-                    if (code == (63f64)) {
-                        {
-                            let query_4 = if !fragment {
-                                {
-                                    let query_3 = true;
-                                    query_3
-                                }
-                            } else {
-                                query
-                            };
+                    {
+                        if (code == (63f64)) {
                             {
-                                let index_3 = (index + 1f64);
+                                let query_4 = if fragment { query } else { { true } };
                                 {
-                                    (query, index) = (query_4, index_3);
-                                    continue;
+                                    let index_3 = (index + 1f64);
+                                    {
+                                        (query, index) = (query_4, index_3);
+                                        continue;
+                                    }
                                 }
                             }
                         }
-                    } else {
-                        if (code == (37f64)) {
-                            if ((((index + 2f64) >= (units.len() as f64))
-                                || !(super::resource_description_hexadecimal(
-                                    super::resource_description_unit(units, (index + 1f64)),
-                                )))
-                                || !(super::resource_description_hexadecimal(
-                                    super::resource_description_unit(units, (index + 2f64)),
-                                )))
-                            {
-                                super::MlAcceptResourceDescriptionIdentifierLoop4Result::MlAcceptResourceDescriptionIdentifierLoop4Return(false)
-                            } else {
+                        {
+                            if (code == (37f64)) {
+                                if ((((index + 2f64) >= (units.len() as f64))
+                                    || !(super::resource_description_hexadecimal(
+                                        super::resource_description_unit(units, index + 1f64),
+                                    )))
+                                    || !(super::resource_description_hexadecimal(
+                                        super::resource_description_unit(units, index + 2f64),
+                                    )))
                                 {
-                                    let index_4 = (index + 2f64);
+                                    super::MlAcceptResourceDescriptionIdentifierLoop4Result::MlAcceptResourceDescriptionIdentifierLoop4Return(false)
+                                } else {
                                     {
-                                        let index_5 = (index_4 + 1f64);
+                                        let index_4 = (index + 2f64);
                                         {
-                                            index = index_5;
-                                            continue;
+                                            let index_5 = (index_4 + 1f64);
+                                            {
+                                                index = index_5;
+                                                continue;
+                                            }
                                         }
                                     }
                                 }
-                            }
-                        } else {
-                            {
-                                let ml_s19 = if ((code >= (55296f64)) && (code <= (56319f64))) {
-                                    {
-                                        let code_2 = (((65536f64 + ((code - 55296f64) * 1024f64))
-                                            + super::resource_description_unit(
-                                                units,
-                                                (index + 1f64),
-                                            ))
-                                            - 56320f64);
+                            } else {
+                                {
+                                    let ml_s19 = if ((55296f64..=56319f64).contains(&code)) {
                                         {
-                                            let index_6 = (index + 1f64);
-                                            super::MlAcceptResourceDescriptionIdentifierJoin5::MlAcceptResourceDescriptionIdentifierJoin5Next(index_6, code_2)
+                                            let code_2 = ((({
+                                                let separately_rounded_product =
+                                                    (code - 55296f64) * 1024f64;
+                                                65536f64 + separately_rounded_product
+                                            }) + super::resource_description_unit(
+                                                units,
+                                                index + 1f64,
+                                            )) - 56320f64);
+                                            {
+                                                let index_6 = (index + 1f64);
+                                                super::MlAcceptResourceDescriptionIdentifierJoin5::MlAcceptResourceDescriptionIdentifierJoin5Next(index_6, code_2)
+                                            }
                                         }
-                                    }
-                                } else {
-                                    super::MlAcceptResourceDescriptionIdentifierJoin5::MlAcceptResourceDescriptionIdentifierJoin5Next(index, code)
-                                };
-                                match ml_s19.clone() {
+                                    } else {
+                                        super::MlAcceptResourceDescriptionIdentifierJoin5::MlAcceptResourceDescriptionIdentifierJoin5Next(index, code)
+                                    };
+                                    match ml_s19 {
                                     super::MlAcceptResourceDescriptionIdentifierJoin5::MlAcceptResourceDescriptionIdentifierJoin5Next(index_7, code_3) => {
-                                        if (((code_3 == (47f64)) || (code_3 == (58f64))) || (code_3 == (64f64))) {
+                                        { if (((code_3 == (47f64)) || (code_3 == (58f64))) || (code_3 == (64f64))) {
                                             {
                                                 let index_8 = (index_7 + 1f64);
                                                 {
@@ -418,10 +239,9 @@ pub fn ml_accept_resource_description_identifier_loop4(
                                                     continue;
                                                 }
                                             }
-                                        } else {
-                                            if !(super::accept_resource_description_identifier_character(code_3, query)) {
-                                                super::MlAcceptResourceDescriptionIdentifierLoop4Result::MlAcceptResourceDescriptionIdentifierLoop4Return(false)
-                                            } else {
+                                        }
+{
+                                            { if (super::accept_resource_description_identifier_character(code_3, query)) {
                                                 {
                                                     let index_9 = (index_7 + 1f64);
                                                     {
@@ -430,8 +250,12 @@ pub fn ml_accept_resource_description_identifier_loop4(
                                                     }
                                                 }
                                             }
-                                        }
+{
+                                                super::MlAcceptResourceDescriptionIdentifierLoop4Result::MlAcceptResourceDescriptionIdentifierLoop4Return(false)
+                                            } }
+                                        } }
                                     }
+                                }
                                 }
                             }
                         }
@@ -457,20 +281,21 @@ pub fn ml_accept_resource_description_identifier_loop6(
     mut authority_end: f64,
 ) -> f64 {
     loop {
-        return if ((((authority_end < (units.len() as f64))
-            && ((super::resource_description_unit(units, authority_end)) != (47f64)))
-            && ((super::resource_description_unit(units, authority_end)) != (63f64)))
-            && ((super::resource_description_unit(units, authority_end)) != (35f64)))
-        {
+        return {
+            if ((((authority_end < (units.len() as f64))
+                && ((super::resource_description_unit(units, authority_end)) != (47f64)))
+                && ((super::resource_description_unit(units, authority_end)) != (63f64)))
+                && ((super::resource_description_unit(units, authority_end)) != (35f64)))
             {
-                let authority_end_2 = (authority_end + 1f64);
                 {
-                    authority_end = authority_end_2;
-                    continue;
+                    let authority_end_2 = (authority_end + 1f64);
+                    {
+                        authority_end = authority_end_2;
+                        continue;
+                    }
                 }
             }
-        } else {
-            authority_end
+            { authority_end }
         };
     }
 }
@@ -506,20 +331,18 @@ pub fn ml_accept_resource_description_identifier_loop8(
                         }
                     }
                 }
+            } else if (found_port
+                && !(super::resource_description_digit(super::resource_description_unit(
+                    units, index,
+                ))))
+            {
+                super::MlAcceptResourceDescriptionIdentifierLoop8Result::MlAcceptResourceDescriptionIdentifierLoop8Return(false)
             } else {
-                if (found_port
-                    && !(super::resource_description_digit(super::resource_description_unit(
-                        units, index,
-                    ))))
                 {
-                    super::MlAcceptResourceDescriptionIdentifierLoop8Result::MlAcceptResourceDescriptionIdentifierLoop8Return(false)
-                } else {
+                    let index_3 = (index + 1f64);
                     {
-                        let index_3 = (index + 1f64);
-                        {
-                            index = index_3;
-                            continue;
-                        }
+                        index = index_3;
+                        continue;
                     }
                 }
             }
@@ -636,30 +459,35 @@ pub fn ml_accept_resource_description_language_loop15(
     mut index: f64,
 ) -> bool {
     loop {
-        return if (index < (super::resource_description_unit(&starts, part) + 3f64)) {
-            if !(super::resource_description_letter(super::resource_description_unit(units, index)))
-            {
+        return {
+            if (index < (super::resource_description_unit(&starts, part) + 3f64)) {
                 {
-                    let letters_2 = false;
-                    {
-                        let index_2 = (index + 1f64);
+                    if (super::resource_description_letter(super::resource_description_unit(
+                        units, index,
+                    ))) {
                         {
-                            (letters, index) = (letters_2, index_2);
-                            continue;
+                            let index_3 = (index + 1f64);
+                            {
+                                index = index_3;
+                                continue;
+                            }
+                        }
+                    }
+                    {
+                        {
+                            let letters_2 = false;
+                            {
+                                let index_2 = (index + 1f64);
+                                {
+                                    (letters, index) = (letters_2, index_2);
+                                    continue;
+                                }
+                            }
                         }
                     }
                 }
-            } else {
-                {
-                    let index_3 = (index + 1f64);
-                    {
-                        index = index_3;
-                        continue;
-                    }
-                }
             }
-        } else {
-            letters
+            { letters }
         };
     }
 }
@@ -690,19 +518,20 @@ pub fn ml_accept_resource_description_language_loop14(
                             letters,
                             index,
                         );
-                        if !letters_2 {
-                            part
-                        } else {
-                            {
-                                let part_2 = (part + 1f64);
+                        {
+                            if letters_2 {
                                 {
-                                    let count_2 = (count + 1f64);
+                                    let part_2 = (part + 1f64);
                                     {
-                                        (part, count) = (part_2, count_2);
-                                        continue;
+                                        let count_2 = (count + 1f64);
+                                        {
+                                            (part, count) = (part_2, count_2);
+                                            continue;
+                                        }
                                     }
                                 }
                             }
+                            { part }
                         }
                     }
                 }
@@ -723,30 +552,35 @@ pub fn ml_accept_resource_description_language_loop16(
     mut index: f64,
 ) -> bool {
     loop {
-        return if (index < (super::resource_description_unit(&starts, part) + 4f64)) {
-            if !(super::resource_description_letter(super::resource_description_unit(units, index)))
-            {
+        return {
+            if (index < (super::resource_description_unit(&starts, part) + 4f64)) {
                 {
-                    let letters_2 = false;
-                    {
-                        let index_2 = (index + 1f64);
+                    if (super::resource_description_letter(super::resource_description_unit(
+                        units, index,
+                    ))) {
                         {
-                            (letters, index) = (letters_2, index_2);
-                            continue;
+                            let index_3 = (index + 1f64);
+                            {
+                                index = index_3;
+                                continue;
+                            }
+                        }
+                    }
+                    {
+                        {
+                            let letters_2 = false;
+                            {
+                                let index_2 = (index + 1f64);
+                                {
+                                    (letters, index) = (letters_2, index_2);
+                                    continue;
+                                }
+                            }
                         }
                     }
                 }
-            } else {
-                {
-                    let index_3 = (index + 1f64);
-                    {
-                        index = index_3;
-                        continue;
-                    }
-                }
             }
-        } else {
-            letters
+            { letters }
         };
     }
 }
@@ -765,18 +599,19 @@ pub fn ml_accept_resource_description_language_loop20(
     mut part: f64,
 ) -> f64 {
     loop {
-        return if ((part < (starts.len() as f64))
-            && ((super::resource_description_unit(&lengths, part)) >= (2f64)))
-        {
+        return {
+            if ((part < (starts.len() as f64))
+                && ((super::resource_description_unit(&lengths, part)) >= (2f64)))
             {
-                let part_2 = (part + 1f64);
                 {
-                    part = part_2;
-                    continue;
+                    let part_2 = (part + 1f64);
+                    {
+                        part = part_2;
+                        continue;
+                    }
                 }
             }
-        } else {
-            part
+            { part }
         };
     }
 }
@@ -785,4 +620,125 @@ pub fn ml_accept_resource_description_language_loop20(
 pub enum MlAcceptResourceDescriptionLanguageLoop19Result {
     MlAcceptResourceDescriptionLanguageLoop19Done,
     MlAcceptResourceDescriptionLanguageLoop19Return(bool),
+}
+
+/// Execute the checked shared resource-description algorithm.
+#[must_use]
+pub fn ml_accept_resource_description_language_loop19(
+    mut singleton: f64,
+    mut ml_values10: Vec<f64>,
+    mut ml_index10: super::ml::Big,
+) -> super::MlAcceptResourceDescriptionLanguageLoop19Result {
+    loop {
+        return if (ml_index10 < (super::ml::Big::from_u128(ml_values10.len() as u128))) {
+            {
+                let earlier = super::ml_array::at(&ml_values10, ml_index10.to_index());
+                if (earlier == singleton) {
+                    super::MlAcceptResourceDescriptionLanguageLoop19Result::MlAcceptResourceDescriptionLanguageLoop19Return(false)
+                } else {
+                    {
+                        let ml_index10_2 = ml_index10.add(&super::ml::Big::from_i128(1));
+                        {
+                            ml_index10 = ml_index10_2.clone();
+                            continue;
+                        }
+                    }
+                }
+            }
+        } else {
+            super::MlAcceptResourceDescriptionLanguageLoop19Result::MlAcceptResourceDescriptionLanguageLoop19Done
+        };
+    }
+}
+
+/// Execute the checked shared resource-description algorithm.
+#[must_use]
+pub fn ml_accept_resource_description_language_loop18(
+    units: &[f64],
+    mut starts: Vec<f64>,
+    mut lengths: Vec<f64>,
+    mut part: f64,
+    mut singletons: Vec<f64>,
+) -> super::MlAcceptResourceDescriptionLanguageLoop18Result {
+    loop {
+        return if ((((part < (starts.len() as f64))
+            && ((super::resource_description_unit(&lengths, part)) == (1f64)))
+            && ((super::resource_description_unit(
+                units,
+                super::resource_description_unit(&starts, part),
+            )) != (88f64)))
+            && ((super::resource_description_unit(
+                units,
+                super::resource_description_unit(&starts, part),
+            )) != (120f64)))
+        {
+            {
+                let singleton = super::resource_description_unit(
+                    units,
+                    super::resource_description_unit(&starts, part),
+                );
+                {
+                    let singleton_3 = if ((65f64..=90f64).contains(&singleton)) {
+                        { (singleton + 32f64) }
+                    } else {
+                        singleton
+                    };
+                    {
+                        let ml_values10 = singletons.clone();
+                        {
+                            let ml_index10 = super::ml::Big::from_i128(0);
+                            {
+                                let ml_s20 = super::ml_accept_resource_description_language_loop19(
+                                    singleton_3,
+                                    ml_values10.clone(),
+                                    ml_index10.clone(),
+                                );
+                                match ml_s20 {
+                                    super::MlAcceptResourceDescriptionLanguageLoop19Result::MlAcceptResourceDescriptionLanguageLoop19Done => {
+                                        {
+                                            let singletons_2 = super::ml_array::append(singletons.clone(), vec![singleton_3]);
+                                            {
+                                                let part_2 = (part + 1f64);
+                                                {
+                                                    let beginning = part_2;
+                                                    {
+                                                        let part_3 = super::ml_accept_resource_description_language_loop20(starts.clone(), lengths.clone(), part_2);
+                                                        if (part_3 == beginning) {
+                                                            super::MlAcceptResourceDescriptionLanguageLoop18Result::MlAcceptResourceDescriptionLanguageLoop18Return(false)
+                                                        } else {
+                                                            {
+                                                                (part, singletons) = (part_3, singletons_2.clone());
+                                                                continue;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    super::MlAcceptResourceDescriptionLanguageLoop19Result::MlAcceptResourceDescriptionLanguageLoop19Return(ml_result20) => {
+                                        super::MlAcceptResourceDescriptionLanguageLoop18Result::MlAcceptResourceDescriptionLanguageLoop18Return(ml_result20)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            super::MlAcceptResourceDescriptionLanguageLoop18Result::MlAcceptResourceDescriptionLanguageLoop18Done(part)
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlAcceptResourceDescriptionLanguageLoop17Result {
+    MlAcceptResourceDescriptionLanguageLoop17Done(f64),
+    MlAcceptResourceDescriptionLanguageLoop17Return(bool),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlAcceptResourceDescriptionLanguageLoop21Result {
+    MlAcceptResourceDescriptionLanguageLoop21Done,
+    MlAcceptResourceDescriptionLanguageLoop21Return(bool),
 }

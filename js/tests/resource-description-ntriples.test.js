@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { LinkNetwork } from '../src/network.js';
 import { LinkId, LinkMetadata, LinkType } from '../src/primitives.js';
@@ -7,6 +8,11 @@ import { importResourceDescriptionGraph, decodeResourceDescriptionGraph, mergeRe
 import { importResourceDescriptionNTriples, emitResourceDescriptionNTriples, readResourceDescriptionNTriplesSource,
   RESOURCE_DESCRIPTION_NTRIPLES_PROFILE, ResourceDescriptionNTriplesError } from '../src/resource-description-ntriples.js';
 import { readResourceDescriptionNTriplesScalar, readResourceDescriptionNTriplesToken } from '../src/resource-description-ntriples-rules.js';
+import { readResourceDescriptionNTriplesTransition, readResourceDescriptionNTriplesRole } from '../src/resource-description-ntriples-characters.js';
+import { parseProgrammingLanguage } from '../src/programming-language-parser.js';
+import { parseRust } from '../src/translation/rust.js';
+import { checkProgram } from '../src/translation/check.js';
+import { emitJavaScript } from '../src/translation/emit-javascript.js';
 
 const fixture = readProjectData(new URL('../../parity/fixtures/resource-description-ntriples.lino', import.meta.url));
 const reload = graph => ({ ...graph, network: LinkNetwork.fromLino(graph.network.toLino()) });
@@ -109,4 +115,23 @@ test('source and token resources are bounded without a full corpus', () => {
   assert.throws(() => importResourceDescriptionNTriples('<urn:s> <urn:p> "' + 'x'.repeat(65537) + '" .', { sourceIdentifier: 's' }), error => error.kind === 'resourceLimit');
   assert.throws(() => importResourceDescriptionNTriples(' '.repeat(262145), { sourceIdentifier: 's' }), error => error.kind === 'resourceLimit');
   assert.throws(() => importResourceDescriptionNTriples('\n '.repeat(5001), { sourceIdentifier: 's' }), error => error.kind === 'resourceLimit');
+});
+
+test('reviewed native transition tables translate back and retain all scalar equality decisions', () => {
+  const source = readFileSync(new URL('../../rust/src/resource_description_ntriples_rules/part_0.rs', import.meta.url), 'utf8');
+  const tree = parseProgrammingLanguage(source, 'Rust').tree;
+  const values = [...Array.from({ length: 11 }, (_, index) => index), -0, -1, .5, NaN, Infinity, -Infinity];
+  for (const [name, expected] of [
+    ['read_resource_description_n_triples_transition', readResourceDescriptionNTriplesTransition],
+    ['read_resource_description_n_triples_role', readResourceDescriptionNTriplesRole],
+  ]) {
+    const item = tree.children.find(node => node.term === 'function_item' && node.children.some(child =>
+      child.field === 'name' && source.slice(child.span.byteRange.start, child.span.byteRange.end) === name));
+    assert.ok(item, 'the original shared scalar classifier remains represented');
+    const range = item.span.byteRange;
+    const program = checkProgram(parseRust(source.slice(range.start, range.end) + '\nfn main() {}'));
+    const code = emitJavaScript(program).text;
+    const actual = new Function(code + '\nreturn ' + name + ';')();
+    for (const state of values) for (const kind of values) assert.ok(Object.is(actual(state, kind), expected(state, kind)), name + ': ' + state + ', ' + kind);
+  }
 });

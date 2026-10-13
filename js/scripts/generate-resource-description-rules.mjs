@@ -8,6 +8,7 @@ import { emitRust } from '../src/translation/emit-rust.js';
 import { DecoratorSet } from '../src/decorators.js';
 import { tokenize } from '../src/translation/lexer.js';
 import { readProjectFileBytes } from './project-data.mjs';
+import { reviewResourceDescriptionStyles, reuseResourceArrayPrelude } from './resource-description-reviewed-styles.mjs';
 
 const sourceFile = new URL('../src/resource-description-rules.js', import.meta.url);
 const stylesFile = new URL('../../parity/self-translation/resource-description-rules-decorators.lino', import.meta.url);
@@ -26,6 +27,27 @@ const format = value => {
 if (process.argv.includes('--update-styles')) {
   const actions = [];
   const replace = (from, to) => { if (raw.includes(from)) actions.push({ op: 'replace', field: 'source', from, to }); };
+  const arrayPrelude = translated.preludes.find(item => item.includes('pub mod ml_array {'));
+  if (arrayPrelude) replace(arrayPrelude, reuseResourceArrayPrelude(arrayPrelude, readFileSync(new URL('../../rust/src/translation/frontend_rules.rs', import.meta.url), 'utf8')));
+  replace('for limb in remainder.iter_mut()', 'for limb in &mut remainder');
+  replace("match text.strip_prefix('-') {\n                Some(rest) => (true, rest),\n                None => (false, text),\n            }", "text.strip_prefix('-').map_or((false, text), |rest| (true, rest))");
+  replace('pub fn is_zero(', 'pub const fn is_zero(');
+  replace('pub fn is_negative(', 'pub const fn is_negative(');
+  replace('use std::fmt;', 'use std::fmt;\n    use std::fmt::Write as _;');
+  replace('text.push_str(&format!("{chunk:09}"));', 'write!(text, "{chunk:09}").expect("formatting a String succeeds");');
+  replace('if value.is_negative() {\n            panic!("{message}");\n        }', 'assert!(!value.is_negative(), "{message}");');
+  replace('f64::signum does not.', '`f64::signum` does not.');
+  replace('pub fn same_resource_description_term(left_kind: String', 'pub fn same_resource_description_term(left_kind: &str');
+  replace('left_kind: String', 'left_kind: &str');
+  replace('right_kind: String', 'right_kind: &str');
+  // SSA labels are purely lexical; this phi position is distinct from part_3.
+  replace('part_13', 'next_part_position');
+  for (const match of raw.matchAll(/\blet (ml_s[0-9]+|ml_result[0-9]+) = |\b[A-Za-z_0-9]+Return\((ml_result[0-9]+)\) => \{/gu)) {
+    const name = match[1] ?? match[2];
+    if ([...raw.matchAll(new RegExp('\\b' + name + '\\b', 'gu'))].length === 2) replace(name + '.clone()', name);
+  }
+  replace('(crate::ml_array::optional_at(&units, crate::ml_array::number_index(index))).clone().unwrap_or_else(|| (-1f64))',
+    '(crate::ml_array::optional_at(&units, crate::ml_array::number_index(index))).unwrap_or(-1f64)');
   for (const name of names) replace('crate::' + name, 'super::' + name);
   // Clippy's pedantic literal style retains every numeric value and suffix.
   // Discover the actual emitted numeric tokens, avoiding edits to source rules.
@@ -57,14 +79,28 @@ if (process.argv.includes('--update-styles')) {
     const attributes = [];
     if (match[2].split(',').length > 7) attributes.push('clippy::too_many_arguments');
     if (format(item).split('\n').length > 100) attributes.push('clippy::too_many_lines');
-    replace('pub fn ' + match[1], '/// Execute the checked shared resource-description algorithm.\n#[must_use]\n'
-      + (attributes.length ? '// The checked continuation explicitly carries its lexical state.\n#[allow(' + attributes.join(', ') + ')]\n' : '') + 'pub fn ' + match[1]);
+    replace('pub fn ' + match[1] + '(', '/// Execute the checked shared resource-description algorithm.\n#[must_use]\n'
+      + (attributes.length ? '// The checked continuation explicitly carries its lexical state.\n#[allow(' + attributes.join(', ') + ')]\n' : '') + 'pub fn ' + match[1] + '(');
   }
   writeFileSync(stylesFile, new DecoratorSet([{ id: 'resource-description-library-adapter-style', level: 'emitter', order: 0,
-    when: [['format', 'Rust']], actions }]).toLino());
+    when: [['format', 'Rust'], ['scope', 'raw-item']], actions }]).toLino());
 }
-const styles = DecoratorSet.fromLino(readFileSync(stylesFile, 'utf8'));
-const styledItems = items.map(item => format(styles.decorate('emitter', { format: 'Rust', source: item }).source));
+let styles = DecoratorSet.fromLino(readFileSync(stylesFile, 'utf8'));
+if (process.argv.includes('--update-styles')) {
+  const actions = [];
+  for (const item of items) {
+    const from = format(styles.decorate('emitter', { format: 'Rust', scope: 'raw-item', source: item }).source);
+    const to = reviewResourceDescriptionStyles(from, format).source;
+    if (from !== to) actions.push({ op: 'replace', field: 'source', from, to });
+  }
+  styles = new DecoratorSet([...styles.decorators, { id: 'reviewed-ci14-resource-description-functions', level: 'emitter', order: 1000,
+    when: [['format', 'Rust'], ['scope', 'formatted-item']], actions }]);
+  writeFileSync(stylesFile, styles.toLino());
+}
+const styledItems = items.map(item => {
+  const initial = format(styles.decorate('emitter', { format: 'Rust', scope: 'raw-item', source: item }).source);
+  return format(styles.decorate('emitter', { format: 'Rust', scope: 'formatted-item', source: initial }).source);
+});
 const groups = [];
 let group = [];
 let size = 0;
