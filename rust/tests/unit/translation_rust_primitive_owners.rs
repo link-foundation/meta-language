@@ -5,9 +5,9 @@ use meta_language::translation::check::check_program;
 use meta_language::translation::ir::{Decl, LitValue, Node, Program};
 use meta_language::translation::rust::{parse_rust, parse_rust_with_primitive_owner_model};
 use meta_language::{
-    LinkId, LinkMetadata, LinkNetwork, LinkType,
+    LinkId, LinkMetadata, LinkNetwork, LinkType, TypedProgramLinksEmissionOptions,
     create_typed_program_links_with_rust_primitive_owner_model, decode_typed_program_links,
-    emit_typed_program_links, encode_typed_program_links,
+    emit_typed_program_links, emit_typed_program_links_with_options, encode_typed_program_links,
 };
 use serde_json::{Value, json};
 use std::fmt::Write as _;
@@ -377,6 +377,84 @@ fn harness(case: &Value, program: &Program, original: bool) -> String {
     }
     code.push_str("}\n");
     code
+}
+
+#[test]
+fn qualified_owner_facets_compose_with_retained_primitive_reference_headers() {
+    let directory = TemporaryDirectory::new("primitive-owner-header");
+    let options = TypedProgramLinksEmissionOptions {
+        rust_source_header_emission_model: Some("primitive borrowed Rust function header 1".into()),
+        ..TypedProgramLinksEmissionOptions::default()
+    };
+    for (index, (prefix, owner)) in [
+        ("", "std::primitive::f64"),
+        ("", "core::primitive::f64"),
+        ("use std::primitive::f64 as Real;", "Real"),
+        ("use core::primitive::f64 as Float;", "Float"),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let source = format!("{prefix}fn apply(value:&{owner})->{owner}{{*value}}fn main(){{}}");
+        let input = create_typed_program_links_with_rust_primitive_owner_model(
+            &source,
+            "Rust",
+            "standard primitive Rust binary64 owner 1",
+            Some("Rust source function signature 1"),
+            None,
+        )
+        .unwrap();
+        let network = LinkNetwork::from_lino(&input.network.to_lino()).unwrap();
+        let program = decode_typed_program_links(&network, input.root).unwrap();
+        assert_eq!(
+            proof(&program, "apply")["parameters"][0]["sourcePath"],
+            json!(owner.split("::").collect::<Vec<_>>())
+        );
+        let emitted = emit_typed_program_links_with_options(&network, input.root, "Rust", &options)
+            .unwrap()
+            .code;
+        assert!(emitted.contains("pub fn apply(value: &f64) -> f64"));
+        let observations = json!({"observations":[
+            {"javascriptArguments":["-0"],"expectedBits":"8000000000000000"},
+            {"javascriptArguments":["-0.5"],"expectedBits":"bfe0000000000000"},
+            {"javascriptArguments":["NaN"],"expectedBits":"NaN"},
+            {"javascriptArguments":["Infinity"],"expectedBits":"7ff0000000000000"}
+        ]});
+        for (kind, code) in [("original", source.as_str()), ("header", emitted.as_str())] {
+            let path = directory.0.join(format!("header-{index}-{kind}.rs"));
+            let binary = directory.0.join(format!(
+                "header-{index}-{kind}{}",
+                std::env::consts::EXE_SUFFIX
+            ));
+            fs::write(
+                &path,
+                format!("{code}\n{}", harness(&observations, &program, true)),
+            )
+            .unwrap();
+            let mut compiler = Command::new("rustc");
+            compiler.args([
+                "--edition",
+                "2024",
+                "--test",
+                "--crate-name",
+                "primitive_owner_header",
+            ]);
+            #[cfg(windows)]
+            if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
+                compiler.arg("-C").arg(format!("linker={linker}"));
+            }
+            compiler.arg(&path).arg("-o").arg(&binary);
+            let compiled = run(&mut compiler);
+            assert!(compiled.ok, "{owner}:{kind}: {}", compiled.stderr);
+            let executed = run(&mut Command::new(&binary));
+            assert!(
+                executed.ok,
+                "{owner}:{kind}: {} {}",
+                executed.stdout, executed.stderr
+            );
+            assert!(executed.stdout.contains("1 passed"));
+        }
+    }
 }
 
 #[test]

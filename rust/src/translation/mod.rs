@@ -12,6 +12,8 @@
 use serde::{Deserialize, Serialize};
 
 pub mod aborts;
+pub(crate) mod borrowed_call_interface;
+pub(crate) mod borrowed_call_interface_rules;
 pub mod check;
 pub mod decimal;
 pub mod diagnostics;
