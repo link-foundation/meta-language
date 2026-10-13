@@ -227,7 +227,9 @@ class JavaScriptEmitter {
       const call = binders.length
         ? `ml_product([${domains.join(', ')}]).every((args) => ${ref}(...args))`
         : `${ref}()`;
-      return `  if (!(${call})) throw new Error('theorem ${source} fails on a bounded input');\n  console.log('theorem ${source}: holds on the bounded domain');`;
+      const failure = JSON.stringify(`theorem ${source} fails on a bounded input`);
+      const success = JSON.stringify(`theorem ${source}: holds on the bounded domain`);
+      return `  if (!(${call})) throw new Error(${failure});\n  console.log(${success});`;
     });
     return `function ml_checkTheorems() {\n${checks.join('\n')}\n}`;
   }

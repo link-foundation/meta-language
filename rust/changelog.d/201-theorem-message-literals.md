@@ -1,0 +1,1 @@
+Serialize complete theorem diagnostic and status strings with the existing JSON string encoders in both JavaScript target emitters. Primed source names such as `add_comm'` retain their exact names and produce executable bounded checks and failure messages.

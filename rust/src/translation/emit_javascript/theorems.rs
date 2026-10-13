@@ -2,7 +2,8 @@
 
 use super::super::ir::{Prop, TheoremDecl, rename_theorem};
 use super::{
-    Decl, Helper, JavaScriptEmitter, Result, TheoremCheck, Type, ctor_object, ident, malformed,
+    Decl, Helper, JavaScriptEmitter, Result, TheoremCheck, Type, ctor_object, ident, json_string,
+    malformed,
 };
 
 impl JavaScriptEmitter<'_> {
@@ -44,7 +45,11 @@ impl JavaScriptEmitter<'_> {
                     domains.join(", ")
                 )
             };
-            checks.push(format!("  if (!({call})) throw new Error('theorem {source} fails on a bounded input');\n  console.log('theorem {source}: holds on the bounded domain');"));
+            let failure = json_string(&format!("theorem {source} fails on a bounded input"));
+            let success = json_string(&format!("theorem {source}: holds on the bounded domain"));
+            checks.push(format!(
+                "  if (!({call})) throw new Error({failure});\n  console.log({success});"
+            ));
         }
         Ok(format!(
             "function ml_checkTheorems() {{\n{}\n}}",
