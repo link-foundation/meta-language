@@ -86,9 +86,11 @@ test('tail branch removal requires every then path to continue and preserves con
   const prefix = raw.slice(0, raw.indexOf('pub fn join_product_items'));
   const continuing = 'pub fn choose(value: bool) -> bool { loop { return if value { if value { continue; } else { continue; } } else { false }; } }';
   const fallingThrough = 'pub fn choose(value: bool) -> bool { loop { return if value { if value { continue; } else { false } } else { true }; } }';
+  const nestedLoop = 'pub fn choose(value: bool) -> bool { loop { return if value { loop { if value { break true; } continue; } } else { false }; } }';
   const style = input => readProductRuleStyleCorrections(prefix + input, 'source', provider).find(action => action.from === input).to;
   assert.doesNotMatch(style(continuing), /return if value/u);
   assert.match(style(fallingThrough), /return if value/u);
+  assert.match(style(nestedLoop), /return if value/u, 'a continuation of a nested loop is not a continuation of the owning loop');
   assert.equal([...style(continuing).matchAll(/if value/gu)].length, 2);
 });
 

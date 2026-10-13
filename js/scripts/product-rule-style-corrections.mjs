@@ -84,13 +84,15 @@ function continues(tokens, matching, open, close) {
   let last = open + 1;
   for (let index = open + 1; index < close;) {
     last = index;
-    if (tokens[index].value === 'if') index = conditional(tokens, matching, index).end + 1;
+    if (tokens[index].kind === 'identifier' && ['if', 'loop', 'while', 'for'].includes(tokens[index].value)) index = conditional(tokens, matching, index).end + 1;
     else if (tokens[index].kind === 'punct' && ['(', '[', '{'].includes(tokens[index].value)) index = matching.get(index) + 1;
     else index += 1;
     if (tokens[index]?.value === ';' && index < close) index += 1;
   }
   if (tokens[last]?.value === 'continue') return true;
-  if (tokens[last]?.value === '{') return continues(tokens, matching, last, matching.get(last));
+  if (tokens[last]?.value === '{') return tokens[last - 1]?.kind === 'punct'
+    && ['{', ';', '}'].includes(tokens[last - 1].value)
+    && continues(tokens, matching, last, matching.get(last));
   if (tokens[last]?.value !== 'if') return false;
   const node = conditional(tokens, matching, last);
   const branchesContinue = node => continues(tokens, matching, node.open, node.close) && Boolean(node.alternate)
