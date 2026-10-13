@@ -75,7 +75,7 @@ pub(crate) fn read_checked_match_pattern_bindings(
         ));
     }
     let mut names = HashSet::new();
-    checked
+    verified_pattern
         .bound()
         .into_iter()
         .map(|name| {
