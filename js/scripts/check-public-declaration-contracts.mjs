@@ -6,11 +6,13 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { readProjectData } from './project-data.mjs';
 
 const publicModule = fileURLToPath(new URL('../src/index.js', import.meta.url));
 
 export function publicDeclarationConsumers(moduleSpecifier = publicModule) {
   const module = JSON.stringify(moduleSpecifier);
+  const emptyOptionFixture = readProjectData(new URL('../../parity/fixtures/rust-empty-options.lino', import.meta.url));
   const imports = `import { importEbnf, encodeFormalConceptDefinition, createDiscoveredConceptLinks,
     readDiscoveredConceptLinks, importResourceDescriptionGraph, decodeResourceDescriptionGraph,
     mergeResourceDescriptionGraphs, verifyResourceDescriptionGraphWitnesses } from ${module};\n`;
@@ -346,6 +348,71 @@ export const contractEvidence = {codes,editedCode,replayCode,network:replay.netw
       source: `import { createTypedProgramLinks, emitTypedProgramLinks } from ${module};
 const packet = createTypedProgramLinks('fn keep(value:f64)->f64{value}fn main(){}','Rust');
 emitTypedProgramLinks(packet.network,packet.root,'JavaScript',{javaScriptScopedBindingEmissionModel:'owned JavaScript scoped bindings 99'});
+`,
+    },
+    ...emptyOptionFixture.cases.map(entry => ({
+      name: `valid-empty-option-owner-${entry.id}`, expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, emitTypedProgramLinks, LinkNetwork } from ${module};
+const options = {rustEmptyOptionSourceModel:'closed empty primitive Rust option 1'} as const;
+const packet = createTypedProgramLinks(${JSON.stringify(entry.source)},'Rust',{...options,provenance:{consumer:${JSON.stringify(entry.id)}}});
+const network = LinkNetwork.fromLino(packet.network.toLino());
+const javascript = emitTypedProgramLinks(network,packet.root,'JavaScript');
+const rust = emitTypedProgramLinks(network,packet.root,'Rust');
+export function reimportActualRustDefinitions(definitions:string) {
+  const packet = createTypedProgramLinks(definitions+'\\nfn main(){}','Rust',options);
+  const network = LinkNetwork.fromLino(packet.network.toLino());
+  const javascript = emitTypedProgramLinks(network,packet.root,'JavaScript');
+  return {network,root:packet.root,code:javascript.code};
+}
+export const contractEvidence = {network,root:packet.root,code:javascript.code,rustCode:rust.code};
+`,
+    })),
+    {
+      name: 'valid-source-free-empty-option-declaration-rename', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, emitTypedProgramLinks, LinkNetwork } from ${module};
+const options = {rustEmptyOptionSourceModel:'closed empty primitive Rust option 1'} as const;
+const packet = createTypedProgramLinks(${JSON.stringify(emptyOptionFixture.cases.find(entry => entry.id === 'prelude').source)},'Rust',options);
+const network = LinkNetwork.fromLino(packet.network.toLino());
+const original = emitTypedProgramLinks(network,packet.root,'JavaScript');
+const names = network.links().filter(link=>link.metadata().term === 'string value' && link.metadata().definition === 'empty');
+if(names.length === 0) throw new Error('the coherent empty declaration rename needs its actual name links');
+for(const name of names) name.metadata().definition = 'vacant';
+const renamed = LinkNetwork.fromLino(network.toLino());
+const javascript = emitTypedProgramLinks(renamed,packet.root,'JavaScript');
+const rust = emitTypedProgramLinks(renamed,packet.root,'Rust');
+export function reimportActualRustDefinitions(definitions:string) {
+  const packet = createTypedProgramLinks(definitions+'\\nfn main(){}','Rust',options);
+  const network = LinkNetwork.fromLino(packet.network.toLino());
+  return {network,root:packet.root,code:emitTypedProgramLinks(network,packet.root,'JavaScript').code};
+}
+export const contractEvidence = {network:renamed,root:packet.root,originalCode:original.code,code:javascript.code,rustCode:rust.code};
+`,
+    },
+    {
+      name: 'reject-unregistered-empty-option-source-version', expectedDiagnostics: ['TS2322'],
+      source: `import { createTypedProgramLinks } from ${module};
+createTypedProgramLinks('fn empty()->Option<f64>{None::<f64>}fn main(){}','Rust',{rustEmptyOptionSourceModel:'closed empty primitive Rust option 99'});
+`,
+    },
+    {
+      name: 'valid-empty-option-selection-type-with-wrong-source-language', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks } from ${module};
+export function createWrongLanguagePacket() {
+  return createTypedProgramLinks('function empty(){return undefined;}','JavaScript',{rustEmptyOptionSourceModel:'closed empty primitive Rust option 1'});
+}
+`,
+    },
+    {
+      name: 'valid-empty-option-independent-profile-composition-types', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks } from ${module};
+export function createComposedSignaturePacket() {
+  return createTypedProgramLinks('fn empty()->Option<f64>{None::<f64>}fn main(){}','Rust',
+    {rustEmptyOptionSourceModel:'closed empty primitive Rust option 1',rustSourceSignatureModel:'Rust source function signature 1'});
+}
+export function createComposedPrimitivePacket() {
+  return createTypedProgramLinks('fn empty()->Option<f64>{None::<f64>}fn main(){}','Rust',
+    {rustEmptyOptionSourceModel:'closed empty primitive Rust option 1',rustPrimitiveOwnerModel:'standard primitive Rust binary64 owner 1'});
+}
 `,
     },
   ];
