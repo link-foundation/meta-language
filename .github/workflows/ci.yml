@@ -910,13 +910,64 @@ jobs:
         run: node scripts/clean-caches.mjs --event ci-teardown
 
   javascript-suite:
-    name: Evidence Stage (javascript-suite)
+    name: Evidence Stage (javascript-suite - ${{ matrix.group }} ${{ matrix.shard }})
     needs: [candidates, consumers, rml-workloads, formal-ai-workloads, self-translation-report]
     if: ${{ !cancelled() && github.event_name != 'release' && needs.candidates.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    # The evidence groups keep the same files and acceptance cells. Separate
+    # runners prevent the serial sum from exceeding the existing deadline.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - group: grammar
+            shard: 1/1
+            partition: 1-of-1
+          - group: grammar-native
+            shard: 1/3
+            partition: 1-of-3
+          - group: grammar-native
+            shard: 2/3
+            partition: 2-of-3
+          - group: grammar-native
+            shard: 3/3
+            partition: 3-of-3
+          - group: grammar-recovery
+            shard: 1/1
+            partition: 1-of-1
+          - group: grammar-scaling
+            shard: 1/1
+            partition: 1-of-1
+          - group: grammar-csharp
+            shard: 1/1
+            partition: 1-of-1
+          - group: grammar-elixir
+            shard: 1/1
+            partition: 1-of-1
+          - group: grammar-ruby
+            shard: 1/1
+            partition: 1-of-1
+          - group: translation
+            shard: 1/1
+            partition: 1-of-1
+          - group: report-artifacts
+            shard: 1/1
+            partition: 1-of-1
+          - group: conformance
+            shard: 1/2
+            partition: 1-of-2
+          - group: conformance
+            shard: 2/2
+            partition: 2-of-2
+          - group: downstream
+            shard: 1/1
+            partition: 1-of-1
+          - group: tooling
+            shard: 1/1
+            partition: 1-of-1
     concurrency:
-      group: issue-195-stage-${{ github.ref }}-javascript-suite
+      group: issue-195-stage-${{ github.ref }}-javascript-suite-${{ matrix.group }}-${{ matrix.partition }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -1010,6 +1061,8 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
           ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
           STAGE: javascript-suite
+          JAVASCRIPT_GROUP: ${{ matrix.group }}
+          JAVASCRIPT_SHARD: ${{ matrix.shard }}
           META_LANGUAGE_TOOLING_FULL_SCOPE: '1'
         run: >-
           node js/scripts/run-issue-195-evidence.mjs
@@ -1017,6 +1070,8 @@ jobs:
           --commit "$GITHUB_SHA"
           --results-dir issue-195-results
           --stage "$STAGE"
+          --javascript-group "$JAVASCRIPT_GROUP"
+          --javascript-shard "$JAVASCRIPT_SHARD"
           --candidates .issue-195-work/candidates
           --platform-reports issue-195-artifacts/platform-reports
 
@@ -1026,7 +1081,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
-          name: issue-195-stage-javascript-suite-${{ github.sha }}
+          name: issue-195-stage-javascript-suite-${{ matrix.group }}-${{ matrix.partition }}-${{ github.sha }}
           path: |
             issue-195-results/work/stage-*
             issue-195-results/work/native/
@@ -1390,6 +1445,8 @@ jobs:
         if: ${{ !cancelled() && needs.candidates.result == 'success' }}
         uses: actions/download-artifact@v8
         with:
+          # Every matrix partition carries distinct stage/observation identities;
+          # merge retains all of them for the complete logical-suite validator.
           pattern: issue-195-stage-*-${{ github.sha }}
           path: issue-195-results
           merge-multiple: true
