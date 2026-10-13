@@ -77,6 +77,11 @@ fn expression(value: &Value, program: &Program) -> Result<Value> {
                     std::iter::once(Value::String(continuation.root.clone()))
                         .chain(continuation.path.iter().cloned().map(Value::String))
                         .collect()
+                } else if owns_type_namespace(program) {
+                    project_declaration_path(child.as_str().unwrap_or_default(), program)?
+                        .into_iter()
+                        .map(Value::String)
+                        .collect()
                 } else {
                     vec![child.clone()]
                 };
@@ -108,12 +113,8 @@ fn expression(value: &Value, program: &Program) -> Result<Value> {
             "element-type" => child["element"].clone(),
             "binding-type" => child["type"].clone(),
             "constructor-path" => {
-                let mut path: Vec<_> = value["data"]
-                    .as_str()
-                    .unwrap_or_default()
-                    .split('.')
-                    .map(str::to_owned)
-                    .collect();
+                let mut path =
+                    project_declaration_path(value["data"].as_str().unwrap_or_default(), program)?;
                 path.push(child.as_str().unwrap_or_default().to_owned());
                 json!({"k":"name", "path":path})
             }
@@ -154,12 +155,10 @@ fn expression(value: &Value, program: &Program) -> Result<Value> {
                     .map(|case| -> Result<Value> {
                         let mut pattern = case["pattern"].clone();
                         if pattern["k"] == "ctor" {
-                            let mut path: Vec<_> = pattern["data"]
-                                .as_str()
-                                .unwrap_or_default()
-                                .split('.')
-                                .map(str::to_owned)
-                                .collect();
+                            let mut path = project_declaration_path(
+                                pattern["data"].as_str().unwrap_or_default(),
+                                program,
+                            )?;
                             path.push(pattern["ctor"].as_str().unwrap_or_default().to_owned());
                             pattern = json!({"k":"ctor", "path":path, "binds":pattern["binds"]});
                         }
@@ -195,12 +194,37 @@ pub(super) fn project(value: &Expr, program: &Program) -> Result<SExpr> {
 }
 
 /// Restore a resolved type name for the existing checker to look up again.
-pub(super) fn project_type(value: &Type) -> Result<Type> {
+pub(super) fn project_type(value: &Type, program: &Program) -> Result<Type> {
     if let Type::Data { name } = value {
         return Ok(Type::Named {
-            path: name.split('.').map(str::to_owned).collect(),
+            path: project_declaration_path(name, program)?,
             span: None,
         });
     }
-    value.map_children(project_type)
+    value.map_children(|child| project_type(child, program))
+}
+
+// The caller independently rechecks the actual namespace facts before projection.
+fn owns_type_namespace(program: &Program) -> bool {
+    program.declarations.iter().any(|declaration| matches!(declaration, Decl::Fn(function) if function.source_type_namespace.is_some()) || matches!(declaration, Decl::Data(data) if data.source_unit_clone_derivation.is_some()))
+}
+fn project_declaration_path(name: &str, program: &Program) -> Result<Vec<String>> {
+    if !owns_type_namespace(program) {
+        return Ok(name.split('.').map(str::to_owned).collect());
+    }
+    let declaration = program
+        .declaration(name)
+        .ok_or_else(|| error("an owned namespace projection has no actual declaration target"))?;
+    let actual = declaration
+        .module_path()
+        .iter()
+        .cloned()
+        .chain(std::iter::once(declaration.name().to_owned()))
+        .collect::<Vec<_>>();
+    if actual.join(".") != name {
+        return Err(error(
+            "an owned namespace projection disagrees with its actual declaration binding",
+        ));
+    }
+    Ok(std::iter::once("crate".to_owned()).chain(actual).collect())
 }

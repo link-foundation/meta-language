@@ -14,7 +14,7 @@ pub(super) fn project_function(function: &FnDecl, program: &Program) -> Result<S
             .map(|parameter| -> Result<SParam> {
                 Ok(SParam {
                     name: parameter.name.clone(),
-                    ty: Some(project_type(&parameter.ty)?),
+                    ty: Some(project_type(&parameter.ty, program)?),
                     default_value: parameter.default_value.clone(),
                     guard: parameter.guard.clone(),
                     span: None,
@@ -22,7 +22,7 @@ pub(super) fn project_function(function: &FnDecl, program: &Program) -> Result<S
                 })
             })
             .collect::<Result<_>>()?,
-        ret: Some(project_type(&function.ret)?),
+        ret: Some(project_type(&function.ret, program)?),
         body: expression(&function.body, program)?,
         span: function.span,
         generated: function.generated,
@@ -78,7 +78,7 @@ pub(super) fn project_module(
             {
                 return Err(error("the owned namespace datatype disagrees with its actual binding"));
             }
-            projected.push(super::declarations::project_data(data)?);
+            projected.push(super::declarations::project_data(data, program)?);
             continue;
         }
         let Some(Decl::Fn(function)) = program.declaration(full_name) else {
