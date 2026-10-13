@@ -6,13 +6,15 @@ import { rustFixedType } from './types.js';
 import { acceptRustImmutableIndirectionLayer, acceptRustSourceIndirectionArgument, acceptRustSourceBoxCoercionLayer, acceptRustSourceBoxOwner, acceptRustSourceBoxAvailability, acceptRustSourceTextEquality, readRustSourceExpressionOrigin } from './rust-indirection-rules.js';
 import { acceptRustImmutableProductType } from './rust-product-rules.js';
 import { acceptRustSourceArrayOwner, acceptRustSourceArrayCoercion, acceptRustFreshArrayResultTail } from './rust-array-rules.js';
+import {ownedLocalPair} from './rust-owned-local-state.js';
 
 const unknown = (uncertain = false) => ({ floatSourceModel: null, wrappers: [], type: null, path: [], fields: null, textSourceModel: null, copyEvidence: false, proven: false, diverging: false, uncertain });
 const value = (copyEvidence = false, type = null) => ({ ...unknown(), proven: true, copyEvidence, type, textSourceModel: type?.kind === 'string' ? 'owned string' : null });
 const clone = origin => origin && ({ proven: true, diverging: false, uncertain: false, copyEvidence: false, fields: null, ...origin, wrappers: [...origin.wrappers], path: [...origin.path], fields: origin.fields?.map(clone) ?? null });
 
 export class RustSourceOrigins {
-  constructor(catalog = null, arrayResultModel = '') {
+  constructor(catalog = null, arrayResultModel = '',localValueStateModel='') {
+    this.localValueStateModel=localValueStateModel;
     this.arrayResultModel = arrayResultModel;
     this.freshCalls = new Set();
     this.collecting = catalog === null;
@@ -46,17 +48,20 @@ export class RustSourceOrigins {
   }
 
   requireProduct(origin, span) {
-    if (!this.collecting && (!origin.fields || !this.immutableProduct(origin))) {
+    if (!this.collecting && (!origin.fields || !this.immutableProduct(origin)&&!this.ownedLocalProduct(origin))) {
       throw unsupported('immutable Rust tuple product', 'every field requires a direct recursively immutable scalar Copy source value', span);
     }
   }
 
   product(node, path, span = node.span) {
     const fields = node.items.map(item => this.origin(item, path));
-    const origin = { ...value(fields.every(field => this.immutableProduct(field))), fields };
+    const type=this.localValueStateModel&&fields.every(field=>field.type)?{kind:'tuple',elements:fields.map(field=>field.type)}:null;
+    const origin = { ...value(fields.every(field => this.immutableProduct(field)),type), fields };
     this.requireProduct(origin, span);
     return this.mark(node, origin);
   }
+
+  ownedLocalProduct(origin){return Boolean(this.localValueStateModel&&ownedLocalPair(origin?.type)&&origin.proven&&!origin.wrappers.length&&origin.fields?.every(field=>field.proven&&!field.wrappers.length)&&(origin.fields[0].textSourceModel==='owned string'));}
 
   project(node, path, index, span = node.span) {
     const origin = this.origin(node.object, path);
@@ -230,7 +235,7 @@ export class RustSourceOrigins {
     if (!this.collecting && actual.arraySourceModel && actual.uncertain) throw unsupported('source array join', 'every array alternative needs the same proven source type and ownership', node.span);
     if (!this.collecting && actual.arraySourceModel === 'owned vector' && actual.wrappers.length === 0 && node.k !== 'array' && !actual.freshArrayValue) throw unsupported('owned vector binding', 'moving a local vector needs an explicit consumption proof', node.span);
     if (declared) this.argument(actual, declared, node.span);
-    this.scope.set(name, { ...clone(declared ?? actual), freshArrayValue: false });
+    this.scope.set(name, { ...clone(declared ?? actual), ...(this.localValueStateModel?{localValueCopy:false}:{}),freshArrayValue: false });
   }
 
   argument(actualOrigin, expectedOrigin, span) {

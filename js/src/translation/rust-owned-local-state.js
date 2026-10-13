@@ -1,0 +1,129 @@
+// Experimental owned value-state facts. Existing types and operators keep their meaning.
+import {readRuntimeProjectData} from '../project-data-loader.js';
+import {typeError} from './diagnostics.js';
+import {sameType} from './types.js';
+import {checkRustSourceSignature} from './rust-source-signatures.js';
+import {acceptRustOwnedLocalValueType,acceptRustOwnedLocalExpression,acceptRustOwnedLocalBinaryOperation} from './rust-owned-local-state-rules.js';
+export const RUST_OWNED_LOCAL_STATE_POLICY=readRuntimeProjectData(new URL('./data/rust-owned-local-state.lino',import.meta.url));
+const policy=RUST_OWNED_LOCAL_STATE_POLICY;
+const fail=reason=>{throw typeError('Rust owned local state proof: '+reason);};
+const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+const exact=(value,fields)=>{if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).length!==fields.length||fields.some(field=>!Object.hasOwn(value,field)))fail('unrecognized or missing owned fields');};
+export function ownedLocalType(type){return Boolean(type&&acceptRustOwnedLocalValueType(type.kind,String(type.bits??''),type.signed===true)&&same(Object.keys(type).sort(),(type.kind==='fixed'?['kind','bits','signed']:['kind']).sort()));}
+export function ownedLocalPair(type){return type?.kind==='tuple'&&same(Object.keys(type).sort(),['elements','kind'])&&type.elements?.length===2&&type.elements[0].kind==='string'&&ownedLocalType(type.elements[0])&&type.elements[1].kind==='fixed'&&ownedLocalType(type.elements[1]);}
+export function ownedLocalPosition(position){return ownedLocalType(position.type)&&position.wrappers.length===0&&position.lifetimes.length===0&&position.owner.arguments.length===0&&(position.type.kind==='string'?position.owner.kind==='library'&&position.owner.path.join('::')==='std::string::String':position.owner.kind==='primitive'&&position.owner.path.join('::')===(position.type.kind==='fixed'?'i32':'bool'));}
+
+function bodyRecords(body){
+ const bindings=[],reads=[];let visits=0;
+ function visit(node,path){
+  if(++visits>100000||path.length>256)fail('body exceeds its traversal limit');
+  if(node.k==='let'){visit(node.value,[...path,'value']);bindings.push({node,path});visit(node.body,[...path,'body']);return;}
+  if(node.k==='var'&&node.type.kind==='string'){reads.push({node,path,binding:node.name});return;}
+  if(node.k==='tupleIndex'){if(node.type.kind==='string'&&node.object.k==='var')reads.push({node,path,binding:node.object.name+'.'+node.index});return;}
+  for(const key of['arg','left','right','cond','then','else'])if(node[key])visit(node[key],[...path,key]);
+  for(const[index,item]of(node.items??[]).entries())visit(item,[...path,'items',index]);
+ }
+ visit(body,[]);return{bindings,reads};
+}
+export function prepareRustOwnedLocalStateProof(proof,body){
+ const value=structuredClone(proof),records=bodyRecords(body),used=new Set();
+ for(const binding of value.bindings){
+  if(binding.path!==null)continue;
+  const found=records.bindings.filter(record=>record.node.name===binding.name);if(found.length!==1)fail('each local version needs its actual unique checked binder');binding.path=found[0].path;
+ }
+ for(const read of value.reads){
+  if(read.path!==null)continue;
+  const found=records.reads.find(record=>!used.has(JSON.stringify(record.path))&&record.binding===read.binding&&same(record.node.span??null,read.span));if(!found)fail('every source move or copy needs its actual checked value occurrence');used.add(JSON.stringify(found.path));read.path=found.path;
+ }
+ for(const initializer of value.initializers){if(initializer.path===null)initializer.path=value.bindings.find(binding=>binding.name===initializer.binding)?.path??null;}
+ return value;
+}
+
+export function checkRustOwnedLocalStateProof(program){
+ const entries=[...program.declarations.values()];if(!entries.some(entry=>Object.hasOwn(entry,'sourceLocalState')))return;
+ if(program.sourceLanguage!=='Rust'||program.items.some(item=>item.k!=='fn')||program.main?.effects?.length||program.imports?.length||program.externals?.length||['referenceSemantics','utf16Strings','outputThreaded','abortsThreaded'].some(field=>Object.hasOwn(program,field)&&program[field]!==false))fail('the profile requires a complete flat value program without imports, effects or other runtime interpretations');
+ for(const entry of entries){
+  if(Object.keys(entry).some(field=>!policy.declarationFields.includes(field))||Object.values(entry).some(value=>value===undefined))fail('a function has unrepresented own fields');
+  if(entry.k!=='fn'||!Array.isArray(entry.modulePath)||entry.modulePath.length||entry.recursive!==false||Object.hasOwn(entry,'generated')&&entry.generated!==false||Object.hasOwn(entry,'mutual')&&entry.mutual!==false||entry.decreasing!=null||Object.hasOwn(entry,'sourceLoop')||Object.hasOwn(entry,'sourcePrimitiveOwners')||policy.reservedOwners.includes(entry.name))fail('a function has an unsupported declaration or standard owner context');
+  const proof=entry.sourceLocalState;exact(proof,policy.fields.proof);
+  const copies=proof.model===policy.models.copies;if(!copies&&proof.model!==policy.models.moves||proof.language!=='Rust'||proof.sourceName!==entry.name||!same(proof.interpretation,policy.interpretation))fail('the owned model or explicit value observation boundary is inconsistent');
+  checkRustSourceSignature(entry.sourceSignature,entry.params.map(parameter=>parameter.type),entry.ret,'Rust');
+  if(entry.params.some(parameter=>Object.keys(parameter).some(field=>!policy.parameterFields.includes(field))||Object.values(parameter).some(value=>value===undefined)))fail('a parameter has unrepresented own fields');
+  if(entry.ret.kind!=='string'||entry.sourceSignature.lifetimeBindings.length||[...entry.sourceSignature.parameters,entry.sourceSignature.result].some(position=>!ownedLocalPosition(position))||entry.params.some(parameter=>parameter.guard!=null||parameter.default!=null||Object.hasOwn(parameter,'optional')))fail('the actual standard interface and signed i32 domain must remain unchanged');
+  if(!Array.isArray(proof.bindings)||!Array.isArray(proof.reads)||!Array.isArray(proof.initializers))fail('state facts must retain their ordered roles');
+  const records=bodyRecords(entry.body),bindings=new Map(),reads=new Map();
+  if(records.bindings.length!==proof.bindings.length||records.reads.length!==proof.reads.length)fail('the owned state proof must cover every actual binder and String occurrence');
+  for(const[index,binding]of proof.bindings.entries()){
+   exact(binding,policy.fields.binding);
+   const key=JSON.stringify(binding.path),record=records.bindings.find(record=>same(record.path,binding.path));
+   if(!record||!same(record.path,records.bindings[index].path)||record.node.name!==binding.name||bindings.has(key)||!sameType(record.node.value.type,binding.type)||typeof binding.mutable!=='boolean'||!policy.roles.includes(binding.role)||typeof binding.sourceName!=='string'||!binding.sourceName||policy.reservedOwners.includes(binding.sourceName))fail('a local version contradicts its actual binding, order or value domain');
+   if(copies&&(binding.mutable||['replacement','join'].includes(binding.role)))fail('canonical copies do not claim original mutable source bindings');
+   if(!ownedLocalType(binding.type)&&!ownedLocalPair(binding.type))fail('a binding changes its actual text or signed i32 domain');
+   bindings.set(key,binding);
+  }
+  for(const[index,read]of proof.reads.entries()){
+   exact(read,policy.fields.read);const key=JSON.stringify(read.path),record=records.reads.find(record=>same(record.path,read.path));
+   if(!record||!same(record.path,records.reads[index].path)||record.binding!==read.binding||reads.has(key)||!sameType(read.type,record.node.type)||!same(read.span,record.node.span??null)||!policy.readModes.includes(read.mode)||!copies&&read.mode!=='move')fail('an owned move or copy disagrees with its actual occurrence and interpretation');
+   reads.set(key,read);
+  }
+  if(!copies&&(proof.initializers.length!==1||!proof.bindings.some(binding=>binding.role==='replacement')))fail('the original model requires one actual mutable tuple initialization and replacement');
+  if(copies&&proof.initializers.length)fail('canonical immutable output does not counterfeit original tuple state');
+  for(const initializer of proof.initializers){
+   exact(initializer,policy.fields.initializer);const binding=bindings.get(JSON.stringify(initializer.path));
+   if(!binding||binding.name!==initializer.binding||binding.role!=='tuple initializer'||!Array.isArray(initializer.fields)||initializer.fields.length!==2||new Set(initializer.fields).size!==2)fail('the initializer must own its once-evaluated tuple and ordered field slots');
+  }
+  let visits=0,mutable=null;
+  const clone=scope=>new Map([...scope].map(([name,value])=>[name,{...value,fields:value.fields?.map(field=>({...field}))}]));
+  function readValue(node,path,scope){
+   const key=JSON.stringify(path),fact=reads.get(key),name=node.k==='var'?node.name:node.object.name,entry=scope.get(name),value=node.k==='var'?entry:entry?.fields?.[node.index];
+   if(!value?.available)fail('a moved String or tuple field is used again');
+   if(!fact||fact.binding!==(node.k==='var'?name:name+'.'+node.index))fail('a String use lacks its actual owned source occurrence');
+   if(fact.mode==='move')value.available=false;
+  }
+  function expression(node,path,scope,state=new Map(),expectedJoin=null){
+   if(++visits>100000||path.length>256)fail('state proof exceeds its semantic traversal limit');
+   if(!node||!acceptRustOwnedLocalExpression(node.k)||Object.keys(node).some(field=>!policy.expressions[node.k].includes(field))||Object.values(node).some(value=>value===undefined)||(!ownedLocalType(node.type)&&!ownedLocalPair(node.type)))fail('an expression has an unsupported value shape or domain');
+   if(node.k==='lit'){
+    if(node.type.kind==='string'&&typeof node.value!=='string'||node.type.kind==='bool'&&typeof node.value!=='boolean')fail('a primitive literal differs from its actual value domain');
+    if(node.type.kind==='fixed'&&(typeof node.value!=='string'||!/^[-]?\d+$/u.test(node.value)||BigInt(node.value)<-2147483648n||BigInt(node.value)>2147483647n))fail('an integer literal exceeds its actual signed i32 domain');
+    if(node.type.kind==='string'&&Array.from(node.value).some(character=>{const code=character.codePointAt(0);return code>=0xd800&&code<=0xdfff;}))fail('text literals must remain valid Unicode scalar String values');
+    return;
+   }
+   if(node.k==='var'){
+    const value=scope.get(node.name);if(!value||!sameType(value.type,node.type))fail('a value has no actual lexical owner');
+    if(node.type.kind==='tuple')fail('whole tuple reads need their own partial-move proof');
+    if(expectedJoin&&node.name!==state.get(expectedJoin))fail('a conditional state result must be its current owned String slot');
+    if(node.type.kind==='string')readValue(node,path,scope);return;
+   }
+   if(node.k==='tupleIndex'){
+    if(node.object.k!=='var'||![0,1].includes(node.index)||!ownedLocalPair(node.object.type)||!scope.has(node.object.name)||!sameType(scope.get(node.object.name).type,node.object.type)||!sameType(node.type,node.object.type.elements[node.index]))fail('tuple field layout or lexical ownership changed');
+    if(node.type.kind==='string')readValue(node,path,scope);return;
+   }
+   if(node.k==='tuple'){if(!ownedLocalPair(node.type)||node.items.length!==2)fail('an initializer has the wrong owned tuple layout');node.items.forEach((item,index)=>expression(item,[...path,'items',index],scope,state));return;}
+   if(node.k==='binary'){
+    if(!acceptRustOwnedLocalBinaryOperation(node.op)||node.type.kind!=='bool'||node.left.type.kind==='string'||!sameType(node.left.type,node.right.type)||node.domain&&(!ownedLocalType(node.domain)||!sameType(node.domain,node.left.type)))fail('only exact equality in the actual Boolean/i32 domain is admitted');
+    expression(node.left,[...path,'left'],scope,state);expression(node.right,[...path,'right'],scope,state);return;
+   }
+   if(node.k==='toString'){if(node.arg.k!=='lit'||node.arg.type.kind!=='string')fail('the constructor must be an actual standard literal String value');expression(node.arg,[...path,'arg'],scope,state);return;}
+   if(node.k==='if'){
+    if(node.cond.type.kind!=='bool')fail('a condition must retain its actual Boolean type');
+    expression(node.cond,[...path,'cond'],scope,state);const thenScope=clone(scope),elseScope=clone(scope);expression(node.then,[...path,'then'],thenScope,new Map(state),expectedJoin);expression(node.else,[...path,'else'],elseScope,new Map(state),expectedJoin);
+    for(const[name,value]of scope){value.available=value.available&&thenScope.get(name).available&&elseScope.get(name).available;value.fields?.forEach((field,index)=>{field.available=field.available&&thenScope.get(name).fields[index].available&&elseScope.get(name).fields[index].available;});}return;
+   }
+   const fact=bindings.get(JSON.stringify(path));if(!fact||scope.has(node.name))fail('each actual version requires its distinct lexical owner');
+   expression(node.value,[...path,'value'],scope,state,fact.role==='join'?fact.sourceName:null);
+   const inner=clone(scope),next=new Map(state);
+   if(fact.role==='tuple field'){
+    if(!proof.initializers.some(initializer=>initializer.binding===fact.initializer&&initializer.fields[fact.index]===fact.sourceName)||node.value.k!=='tupleIndex'||node.value.object.name!==fact.initializer||node.value.index!==fact.index||fact.mutable!==(fact.index===0))fail('the once-evaluated tuple field and source mutability were changed');
+    if(fact.mutable){if(mutable&&mutable!==fact.sourceName)fail('only one tuple-owned mutable String slot is admitted');mutable=fact.sourceName;next.set(fact.sourceName,node.name);}
+   }else if(['replacement','join'].includes(fact.role)){
+    if(fact.sourceName!==mutable||fact.previous!==state.get(mutable)||fact.type.kind!=='string'||fact.mutable||fact.role==='join'&&node.value.k!=='if')fail('replacement order or state ownership changed');
+    if(inner.has(fact.previous))inner.get(fact.previous).available=false;next.set(mutable,node.name);
+   }else if(fact.mutable||fact.previous!==null||fact.initializer!==null||fact.index!==null)fail('an immutable binding has contradictory source state fields');
+   const value={type:node.value.type,available:true};if(ownedLocalPair(value.type))value.fields=[{type:{kind:'string'},available:true},{type:value.type.elements[1],available:true}];inner.set(node.name,value);
+   expression(node.body,[...path,'body'],inner,next,expectedJoin);
+   for(const[name,value]of scope){value.available=value.available&&inner.get(name).available;value.fields?.forEach((field,index)=>{field.available=field.available&&inner.get(name).fields[index].available;});}
+  }
+  expression(entry.body,[],new Map(entry.params.map(parameter=>[parameter.name,{type:parameter.type,available:true}])));
+ }
+}

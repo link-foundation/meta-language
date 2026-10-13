@@ -8,6 +8,7 @@
 import { typeError, unsupported } from './diagnostics.js';
 import { checkRustSourceSignature } from './rust-source-signatures.js';
 import {prepareRustPrimitiveOwnerProof,checkRustPrimitiveOwnerProof} from './rust-primitive-owners.js';
+import {prepareRustOwnedLocalStateProof,checkRustOwnedLocalStateProof} from './rust-owned-local-state.js';
 import { acceptArgumentCount, acceptCheckedTypeQueryOperand, acceptTypeQueryOperand, readTypeQueryResult } from './frontend-rules.js';
 import { normaliseProof } from './proof.js';
 import { referenceOperation } from './reference-model.js';
@@ -138,6 +139,7 @@ class Checker {
     }
     analyseRecursion(program);
     checkRustPrimitiveOwnerProof(program);
+    checkRustOwnedLocalStateProof(program);
     return program;
   }
 
@@ -209,6 +211,7 @@ class Checker {
         const env = new Map(entry.params.map((param) => [param.name, param.type]));
         entry.body = coerce(this.expr(item.body, env, itemPath, entry.ret), entry.ret, this.language, item.span);
         if(item.sourcePrimitiveOwners!==undefined)entry.sourcePrimitiveOwners=prepareRustPrimitiveOwnerProof(item.sourcePrimitiveOwners,entry.body);
+        if(item.sourceLocalState!==undefined)entry.sourceLocalState=prepareRustOwnedLocalStateProof(item.sourceLocalState,entry.body);
         if (entry.sourceLoop !== undefined) checkRustScalarLoopProof(entry, this.language);
       } else if (item.k === 'theorem') {
         entry.binders = item.binders.map((binder) => ({ name: binder.name, type: this.resolveType(binder.type, itemPath, item.span) }));
