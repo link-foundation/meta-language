@@ -16,6 +16,35 @@ export function readRustConditionalCompletion(thenKind, otherwiseKind, hasElse, 
   if (thenKind === "value" && otherwiseKind === "value" && hasElse === true && continuation === false) return "conditional value";
   if (thenKind === "returned" && otherwiseKind === "returned" && hasElse === true && continuation === true) return "unreachable continuation";
   if (thenKind === "value" && otherwiseKind === "value" && hasElse === true && continuation === true) return "discarded conditional value";
+  if (thenKind === "returned" && otherwiseKind === "aborted" && hasElse === true && continuation === false) return "returned conditional";
+  if (thenKind === "returned" && otherwiseKind === "aborted" && hasElse === true && continuation === true) return "unreachable continuation";
+  if (thenKind === "aborted" && otherwiseKind === "returned" && hasElse === true && continuation === false) return "returned conditional";
+  if (thenKind === "aborted" && otherwiseKind === "returned" && hasElse === true && continuation === true) return "unreachable continuation";
+  if (thenKind === "aborted" && otherwiseKind === "aborted" && hasElse === true && continuation === false) return "aborted conditional";
+  if (thenKind === "aborted" && otherwiseKind === "aborted" && hasElse === true && continuation === true) return "unreachable continuation";
+  if (thenKind === "value" && otherwiseKind === "aborted" && hasElse === true && continuation === false) return "conditional value";
+  if (thenKind === "value" && otherwiseKind === "aborted" && hasElse === true && continuation === true) return "discarded conditional value";
+  if (thenKind === "aborted" && otherwiseKind === "value" && hasElse === true && continuation === false) return "conditional value";
+  if (thenKind === "aborted" && otherwiseKind === "value" && hasElse === true && continuation === true) return "discarded conditional value";
+  if (thenKind === "aborted" && otherwiseKind === "" && hasElse === false && continuation === true) return "guarded continuation";
+  return "unsupported completion";
+}
+
+/** @param {string} action @param {string} thenKind @param {string} otherwiseKind @returns {string} */
+export function readRustCompletionKind(action, thenKind, otherwiseKind) {
+  if (action === "returned conditional" && thenKind === "returned" && otherwiseKind === "returned") return "returned";
+  if (action === "conditional value" && thenKind === "value" && otherwiseKind === "value") return "value";
+  if (action === "returned conditional" && thenKind === "returned" && otherwiseKind === "aborted") return "returned";
+  if (action === "returned conditional" && thenKind === "aborted" && otherwiseKind === "returned") return "returned";
+  if (action === "aborted conditional" && thenKind === "aborted" && otherwiseKind === "aborted") return "aborted";
+  if (action === "conditional value" && thenKind === "value" && otherwiseKind === "aborted") return "value";
+  if (action === "conditional value" && thenKind === "aborted" && otherwiseKind === "value") return "value";
+  if (action === "guarded continuation" && thenKind === "returned" && otherwiseKind === "value") return "value";
+  if (action === "guarded continuation" && thenKind === "returned" && otherwiseKind === "returned") return "returned";
+  if (action === "guarded continuation" && thenKind === "returned" && otherwiseKind === "aborted") return "returned";
+  if (action === "guarded continuation" && thenKind === "aborted" && otherwiseKind === "value") return "value";
+  if (action === "guarded continuation" && thenKind === "aborted" && otherwiseKind === "returned") return "returned";
+  if (action === "guarded continuation" && thenKind === "aborted" && otherwiseKind === "aborted") return "aborted";
   return "unsupported completion";
 }
 

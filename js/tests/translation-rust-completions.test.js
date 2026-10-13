@@ -9,7 +9,7 @@ import {checkProgram} from '../src/translation/check.js';
 import {emitJavaScript} from '../src/translation/emit-javascript.js';
 import {createTypedProgramLinks,decodeTypedProgramLinks,emitTypedProgramLinks} from '../src/typed-program-links.js';
 import {LinkNetwork} from '../src/network.js';
-import {acceptRustCompletionModel,acceptRustReturnOwnership,readRustConditionalCompletion} from '../src/translation/rust-completion-rules.js';
+import {acceptRustCompletionModel,acceptRustReturnOwnership,readRustConditionalCompletion,readRustCompletionKind} from '../src/translation/rust-completion-rules.js';
 
 const fixture=readProjectData(new URL('../../parity/fixtures/rust-completions.lino',import.meta.url));
 const options=entry=>({completionModel:fixture.completionModel,...(entry.arrayResultModel?{arrayResultModel:entry.arrayResultModel}:{})});
@@ -122,4 +122,18 @@ test('shared completion decisions admit only closed guards and proved direct own
   assert.equal(readRustConditionalCompletion('returned','returned',true,true),'unreachable continuation');
   assert.equal(readRustConditionalCompletion('value','value',true,true),'discarded conditional value');
   for(const row of [['value','',false,true],['returned','',false,false],['returned','value',true,false],['unknown','returned',true,false]])assert.equal(readRustConditionalCompletion(...row),'unsupported completion');
+  assert.equal(readRustConditionalCompletion('value','aborted',true,false),'conditional value');
+  assert.equal(readRustConditionalCompletion('aborted','value',true,false),'conditional value');
+  assert.equal(readRustConditionalCompletion('aborted','aborted',true,false),'aborted conditional');
+  assert.equal(readRustCompletionKind('guarded continuation','returned','aborted'),'returned');
+  assert.equal(readRustCompletionKind('returned conditional','aborted','returned'),'returned');
+  assert.equal(readRustCompletionKind('aborted conditional','aborted','aborted'),'aborted');
+  assert.equal(readRustCompletionKind('guarded continuation','aborted','value'),'value');
+  const hiddenReturn='fn f(flag:bool,choice:bool)->bool{if flag{if choice{return true;}panic!("stop");}else{false}}fn main(){}';
+  assert.throws(()=>checkProgram(parseRust(hiddenReturn,options({}))),/guarded return completion/u,'a source-return path cannot become an aborted-only branch');
+  const onlyAborts='fn choose(flag:bool,choice:bool)->String{if flag{if choice{panic!("first");}else{panic!("second");}}String::from("safe")}fn main(){println!("{}",choose(false,false));}';
+  const code=emitJavaScript(checkProgram(parseRust(onlyAborts,options({})))).text;
+  const checked=run(code);assert.deepEqual(checked.output,['safe']);
+  assert.throws(()=>checked.context.choose(true,true),/first/u);
+  assert.throws(()=>checked.context.choose(true,false),/second/u);
 });

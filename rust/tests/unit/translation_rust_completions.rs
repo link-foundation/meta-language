@@ -406,3 +406,26 @@ fn canonical_literal_panic_replays_exact_data_and_preserves_default_refusals() {
         assert_eq!(serde_json::to_value(error.span).unwrap(), case["span"]);
     }
 }
+
+#[test]
+fn terminal_divergent_branches_do_not_hide_actual_function_return_paths() {
+    let model = "closed guarded function returns 1";
+    let hidden_return = "fn f(flag:bool,choice:bool)->bool{if flag{if choice{return true;}panic!(\"stop\");}else{false}}fn main(){}";
+    let error = parse_rust_with_completion_model(hidden_return, model)
+        .and_then(|surface| check_program(&surface))
+        .expect_err("a return path is not an aborted-only branch");
+    assert!(error.reason.starts_with("guarded return completion:"));
+    let source = "fn choose(flag:bool,choice:bool)->String{if flag{if choice{panic!(\"first\");}else{panic!(\"second\");}}String::from(\"safe\")}fn main(){println!(\"{}\",choose(false,false));}";
+    let program = check_program(&parse_rust_with_completion_model(source, model).unwrap()).unwrap();
+    let directory = TemporaryDirectory::new("rust-aborted-completions");
+    assert_eq!(rust_output(source, &directory.0, "original"), ["safe"]);
+    assert_eq!(
+        rust_output(&emit_rust(&program).unwrap().text, &directory.0, "emitted"),
+        ["safe"]
+    );
+    let javascript = format!(
+        "{}\nfor (const choice of [true,false]) {{try {{choose(true,choice);}} catch(error) {{console.log(error.message);}}}}",
+        emit_javascript(&program).unwrap().text
+    );
+    assert_eq!(javascript_output(&javascript), ["safe", "first", "second"]);
+}

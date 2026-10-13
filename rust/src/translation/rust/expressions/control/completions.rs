@@ -2,14 +2,14 @@
 //! Mirrors `js/src/translation/rust-completions.js`; no new semantic operation.
 
 use super::super::super::completion_rules::{
-    accept_rust_return_ownership, read_rust_conditional_completion,
+    accept_rust_return_ownership, read_rust_completion_kind, read_rust_conditional_completion,
 };
 use super::super::super::{
     Options, Result, RustParser, SExpr, SNode, Token, TokenKind, is_if_or_match, span, unsupported,
 };
 
 struct Completion {
-    kind: &'static str,
+    kind: String,
     expression: SExpr,
 }
 
@@ -100,7 +100,7 @@ impl RustParser {
             ));
         }
         Ok(Completion {
-            kind: "returned",
+            kind: "returned".into(),
             expression,
         })
     }
@@ -149,7 +149,7 @@ impl RustParser {
             return Err(Self::fail("expected }", self.cursor.peek()));
         }
         Ok(Completion {
-            kind: if abort { "returned" } else { "value" },
+            kind: if abort { "aborted" } else { "value" }.into(),
             expression,
         })
     }
@@ -184,18 +184,14 @@ impl RustParser {
         };
         let terminated = self.cursor.eat(";").is_some();
         let action = read_rust_conditional_completion(
-            then.kind,
-            otherwise.as_ref().map_or("", |result| result.kind),
+            &then.kind,
+            otherwise.as_ref().map_or("", |result| result.kind.as_str()),
             has_else,
             !self.cursor.is("}"),
         );
         let otherwise =
             self.completion_continuation(otherwise, &action, terminated, path, open, &token)?;
-        let kind = if action == "conditional value" {
-            "value"
-        } else {
-            otherwise.kind
-        };
+        let kind = read_rust_completion_kind(&action, &then.kind, &otherwise.kind);
         let origin = self.origins.join(&[
             self.origins.origin(&then.expression, path),
             self.origins.origin(&otherwise.expression, path),
@@ -222,7 +218,7 @@ impl RustParser {
     ) -> Result<Completion> {
         let otherwise = match action {
             "guarded continuation" => self.completion_sequence(path, open)?,
-            "returned conditional" => otherwise.ok_or_else(|| {
+            "returned conditional" | "aborted conditional" => otherwise.ok_or_else(|| {
                 unsupported(
                     "guarded return completion",
                     "the shared policy requires both branches",

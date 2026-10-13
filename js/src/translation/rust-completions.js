@@ -1,7 +1,7 @@
 // Thin source parser orchestration over the shared completion decisions.
 // A completion is private parser state, never a new semantic operation.
 import {unsupported} from './diagnostics.js';
-import {acceptRustReturnOwnership,readRustConditionalCompletion} from './rust-completion-rules.js';
+import {acceptRustReturnOwnership,readRustConditionalCompletion,readRustCompletionKind} from './rust-completion-rules.js';
 
 export function readRustFunctionCompletion(parser,path) {
   return block(parser,path).expression;
@@ -47,7 +47,7 @@ function sequence(parser,path,open) {
       if(['if','match','block'].includes(expression.k))throw unsupported('expression statement','a block value must be its last expression',expression.span);
       throw parser.fail('expected }');
     }
-    result={kind:expression.k==='abort'?'returned':'value',expression};
+    result={kind:expression.k==='abort'?'aborted':'value',expression};
   }
   const origin=parser.origins.origin(result.expression,path);
   result.expression=bindings.reduceRight((body,binding)=>({k:'let',...binding,body,span:binding.span}),result.expression);
@@ -72,6 +72,7 @@ function conditional(parser,path,open) {
       otherwise=sequence(parser,path,open);
       break;
     case 'returned conditional':
+    case 'aborted conditional':
       break;
     case 'conditional value':
       if(terminated)throw unsupported('expression statement','statements with effects are outside the portable core in function bodies',range(token,c.peek()));
@@ -85,5 +86,5 @@ function conditional(parser,path,open) {
   }
   const expression={k:'if',cond,then:then.expression,else:otherwise.expression,span:range(token,c.peek())};
   parser.origins.mark(expression,parser.origins.join([parser.origins.origin(then.expression,path),parser.origins.origin(otherwise.expression,path)]));
-  return {kind:action==='conditional value'?'value':otherwise.kind,expression};
+  return {kind:readRustCompletionKind(action,then.kind,otherwise.kind),expression};
 }
