@@ -105,7 +105,7 @@ pub fn accept_java_script_scoped_binding_own_field(role: &str, kind: &str, field
             && ((field == "effects" || field == "span")
                 || field == "sequentialAsync")))
         || ((role == "declaration" && kind == "fn")
-            && ((((((((((((((field == "k" || field == "name")
+            && (((((((((((((((field == "k" || field == "name")
                 || field == "fullName")
                 || field == "modulePath")
                 || field == "params")
@@ -118,7 +118,8 @@ pub fn accept_java_script_scoped_binding_own_field(role: &str, kind: &str, field
                 || field == "generated")
                 || field == "sourceSignature")
                 || field == "sourceLoop")
-                || field == "sourcePrimitiveOwners")))
+                || field == "sourcePrimitiveOwners")
+                || field == "sourceEmptyOption")))
         || ((role == "parameter" && kind == "")
             && ((((field == "name" || field == "type") || field == "span")
                 || field == "guard")
@@ -175,7 +176,8 @@ pub fn accept_java_script_scoped_binding_own_field(role: &str, kind: &str, field
 /// Apply the shared owned scoped binding emission policy.
 #[must_use]
 pub fn accept_java_script_scoped_binding_source_facet(field: &str, record: bool) -> bool {
-    ((field == "sourceSignature" || field == "sourceLoop") || field == "sourcePrimitiveOwners")
+    (((field == "sourceSignature" || field == "sourceLoop") || field == "sourcePrimitiveOwners")
+        || field == "sourceEmptyOption")
         && record
 }
 

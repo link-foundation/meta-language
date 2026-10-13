@@ -3,6 +3,7 @@ import {validateLinkedTypedProgram} from '../typed-program-links-validation.js';
 import {recheckLinkedTypedProgram} from '../typed-program-checked-projection.js';
 import {checkRustScalarLoopProof} from './rust-scalar-loops.js';
 import {checkRustSourceSignature} from './rust-source-signatures.js';
+import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 import {unsupported} from './diagnostics.js';
 import {acceptJavaScriptScopedBindingEmissionModel, acceptJavaScriptScopedBindingEmissionContext,
   acceptJavaScriptScopedBindingEmissionReferenceContext,
@@ -19,6 +20,7 @@ const fail = detail => { throw unsupported('JavaScript scoped binding emission',
 export function readJavaScriptScopedBindingEmission(program, model) {
   if (!acceptJavaScriptScopedBindingEmissionModel(model)) throw unsupported('JavaScript scoped binding emission model', `select ${JAVASCRIPT_SCOPED_BINDING_EMISSION_POLICY.model}`);
   validateLinkedTypedProgram(program);
+  checkRustEmptyOptionProof(program);
   const ownFields=(value,role,kind='')=>{
     if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(field=>!acceptJavaScriptScopedBindingOwnField(role,kind,field))) fail('a checked '+role+' has unrepresented own fields');
     if(role!=='program'&&Object.keys(value).some(field=>!acceptJavaScriptScopedBindingDefinedField(value[field]===undefined)))fail('a checked '+role+' has an explicitly undefined field');
