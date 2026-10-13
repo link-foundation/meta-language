@@ -213,12 +213,18 @@ The authorized bulk workflow obtains the latest repository refs, uses the
 maximum useful independent agent delegation, commits every contributor's owned
 work, and reserves pushing for one coordinator. That coordinator verifies prior
 CI is finished and every prior error has a concrete fix before the next reviewed
-batch push. Local validation uses targeted JavaScript checks and never compiles
+batch push. A feedback push does not finish the authorized work: the coordinator
+continues implementation and CI follow-up until the required work is complete,
+as reiterated in the [captured follow-through instruction](../parity/sources/ci-follow-through-2026-10-13.txt).
+Local validation uses targeted JavaScript checks and never compiles
 Rust; compiled parity and expensive workloads belong to CI.
-The later instruction to gradually reduce agents is retained as a separate
-hashed source and critical workflow obligation. Active contributors finish their
-existing work, after which the coordinator continues alone. This changes the
-remaining coordination phase and preserves every earlier project requirement.
+The instruction to gradually reduce agents remains a separate hashed source and
+critical obligation for that historical coordination phase. Contributors finished
+their existing work and the coordinator continued alone. The subsequent
+[instruction to expand delegation](../parity/sources/expanded-agent-delegation-2026-10-13.txt)
+authorizes the current phase: split useful independent work among additional
+agents, retain clear ownership and contributor commits, and preserve one push
+coordinator. This operational steering preserves every earlier project requirement.
 
 ### Associative data storage
 

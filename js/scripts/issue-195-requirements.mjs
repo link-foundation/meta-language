@@ -83,6 +83,10 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'parity/sources/associative-data-storage-2026-10-12.txt',
   agentReductionRequest:
     'parity/sources/gradual-agent-reduction-2026-10-12.txt',
+  ciFollowThroughRequest:
+    'parity/sources/ci-follow-through-2026-10-13.txt',
+  expandedDelegationRequest:
+    'parity/sources/expanded-agent-delegation-2026-10-13.txt',
   grammarInferenceIssue:
     'https://github.com/link-foundation/meta-language/issues/224',
 });
