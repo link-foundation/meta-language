@@ -672,6 +672,7 @@ impl JavaScriptParser {
                 source_empty_option: None,
                 source_loop: Some(Box::new(proof)),
                 source_type_namespace: None,
+                source_local_state: None,
                 span: Some(self.to_here(doc_token)),
                 generated: false,
             });
@@ -739,6 +740,7 @@ impl JavaScriptParser {
             source_primitive_owners: None,
             source_empty_option: None,
             source_type_namespace: None,
+            source_local_state: None,
             source_loop: None,
             body,
             span: Some(self.to_here(doc_token)),
