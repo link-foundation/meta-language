@@ -371,6 +371,55 @@ const nativeRuleConcepts = (text) => [...text.matchAll(/^\(rule ([a-z0-9_]+) [^\
  */
 export const NAME_INVENTORIES = Object.freeze([
   {
+    inventory: 'formal function graph adapters',
+    files: ['js/src/formal-function-links.js', 'rust/src/formal_function_links.rs'],
+    extract: (text) => captures(text, /^(?:function|fn) (redirectSignature|redirect_signature|importSelection|import_selection)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `formal.${name === 'redirect-signature' ? 'redirect-function-signature' : 'import-function-selection'}`,
+  },
+  {
+    inventory: 'Rust source profile adapter operations',
+    files: ['js/src/translation/rust-float-predicates.js', 'rust/src/translation/rust/float_predicates.rs',
+      'js/src/translation/rust-scalar-parameters.js', 'rust/src/translation/rust/scalar_parameters.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub\(super\) fn) ([a-zA-Z_]+)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${name === 'expression' ? 'create-rust-floating-point-predicate-expression' : name.replaceAll('float-predicate', 'floating-point-predicate')}`,
+  },
+  {
+    inventory: 'formal function selector boundary',
+    files: ['js/src/index.d.ts', 'rust/src/formal_function_links.rs'],
+    extract: (text) => captures(text, /^(?:export type|pub enum) (FormalFunctionSelector)/gmu).map(() => 'formal-function-selector'),
+    recordOf: (name) => `formal.${name}`,
+  },
+  {
+    inventory: 'formal function definition operations',
+    files: ['js/src/formal-function-rules.js', 'js/src/formal-function-links.js', 'rust/src/formal_function_rules.rs', 'rust/src/formal_function_links.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub fn) ([a-zA-Z_]+)\(/gmu)
+      .filter(name => /FormalFunction|formal_function/u.test(name))
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `formal.${name}`,
+  },
+  {
+    inventory: 'formal function definition entry',
+    files: ['js/src/formal-function-links.js', 'rust/src/formal_function_links.rs'],
+    extract: (text) => text.includes('selected_function_definition') ? ['selected-function-definition'] : [],
+    recordOf: (name) => `formal.${name}`,
+  },
+  {
+    inventory: 'Rust floating point predicate admission operations',
+    files: ['js/src/translation/rust-float-predicate-rules.js', 'rust/src/translation/rust/float_predicate_rules.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub fn) ([a-zA-Z_]+)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${name.replaceAll('float-predicate', 'floating-point-predicate')}`,
+  },
+  {
+    inventory: 'Rust read only scalar parameter operations',
+    files: ['js/src/translation/rust-scalar-parameter-rules.js', 'rust/src/translation/rust/scalar_parameter_rules.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub fn) ([a-zA-Z_]+)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${name.replaceAll('unwritten-scalar', 'read-only-scalar')}`,
+  },
+  {
     inventory: 'resource triple syntax operations',
     files: ['js/src/resource-description-ntriples.js', 'js/src/resource-description-ntriples-rules.js',
       'js/src/resource-description-ntriples-characters.js', 'rust/src/resource_description_ntriples.rs',

@@ -14,6 +14,8 @@ pub mod document_formatting;
 mod docx_parser;
 mod embedded_region_parser;
 mod formal_concept_definition;
+mod formal_function_links;
+mod formal_function_rules;
 mod foundation_models;
 mod global_concept_rules;
 mod global_concept_space;
@@ -121,6 +123,7 @@ pub use formal_concept_definition::{
     encode_formal_concept_definition, prove_formal_concept_equivalence,
     read_formal_concept_definition, verify_formal_concept_equivalence,
 };
+pub use formal_function_links::{FormalFunctionSelector, encode_formal_function_definition};
 pub use foundation_models::{
     CORRESPONDENCE_KINDS, FoundationCorrespondence, FoundationDistinction, FoundationFamily,
     FoundationModel, FoundationProblem, FoundationRegister, LOGIC_FAMILIES, LanguageFoundation,
@@ -364,8 +367,8 @@ pub use translation_rules::{
 pub use tree_sitter_adapter::{GrammarNames, grammar_names};
 pub use typed_program_links::{
     TypedProgramLinks, TypedProgramLinksEmission, TypedProgramLinksError, TypedProgramLinksLimits,
-    create_typed_program_links, decode_typed_program_links, emit_typed_program_links,
-    encode_typed_program_links,
+    create_typed_program_links, create_typed_program_links_with_rust_array_result_model,
+    decode_typed_program_links, emit_typed_program_links, encode_typed_program_links,
 };
 pub use verification::{VerificationIssue, VerificationIssueKind, VerificationReport};
 

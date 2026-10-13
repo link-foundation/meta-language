@@ -71,6 +71,23 @@ export const contractEvidence = {tripleCount:graph.triples.length,sourceCount:re
       name: 'reject-decoded-literal-without-metadata', expectedDiagnostics: ['TS2322'],
       source: `import type { DecodedResourceDescriptionTerm } from ${module};\nconst term:DecodedResourceDescriptionTerm={kind:'literal',value:'text'};\n`,
     },
+    {
+      name: 'valid-selected-vector-profile-and-formal-function', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, encodeFormalFunctionDefinition } from ${module};
+import type { FormalConceptArchive } from ${module};
+const packet = createTypedProgramLinks('fn values()->Vec<f64>{vec![1f64]} fn main(){}','Rust',
+  {rustArrayResultModel:'immutable fresh scalar vector results 1',provenance:{consumer:'typed'}});
+const definition:FormalConceptArchive = encodeFormalFunctionDefinition(packet,'values',{provenance:'selected'});
+`,
+    },
+    {
+      name: 'reject-unknown-vector-result-profile', expectedDiagnostics: ['TS2322'],
+      source: `import { createTypedProgramLinks } from ${module};\ncreateTypedProgramLinks('fn main(){}','Rust',{rustArrayResultModel:'unknown model'});\n`,
+    },
+    {
+      name: 'reject-source-text-in-place-of-formal-function-graph', expectedDiagnostics: ['TS2345'],
+      source: `import { encodeFormalFunctionDefinition } from ${module};\nencodeFormalFunctionDefinition('opaque source text','function');\n`,
+    },
   ];
 }
 

@@ -551,9 +551,29 @@ jobs:
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-rust-array-rules.mjs --check
 
+      - name: Check generated Rust floating point predicate rules
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-rust-float-predicate-rules.mjs --check
+
+      - name: Check shared Rust floating point predicate fixtures
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-rust-float-predicate-fixtures.mjs --check
+
+      - name: Check generated read-only Rust scalar parameter rules
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-rust-scalar-parameter-rules.mjs --check
+
+      - name: Check shared read-only Rust scalar parameter fixtures
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-rust-scalar-parameter-fixtures.mjs --check
+
       - name: Check shared Rust array source fixtures
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-rust-array-source-fixtures.mjs --check
+
+      - name: Check shared fresh Rust scalar vector result fixtures
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-rust-array-result-fixtures.mjs --check
 
       - name: Check generated Rust string continuation rules
         if: ${{ !cancelled() }}
@@ -566,6 +586,14 @@ jobs:
       - name: Check shared TypeScript documentation pattern fixtures
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-typescript-documentation-fixtures.mjs --check
+
+      - name: Check generated formal function selection rules
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-formal-function-rules.mjs --check
+
+      - name: Check shared formal function definition fixtures
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-formal-function-fixtures.mjs --check
 
       - name: Check strict public declaration consumers
         if: ${{ !cancelled() }}

@@ -138,6 +138,13 @@ length conversion explicitly projected to the Number model. Ownership moves,
 borrowed results, mutable arrays and full generated runtime wrappers still need
 their separate obligations. Rust string continuations and CRLF normalization
 use shared checked rules while preserving original source-token spans.
+The explicit fresh scalar vector result profile admits owned constructor tails
+and preserves its source profile and caller provenance through typed links.
+Existing default-profile refusals remain available. Proven primitive binary
+floating point predicate receivers use shared linked expression templates with
+one receiver evaluation. Read-only scalar `mut` parameters require a complete
+assignment-free body and ordinary source-owner validation; mutable writes and
+full generated-source reimport remain separate obligations.
 Its shared schema gives abbreviated host fields readable English
 relation names, including the Unicode code unit string model. The finite formal
 definition adapter checks closed recursive correspondences under supported
@@ -146,6 +153,12 @@ certificate carries both premises and every node pair; counterfeit or missing
 premises cannot authorize sharing. These conditional operational witnesses do
 not provide deep formal definitions for every catalog concept or prove arbitrary
 source-language equivalence.
+Individual function definitions can now retain the selected declaration's actual
+closed recursive dependencies under that checked model. An interpreted call
+wrapper identifies the selected function; unrelated declarations and main effects
+do not enter this function-specific meaning. Public names, source language,
+types and executable operators remain explicit premises. Captured externals,
+non-flat declarations and broader equivalence require separate proofs.
 Formal relation comparison also validates the actual label self-points and
 anonymous relation edges under their declared interpretation. Matching spelling
 cannot hide a different namespace, definition or identity premise.

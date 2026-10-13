@@ -890,7 +890,8 @@ export interface TypedProgramLinksEmission {
 export function createTypedProgramLinks(
   source: string,
   language: string,
-  options?: { provenance?: unknown; utf16Strings?: boolean; context?: object },
+  options?: { provenance?: unknown; utf16Strings?: boolean; context?: object;
+    rustArrayResultModel?: 'immutable fresh scalar vector results 1' },
 ): TypedProgramLinks;
 export function encodeTypedProgramLinks(
   program: CheckedTypedProgram,
@@ -1720,6 +1721,13 @@ export function encodeFormalConceptDefinition(
 export function readFormalConceptDefinition(
   value: FormalConceptArchive | PortableFormalConceptArchive,
 ): FormalConceptDefinition;
+/** Extracts the selected checked function and its actual closed recursive dependency links. */
+export type FormalFunctionSelector = string | number | LinkId;
+export function encodeFormalFunctionDefinition(
+  value: TypedProgramLinks | PortableFormalConceptArchive,
+  declaration: FormalFunctionSelector,
+  options?: { provenance?: unknown },
+): FormalConceptArchive;
 /** Returns a closed correspondence under the declared model, or null if none is proved. */
 export function proveFormalConceptEquivalence(
   first: FormalConceptArchive | PortableFormalConceptArchive,

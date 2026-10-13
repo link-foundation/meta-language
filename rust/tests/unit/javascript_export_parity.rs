@@ -398,6 +398,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     (
+        "encodeFormalFunctionDefinition",
+        "encode_formal_function_definition",
+        "function",
+    ),
+    (
         "encodeLinkNetworkBinary",
         "encode_link_network_binary",
         "function",
