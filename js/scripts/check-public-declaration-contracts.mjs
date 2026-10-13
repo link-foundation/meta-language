@@ -13,6 +13,7 @@ const publicModule = fileURLToPath(new URL('../src/index.js', import.meta.url));
 export function publicDeclarationConsumers(moduleSpecifier = publicModule) {
   const module = JSON.stringify(moduleSpecifier);
   const emptyOptionFixture = readProjectData(new URL('../../parity/fixtures/rust-empty-options.lino', import.meta.url));
+  const typeNamespaceFixture = readProjectData(new URL('../../parity/fixtures/rust-type-namespace.lino', import.meta.url));
   const imports = `import { importEbnf, encodeFormalConceptDefinition, createDiscoveredConceptLinks,
     readDiscoveredConceptLinks, importResourceDescriptionGraph, decodeResourceDescriptionGraph,
     mergeResourceDescriptionGraphs, verifyResourceDescriptionGraphWitnesses } from ${module};\n`;
@@ -412,6 +413,74 @@ export function createComposedSignaturePacket() {
 export function createComposedPrimitivePacket() {
   return createTypedProgramLinks('fn empty()->Option<f64>{None::<f64>}fn main(){}','Rust',
     {rustEmptyOptionSourceModel:'closed empty primitive Rust option 1',rustPrimitiveOwnerModel:'standard primitive Rust binary64 owner 1'});
+}
+`,
+    },
+    ...typeNamespaceFixture.cases.map(entry => ({
+      name: `valid-type-namespace-owner-${entry.id}`, expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks, LinkNetwork } from ${module};
+const options = {rustTypeNamespaceModel:'resolved Rust type namespace 1'} as const;
+const packet = createTypedProgramLinks(${JSON.stringify(entry.source)},'Rust',
+  {...options,provenance:{consumer:${JSON.stringify(entry.id)}}});
+const network = LinkNetwork.fromLino(packet.network.toLino());
+const program = decodeTypedProgramLinks(network,packet.root);
+const javascript = emitTypedProgramLinks(network,packet.root,'JavaScript');
+const rust = emitTypedProgramLinks(network,packet.root,'Rust');
+export const contractEvidence = {network,root:packet.root,program,code:javascript.code,rustCode:rust.code};
+export function reimportActualRustDefinitions(definitions:string) {
+  const packet = createTypedProgramLinks(definitions+'\\nfn main(){}','Rust',options);
+  const network = LinkNetwork.fromLino(packet.network.toLino());
+  const javascript = emitTypedProgramLinks(network,packet.root,'JavaScript');
+  return {network,root:packet.root,program:decodeTypedProgramLinks(network,packet.root),code:javascript.code};
+}
+`,
+    })),
+    {
+      name: 'valid-source-free-type-namespace-value-edit', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, emitTypedProgramLinks, LinkNetwork, LinkId } from ${module};
+const packet = createTypedProgramLinks(${JSON.stringify(typeNamespaceFixture.cases[0].source)},'Rust',
+  {rustTypeNamespaceModel:'resolved Rust type namespace 1'});
+const network = LinkNetwork.fromLino(packet.network.toLino());
+const relations = network.links().filter(link=>link.references().length===3);
+const field = (parent:LinkId,label:string):LinkId => {
+  const relation = relations.find(link=>link.references()[0].equals(parent)
+    &&network.link(link.references()[1])?.metadata().term===label);
+  if(!relation) throw new Error('missing actual owned field '+label);
+  return relation.references()[2];
+};
+const declaration = relations.find(link=>network.link(link.references()[1])?.metadata().term==='full name'
+  &&network.link(link.references()[2])?.metadata().definition==='nested.f64');
+if(!declaration) throw new Error('missing actual value declaration');
+const value = network.link(field(field(declaration.references()[0],'body'),'value'));
+if(!value) throw new Error('missing actual Boolean value');
+value.metadata().definition = 'false';
+const restored = LinkNetwork.fromLino(network.toLino());
+const javascript = emitTypedProgramLinks(restored,packet.root,'JavaScript');
+const rust = emitTypedProgramLinks(restored,packet.root,'Rust');
+export const contractEvidence = {network:restored,root:packet.root,code:javascript.code,rustCode:rust.code};
+`,
+    },
+    {
+      name: 'reject-unregistered-type-namespace-source-version', expectedDiagnostics: ['TS2322'],
+      source: `import { createTypedProgramLinks } from ${module};
+createTypedProgramLinks('fn main(){}','Rust',{rustTypeNamespaceModel:'resolved Rust type namespace 99'});
+`,
+    },
+    {
+      name: 'valid-type-namespace-selection-type-with-wrong-source-language', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks } from ${module};
+export function createWrongLanguagePacket() {
+  return createTypedProgramLinks('function keep(value){return value;}','JavaScript',
+    {rustTypeNamespaceModel:'resolved Rust type namespace 1'});
+}
+`,
+    },
+    {
+      name: 'valid-type-namespace-independent-empty-option-profile-types', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks } from ${module};
+export function createComposedEmptyOptionPacket() {
+  return createTypedProgramLinks(${JSON.stringify(emptyOptionFixture.cases[0].source)},'Rust',
+    {rustTypeNamespaceModel:'resolved Rust type namespace 1',rustEmptyOptionSourceModel:'closed empty primitive Rust option 1'});
 }
 `,
     },
