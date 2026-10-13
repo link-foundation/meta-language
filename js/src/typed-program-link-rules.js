@@ -121,7 +121,7 @@ export function readProgramNeutralFieldDefault(context, field) {
   if ((context === "parameter" && field === "guard") || (context === "parameter" && field === "default")) return "null";
   if ((context === "effect:let" && field === "constant")) return "false";
   if ((context === "effect:let" && field === "span") || (context === "declaration:module" && field === "span") || (context === "effect:print" && field === "span")) return "null";
-  if (field === "span" && (context === "expression:lit" || context === "expression:unit" || context === "expression:var" || context === "expression:call" || context === "expression:ctor" || context === "expression:match" || context === "expression:unary" || context === "expression:binary" || context === "expression:if" || context === "expression:let" || context === "expression:toString" || context === "expression:stringMap" || context === "expression:stringTest" || context === "expression:cast" || context === "expression:abort" || context === "expression:print" || context === "expression:array" || context === "expression:append" || context === "expression:index" || context === "expression:length" || context === "expression:math" || context === "expression:tuple" || context === "expression:tupleIndex")) return "null";
+  if (field === "span" && (context === "expression:lit" || context === "expression:unit" || context === "expression:var" || context === "expression:call" || context === "expression:ctor" || context === "expression:match" || context === "expression:unary" || context === "expression:binary" || context === "expression:if" || context === "expression:let" || context === "expression:toString" || context === "expression:stringMap" || context === "expression:stringTest" || context === "expression:cast" || context === "expression:abort" || context === "expression:print" || context === "expression:array" || context === "expression:append" || context === "expression:index" || context === "expression:length" || context === "expression:math" || context === "expression:tuple" || context === "expression:tupleIndex" || context === "expression:none")) return "null";
   return "";
 }
 
@@ -171,6 +171,7 @@ export function readProgramExpressionProjection(term) {
   if ((term === "math")) return "math";
   if ((term === "tuple")) return "tuple";
   if ((term === "tupleIndex")) return "tupleIndex";
+  if ((term === "none")) return "none";
   return "";
 }
 

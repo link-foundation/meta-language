@@ -119,6 +119,7 @@ impl Expr {
         match &self.node {
             Node::Lit { .. }
             | Node::Unit
+            | Node::None { .. }
             | Node::Var { .. }
             | Node::Abort { .. }
             | Node::OutNil => Vec::new(),
@@ -166,6 +167,7 @@ impl Expr {
         let node = match &self.node {
             Node::Lit { .. }
             | Node::Unit
+            | Node::None { .. }
             | Node::Var { .. }
             | Node::Abort { .. }
             | Node::OutNil => self.node.clone(),
@@ -331,6 +333,10 @@ pub enum Node {
         value: LitValue,
     },
     Unit,
+    /// An empty optional value; its element and absence policy remain on the type.
+    None {
+        absence: String,
+    },
     Var {
         name: String,
     },
@@ -474,6 +480,7 @@ impl Node {
         match self {
             Self::Lit { .. } => "lit",
             Self::Unit => "unit",
+            Self::None { .. } => "none",
             Self::Var { .. } => "var",
             Self::Call { .. } => "call",
             Self::Ctor { .. } => "ctor",
