@@ -75,6 +75,13 @@ pub const fn accept_rust_type_namespace_unit_clone(
 
 /// Apply the shared resolved type namespace policy.
 #[must_use]
+pub fn accept_rust_type_namespace_container(kind: &str, dense: bool, unrepresented: bool) -> bool {
+    (kind == "array" && dense && !unrepresented)
+        || ((kind == "map" || kind == "record") && !unrepresented)
+}
+
+/// Apply the shared resolved type namespace policy.
+#[must_use]
 pub fn accept_rust_type_namespace_discovery_type(discovery: bool, type_name: &str) -> bool {
     discovery && type_name == "str"
 }

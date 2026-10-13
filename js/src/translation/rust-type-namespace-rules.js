@@ -15,6 +15,8 @@ export function acceptRustTypeNamespaceBodyMethod(selected, methodName, ownedUni
 export function acceptRustTypeNamespaceMethodDiscovery(discovery, methodName) { return discovery && (methodName === "clone"); }
 /** @param {boolean} ownedDerivation @param {boolean} fieldFree @param {boolean} directReceiver @returns {boolean} */
 export function acceptRustTypeNamespaceUnitClone(ownedDerivation, fieldFree, directReceiver) { return ownedDerivation && fieldFree && directReceiver; }
+/** @param {string} kind @param {boolean} dense @param {boolean} unrepresented @returns {boolean} */
+export function acceptRustTypeNamespaceContainer(kind, dense, unrepresented) { return (kind === "array" && dense && !unrepresented) || ((kind === "map" || kind === "record") && !unrepresented); }
 /** @param {boolean} discovery @param {string} typeName @returns {boolean} */
 export function acceptRustTypeNamespaceDiscoveryType(discovery, typeName) { return discovery && (typeName === "str"); }
 /** @param {string} kind @param {boolean} invalidWrappers @param {boolean} borrowedResult @returns {boolean} */

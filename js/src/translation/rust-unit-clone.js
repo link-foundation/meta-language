@@ -13,7 +13,7 @@ export function captureRustUnitCloneDerivation(attributes,declaration,path) {
   if(!occurrences)return null;
   if(attributes.length!==1||occurrences!==1)throw unsupported('Rust unit Clone derivation','one actual attached derive attribute with one Clone argument is required');
   if(declaration.ctors.some(constructor=>constructor.fields.length))return null;
-  const proof={model:policy.unitCloneModel,language:policy.language,owner:[...path,declaration.name],traitOwner:[...policy.unitCloneTraitOwner],constructorNames:declaration.ctors.map(constructor=>constructor.name),attribute:structuredClone(attributes[0])};
+  const proof={model:policy.unitCloneModel,language:policy.language,datatypeOwner:[...path,declaration.name],traitOwner:[...policy.unitCloneTraitOwner],constructorNames:declaration.ctors.map(constructor=>constructor.name),attribute:structuredClone(attributes[0])};
   checkRustUnitCloneDerivation(proof,{...declaration,modulePath:path});
   return proof;
 }
@@ -21,7 +21,7 @@ export function captureRustUnitCloneDerivation(attributes,declaration,path) {
 /** The owned source fact describes the actual standard unit derive instance. */
 export function checkRustUnitCloneDerivation(proof,declaration) {
   if(!declaration||!Array.isArray(declaration.modulePath)||!Array.isArray(declaration.ctors)||declaration.ctors.some(constructor=>!constructor||!Array.isArray(constructor.fields)))fail();
-  if(!exact(proof,policy.unitCloneFields)||proof.model!==policy.unitCloneModel||proof.language!==policy.language||declaration.k!=='data'||!equal(proof.owner,[...declaration.modulePath,declaration.name])||!equal(proof.traitOwner,policy.unitCloneTraitOwner)||!equal(proof.constructorNames,declaration.ctors.map(constructor=>constructor.name))||declaration.ctors.some(constructor=>constructor.fields.length))fail();
+  if(!exact(proof,policy.unitCloneFields)||proof.model!==policy.unitCloneModel||proof.language!==policy.language||declaration.k!=='data'||!equal(proof.datatypeOwner,[...declaration.modulePath,declaration.name])||!equal(proof.traitOwner,policy.unitCloneTraitOwner)||!equal(proof.constructorNames,declaration.ctors.map(constructor=>constructor.name))||declaration.ctors.some(constructor=>constructor.fields.length))fail();
   const attribute=proof.attribute;
   if(!exact(attribute,policy.unitCloneAttributeFields)||attribute.name!=='derive'||!Array.isArray(attribute.traits)||attribute.traits.some(trait=>!policy.unitCloneDeriveArguments.includes(trait))||new Set(attribute.traits).size!==attribute.traits.length||attribute.traits.filter(trait=>trait==='Clone').length!==1)fail();
   for(const trait of attribute.traits)if((policy.unitCloneDeriveDependencies[trait]??[]).some(required=>!attribute.traits.includes(required)))fail();

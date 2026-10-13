@@ -19,6 +19,7 @@ source += fn('acceptRustTypeNamespaceBodyConstructor', '@param {boolean} selecte
 source += fn('acceptRustTypeNamespaceBodyMethod', '@param {boolean} selected @param {string} methodName @param {boolean} ownedUnitClone', `return !selected || (methodName === "clone" && ownedUnitClone) || (${policy.unprovedBodyMethods.map(name=>`methodName !== ${JSON.stringify(name)}`).join(' && ')});`);
 source += fn('acceptRustTypeNamespaceMethodDiscovery', '@param {boolean} discovery @param {string} methodName', `return discovery && (${policy.methodDiscoveryNames.map(name=>`methodName === ${JSON.stringify(name)}`).join(' || ')});`);
 source += fn('acceptRustTypeNamespaceUnitClone', '@param {boolean} ownedDerivation @param {boolean} fieldFree @param {boolean} directReceiver', 'return ownedDerivation && fieldFree && directReceiver;');
+source += fn('acceptRustTypeNamespaceContainer', '@param {string} kind @param {boolean} dense @param {boolean} unrepresented', `return (kind === ${JSON.stringify(policy.containerKinds[0])} && dense && !unrepresented) || ((kind === ${JSON.stringify(policy.containerKinds[1])} || kind === ${JSON.stringify(policy.containerKinds[2])}) && !unrepresented);`);
 source += fn('acceptRustTypeNamespaceDiscoveryType', '@param {boolean} discovery @param {string} typeName', `return discovery && (${policy.discoveryTypes.map(name=>`typeName === ${JSON.stringify(name)}`).join(' || ')});`);
 source += fn('acceptRustTypeNamespacePosition', '@param {string} kind @param {boolean} invalidWrappers @param {boolean} borrowedResult', `return (${policy.ownerKinds.map(kind => `kind === ${JSON.stringify(kind)}`).join(' || ')}) && !invalidWrappers && !borrowedResult;`);
 if (process.argv.includes('--check')) { if (readFileSync(javascript, 'utf8') !== source) throw new Error('type namespace JavaScript rules are stale'); }
@@ -50,6 +51,7 @@ if (!process.argv.includes('--javascript-only')) {
     replace('((kind == "primitive" || kind == "declaration") && !invalid_wrappers) && !borrowed_result', '(kind == "primitive" || kind == "declaration") && !invalid_wrappers && !borrowed_result');
     replace('(model.is_empty())', 'model.is_empty()');
     replace('(owned_derivation && field_free) && direct_receiver', 'owned_derivation && field_free && direct_receiver');
+    replace('((kind == "array" && dense) && !unrepresented)', '(kind == "array" && dense && !unrepresented)');
     writeFileSync(style, new DecoratorSet([{ id: 'rust-type-namespace-library-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }]).toLino());
   }
   const decorated = DecoratorSet.fromLino(readFileSync(style, 'utf8')).decorate('emitter', { format: 'Rust', source: raw }).source;
