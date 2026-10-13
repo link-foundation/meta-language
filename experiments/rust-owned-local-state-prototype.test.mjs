@@ -6,6 +6,7 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {readProjectData} from '../js/scripts/project-data.mjs';
 import {rustOwnedLocalStateFixture} from './generate-rust-owned-local-state-fixture.mjs';
+import {withRustOwnedLocalAuthenticSource} from './rust-owned-local-authentic-source.mjs';
 import {parseRust} from '../js/src/translation/rust.js';
 import {checkProgram} from '../js/src/translation/check.js';
 import {emitRust} from '../js/src/translation/emit-rust.js';
@@ -161,7 +162,7 @@ test('a source-free String replacement edit executes with unchanged actual owner
  const definitions=emitRust(reloaded).definitions.join('\n\n')+'\nfn main(){}';assert.ok(actualRust.includes(emitRust(reloaded).definitions[0]));observe(emitJavaScript(checkProgram(parseRust(definitions,{localValueStateModel:fixture.models.copies}))).text,entry,[['seed','0',true,'edited']]);
 });
 test('authentic complete binary formatter source remains pinned and still has its actual mutable tuple gap',()=>{
- const sources=fixture.authentic.files.map(file=>{const bytes=readFileSync(new URL('../'+file.file,import.meta.url));assert.equal(bytes.length,file.bytes);assert.equal(createHash('sha256').update(bytes).digest('hex'),file.sha256);return bytes.toString('utf8');}),source=sources.join('\n');
+ const sources=withRustOwnedLocalAuthenticSource(fixture.authentic.files.map(file=>file.file),paths=>fixture.authentic.files.map((file,index)=>{const bytes=readFileSync(paths[index]);assert.equal(bytes.length,file.bytes);assert.equal(createHash('sha256').update(bytes).digest('hex'),file.sha256);return bytes.toString('utf8');})),source=sources.join('\n');
  assert.ok(source.includes('let (mut digits, n) = decimal(&format!("{:e}", x.abs()));'));assert.ok(source.includes('digits = other.trim_end_matches(\'0\').to_string();'));
  for(const entry of fixture.authentic.diagnostics)assert.throws(()=>checkProgram(parseRust(source,entry.options)),error=>{assert.equal(error.reason,entry.reason);assert.deepEqual(error.span,entry.span);return true;});
  const selected=fixture.authentic.diagnostics.find(entry=>entry.options.completionModel);assert.equal(selected.reason,'mutable tuple binding: mutation is outside the immutable product model');assert.deepEqual(selected.span,{start:935,end:938});
