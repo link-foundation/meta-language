@@ -887,9 +887,12 @@ export interface TypedProgramLinksEmission {
   readonly encodings: readonly TranslationEncoding[];
   readonly theorems: readonly TranslationObligation[];
 }
-/** Selects primitive immutable-reference Rust headers from owned source facts. */
+/** Selects supported emission models from validated owned program facts. */
 export interface TypedProgramLinksEmissionOptions {
-  readonly rustSourceHeaderEmissionModel?: 'primitive borrowed Rust function header 1';
+  /** Preserves selected immutable-reference Rust headers and closed call interfaces. */
+  readonly rustSourceHeaderEmissionModel?: 'primitive borrowed Rust function header 1' | 'closed primitive borrowed Rust call interface 1';
+  /** Allocates JavaScript aliases from actual checked local binding owners. */
+  readonly javaScriptScopedBindingEmissionModel?: 'owned JavaScript scoped bindings 1';
 }
 /** Imports the supported checked JavaScript or Rust core as editable semantic links. */
 export function createTypedProgramLinks(
@@ -900,8 +903,10 @@ export function createTypedProgramLinks(
     rustCompletionModel?: 'closed guarded function returns 1';
     /** Retains owned source header facts; does not promise source ABI emission. */
     rustSourceSignatureModel?: 'Rust source function signature 1',
-    rustScalarLoopModel?: 'closed primitive scalar loop 1',
-    javaScriptScalarLoopModel?: 'closed primitive scalar loop 1' },
+    /** Resolves qualified and imported standard binary64 owners under explicit source checks. */
+    rustPrimitiveOwnerModel?: 'standard primitive Rust binary64 owner 1',
+    rustScalarLoopModel?: 'closed primitive scalar loop 1' | 'closed declaration scalar loop 1',
+    javaScriptScalarLoopModel?: 'closed primitive scalar loop 1' | 'closed declaration scalar loop 1' },
 ): TypedProgramLinks;
 export function encodeTypedProgramLinks(
   program: CheckedTypedProgram,

@@ -213,6 +213,141 @@ const packet = createTypedProgramLinks('fn keep(value:&f64)->f64{*value}fn main(
 emitTypedProgramLinks(packet.network,packet.root,'Rust',{rustSourceHeaderEmissionModel:'unknown model'});
 `,
     },
+    {
+      name: 'valid-selected-Rust-declaration-loop-profile', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, emitTypedProgramLinks, LinkNetwork } from ${module};
+const packet = createTypedProgramLinks('fn run(mut run:f64,limit:f64)->f64{loop{return if run<limit{(run,)=(run+1f64,);continue;}else{run};}}fn main(){}','Rust',
+  {rustScalarLoopModel:'closed declaration scalar loop 1'});
+const network = LinkNetwork.fromLino(packet.network.toLino());
+const javascript = emitTypedProgramLinks(network,packet.root,'JavaScript');
+const rust = emitTypedProgramLinks(network,packet.root,'Rust');
+export const contractEvidence = {network,root:packet.root,code:javascript.code,rustCode:rust.code};
+`,
+    },
+    {
+      name: 'valid-selected-JavaScript-declaration-loop-profile', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, emitTypedProgramLinks, LinkNetwork } from ${module};
+const actualSource = '/** @param {number} run @param {number} limit @returns {number} */function run(run,limit){for(;;){if(run<limit){const ml_scalar_write0=run+1;[run,limit]=[ml_scalar_write0,limit];continue;}else{return run;}}}';
+const packet = createTypedProgramLinks(actualSource,'JavaScript',{javaScriptScalarLoopModel:'closed declaration scalar loop 1'});
+const network = LinkNetwork.fromLino(packet.network.toLino());
+const javascript = emitTypedProgramLinks(network,packet.root,'JavaScript');
+const rust = emitTypedProgramLinks(network,packet.root,'Rust');
+export const contractEvidence = {network,root:packet.root,code:javascript.code,rustCode:rust.code};
+`,
+    },
+    {
+      name: 'reject-unregistered-Rust-declaration-loop-version', expectedDiagnostics: ['TS2820'],
+      source: `import { createTypedProgramLinks } from ${module};\ncreateTypedProgramLinks('fn main(){}','Rust',{rustScalarLoopModel:'closed declaration scalar loop 99'});\n`,
+    },
+    {
+      name: 'reject-unregistered-JavaScript-declaration-loop-version', expectedDiagnostics: ['TS2820'],
+      source: `import { createTypedProgramLinks } from ${module};\ncreateTypedProgramLinks('function keep(){return 1;}','JavaScript',{javaScriptScalarLoopModel:'closed declaration scalar loop 99'});\n`,
+    },
+    {
+      name: 'valid-closed-borrowed-Rust-call-interface', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, emitTypedProgramLinks, LinkNetwork } from ${module};
+import type { TypedProgramLinksEmissionOptions } from ${module};
+const packet = createTypedProgramLinks('fn leaf(value:&f64)->f64{*value+1.0}fn caller(value:f64)->f64{leaf(&value)}fn main(){}','Rust',
+  {rustSourceSignatureModel:'Rust source function signature 1'});
+const network = LinkNetwork.fromLino(packet.network.toLino());
+const options:TypedProgramLinksEmissionOptions = {rustSourceHeaderEmissionModel:'closed primitive borrowed Rust call interface 1'};
+const selected = emitTypedProgramLinks(network,packet.root,'Rust',options);
+const legacy = emitTypedProgramLinks(network,packet.root,'Rust');
+const javascript = emitTypedProgramLinks(network,packet.root,'JavaScript');
+export const contractEvidence = {network,root:packet.root,code:javascript.code,rustCode:selected.code,legacyCode:legacy.code};
+`,
+    },
+    {
+      name: 'valid-source-free-closed-borrowed-call-value-edit', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, emitTypedProgramLinks, LinkNetwork } from ${module};
+import type { TypedProgramLinksEmissionOptions } from ${module};
+const packet = createTypedProgramLinks('fn leaf(value:&f64)->f64{*value+1.0}fn caller(value:f64)->f64{leaf(&value)}fn main(){}','Rust',
+  {rustSourceSignatureModel:'Rust source function signature 1'});
+const network = LinkNetwork.fromLino(packet.network.toLino());
+const original = emitTypedProgramLinks(network,packet.root,'JavaScript');
+const literals = network.links().filter(link=>link.metadata().term === 'string value' && link.metadata().definition === '1');
+if(literals.length !== 1) throw new Error('the call value edit needs exactly one scalar link');
+literals[0].metadata().definition = '2';
+const restored = LinkNetwork.fromLino(network.toLino());
+const options:TypedProgramLinksEmissionOptions = {rustSourceHeaderEmissionModel:'closed primitive borrowed Rust call interface 1'};
+const selected = emitTypedProgramLinks(restored,packet.root,'Rust',options);
+const changed = emitTypedProgramLinks(restored,packet.root,'JavaScript');
+export const contractEvidence = {network:restored,root:packet.root,originalCode:original.code,changedCode:changed.code,rustCode:selected.code};
+`,
+    },
+    {
+      name: 'reject-unregistered-closed-borrowed-call-version', expectedDiagnostics: ['TS2820'],
+      source: `import { createTypedProgramLinks, emitTypedProgramLinks } from ${module};
+const packet = createTypedProgramLinks('fn keep(value:&f64)->f64{*value}fn main(){}','Rust',
+  {rustSourceSignatureModel:'Rust source function signature 1'});
+emitTypedProgramLinks(packet.network,packet.root,'Rust',{rustSourceHeaderEmissionModel:'closed primitive borrowed Rust call interface 99'});
+`,
+    },
+    {
+      name: 'valid-standard-qualified-binary64-owner-value-edit', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, emitTypedProgramLinks, LinkNetwork } from ${module};
+const packet = createTypedProgramLinks('fn add_one(value:std::primitive::f64)->std::primitive::f64{value+1.0}fn main(){}','Rust',
+  {rustPrimitiveOwnerModel:'standard primitive Rust binary64 owner 1',rustSourceSignatureModel:'Rust source function signature 1'});
+const network = LinkNetwork.fromLino(packet.network.toLino());
+const original = emitTypedProgramLinks(network,packet.root,'JavaScript');
+const literals = network.links().filter(link=>link.metadata().term === 'string value' && link.metadata().definition === '1');
+if(literals.length !== 1) throw new Error('the qualified owner value edit needs exactly one scalar link');
+literals[0].metadata().definition = '2';
+const restored = LinkNetwork.fromLino(network.toLino());
+const changed = emitTypedProgramLinks(restored,packet.root,'JavaScript');
+const rust = emitTypedProgramLinks(restored,packet.root,'Rust');
+export const contractEvidence = {network:restored,root:packet.root,originalCode:original.code,changedCode:changed.code,rustCode:rust.code};
+`,
+    },
+    {
+      name: 'valid-standard-imported-binary64-owner', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, emitTypedProgramLinks, LinkNetwork } from ${module};
+const packet = createTypedProgramLinks('use std::primitive::f64 as Real;fn keep(value:Real)->Real{value}fn main(){}','Rust',
+  {rustPrimitiveOwnerModel:'standard primitive Rust binary64 owner 1',rustSourceSignatureModel:'Rust source function signature 1'});
+const network = LinkNetwork.fromLino(packet.network.toLino());
+const javascript = emitTypedProgramLinks(network,packet.root,'JavaScript');
+const rust = emitTypedProgramLinks(network,packet.root,'Rust');
+export const contractEvidence = {network,root:packet.root,code:javascript.code,rustCode:rust.code};
+`,
+    },
+    {
+      name: 'reject-unregistered-standard-binary64-owner-version', expectedDiagnostics: ['TS2322'],
+      source: `import { createTypedProgramLinks } from ${module};\ncreateTypedProgramLinks('fn main(){}','Rust',{rustPrimitiveOwnerModel:'standard primitive Rust binary64 owner 99'});\n`,
+    },
+    {
+      name: 'valid-complete-repeated-JavaScript-scoped-binding-output', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, emitTypedProgramLinks, LinkNetwork } from ${module};
+import type { TypedProgramLinksEmissionOptions } from ${module};
+const packet = createTypedProgramLinks('fn run(mut run:f64,limit:f64)->f64{loop{return if run<limit{(run,)=(run+1f64,);continue;}else{run};}}fn main(){}','Rust',
+  {rustScalarLoopModel:'closed declaration scalar loop 1'});
+const options:TypedProgramLinksEmissionOptions = Object.freeze({javaScriptScopedBindingEmissionModel:'owned JavaScript scoped bindings 1'} as const);
+let network = LinkNetwork.fromLino(packet.network.toLino());
+let root = packet.root;
+const codes:string[] = [];
+for(let hop = 0; hop < 4; hop++) {
+  const code = emitTypedProgramLinks(network,root,'JavaScript',options).code;
+  codes.push(code);
+  const replay = createTypedProgramLinks(code,'JavaScript',{javaScriptScalarLoopModel:'closed declaration scalar loop 1'});
+  network = LinkNetwork.fromLino(replay.network.toLino());
+  root = replay.root;
+}
+const literals = network.links().filter(link=>link.metadata().term === 'string value' && link.metadata().definition === '1');
+if(literals.length !== 1) throw new Error('the complete module value edit needs exactly one scalar link');
+literals[0].metadata().definition = '2';
+const restored = LinkNetwork.fromLino(network.toLino());
+const editedCode = emitTypedProgramLinks(restored,root,'JavaScript',options).code;
+const replay = createTypedProgramLinks(editedCode,'JavaScript',{javaScriptScalarLoopModel:'closed declaration scalar loop 1'});
+const replayCode = emitTypedProgramLinks(replay.network,replay.root,'JavaScript',options).code;
+export const contractEvidence = {codes,editedCode,replayCode,network:replay.network,root:replay.root};
+`,
+    },
+    {
+      name: 'reject-unregistered-JavaScript-scoped-binding-emission-version', expectedDiagnostics: ['TS2322'],
+      source: `import { createTypedProgramLinks, emitTypedProgramLinks } from ${module};
+const packet = createTypedProgramLinks('fn keep(value:f64)->f64{value}fn main(){}','Rust');
+emitTypedProgramLinks(packet.network,packet.root,'JavaScript',{javaScriptScopedBindingEmissionModel:'owned JavaScript scoped bindings 99'});
+`,
+    },
   ];
 }
 
