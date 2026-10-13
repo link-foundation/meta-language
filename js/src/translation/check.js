@@ -411,8 +411,9 @@ class Checker {
   expr(node, env, path, expected, allowLiteral = false) {
     if (node.prototypeDefinition) throw unsupported('object prototype definition',
       'an uncomputed __proto__: entry is prototype-definition syntax rather than an own data property; the portable core does not represent object prototypes', node.prototypeDefinition.span);
-    const innerExpected = expected?.reference ? { ...expected, reference: false } : expected;
-    let result = this.exprInner(node, env, path, innerExpected, allowLiteral);
+    // Control flow passes its expected result type to every branch. Literal
+    // builders already construct value payloads before the allocation below.
+    let result = this.exprInner(node, env, path, expected, allowLiteral);
     if (this.referenceSemantics && ['array', 'record', 'set', 'map'].includes(result.type.kind) && !result.type.reference) {
       result = { k: 'referenceAllocate', value: result, type: { ...result.type, reference: true } };
     }
