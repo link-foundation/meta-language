@@ -75,6 +75,10 @@ impl Checker {
                     span,
                     generated: data.generated,
                     output: false,
+                    source_unit_clone_derivation: data
+                        .source_unit_clone_derivation
+                        .as_deref()
+                        .cloned(),
                     full_name: full_name.clone(),
                     module_path,
                 }),

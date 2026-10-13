@@ -41,6 +41,9 @@ pub struct DataDecl {
     /// A pair of printed lines and a value (see `output`).
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub output: bool,
+    /// Optional actual field-free Rust Clone derivation owned by this datatype.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_unit_clone_derivation: Option<serde_json::Value>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

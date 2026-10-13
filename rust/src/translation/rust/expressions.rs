@@ -289,6 +289,11 @@ impl RustParser {
                 self.cursor.advance();
                 let args = self.call_arguments(path)?;
                 self.cursor.expect(")", Some(&method.value))?;
+                self.require_type_namespace_body_method(
+                    &value,
+                    &method.value,
+                    span(&token, self.cursor.peek()),
+                )?;
                 let mut origin = self.origins.origin(&value, path);
                 let method_name = method.value.as_str();
                 let float_operation =
@@ -869,6 +874,7 @@ impl RustParser {
             return Ok(result);
         }
         if name == "String::from" {
+            self.require_type_namespace_body_constructor(&name, range)?;
             if args.len() != 1 {
                 return Err(type_error("String::from expects 1 argument", range));
             }
@@ -886,6 +892,7 @@ impl RustParser {
             && segments[1] == "from"
             && let Some(to) = fixed.clone()
         {
+            self.require_type_namespace_body_constructor(&name, range)?;
             if args.len() != 1 {
                 return Err(type_error(format!("{name} expects 1 argument"), range));
             }

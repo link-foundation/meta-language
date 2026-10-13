@@ -46,6 +46,7 @@ pub(crate) mod source_primitive_owners;
 pub(crate) mod source_signature_rules;
 pub mod source_signatures;
 pub(crate) mod source_type_namespaces;
+pub(crate) mod source_unit_clone_derivations;
 pub mod structured_type_rules;
 pub mod surface;
 pub(crate) mod type_namespace_rules;

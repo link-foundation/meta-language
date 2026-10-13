@@ -6,9 +6,7 @@ use crate::translation::ir::{Decl, Effect, Item, Program};
 use crate::translation::primitive_value_rules::{
     accept_linked_text_conversion_kind, read_number_display_refusal,
 };
-use crate::translation::surface::{
-    SCtor, SData, SEffect, SField, SItem, SMain, SProgram, ShowStyle,
-};
+use crate::translation::surface::{SEffect, SItem, SMain, SProgram, ShowStyle};
 use crate::translation::typed_program_link_rules::{
     accept_program_division_rounding, accept_program_expression_operation,
     accept_program_machine_integer_width, accept_program_optional_absence,
@@ -18,6 +16,7 @@ use serde_json::Value;
 use std::collections::HashSet;
 use std::sync::OnceLock;
 
+mod declarations;
 mod loop_modules;
 
 fn valid_float(value: &str) -> bool {
@@ -120,6 +119,10 @@ fn validate_type_records(
 }
 
 pub(super) fn validate(program: &Program) -> Result<()> {
+    crate::translation::source_unit_clone_derivations::validate_source_unit_clone_derivations(
+        program,
+    )
+    .map_err(|failure| error(failure.to_string()))?;
     crate::translation::source_empty_options::validate_source_empty_options(program)
         .map_err(|failure| error(failure.to_string()))?;
     crate::translation::source_primitive_owners::validate_source_primitive_owners(program)
@@ -175,32 +178,7 @@ pub(super) fn validate(program: &Program) -> Result<()> {
                     "the Rust typed links adapter does not yet recheck qualified declarations",
                 ));
             }
-            items.push(SItem::Data(SData {
-                name: data.name.clone(),
-                ctors: data
-                    .ctors
-                    .iter()
-                    .map(|constructor| -> Result<SCtor> {
-                        Ok(SCtor {
-                            name: constructor.name.clone(),
-                            fields: constructor
-                                .fields
-                                .iter()
-                                .map(|field| -> Result<SField> {
-                                    Ok(SField {
-                                        name: Some(field.name.clone()),
-                                        ty: project_type(&field.ty)?,
-                                        rocq_type: None,
-                                        span: None,
-                                    })
-                                })
-                                .collect::<Result<_>>()?,
-                        })
-                    })
-                    .collect::<Result<_>>()?,
-                span: data.span,
-                generated: data.generated,
-            }));
+            items.push(declarations::project_data(data)?);
             continue;
         }
         let Decl::Fn(function) = declaration else {

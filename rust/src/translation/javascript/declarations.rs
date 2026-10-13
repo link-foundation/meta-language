@@ -206,12 +206,14 @@ impl JavaScriptParser {
                     ctors: ctors.clone(),
                     span: None,
                     generated: false,
+                    source_unit_clone_derivation: None,
                 });
                 items.push(SItem::Data(SData {
                     name,
                     ctors,
                     span: Some(range),
                     generated: false,
+                    source_unit_clone_derivation: None,
                 }));
             }
         }

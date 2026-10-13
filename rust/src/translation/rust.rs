@@ -370,6 +370,7 @@ fn parse_rust_with_selected_profiles(
         tokens.clone(),
         SourceOrigins::new(None, array_result_model),
         profiles,
+        true,
     );
     declarations.file()?;
     let mut origins = std::mem::replace(
@@ -379,7 +380,8 @@ fn parse_rust_with_selected_profiles(
     origins.resolve_catalog_types(|segments, path| declarations.resolve(segments, path));
     let mut source_origins = SourceOrigins::new(Some(origins.catalog), array_result_model);
     source_origins.collecting = true;
-    let mut syntax = RustParser::new(tokens.clone(), source_origins, profiles);
+    source_origins.unit_clone_facts = origins.unit_clone_facts;
+    let mut syntax = RustParser::new(tokens.clone(), source_origins, profiles, false);
     syntax.aliases = declarations.aliases;
     syntax.primitive_imports = declarations.primitive_imports;
     let surface = syntax.file()?;
@@ -392,7 +394,9 @@ fn parse_rust_with_selected_profiles(
         tokens,
         SourceOrigins::new(Some(syntax.origins.catalog), array_result_model),
         profiles,
+        false,
     );
+    parser.origins.unit_clone_facts = syntax.origins.unit_clone_facts;
     parser.aliases = syntax.aliases;
     parser.primitive_imports = syntax.primitive_imports;
     parser.file()
@@ -465,6 +469,8 @@ struct RustParser {
     empty_option_source_model: String,
     type_namespace_model: String,
     type_namespace_frames: Vec<Vec<Vec<String>>>,
+    /// Selected initial catalog discovery, never a later collecting pass.
+    type_namespace_discovery: Option<()>,
     empty_option_result: Option<serde_json::Value>,
     empty_option_main_seen: bool,
     primitive_owner_frames: Vec<Vec<Option<serde_json::Value>>>,
@@ -480,7 +486,12 @@ struct RustParser {
 }
 
 impl RustParser {
-    fn new(tokens: Vec<Token>, origins: SourceOrigins, profiles: SourceProfiles<'_>) -> Self {
+    fn new(
+        tokens: Vec<Token>,
+        origins: SourceOrigins,
+        profiles: SourceProfiles<'_>,
+        initial_discovery: bool,
+    ) -> Self {
         let reserved_binding_names = tokens
             .iter()
             .filter(|token| token.kind == TokenKind::Identifier)
@@ -506,6 +517,8 @@ impl RustParser {
             empty_option_source_model: profiles.empty_option_source.to_owned(),
             type_namespace_model: profiles.type_namespace.to_owned(),
             type_namespace_frames: Vec::new(),
+            type_namespace_discovery: (!profiles.type_namespace.is_empty() && initial_discovery)
+                .then_some(()),
             empty_option_result: None,
             empty_option_main_seen: false,
             primitive_owner_frames: Vec::new(),

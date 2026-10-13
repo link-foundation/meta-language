@@ -9,13 +9,13 @@ use super::read_only_query_rules::accept_rust_read_only_query_owner;
 use super::scalar_parameter_rules::accept_rust_unwritten_scalar_parameter;
 use super::scalar_parameters::read_rust_scalar_parameter_body;
 use super::{
-    ACCEPTED_DERIVES, ACCEPTED_LINTS, FLOAT, ItemsEnd, Language, Options, RESERVED_ITEMS, Result,
-    RustParser, SComparison, SCtor, SData, SEffect, SExpr, SField, SFn, SItem, SMain, SModule,
-    SNode, SParam, SProgram, SProp, SPropNode, ShowStyle, SourceDeclaration, SourceOrigin, Token,
-    TokenKind, TranslationError, Type, absolute, format, is_if_or_match, prop_of, span,
-    unsupported,
+    FLOAT, ItemsEnd, Language, Options, RESERVED_ITEMS, Result, RustParser, SComparison, SCtor,
+    SData, SEffect, SExpr, SField, SFn, SItem, SMain, SModule, SNode, SParam, SProgram, SProp,
+    SPropNode, ShowStyle, SourceDeclaration, SourceOrigin, Token, TokenKind, TranslationError,
+    Type, absolute, format, is_if_or_match, prop_of, span, unsupported,
 };
 
+mod attributes;
 mod product_bindings;
 mod source_headers;
 mod types;
@@ -49,68 +49,6 @@ impl RustParser {
         })
     }
 
-    pub(super) fn inner_attributes(&mut self) -> Result<()> {
-        self.empty_option_attribute_guard()?;
-        while self.cursor.is("#") && self.cursor.is_at("!", 1) {
-            let start = self.cursor.advance();
-            self.cursor.advance();
-            self.attribute_body(&start)?;
-        }
-        Ok(())
-    }
-
-    pub(super) fn attributes(&mut self) -> Result<()> {
-        self.empty_option_attribute_guard()?;
-        while self.cursor.is("#") && self.cursor.is_at("[", 1) {
-            let start = self.cursor.advance();
-            self.attribute_body(&start)?;
-        }
-        Ok(())
-    }
-
-    /// `#[derive(Clone, …)]` and lint attributes do not change behaviour.
-    pub(super) fn attribute_body(&mut self, start: &Token) -> Result<()> {
-        let c = &mut self.cursor;
-        c.expect("[", Some("attribute"))?;
-        let name = c.identifier(Some("attribute"))?.value;
-        if name == "derive" {
-            c.expect("(", Some("derive"))?;
-            while !c.is(")") {
-                let derived = c.identifier(Some("derive"))?;
-                if !ACCEPTED_DERIVES.contains(&derived.value.as_str()) {
-                    return Err(unsupported(
-                        &format!("derive({})", derived.value),
-                        "only derives that add no behaviour are portable",
-                        span(&derived, &derived),
-                    ));
-                }
-                if c.eat(",").is_none() {
-                    break;
-                }
-            }
-            c.expect(")", Some("derive"))?;
-        } else if ACCEPTED_LINTS.contains(&name.as_str()) {
-            let mut depth = 0_i64;
-            while !c.at_end() && (depth != 0 || !c.is("]")) {
-                if c.is("(") {
-                    depth += 1;
-                }
-                if c.is(")") {
-                    depth -= 1;
-                }
-                c.advance();
-            }
-        } else {
-            return Err(unsupported(
-                &format!("#[{name}]"),
-                "attributes that change compilation are outside the portable core",
-                span(start, c.peek()),
-            ));
-        }
-        c.expect("]", Some("attribute"))?;
-        Ok(())
-    }
-
     pub(super) fn items(&mut self, path: &[String], end: ItemsEnd) -> Result<Vec<SItem>> {
         let mut items = Vec::new();
         loop {
@@ -121,11 +59,13 @@ impl RustParser {
             if done {
                 return Ok(items);
             }
-            self.attributes()?;
+            let derivations = self.attributes()?;
             let start = self.peek();
             self.module_path = path.to_vec();
             self.visibility()?;
             self.empty_option_item_guard(path, &start)?;
+            self.require_unit_clone_attached_enum(&derivations, &start)?;
+            self.require_type_namespace_without_externals(&start)?;
             let c = &mut self.cursor;
             if c.is("mod") {
                 c.advance();
@@ -177,7 +117,7 @@ impl RustParser {
                 continue;
             }
             if c.is("enum") {
-                items.push(self.enum_item(path)?);
+                items.push(self.enum_item(path, &derivations)?);
                 continue;
             }
             if c.is("fn") || c.is("const") {
@@ -356,7 +296,11 @@ impl RustParser {
             )
     }
 
-    pub(super) fn enum_item(&mut self, path: &[String]) -> Result<SItem> {
+    pub(super) fn enum_item(
+        &mut self,
+        path: &[String],
+        derivations: &[serde_json::Value],
+    ) -> Result<SItem> {
         let start = self.cursor.advance();
         let name = self.cursor.identifier(Some("enum"))?.value;
         if self.cursor.is("<") {
@@ -377,7 +321,8 @@ impl RustParser {
         self.origins
             .declaration(&name, path, SourceDeclaration::Data)?;
         while !self.cursor.is("}") {
-            self.attributes()?;
+            let attributes = self.attributes()?;
+            self.require_unit_clone_attached_variant(&attributes)?;
             let variant = self.cursor.identifier(Some("variant"))?;
             let mut fields = Vec::new();
             let mut source_fields = Vec::new();
@@ -437,12 +382,33 @@ impl RustParser {
             }
         }
         self.cursor.expect("}", Some("enum"))?;
-        Ok(SItem::Data(SData {
+        let mut declaration = SData {
             name,
             ctors,
             span: span(&start, self.cursor.peek()),
             generated: false,
-        }))
+            source_unit_clone_derivation: None,
+        };
+        if !self.type_namespace_model.is_empty() {
+            let proof =
+                crate::translation::source_unit_clone_derivations::capture_unit_clone_derivation(
+                    derivations,
+                    &declaration,
+                    path,
+                )?;
+            self.origins.unit_clone_facts.insert(
+                owner,
+                (
+                    proof.clone(),
+                    declaration
+                        .ctors
+                        .iter()
+                        .all(|constructor| constructor.fields.is_empty()),
+                ),
+            );
+            declaration.source_unit_clone_derivation = proof.map(Box::new);
+        }
+        Ok(SItem::Data(declaration))
     }
 
     pub(super) fn path_segments(&mut self, context: &str) -> Result<Vec<String>> {

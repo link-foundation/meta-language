@@ -1,4 +1,4 @@
-//! Checked namespace binding adapter for owned scalar loop graph edits.
+//! Checked namespace adapters for independently owned loop and type bindings.
 use super::{Result, error, expression, project_type};
 use crate::translation::ir::{Decl, FnDecl, Item, Program};
 use crate::translation::source_loops::validate_source_loop;
@@ -68,12 +68,25 @@ pub(super) fn project_module(
         let Item::Decl { full_name } = child else {
             unreachable!("program items are declarations or modules");
         };
+        if let Some(Decl::Data(data)) = program.declaration(full_name)
+            && program.declarations.iter().any(|declaration| matches!(declaration, Decl::Fn(function) if function.source_type_namespace.is_some()) || matches!(declaration, Decl::Data(data) if data.source_unit_clone_derivation.is_some()))
+        {
+            if data.module_path != actual_path
+                || data.full_name != *full_name
+                || actual_path.iter().chain(std::iter::once(&data.name)).cloned().collect::<Vec<_>>().join(".") != *full_name
+                || !seen.insert(full_name.clone())
+            {
+                return Err(error("the owned namespace datatype disagrees with its actual binding"));
+            }
+            projected.push(super::declarations::project_data(data)?);
+            continue;
+        }
         let Some(Decl::Fn(function)) = program.declaration(full_name) else {
             return Err(error(
                 "the Rust typed links adapter does not yet recheck module items",
             ));
         };
-        if function.source_loop.is_none() {
+        if function.source_loop.is_none() && function.source_type_namespace.is_none() {
             return Err(error(
                 "the Rust typed links adapter does not yet recheck module items",
             ));
@@ -93,8 +106,10 @@ pub(super) fn project_module(
                 "the owned loop declaration disagrees with its actual namespace binding",
             ));
         }
-        validate_source_loop(function, program.source_language.as_str())
-            .map_err(|failure| error(failure.to_string()))?;
+        if function.source_loop.is_some() {
+            validate_source_loop(function, program.source_language.as_str())
+                .map_err(|failure| error(failure.to_string()))?;
+        }
         projected.push(project_function(function, program)?);
     }
     Ok(SItem::Module(SModule {

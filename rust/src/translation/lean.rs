@@ -492,6 +492,7 @@ impl<'a> LeanParser<'a> {
             ctors,
             span: Some(self.span_to_next(&start)),
             generated: false,
+            source_unit_clone_derivation: None,
         })
     }
 

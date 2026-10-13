@@ -242,6 +242,9 @@ impl RustParser {
         if name == "String" || resolved.join("::") == "std::string::String" {
             return Ok(self.origins.typed(STRING, &self.module_path, Vec::new()));
         }
+        if let Some(deferred) = self.read_type_namespace_discovery_type(&name, &resolved, &token) {
+            return Ok(deferred);
+        }
         if UNSUPPORTED_TYPES.contains(&name.as_str()) {
             return Err(unsupported(
                 &format!("Rust type {name}"),

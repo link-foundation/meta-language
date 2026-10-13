@@ -314,6 +314,7 @@ impl Threader<'_> {
                 module_path: Vec::new(),
                 generated: true,
                 output: true,
+                source_unit_clone_derivation: None,
             },
         ));
         name

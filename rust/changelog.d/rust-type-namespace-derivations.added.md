@@ -1,0 +1,1 @@
+The selected resolved Rust type namespace profile retains actual header spelling and standard field-free datatype Clone derivation facts through editable Links reload. Selected imports, unproved conversion and trait calls, malformed metadata, and container extensions refuse; the default source profile is unchanged.
