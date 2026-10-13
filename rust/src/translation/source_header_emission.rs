@@ -58,7 +58,7 @@ const fn semantics_name(semantics: Option<Semantics>) -> &'static str {
     }
 }
 
-pub(crate) fn validate_rust_source_header_emission_model(model: &str) -> Result<()> {
+pub fn validate_rust_source_header_emission_model(model: &str) -> Result<()> {
     if !accept_rust_source_header_emission_model(model) {
         return Err(unsupported(
             "Rust source header emission model",
