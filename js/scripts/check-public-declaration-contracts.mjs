@@ -171,6 +171,48 @@ export const contractEvidence = {language:javascript.language,code:javascript.co
       name: 'reject-unknown-JavaScript-scalar-loop-profile', expectedDiagnostics: ['TS2322'],
       source: `import { createTypedProgramLinks } from ${module};\ncreateTypedProgramLinks('function keep(){return 1;}','JavaScript',{javaScriptScalarLoopModel:'unknown model'});\n`,
     },
+    {
+      name: 'valid-selected-borrowed-Rust-source-header', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, emitTypedProgramLinks, LinkNetwork } from ${module};
+import type { TypedProgramLinksEmissionOptions, TypedProgramLinksEmission } from ${module};
+const packet = createTypedProgramLinks("fn choose<'a,'b>(flag:&'a bool,value:&'b f64)->f64{if *flag{*value}else{-*value}}fn main(){}",'Rust',
+  {rustSourceSignatureModel:'Rust source function signature 1'});
+const network = LinkNetwork.fromLino(packet.network.toLino());
+const options:TypedProgramLinksEmissionOptions = Object.freeze({rustSourceHeaderEmissionModel:'primitive borrowed Rust function header 1'} as const);
+const selected:TypedProgramLinksEmission = emitTypedProgramLinks(network,packet.root,'Rust',options);
+const legacy:TypedProgramLinksEmission = emitTypedProgramLinks(network,packet.root,'Rust');
+const javascript:TypedProgramLinksEmission = emitTypedProgramLinks(network,packet.root,'JavaScript');
+export const contractEvidence = {language:selected.language,code:javascript.code,rustCode:selected.code,legacyCode:legacy.code,
+  root:!!network.link(packet.root),signature:network.links().some(link=>link.metadata().term === 'source function signature')};
+`,
+    },
+    {
+      name: 'valid-source-free-borrowed-Rust-header-value-edit', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, emitTypedProgramLinks, LinkNetwork } from ${module};
+import type { TypedProgramLinksEmissionOptions, TypedProgramLinksEmission } from ${module};
+const packet = createTypedProgramLinks('fn add_one(value:&f64)->f64{*value+1.0}fn main(){}','Rust',
+  {rustSourceSignatureModel:'Rust source function signature 1'});
+const network = LinkNetwork.fromLino(packet.network.toLino());
+const original:TypedProgramLinksEmission = emitTypedProgramLinks(network,packet.root,'JavaScript');
+const literals = network.links().filter(link=>link.metadata().term === 'string value' && link.metadata().definition === '1');
+if(literals.length !== 1) throw new Error('the source-free edit must select exactly one scalar link');
+literals[0].metadata().definition = '2.0';
+const restored = LinkNetwork.fromLino(network.toLino());
+const options:TypedProgramLinksEmissionOptions = {rustSourceHeaderEmissionModel:'primitive borrowed Rust function header 1'};
+const selected:TypedProgramLinksEmission = emitTypedProgramLinks(restored,packet.root,'Rust',options);
+const changed:TypedProgramLinksEmission = emitTypedProgramLinks(restored,packet.root,'JavaScript');
+export const contractEvidence = {language:selected.language,originalCode:original.code,changedCode:changed.code,rustCode:selected.code,
+  root:!!restored.link(packet.root),signature:restored.links().some(link=>link.metadata().term === 'source function signature')};
+`,
+    },
+    {
+      name: 'reject-unknown-Rust-source-header-emission-model', expectedDiagnostics: ['TS2322'],
+      source: `import { createTypedProgramLinks, emitTypedProgramLinks } from ${module};
+const packet = createTypedProgramLinks('fn keep(value:&f64)->f64{*value}fn main(){}','Rust',
+  {rustSourceSignatureModel:'Rust source function signature 1'});
+emitTypedProgramLinks(packet.network,packet.root,'Rust',{rustSourceHeaderEmissionModel:'unknown model'});
+`,
+    },
   ];
 }
 

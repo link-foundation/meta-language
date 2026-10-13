@@ -887,6 +887,10 @@ export interface TypedProgramLinksEmission {
   readonly encodings: readonly TranslationEncoding[];
   readonly theorems: readonly TranslationObligation[];
 }
+/** Selects primitive immutable-reference Rust headers from owned source facts. */
+export interface TypedProgramLinksEmissionOptions {
+  readonly rustSourceHeaderEmissionModel?: 'primitive borrowed Rust function header 1';
+}
 /** Imports the supported checked JavaScript or Rust core as editable semantic links. */
 export function createTypedProgramLinks(
   source: string,
@@ -913,6 +917,7 @@ export function emitTypedProgramLinks(
   network: LinkNetwork,
   root: LinkIdValue,
   target: string,
+  options?: TypedProgramLinksEmissionOptions,
 ): TypedProgramLinksEmission;
 
 export const PROGRAM_REPRESENTATION_SCHEMA_VERSION: 1;
