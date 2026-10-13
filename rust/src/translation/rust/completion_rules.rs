@@ -65,11 +65,8 @@ pub fn read_rust_completion_kind(action: &str, then_kind: &str, otherwise_kind: 
     } else if action == "conditional value" && then_kind == "value" && otherwise_kind == "value" {
         String::from("value")
     } else if action == "returned conditional"
-        && then_kind == "returned"
-        && otherwise_kind == "aborted"
-        || action == "returned conditional"
-            && then_kind == "aborted"
-            && otherwise_kind == "returned"
+        && (then_kind == "returned" && otherwise_kind == "aborted"
+            || then_kind == "aborted" && otherwise_kind == "returned")
     {
         String::from("returned")
     } else if action == "aborted conditional"
@@ -84,10 +81,7 @@ pub fn read_rust_completion_kind(action: &str, then_kind: &str, otherwise_kind: 
         String::from("value")
     } else if action == "guarded continuation"
         && then_kind == "returned"
-        && otherwise_kind == "returned"
-        || action == "guarded continuation"
-            && then_kind == "returned"
-            && otherwise_kind == "aborted"
+        && (otherwise_kind == "returned" || otherwise_kind == "aborted")
     {
         String::from("returned")
     } else if action == "guarded continuation"

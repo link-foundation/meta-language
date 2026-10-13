@@ -1,4 +1,4 @@
-// Reviewed corrections for the published 285c8b13 native lint log. These are
+// Reviewed corrections for the published 285c8b13 and CI18 native lint contexts. These are
 // source styles, not invented machine-applicable compiler suggestions.
 import { tokenize } from '../src/translation/lexer.js';
 import { spawnSync } from 'node:child_process';
@@ -197,6 +197,43 @@ function simplifyReturns(source) {
     if (!changed) return source;
   }
   throw new Error('product return styles did not converge');
+}
+
+// The two actual CI18 conditions compute an immutable Boolean in a closure
+// block. Keep the computation inside its original branch, then read it once.
+function bindConditionBlocks(source) {
+  for (let round = 0; round < 100; round += 1) {
+    const { tokens, matching } = syntax(source);
+    const used = new Set(tokens.filter(token => token.kind === 'identifier').map(token => token.value));
+    let changed = false;
+    for (let index = tokens.length - 1; index >= 0; index -= 1) {
+      if (tokens[index].kind !== 'identifier' || tokens[index].value !== 'if' || tokens[index + 1]?.value !== '(' || tokens[index + 2]?.value !== '{') continue;
+      const close = matching.get(index + 1);
+      if (matching.get(index + 2) !== close - 1) continue;
+      const node = conditional(tokens, matching, index);
+      let number = 1;
+      while (used.has(`ml_product_condition_${number}`)) number += 1;
+      const name = `ml_product_condition_${number}`;
+      const condition = source.slice(tokens[index + 2].start, tokens[close - 1].end);
+      const branches = source.slice(tokens[node.open].start, tokens[node.end].end);
+      const replacement = `{\nlet ${name} = ${condition};\nif ${name} ${branches}\n}`;
+      source = source.slice(0, tokens[index].start) + replacement + source.slice(tokens[node.end].end);
+      changed = true;
+      break;
+    }
+    if (!changed) return source;
+  }
+  throw new Error('product condition styles did not converge');
+}
+
+/** Record the full owning functions for the two published CI18 condition diagnostics. */
+export function readProductSourceConditionStyleCorrections(source) {
+  const actions = [];
+  for (const definition of definitions(source)) {
+    const from = source.slice(definition.start, definition.end), to = bindConditionBlocks(from);
+    if (from !== to) actions.push({ op: 'replace', field: 'source', from, to });
+  }
+  return actions;
 }
 
 /** Build exact function-scoped reviewed styles, preserving the provider ABI. */
