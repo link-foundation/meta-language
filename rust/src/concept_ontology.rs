@@ -6,6 +6,8 @@ use crate::link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType};
 use crate::lino_serialization::LinoSerializationError;
 
 mod semantic_lexicon;
+mod views;
+pub use views::{ConceptViews, create_concept_views, read_concept_ontology, read_concept_taxonomy};
 
 use semantic_lexicon::{
     SemanticLexiconConcept, is_wikidata_qid, is_wordnet_cili_id, semantic_lexicon,
