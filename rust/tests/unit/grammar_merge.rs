@@ -12,10 +12,10 @@ use std::fs;
 use std::path::PathBuf;
 
 use meta_language::{
-    GRAMMAR_MERGE_METHOD, Grammar, GrammarExpr, GrammarMergeDecision, GrammarMergeDecisionKind,
-    GrammarMergeFailureReason, GrammarMergeOptions, GrammarMergeResult, GrammarMergeSource,
-    GrammarRule, MergedGrammarGroup, assert_merge_complete, import_bnf, import_pest,
-    merge_grammars, normalized_rule_definition, parse_native_grammar,
+    GRAMMAR_MERGE_METHOD, Grammar, GrammarExpr, GrammarFormat, GrammarMergeDecision,
+    GrammarMergeDecisionKind, GrammarMergeFailureReason, GrammarMergeOptions, GrammarMergeResult,
+    GrammarMergeSource, GrammarRule, MergedGrammarGroup, assert_merge_complete, import_bnf,
+    import_pest, merge_grammars, normalized_rule_definition, parse_native_grammar,
 };
 use serde_json::{Value, json};
 

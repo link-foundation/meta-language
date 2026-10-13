@@ -1,11 +1,8 @@
 //! Bounded discovery-output integration and independent CST assertions.
-use meta_language::grammar::{
-    FeatureParseOptions, GrammarKind, GrammarSourceName, LeafText, SyntaxTree, parse_with_grammar,
-};
 use meta_language::{
-    GlobalConceptOptions, GlobalConceptSource, LinkId, LinkNetwork,
-    create_discovered_concept_links, percent_encode_links_text, read_discovered_concept_links,
-    read_structured_data_lino,
+    FeatureParseOptions, GlobalConceptOptions, GlobalConceptSource, GrammarKind, GrammarSourceName,
+    LeafText, LinkId, LinkNetwork, SyntaxTree, create_discovered_concept_links, parse_with_grammar,
+    percent_encode_links_text, read_discovered_concept_links, read_structured_data_lino,
 };
 use serde_json::{Value, json};
 
