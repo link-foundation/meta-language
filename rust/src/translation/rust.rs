@@ -28,6 +28,8 @@ mod expressions;
 mod indirection_rules;
 mod items;
 mod product_rules;
+mod scalar_parameter_rules;
+mod scalar_parameters;
 mod source_origins;
 
 use source_origins::{SourceDeclaration, SourceOrigin, SourceOrigins};

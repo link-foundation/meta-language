@@ -5,6 +5,8 @@ use super::indirection_rules::{
     accept_rust_source_box_owner, accept_rust_source_lifetime_binding,
     accept_rust_source_lifetime_result,
 };
+use super::scalar_parameter_rules::accept_rust_unwritten_scalar_parameter;
+use super::scalar_parameters::read_rust_scalar_parameter_body;
 use super::{
     ACCEPTED_DERIVES, ACCEPTED_LINTS, Binding, FLOAT, ItemsEnd, Language, Options, RESERVED_ITEMS,
     Result, RustParser, SComparison, SCtor, SData, SEffect, SExpr, SField, SFn, SItem, SMain,
@@ -452,15 +454,10 @@ impl RustParser {
         self.cursor.expect("(", Some("fn"))?;
         let mut params = Vec::new();
         let mut source_params = Vec::new();
+        let mut mutable_params = Vec::new();
         while !self.cursor.is(")") {
             let param_token = self.peek();
-            if self.cursor.is("mut") {
-                return Err(unsupported(
-                    "mutable parameter",
-                    "mutation is outside the portable core",
-                    span(&param_token, &param_token),
-                ));
-            }
+            let mutable = self.cursor.eat("mut").is_some();
             if self.cursor.is("self") || self.cursor.is("&") {
                 return Err(unsupported(
                     "method",
@@ -470,7 +467,15 @@ impl RustParser {
             }
             let param_name = self.cursor.identifier(Some("parameter"))?.value;
             self.cursor.expect(":", Some("parameter"))?;
+            let type_token = self.peek();
             let ty = self.parse_type()?;
+            if mutable {
+                mutable_params.push((
+                    param_token.clone(),
+                    type_token,
+                    self.origins.current_type.clone(),
+                ));
+            }
             source_params.push(self.origins.current_type.clone());
             params.push(SParam {
                 name: param_name,
@@ -494,6 +499,27 @@ impl RustParser {
         }
         let ret = self.parse_type()?;
         let source_result = self.origins.current_type.clone();
+        if !mutable_params.is_empty() {
+            let (closed, possible_write) = read_rust_scalar_parameter_body(&self.cursor);
+            for (token, type_token, origin) in mutable_params {
+                let resolved = self.resolve(std::slice::from_ref(&type_token.value), path);
+                let shadowed = type_token.kind != TokenKind::Identifier
+                    || self.origins.lookup(&resolved, path).is_some();
+                if !accept_rust_unwritten_scalar_parameter(
+                    origin.ty.as_ref().map_or("", Type::kind),
+                    origin.direct_copy_value(),
+                    shadowed,
+                    closed,
+                    possible_write,
+                ) {
+                    return Err(unsupported(
+                        "mutable parameter",
+                        "mutation is outside the portable core",
+                        span(&token, &token),
+                    ));
+                }
+            }
+        }
         if matches!(ret, Type::Array { .. }) {
             return Err(unsupported(
                 "Rust array result",
