@@ -484,7 +484,7 @@ fn add(
     name: &str,
     id: LinkId,
     definitions: &[LinkId],
-    provenance: Value,
+    provenance: &Value,
     provenance_roots: &[LinkId],
 ) -> Result<(), String> {
     if name.is_empty() || identities.contains_key(name) {
@@ -548,11 +548,10 @@ fn read_views(network: &LinkNetwork, root: LinkId) -> Result<(Value, Value), Str
                 .iter()
                 .map(|candidate| source.link(*candidate).unwrap().references()[0])
                 .collect::<Vec<_>>();
-            let provenance = items(&checked.space["concepts"])?
+            let provenance = &items(&checked.space["concepts"])?
                 .iter()
                 .find(|concept| concept["id"] == name)
-                .unwrap()["origins"]
-                .clone();
+                .unwrap()["origins"];
             add(
                 &mut identities,
                 name,
@@ -573,7 +572,7 @@ fn read_views(network: &LinkNetwork, root: LinkId) -> Result<(Value, Value), Str
             concept.metadata().definition().unwrap(),
             id,
             &[definition],
-            origin,
+            &origin,
             &[root],
         )?;
     }
