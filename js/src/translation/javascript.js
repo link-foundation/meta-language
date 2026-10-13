@@ -20,6 +20,8 @@ import { bindArrayElements, isLiteralBinding, readArrayBinding, readClosure, rea
 import { hasStructuralIdentity, requiresReferenceSemantics } from './reference-analysis.js';
 import { acceptObjectFreezeOperand, acceptObjectPropertyDefinition } from './primitive-value-rules.js';
 import { validateJavaScriptProducts } from './javascript-products.js';
+import {acceptRustScalarLoopModel} from './rust-scalar-loops.js';
+import {isJavaScriptScalarLoop, readJavaScriptScalarLoop, finishJavaScriptScalarLoops} from './javascript-scalar-loops.js';
 
 // The string predicates of the portable core: each reads the whole string,
 // so it means the same over UTF-16, UTF-8 and code points.
@@ -68,13 +70,15 @@ const ASSERTIONS = { strictEqual: 'eq', notStrictEqual: 'ne', deepStrictEqual: '
  * imports items of the crate.
  */
 export function parseJavaScript(source, context = {}) {
+  if (!acceptRustScalarLoopModel(context.scalarLoopModel ?? '')) throw unsupported('JavaScript scalar loop model', 'the selected model is not registered');
   const { tokens, comments } = tokenize(source, 'JavaScript');
   return new JavaScriptParser(source, tokens, comments, context).file();
 }
 
 class JavaScriptParser {
-  constructor(source, tokens, comments, { externals = [], moduleDirectory = null, literalBindings = new Map(), referenceSemantics, readonlyModuleConstants = false } = {}) {
+  constructor(source, tokens, comments, { externals = [], moduleDirectory = null, literalBindings = new Map(), referenceSemantics, readonlyModuleConstants = false, scalarLoopModel = '' } = {}) {
     this.source = source;
+    this.scalarLoopModel = scalarLoopModel;
     this.readonlyModuleConstants = readonlyModuleConstants;
     this.readonlyConstantInitializer = false;
     this.referenceSemantics = referenceSemantics ?? requiresReferenceSemantics(source);
@@ -222,6 +226,7 @@ class JavaScriptParser {
     if (this.imports.length) program.imports = this.imports;
     if (this.externals.size) program.externals = [...this.externals.values()];
     const inferred = inferJavaScriptTypes(program);
+    finishJavaScriptScalarLoops(inferred);
     validateJavaScriptProducts(inferred, this.exportedNames);
     if (this.referenceSemanticsEnabled && hasStructuralIdentity(inferred)) inferred.referenceSemantics = true;
     return inferred;
@@ -573,6 +578,12 @@ class JavaScriptParser {
     this.topLevel = false;
     const names = params.map((param) => param.name);
     this.scope = { locals: new Set(names), tdz: new Set(), mutable: new Set(names) };
+    if (this.scalarLoopModel && isJavaScriptScalarLoop(c)) {
+      let loop;
+      try { loop = readJavaScriptScalarLoop(this, name, params, isAsync); }
+      finally { this.scope = outer; this.inAsync = outerAsync; this.jumps = outerJumps; this.topLevel = outerTopLevel; }
+      return {k: 'fn', name, params, ret, body: loop.body, sourceLoop: loop.proof, span: span(docToken, c.peek())};
+    }
     const statements = statementsOf();
     validateClosureCaptures(statements, this.referenceSemantics);
     this.scope = outer;
