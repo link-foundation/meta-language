@@ -201,6 +201,7 @@ mod translation_rust_array_results;
 mod translation_rust_arrays;
 mod translation_rust_borrowed_call_interface;
 mod translation_rust_completions;
+mod translation_rust_empty_options;
 mod translation_rust_float_constants;
 mod translation_rust_float_operations;
 mod translation_rust_float_predicates;

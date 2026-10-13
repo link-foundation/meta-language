@@ -432,6 +432,7 @@ impl Checker {
             externals: self.externals,
         };
         super::source_primitive_owners::validate_source_primitive_owners(&program)?;
+        super::source_empty_options::validate_source_empty_options(&program)?;
         Ok(program)
     }
 

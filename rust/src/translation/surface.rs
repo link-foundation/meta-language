@@ -785,6 +785,13 @@ pub struct SFn {
         skip_serializing_if = "Option::is_none"
     )]
     pub source_primitive_owners: Option<serde_json::Value>,
+    /// Optional owned standard empty-option source interpretation.
+    #[serde(
+        default,
+        rename = "sourceEmptyOption",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub source_empty_option: Option<serde_json::Value>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
