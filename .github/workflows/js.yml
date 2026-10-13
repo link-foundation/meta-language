@@ -632,6 +632,14 @@ jobs:
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-rust-source-signature-fixtures.mjs --check
 
+      - name: Check generated standard Rust readonly query rules
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-rust-read-only-query-rules.mjs --check
+
+      - name: Check standard Rust readonly query fixtures
+        if: ${{ !cancelled() }}
+        run: node js/scripts/generate-rust-read-only-query-fixtures.mjs --check
+
       - name: Check shared numeric function definition fixtures
         if: ${{ !cancelled() }}
         run: node js/scripts/generate-shared-numeric-function-fixtures.mjs --check
