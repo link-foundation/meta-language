@@ -7,13 +7,14 @@ import assert from 'node:assert/strict';
 
 const policyFile=new URL('../src/translation/data/rust-pure-unit-calls.lino',import.meta.url),policy=readProjectData(policyFile);
 const source='// Generated from linked pure Rust Unit-call policy. Do not edit.\n'
- +'/** @param {string} model @returns {boolean} */\nexport function acceptRustPureUnitCallModel(model){return model === "" || model === '+JSON.stringify(policy.model)+';}\n'
+ +'/** @param {string} model @returns {boolean} */\nexport function acceptRustPureUnitCallModel(model){return model === "" || model === '+JSON.stringify(policy.model)+' || model === '+JSON.stringify(policy.publicModel)+';}\n'
  +'/** @param {number} code @param {boolean} first @returns {boolean} */\nexport function acceptRustPureUnitNameCharacter(code,first){return code >= 95 && code <= 95 || code >= 65 && code <= 90 || code >= 97 && code <= 122 || !first && code >= 48 && code <= 57;}\n'
  +'/** @param {string} name @returns {boolean} */\nexport function acceptRustPureUnitName(name){return name !== "" && name !== "_" && !name.startsWith("ml_") && !('+policy.forbiddenNames.map(name=>'name === '+JSON.stringify(name)).join(' || ')+');}\n'
  +'/** @param {string} form @returns {boolean} */\nexport function acceptRustPureUnitHeaderForm(form){return '+policy.headerForms.map(form=>'form === '+JSON.stringify(form)).join(' || ')+';}\n'
  +'/** @param {string} form @returns {boolean} */\nexport function acceptRustPureUnitBodyForm(form){return '+policy.bodyForms.map(form=>'form === '+JSON.stringify(form)).join(' || ')+';}\n'
  +'/** @param {string} form @returns {boolean} */\nexport function acceptRustPureUnitPathForm(form){return '+policy.pathForms.map(form=>'form === '+JSON.stringify(form)).join(' || ')+';}\n'
  +'/** @param {string} language @param {boolean} forbidden @returns {boolean} */\nexport function acceptRustPureUnitContext(language,forbidden){return language === "Rust" && !forbidden;}\n'
+ +'/** @param {string} model @param {string} form @returns {boolean} */\nexport function acceptRustPureUnitVisibility(model,form){return model === '+JSON.stringify(policy.model)+' && form === '+JSON.stringify(policy.visibilityForms.private)+' || model === '+JSON.stringify(policy.publicModel)+' && form === '+JSON.stringify(policy.visibilityForms.public)+';}\n'
  +'/** @param {string} kind @param {boolean} dense @param {boolean} unrepresented @returns {boolean} */\nexport function acceptRustPureUnitContainer(kind,dense,unrepresented){return !unrepresented && (kind === '+JSON.stringify(policy.containerKinds.array)+' && dense || kind === '+JSON.stringify(policy.containerKinds.map)+');}\n';
 const js=new URL('../src/translation/rust-pure-unit-call-rules.js',import.meta.url),native=new URL('../../rust/src/translation/rust/pure_unit_call_rules.rs',import.meta.url),copy=new URL('../../rust/src/data/rust-pure-unit-calls.lino',import.meta.url),style=new URL('../../parity/self-translation/rust-pure-unit-call-rules-decorators.lino',import.meta.url);
 if(process.argv.includes('--check')){if(readFileSync(js,'utf8')!==source)throw Error('JavaScript pure Unit-call rules are stale');}else writeFileSync(js,source);

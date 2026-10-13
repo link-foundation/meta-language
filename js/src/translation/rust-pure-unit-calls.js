@@ -2,7 +2,7 @@
 import {readRuntimeProjectData} from '../project-data-loader.js';
 import {unsupported,typeError} from './diagnostics.js';
 import {UNIT} from './types.js';
-import {acceptRustPureUnitCallModel,acceptRustPureUnitNameCharacter,acceptRustPureUnitName,acceptRustPureUnitHeaderForm,acceptRustPureUnitBodyForm,acceptRustPureUnitPathForm,acceptRustPureUnitContext,acceptRustPureUnitContainer} from './rust-pure-unit-call-rules.js';
+import {acceptRustPureUnitCallModel,acceptRustPureUnitNameCharacter,acceptRustPureUnitName,acceptRustPureUnitHeaderForm,acceptRustPureUnitBodyForm,acceptRustPureUnitPathForm,acceptRustPureUnitContext,acceptRustPureUnitContainer,acceptRustPureUnitVisibility} from './rust-pure-unit-call-rules.js';
 export const RUST_PURE_UNIT_CALL_POLICY=readRuntimeProjectData(new URL('./data/rust-pure-unit-calls.lino',import.meta.url));
 const policy=RUST_PURE_UNIT_CALL_POLICY;
 const same=(left,right)=>JSON.stringify(left)===JSON.stringify(right);
@@ -46,19 +46,35 @@ function nameAccepted(name){return typeof name==='string'&&acceptRustPureUnitNam
 function readName(parser,context){const token=parser.cursor.identifier(context);if(!nameAccepted(token.value))sourceFail('the selected name requires an ordinary unreserved ASCII Rust identifier',range(token,token));return token;}
 function readUnit(parser,context){const c=parser.cursor;c.expect('(',context);c.expect(')',context);}
 
+export function readRustPureUnitItemContext(parser,path,start){
+ const c=parser.cursor;parser.pureUnitPublicToken=null;
+ if(!parser.pureUnitCallModel)return;
+ if(acceptRustPureUnitVisibility(parser.pureUnitCallModel,policy.visibilityForms.private)){
+  if(path.length||!c.is('fn'))sourceFail('only flat private pure Unit functions and one ordinary main are admitted',range(start,c.peek()));
+  return;
+ }
+ const publicToken=c.eat('pub');
+ if(path.length||!c.is('fn'))sourceFail('only flat bare public pure Unit helpers and one ordinary private main are admitted',range(start,c.peek()));
+ const main=c.is('main',1);
+ if(main&&publicToken)sourceFail('the complete source requires an ordinary private main',range(start,c.peek()));
+ if(!main&&!publicToken)sourceFail('each helper requires its actual bare pub keyword and complete owned Unit header',range(start,c.peek()));
+ parser.pureUnitPublicToken=publicToken??null;
+}
+
 export function readRustPureUnitFunction(parser,path,start,name){
  const c=parser.cursor;
+ const publicToken=parser.pureUnitPublicToken,first=publicToken??start;
  if(path.length||!nameAccepted(name))sourceFail('pure Unit functions require an ordinary flat owned name',range(start,c.peek()));
  readUnit(parser,'zero-argument pure Unit function');
  let headerForm='implicit unit';
  if(c.eat('->')){readUnit(parser,'direct Unit result');headerForm='explicit unit';}
- const headerSpan=range(start,c.tokens[c.index-1]),open=c.expect('{','pure Unit function');
+ const headerSpan=range(first,c.tokens[c.index-1]),open=c.expect('{','pure Unit function');
  let bodyForm='empty block';
  if(!c.is('}')){readUnit(parser,'pure Unit body');bodyForm='unit expression';}
  if(!c.is('}'))sourceFail('a helper body must be exactly an empty block or the Unit expression',range(open,c.peek()));
  const close=c.next(),origin=parser.origins.typeOrigin(UNIT,path);
  parser.origins.declaration(name,path,{k:'fn',parameters:[],result:origin});
- return {k:'fn',name,params:[],ret:UNIT,body:parser.origins.mark({k:'unit'},origin),span:range(start,close),sourcePureUnit:{model:parser.pureUnitCallModel,language:policy.language,headerForm,bodyForm,headerSpan,bodySpan:range(open,close)}};
+ return {k:'fn',name,params:[],ret:UNIT,body:parser.origins.mark({k:'unit'},origin),span:range(first,close),sourcePureUnit:{model:parser.pureUnitCallModel,language:policy.language,headerForm,bodyForm,headerSpan,bodySpan:range(open,close),...(publicToken?{visibility:{form:policy.visibilityForms.public,span:range(publicToken,publicToken)}}:{})}};
 }
 
 export function readRustPureUnitMain(parser){
@@ -93,7 +109,8 @@ export function checkRustPureUnitCalls(program){
   ||!Array.isArray(program.items)||program.items.some(item=>item.k!=='fn')||entries.length!==program.items.length;
  if(!acceptRustPureUnitContext(program.sourceLanguage,forbidden))fail('the selected interpretation requires a complete flat pure Unit program without other effects');
  allowed(program,policy.fields.program);exact(program.sourcePureUnitCalls,policy.fields.marker);
- if(program.sourcePureUnitCalls.model!==policy.model||program.sourcePureUnitCalls.language!==policy.language||!acceptRustPureUnitCallModel(program.sourcePureUnitCalls.model))fail('the selected interpretation is invalid');
+ const model=program.sourcePureUnitCalls.model,publicSelected=acceptRustPureUnitVisibility(model,policy.visibilityForms.public);
+ if(!model||program.sourcePureUnitCalls.language!==policy.language||!acceptRustPureUnitCallModel(model))fail('the selected interpretation is invalid');
  exact(program.main,policy.fields.main);validSpan(program.main.span);
  const owned=new Set(),names=new Set();
  for(const entry of entries){
@@ -101,8 +118,12 @@ export function checkRustPureUnitCalls(program){
   if(entry.k!=='fn'||!nameAccepted(entry.name)||entry.fullName!==entry.name||!same(entry.modulePath,[])||!same(entry.params,[])||entry.recursive!==false||entry.decreasing!=null||Object.hasOwn(entry,'mutual')&&entry.mutual!==false||Object.hasOwn(entry,'generated')&&entry.generated!==false||program.declarations.get(entry.fullName)!==entry||names.has(entry.name))fail('a helper does not own the declared flat zero-argument identity');
   exact(entry.ret,policy.fields.unitType);exact(entry.body,policy.fields.body);exact(entry.body.type,policy.fields.unitType);
   if(entry.ret.kind!=='unit'||entry.body.k!=='unit'||entry.body.type.kind!=='unit')fail('a helper must return the exact pure Unit value');
-  const proof=entry.sourcePureUnit;exact(proof,policy.fields.functionProof);validSpan(proof.headerSpan);validSpan(proof.bodySpan);
-  if(proof.model!==policy.model||proof.language!==policy.language||!acceptRustPureUnitHeaderForm(proof.headerForm)||!acceptRustPureUnitBodyForm(proof.bodyForm)||proof.headerSpan.start!==entry.span.start||proof.bodySpan.end!==entry.span.end||proof.headerSpan.end>proof.bodySpan.start||!inside(proof.headerSpan,entry.span)||!inside(proof.bodySpan,entry.span))fail('a helper header or complete body site contradicts its actual owned declaration');
+  const proof=entry.sourcePureUnit;exact(proof,publicSelected?policy.fields.publicFunctionProof:policy.fields.functionProof);validSpan(proof.headerSpan);validSpan(proof.bodySpan);
+  if(proof.model!==model||proof.language!==policy.language||!acceptRustPureUnitHeaderForm(proof.headerForm)||!acceptRustPureUnitBodyForm(proof.bodyForm)||proof.headerSpan.start!==entry.span.start||proof.bodySpan.end!==entry.span.end||proof.headerSpan.end>proof.bodySpan.start||!inside(proof.headerSpan,entry.span)||!inside(proof.bodySpan,entry.span))fail('a helper header or complete body site contradicts its actual owned declaration');
+  if(publicSelected){
+   exact(proof.visibility,policy.fields.visibility);validSpan(proof.visibility.span);
+   if(!acceptRustPureUnitVisibility(model,proof.visibility.form)||proof.visibility.span.start!==proof.headerSpan.start||proof.visibility.span.end-proof.visibility.span.start!==policy.publicVisibilityWidth||proof.visibility.span.end>=proof.headerSpan.end)fail('the actual bare public visibility does not belong to the complete owned header');
+  }
   owned.add(entry);names.add(entry.name);
  }
  if(new Set(program.items).size!==entries.length||program.items.some(entry=>!owned.has(entry)))fail('the ordered items do not contain each actual declaration exactly once');
@@ -113,6 +134,6 @@ export function checkRustPureUnitCalls(program){
   locals.add(effect.name);exact(effect.value,policy.fields.call);exact(effect.value.type,policy.fields.unitType);validSpan(effect.value.span);
   if(effect.value.k!=='call'||!same(effect.value.args,[])||effect.value.type.kind!=='unit'||!same(effect.value.span,effect.span)||!owned.has(program.declarations.get(effect.value.fn)))fail('a main statement must call the exact owned zero-argument pure Unit declaration');
   const proof=effect.sourcePureUnitCall;exact(proof,policy.fields.callProof);validSpan(proof.span);
-  if(proof.model!==policy.model||proof.language!==policy.language||!acceptRustPureUnitPathForm(proof.pathForm)||!same(proof.span,effect.span))fail('a Unit call statement has invalid selected source facts');
+  if(proof.model!==model||proof.language!==policy.language||!acceptRustPureUnitPathForm(proof.pathForm)||!same(proof.span,effect.span))fail('a Unit call statement has invalid selected source facts');
  }
 }
