@@ -42,7 +42,9 @@ if (process.argv.includes('--javascript-only')) {
   const { parseJavaScript } = await import('../src/translation/javascript.js');
   const { checkProgram } = await import('../src/translation/check.js');
   const { emitRust } = await import('../src/translation/emit-rust.js');
-  const raw = emitRust(checkProgram(parseJavaScript(source))).definitions.join('\n\n');
+  // Every undecorated definition has a blank-line boundary. An inserted
+  // attribute block removes that boundary before `pub`, so replay is stable.
+  const raw = '\n\n' + emitRust(checkProgram(parseJavaScript(source))).definitions.join('\n\n');
   if (process.argv.includes('--update-styles')) {
     const actions = [];
     let current = raw;
@@ -50,8 +52,8 @@ if (process.argv.includes('--javascript-only')) {
       if (current.includes(from)) { actions.push({ op: 'replace', field: 'source', from, to }); current = current.split(from).join(to); }
     };
     for (const name of ['model', 'language', 'kind', 'field', 'semantics', 'owner_kind', 'owner_path', 'lifetime', 'inner', 'name', 'type_', 'dereferenced', 'lifetimes', 'parameters', 'result', 'body']) replace(`${name}: String`, `${name}: &str`);
-    for (const match of raw.matchAll(/^pub fn (\w+)/gmu)) replace(`pub fn ${match[1]}`, `/// Apply the shared primitive borrowed header emission policy.\n#[must_use]\npub fn ${match[1]}`);
-    for (const name of ['accept_rust_source_header_emission_declaration_fields', 'accept_rust_source_header_emission_parameter']) replace(`pub fn ${name}`, `pub const fn ${name}`);
+    for (const match of raw.matchAll(/^pub fn (\w+)\(/gmu)) replace(`\n\npub fn ${match[1]}(`, `\n\n/// Apply the shared primitive borrowed header emission policy.\n#[must_use]\npub fn ${match[1]}(`);
+    for (const name of ['accept_rust_source_header_emission_declaration_fields', 'accept_rust_source_header_emission_parameter']) replace(`pub fn ${name}(`, `pub const fn ${name}(`);
     replace('lifetime == ""', 'lifetime.is_empty()'); replace('lifetimes == ""', 'lifetimes.is_empty()');
     for (const condition of ['kind == "float"', 'kind == "bool"', 'lifetime.is_empty()', 'lifetimes.is_empty()']) replace(`if (${condition})`, `if ${condition}`);
     replace('String::from("")', 'String::new()');

@@ -23,8 +23,6 @@ pub fn accept_rust_source_header_emission_declaration(
 
 /// Apply the shared primitive borrowed header emission policy.
 #[must_use]
-/// Apply the shared primitive borrowed header emission policy.
-#[must_use]
 pub const fn accept_rust_source_header_emission_declaration_fields(unrepresented: bool) -> bool {
     !unrepresented
 }
@@ -50,8 +48,6 @@ pub fn accept_rust_source_header_emission_expression(kind: &str) -> bool {
         || kind == "binary"
 }
 
-/// Apply the shared primitive borrowed header emission policy.
-#[must_use]
 /// Apply the shared primitive borrowed header emission policy.
 #[must_use]
 pub fn accept_rust_source_header_emission_expression_field(kind: &str, field: &str) -> bool {
