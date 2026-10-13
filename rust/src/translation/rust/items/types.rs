@@ -190,7 +190,7 @@ impl RustParser {
         if name == "bool" {
             return Ok(self.origins.typed(BOOL, &self.module_path, Vec::new()));
         }
-        if name == "String" {
+        if name == "String" || resolved.join("::") == "std::string::String" {
             return Ok(self.origins.typed(STRING, &self.module_path, Vec::new()));
         }
         if UNSUPPORTED_TYPES.contains(&name.as_str()) {

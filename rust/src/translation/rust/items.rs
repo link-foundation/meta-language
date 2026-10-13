@@ -5,6 +5,7 @@ use super::indirection_rules::{
     accept_rust_source_box_owner, accept_rust_source_lifetime_binding,
     accept_rust_source_lifetime_result,
 };
+use super::read_only_query_rules::accept_rust_read_only_query_owner;
 use super::scalar_parameter_rules::accept_rust_unwritten_scalar_parameter;
 use super::scalar_parameters::read_rust_scalar_parameter_body;
 use super::{
@@ -259,9 +260,12 @@ impl RustParser {
         let standard_box = full.len() > 1 && accept_rust_source_box_owner(&full.join("::"), false);
         let standard_vector =
             full.len() > 1 && accept_rust_source_array_owner(&full.join("::"), false);
+        let standard_string =
+            accept_rust_read_only_query_owner("string empty", "library", &full.join("::"));
         if !["crate", "super", "self"].contains(&full[0].as_str())
             && !standard_box
             && !standard_vector
+            && !standard_string
         {
             return Err(unsupported(
                 &format!("use {}", full.join("::")),
@@ -282,7 +286,7 @@ impl RustParser {
         } else {
             segment
         };
-        let target = if standard_box || standard_vector {
+        let target = if standard_box || standard_vector || standard_string {
             full
         } else {
             absolute(&full, path, span(start, c.peek()))?

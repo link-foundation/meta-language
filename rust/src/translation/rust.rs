@@ -31,6 +31,7 @@ mod float_predicates;
 pub(super) mod indirection_rules;
 mod items;
 mod product_rules;
+mod read_only_query_rules;
 mod scalar_parameter_rules;
 mod scalar_parameters;
 mod source_origins;

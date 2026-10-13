@@ -5,6 +5,8 @@ import { readRustFunctionCompletion } from './rust-completions.js';
 import { readRustCompletionPanicMessage } from './rust-completion-panic.js';
 import { acceptRustSourceSignatureModel } from './rust-source-signature-rules.js';
 import { readRustSourceTypeHead, readRustSourceTypeOwner, createRustSourceSignature } from './rust-source-signatures.js';
+import { readRustInclusiveRangeQuery, readRustStringEmptyQuery, readRustEmptyStringConstructor } from './rust-read-only-queries.js';
+import { acceptRustReadOnlyQueryOwner } from './rust-read-only-query-rules.js';
 import { readStringMapOperation, readStringTestOperation } from './frontend-rules.js';
 // Rust frontend for the portable core. It reads the subset of Rust the core
 // can represent faithfully: modules with `use` of crate items, enums with
@@ -218,13 +220,14 @@ class RustParser {
       }
       const standardBox = full.length > 1 && acceptRustSourceBoxOwner(full.join('::'), false);
       const standardVector = full.length > 1 && acceptRustSourceArrayOwner(full.join('::'), false);
-      if (!['crate', 'super', 'self'].includes(full[0]) && !standardBox && !standardVector) {
+      const standardString = acceptRustReadOnlyQueryOwner('string empty', 'library', full.join('::'));
+      if (!['crate', 'super', 'self'].includes(full[0]) && !standardBox && !standardVector && !standardString) {
         throw unsupported(`use ${full.join('::')}`, 'only items of this crate can be imported; the standard library is outside the portable core', span(start, c.peek()));
       }
       if (standardBox) this.origins.box(full, full, path, span(start, c.peek()));
       if (standardVector) this.origins.vector(full, full, path, span(start, c.peek()));
       const alias = c.eat('as') ? c.identifier('use alias').value : segment;
-      aliases.set(alias, standardBox || standardVector ? full : absolute(full, path, span(start, c.peek())));
+      aliases.set(alias, standardBox || standardVector || standardString ? full : absolute(full, path, span(start, c.peek())));
     };
     tree([]);
     c.expect(';', 'use');
@@ -276,7 +279,8 @@ class RustParser {
    * is immutable.
    */
   type() {
-    if (!this.sourceSignatureModel) return this.typeValue();
+    // Actual source owners also prove readonly method dispatch. Capturing a
+    // public source-signature facet remains opt-in, independently of this fact.
     const head = readRustSourceTypeHead(this.cursor);
     const children = [];
     this.sourceOwnerFrames.push(children);
@@ -375,7 +379,7 @@ class RustParser {
     const fixed = segments.length === 1 ? rustFixedType(name) : undefined;
     if (fixed) return this.origins.typed(fixed, this.modulePath);
     if (name === 'bool') return this.origins.typed(BOOL, this.modulePath);
-    if (name === 'String') return this.origins.typed(STRING, this.modulePath);
+    if (name === 'String' || resolved.join('::') === 'std::string::String') return this.origins.typed(STRING, this.modulePath);
     if (name === 'f64') return this.origins.typed(FLOAT, this.modulePath);
     if (['str', 'char', 'f32', 'Vec', 'Option', 'Result', 'Rc', 'Arc', 'HashMap', 'Self'].includes(name)) {
       throw unsupported(`Rust type ${name}`, 'outside the portable core', span(token, token));
@@ -922,6 +926,10 @@ class RustParser {
         : this.origins.typeOrigin(BOOL, this.modulePath));
     }
     const mapOperation = readStringMapOperation('Rust', method.value);
+    if (method.value === 'is_empty') {
+      const query = readRustStringEmptyQuery(this, receiver, args, range);
+      if (query) return query;
+    }
     if (['len', 'is_empty'].includes(method.value)) {
       const origin = this.origins.origin(receiver, this.modulePath);
       if (!origin.arraySourceModel) throw unsupported(`method ${method.value}`, 'outside the portable core', range);
@@ -992,7 +1000,7 @@ class RustParser {
     }
     if (token.kind === 'string') {
       c.next();
-      return this.origins.mark({ k: 'str', value: token.value, span: span(token, token) }, { type: STRING, textSourceModel: 'string slice', path: [...path], wrappers: ['reference'] });
+      return this.origins.mark({ k: 'str', value: token.value, span: span(token, token) }, { type: STRING, textSourceModel: 'string slice', sourceOwner: { kind: 'primitive', path: ['str'], arguments: [] }, path: [...path], wrappers: ['reference'] });
     }
     if (token.kind === 'macro') {
       c.next();
@@ -1003,6 +1011,7 @@ class RustParser {
       c.next();
       if (c.eat(')')) return { k: 'unit', span: span(token, token) };
       const inner = this.expr(path);
+      if (c.is('..=')) return readRustInclusiveRangeQuery(this, token, path, inner);
       if (!c.eat(',')) {
         c.expect(')', 'parenthesised expression');
         return inner;
@@ -1063,6 +1072,8 @@ class RustParser {
       }
       c.expect(')', 'call');
       const range = span(token, c.peek());
+      const emptyString = readRustEmptyStringConstructor(this, segments, args, path, range);
+      if (emptyString) return emptyString;
       const resolvedOwner = segments.length > 1 ? this.resolve(segments.slice(0, -1), path) : [];
       if (segments.at(-1) === 'new' && (acceptRustSourceBoxOwner(segments.slice(0, -1).join('::'), false) || acceptRustSourceBoxOwner(resolvedOwner.join('::'), false))) {
         if (args.length !== 1) throw new TranslationError('type', 'Box::new expects 1 argument', range);

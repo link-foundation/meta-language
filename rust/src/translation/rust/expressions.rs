@@ -1,6 +1,7 @@
 //! Expression precedence, immutable reads, primary values and qualified paths.
 
 mod control;
+mod read_only_queries;
 
 use super::array_rules::{accept_rust_source_array_element, accept_rust_source_array_owner};
 use super::indirection_rules::accept_rust_source_box_owner;
@@ -289,6 +290,17 @@ impl RustParser {
                     }
                     continue;
                 }
+                if method_name == "is_empty"
+                    && let Some(query) = self.read_string_empty_query(
+                        &value,
+                        args.len(),
+                        path,
+                        span(&token, self.cursor.peek()),
+                    )?
+                {
+                    value = query;
+                    continue;
+                }
                 if ["len", "is_empty"].contains(&method_name) {
                     value = self.array_read(
                         value,
@@ -546,6 +558,11 @@ impl RustParser {
             );
             let mut origin = SourceOrigin::with_type(STRING, path, vec!["reference".to_owned()]);
             origin.text_source_model = Some("string slice");
+            origin.source_owner = Some(crate::translation::source_signatures::SourceOwner {
+                kind: "primitive".to_owned(),
+                path: vec!["str".to_owned()],
+                arguments: Vec::new(),
+            });
             self.origins.mark(&result, origin);
             return Ok(result);
         }
@@ -567,6 +584,9 @@ impl RustParser {
                 return Ok(SExpr::new(SNode::Unit, span(&token, &token)));
             }
             let inner = self.expr(path, Options::default())?;
+            if self.cursor.is("..=") {
+                return self.read_inclusive_range_query(&token, path, inner);
+            }
             if self.cursor.eat(",").is_some() {
                 let mut items = vec![inner];
                 while !self.cursor.is(")") {
@@ -744,6 +764,11 @@ impl RustParser {
         let mut args = self.call_arguments(path)?;
         self.cursor.expect(")", Some("call"))?;
         let range = span(token, self.cursor.peek());
+        if let Some(empty) =
+            self.read_empty_string_constructor(&segments, args.len(), path, range)?
+        {
+            return Ok(empty);
+        }
         let owner = &segments[..segments.len() - 1];
         let resolved_owner = if owner.is_empty() {
             Vec::new()

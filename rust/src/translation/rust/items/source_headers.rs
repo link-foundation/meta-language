@@ -69,7 +69,11 @@ impl RustParser {
         self.named_source_type_owner(head, children)
     }
 
-    fn named_source_type_owner(&self, head: &[String], children: Vec<SourceOwner>) -> SourceOwner {
+    pub(in super::super) fn named_source_type_owner(
+        &self,
+        head: &[String],
+        children: Vec<SourceOwner>,
+    ) -> SourceOwner {
         let resolved = self.resolve(head, &self.module_path);
         let declared = self
             .origins
@@ -114,9 +118,8 @@ impl RustParser {
     }
 
     pub(in super::super) fn parse_type(&mut self) -> Result<Type> {
-        if self.source_signature_model.is_empty() {
-            return self.parse_type_value();
-        }
+        // Readonly dispatch also needs actual owners; publishing the captured
+        // header facet remains independently opt-in.
         let head = self.source_type_head();
         self.source_owner_frames.push(Vec::new());
         let result = self.parse_type_value();

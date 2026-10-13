@@ -142,7 +142,7 @@ impl RustParser {
         Ok(())
     }
 
-    fn fresh_product_binding(&mut self) -> String {
+    pub(in super::super) fn fresh_product_binding(&mut self) -> String {
         loop {
             let name = format!("ml_tuple_value{}", self.next_product_binding);
             self.next_product_binding += 1;
