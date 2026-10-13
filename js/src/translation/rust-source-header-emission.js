@@ -10,6 +10,7 @@ import { acceptRustSourceHeaderEmissionModel, acceptRustSourceHeaderEmissionCont
   acceptRustSourceHeaderEmissionDeclaration, acceptRustSourceHeaderEmissionPosition,
   acceptRustSourceHeaderEmissionDeclarationFields,
   acceptRustSourceHeaderEmissionExpression, readRustSourceHeaderPrimitive,
+  acceptRustSourceHeaderEmissionExpressionField, acceptRustSourceHeaderEmissionSemantics,
   acceptRustSourceHeaderEmissionParameter,
   acceptRustSourceHeaderLifetimeCharacter,
   renderRustSourceHeaderReference, renderRustSourceHeaderParameter,
@@ -72,6 +73,8 @@ export function validateRustPrimitiveValueExpressions(roots) {
     if (at >= 100000) fail('the leaf body exceeds its expression resource limit');
     visited.add(node); type(node.type);
     if (!acceptRustSourceHeaderEmissionExpression(node.k) || !acceptSharedNumericExpressionShape(node.k, node.rounding != null || node.byZero != null)) fail('calls and effects require a distinct interface transformation proof');
+    if (Object.keys(node).some(field => !acceptRustSourceHeaderEmissionExpressionField(node.k, field))) fail('the primitive value expression contains unrepresented fields');
+    if (Object.hasOwn(node, 'semantics') && (typeof node.semantics !== 'string' || !acceptRustSourceHeaderEmissionSemantics(node.semantics))) fail('the primitive value expression has malformed represented semantics');
     if (node.k === 'unary') {
       if (!acceptSharedNumericUnary(node.op, node.type.kind, node.semantics ?? '')) fail('the unary operation has no admitted primitive value interpretation');
       pending.push(node.arg);

@@ -45,6 +45,42 @@ test('selected leaf headers refuse source-free parameter span fields while decla
   }
 });
 
+test('selected leaf headers reject source-free unrepresented fields on actual literal, variable, let and if nodes', () => {
+  const original = createTypedProgramLinks('fn leaf(value:&f64)->f64{let copied=*value;if copied>0.0{copied}else{1.0}}fn main(){}', 'Rust', capture);
+  const targets = [body => body, body => body.body, body => body.body.cond.left, body => body.body.else];
+  for (const target of targets) {
+    for (const [field, scalar] of [['borrowEscape', true], ['opaqueExpression', false]]) {
+      const program = decodeTypedProgramLinks(original.network, original.root);
+      const defaultCode = emitRust(program).text;
+      target(program.declarations.get('leaf').body)[field] = scalar;
+      const archive = encodeTypedProgramLinks(program);
+      const network = LinkNetwork.fromLino(archive.network.toLino());
+      assert.equal(emitTypedProgramLinks(network, archive.root, 'Rust').code, defaultCode);
+      assert.throws(() => emitTypedProgramLinks(network, archive.root, 'Rust', options), /primitive value expression contains unrepresented fields/u, field);
+    }
+  }
+});
+
+test('selected primitive bodies add no neutral null or empty-string interpretation for semantic model fields', () => {
+  const original = createTypedProgramLinks('fn leaf(flag:&bool)->bool{!*flag}fn main(){}', 'Rust', capture);
+  for (const semantics of [null, '', false]) {
+    const program = decodeTypedProgramLinks(original.network, original.root);
+    program.declarations.get('leaf').body.semantics = semantics;
+    const archive = encodeTypedProgramLinks(program);
+    const network = LinkNetwork.fromLino(archive.network.toLino());
+    assert.throws(() => emitTypedProgramLinks(network, archive.root, 'Rust', options), /malformed represented semantics/u);
+  }
+  for (const field of ['rounding', 'byZero']) {
+    const value = reload(fixture.cases.find(value => value.id === 'local-shadowing'));
+    const program = decodeTypedProgramLinks(value.network, value.root);
+    program.declarations.get('read').body.body[field] = null;
+    assert.throws(() => {
+      const archive = encodeTypedProgramLinks(program);
+      emitTypedProgramLinks(LinkNetwork.fromLino(archive.network.toLino()), archive.root, 'Rust', options);
+    }, /rounding policy|unrepresented fields/u, field);
+  }
+});
+
 test('twelve independently specified headers retain reference/lifetime order with checked scoped copies after source-free reload', () => {
   assert.deepEqual(rustSourceHeaderEmissionFixture(), fixture);
   assert.equal(fixture.cases.length, 12);
