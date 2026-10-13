@@ -182,7 +182,7 @@ fn original_emitted_reparsed_and_reverse_definitions_match_native_bit_oracles() 
                     .definitions
                     .join("\n\n")
             } else {
-                case[*field].as_str().unwrap().replace("fn main(){}", "")
+                case[*field].as_str().unwrap().to_owned()
             };
             // Original functions are private; expose their unchanged bodies
             // within this isolated oracle namespace. Emitted functions are public.
