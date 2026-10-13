@@ -25,7 +25,7 @@ pub fn read_structured_data_kind(term: &str) -> String {
     } else if term == "null value" {
         String::from("null")
     } else {
-        String::from("")
+        String::new()
     }
 }
 

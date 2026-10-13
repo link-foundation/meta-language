@@ -37,6 +37,14 @@ if (process.argv.includes('--update-styles')) {
   // Positive, finite, nonzero binary64 3 has one encoding. Bit equality is
   // therefore exactly its Number equality predicate, including NaN and zeros.
   replace('relation_arity == 3f64', 'relation_arity.to_bits() == 3.0_f64.to_bits()');
+  // Native metadata is grouped without changing the named JavaScript decisions.
+  // Tuple positions retain the exact source parameter order and need no flags
+  // object, callback, allocation or new semantic admission.
+  replace('pub fn accept_formal_relation_label_identity(label_kind: &str, label_definition: &str, label_has_term: bool, label_has_namespace: bool, label_named: bool, label_self_point: bool) -> bool {',
+    'pub fn accept_formal_relation_label_identity(label_kind: &str, label_definition: &str, label_flags: (bool, bool, bool, bool)) -> bool {\n    let (label_has_term, label_has_namespace, label_named, label_self_point) = label_flags;');
+  replace('pub fn accept_formal_relation_edge_identity(relation_kind: &str, relation_has_namespace: bool, relation_has_term: bool, relation_has_definition: bool, relation_named: bool, relation_arity: f64) -> bool {',
+    'pub fn accept_formal_relation_edge_identity(relation_kind: &str, relation_flags: (bool, bool, bool, bool), relation_arity: f64) -> bool {\n    let (relation_has_namespace, relation_has_term, relation_has_definition, relation_named) = relation_flags;');
+  replace('pub fn accept_formal_relation_identity', 'pub const fn accept_formal_relation_identity');
   writeFileSync(style, new DecoratorSet([{ id: 'formal-relation-library-style', level: 'emitter', order: 0,
     when: [['format', 'Rust']], actions }]).toLino());
 }

@@ -26,6 +26,7 @@ if (process.argv.includes('--update-styles')) {
     '((kind == "number" || kind == "boolean") || kind == "unit")',
     '(reference_count == "1" && metadata_count == "1")',
   ]) replace(expression, expression.replace(/[()]/gu, ''));
+  replace('String::from("")', 'String::new()');
   for (;;) {
     const match = /\} else \{\n\s+if /u.exec(styled);
     if (!match) break;

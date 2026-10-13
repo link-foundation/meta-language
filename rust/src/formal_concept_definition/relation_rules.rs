@@ -6,11 +6,9 @@
 pub fn accept_formal_relation_label_identity(
     label_kind: &str,
     label_definition: &str,
-    label_has_term: bool,
-    label_has_namespace: bool,
-    label_named: bool,
-    label_self_point: bool,
+    label_flags: (bool, bool, bool, bool),
 ) -> bool {
+    let (label_has_term, label_has_namespace, label_named, label_self_point) = label_flags;
     label_kind == "Field"
         && label_definition == "A field label names a relation between links."
         && label_has_term
@@ -23,12 +21,11 @@ pub fn accept_formal_relation_label_identity(
 #[must_use]
 pub fn accept_formal_relation_edge_identity(
     relation_kind: &str,
-    relation_has_namespace: bool,
-    relation_has_term: bool,
-    relation_has_definition: bool,
-    relation_named: bool,
+    relation_flags: (bool, bool, bool, bool),
     relation_arity: f64,
 ) -> bool {
+    let (relation_has_namespace, relation_has_term, relation_has_definition, relation_named) =
+        relation_flags;
     relation_kind == "Field"
         && !relation_has_namespace
         && !relation_has_term
@@ -39,7 +36,7 @@ pub fn accept_formal_relation_edge_identity(
 
 /// Admit the existing formal labeled relation model.
 #[must_use]
-pub fn accept_formal_relation_identity(
+pub const fn accept_formal_relation_identity(
     label_admitted: bool,
     relation_admitted: bool,
     same_label_identity: bool,
