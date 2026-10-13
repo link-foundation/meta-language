@@ -4,7 +4,9 @@ import { acceptRustCompletionModel } from './rust-completion-rules.js';
 import { readRustFunctionCompletion } from './rust-completions.js';
 import { readRustCompletionPanicMessage } from './rust-completion-panic.js';
 import { acceptRustSourceSignatureModel } from './rust-source-signature-rules.js';
-import { readRustSourceTypeHead, readRustSourceTypeOwner, createRustSourceSignature } from './rust-source-signatures.js';
+import { readRustSourceTypeHead, readRustSourceTypeOwner, createRustSourceSignature, RUST_SOURCE_SIGNATURE_POLICY } from './rust-source-signatures.js';
+import { acceptRustTypeNamespaceModel, acceptRustTypeNamespaceDeclaration } from './rust-type-namespace-rules.js';
+import { createRustTypeNamespaceProof, requireRustTypeNamespaceWithoutImports, requireRustTypeNamespaceAnchor } from './rust-type-namespace.js';
 import { readRustInclusiveRangeQuery, readRustStringEmptyQuery, readRustEmptyStringConstructor } from './rust-read-only-queries.js';
 import { acceptRustReadOnlyQueryOwner } from './rust-read-only-query-rules.js';
 import { readStringMapOperation, readStringTestOperation } from './frontend-rules.js';
@@ -38,17 +40,18 @@ const ADDITIVE = { '+': 'add', '-': 'sub' };
 const MULTIPLICATIVE = { '*': 'mul', '/': 'div', '%': 'rem' };
 const RESERVED_ITEMS = new Set(['impl', 'trait', 'struct', 'union', 'static', 'type', 'extern', 'macro_rules', 'async', 'unsafe']);
 
-export function parseRust(source, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '' } = {}) {
+export function parseRust(source, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', typeNamespaceModel = '' } = {}) {
+  if (!acceptRustTypeNamespaceModel(typeNamespaceModel)) throw unsupported('Rust type namespace model', 'select the legacy model or resolved Rust type namespace 1');
   if(!acceptRustPrimitiveOwnerModel(primitiveOwnerModel))throw unsupported('Rust primitive owner model','select the legacy model or standard primitive Rust binary64 owner 1');
   if (!acceptRustScalarLoopModel(scalarLoopModel)) throw unsupported('Rust scalar loop model', 'select the legacy model or closed primitive scalar loop 1');
   if (!acceptRustSourceArrayResultModel(arrayResultModel)) throw unsupported('Rust array result model', 'select the legacy model or immutable fresh scalar vector results 1');
   if (!acceptRustCompletionModel(completionModel)) throw unsupported('Rust completion model', 'select the legacy model or closed guarded function returns 1');
   if (!acceptRustSourceSignatureModel(sourceSignatureModel)) throw unsupported('Rust source signature model', 'select the legacy model or Rust source function signature 1');
   const { tokens } = tokenize(source, 'Rust');
-  const declarations = new RustParser(tokens, null, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel);
+  const declarations = new RustParser(tokens, null, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,typeNamespaceModel);
   declarations.file();
   declarations.origins.resolveTypes((segments, path) => declarations.resolve(segments, path));
-  const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel);
+  const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,typeNamespaceModel);
   syntax.origins.collecting = true;
   syntax.aliases = declarations.aliases;
   const surface = syntax.file();
@@ -58,13 +61,13 @@ export function parseRust(source, { arrayResultModel = '', completionModel = '',
     if (!(error instanceof TranslationError)) throw error;
     return surface;
   }
-  const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel);
+  const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,typeNamespaceModel);
   parser.aliases = syntax.aliases;
   return parser.file();
 }
 
 class RustParser {
-  constructor(tokens, catalog = null, arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '',primitiveOwnerModel='') {
+  constructor(tokens, catalog = null, arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '',primitiveOwnerModel='',typeNamespaceModel='') {
     this.cursor = new TokenCursor([...tokens], 'Rust');
     // `use` aliases, per module path.
     this.aliases = new Map();
@@ -72,7 +75,9 @@ class RustParser {
     this.crateDeclarations = new Set();
     this.origins = new RustSourceOrigins(catalog, arrayResultModel);
     this.completionModel = completionModel;
-    this.sourceSignatureModel = sourceSignatureModel;
+    this.sourceSignatureModel = sourceSignatureModel || (typeNamespaceModel ? 'Rust source function signature 1' : '');
+    this.typeNamespaceModel = typeNamespaceModel;
+    this.typeNamespaceFrames = [];
     this.scalarLoopModel = scalarLoopModel;
     this.primitiveOwnerModel=primitiveOwnerModel;
     this.primitiveOwnerFrames=[];
@@ -208,6 +213,7 @@ class RustParser {
    * an alias for its absolute path inside the importing module.
    */
   use(path) {
+    requireRustTypeNamespaceWithoutImports(this.typeNamespaceModel);
     const c = this.cursor;
     const start = c.next();
     const key = path.join('.');
@@ -301,18 +307,24 @@ class RustParser {
     const head = readRustSourceTypeHead(this.cursor);
     const children = [];
     const primitiveChildren=[];
+    const namespaceChildren = [];
     this.sourceOwnerFrames.push(children);
     this.primitiveOwnerFrames.push(primitiveChildren);
+    this.typeNamespaceFrames.push(namespaceChildren);
     try {
       const result = this.typeValue();
       const position=readRustStandardPrimitivePosition(this,head)??(['&','('].includes(head[0])&&primitiveChildren.length===1?primitiveChildren[0]:null);
       this.origins.type.primitiveOwnerPosition=position;
       const owner = position?{kind:'primitive',path:['f64'],arguments:[]}:readRustSourceTypeOwner(this, head, children, result);
       this.origins.type.sourceOwner = owner;
+      this.origins.type.namespaceSpelling = !['&', '('].includes(head[0]) ? [...head]
+        : namespaceChildren.length === 1 && !head.includes('[') ? [...namespaceChildren[0]]
+          : head[0] === '&' && !head.includes('[') ? ['str'] : [];
+      this.typeNamespaceFrames.at(-2)?.push(this.origins.type.namespaceSpelling);
       this.sourceOwnerFrames.at(-2)?.push(owner);
       this.primitiveOwnerFrames.at(-2)?.push(position);
       return result;
-    } finally { this.sourceOwnerFrames.pop();this.primitiveOwnerFrames.pop(); }
+    } finally { this.sourceOwnerFrames.pop();this.primitiveOwnerFrames.pop();this.typeNamespaceFrames.pop(); }
   }
 
   typeValue() {
@@ -338,7 +350,7 @@ class RustParser {
         this.origins.type.sourceLifetimes = [sourceLifetime];
         return result;
       }
-      if (c.is('str')) {
+      if (c.is('str') && !(this.typeNamespaceModel && this.origins.lookup(['str'], this.modulePath, RUST_SOURCE_SIGNATURE_POLICY.typeOwnerKinds))) {
         c.next();
         const result = this.origins.typed(STRING, this.modulePath, ['reference'], null, 'string slice');
         this.origins.type.sourceLifetimes = [sourceLifetime];
@@ -376,6 +388,14 @@ class RustParser {
     const segments = this.pathSegments('type');
     const name = segments.join('::');
     const resolved = this.resolve(segments, this.modulePath);
+    if (this.typeNamespaceModel) {
+      requireRustTypeNamespaceAnchor(segments, this.modulePath);
+      const declared = this.origins.lookup(segments, this.modulePath, RUST_SOURCE_SIGNATURE_POLICY.typeOwnerKinds);
+      if (declared) {
+        if (!acceptRustTypeNamespaceDeclaration(declared.k) || c.is('<')) throw unsupported('Rust type namespace binding', 'the selected source position needs an actual datatype without generic arguments', span(token, c.peek()));
+        return this.origins.typed({ kind: 'named', path: ['crate', ...declared.fullName.split('.')], span: span(token, token) }, this.modulePath);
+      }
+    }
     if(readRustStandardPrimitivePosition(this,segments))return this.origins.typed(FLOAT,this.modulePath);
     if (acceptRustSourceArrayOwner(name, false) || acceptRustSourceArrayOwner(resolved.join('::'), false)) {
       this.origins.vector(segments, resolved, this.modulePath, span(token, c.peek()));
@@ -500,6 +520,7 @@ class RustParser {
       this.origins.argument(this.origins.origin(body, path), sourceResult, body.span);
       this.origins.scope = previous;
       return { k: 'fn', name, params, ret, body, span: span(start, c.peek()),
+        ...(this.typeNamespaceModel ? {sourceTypeNamespace: createRustTypeNamespaceProof(sourceParams, sourceResult)} : {}),
         ...(this.primitiveOwnerModel?{sourcePrimitiveOwners:createRustPrimitiveOwnerProof(this,sourceParams,sourceResult,{span:span(start,c.peek())})}:{}),
         ...(scalarLoop ? {sourceSignature: signature, sourceLoop: lowered.proof} : this.sourceSignatureModel ? { sourceSignature: createRustSourceSignature(this.sourceSignatureModel, sourceParams, sourceResult, this.lifetimeBindings) } : {}),
       };
@@ -511,6 +532,7 @@ class RustParser {
 
   /** `const N: T = e;` is a function without parameters. */
   constItem(path) {
+    if (this.typeNamespaceModel) throw unsupported('Rust type namespace constant', 'constant-as-function projection needs a separate owned source binding proof');
     const c = this.cursor;
     const start = c.next();
     const name = c.identifier('const').value;
