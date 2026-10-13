@@ -446,6 +446,7 @@ impl RocqParser {
                 })
                 .collect(),
             ret: Some(ret),
+            source_signature: None,
             body,
             span: Some(span(&start, self.peek())),
             generated: false,

@@ -863,6 +863,7 @@ impl Lowering {
                 })
                 .collect(),
             ret: None,
+            source_signature: None,
             body: fn_body,
             span: Some(place),
             generated: true,

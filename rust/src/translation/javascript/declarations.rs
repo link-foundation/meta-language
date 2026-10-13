@@ -709,6 +709,7 @@ impl JavaScriptParser {
             name,
             params,
             ret,
+            source_signature: None,
             body,
             span: Some(self.to_here(doc_token)),
             generated: false,
