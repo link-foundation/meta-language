@@ -1,10 +1,14 @@
 //! Parser adapter for one owned scalar state and its actual ordered writes.
 use super::{
-    Options, Result, RustParser, SExpr, SNode, SParam, SourceOrigin, Type, span, unsupported,
+    Options, Result, RustParser, SExpr, SNode, SParam, SourceOrigin, TokenKind, Type, span,
+    unsupported,
 };
 use crate::translation::source_loops::{
-    ScalarLoopState, ScalarLoopTransition, ScalarLoopWrite, SourceLoop, scalar_loop_policy,
+    ScalarLoopContinuation, ScalarLoopState, ScalarLoopTransition, ScalarLoopWrite, SourceLoop,
+    scalar_loop_policy,
 };
+
+use crate::translation::scalar_loop_rules::accept_scalar_loop_declaration_model;
 
 struct LoopState {
     name: String,
@@ -33,7 +37,7 @@ impl RustParser {
             mutable: mutable.to_vec(),
             next_snapshot: 0,
             proof: SourceLoop {
-                model: policy["model"].as_str().unwrap().into(),
+                model: self.scalar_loop_model.clone(),
                 language: "Rust".into(),
                 source_name: name.into(),
                 lowering: policy["lowering"].as_str().unwrap().into(),
@@ -46,6 +50,16 @@ impl RustParser {
                     .collect(),
                 transitions: Vec::new(),
                 source_interface: None,
+                continuation: accept_scalar_loop_declaration_model(&self.scalar_loop_model).then(
+                    || ScalarLoopContinuation {
+                        root: policy["continuationRoot"].as_str().unwrap().into(),
+                        path: path
+                            .iter()
+                            .cloned()
+                            .chain(std::iter::once(name.into()))
+                            .collect(),
+                    },
+                ),
             },
         };
         let body = self.scalar_loop_block(path, &mut state, false)?;
@@ -95,7 +109,12 @@ impl RustParser {
                 self.scalar_loop_block(path, state, value_allowed)?
             } else if self.cursor.is("if") {
                 self.scalar_loop_conditional(path, state, value_allowed)?
-            } else if self.cursor.is("(") || self.cursor.is("continue") {
+            } else if self.cursor.is("(")
+                || self.cursor.is("continue")
+                || state.proof.continuation.is_some()
+                    && self.peek().kind == TokenKind::Identifier
+                    && self.cursor.is_at("=", 1)
+            {
                 self.scalar_loop_continuation(path, state)?
             } else if value_allowed {
                 let value = self.expr(path, Options::default())?;
@@ -227,6 +246,37 @@ impl RustParser {
                     span(&start, self.cursor.peek()),
                 ));
             }
+        } else if state.proof.continuation.is_some()
+            && self.peek().kind == TokenKind::Identifier
+            && self.cursor.is_at("=", 1)
+        {
+            let target = self.cursor.identifier(Some("scalar state slot"))?.value;
+            if !state.mutable.contains(&target) {
+                return Err(unsupported(
+                    "Rust scalar loop",
+                    "single writes require a mutable parameter slot",
+                    Some(start.span()),
+                ));
+            }
+            let binding = loop {
+                let name = format!("ml_scalar_write{}", state.next_snapshot);
+                state.next_snapshot += 1;
+                if self.reserved_binding_names.insert(name.clone()) {
+                    break name;
+                }
+            };
+            writes.push(ScalarLoopWrite { target, binding });
+            self.cursor.expect("=", Some("single scalar state write"))?;
+            let value = self.expr(path, Options::default())?;
+            self.cursor.expect(";", Some("single scalar state write"))?;
+            if !self.origins.origin(&value, path).direct_copy_value() {
+                return Err(unsupported(
+                    "Rust scalar loop",
+                    "parallel state values require direct scalar Copy ownership",
+                    span(&start, self.cursor.peek()),
+                ));
+            }
+            values.push(value);
         }
         self.cursor
             .expect("continue", Some("scalar continuation"))?;
@@ -247,7 +297,19 @@ impl RustParser {
         });
         let mut result = SExpr::new(
             SNode::App {
-                func: Box::new(SExpr::name(&state.name)),
+                func: Box::new(SExpr::new(
+                    SNode::Name {
+                        path: state.proof.continuation.as_ref().map_or_else(
+                            || vec![state.name.clone()],
+                            |continuation| {
+                                std::iter::once(continuation.root.clone())
+                                    .chain(continuation.path.iter().cloned())
+                                    .collect()
+                            },
+                        ),
+                    },
+                    None,
+                )),
                 args: arguments.iter().map(|name| SExpr::name(name)).collect(),
             },
             span(&start, self.cursor.peek()),
