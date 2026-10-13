@@ -3,9 +3,9 @@ use super::{SourceLoop, scalar_loop_policy, scalar_loop_snapshot_binding};
 use crate::translation::diagnostics::{Result, unsupported};
 use crate::translation::scalar_loop_rules::{
     accept_rust_scalar_loop_model, accept_scalar_loop_binary_operation,
-    accept_scalar_loop_language, accept_scalar_loop_math_operation,
-    accept_scalar_loop_primitive_owner, accept_scalar_loop_unary_operation,
-    accept_scalar_loop_value_kind,
+    accept_scalar_loop_declaration_model, accept_scalar_loop_language,
+    accept_scalar_loop_math_operation, accept_scalar_loop_primitive_owner,
+    accept_scalar_loop_unary_operation, accept_scalar_loop_value_kind,
 };
 use crate::translation::source_signatures::{SourceSignature, validate_source_signature};
 use crate::translation::types::Type;
@@ -176,6 +176,25 @@ fn validate_in_scope(
             ));
         }
     }
+    if accept_scalar_loop_declaration_model(&proof.model) {
+        let continuation = proof.continuation.as_ref().ok_or_else(|| {
+            fail("the continuation target disagrees with its actual root-owned declaration scope")
+        })?;
+        if continuation.root != policy["continuationRoot"].as_str().unwrap_or("")
+            || continuation.path.iter().any(String::is_empty)
+            || continuation
+                .path
+                .iter()
+                .map(String::as_str)
+                .ne(actual_name.split('.'))
+        {
+            return Err(fail(
+                "the continuation target disagrees with its actual root-owned declaration scope",
+            ));
+        }
+    } else if proof.continuation.is_some() {
+        return Err(fail("the owned loop proof has an inconsistent layout"));
+    }
     let mut adapter = TreeAdapter {
         full_name: actual_name,
         proof: &proof,
@@ -313,12 +332,25 @@ impl<'a> TreeAdapter<'a> {
         let args = node["args"]
             .as_array()
             .ok_or_else(|| fail("the continuation needs actual argument bindings"))?;
-        let owned_target = target.as_deref().is_some_and(|target| {
-            target == self.full_name
-                || (node["k"] == "app"
-                    && (target == self.proof.source_name
-                        || target.strip_prefix("crate.") == Some(self.full_name)))
-        });
+        let owned_target = if node["k"] == "call" {
+            node["fn"].as_str() == Some(self.full_name)
+        } else if let Some(continuation) = &proof.continuation {
+            node["fn"]["k"] == "name"
+                && node["fn"]["path"].as_array().is_some_and(|path| {
+                    path.len() == continuation.path.len() + 1
+                        && path[0].as_str() == Some(continuation.root.as_str())
+                        && path[1..]
+                            .iter()
+                            .zip(&continuation.path)
+                            .all(|(actual, owned)| actual.as_str() == Some(owned.as_str()))
+                })
+        } else {
+            target.as_deref().is_some_and(|target| {
+                target == self.full_name
+                    || target == self.proof.source_name
+                    || target.strip_prefix("crate.") == Some(self.full_name)
+            })
+        };
         if !tail
             || !owned_target
             || args.len() != self.proof.state.len()
