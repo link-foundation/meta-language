@@ -750,8 +750,7 @@ impl JavaScriptParser {
                 ));
             }
             self.cursor.advance();
-            if !accept_object_property_definition(member.value.clone(), false, self.cursor.is(":"))
-            {
+            if !accept_object_property_definition(&member.value, false, self.cursor.is(":")) {
                 return Err(unsupported(
                     "object prototype definition",
                     "an uncomputed __proto__: entry is prototype-definition syntax rather than an own data property; the portable core does not represent object prototypes",

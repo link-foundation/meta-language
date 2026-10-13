@@ -20,7 +20,7 @@ fn generated_primitive_value_decisions_match_shared_independent_fixtures() {
     for entry in data["objectProperties"].as_array().unwrap() {
         assert_eq!(
             accept_object_property_definition(
-                entry["name"].as_str().unwrap().to_owned(),
+                entry["name"].as_str().unwrap(),
                 entry["computed"].as_bool().unwrap(),
                 entry["colon"].as_bool().unwrap()
             ),
@@ -31,7 +31,7 @@ fn generated_primitive_value_decisions_match_shared_independent_fixtures() {
     for entry in data["freezeOperands"].as_array().unwrap() {
         assert_eq!(
             accept_object_freeze_operand(
-                entry["expression"].as_str().unwrap().to_owned(),
+                entry["expression"].as_str().unwrap(),
                 entry["readonlyLiteral"].as_bool().unwrap()
             ),
             entry["accepted"].as_bool().unwrap(),
@@ -41,7 +41,7 @@ fn generated_primitive_value_decisions_match_shared_independent_fixtures() {
     for entry in data["dataObjectFreeze"].as_array().unwrap() {
         assert_eq!(
             require_data_object_freeze(
-                entry["language"].as_str().unwrap().to_owned(),
+                entry["language"].as_str().unwrap(),
                 entry["explicitFrozen"].as_bool().unwrap()
             ),
             entry["frozen"].as_bool().unwrap(),
@@ -52,38 +52,28 @@ fn generated_primitive_value_decisions_match_shared_independent_fixtures() {
         let operation = entry["operation"].as_str().unwrap();
         let absence = entry["absence"].as_str().unwrap();
         assert_eq!(
-            read_absent_number_value(operation.to_owned(), absence.to_owned()),
+            read_absent_number_value(operation, absence),
             entry["value"].as_str().unwrap()
         );
         for (target, expression) in entry["expressions"].as_object().unwrap() {
             assert_eq!(
-                render_absent_number_expression(
-                    target.to_owned(),
-                    operation.to_owned(),
-                    absence.to_owned()
-                ),
+                render_absent_number_expression(target, operation, absence),
                 expression.as_str().unwrap()
             );
         }
     }
     for entry in data["cells"].as_array().unwrap() {
         assert_eq!(
-            read_scalar_cell_operation(entry["expression"].as_str().unwrap().to_owned()),
+            read_scalar_cell_operation(entry["expression"].as_str().unwrap()),
             entry["operation"].as_str().unwrap()
         );
     }
     assert_eq!(
-        read_number_display_refusal("Rust".to_owned(), "float".to_owned()),
+        read_number_display_refusal("Rust", "float"),
         data["displayRefusal"].as_str().unwrap()
     );
-    assert_eq!(
-        read_number_display_function("float".to_owned(), false),
-        "js_number"
-    );
-    assert_eq!(
-        read_number_display_function("float".to_owned(), true),
-        "js_console"
-    );
+    assert_eq!(read_number_display_function("float", false), "js_number");
+    assert_eq!(read_number_display_function("float", true), "js_console");
 }
 
 #[test]
