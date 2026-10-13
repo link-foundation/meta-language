@@ -56,6 +56,7 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
       ret: projectType(entry.ret), body: projectExpression(entry.body), span: entry.span,
       ...(entry.generated !== undefined ? { generated: entry.generated } : {}),
       ...(entry.sourceSignature !== undefined ? { sourceSignature: entry.sourceSignature } : {}),
+      ...(entry.sourceTypeNamespace !== undefined ? { sourceTypeNamespace: entry.sourceTypeNamespace } : {}),
       ...(entry.sourceLoop !== undefined ? { sourceLoop: entry.sourceLoop } : {}),
       ...(entry.sourcePrimitiveOwners!==undefined?{sourcePrimitiveOwners:entry.sourcePrimitiveOwners}:{}),
       ...(entry.sourceEmptyOption!==undefined?{sourceEmptyOption:entry.sourceEmptyOption}:{}),
