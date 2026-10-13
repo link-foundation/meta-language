@@ -128,6 +128,17 @@ before projecting immutable references and standard boxes into the value core.
 It checks the actual owner and consumed pointer layer under that selected model;
 complete trait, borrow, lifetime and destructor semantics remain separate
 obligations.
+The opt-in `Rust source function signature 1` model records actual supported
+header type owners, ordered parameter and result positions, immutable reference
+and box layers, and lifetime positions and binders as an owned function facet.
+Both runtimes validate its arity, types, ownership and exact shape after
+source-free Links reload. Nineteen independently specified headers exercise the
+capture; seven source refusals and ten malformed graph edits check its boundary.
+Body value edits remain executable while the source facet stays intact. Existing
+archives omit this facet by default. Capture does not yet preserve the original
+qualified Rust header through target emission and reimport. Effect threading
+refuses a captured interface rewrite until its signature transformation is
+proved.
 Scoped lifetime-only function headers now retain ordered input binders and
 immutable reference spelling. Reference-bearing results with named binders still
 require an instantiation and outlives proof before admission. Type and constant
@@ -188,10 +199,14 @@ model retains public names, source language, types and executable operators as
 meaning premises. Captured externals, non-flat declarations and broader
 equivalence require separate proofs.
 The opt-in `closed binary floating point function` model gives closed Rust and
-JavaScript functions a declared common value interpretation. It guards flat
-function declarations with binary64 and Boolean parameters and results,
-canonical finite literals including signed zero, lexical variables, local
-bindings, conditionals and closed recursive calls. Shared admission rules are
+JavaScript functions a declared common abstract value interpretation. It guards
+flat function declarations with binary64 and Boolean parameters and results,
+finite decimal literals, lexical variables, local bindings, conditionals and
+closed recursive calls. Rust admission requires an owned
+`Rust source function signature 1` facet whose parameter and result owners are
+direct primitive `f64` or `bool`, with no wrappers or lifetime bindings.
+The selected function's synthetic call wrapper must use the actual ordered
+parameter bindings and a distinct owned target. Shared admission rules are
 automatically translated into Rust and accept only declared arithmetic,
 comparisons and Boolean negation. The linked primitive basis states IEEE
 arithmetic, rounding to nearest with ties to even, truncated quotient remainder,
@@ -199,16 +214,26 @@ all binary64 result values and unobservable NaN payloads. Recursive equations
 denote partial functions. The ordinary rounding environment is an assumption;
 host stack exhaustion and machine resource limits lie outside this abstract
 value interpretation.
-Source language remains inspectable in the typed graph and origin provenance.
-Its meaning field is excluded from comparison only after every profile guard
-holds and the linked primitive basis matches its declared model. The original
-source-qualified model keeps its source-language premise. Eight actual
+Finite literal text remains unchanged in typed archives and formal definitions.
+Only the temporary comparison graph replaces admitted literal meanings with
+validated IEEE binary64 bit patterns, preserving shared references and distinct
+signed zeros while equating decimal spellings that round to the same value.
+The shared spelling rule excludes a leading plus, leading or trailing decimal
+points and padded leading zeros. Source language and the owned source signature
+remain inspectable in the actual typed graph and origin provenance. Comparison
+omits their meaning relations only after every profile guard holds and the
+linked primitive basis matches its declared model. Immutable body references
+and boxes may pass only through the existing checked value-preserving erasure;
+pointer identity, allocation, deallocation and their resource failures are
+outside this model. The original source-qualified model keeps its
+source-language premise. Eight actual
 Rust/JavaScript function pairs exercise recursive certificates and source-free
 reload, including direct and mutual recursion. A checked pair grounds reusable
 global identity; changing an operator preserves distinct identities. Unsupported
 types, effects, defaults, source interpretations and counterfeit premises retain
-their refusals. Cross-ABI behavior, complete effects and resource equivalence,
-and formal definitions for every catalog concept require separate evidence.
+their refusals. Qualified source-header emission and reimport, cross-ABI
+behavior, complete effects and resource equivalence, and formal definitions for
+every catalog concept require separate evidence.
 Formal relation comparison also validates the actual label self-points and
 anonymous relation edges under their declared interpretation. Matching spelling
 cannot hide a different namespace, definition or identity premise.
