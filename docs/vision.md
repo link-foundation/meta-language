@@ -297,6 +297,33 @@ refusal remains exact. This separate facet does not broaden the existing Rust
 source-signature model. Nonempty options, other elements, null, imports,
 attributes, full runtime wrappers and other source-model compositions still
 require independent proofs. Native compilation and executable parity run in CI.
+The independently selected `resolved Rust type namespace 1` source model
+resolves actual header spellings against the type namespace before projecting
+primitive value types. An enum and a value function with the same spelling
+retain distinct owned identities. Source-free links preserve each parameter
+and result spelling alongside the existing source signature; validation resolves
+the ordered identifier segments again against the actual program catalog.
+Crate, self and parent anchors retain their declared scopes, and value calls
+retain their actual function targets. Checked spelling edits and value-body
+edits remain executable. Fifteen independently specified sources, twenty-four
+exact source refusals and twenty-five malformed graph edits bound this draft;
+the preceding fourteen sources, seventeen refusals and twenty-four malformed
+graphs remain unchanged.
+An actual attached standard `Clone` derivation on a field-free datatype is an
+owned `sourceUnitCloneDerivation` facet. Its datatype identity, constructor
+names, trait owner and parsed attribute traits and span remain inspectable links.
+Both runtimes recheck that premise before admitting a direct owned datatype
+clone. Two derivation sources, six exact method refusals and three malformed
+derivation graphs exercise this boundary. Other method implementations and
+associated constructors require separate proofs.
+Actual emitted definitions reimport with the emitter's declared name mappings
+and a canonical empty main. Independently validated primitive namespace facts
+compose with both borrowed-header models and scoped JavaScript emission.
+Imported aliases, library positions, generic types, borrowed results and
+constructor-overwritten identities require separate proofs. The existing
+source-signature model's exact refusals remain required. This draft does not
+establish arbitrary runtime-wrapper replay or pointer, outlives and ABI
+equivalence. Native compilation and executable parity run in CI.
 The typed-program adapter's shared schema gives abbreviated host fields readable
 English relation names, including the Unicode code unit string model. The finite formal
 definition adapter checks closed recursive correspondences under supported
