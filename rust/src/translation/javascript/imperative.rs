@@ -869,6 +869,7 @@ impl Lowering {
             source_primitive_owners: None,
             source_empty_option: None,
             source_type_namespace: None,
+            source_local_state: None,
             source_loop: None,
             body: fn_body,
             span: Some(place),
