@@ -669,7 +669,7 @@ impl JavaScriptParser {
                 source_primitive_owners: None,
                 source_empty_option: None,
                 source_type_namespace: None,
-                source_loop: Some(proof),
+                source_loop: Some(Box::new(proof)),
                 span: Some(self.to_here(doc_token)),
                 generated: false,
             });

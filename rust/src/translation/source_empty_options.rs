@@ -11,7 +11,7 @@ use serde_json::{Value, json};
 use std::sync::LazyLock;
 
 #[must_use]
-pub(crate) fn policy() -> &'static Value {
+pub fn policy() -> &'static Value {
     static POLICY: LazyLock<Value> = LazyLock::new(|| {
         crate::read_structured_data_lino(include_str!("../data/rust-empty-options.lino"))
             .expect("the shared empty option policy is valid")
@@ -129,7 +129,7 @@ fn owner(value: &Value, construction: bool, names: &[Value]) -> Result<()> {
     Ok(())
 }
 /// Validate actual raw records before serde can discard unknown or null fields.
-pub(crate) fn validate_empty_option_records(value: &Value) -> Result<()> {
+pub fn validate_empty_option_records(value: &Value) -> Result<()> {
     let declarations = array(
         &value["declarations"],
         "the selected model requires a complete flat empty leaf program without imports or effects",
@@ -275,7 +275,7 @@ pub(crate) fn validate_empty_option_records(value: &Value) -> Result<()> {
     Ok(())
 }
 /// Recheck the complete actual typed program before source-free emission.
-pub(crate) fn validate_source_empty_options(program: &Program) -> Result<()> {
+pub fn validate_source_empty_options(program: &Program) -> Result<()> {
     let value = serde_json::to_value(program)
         .map_err(|_| fail("the empty program has unrepresented own fields"))?;
     validate_empty_option_records(&value)
