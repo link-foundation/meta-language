@@ -89,6 +89,7 @@ impl RustParser {
             self.cursor.advance();
             let right = self.multiplicative(path, Options::default())?;
             left = binary(op, left, right, &token);
+            self.scalar_loop_arithmetic(&left, path);
         }
     }
 
@@ -105,6 +106,7 @@ impl RustParser {
             self.cursor.advance();
             let right = self.cast(path, Options::default())?;
             left = binary(op, left, right, &token);
+            self.scalar_loop_arithmetic(&left, path);
         }
     }
 
@@ -154,6 +156,13 @@ impl RustParser {
                 return Ok(result);
             }
         }
+        if self.scalar_loop_active && ["&", "&&", "*"].contains(&token.value.as_str()) {
+            return Err(unsupported(
+                "Rust scalar loop",
+                "loop expressions exclude references and dereferences",
+                Some(token.span()),
+            ));
+        }
         // Source evidence proves immutable indirection before projecting its value.
         if self.cursor.is("&") || self.cursor.is("&&") {
             self.cursor.advance();
@@ -178,6 +187,20 @@ impl RustParser {
             return Ok(arg);
         }
         self.postfix(path, options)
+    }
+
+    fn scalar_loop_arithmetic(&mut self, node: &SExpr, path: &[String]) {
+        if !self.scalar_loop_active {
+            return;
+        }
+        if let SNode::Binary { left, right, .. } = &node.node {
+            let origin = self.origins.origin(left, path);
+            if self.accept_float_receiver_origin(&origin, 0)
+                && self.accept_float_receiver_origin(&self.origins.origin(right, path), 0)
+            {
+                self.origins.mark(node, origin);
+            }
+        }
     }
 
     fn accept_float_receiver_origin(&self, origin: &SourceOrigin, arguments_count: usize) -> bool {

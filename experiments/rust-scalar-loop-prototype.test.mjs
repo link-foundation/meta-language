@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
+import {readProjectData} from '../js/scripts/project-data.mjs';
 import {rustFunctionDefinitions} from '../js/scripts/generate-self-translation-report.mjs';
 import {parseRust} from '../js/src/translation/rust.js';
 import {parseJavaScript} from '../js/src/translation/javascript.js';
@@ -85,6 +86,7 @@ test('owned header, state, write order and profile survive checked source-free L
 test('JavaScript reverse refuses unproved snapshots, owners, state order and interface meanings', () => {
   const actual = emitJavaScript(checkProgram(parseRust(cases[1].source + suffix, options))).definitions.join('\n\n');
   const invalid = [
+    actual.replaceAll('ml_scalar_write0', 'ml_scalar_write00'),
     actual.replace('const ml_scalar_write0 = b;', 'const ml_unrelated = b;'),
     actual.replace('const ml_scalar_write0 = b;', 'const ml_scalar_write9 = b; const ml_scalar_write0 = b;'),
     actual.replace('const ml_scalar_write1 = a;', 'const ml_scalar_write1 = ml_scalar_write0;'),
@@ -186,4 +188,19 @@ test('the profile makes no termination claim and preserves iterative divergence'
   for (const code of ['function forever(value){for(;;){value+=1;}}', emitted]) {
     assert.throws(() => vm.runInNewContext(code + '\nforever(0);', {}, {timeout: 30}), /Script execution timed out/u);
   }
+});
+
+test('paired draft fixtures retain actual complete sources, surfaces and definitions', () => {
+ const fixture=readProjectData(new URL('../parity/fixtures/rust-scalar-loops.lino',import.meta.url));
+ assert.equal(fixture.actualSource,authentic);assert.equal(fixture.cases.length,cases.length);
+ for(const [index,entry] of cases.entries()) {
+  const stored=fixture.cases[index],surface=parseRust(entry.source+suffix,options),program=checkProgram(surface);
+  assert.equal(stored.source,entry.source+suffix);assert.equal(stored.originalJavaScript,entry.original);
+  assert.deepEqual(stored.surface,JSON.parse(JSON.stringify(surface)));
+  const definitions=emitJavaScript(program).definitions.join('\n\n');
+  assert.equal(stored.javaScriptDefinitions,definitions);
+  assert.deepEqual(stored.javaScriptReverseSurface,JSON.parse(JSON.stringify(parseJavaScript(definitions,options))));
+  assert.equal(stored.rustDefinitions,emitRust(program).definitions.join('\n\n'));
+  assert.equal(stored.reverseRustDefinitions,emitRust(checkProgram(parseJavaScript(definitions,options))).definitions.join('\n\n'));
+ }
 });

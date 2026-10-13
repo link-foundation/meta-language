@@ -766,6 +766,13 @@ pub struct SFn {
         skip_serializing_if = "Option::is_none"
     )]
     pub source_signature: Option<super::source_signatures::SourceSignature>,
+    /// Optional owned scalar loop state and checked continuation interpretation.
+    #[serde(
+        default,
+        rename = "sourceLoop",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub source_loop: Option<super::source_loops::SourceLoop>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

@@ -36,6 +36,7 @@ include = [
     "src/data/link-network-binary-schema.lino",
     "src/data/rust-source-signatures.lino",
     "src/data/rust-read-only-queries.lino",
+    "src/data/rust-scalar-loops.lino",
     "src/translation/rust/float-predicates.lino",
     "src/translation/rust/completions.lino",
     "src/translation/runtime/array-*.txt",

@@ -481,6 +481,7 @@ impl RustParser {
                     param_token.clone(),
                     type_token,
                     self.origins.current_type.clone(),
+                    param_name.clone(),
                 ));
             }
             source_params.push(self.origins.current_type.clone());
@@ -506,9 +507,16 @@ impl RustParser {
         }
         let ret = self.parse_type()?;
         let mut source_result = self.origins.current_type.clone();
-        if !mutable_params.is_empty() {
+        let scalar_loop = !self.scalar_loop_model.is_empty()
+            && self.cursor.is("{")
+            && self.cursor.is_at("loop", 1);
+        let mutable_names = mutable_params
+            .iter()
+            .map(|(_, _, _, name)| name.clone())
+            .collect::<Vec<_>>();
+        if !scalar_loop && !mutable_params.is_empty() {
             let (closed, possible_write) = read_rust_scalar_parameter_body(&self.cursor);
-            for (token, type_token, origin) in mutable_params {
+            for (token, type_token, origin, _) in mutable_params {
                 let resolved = self.resolve(std::slice::from_ref(&type_token.value), path);
                 let shadowed = type_token.kind != TokenKind::Identifier
                     || self.origins.lookup(&resolved, path).is_some();
@@ -571,6 +579,7 @@ impl RustParser {
             &source_params,
             &source_result,
             source_lifetime_bindings,
+            scalar_loop,
         )?;
         self.lifetime_header = false;
         let scope = params
@@ -579,7 +588,22 @@ impl RustParser {
             .map(|(parameter, origin)| (parameter.name.clone(), origin))
             .collect();
         let previous = self.origins.enter(Some(scope));
-        let body = if self.completion_model.is_empty() {
+        let mut source_loop = None;
+        let body = if scalar_loop {
+            if !path.is_empty() {
+                return Err(unsupported(
+                    "Rust scalar loop",
+                    "qualified loop state requires a separate scope model",
+                    span(&start, self.cursor.peek()),
+                ));
+            }
+            let active = std::mem::replace(&mut self.scalar_loop_active, true);
+            let read = self.read_scalar_loop(path, &name, &params, &ret, &mutable_names);
+            self.scalar_loop_active = active;
+            let (body, proof) = read?;
+            source_loop = Some(proof);
+            body
+        } else if self.completion_model.is_empty() {
             self.block(path)?
         } else {
             self.closed_function_completion(path)?
@@ -613,6 +637,7 @@ impl RustParser {
             span: span(&start, self.cursor.peek()),
             generated: false,
             source_signature,
+            source_loop,
         })
     }
 
@@ -651,6 +676,7 @@ impl RustParser {
             span: span(&start, self.cursor.peek()),
             generated: false,
             source_signature: None,
+            source_loop: None,
         })
     }
 

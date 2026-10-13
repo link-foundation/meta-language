@@ -2,13 +2,14 @@
 import { readRuntimeProjectData } from '../project-data-loader.js';
 import { unsupported } from './diagnostics.js';
 import { checkRustSourceSignature } from './rust-source-signatures.js';
+import {acceptRustScalarLoopModel, acceptScalarLoopLanguage, acceptScalarLoopValueKind, acceptScalarLoopPrimitiveOwner, acceptScalarLoopBinaryOperation, acceptScalarLoopUnaryOperation, acceptScalarLoopMathOperation} from './scalar-loop-rules.js';
+export {acceptRustScalarLoopModel} from './scalar-loop-rules.js';
 
 export const RUST_SCALAR_LOOP_POLICY = readRuntimeProjectData(new URL('./data/rust-scalar-loops.lino', import.meta.url));
 const policy = RUST_SCALAR_LOOP_POLICY;
 const fail = (reason, span) => { throw unsupported('Rust scalar loop', reason, span); };
 const range = (first, last) => ({start: first.start, end: last.end});
 
-export function acceptRustScalarLoopModel(model) { return model === '' || model === policy.model; }
 
 function header(signature, params, ret, language) {
   checkRustSourceSignature(signature, params.map(param => param.type), ret, language);
@@ -16,7 +17,7 @@ function header(signature, params, ret, language) {
   for (const position of [...signature.parameters, signature.result]) {
     if (position.wrappers.length || position.lifetimes.length || position.owner.kind !== 'primitive'
       || position.owner.path.length !== 1 || position.owner.arguments.length
-      || position.owner.path[0] !== policy.types[position.type.kind]) fail('state and result require direct primitive f64 or Boolean owners');
+      || !acceptScalarLoopPrimitiveOwner(position.type.kind, position.owner.path[0])) fail('state and result require direct primitive f64 or Boolean owners');
   }
 }
 
@@ -26,7 +27,7 @@ export function checkRustScalarLoopProof(item, language) {
     && Object.keys(value).length === fields.length && fields.every(field => Object.hasOwn(value, field));
   const fields = ['model', 'language', 'sourceName', 'lowering', 'state', 'transitions', ...(language === 'JavaScript' ? ['interface'] : [])];
   if (!exact(proof, fields)
-    || proof.model !== policy.model || proof.language !== language || !policy.languages.includes(language)
+    || (!acceptRustScalarLoopModel(proof.model) || !proof.model) || proof.language !== language || !acceptScalarLoopLanguage(language)
     || proof.sourceName !== item.name || proof.lowering !== policy.lowering
     || (item.generated !== undefined && item.generated !== false)
     || !Array.isArray(proof.state) || !Array.isArray(proof.transitions)) fail('the owned loop proof has an inconsistent model, name or layout', item.span);
@@ -38,7 +39,7 @@ export function checkRustScalarLoopProof(item, language) {
       || signature.parameters.length !== item.params.length) fail('a JavaScript loop needs its distinct Number/Boolean interface', item.span);
     const actual = [...item.params.map(param => param.type), item.ret];
     for (const [index, type] of [...signature.parameters, signature.result].entries()) {
-      if (!exact(type, ['kind']) || !Object.hasOwn(policy.types, type.kind) || type.kind !== actual[index]?.kind) fail('a JavaScript loop interface must match actual scalar header types', item.span);
+      if (!exact(type, ['kind']) || !acceptScalarLoopValueKind(type.kind) || type.kind !== actual[index]?.kind) fail('a JavaScript loop interface must match actual scalar header types', item.span);
     }
   }
   if (item.params.some(param => param.guard != null || param.default != null || param.optional)) fail('loop state excludes guarded, default and optional parameters', item.span);
@@ -108,18 +109,18 @@ export function checkRustScalarLoopProof(item, language) {
       const name = node.k === 'var' ? node.name : node.path?.length === 1 ? node.path[0] : null;
       if (!scope.has(name)) fail('loop expressions cannot capture undeclared values', node.span);
     } else if (['num', 'bool', 'lit'].includes(node.k)) {
-      if (node.k === 'lit' && !Object.hasOwn(policy.types, node.type?.kind)) fail('only scalar loop literals are admitted', node.span);
+      if (node.k === 'lit' && !acceptScalarLoopValueKind(node.type?.kind ?? '')) fail('only scalar loop literals are admitted', node.span);
       if (node.k === 'num' && node.type && node.type.kind !== 'float') fail('only binary64 numeric literals are admitted', node.span);
-    } else if (node.k === 'binary' && policy.operations.binary.includes(node.op)) {
+    } else if (node.k === 'binary' && acceptScalarLoopBinaryOperation(node.op)) {
       expression(node.left, scope); expression(node.right, scope);
-    } else if (node.k === 'unary' && policy.operations.unary.includes(node.op)) expression(node.arg, scope);
-    else if (node.k === 'math' && policy.operations.math.includes(node.op)) node.args.forEach(arg => {
+    } else if (node.k === 'unary' && acceptScalarLoopUnaryOperation(node.op)) expression(node.arg, scope);
+    else if (node.k === 'math' && acceptScalarLoopMathOperation(node.op)) node.args.forEach(arg => {
       if (arg.k) expression(arg, scope);
       else if (arg.value && !arg.spread) expression(arg.value, scope);
       else fail('a scalar math argument must be one direct value', node.span);
     });
     else fail(`expression ${node.k ?? 'record'} has no closed scalar loop interpretation`, node.span);
-    if (node.type && !Object.hasOwn(policy.types, node.type.kind)) fail('a loop expression has a non-scalar value type', node.span);
+    if (node.type && !acceptScalarLoopValueKind(node.type.kind)) fail('a loop expression has a non-scalar value type', node.span);
   }
   expression(item.body, new Map([...names].map(name => [name, null])), true);
   if (!calls || calls !== proof.transitions.length) fail('the loop proof must describe every actual continuation', item.span);

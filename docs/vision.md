@@ -160,6 +160,20 @@ The source profile, independent vector-result selection and user provenance
 survive source-free Links reload. Returns escaping value expressions, mixed or
 incomplete branch completions and unreachable statements require further proofs;
 the existing default-profile return diagnostics remain exact.
+An isolated JavaScript-first experiment selects `closed primitive scalar loop 1`
+for one unconditional loop over direct `f64` and Boolean values. Its owned
+`sourceLoop` facet validates the actual header, state slots, immutable snapshots
+and complete ordered tail continuations before the existing iterative lowering
+admits an original reserved function name. Rust retains its actual owned source
+signature; emitted JavaScript reimport retains a distinct inferred Number and
+Boolean interface and checks each reserved snapshot binding against its actual
+state write. Checked Links reload and scalar transition edits exercise the
+complete original 512-byte binary integer-byte helper and ordinary-name cases.
+The native adapters and tests remain a draft requiring compilation and runtime
+parity evidence. The selected JavaScript realm assumes its standard unmodified
+array iterator for transient assignment snapshots. General heap mutation,
+references, effects, nested loops, full generated modules, termination and
+universal host resource or allocation-failure equivalence remain separate work.
 Under this explicit completion profile, the emitter's exact two-literal
 `panic!("{}", "message")` form retains the second literal as message data,
 including braces, escapes, empty text and Unicode. Dynamic formatting, other

@@ -205,6 +205,7 @@ mod translation_rust_indirection;
 mod translation_rust_lifetimes;
 mod translation_rust_products;
 mod translation_rust_read_only_queries;
+mod translation_rust_scalar_loops;
 mod translation_rust_scalar_parameters;
 mod translation_rust_source_signatures;
 mod translation_rust_string_continuations;

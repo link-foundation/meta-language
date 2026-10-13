@@ -32,6 +32,7 @@ pub(super) mod indirection_rules;
 mod items;
 mod product_rules;
 mod read_only_query_rules;
+mod scalar_loops;
 mod scalar_parameter_rules;
 mod scalar_parameters;
 mod source_origins;
@@ -153,6 +154,37 @@ pub fn parse_rust_with_source_profiles(
     completion_model: &str,
     source_signature_model: &str,
 ) -> Result<SProgram> {
+    parse_rust_with_loop_profiles(
+        source,
+        array_result_model,
+        completion_model,
+        source_signature_model,
+        "",
+    )
+}
+
+/// Read an explicitly selected closed primitive scalar loop interpretation.
+///
+/// # Errors
+/// Refuses unknown models, unproved owners and unsupported loop state or effects.
+pub fn parse_rust_with_scalar_loop_model(source: &str, model: &str) -> Result<SProgram> {
+    parse_rust_with_loop_profiles(source, "", "", "", model)
+}
+
+pub(crate) fn parse_rust_with_loop_profiles(
+    source: &str,
+    array_result_model: &str,
+    completion_model: &str,
+    source_signature_model: &str,
+    scalar_loop_model: &str,
+) -> Result<SProgram> {
+    if !super::scalar_loop_rules::accept_rust_scalar_loop_model(scalar_loop_model) {
+        return Err(unsupported(
+            "Rust scalar loop model",
+            "the selected model is not registered",
+            None,
+        ));
+    }
     if !array_rules::accept_rust_source_array_result_model(array_result_model) {
         return Err(unsupported(
             "Rust array result model",
@@ -180,6 +212,7 @@ pub fn parse_rust_with_source_profiles(
         SourceOrigins::new(None, array_result_model),
         completion_model,
         source_signature_model,
+        scalar_loop_model,
     );
     declarations.file()?;
     let mut origins = std::mem::replace(
@@ -194,6 +227,7 @@ pub fn parse_rust_with_source_profiles(
         source_origins,
         completion_model,
         source_signature_model,
+        scalar_loop_model,
     );
     syntax.aliases = declarations.aliases;
     let surface = syntax.file()?;
@@ -207,6 +241,7 @@ pub fn parse_rust_with_source_profiles(
         SourceOrigins::new(Some(syntax.origins.catalog), array_result_model),
         completion_model,
         source_signature_model,
+        scalar_loop_model,
     );
     parser.aliases = syntax.aliases;
     parser.file()
@@ -274,6 +309,8 @@ struct RustParser {
     origins: SourceOrigins,
     completion_model: String,
     source_signature_model: String,
+    scalar_loop_model: String,
+    scalar_loop_active: bool,
     source_owner_frames: Vec<Vec<super::source_signatures::SourceOwner>>,
     reserved_binding_names: HashSet<String>,
     next_product_binding: usize,
@@ -287,6 +324,7 @@ impl RustParser {
         origins: SourceOrigins,
         completion_model: &str,
         source_signature_model: &str,
+        scalar_loop_model: &str,
     ) -> Self {
         let reserved_binding_names = tokens
             .iter()
@@ -302,6 +340,8 @@ impl RustParser {
             origins,
             completion_model: completion_model.to_owned(),
             source_signature_model: source_signature_model.to_owned(),
+            scalar_loop_model: scalar_loop_model.to_owned(),
+            scalar_loop_active: false,
             source_owner_frames: Vec::new(),
             reserved_binding_names,
             next_product_binding: 0,

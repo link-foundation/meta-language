@@ -895,7 +895,9 @@ export function createTypedProgramLinks(
     rustArrayResultModel?: 'immutable fresh scalar vector results 1';
     rustCompletionModel?: 'closed guarded function returns 1';
     /** Retains owned source header facts; does not promise source ABI emission. */
-    rustSourceSignatureModel?: 'Rust source function signature 1' },
+    rustSourceSignatureModel?: 'Rust source function signature 1',
+    rustScalarLoopModel?: 'closed primitive scalar loop 1',
+    javaScriptScalarLoopModel?: 'closed primitive scalar loop 1' },
 ): TypedProgramLinks;
 export function encodeTypedProgramLinks(
   program: CheckedTypedProgram,

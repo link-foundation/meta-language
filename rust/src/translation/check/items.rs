@@ -31,7 +31,13 @@ impl Checker {
                 SItem::Data(data) => data.generated,
                 _ => false,
             };
-            if name.starts_with("ml_") && !generated {
+            if let SItem::Fn(function) = item
+                && function.source_loop.is_some()
+            {
+                super::super::source_loops::validate_source_loop(function, self.language.as_str())?;
+            }
+            let owned_loop = matches!(item, SItem::Fn(function) if function.source_loop.is_some());
+            if name.starts_with("ml_") && !generated && !owned_loop {
                 return Err(unsupported(
                     "reserved identifier",
                     &format!("{name} uses the translator's reserved ml_ prefix"),
@@ -81,6 +87,7 @@ impl Checker {
                     decreasing: None,
                     mutual: false,
                     source_signature: None,
+                    source_loop: function.source_loop.clone(),
                 }),
                 SItem::Theorem(theorem) => Decl::Theorem(TheoremDecl {
                     name: name.clone(),
@@ -224,6 +231,12 @@ impl Checker {
                     let body = self.coerce(body, &ret, item.span)?;
                     if let Some(Decl::Fn(entry)) = self.decls.get_mut(&name) {
                         entry.body = body;
+                        if entry.source_loop.is_some() {
+                            super::super::source_loops::validate_source_loop(
+                                entry,
+                                self.language.as_str(),
+                            )?;
+                        }
                     }
                 }
                 SItem::Theorem(item) => {

@@ -116,6 +116,7 @@ export function encodeFormalFunctionDefinition(value, declaration, { provenance 
   const call = { k: 'call', fn: chosen.fullName, args: params.map(parameter => ({ k: 'var', name: parameter.name, type: parameter.type })), type: chosen.ret };
   const wrapper = { ...chosen, name: entryName, fullName: entryName, modulePath: [], params, body: call, recursive: false, decreasing: null, generated: true };
   delete wrapper.span; delete wrapper.mutual; delete wrapper.sourceSignature;
+  delete wrapper.sourceLoop;
   declarations.set(entryName, wrapper);
   const projected = { ...program, items: [...declarations.values()], declarations, main: { effects: [] } };
   delete projected.externals;
