@@ -12,12 +12,12 @@ const resultType=node=>node.k==='let'?resultType(node.body):node.type;
 export function readRustOwnedLocalStateBody(parser,path,name,params,ret,signature){
  const copies=parser.localValueStateModel===policy.models.copies;
  if(path.length||ret.kind!=='string'||signature.lifetimeBindings.length||[...signature.parameters,signature.result].some(position=>!ownedLocalPosition(position)))fail('only direct standard String, i32 and Boolean interfaces with a String result are admitted');
- const c=parser.cursor,bindings=[],reads=[],initializers=[];
+ const c=parser.cursor,bindings=[],reads=[],initializers=[],constructors=[];
  const names=new Set(params.map(parameter=>parameter.name));
  if(names.size!==params.length||[...names].some(name=>policy.reservedOwners.includes(name)))fail('source bindings cannot shadow each other or standard owners');
  let temporary=0,mutableSlot=null,writes=0;
  const fresh=()=>{let candidate;do{candidate=`ml_owned_local_value${temporary++}`;}while(parser.reservedNames.has(candidate));parser.reservedNames.add(candidate);return candidate;};
- const proof={model:parser.localValueStateModel,language:'Rust',sourceName:name,interpretation:structuredClone(policy.interpretation),bindings,reads,initializers};
+ const proof={model:parser.localValueStateModel,language:'Rust',sourceName:name,interpretation:structuredClone(policy.interpretation),bindings,reads,initializers,literalConstructors:constructors};
  const parameterEnvironment=new Map(params.map(parameter=>[parameter.name,{name:parameter.name,type:parameter.type,available:true,mutable:false}]));
  function rawExpression(options={}){
   const start=c.index,expression=parser.expr(path,options);
@@ -65,22 +65,26 @@ export function readRustOwnedLocalStateBody(parser,path,name,params,ret,signatur
   }
   return{k:'name',path:[entry.name],...(span?{span}:{}),type:entry.type};
  }
- function expression(node,environment){
+ function expression(node,environment,constructorLiteral=false){
   const copy=parser.origins.expressions.get(node)?.localValueCopy;
   if(node.k==='name'){
    if(node.path.length!==1||!environment.has(node.path[0]))fail('values require their actual unique local binding owner',node.span);
    const entry=environment.get(node.path[0]);if(entry.type.kind==='tuple')fail('whole tuple moves need a separate partial-move proof',node.span);
    return reference(entry,copy?'copy':'move',node.span);
   }
-  if(node.k==='str')return{...node,type:{kind:'string'}};
+  if(node.k==='str'){
+   if(!constructorLiteral)fail('a borrowed string literal is not an owned standard String value',node.span);
+   return{...node,type:{kind:'string'}};
+  }
   if(node.k==='num'){
    if(!ownedLocalType(node.type)||node.type.kind!=='fixed')fail('integer literals need their actual signed i32 source domain',node.span);
    return node;
   }
   if(node.k==='bool')return{...node,type:{kind:'bool'}};
   if(node.k==='toString'){
-   if(node.arg.k!=='str')fail('only the actual standard String literal constructor is admitted',node.span);
-   return{...node,arg:expression(node.arg,environment),type:{kind:'string'}};
+   if(node.arg.k!=='str'||parser.origins.expressions.get(node)?.localValueConstructor!=='String::from')fail('only the actual standard String literal constructor is admitted',node.span);
+   constructors.push({...structuredClone(policy.constructor),span:node.arg.span,callSpan:parser.origins.expressions.get(node).localValueConstructorSpan,path:null});
+   return{...node,arg:expression(node.arg,environment,true),type:{kind:'string'}};
   }
   if(node.k==='tuple'){
    const items=node.items.map(item=>expression(item,environment)),type={kind:'tuple',elements:items.map(item=>item.type)};
