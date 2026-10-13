@@ -1,6 +1,6 @@
 // Generated from linked pure Rust Unit-call policy. Do not edit.
 /** @param {string} model @returns {boolean} */
-export function acceptRustPureUnitCallModel(model){return model === "" || model === "closed pure Rust unit calls 1";}
+export function acceptRustPureUnitCallModel(model){return model === "" || model === "closed pure Rust unit calls 1" || model === "closed public pure Rust unit calls 1";}
 /** @param {number} code @param {boolean} first @returns {boolean} */
 export function acceptRustPureUnitNameCharacter(code,first){return code >= 95 && code <= 95 || code >= 65 && code <= 90 || code >= 97 && code <= 122 || !first && code >= 48 && code <= 57;}
 /** @param {string} name @returns {boolean} */
@@ -13,5 +13,7 @@ export function acceptRustPureUnitBodyForm(form){return form === "empty block" |
 export function acceptRustPureUnitPathForm(form){return form === "unqualified name" || form === "absolute crate path";}
 /** @param {string} language @param {boolean} forbidden @returns {boolean} */
 export function acceptRustPureUnitContext(language,forbidden){return language === "Rust" && !forbidden;}
+/** @param {string} model @param {string} form @returns {boolean} */
+export function acceptRustPureUnitVisibility(model,form){return model === "closed pure Rust unit calls 1" && form === "private" || model === "closed public pure Rust unit calls 1" && form === "public";}
 /** @param {string} kind @param {boolean} dense @param {boolean} unrepresented @returns {boolean} */
 export function acceptRustPureUnitContainer(kind,dense,unrepresented){return !unrepresented && (kind === "array" && dense || kind === "map");}

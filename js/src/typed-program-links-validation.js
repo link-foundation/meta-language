@@ -16,6 +16,9 @@ const primitives = new Set(['nat', 'int', 'bool', 'string', 'unit', 'float', 'ou
 const operationKinds = new Set(['math', 'stringMap', 'stringTest', 'method', 'collectionRead', 'collectionItems', 'optionalPredicate']);
 
 export function validateLinkedTypedProgram(program, references = new WeakMap(), { graphPatterns = false, patternScopes = new WeakMap() } = {}) {
+  // The independently selected Unit profile owns plain data throughout its
+  // graph. Check descriptors before reading even the initial role fields.
+  if (program && typeof program === 'object' && Object.hasOwn(program, 'sourcePureUnitCalls')) checkRustPureUnitCalls(program);
   checkRustTypeNamespaceContainers(program);
   if (!program || program.schemaVersion !== 1 || !['JavaScript', 'Rust', 'Lean', 'Rocq'].includes(program.sourceLanguage)
     || !(program.declarations instanceof Map) || !Array.isArray(program.items)) throw new TypeError('the linked value is not a checked typed program');
