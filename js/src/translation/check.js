@@ -8,7 +8,7 @@ import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 
 import { typeError, unsupported } from './diagnostics.js';
 import { checkRustSourceSignature } from './rust-source-signatures.js';
-import { validateRustTypeNamespace } from './rust-type-namespace.js';
+import { validateRustTypeNamespace, checkRustTypeNamespaceContainers } from './rust-type-namespace.js';
 import {prepareRustPrimitiveOwnerProof,checkRustPrimitiveOwnerProof} from './rust-primitive-owners.js';
 import {prepareRustOwnedLocalStateProof,checkRustOwnedLocalStateProof} from './rust-owned-local-state.js';
 import { acceptArgumentCount, acceptCheckedTypeQueryOperand, acceptTypeQueryOperand, readTypeQueryResult } from './frontend-rules.js';
@@ -71,6 +71,7 @@ function immutableProductValue(value, bindings = new Map()) {
 }
 
 export function checkProgram(surface) {
+  checkRustTypeNamespaceContainers(surface);
   const checker = new Checker(surface.language, surface.externals ?? [], Boolean(surface.referenceSemantics));
   return checker.program(surface);
 }
