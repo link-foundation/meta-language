@@ -260,7 +260,7 @@ fn counterfeit_witness_dangling_reference_and_foreign_model_are_rejected() {
         "source A",
         json!([triple(identifier("urn:subject"), literal("one"))]),
     );
-    let merged = merge_resource_description_graphs(&[graph.clone()]).unwrap();
+    let merged = merge_resource_description_graphs(std::slice::from_ref(&graph)).unwrap();
     let witness = merged
         .network
         .link(role(&merged.network, "witness")[0])
