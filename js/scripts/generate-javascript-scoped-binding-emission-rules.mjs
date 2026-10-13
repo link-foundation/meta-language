@@ -48,6 +48,7 @@ if (!process.argv.includes('--javascript-only')) {
     const actions = []; let current = raw;
     const replace = (from, to) => { if (current.includes(from)) { actions.push({op: 'replace', field: 'source', from, to}); current = current.split(from).join(to); } };
     for (const name of ['model', 'language', 'form', 'kind', 'element', 'absence', 'role', 'owner', 'name','field']) replace(`${name}: String`, `${name}: &str`);
+    replace('kind == ""','kind.is_empty()');
     for (const match of [...current.matchAll(/^pub fn (\w+)/gmu)]) replace(`pub fn ${match[1]}`, `/// Apply the shared owned scoped binding emission policy.\n#[must_use]\npub fn ${match[1]}`);
     for (const match of [...current.matchAll(/pub fn accept_java_script_scoped_binding_[\s\S]*?\n\}/gu)]) {
       const block = match[0]; const open = block.indexOf('{'); let expression = block.slice(open + 1, -1).trim();

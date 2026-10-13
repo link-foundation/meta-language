@@ -90,7 +90,7 @@ pub fn accept_java_script_scoped_binding_emission_role(role: &str, owner: &str) 
 /// Apply the shared owned scoped binding emission policy.
 #[must_use]
 pub fn accept_java_script_scoped_binding_own_field(role: &str, kind: &str, field: &str) -> bool {
-    (((((((((((((((((role == "program" && kind == "")
+    (((((((((((((((((role == "program" && (kind.is_empty()))
         && ((((((((((field == "schemaVersion" || field == "sourceLanguage")
             || field == "items")
             || field == "declarations")
@@ -101,7 +101,7 @@ pub fn accept_java_script_scoped_binding_own_field(role: &str, kind: &str, field
             || field == "abortsThreaded")
             || field == "referenceSemantics")
             || field == "utf16Strings"))
-        || ((role == "main" && kind == "")
+        || ((role == "main" && (kind.is_empty()))
             && ((field == "effects" || field == "span")
                 || field == "sequentialAsync")))
         || ((role == "declaration" && kind == "fn")
@@ -120,7 +120,7 @@ pub fn accept_java_script_scoped_binding_own_field(role: &str, kind: &str, field
                 || field == "sourceLoop")
                 || field == "sourcePrimitiveOwners")
                 || field == "sourceEmptyOption")))
-        || ((role == "parameter" && kind == "")
+        || ((role == "parameter" && (kind.is_empty()))
             && ((((field == "name" || field == "type") || field == "span")
                 || field == "guard")
                 || field == "default")))
@@ -188,7 +188,7 @@ pub fn accept_java_script_scoped_binding_boolean_field(
     kind: &str,
     field: &str,
 ) -> bool {
-    (((role == "main" && kind == "") && field == "sequentialAsync")
+    (((role == "main" && (kind.is_empty())) && field == "sequentialAsync")
         || ((role == "declaration" && kind == "fn")
             && ((field == "recursive" || field == "mutual") || field == "generated")))
         || ((role == "effect" && kind == "let") && field == "constant")
