@@ -8,6 +8,7 @@ import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 
 import { typeError, unsupported } from './diagnostics.js';
 import { checkRustSourceSignature } from './rust-source-signatures.js';
+import { validateRustTypeNamespace } from './rust-type-namespace.js';
 import {prepareRustPrimitiveOwnerProof,checkRustPrimitiveOwnerProof} from './rust-primitive-owners.js';
 import { acceptArgumentCount, acceptCheckedTypeQueryOperand, acceptTypeQueryOperand, readTypeQueryResult } from './frontend-rules.js';
 import { normaliseProof } from './proof.js';
@@ -140,6 +141,7 @@ class Checker {
     analyseRecursion(program);
     checkRustPrimitiveOwnerProof(program);
     checkRustEmptyOptionProof(program);
+    validateRustTypeNamespace(program);
     return program;
   }
 
