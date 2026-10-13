@@ -95,7 +95,10 @@ export function checkPublicDeclarationContracts(compiler) {
       if (result.error) throw new Error(`Cannot execute the required TypeScript compiler ${compiler}: ${result.error.message}`);
       const diagnostics = `${result.stdout ?? ''}${result.stderr ?? ''}`;
       const codes = [...diagnostics.matchAll(/error (TS\d+):/gu)].map((match) => match[1]);
-      if (result.status !== (expectedDiagnostics.length ? 2 : 0)
+      // TypeScript 5 exits 2 for diagnostics; the pinned TypeScript 7 exits 1.
+      // Both must still produce exactly the declared rejection diagnostics.
+      const expectedExit = expectedDiagnostics.length ? [1, 2].includes(result.status) : result.status === 0;
+      if (!expectedExit
         || JSON.stringify(codes) !== JSON.stringify(expectedDiagnostics)) {
         throw new Error(`${name}: compiler exit ${result.status}; expected diagnostics ${expectedDiagnostics.join(', ') || 'none'}\n${diagnostics}`);
       }
