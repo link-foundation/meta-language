@@ -493,13 +493,14 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'owned scalar loop proof entities',
     files: ['rust/src/translation/source_loops.rs'],
-    extract: (text) => captures(text, /^pub struct (ScalarLoopState|ScalarLoopWrite|ScalarLoopTransition|ScalarLoopInterfaceType|ScalarLoopInterface|SourceLoop)\b/gmu)
+    extract: (text) => captures(text, /^pub struct (ScalarLoopState|ScalarLoopWrite|ScalarLoopTransition|ScalarLoopInterfaceType|ScalarLoopInterface|ScalarLoopContinuation|SourceLoop)\b/gmu)
       .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
     recordOf: (name) => `translation.${({
       'scalar-loop-state': 'scalar-loop-state-slot',
       'scalar-loop-write': 'scalar-loop-state-assignment',
       'scalar-loop-transition': 'scalar-loop-state-transition',
       'source-loop': 'source-scalar-loop-proof',
+      'scalar-loop-continuation': 'scalar-loop-declaration-continuation',
     })[name] ?? name}`,
   },
   {
@@ -522,14 +523,146 @@ export const NAME_INVENTORIES = Object.freeze([
     recordOf: (name) => `translation.${name}`,
   },
   {
+    inventory: 'closed primitive borrowed call decisions',
+    files: ['js/src/translation/rust-borrowed-call-interface-rules.js', 'rust/src/translation/borrowed_call_interface_rules.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub(?: const)? fn) ([a-zA-Z_]+)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${name}`,
+  },
+  {
+    inventory: 'closed primitive borrowed call adapters',
+    files: ['js/src/translation/rust-borrowed-call-interface.js', 'rust/src/translation/borrowed_call_interface.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub(?:\(crate\))? fn) (readRustBorrowedCallInterface|renderRustBorrowedCall|read_rust_borrowed_call_interface|render_rust_borrowed_call|borrowed_call_policy)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${name === 'borrowed-call-policy' ? 'read-rust-borrowed-call-policy' : name}`,
+  },
+  {
+    inventory: 'selected interface policy entities',
+    files: ['js/src/translation/rust-borrowed-call-interface.js', 'js/src/translation/rust-primitive-owners.js', 'js/src/translation/javascript-scoped-binding-emission.js'],
+    extract: (text) => captures(text, /^export const (RUST_BORROWED_CALL_INTERFACE_POLICY|RUST_PRIMITIVE_OWNER_POLICY|JAVASCRIPT_SCOPED_BINDING_EMISSION_POLICY)\b/gmu)
+      .map(name => name.replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${name}`,
+  },
+  {
+    inventory: 'owned borrowed interface entity',
+    files: ['rust/src/translation/borrowed_call_interface.rs'],
+    extract: (text) => captures(text, /^pub struct (BorrowedCallInterface)\b/gmu).map(() => 'borrowed-call-interface'),
+    recordOf: () => 'translation.rust-borrowed-call-interface',
+  },
+  {
+    inventory: 'qualified primitive owner decisions',
+    files: ['js/src/translation/rust-primitive-owner-rules.js', 'rust/src/translation/rust/primitive_owner_rules.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub(?: const)? fn) ([a-zA-Z_]+)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${name}`,
+  },
+  {
+    inventory: 'qualified primitive owner adapters',
+    files: ['js/src/translation/rust-primitive-owners.js', 'rust/src/translation/rust/primitive_owners.rs', 'rust/src/translation/source_primitive_owners.rs'],
+    extract: (text) => captures(text, /^\s*(?:export function|function|pub\((?:crate|super)\) fn|fn) (acceptRustPrimitiveOwnerImportName|readRustStandardPrimitivePosition|createRustPrimitiveOwnerProof|prepareRustPrimitiveOwnerProof|checkRustPrimitiveOwnerProof|accept_import_name|read_standard_primitive_position|create_primitive_owner_proof|prepare_primitive_owner_proof|validate_primitive_owner_records|validate_source_primitive_owners|policy|bodySites|body_sites|exact|spelling|owner)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: (name) => `translation.${({
+      'accept-import-name': 'accept-rust-primitive-owner-import-name',
+      'read-standard-primitive-position': 'read-rust-standard-primitive-position',
+      'create-primitive-owner-proof': 'create-rust-primitive-owner-proof',
+      'prepare-primitive-owner-proof': 'prepare-rust-primitive-owner-proof',
+      'validate-primitive-owner-records': 'validate-rust-primitive-owner-records',
+      'validate-source-primitive-owners': 'check-rust-primitive-owner-proof',
+      'policy': 'read-rust-primitive-owner-policy',
+      'body-sites': 'read-rust-primitive-owner-body-sites',
+      'exact': 'check-rust-primitive-owner-record-fields',
+      'spelling': 'read-rust-primitive-owner-path-spelling',
+      'owner': 'check-rust-primitive-owner-position',
+    })[name] ?? name}`,
+  },
+  {
+    inventory: 'owned JavaScript scoped binding decisions',
+    files: ['js/src/translation/javascript-scoped-binding-emission-rules.js', 'rust/src/translation/scoped_binding_emission_rules.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub(?: const)? fn) ([a-zA-Z_]+)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase().replace('java-script', 'javascript')),
+    recordOf: (name) => `translation.${name}`,
+  },
+  {
+    inventory: 'owned JavaScript scoped binding adapters',
+    files: ['js/src/translation/javascript-scoped-binding-emission.js', 'rust/src/translation/scoped_binding_emission.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub\(crate\) fn|fn) (readJavaScriptScopedBindingEmission|validate_model|validate_program|validate_origin_context|function_role|main_role|value_type|flag_form)(?:<'[^>]+>)?\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase().replace('java-script', 'javascript')),
+    recordOf: (name) => `translation.${({
+      'validate-model': 'validate-javascript-scoped-binding-emission-model',
+      'validate-program': 'read-javascript-scoped-binding-emission',
+      'validate-origin-context': 'validate-javascript-scoped-binding-origin-context',
+      'function-role': 'read-javascript-function-binding-role',
+      'main-role': 'check-javascript-main-binding-role',
+      'value-type': 'check-javascript-scoped-binding-value-type',
+      'flag-form': 'read-javascript-scoped-binding-origin-flag',
+    })[name] ?? name}`,
+  },
+  {
+    inventory: 'direct JavaScript program emission',
+    files: ['js/src/translation/emit-javascript.js', 'rust/src/translation/emit_javascript.rs'],
+    extract: (text) => captures(text, /^(?:export function|pub fn) (emitJavaScript|emit_javascript|emit_javascript_with_options)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
+    recordOf: () => 'translation.emit-javascript-program',
+  },
+  {
+    inventory: 'JavaScript emission option entity',
+    files: ['rust/src/translation/emit_javascript.rs'],
+    extract: (text) => captures(text, /^pub struct (JavaScriptEmissionOptions)\b/gmu).map(() => 'javascript-emission-options'),
+    recordOf: () => 'translation.javascript-emission-options',
+  },
+  {
+    inventory: 'selected source and binding option roles',
+    files: ['js/src/translation/emit-javascript.js', 'rust/src/translation/emit_javascript.rs', 'js/src/typed-program-links.js', 'rust/src/typed_program_links.rs', 'js/src/index.d.ts', 'js/src/translation/rust.js', 'rust/src/translation/rust.rs'],
+    extract: (text) => [...text.matchAll(/\b(scopedBindingModel|scoped_binding_model|javaScriptScopedBindingEmissionModel|java_script_scoped_binding_emission_model|rustPrimitiveOwnerModel|primitiveOwnerModel|primitive_owner_model)\b/gu)]
+      .map(([,name]) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase().replace('java-script', 'javascript')),
+    recordOf: (name) => `translation.${({
+      'scoped-binding-model': 'javascript-scoped-binding-model-option',
+      'javascript-scoped-binding-emission-model': 'typed-program-javascript-scoped-binding-emission-model-option',
+      'rust-primitive-owner-model': 'typed-program-rust-primitive-owner-model-option',
+      'primitive-owner-model': 'rust-primitive-owner-model-option',
+    })[name]}`,
+  },
+  {
+    inventory: 'typed qualified owner facet role',
+    files: ['js/src/typed-program-checked-projection.js', 'rust/src/translation/ir.rs'],
+    extract: (text) => [...text.matchAll(/\b(sourcePrimitiveOwners|source_primitive_owners)\b/gu)].map(() => 'source-primitive-owners'),
+    recordOf: () => 'translation.program-source-primitive-owner-proof-field',
+  },
+  {
+    inventory: 'typed empty optional construct',
+    files: ['rust/src/translation/ir.rs', 'rust/src/translation/surface.rs'],
+    extract: (text) => captures(text, /^    (None) \{/gmu).map(() => 'none'),
+    recordOf: () => 'translation.optional-empty-expression',
+  },
+  {
+    inventory: 'typed native checked program admission',
+    files: ['rust/src/typed_program_links.rs'],
+    extract: (text) => captures(text, /^pub\(super\) fn (validate_checked_program)\(/gmu).map(name => name.replaceAll('_','-')),
+    recordOf: () => 'translation.check-typed-linked-program',
+  },
+  {
+    inventory: 'selected source and binding fixture builders',
+    files: ['js/scripts/generate-rust-borrowed-call-interface-fixtures.mjs', 'js/scripts/generate-rust-primitive-owner-fixtures.mjs', 'js/scripts/generate-javascript-scoped-binding-emission-fixtures.mjs'],
+    extract: (text) => captures(text, /^export function (rustBorrowedCallInterfaceFixture|rustPrimitiveOwnerFixture|javaScriptScopedBindingEmissionFixture)\(/gmu)
+      .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase().replace('java-script','javascript')),
+    recordOf: (name) => `repository.create-${name}`,
+  },
+  {
+    inventory: 'reviewed Rust source header library styles',
+    files: ['js/scripts/rust-source-header-library-style.mjs'],
+    extract: (text) => captures(text, /^export function ([a-zA-Z_]+)\(/gmu).map(name => name.replace(/([a-z])([A-Z])/gu,'$1-$2').toLowerCase()),
+    recordOf: (name) => `repository.${name}`,
+  },
+  {
     inventory: 'Rust source header emission adapters',
     files: ['js/src/translation/rust-source-header-emission.js', 'rust/src/translation/source_header_emission.rs'],
-    extract: (text) => captures(text, /^(?:export function|pub(?:\(crate\))? fn|(?:const )?fn) (readRustSourceHeaderEmission|renderRustSourceHeaderEmission|read_rust_source_header_emission|render_rust_source_header_emission|validate_rust_source_header_emission_model|value_type|policy|semantics_name)\(/gmu)
+    extract: (text) => captures(text, /^(?:export function|pub(?:\(crate\))? fn|(?:const )?fn) (readRustSourceHeaderEmission|renderRustSourceHeaderEmission|readRustPrimitiveSourceHeaders|validateRustPrimitiveValueExpressions|read_rust_source_header_emission|render_rust_source_header_emission|render_rust_source_header_emission_with_reference|read_rust_primitive_source_headers|validate_rust_primitive_value_expressions|validate_rust_source_header_emission_model|value_type|policy|semantics_name)\(/gmu)
       .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
     recordOf: (name) => `translation.${({
       'value-type': 'check-rust-source-header-value-type',
       'policy': 'read-rust-source-header-emission-policy',
       'semantics-name': 'read-rust-source-header-semantic-qualifier',
+      'render-rust-source-header-emission-with-reference': 'render-rust-source-header-emission',
     })[name] ?? name}`,
   },
   {
@@ -640,7 +773,7 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'Rust source model parser entry points',
     files: ['js/src/translation/rust.js', 'rust/src/translation/rust.rs'],
-    extract: (text) => captures(text, /^(?:export function|pub fn) (parseRust|parse_rust|parse_rust_with_array_result_model|parse_rust_with_completion_model|parse_rust_with_source_models|parse_rust_with_source_signature_model|parse_rust_with_source_profiles|parse_rust_with_scalar_loop_model)\(/gmu)
+    extract: (text) => captures(text, /^(?:export function|pub(?:\(crate\))? fn) (parseRust|parse_rust|parse_rust_with_array_result_model|parse_rust_with_completion_model|parse_rust_with_source_models|parse_rust_with_source_signature_model|parse_rust_with_source_profiles|parse_rust_with_scalar_loop_model|parse_rust_with_primitive_owner_model|parse_rust_with_loop_profiles)\(/gmu)
       .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
     recordOf: () => 'translation.parse-rust-source-models',
   },
@@ -905,7 +1038,7 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'typed Rust source model factory operations',
     files: ['rust/src/typed_program_links.rs'],
-    extract: (text) => captures(text, /^pub fn (create_typed_program_links_with_rust_array_result_model|create_typed_program_links_with_rust_completion_model|create_typed_program_links_with_rust_source_models|create_typed_program_links_with_rust_source_signature_model|create_typed_program_links_with_rust_source_profiles)\(/gmu)
+    extract: (text) => captures(text, /^pub fn (create_typed_program_links_with_rust_array_result_model|create_typed_program_links_with_rust_completion_model|create_typed_program_links_with_rust_source_models|create_typed_program_links_with_rust_source_signature_model|create_typed_program_links_with_rust_source_profiles|create_typed_program_links_with_rust_primitive_owner_model)\(/gmu)
       .map(name => name.replaceAll('_', '-')),
     recordOf: () => 'translation.create-typed-program-links',
   },
