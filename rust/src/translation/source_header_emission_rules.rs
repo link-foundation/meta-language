@@ -52,6 +52,45 @@ pub fn accept_rust_source_header_emission_expression(kind: &str) -> bool {
 
 /// Apply the shared primitive borrowed header emission policy.
 #[must_use]
+/// Apply the shared primitive borrowed header emission policy.
+#[must_use]
+pub fn accept_rust_source_header_emission_expression_field(kind: &str, field: &str) -> bool {
+    if kind == "lit" {
+        ((field == "k" || field == "type") || field == "span") || field == "value"
+    } else if kind == "var" {
+        ((field == "k" || field == "type") || field == "span") || field == "name"
+    } else if kind == "unary" {
+        ((((field == "k" || field == "type") || field == "span") || field == "op")
+            || field == "arg")
+            || field == "semantics"
+    } else if kind == "binary" {
+        ((((((field == "k" || field == "type") || field == "span") || field == "op")
+            || field == "left")
+            || field == "right")
+            || field == "domain")
+            || field == "semantics"
+    } else if kind == "let" {
+        ((((field == "k" || field == "type") || field == "span") || field == "name")
+            || field == "value")
+            || field == "body"
+    } else if kind == "if" {
+        ((((field == "k" || field == "type") || field == "span") || field == "cond")
+            || field == "then")
+            || field == "else"
+    } else {
+        false
+    }
+}
+
+/// Apply the shared primitive borrowed header emission policy.
+#[must_use]
+pub fn accept_rust_source_header_emission_semantics(semantics: &str) -> bool {
+    ((semantics == "exact" || semantics == "checked") || semantics == "truncated")
+        || semantics == "ieee"
+}
+
+/// Apply the shared primitive borrowed header emission policy.
+#[must_use]
 pub fn accept_rust_source_header_emission_parameter(
     guarded: bool,
     defaulted: bool,
