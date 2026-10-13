@@ -140,6 +140,15 @@ Linked text conversion rejects unrepresented array operands and undeclared
 Rust floating-point display before admitting a formal definition. Existing
 record definitions remain available; their admission does not verify complete
 source record or console formatting.
+The experimental record text rules distinguish ordinary ECMAScript coercion
+from Node console inspection. Their bounded ordinary record trees and complete
+checked algorithm serialize as inspectable links and reload without the source
+objects or source code. Thirty fixtures exercise both models in JavaScript,
+including emitted JavaScript after reload; native generated Rust verification
+runs in CI. These rules cover safe integers, booleans, bounded big integers and
+ASCII text in shallow single-line records. Complete source admission and emitter
+integration, floating-point fields, Unicode, multiline layouts, deeper recursion
+and effectful or shared objects remain required work.
 
 ### Ontology and taxonomy entry points
 
