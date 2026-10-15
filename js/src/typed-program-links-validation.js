@@ -6,7 +6,7 @@ import {checkRustUnitCloneDerivations} from './translation/rust-unit-clone.js';
 import {validateSourceSpans} from './source-spans.js';
 import {checkRustScalarLoopProof} from './translation/rust-scalar-loops.js';
 import {checkRustPrimitiveOwnerProof} from './translation/rust-primitive-owners.js';
-import {checkRustOwnedLocalStateProof} from './translation/rust-owned-local-state.js';
+import {checkRustOwnedLocalStateProof,checkRustOwnedLocalStateRecordShapes} from './translation/rust-owned-local-state.js';
 // Validate the source-free checked IR boundary before any target emission.
 import { fixedBounds, sameType } from './translation/types.js';
 import { checkLinkedMatchCoverage } from './translation/check.js';
@@ -22,6 +22,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
   // The independently selected Unit profile owns plain data throughout its
   // graph. Check descriptors before reading even the initial role fields.
   if (program && typeof program === 'object' && Object.hasOwn(program, 'sourcePureUnitCalls')) checkRustPureUnitCalls(program);
+  checkRustOwnedLocalStateRecordShapes(program);
   validateSourceSpans(program);
   if (!program || program.schemaVersion !== 1 || !['JavaScript', 'Rust', 'Lean', 'Rocq'].includes(program.sourceLanguage)
     || !(program.declarations instanceof Map) || !Array.isArray(program.items)) throw new TypeError('the linked value is not a checked typed program');

@@ -9,6 +9,12 @@ export function acceptRustOwnedLocalExpression(kind){return kind === "lit" || ki
 export function acceptRustOwnedLocalBinaryOperation(operation){return operation === "eq";}
 /** @param {string} operation @returns {boolean} */
 export function acceptRustOwnedLocalSourceOperation(operation){return operation !== "borrow" && operation !== "dereference" && operation !== "box construction";}
+/** @param {string} kind @param {boolean} dense @param {boolean} unrepresented @returns {boolean} */
+export function acceptRustOwnedLocalContainer(kind,dense,unrepresented){return (kind === "array" && dense && !unrepresented) || (kind === "map" && !unrepresented) || (kind === "record" && !unrepresented);}
+/** @param {boolean} booleanRequired @param {boolean} booleanValue @returns {boolean} */
+export function acceptRustOwnedLocalRecordValue(booleanRequired,booleanValue){return !booleanRequired || booleanValue;}
+/** @param {boolean} present @param {boolean} recordShape @param {boolean} offsetShape @returns {boolean} */
+export function acceptRustOwnedLocalSourceSpan(present,recordShape,offsetShape){return !present || (recordShape && offsetShape);}
 /** @param {Array<number>} units @returns {boolean} */
 export function acceptRustOwnedLocalTextUnits(units){
  for(let index=0;index<units.length;index++){

@@ -2,6 +2,7 @@
 // The adapter carries declarations and shared projection instructions; it
 // does not assign meaning to types, operators, patterns or recursion.
 import { checkProgram } from './translation/check.js';
+import {checkRustOwnedLocalStateRecordShapes} from './translation/rust-owned-local-state.js';
 import { validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes } from './translation/rust-type-namespace.js';
 import { projectLinkedProgramExpression, projectLinkedProgramDeclarationPath } from './typed-program-expression-projection.js';
 import { readProgramExpressionProjection, readProgramNeutralFieldDefault } from './typed-program-link-rules.js';
@@ -9,6 +10,7 @@ import { readProgramExpressionProjection, readProgramNeutralFieldDefault } from 
 export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
   const rootedNamespace = checkRustTypeNamespaceRecordShapes(program);
   if (rootedNamespace) { validateRustTypeNamespace(program); wholeProgram = true; }
+  if(checkRustOwnedLocalStateRecordShapes(program))wholeProgram=true;
   const visited = new WeakSet();
   const active = new WeakSet();
   let hasTuple = false;

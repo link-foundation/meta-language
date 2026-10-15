@@ -3,13 +3,44 @@ import {readRuntimeProjectData} from '../project-data-loader.js';
 import {typeError} from './diagnostics.js';
 import {sameType} from './types.js';
 import {checkRustSourceSignature} from './rust-source-signatures.js';
-import {acceptRustOwnedLocalValueType,acceptRustOwnedLocalExpression,acceptRustOwnedLocalBinaryOperation} from './rust-owned-local-state-rules.js';
+import {checkOwnedProgramContainers} from './owned-program-containers.js';
+import {acceptRustOwnedLocalValueType,acceptRustOwnedLocalExpression,acceptRustOwnedLocalBinaryOperation,acceptRustOwnedLocalContainer,acceptRustOwnedLocalRecordValue,acceptRustOwnedLocalSourceSpan} from './rust-owned-local-state-rules.js';
 export const RUST_OWNED_LOCAL_STATE_POLICY=readRuntimeProjectData(new URL('./data/rust-owned-local-state.lino',import.meta.url));
 const policy=RUST_OWNED_LOCAL_STATE_POLICY;
 const fail=reason=>{throw typeError('Rust owned local state proof: '+reason);};
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const exact=(value,fields)=>{if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).length!==fields.length||fields.some(field=>!Object.hasOwn(value,field)))fail('unrecognized or missing owned fields');};
 const sourceInterval=span=>Boolean(span&&same(Object.keys(span).sort(),['end','start'])&&[span.start,span.end].every(value=>Number.isSafeInteger(value)&&value>=0)&&span.start<span.end);
+
+/** Reject host facts the selected semantic archive cannot represent before reading them. */
+export function checkRustOwnedLocalStateContainers(program){
+ return checkOwnedProgramContainers(program,{acceptContainer:acceptRustOwnedLocalContainer,fail,selectedFields:policy.containerMarkerFields});
+}
+
+/** Check actual contextual Boolean and optional source-span shapes before projection. */
+export function checkRustOwnedLocalStateRecordShapes(program){
+ if(!checkRustOwnedLocalStateContainers(program))return false;
+ const visited=new WeakSet();
+ function inspect(value){
+  if(!value||typeof value!=='object'||visited.has(value))return;
+  visited.add(value);
+  if(value instanceof Map){for(const child of Map.prototype.values.call(value))inspect(child);return;}
+  if(Array.isArray(value)){for(const child of value)inspect(child);return;}
+  const context=value===program?'program':value===program.main?'main':typeof value.k==='string'?value.k:'';
+  for(const[field,child]of Object.entries(value)){
+   if(!acceptRustOwnedLocalRecordValue((policy.recordBooleanFields[context]??[]).includes(field),typeof child==='boolean'))fail('a contextual flag has a non-Boolean value');
+   if(field==='span'){
+    const present=child!=null;
+    const recordShape=Boolean(child&&typeof child==='object'&&!Array.isArray(child)&&Object.keys(child).length===2&&Object.hasOwn(child,'start')&&Object.hasOwn(child,'end'));
+    const offsetShape=recordShape&&Number.isSafeInteger(child.start)&&Number.isSafeInteger(child.end)&&child.start>=0&&child.end>=child.start&&child.end<=policy.sourceOffsetMaximum&&!Object.is(child.start,-0)&&!Object.is(child.end,-0);
+    if(!acceptRustOwnedLocalSourceSpan(present,recordShape,offsetShape))fail('a source span has an invalid owned shape or offset');
+   }
+   inspect(child);
+  }
+ }
+ inspect(program);
+ return true;
+}
 export function ownedLocalType(type){return Boolean(type&&acceptRustOwnedLocalValueType(type.kind,String(type.bits??''),type.signed===true)&&same(Object.keys(type).sort(),(type.kind==='fixed'?['kind','bits','signed']:['kind']).sort()));}
 export function ownedLocalPair(type){return type?.kind==='tuple'&&same(Object.keys(type).sort(),['elements','kind'])&&type.elements?.length===2&&type.elements[0].kind==='string'&&ownedLocalType(type.elements[0])&&type.elements[1].kind==='fixed'&&ownedLocalType(type.elements[1]);}
 export function ownedLocalPosition(position){return ownedLocalType(position.type)&&position.wrappers.length===0&&position.lifetimes.length===0&&position.owner.arguments.length===0&&(position.type.kind==='string'?position.owner.kind==='library'&&position.owner.path.join('::')==='std::string::String':position.owner.kind==='primitive'&&position.owner.path.join('::')===(position.type.kind==='fixed'?'i32':'bool'));}
@@ -46,6 +77,7 @@ export function prepareRustOwnedLocalStateProof(proof,body){
 }
 
 export function checkRustOwnedLocalStateProof(program){
+ checkRustOwnedLocalStateRecordShapes(program);
  const entries=[...program.declarations.values()];if(!entries.some(entry=>Object.hasOwn(entry,'sourceLocalState')))return;
  if(program.sourceLanguage!=='Rust'||program.items.some(item=>item.k!=='fn')||program.main?.effects?.length||program.imports?.length||program.externals?.length||['referenceSemantics','utf16Strings','outputThreaded','abortsThreaded'].some(field=>Object.hasOwn(program,field)&&program[field]!==false))fail('the profile requires a complete flat value program without imports, effects or other runtime interpretations');
  for(const entry of entries){
