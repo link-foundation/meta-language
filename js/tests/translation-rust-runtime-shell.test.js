@@ -116,3 +116,8 @@ test('a surviving actual worker context cannot lose its complete runtime operati
 test('source-free rechecking preserves negative-zero refusal on every derived operation interval',()=>{
  const entry=fixture.cases[0],packet=load(entry),actual=emitTypedProgramLinks(packet.network,packet.root,'Rust'),again=createTypedProgramLinks(actual.code,'Rust',options),p=decodeTypedProgramLinks(again.network,again.root);assert.equal(p.sourceRuntimeShell.operations.span.start,0);p.sourceRuntimeShell.operations.span.start=-0;assertRefused(p,'derived operation source negative zero');
 });
+
+
+test('fixed ASCII runtime string facts require enough original extent for their actual scalar contents and delimiters',()=>{
+ const p=example(),string=p.sourceRuntimeShell.tokens.find(token=>token.kind==='string');string.span.start=string.span.end-1;assertRefused(p,'impossible runtime string source extent');
+});

@@ -56,6 +56,7 @@ function validateTokens(proof,program){
    }else if(!tokenSet.has(token.binding)||token.binding.kind!=='identifier'||!own(token.binding,'value'))fail('a source occurrence references an unowned lexical binder');
   }else if(typeof token.value!=='string'||token.kind==='number'&&(typeof token.suffix!=='string'||typeof token.floating!=='boolean'))fail('the actual token scalar has a different lexical domain');
   if(['identifier','punct','number'].includes(token.kind)&&!reference&&token.span.end-token.span.start!==(token.value+(token.kind==='number'?token.suffix:'')).length)fail('a lexical token does not own its actual source interval');
+  if(token.kind==='string'&&token.span.end-token.span.start<token.value.length+2)fail('an actual fixed ASCII string must own its scalar contents and both delimiters');
   if(previousToken&&previousToken.span.end===token.span.start&&['identifier','number'].includes(previousToken.kind)&&['identifier','number'].includes(token.kind))fail('distinct source word tokens require an actual lexical separator');
   previousToken=token;
   if(token.kind==='eof'&&(index!==proof.tokens.length-1||token.value!==''||token.span.start!==proof.span.end||token.span.end!==proof.span.end))fail('the complete artifact has a malformed final lexical boundary');
