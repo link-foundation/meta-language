@@ -47,10 +47,26 @@ pairing, complete failure behavior and the full binary formatter remain gaps.
 The generated experimental Rust decision file is an automatic translation
 artifact and is never compiled by this experiment. This is not ledger evidence.
 
+The independently selected `closed generated owned Rust literal value edits 1`
+model adds complete Unicode scalar String literals and bounded signed i32 edits.
+Select it through the existing experimental factory's `model` option. Its linked
+`literalEdits` records bind each actual String or i32 literal to its source
+operation and optional real minus token. Removing a minus inserts an ASCII
+separator and preserves intervening comments; insertion affects only the actual
+literal. Unchanged alternative spellings retain their original bytes. Edited
+strings use the same internal quoter as the production Rust emitter, and raw
+literals are checked by the actual production Rust lexer. Every emitted complete
+module is reinterpreted under the selected model before conditions receive their
+new operation spans. Text and binary snapshots retain all actual core and source
+identities. The original model and all of its policies, decisions, fixtures and
+refusals remain unchanged. The new model makes no production or native claim.
+
 Run the bounded checks from the repository root with Node 22:
 
 ```sh
 node experiments/generated-owned-rust/generate-rules.mjs --check
 node experiments/generated-owned-rust/generate-fixtures.mjs --check
-TRANSLATION_CHECK_RUST=0 SELF_TRANSLATION_CHECK_RUST=0 node scripts/with-cache-cleanup.mjs --event test --no-preflight --no-docker -- node --test experiments/generated-owned-rust/model.test.mjs
+node experiments/generated-owned-rust/generate-value-edit-rules.mjs --check
+node experiments/generated-owned-rust/generate-value-edit-fixtures.mjs --check
+TRANSLATION_CHECK_RUST=0 SELF_TRANSLATION_CHECK_RUST=0 node scripts/with-cache-cleanup.mjs --event test --no-preflight --no-docker -- node --test experiments/generated-owned-rust/model.test.mjs experiments/generated-owned-rust/value-edits.test.mjs
 ```
