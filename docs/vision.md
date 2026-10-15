@@ -1728,7 +1728,10 @@ succeed before Rust evidence starts, and both remain dependencies of the
 aggregate with their original physical scope and artifact identities.
 The Rust evidence suite starts only after the entire JavaScript matrix passes.
 Both suites provision their required formatter and compiler tools. Failure
-tails and periodic command progress are retained in live CI output.
+tails and periodic command progress are retained in live CI output. Each
+thirty-second heartbeat includes a bounded, credential-redacted actual log
+suffix, so a job timeout retains recent test progress even if artifact upload
+cannot run. Original command logs remain unchanged.
 
 Package validation runs six required parallel check groups: native imports,
 native fixtures, grammar, contracts, generated code and source models. The

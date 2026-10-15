@@ -866,7 +866,15 @@ async function runCommand(
   await handle.write(`command: ${rendered}\ncwd: ${cwd}\n\n`);
   console.log(`issue-195 evidence: ${label}`);
   const started = Date.now();
-  const progress = setInterval(() => console.log(`issue-195 evidence: ${label} running (${Math.floor((Date.now() - started) / 1000)}s); output: ${relative(logPath)}`), 30_000);
+  const progress = setInterval(async () => {
+    console.log(`issue-195 evidence: ${label} running (${Math.floor((Date.now() - started) / 1000)}s); output: ${relative(logPath)}`);
+    try {
+      const tail = await readEvidenceCommandFailureTail(logPath, env);
+      if (tail) console.log(`issue-195 evidence: actual command progress from ${relative(logPath)}\n${tail}`);
+    } catch {
+      console.log(`issue-195 evidence: ${label} progress log is temporarily unavailable`);
+    }
+  }, 30_000);
   progress.unref();
   let code;
   try {
