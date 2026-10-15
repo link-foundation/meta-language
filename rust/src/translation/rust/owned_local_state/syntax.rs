@@ -1,7 +1,7 @@
 //! Ordered source statements; expressions still use the production Rust parser.
 use super::{
     LocalBindingPattern, LocalPattern, LocalState, Options, Result, RustParser, SExpr, SNode, Span,
-    Statement, TokenKind, fail, span,
+    Statement, TokenKind, accept_rust_owned_local_source_operation, fail, span,
 };
 impl RustParser {
     fn owned_local_raw_expression(&mut self, path: &[String], options: Options) -> Result<SExpr> {
@@ -12,7 +12,9 @@ impl RustParser {
             .any(|token| {
                 token.kind == TokenKind::Identifier
                     && ["mut", "ref"].contains(&token.value.as_str())
-                    || token.kind == TokenKind::Punct && ["&", "&&"].contains(&token.value.as_str())
+                    || token.kind == TokenKind::Punct
+                        && ["&", "&&"].contains(&token.value.as_str())
+                        && !accept_rust_owned_local_source_operation("borrow")
             })
         {
             return Err(fail(
