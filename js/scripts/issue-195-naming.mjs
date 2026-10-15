@@ -369,7 +369,7 @@ const nativeRuleConcepts = (text) => [...text.matchAll(/^\(rule ([a-z0-9_]+) [^\
  * inventory of `words` has no records (generated names such as inferred rule
  * names) and only its words are checked.
  */
-export const NAME_INVENTORIES = Object.freeze([
+const BASE_NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'closed empty primitive Rust option decisions',
     files: ['js/src/translation/rust-empty-option-rules.js', 'rust/src/translation/rust/empty_option_rules.rs'],
@@ -380,7 +380,7 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'closed empty primitive Rust option source adapters',
     files: ['js/src/translation/rust-empty-options.js', 'rust/src/translation/rust/empty_options.rs', 'rust/src/translation/source_empty_options.rs'],
-    extract: (text) => captures(text, /^\s*(?:export function|pub\((?:crate|super)\) fn) (readRustEmptyOptionResult|readRustEmptyOptionBody|createRustEmptyOptionProof|finishRustEmptyOptionSource|checkRustEmptyOptionProof|read_empty_option_result|empty_option_function|empty_option_attribute_guard|empty_option_item_guard|empty_option_main_guard|finish_empty_option_source|validate_empty_option_records|validate_source_empty_options|policy)\(/gmu)
+    extract: (text) => captures(text, /^\s*(?:export function|pub(?:\((?:crate|super)\))? fn) (readRustEmptyOptionResult|readRustEmptyOptionBody|createRustEmptyOptionProof|finishRustEmptyOptionSource|checkRustEmptyOptionProof|read_empty_option_result|empty_option_function|empty_option_attribute_guard|empty_option_item_guard|empty_option_main_guard|finish_empty_option_source|validate_empty_option_records|validate_source_empty_options|policy)\(/gmu)
       .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
     recordOf: (name) => `translation.${({
       'read-empty-option-result': 'read-rust-empty-option-result',
@@ -415,7 +415,7 @@ export const NAME_INVENTORIES = Object.freeze([
   },
   {
     inventory: 'typed program closed empty primitive Rust option proof roles',
-    files: ['js/src/typed-program-checked-projection.js', 'rust/src/translation/ir.rs', 'rust/src/translation/surface.rs'],
+    files: ['js/src/typed-program-checked-projection.js', 'rust/src/translation/ir/declarations.rs', 'rust/src/translation/surface.rs'],
     extract: (text) => captures(text, /\b(sourceEmptyOption|source_empty_option)\b/gu).map(() => 'source-empty-option'),
     recordOf: () => 'translation.program-source-empty-option-proof-field',
   },
@@ -434,7 +434,7 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'native typed program field name reader',
     files: ['rust/src/typed_program_links.rs'],
-    extract: (text) => captures(text, /^pub\(super\) fn (field_of)\(/gmu).map(() => 'field-of'),
+    extract: (text) => captures(text, /^pub(?:\(super\))? fn (field_of)\(/gmu).map(() => 'field-of'),
     recordOf: () => 'translation.read-typed-program-field-name',
   },
   {
@@ -580,7 +580,7 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'scalar loop policy and namespace adapters',
     files: ['rust/src/translation/source_loops.rs', 'rust/src/typed_program_links/checked/loop_modules.rs'],
-    extract: (text) => captures(text, /^pub\((?:crate|super)\) fn (scalar_loop_policy|scalar_loop_snapshot_binding|project_function|project_module)\(/gmu)
+    extract: (text) => captures(text, /^pub(?:\((?:crate|super)\))? fn (scalar_loop_policy|scalar_loop_snapshot_binding|project_function|project_module)\(/gmu)
       .map(name => name.replaceAll('_', '-')),
     recordOf: (name) => `translation.${({
       'scalar-loop-policy': 'read-scalar-loop-source-policy',
@@ -633,7 +633,7 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'qualified primitive owner adapters',
     files: ['js/src/translation/rust-primitive-owners.js', 'rust/src/translation/rust/primitive_owners.rs', 'rust/src/translation/source_primitive_owners.rs'],
-    extract: (text) => captures(text, /^\s*(?:export function|function|pub\((?:crate|super)\) fn|fn) (acceptRustPrimitiveOwnerImportName|readRustStandardPrimitivePosition|createRustPrimitiveOwnerProof|prepareRustPrimitiveOwnerProof|checkRustPrimitiveOwnerProof|accept_import_name|read_standard_primitive_position|create_primitive_owner_proof|prepare_primitive_owner_proof|validate_primitive_owner_records|validate_source_primitive_owners|policy|bodySites|body_sites|exact|spelling|owner)\(/gmu)
+    extract: (text) => captures(text, /^\s*(?:export function|function|pub(?:\((?:crate|super)\))? fn|fn) (acceptRustPrimitiveOwnerImportName|readRustStandardPrimitivePosition|createRustPrimitiveOwnerProof|prepareRustPrimitiveOwnerProof|checkRustPrimitiveOwnerProof|accept_import_name|read_standard_primitive_position|create_primitive_owner_proof|prepare_primitive_owner_proof|validate_primitive_owner_records|validate_source_primitive_owners|policy|bodySites|body_sites|exact|spelling|owner)\(/gmu)
       .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
     recordOf: (name) => `translation.${({
       'accept-import-name': 'accept-rust-primitive-owner-import-name',
@@ -659,7 +659,7 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'owned JavaScript scoped binding adapters',
     files: ['js/src/translation/javascript-scoped-binding-emission.js', 'rust/src/translation/scoped_binding_emission.rs'],
-    extract: (text) => captures(text, /^(?:export function|pub\(crate\) fn|fn) (readJavaScriptScopedBindingEmission|validate_model|validate_program|validate_origin_context|function_role|main_role|value_type|flag_form|validate_raw_program)(?:<'[^>]+>)?\(/gmu)
+    extract: (text) => captures(text, /^(?:export function|pub(?:\(crate\))? fn|fn) (readJavaScriptScopedBindingEmission|validate_model|validate_program|validate_origin_context|function_role|main_role|value_type|flag_form|validate_raw_program)(?:<'[^>]+>)?\(/gmu)
       .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase().replace('java-script', 'javascript')),
     recordOf: (name) => `translation.${({
       'validate-model': 'validate-javascript-scoped-binding-emission-model',
@@ -699,7 +699,7 @@ export const NAME_INVENTORIES = Object.freeze([
   },
   {
     inventory: 'typed qualified owner facet role',
-    files: ['js/src/typed-program-checked-projection.js', 'rust/src/translation/ir.rs'],
+    files: ['js/src/typed-program-checked-projection.js', 'rust/src/translation/ir/declarations.rs'],
     extract: (text) => [...text.matchAll(/\b(sourcePrimitiveOwners|source_primitive_owners)\b/gu)].map(() => 'source-primitive-owners'),
     recordOf: () => 'translation.program-source-primitive-owner-proof-field',
   },
@@ -712,7 +712,7 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'typed native checked program admission',
     files: ['rust/src/typed_program_links.rs'],
-    extract: (text) => captures(text, /^pub\(super\) fn (validate_checked_program)\(/gmu).map(name => name.replaceAll('_','-')),
+    extract: (text) => captures(text, /^pub(?:\(super\))? fn (validate_checked_program)\(/gmu).map(name => name.replaceAll('_','-')),
     recordOf: () => 'translation.check-typed-linked-program',
   },
   {
@@ -848,7 +848,7 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'Rust source model parser entry points',
     files: ['js/src/translation/rust.js', 'rust/src/translation/rust.rs'],
-    extract: (text) => captures(text, /^(?:export function|pub(?:\(crate\))? fn) (parseRust|parse_rust|parse_rust_with_array_result_model|parse_rust_with_completion_model|parse_rust_with_source_models|parse_rust_with_source_signature_model|parse_rust_with_source_profiles|parse_rust_with_scalar_loop_model|parse_rust_with_primitive_owner_model|parse_rust_with_loop_profiles|parse_rust_with_empty_option_source_model)\(/gmu)
+    extract: (text) => captures(text, /^(?:export function|pub(?:\(crate\))? fn) (parseRust|parse_rust|parse_rust_with_array_result_model|parse_rust_with_completion_model|parse_rust_with_source_models|parse_rust_with_source_signature_model|parse_rust_with_source_profiles|parse_rust_with_scalar_loop_model|parse_rust_with_primitive_owner_model|parse_rust_with_loop_profiles|parse_rust_with_empty_option_source_model|parse_rust_with_type_namespace_model)\(/gmu)
       .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
     recordOf: () => 'translation.parse-rust-source-models',
   },
@@ -1113,7 +1113,7 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'typed Rust source model factory operations',
     files: ['rust/src/typed_program_links.rs'],
-    extract: (text) => captures(text, /^pub fn (create_typed_program_links_with_rust_array_result_model|create_typed_program_links_with_rust_completion_model|create_typed_program_links_with_rust_source_models|create_typed_program_links_with_rust_source_signature_model|create_typed_program_links_with_rust_source_profiles|create_typed_program_links_with_rust_primitive_owner_model|create_typed_program_links_with_rust_empty_option_source_model)\(/gmu)
+    extract: (text) => captures(text, /^pub fn (create_typed_program_links_with_rust_array_result_model|create_typed_program_links_with_rust_completion_model|create_typed_program_links_with_rust_source_models|create_typed_program_links_with_rust_source_signature_model|create_typed_program_links_with_rust_source_profiles|create_typed_program_links_with_rust_primitive_owner_model|create_typed_program_links_with_rust_empty_option_source_model|create_typed_program_links_with_rust_type_namespace_model)\(/gmu)
       .map(name => name.replaceAll('_', '-')),
     recordOf: () => 'translation.create-typed-program-links',
   },
@@ -1134,7 +1134,7 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'typed program binding identities',
     files: ['rust/src/typed_program_links.rs'],
-    extract: (text) => captures(text, /^pub\((?:crate|super)\) fn (read_typed_program_binding_identities)\(/gmu)
+    extract: (text) => captures(text, /^pub(?:\((?:crate|super)\))? fn (read_typed_program_binding_identities)\(/gmu)
       .map((name) => name.replaceAll('_', '-')),
     recordOf: (name) => `translation.${name}`,
   },
@@ -1157,7 +1157,7 @@ export const NAME_INVENTORIES = Object.freeze([
     files: ['js/src/data/typed-program-links-schema.json', 'rust/src/data/typed-program-links-schema.json'],
     extract: (text) => {
       const schema = JSON.parse(text);
-      return [schema.root, ...Object.values(schema.containers), ...Object.values(schema.scalars), ...Object.values(schema.fields), ...Object.values(schema.references)].map((name) => name.toLowerCase().replaceAll(' ', '-'));
+      return [schema.root, ...Object.values(schema.containers), ...Object.values(schema.scalars), ...Object.values(schema.fields), ...Object.values(schema.references)].map((name) => name.toLowerCase().replaceAll('datatype', 'data type').replaceAll(' ', '-'));
     },
     recordOf: (name) => ({
       'string-value': 'translation.string-scalar-value',
@@ -1193,6 +1193,10 @@ export const NAME_INVENTORIES = Object.freeze([
       'canonical-owner-path': 'translation.program-source-canonical-owner-path-field',
       'external-option-roots': 'translation.program-source-external-option-root-list-field',
       'declared-function-names': 'translation.program-source-declared-function-name-list-field',
+      'source-derivation-data-type-owner': 'translation.source-derivation-data-type-owner',
+      'source-derivation-data-type-owner': 'translation.source-derivation-data-type-owner',
+      'source-derivation-data-type-owner': 'translation.source-derivation-data-type-owner',
+      'source-derivation-data-type-owner': 'translation.source-derivation-data-type-owner',
     })[name] ?? `translation.${name}`,
   },
   {
@@ -1733,6 +1737,520 @@ export const FORMER_NAME_TABLES = Object.freeze([
     recordOf: (name) => `ontology.${name}`,
   },
 ]);
+
+// Additive source bindings for the resolved type namespace and reviewed policy corrections.
+const RESOLVED_SOURCE_NAME_BINDINGS = [
+  {
+    "inventory": "resolved Rust type namespace decisions",
+    "files": {
+      "js/src/translation/rust-type-namespace-rules.js": [
+        {
+          "name": "acceptRustTypeNamespaceModel",
+          "id": "translation.accept-rust-type-namespace-model"
+        },
+        {
+          "name": "acceptRustTypeNamespaceDeclaration",
+          "id": "translation.accept-rust-type-namespace-declaration"
+        },
+        {
+          "name": "acceptRustTypeNamespaceFields",
+          "id": "translation.accept-rust-type-namespace-fields"
+        },
+        {
+          "name": "acceptRustTypeNamespaceAnchor",
+          "id": "translation.accept-rust-type-namespace-anchor"
+        },
+        {
+          "name": "acceptRustTypeNamespaceBodyConstructor",
+          "id": "translation.accept-rust-type-namespace-body-constructor"
+        },
+        {
+          "name": "acceptRustTypeNamespaceBodyMethod",
+          "id": "translation.accept-rust-type-namespace-body-method"
+        },
+        {
+          "name": "acceptRustTypeNamespaceMethodDiscovery",
+          "id": "translation.accept-rust-type-namespace-method-discovery"
+        },
+        {
+          "name": "acceptRustTypeNamespaceUnitClone",
+          "id": "translation.accept-rust-type-namespace-unit-clone"
+        },
+        {
+          "name": "acceptRustTypeNamespaceContainer",
+          "id": "translation.accept-rust-type-namespace-container"
+        },
+        {
+          "name": "acceptRustTypeNamespaceDiscoveryType",
+          "id": "translation.accept-rust-type-namespace-discovery-type"
+        },
+        {
+          "name": "acceptRustTypeNamespaceRecordValue",
+          "id": "translation.accept-rust-type-namespace-record-value"
+        },
+        {
+          "name": "acceptRustTypeNamespacePosition",
+          "id": "translation.accept-rust-type-namespace-position"
+        }
+      ],
+      "rust/src/translation/type_namespace_rules.rs": [
+        {
+          "name": "accept_rust_type_namespace_model",
+          "id": "translation.accept-rust-type-namespace-model"
+        },
+        {
+          "name": "accept_rust_type_namespace_declaration",
+          "id": "translation.accept-rust-type-namespace-declaration"
+        },
+        {
+          "name": "accept_rust_type_namespace_fields",
+          "id": "translation.accept-rust-type-namespace-fields"
+        },
+        {
+          "name": "accept_rust_type_namespace_anchor",
+          "id": "translation.accept-rust-type-namespace-anchor"
+        },
+        {
+          "name": "accept_rust_type_namespace_body_constructor",
+          "id": "translation.accept-rust-type-namespace-body-constructor"
+        },
+        {
+          "name": "accept_rust_type_namespace_body_method",
+          "id": "translation.accept-rust-type-namespace-body-method"
+        },
+        {
+          "name": "accept_rust_type_namespace_method_discovery",
+          "id": "translation.accept-rust-type-namespace-method-discovery"
+        },
+        {
+          "name": "accept_rust_type_namespace_unit_clone",
+          "id": "translation.accept-rust-type-namespace-unit-clone"
+        },
+        {
+          "name": "accept_rust_type_namespace_container",
+          "id": "translation.accept-rust-type-namespace-container"
+        },
+        {
+          "name": "accept_rust_type_namespace_discovery_type",
+          "id": "translation.accept-rust-type-namespace-discovery-type"
+        },
+        {
+          "name": "accept_rust_type_namespace_record_value",
+          "id": "translation.accept-rust-type-namespace-record-value"
+        },
+        {
+          "name": "accept_rust_type_namespace_position",
+          "id": "translation.accept-rust-type-namespace-position"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "resolved Rust type namespace source operations",
+    "files": {
+      "js/src/translation/rust-type-namespace.js": [
+        {
+          "name": "checkRustTypeNamespaceRecordShapes",
+          "id": "translation.check-rust-type-namespace-record-shapes"
+        },
+        {
+          "name": "checkRustTypeNamespaceContainers",
+          "id": "translation.check-rust-type-namespace-containers"
+        },
+        {
+          "name": "acceptRustTypeNamespaceSpellingSegment",
+          "id": "translation.accept-rust-type-namespace-spelling-segment"
+        },
+        {
+          "name": "createRustTypeNamespaceProof",
+          "id": "translation.create-rust-type-namespace-proof"
+        },
+        {
+          "name": "requireRustTypeNamespaceAnchor",
+          "id": "translation.require-rust-type-namespace-anchor"
+        },
+        {
+          "name": "validateRustTypeNamespace",
+          "id": "translation.validate-rust-type-namespace"
+        },
+        {
+          "name": "requireRustTypeNamespaceWithoutImports",
+          "id": "translation.require-rust-type-namespace-without-imports"
+        }
+      ],
+      "rust/src/translation/source_type_namespaces.rs": [
+        {
+          "name": "validate_namespace_value_shapes",
+          "id": "translation.check-rust-type-namespace-record-shapes"
+        },
+        {
+          "name": "validate_source_type_namespaces",
+          "id": "translation.validate-rust-type-namespace"
+        },
+        {
+          "name": "policy",
+          "id": "translation.read-rust-type-namespace-policy"
+        },
+        {
+          "name": "validate_type_namespace_records",
+          "id": "translation.validate-rust-type-namespace-records"
+        },
+        {
+          "name": "validate_type_namespace_declaration_record",
+          "id": "translation.validate-rust-type-namespace-declaration-record"
+        },
+        {
+          "name": "spelling",
+          "id": "translation.read-rust-type-namespace-spelling"
+        },
+        {
+          "name": "position",
+          "id": "translation.check-rust-type-namespace-position"
+        },
+        {
+          "name": "unrepresented",
+          "id": "translation.check-rust-type-namespace-record-fields"
+        }
+      ],
+      "js/src/typed-program-expression-projection.js": [
+        {
+          "name": "projectLinkedProgramDeclarationPath",
+          "id": "translation.project-linked-program-declaration-path"
+        }
+      ],
+      "rust/src/translation/rust/type_namespaces.rs": [
+        {
+          "name": "accept_namespace_segment",
+          "id": "translation.accept-rust-type-namespace-spelling-segment"
+        },
+        {
+          "name": "capture_type_namespace",
+          "id": "translation.create-rust-type-namespace-proof"
+        },
+        {
+          "name": "require_anchor",
+          "id": "translation.require-rust-type-namespace-anchor"
+        },
+        {
+          "name": "require_type_namespace_without_imports",
+          "id": "translation.require-rust-type-namespace-without-imports"
+        },
+        {
+          "name": "new",
+          "id": "translation.create-rust-type-namespace-catalog"
+        },
+        {
+          "name": "lookup",
+          "id": "translation.look-up-rust-type-namespace-owner"
+        },
+        {
+          "name": "require_type_namespace_without_constant",
+          "id": "translation.require-rust-type-namespace-without-constant"
+        },
+        {
+          "name": "require_type_namespace_body_constructor",
+          "id": "translation.require-rust-type-namespace-body-constructor"
+        },
+        {
+          "name": "require_type_namespace_body_method",
+          "id": "translation.require-rust-type-namespace-body-method"
+        },
+        {
+          "name": "read_type_namespace_discovery_type",
+          "id": "translation.read-rust-type-namespace-discovery-type"
+        },
+        {
+          "name": "require_type_namespace_without_externals",
+          "id": "translation.require-rust-type-namespace-without-externals"
+        },
+        {
+          "name": "require_unit_clone_attached_enum",
+          "id": "translation.require-rust-unit-clone-attached-enumeration"
+        },
+        {
+          "name": "require_unit_clone_attached_variant",
+          "id": "translation.require-rust-unit-clone-attached-variant"
+        },
+        {
+          "name": "has_clone",
+          "id": "translation.check-rust-unit-clone-attribute"
+        }
+      ],
+      "js/src/translation/rust-unit-clone.js": [
+        {
+          "name": "captureRustUnitCloneDerivation",
+          "id": "translation.capture-rust-unit-clone-derivation"
+        },
+        {
+          "name": "checkRustUnitCloneDerivation",
+          "id": "translation.check-rust-unit-clone-derivation"
+        },
+        {
+          "name": "checkRustUnitCloneDerivations",
+          "id": "translation.check-rust-program-unit-clone-derivations"
+        },
+        {
+          "name": "acceptRustUnitCloneReceiver",
+          "id": "translation.accept-rust-unit-clone-receiver"
+        }
+      ],
+      "rust/src/translation/source_unit_clone_derivations.rs": [
+        {
+          "name": "capture_unit_clone_derivation",
+          "id": "translation.capture-rust-unit-clone-derivation"
+        },
+        {
+          "name": "validate_unit_clone_declaration_record",
+          "id": "translation.check-rust-unit-clone-derivation"
+        },
+        {
+          "name": "validate_source_unit_clone_derivations",
+          "id": "translation.check-rust-program-unit-clone-derivations"
+        },
+        {
+          "name": "validate_unit_clone_records",
+          "id": "translation.check-rust-program-unit-clone-derivations"
+        },
+        {
+          "name": "validate_surface_unit_clone_derivations",
+          "id": "translation.validate-rust-surface-unit-clone-derivations"
+        }
+      ],
+      "rust/src/typed_program_links/checked/declarations.rs": [
+        {
+          "name": "project_data",
+          "id": "translation.project-checked-data-declaration"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "resolved Rust type namespace catalog",
+    "files": {
+      "rust/src/translation/rust/type_namespaces.rs": [
+        {
+          "name": "TypeNamespaceCatalog",
+          "id": "translation.rust-type-namespace-catalog"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "represented program host containers",
+    "files": {
+      "js/src/translation/owned-program-containers.js": [
+        {
+          "name": "checkOwnedProgramContainers",
+          "id": "translation.check-owned-program-containers"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "resolved Rust type namespace fixture operations",
+    "files": {
+      "js/scripts/generate-rust-type-namespace-fixtures.mjs": [
+        {
+          "name": "rustTypeNamespaceRecordFixture",
+          "id": "repository.create-rust-type-namespace-record-fixture"
+        },
+        {
+          "name": "rustTypeNamespaceField",
+          "id": "repository.read-rust-type-namespace-fixture-field"
+        },
+        {
+          "name": "rustTypeNamespaceFixture",
+          "id": "repository.create-rust-type-namespace-fixture"
+        },
+        {
+          "name": "rustTypeNamespaceTraitFixture",
+          "id": "repository.create-rust-type-namespace-trait-fixture"
+        },
+        {
+          "name": "rustTypeNamespaceContainerFixture",
+          "id": "repository.create-rust-type-namespace-container-fixture"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "resolved Rust type namespace model selections",
+    "files": {
+      "js/src/translation/rust.js": [
+        {
+          "name": "typeNamespaceModel",
+          "id": "translation.rust-type-namespace-model-option"
+        }
+      ],
+      "rust/src/translation/rust.rs": [
+        {
+          "name": "type_namespace_model",
+          "id": "translation.rust-type-namespace-model-option"
+        }
+      ],
+      "js/src/typed-program-links.js": [
+        {
+          "name": "rustTypeNamespaceModel",
+          "id": "translation.typed-program-rust-type-namespace-model-option"
+        }
+      ],
+      "js/src/index.d.ts": [
+        {
+          "name": "rustTypeNamespaceModel",
+          "id": "translation.typed-program-rust-type-namespace-model-option"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned source namespace and derivation fields",
+    "files": {
+      "js/src/typed-program-checked-projection.js": [
+        {
+          "name": "sourceTypeNamespace",
+          "id": "translation.source-type-namespace"
+        }
+      ],
+      "rust/src/translation/ir/declarations.rs": [
+        {
+          "name": "source_type_namespace",
+          "id": "translation.source-type-namespace"
+        },
+        {
+          "name": "source_unit_clone_derivation",
+          "id": "translation.source-unit-clone-derivation"
+        }
+      ],
+      "rust/src/translation/surface.rs": [
+        {
+          "name": "source_type_namespace",
+          "id": "translation.source-type-namespace"
+        },
+        {
+          "name": "source_unit_clone_derivation",
+          "id": "translation.source-unit-clone-derivation"
+        }
+      ],
+      "js/src/translation/rust-unit-clone.js": [
+        {
+          "name": "sourceUnitCloneDerivation",
+          "id": "translation.source-unit-clone-derivation"
+        },
+        {
+          "name": "datatypeOwner",
+          "id": "translation.source-derivation-data-type-owner"
+        }
+      ],
+      "rust/src/translation/source_unit_clone_derivations.rs": [
+        {
+          "name": "datatypeOwner",
+          "id": "translation.source-derivation-data-type-owner"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "resolved Rust type namespace record policy fields",
+    "files": {
+      "js/src/translation/data/rust-type-namespace.lino": [
+        {
+          "name": "recordBooleanFields",
+          "id": "translation.source-type-namespace-boolean-field-list"
+        },
+        {
+          "name": "sourceOffsetMaximum",
+          "id": "translation.source-type-namespace-offset-maximum"
+        }
+      ],
+      "rust/src/data/rust-type-namespace.lino": [
+        {
+          "name": "recordBooleanFields",
+          "id": "translation.source-type-namespace-boolean-field-list"
+        },
+        {
+          "name": "sourceOffsetMaximum",
+          "id": "translation.source-type-namespace-offset-maximum"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "reviewed generated policy correction helpers",
+    "files": {
+      "js/scripts/generate-link-network-binary-rules.mjs": [
+        {
+          "name": "recordFollowupReviewedStyles",
+          "id": "repository.record-followup-reviewed-binary-styles"
+        }
+      ],
+      "js/scripts/generate-typed-program-link-rules.mjs": [
+        {
+          "name": "combineSelectorConditions",
+          "id": "repository.combine-program-selector-conditions"
+        }
+      ],
+      "js/scripts/product-rule-style-corrections.mjs": [
+        {
+          "name": "readProductSourceConditionStyleCorrections",
+          "id": "repository.read-product-source-condition-style-corrections"
+        },
+        {
+          "name": "bindConditionBlocks",
+          "id": "repository.bind-product-source-condition-blocks"
+        }
+      ],
+      "js/scripts/generate-rust-completion-rules.mjs": [
+        {
+          "name": "removeRedundantBooleanGrouping",
+          "id": "repository.remove-redundant-completion-boolean-grouping"
+        }
+      ],
+      "js/scripts/resource-description-reviewed-styles.mjs": [
+        {
+          "name": "hasConditionBinding",
+          "id": "repository.check-resource-condition-binding"
+        },
+        {
+          "name": "excludeBindings",
+          "id": "repository.exclude-resource-condition-bindings"
+        },
+        {
+          "name": "scalarEquality",
+          "id": "repository.check-resource-scalar-equality"
+        },
+        {
+          "name": "scalarTerms",
+          "id": "repository.read-resource-scalar-terms"
+        },
+        {
+          "name": "factor",
+          "id": "repository.factor-resource-scalar-conditions"
+        },
+        {
+          "name": "scalar",
+          "id": "repository.check-resource-scalar-expression"
+        },
+        {
+          "name": "simpleBoolean",
+          "id": "repository.check-resource-simple-boolean-expression"
+        }
+      ],
+      "js/tests/translation-resource-description-rule-styles.test.js": [
+        {
+          "name": "replay",
+          "id": "repository.replay-reviewed-resource-policy"
+        }
+      ]
+    }
+  }
+];
+const normalizeResolvedSourceName = name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase().replaceAll('datatype', 'data-type').replaceAll('namespaces', 'namespace').replace(/enum$/u, 'enumeration').replace(/^unrepresented$/u, 'check-record-fields');
+const RESOLVED_SOURCE_NAME_INVENTORIES = RESOLVED_SOURCE_NAME_BINDINGS.map(({inventory, files}) => ({
+  inventory, files: Object.keys(files),
+  extract: (text, file) => files[file].filter(({name}) => new RegExp('\\b' + name + '\\b', 'u').test(text)).map(({name}) => normalizeResolvedSourceName(name)),
+  recordOf: name => Object.values(files).flat().find(binding => normalizeResolvedSourceName(binding.name) === name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {

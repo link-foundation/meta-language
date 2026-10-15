@@ -67,7 +67,7 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 112 | 111 | 1 | 0 |
+| Generators | 114 | 113 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -639,6 +639,8 @@ they are.
 | `js/scripts/generate-rust-source-signature-fixtures.mjs` | `js/scripts/generate-rust-source-signature-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-source-signature-rules.mjs` | `js/scripts/generate-rust-source-signature-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-string-rules.mjs` | `js/scripts/generate-rust-string-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-type-namespace-fixtures.mjs` | `js/scripts/generate-rust-type-namespace-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-type-namespace-rules.mjs` | `js/scripts/generate-rust-type-namespace-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-scalar-loop-rules.mjs` | `js/scripts/generate-scalar-loop-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-cases.mjs` | `js/scripts/generate-self-translation-cases.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-report.mjs` | `js/scripts/generate-self-translation-report.mjs` | `script` |  | derived | current |  |
