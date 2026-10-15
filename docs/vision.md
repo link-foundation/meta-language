@@ -1683,8 +1683,10 @@ The Rust evidence suite starts only after the entire JavaScript matrix passes.
 Both suites provision their required formatter and compiler tools. Failure
 tails and periodic command progress are retained in live CI output.
 
-Package validation runs five required parallel check groups: native imports,
-native fixtures, grammar, contracts and generated code. Each group retains the
+Package validation runs six required parallel check groups: native imports,
+native fixtures, grammar, contracts, generated code and source models. The
+source-model group executes the new raw-binding and complete text-certificate
+checks without adding work to the original generated-code group. Each retains the
 ten-minute deadline and its own setup and cleanup. The final package job requires
 every group, every JavaScript test partition and the complete report assertion
 job before packaging or publication. It also requires the validated merge of
