@@ -153,9 +153,9 @@ fn same_children_with(a: &Children, b: &Children, memo: Option<&TreeMemo>) -> bo
 /// It mirrors sameOutput in js/src/grammar-runtime/executor.js.
 pub(super) fn same_output(a: &Children, b: &Children) -> bool {
     Rc::ptr_eq(a, b)
-        || (a.len() == b.len()
-            && a.iter().zip(b.iter()).all(|(first, second)| {
-                Rc::ptr_eq(first, second)
+        || (a.count == b.count
+            && items(a).zip(items(b)).all(|(first, second)| {
+                Rc::ptr_eq(&first, &second)
                     || (first.ty == second.ty
                         && first.kind == second.kind
                         && first.start == second.start
@@ -168,6 +168,9 @@ pub(super) fn same_output(a: &Children, b: &Children) -> bool {
                             || same_output(&first.children, &second.children)))
             }))
 }
+
+#[cfg(test)]
+mod tests;
 
 /// The first child of a list that is not trivia, without flattening it.
 pub(super) fn first_meaningful(children: &Children) -> Option<Rc<Tree>> {
