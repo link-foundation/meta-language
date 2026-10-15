@@ -15,6 +15,8 @@ export function publicDeclarationConsumers(moduleSpecifier = publicModule) {
   const emptyOptionFixture = readProjectData(new URL('../../parity/fixtures/rust-empty-options.lino', import.meta.url));
   const typeNamespaceFixture = readProjectData(new URL('../../parity/fixtures/rust-type-namespace.lino', import.meta.url));
   const ownedTextFixture = readProjectData(new URL('../../experiments/rust-owned-local-state-fixture.lino', import.meta.url));
+  const privateUnitFixture = readProjectData(new URL('../../parity/fixtures/rust-pure-unit-calls.lino', import.meta.url));
+  const publicUnitFixture = readProjectData(new URL('../../parity/fixtures/rust-public-pure-unit-calls.lino', import.meta.url));
   const imports = `import { importEbnf, encodeFormalConceptDefinition, createDiscoveredConceptLinks,
     readDiscoveredConceptLinks, importResourceDescriptionGraph, decodeResourceDescriptionGraph,
     mergeResourceDescriptionGraphs, verifyResourceDescriptionGraphWitnesses } from ${module};\n`;
@@ -564,6 +566,70 @@ export function createWrongLanguagePacket() {
 }
 `,
     },
+    ...[
+      ['private', privateUnitFixture], ['public', publicUnitFixture],
+    ].flatMap(([selection, fixture]) => fixture.cases.map(entry => ({
+      name: `valid-pure-unit-${selection}-${entry.id}`, expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks, LinkNetwork } from ${module};
+import type { TypedProgramLinksEmission } from ${module};
+const packet = createTypedProgramLinks(${JSON.stringify(entry.source)},'Rust',
+  {rustPureUnitCallModel:${JSON.stringify(fixture.model)},provenance:{consumer:${JSON.stringify(entry.id)}}});
+const network = LinkNetwork.fromLino(packet.network.toLino());
+const program = decodeTypedProgramLinks(network,packet.root);
+const javascript:TypedProgramLinksEmission = emitTypedProgramLinks(network,packet.root,'JavaScript');
+const rust:TypedProgramLinksEmission = emitTypedProgramLinks(network,packet.root,'Rust');
+export function reimportActualRustDefinitions(definitions:string) {
+  const packet = createTypedProgramLinks(definitions+'\\nfn main(){}','Rust',
+    {rustPureUnitCallModel:${JSON.stringify(fixture.model)}});
+  const network = LinkNetwork.fromLino(packet.network.toLino());
+  return {network,root:packet.root,program:decodeTypedProgramLinks(network,packet.root),
+    code:emitTypedProgramLinks(network,packet.root,'JavaScript').code};
+}
+export const contractEvidence = {network,root:packet.root,program,code:javascript.code,rustCode:rust.code};
+`,
+    }))),
+    ...publicUnitFixture.generated.map(entry => ({
+      name: `valid-pure-unit-actual-JavaScript-${entry.id}`, expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks, LinkNetwork } from ${module};
+const originalSource = ${JSON.stringify(entry.original)};
+const original = createTypedProgramLinks(originalSource,'JavaScript');
+const originalProgram = decodeTypedProgramLinks(original.network,original.root);
+const actualRust = emitTypedProgramLinks(original.network,original.root,'Rust');
+const packet = createTypedProgramLinks(${JSON.stringify(entry.source)},'Rust',
+  {rustPureUnitCallModel:${JSON.stringify(publicUnitFixture.model)}});
+const network = LinkNetwork.fromLino(packet.network.toLino());
+const program = decodeTypedProgramLinks(network,packet.root);
+const javascript = emitTypedProgramLinks(network,packet.root,'JavaScript');
+export function reimportActualRustDefinitions(definitions:string) {
+  const packet = createTypedProgramLinks(definitions+'\\nfn main(){}','Rust',
+    {rustPureUnitCallModel:${JSON.stringify(publicUnitFixture.model)}});
+  const network = LinkNetwork.fromLino(packet.network.toLino());
+  return {network,root:packet.root,program:decodeTypedProgramLinks(network,packet.root),
+    code:emitTypedProgramLinks(network,packet.root,'JavaScript').code};
+}
+export const contractEvidence = {network,root:packet.root,program,code:javascript.code,
+  originalSource,originalProgram,actualRustCode:actualRust.code};
+`,
+    })),
+    ...[
+      ['private', 'closed pure Rust unit calls 99'],
+      ['public', 'closed public pure Rust unit calls 99'],
+    ].map(([selection, model]) => ({
+      name: `reject-unregistered-${selection}-pure-unit-model-version`, expectedDiagnostics: ['TS2820'],
+      source: `import { createTypedProgramLinks } from ${module};
+createTypedProgramLinks('fn main(){}','Rust',{rustPureUnitCallModel:${JSON.stringify(model)}});
+`,
+    })),
+    ...[
+      ['private', privateUnitFixture.model], ['public', publicUnitFixture.model],
+    ].map(([selection, model]) => ({
+      name: `valid-${selection}-pure-unit-selection-type-with-wrong-source-language`, expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks } from ${module};
+export function createWrongLanguagePacket() {
+  return createTypedProgramLinks('function empty(){}','JavaScript',{rustPureUnitCallModel:${JSON.stringify(model)}});
+}
+`,
+    })),
   ];
 }
 
