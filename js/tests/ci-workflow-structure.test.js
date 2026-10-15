@@ -147,7 +147,7 @@ test('Rust test jobs install the JavaScript dependencies used by the shared repo
 
 test('both self-translation acceptance suites install Clippy for the generated Rust', () => {
   const acceptance = jobs('ci.yml');
-  for (const id of ['javascript-suite', 'rust-suite']) {
+  for (const id of ['javascript-suite-independent', 'javascript-suite', 'rust-suite']) {
     const setup = acceptance.get(id).steps.find((step) => /dtolnay\/rust-toolchain@/u.test(step.text));
     assert.ok(setup, `${id} sets up Rust`);
     assert.match(setup.text, /components:.*\bclippy\b/u, `${id} installs clippy-driver`);
@@ -157,32 +157,36 @@ test('both self-translation acceptance suites install Clippy for the generated R
 
 test('the JavaScript evidence matrix retains every group and file once with disjoint outputs under the original deadline', () => {
   const acceptance = jobs('ci.yml');
-  const suite = acceptance.get('javascript-suite');
-  const entries = [...suite.header.matchAll(/- group: ([a-z-]+)\n\s+shard: ([0-9]+\/[0-9]+)\n\s+partition: ([0-9]+-of-[0-9]+)/gu)]
-    .map(([, group, shard, partition]) => ({ group, shard, partition }));
+  const suites = ['javascript-suite-independent', 'javascript-suite'].map(id => acceptance.get(id));
+  const entries = suites.flatMap(suite => [...suite.header.matchAll(/- group: ([a-z-]+)\n\s+shard: ([0-9]+\/[0-9]+)\n\s+partition: ([0-9]+-of-[0-9]+)/gu)]
+    .map(([, group, shard, partition]) => ({ group, shard, partition })));
   const expected = Object.keys(TEST_GROUPS).flatMap(group => {
     const count = group === 'grammar-native' ? 3 : group === 'conformance' ? 2 : 1;
     return Array.from({ length: count }, (_, index) => ({ group, shard: `${index + 1}/${count}`, partition: `${index + 1}-of-${count}` }));
   });
-  assert.deepEqual(entries, expected);
+  const byScope = (left, right) => `${left.group}/${left.shard}`.localeCompare(`${right.group}/${right.shard}`);
+  assert.deepEqual([...entries].sort(byScope), [...expected].sort(byScope));
   const files = partitionTests(testFiles()).groups;
   const executed = entries.flatMap(({ group, shard }) => partitionGroupFiles(files[group], shard));
   assert.equal(new Set(executed).size, executed.length);
   assert.deepEqual(executed.sort(), Object.values(files).flat().sort());
-  assert.match(suite.header, /timeout-minutes: 60\n/u);
-  assert.match(suite.header, /fail-fast: false\n/u);
-  assert.match(suite.header, /group: issue-195-stage-\$\{\{ github.ref \}\}-javascript-suite-\$\{\{ matrix.group \}\}-\$\{\{ matrix.partition \}\}/u);
-  const execute = suite.steps.find(step => step.name === 'Produce the stage evidence');
-  assert.match(execute.text, /JAVASCRIPT_GROUP: \$\{\{ matrix.group \}\}/u);
-  assert.match(execute.text, /JAVASCRIPT_SHARD: \$\{\{ matrix.shard \}\}/u);
-  assert.match(execute.run, /--javascript-group "\$JAVASCRIPT_GROUP"/u);
-  assert.match(execute.run, /--javascript-shard "\$JAVASCRIPT_SHARD"/u);
-  const upload = suite.steps.find(step => step.name === 'Upload the stage outputs');
-  assert.ok(upload.afterFailure);
-  assert.match(upload.text, /name: issue-195-stage-javascript-suite-\$\{\{ matrix.group \}\}-\$\{\{ matrix.partition \}\}-\$\{\{ github.sha \}\}/u);
-  assert.match(upload.text, /issue-195-results\/work\/stage-\*/u);
-  assert.ok(needs(acceptance.get('rust-suite')).includes('javascript-suite'));
-  assert.match(condition(acceptance.get('rust-suite')), /needs.javascript-suite.result == 'success'/u);
+  for (const suite of suites) {
+    assert.match(suite.header, /timeout-minutes: 60\n/u);
+    assert.match(suite.header, /fail-fast: false\n/u);
+    assert.match(suite.header, /group: issue-195-stage-\$\{\{ github.ref \}\}-javascript-suite-\$\{\{ matrix.group \}\}-\$\{\{ matrix.partition \}\}/u);
+    const execute = suite.steps.find(step => step.name === 'Produce the stage evidence');
+    assert.match(execute.text, /JAVASCRIPT_GROUP: \$\{\{ matrix.group \}\}/u);
+    assert.match(execute.text, /JAVASCRIPT_SHARD: \$\{\{ matrix.shard \}\}/u);
+    assert.match(execute.run, /--javascript-group "\$JAVASCRIPT_GROUP"/u);
+    assert.match(execute.run, /--javascript-shard "\$JAVASCRIPT_SHARD"/u);
+    const upload = suite.steps.find(step => step.name === 'Upload the stage outputs');
+    assert.ok(upload.afterFailure);
+    assert.match(upload.text, /name: issue-195-stage-javascript-suite-\$\{\{ matrix.group \}\}-\$\{\{ matrix.partition \}\}-\$\{\{ github.sha \}\}/u);
+    assert.match(upload.text, /issue-195-results\/work\/stage-\*/u);
+    assert.ok(needs(acceptance.get('rust-suite')).includes(suite.id));
+    assert.ok(condition(acceptance.get('rust-suite')).includes(`needs.${suite.id}.result == 'success'`));
+    assert.ok(needs(acceptance.get('acceptance')).includes(suite.id));
+  }
   const download = acceptance.get('acceptance').steps.find(step => /pattern: issue-195-stage-/u.test(step.text));
   assert.match(download.text, /pattern: issue-195-stage-\*-\$\{\{ github.sha \}\}/u);
   assert.match(download.text, /merge-multiple: true/u);
@@ -216,8 +220,10 @@ test('fresh merge keeps build artifacts out of its cache and optimizes the uncha
 
 test('both acceptance suites verify the complete published self-translation reports', () => {
   const acceptance = jobs('ci.yml');
-  assert.ok(needs(acceptance.get('javascript-suite')).includes('self-translation-report'));
-  for (const id of ['javascript-suite', 'rust-suite']) {
+  for (const id of ['javascript-suite-independent', 'javascript-suite']) {
+    assert.ok(needs(acceptance.get(id)).includes('self-translation-report'));
+  }
+  for (const id of ['javascript-suite-independent', 'javascript-suite', 'rust-suite']) {
     const steps = acceptance.get(id).steps;
     const download = steps.findIndex((step) => step.name === 'Download the complete self-translation reports');
     const execute = steps.findIndex((step) => step.name === 'Produce the stage evidence');
@@ -243,11 +249,13 @@ test('required JavaScript CI retains bounded memory regressions and actual targe
   const oracle = parsed.get('tests').steps.find((step) => /build-agda-layout-oracle\.mjs/u.test(step.run));
   assert.ok(oracle, 'the independent Agda scanner oracle is built in CI');
   assert.match(oracle.text, /contains\(fromJSON\('\["grammar", "grammar-native", "grammar-recovery"\]'\), matrix\.group\)/u);
-  const evidence = jobs('ci.yml').get('javascript-suite');
-  const rebuild = evidence.steps.findIndex((step) => /build-agda-layout-oracle\.mjs/u.test(step.run));
-  const suite = evidence.steps.findIndex((step) => step.name === 'Produce the stage evidence');
-  assert.ok(rebuild >= 0 && suite > rebuild, 'acceptance rebuilds the same independent oracle before its corpus tests');
-  assert.ok(evidence.steps[suite].afterFailure, 'other acceptance tests still report failures if the oracle build fails');
+  for (const id of ['javascript-suite-independent', 'javascript-suite']) {
+    const evidence = jobs('ci.yml').get(id);
+    const rebuild = evidence.steps.findIndex((step) => /build-agda-layout-oracle\.mjs/u.test(step.run));
+    const suite = evidence.steps.findIndex((step) => step.name === 'Produce the stage evidence');
+    assert.ok(rebuild >= 0 && suite > rebuild, 'acceptance rebuilds the same independent oracle before its corpus tests');
+    assert.ok(evidence.steps[suite].afterFailure, 'other acceptance tests still report failures if the oracle build fails');
+  }
   const conversion = parsed.get('package-checks').steps.find((step) => /run-grammar-interchange-tools\.mjs/u.test(step.run));
   assert.ok(conversion?.afterFailure, 'the real target compiler runs despite other package check failures');
   assert.doesNotMatch(conversion.text, /continue-on-error|github\.event_name != 'pull_request'/u);
@@ -263,7 +271,7 @@ test('required JavaScript CI retains bounded memory regressions and actual targe
 
 test('the acceptance workflow runs each Rust stage only after the matching JavaScript stage passes', () => {
   const acceptance = jobs('ci.yml');
-  for (const [rust, javascript] of [['native-rust', 'native-javascript'], ['rust-suite', 'javascript-suite']]) {
+  for (const [rust, javascript] of [['native-rust', 'native-javascript'], ['rust-suite', 'javascript-suite'], ['rust-suite', 'javascript-suite-independent']]) {
     assert.ok(acceptance.has(javascript), `the acceptance workflow has a ${javascript} job`);
     assert.ok(acceptance.has(rust), `the acceptance workflow has a ${rust} job`);
     assert.ok(needs(acceptance.get(rust)).includes(javascript), `${rust} needs ${javascript}`);
@@ -274,7 +282,7 @@ test('the acceptance workflow runs each Rust stage only after the matching JavaS
   assert.doesNotMatch(native.header, /target:\s*\[[^\]]*\b(?:javascript|rust)\b/u);
   assert.ok(!acceptance.has('evidence-stages'), 'the suite stages are separate jobs, not one matrix');
   const aggregate = needs(acceptance.get('acceptance'));
-  for (const stage of ['native-javascript', 'native-rust', 'native-translations', 'javascript-suite', 'rust-suite', 'delivery']) {
+  for (const stage of ['native-javascript', 'native-rust', 'native-translations', 'javascript-suite-independent', 'javascript-suite', 'rust-suite', 'delivery']) {
     assert.ok(aggregate.includes(stage), `the aggregate needs ${stage}`);
   }
   observe('I195-CI-ACCEPTANCE-STAGE-ORDER', ['rustStagesNeedJavaScriptStages'], 'the Rust acceptance stages need the JavaScript stages');
@@ -293,7 +301,7 @@ function ancestors(parsed, id, seen = new Set()) {
 
 const ACCEPTANCE_JOBS = [
   'candidates', 'consumers', 'rml-workloads', 'formal-ai-workloads', 'runtime-parity', 'native-javascript', 'native-rust',
-  'native-translations', 'javascript-suite', 'rust-suite', 'delivery', 'post-merge', 'acceptance',
+  'native-translations', 'javascript-suite-independent', 'javascript-suite', 'rust-suite', 'delivery', 'post-merge', 'acceptance',
 ];
 
 test('the acceptance stages are ci.yml jobs that start only after every JavaScript job passed', () => {
