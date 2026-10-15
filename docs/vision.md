@@ -1748,6 +1748,13 @@ before every JavaScript job passed, and the Rust jobs show as skipped when
 JavaScript fails. Inside the acceptance workflow, the Rust evidence stages,
 the Rust native translations and the Rust consumers likewise need the
 JavaScript stages.
+Registered native experiment inputs and shared Links data also activate the
+Cargo lockfile, check and test prerequisite chain on pull requests. This
+selection derives from the same native path filter and passes an explicit
+Boolean to the called workflow. It preserves ordinary experiment and
+documentation exclusions, the changelog policy and every earlier activation
+condition; an unknown comparison base selects checks conservatively. A
+JavaScript failure still prevents the Rust workflow from starting.
 
 JavaScript evidence runs in separate group and shard jobs. Each physical
 partition records its exact commit, selected test files, observations and logs
@@ -1773,7 +1780,8 @@ cannot run. Original command logs remain unchanged.
 Package validation runs six required parallel check groups: native imports,
 native fixtures, grammar, contracts, generated code and source models. The
 source-model group executes the new raw-binding and complete text-certificate
-checks, isolated owned-certificate adapters and library packaging generators
+checks, isolated owned-certificate adapters, original-identity and role
+projection checks, fresh collector certificates and library packaging generators
 without adding work to the original generated-code group. Each retains the
 ten-minute deadline and its own setup and cleanup. The final package job requires
 every group, every JavaScript test partition and the complete report assertion
