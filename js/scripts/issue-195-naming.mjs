@@ -21151,7 +21151,165 @@ const PROJECTION_MEMORY_NAME_INVENTORIES=PROJECTION_MEMORY_NAME_BINDINGS.map(({i
  extract:(text,file)=>files[file].filter(({name})=>text.includes(name)).map(({name})=>normalizeArchiveLifecycleName(name)),
  recordOf:name=>Object.values(files).flat().find(entry=>normalizeArchiveLifecycleName(entry.name)===name).id,
 }));
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES]);
+// Shared binary record operations and exact generator adaptation meanings.
+const BINARY_RECORD_NAME_BINDINGS=[
+  {
+    "inventory": "binary record shared framing operations",
+    "files": {
+      "js/src/link-network-binary-record-rules.js": [
+        {
+          "name": "transcodeLinkNetworkBinary",
+          "id": "links.convert-link-network-binary-encoding"
+        }
+      ],
+      "rust/src/link_network_binary_record_rules/part_0.rs": [
+        {
+          "name": "link_network_binary_unit",
+          "id": "links.read-link-network-binary-unit"
+        },
+        {
+          "name": "accept_link_network_binary_integer",
+          "id": "links.accept-link-network-binary-integer"
+        },
+        {
+          "name": "read_link_network_binary_integer",
+          "id": "links.read-link-network-binary-integer"
+        },
+        {
+          "name": "link_network_binary_integer_byte",
+          "id": "links.read-link-network-binary-integer-byte"
+        },
+        {
+          "name": "accept_link_network_binary_unicode",
+          "id": "links.accept-link-network-binary-unicode"
+        },
+        {
+          "name": "render_link_network_binary_hexadecimal_digit",
+          "id": "links.render-link-network-binary-hexadecimal-digit"
+        },
+        {
+          "name": "render_link_network_binary_field",
+          "id": "links.render-link-network-binary-field"
+        }
+      ],
+      "rust/src/link_network_binary_record_rules/part_1.rs": [
+        {
+          "name": "transcode_link_network_binary",
+          "id": "links.convert-link-network-binary-encoding"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "binary record framing local state",
+    "files": {
+      "js/src/link-network-binary-record-rules.js": [
+        {
+          "name": "greatestIdentity",
+          "id": "repository.greatest-binary-record-identity"
+        },
+        {
+          "name": "recordPrefix",
+          "id": "repository.binary-record-output-prefix"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "binary record bounded control operations",
+    "files": {
+      "js/tests/link-network-binary.test.js": [
+        {
+          "name": "createBinaryIdentityControl",
+          "id": "repository.create-binary-record-identity-control"
+        },
+        {
+          "name": "record",
+          "id": "repository.create-binary-record-identity-fields"
+        },
+        {
+          "name": "readBinaryControlBytes",
+          "id": "repository.read-binary-record-control-bytes"
+        },
+        {
+          "name": "observeBinaryStringWork",
+          "id": "repository.observe-binary-record-string-work"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "binary record bounded control observations",
+    "files": {
+      "js/tests/link-network-binary.test.js": [
+        {
+          "name": "searchCount",
+          "id": "repository.binary-record-prefix-search-count"
+        },
+        {
+          "name": "sliceCharacters",
+          "id": "repository.binary-record-slice-input-length"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "binary record bounded preservation checks",
+    "files": {
+      "js/tests/link-network-binary.test.js": [
+        {
+          "name": "identity framing preserves unsorted records and exact duplicate refusals",
+          "id": "repository.check-binary-record-identity-validation"
+        },
+        {
+          "name": "sorted identity framing avoids prefix searches and confines metadata patching to one record",
+          "id": "repository.check-binary-record-local-string-work"
+        },
+        {
+          "name": "record local metadata keeps byte limits and failure precedence identical",
+          "id": "repository.check-binary-record-budget-and-error-precedence"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "binary record automatic generation data",
+    "files": {
+      "js/scripts/generate-link-network-binary-record-rules.mjs": [
+        {
+          "name": "producer",
+          "id": "repository.binary-record-authenticated-producer"
+        },
+        {
+          "name": "primitives",
+          "id": "repository.binary-record-authenticated-primitives"
+        },
+        {
+          "name": "completeSource",
+          "id": "repository.binary-record-complete-source"
+        },
+        {
+          "name": "deriveStyles",
+          "id": "repository.binary-record-style-derivation"
+        },
+        {
+          "name": "profile",
+          "id": "repository.binary-record-generator-adaptation"
+        },
+        {
+          "name": "receipt",
+          "id": "repository.binary-record-generation-receipt"
+        }
+      ]
+    }
+  }
+];
+const BINARY_RECORD_NAME_INVENTORIES=BINARY_RECORD_NAME_BINDINGS.map(({inventory,files})=>({
+ inventory,files:Object.keys(files),
+ extract:(text,file)=>files[file].filter(({name})=>text.includes(name)).map(({name})=>normalizeArchiveLifecycleName(name)),
+ recordOf:name=>Object.values(files).flat().find(entry=>normalizeArchiveLifecycleName(entry.name)===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
