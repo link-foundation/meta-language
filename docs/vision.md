@@ -2054,6 +2054,16 @@ release sibling worktrees. Cleanup is restricted to meta-language-owned storage;
 it never clears unrelated project or user data. Rust compilation runs only in
 CI/CD. Local Rust checks are limited to formatting changed files.
 
+For local cleanup and wrapped checks, unset inherited `CARGO_TARGET_DIR` and
+`CARGO_BUILD_TARGET_DIR` unless their resolved directories have been verified
+as storage owned by the current meta-language task. The cleanup tool also reads
+those environment variables; a valid Cargo cache marker establishes the kind
+of directory, not which project owns its contents. Keep manual local cleanup
+within the selected project scope, disable automatic low-disk escalation and
+container cleanup with `--no-preflight --no-docker`, and retain the cleanup
+receipt. Deliberately selected external caches still require that ownership
+check before use.
+
 The complete-table and raw-graph native oracles prepare and authenticate their
 whole generated sources, then finish the full Rust CST text and binary replays
 before constructing observation matrices and numeric transport dictionaries.

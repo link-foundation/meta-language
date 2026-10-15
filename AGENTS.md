@@ -115,3 +115,8 @@ suites:
   scratch. Never remove dirty worktrees, uncommitted work, active tasks or
   unrelated directories. Stop only leftover processes owned by the failed task.
   Never compile Rust locally.
+- Before local cleanup or a wrapped check, unset inherited `CARGO_TARGET_DIR`
+  and `CARGO_BUILD_TARGET_DIR` unless their resolved paths are verified as
+  storage owned by this meta-language task. A Cargo cache marker alone does
+  not establish project ownership. Use `--no-preflight --no-docker` for manual
+  local cleanup and retain its receipt; see the same resource policy above.
