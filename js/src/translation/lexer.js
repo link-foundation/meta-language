@@ -6,6 +6,7 @@
 import { TranslationError } from './diagnostics.js';
 import { acceptControlParenthesis, acceptStatementBrace, decodeUnicodeEscape, readRustNumberBounds, regularExpressionEnd, startRegularExpression } from './frontend-rules.js';
 import { readRustSourceLineBreakEnd, readRustStringContinuationEnd } from './rust-string-rules.js';
+import { acceptRustCookedStringEscapePrefix, readRustAsciiEscapeValue } from './rust-cooked-string-rules.js';
 import { acceptRustNumberDigitBoundary } from './rust-number-rules.js';
 import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
 
@@ -258,6 +259,16 @@ function stringToken(source, index, language, encoding) {
         encoding.units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
         const end = readRustStringContinuationEnd(encoding.units, cursor);
         if (end >= 0) { cursor = end; continue; }
+        if (!acceptRustCookedStringEscapePrefix(encoding.units[cursor + 1] ?? -1)) {
+          throw new TranslationError('syntax', `unsupported string escape \\${escaped}`, { start: cursor, end: cursor + 2 });
+        }
+        if (escaped === 'x') {
+          const valueUnit = readRustAsciiEscapeValue(encoding.units[cursor + 2] ?? -1, encoding.units[cursor + 3] ?? -1);
+          if (valueUnit < 0) throw new TranslationError('syntax', 'malformed Rust ASCII escape', { start: cursor, end: cursor + 2 });
+          value += String.fromCharCode(valueUnit);
+          cursor += 4;
+          continue;
+        }
       }
       if (language === 'JavaScript' && (/[1-9]/u.test(escaped ?? '') || (escaped === '0' && /[0-9]/u.test(source[cursor + 2] ?? '')))) {
         throw new TranslationError('syntax', 'legacy octal string escape', { start: cursor, end: cursor + 2 });
@@ -284,6 +295,7 @@ function stringToken(source, index, language, encoding) {
       encoding.units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
       const end = readRustSourceLineBreakEnd(encoding.units, cursor);
       if (end >= 0) { value += '\n'; cursor = end; continue; }
+      throw new TranslationError('syntax', 'isolated carriage return in a Rust string', { start: cursor, end: cursor + 1 });
     }
     if ((char === '\n' || char === '\r') && language === 'JavaScript') break;
     value += char;
