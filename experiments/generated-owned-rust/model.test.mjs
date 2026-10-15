@@ -38,8 +38,21 @@ test('all five entire actual artifacts preserve receipts, every code unit and co
    assert.ok(packet.network.links().every(link=>link.metadata().definition!==code));
    const js=emitGeneratedOwnedRustLinks(packet.network,packet.root,'JavaScript');execute(js,entry.observations);assert.equal(js.assumptions.length,4+proof.valueAssumptions.length+1);
    assert.ok(proof.clones.every(row=>row.receiver.type.kind==='string'&&row.owner.join('::')==='std::string::String'));
-   code=emitCanonicalGeneratedOwnedRust(program,proof).text;
+   const canonical=emitCanonicalGeneratedOwnedRust(program,proof);assert.equal(canonical.assumptions.length,4+proof.valueAssumptions.length);code=canonical.text;
   }
+ }
+});
+
+test('canonical whole-source edit cycles retain eleven conditions bound to actual newly emitted operation intervals',()=>{
+ let packet=reload(createGeneratedOwnedRustLinks('/* shifted original source Ω😀 */\n'+source(0)));
+ for(let cycle=0;cycle<3;cycle++){
+  let{program,proof}=chosen(packet);const literal=proof.tokens.find(token=>token.literal?.type.kind==='string');literal.literal.value='canonical '+cycle+' Ω😀';
+  packet=reload(encodeGeneratedOwnedRustLinks(program,proof));({program,proof}=chosen(packet));
+  const prior=emitGeneratedOwnedRust(program,proof,'Rust'),canonical=emitCanonicalGeneratedOwnedRust(program,proof);assert.equal(prior.assumptions.length,11);assert.equal(canonical.assumptions.length,11);
+  packet=reload(createGeneratedOwnedRustLinks(canonical.text));const restored=chosen(packet),fresh=emitGeneratedOwnedRust(restored.program,restored.proof,'Rust');
+  assert.deepEqual(canonical.assumptions,fresh.assumptions);assert.equal(restored.proof.assumptions.length,4);assert.equal(restored.proof.valueAssumptions.length,7);
+  if(cycle===0)assert.notDeepEqual(canonical.assumptions,prior.assumptions,'original provenance intervals must not be attached to the canonical output');
+  execute(emitGeneratedOwnedRustLinks(packet.network,packet.root,'JavaScript'),[['before','0',false,'canonical '+cycle+' Ω😀'],['before','1',false,'before']]);
  }
 });
 
