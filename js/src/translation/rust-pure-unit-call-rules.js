@@ -17,3 +17,5 @@ export function acceptRustPureUnitContext(language,forbidden){return language ==
 export function acceptRustPureUnitVisibility(model,form){return model === "closed pure Rust unit calls 1" && form === "private" || model === "closed public pure Rust unit calls 1" && form === "public";}
 /** @param {string} kind @param {boolean} dense @param {boolean} unrepresented @returns {boolean} */
 export function acceptRustPureUnitContainer(kind,dense,unrepresented){return !unrepresented && (kind === "array" && dense || kind === "map");}
+/** @param {number} value @param {boolean} negativeZero @returns {boolean} */
+export function acceptRustPureUnitSourceOffset(value,negativeZero){return !negativeZero && value >= 0 && value <= 9007199254740991 && value % 1 === 0;}
