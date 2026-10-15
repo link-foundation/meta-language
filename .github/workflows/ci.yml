@@ -48,7 +48,7 @@ jobs:
         env:
           BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
         run: |
-          rust_paths='^(rust/|parity/|docs/|scripts/|experiments/rust-text-value-projection/|experiments/rust-raw-binding-identifiers/|experiments/rust-text-certificate/|experiments/rust-raw-binding-certificate-adapter/|experiments/rust-text-certificate-adapter/|experiments/rust-text-certificate-library/|experiments/original-link-identity/|js/scripts/rust-library-packaging\.mjs$|experiments/source-native-observations\.mjs$|\.github/workflows/(ci|rust)\.yml$|\.secretlintrc\.json$)'
+          rust_paths='^(rust/|parity/|docs/|scripts/|experiments/rust-text-value-projection/|experiments/rust-raw-binding-identifiers/|experiments/rust-text-certificate/|experiments/rust-raw-binding-certificate-adapter/|experiments/rust-text-certificate-adapter/|experiments/rust-text-certificate-library/|experiments/original-link-identity/|experiments/original-link-role-projection/|experiments/fresh-number-array-collectors/|js/scripts/rust-library-packaging\.mjs$|experiments/source-native-observations\.mjs$|\.github/workflows/(ci|rust)\.yml$|\.secretlintrc\.json$)'
           if [ -z "$BASE_SHA" ] || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
             rust=true
           elif git diff --name-only "$BASE_SHA" HEAD | grep -Eq "$rust_paths"; then

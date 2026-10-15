@@ -791,6 +791,21 @@ const OWNED_SOURCE_ADAPTER_PACKAGE_STEPS = [
   ['Run exact original link identity oracle contracts',
     'node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/original-link-identity/native-observations.test.mjs',
     'b6e2ec0b38634255126b994944962796f0419f66c7a1848d91d2df8187d54539', 'source-models'],
+  ['Check fresh Number array collector rules',
+    'node ../experiments/fresh-number-array-collectors/generate.mjs --check',
+    '225cb45b8afec904e0d5425f721a3c06b61699a4426225d6ceffd92b10ab3f62', 'source-models'],
+  ['Check complete fresh Number array collector fixtures',
+    'node ../experiments/fresh-number-array-collectors/generate-fixtures.mjs --check',
+    'f053f84d4f2ba2f46321262c265e6734d66281cdae4913676d0176409b96969c', 'source-models'],
+  ['Run fresh Number array collector certificates',
+    'node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/fresh-number-array-collectors/model.test.mjs',
+    '216da9daa16788533b6cbb9ddfd8f2dc4ff2a9457fc01e247f0a6d3fa1bb9bfe', 'source-models'],
+  ['Check original link role projection kernel',
+    'node ../experiments/original-link-role-projection/generate.mjs --check',
+    'ac7fb19d1870dcae640cb6753b81901dec8e6b92913cad8a041a9432754f2c21', 'source-models'],
+  ['Run original link certificate role projection',
+    'node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/original-link-role-projection/projection.test.mjs',
+    'fadcdf19bc24ef39bced296e54ac578f7e9ab9d5424016147152ea1d8764b7ab', 'source-models'],
 ];
 
 function packageStepSignature(step, includeGroup = false) {
@@ -826,6 +841,8 @@ test('the complete Rust text source oracle is mandatory after JavaScript and its
     .replace('|experiments/rust-text-certificate-adapter/', '')
     .replace('|experiments/rust-text-certificate-library/', '')
     .replace('|experiments/original-link-identity/', '')
+    .replace('|experiments/original-link-role-projection/', '')
+    .replace('|experiments/fresh-number-array-collectors/', '')
     .replace('|js/scripts/rust-library-packaging\\.mjs$', '')
     .replace('|experiments/source-native-observations\\.mjs$', ''),
     '^(rust/|parity/|docs/|scripts/|\\.github/workflows/(ci|rust)\\.yml$|\\.secretlintrc\\.json$)',
@@ -1350,12 +1367,18 @@ test('owned source adapters retain all bounded checks and refuse gate weakening'
   for (const path of [
     'experiments/rust-text-certificate-adapter/',
     'experiments/rust-text-certificate-library/',
+    'experiments/original-link-role-projection/',
+    'experiments/fresh-number-array-collectors/',
     'js/scripts/rust-library-packaging\\.mjs$',
   ]) assert.equal(classifier.split('|' + path).length, 2, 'the source path is selected once');
   for (const file of [
     'experiments/rust-text-certificate-adapter/model.mjs',
     'experiments/rust-text-certificate-adapter/data/identity-transport.lino',
     'experiments/rust-text-certificate-library/data/library.lino',
+    'experiments/original-link-role-projection/transport.mjs',
+    'experiments/original-link-role-projection/data/native-definitions.lino',
+    'experiments/fresh-number-array-collectors/model.mjs',
+    'experiments/fresh-number-array-collectors/data/rule-translation.lino',
     'js/scripts/rust-library-packaging.mjs',
   ]) assert.ok(matches.test(file), file);
   assert.ok(!matches.test('js/scripts/rust-library-packaging.mjs.extra'));
