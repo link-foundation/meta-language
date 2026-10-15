@@ -1,5 +1,9 @@
 /** Check represented host containers without invoking accessors or iterator overrides. */
 export function checkOwnedProgramContainers(root, { acceptContainer, fail, selectedFields }) {
+  if (!root || typeof root !== 'object' || Array.isArray(root)
+    || ![Object.prototype, null].includes(Object.getPrototypeOf(root))) {
+    fail('the owned program root must be a plain data record');
+  }
   const visited = new WeakSet();
   let selected = false;
   let defect;
