@@ -20,6 +20,8 @@ export function acceptSourceSpanRecord(value) {
 /** Inspect named source-span data without invoking accessors or iterator overrides. */
 export function validateSourceSpans(root) {
   const visited=new WeakSet(),pending=[[root,0]];
+  const main=root&&typeof root==='object'?Object.getOwnPropertyDescriptor(root,'main'):undefined;
+  const legacyMain=main&&Object.hasOwn(main,'value')?main.value:undefined;
   let visits=0;
   while(pending.length){
     const [value,depth]=pending.pop();
@@ -32,7 +34,10 @@ export function validateSourceSpans(root) {
     }
     for(const field of Reflect.ownKeys(value)){
       const descriptor=Object.getOwnPropertyDescriptor(value,field);
-      if(field===SOURCE_SPAN_POLICY.role&&(!Object.hasOwn(descriptor,'value')||descriptor.value!=null&&!acceptSourceSpanRecord(descriptor.value)))throw new TypeError('a linked source span is invalid');
+      // Legacy main metadata can retain false as opaque data. Selected models
+      // check their own complete shape first; false never becomes a span.
+      const legacyMainMetadata=value===legacyMain&&descriptor.value===false;
+      if(field===SOURCE_SPAN_POLICY.role&&(!Object.hasOwn(descriptor,'value')||descriptor.value!=null&&!legacyMainMetadata&&!acceptSourceSpanRecord(descriptor.value)))throw new TypeError('a linked source span is invalid');
       if(Object.hasOwn(descriptor,'value'))pending.push([descriptor.value,depth+1]);
     }
   }
