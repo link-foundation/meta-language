@@ -10342,7 +10342,276 @@ const RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES=RUST_RAW_AND_TEXT_CERTIFICA
  extract:(raw,file)=>{let text=raw;if(file.endsWith('.lino')){const saved=RUST_RAW_AND_TEXT_CERTIFICATE_SOURCE_TEXTS.get(file);if(!saved||saved.raw!==raw)RUST_RAW_AND_TEXT_CERTIFICATE_SOURCE_TEXTS.set(file,{raw,text:JSON.stringify(readStructuredDataLino(raw))});text=RUST_RAW_AND_TEXT_CERTIFICATE_SOURCE_TEXTS.get(file).text;}return files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeRustRawAndTextCertificateName(name));},
  recordOf:name=>Object.values(files).flat().find(entry=>normalizeRustRawAndTextCertificateName(entry.name)===name).id,
 }));
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES]);
+// Actual CI-only complete raw binding selector source oracle identities.
+const RAW_BINDING_RULE_ORACLE_NAME_BINDINGS=[
+  {
+    "inventory": "conditional raw binding rule native oracle operations",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/native-observations.mjs": [
+        {
+          "name": "verifyRustRawBindingRuleModel",
+          "id": "repository.verify-raw-binding-rule-native-oracle-model"
+        },
+        {
+          "name": "rustRawBindingRuleNativeMode",
+          "id": "repository.read-raw-binding-rule-native-oracle-mode"
+        },
+        {
+          "name": "selectorInventory",
+          "id": "repository.read-raw-binding-rule-native-selector-inventory"
+        },
+        {
+          "name": "boundaryCalls",
+          "id": "repository.create-raw-binding-rule-native-boundary-calls"
+        },
+        {
+          "name": "typedArgument",
+          "id": "repository.encode-raw-binding-rule-native-argument"
+        },
+        {
+          "name": "consumerSource",
+          "id": "repository.create-raw-binding-rule-native-consumer-source"
+        },
+        {
+          "name": "planRustRawBindingRuleNative",
+          "id": "repository.plan-raw-binding-rule-native-observations"
+        },
+        {
+          "name": "parseObservations",
+          "id": "repository.read-raw-binding-rule-native-observation-stream"
+        },
+        {
+          "name": "runRustRawBindingRuleNative",
+          "id": "repository.run-raw-binding-rule-native-observations"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "conditional raw binding rule native oracle role RUST_RAW_BINDING_RULE_MODEL_COMMIT",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/native-observations.mjs": [
+        {
+          "name": "RUST_RAW_BINDING_RULE_MODEL_COMMIT",
+          "id": "repository.raw-binding-rule-native-oracle-model-revision"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "conditional raw binding rule native oracle role digests",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/native-observations.mjs": [
+        {
+          "name": "digests",
+          "id": "repository.raw-binding-rule-native-oracle-model-digest-map"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "conditional raw binding rule native oracle role checkedPlans",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/native-observations.mjs": [
+        {
+          "name": "checkedPlans",
+          "id": "repository.raw-binding-rule-native-authenticated-plan-set"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "conditional raw binding rule native oracle role observationScope",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/native-observations.mjs": [
+        {
+          "name": "observationScope",
+          "id": "repository.raw-binding-rule-native-conditional-observation-scope"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "conditional raw binding rule native oracle role declarations",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/native-observations.mjs": [
+        {
+          "name": "declarations",
+          "id": "repository.raw-binding-rule-native-declaration-inventory"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "conditional raw binding rule native oracle role invocationCount",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/native-observations.mjs": [
+        {
+          "name": "invocationCount",
+          "id": "repository.raw-binding-rule-native-invocation-plan-count"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "conditional selector oracle actual shared provider sha256",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/native-observations.mjs": [
+        {
+          "name": "sha256",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "conditional selector oracle actual shared provider textBytes",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/native-observations.mjs": [
+        {
+          "name": "textBytes",
+          "id": "repository.read-rust-text-native-oracle-bytes"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "conditional selector oracle actual shared provider freeze",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/native-observations.mjs": [
+        {
+          "name": "freeze",
+          "id": "repository.freeze-rust-text-native-observation-plan"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "conditional selector oracle actual shared provider numberBits",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/native-observations.mjs": [
+        {
+          "name": "numberBits",
+          "id": "repository.encode-text-certificate-native-number-bits"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "conditional selector oracle actual shared provider createSourceNativeObservationRunner",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/native-observations.mjs": [
+        {
+          "name": "createSourceNativeObservationRunner",
+          "id": "repository.create-source-native-observation-runner"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "conditional selector oracle actual pure provider acceptRustRawBindingIdentifierModel",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/native-observations.mjs": [
+        {
+          "name": "acceptRustRawBindingIdentifierModel",
+          "id": "repository.accept-rust-raw-binding-identifier-model"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "conditional selector oracle actual pure provider acceptRustRawBindingIdentifierName",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/native-observations.mjs": [
+        {
+          "name": "acceptRustRawBindingIdentifierName",
+          "id": "repository.accept-rust-raw-binding-identifier-name"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "conditional selector oracle actual pure provider acceptRustRawBindingIdentifierType",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/native-observations.mjs": [
+        {
+          "name": "acceptRustRawBindingIdentifierType",
+          "id": "repository.accept-rust-raw-binding-identifier-type"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "conditional selector oracle actual pure provider acceptRustRawBindingIdentifierClosure",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/native-observations.mjs": [
+        {
+          "name": "acceptRustRawBindingIdentifierClosure",
+          "id": "repository.accept-rust-raw-binding-identifier-closure"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "conditional selector oracle actual pure provider acceptRustRawBindingIdentifierInvocationModel",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/native-observations.mjs": [
+        {
+          "name": "acceptRustRawBindingIdentifierInvocationModel",
+          "id": "repository.accept-rust-raw-binding-identifier-invocation-model"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "conditional selector oracle actual pure provider acceptRustRawBindingIdentifierInput",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/native-observations.mjs": [
+        {
+          "name": "acceptRustRawBindingIdentifierInput",
+          "id": "repository.accept-rust-raw-binding-identifier-input"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "conditional raw binding rule injected oracle controls",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/native-observations.test.mjs": [
+        {
+          "name": "fakeProcess",
+          "id": "repository.create-raw-binding-rule-native-test-process"
+        },
+        {
+          "name": "injected",
+          "id": "repository.run-raw-binding-rule-native-injected-contract"
+        },
+        {
+          "name": "rows",
+          "id": "repository.read-raw-binding-rule-native-test-selector-rows"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "conditional selector oracle exact aggregate failure assertion",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/native-observations.test.mjs": [
+        {
+          "name": "fails",
+          "id": "repository.require-text-certificate-native-test-failure"
+        }
+      ]
+    }
+  }
+];
+const normalizeRawBindingRuleOracleName=name=>name.replace(/([a-z0-9])([A-Z])/gu,'$1-$2').replaceAll('_','-').replaceAll(' ','-').toLowerCase().replace(/\bsha256\b/gu,'secure-hash-algorithm-two-hundred-fifty-six');
+const RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES=RAW_BINDING_RULE_ORACLE_NAME_BINDINGS.map(({inventory,files})=>({
+ inventory,files:Object.keys(files),
+ extract:(raw,file)=>files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(raw)).map(({name})=>normalizeRawBindingRuleOracleName(name)),
+ recordOf:name=>Object.values(files).flat().find(entry=>normalizeRawBindingRuleOracleName(entry.name)===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
