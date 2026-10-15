@@ -1,5 +1,5 @@
 //! Bind actual host records to shared contextual flag and source span rules.
-use super::{Result, Value, contains, fail, policy};
+use super::{Result, Value, contains, fail, policy, read_source_offset};
 use crate::translation::rust::owned_local_state_rules::{
     accept_rust_owned_local_record_value, accept_rust_owned_local_source_span,
 };
@@ -35,8 +35,8 @@ fn inspect(value: &Value, context: Option<&str>, depth: usize, visits: &mut usiz
                 span.len() == 2 && span.contains_key("start") && span.contains_key("end")
             });
             let offsets = match (
-                child["start"].as_u64(),
-                child["end"].as_u64(),
+                read_source_offset(&child["start"], true),
+                read_source_offset(&child["end"], true),
                 policy()["sourceOffsetMaximum"].as_u64(),
             ) {
                 (Some(start), Some(end), Some(maximum)) => start <= end && end <= maximum,
