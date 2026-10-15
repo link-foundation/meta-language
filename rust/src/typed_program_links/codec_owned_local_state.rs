@@ -102,18 +102,36 @@ fn occurrence(
             .metadata()
             .definition()
             .ok_or_else(|| error("an owned state occurrence path is invalid"))?;
-        node = if fields.contains_key(&node) {
+        node = if part.metadata().term()
+            == typed_program_links_schema()["scalars"]["string"].as_str()
+            && fields.contains_key(&node)
+        {
             field(fields, node, text)
                 .ok_or_else(|| error("an owned state occurrence path is invalid"))?
-        } else {
-            let index = text
-                .parse::<usize>()
-                .map_err(|_| error("an owned state occurrence path is invalid"))?;
-            network
+        } else if part.metadata().term()
+            == typed_program_links_schema()["scalars"]["number"].as_str()
+        {
+            let list = network
                 .link(node)
-                .and_then(|node| node.references().get(index))
+                .filter(|node| {
+                    node.metadata().term()
+                        == typed_program_links_schema()["containers"]["array"].as_str()
+                })
+                .ok_or_else(|| error("an owned state occurrence path is invalid"))?
+                .references();
+            let value: Value = serde_json::from_str(text)
+                .map_err(|_| error("an owned state occurrence path is invalid"))?;
+            let length = serde_json::Number::from(list.len())
+                .as_f64()
+                .ok_or_else(|| error("an owned state occurrence path is invalid"))?;
+            let index =
+                crate::translation::owned_local_state::read_owned_local_position(&value, length)
+                    .map_err(|failure| error(failure.to_string()))?;
+            list.get(index)
                 .copied()
                 .ok_or_else(|| error("an owned state occurrence path is invalid"))?
+        } else {
+            return Err(error("an owned state occurrence path is invalid"));
         };
     }
     Ok(node)
@@ -319,9 +337,16 @@ fn value_occurrence<'a>(mut value: &'a Value, path: &Value) -> Result<&'a Value>
         value = if let Some(field) = part.as_str() {
             value.get(field)
         } else {
-            part.as_u64()
-                .and_then(|index| usize::try_from(index).ok())
-                .and_then(|index| value.get(index))
+            let values = value
+                .as_array()
+                .ok_or_else(|| error("an owned state occurrence path is invalid"))?;
+            let length = serde_json::Number::from(values.len())
+                .as_f64()
+                .ok_or_else(|| error("an owned state occurrence path is invalid"))?;
+            let index =
+                crate::translation::owned_local_state::read_owned_local_position(part, length)
+                    .map_err(|failure| error(failure.to_string()))?;
+            values.get(index)
         }
         .ok_or_else(|| error("an owned state occurrence path is invalid"))?;
     }

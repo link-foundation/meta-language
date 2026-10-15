@@ -106,6 +106,17 @@ fn same_order(left: &Value, right: &Value, ordered: bool) -> bool {
     }
 }
 
+/// Bind an actual Number to the generated ordered-position interpretation.
+pub fn read_owned_local_position(value: &Value, length: f64) -> Result<usize> {
+    let number = value.as_f64().filter(|number| {
+        crate::typed_program_links::program_numeric_metadata_rules::accept_program_ordered_position(*number, length)
+    }).ok_or_else(|| fail("an owned occurrence path has an invalid numeric position"))?;
+    super::primitive_value_rules::read_tuple_position(number)
+        .to_string()
+        .parse()
+        .map_err(|_| fail("an owned occurrence path has an invalid numeric position"))
+}
+
 fn read_source_offset(value: &Value, reject_negative_zero: bool) -> Option<u64> {
     let value = value.as_f64()?;
     if !crate::typed_program_links::source_span_rules::accept_source_span_offset(
