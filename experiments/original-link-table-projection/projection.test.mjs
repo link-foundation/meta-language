@@ -76,6 +76,15 @@ test('actual null and unknown symbols remain distinct from absent and nonregiste
  const unknown=copy(result.transport.arguments),owner=field(packet.network,rows(packet,'functions')[0],'signature').child,ret=field(packet.network,owner,'result').child;unknown[9][scalar(result,packet,ret,['type','kind'])]=0;assert.equal(tableRows(result,unknown).positions.at(-8),-1);
 });
 
+test('operation markers require their actual String scalar tag as well as the marker code',()=>{
+ const packet=create(fixtures.cases[0]),result=projectOriginalLinkFixedSymbolTables(packet.network,packet.root),expected=compare(packet,result),operation=field(packet.network,proof(packet),'operations').child,marker=field(packet.network,operation,'kind').child,slot=ordinal(result,marker)-1;
+ for(const kind of [0,1,3,4]){const args=copy(result.transport.arguments);assert.equal(args[7][slot],2);args[7][slot]=kind;assert.deepEqual(project(...args),[[-22]]);}
+ const parts=refs(packet.network,field(packet.network,operation,'parts').child),child=parts.find(id=>packet.network.fieldRelations().some(row=>row.parent.equals(id)&&row.label===label('kind')&&packet.network.link(row.child).metadata().definition==='source operation'));assert.ok(child);const childSlot=ordinal(result,field(packet.network,child,'kind').child)-1;assert.notEqual(childSlot,slot);
+ for(const kind of [0,1,3,4]){const args=copy(result.transport.arguments);args[7][childSlot]=kind;const changed=tableRows(result,args);assert.notDeepEqual(changed.operations,result.tables.operations);assert.notEqual(evaluateRustTextCertificate({...expected,...changed})[0],1);}
+ const link=packet.network.link(marker);link.setMetadata(link.metadata().clone().withTerm(schema.scalars.number).withDefinition('0'));
+ for(const load of loads){const saved=load(packet);assert.throws(()=>projectOriginalLinkFixedSymbolTables(saved.network,saved.root));}
+});
+
 test('all seven raw cross-owner and cloned-owner forgeries still fail before host projection',()=>{
  const fixture=fixtures.cases.find(row=>row.id==='equal-valued-distinct-owners');
  for(const role of ['declaration','signature','resultPosition','operationNode','coreValue','input','position'])for(const load of loads){
@@ -111,7 +120,7 @@ test('early primitive shape, root, ordinal, scalar and dictionary bounds refuse 
 
 test('all eleven whole tables execute after checked text/binary reload without the original rules source',()=>{
  const checked=checkProgram(parseJavaScript(originalLinkTableRulesSource(),{referenceSemantics:false})),packet=encodeTypedProgramLinks(checked),fixture=create(fixtures.cases[0]),result=projectOriginalLinkFixedSymbolTables(fixture.network,fixture.root),base=result.transport.arguments;
- for(const load of loads){const saved=load(packet),context={};vm.runInNewContext(emitTypedProgramLinks(saved.network,saved.root,'JavaScript').code,context,{timeout:2000});assert.deepEqual(Array.from(context.projectOriginalLinkCertificateTables(...base),row=>Array.from(row)),project(...base));const wrong=copy(base);wrong[1]=base[0]+1;assert.deepEqual(Array.from(context.projectOriginalLinkCertificateTables(...wrong),row=>Array.from(row)),[[-10]]);}
+ for(const load of loads){const saved=load(packet),context={};vm.runInNewContext(emitTypedProgramLinks(saved.network,saved.root,'JavaScript').code,context,{timeout:2000});assert.deepEqual(Array.from(context.projectOriginalLinkCertificateTables(...base),row=>Array.from(row)),project(...base));const wrong=copy(base);wrong[1]=base[0]+1;assert.deepEqual(Array.from(context.projectOriginalLinkCertificateTables(...wrong),row=>Array.from(row)),[[-10]]);const retag=copy(base),operation=field(fixture.network,proof(fixture),'operations').child,marker=scalar(result,fixture,operation,['kind']);retag[7][marker]=3;assert.deepEqual(Array.from(context.projectOriginalLinkCertificateTables(...retag),row=>Array.from(row)),[[-22]]);}
 });
 
 test('the shared column policy and every complete Rust definition regenerate automatically',()=>{

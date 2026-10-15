@@ -17,6 +17,9 @@ from names. Source operation codes still come from the shared certificate data;
 the unchanged final certificate checks their grammar, owner and condition facts.
 
 Root, edge, scalar-tag and dictionary bounds run before interpretation. Actual
+root and child operation markers also require their actual String scalar tag;
+the fixed marker code alone cannot classify a non-String node. An invalid root
+operation marker returns the linked policy's precise `[-22]` refusal row. Actual
 null, missing/unregistered nodes and unknown fixed symbols retain distinct
 representations. Primitive Number payloads are copied without normalization.
 Tests retain negative zero and nonfinite Number values in projected cells, then
