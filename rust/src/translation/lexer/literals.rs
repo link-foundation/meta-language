@@ -180,6 +180,76 @@ fn read_unicode_escape(
     }
 }
 
+fn raw_string_token(
+    source: &Source,
+    index: usize,
+    units: &mut Option<Vec<f64>>,
+) -> Result<Option<Token>> {
+    let encoded =
+        units.get_or_insert_with(|| source.units().iter().map(|unit| f64::from(*unit)).collect());
+    let start = serde_json::Number::from(index)
+        .as_f64()
+        .expect("UTF-16 source offset");
+    match raw_strings::decode_rust_raw_string(encoded, start) {
+        raw_strings::RustRawString::NotRaw => Ok(None),
+        raw_strings::RustRawString::Literal(content_start, content_end, end) => {
+            let mut cursor = super::frontend_rules::ml_array::number_index(content_start)
+                .expect("decoded raw string content start");
+            let content_end = super::frontend_rules::ml_array::number_index(content_end)
+                .expect("decoded raw string content end");
+            let end =
+                super::frontend_rules::ml_array::number_index(end).expect("decoded raw string end");
+            let mut value = Vec::new();
+            while cursor < content_end {
+                let start = serde_json::Number::from(cursor)
+                    .as_f64()
+                    .expect("UTF-16 source offset");
+                let (unit, end) = super::frontend_rules::ml_array::number_index(
+                    read_rust_source_line_break_end(encoded, start),
+                )
+                .map_or((source.units[cursor], cursor + 1), |end| {
+                    (u16::from(b'\n'), end)
+                });
+                value.push(unit);
+                cursor = end;
+            }
+            // The generated reader has checked every original scalar; retain
+            // those UTF-16 units while normalizing only its admitted CRLFs.
+            Ok(Some(Token::new(
+                TokenKind::String,
+                String::from_utf16_lossy(&value),
+                source.slice(index, end),
+                index,
+                end,
+            )))
+        }
+        raw_strings::RustRawString::TooManyDelimiters => Err(TranslationError::syntax(
+            "Rust raw string exceeds 255 delimiter hashes",
+            Some(span(index, source.len())),
+        )),
+        raw_strings::RustRawString::CarriageReturn(at) => {
+            let at = super::frontend_rules::ml_array::number_index(at)
+                .expect("decoded raw string carriage return offset");
+            Err(TranslationError::syntax(
+                "isolated carriage return in a Rust string",
+                Some(span(at, at + 1)),
+            ))
+        }
+        raw_strings::RustRawString::NonScalar(at) => {
+            let at = super::frontend_rules::ml_array::number_index(at)
+                .expect("decoded raw string nonscalar offset");
+            Err(TranslationError::syntax(
+                "unpaired Unicode surrogate in a Rust raw string",
+                Some(span(at, at + 1)),
+            ))
+        }
+        raw_strings::RustRawString::Unterminated => Err(TranslationError::syntax(
+            "unterminated Rust raw string literal",
+            Some(span(index, source.len())),
+        )),
+    }
+}
+
 fn string_token(
     source: &Source,
     index: usize,
