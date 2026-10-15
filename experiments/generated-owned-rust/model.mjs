@@ -58,7 +58,7 @@ function checkCst(proof,selected){
  const lexical=tokenize(text,'Rust').tokens;if(lexical.length!==proof.tokens.length)fail('the trivia or literal spelling changes active source tokens');
  for(const[index,original]of lexical.entries()){
   const token=proof.tokens[index];if(original.kind!==token.kind||original.start!==token.span.start||original.end!==token.span.end||text.slice(original.start,original.end)!==token.raw||token.kind==='number'&&(original.suffix!==token.suffix||Boolean(original.floating)!==token.floating)||!['declaration','binding','literal'].some(role=>own(token,role))&&original.value!==token.value)fail('the stored source token differs from the actual whole-source lexer');
-  if(token.kind==='string'){if(!token.raw.startsWith('"'))fail('only actual generated cooked strings have an interpretation');readGeneratedOwnedRustCookedLiteral(token.raw,selected);}
+  if(token.kind==='string'&&selected.literalTokenMode!=='production Rust string token'){if(!token.raw.startsWith('"'))fail('only actual generated cooked strings have an interpretation');readGeneratedOwnedRustCookedLiteral(token.raw,selected);}
  }
  return new Set(proof.tokens);
 }
@@ -170,3 +170,5 @@ export function emitCanonicalGeneratedOwnedRust(program,proof){
  if(rebound.text!==emitted.text)fail('the canonical whole source lost its exact interpreted output');
  return{...emitted,assumptions:[...emitted.assumptions,...rebound.assumptions]};
 }
+// Private experiment seams. Existing model entry points retain their exact modes.
+export {data as checkGeneratedOwnedRustData,fields as checkGeneratedOwnedRustFields,interval as checkGeneratedOwnedRustInterval,compare as compareGeneratedOwnedRustData,surfaceMap as mapGeneratedOwnedRustSurface,operationNodes as readGeneratedOwnedRustOperations,checkCst as checkGeneratedOwnedRustCst};
