@@ -105,6 +105,10 @@ test('actual saved Links mutations remain rejected by the experimental reload an
  }
 });
 
+test('direct source spans bind actual Number offsets before the shared typed numeric rule',()=>{
+ for(const transform of [String,value=>BigInt(value)]){const p=example(),proof=p.sourceGeneratedJavaScriptUnit,end=transform(proof.span.end);proof.span.end=end;proof.tokens.at(-1).span.start=end;proof.tokens.at(-1).span.end=end;proof.gaps.at(-1).span.end=end;proof.operations.span.end=end;savedRefused(p,'coherent non-Number offset domain');}
+});
+
 test('host accessors, hidden fields, structural cycles, prototypes and sparse arrays refuse before callbacks',()=>{
  const targets=[p=>p,p=>p.sourceGeneratedJavaScriptUnit,p=>p.sourceGeneratedJavaScriptUnit.tokens[0],p=>p.sourceGeneratedJavaScriptUnit.tokens[0].span,p=>p.sourceGeneratedJavaScriptUnit.gaps[0],p=>p.sourceGeneratedJavaScriptUnit.operations,p=>p.main.sourceGeneratedJavaScriptEntry,p=>p.items[0],p=>p.items[0].body,p=>p.main.effects[0]];let invoked=0;
  for(const [index,target]of targets.entries())for(const change of [node=>Object.defineProperty(node,'host',{get(){invoked++;return 0;},enumerable:true}),node=>Object.defineProperty(node,'hidden',{value:1}),node=>{node[Symbol('host')]=1;},node=>Object.setPrototypeOf(node,{inherited:1})]){const p=example();change(target(p));refused(p,'owned host record '+index);}
