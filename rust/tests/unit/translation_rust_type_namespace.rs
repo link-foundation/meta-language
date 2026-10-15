@@ -1,6 +1,7 @@
 //! Paired selected type namespaces; native compilation runs only in CI.
 use super::issue_195_translation_pairs::{TemporaryDirectory, run};
 use meta_language::translation::check::check_program;
+use meta_language::translation::emit_javascript::emit_javascript;
 use meta_language::translation::emit_rust::emit_rust;
 use meta_language::translation::ir::{Decl, Node, Program};
 use meta_language::translation::rust::{parse_rust, parse_rust_with_type_namespace_model};
@@ -839,6 +840,41 @@ fn present_namespace_record_facts_refuse_normalization_and_retain_genuine_option
                     .code
             ),
             expected(entry)
+        );
+    }
+}
+
+#[test]
+fn direct_source_free_namespace_emitters_reject_forged_owned_header_facts() {
+    let data = fixture();
+    let entry = &data["cases"][0];
+    let (network, root) = archive(entry);
+    let original = decode_typed_program_links(&network, root).unwrap();
+    assert!(emit_rust(&original).is_ok());
+    assert!(emit_javascript(&original).is_ok());
+    for mutation in 0..4 {
+        let mut program = original.clone();
+        let Some(Decl::Fn(function)) = program
+            .declarations
+            .iter_mut()
+            .find(|declaration| declaration.full_name() == entry["functionName"].as_str().unwrap())
+        else {
+            panic!("the actual selected function exists")
+        };
+        match mutation {
+            0 => function.source_type_namespace = Some(Value::Null),
+            1 => {
+                function.source_type_namespace.as_mut().unwrap()["result"] = json!(["unknown"]);
+            }
+            2 => {
+                function.source_type_namespace.as_mut().unwrap()["parameters"][0] = json!(["bool"]);
+            }
+            _ => function.generated = true,
+        }
+        assert!(emit_rust(&program).is_err(), "Rust mutation {mutation}");
+        assert!(
+            emit_javascript(&program).is_err(),
+            "JavaScript mutation {mutation}"
         );
     }
 }

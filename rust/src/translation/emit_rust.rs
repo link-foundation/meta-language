@@ -532,6 +532,7 @@ pub fn emit_rust_with_options(
     program: &Program,
     options: RustEmissionOptions<'_>,
 ) -> Result<Emitted> {
+    super::source_type_namespaces::validate_source_type_namespaces(program)?;
     super::source_const_functions::validate_const_functions(program)?;
     super::owned_local_state::validate_owned_local_state(program)?;
     if let Some(runtime) = super::runtime_shell::validate_program(program)? {

@@ -113,6 +113,7 @@ pub fn emit_javascript_with_options(
     program: &Program,
     options: JavaScriptEmissionOptions<'_>,
 ) -> Result<Emitted> {
+    super::source_type_namespaces::validate_source_type_namespaces(program)?;
     let runtime = super::runtime_shell::validate_program(program)?;
     if runtime.is_some() && options.scoped_binding_model.is_some() {
         return Err(crate::translation::diagnostics::unsupported(
