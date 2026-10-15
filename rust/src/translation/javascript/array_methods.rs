@@ -22,10 +22,7 @@ impl JavaScriptParser {
         let items = receiver
             .into_iter()
             .chain(args)
-            .map(|value| SArrayItem {
-                spread: form != "construct",
-                value,
-            })
+            .map(|value| SArrayItem::new(value, form != "construct"))
             .collect();
         Ok(node(
             SNode::Array {

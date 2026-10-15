@@ -609,10 +609,7 @@ impl JavaScriptParser {
                 ));
             }
             let spread = self.cursor.eat("...").is_some();
-            items.push(SArrayItem {
-                spread,
-                value: self.expr()?,
-            });
+            items.push(SArrayItem::new(self.expr()?, spread));
             if self.cursor.eat(",").is_none() {
                 break;
             }

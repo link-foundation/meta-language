@@ -10,6 +10,8 @@ use super::{Language, Span};
 
 mod externals;
 pub use externals::{External, ExternalParam, SImport, SImportName};
+mod array_item;
+pub use array_item::SArrayItem;
 
 #[allow(clippy::trivially_copy_pass_by_ref)] // serde passes fields by reference
 const fn is_false(value: &bool) -> bool {
@@ -411,13 +413,6 @@ impl SNode {
             Self::Default => "default",
         }
     }
-}
-
-/// An element of an array literal, or with `spread` the elements of an array.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct SArrayItem {
-    pub spread: bool,
-    pub value: SExpr,
 }
 
 /// A source prototype definition, preserved until the checker refuses it.

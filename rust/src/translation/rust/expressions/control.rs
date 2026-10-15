@@ -52,10 +52,7 @@ impl RustParser {
                     SNode::Array {
                         items: args
                             .into_iter()
-                            .map(|value| SArrayItem {
-                                spread: false,
-                                value,
-                            })
+                            .map(|value| SArrayItem::new(value, false))
                             .collect(),
                         element: None,
                     },
