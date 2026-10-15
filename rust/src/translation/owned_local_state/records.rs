@@ -88,14 +88,16 @@ impl Records {
                 self.visit(value, &child(path, field))?;
             }
         }
-        if let Some(items) = node.get("items") {
-            for (index, item) in array(items, "an expression needs its ordered item roles")?
-                .iter()
-                .enumerate()
-            {
-                let mut next = child(path, "items");
-                next.push(Value::from(index));
-                self.visit(item, &next)?;
+        for field in ["items", "args"] {
+            if let Some(items) = node.get(field) {
+                for (index, item) in array(items, "an expression needs its ordered item roles")?
+                    .iter()
+                    .enumerate()
+                {
+                    let mut next = child(path, field);
+                    next.push(Value::from(index));
+                    self.visit(item, &next)?;
+                }
             }
         }
         Ok(())

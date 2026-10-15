@@ -1,6 +1,9 @@
 //! Bind checked expressions to the shared lexical ownership decisions.
 use super::records::{child, key};
-use super::{Result, Value, allowed, array, contains, fail, pair_type, policy, value_type};
+use super::{
+    Result, Value, allowed, array, contains, fail, pair_type, policy, same_order,
+    tuple_call_policy, value_type,
+};
 use crate::translation::rust::owned_local_state_rules::{
     accept_rust_owned_local_binary_operation, accept_rust_owned_local_expression,
     accept_rust_owned_local_text_units,
@@ -61,6 +64,9 @@ pub(super) struct Validator<'a> {
     reads: BTreeMap<String, Value>,
     visits: usize,
     mutable: Option<String>,
+    entry: &'a Value,
+    declarations: &'a BTreeMap<String, Value>,
+    calls: bool,
 }
 
 impl<'a> Validator<'a> {
@@ -68,6 +74,9 @@ impl<'a> Validator<'a> {
         proof: &'a Value,
         bindings: BTreeMap<String, Value>,
         reads: BTreeMap<String, Value>,
+        entry: &'a Value,
+        declarations: &'a BTreeMap<String, Value>,
+        calls: bool,
     ) -> Self {
         Self {
             proof,
@@ -75,6 +84,9 @@ impl<'a> Validator<'a> {
             reads,
             visits: 0,
             mutable: None,
+            entry,
+            declarations,
+            calls,
         }
     }
 
@@ -140,8 +152,13 @@ impl<'a> Validator<'a> {
             return Err(fail("state proof exceeds its semantic traversal limit"));
         }
         let kind = node["k"].as_str().unwrap_or_default();
-        if !accept_rust_owned_local_expression(kind)
-            || !allowed(node, &policy()["expressions"][kind])
+        let fields = if self.calls && kind == "call" {
+            &tuple_call_policy()["callFields"]
+        } else {
+            &policy()["expressions"][kind]
+        };
+        if (!accept_rust_owned_local_expression(kind) && !(self.calls && kind == "call"))
+            || !allowed(node, fields)
             || (!value_type(&node["type"]) && !pair_type(&node["type"]))
         {
             return Err(fail(
@@ -184,9 +201,39 @@ impl<'a> Validator<'a> {
                     return Err(fail("an initializer has the wrong owned tuple layout"));
                 }
                 for (index, item) in items.iter().enumerate() {
+                    if item["type"] != node["type"]["elements"][index] {
+                        return Err(fail(
+                            "an actual tuple item differs from its declared owned field type",
+                        ));
+                    }
                     let mut next = child(path, "items");
                     next.push(Value::from(index));
                     self.expression(item, &next, scope, state, None)?;
+                }
+                Ok(())
+            }
+            "call" if self.calls => {
+                let fact = array(
+                    &self.proof["initializers"],
+                    "state facts must retain their ordered roles",
+                )?
+                .iter()
+                .find(|initializer| {
+                    initializer["path"].as_array().is_some_and(|site| {
+                        same_order(&Value::Array(child(site, "value")), &json!(path), true)
+                    })
+                })
+                .cloned()
+                .unwrap_or(Value::Null);
+                super::tuple_calls::target(self.declarations, self.entry, node, &fact)?;
+                for (index, argument) in
+                    array(&node["args"], "a call needs its ordered argument roles")?
+                        .iter()
+                        .enumerate()
+                {
+                    let mut site = child(path, "args");
+                    site.push(Value::from(index));
+                    self.expression(argument, &site, scope, state, None)?;
                 }
                 Ok(())
             }
@@ -194,6 +241,7 @@ impl<'a> Validator<'a> {
                 if !accept_rust_owned_local_binary_operation(
                     node["op"].as_str().unwrap_or_default(),
                 ) || node["type"]["kind"] != "bool"
+                    || !value_type(&node["left"]["type"])
                     || node["left"]["type"]["kind"] == "string"
                     || node["left"]["type"] != node["right"]["type"]
                     || node.get("domain").is_some_and(|domain| {
@@ -209,7 +257,10 @@ impl<'a> Validator<'a> {
                 self.expression(&node["right"], &child(path, "right"), scope, state, None)
             }
             "toString" => {
-                if node["arg"]["k"] != "lit" || node["arg"]["type"]["kind"] != "string" {
+                if node["type"]["kind"] != "string"
+                    || node["arg"]["k"] != "lit"
+                    || node["arg"]["type"]["kind"] != "string"
+                {
                     return Err(fail(
                         "the constructor must be an actual standard literal String value",
                     ));
@@ -230,6 +281,11 @@ impl<'a> Validator<'a> {
                     state,
                     expected_join,
                 )?;
+                if node["then"]["type"] != node["type"] || node["else"]["type"] != node["type"] {
+                    return Err(fail(
+                        "actual conditional branches differ from their declared result type",
+                    ));
+                }
                 self.expression(
                     &node["else"],
                     &child(path, "else"),
@@ -412,6 +468,11 @@ impl<'a> Validator<'a> {
             &next,
             expected_join,
         )?;
+        if node["body"]["type"] != node["type"] {
+            return Err(fail(
+                "the actual local body differs from its declared result type",
+            ));
+        }
         merge(scope, &inner)
     }
 }

@@ -4,6 +4,7 @@ use super::super::{Result, error, field_of, typed_program_links_schema};
 use crate::translation::rust::owned_local_state_rules::{
     accept_rust_owned_local_record_value, accept_rust_owned_local_source_span,
 };
+use crate::translation::rust::owned_tuple_call_rules::accept_rust_owned_tuple_call_model;
 use crate::{LinkId, LinkNetwork, StructuredDataValue};
 use serde_json::{Map, Value};
 use std::collections::{HashMap, HashSet};
@@ -19,6 +20,28 @@ fn policy() -> &'static StructuredDataValue {
         .expect("the shared ordered owned local state policy is valid")
     });
     &POLICY
+}
+
+fn interpretation(model: Option<&str>) -> Result<StructuredDataValue> {
+    let mut expected = member(policy(), "interpretation")?.clone();
+    if accept_rust_owned_tuple_call_model(model.unwrap_or_default()) {
+        static CALL_POLICY: LazyLock<StructuredDataValue> = LazyLock::new(|| {
+            crate::read_structured_data_lino_ordered(include_str!(
+                "../data/rust-owned-tuple-calls.lino"
+            ))
+            .expect("the shared ordered tuple call policy is valid")
+        });
+        let StructuredDataValue::Object(entries) = &mut expected else {
+            return Err(error(
+                "the shared owned interpretation must remain an ordered record",
+            ));
+        };
+        entries.push((
+            "tupleInitialization".encode_utf16().collect(),
+            member(&CALL_POLICY, "interpretation")?.clone(),
+        ));
+    }
+    Ok(expected)
 }
 
 fn member<'a>(value: &'a StructuredDataValue, name: &str) -> Result<&'a StructuredDataValue> {
@@ -257,6 +280,7 @@ pub(super) fn validate_order(
     fields: &Fields,
     declarations: &[LinkId],
     body: LinkId,
+    mapping: LinkId,
 ) -> Result<()> {
     if !declarations
         .iter()
@@ -265,17 +289,50 @@ pub(super) fn validate_order(
         return Ok(());
     }
     validate_original_shapes(network, fields, body)?;
+    // The original graph keeps object identity before native maps and Item
+    // references project declarations to names. Mapping order is independent
+    // from ordered item traversal, as in the JavaScript declaration owner check.
+    let mut declared = HashSet::new();
+    for pair in network
+        .link(mapping)
+        .ok_or_else(|| error("an owned declaration mapping is missing"))?
+        .references()
+    {
+        let pair = network
+            .link(*pair)
+            .ok_or_else(|| error("an owned declaration mapping entry is missing"))?;
+        let [_, declaration] = pair.references() else {
+            return Err(error("an owned declaration mapping entry is invalid"));
+        };
+        if !declared.insert(*declaration) {
+            return Err(error(
+                "the linked ordered items contain a duplicate or unowned declaration",
+            ));
+        }
+    }
+    let items = field(fields, body, "items")
+        .and_then(|items| network.link(items))
+        .ok_or_else(|| error("the linked declaration mapping and ordered items disagree"))?;
+    let mut seen = HashSet::new();
+    if items
+        .references()
+        .iter()
+        .any(|item| !declared.contains(item) || !seen.insert(*item))
+        || seen.len() != declared.len()
+    {
+        return Err(error(
+            "the linked ordered items contain a duplicate or unowned declaration",
+        ));
+    }
     for declaration in declarations {
         let Some(proof) = field(fields, *declaration, "sourceLocalState") else {
             continue;
         };
         if let Some(interpretation) = field(fields, proof, "interpretation") {
-            compare_policy_order(
-                fields,
-                interpretation,
-                member(policy(), "interpretation")?,
-                &[],
-            )?;
+            let model = field(fields, proof, "model")
+                .and_then(|id| network.link(id))
+                .and_then(|link| link.metadata().definition());
+            compare_policy_order(fields, interpretation, &self::interpretation(model)?, &[])?;
         }
         let body = field(fields, *declaration, "body")
             .ok_or_else(|| error("an owned state declaration has no actual body"))?;
@@ -372,10 +429,8 @@ pub(super) fn prepare_order(program: &mut Value) -> Result<()> {
         let Some(proof) = declaration.get_mut("sourceLocalState") else {
             continue;
         };
-        reorder(
-            &mut proof["interpretation"],
-            member(policy(), "interpretation")?,
-        )?;
+        let expected = interpretation(proof["model"].as_str())?;
+        reorder(&mut proof["interpretation"], &expected)?;
         for role in ["reads", "literalConstructors"] {
             let facts = proof[role]
                 .as_array_mut()
