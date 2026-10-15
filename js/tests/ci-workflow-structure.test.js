@@ -741,6 +741,21 @@ const RUST_RAW_BINDING_IDENTIFIER_EXPERIMENT_STEPS = [
     '7c9a8ae9fe9e0cccf5791f0c22cf2e87198d150f496fb5842860da5c7fe24122', 'generated']
 ];
 
+const RUST_TEXT_CERTIFICATE_GENERATOR_STEPS = [
+  ['Check generated complete Rust text certificate kernel',
+    'node ../experiments/rust-text-certificate/generate.mjs --check',
+    'cf7a9c83c853aafd882c00845534dddb8808fbd47994795962ec83fa8648c96f', 'generated']
+];
+
+const RUST_TEXT_CERTIFICATE_EXPERIMENT_STEPS = [
+  ['Run portable Rust text certificate feasibility checks',
+    'node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-text-certificate/feasibility.mjs',
+    'edec431f90737e92f42b23e21f7c257fd9234aa7e131df4bdc6ece9819b743da', 'generated'],
+  ['Run complete portable Rust text certificate kernel',
+    'node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-text-certificate/kernel.test.mjs',
+    '79f01a89fe43fb77a117afa87dfff0d1563c61d9fcc99cd1ac902ca30d773f47', 'generated']
+];
+
 function packageStepSignature(step, includeGroup = false) {
   const fields = includeGroup ? step.text : step.text.replace(/ && matrix\.group == '[a-z-]+'/gu, '');
   const text = fields
@@ -769,6 +784,7 @@ test('the complete Rust text source oracle is mandatory after JavaScript and its
   const addition = '|experiments/rust-text-value-projection/';
   assert.equal(classifier.split(addition).length, 2);
   assert.equal(classifier.replace(addition, '').replace('|experiments/rust-raw-binding-identifiers/', '')
+    .replace('|experiments/rust-text-certificate/', '')
     .replace('|experiments/source-native-observations\\.mjs$', ''),
     '^(rust/|parity/|docs/|scripts/|\\.github/workflows/(ci|rust)\\.yml$|\\.secretlintrc\\.json$)',
     'the native source selection preserves every existing Rust workflow trigger');
@@ -902,6 +918,73 @@ test('Rust raw-binding native observation gates refuse omissions, duplication an
   }
 });
 
+const RUST_TEXT_CERTIFICATE_NATIVE_STEPS = [
+  ['Run complete translated Rust text certificate observations', 'c7609c51a80704d8dbcdf49bb5e790ab5f0672f984ded50f20c30adebf883fcb'],
+  ['Retain complete translated Rust text certificate observations', '0f6abe1826a6e6c8e5f56974cf6c1d8464afefeb2b8c7dc03b29c4d09792f7bc'],
+];
+
+function checkRustTextCertificateNativeSteps(parsed) {
+  for (const [name, hash] of RUST_TEXT_CERTIFICATE_NATIVE_STEPS) {
+    const steps = parsed.get('test').steps.filter(step => step.name === name);
+    assert.equal(steps.length, 1, `the text-certificate source observation step must execute once: ${name}`);
+    assert.equal(packageStepSignature(steps[0], true), hash, `text-certificate native step changed: ${name}`);
+  }
+}
+
+test('Rust text-certificate source observations retain mandatory compilation, receipt upload and source triggers', () => {
+  checkRustTextCertificateNativeSteps(jobs('rust.yml'));
+  const classifier = /rust_paths='([^']+)'/u.exec(workflow('ci.yml'))?.[1];
+  for (const addition of ['|experiments/rust-text-certificate/']) {
+    assert.equal(classifier.split(addition).length, 2, 'each native source oracle path is selected exactly once');
+  }
+  const matches = new RegExp(classifier, 'u');
+  for (const file of ['bridge.mjs', 'rules.mjs', 'data/translation.lino', 'native-observations.mjs', 'native-observations.test.mjs']) {
+    assert.ok(matches.test(`experiments/rust-text-certificate/${file}`), file);
+  }
+  assert.ok(matches.test('experiments/source-native-observations.mjs'));
+  assert.ok(!matches.test('experiments/source-native-observations.mjs.extra'));
+});
+
+test('Rust text-certificate native observation gates refuse omissions, duplication and compiler or artifact weakening', () => {
+  for (const [name] of RUST_TEXT_CERTIFICATE_NATIVE_STEPS) {
+    const mutate = change => {
+      const parsed = jobs('rust.yml');
+      const steps = parsed.get('test').steps;
+      const index = steps.findIndex(step => step.name === name);
+      assert.ok(index >= 0);
+      change(steps, index);
+      assert.throws(() => checkRustTextCertificateNativeSteps(parsed), assert.AssertionError);
+    };
+    mutate((steps, index) => steps.splice(index, 1));
+    mutate((steps, index) => steps.push({ ...steps[index] }));
+    const edits = [
+      ['!cancelled()', 'success()'],
+      ["matrix.suite == 'translation'", "matrix.suite == 'remaining'"],
+      ["matrix.os == 'ubuntu-latest'", "matrix.os == 'windows-latest'"],
+      ...(name.startsWith('Run ') ? [
+        ["CI: 'true'", "CI: 'false'"],
+        ["RUST_TEXT_CERTIFICATE_NATIVE: '1'", "RUST_TEXT_CERTIFICATE_NATIVE: '0'"],
+        ['--event test --', '--event build --'],
+        ['node --test experiments/', 'node --test --test-name-pattern optional experiments/'],
+        ['working-directory: ${{ github.workspace }}', 'working-directory: rust'],
+        ['working-directory: ${{ github.workspace }}', 'continue-on-error: true\n        working-directory: ${{ github.workspace }}'],
+      ] : [
+        ['uses: actions/upload-artifact@v7', 'uses: actions/upload-artifact@v6'],
+        ['${{ github.sha }}', '${{ github.ref }}'],
+        ['native-observations.lino', 'native-observations.json'],
+        ['if-no-files-found: error', 'if-no-files-found: ignore'],
+        ['retention-days: 7', 'retention-days: 0'],
+      ]),
+    ];
+    for (const [before, after] of edits) {
+      mutate((steps, index) => {
+        assert.ok(steps[index].text.includes(before));
+        steps[index].text = steps[index].text.replace(before, after);
+      });
+    }
+  }
+});
+
 function checkPackageStepConservation(parsed) {
   const additions = [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS, ...TYPE_NAMESPACE_PACKAGE_STEPS,
     ...PURE_UNIT_PACKAGE_STEPS, ...SOURCE_SPAN_PACKAGE_STEPS, ...OWNED_TEXT_GENERATOR_PACKAGE_STEPS,
@@ -913,7 +996,8 @@ function checkPackageStepConservation(parsed) {
     ...RUST_LEXICAL_AND_OWNED_MODULE_GENERATOR_STEPS, ...GENERATED_OWNED_RUST_MODULE_EXPERIMENT_STEPS,
     ...RUST_RAW_STRING_AND_LITERAL_EDIT_GENERATOR_STEPS, ...OWNED_RUST_LITERAL_EDIT_EXPERIMENT_STEPS,
     ...RUST_TEXT_VALUE_PROJECTION_GENERATOR_STEPS, ...RUST_TEXT_VALUE_PROJECTION_EXPERIMENT_STEPS,
-    ...RUST_RAW_BINDING_IDENTIFIER_GENERATOR_STEPS, ...RUST_RAW_BINDING_IDENTIFIER_EXPERIMENT_STEPS];
+    ...RUST_RAW_BINDING_IDENTIFIER_GENERATOR_STEPS, ...RUST_RAW_BINDING_IDENTIFIER_EXPERIMENT_STEPS,
+    ...RUST_TEXT_CERTIFICATE_GENERATOR_STEPS, ...RUST_TEXT_CERTIFICATE_EXPERIMENT_STEPS];
   const expected = new Map([
     ...ORIGINAL_PACKAGE_STEPS.map(([name, hash, owner]) => [name, { hash, owner }]),
     ...additions.map(([name, command, hash, owner]) => [name, { hash, owner, command, addition: true }]),
@@ -1052,7 +1136,7 @@ test('every frozen generator addition rejects omission, duplication, condition, 
     ...JAVASCRIPT_LINE_TERMINATOR_PACKAGE_STEPS, ...GENERATED_JAVASCRIPT_UNIT_PACKAGE_STEPS,
     ...OWNED_TUPLE_CALL_GENERATOR_PACKAGE_STEPS, ...RUST_LEXICAL_AND_OWNED_MODULE_GENERATOR_STEPS,
     ...RUST_RAW_STRING_AND_LITERAL_EDIT_GENERATOR_STEPS, ...RUST_TEXT_VALUE_PROJECTION_GENERATOR_STEPS,
-    ...RUST_RAW_BINDING_IDENTIFIER_GENERATOR_STEPS]) {
+    ...RUST_RAW_BINDING_IDENTIFIER_GENERATOR_STEPS, ...RUST_TEXT_CERTIFICATE_GENERATOR_STEPS]) {
     mutate(name, (steps, index) => steps.splice(index, 1));
     mutate(name, (steps, index) => steps.push({ ...steps[index] }));
     for (const [before, after] of [
@@ -1073,7 +1157,8 @@ test('every frozen text experiment addition retains its mandatory execution, wra
   for (const [name] of [...OWNED_TEXT_EXPERIMENT_PACKAGE_STEPS, ...INTEGRAL_METADATA_EXPERIMENT_PACKAGE_STEPS, ...CONST_AND_BYTE_EXPERIMENT_PACKAGE_STEPS,
     ...GENERATED_JAVASCRIPT_UNIT_EXPERIMENT_STEPS, ...OWNED_TUPLE_CALL_EXPERIMENT_PACKAGE_STEPS,
     ...GENERATED_OWNED_RUST_MODULE_EXPERIMENT_STEPS, ...OWNED_RUST_LITERAL_EDIT_EXPERIMENT_STEPS,
-    ...RUST_TEXT_VALUE_PROJECTION_EXPERIMENT_STEPS, ...RUST_RAW_BINDING_IDENTIFIER_EXPERIMENT_STEPS]) {
+    ...RUST_TEXT_VALUE_PROJECTION_EXPERIMENT_STEPS, ...RUST_RAW_BINDING_IDENTIFIER_EXPERIMENT_STEPS,
+    ...RUST_TEXT_CERTIFICATE_EXPERIMENT_STEPS]) {
     const mutate = change => {
       const parsed = jobs('js.yml');
       const steps = parsed.get('package-checks').steps;

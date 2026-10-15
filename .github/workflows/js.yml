@@ -872,6 +872,27 @@ jobs:
           SELF_TRANSLATION_CHECK_RUST: '0'
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-raw-binding-identifiers/model.test.mjs
 
+      - name: Check generated complete Rust text certificate kernel
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../experiments/rust-text-certificate/generate.mjs --check
+
+      - name: Run portable Rust text certificate feasibility checks
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        env:
+          TRANSLATION_CHECK_RUST: '0'
+          SELF_TRANSLATION_CHECK_RUST: '0'
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-text-certificate/feasibility.mjs
+
+      - name: Run complete portable Rust text certificate kernel
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        env:
+          TRANSLATION_CHECK_RUST: '0'
+          SELF_TRANSLATION_CHECK_RUST: '0'
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-text-certificate/kernel.test.mjs
+
       - name: Check generated whole Rust runtime shell rules
         if: ${{ !cancelled() && matrix.group == 'generated' }}
         working-directory: js
