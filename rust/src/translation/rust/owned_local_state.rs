@@ -212,7 +212,7 @@ impl RustParser {
         value.span = Some(Span::new(
             receiver
                 .span
-                .map_or(range.unwrap().start, |span| span.start),
+                .map_or_else(|| range.unwrap().start, |span| span.start),
             range.unwrap().end,
         ));
         self.local_value_copies.insert(value.span.unwrap());
