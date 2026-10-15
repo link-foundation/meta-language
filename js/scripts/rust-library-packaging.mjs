@@ -1,7 +1,11 @@
 // Packaging changes concrete syntax only. Every change is replayed by the
 // ordinary Links decorator engine; the original complete artifact is retained.
+// Conservation applies to the supported automatically generated pure-decision
+// subset. Token counts alone do not prove unrestricted Rust equivalence for
+// custom Drop implementations, temporary scopes or other observable lifetimes.
 import { tokenize } from '../src/translation/lexer.js';
 import { DecoratorSet } from '../src/decorators.js';
+import { acceptRustPureUnitName } from '../src/translation/rust-pure-unit-call-rules.js';
 
 function syntax(source) {
   const { tokens, comments } = tokenize(source, 'Rust');
@@ -179,7 +183,8 @@ function qualify(source, modulePath, names, namespaceExpressionMacros) {
 
 /** Produce exact source actions for the ordinary translation-rule decorators. */
 export function readRustLibraryStyles(source, { modulePath, namespaceExpressionMacros = [] }) {
-  if (typeof modulePath !== 'string' || !/^[a-z][a-z0-9_]*(?:::[a-z][a-z0-9_]*)*$/u.test(modulePath)) {
+  if (typeof modulePath !== 'string' || !/^[a-z][a-z0-9_]*(?:::[a-z][a-z0-9_]*)*$/u.test(modulePath)
+    || !modulePath.split('::').every(segment => acceptRustPureUnitName(segment))) {
     throw new TypeError('Rust library packaging needs an explicit module path');
   }
   if (!Array.isArray(namespaceExpressionMacros) || namespaceExpressionMacros.some(name => name !== 'vec')) {

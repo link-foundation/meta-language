@@ -1,5 +1,8 @@
 // Additive packaging experiment. The original automatically translated source,
 // definitions, generic emitter defaults and native oracle stay unchanged.
+// These syntax receipts concern that supported pure-decision artifact, not
+// arbitrary Rust Drop/temporary-scope semantics. Actual native comparison is
+// still a CI boundary; no token inventory substitutes for that observation.
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, join } from 'node:path';

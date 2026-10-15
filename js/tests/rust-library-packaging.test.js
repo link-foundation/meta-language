@@ -102,6 +102,20 @@ test('namespace qualification changes actual known crate paths and preserves ext
   assert.ok(!result.includes('crate::text_certificate_library::external'));
 });
 
+test('module paths reject every excluded registered Rust name in every segment', () => {
+  const names = readProjectData(new URL('../src/translation/data/rust-pure-unit-calls.lino', import.meta.url));
+  const source = 'pub fn item() -> f64 { 1f64 }\npub fn caller() -> f64 { crate::item() }';
+  for (const segment of names.forbiddenNames) {
+    for (const path of [segment, `outer::${segment}`, `${segment}::inner`]) {
+      assert.throws(() => readRustLibraryStyles(source, { modulePath: path }), /explicit module path/u, path);
+    }
+  }
+  // The existing policy also reserves generated helper prefixes and main.
+  assert.throws(() => readRustLibraryStyles(source, { modulePath: 'outer::ml_reserved' }), /explicit module path/u);
+  const accepted = readRustLibraryStyles(source, { modulePath: 'translation::text_certificate_library' });
+  assert.ok(accepted.decorated[1].source.includes('crate::translation::text_certificate_library::item()'));
+});
+
 test('whole-item partitioning rejects oversized items instead of trimming or splitting algorithms', () => {
   const source = Array.from({ length: 9 }, (_, index) => `pub fn item_${index}() -> f64 {\n ${index}f64\n}\n`).join('');
   const result = packageRustLibrary(source, { modulePath, maximumLines: 20 });
