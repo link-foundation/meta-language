@@ -21,6 +21,34 @@ export function publicDeclarationConsumers(moduleSpecifier = publicModule) {
   const sourceTextByteFixture = readProjectData(new URL('../../parity/fixtures/source-text-bytes.lino', import.meta.url));
   const runtimeShellFixture = readProjectData(new URL('../../parity/fixtures/rust-runtime-shell.lino', import.meta.url));
   const repeatedRuntime = runtimeShellFixture.cases.find(entry => entry.id === 'ordered-repeated');
+  const ownedTupleCallFixture = readProjectData(new URL('../../experiments/owned-tuple-call-fixture.lino', import.meta.url));
+  const retargetTupleCall = ownedTupleCallFixture.cases.find(entry => entry.name === 'source-free target');
+  const tupleCallGraphPrelude = `import { createTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks, LinkNetwork, LinkId, SubstitutionRule } from ${module};
+const packet = createTypedProgramLinks(${JSON.stringify(retargetTupleCall.source)},'Rust',
+  {rustOwnedLocalStateModel:${JSON.stringify(ownedTupleCallFixture.model)}});
+const network = LinkNetwork.fromLino(packet.network.toLino());
+const originalProgram = decodeTypedProgramLinks(network,packet.root);
+const relations = network.links().filter(link=>link.references().length===3);
+const field = (parent:LinkId,label:string):LinkId => {
+  const relation = relations.find(link=>link.references()[0].equals(parent)
+    &&network.link(link.references()[1])?.metadata().term===label);
+  if(!relation) throw new Error('missing actual owned tuple field '+label);
+  return relation.references()[2];
+};
+const declaration = (name:string):LinkId => {
+  const relation = relations.find(link=>network.link(link.references()[1])?.metadata().term==='full name'
+    &&network.link(link.references()[2])?.metadata().definition===name);
+  if(!relation) throw new Error('missing actual owned tuple declaration '+name);
+  return relation.references()[0];
+};
+const seed = declaration('seed'),choose = declaration('choose'),alternate = declaration('alternate');
+const reference = relations.find(link=>network.link(link.references()[1])?.metadata().term==='declaration reference'
+  &&link.references()[2].equals(seed));
+if(!reference) throw new Error('the actual owned initializer declaration reference is missing');
+const initializerList = network.link(field(field(choose,'source local state'),'initializers'));
+if(!initializerList) throw new Error('the actual owned initializer list is missing');
+const initializer = initializerList.references()[0];
+`;
   const imports = `import { importEbnf, encodeFormalConceptDefinition, createDiscoveredConceptLinks,
     readDiscoveredConceptLinks, importResourceDescriptionGraph, decodeResourceDescriptionGraph,
     mergeResourceDescriptionGraphs, verifyResourceDescriptionGraphWitnesses } from ${module};\n`;
@@ -832,6 +860,88 @@ export function createWithoutSelectedRustModel() { return createTypedProgramLink
 export function reimportCompleteJavaScriptWithoutGeneratedBindingModel() {
   return createTypedProgramLinks(javascript.code,'JavaScript');
 }
+`,
+    },
+    ...ownedTupleCallFixture.cases.map((entry,index) => ({
+      name: `valid-owned-tuple-call-whole-program-${index}`, expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks, LinkNetwork } from ${module};
+const packet = createTypedProgramLinks(${JSON.stringify(entry.source)},'Rust',
+  {rustOwnedLocalStateModel:${JSON.stringify(ownedTupleCallFixture.model)},provenance:{consumer:${JSON.stringify(entry.name)}}});
+const network = LinkNetwork.fromLino(packet.network.toLino());
+export function reimportActualEmittedRust(source:string,copies:boolean) {
+  return createTypedProgramLinks(source,'Rust',{rustOwnedLocalStateModel:copies?'canonical owned text local copies 1':${JSON.stringify(ownedTupleCallFixture.model)}});
+}
+export const contractEvidence = {network,root:packet.root,program:decodeTypedProgramLinks(network,packet.root),
+  javascript:emitTypedProgramLinks(network,packet.root,'JavaScript'),rust:emitTypedProgramLinks(network,packet.root,'Rust')};
+`,
+    })),
+    {
+      name: 'valid-source-free-owned-tuple-call-declaration-retarget', expectedDiagnostics: [],
+      source: `${tupleCallGraphPrelude}
+const previous = reference.references();
+const report = network.applySubstitution(new SubstitutionRule(previous,[previous[0],previous[1],alternate]));
+if(report.updated().length!==1) throw new Error('the actual initializer must have exactly one declaration reference');
+const target = network.link(field(initializer,'target'));
+if(!target) throw new Error('the actual initializer target fact is missing');
+target.metadata().definition = 'alternate';
+const restored = LinkNetwork.fromLino(network.toLino());
+export const contractEvidence = {network:restored,root:packet.root,originalProgram,
+  program:decodeTypedProgramLinks(restored,packet.root),javascript:emitTypedProgramLinks(restored,packet.root,'JavaScript'),
+  rust:emitTypedProgramLinks(restored,packet.root,'Rust')};
+`,
+    },
+    ...ownedTupleCallFixture.refusals.map((entry,index) => ({
+      name: `valid-owned-tuple-call-selector-with-refused-source-${index}`, expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks } from ${module};
+createTypedProgramLinks(${JSON.stringify(entry.source)},'Rust',{rustOwnedLocalStateModel:${JSON.stringify(ownedTupleCallFixture.model)}});
+`,
+    })),
+    ...[
+      ['call-only-retarget', `const previous=reference.references();network.applySubstitution(new SubstitutionRule(previous,[previous[0],previous[1],alternate]));`],
+      ['fact-only-retarget', `const target=network.link(field(initializer,'target'));if(!target)throw new Error('missing target');target.metadata().definition='alternate';`],
+      ['detached-declaration', `const original=network.link(seed);if(!original)throw new Error('missing declaration');
+const cloned=network.insertLink(original.references(),original.metadata());
+for(const relation of relations){const refs=relation.references();if(refs[0].equals(seed))network.insertLink([cloned,refs[1],refs[2]],relation.metadata());}
+const previous=reference.references();network.applySubstitution(new SubstitutionRule(previous,[previous[0],previous[1],cloned]));`],
+      ['string-header-width', `const integerList=network.link(field(field(field(field(seed,'source function signature'),'source signature result'),'type'),'elements'));
+if(!integerList)throw new Error('missing actual result tuple');const integer=integerList.references()[1],width=field(integer,'bits');
+const old=network.link(width);if(!old)throw new Error('missing actual integer width');
+const scalar=network.insertLink([],old.metadata().withTerm('string value').withDefinition('32'));
+const relation=relations.find(link=>link.references()[0].equals(integer)&&link.references()[2].equals(width));if(!relation)throw new Error('missing width relation');
+const previous=relation.references();network.applySubstitution(new SubstitutionRule(previous,[previous[0],previous[1],scalar]));`],
+      ['wrong-tuple-item-type', `const items=network.link(field(field(seed,'body'),'items'));if(!items)throw new Error('missing actual tuple items');
+const previous=items.references();network.applySubstitution(new SubstitutionRule(previous,[previous[1],previous[1]]));`],
+      ['reversed-field-modes', `const modes=network.link(field(initializer,'field modes'));if(!modes)throw new Error('missing actual ordered field modes');
+const previous=modes.references();network.applySubstitution(new SubstitutionRule(previous,[previous[1],previous[0]]));`],
+    ].map(([selection,mutation]) => ({
+      name: `valid-owned-tuple-call-selector-with-malformed-links-${selection}`, expectedDiagnostics: [],
+      source: `${tupleCallGraphPrelude}\n${mutation}\nexport const malformedPacket={network:LinkNetwork.fromLino(network.toLino()),root:packet.root};\n`,
+    })),
+    {
+      name: 'reject-unregistered-owned-tuple-call-model-version', expectedDiagnostics: ['TS2820'],
+      source: `import { createTypedProgramLinks } from ${module};
+createTypedProgramLinks(${JSON.stringify(retargetTupleCall.source)},'Rust',{rustOwnedLocalStateModel:'closed owned text tuple initialization calls 99'});
+`,
+    },
+    {
+      name: 'valid-owned-tuple-call-selector-type-with-wrong-source-language', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks } from ${module};
+export function createWrongLanguagePacket(){return createTypedProgramLinks('function empty(){}','JavaScript',
+  {rustOwnedLocalStateModel:${JSON.stringify(ownedTupleCallFixture.model)}});}
+`,
+    },
+    {
+      name: 'reject-unregistered-owned-tuple-call-source-signature-model', expectedDiagnostics: ['TS2322'],
+      source: `import { createTypedProgramLinks } from ${module};
+createTypedProgramLinks(${JSON.stringify(retargetTupleCall.source)},'Rust',
+  {rustOwnedLocalStateModel:${JSON.stringify(ownedTupleCallFixture.model)},rustSourceSignatureModel:'Rust source function signature 99'});
+`,
+    },
+    {
+      name: 'valid-owned-tuple-call-selector-type-with-independent-source-profile', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks } from ${module};
+export function createIncompatibleSourcePacket(){return createTypedProgramLinks(${JSON.stringify(retargetTupleCall.source)},'Rust',
+  {rustOwnedLocalStateModel:${JSON.stringify(ownedTupleCallFixture.model)},rustPureUnitCallModel:'closed pure Rust unit calls 1'});}
 `,
     },
   ];
