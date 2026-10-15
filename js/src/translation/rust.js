@@ -71,6 +71,11 @@ export function parseRust(source, { arrayResultModel = '', completionModel = '',
   if(!acceptRustPureUnitCallModel(pureUnitCallModel))throw unsupported('Rust pure Unit-call model','select the legacy model, closed pure Rust unit calls 1 or closed public pure Rust unit calls 1');
   if(pureUnitCallModel&&[arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,localValueStateModel].some(Boolean))throw unsupported('Rust pure Unit-call model','the closed Unit-call interpretation requires its independent source profile');
   const { tokens } = tokenize(source, 'Rust');
+  return parseRustTokenStream(tokens, { arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel, primitiveOwnerModel, emptyOptionSourceModel, typeNamespaceModel, pureUnitCallModel, localValueStateModel, constFunctionModel });
+}
+
+// Internal complete-token entry; public source parsing validates options and lexes first.
+export function parseRustTokenStream(tokens, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '', pureUnitCallModel = '', localValueStateModel = '', constFunctionModel = '' } = {}) {
   const declarations = new RustParser(tokens, null, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel);
   declarations.file();
   declarations.origins.resolveTypes((segments, path) => declarations.resolve(segments, path));
