@@ -2054,6 +2054,21 @@ release sibling worktrees. Cleanup is restricted to meta-language-owned storage;
 it never clears unrelated project or user data. Rust compilation runs only in
 CI/CD. Local Rust checks are limited to formatting changed files.
 
+The complete-table and raw-graph native oracles prepare and authenticate their
+whole generated sources, then finish the full Rust CST text and binary replays
+before constructing observation matrices and numeric transport dictionaries.
+Only immutable source texts, compact interface records and declaration identities
+leave source preparation; typed programs, emitter artifacts and replay graphs
+do not remain attached to the matrix. Canonical text replay feeds every record
+through the existing streaming Links parser with collection disabled, preserving
+its per-record bounds, all link identities, ordered references and metadata. It
+still reconstructs the whole network and checks the exact original source; it
+does not raise the whole-input parser limit or omit records. The transport's
+actual source hash is a separate receipt checked before and after execution,
+outside the unchanged historical producer bindings. Tiny lifecycle and transport
+checks establish ordering and fidelity; full planner resource fit and native
+observations require CI execution within the existing limits.
+
 - CI runs a fast `cargo check` of all targets and features first; the jobs that
   compile and test need it, so a compile error fails once.
 - CI splits the Rust tests by test target and filter, and the JavaScript tests
