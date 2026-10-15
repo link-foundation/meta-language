@@ -3562,6 +3562,12 @@ const SOURCE_PROCESSING_NAME_BINDINGS = [
           "name": "normalize_program_integral_metadata",
           "id": "translation.normalize-program-integral-metadata"
         }
+      ],
+      "js/src/translation/rust-source-signatures.js": [
+        {
+          "name": "acceptProgramIntegralMetadata",
+          "id": "translation.accept-program-integral-metadata"
+        }
       ]
     }
   },
