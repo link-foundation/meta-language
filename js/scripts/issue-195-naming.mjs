@@ -12848,7 +12848,1080 @@ const FINAL_SOURCE_ORACLE_NAME_INVENTORIES=FINAL_SOURCE_ORACLE_NAME_BINDINGS.map
  extract:(raw,file)=>files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(raw)).map(({name})=>normalizeFinalSourceOracleName(name)),
  recordOf:name=>Object.values(files).flat().find(entry=>normalizeFinalSourceOracleName(entry.name)===name).id,
 }));
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES]);
+// Actual isolated identity, role projection and finite collector meanings.
+const ORIGINAL_LINK_AND_COLLECTOR_NAME_BINDINGS=[
+  {
+    "inventory": "exact original link identity decisions",
+    "files": {
+      "experiments/original-link-identity/rules.mjs": [
+        {
+          "name": "acceptOriginalLinkIdentityWord",
+          "id": "repository.accept-original-link-identity-word"
+        },
+        {
+          "name": "checkOriginalLinkIdentityIndex",
+          "id": "repository.check-original-link-identity-index"
+        },
+        {
+          "name": "findOriginalLinkIdentityOrdinal",
+          "id": "repository.find-original-link-identity-ordinal"
+        },
+        {
+          "name": "readOriginalLinkIdentityOrdinals",
+          "id": "repository.read-original-link-identity-ordinals"
+        }
+      ],
+      "experiments/original-link-identity/data/native-definitions.lino": [
+        {
+          "name": "accept_original_link_identity_word",
+          "id": "repository.accept-original-link-identity-word"
+        },
+        {
+          "name": "check_original_link_identity_index",
+          "id": "repository.check-original-link-identity-index"
+        },
+        {
+          "name": "find_original_link_identity_ordinal",
+          "id": "repository.find-original-link-identity-ordinal"
+        },
+        {
+          "name": "read_original_link_identity_ordinals",
+          "id": "repository.read-original-link-identity-ordinals"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original link identity policy and host operations",
+    "files": {
+      "experiments/original-link-identity/policy.mjs": [
+        {
+          "name": "originalLinkIdentityPolicy",
+          "id": "repository.original-link-identity-policy"
+        },
+        {
+          "name": "originalLinkIdentityRulesSource",
+          "id": "repository.render-original-link-identity-rules"
+        },
+        {
+          "name": "exactOriginalLinkIdentity",
+          "id": "repository.read-original-link-identity-integer"
+        },
+        {
+          "name": "originalLinkIdentityWords",
+          "id": "repository.project-original-link-identity-words"
+        },
+        {
+          "name": "originalLinkIdentityIndex",
+          "id": "repository.create-original-link-identity-index"
+        },
+        {
+          "name": "historicalPublicLinkId",
+          "id": "repository.historical-public-link-identity-source"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original link identity exact transport roles",
+    "files": {
+      "experiments/original-link-identity/policy.mjs": [
+        {
+          "name": "anchors",
+          "id": "repository.original-link-identity-anchor-vector"
+        },
+        {
+          "name": "nullHandle",
+          "id": "repository.original-link-identity-missing-ordinal"
+        },
+        {
+          "name": "absentHandle",
+          "id": "repository.original-link-identity-absent-handle"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original link identity linked source generation",
+    "files": {
+      "experiments/original-link-identity/generate.mjs": [
+        {
+          "name": "originalLinkIdentityNativeDefinitions",
+          "id": "repository.build-original-link-identity-native-definitions"
+        },
+        {
+          "name": "generateOriginalLinkIdentity",
+          "id": "repository.generate-original-link-identity-data"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original link certificate role decisions",
+    "files": {
+      "experiments/original-link-role-projection/rules.mjs": [
+        {
+          "name": "readOriginalLinkRoleField",
+          "id": "repository.read-original-link-role-field"
+        },
+        {
+          "name": "readOriginalLinkRoleReferences",
+          "id": "repository.read-original-link-role-references"
+        },
+        {
+          "name": "readOriginalLinkRoleOperation",
+          "id": "repository.accept-original-link-role-operation"
+        },
+        {
+          "name": "firstOriginalLinkRoleOccurrence",
+          "id": "repository.accept-first-original-link-role-occurrence"
+        },
+        {
+          "name": "readOriginalLinkRoleKind",
+          "id": "repository.read-original-link-concrete-role-kind"
+        },
+        {
+          "name": "registerOriginalLinkRoles",
+          "id": "repository.register-original-link-certificate-roles"
+        },
+        {
+          "name": "projectOriginalLinkRoleRegistry",
+          "id": "repository.project-original-link-role-registry"
+        }
+      ],
+      "experiments/original-link-role-projection/data/native-definitions.lino": [
+        {
+          "name": "read_original_link_role_field",
+          "id": "repository.read-original-link-role-field"
+        },
+        {
+          "name": "read_original_link_role_references",
+          "id": "repository.read-original-link-role-references"
+        },
+        {
+          "name": "read_original_link_role_operation",
+          "id": "repository.accept-original-link-role-operation"
+        },
+        {
+          "name": "first_original_link_role_occurrence",
+          "id": "repository.accept-first-original-link-role-occurrence"
+        },
+        {
+          "name": "read_original_link_role_kind",
+          "id": "repository.read-original-link-concrete-role-kind"
+        },
+        {
+          "name": "register_original_link_roles",
+          "id": "repository.register-original-link-certificate-roles"
+        },
+        {
+          "name": "project_original_link_role_registry",
+          "id": "repository.project-original-link-role-registry"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original link certificate role source operations",
+    "files": {
+      "experiments/original-link-role-projection/policy.mjs": [
+        {
+          "name": "originalLinkRolePolicy",
+          "id": "repository.original-link-role-policy"
+        },
+        {
+          "name": "originalLinkRoleRulesSource",
+          "id": "repository.render-original-link-role-rules"
+        }
+      ],
+      "experiments/original-link-role-projection/transport.mjs": [
+        {
+          "name": "ORIGINAL_LINK_ROLE_POLICY",
+          "id": "repository.original-link-role-policy"
+        },
+        {
+          "name": "readOriginalLinkRoleTransport",
+          "id": "repository.read-original-link-role-transport"
+        },
+        {
+          "name": "projectOriginalLinkCertificateRoles",
+          "id": "repository.project-original-link-certificate-roles"
+        }
+      ],
+      "experiments/original-link-role-projection/generate.mjs": [
+        {
+          "name": "generateOriginalLinkRoleProjection",
+          "id": "repository.generate-original-link-role-data"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original link role host transport operations",
+    "files": {
+      "experiments/original-link-role-projection/transport.mjs": [
+        {
+          "name": "ordinal",
+          "id": "repository.read-original-link-role-membership-ordinals"
+        },
+        {
+          "name": "fail",
+          "id": "repository.raise-original-link-role-error"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original link role exact reversible field names",
+    "files": {
+      "experiments/original-link-role-projection/transport.mjs": [
+        {
+          "name": "fieldName",
+          "id": "repository.read-owned-text-certificate-field-name"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original link role existing kinds table",
+    "files": {
+      "experiments/original-link-role-projection/rules.mjs": [
+        {
+          "name": "kinds",
+          "id": "repository.text-certificate-identity-kind-table"
+        }
+      ],
+      "experiments/original-link-role-projection/transport.mjs": [
+        {
+          "name": "kinds",
+          "id": "repository.text-certificate-identity-kind-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original link role selected occurrence data",
+    "files": {
+      "experiments/original-link-role-projection/rules.mjs": [
+        {
+          "name": "members",
+          "id": "repository.original-link-role-membership-occurrences"
+        },
+        {
+          "name": "roles",
+          "id": "repository.original-link-certificate-role-occurrences"
+        },
+        {
+          "name": "handles",
+          "id": "repository.original-link-role-compact-handles"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experiments/original-link-identity/translated control wrappers",
+    "files": {
+      "experiments/original-link-identity/data/native-definitions.lino": [
+        {
+          "name": "MlCheckOriginalLinkIdentityIndexLoop1Result",
+          "id": "repository.original-link-identity-index-scan-control-result"
+        },
+        {
+          "name": "MlReadOriginalLinkIdentityOrdinalsLoop4Result",
+          "id": "repository.original-link-identity-missing-result-scan-control-result"
+        },
+        {
+          "name": "MlReadOriginalLinkIdentityOrdinalsLoop3Result",
+          "id": "repository.original-link-identity-query-word-scan-control-result"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experiments/original-link-identity/translated control constructors",
+    "files": {
+      "experiments/original-link-identity/data/native-definitions.lino": [
+        {
+          "name": "MlCheckOriginalLinkIdentityIndexLoop1Done",
+          "id": "repository.original-link-identity-index-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkIdentityIndexLoop1Return",
+          "id": "repository.original-link-identity-index-scan-return-constructor"
+        },
+        {
+          "name": "MlReadOriginalLinkIdentityOrdinalsLoop4Done",
+          "id": "repository.original-link-identity-missing-result-scan-completion-constructor"
+        },
+        {
+          "name": "MlReadOriginalLinkIdentityOrdinalsLoop4Return",
+          "id": "repository.original-link-identity-missing-result-scan-return-constructor"
+        },
+        {
+          "name": "MlReadOriginalLinkIdentityOrdinalsLoop3Done",
+          "id": "repository.original-link-identity-query-word-scan-completion-constructor"
+        },
+        {
+          "name": "MlReadOriginalLinkIdentityOrdinalsLoop3Return",
+          "id": "repository.original-link-identity-query-word-scan-return-constructor"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experiments/original-link-identity/translated control continuations",
+    "files": {
+      "experiments/original-link-identity/data/native-definitions.lino": [
+        {
+          "name": "ml_check_original_link_identity_index_loop1",
+          "id": "repository.continue-original-link-identity-index-scan"
+        },
+        {
+          "name": "ml_find_original_link_identity_ordinal_loop2",
+          "id": "repository.continue-original-link-identity-binary-search"
+        },
+        {
+          "name": "ml_read_original_link_identity_ordinals_loop4",
+          "id": "repository.continue-original-link-identity-missing-result-scan"
+        },
+        {
+          "name": "ml_read_original_link_identity_ordinals_loop3",
+          "id": "repository.continue-original-link-identity-query-word-scan"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experiments/original-link-role-projection/translated control wrappers",
+    "files": {
+      "experiments/original-link-role-projection/data/native-definitions.lino": [
+        {
+          "name": "ml_readOriginalLinkRoleField_loop1_result",
+          "id": "repository.original-link-role-unique-field-scan-control-result"
+        },
+        {
+          "name": "MlReadOriginalLinkRoleFieldLoop1Result",
+          "id": "repository.original-link-role-unique-field-scan-control-result"
+        },
+        {
+          "name": "ml_firstOriginalLinkRoleOccurrence_loop2_result",
+          "id": "repository.original-link-role-first-occurrence-scan-control-result"
+        },
+        {
+          "name": "MlFirstOriginalLinkRoleOccurrenceLoop2Result",
+          "id": "repository.original-link-role-first-occurrence-scan-control-result"
+        },
+        {
+          "name": "ml_registerOriginalLinkRoles_loop5_result",
+          "id": "repository.original-link-role-unresolved-kind-scan-control-result"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop5Result",
+          "id": "repository.original-link-role-unresolved-kind-scan-control-result"
+        },
+        {
+          "name": "ml_registerOriginalLinkRoles_loop4_result",
+          "id": "repository.original-link-role-occurrence-validation-control-result"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop4Result",
+          "id": "repository.original-link-role-occurrence-validation-control-result"
+        },
+        {
+          "name": "ml_registerOriginalLinkRoles_loop6_result",
+          "id": "repository.original-link-role-contradiction-scan-control-result"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop6Result",
+          "id": "repository.original-link-role-contradiction-scan-control-result"
+        },
+        {
+          "name": "ml_projectOriginalLinkRoleRegistry_loop7_result",
+          "id": "repository.original-link-role-ordered-operation-traversal-control-result"
+        },
+        {
+          "name": "MlProjectOriginalLinkRoleRegistryLoop7Result",
+          "id": "repository.original-link-role-ordered-operation-traversal-control-result"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experiments/original-link-role-projection/translated control constructors",
+    "files": {
+      "experiments/original-link-role-projection/data/native-definitions.lino": [
+        {
+          "name": "MlReadOriginalLinkRoleFieldLoop1Done",
+          "id": "repository.original-link-role-unique-field-scan-completion-constructor"
+        },
+        {
+          "name": "MlReadOriginalLinkRoleFieldLoop1Return",
+          "id": "repository.original-link-role-unique-field-scan-return-constructor"
+        },
+        {
+          "name": "MlFirstOriginalLinkRoleOccurrenceLoop2Done",
+          "id": "repository.original-link-role-first-occurrence-scan-completion-constructor"
+        },
+        {
+          "name": "MlFirstOriginalLinkRoleOccurrenceLoop2Return",
+          "id": "repository.original-link-role-first-occurrence-scan-return-constructor"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop5Done",
+          "id": "repository.original-link-role-unresolved-kind-scan-completion-constructor"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop5Return",
+          "id": "repository.original-link-role-unresolved-kind-scan-return-constructor"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop4Done",
+          "id": "repository.original-link-role-occurrence-validation-completion-constructor"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop4Return",
+          "id": "repository.original-link-role-occurrence-validation-return-constructor"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop6Done",
+          "id": "repository.original-link-role-contradiction-scan-completion-constructor"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop6Return",
+          "id": "repository.original-link-role-contradiction-scan-return-constructor"
+        },
+        {
+          "name": "MlProjectOriginalLinkRoleRegistryLoop7Done",
+          "id": "repository.original-link-role-ordered-operation-traversal-completion-constructor"
+        },
+        {
+          "name": "MlProjectOriginalLinkRoleRegistryLoop7Return",
+          "id": "repository.original-link-role-ordered-operation-traversal-return-constructor"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experiments/original-link-role-projection/translated control continuations",
+    "files": {
+      "experiments/original-link-role-projection/data/native-definitions.lino": [
+        {
+          "name": "ml_readOriginalLinkRoleField_loop1",
+          "id": "repository.continue-original-link-role-unique-field-scan"
+        },
+        {
+          "name": "ml_read_original_link_role_field_loop1",
+          "id": "repository.continue-original-link-role-unique-field-scan"
+        },
+        {
+          "name": "ml_firstOriginalLinkRoleOccurrence_loop2",
+          "id": "repository.continue-original-link-role-first-occurrence-scan"
+        },
+        {
+          "name": "ml_first_original_link_role_occurrence_loop2",
+          "id": "repository.continue-original-link-role-first-occurrence-scan"
+        },
+        {
+          "name": "ml_readOriginalLinkRoleKind_loop3",
+          "id": "repository.continue-original-link-role-concrete-kind-scan"
+        },
+        {
+          "name": "ml_read_original_link_role_kind_loop3",
+          "id": "repository.continue-original-link-role-concrete-kind-scan"
+        },
+        {
+          "name": "ml_registerOriginalLinkRoles_loop5",
+          "id": "repository.continue-original-link-role-unresolved-kind-scan"
+        },
+        {
+          "name": "ml_register_original_link_roles_loop5",
+          "id": "repository.continue-original-link-role-unresolved-kind-scan"
+        },
+        {
+          "name": "ml_registerOriginalLinkRoles_loop6",
+          "id": "repository.continue-original-link-role-contradiction-scan"
+        },
+        {
+          "name": "ml_register_original_link_roles_loop6",
+          "id": "repository.continue-original-link-role-contradiction-scan"
+        },
+        {
+          "name": "ml_registerOriginalLinkRoles_loop4",
+          "id": "repository.continue-original-link-role-occurrence-validation"
+        },
+        {
+          "name": "ml_register_original_link_roles_loop4",
+          "id": "repository.continue-original-link-role-occurrence-validation"
+        },
+        {
+          "name": "ml_projectOriginalLinkRoleRegistry_loop7",
+          "id": "repository.continue-original-link-role-ordered-operation-traversal"
+        },
+        {
+          "name": "ml_project_original_link_role_registry_loop7",
+          "id": "repository.continue-original-link-role-ordered-operation-traversal"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "exact identity complete source oracle operations",
+    "files": {
+      "experiments/original-link-identity/native-observations.mjs": [
+        {
+          "name": "verifyOriginalLinkIdentityNativeModel",
+          "id": "repository.verify-original-link-identity-native-model"
+        },
+        {
+          "name": "originalLinkIdentityNativeMode",
+          "id": "repository.read-original-link-identity-native-mode"
+        },
+        {
+          "name": "nativeInterface",
+          "id": "repository.read-original-link-identity-native-interface"
+        },
+        {
+          "name": "cases",
+          "id": "repository.build-original-link-identity-native-cases"
+        },
+        {
+          "name": "consumerSource",
+          "id": "repository.render-original-link-identity-native-consumer"
+        },
+        {
+          "name": "planOriginalLinkIdentityNative",
+          "id": "repository.plan-original-link-identity-native-observations"
+        },
+        {
+          "name": "parseObservations",
+          "id": "repository.read-original-link-identity-native-observation-stream"
+        },
+        {
+          "name": "runOriginalLinkIdentityNative",
+          "id": "repository.run-original-link-identity-native-observations"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "exact identity complete source oracle receipt roles",
+    "files": {
+      "experiments/original-link-identity/native-observations.mjs": [
+        {
+          "name": "ORIGINAL_LINK_IDENTITY_MODEL_COMMIT",
+          "id": "repository.original-link-identity-native-model-revision"
+        },
+        {
+          "name": "maximumObservedIndexRows",
+          "id": "repository.original-link-identity-native-index-row-bound"
+        },
+        {
+          "name": "maximumObservedQueryRows",
+          "id": "repository.original-link-identity-native-query-row-bound"
+        },
+        {
+          "name": "inputVectors",
+          "id": "repository.original-link-identity-native-input-vector-receipts"
+        },
+        {
+          "name": "resultBits",
+          "id": "repository.original-link-identity-native-result-bit-vectors"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original identity existing exact oracle provider source digest",
+    "files": {
+      "experiments/original-link-identity/native-observations.mjs": [
+        {
+          "name": "sha256",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        }
+      ],
+      "experiments/original-link-identity/native-observations.test.mjs": [
+        {
+          "name": "digest",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original identity existing exact oracle provider source scalar bytes",
+    "files": {
+      "experiments/original-link-identity/native-observations.mjs": [
+        {
+          "name": "textBytes",
+          "id": "repository.read-rust-text-native-oracle-bytes"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original identity existing exact oracle provider immutable plan",
+    "files": {
+      "experiments/original-link-identity/native-observations.mjs": [
+        {
+          "name": "freeze",
+          "id": "repository.freeze-rust-text-native-observation-plan"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original identity existing exact oracle provider number bit encoder",
+    "files": {
+      "experiments/original-link-identity/native-observations.mjs": [
+        {
+          "name": "numberBits",
+          "id": "repository.encode-text-certificate-native-number-bits"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original identity existing exact oracle provider number bit decoder",
+    "files": {
+      "experiments/original-link-identity/native-observations.mjs": [
+        {
+          "name": "bitsNumber",
+          "id": "repository.decode-text-certificate-native-number-bits"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original identity existing exact oracle provider complete shared source runner",
+    "files": {
+      "experiments/original-link-identity/native-observations.mjs": [
+        {
+          "name": "createSourceNativeObservationRunner",
+          "id": "repository.create-source-native-observation-runner"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original identity existing exact oracle provider controlled complete artifact process",
+    "files": {
+      "experiments/original-link-identity/native-observations.test.mjs": [
+        {
+          "name": "fakeProcess",
+          "id": "repository.create-text-certificate-native-test-process"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original identity existing exact oracle provider exact aggregate failure contract",
+    "files": {
+      "experiments/original-link-identity/native-observations.test.mjs": [
+        {
+          "name": "fails",
+          "id": "repository.require-text-certificate-native-test-failure"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original identity injected process controls",
+    "files": {
+      "experiments/original-link-identity/native-observations.test.mjs": [
+        {
+          "name": "injected",
+          "id": "repository.run-original-link-identity-injected-contract"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original link identity independent controls",
+    "files": {
+      "experiments/original-link-identity/identity.test.mjs": [
+        {
+          "name": "words",
+          "id": "repository.project-original-link-identity-test-word-vectors"
+        },
+        {
+          "name": "run",
+          "id": "repository.run-original-link-identity-test-query"
+        },
+        {
+          "name": "oracle",
+          "id": "repository.read-original-link-identity-linear-test-ordinals"
+        },
+        {
+          "name": "reloads",
+          "id": "repository.reload-original-link-identity-test-packet"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original link role exact original test keys",
+    "files": {
+      "experiments/original-link-role-projection/projection.test.mjs": [
+        {
+          "name": "key",
+          "id": "repository.read-exact-link-identity-key"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original link identity actual saved field reader",
+    "files": {
+      "experiments/original-link-identity/identity.test.mjs": [
+        {
+          "name": "field",
+          "id": "repository.read-text-certificate-test-field"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original link role unique saved field reader",
+    "files": {
+      "experiments/original-link-role-projection/projection.test.mjs": [
+        {
+          "name": "field",
+          "id": "repository.read-unique-original-link-role-test-field"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original graph reversible test field labels",
+    "files": {
+      "experiments/original-link-role-projection/projection.test.mjs": [
+        {
+          "name": "label",
+          "id": "repository.render-certificate-test-field-label"
+        }
+      ],
+      "experiments/original-link-identity/identity.test.mjs": [
+        {
+          "name": "label",
+          "id": "repository.render-certificate-test-field-label"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original link role saved field replacement",
+    "files": {
+      "experiments/original-link-role-projection/projection.test.mjs": [
+        {
+          "name": "replace",
+          "id": "repository.replace-text-certificate-test-field"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original link role attached proof controls",
+    "files": {
+      "experiments/original-link-role-projection/projection.test.mjs": [
+        {
+          "name": "attach",
+          "id": "repository.attach-owned-text-certificate-test-proof"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original link role independent correspondence controls",
+    "files": {
+      "experiments/original-link-role-projection/projection.test.mjs": [
+        {
+          "name": "refs",
+          "id": "repository.read-original-link-role-test-references"
+        },
+        {
+          "name": "body",
+          "id": "repository.read-original-link-role-test-body"
+        },
+        {
+          "name": "create",
+          "id": "repository.create-original-link-role-test-packet"
+        },
+        {
+          "name": "proof",
+          "id": "repository.read-original-link-role-test-proof"
+        },
+        {
+          "name": "rows",
+          "id": "repository.read-original-link-role-test-proof-rows"
+        },
+        {
+          "name": "unpack",
+          "id": "repository.read-original-link-role-test-registration"
+        },
+        {
+          "name": "remapExistingTables",
+          "id": "repository.change-original-link-role-test-table-identities"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "native workflow input selection controls",
+    "files": {
+      "js/tests/ci-workflow-structure.test.js": [
+        {
+          "name": "selectNativeTestInputs",
+          "id": "repository.select-native-workflow-test-inputs"
+        },
+        {
+          "name": "nativeInputCondition",
+          "id": "repository.read-native-workflow-input-condition"
+        },
+        {
+          "name": "evaluateNativeInputCondition",
+          "id": "repository.evaluate-native-workflow-input-condition"
+        },
+        {
+          "name": "nativeInputJobChain",
+          "id": "repository.evaluate-native-workflow-input-job-chain"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "fresh Number array collector admission decisions",
+    "files": {
+      "experiments/fresh-number-array-collectors/rules.mjs": [
+        {
+          "name": "acceptFreshNumberArrayCollectorPattern",
+          "id": "repository.accept-fresh-number-array-collector-pattern"
+        },
+        {
+          "name": "acceptFreshNumberArrayCollectorBinding",
+          "id": "repository.accept-fresh-number-array-collector-binding"
+        }
+      ],
+      "experiments/fresh-number-array-collectors/data/rule-translation.lino": [
+        {
+          "name": "accept_fresh_number_array_collector_pattern",
+          "id": "repository.accept-fresh-number-array-collector-pattern"
+        },
+        {
+          "name": "accept_fresh_number_array_collector_binding",
+          "id": "repository.accept-fresh-number-array-collector-binding"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "fresh Number array collector source operations",
+    "files": {
+      "experiments/fresh-number-array-collectors/policy.mjs": [
+        {
+          "name": "freshNumberArrayCollectorPolicy",
+          "id": "repository.fresh-number-array-collector-policy"
+        }
+      ],
+      "experiments/fresh-number-array-collectors/model.mjs": [
+        {
+          "name": "FRESH_NUMBER_ARRAY_COLLECTOR_POLICY",
+          "id": "repository.fresh-number-array-collector-policy"
+        },
+        {
+          "name": "checkContainers",
+          "id": "repository.check-fresh-number-array-collector-containers"
+        },
+        {
+          "name": "sourceFacts",
+          "id": "repository.read-fresh-number-array-collector-source-facts"
+        },
+        {
+          "name": "compile",
+          "id": "repository.check-fresh-number-array-collector-lowering"
+        },
+        {
+          "name": "certificate",
+          "id": "repository.create-fresh-number-array-collector-certificate"
+        },
+        {
+          "name": "originalSource",
+          "id": "repository.reconstruct-fresh-number-array-collector-source"
+        },
+        {
+          "name": "createFreshNumberArrayCollector",
+          "id": "repository.create-fresh-number-array-collector"
+        },
+        {
+          "name": "checkFreshNumberArrayCollector",
+          "id": "repository.check-fresh-number-array-collector"
+        },
+        {
+          "name": "encodeFreshNumberArrayCollector",
+          "id": "repository.encode-fresh-number-array-collector"
+        },
+        {
+          "name": "decodeFreshNumberArrayCollector",
+          "id": "repository.decode-fresh-number-array-collector"
+        },
+        {
+          "name": "fail",
+          "id": "repository.raise-fresh-number-array-collector-error"
+        },
+        {
+          "name": "equal",
+          "id": "repository.check-fresh-number-array-collector-equality"
+        },
+        {
+          "name": "codeOf",
+          "id": "repository.read-fresh-number-array-collector-token-code"
+        }
+      ],
+      "experiments/fresh-number-array-collectors/generate.mjs": [
+        {
+          "name": "freshNumberArrayCollectorRuleSource",
+          "id": "repository.render-fresh-number-array-collector-rules"
+        },
+        {
+          "name": "freshNumberArrayCollectorDecorators",
+          "id": "repository.build-fresh-number-array-collector-decorators"
+        }
+      ],
+      "experiments/fresh-number-array-collectors/generate-fixtures.mjs": [
+        {
+          "name": "freshNumberArrayCollectorFixtures",
+          "id": "repository.build-fresh-number-array-collector-fixtures"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "fresh Number array collector actual premise ownership",
+    "files": {
+      "experiments/fresh-number-array-collectors/model.mjs": [
+        {
+          "name": "premiseOwner",
+          "id": "repository.fresh-number-array-collector-premise-owner"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "fresh Number array collector lexical source data",
+    "files": {
+      "experiments/fresh-number-array-collectors/policy.mjs": [
+        {
+          "name": "sourceGrammarBasis",
+          "id": "repository.fresh-number-array-collector-source-grammar-basis"
+        },
+        {
+          "name": "unconditionallyReservedBindings",
+          "id": "repository.fresh-number-array-collector-reserved-bindings"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experiments/fresh-number-array-collectors/translated control wrappers",
+    "files": {
+      "experiments/fresh-number-array-collectors/data/rule-translation.lino": [
+        {
+          "name": "ml_acceptFreshNumberArrayCollectorPattern_loop1_result",
+          "id": "repository.fresh-number-array-collector-binding-scan-control-result"
+        },
+        {
+          "name": "MlAcceptFreshNumberArrayCollectorPatternLoop1Result",
+          "id": "repository.fresh-number-array-collector-binding-scan-control-result"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experiments/fresh-number-array-collectors/translated control constructors",
+    "files": {
+      "experiments/fresh-number-array-collectors/data/rule-translation.lino": [
+        {
+          "name": "MlAcceptFreshNumberArrayCollectorPatternLoop1Done",
+          "id": "repository.fresh-number-array-collector-binding-scan-completion-constructor"
+        },
+        {
+          "name": "MlAcceptFreshNumberArrayCollectorPatternLoop1Return",
+          "id": "repository.fresh-number-array-collector-binding-scan-return-constructor"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experiments/fresh-number-array-collectors/translated control continuations",
+    "files": {
+      "experiments/fresh-number-array-collectors/data/rule-translation.lino": [
+        {
+          "name": "ml_acceptFreshNumberArrayCollectorPattern_loop1",
+          "id": "repository.continue-fresh-number-array-collector-binding-scan"
+        },
+        {
+          "name": "ml_accept_fresh_number_array_collector_pattern_loop1",
+          "id": "repository.continue-fresh-number-array-collector-binding-scan"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "fresh Number array collector actual declaration mapping owners",
+    "files": {
+      "experiments/fresh-number-array-collectors/model.mjs": [
+        {
+          "name": "checkProgramDeclarationOwners",
+          "id": "translation.check-program-declaration-owners"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "fresh Number array collector unchanged proof encoder",
+    "files": {
+      "experiments/fresh-number-array-collectors/model.mjs": [
+        {
+          "name": "encodeGeneratedOwnedRust",
+          "id": "repository.encode-generated-owned-rust"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "fresh Number array collector unchanged proof decoder",
+    "files": {
+      "experiments/fresh-number-array-collectors/model.mjs": [
+        {
+          "name": "decodeGeneratedOwnedRust",
+          "id": "repository.decode-generated-owned-rust"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "fresh Number array collector independent source controls",
+    "files": {
+      "experiments/fresh-number-array-collectors/model.test.mjs": [
+        {
+          "name": "create",
+          "id": "repository.create-fresh-number-array-collector-test-program"
+        },
+        {
+          "name": "execute",
+          "id": "repository.execute-fresh-number-array-collector-test-javascript"
+        }
+      ]
+    }
+  }
+];
+const normalizeOriginalLinkAndCollectorName=name=>name.replace(/([a-z0-9])([A-Z])/gu,'$1-$2').replaceAll('_','-').replaceAll(' ','-').toLowerCase().replace(/^remap-/u,'change-mapping-of-').replace(/\bsha256\b/gu,'secure-hash-algorithm-two-hundred-fifty-six').replace(/\bid\b/gu,'identity').replace(/\bml\b/gu,'meta-language').replace(/\b(loop|join)([1-7])\b/gu,(whole,kind,digit)=>kind+'-'+({1:'one',2:'two',3:'three',4:'four',5:'five',6:'six',7:'seven'})[digit]);
+const ORIGINAL_LINK_AND_COLLECTOR_SOURCE_TEXTS=new Map();
+const ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES=ORIGINAL_LINK_AND_COLLECTOR_NAME_BINDINGS.map(({inventory,files})=>({
+ inventory,files:Object.keys(files),
+ extract:(raw,file)=>{let text=raw;if(file.endsWith('.lino')){const saved=ORIGINAL_LINK_AND_COLLECTOR_SOURCE_TEXTS.get(file);if(!saved||saved.raw!==raw)ORIGINAL_LINK_AND_COLLECTOR_SOURCE_TEXTS.set(file,{raw,text:JSON.stringify(readStructuredDataLino(raw))});text=ORIGINAL_LINK_AND_COLLECTOR_SOURCE_TEXTS.get(file).text;}return files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeOriginalLinkAndCollectorName(name));},
+ recordOf:name=>Object.values(files).flat().find(entry=>normalizeOriginalLinkAndCollectorName(entry.name)===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
