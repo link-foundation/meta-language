@@ -322,6 +322,7 @@ impl<'a> LeanParser<'a> {
             main,
             imports: Vec::new(),
             externals: Vec::new(),
+            source_pure_unit_calls: None,
         })
     }
 
@@ -633,6 +634,7 @@ impl<'a> LeanParser<'a> {
                 body,
                 span: Some(self.span_to_next(&start)),
                 generated: false,
+                source_pure_unit: None,
             })));
         }
         if !self.cursor.is("|") {
@@ -666,6 +668,7 @@ impl<'a> LeanParser<'a> {
             body,
             span: Some(self.span_to_next(&start)),
             generated: false,
+            source_pure_unit: None,
         })))
     }
 
@@ -747,6 +750,7 @@ impl<'a> LeanParser<'a> {
                 value,
                 constant: false,
                 span: Some(self.span_to_next(&token)),
+                source_pure_unit_call: None,
             });
         }
         Err(unsupported(

@@ -7,6 +7,7 @@ use super::super::{
 
 impl RustParser {
     pub(in super::super) fn inner_attributes(&mut self) -> Result<()> {
+        self.pure_unit_attribute_guard()?;
         self.empty_option_attribute_guard()?;
         while self.cursor.is("#") && self.cursor.is_at("!", 1) {
             let start = self.cursor.advance();
@@ -17,6 +18,7 @@ impl RustParser {
     }
 
     pub(in super::super) fn attributes(&mut self) -> Result<Vec<Value>> {
+        self.pure_unit_attribute_guard()?;
         let mut derivations = Vec::new();
         self.empty_option_attribute_guard()?;
         while self.cursor.is("#") && self.cursor.is_at("[", 1) {

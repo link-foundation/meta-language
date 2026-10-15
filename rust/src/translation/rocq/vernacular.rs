@@ -17,6 +17,7 @@ impl RocqParser {
             main,
             imports: Vec::new(),
             externals: Vec::new(),
+            source_pure_unit_calls: None,
         })
     }
 
@@ -455,6 +456,7 @@ impl RocqParser {
             body,
             span: Some(span(&start, self.peek())),
             generated: false,
+            source_pure_unit: None,
         })))
     }
 

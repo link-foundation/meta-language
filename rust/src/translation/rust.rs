@@ -35,6 +35,8 @@ mod items;
 pub(crate) mod primitive_owner_rules;
 pub(crate) mod primitive_owners;
 mod product_rules;
+pub(crate) mod pure_unit_call_rules;
+mod pure_unit_calls;
 mod read_only_query_rules;
 mod scalar_loops;
 mod scalar_parameter_rules;
@@ -274,6 +276,20 @@ pub fn parse_rust_with_type_namespace_model(
     )
 }
 
+/// Read complete closed pure Unit programs under the independently selected model.
+///
+/// # Errors
+/// Refuses unknown selectors, unsupported source context and unproved Unit calls.
+pub fn parse_rust_with_pure_unit_call_model(source: &str, model: &str) -> Result<SProgram> {
+    parse_rust_with_selected_profiles(
+        source,
+        SourceProfiles {
+            pure_unit_call: model,
+            ..SourceProfiles::default()
+        },
+    )
+}
+
 #[derive(Clone, Copy, Default)]
 struct SourceProfiles<'a> {
     array_result: &'a str,
@@ -283,6 +299,7 @@ struct SourceProfiles<'a> {
     primitive_owner: &'a str,
     empty_option_source: &'a str,
     type_namespace: &'a str,
+    pure_unit_call: &'a str,
 }
 
 fn parse_rust_with_selected_profiles(
@@ -297,7 +314,34 @@ fn parse_rust_with_selected_profiles(
         primitive_owner: primitive_owner_model,
         empty_option_source: empty_option_source_model,
         type_namespace: type_namespace_model,
+        pure_unit_call: pure_unit_call_model,
     } = profiles;
+    if !pure_unit_call_rules::accept_rust_pure_unit_call_model(pure_unit_call_model) {
+        return Err(unsupported(
+            "Rust pure Unit-call model",
+            "select the legacy model, closed pure Rust unit calls 1 or closed public pure Rust unit calls 1",
+            None,
+        ));
+    }
+    if !pure_unit_call_model.is_empty()
+        && [
+            array_result_model,
+            completion_model,
+            source_signature_model,
+            scalar_loop_model,
+            primitive_owner_model,
+            empty_option_source_model,
+            type_namespace_model,
+        ]
+        .iter()
+        .any(|model| !model.is_empty())
+    {
+        return Err(unsupported(
+            "Rust pure Unit-call model",
+            "the closed Unit-call interpretation requires its independent source profile",
+            None,
+        ));
+    }
     if !super::type_namespace_rules::accept_rust_type_namespace_model(type_namespace_model) {
         return Err(unsupported(
             "Rust type namespace model",
@@ -468,6 +512,8 @@ struct RustParser {
     primitive_owner_model: String,
     empty_option_source_model: String,
     type_namespace_model: String,
+    pure_unit_call_model: String,
+    pure_unit_public_token: Option<Token>,
     type_namespace_frames: Vec<Vec<Vec<String>>>,
     /// Selected initial catalog discovery, never a later collecting pass.
     type_namespace_discovery: Option<()>,
@@ -516,6 +562,8 @@ impl RustParser {
             primitive_owner_model: profiles.primitive_owner.to_owned(),
             empty_option_source_model: profiles.empty_option_source.to_owned(),
             type_namespace_model: profiles.type_namespace.to_owned(),
+            pure_unit_call_model: profiles.pure_unit_call.to_owned(),
+            pure_unit_public_token: None,
             type_namespace_frames: Vec::new(),
             type_namespace_discovery: (!profiles.type_namespace.is_empty() && initial_discovery)
                 .then_some(()),

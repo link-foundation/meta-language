@@ -237,11 +237,13 @@ fn settle_effect(effect: &Effect) -> Effect {
             value,
             constant,
             span,
+            source_pure_unit_call,
         } => Effect::Let {
             name: name.clone(),
             value: settle(value),
             constant: *constant,
             span: *span,
+            source_pure_unit_call: source_pure_unit_call.clone(),
         },
         Effect::Assert { prop, span } => Effect::Assert {
             prop: settle_prop(prop),

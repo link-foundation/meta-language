@@ -553,6 +553,8 @@ pub(super) fn decode_with_binding_identities(
     value["items"] = Value::Array(items);
     value["declarations"] = Value::Array(ordered_declarations);
     validate_spans(&value)?;
+    crate::translation::source_pure_unit_calls::validate_pure_unit_records(&value)
+        .map_err(|failure| error(failure.to_string()))?;
     scopes::restore_patterns(&mut value)?;
     crate::translation::source_unit_clone_derivations::validate_unit_clone_records(&value)
         .map_err(|failure| error(failure.to_string()))?;

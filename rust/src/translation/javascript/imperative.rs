@@ -873,6 +873,7 @@ impl Lowering {
             body: fn_body,
             span: Some(place),
             generated: true,
+            source_pure_unit: None,
         }));
         call_site(self)
     }

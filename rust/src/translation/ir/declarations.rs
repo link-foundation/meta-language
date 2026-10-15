@@ -49,6 +49,9 @@ pub struct DataDecl {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FnDecl {
+    /// Actual complete pure Unit header and body sites under the selected model.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_pure_unit: Option<serde_json::Value>,
     pub name: String,
     pub params: Vec<Param>,
     pub ret: Type,
