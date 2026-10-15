@@ -13,6 +13,7 @@ import {
   validateIssue195Manifest,
 } from '../scripts/issue-195-acceptance-lib.mjs';
 import { translateProgram } from '../src/program-translation.js';
+import { readProjectData } from '../scripts/project-data.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -31,12 +32,26 @@ function clone(value) {
 function syntheticCase(assertions = ['observableBehavior']) {
   const testId = 'i195-synthetic-javascript-positive';
   const manifest = {
+    checkpoints: {
+      'pre-merge': 'The exact candidate must pass before merge.',
+      'post-merge': 'Live default-branch state is reported after merge.',
+      'release-delivery': 'Published artifacts are required for delivery.',
+    },
+    resultPolicy: {
+      acceptedOutcome: 'passed',
+      forbiddenOutcomes: ['missing', 'open', 'partial', 'unsupported', 'skipped', 'todo', 'xfail'],
+      exactCommitRequired: true,
+      positiveEvidenceRequired: true,
+      capabilityDeclarationsAreNotEvidence: true,
+    },
     fixtureCatalog: {
       fixture: { path: 'fixture.json', selector: '$', sha256: 'fixture-digest' },
     },
     atomicRequirements: [
       {
         id: 'I195-SYNTHETIC',
+        critical: true,
+        fullScopeReleaseBlocker: true,
         area: 'synthetic',
         scope: { aliases: ['synthetic'], extensions: ['.synthetic'] },
         requiredRuntimes: ['javascript'],
@@ -100,6 +115,9 @@ test('issue 195 generated manifest is atomic, traceable, and reconciled', async 
   const errors = await validateIssue195Manifest(manifest, root);
 
   assert.deepEqual(errors, []);
+  assert.deepEqual(compareScopeBaseline(
+    readProjectData(path.join(root, 'parity/issue-195-requirements.lino')), manifest,
+  ), [], 'the current generated production manifest preserves its committed scope and policy');
   assert.ok(manifest.atomicRequirements.length >= 150);
   assert.equal(
     manifest.atomicRequirements.filter(({ area }) => area === 'directed-translation').length,
@@ -183,6 +201,90 @@ test('scope baseline detects removed rows, aliases, tests, assertions, and fixtu
     candidate.atomicRequirements[0].verifications[0].fixtureIds.shift();
     assert.match(compareScopeBaseline(baseline, candidate).join('\n'), /fixture removed/);
   });
+});
+
+test('scope baseline conserves critical classification and full-scope delivery blockers', async (context) => {
+  for (const field of ['critical', 'fullScopeReleaseBlocker']) {
+    for (const mutation of ['false', 'missing']) {
+      await context.test(`${field} ${mutation}`, () => {
+        const { manifest } = syntheticCase();
+        const candidate = clone(manifest);
+        if (mutation === 'missing') delete candidate.atomicRequirements[0][field];
+        else candidate.atomicRequirements[0][field] = false;
+        assert.match(compareScopeBaseline(manifest, candidate).join('\n'),
+          new RegExp(`protected requirement field changed for I195-SYNTHETIC: ${field}`, 'u'));
+      });
+    }
+  }
+});
+
+test('scope baseline rejects removed or weakened exact-evidence policies', async (context) => {
+  for (const [name, mutate, expected] of [
+    ['result policy removed', (candidate) => { delete candidate.resultPolicy; }, /acceptance policy changed: resultPolicy/u],
+    ['result policy replaced by array', (candidate) => { candidate.resultPolicy = []; }, /acceptance policy changed: resultPolicy/u],
+    ['accepted outcome weakened', (candidate) => { candidate.resultPolicy.acceptedOutcome = 'skipped'; }, /resultPolicy.acceptedOutcome/u],
+    ['forbidden outcome removed', (candidate) => { candidate.resultPolicy.forbiddenOutcomes.splice(4, 1); }, /resultPolicy.forbiddenOutcomes/u],
+    ['forbidden outcomes removed', (candidate) => { delete candidate.resultPolicy.forbiddenOutcomes; }, /resultPolicy.forbiddenOutcomes/u],
+    ['forbidden outcomes not a list', (candidate) => { candidate.resultPolicy.forbiddenOutcomes = 'missing'; }, /resultPolicy.forbiddenOutcomes/u],
+    ['exact commit guard removed', (candidate) => { delete candidate.resultPolicy.exactCommitRequired; }, /resultPolicy.exactCommitRequired/u],
+    ['exact commit guard disabled', (candidate) => { candidate.resultPolicy.exactCommitRequired = false; }, /resultPolicy.exactCommitRequired/u],
+    ['positive evidence guard disabled', (candidate) => { candidate.resultPolicy.positiveEvidenceRequired = false; }, /resultPolicy.positiveEvidenceRequired/u],
+    ['capability declaration guard disabled', (candidate) => { candidate.resultPolicy.capabilityDeclarationsAreNotEvidence = false; }, /resultPolicy.capabilityDeclarationsAreNotEvidence/u],
+  ]) {
+    await context.test(name, () => {
+      const { manifest } = syntheticCase();
+      const candidate = clone(manifest);
+      mutate(candidate);
+      assert.match(compareScopeBaseline(manifest, candidate).join('\n'), expected);
+    });
+  }
+});
+
+test('scope baseline preserves checkpoint guards and execution order', async (context) => {
+  for (const [name, mutate, expected] of [
+    ['checkpoint policies removed', (candidate) => { delete candidate.checkpoints; }, /acceptance policy changed: checkpoints/u],
+    ['pre-merge guard removed', (candidate) => { delete candidate.checkpoints['pre-merge']; }, /checkpoints.pre-merge/u],
+    ['post-merge guard weakened', (candidate) => { candidate.checkpoints['post-merge'] = 'Run before merge.'; }, /checkpoints.post-merge/u],
+    ['release guard weakened', (candidate) => { candidate.checkpoints['release-delivery'] = 'Published artifacts are optional.'; }, /checkpoints.release-delivery/u],
+    ['checkpoint order reversed', (candidate) => {
+      candidate.checkpoints = Object.fromEntries(Object.entries(candidate.checkpoints).reverse());
+    }, /checkpoint order changed/u],
+    ['verification checkpoint moved', (candidate) => {
+      candidate.atomicRequirements[0].verifications[0].checkpoint = 'release-delivery';
+    }, /protected verification field changed.*checkpoint/u],
+  ]) {
+    await context.test(name, () => {
+      const { manifest } = syntheticCase();
+      const candidate = clone(manifest);
+      mutate(candidate);
+      assert.match(compareScopeBaseline(manifest, candidate).join('\n'), expected);
+    });
+  }
+});
+
+test('scope baseline accepts additive obligations without changing earlier policy or scope', () => {
+  const { manifest } = syntheticCase();
+  const candidate = clone(manifest);
+  candidate.atomicRequirements[0].scope.aliases.push('additional alias');
+  candidate.atomicRequirements[0].scope.extensions.push('.additional');
+  candidate.atomicRequirements[0].requiredRuntimes.push('rust');
+  candidate.atomicRequirements[0].implementationEntryPoints.rust = ['implementation.rs'];
+  candidate.atomicRequirements[0].verifications[0].assertions.push('additionalAssertion');
+  candidate.atomicRequirements[0].verifications[0].fixtureIds.push('additional-fixture');
+  candidate.fixtureCatalog['additional-fixture'] = {
+    path: 'additional-fixture.json', selector: '$', sha256: 'additional-fixture-digest',
+  };
+  candidate.atomicRequirements[0].verifications.push({
+    ...candidate.atomicRequirements[0].verifications[0],
+    testId: 'i195-synthetic-rust-positive', runtime: 'rust',
+  });
+  const added = clone(candidate.atomicRequirements[0]);
+  added.id = 'I195-ADDITIONAL';
+  for (const cell of added.verifications) cell.testId = cell.testId.replace('synthetic', 'additional');
+  candidate.atomicRequirements.push(added);
+  candidate.resultPolicy.forbiddenOutcomes.push('deferred');
+  candidate.resultPolicy.additionalGuard = true;
+  assert.deepEqual(compareScopeBaseline(manifest, candidate), []);
 });
 
 test('known parser shortcuts cannot satisfy the aggregate gate', async (context) => {
