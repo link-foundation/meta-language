@@ -4960,7 +4960,231 @@ const RUST_NUMBER_BOUNDARY_NAME_INVENTORIES=[{
  extract:text=>captures(text,/^(?:export function|pub fn) (acceptRustNumberDigitBoundary|accept_rust_number_digit_boundary)\(/gmu).map(name=>name.replace(/([a-z])([A-Z])/gu,'$1-$2').replaceAll('_','-').toLowerCase()),
  recordOf:()=> 'translation.accept-rust-number-digit-boundary',
 }];
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES]);
+// Exact source bindings for the shared ECMAScript line boundary rule.
+const JAVASCRIPT_LINE_BOUNDARY_NAME_BINDINGS=[
+  {
+    "inventory": "ECMAScript line terminator decisions",
+    "files": {
+      "js/src/translation/javascript-line-terminator-rules.js": [
+        {
+          "name": "acceptJavaScriptLineTerminator",
+          "id": "translation.accept-javascript-line-terminator"
+        }
+      ],
+      "rust/src/translation/javascript_line_terminator_rules.rs": [
+        {
+          "name": "accept_java_script_line_terminator",
+          "id": "translation.accept-javascript-line-terminator"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "ECMAScript line terminator host search",
+    "files": {
+      "js/src/translation/javascript-line-terminators.js": [
+        {
+          "name": "findJavaScriptLineTerminator",
+          "id": "translation.find-javascript-line-terminator"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "ECMAScript line terminator policy",
+    "files": {
+      "js/scripts/generate-javascript-line-terminator-rules.mjs": [
+        {
+          "name": "policy",
+          "id": "translation.javascript-line-terminator-policy"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "ECMAScript line terminator test vectors",
+    "files": {
+      "js/tests/translation-javascript-line-terminators.test.js": [
+        {
+          "name": "terminators",
+          "id": "repository.javascript-line-terminator-test-vectors"
+        }
+      ],
+      "rust/tests/unit/translation_javascript_line_terminators.rs": [
+        {
+          "name": "TERMINATORS",
+          "id": "repository.javascript-line-terminator-test-vectors"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "JavaScript line boundary source observations",
+    "files": {
+      "js/tests/translation-javascript-line-terminators.test.js": [
+        {
+          "name": "execute",
+          "id": "repository.execute-javascript-line-boundary-source"
+        },
+        {
+          "name": "replay",
+          "id": "repository.replay-javascript-line-boundary-program"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "native JavaScript line boundary source observations",
+    "files": {
+      "rust/tests/unit/translation_javascript_line_terminators.rs": [
+        {
+          "name": "observe",
+          "id": "repository.observe-native-javascript-line-boundary-output"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "authentic native suite diagnostic provenance",
+    "files": {
+      "js/tests/translation-bulk-twenty-ci-feedback.test.js": [
+        {
+          "name": "suite",
+          "id": "repository.reviewed-compiler-diagnostic-receipt"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental generated Unit linked operation meanings",
+    "files": {
+      "experiments/generated-javascript-unit/data/policy.lino": [
+        {
+          "name": "owned strict JavaScript directive",
+          "id": "experiment.owned-strict-javascript-directive"
+        },
+        {
+          "name": "owned generated Unit helper",
+          "id": "experiment.owned-generated-unit-helper"
+        },
+        {
+          "name": "owned null Unit return",
+          "id": "experiment.owned-null-unit-return"
+        },
+        {
+          "name": "owned generated Unit binding",
+          "id": "experiment.owned-generated-unit-binding"
+        },
+        {
+          "name": "owned generated Unit invocation",
+          "id": "experiment.owned-generated-unit-invocation"
+        },
+        {
+          "name": "owned generated Unit entry",
+          "id": "experiment.owned-generated-unit-entry"
+        },
+        {
+          "name": "ordered generated Unit bindings",
+          "id": "experiment.ordered-generated-unit-bindings"
+        },
+        {
+          "name": "complete generated JavaScript Unit module",
+          "id": "experiment.complete-generated-javascript-unit-module"
+        },
+        {
+          "name": "ordered generated Unit helpers",
+          "id": "experiment.ordered-generated-unit-helpers"
+        },
+        {
+          "name": "owned generated entry invocation",
+          "id": "experiment.owned-generated-entry-invocation"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental generated Unit source graph relation roles",
+    "files": {
+      "experiments/generated-javascript-unit/model.mjs": [
+        {
+          "name": "sourceGeneratedJavaScriptUnit",
+          "id": "experiment.generated-javascript-unit-source-graph-field"
+        },
+        {
+          "name": "sourceGeneratedJavaScriptEntry",
+          "id": "experiment.generated-javascript-unit-entry-context-field"
+        },
+        {
+          "name": "entryTarget",
+          "id": "experiment.generated-javascript-unit-entry-target-field"
+        },
+        {
+          "name": "gaps",
+          "id": "experiment.generated-javascript-unit-trivia-gap-list-field"
+        },
+        {
+          "name": "raw",
+          "id": "experiment.generated-javascript-unit-source-spelling-field"
+        },
+        {
+          "name": "units",
+          "id": "experiment.generated-javascript-unit-trivia-code-unit-list-field"
+        },
+        {
+          "name": "valueEncoding",
+          "id": "experiment.generated-javascript-unit-value-encoding-field"
+        },
+        {
+          "name": "binding",
+          "id": "experiment.generated-javascript-unit-token-effect-binding-field"
+        },
+        {
+          "name": "declaration",
+          "id": "experiment.generated-javascript-unit-token-declaration-field"
+        },
+        {
+          "name": "observationModel",
+          "id": "experiment.generated-javascript-unit-observation-model-field"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental shared ECMAScript decision reuse",
+    "files": {
+      "experiments/generated-javascript-unit/parser.mjs": [
+        {
+          "name": "acceptJavaScriptLineTerminator",
+          "id": "translation.accept-javascript-line-terminator"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental shared ECMAScript policy reuse",
+    "files": {
+      "experiments/generated-javascript-unit/generate-rules.mjs": [
+        {
+          "name": "lineTerminatorPolicy",
+          "id": "translation.javascript-line-terminator-policy"
+        }
+      ],
+      "experiments/generated-javascript-unit/model.test.mjs": [
+        {
+          "name": "shared",
+          "id": "translation.javascript-line-terminator-policy"
+        }
+      ]
+    }
+  }
+];
+const normalizeJavaScriptLineBoundaryName=name=>name.replace(/([a-z])([A-Z])/gu,'$1-$2').replaceAll('_','-').toLowerCase().replaceAll('java-script','javascript');
+const JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES=JAVASCRIPT_LINE_BOUNDARY_NAME_BINDINGS.map(({inventory,files})=>({
+ inventory,files:Object.keys(files),
+ extract:(raw,file)=>{const text=file.endsWith('.lino')?decodeURIComponent(raw):raw;return files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeJavaScriptLineBoundaryName(name));},
+ recordOf:name=>Object.values(files).flat().find(entry=>normalizeJavaScriptLineBoundaryName(entry.name)===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
