@@ -67,7 +67,21 @@ const premises = [
     id: 'finite operational references',
     statement: 'The draft reference set is a subset of natural numbers. JavaScript currently accepts positive integral Number identifiers; Rust stores u64 identifiers. These finite operational choices do not implement unbounded natural-number addressing or establish equality of the packages entire identifier domains.',
     sources: [[introduction, 'R ⊆ ℕ_0']],
-    implementations: [[jsLink, 'if (!Number.isInteger(numeric) || numeric < 1) {'], [nativeNetwork, 'pub struct LinkId(pub(crate) u64);']],
+    implementations: [[jsLink, `function readLinkIdValue(value) {
+  const identifier = value instanceof LinkId;
+  const descriptor = identifier ? Object.getOwnPropertyDescriptor(value, 'value') : null;
+  const original = identifier
+    ? descriptor && Object.hasOwn(descriptor, 'value') ? descriptor.value : undefined
+    : value;
+  const text = typeof original === 'string' ? original.trim() : null;
+  const numeric = typeof original === 'number' || typeof original === 'bigint'
+    || text !== null && /^[0-9]+$/u.test(text)
+    ? Number(original) : Number.NaN;
+  if (identifier && typeof original !== 'number' || !Number.isSafeInteger(numeric) || numeric < 1) {
+    throw new TypeError('link id must be an exact positive safe integer');
+  }
+  return numeric;
+}`], [nativeNetwork, 'pub struct LinkId(pub(crate) u64);']],
     sharedModels: ['integer-model.binary64-number', 'integer-model.fixed-width-integer', 'integer-model.natural-number'],
   },
   {
