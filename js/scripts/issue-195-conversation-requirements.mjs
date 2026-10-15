@@ -15,6 +15,12 @@ const associativeDataSource = capture('associative-data-storage');
 const agentReductionSource = capture('gradual-agent-reduction');
 const inferenceSource = 'parity/sources/grammar-inference-issue-224.txt';
 
+const sourceTooling = {
+  'I195-ASSOCIATIVE-STACK-PINNED-SOURCE-AUDIT': [
+    'js/scripts/associative-stack-sources.mjs', 'js/tests/issue-195-associative-stack-sources.test.js',
+  ],
+};
+
 // Entry points identify executable implementations. Their presence is not an
 // observation: the tooling tests emit each cell only after its whole behavior
 // succeeds, with the original conversation capture retained as a fixture.
@@ -79,7 +85,7 @@ function rows(sourceKey, fixture, specification, area, declarations, tooling = f
       additionalFixtures: [{ id: 'formal-concept-definitions', path: 'parity/fixtures/formal-concept-definitions.json' }],
     } : {}),
     specification, area,
-    ...(tooling ? { tooling: dataTooling[id]?.tooling ?? null } : (runtimeEntryPoints[id] ?? { javascript: null, rust: null })),
+    ...(tooling ? { tooling: dataTooling[id]?.tooling ?? sourceTooling[id] ?? null } : (runtimeEntryPoints[id] ?? { javascript: null, rust: null })),
     ...(dataTooling[id] ? {
       additionalFixtures: [
         { id: 'project-data-tooling-contract', path: 'parity/fixtures/project-data-tooling-contract.lino' },

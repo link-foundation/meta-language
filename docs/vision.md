@@ -1105,6 +1105,11 @@ have distinct roles. Relevant obligations need code and dependency traceability;
 adoption does not require blindly adding every formal-ai dependency here.
 The [pinned provider audit](../parity/associative-stack-audit.lino) records the
 current source and manifest findings separately from execution evidence.
+Its source checker reads every provider section of the captured guide and
+validates fifteen provider identities and sixteen source roles against the
+immutable bytes. Formal AI's direct runtime use, transitive storage providers,
+conditional browser compatibility, protocol roles, conceptual references and
+development tools remain distinct from meta-language's own integration roles.
 
 Both packages directly depend on Links Notation. Rust additionally offers the
 optional Doublets and platform-mem storage providers through its own adapter.

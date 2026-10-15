@@ -14,6 +14,89 @@ const digest = (algorithm, bytes) => createHash(algorithm).update(bytes).digest(
 const blobHash = bytes => digest('sha1', Buffer.concat([Buffer.from(`blob ${bytes.length}\0`), bytes]));
 const sourcePath = (repository, revision, path) => `parity/sources/associative-stack/${repository}/${revision}/${path}`;
 
+/** Check provider classifications against the actual pinned guide sections. */
+export function checkAssociativeStackProviderRoles(audit, snapshots) {
+  const problems = [];
+  const guide = audit.guides?.find(value => value.repository === 'link-assistant/formal-ai');
+  const file = guide?.files?.find(value => value.path === 'docs/associative-tech-stack.md');
+  const bytes = file && snapshots.get(file.sourceFile);
+  if (!bytes) return ['provider classifications require the captured associative stack guide'];
+  const text = Buffer.from(bytes).toString('utf8');
+  const sections = new Map();
+  let section = '', heading = '', body = [];
+  function retain() {
+    if (!heading) return;
+    const text = body.join('\n').replace(/\s+/gu, ' ');
+    const repository = /Repository:\s*\[[^\]]+\]\(https:\/\/github\.com\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)\)/u.exec(text)?.[1];
+    const identities = repository ? [{ name: /`([^`]+)`/u.exec(heading)?.[1] ?? heading, repository }] : [];
+    for (const match of text.matchAll(/\[(`?[A-Za-z0-9_. -]+`?)\]\(https:\/\/github\.com\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)\)/gu)) {
+      identities.push({ name: match[1].replaceAll('`', ''), repository: match[2] });
+    }
+    sections.set(heading, { section, text, identities });
+  }
+  for (const line of text.split('\n')) {
+    const match = /^(#{2,3}) (.+)$/u.exec(line);
+    if (!match) { body.push(line); continue; }
+    retain(); body = [];
+    if (match[1] === '##') { section = match[2]; heading = ''; }
+    else heading = match[2];
+  }
+  retain();
+  const kinds = new Map([
+    ['direct runtime dependency', 'Direct runtime components'],
+    ['transitive storage dependency', 'Direct runtime components'],
+    ['protocol compatibility', 'Architecture and protocol components'],
+    ['conditional browser compatibility', 'Architecture and protocol components'],
+    ['conceptual reference', 'Architecture and protocol components'],
+    ['development tool', 'Development and orchestration components'],
+  ]);
+  if (!Array.isArray(audit.sourceProviders) || !audit.sourceProviders.length) return ['the pinned guide needs an explicit provider inventory'];
+  const providers = new Set(), covered = new Set();
+  for (const provider of audit.sourceProviders) {
+    if (!provider || typeof provider.name !== 'string' || !provider.name || providers.has(provider.name)
+      || !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/u.test(provider.repository ?? '')
+      || !Array.isArray(provider.locations) || !provider.locations.length) {
+      problems.push('provider identities and their source locations must be unique and explicit');
+      continue;
+    }
+    providers.add(provider.name);
+    const locations = new Set();
+    for (const location of provider.locations) {
+      if (!location || typeof location.heading !== 'string' || typeof location.role !== 'string'
+        || typeof location.sourceFile !== 'string' || typeof location.anchor !== 'string') {
+        problems.push(`${provider.name}: provider source locations must be explicit records`);
+        continue;
+      }
+      const source = sections.get(location.heading);
+      const expectedRole = source?.section === 'Development and orchestration components' ? 'development tool'
+        : source?.section === 'Direct runtime components' ? source.text.includes('transitive implementation detail') ? 'transitive storage dependency' : 'direct runtime dependency'
+          : source?.text.includes('not a bundled JavaScript dependency') ? 'conditional browser compatibility'
+            : location.heading.startsWith('Query dialect supplied by ') ? 'protocol compatibility' : 'conceptual reference';
+      const identity = `${location.heading}\0${location.role}`;
+      if (locations.has(identity)) problems.push(`${provider.name}: duplicate provider source role`);
+      locations.add(identity);
+      if (!source || kinds.get(location.role) !== source.section
+        || location.role !== expectedRole
+        || location.sourceFile !== file.sourceFile
+        || !source.identities.some(identity => identity.name === provider.name && identity.repository === provider.repository)
+        || typeof location.anchor !== 'string' || !location.anchor || !source.text.includes(location.anchor)) {
+        problems.push(`${provider.name}: provider role does not match its exact pinned source section`);
+        continue;
+      }
+      if (location.role === 'transitive storage dependency' && !location.anchor.includes('transitive')) {
+        problems.push(`${provider.name}: a transitive provider needs its explicit source boundary`);
+      }
+      covered.add(`${location.heading}\0${provider.name}\0${provider.repository}`);
+    }
+  }
+  for (const [heading, source] of sections) {
+    for (const identity of source.identities) {
+      if (!covered.has(`${heading}\0${identity.name}\0${identity.repository}`)) problems.push(`a pinned provider occurrence has no classification: ${heading}: ${identity.name}`);
+    }
+  }
+  return problems;
+}
+
 /** Validate exact pinned bytes and Git object identities without network access. */
 export function checkAssociativeStackSources(audit, snapshots) {
   const problems = [];
@@ -77,7 +160,7 @@ export function checkAssociativeStackSources(audit, snapshots) {
       }
     }
   }
-  return problems;
+  return [...problems, ...checkAssociativeStackProviderRoles(audit, snapshots)];
 }
 
 async function githubJson(path) {
