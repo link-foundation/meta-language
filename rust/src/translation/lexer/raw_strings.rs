@@ -103,7 +103,7 @@ fn ml_decode_rust_raw_string_loop5(units: &[f64], mut opening: f64) -> f64 {
                 }
             }
         }
-        return { opening };
+        return opening;
     }
 }
 
