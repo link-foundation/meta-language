@@ -16,6 +16,7 @@ use super::{
 };
 
 mod attributes;
+mod constants;
 mod product_bindings;
 mod source_headers;
 mod types;
@@ -40,6 +41,7 @@ impl RustParser {
             ));
         }
         self.finish_empty_option_source(&mut items, &main)?;
+        self.require_owned_local_program(&items, &main)?;
         Ok(SProgram {
             language: Language::Rust,
             items,
@@ -98,6 +100,13 @@ impl RustParser {
                 && c.is_at("alloc", 2)
                 && c.is_at(";", 3)
             {
+                if !self.local_value_state_model.is_empty() {
+                    return Err(unsupported(
+                        "Rust owned local state",
+                        "external crate declarations require a separate namespace interpretation",
+                        None,
+                    ));
+                }
                 if !self.crate_declarations.insert("alloc".to_owned()) {
                     return Err(unsupported(
                         "extern crate alloc",
@@ -174,6 +183,13 @@ impl RustParser {
     /// `use super::Tree;`, `use crate::a::{b, c as d};`: each imported name is
     /// an alias for its absolute path inside the importing module.
     pub(super) fn use_declaration(&mut self, path: &[String]) -> Result<()> {
+        if !self.local_value_state_model.is_empty() {
+            return Err(unsupported(
+                "Rust owned local state",
+                "imports require a separate actual owner and namespace interpretation",
+                None,
+            ));
+        }
         self.require_type_namespace_without_imports()?;
         let start = self.cursor.advance();
         self.aliases.entry(path.join(".")).or_default();
@@ -527,6 +543,15 @@ impl RustParser {
         let scalar_loop = !self.scalar_loop_model.is_empty()
             && self.cursor.is("{")
             && self.cursor.is_at("loop", 1);
+        if !self.local_value_state_model.is_empty()
+            && (!mutable_params.is_empty() || !self.lifetime_bindings.is_empty())
+        {
+            return Err(unsupported(
+                "Rust owned local state",
+                "mutable parameters and lifetimes require a separate interface proof",
+                None,
+            ));
+        }
         let mutable_names = mutable_params
             .iter()
             .map(|(_, _, _, name)| name.clone())
@@ -615,6 +640,7 @@ impl RustParser {
             .collect();
         let previous = self.origins.enter(Some(scope));
         let mut source_loop = None;
+        let mut source_local_state = None;
         let body = if scalar_loop {
             if !path.is_empty() {
                 return Err(unsupported(
@@ -628,6 +654,16 @@ impl RustParser {
             self.scalar_loop_active = active;
             let (body, proof) = read?;
             source_loop = Some(proof);
+            body
+        } else if !self.local_value_state_model.is_empty() {
+            let (body, proof) = self.read_owned_local_state_body(
+                path,
+                &name,
+                &params,
+                &ret,
+                source_signature.as_ref(),
+            )?;
+            source_local_state = Some(Box::new(proof));
             body
         } else if self.completion_model.is_empty() {
             self.block(path)?
@@ -677,49 +713,7 @@ impl RustParser {
             source_empty_option: None,
             source_loop: source_loop.map(Box::new),
             source_type_namespace,
-        })
-    }
-
-    /// `const N: T = e;` is a function without parameters.
-    pub(super) fn const_item(&mut self, path: &[String]) -> Result<SFn> {
-        self.require_type_namespace_without_constant()?;
-        let start = self.cursor.advance();
-        let name = self.cursor.identifier(Some("const"))?.value;
-        self.cursor.expect(":", Some("const"))?;
-        let ret = self.parse_type()?;
-        let source_result = self.origins.current_type.clone();
-        if matches!(ret, Type::Array { .. }) {
-            return Err(unsupported(
-                "Rust array constant",
-                "vector allocation and slice constants require a separate constant evaluation model",
-                span(&start, self.cursor.peek()),
-            ));
-        }
-        self.origins.declaration(
-            &name,
-            path,
-            SourceDeclaration::Function {
-                parameters: Vec::new(),
-                result: source_result.clone(),
-            },
-        )?;
-        self.cursor.expect("=", Some("const"))?;
-        let body = self.expr(path, Options::default())?;
-        self.origins
-            .argument(&self.origins.origin(&body, path), &source_result, body.span)?;
-        self.cursor.expect(";", Some("const"))?;
-        Ok(SFn {
-            name,
-            params: Vec::new(),
-            ret: Some(ret),
-            body,
-            span: span(&start, self.cursor.peek()),
-            generated: false,
-            source_signature: None,
-            source_primitive_owners: None,
-            source_empty_option: None,
-            source_type_namespace: None,
-            source_loop: None,
+            source_local_state,
         })
     }
 

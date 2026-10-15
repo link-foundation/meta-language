@@ -163,6 +163,7 @@ impl RustParser {
                 Some(token.span()),
             ));
         }
+        self.require_owned_local_indirection(&token)?;
         // Source evidence proves immutable indirection before projecting its value.
         if self.cursor.is("&") || self.cursor.is("&&") {
             self.cursor.advance();
@@ -296,6 +297,16 @@ impl RustParser {
                 )?;
                 let mut origin = self.origins.origin(&value, path);
                 let method_name = method.value.as_str();
+                if let Some(copy) = self.read_owned_local_copy(
+                    &value,
+                    &method,
+                    args.len(),
+                    &origin,
+                    span(&token, self.cursor.peek()),
+                )? {
+                    value = copy;
+                    continue;
+                }
                 let float_operation =
                     super::float_predicate_rules::accept_rust_float_operation_method(method_name);
                 if float_operation
@@ -652,8 +663,11 @@ impl RustParser {
                 let result = SExpr::new(
                     SNode::Tuple {
                         items,
-                        frozen: true,
-                        product_model: Some("immutable value product".to_owned()),
+                        frozen: self.local_value_state_model.is_empty(),
+                        product_model: self
+                            .local_value_state_model
+                            .is_empty()
+                            .then(|| "immutable value product".to_owned()),
                     },
                     range,
                 );
@@ -864,6 +878,13 @@ impl RustParser {
             && (accept_rust_source_box_owner(&owner.join("::"), false)
                 || accept_rust_source_box_owner(&resolved_owner.join("::"), false))
         {
+            if !self.local_value_state_model.is_empty() {
+                return Err(unsupported(
+                    "Rust owned local state",
+                    "Box allocation requires a separate source ownership interpretation",
+                    range,
+                ));
+            }
             if args.len() != 1 {
                 return Err(type_error("Box::new expects 1 argument", range));
             }
@@ -885,6 +906,12 @@ impl RustParser {
                 range,
             );
             self.origins.conversion(&result, path);
+            if !self.local_value_state_model.is_empty() {
+                self.local_value_constructors.insert(
+                    range.expect("a parsed constructor has a range"),
+                    Span::new(token.start, self.cursor.tokens[self.cursor.index - 1].end),
+                );
+            }
             return Ok(result);
         }
         let fixed = rust_fixed_type(&segments[0]);
