@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 124 | 123 | 1 | 0 |
+| Generators | 125 | 124 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 44 | 0 | 0 | 44 |
+| Published artifact contents | 45 | 0 | 0 | 45 |
 
 ## JavaScript engines
 
@@ -627,6 +627,7 @@ they are.
 | `js/scripts/generate-rust-float-predicate-rules.mjs` | `js/scripts/generate-rust-float-predicate-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-function-lifetime-fixtures.mjs` | `js/scripts/generate-rust-function-lifetime-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-indirection-rules.mjs` | `js/scripts/generate-rust-indirection-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-number-rules.mjs` | `js/scripts/generate-rust-number-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-primitive-owner-fixtures.mjs` | `js/scripts/generate-rust-primitive-owner-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-primitive-owner-rules.mjs` | `js/scripts/generate-rust-primitive-owner-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-product-rules.mjs` | `js/scripts/generate-rust-product-rules.mjs` | `script` |  | derived | current |  |
@@ -761,6 +762,7 @@ they are.
 | `src/data/rust-borrowed-call-interface.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-const-functions.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-empty-options.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-number-literals.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-owned-local-state.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-primitive-owners.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-pure-unit-calls.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
