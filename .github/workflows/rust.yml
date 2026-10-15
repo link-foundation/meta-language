@@ -722,6 +722,23 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Run complete Rust raw binding rule observations
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        working-directory: ${{ github.workspace }}
+        env:
+          CI: 'true'
+          RUST_RAW_BINDING_RULE_NATIVE: '1'
+        run: node scripts/with-cache-cleanup.mjs --event test -- node --test experiments/rust-raw-binding-certificate-adapter/native-observations.test.mjs
+
+      - name: Retain complete Rust raw binding rule observations
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: rust-raw-binding-rules-native-observations-${{ github.sha }}
+          path: issue-195-artifacts/rust-raw-binding-rules-native-observations.lino
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Run doc tests
         if: ${{ !cancelled() && matrix.suite == 'remaining' }}
         shell: bash

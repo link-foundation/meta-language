@@ -112,7 +112,7 @@ test('successful compiler status requires real artifacts and any source or consu
  }
 });
 
-// No current CI wiring. Only a later reviewed batch may enable this real subprocess group.
+// Only the explicitly selected native CI cell enables this real subprocess group.
 if(nativeEnabled)test('CI executes the complete unchanged six-rule artifact for all 644 declared selector calls',()=>{
  const receipt=runRustRawBindingRuleNative(plan);assert.equal(receipt.processMode,'native subprocesses');assert.equal(receipt.originalCount,1);assert.deepEqual(receipt.processCounts,{libraryCompilations:1,consumerCompilations:1,executions:1});assert.equal(receipt.observations.length,1);
  const row=receipt.observations[0];assert.equal(row.invocationCount,644);assert.equal(row.observations.length,644);assert.equal(row.sourceSha256,entry.sourceSha256);assert.deepEqual(row.declarations,entry.declarations);

@@ -785,6 +785,7 @@ test('the complete Rust text source oracle is mandatory after JavaScript and its
   assert.equal(classifier.split(addition).length, 2);
   assert.equal(classifier.replace(addition, '').replace('|experiments/rust-raw-binding-identifiers/', '')
     .replace('|experiments/rust-text-certificate/', '')
+    .replace('|experiments/rust-raw-binding-certificate-adapter/', '')
     .replace('|experiments/source-native-observations\\.mjs$', ''),
     '^(rust/|parity/|docs/|scripts/|\\.github/workflows/(ci|rust)\\.yml$|\\.secretlintrc\\.json$)',
     'the native source selection preserves every existing Rust workflow trigger');
@@ -964,6 +965,73 @@ test('Rust text-certificate native observation gates refuse omissions, duplicati
       ...(name.startsWith('Run ') ? [
         ["CI: 'true'", "CI: 'false'"],
         ["RUST_TEXT_CERTIFICATE_NATIVE: '1'", "RUST_TEXT_CERTIFICATE_NATIVE: '0'"],
+        ['--event test --', '--event build --'],
+        ['node --test experiments/', 'node --test --test-name-pattern optional experiments/'],
+        ['working-directory: ${{ github.workspace }}', 'working-directory: rust'],
+        ['working-directory: ${{ github.workspace }}', 'continue-on-error: true\n        working-directory: ${{ github.workspace }}'],
+      ] : [
+        ['uses: actions/upload-artifact@v7', 'uses: actions/upload-artifact@v6'],
+        ['${{ github.sha }}', '${{ github.ref }}'],
+        ['native-observations.lino', 'native-observations.json'],
+        ['if-no-files-found: error', 'if-no-files-found: ignore'],
+        ['retention-days: 7', 'retention-days: 0'],
+      ]),
+    ];
+    for (const [before, after] of edits) {
+      mutate((steps, index) => {
+        assert.ok(steps[index].text.includes(before));
+        steps[index].text = steps[index].text.replace(before, after);
+      });
+    }
+  }
+});
+
+const RUST_RAW_BINDING_RULE_NATIVE_STEPS = [
+  ['Run complete Rust raw binding rule observations', '60fb15bf3398a6a186d26f0ec2c6adf716c0b5e035370a55333be6b4a066ef87'],
+  ['Retain complete Rust raw binding rule observations', 'b697ffbc4631897dac90caca1df58104d8f00c9ddc26d1f52e6efcb0c2ef0430'],
+];
+
+function checkRustRawBindingRuleNativeSteps(parsed) {
+  for (const [name, hash] of RUST_RAW_BINDING_RULE_NATIVE_STEPS) {
+    const steps = parsed.get('test').steps.filter(step => step.name === name);
+    assert.equal(steps.length, 1, `the raw-binding rule source observation step must execute once: ${name}`);
+    assert.equal(packageStepSignature(steps[0], true), hash, `raw-binding rule native step changed: ${name}`);
+  }
+}
+
+test('Rust raw-binding rule source observations retain mandatory compilation, receipt upload and source triggers', () => {
+  checkRustRawBindingRuleNativeSteps(jobs('rust.yml'));
+  const classifier = /rust_paths='([^']+)'/u.exec(workflow('ci.yml'))?.[1];
+  for (const addition of ['|experiments/rust-raw-binding-certificate-adapter/']) {
+    assert.equal(classifier.split(addition).length, 2, 'each native source oracle path is selected exactly once');
+  }
+  const matches = new RegExp(classifier, 'u');
+  for (const file of ['native-observations.mjs', 'native-observations.test.mjs']) {
+    assert.ok(matches.test(`experiments/rust-raw-binding-certificate-adapter/${file}`), file);
+  }
+  assert.ok(matches.test('experiments/source-native-observations.mjs'));
+  assert.ok(!matches.test('experiments/source-native-observations.mjs.extra'));
+});
+
+test('Rust raw-binding rule native observation gates refuse omissions, duplication and compiler or artifact weakening', () => {
+  for (const [name] of RUST_RAW_BINDING_RULE_NATIVE_STEPS) {
+    const mutate = change => {
+      const parsed = jobs('rust.yml');
+      const steps = parsed.get('test').steps;
+      const index = steps.findIndex(step => step.name === name);
+      assert.ok(index >= 0);
+      change(steps, index);
+      assert.throws(() => checkRustRawBindingRuleNativeSteps(parsed), assert.AssertionError);
+    };
+    mutate((steps, index) => steps.splice(index, 1));
+    mutate((steps, index) => steps.push({ ...steps[index] }));
+    const edits = [
+      ['!cancelled()', 'success()'],
+      ["matrix.suite == 'translation'", "matrix.suite == 'remaining'"],
+      ["matrix.os == 'ubuntu-latest'", "matrix.os == 'windows-latest'"],
+      ...(name.startsWith('Run ') ? [
+        ["CI: 'true'", "CI: 'false'"],
+        ["RUST_RAW_BINDING_RULE_NATIVE: '1'", "RUST_RAW_BINDING_RULE_NATIVE: '0'"],
         ['--event test --', '--event build --'],
         ['node --test experiments/', 'node --test --test-name-pattern optional experiments/'],
         ['working-directory: ${{ github.workspace }}', 'working-directory: rust'],
