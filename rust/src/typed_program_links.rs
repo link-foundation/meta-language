@@ -722,6 +722,19 @@ pub fn emit_typed_program_links_with_options(
     target: &str,
     options: &TypedProgramLinksEmissionOptions,
 ) -> Result<TypedProgramLinksEmission> {
+    let source_header_model = options.rust_source_header_emission_model.as_deref();
+    let rust_target = matches!(target.to_ascii_lowercase().as_str(), "rust" | "rs");
+    if rust_target
+        && options.java_script_scoped_binding_emission_model.is_none()
+        && let Some(model) = source_header_model
+    {
+        crate::translation::source_header_emission::validate_rust_source_header_emission_model(
+            model,
+        )
+        .map_err(|failure| error(failure.to_string()))?;
+        crate::shared_numeric_function_model::validate_shared_numeric_origin_context(network, root)
+            .map_err(|failure| error(format!("Rust source header emission: {failure}")))?;
+    }
     if matches!(
         target.to_ascii_lowercase().as_str(),
         "javascript" | "js" | "mjs"
@@ -731,8 +744,16 @@ pub fn emit_typed_program_links_with_options(
         crate::translation::scoped_binding_emission::validate_raw_program(network, root, model)
             .map_err(|failure| error(failure.to_string()))?;
     }
-    let program = decode_typed_program_links(network, root)?;
-    let source_header_model = options.rust_source_header_emission_model.as_deref();
+    let program = decode_typed_program_links(network, root).map_err(|failure| {
+        if rust_target
+            && options.java_script_scoped_binding_emission_model.is_none()
+            && source_header_model.is_some()
+        {
+            error(format!("Rust source header emission: {failure}"))
+        } else {
+            failure
+        }
+    })?;
     let emitted = match target.to_ascii_lowercase().as_str() {
         "javascript" | "js" | "mjs" => {
             if source_header_model.is_some() {
@@ -744,20 +765,23 @@ pub fn emit_typed_program_links_with_options(
             if let Some(model) = scoped_binding_model {
                 crate::translation::scoped_binding_emission::validate_program(&program, model)
                     .map_err(|failure| error(failure.to_string()))?;
-                crate::translation::scoped_binding_emission::validate_origin_context(network, root, &program)
-                    .map_err(|failure| error(failure.to_string()))?;
+                crate::translation::scoped_binding_emission::validate_origin_context(
+                    network, root, &program,
+                )
+                .map_err(|failure| error(failure.to_string()))?;
             }
-            emit_javascript_with_options(&program, JavaScriptEmissionOptions { scoped_binding_model })
+            emit_javascript_with_options(
+                &program,
+                JavaScriptEmissionOptions {
+                    scoped_binding_model,
+                },
+            )
         }
         "rust" | "rs" => {
-            if options.java_script_scoped_binding_emission_model.is_some() { return Err(error("a JavaScript scoped binding emission model requires JavaScript target")); }
-            if let Some(model) = source_header_model {
-                crate::translation::source_header_emission::validate_rust_source_header_emission_model(model)
-                    .map_err(|failure| error(failure.to_string()))?;
-                crate::shared_numeric_function_model::validate_shared_numeric_origin_context(
-                    network, root,
-                )
-                .map_err(|failure| error(format!("Rust source header emission: {failure}")))?;
+            if options.java_script_scoped_binding_emission_model.is_some() {
+                return Err(error(
+                    "a JavaScript scoped binding emission model requires JavaScript target",
+                ));
             }
             emit_rust_with_options(
                 &program,
