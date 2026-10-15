@@ -438,6 +438,16 @@ fn floating_point_special_spellings_cannot_become_undefined_identifiers() {
 #[test]
 fn constructor_immutability_flags_are_explicitly_refused_until_data_projection_is_supported() {
     let fixtures = fixture();
+    // The historical identifier retains the conditional obligation: datatype
+    // projection is now supported, while explicit JavaScript freezing still
+    // requires a property descriptor model in the Rust target.
+    assert_eq!(
+        fixtures["constructorImmutabilityCases"]
+            .as_array()
+            .unwrap()
+            .len(),
+        4
+    );
     for case in fixtures["constructorImmutabilityCases"].as_array().unwrap() {
         let graph = LinkNetwork::from_lino(case["lino"].as_str().unwrap()).unwrap();
         let root = LinkId::from_u64(case["root"].as_u64().unwrap());
@@ -459,12 +469,34 @@ fn constructor_immutability_flags_are_explicitly_refused_until_data_projection_i
                 Some("boolean value")
             );
         }
-        for target in ["JavaScript", "Rust"] {
+        let javascript = emit_typed_program_links(&graph, root, "JavaScript").unwrap();
+        assert_eq!(javascript.code, case["javascript"].as_str().unwrap());
+        let observed = run_javascript(&format!(
+            "{}\nconst value = make(); const property = Object.getOwnPropertyDescriptor(value, 'value');\nconsole.log(JSON.stringify({{ frozen: Object.isFrozen(value), extensible: Object.isExtensible(value), writable: property.writable, configurable: property.configurable, enumerable: property.enumerable, assigned: Reflect.set(value, 'value', 2), value: value.value }}));",
+            javascript.code
+        ));
+        assert_eq!(observed.len(), 1);
+        assert_eq!(
+            serde_json::from_str::<Value>(&observed[0]).unwrap(),
+            case["descriptors"],
+            "{}",
+            case["id"]
+        );
+        if case["id"].as_str() == Some("frozen-explicit") {
             assert!(
-                emit_typed_program_links(&graph, root, target)
+                emit_typed_program_links(&graph, root, "Rust")
                     .unwrap_err()
                     .message
-                    .contains("does not yet")
+                    .contains("this target needs a JavaScript property descriptor model to retain explicit constructor freezing")
+            );
+        } else {
+            assert!(
+                !emit_typed_program_links(&graph, root, "Rust")
+                    .unwrap()
+                    .code
+                    .is_empty(),
+                "{}",
+                case["id"]
             );
         }
     }
