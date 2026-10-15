@@ -180,10 +180,11 @@ export function checkRustOwnedLocalStateProof(program){
     if(!acceptRustOwnedLocalBinaryOperation(node.op)||node.type.kind!=='bool'||node.left.type.kind==='string'||!sameType(node.left.type,node.right.type)||node.domain&&(!ownedLocalType(node.domain)||!sameType(node.domain,node.left.type)))fail('only exact equality in the actual Boolean/i32 domain is admitted');
     expression(node.left,[...path,'left'],scope,state);expression(node.right,[...path,'right'],scope,state);return;
    }
-   if(node.k==='toString'){if(node.arg.k!=='lit'||node.arg.type.kind!=='string')fail('the constructor must be an actual standard literal String value');expression(node.arg,[...path,'arg'],scope,state);return;}
+   if(node.k==='toString'){if(node.type.kind!=='string'||node.arg.k!=='lit'||node.arg.type.kind!=='string')fail('the constructor must be an actual standard literal String value');expression(node.arg,[...path,'arg'],scope,state);return;}
    if(node.k==='if'){
     if(node.cond.type.kind!=='bool')fail('a condition must retain its actual Boolean type');
     expression(node.cond,[...path,'cond'],scope,state);const thenScope=clone(scope),elseScope=clone(scope);expression(node.then,[...path,'then'],thenScope,new Map(state),expectedJoin);expression(node.else,[...path,'else'],elseScope,new Map(state),expectedJoin);
+    if(!sameType(node.then.type,node.type)||!sameType(node.else.type,node.type))fail('actual conditional branches differ from their declared result type');
     for(const[name,value]of scope){value.available=value.available&&thenScope.get(name).available&&elseScope.get(name).available;value.fields?.forEach((field,index)=>{field.available=field.available&&thenScope.get(name).fields[index].available&&elseScope.get(name).fields[index].available;});}return;
    }
    const fact=bindings.get(JSON.stringify(path));if(!fact||scope.has(node.name))fail('each actual version requires its distinct lexical owner');
@@ -198,8 +199,10 @@ export function checkRustOwnedLocalStateProof(program){
    }else if(fact.mutable||fact.previous!==null||fact.initializer!==null||fact.index!==null)fail('an immutable binding has contradictory source state fields');
    const value={type:node.value.type,available:true};if(ownedLocalPair(value.type))value.fields=[{type:{kind:'string'},available:true},{type:value.type.elements[1],available:true}];inner.set(node.name,value);
    expression(node.body,[...path,'body'],inner,next,expectedJoin);
+   if(!sameType(node.body.type,node.type))fail('the actual local body differs from its declared result type');
    for(const[name,value]of scope){value.available=value.available&&inner.get(name).available;value.fields?.forEach((field,index)=>{field.available=field.available&&inner.get(name).fields[index].available;});}
   }
   expression(entry.body,[],new Map(entry.params.map(parameter=>[parameter.name,{type:parameter.type,available:true}])));
+  if(!sameType(entry.body.type,entry.ret))fail('the actual function body differs from its declared result type');
  }
 }

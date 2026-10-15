@@ -76,6 +76,21 @@ test('direct selected checking and emission reject a forged tuple item before re
  assert.throws(()=>encodeTypedProgramLinks(program),/tuple|owned field/u);
 });
 
+test('direct selected checking and emission validate the actual conditional and local result types',()=>{
+ const conditional=parse(fixture.cases[0]),helper=conditional.declarations.get('seed');
+ const text=helper.body.items[0],count=helper.body.items[1];
+ helper.body.items[0]={k:'if',cond:{k:'lit',value:true,type:{kind:'bool'},span:text.span},then:structuredClone(count),else:text,type:text.type,span:text.span};
+ helper.sourceLocalState.reads[0].path=['items',0,'else'];
+ for(const run of[checkRustOwnedLocalStateProof,emitJavaScript])assert.throws(()=>run(conditional),/actual conditional branches differ/u);
+ assert.throws(()=>encodeTypedProgramLinks(conditional),/conditional|branch/u);
+ const local=parse(fixture.cases[0]),fn=local.declarations.get('choose'),path=[];let last=fn.body;
+ while(last.body.k==='let'){path.push('body');last=last.body;}
+ last.body={k:'var',name:'count',type:fn.params[1].type};
+ fn.sourceLocalState.reads=fn.sourceLocalState.reads.filter(read=>JSON.stringify(read.path)!==JSON.stringify([...path,'body']));
+ for(const run of[checkRustOwnedLocalStateProof,emitJavaScript])assert.throws(()=>run(local),/actual local body differs/u);
+ assert.throws(()=>encodeTypedProgramLinks(local),/type|result/u);
+});
+
 test('new shared rule decisions themselves replay from checked Links without a native implementation',()=>{
  const source=rustOwnedTupleCallRules();assert.equal(readFileSync(new URL('../js/src/translation/rust-owned-tuple-call-rules.js',import.meta.url),'utf8'),source);
  const archive=reload(checkProgram(parseJavaScript(source))),program=decodeTypedProgramLinks(archive.network,archive.root),emission=emitJavaScript(program),context={};
