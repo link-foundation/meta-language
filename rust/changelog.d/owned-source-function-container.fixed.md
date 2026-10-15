@@ -2,3 +2,6 @@ Include function properties in owned source container checks, detecting misplace
 proof markers without invoking accessors. This closes function-root and callback
 fallbacks in the guarded const and owned-text emitters and linked validation;
 ordinary unselected callback metadata keeps its existing behavior.
+Require a plain or null-prototype program root before model selection so
+inherited program fields cannot conceal invalid source qualifications. Ordinary
+unselected callback metadata and inference caches retain their existing behavior.

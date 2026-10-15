@@ -22,13 +22,21 @@ function removeMarkers(program,markers){
 }
 
 test('actual public const, owned text and namespace programs refuse function roots and callback proofs at their guarded boundaries',()=>{
- for(const entry of models)for(const form of['root','nested','getter']){
+ for(const entry of models)for(const form of['root','inherited','nested','getter']){
   let program=create(entry),calls=0;
   if(form==='root')program=Object.assign(function host(){},program);
+  else if(form==='inherited')program=Object.create(program);
   else{const[marker,proof]=removeMarkers(program,entry.markers);program.hidden=function host(){};if(form==='getter')Object.defineProperty(program.hidden,marker,{get(){calls++;return proof;},enumerable:true});else program.hidden[marker]=proof;}
   const checks=[()=>validateLinkedTypedProgram(program),()=>recheckLinkedTypedProgram(program),()=>encodeTypedProgramLinks(program),()=>emitRust(program),()=>emitJavaScript(program)];
   for(const check of checks)assert.throws(check,entry.markers[0]+' '+form);
   assert.equal(calls,0,'source marker accessors must not run');
+ }
+});
+
+test('inherited program fields cannot conceal an invalid actual const qualification',()=>{
+ const program=create(models[0]);program.items[0].sourceConstFunction.keyword='not-const';
+ for(const input of[program,Object.create(program)]){
+  assert.throws(()=>emitRust(input));assert.throws(()=>emitJavaScript(input));
  }
 });
 
@@ -48,4 +56,8 @@ test('ordinary unselected callback metadata retains the existing direct-emitter 
  const packet=createTypedProgramLinks('fn keep(value:i32)->i32{value}fn main(){}','Rust'),program=decodeTypedProgramLinks(packet.network,packet.root),expected=[emitRust(program),emitJavaScript(program)];let calls=0;
  program.hidden=function host(){};Object.defineProperty(program.hidden,'irrelevant',{get(){calls++;return false;}});
  assert.deepEqual([emitRust(program),emitJavaScript(program)],expected);assert.equal(calls,0);
+ Object.defineProperty(program,'inferredExpressionTypes',{value:new WeakMap()});
+ const nullRoot=Object.assign(Object.create(null),program);
+ for(const input of[program,nullRoot])assert.deepEqual([emitRust(input),emitJavaScript(input)],expected);
+ assert.equal(calls,0);
 });
