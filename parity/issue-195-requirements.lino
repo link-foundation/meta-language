@@ -2766,7 +2766,7 @@
 (2766: 172 2765 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (2767: (meta: (t: semantic) (n: 1) (term: string%20value) (def: %23sources-of-truth%3A%20one%20authoritative%20vision%20and%20architecture%20specification) (lang: meta-language%20structured%20data)))
 (2768: 175 2767 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(2769: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 28fdf29dc2688393f7d2c1b2515d23b025b5721b77f56bb7d9ad8156a8c4144e) (lang: meta-language%20structured%20data)))
+(2769: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 76e6c5d8cdc675c6e9b89366ba4470b3550ef5a86cf9365789e9cc774534e90a) (lang: meta-language%20structured%20data)))
 (2770: 178 2769 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (2771: 2763 2764 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (2772: (meta: (t: semantic) (n: 1) (term: string%20value) (def: planned%3Arepository-directive%3Ai195-vision-source-register) (lang: meta-language%20structured%20data)))

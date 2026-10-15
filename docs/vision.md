@@ -365,6 +365,10 @@ primitive value types. An enum and a value function with the same spelling
 retain distinct owned identities. Source-free links preserve each parameter
 and result spelling alongside the existing source signature; validation resolves
 the ordered identifier segments again against the actual program catalog.
+Both direct emitters recheck these namespace facts in each runtime before
+rendering, as linked validation and rechecking do. JavaScript container guards
+inspect callback property descriptors without invoking accessors, so surviving
+source facts hidden on a callback cannot bypass the selected interpretation.
 Crate, self and parent anchors retain their declared scopes, and value calls
 retain their actual function targets. Checked spelling edits and value-body
 edits remain executable. Fifteen independently specified sources, twenty-four
