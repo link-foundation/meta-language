@@ -4,6 +4,7 @@ import {typeError} from './diagnostics.js';
 import {sameType} from './types.js';
 import {checkRustSourceSignature} from './rust-source-signatures.js';
 import {checkOwnedProgramContainers} from './owned-program-containers.js';
+import {acceptProgramOrderedPosition} from '../program-numeric-metadata-rules.js';
 import {acceptRustOwnedLocalValueType,acceptRustOwnedLocalExpression,acceptRustOwnedLocalBinaryOperation,acceptRustOwnedLocalContainer,acceptRustOwnedLocalRecordValue,acceptRustOwnedLocalSourceSpan} from './rust-owned-local-state-rules.js';
 export const RUST_OWNED_LOCAL_STATE_POLICY=readRuntimeProjectData(new URL('./data/rust-owned-local-state.lino',import.meta.url));
 const policy=RUST_OWNED_LOCAL_STATE_POLICY;
@@ -11,6 +12,13 @@ const fail=reason=>{throw typeError('Rust owned local state proof: '+reason);};
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const exact=(value,fields)=>{if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).length!==fields.length||fields.some(field=>!Object.hasOwn(value,field)))fail('unrecognized or missing owned fields');};
 const sourceInterval=span=>Boolean(span&&same(Object.keys(span).sort(),['end','start'])&&[span.start,span.end].every(value=>Number.isSafeInteger(value)&&value>=0)&&span.start<span.end);
+function matchRustOwnedLocalOccurrencePath(actual,recorded){
+ return Array.isArray(actual)&&Array.isArray(recorded)&&actual.length===recorded.length&&actual.every((part,index)=>{
+  const value=recorded[index];
+  return typeof part==='string'?typeof value==='string'&&part===value
+   :typeof part==='number'&&typeof value==='number'&&acceptProgramOrderedPosition(value,part+1)&&part===value;
+ });
+}
 
 /** Reject host facts the selected semantic archive cannot represent before reading them. */
 export function checkRustOwnedLocalStateContainers(program){
@@ -95,8 +103,8 @@ export function checkRustOwnedLocalStateProof(program){
   if(records.bindings.length!==proof.bindings.length||records.reads.length!==proof.reads.length)fail('the owned state proof must cover every actual binder and String occurrence');
   for(const[index,binding]of proof.bindings.entries()){
    exact(binding,policy.fields.binding);
-   const key=JSON.stringify(binding.path),record=records.bindings.find(record=>same(record.path,binding.path));
-   if(!record||!same(record.path,records.bindings[index].path)||record.node.name!==binding.name||bindings.has(key)||!sameType(record.node.value.type,binding.type)||typeof binding.mutable!=='boolean'||!policy.roles.includes(binding.role)||typeof binding.sourceName!=='string'||!binding.sourceName||policy.reservedOwners.includes(binding.sourceName))fail('a local version contradicts its actual binding, order or value domain');
+   const key=JSON.stringify(binding.path),record=records.bindings.find(record=>matchRustOwnedLocalOccurrencePath(record.path,binding.path));
+   if(!record||!matchRustOwnedLocalOccurrencePath(record.path,records.bindings[index].path)||record.node.name!==binding.name||bindings.has(key)||!sameType(record.node.value.type,binding.type)||typeof binding.mutable!=='boolean'||!policy.roles.includes(binding.role)||typeof binding.sourceName!=='string'||!binding.sourceName||policy.reservedOwners.includes(binding.sourceName))fail('a local version contradicts its actual binding, order or value domain');
    if(copies&&(binding.mutable||['replacement','join'].includes(binding.role)))fail('canonical copies do not claim original mutable source bindings');
    if(!ownedLocalType(binding.type)&&!ownedLocalPair(binding.type))fail('a binding changes its actual text or signed i32 domain');
    if(!['replacement','join'].includes(binding.role)){
@@ -106,8 +114,8 @@ export function checkRustOwnedLocalStateProof(program){
    bindings.set(key,binding);
   }
   for(const[index,read]of proof.reads.entries()){
-   exact(read,policy.fields.read);const key=JSON.stringify(read.path),record=records.reads.find(record=>same(record.path,read.path));
-   if(!record||!same(record.path,records.reads[index].path)||record.binding!==read.binding||reads.has(key)||!sameType(read.type,record.node.type)||!same(read.span,record.node.span??null)||!policy.readModes.includes(read.mode)||!copies&&read.mode!=='move')fail('an owned move or copy disagrees with its actual occurrence and interpretation');
+   exact(read,policy.fields.read);const key=JSON.stringify(read.path),record=records.reads.find(record=>matchRustOwnedLocalOccurrencePath(record.path,read.path));
+   if(!record||!matchRustOwnedLocalOccurrencePath(record.path,records.reads[index].path)||record.binding!==read.binding||reads.has(key)||!sameType(read.type,record.node.type)||!same(read.span,record.node.span??null)||!policy.readModes.includes(read.mode)||!copies&&read.mode!=='move')fail('an owned move or copy disagrees with its actual occurrence and interpretation');
    reads.set(key,read);
   }
   if(!copies&&(proof.initializers.length!==1||!proof.bindings.some(binding=>binding.role==='replacement')))fail('the original model requires one actual mutable tuple initialization and replacement');
@@ -116,7 +124,7 @@ export function checkRustOwnedLocalStateProof(program){
   for(const[index,constructor]of proof.literalConstructors.entries()){
    exact(constructor,policy.fields.constructor);
    const record=records.constructors[index],{span,callSpan,path,...owner}=constructor;
-   if(!same(owner,policy.constructor)||!same(record.path,path)||!same(record.node.span??null,span)||!sourceInterval(span)||!sourceInterval(callSpan)||callSpan.start>=span.start||callSpan.end<=span.end||callSpan.start<entry.span.start||callSpan.end>entry.span.end)fail('the standard constructor owner or its actual literal site changed');
+   if(!same(owner,policy.constructor)||!matchRustOwnedLocalOccurrencePath(record.path,path)||!same(record.node.span??null,span)||!sourceInterval(span)||!sourceInterval(callSpan)||callSpan.start>=span.start||callSpan.end<=span.end||callSpan.start<entry.span.start||callSpan.end>entry.span.end)fail('the standard constructor owner or its actual literal site changed');
   }
   for(const initializer of proof.initializers){
    exact(initializer,policy.fields.initializer);const binding=bindings.get(JSON.stringify(initializer.path));

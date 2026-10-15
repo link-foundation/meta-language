@@ -508,9 +508,11 @@ const SOURCE_SPAN_PACKAGE_STEPS = [
 const INTEGRAL_METADATA_PACKAGE_STEPS = [
   ['Check generated integral program metadata rules', 'node scripts/generate-program-numeric-metadata-rules.mjs --check', '68f2e0a33ba07c5f208f0bc67dcadaa722fb64d10e5e30c99415f32b53f6ef3e', 'generated'],
   ['Check shared integral program metadata fixtures', 'node ../experiments/generate-program-numeric-metadata-fixture.mjs --check', 'fd284d751def0418595364f1441265a9281ec97dfbac702f5359b38ea39e96bd', 'generated'],
+  ['Check shared owned occurrence position fixtures', 'node ../experiments/generate-owned-occurrence-position-fixture.mjs --check', '835f45ba351fd3fc0fef0c68aa24cafc0da6aa48b5a3b7509c1def89ab09b168', 'generated'],
 ];
 const INTEGRAL_METADATA_EXPERIMENT_PACKAGE_STEPS = [
   ['Run integral program metadata checks', 'node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/program-numeric-metadata.test.mjs', '1eff414d8e3fa073988ff08d0e9ba2bf6b80010e1c59a78fd452e2c2d79de54c', 'generated'],
+  ['Run owned occurrence position checks', 'node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/owned-occurrence-position.test.mjs', 'd179c728750a9e894baef1886d13d39853f93f45989aab41087af6059683ee98', 'generated'],
 ];
 const OWNED_TEXT_GENERATOR_PACKAGE_STEPS = [
   ["Check generated Rust owned local text state rules", "node ../experiments/generate-rust-owned-local-state-rules.mjs --check", '9f63b3bacdbe0a6bb5a421ff26c75bc5e806e0628f31040b7aaabdc00ea536b8', 'generated'],

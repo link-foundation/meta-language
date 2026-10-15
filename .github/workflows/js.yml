@@ -681,6 +681,16 @@ jobs:
         working-directory: js
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/program-numeric-metadata.test.mjs
 
+      - name: Check shared owned occurrence position fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../experiments/generate-owned-occurrence-position-fixture.mjs --check
+
+      - name: Run owned occurrence position checks
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/owned-occurrence-position.test.mjs
+
       - name: Check generated Rust owned local text state rules
         if: ${{ !cancelled() && matrix.group == 'generated' }}
         working-directory: js

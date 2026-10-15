@@ -1,5 +1,5 @@
 //! Actual expression traversal in the JavaScript host's source-role order.
-use super::{Result, Value, array, fail};
+use super::{Result, Value, array, fail, read_owned_local_position};
 use std::collections::BTreeSet;
 
 #[derive(Clone)]
@@ -24,11 +24,18 @@ pub(super) fn child(path: &[Value], field: &str) -> Vec<Value> {
 }
 
 pub(super) fn key(path: &Value) -> Result<String> {
-    serde_json::to_string(array(
-        path,
-        "a source fact needs its ordered occurrence path",
-    )?)
-    .map_err(|_| fail("a source fact needs its ordered occurrence path"))
+    let parts = array(path, "a source fact needs its ordered occurrence path")?
+        .iter()
+        .map(|part| {
+            if part.is_string() {
+                Ok(part.clone())
+            } else {
+                read_owned_local_position(part, f64::INFINITY).map(Value::from)
+            }
+        })
+        .collect::<Result<Vec<_>>>()?;
+    serde_json::to_string(&parts)
+        .map_err(|_| fail("a source fact needs its ordered occurrence path"))
 }
 
 impl Records {

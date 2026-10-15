@@ -129,6 +129,11 @@ including the same type inside an owned proof. Its supported widths still come
 from the shared typed schema. Native decoding normalizes only that declared
 role before reading its integer field; primitive floating values and all other
 scalar roles keep their existing interpretations.
+Owned occurrence paths likewise compare the numeric value of an actual Number
+position, checking the actual array bounds through the shared tuple-index rule.
+Equivalent integral spellings retain their stored scalar, including negative
+zero naming position zero. String fields remain distinct from numeric array
+positions, and fractional, out-of-range and unsafe positions are refused.
 Rust source admission retains parsed declaration and lexical pointer origins
 before projecting immutable references and standard boxes into the value core.
 It checks the actual owner and consumed pointer layer under that selected model;

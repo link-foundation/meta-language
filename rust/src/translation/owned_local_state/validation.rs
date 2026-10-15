@@ -177,7 +177,7 @@ fn validate_entry(entry: &Value, ordered: bool) -> Result<()> {
     for (binding, record) in facts.iter().zip(&records.bindings) {
         exact(binding, &policy["fields"]["binding"])?;
         let path_key = key(&binding["path"])?;
-        if binding["path"] != json!(record.path)
+        if !same_order(&binding["path"], &json!(record.path), true)
             || record.node["name"] != binding["name"]
             || bindings.contains_key(&path_key)
             || record.node["value"]["type"] != binding["type"]
@@ -219,7 +219,7 @@ fn validate_entry(entry: &Value, ordered: bool) -> Result<()> {
     for (read, record) in read_facts.iter().zip(&records.reads) {
         exact(read, &policy["fields"]["read"])?;
         let path_key = key(&read["path"])?;
-        if read["path"] != json!(record.path)
+        if !same_order(&read["path"], &json!(record.path), true)
             || read["binding"] != record.binding
             || reads.contains_key(&path_key)
             || read["type"] != record.node["type"]
@@ -265,7 +265,7 @@ fn validate_entry(entry: &Value, ordered: bool) -> Result<()> {
         let span = interval(&constructor["span"])?;
         let call_span = interval(&constructor["callSpan"])?;
         if !same_order(&owner, &policy["constructor"], ordered)
-            || constructor["path"] != json!(record.path)
+            || !same_order(&constructor["path"], &json!(record.path), true)
             || !same_order(&record.node["span"], &constructor["span"], ordered)
             || call_span.0 >= span.0
             || call_span.1 <= span.1
