@@ -519,6 +519,7 @@ pub(super) fn decode_with_binding_identities(
         &decoder.fields,
         &declarations.values().copied().collect::<Vec<_>>(),
         body,
+        mapping,
     )?;
     let mut traversal = scopes::Traversal::new(limits.node_limit);
     let ownership = decoder.ownership(&declarations, &mut traversal.remaining)?;

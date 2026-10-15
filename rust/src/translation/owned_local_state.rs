@@ -12,6 +12,7 @@ use std::sync::LazyLock;
 mod expression;
 mod records;
 mod shapes;
+mod tuple_calls;
 mod validation;
 
 /// The same inspectable policy consumed by the JavaScript host.
@@ -20,6 +21,16 @@ pub fn policy() -> &'static Value {
     static POLICY: LazyLock<Value> = LazyLock::new(|| {
         crate::read_structured_data_lino(include_str!("../data/rust-owned-local-state.lino"))
             .expect("the shared owned local state policy is valid")
+    });
+    &POLICY
+}
+
+/// The selected call interpretation extends the unchanged local state policy.
+#[must_use]
+pub fn tuple_call_policy() -> &'static Value {
+    static POLICY: LazyLock<Value> = LazyLock::new(|| {
+        crate::read_structured_data_lino(include_str!("../data/rust-owned-tuple-calls.lino"))
+            .expect("the shared owned tuple call policy is valid")
     });
     &POLICY
 }
@@ -196,6 +207,24 @@ pub fn owned_local_position(position: &SourceTypeSignature) -> bool {
         && position.owner.arguments.is_empty()
         && position.owner.kind == expected.0
         && position.owner.path.join("::") == expected.1
+}
+
+/// Bind the ordered pair to its actual unwrapped standard String/i32 owners.
+#[must_use]
+pub fn owned_tuple_call_position(position: &SourceTypeSignature) -> bool {
+    let owner = &position.owner;
+    owned_local_pair(&position.ty)
+        && position.wrappers.is_empty()
+        && position.lifetimes.is_empty()
+        && owner.kind == "tuple"
+        && owner.path.is_empty()
+        && owner.arguments.len() == 2
+        && owner.arguments[0].kind == "library"
+        && owner.arguments[0].path.join("::") == "std::string::String"
+        && owner.arguments[0].arguments.is_empty()
+        && owner.arguments[1].kind == "primitive"
+        && owner.arguments[1].path.join("::") == "i32"
+        && owner.arguments[1].arguments.is_empty()
 }
 
 /// Resolve source facts to the actual checked lexical occurrence paths.

@@ -3,8 +3,9 @@ use super::expression::{Scope, Slot, Validator};
 use super::records::{Records, key};
 use super::{
     Result, Value, allowed, array, contains, exact, fail, interval, owned_local_position,
-    pair_type, policy, same_order, value_type,
+    owned_tuple_call_position, pair_type, policy, same_order, tuple_call_policy, value_type,
 };
+use crate::translation::rust::owned_tuple_call_rules::accept_rust_owned_tuple_call_model;
 use crate::translation::source_signatures::{SourceSignature, validate_source_signature};
 use crate::translation::types::Type;
 use serde_json::json;
@@ -49,21 +50,25 @@ pub(super) fn validate(program: &Value, ordered: bool) -> Result<()> {
     {
         return Err(fail(context_error));
     }
-    for entry in entries {
-        validate_entry(entry, ordered)?;
+    let mut entries = entries.clone();
+    for entry in &mut entries {
+        crate::typed_program_links::program_numeric_metadata::normalize_program_integral_metadata(
+            entry,
+        )
+        .map_err(|failure| fail(&failure.to_string()))?;
+    }
+    let declarations = super::tuple_calls::declarations(program, &entries)?;
+    for entry in &entries {
+        validate_entry(entry, &declarations, ordered)?;
     }
     Ok(())
 }
 
-fn validate_entry(entry: &Value, ordered: bool) -> Result<()> {
-    // Dynamic proof types retain their original Number and property order.
-    // Read only a private fixed-width comparison view before typed serde.
-    let mut view = entry.clone();
-    crate::typed_program_links::program_numeric_metadata::normalize_program_integral_metadata(
-        &mut view,
-    )
-    .map_err(|failure| fail(&failure.to_string()))?;
-    let entry = &view;
+fn validate_entry(
+    entry: &Value,
+    declarations: &BTreeMap<String, Value>,
+    ordered: bool,
+) -> Result<()> {
     let policy = policy();
     if !allowed(entry, &policy["declarationFields"]) {
         return Err(fail("a function has unrepresented own fields"));
@@ -89,10 +94,22 @@ fn validate_entry(entry: &Value, ordered: bool) -> Result<()> {
     exact(proof, &policy["fields"]["proof"])?;
     let function_span = interval(&entry["span"])?;
     let copies = proof["model"] == policy["models"]["copies"];
-    if (!copies && proof["model"] != policy["models"]["moves"])
+    let calls = accept_rust_owned_tuple_call_model(proof["model"].as_str().unwrap_or_default());
+    let helper = calls && pair_type(&entry["ret"]);
+    let mut interpretation = policy["interpretation"].clone();
+    if calls {
+        interpretation
+            .as_object_mut()
+            .expect("the shared interpretation is a record")
+            .insert(
+                "tupleInitialization".to_owned(),
+                tuple_call_policy()["interpretation"].clone(),
+            );
+    }
+    if (!copies && !calls && proof["model"] != policy["models"]["moves"])
         || proof["language"] != "Rust"
         || proof["sourceName"] != entry["name"]
-        || !same_order(&proof["interpretation"], &policy["interpretation"], ordered)
+        || !same_order(&proof["interpretation"], &interpretation, ordered)
     {
         return Err(fail(
             "the owned model or explicit value observation boundary is inconsistent",
@@ -124,17 +141,26 @@ fn validate_entry(entry: &Value, ordered: bool) -> Result<()> {
         &raw_signature["parameters"],
         "the actual standard interface and signed i32 domain must remain unchanged",
     )?;
-    if entry["ret"] != json!({"kind":"string"})
+    if (entry["ret"] != json!({"kind":"string"}) && !helper)
         || !signature.lifetime_bindings.is_empty()
         || signature
             .parameters
             .iter()
-            .chain(std::iter::once(&signature.result))
             .any(|position| !owned_local_position(position))
+        || if helper {
+            !owned_tuple_call_position(&signature.result)
+                || !super::tuple_calls::parameters(&entry["params"])
+        } else {
+            !owned_local_position(&signature.result)
+        }
         || raw_positions
             .iter()
-            .chain(std::iter::once(&raw_signature["result"]))
             .any(|position| !value_type(&position["type"]))
+        || if helper {
+            !pair_type(&raw_signature["result"]["type"])
+        } else {
+            !value_type(&raw_signature["result"]["type"])
+        }
         || parameters.iter().any(|parameter| {
             !value_type(&parameter["type"])
                 || !parameter["guard"].is_null()
@@ -242,11 +268,17 @@ fn validate_entry(entry: &Value, ordered: bool) -> Result<()> {
         reads.insert(path_key, read.clone());
     }
     if !copies
+        && !helper
         && (initializers.len() != 1
             || !facts.iter().any(|binding| binding["role"] == "replacement"))
     {
         return Err(fail(
             "the original model requires one actual mutable tuple initialization and replacement",
+        ));
+    }
+    if helper && (entry["body"]["k"] != "tuple" || !initializers.is_empty() || !facts.is_empty()) {
+        return Err(fail(
+            "a tuple helper must retain one direct ordered product result without local state or calls",
         ));
     }
     if copies && !initializers.is_empty() {
@@ -286,7 +318,14 @@ fn validate_entry(entry: &Value, ordered: bool) -> Result<()> {
         }
     }
     for initializer in initializers {
-        exact(initializer, &policy["fields"]["initializer"])?;
+        exact(
+            initializer,
+            if calls {
+                &tuple_call_policy()["initializerFields"]
+            } else {
+                &policy["fields"]["initializer"]
+            },
+        )?;
         let binding = bindings.get(&key(&initializer["path"])?);
         let fields = array(
             &initializer["fields"],
@@ -301,6 +340,18 @@ fn validate_entry(entry: &Value, ordered: bool) -> Result<()> {
                 "the initializer must own its once-evaluated tuple and ordered field slots",
             ));
         }
+        if calls {
+            let record = records
+                .bindings
+                .iter()
+                .find(|record| same_order(&initializer["path"], &json!(record.path), true))
+                .ok_or_else(|| {
+                    fail(
+                        "the initializer must own its once-evaluated tuple and ordered field slots",
+                    )
+                })?;
+            super::tuple_calls::target(declarations, entry, &record.node["value"], initializer)?;
+        }
     }
     let mut scope = Scope::new();
     for parameter in parameters {
@@ -309,11 +360,17 @@ fn validate_entry(entry: &Value, ordered: bool) -> Result<()> {
             Slot::new(parameter["type"].clone()),
         );
     }
-    Validator::new(proof, bindings, reads).expression(
+    Validator::new(proof, bindings, reads, entry, declarations, calls).expression(
         &entry["body"],
         &[],
         &mut scope,
         &BTreeMap::new(),
         None,
-    )
+    )?;
+    if entry["body"]["type"] != entry["ret"] {
+        return Err(fail(
+            "the actual function body differs from its declared result type",
+        ));
+    }
+    Ok(())
 }
