@@ -12,6 +12,7 @@ import { checkRustSourceSignature } from './rust-source-signatures.js';
 import { validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes } from './rust-type-namespace.js';
 import {prepareRustPrimitiveOwnerProof,checkRustPrimitiveOwnerProof} from './rust-primitive-owners.js';
 import {prepareRustOwnedLocalStateProof,checkRustOwnedLocalStateProof,checkRustOwnedLocalStateContainers} from './rust-owned-local-state.js';
+import {checkRustConstFunctionProof,checkRustConstFunctionContainers} from './rust-const-functions.js';
 import { acceptArgumentCount, acceptCheckedTypeQueryOperand, acceptTypeQueryOperand, readTypeQueryResult } from './frontend-rules.js';
 import { normaliseProof } from './proof.js';
 import { referenceOperation } from './reference-model.js';
@@ -72,6 +73,7 @@ function immutableProductValue(value, bindings = new Map()) {
 }
 
 export function checkProgram(surface) {
+  checkRustConstFunctionContainers(surface);
   checkRustTypeNamespaceRecordShapes(surface);
   checkRustOwnedLocalStateContainers(surface);
   const checker = new Checker(surface.language, surface.externals ?? [], Boolean(surface.referenceSemantics));
@@ -145,6 +147,7 @@ class Checker {
     }
     analyseRecursion(program);
     checkRustPrimitiveOwnerProof(program);
+    checkRustConstFunctionProof(program);
     checkRustEmptyOptionProof(program);
     validateRustTypeNamespace(program);
     checkRustPureUnitCalls(program);

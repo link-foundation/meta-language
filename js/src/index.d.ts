@@ -901,6 +901,8 @@ export function createTypedProgramLinks(
   options?: { provenance?: unknown; utf16Strings?: boolean; context?: object;
     rustArrayResultModel?: 'immutable fresh scalar vector results 1';
     rustCompletionModel?: 'closed guarded function returns 1';
+    /** Retains const qualification on closed primitive predicates; no compile-time evaluation requests. */
+    rustConstFunctionModel?: 'closed pure Rust const predicates 1';
     /** Retains owned source header facts; does not promise source ABI emission. */
     rustSourceSignatureModel?: 'Rust source function signature 1',
     /** Resolves qualified and imported standard binary64 owners under explicit source checks. */

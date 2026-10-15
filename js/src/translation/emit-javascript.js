@@ -16,6 +16,7 @@ import { fixedBounds, typeKey } from './types.js';
 import { renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
 import {readJavaScriptScopedBindingEmission} from './javascript-scoped-binding-emission.js';
 import {reserveJavaScriptScopedBindingDeclarationNames} from './javascript-scoped-binding-emission-rules.js';
+import {checkRustConstFunctionProof} from './rust-const-functions.js';
 import {checkRustOwnedLocalStateProof,RUST_OWNED_LOCAL_STATE_POLICY} from './rust-owned-local-state.js';
 import {renderRustOwnedLocalTextInput} from './rust-owned-local-state-rules.js';
 import { EmitState, withParts } from './emit-common.js';
@@ -108,6 +109,7 @@ function ident(name) {
 }
 
 export function emitJavaScript(program, options = {}) {
+  checkRustConstFunctionProof(program);
   checkRustOwnedLocalStateProof(program);
   const scopedBindings = options.scopedBindingModel === undefined ? null : readJavaScriptScopedBindingEmission(program, options.scopedBindingModel);
   const reserved = new Set(KEYWORDS);
@@ -210,6 +212,10 @@ class JavaScriptEmitter {
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
     const guards = params.flatMap((param) => this.parameterGuard(param, entry.sourceLocalState !== undefined));
+    if(entry.sourceConstFunction!==undefined){
+      for(const param of params){const kind=param.type.kind==='bool'?'boolean':'number';guards.push(`if (typeof ${param.name} !== ${JSON.stringify(kind)}) throw new RangeError(${JSON.stringify(`const predicate argument ${param.name} requires ${kind}`)});`);}
+      this.state.encode('rust-const-predicate-inputs','the selected Rust const predicate model admits only primitive Boolean and binary64 input values; const evaluation requests remain outside this source interpretation');
+    }
     if (entry.sourceLocalState !== undefined) {
       this.state.encode('owned-text-input', 'the selected Rust local value model admits primitive Unicode scalar text, Boolean and signed i32 inputs; JavaScript rejects other input values before evaluating the body');
       this.state.assume(RUST_OWNED_LOCAL_STATE_POLICY.targetInputAssumption);

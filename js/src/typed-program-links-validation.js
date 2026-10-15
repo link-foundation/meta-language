@@ -1,4 +1,5 @@
 import {checkRustPureUnitCalls} from './translation/rust-pure-unit-calls.js';
+import {checkRustConstFunctionProof,checkRustConstFunctionContainers} from './translation/rust-const-functions.js';
 import {checkRustEmptyOptionProof} from './translation/rust-empty-options.js';
 import {checkRustSourceSignature} from './translation/rust-source-signatures.js';
 import {validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes} from './translation/rust-type-namespace.js';
@@ -19,6 +20,7 @@ const primitives = new Set(['nat', 'int', 'bool', 'string', 'unit', 'float', 'ou
 const operationKinds = new Set(['math', 'stringMap', 'stringTest', 'method', 'collectionRead', 'collectionItems', 'optionalPredicate']);
 
 export function validateLinkedTypedProgram(program, references = new WeakMap(), { graphPatterns = false, patternScopes = new WeakMap() } = {}) {
+  checkRustConstFunctionContainers(program);
   checkRustTypeNamespaceRecordShapes(program);
   // The independently selected Unit profile owns plain data throughout its
   // graph. Check descriptors before reading even the initial role fields.
@@ -52,6 +54,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
   bounded(program);
   checkRustUnitCloneDerivations(program);
   checkRustPrimitiveOwnerProof(program);
+  checkRustConstFunctionProof(program);
   checkRustEmptyOptionProof(program);
   checkRustOwnedLocalStateProof(program);
   // Shared records can describe exponentially many expression paths. Bound

@@ -10,6 +10,7 @@ import { renderStringLengthExpression, renderStringMapExpression, renderStringTe
 // `--ml-check-theorems`, while the proof stays discharged by the source kernel.
 
 import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
+import {checkRustConstFunctionProof,renderRustConstFunctionHeader} from './rust-const-functions.js';
 import { unsupported } from './diagnostics.js';
 import { typeKey } from './types.js';
 import { Scope, renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
@@ -624,6 +625,7 @@ export function readRustArrayPrelude(standard = false) {
 }
 
 export function emitRust(program, options = {}) {
+  checkRustConstFunctionProof(program);
   const borrowedCalls = acceptRustBorrowedCallInterfaceModel(options.sourceHeaderModel) ? readRustBorrowedCallInterface(program, options.sourceHeaderModel) : null;
   const sourceHeaders = borrowedCalls?.headers ?? (options.sourceHeaderModel === undefined ? null : readRustSourceHeaderEmission(program, options.sourceHeaderModel));
   const state = new EmitState(program, 'Rust', snake, KEYWORDS, {
@@ -896,7 +898,7 @@ class RustEmitter {
       return `pub fn ${name}(${binders}) -> ${this.type(entry.ret)} {\n${indent(`loop {\n${indent(`return ${text};`, 1)}\n}`, 1)}\n}`;
     }
     const binders = params.map((param) => `${param.name}: ${this.type(param.type)}`).join(', ');
-    return `pub fn ${name}(${binders}) -> ${this.type(entry.ret)} {\n${indent(this.expr(body), 1)}\n}`;
+    return renderRustConstFunctionHeader(entry,`pub fn ${name}(${binders}) -> ${this.type(entry.ret)} {\n${indent(this.expr(body), 1)}\n}`);
   }
 
   theorem(entry) {

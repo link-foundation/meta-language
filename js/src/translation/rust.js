@@ -40,6 +40,8 @@ import {readRustStandardPrimitivePosition,createRustPrimitiveOwnerProof,acceptRu
 import {acceptRustOwnedLocalStateModel,acceptRustOwnedLocalSourceOperation} from './rust-owned-local-state-rules.js';
 import {readRustOwnedLocalStateBody} from './rust-owned-local-state-reader.js';
 import {RUST_OWNED_LOCAL_STATE_POLICY} from './rust-owned-local-state.js';
+import {acceptRustConstFunctionModel} from './rust-const-function-rules.js';
+import {createRustConstFunctionProof} from './rust-const-functions.js';
 
 const ACCEPTED_DERIVES = new Set(['Clone', 'Copy', 'Debug', 'PartialEq', 'Eq', 'Hash', 'PartialOrd', 'Ord']);
 const ACCEPTED_LINTS = new Set(['allow', 'warn', 'deny', 'expect', 'must_use', 'inline']);
@@ -48,7 +50,9 @@ const ADDITIVE = { '+': 'add', '-': 'sub' };
 const MULTIPLICATIVE = { '*': 'mul', '/': 'div', '%': 'rem' };
 const RESERVED_ITEMS = new Set(['impl', 'trait', 'struct', 'union', 'static', 'type', 'extern', 'macro_rules', 'async', 'unsafe']);
 
-export function parseRust(source, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '', pureUnitCallModel = '', localValueStateModel = '' } = {}) {
+export function parseRust(source, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '',pureUnitCallModel='',localValueStateModel='',constFunctionModel='' } = {}) {
+  if(!acceptRustConstFunctionModel(constFunctionModel))throw unsupported('Rust const function model','select the legacy model or closed pure Rust const predicates 1');
+  if(constFunctionModel&&[arrayResultModel,completionModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,localValueStateModel,pureUnitCallModel].some(Boolean))throw unsupported('Rust const function model','other source interpretations require independent composition proofs');
   if (!acceptRustTypeNamespaceModel(typeNamespaceModel)) throw unsupported('Rust type namespace model', 'select the legacy model or resolved Rust type namespace 1');
   if(!acceptRustOwnedLocalStateModel(localValueStateModel))throw unsupported('Rust owned local state model','select the original move profile or canonical String copy profile');
   if(localValueStateModel&&(arrayResultModel||completionModel||scalarLoopModel||primitiveOwnerModel||emptyOptionSourceModel||typeNamespaceModel||pureUnitCallModel))throw unsupported('Rust owned local state model','other source state and completion profiles require independent composition proofs');
@@ -62,10 +66,10 @@ export function parseRust(source, { arrayResultModel = '', completionModel = '',
   if(!acceptRustPureUnitCallModel(pureUnitCallModel))throw unsupported('Rust pure Unit-call model','select the legacy model, closed pure Rust unit calls 1 or closed public pure Rust unit calls 1');
   if(pureUnitCallModel&&[arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,localValueStateModel].some(Boolean))throw unsupported('Rust pure Unit-call model','the closed Unit-call interpretation requires its independent source profile');
   const { tokens } = tokenize(source, 'Rust');
-  const declarations = new RustParser(tokens, null, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel);
+  const declarations = new RustParser(tokens, null, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel);
   declarations.file();
   declarations.origins.resolveTypes((segments, path) => declarations.resolve(segments, path));
-  const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel);
+  const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel);
   syntax.origins.collecting = true;
   syntax.aliases = declarations.aliases;
   const surface = syntax.file();
@@ -75,13 +79,13 @@ export function parseRust(source, { arrayResultModel = '', completionModel = '',
     if (!(error instanceof TranslationError)) throw error;
     return surface;
   }
-  const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel);
+  const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel);
   parser.aliases = syntax.aliases;
   return parser.file();
 }
 
 class RustParser {
-  constructor(tokens, catalog = null, arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '',primitiveOwnerModel='',emptyOptionSourceModel='',typeNamespaceModel='',pureUnitCallModel='',localValueStateModel='') {
+  constructor(tokens, catalog = null, arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '',primitiveOwnerModel='',emptyOptionSourceModel='',typeNamespaceModel='',pureUnitCallModel='',localValueStateModel='',constFunctionModel='') {
     this.cursor = new TokenCursor([...tokens], 'Rust');
     // `use` aliases, per module path.
     this.aliases = new Map();
@@ -89,8 +93,9 @@ class RustParser {
     this.crateDeclarations = new Set();
     this.origins = new RustSourceOrigins(catalog, arrayResultModel,localValueStateModel);
     this.localValueStateModel=localValueStateModel;
+    this.constFunctionModel=constFunctionModel;
     this.completionModel = completionModel;
-    this.sourceSignatureModel = sourceSignatureModel || (typeNamespaceModel ? 'Rust source function signature 1' : '');
+    this.sourceSignatureModel = sourceSignatureModel || (typeNamespaceModel||constFunctionModel ? 'Rust source function signature 1' : '');
     this.typeNamespaceModel = typeNamespaceModel;
     this.typeNamespaceDiscovery = Boolean(typeNamespaceModel && catalog === null);
     this.typeNamespaceFrames = [];
@@ -119,6 +124,7 @@ class RustParser {
     this.items(root, root.items, [], () => this.cursor.atEnd());
     if(this.primitiveOwnerModel&&(root.items.some(item=>item.k!=='fn')||root.main?.effects.length))throw unsupported('Rust primitive owner profile','only flat primitive leaf functions and an empty main are admitted');
     if(this.localValueStateModel&&(!root.items.length||root.items.some(item=>item.k!=='fn'||!Object.hasOwn(item,'sourceLocalState')||RUST_OWNED_LOCAL_STATE_POLICY.reservedOwners.includes(item.name))||root.main?.effects.length))throw unsupported('Rust owned local state','only flat functions with an empty main and unshadowed standard owners are admitted');
+    if(this.constFunctionModel&&(!root.items.length||root.items.some(item=>item.k!=='fn'||!Object.hasOwn(item,'sourceConstFunction'))||root.main?.effects.length))throw unsupported('Rust const function source','only closed flat const predicates and an empty ordinary main are admitted');
     if (!root.main) throw new TranslationError('syntax', 'a Rust program needs fn main', this.cursor.peek());
     finishRustEmptyOptionSource(this,root);
     finishRustPureUnitSource(this,root);
@@ -128,6 +134,7 @@ class RustParser {
   innerAttributes() {
     const c = this.cursor;
     if(this.pureUnitCallModel&&c.is('#'))throw unsupported('Rust pure Unit-call source','attributes require a separate compilation context proof',span(c.peek(),c.peek()));
+    if(this.constFunctionModel&&c.is('#')&&c.is('!',1))throw unsupported('Rust const function context','crate attributes require an independent compilation interpretation');
     if (this.emptyOptionSourceModel && c.is('#')) throw unsupported('Rust empty option source', 'attributes require a separate compilation context proof', span(c.peek(),c.peek()));
     while (c.is('#') && c.is('!', 1)) {
       const start = c.next();
@@ -154,6 +161,7 @@ class RustParser {
     const c = this.cursor;
     c.expect('[', 'attribute');
     const name = c.identifier('attribute').value;
+    if(this.constFunctionModel&&(name!=='must_use'||!c.is(']')))throw unsupported('Rust const function attribute','only the actual zero-argument must_use function attribute is admitted');
     const traits=[];
     if (name === 'derive') {
       c.expect('(', 'derive');
@@ -185,9 +193,12 @@ class RustParser {
       const start = c.peek();
       this.modulePath = path;
       readRustPureUnitItemContext(this,path,start);
+      if(this.constFunctionModel&&c.is('pub')&&c.is('(',1))throw unsupported('Rust const function visibility','restricted visibility requires an independent module proof');
       this.visibility();
       if(this.typeNamespaceModel&&derivations.some(attribute=>attribute.traits.includes('Clone'))&&!c.is('enum'))throw unsupported('Rust unit Clone derivation','a Clone derive must be attached to an actual datatype',span(start,c.peek()));
       if (this.emptyOptionSourceModel && (path.length || !c.is('fn'))) throw unsupported('Rust empty option source', 'only flat zero-argument empty leaf functions and an empty main are admitted', span(start,c.peek()));
+      if(this.constFunctionModel&&!(c.is('const')&&c.is('fn',1)||!path.length&&c.is('fn')&&c.is('main',1)))throw unsupported('Rust const function context','only actual const predicate declarations and the ordinary main are admitted',span(start,c.peek()));
+      if(this.constFunctionModel&&c.is('const')&&c.is('fn',1)){const keyword=c.next();items.push(this.fn(path,keyword));continue;}
       if (c.is('mod')) {
         c.next();
         const name = c.identifier('mod').value;
@@ -221,6 +232,7 @@ class RustParser {
       if (c.is('fn') || c.is('const')) {
         if (c.is('fn') && c.is('main', 1) && path.length === 0) {
           if(this.pureUnitCallModel&&this.emptyOptionMainSeen)throw unsupported('Rust pure Unit-call source','the complete source must have one owned main declaration',span(start,c.peek()));
+          if(this.constFunctionModel&&this.emptyOptionMainSeen)throw unsupported('Rust const function source','the complete source must have one ordinary main declaration',span(start,c.peek()));
           if(this.emptyOptionSourceModel && this.emptyOptionMainSeen) throw unsupported('Rust empty option source', 'the complete source must have one owned main declaration', span(start,c.peek()));
           this.emptyOptionMainSeen=true;
           root.main = this.main();
@@ -494,9 +506,10 @@ class RustParser {
     if (shadowed || !acceptRustSourceArrayElement(this.origins.type.type?.kind ?? '', this.origins.type.wrappers.length > 0)) throw unsupported('Rust array element', 'only direct immutable scalar and owned string elements are admitted', span(token, this.cursor.peek()));
   }
 
-  fn(path) {
+  fn(path,constKeyword=null) {
     const c = this.cursor;
-    const start = c.next();
+    const functionKeyword = c.next();
+    const start = constKeyword??functionKeyword;
     const name = c.identifier('fn').value;
     if(this.pureUnitCallModel)return readRustPureUnitFunction(this,path,start,name);
     const outerLifetimes = this.lifetimeBindings;
@@ -539,8 +552,9 @@ class RustParser {
       const resultToken=c.peek();
       const ret = this.type();
       const sourceResult = this.origins.type;
-      if(this.emptyOptionSourceModel && (!sourceResult.emptyOptionResult || sourceResult.wrappers.length || sourceResult.emptyOptionResult.span.start!==resultToken.start)) throw unsupported('Rust empty option source', 'the result needs an exact direct standard Option<f64> owner', span(start,c.peek()));
+      if(this.constFunctionModel&&(mutableParams.length||this.lifetimeBindings.size))throw unsupported('Rust const function interface','mutable parameters and lifetime binders require an independent interpretation');
       if(this.localValueStateModel&&(mutableParams.length||this.lifetimeBindings.size))throw unsupported('Rust owned local state','mutable parameters and lifetimes require a separate interface proof');
+      if(this.emptyOptionSourceModel && (!sourceResult.emptyOptionResult || sourceResult.wrappers.length || sourceResult.emptyOptionResult.span.start!==resultToken.start)) throw unsupported('Rust empty option source', 'the result needs an exact direct standard Option<f64> owner', span(start,c.peek()));
       if(this.primitiveOwnerModel&&(mutableParams.length||this.lifetimeBindings.size))throw unsupported('Rust primitive owner context','mutable parameters and named lifetime binders require a separate owned context proof');
       const scalarLoop = Boolean(this.scalarLoopModel && c.is('{') && c.is('loop', 1));
       if (scalarLoop && path.length) throw unsupported('Rust scalar loop', 'the selected scalar state model requires a flat function', span(start, c.peek()));
@@ -557,6 +571,7 @@ class RustParser {
       if (!acceptRustSourceLifetimeResult(this.lifetimeBindings.size > 0, sourceResult.wrappers.includes('reference'))) throw unsupported('function lifetime result', 'reference results with lifetime binders require an explicit return-lifetime instantiation and outlives proof', span(start, c.peek()));
       this.origins.declaration(name, path, { k: 'fn', lifetimeBindings: [...this.lifetimeBindings], parameters: sourceParams, result: sourceResult });
       if (c.is('where')) throw unsupported('where clause', 'trait bounds are outside the portable core', span(start, c.peek()));
+      const constHeaderEnd=constKeyword?c.peek().start:null;
       this.lifetimeHeader = false;
       const previous = this.origins.enter(new Map(params.map((param, index) => [param.name, sourceParams[index]])));
       const signature = scalarLoop||this.localValueStateModel ? createRustSourceSignature('Rust source function signature 1', sourceParams, sourceResult, this.lifetimeBindings) : null;
@@ -577,6 +592,7 @@ class RustParser {
       this.origins.argument(this.origins.origin(body, path), sourceResult, body.span);
       this.origins.scope = previous;
       return { k: 'fn', name, params, ret, body, span: emptyOptionBody?{start:start.start,end:c.tokens[c.index-1].end}:span(start, c.peek()),
+        ...(constKeyword?{sourceConstFunction:createRustConstFunctionProof(name,constKeyword,functionKeyword,constHeaderEnd,c.tokens[c.index-1].end)}:{}),
         ...(emptyOptionBody?{sourceEmptyOption:createRustEmptyOptionProof(this,name,sourceResult.emptyOptionResult,emptyOptionBody.construction)}:{}),
         ...(this.typeNamespaceModel ? {sourceTypeNamespace: createRustTypeNamespaceProof(sourceParams, sourceResult)} : {}),
         ...(this.localValueStateModel?{sourceSignature:signature,sourceLocalState:lowered.proof}:{}),

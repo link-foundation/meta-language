@@ -373,6 +373,20 @@ Actual whole emitted artifacts are executed in CI, while source reimport of the
 complete generated runtime shell and the full binary formatter still need their
 separate source interpretations. Existing source-profile refusals remain exact;
 native compilation, execution and cross-runtime observations are CI checks.
+The independently selected `closed pure Rust const predicates 1` source model
+owns the actual `const` and `fn` keyword intervals, complete header and body
+intervals, original declaration name and direct primitive source signature.
+Its initial JavaScript-first experiment admits only flat, closed Boolean
+predicates over primitive Boolean and binary64 parameters, with Boolean
+negation and comparisons and an empty ordinary main. Shared links policy and
+generated decisions reject calls, allocations, arithmetic, imported owners,
+mutable interfaces, unsupported compilation attributes and contradictory
+source-free facets. A linked emitter decoration retains the checked `const fn`
+qualification. Three immutable complete styled generated predicates exercise
+actual definition replay, source-free body edits and executable JavaScript
+observations. This source qualification does not establish general compile-time
+invocation, evaluation or diagnostics, public visibility or ABI equivalence;
+native adapters and CI execution remain required for paired support.
 The typed-program adapter's shared schema gives abbreviated host fields readable
 English relation names, including the Unicode code unit string model. The finite formal
 definition adapter checks closed recursive correspondences under supported
