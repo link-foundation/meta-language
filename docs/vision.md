@@ -645,6 +645,32 @@ mechanical consumer has a four MiB source bound. Heavy planning and injected
 contracts run in CI, and only explicit native authorization permits compilation,
 execution and an observation artifact. Native graph capture, production
 integration and resource improvement still require their own evidence.
+The subsequent `original selected Rust text graph shape component 1` experiment
+adds a primitive graph preflight before that established raw decoder and
+seventeen-table projector. One bounded snapshot retains original identifiers,
+ordered references and exact metadata kinds, UTF-16 units and Number payloads.
+Shared Links recipes check selected root and facet ownership, actual Field
+claims, record/list/map/scalar shapes, lexical binding targets and proof/core
+owner references. Completed compatible aliases remain distinct from active
+structural cycles. Original declaration, parameter, signature and position
+identities cannot be replaced by equal-looking records. Unrelated roots do not
+acquire selected ownership through coincident names or provenance.
+The complete shared JavaScript kernel automatically emits all 106 Rust
+definitions without a handwritten native algorithm. Its finite transport and
+traversal bounds do not establish scalability. Source portability rewrites use
+single bindings, explicit counter assignments, immutable callback snapshots and
+typed Number membership; they do not establish general translator support for
+the corresponding source forms. Opt-in attempt receipts retain actual input
+bytes and diagnostics; freshness checks never modify those receipts.
+The unchanged raw decoder, sixty-six-definition projector and ninety-two-definition
+final certificate remain mandatory after this preflight. Complete lexical/CST,
+source-signature and source/body meaning checks retain their established owners.
+The composed experiment also retains the old projector's refusals for nullish
+String metadata and unrelated dangling references, even where the new component
+and old decoder independently admit them. Public JavaScript graph anchors remain
+safe integers; synthetic high/low word tests do not establish native graph
+capture. Native execution, pre-Serde integration, production selection and paired
+source replay remain separate obligations.
 The separate `closed fresh Number array collector 1` experiment selects one
 complete JavaScript function with a fresh unaliased array, one counted input
 loop, one ignored one-argument append per iteration and a terminal array return.
@@ -925,6 +951,15 @@ restricts cleanup to meta-language-owned disk space and requires local work to
 respect available disk, memory and process capacity. Rust compilation is
 exclusive to CI/CD. The [resource limits](#resource-limits) govern shared
 checkout use and the prompt, verified release of completed task worktrees.
+The [cancellation investigation instruction](../parity/sources/ci-cancellation-investigation-2026-10-16.txt)
+requires evidence for the reported cancellation of run 38431880453. Its frozen
+Links receipt retains actual run, job, check-run, annotation and historical
+workflow responses with their hashes. The checker joins their identities and
+timestamps before accepting the explicit ten-minute automatic-timeout annotation.
+Missing or contradictory evidence leaves the cause unknown; actor metadata
+does not identify who cancelled a run. The historical head configuration is
+labelled separately from an unverified effective merge checkout. This finite
+investigation preserves the obligation to finish and repair subsequent CI runs.
 The instruction to gradually reduce agents remains a separate hashed source and
 critical obligation for that historical coordination phase. Contributors finished
 their existing work and the coordinator continued alone. The subsequent
