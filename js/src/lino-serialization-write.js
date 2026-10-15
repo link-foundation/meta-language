@@ -1,5 +1,5 @@
 // Canonical link writing and scalar escaping without a parser dependency.
-import { LinkFlags, LinkType } from './primitives.js';
+import { LinkFlags, LinkId, LinkType } from './primitives.js';
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
@@ -113,9 +113,9 @@ function flagBits(flags) {
 
 /** Writes one `(<id>: <refs> (meta: ...))` statement. */
 export function encodeLinkStatement(id, references, metadata, registered = false) {
-  let output = `(${Number(id)}:`;
+  let output = `(${LinkId.from(id).asU64()}:`;
   for (const reference of references) {
-    output += ` ${Number(reference)}`;
+    output += ` ${LinkId.from(reference).asU64()}`;
   }
   output += ' (meta:';
   if (metadata.linkType !== undefined) {
