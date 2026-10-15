@@ -1939,7 +1939,10 @@ gaps against the target above:
   substitution boundaries reject imprecise identifiers before conversion;
   rejected insertions preserve the allocator and graph, and exhausted allocation
   refuses without replacing an existing link. Original decimal spellings and
-  safe BigInt inputs normalize to the existing Number representation. Carrying
+  safe BigInt inputs normalize to the existing Number representation. An existing
+  LinkId must retain its own Number data field; inherited values and accessors
+  refuse before a getter can change the identifier between validation and use.
+  Carrying
   the entire native unsigned 64-bit domain needs a broader exact representation
   and a separately versioned binary profile; that support is not established.
 
