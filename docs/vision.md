@@ -585,6 +585,12 @@ refuse. Four whole-item include parts retain private sibling scope and the
 original artifact remains unchanged. These syntax receipts apply to the
 supported generated pure-decision artifact; native comparison, strict lint,
 formatted size and broader temporary or destructor semantics remain unverified.
+An independent mandatory CI comparison compiles the five recorded library
+files plus a module declaration and public reexport. It reuses the unchanged
+forty-call consumer and every input and expected result bit from the original
+kernel oracle. The runner authenticates all six compilation sources before
+and after each process, rejects unsafe paths and symbolic links including
+dangling output links, and distinguishes injected contracts from native runs.
 The independently selected `closed pure Rust const predicates 1` source model
 owns the actual `const` and `fn` keyword intervals, complete header and body
 intervals, original declaration name and direct primitive source signature.
@@ -1904,6 +1910,14 @@ gaps against the target above:
 - **Matching published releases.** The crate release and npm publication must
   expose matching versions and the delivered APIs. Exact published consumers,
   downstream integrations and post-merge rules still require executed evidence.
+- **Full unsigned 64-bit identifiers in JavaScript.** The current public Number
+  profile admits only exact positive safe integers. Primitive, text, writer and
+  substitution boundaries reject imprecise identifiers before conversion;
+  rejected insertions preserve the allocator and graph, and exhausted allocation
+  refuses without replacing an existing link. Original decimal spellings and
+  safe BigInt inputs normalize to the existing Number representation. Carrying
+  the entire native unsigned 64-bit domain needs a broader exact representation
+  and a separately versioned binary profile; that support is not established.
 
 Self-translation preserves carriage-return sources through a serialized source
 envelope guarded by the original byte length and digest and the complete emitted
