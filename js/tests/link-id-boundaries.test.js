@@ -72,3 +72,28 @@ test('ordinary IDs, shared references and cycles retain text, binary and link-cl
  const text=network.toLino(),restored=LinkNetwork.fromLino(text);assert.equal(restored.toLino(),text);const binary=decodeLinkNetworkBinary(encodeLinkNetworkBinary(restored));assert.equal(binary.toLino(),text);assert.equal(binary.insertLink().asU64(),3);
  const cli=new LinkNetwork();assert.deepEqual(cli.applyLinkCliSubstitutionText('() ((1 1))').created().map(Number),[1]);assert.deepEqual(cli.applyLinkCliSubstitutionText('((1: 1 1)) ((1: 1 2))').updated().map(Number),[1]);assert.deepEqual(cli.link(1).references().map(Number),[1,2]);assert.deepEqual(cli.applyLinkCliSubstitutionText('((1 2)) ()').deleted().map(Number),[1]);
 });
+
+test('accessor and inherited LinkId representations refuse without running getters or changing graph state',()=>{
+ for(const inherited of[false,true]){
+  let calls=0;const network=new LinkNetwork(),stored=network.insertLink([],LinkMetadata.new().withTerm('original')),before=network.toLino(),bytes=encodeLinkNetworkBinary(network),identifier=new LinkId(1);
+  const descriptor={get(){calls++;return calls%2===1?1:'1';},configurable:true};
+  if(inherited){delete identifier.value;Object.setPrototypeOf(identifier,Object.create(LinkId.prototype,{value:descriptor}));}
+  else Object.defineProperty(identifier,'value',descriptor);
+  for(const operation of[()=>new LinkId(identifier),()=>LinkId.from(identifier),()=>LinkId.fromU64(identifier),()=>identifier.asU64(),()=>identifier.equals(stored),()=>stored.equals(identifier),()=>idKey(identifier),()=>Number(identifier),()=>String(identifier),()=>JSON.stringify(identifier),()=>network.link(identifier),()=>network.insertLinkWithOptionalId(identifier),()=>network.insertLink([identifier]),()=>network.link(stored).setReferences([identifier]),()=>encodeLinkStatement(identifier,[],LinkMetadata.new()),()=>encodeLinkStatement(1,[identifier],LinkMetadata.new())]){
+   assert.throws(operation,TypeError);assert.equal(calls,0);assert.equal(network._nextId,2);assert.equal(network.toLino(),before);assert.deepEqual(encodeLinkNetworkBinary(network),bytes);
+  }
+  assert.equal(network.insertLink().asU64(),2);
+ }
+ const inheritedNumber=Object.create(LinkId.prototype,{value:{value:1}}),missing=Object.create(inheritedNumber);assert.throws(()=>LinkId.from(missing),TypeError);assert.throws(()=>idKey(missing),TypeError);
+});
+
+test('text and binary writers refuse a stored identity getter before reading it',()=>{
+ for(const write of[network=>network.toLino(),network=>encodeLinkNetworkBinary(network)]){
+  const network=new LinkNetwork(),id=network.insertLink();let calls=0;Object.defineProperty(id,'value',{get(){calls++;return calls%2===1?1:2;},configurable:true});assert.throws(()=>write(network),TypeError);assert.equal(calls,0);assert.equal(network.len(),1);assert.equal(network._nextId,2);
+ }
+});
+
+test('ordinary own data identities stay writable and preserve Number keys after an exact change',()=>{
+ const identifier=new LinkId(' 0001 ');assert.equal(Object.getOwnPropertyDescriptor(identifier,'value').writable,true);identifier.value=2;assert.equal(identifier.asU64(),2);assert.equal(idKey(identifier),2);assert.equal(identifier.equals(new LinkId(2n)),true);assert.equal(new LinkId(2n).equals(identifier),true);
+ const network=new LinkNetwork();network.insertLinkWithOptionalId(identifier,[identifier]);assert.equal(network.link(2).id(),identifier);assert.equal(network.link(identifier).references()[0],identifier);assert.equal(network.toLino(),'(2: 2 (meta: (n: 0)))\n');
+});

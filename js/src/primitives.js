@@ -32,7 +32,10 @@ export const TriviaAttachmentPolicy = Object.freeze({
 
 function readLinkIdValue(value) {
   const identifier = value instanceof LinkId;
-  const original = identifier ? value.value : value;
+  const descriptor = identifier ? Object.getOwnPropertyDescriptor(value, 'value') : null;
+  const original = identifier
+    ? descriptor && Object.hasOwn(descriptor, 'value') ? descriptor.value : undefined
+    : value;
   const text = typeof original === 'string' ? original.trim() : null;
   const numeric = typeof original === 'number' || typeof original === 'bigint'
     || text !== null && /^[0-9]+$/u.test(text)
