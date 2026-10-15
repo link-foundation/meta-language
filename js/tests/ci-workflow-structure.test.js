@@ -7,7 +7,8 @@ import { test } from 'node:test';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
@@ -58,12 +59,23 @@ function selectNativeTestInputs(paths, { base = 'base', valid = true } = {}) {
       *) return 99 ;;
     esac
   }\n`;
-  const result = spawnSync('bash', ['-e', '-o', 'pipefail', '-c', stub + step.run.replace(/^\|\s*\n/u, '')], {
-    encoding: 'utf8', env: { ...process.env, BASE_SHA: base, GITHUB_OUTPUT: '/dev/stdout',
-      TEST_NATIVE_BASE_VALID: String(valid), TEST_NATIVE_CHANGED_PATHS: paths.join('\n') },
-  });
-  assert.equal(result.status, 0, result.stderr);
-  return Object.fromEntries([...result.stdout.matchAll(/^(rust|native_test_inputs_changed)=(true|false)$/gmu)].map(([, key, value]) => [key, value === 'true']));
+  // GitHub Actions provides a regular output file. Linux cannot reopen Node's
+  // captured subprocess pipe through /dev/stdout on every runner.
+  const directory = mkdtempSync(path.join(tmpdir(), 'meta-language-native-input-'));
+  const output = path.join(directory, 'github-output');
+  try {
+    const result = spawnSync('bash', ['-e', '-o', 'pipefail', '-c', stub + step.run.replace(/^\|\s*\n/u, '')], {
+      encoding: 'utf8', env: { ...process.env, BASE_SHA: base, GITHUB_OUTPUT: output,
+        TEST_NATIVE_BASE_VALID: String(valid), TEST_NATIVE_CHANGED_PATHS: paths.join('\n') },
+    });
+    assert.equal(result.status, 0, result.stderr);
+    const text = readFileSync(output, 'utf8');
+    assert.match(text, /^rust=(?:true|false)\nnative_test_inputs_changed=(?:true|false)\n$/u,
+      'the actual selector writes each Boolean output exactly once');
+    return Object.fromEntries([...text.matchAll(/^(rust|native_test_inputs_changed)=(true|false)$/gmu)].map(([, key, value]) => [key, value === 'true']));
+  } finally {
+    rmSync(directory, {recursive: true, force: true});
+  }
 }
 
 function nativeInputCondition(job) {
