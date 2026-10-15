@@ -406,6 +406,7 @@ impl<'c> ResultSet<'c> {
                         if order == Ordering::Equal
                             && self.settling.ambiguity()
                             && existing.cost == 0
+                            && !existing.ambiguous
                             && !same_output(&result.children, &existing.children)
                         {
                             existing.ambiguous = true;
