@@ -6618,7 +6618,513 @@ const RUST_LEXICAL_SOURCE_NAME_INVENTORIES=RUST_LEXICAL_SOURCE_NAME_BINDINGS.map
  extract:(raw,file)=>{const text=file.endsWith('.lino')?decodeURIComponent(raw):raw;return files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeRustLexicalSourceName(name));},
  recordOf:name=>Object.values(files).flat().find(entry=>normalizeRustLexicalSourceName(entry.name)===name).id,
 }));
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES]);
+// Actual shared raw string source and isolated owned literal edit identities.
+const RUST_LITERAL_VALUE_NAME_BINDINGS=[
+  {
+    "inventory": "unchanged shared Rust string rendering",
+    "files": {
+      "js/src/translation/rust-string-literals.js": [
+        {
+          "name": "rustEscape",
+          "id": "translation.escape-rust-string-content"
+        },
+        {
+          "name": "rustString",
+          "id": "translation.render-rust-string-literal"
+        }
+      ],
+      "js/src/translation/emit-rust.js": [
+        {
+          "name": "rustEscape",
+          "id": "translation.escape-rust-string-content"
+        },
+        {
+          "name": "rustString",
+          "id": "translation.render-rust-string-literal"
+        }
+      ],
+      "experiments/generated-owned-rust/model.mjs": [
+        {
+          "name": "rustString",
+          "id": "translation.render-rust-string-literal"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "Rust raw string decision",
+    "files": {
+      "js/src/translation/rust-raw-string-rules.js": [
+        {
+          "name": "decodeRustRawString",
+          "id": "translation.decode-rust-raw-string"
+        }
+      ],
+      "rust/src/translation/lexer/raw_strings.rs": [
+        {
+          "name": "decode_rust_raw_string",
+          "id": "translation.decode-rust-raw-string"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "Rust raw string scan result",
+    "files": {
+      "js/src/translation/rust-raw-string-rules.js": [
+        {
+          "name": "RustRawString",
+          "id": "translation.rust-raw-string-scan-result"
+        }
+      ],
+      "rust/src/translation/lexer/raw_strings.rs": [
+        {
+          "name": "RustRawString",
+          "id": "translation.rust-raw-string-scan-result"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "Rust raw string policy",
+    "files": {
+      "js/scripts/generate-rust-raw-string-rules.mjs": [
+        {
+          "name": "policy",
+          "id": "translation.rust-raw-string-literal-policy"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "Rust raw string reused readRustSourceLineBreakEnd",
+    "files": {
+      "js/src/translation/rust-raw-string-rules.js": [
+        {
+          "name": "readRustSourceLineBreakEnd",
+          "id": "translation.read-rust-source-line-break-end"
+        }
+      ],
+      "rust/src/translation/lexer/raw_strings.rs": [
+        {
+          "name": "read_rust_source_line_break_end",
+          "id": "translation.read-rust-source-line-break-end"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "Rust raw string reused readSourceTextScalar",
+    "files": {
+      "js/src/translation/rust-raw-string-rules.js": [
+        {
+          "name": "readSourceTextScalar",
+          "id": "translation.read-source-text-scalar"
+        }
+      ],
+      "rust/src/translation/lexer/raw_strings.rs": [
+        {
+          "name": "read_source_text_scalar",
+          "id": "translation.read-source-text-scalar"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned literal edit decisions",
+    "files": {
+      "experiments/generated-owned-rust/value-edit-rules.mjs": [
+        {
+          "name": "acceptGeneratedOwnedRustValueEditModel",
+          "id": "repository.accept-generated-owned-rust-value-edit-model"
+        },
+        {
+          "name": "acceptGeneratedOwnedRustLiteralEditOwner",
+          "id": "repository.accept-generated-owned-rust-literal-edit-owner"
+        },
+        {
+          "name": "acceptGeneratedOwnedRustSignOwner",
+          "id": "repository.accept-generated-owned-rust-sign-owner"
+        }
+      ],
+      "experiments/generated-owned-rust/data/value-edit-rules.rs": [
+        {
+          "name": "accept_generated_owned_rust_value_edit_model",
+          "id": "repository.accept-generated-owned-rust-value-edit-model"
+        },
+        {
+          "name": "accept_generated_owned_rust_literal_edit_owner",
+          "id": "repository.accept-generated-owned-rust-literal-edit-owner"
+        },
+        {
+          "name": "accept_generated_owned_rust_sign_owner",
+          "id": "repository.accept-generated-owned-rust-sign-owner"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental literal edit policy",
+    "files": {
+      "experiments/generated-owned-rust/generate-value-edit-rules.mjs": [
+        {
+          "name": "generatedOwnedRustValueEditPolicy",
+          "id": "repository.generated-owned-rust-value-edit-policy"
+        }
+      ],
+      "experiments/generated-owned-rust/model.mjs": [
+        {
+          "name": "GENERATED_OWNED_RUST_VALUE_EDIT_POLICY",
+          "id": "repository.generated-owned-rust-value-edit-policy"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned literal edit model.mjs",
+    "files": {
+      "experiments/generated-owned-rust/model.mjs": [
+        {
+          "name": "sourcePolicy",
+          "id": "repository.select-generated-owned-rust-source-policy"
+        },
+        {
+          "name": "literalEdits",
+          "id": "repository.read-generated-owned-rust-literal-edit-owners"
+        },
+        {
+          "name": "operationAssumptions",
+          "id": "repository.read-generated-owned-rust-operation-assumptions"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned literal edit parser.mjs",
+    "files": {
+      "experiments/generated-owned-rust/parser.mjs": [
+        {
+          "name": "readGeneratedOwnedRustCookedLiteral",
+          "id": "repository.read-generated-owned-rust-cooked-literal"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned literal edit generate-value-edit-rules.mjs",
+    "files": {
+      "experiments/generated-owned-rust/generate-value-edit-rules.mjs": [
+        {
+          "name": "generatedOwnedRustValueEditRules",
+          "id": "repository.generate-owned-rust-value-edit-rules"
+        },
+        {
+          "name": "translatedRules",
+          "id": "repository.translate-owned-rust-value-edit-decisions"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned literal edit generate-value-edit-fixtures.mjs",
+    "files": {
+      "experiments/generated-owned-rust/generate-value-edit-fixtures.mjs": [
+        {
+          "name": "generatedOwnedRustValueEditFixtures",
+          "id": "repository.create-owned-rust-value-edit-fixtures"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned literal edit value-edits.test.mjs",
+    "files": {
+      "experiments/generated-owned-rust/value-edits.test.mjs": [
+        {
+          "name": "execute",
+          "id": "repository.execute-owned-rust-value-edit-test-artifact"
+        },
+        {
+          "name": "verifyRust",
+          "id": "repository.check-owned-rust-value-edit-source-reload"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned literal edit role literalEdits",
+    "files": {
+      "experiments/generated-owned-rust/data/value-edit-policy.lino": [
+        {
+          "name": "literalEdits",
+          "id": "repository.generated-owned-rust-literal-edit-list"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned literal edit role operationNode",
+    "files": {
+      "experiments/generated-owned-rust/model.mjs": [
+        {
+          "name": "operationNode",
+          "id": "repository.generated-owned-rust-literal-edit-operation-target"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned literal edit role signToken",
+    "files": {
+      "experiments/generated-owned-rust/model.mjs": [
+        {
+          "name": "signToken",
+          "id": "repository.generated-owned-rust-literal-sign-target"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental editable literal identity",
+    "files": {
+      "experiments/generated-owned-rust/data/value-edit-policy.lino": [
+        {
+          "name": "literal",
+          "id": "repository.generated-owned-rust-literal-target"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental existing String literal operation",
+    "files": {
+      "experiments/generated-owned-rust/data/value-edit-policy.lino": [
+        {
+          "name": "owned standard String literal construction",
+          "id": "repository.owned-standard-string-literal-construction-source-operation"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental existing signed integer literal operation",
+    "files": {
+      "experiments/generated-owned-rust/parser.mjs": [
+        {
+          "name": "owned signed i32 literal",
+          "id": "repository.owned-signed-thirty-two-bit-integer-literal-source-operation"
+        }
+      ],
+      "experiments/generated-owned-rust/data/value-edit-policy.lino": [
+        {
+          "name": "owned signed i32 literal",
+          "id": "repository.owned-signed-thirty-two-bit-integer-literal-source-operation"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "Rust raw string fixture authoring",
+    "files": {
+      "js/scripts/generate-rust-raw-string-rules.mjs": [
+        {
+          "name": "fixture",
+          "id": "repository.rust-raw-string-literal-fixture"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "Rust raw string JavaScript test operations",
+    "files": {
+      "js/tests/translation-rust-raw-string-literals.test.js": [
+        {
+          "name": "units",
+          "id": "repository.read-rust-raw-string-test-code-units"
+        },
+        {
+          "name": "literalFor",
+          "id": "repository.create-rust-raw-string-test-literal"
+        },
+        {
+          "name": "sourceFor",
+          "id": "repository.create-rust-raw-string-test-program"
+        },
+        {
+          "name": "execute",
+          "id": "repository.execute-rust-raw-string-test-javascript"
+        },
+        {
+          "name": "reloads",
+          "id": "repository.reload-rust-raw-string-test-networks"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "Rust raw string host adapter",
+    "files": {
+      "rust/src/translation/lexer/literals.rs": [
+        {
+          "name": "raw_string_token",
+          "id": "translation.read-rust-raw-string-token"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "Rust raw string generated scan operations",
+    "files": {
+      "rust/src/translation/lexer/raw_strings.rs": [
+        {
+          "name": "ml_decode_rust_raw_string_loop5",
+          "id": "translation.read-rust-raw-string-opening-hash-end"
+        },
+        {
+          "name": "ml_decode_rust_raw_string_loop6",
+          "id": "translation.continue-rust-raw-string-content"
+        },
+        {
+          "name": "ml_decode_rust_raw_string_loop8",
+          "id": "translation.read-rust-raw-string-closing-hashes"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "Rust raw string generated control MlDecodeRustRawStringLoop6Result",
+    "files": {
+      "rust/src/translation/lexer/raw_strings.rs": [
+        {
+          "name": "MlDecodeRustRawStringLoop6Result",
+          "id": "translation.rust-raw-string-content-scan-result"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "Rust raw string generated control MlDecodeRustRawStringJoin7",
+    "files": {
+      "rust/src/translation/lexer/raw_strings.rs": [
+        {
+          "name": "MlDecodeRustRawStringJoin7",
+          "id": "translation.rust-raw-string-closing-choice-result"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "Rust raw string generated control MlDecodeRustRawStringLoop8Result",
+    "files": {
+      "rust/src/translation/lexer/raw_strings.rs": [
+        {
+          "name": "MlDecodeRustRawStringLoop8Result",
+          "id": "translation.rust-raw-string-closing-hash-state"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "shared actual runtime test fixture",
+    "files": {
+      "rust/tests/unit/translation_rust_raw_string_literals.rs": [
+        {
+          "name": "runtime_fixture",
+          "id": "repository.read-rust-runtime-shell-fixture"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "shared actual runtime test record copy",
+    "files": {
+      "rust/tests/unit/translation_rust_raw_string_literals.rs": [
+        {
+          "name": "clone_record",
+          "id": "repository.clone-rust-runtime-shell-test-record"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "Rust raw string native test operations",
+    "files": {
+      "rust/tests/unit/translation_rust_raw_string_literals.rs": [
+        {
+          "name": "fixture",
+          "id": "repository.read-rust-raw-string-test-fixture"
+        },
+        {
+          "name": "literal",
+          "id": "repository.create-native-raw-string-delimited-test-literal"
+        },
+        {
+          "name": "case_literal",
+          "id": "repository.create-native-raw-string-fixture-literal"
+        },
+        {
+          "name": "source_for",
+          "id": "repository.create-native-raw-string-test-program"
+        },
+        {
+          "name": "offset",
+          "id": "repository.read-native-raw-string-original-offset"
+        },
+        {
+          "name": "archives",
+          "id": "repository.reload-native-raw-string-test-networks"
+        },
+        {
+          "name": "value",
+          "id": "repository.read-native-raw-string-test-value"
+        },
+        {
+          "name": "execute_javascript",
+          "id": "repository.execute-native-raw-string-javascript-artifact"
+        },
+        {
+          "name": "execute_runtime_javascript",
+          "id": "repository.execute-native-raw-string-runtime-javascript"
+        },
+        {
+          "name": "execute_rust",
+          "id": "repository.execute-native-raw-string-rust-artifact"
+        },
+        {
+          "name": "field",
+          "id": "repository.read-native-raw-string-test-field"
+        },
+        {
+          "name": "scalar_field",
+          "id": "repository.read-native-raw-string-test-scalar-field"
+        },
+        {
+          "name": "operations",
+          "id": "repository.read-native-raw-string-test-operations"
+        },
+        {
+          "name": "runtime_calls",
+          "id": "repository.read-native-raw-string-test-runtime-calls"
+        },
+        {
+          "name": "check_runtime_owners",
+          "id": "repository.check-native-raw-string-test-runtime-owners"
+        },
+        {
+          "name": "forge_owner",
+          "id": "repository.change-native-raw-string-test-owner"
+        }
+      ]
+    }
+  }
+];
+const normalizeRustLiteralValueName=name=>name.replace(/([a-z0-9])([A-Z])/gu,'$1-$2').replaceAll('_','-').replaceAll(' ','-').toLowerCase().replace(/\bascii\b/gu,'american-standard-code-for-information-interchange').replace(/\bml\b/gu,'meta-language').replace(/\bi32\b/gu,'signed-thirty-two-bit-integer').replace(/\bconst\b/gu,'constant').replace(/\bloop5\b/gu,'loop-five').replace(/\bloop6\b/gu,'loop-six').replace(/\bjoin7\b/gu,'join-seven').replace(/\bloop8\b/gu,'loop-eight');
+const RUST_LITERAL_VALUE_NAME_INVENTORIES=RUST_LITERAL_VALUE_NAME_BINDINGS.map(({inventory,files})=>({
+ inventory,files:Object.keys(files),
+ extract:(raw,file)=>{const text=file.endsWith('.lino')?decodeURIComponent(raw):raw;return files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeRustLiteralValueName(name));},
+ recordOf:name=>Object.values(files).flat().find(entry=>normalizeRustLiteralValueName(entry.name)===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {

@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 131 | 130 | 1 | 0 |
+| Generators | 132 | 131 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 50 | 0 | 0 | 50 |
+| Published artifact contents | 51 | 0 | 0 | 51 |
 
 ## JavaScript engines
 
@@ -638,6 +638,7 @@ they are.
 | `js/scripts/generate-rust-public-pure-unit-call-fixtures.mjs` | `js/scripts/generate-rust-public-pure-unit-call-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-pure-unit-call-fixtures.mjs` | `js/scripts/generate-rust-pure-unit-call-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-pure-unit-call-rules.mjs` | `js/scripts/generate-rust-pure-unit-call-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-raw-string-rules.mjs` | `js/scripts/generate-rust-raw-string-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-read-only-query-fixtures.mjs` | `js/scripts/generate-rust-read-only-query-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-read-only-query-rules.mjs` | `js/scripts/generate-rust-read-only-query-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-runtime-shell-fixtures.mjs` | `js/scripts/generate-rust-runtime-shell-fixtures.mjs` | `script` |  | derived | current |  |
@@ -775,6 +776,7 @@ they are.
 | `src/data/rust-owned-tuple-calls.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-primitive-owners.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-pure-unit-calls.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-raw-string-literals.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-read-only-queries.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-runtime-shell.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-scalar-loops.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
