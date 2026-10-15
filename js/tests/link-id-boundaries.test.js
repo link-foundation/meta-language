@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {LinkId,LinkMetadata} from '../src/primitives.js';
+import {LinkId,LinkMetadata,idKey} from '../src/primitives.js';
 import {LinkNetwork} from '../src/network.js';
 import {encodeLinkStatement,LinoSerializationError} from '../src/lino-serialization.js';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
@@ -18,6 +18,25 @@ test('LinkId refuses unsafe original BigInt, decimal tokens and fractional strin
 test('mutated unsafe LinkId instances cannot bypass validation at inbound identity boundaries',()=>{
  const network=new LinkNetwork(),stored=network.insertLink([],LinkMetadata.new().withTerm('original')),before=network.toLino(),mutated=LinkId.from(2);mutated.value=9007199254740992;
  for(const operation of[()=>new LinkId(mutated),()=>LinkId.from(mutated),()=>LinkId.fromU64(mutated),()=>mutated.asU64(),()=>mutated.equals(2),()=>LinkId.from(2).equals(mutated),()=>Number(mutated),()=>String(mutated),()=>JSON.stringify(mutated),()=>network.link(mutated),()=>network.insertLinkWithOptionalId(mutated),()=>network.insertLink([mutated]),()=>network.link(stored).setReferences([mutated]),()=>encodeLinkStatement(mutated,[],LinkMetadata.new())]){assert.throws(operation,TypeError);assert.equal(network.toLino(),before);}
+});
+
+test('existing LinkId instances require an actual Number for symmetric equality and consistent lookup keys',()=>{
+ const network=new LinkNetwork(),normal=network.insertLink(),before=network.toLino();
+ for(const value of['1',1n]){const mutated=LinkId.from(1);mutated.value=value;
+  for(const operation of[()=>new LinkId(mutated),()=>LinkId.from(mutated),()=>mutated.asU64(),()=>mutated.equals(normal),()=>normal.equals(mutated),()=>idKey(mutated),()=>network.link(mutated),()=>network.insertLinkWithOptionalId(mutated)])assert.throws(operation,TypeError);
+  assert.equal(network.toLino(),before);assert.equal(network._nextId,2);
+ }
+ assert.equal(LinkId.from('1').equals(normal),true);assert.equal(normal.equals(LinkId.from(1n)),true);assert.equal(idKey(LinkId.from('1')),idKey(normal));
+});
+
+test('rejected preferred and automatic insertion preserve allocator and later normal allocation',()=>{
+ for(const preferred of[Number.MAX_SAFE_INTEGER,undefined]){
+  const network=new LinkNetwork();network.insertLink([],LinkMetadata.new().withTerm('original'));const before=network.toLino(),bytes=encodeLinkNetworkBinary(network);
+  for(let attempt=0;attempt<2;attempt++){
+   assert.throws(()=>network.insertLinkWithOptionalId(preferred,[9007199254740993n]),TypeError);assert.equal(network._nextId,2);assert.equal(network.len(),1);assert.equal(network.toLino(),before);assert.deepEqual(encodeLinkNetworkBinary(network),bytes);
+  }
+  assert.equal(network.insertLink([],LinkMetadata.new().withTerm('next')).asU64(),2);assert.equal(network._nextId,3);assert.equal(network.len(),2);assert.equal(network.link(1).metadata().term,'original');
+ }
 });
 
 test('canonical and plain LiNo reject both colliding original IDs and unsafe reference tokens',()=>{

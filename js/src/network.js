@@ -161,9 +161,11 @@ export class LinkNetwork {
   }
 
   insertLinkWithOptionalId(preferredId, references = [], metadata = LinkMetadata.new()) {
-    const id = preferredId === undefined ? this._allocateId() : LinkId.from(preferredId);
-    this._nextId = Math.max(this._nextId, id.asU64() + 1);
-    this._links.set(id.asU64(), new Link(id, references, metadata));
+    const id = preferredId === undefined ? new LinkId(this._nextId) : LinkId.from(preferredId);
+    const link = new Link(id, references, metadata);
+    const numeric = id.asU64();
+    this._nextId = Math.max(this._nextId, numeric + 1);
+    this._links.set(numeric, link);
     return id;
   }
 
