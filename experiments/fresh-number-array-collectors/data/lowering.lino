@@ -1,0 +1,1 @@
+(decorator lower-certified-fresh-number-array-collector (level transformation) (order 0) (when (model closed%20fresh%20Number%20array%20collector%201) (role certified%20collector)) (set bindingForm let) (set operation append%20value%20state) (set argumentEvaluation once%20before%20append))
