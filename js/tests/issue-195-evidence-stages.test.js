@@ -7,6 +7,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import vm from 'node:vm';
 
 import { buildIssue195Manifest, evaluateIssue195Acceptance } from '../scripts/issue-195-acceptance-lib.mjs';
 import { buildEvidencePlan } from '../scripts/issue-195-evidence-plan.mjs';
@@ -202,6 +203,35 @@ test('the evidence commands run with bounded build parallelism unless the caller
   observe('I195-RESOURCE-BOUNDED-SEQUENTIAL-EVIDENCE',
     ['stagesRunSequentially', 'boundedBuildEnvironment', 'defaultFeaturesOnly', 'testGroupsRunSeparately'],
     'the evidence commands run with bounded build parallelism unless the caller set it');
+});
+
+test('the acceptance Rust command reuses only the checked fresh-merge test optimization', async () => {
+  const runner = read('js/scripts/run-issue-195-evidence.mjs');
+  const definition = runner.match(/^async function runRustSuite\(failures\) \{[\s\S]*?^\}/mu)?.[0];
+  assert.ok(definition, 'the actual Rust-suite producer is inspected without running the evidence pipeline');
+  const calls = [];
+  const run = vm.runInNewContext(`(${definition})`, {
+    path, root,
+    runCommand: async (...args) => { calls.push(args); return { ok: true }; },
+    bundle: record => record,
+  });
+  const failures = [];
+  await run(failures);
+  assert.deepEqual(failures, []);
+  assert.equal(calls.length, 1, 'the complete suite remains one Cargo command');
+  const [label, command, args, options] = structuredClone(calls[0]);
+  assert.equal(label, 'suite-rust');
+  assert.equal(command, 'cargo');
+  assert.deepEqual(options, { allowFailure: true });
+  const original = ['test', '--no-fail-fast', '--locked', '--manifest-path', path.join(root, 'rust/Cargo.toml'), '--tests'];
+  const settings = ['profile.test.package.meta-language.opt-level=3',
+    'profile.test.package.meta-language.debug-assertions=true',
+    'profile.test.package.meta-language.overflow-checks=true'];
+  const freshMerge = [...read('rust/scripts/simulate-fresh-merge.sh').matchAll(/--config '([^']+)'/gu)].map(match => match[1]);
+  assert.deepEqual(settings, freshMerge, 'reuse the existing package-specific test settings exactly');
+  assert.deepEqual(args, [...original, ...settings.flatMap(setting => ['--config', setting])],
+    'retain default features, every test target, enabled debug/overflow checks and the original failure policy');
+  assert.doesNotMatch(args.join(' '), /--release|--profile|--features|--all-features|--no-default-features|--skip|--ignored|debug-assertions=false|overflow-checks=false/u);
 });
 
 test('declared toolchains must match exactly; tools a stage does not use are not required', () => {
