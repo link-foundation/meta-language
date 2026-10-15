@@ -154,6 +154,32 @@ test('selected equality keeps its actual Boolean or i32 operands before either d
  for(const run of[checkRustOwnedLocalStateProof,emitJavaScript,emitRust,encodeTypedProgramLinks])assert.throws(()=>run(program),/actual Boolean\/i32 domain/u);
 });
 
+test('optional binary domains use explicit absence rather than JavaScript truthiness',()=>{
+ const wrapped=()=>{
+  const program=parse(fixture.cases[0]),fn=program.declarations.get('choose'),branch=fn.body.body.body.body.value;
+  branch.cond={k:'binary',op:'eq',left:branch.cond,right:{k:'lit',value:true,type:{kind:'bool'}},type:{kind:'bool'}};
+  return{program,condition:branch.cond};
+ };
+ for(const domain of[false,0,'',true,'bool',[],{}]){
+  const{program,condition}=wrapped();condition.domain=domain;
+  for(const run of[checkRustOwnedLocalStateProof,emitJavaScript,emitRust,encodeTypedProgramLinks])assert.throws(()=>run(program),/actual Boolean\/i32 domain/u);
+ }
+ const unrepresented=wrapped();unrepresented.condition.domain=undefined;
+ for(const run of[checkRustOwnedLocalStateProof,emitJavaScript,emitRust,encodeTypedProgramLinks])assert.throws(()=>run(unrepresented.program),/unsupported value shape or domain/u);
+ for(const domain of[null,{kind:'bool'}]){
+  const{program,condition}=wrapped();condition.domain=domain;
+  checkRustOwnedLocalStateProof(program);execute(program,fixture.cases[0].observations);
+  assert.ok(emitRust(program).text.includes('pub fn choose'));
+  if(domain===null)assert.throws(()=>encodeTypedProgramLinks(program),/checked surface projection/u);
+  else{const saved=reload(program);execute(decodeTypedProgramLinks(saved.network,saved.root),fixture.cases[0].observations);}
+ }
+ const absent=wrapped();assert.equal(Object.hasOwn(absent.condition,'domain'),false);
+ checkRustOwnedLocalStateProof(absent.program);execute(absent.program,fixture.cases[0].observations);
+ assert.ok(emitRust(absent.program).text.includes('pub fn choose'));
+ // Preserve the SDK's existing canonical inferred-domain check separately.
+ assert.throws(()=>encodeTypedProgramLinks(absent.program),/checked surface projection/u);
+});
+
 test('new shared rule decisions themselves replay from checked Links without a native implementation',()=>{
  const source=rustOwnedTupleCallRules();assert.equal(readFileSync(new URL('../js/src/translation/rust-owned-tuple-call-rules.js',import.meta.url),'utf8'),source);
  const archive=reload(checkProgram(parseJavaScript(source))),program=decodeTypedProgramLinks(archive.network,archive.root),emission=emitJavaScript(program),context={};

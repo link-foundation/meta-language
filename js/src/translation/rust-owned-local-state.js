@@ -178,7 +178,8 @@ export function checkRustOwnedLocalStateProof(program){
     node.args.forEach((arg,index)=>expression(arg,[...path,'args',index],scope,state));return;
    }
    if(node.k==='binary'){
-    if(!acceptRustOwnedLocalBinaryOperation(node.op)||node.type.kind!=='bool'||!ownedLocalType(node.left.type)||node.left.type.kind==='string'||!sameType(node.left.type,node.right.type)||node.domain&&(!ownedLocalType(node.domain)||!sameType(node.domain,node.left.type)))fail('only exact equality in the actual Boolean/i32 domain is admitted');
+    if(!acceptRustOwnedLocalBinaryOperation(node.op)||node.type.kind!=='bool'||!ownedLocalType(node.left.type)||node.left.type.kind==='string'||!sameType(node.left.type,node.right.type)
+     ||(node.domain!=null&&(!ownedLocalType(node.domain)||!sameType(node.domain,node.left.type))))fail('only exact equality in the actual Boolean/i32 domain is admitted');
     expression(node.left,[...path,'left'],scope,state);expression(node.right,[...path,'right'],scope,state);return;
    }
    if(node.k==='toString'){if(node.type.kind!=='string'||node.arg.k!=='lit'||node.arg.type.kind!=='string')fail('the constructor must be an actual standard literal String value');expression(node.arg,[...path,'arg'],scope,state);return;}
