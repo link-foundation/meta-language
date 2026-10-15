@@ -87,7 +87,8 @@ impl RustParser {
             ));
         }
         let end = c.expect("]", Some("attribute"))?;
-        Ok((name == "derive")
-            .then(|| json!({"name":"derive", "traits": traits, "span": span(start, &end)})))
+        Ok((name == "derive").then(|| {
+            json!({"name":"derive", "traits": traits, "span":{"start":start.start,"end":end.end}})
+        }))
     }
 }

@@ -237,12 +237,13 @@ fn actual_owned_occurrence_positions_keep_numeric_meaning_and_stored_zero_sign()
 
 #[test]
 fn direct_program_dynamic_proof_widths_keep_original_values_and_archive_execution() {
-    let fixture = meta_language::read_structured_data_lino(include_str!(
+    let fixture = meta_language::read_structured_data_lino_ordered(include_str!(
         "../../../experiments/rust-owned-local-state-fixture.lino"
     ))
     .unwrap();
+    let entries: Vec<Value> = super::project_data::project_data_member(&fixture, "cases").unwrap();
     let mut cases = 0;
-    for original in fixture["cases"].as_array().unwrap() {
+    for original in &entries {
         let entry = json!({"archive": original["links"], "root": original["root"],
             "name": original["name"], "observations": original["observations"]});
         let (network, root) = archive(&entry, None);
@@ -297,11 +298,12 @@ fn direct_program_dynamic_proof_widths_keep_original_values_and_archive_executio
 
 #[test]
 fn direct_dynamic_width_views_keep_unknown_null_and_order_refusals() {
-    let fixture = meta_language::read_structured_data_lino(include_str!(
+    let fixture = meta_language::read_structured_data_lino_ordered(include_str!(
         "../../../experiments/rust-owned-local-state-fixture.lino"
     ))
     .unwrap();
-    let first = &fixture["cases"][0];
+    let entries: Vec<Value> = super::project_data::project_data_member(&fixture, "cases").unwrap();
+    let first = &entries[0];
     let entry = json!({"archive": first["links"], "root": first["root"]});
     let (network, root) = archive(&entry, None);
     let baseline = decode_typed_program_links(&network, root).unwrap();

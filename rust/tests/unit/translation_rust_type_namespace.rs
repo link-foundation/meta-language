@@ -741,7 +741,8 @@ fn raw_links_preserve_every_shared_container_location_before_rendering() {
             network.link(container).unwrap().metadata().term(),
             meta_language::typed_program_links_schema()["containers"][kind].as_str()
         );
-        let scalar = field(&network, root, "source language");
+        let body = network.link(root).unwrap().references()[0];
+        let scalar = field(&network, body, "source language");
         network.insert_field(container, "opaque container fact", scalar);
         let loaded = LinkNetwork::from_lino(&network.to_lino()).unwrap();
         for target in ["JavaScript", "Rust"] {

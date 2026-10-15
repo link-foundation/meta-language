@@ -7,11 +7,9 @@ use super::{
     binary_node, cast_to, coerce, comparison, fixed_bounds, negate_number, op_name, plain_binary,
     text_lit, type_error, unsupported,
 };
-use crate::translation::scoped_binding_emission_rules::{
-    accept_java_script_scoped_binding_emission_absent_expression,
-    accept_java_script_scoped_binding_emission_absent_value_type,
+use crate::translation::typed_program_link_rules::{
+    accept_program_optional_absence, accept_program_tuple_product_model,
 };
-use crate::translation::typed_program_link_rules::accept_program_tuple_product_model;
 
 mod calls;
 
@@ -103,33 +101,20 @@ impl Checker {
             SNode::Str { value } => Ok(text_lit(STRING, value.clone())),
             SNode::Unit => Ok(Expr::new(Node::Unit, UNIT)),
             SNode::None { absence } => {
-                let ty = expected
-                    .cloned()
-                    .unwrap_or_else(|| crate::translation::types::option(FLOAT, absence.clone()));
-                let valid = if let Type::Option {
-                    element,
-                    absence: policy,
-                } = &ty
-                {
-                    accept_java_script_scoped_binding_emission_absent_value_type(
-                        ty.kind(),
-                        element.kind(),
-                        policy,
-                        matches!(element.as_ref(), Type::Float),
-                    ) && accept_java_script_scoped_binding_emission_absent_expression(
-                        ty.kind(),
-                        absence,
-                    ) && policy == absence
-                } else {
-                    false
-                };
-                if !valid {
+                if !accept_program_optional_absence(absence) {
                     return Err(unsupported(
                         "empty optional value",
-                        "only the exact undefined Number optional value is admitted",
+                        "an empty optional value needs a recognized absence policy",
                         span,
                     ));
                 }
+                // The generic JS checker retains an expected optional type,
+                // otherwise absence carries Unit. Scoped Number proofs are
+                // checked by their own independently selected adapter.
+                let ty = expected
+                    .filter(|ty| matches!(ty, Type::Option { .. }))
+                    .cloned()
+                    .unwrap_or_else(|| crate::translation::types::option(UNIT, absence.clone()));
                 Ok(Expr::new(
                     Node::None {
                         absence: absence.clone(),

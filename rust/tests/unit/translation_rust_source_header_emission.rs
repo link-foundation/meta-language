@@ -46,6 +46,9 @@ fn function<'a>(program: &'a Program, name: &str) -> &'a meta_language::translat
 }
 
 fn field(network: &LinkNetwork, parent: LinkId, label: &str) -> (LinkId, LinkId) {
+    let label = meta_language::typed_program_links_schema()["fields"][label]
+        .as_str()
+        .unwrap_or(label);
     network
         .links()
         .find_map(|link| match link.references() {
@@ -552,15 +555,38 @@ fn source_free_body_edits_change_observations_without_changing_reference_facts()
     )
     .unwrap();
     let before = decode_typed_program_links(&archive.network, archive.root).unwrap();
-    let literal = archive
+    let body = archive.network.link(archive.root).unwrap().references()[0];
+    let declarations = field(&archive.network, body, "declarations").1;
+    let declaration = archive
         .network
-        .links()
-        .find(|link| {
-            link.metadata().term() == Some("string value")
-                && link.metadata().definition() == Some("1.0")
-        })
+        .link(declarations)
         .unwrap()
-        .id();
+        .references()
+        .iter()
+        .find_map(|entry| {
+            let pair = archive.network.link(*entry).unwrap().references();
+            (archive
+                .network
+                .link(pair[0])
+                .unwrap()
+                .metadata()
+                .definition()
+                == Some("add_one"))
+            .then_some(pair[1])
+        })
+        .unwrap();
+    let addition = field(&archive.network, declaration, "body").1;
+    let right = field(&archive.network, addition, "right").1;
+    let literal = field(&archive.network, right, "value").1;
+    assert_eq!(
+        archive
+            .network
+            .link(literal)
+            .unwrap()
+            .metadata()
+            .definition(),
+        Some("1")
+    );
     let edited = edit_definition(&archive.network, literal, "2.0");
     let program = decode_typed_program_links(&edited, archive.root).unwrap();
     assert_eq!(

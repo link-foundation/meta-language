@@ -10,7 +10,6 @@
 //!
 //! Mirrors `js/src/translation/emit-rocq.js`.
 
-use super::scoped_binding_emission_rules::accept_java_script_scoped_binding_emission_absent_value_type;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Write as _;
 use std::rc::Rc;
@@ -499,15 +498,13 @@ impl RocqEmitter<'_> {
             Type::String => "string".to_owned(),
             Type::Unit => "unit".to_owned(),
             Type::Output => "list string".to_owned(),
-            Type::Option { element, absence }
-                if accept_java_script_scoped_binding_emission_absent_value_type(
-                    "option",
-                    element.kind(),
-                    absence,
-                    matches!(element.as_ref(), Type::Float),
-                ) =>
-            {
-                format!("(option {})", self.ty(element)?)
+            Type::Option { element, absence } => {
+                let element = self.ty(element)?;
+                if absence == "both" {
+                    format!("(option (option {element}))")
+                } else {
+                    format!("(option {element})")
+                }
             }
             Type::Data { name } => self.state.reference(name, "."),
             Type::Array { element, .. } => {
