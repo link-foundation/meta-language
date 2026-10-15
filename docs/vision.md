@@ -151,6 +151,12 @@ source-free Links reload. Nineteen independently specified headers exercise the
 capture; seven source refusals and ten malformed graph edits check its boundary.
 Body value edits remain executable while the source facet stays intact. Existing
 archives omit this facet by default. The independent
+body ownership obligation also requires actual constructor, clone, dereference
+and receiver owners, together with the borrow and lifetime relations that connect
+them to those headers. Header capture alone does not prove a body's String
+conversion, a move from a borrowed non-Copy value or an escaping reference.
+These operation facts and their checked links remain required independently of
+the source signature facet. The independent
 `primitive borrowed Rust function header 1` emission model retains direct
 primitive `f64` and Boolean result headers and direct or multiply borrowed
 immutable primitive parameters. Ordered ASCII lifetime binders and reference
