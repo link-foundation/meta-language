@@ -394,6 +394,19 @@ declaration, token and operation link identities before projecting saved graphs;
 encoding reattaches those same owned nodes. Native compilation and the complete
 executable cross-runtime replay checks remain CI obligations before this draft
 constitutes runtime parity support.
+The isolated JavaScript-first `closed generated JavaScript Unit module 1`
+experiment reads the complete actual emitted strict module, retaining every
+token and trivia code unit and actual helper, local and entry identities. Its
+paired experimental factory and emitter interpret `null` as Unit only in owned
+helper returns and unused entry-call results. Independent entry markers, temporal
+binding checks and primitive Number source intervals remain checked through
+source-free reload and edits. Eight whole modules exercise three complete code
+cycles and actual JavaScript execution; complete emitted Rust is re-read under
+its four operation-bound successful-runtime assumptions. Incoming assumptions
+remain explicit witnesses. Default and generic public APIs do not enforce this
+experimental source facet. Native integration, full failure equivalence and
+general generated-module coverage remain required work; mandatory CI retains
+the bounded experiment and both freshness checks.
 Named source spans compare safe, nonnegative integral offsets by value, including
 equivalent decimal and exponent spellings. Source-position negative zero remains
 invalid while primitive floating-point negative zero retains its value.

@@ -676,6 +676,24 @@ jobs:
         working-directory: js
         run: node scripts/generate-javascript-line-terminator-rules.mjs --check
 
+      - name: Check generated JavaScript Unit module experiment rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../experiments/generated-javascript-unit/generate-rules.mjs --check
+
+      - name: Check complete generated JavaScript Unit module experiment fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../experiments/generated-javascript-unit/generate-fixtures.mjs --check
+
+      - name: Run generated JavaScript Unit module experiment
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        env:
+          TRANSLATION_CHECK_RUST: '0'
+          SELF_TRANSLATION_CHECK_RUST: '0'
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/generated-javascript-unit/model.test.mjs
+
       - name: Check generated whole Rust runtime shell rules
         if: ${{ !cancelled() && matrix.group == 'generated' }}
         working-directory: js

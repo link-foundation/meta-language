@@ -51,5 +51,6 @@ This finite model accepts ASCII identifiers and the closed syntax above. It
 conservatively refuses other syntax and trivia. It uses the existing generic
 Links codec, with its explicit experimental reload check, and stores no opaque
 source envelope or cached target emission. A public selector, shared production
-validation hooks, native pairing, central schema/naming registration and CI
-registration require a separately reviewed integration.
+validation hooks, native pairing and central schema registration require a
+separately reviewed integration. Required CI runs this bounded experiment and
+both generated-data freshness checks without compiling Rust in the experiment.

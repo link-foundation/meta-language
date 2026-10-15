@@ -604,6 +604,30 @@ const JAVASCRIPT_LINE_TERMINATOR_PACKAGE_STEPS = [
   ]
 ];
 
+const GENERATED_JAVASCRIPT_UNIT_PACKAGE_STEPS = [
+  [
+    "Check generated JavaScript Unit module experiment rules",
+    "node ../experiments/generated-javascript-unit/generate-rules.mjs --check",
+    "d87a6c2f050ec7b711baf691ba78705b85da2ded1572ddb16ee5a3d096135fc5",
+    "generated"
+  ],
+  [
+    "Check complete generated JavaScript Unit module experiment fixtures",
+    "node ../experiments/generated-javascript-unit/generate-fixtures.mjs --check",
+    "5d5a780433038f4bce1cc0ffed08311960e3dbda4786e9f9eae2dd2ab486318c",
+    "generated"
+  ]
+];
+
+const GENERATED_JAVASCRIPT_UNIT_EXPERIMENT_STEPS = [
+  [
+    "Run generated JavaScript Unit module experiment",
+    "node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/generated-javascript-unit/model.test.mjs",
+    "c9b231ccebcf35f57faf1c91f72f7a7fd7e93090f719a53461b47b2d189ba6d9",
+    "generated"
+  ]
+];
+
 function packageStepSignature(step, includeGroup = false) {
   const fields = includeGroup ? step.text : step.text.replace(/ && matrix\.group == '[a-z-]+'/gu, '');
   const text = fields
@@ -617,7 +641,8 @@ function checkPackageStepConservation(parsed) {
     ...PURE_UNIT_PACKAGE_STEPS, ...SOURCE_SPAN_PACKAGE_STEPS, ...OWNED_TEXT_GENERATOR_PACKAGE_STEPS,
     ...OWNED_TEXT_EXPERIMENT_PACKAGE_STEPS, ...INTEGRAL_METADATA_PACKAGE_STEPS, ...INTEGRAL_METADATA_EXPERIMENT_PACKAGE_STEPS,
     ...CONST_AND_BYTE_GENERATOR_PACKAGE_STEPS, ...CONST_AND_BYTE_EXPERIMENT_PACKAGE_STEPS, ...RUNTIME_SHELL_PACKAGE_STEPS, ...RUST_NUMBER_PACKAGE_STEPS,
-    ...JAVASCRIPT_LINE_TERMINATOR_PACKAGE_STEPS];
+    ...JAVASCRIPT_LINE_TERMINATOR_PACKAGE_STEPS, ...GENERATED_JAVASCRIPT_UNIT_PACKAGE_STEPS,
+    ...GENERATED_JAVASCRIPT_UNIT_EXPERIMENT_STEPS];
   const expected = new Map([
     ...ORIGINAL_PACKAGE_STEPS.map(([name, hash, owner]) => [name, { hash, owner }]),
     ...additions.map(([name, command, hash, owner]) => [name, { hash, owner, command, addition: true }]),
@@ -745,7 +770,8 @@ test('every frozen generator addition rejects omission, duplication, condition, 
     assert.throws(() => checkPackageStepConservation(parsed), assert.AssertionError, name);
   };
   for (const [name] of [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS, ...TYPE_NAMESPACE_PACKAGE_STEPS,
-    ...PURE_UNIT_PACKAGE_STEPS, ...SOURCE_SPAN_PACKAGE_STEPS, ...OWNED_TEXT_GENERATOR_PACKAGE_STEPS, ...INTEGRAL_METADATA_PACKAGE_STEPS, ...CONST_AND_BYTE_GENERATOR_PACKAGE_STEPS, ...RUNTIME_SHELL_PACKAGE_STEPS, ...RUST_NUMBER_PACKAGE_STEPS]) {
+    ...PURE_UNIT_PACKAGE_STEPS, ...SOURCE_SPAN_PACKAGE_STEPS, ...OWNED_TEXT_GENERATOR_PACKAGE_STEPS, ...INTEGRAL_METADATA_PACKAGE_STEPS, ...CONST_AND_BYTE_GENERATOR_PACKAGE_STEPS, ...RUNTIME_SHELL_PACKAGE_STEPS, ...RUST_NUMBER_PACKAGE_STEPS,
+    ...JAVASCRIPT_LINE_TERMINATOR_PACKAGE_STEPS, ...GENERATED_JAVASCRIPT_UNIT_PACKAGE_STEPS]) {
     mutate(name, (steps, index) => steps.splice(index, 1));
     mutate(name, (steps, index) => steps.push({ ...steps[index] }));
     for (const [before, after] of [
@@ -763,7 +789,8 @@ test('every frozen generator addition rejects omission, duplication, condition, 
 });
 
 test('every frozen text experiment addition retains its mandatory execution, wrapper, directory and owner', () => {
-  for (const [name] of [...OWNED_TEXT_EXPERIMENT_PACKAGE_STEPS, ...INTEGRAL_METADATA_EXPERIMENT_PACKAGE_STEPS, ...CONST_AND_BYTE_EXPERIMENT_PACKAGE_STEPS]) {
+  for (const [name] of [...OWNED_TEXT_EXPERIMENT_PACKAGE_STEPS, ...INTEGRAL_METADATA_EXPERIMENT_PACKAGE_STEPS, ...CONST_AND_BYTE_EXPERIMENT_PACKAGE_STEPS,
+    ...GENERATED_JAVASCRIPT_UNIT_EXPERIMENT_STEPS]) {
     const mutate = change => {
       const parsed = jobs('js.yml');
       const steps = parsed.get('package-checks').steps;
