@@ -6,7 +6,7 @@ export function checkOwnedProgramContainers(root, { acceptContainer, fail, selec
   let visits = 0;
   const reject = detail => { defect ??= detail; };
   function visit(value, depth = 0) {
-    if (!value || typeof value !== 'object' || visited.has(value)) return;
+    if (!value || typeof value !== 'object' && typeof value !== 'function' || visited.has(value)) return;
     if (depth > 256 || ++visits > 100_000) {
       reject('the owned container graph exceeds its resource limit');
       return;
