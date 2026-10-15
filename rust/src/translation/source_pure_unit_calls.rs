@@ -6,7 +6,7 @@ use super::rust::pure_unit_call_rules::{
     accept_rust_pure_unit_body_form, accept_rust_pure_unit_call_model,
     accept_rust_pure_unit_context, accept_rust_pure_unit_header_form, accept_rust_pure_unit_name,
     accept_rust_pure_unit_name_character, accept_rust_pure_unit_path_form,
-    accept_rust_pure_unit_visibility,
+    accept_rust_pure_unit_source_offset, accept_rust_pure_unit_visibility,
 };
 use serde_json::{Value, json};
 use std::collections::HashSet;
@@ -56,14 +56,22 @@ fn array<'a>(value: &'a Value, detail: &str) -> Result<&'a [Value]> {
         .map(Vec::as_slice)
         .ok_or_else(|| fail(detail))
 }
+fn source_offset(value: &Value) -> Option<u64> {
+    // Preserve the native integer representation before serde's usize projection.
+    // Other raw numeric lexemes remain a separate codec normalization boundary.
+    let integer = value.as_u64()?;
+    let number = value.as_f64()?;
+    accept_rust_pure_unit_source_offset(number, number == 0.0 && number.is_sign_negative())
+        .then_some(integer)
+}
 fn span(value: &Value) -> Result<(u64, u64)> {
     if value.as_object().is_none_or(|record| {
         record.len() != 2 || !record.contains_key("start") || !record.contains_key("end")
     }) {
         return Err(fail("unrecognized or missing owned fields"));
     }
-    match (value["start"].as_u64(), value["end"].as_u64()) {
-        (Some(start), Some(end)) if end > start && end <= 9_007_199_254_740_991 => Ok((start, end)),
+    match (source_offset(&value["start"]), source_offset(&value["end"])) {
+        (Some(start), Some(end)) if end > start => Ok((start, end)),
         _ => Err(fail("an actual source span is malformed")),
     }
 }

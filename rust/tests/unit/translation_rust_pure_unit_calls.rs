@@ -511,3 +511,109 @@ fn source_free_renaming_reordering_and_reference_retargeting_change_actual_calls
         assert!(checked(&replay).declaration("renamed").is_some());
     }
 }
+
+#[test]
+fn labeled_span_offsets_survive_reordered_raw_records_and_reject_negative_zero() {
+    let data = fixtures();
+    for fixture in &data {
+        let entry = &fixture["cases"][1];
+        let mut packet = archive(entry);
+        let network = &mut packet.network;
+        let program = network.link(packet.root).unwrap().references()[0];
+        let main = field(network, program, "main").1;
+        let effect = network
+            .link(field(network, main, "effects").1)
+            .unwrap()
+            .references()[0];
+        let call = field(network, effect, "value").1;
+        let (relation, original_span) = field(network, call, "span");
+        let start = field(network, original_span, "start").1;
+        let end = field(network, original_span, "end").1;
+        let metadata = network.link(original_span).unwrap().metadata().clone();
+        let reordered = network.insert_link([], metadata);
+        network.insert_field(reordered, "end", end);
+        network.insert_field(reordered, "start", start);
+        let old: [LinkId; 3] = network
+            .link(relation)
+            .unwrap()
+            .references()
+            .try_into()
+            .unwrap();
+        assert_eq!(
+            network
+                .apply_substitution(&SubstitutionRule::new(old, [old[0], old[1], reordered]))
+                .updated()
+                .len(),
+            1
+        );
+        assert_eq!(observe_calls(&packet), json!(["empty"]));
+        for target in ["Rust", "JavaScript"] {
+            assert!(emit_typed_program_links(&packet.network, packet.root, target).is_ok());
+        }
+        for spelling in ["-0", "-0.0", "9007199254740992"] {
+            let mut malformed = archive(entry);
+            let network = &mut malformed.network;
+            let program = network.link(malformed.root).unwrap().references()[0];
+            let main = field(network, program, "main").1;
+            let site = field(network, main, "span").1;
+            let relation = field(network, site, "start").0;
+            let replacement = network.insert_link(
+                [],
+                LinkMetadata::new()
+                    .with_link_type(LinkType::Semantic)
+                    .with_named(true)
+                    .with_language("meta-language typed program")
+                    .with_term("number value")
+                    .with_definition(spelling),
+            );
+            let old: [LinkId; 3] = network
+                .link(relation)
+                .unwrap()
+                .references()
+                .try_into()
+                .unwrap();
+            assert_eq!(
+                network
+                    .apply_substitution(&SubstitutionRule::new(old, [old[0], old[1], replacement]))
+                    .updated()
+                    .len(),
+                1
+            );
+            rejects(&malformed);
+        }
+        for invalid in [
+            json!(-0.0),
+            json!(-1),
+            json!(1.5),
+            json!(9007199254740992_u64),
+        ] {
+            let mut malformed = checked(&archive(entry));
+            let Decl::Fn(function) = &mut malformed.declarations[0] else {
+                panic!("actual helper")
+            };
+            function.source_pure_unit.as_mut().unwrap()["headerSpan"]["start"] = invalid;
+            assert!(encode_typed_program_links(&malformed).is_err());
+        }
+        let mut maximum = checked(&archive(entry));
+        maximum.main.as_mut().unwrap().span.as_mut().unwrap().end =
+            usize::try_from(9007199254740991_u64).unwrap();
+        assert!(encode_typed_program_links(&maximum).is_ok());
+    }
+    let packet = create_typed_program_links(
+        "/** @returns {number} */function negative(){return -0;}console.log(negative());",
+        "JavaScript",
+    )
+    .unwrap();
+    let program = checked(&packet);
+    let Some(Decl::Fn(function)) = program.declaration("negative") else {
+        panic!("actual primitive helper")
+    };
+    assert_eq!(serde_json::to_value(&function.body).unwrap()["value"], "-0");
+    let code = emit_typed_program_links(&packet.network, packet.root, "JavaScript")
+        .unwrap()
+        .code;
+    assert_eq!(
+        execute_javascript(&(code + "\nconsole.log(Object.is(negative(),-0));")),
+        "-0\ntrue"
+    );
+}
