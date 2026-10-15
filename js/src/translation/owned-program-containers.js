@@ -44,4 +44,5 @@ export function checkOwnedProgramContainers(root, { acceptContainer, fail, selec
   }
   visit(root);
   if (selected && defect) fail(defect);
+  return selected;
 }

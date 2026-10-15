@@ -2,10 +2,13 @@
 // The adapter carries declarations and shared projection instructions; it
 // does not assign meaning to types, operators, patterns or recursion.
 import { checkProgram } from './translation/check.js';
-import { projectLinkedProgramExpression } from './typed-program-expression-projection.js';
+import { validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes } from './translation/rust-type-namespace.js';
+import { projectLinkedProgramExpression, projectLinkedProgramDeclarationPath } from './typed-program-expression-projection.js';
 import { readProgramExpressionProjection, readProgramNeutralFieldDefault } from './typed-program-link-rules.js';
 
 export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
+  const rootedNamespace = checkRustTypeNamespaceRecordShapes(program);
+  if (rootedNamespace) { validateRustTypeNamespace(program); wholeProgram = true; }
   const visited = new WeakSet();
   const active = new WeakSet();
   let hasTuple = false;
@@ -32,9 +35,9 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
   // shared native projection boundary. Explicit product qualifiers always
   // require whole-program rechecking, including after a true-to-false edit.
   if (!wholeProgram && (!hasTuple || (!explicitImmutability && unprojected))) return program;
-  const projectExpression = value => projectLinkedProgramExpression(value, program.declarations);
+  const projectExpression = value => projectLinkedProgramExpression(value, program.declarations, {rootedNamespace});
   function projectType(value) {
-    if (value.kind === 'data') return { kind: 'named', path: value.name.split('.') };
+    if (value.kind === 'data') return { kind: 'named', path: projectLinkedProgramDeclarationPath(value.name, program.declarations, rootedNamespace) };
     if (['array', 'option', 'set', 'cell'].includes(value.kind)) return { ...value, element: projectType(value.element) };
     if (value.kind === 'tuple') return { ...value, elements: value.elements.map(projectType) };
     if (value.kind === 'record') return { ...value, fields: value.fields.map(field => ({ ...field, type: projectType(field.type) })) };

@@ -649,12 +649,12 @@ class RustParser {
     const range = span(start, c.peek());
     if (pattern.k === 'name') {
       this.origins.bind(pattern.name, value, path, sourceType);
-      return [{ name: pattern.name, type, value, span: range }];
+      return [{ name: pattern.name, ...(type === undefined && this.typeNamespaceModel ? {} : {type}), value, span: range }];
     }
     const bindings = [];
     const name = this.freshProductBinding();
     this.origins.bind(name, value, path, sourceType);
-    bindings.push({ name, type, value, span: range });
+    bindings.push({ name, ...(type === undefined && this.typeNamespaceModel ? {} : {type}), value, span: range });
     this.lowerProductBinding(pattern, { k: 'name', path: [name], span: range }, path, bindings);
     return bindings;
   }
@@ -731,7 +731,7 @@ class RustParser {
     while (!c.is('}')) {
       const token = c.peek();
       if (c.is('let')) {
-        for (const binding of this.letStatement([])) effects.push({ k: 'let', name: binding.name, type: binding.type, value: binding.value, span: binding.span });
+        for (const binding of this.letStatement([])) effects.push({ k: 'let', name: binding.name, ...(binding.type === undefined && this.typeNamespaceModel ? {} : {type: binding.type}), value: binding.value, span: binding.span });
         continue;
       }
       if (token.kind === 'macro') {
