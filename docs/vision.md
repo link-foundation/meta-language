@@ -324,6 +324,20 @@ constructor-overwritten identities require separate proofs. The existing
 source-signature model's exact refusals remain required. This draft does not
 establish arbitrary runtime-wrapper replay or pointer, outlives and ABI
 equivalence. Native compilation and executable parity run in CI.
+The independently selected `closed pure Rust unit calls 1` model retains flat,
+zero-argument private Unit helpers and their actual ordered calls from main.
+`closed public pure Rust unit calls 1` also retains each actual bare public
+keyword and its owned source position. Header and body forms, call paths and
+declaration identities remain inspectable links after source-free reload.
+Twelve private sources, nine public sources and sixty exact source refusals
+bound these interpretations. Five complete JavaScript programs replay their
+actual emitted Rust definitions three times under the public model, using the
+canonical empty main. Coherent declaration renames and call-order edits change
+the actual target bindings. The complete runtime shell, standard-library calls,
+effects, arguments, attributes and broader visibility require separate proofs.
+Named source spans compare safe, nonnegative integral offsets by value, including
+equivalent decimal and exponent spellings. Source-position negative zero remains
+invalid while primitive floating-point negative zero retains its value.
 Two independently selected owned-text source models retain local ownership
 before projecting it into value semantics. `closed owned text local state 1`
 records one once-evaluated standard `(String, i32)` initialization, its ordered
