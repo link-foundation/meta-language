@@ -16,10 +16,12 @@ owned entry binders. The default JavaScript reader remains unchanged.
 The saved proof contains every original lexer token, token spelling, interval
 and intervening trivia code unit. It links helper occurrences to actual checked
 declarations, local binders to actual ordered effects, and both entry
-occurrences to an independent marker on the checked main. All four JavaScript
-line terminators control return ASI and line comments. Entry locals cannot
-shadow any helper or entry, including through a later temporal-dead-zone
-binding. Same-target emission renders the complete owned CST; it reproduces the
+occurrences to an independent marker on the checked main. The shared production
+predicate `acceptJavaScriptLineTerminator` controls return ASI and line comments;
+the experimental policy explicitly records its shared policy, source and
+four-code-unit assumption (LF, CR, line separator and paragraph separator).
+Entry locals cannot shadow any helper or entry, including through a later
+temporal-dead-zone binding. Same-target emission renders the complete owned CST; it reproduces the
 input exactly until checked semantic edits change live names or targets.
 
 Rust emission re-reads its actual complete emitted artifact under the existing

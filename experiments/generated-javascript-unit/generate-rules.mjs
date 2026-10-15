@@ -1,6 +1,9 @@
 import {readFileSync,writeFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
-import {checkProjectData,writeProjectData} from '../../js/scripts/project-data.mjs';
+import {readProjectData,checkProjectData,writeProjectData} from '../../js/scripts/project-data.mjs';
+const lineTerminatorPolicy=readProjectData(new URL('../../js/src/translation/data/javascript-line-terminators.lino',import.meta.url));
+assert.equal(lineTerminatorPolicy.model,'ECMAScript line terminators 1');
+assert.deepEqual(lineTerminatorPolicy.codeUnits,[10,13,8232,8233],'the experimental ASI and comment proof assumes exactly LF, CR, line separator and paragraph separator');
 const emitter=readFileSync(new URL('../../js/src/translation/emit-javascript.js',import.meta.url),'utf8');
 const keywords=emitter.match(/const KEYWORDS = new Set\(\[([\s\S]*?)\]\);/u)?.[1];assert.ok(keywords,'the actual JavaScript emitter owns its reserved identifiers');
 const reservedNames=[...keywords.matchAll(/'([^'\\]*)'/gu)].map(match=>match[1]);assert.ok(reservedNames.includes('main')&&reservedNames.includes('arguments')&&reservedNames.includes('return'));
@@ -9,7 +12,7 @@ const directive=op('owned strict JavaScript directive',[{directive:true},';']);
 const helper=op('owned generated Unit helper',['function',{bind:'helper'},'(',')','{',op('owned null Unit return',['return',{nullUnit:true},';']),'}']);
 const statement=op('owned generated Unit binding',['const',{bind:'local'},'=',op('owned generated Unit invocation',[{helperReference:true},'(',')']),';']);
 const entry=op('owned generated Unit entry',['function',{bind:'entry'},'(',')','{',{repeat:'ordered generated Unit bindings',rule:'statement',until:'}'},'}']);
-const policy={schemaVersion:1,model:'closed generated JavaScript Unit module 1',language:'JavaScript',observationModel:'closed generated JavaScript Unit module observation 1',valueEncoding:'JavaScript null as closed Unit 1',entryName:'main',generatedLocalPattern:'^ml_main_ignored[0-9]+$',reservedNames,strictDirectives:["'use strict'",'"use strict"'],maximumCodeUnit:65535,lineTerminatorCodeUnits:[10,13,8232,8233],
+const policy={schemaVersion:1,model:'closed generated JavaScript Unit module 1',language:'JavaScript',observationModel:'closed generated JavaScript Unit module observation 1',valueEncoding:'JavaScript null as closed Unit 1',entryName:'main',generatedLocalPattern:'^ml_main_ignored[0-9]+$',reservedNames,strictDirectives:["'use strict'",'"use strict"'],maximumCodeUnit:65535,lineTerminatorCodeUnits:[...lineTerminatorPolicy.codeUnits],lineTerminatorPolicy:{model:lineTerminatorPolicy.model,source:lineTerminatorPolicy.source,policyFile:'js/src/translation/data/javascript-line-terminators.lino',ruleFile:'js/src/translation/javascript-line-terminator-rules.js',assumption:'Actual UTF-16 code units use exactly LF, CR, line separator and paragraph separator for line comments and restricted return boundaries.'},
  syntax:{directive,helper,statement,entry,module:op('complete generated JavaScript Unit module',[directive,{repeat:'ordered generated Unit helpers',rule:'helper',whileHelper:true},entry,op('owned generated entry invocation',[{entryReference:true},'(',')',';']),{eof:true}])},
  containerMarkerFields:['sourceGeneratedJavaScriptUnit','sourceGeneratedJavaScriptEntry'],
  fields:{program:['schemaVersion','sourceLanguage','items','main','declarations','imports','externals','outputThreaded','abortsThreaded','referenceSemantics','utf16Strings','sourceGeneratedJavaScriptUnit'],proof:['model','language','observationModel','valueEncoding','span','tokens','gaps','operations'],entryContext:['model','observationModel','valueEncoding','name','span'],main:['effects','span','sourceGeneratedJavaScriptEntry'],declaration:['k','name','params','ret','body','span','fullName','modulePath','recursive','decreasing','mutual','generated'],effect:['k','name','value','constant','span'],gap:['span','units']},
@@ -21,7 +24,6 @@ const source='// Generated from the closed generated JavaScript Unit policy. Do 
  +'/** @param {string} model @returns {boolean} */\nexport function acceptGeneratedJavaScriptUnitModel(model){return model === "" || model === '+JSON.stringify(policy.model)+';}\n'
  +'/** @param {string} name @param {boolean} generatedLocal @returns {boolean} */\nexport function acceptGeneratedJavaScriptUnitName(name,generatedLocal){return name !== "" && name !== "_" && (!name.startsWith("ml_") || generatedLocal) && !('+reservedNames.map(name=>'name === '+JSON.stringify(name)).join(' || ')+');}\n'
  +'/** @param {number} value @param {boolean} negativeZero @returns {boolean} */\nexport function acceptGeneratedJavaScriptUnitCodeUnit(value,negativeZero){return !negativeZero && value >= 0 && value <= '+policy.maximumCodeUnit+' && value % 1 === 0;}\n'
- +'/** @param {number} value @returns {boolean} */\nexport function acceptGeneratedJavaScriptUnitLineTerminator(value){return '+policy.lineTerminatorCodeUnits.map(value=>'value === '+value).join(' || ')+';}\n'
  +'/** @param {string} kind @param {boolean} dense @param {boolean} unrepresented @returns {boolean} */\nexport function acceptGeneratedJavaScriptUnitContainer(kind,dense,unrepresented){return !unrepresented && (kind === "array" && dense || kind === "map" || kind === "record");}\n';
 const file=new URL('./rules.mjs',import.meta.url);
 if(process.argv.includes('--check')){checkProjectData(policyFile,policy);assert.equal(readFileSync(file,'utf8'),source,'generated JavaScript Unit rules are fresh');}else{writeProjectData(policyFile,policy);writeFileSync(file,source);}
