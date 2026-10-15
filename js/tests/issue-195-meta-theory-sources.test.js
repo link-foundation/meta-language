@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { buildMetaTheoryFoundationSources, checkMetaTheoryFoundationSources, observeMetaTheoryFoundationModels } from '../scripts/meta-theory-foundation-sources.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
+import { LinkId } from '../src/primitives.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const file = path => new URL(`../../${path}`, import.meta.url);
@@ -113,4 +114,52 @@ test('theory traces require the exact captured upstream bytes and actual shared 
   changed.set('rust/src/link_network.rs', Buffer.from('meta-theory is our philosophical and theoretical foundation'));
   assert.match(checkMetaTheoryFoundationSources(audit, snapshots, changed).join('\n'), /implementation anchor is missing/u,
     'a provider declaration cannot replace actual native reference and tuple representation');
+});
+
+test('the finite-reference premise traces the exact safe own-data guard and refuses a refreshed weakened guard', () => {
+  const premise = theory.premises.find(({ id }) => id === 'finite operational references');
+  const implementation = premise.implementations.find(({ path }) => path === 'js/src/primitives.js');
+  const source = projectSources.get(implementation.path).toString('utf8');
+  assert.equal(implementation.excerpt, implementation.anchor);
+  assert.ok(implementation.anchor.startsWith('function readLinkIdValue(value) {'));
+  for (const anchor of [
+    "Object.getOwnPropertyDescriptor(value, 'value')",
+    "Object.hasOwn(descriptor, 'value')",
+    "identifier && typeof original !== 'number'",
+    '!Number.isSafeInteger(numeric) || numeric < 1',
+  ]) assert.ok(implementation.anchor.includes(anchor), anchor);
+  for (const value of [1, Number.MAX_SAFE_INTEGER, '0001', String(Number.MAX_SAFE_INTEGER), 1n, BigInt(Number.MAX_SAFE_INTEGER)]) {
+    assert.equal(new LinkId(value).asU64(), Number(value));
+  }
+  const original = new LinkId(1);
+  assert.equal(LinkId.from(original), original);
+  for (const value of [0, -0, -1, 1.5, Number.MAX_SAFE_INTEGER + 1, 9007199254740993n, '9007199254740993', NaN, Infinity]) {
+    assert.throws(() => new LinkId(value), TypeError);
+  }
+  for (const value of ['1', 1n]) {
+    const identifier = new LinkId(1);
+    identifier.value = value;
+    assert.throws(() => LinkId.from(identifier), TypeError);
+  }
+  let getterCalls = 0;
+  const accessor = new LinkId(1);
+  Object.defineProperty(accessor, 'value', { get() { getterCalls += 1; return 1; } });
+  assert.throws(() => LinkId.from(accessor), TypeError);
+  assert.equal(getterCalls, 0);
+  const inherited = Object.create(Object.create(LinkId.prototype, { value: { value: 1 } }));
+  assert.throws(() => LinkId.from(inherited), TypeError);
+  for (const [before, after] of [
+    ['!Number.isSafeInteger(numeric)', '!Number.isInteger(numeric)'],
+    ['numeric < 1', 'numeric < 0'],
+    ["identifier && typeof original !== 'number' || ", ''],
+    ["Object.getOwnPropertyDescriptor(value, 'value')", '{ value: value.value }'],
+    ["descriptor && Object.hasOwn(descriptor, 'value') ? descriptor.value : undefined", 'value.value'],
+  ]) {
+    assert.ok(source.includes(before), before);
+    const changed = new Map(projectSources);
+    changed.set(implementation.path, Buffer.from(source.replace(before, after)));
+    assert.throws(() => buildMetaTheoryFoundationSources(audit, snapshots, changed), /implementation anchor is missing/u,
+      'the actual --update pipeline must refuse a changed admission rule before refreshing hashes');
+    assert.match(checkMetaTheoryFoundationSources(audit, snapshots, changed).join('\n'), /implementation anchor is missing/u);
+  }
 });
