@@ -313,18 +313,22 @@ jobs:
   # Separate the native import and oracle fixture costs from other package
   # checks. Every group is required; a failure never cancels its siblings.
   package-checks:
-    name: JavaScript Package Checks (${{ matrix.group }})
+    name: JavaScript Package Checks (${{ matrix.group }}, ${{ matrix.generated_slice }})
     needs: [tests, report-assertions]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
-      group: check-js-${{ github.ref }}-javascript-package-checks-${{ matrix.group }}
+      group: check-js-${{ github.ref }}-javascript-package-checks-${{ matrix.group }}-${{ matrix.generated_slice }}
       cancel-in-progress: true
     strategy:
       fail-fast: false
       matrix:
         group: [native-imports, native-fixtures, grammar, contracts, generated, source-models]
+        generated_slice: [first]
+        include:
+          - group: generated
+            generated_slice: second
     steps:
       - uses: actions/checkout@v7
         with:
@@ -528,277 +532,277 @@ jobs:
           components: rustfmt, clippy
 
       - name: Check the generated Rust frontend rules against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: npm run check:frontend-rules
         working-directory: js
 
       - name: Check the generated global concept rules against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-global-concept-rules.mjs --check
 
       - name: Check the generated discovery integration rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-discovered-concept-rules.mjs --check
 
       - name: Check shared discovered concept graph fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-discovered-concept-fixture.mjs --check
 
       - name: Check generated concept view admission rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-concept-view-rules.mjs --check
 
       - name: Check shared ontology and taxonomy view fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-concept-view-fixture.mjs --check
 
       - name: Check generated binary link network rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-link-network-binary-rules.mjs --check
 
       - name: Check shared binary link network fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-link-network-binary-fixtures.mjs --check
 
       - name: Check the generated Resource Description Framework rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-resource-description-rules.mjs --check
 
       - name: Check shared Resource Description Framework graph fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-resource-description-fixture.mjs --check
 
       - name: Check generated resource triple syntax character rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-resource-description-ntriples-characters.mjs --check
 
       - name: Check generated resource triple syntax token rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-resource-description-ntriples-rules.mjs --check
 
       - name: Check shared resource triple syntax fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-resource-description-ntriples-fixture.mjs --check
 
       - name: Check the generated grammar merge decisions against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-grammar-merge-decisions.mjs --check
 
       - name: Check the generated structural type rules against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-structured-type-rules.mjs --check
 
       - name: Check the generated primitive value rules against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-primitive-value-rules.mjs --check
 
       - name: Check the shared Rust array runtime artifacts
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-array-runtime.mjs --check
 
       - name: Check the generated TypeScript erasure rules against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-typescript-erasure-rules.mjs --check
 
       - name: Check the generated typed program link rules against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-typed-program-link-rules.mjs --check
 
       - name: Check the generated Rust source indirection rules against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-indirection-rules.mjs --check
 
       - name: Check shared scoped Rust lifetime fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-function-lifetime-fixtures.mjs --check
 
       - name: Check generated Rust array admission rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-array-rules.mjs --check
 
       - name: Check generated Rust floating point predicate rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-float-predicate-rules.mjs --check
 
       - name: Check shared Rust floating point predicate fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-float-predicate-fixtures.mjs --check
 
       - name: Check shared Rust floating point operation fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-float-operation-fixtures.mjs --check
 
       - name: Check shared Rust floating point constant fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-float-constant-fixtures.mjs --check
 
       - name: Check generated Rust guarded function completion rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-completion-rules.mjs --check
 
       - name: Check shared Rust guarded function completion fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-completion-fixtures.mjs --check
 
       - name: Check shared Rust guarded completion panic fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-completion-panic-fixtures.mjs --check
 
       - name: Check generated read-only Rust scalar parameter rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-scalar-parameter-rules.mjs --check
 
       - name: Check shared read-only Rust scalar parameter fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-scalar-parameter-fixtures.mjs --check
 
       - name: Check shared Rust array source fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-array-source-fixtures.mjs --check
 
       - name: Check shared fresh Rust scalar vector result fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-array-result-fixtures.mjs --check
 
       - name: Check generated Rust string continuation rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-string-rules.mjs --check
 
       - name: Check shared Rust string continuation fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/build-rust-string-continuation-fixtures.mjs --check
 
       - name: Check generated Rust cooked string escape rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/generate-rust-cooked-string-rules.mjs --check
 
       - name: Check shared Rust cooked string escape fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/build-rust-cooked-string-escape-fixtures.mjs --check
 
       - name: Check generated Rust Unicode scalar escape rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/generate-rust-unicode-escape-rules.mjs --check
 
       - name: Check shared Rust Unicode scalar escape fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/build-rust-unicode-escape-fixtures.mjs --check
 
       - name: Check generated Rust source whitespace and boundary rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/generate-rust-source-whitespace-rules.mjs --check
 
       - name: Check generated Rust raw string literal rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/generate-rust-raw-string-rules.mjs --check
 
       - name: Check shared TypeScript documentation pattern fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-typescript-documentation-fixtures.mjs --check
 
       - name: Check generated formal function selection rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-formal-function-rules.mjs --check
 
       - name: Check shared formal function definition fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-formal-function-fixtures.mjs --check
 
       - name: Check generated shared numeric function rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-shared-numeric-function-rules.mjs --check
 
       - name: Check generated Rust source signature rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-source-signature-rules.mjs --check
 
       - name: Check shared Rust source signature fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-source-signature-fixtures.mjs --check
 
       - name: Check generated Rust borrowed call interface rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/generate-rust-borrowed-call-interface-rules.mjs --check
 
       - name: Check shared Rust borrowed call interface fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/generate-rust-borrowed-call-interface-fixtures.mjs --check
 
       - name: Check generated Rust primitive owner rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/generate-rust-primitive-owner-rules.mjs --check
 
       - name: Check shared Rust primitive owner fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/generate-rust-primitive-owner-fixtures.mjs --check
 
       - name: Check generated Rust type namespace rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/generate-rust-type-namespace-rules.mjs --check
 
       - name: Check shared Rust type namespace fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/generate-rust-type-namespace-fixtures.mjs --check
 
       - name: Check generated Rust pure Unit call rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/generate-rust-pure-unit-call-rules.mjs --check
 
       - name: Check shared Rust private pure Unit call fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/generate-rust-pure-unit-call-fixtures.mjs --check
 
       - name: Check shared Rust public pure Unit call fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/generate-rust-public-pure-unit-call-fixtures.mjs --check
 
       - name: Check generated source span rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/generate-source-span-rules.mjs --check
 
       - name: Check shared source span offset fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/generate-source-span-fixtures.mjs --check
 
       - name: Check generated Rust numeric boundary rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/generate-rust-number-rules.mjs --check
 
       - name: Check generated JavaScript line terminator rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/generate-javascript-line-terminator-rules.mjs --check
 
       - name: Check generated JavaScript Unit module experiment rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node ../experiments/generated-javascript-unit/generate-rules.mjs --check
 
       - name: Check complete generated JavaScript Unit module experiment fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node ../experiments/generated-javascript-unit/generate-fixtures.mjs --check
 
       - name: Run generated JavaScript Unit module experiment
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -806,17 +810,17 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/generated-javascript-unit/model.test.mjs
 
       - name: Check generated owned Rust module experiment rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node ../experiments/generated-owned-rust/generate-rules.mjs --check
 
       - name: Check complete generated owned Rust module experiment fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node ../experiments/generated-owned-rust/generate-fixtures.mjs --check
 
       - name: Run generated owned Rust module experiment
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -824,17 +828,17 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/generated-owned-rust/model.test.mjs
 
       - name: Check generated owned Rust literal value edit experiment rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'first' }}
         working-directory: js
         run: node ../experiments/generated-owned-rust/generate-value-edit-rules.mjs --check
 
       - name: Check complete generated owned Rust literal value edit fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'first' }}
         working-directory: js
         run: node ../experiments/generated-owned-rust/generate-value-edit-fixtures.mjs --check
 
       - name: Run generated owned Rust literal value edit experiment
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'first' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -842,17 +846,17 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/generated-owned-rust/value-edits.test.mjs
 
       - name: Check generated Rust text value projection experiment rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node ../experiments/rust-text-value-projection/generate-rules.mjs --check
 
       - name: Check complete Rust text value projection experiment fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node ../experiments/rust-text-value-projection/generate-fixtures.mjs --check
 
       - name: Run Rust text value projection experiment
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -1017,248 +1021,248 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/original-link-table-projection/projection.test.mjs
 
       - name: Check generated whole Rust runtime shell rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/generate-rust-runtime-shell-rules.mjs --check
 
       - name: Check complete Rust runtime shell fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/generate-rust-runtime-shell-fixtures.mjs --check
 
       - name: Check generated source text byte rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/generate-source-text-byte-rules.mjs --check
 
       - name: Check shared source text byte fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/generate-source-text-byte-fixtures.mjs --check
 
       - name: Check portable source text byte kernels
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/source-text-byte-kernel.test.mjs ../experiments/complete-binary-formatter-probe.test.mjs
 
       - name: Check generated integral program metadata rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/generate-program-numeric-metadata-rules.mjs --check
 
       - name: Check shared integral program metadata fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node ../experiments/generate-program-numeric-metadata-fixture.mjs --check
 
       - name: Run integral program metadata checks
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/program-numeric-metadata.test.mjs
 
       - name: Check shared owned occurrence position fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node ../experiments/generate-owned-occurrence-position-fixture.mjs --check
 
       - name: Run owned occurrence position checks
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/owned-occurrence-position.test.mjs
       - name: Check generated closed Rust const predicate rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node ../experiments/generate-rust-const-function-rules.mjs --check
 
       - name: Check actual styled Rust const predicate fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node ../experiments/generate-rust-const-function-fixture.mjs --check
 
       - name: Run closed Rust const predicate prototype checks
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-const-function-prototype.test.mjs
 
       - name: Check generated Rust owned local text state rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node ../experiments/generate-rust-owned-local-state-rules.mjs --check
 
       - name: Check generated owned tuple initialization call rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node ../experiments/generate-rust-owned-tuple-call-rules.mjs --check
 
       - name: Check owned tuple initialization call fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node ../experiments/generate-owned-tuple-call-fixture.mjs --check
 
       - name: Check actual public owned tuple call native archives
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node ../experiments/generate-owned-tuple-call-native-fixture.mjs --check
 
       - name: Run owned tuple initialization call checks
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/owned-tuple-call.test.mjs
 
       - name: Check shared Rust owned local text state fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node ../experiments/generate-rust-owned-local-state-fixture.mjs --check
 
       - name: Check shared Rust owned local source operation fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node ../experiments/generate-rust-owned-local-source-operation-fixture.mjs --check
 
       - name: Check shared Rust owned local container fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node ../experiments/generate-rust-owned-local-container-fixture.mjs --check
 
       - name: Run Rust owned local text state prototype checks
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-owned-local-state-prototype.test.mjs
 
       - name: Run Rust owned local text public profile checks
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-owned-local-state-public.test.mjs
 
       - name: Run Rust owned local text unit checks
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-owned-local-text-units.test.mjs
 
       - name: Run Rust owned local container checks
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-owned-local-container.test.mjs
 
       - name: Check generated Rust empty option rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/generate-rust-empty-option-rules.mjs --check
 
       - name: Check shared Rust empty option fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/generate-rust-empty-option-fixtures.mjs --check
 
       - name: Check generated JavaScript scoped binding emission rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/generate-javascript-scoped-binding-emission-rules.mjs --check
 
       - name: Check shared JavaScript scoped binding emission fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
         run: node scripts/generate-javascript-scoped-binding-emission-fixtures.mjs --check
 
       - name: Check generated standard Rust readonly query rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-read-only-query-rules.mjs --check
 
       - name: Check standard Rust readonly query fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-read-only-query-fixtures.mjs --check
 
       - name: Check generated shared scalar loop rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-scalar-loop-rules.mjs --check
 
       - name: Check shared scalar loop source fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node experiments/generate-rust-scalar-loop-fixture.mjs --check
 
       - name: Check owned declaration scalar loop source fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node experiments/generate-rust-scalar-loop-declaration-fixture.mjs --check
 
       - name: Check generated primitive borrowed Rust header rules
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-source-header-emission-rules.mjs --check
 
       - name: Check primitive borrowed Rust header fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-source-header-emission-fixtures.mjs --check
 
       - name: Check shared numeric function definition fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-shared-numeric-function-fixtures.mjs --check
 
       - name: Check strict public declaration consumers
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/check-public-declaration-contracts.mjs --compiler js/node_modules/.bin/tsc
 
       - name: Authenticate reviewed generated-stage migration refreshes
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-translation-stage-refresh-receipt.mjs --check
 
       - name: Check the generated Rust source product rules against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-product-rules.mjs --check
 
       - name: Check the generated immutable product emission rules against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-product-emission-rules.mjs --check
 
       - name: Check the generated closed product source proofs against JavaScript
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-product-source-rules.mjs --check
 
       - name: Check shared source-free typed program fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-typed-program-links-fixtures.mjs --check
 
       - name: Check shared editable algebraic program fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-typed-program-algebraic-fixtures.mjs --check
 
       - name: Check shared editable immutable product fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-typed-program-tuple-fixtures.mjs --check
 
       - name: Check shared product unit value fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-product-unit-fixture.mjs --check
 
       - name: Check the associative data tooling fixture
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-project-data-tooling-fixture.mjs --check
 
       - name: Check the recorded original structured data conversion revisions
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-structured-data-migration-revisions.mjs --check
 
       - name: Check shared formal definition and certificate fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-formal-concept-fixtures.mjs --check
 
       - name: Check generated formal relation identities
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-formal-relation-rules.mjs --check
 
       - name: Check shared formal relation identity fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-formal-relation-fixtures.mjs --check
 
       - name: Check generated frontend rule compilation and style
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: npm run check:frontend-rule-styles
         working-directory: js
 
       - name: Check generated global concept rule compilation and style
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-global-concept-rule-styles.mjs --check
 
       - name: Retain exact generated sources and compiler feedback
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         uses: actions/upload-artifact@v7
         with:
           name: generated-compiler-feedback-${{ github.sha }}
