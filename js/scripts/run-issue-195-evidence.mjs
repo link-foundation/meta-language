@@ -217,6 +217,9 @@ async function runJavaScriptSuite(failures, selection) {
 async function runRustSuite(failures) {
   const record = await runCommand('suite-rust', 'cargo', [
     'test', '--no-fail-fast', '--locked', '--manifest-path', path.join(root, 'rust/Cargo.toml'), '--tests',
+    '--config', 'profile.test.package.meta-language.opt-level=3',
+    '--config', 'profile.test.package.meta-language.debug-assertions=true',
+    '--config', 'profile.test.package.meta-language.overflow-checks=true',
   ], { allowFailure: true });
   if (!record.ok) failures.push(`Rust tests failed; see ${record.artifacts[0]}`);
   return bundle(record);
