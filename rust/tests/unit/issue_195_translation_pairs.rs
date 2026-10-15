@@ -455,7 +455,8 @@ impl Pair {
                     mapping.target
                 );
             } else if javascript && mapping.kind == "constructor" {
-                assert!(self.code().contains(&format!("$: '{name}'")), "tags {name}");
+                let tag = serde_json::to_string(name).expect("constructor tag is a JSON string");
+                assert!(self.code().contains(&format!("$: {tag}")), "tags {name}");
             } else {
                 assert!(
                     terms.contains(name),

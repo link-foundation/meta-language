@@ -208,9 +208,9 @@ fn rejected_programs_raise_the_javascript_errors() {
             "mutable binding: mutation is outside the portable core at 22..26",
         ),
         (
-            "fn f(v: Vec<u64>) -> u64 { 0 } fn main() { println!(\"x\"); }",
+            "fn f(v: List<u64>) -> u64 { 0 } fn main() { println!(\"x\"); }",
             ErrorKind::Unsupported,
-            "type Vec<…>: generic types are outside the portable core at 8..11",
+            "type List<…>: generic types are outside the portable core at 8..12",
         ),
         (
             "fn main() { println!(\"{:?}\", 1u64); }",
@@ -252,7 +252,7 @@ fn rejected_programs_raise_the_javascript_errors() {
             ErrorKind::Type,
             "super beyond crate root at 0..12",
         ),
-        // The JavaScript frontend loops here: its visibility scan does not stop at the end of input.
+        // Both frontends stop an unfinished visibility scan at the end of input.
         (
             "fn main() { println!(\"x\"); }\npub(crate",
             ErrorKind::Syntax,
@@ -262,6 +262,24 @@ fn rejected_programs_raise_the_javascript_errors() {
     for (source, kind, message) in cases {
         assert_eq!(failure(source), (*kind, (*message).to_owned()), "{source}");
     }
+}
+
+#[test]
+fn the_original_vector_rejection_source_has_its_exact_supported_array_surface() {
+    let source = "fn f(v: Vec<u64>) -> u64 { 0 } fn main() { println!(\"x\"); }";
+    assert_eq!(
+        surface(source),
+        json!({
+            "language": "Rust",
+            "items": [{
+                "k": "fn", "name": "f",
+                "params": [{ "name": "v", "type": { "kind": "array", "element": u64_type() } }],
+                "ret": u64_type(),
+                "body": { "k": "num", "value": "0" }
+            }],
+            "main": { "effects": [{ "k": "print", "expr": { "k": "str", "value": "x" }, "style": "rust" }] }
+        })
+    );
 }
 
 #[test]

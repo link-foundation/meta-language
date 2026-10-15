@@ -184,13 +184,12 @@ fn issue_195_project_programs_cover_every_language_and_construct() {
     );
     for fixture in programs {
         let constructs = fixture["constructs"].as_object().expect("constructs");
-        // serde_json sorts object keys, so the constructs compare as sets.
+        // Compare the construct keys as sets, independently of object insertion order.
+        let mut actual = constructs.keys().map(String::as_str).collect::<Vec<_>>();
+        actual.sort_unstable();
         let mut expected = SEMANTIC_CONSTRUCTS.to_vec();
         expected.sort_unstable();
-        assert_eq!(
-            constructs.keys().map(String::as_str).collect::<Vec<_>>(),
-            expected
-        );
+        assert_eq!(actual, expected);
         for construct in SEMANTIC_CONSTRUCTS {
             assert!(
                 !constructs[construct]

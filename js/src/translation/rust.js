@@ -266,7 +266,7 @@ class RustParser {
     if (c.is('(')) {
       c.next();
       c.eat('in');
-      while (!c.is(')')) c.next();
+      while (!c.is(')') && !c.atEnd()) c.next();
       c.expect(')', 'visibility');
     }
   }
