@@ -791,3 +791,54 @@ fn selected_module_datatypes_and_functions_recheck_without_relaxing_legacy_modul
             .is_some()
     );
 }
+
+#[test]
+fn present_namespace_record_facts_refuse_normalization_and_retain_genuine_optional_absence() {
+    let data = meta_language::read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/rust-type-namespace-records.lino"
+    ))
+    .unwrap();
+    assert_eq!(data["malformed"].as_array().unwrap().len(), 26);
+    for entry in data["malformed"].as_array().unwrap() {
+        let (network, root) = archive(entry);
+        assert!(
+            decode_typed_program_links(&network, root).is_err(),
+            "{}",
+            entry["id"]
+        );
+        for target in ["JavaScript", "Rust"] {
+            assert!(
+                emit_typed_program_links(&network, root, target).is_err(),
+                "{}:{target}",
+                entry["id"]
+            );
+        }
+    }
+    if let Ok(end) = usize::try_from(9_007_199_254_740_992_u64) {
+        let (network, root) = archive(&data["base"]);
+        let mut program = decode_typed_program_links(&network, root).unwrap();
+        let Some(Decl::Fn(function)) = program
+            .declarations
+            .iter_mut()
+            .find(|entry| entry.name() == "keep")
+        else {
+            panic!("the selected function exists")
+        };
+        function.span = Some(meta_language::translation::Span::new(0, end));
+        assert!(encode_typed_program_links(&program).is_err());
+    }
+    for entry in [&data["base"], &data["optionalAbsence"]] {
+        let (network, root) = archive(entry);
+        let program = decode_typed_program_links(&network, root).unwrap();
+        let rebuilt = encode_typed_program_links(&program).unwrap();
+        let loaded = LinkNetwork::from_lino(&rebuilt.network.to_lino()).unwrap();
+        assert_eq!(
+            observe(
+                &emit_typed_program_links(&loaded, rebuilt.root, "JavaScript")
+                    .unwrap()
+                    .code
+            ),
+            expected(entry)
+        );
+    }
+}

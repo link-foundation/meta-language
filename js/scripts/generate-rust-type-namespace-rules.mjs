@@ -20,6 +20,7 @@ source += fn('acceptRustTypeNamespaceBodyMethod', '@param {boolean} selected @pa
 source += fn('acceptRustTypeNamespaceMethodDiscovery', '@param {boolean} discovery @param {string} methodName', `return discovery && (${policy.methodDiscoveryNames.map(name=>`methodName === ${JSON.stringify(name)}`).join(' || ')});`);
 source += fn('acceptRustTypeNamespaceUnitClone', '@param {boolean} ownedDerivation @param {boolean} fieldFree @param {boolean} directReceiver', 'return ownedDerivation && fieldFree && directReceiver;');
 source += fn('acceptRustTypeNamespaceContainer', '@param {string} kind @param {boolean} dense @param {boolean} unrepresented', `return (kind === ${JSON.stringify(policy.containerKinds[0])} && dense && !unrepresented) || ((kind === ${JSON.stringify(policy.containerKinds[1])} || kind === ${JSON.stringify(policy.containerKinds[2])}) && !unrepresented);`);
+source += fn('acceptRustTypeNamespaceRecordValue', '@param {boolean} booleanRequired @param {boolean} booleanValue @param {boolean} definedValue', 'return definedValue && (!booleanRequired || booleanValue);');
 source += fn('acceptRustTypeNamespaceDiscoveryType', '@param {boolean} discovery @param {string} typeName', `return discovery && (${policy.discoveryTypes.map(name=>`typeName === ${JSON.stringify(name)}`).join(' || ')});`);
 source += fn('acceptRustTypeNamespacePosition', '@param {string} kind @param {boolean} invalidWrappers @param {boolean} borrowedResult', `return (${policy.ownerKinds.map(kind => `kind === ${JSON.stringify(kind)}`).join(' || ')}) && !invalidWrappers && !borrowedResult;`);
 if (process.argv.includes('--check')) { if (readFileSync(javascript, 'utf8') !== source) throw new Error('type namespace JavaScript rules are stale'); }
@@ -38,6 +39,7 @@ if (!process.argv.includes('--javascript-only')) {
     replace('pub fn accept_rust_type_namespace_fields(', 'pub const fn accept_rust_type_namespace_fields(');
     replace('pub fn accept_rust_type_namespace_anchor(', 'pub const fn accept_rust_type_namespace_anchor(');
     replace('pub fn accept_rust_type_namespace_unit_clone(', 'pub const fn accept_rust_type_namespace_unit_clone(');
+    replace('pub fn accept_rust_type_namespace_record_value(', 'pub const fn accept_rust_type_namespace_record_value(');
     for (const definition of current.matchAll(/pub(?: const)? fn accept_rust_type_namespace_[\s\S]*?\n\}/gu)) {
       const block = definition[0]; const open = block.indexOf('{');
       let expression = stripRustSourceHeaderStyleParentheses(block.slice(open + 1, -1)).replace(/\((\w+\s*(?:==|!=)\s*"[^"]*")\)/gu, '$1');

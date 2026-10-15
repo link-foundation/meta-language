@@ -7,15 +7,45 @@ import {checkRustUnitCloneDerivation} from './rust-unit-clone.js';
 import {checkOwnedProgramContainers} from './owned-program-containers.js';
 import { acceptRustTypeNamespaceModel, acceptRustTypeNamespacePosition,
   acceptRustTypeNamespaceDeclaration, acceptRustTypeNamespaceFields, acceptRustTypeNamespaceAnchor,
-  acceptRustTypeNamespaceContainer } from './rust-type-namespace-rules.js';
+  acceptRustTypeNamespaceContainer, acceptRustTypeNamespaceRecordValue } from './rust-type-namespace-rules.js';
 
 export const RUST_TYPE_NAMESPACE_POLICY = readRuntimeProjectData(new URL('./data/rust-type-namespace.lino', import.meta.url));
 const fail = detail => { throw typeError(`an owned Rust type namespace ${detail}`); };
 
 /** Reject erased container facts before the generic encoder or semantic walk. */
 export function checkRustTypeNamespaceContainers(program) {
-  checkOwnedProgramContainers(program, { acceptContainer: acceptRustTypeNamespaceContainer, fail,
+  return checkOwnedProgramContainers(program, { acceptContainer: acceptRustTypeNamespaceContainer, fail,
     selectedFields: RUST_TYPE_NAMESPACE_POLICY.containerMarkerFields });
+}
+
+/** Preserve contextual JSON/serde facts before a source or Links projection. */
+export function checkRustTypeNamespaceRecordShapes(program) {
+  if (!checkRustTypeNamespaceContainers(program)) return false;
+  for (const field of ['imports', 'externals']) {
+    if (Object.hasOwn(program, field) && (!Array.isArray(program[field]) || program[field].length)) fail('requires a Rust program without imported aliases or externals');
+  }
+  const visited = new WeakSet();
+  function inspect(value) {
+    if (!value || typeof value !== 'object' || visited.has(value)) return;
+    visited.add(value);
+    if (value instanceof Map) { for (const child of Map.prototype.values.call(value)) inspect(child); return; }
+    if (Array.isArray(value)) { for (const child of value) inspect(child); return; }
+    const context = value === program ? 'program' : value === program.main ? 'main' : typeof value.k === 'string' ? value.k : '';
+    for (const [field, child] of Object.entries(value)) {
+      const booleanRequired=(RUST_TYPE_NAMESPACE_POLICY.recordBooleanFields[context] ?? []).includes(field);
+      if (!acceptRustTypeNamespaceRecordValue(booleanRequired,typeof child === 'boolean',child !== undefined)) {
+        if (child === undefined) fail('contains an explicitly undefined owned field');
+        if (context === 'fn' && field === 'generated') fail('requires original declarations with absent or false generated facts');
+        fail('contains a non-Boolean contextual flag');
+      }
+      if (field === 'span' && child !== null && (!child || typeof child !== 'object' || Array.isArray(child)
+        || Object.keys(child).length !== 2 || !Number.isSafeInteger(child.start) || !Number.isSafeInteger(child.end)
+        || child.start < 0 || child.end < child.start || Object.is(child.start,-0) || Object.is(child.end,-0) || child.end > RUST_TYPE_NAMESPACE_POLICY.sourceOffsetMaximum)) fail('contains an invalid owned source span');
+      inspect(child);
+    }
+  }
+  inspect(program);
+  return true;
 }
 
 /** Reuse the shared character predicate matching the actual Rust lexer. */
@@ -42,13 +72,13 @@ export function requireRustTypeNamespaceAnchor(source, path) {
 
 /** Use the existing anchored, filtered lookup over actual checked declarations. */
 export function validateRustTypeNamespace(program) {
-  checkRustTypeNamespaceContainers(program);
+  checkRustTypeNamespaceRecordShapes(program);
   const selected = [...program.declarations.values()].some(entry => Object.hasOwn(entry, 'sourceTypeNamespace')||Object.hasOwn(entry,'sourceUnitCloneDerivation'));
   if (!selected) return;
   if (program.sourceLanguage !== RUST_TYPE_NAMESPACE_POLICY.language || program.imports?.length || program.externals?.length) fail('requires a Rust program without imported aliases or externals');
   const catalog = new Map();
   for (const [name, declaration] of program.declarations) {
-    if (!acceptRustTypeNamespaceSpellingSegment(declaration.name) || !declaration.modulePath.every(acceptRustTypeNamespaceSpellingSegment)) fail('catalog contains an invalid Rust identifier segment');
+    if (typeof name !== 'string' || !acceptRustTypeNamespaceSpellingSegment(declaration.name) || !Array.isArray(declaration.modulePath) || !declaration.modulePath.every(acceptRustTypeNamespaceSpellingSegment)) fail('catalog contains an invalid Rust identifier segment');
     if(Object.hasOwn(declaration,'sourceUnitCloneDerivation'))checkRustUnitCloneDerivation(declaration.sourceUnitCloneDerivation,declaration);
     catalog.set(name, { k: declaration.k });
     if (declaration.k === 'data') for (const constructor of declaration.ctors) {

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readProjectData } from '../scripts/project-data.mjs';
-import { rustTypeNamespaceFixture, rustTypeNamespaceTraitFixture, rustTypeNamespaceContainerFixture, rustTypeNamespaceField } from '../scripts/generate-rust-type-namespace-fixtures.mjs';
+import { rustTypeNamespaceFixture, rustTypeNamespaceTraitFixture, rustTypeNamespaceContainerFixture, rustTypeNamespaceRecordFixture, rustTypeNamespaceField } from '../scripts/generate-rust-type-namespace-fixtures.mjs';
 import { parseRust } from '../src/translation/rust.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
@@ -12,6 +12,7 @@ import { tokenize } from '../src/translation/lexer.js';
 import { rustFixedType } from '../src/translation/types.js';
 import { createTypedProgramLinks, encodeTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks } from '../src/typed-program-links.js';
 import { LinkNetwork } from '../src/network.js';
+import { recheckLinkedTypedProgram } from '../src/typed-program-checked-projection.js';
 
 const fixture = readProjectData(new URL('../../parity/fixtures/rust-type-namespace.lino', import.meta.url));
 const options = {typeNamespaceModel:fixture.typeNamespaceModel};
@@ -51,6 +52,50 @@ test('selected owned containers refuse metadata loss before encoding and retain 
     }
   }
   assert.equal(observed,containers.locations.reduce((count,location)=>count+containers.mutations.find(value=>value.kind===location.kind).operations.length,0));
+});
+
+test('the actual fifteen namespace and two derived Clone archives pass mandatory whole-program surface rechecking',()=>{
+  const traits=readProjectData(new URL('../../parity/fixtures/rust-type-namespace-traits.lino',import.meta.url));
+  const entries=[...fixture.cases,...traits.cases];
+  assert.equal(entries.length,17);
+  for(const entry of entries){
+    const program=decodeTypedProgramLinks(LinkNetwork.fromLino(entry.archive),entry.root);
+    assert.equal(recheckLinkedTypedProgram(program,{wholeProgram:true}),program,entry.id);
+  }
+});
+
+test('selected present flags, source spans, empty contexts and unknown semantic facts refuse before normalization',()=>{
+  const records=readProjectData(new URL('../../parity/fixtures/rust-type-namespace-records.lino',import.meta.url));
+  assert.deepEqual(rustTypeNamespaceRecordFixture(),records);
+  const at=(root,path)=>path.reduce((value,key)=>value instanceof Map?Map.prototype.get.call(value,key):value[key],root);
+  assert.equal(records.malformed.length,26);
+  for(const entry of records.malformed){
+    const program=decodeTypedProgramLinks(LinkNetwork.fromLino(records.base.archive),records.base.root);
+    const parent=at(program,entry.path.slice(0,-1));
+    parent[entry.path.at(-1)]=entry.kind==='span'?structuredClone(entry.value):entry.kind==='record'?{}:entry.kind==='undefined'?undefined:entry.kind==='boolean'?entry.value??false:null;
+    assert.throws(()=>encodeTypedProgramLinks(program),undefined,entry.id);
+    assert.throws(()=>recheckLinkedTypedProgram(program,{wholeProgram:true}),undefined,entry.id);
+    for(const target of ['JavaScript','Rust'])assert.throws(()=>emitTypedProgramLinks(LinkNetwork.fromLino(entry.archive),entry.root,target),undefined,entry.id);
+  }
+  for(const bounds of [{start:0,end:9_007_199_254_740_992},{start:1,end:0},{start:-1,end:0},{start:0.5,end:1}]){
+    const program=decodeTypedProgramLinks(LinkNetwork.fromLino(records.base.archive),records.base.root);
+    program.declarations.get('keep').span=bounds;
+    assert.throws(()=>encodeTypedProgramLinks(program),/invalid owned source span/u);
+  }
+  for(const field of ['imports','externals'])for(const value of [null,{},undefined]){
+    const surface=parseRust(records.base.source,options);surface[field]=value;
+    assert.throws(()=>checkProgram(surface),undefined,`${field} must refuse before source normalization`);
+  }
+});
+
+test('a genuine None undefined absence remains data while explicitly undefined owned fields refuse',()=>{
+  const records=readProjectData(new URL('../../parity/fixtures/rust-type-namespace-records.lino',import.meta.url));
+  const program=decodeTypedProgramLinks(LinkNetwork.fromLino(records.base.archive),records.base.root),entry=program.declarations.get('keep');
+  entry.body={k:'let',name:'absent',value:{k:'none',absence:'undefined',type:{kind:'option',element:{kind:'unit'},absence:'undefined'}},body:entry.body,type:entry.ret};
+  const rebuilt=encodeTypedProgramLinks(program);
+  const decoded=decodeTypedProgramLinks(LinkNetwork.fromLino(rebuilt.network.toLino()),rebuilt.root);
+  assert.equal(decoded.declarations.get('keep').body.value.absence,'undefined');
+  assert.deepEqual(output(emitTypedProgramLinks(rebuilt.network,rebuilt.root,'JavaScript').code),records.base.output);
 });
 
 test('selected source checker rejects erased container properties before surface projection',()=>{
