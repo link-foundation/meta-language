@@ -1120,8 +1120,14 @@ function checkGeneratedPackageSlices(parsed) {
   const cells = packageCheckCells(checks);
   assert.equal(cells.length, 7);
   assert.equal(new Set(cells.map(cell => `${cell.group}:${cell.generated_slice}`)).size, 7);
-  assert.equal(/^ {4}name: (.+)$/mu.exec(checks.header)?.[1],
-    'JavaScript Package Checks (${{ matrix.group }}, ${{ matrix.generated_slice }})');
+  const display = /^ {4}name: (.+)$/mu.exec(checks.header)?.[1];
+  const secondLabel = "${{ matrix.generated_slice == 'second' && ' / second' || '' }}";
+  assert.equal(display, 'JavaScript Package Checks (${{ matrix.group }})' + secondLabel);
+  const displayNames = cells.map(cell => display.replace('${{ matrix.group }}', cell.group)
+    .replace(secondLabel, cell.generated_slice === 'second' ? ' / second' : ''));
+  assert.deepEqual(displayNames.slice(0, 6), PACKAGE_GROUPS.map(group => `JavaScript Package Checks (${group})`),
+    'all six published check context names remain unchanged');
+  assert.equal(new Set(displayNames).size, 7);
   const concurrencyGroups = [...checks.header.matchAll(/^ {6}group: (.+)$/gmu)].map(match => match[1]);
   assert.equal(concurrencyGroups.length, 1);
   const concurrency = concurrencyGroups[0];
@@ -1826,7 +1832,7 @@ test('physical generated cells reject exclusions, extra cells, shared concurrenc
     ['generated, source-models]', 'source-models]'],
     ['-${{ matrix.generated_slice }}', ''],
     ['      cancel-in-progress: true', '      group: shared-generated-runner\n      cancel-in-progress: true'],
-    ['(${{ matrix.group }}, ${{ matrix.generated_slice }})', '(${{ matrix.group }})'],
+    ["${{ matrix.generated_slice == 'second' && ' / second' || '' }}", ''],
     ['      fail-fast: false', '      fail-fast: true'],
   ]) mutate(parsed => {
     const job = parsed.get('package-checks');
