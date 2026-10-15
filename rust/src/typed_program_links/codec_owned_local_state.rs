@@ -1,9 +1,12 @@
 //! Preserve the selected proof's original property-order comparisons.
 //! The semantic validator still owns values, types and source occurrence facts.
-use super::super::{Result, error, field_of};
+use super::super::{Result, error, field_of, typed_program_links_schema};
+use crate::translation::rust::owned_local_state_rules::{
+    accept_rust_owned_local_record_value, accept_rust_owned_local_source_span,
+};
 use crate::{LinkId, LinkNetwork, StructuredDataValue};
 use serde_json::{Map, Value};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::LazyLock;
 
 type Fields = HashMap<LinkId, Vec<(String, LinkId)>>;
@@ -138,12 +141,112 @@ fn compare_occurrence_span_order(
     Ok(())
 }
 
+fn source_offset(network: &LinkNetwork, id: Option<LinkId>) -> Option<f64> {
+    let link = network.link(id?)?;
+    if link.metadata().term() != typed_program_links_schema()["scalars"]["number"].as_str() {
+        return None;
+    }
+    serde_json::from_str::<Value>(link.metadata().definition()?)
+        .ok()?
+        .as_f64()
+}
+
+fn validate_original_shapes(network: &LinkNetwork, fields: &Fields, body: LinkId) -> Result<()> {
+    let policy = crate::translation::owned_local_state::policy();
+    let main = field(fields, body, "main");
+    let mut pending = vec![body];
+    let mut visited = HashSet::new();
+    while let Some(id) = pending.pop() {
+        if !visited.insert(id) {
+            continue;
+        }
+        if visited.len() > 100_000 {
+            return Err(error(
+                "owned state record shapes exceed their traversal limit",
+            ));
+        }
+        let link = network
+            .link(id)
+            .ok_or_else(|| error("an owned state value is missing"))?;
+        pending.extend_from_slice(link.references());
+        let context = if id == body {
+            "program"
+        } else if main == Some(id) {
+            "main"
+        } else {
+            field(fields, id, "k")
+                .and_then(|id| network.link(id))
+                .and_then(|link| link.metadata().definition())
+                .unwrap_or_default()
+        };
+        for (label, child) in fields.get(&id).into_iter().flatten() {
+            pending.push(*child);
+            let name = field_of(label);
+            let child_link = network
+                .link(*child)
+                .ok_or_else(|| error("an owned state value is missing"))?;
+            let required = policy["recordBooleanFields"][context]
+                .as_array()
+                .is_some_and(|names| {
+                    names
+                        .iter()
+                        .any(|field| field.as_str() == Some(name.as_str()))
+                });
+            let boolean = child_link.metadata().term()
+                == typed_program_links_schema()["scalars"]["boolean"].as_str()
+                && matches!(child_link.metadata().definition(), Some("true" | "false"));
+            if !accept_rust_owned_local_record_value(required, boolean) {
+                return Err(error(
+                    "Rust owned local state proof: a contextual flag has a non-Boolean value",
+                ));
+            }
+            if name != "span" {
+                continue;
+            }
+            let present = child_link.metadata().term()
+                != typed_program_links_schema()["scalars"]["null"].as_str();
+            let mut keys = names(fields, *child, &[]);
+            keys.sort();
+            let shape = keys.iter().map(String::as_str).eq(["end", "start"]);
+            let offsets = match (
+                source_offset(network, field(fields, *child, "start")),
+                source_offset(network, field(fields, *child, "end")),
+            ) {
+                (Some(start), Some(end)) => {
+                    super::super::source_span_rules::accept_source_span_offset(
+                        start,
+                        start == 0.0 && start.is_sign_negative(),
+                    ) && super::super::source_span_rules::accept_source_span_offset(
+                        end,
+                        end == 0.0 && end.is_sign_negative(),
+                    ) && super::super::source_span_rules::accept_source_span_interval(start, end)
+                }
+                _ => false,
+            };
+            if !accept_rust_owned_local_source_span(present, shape, offsets) {
+                return Err(error(
+                    "Rust owned local state proof: a source span has an invalid owned shape or offset",
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
 /// Inspect retained original relations before projecting proof records to values.
 pub(super) fn validate_order(
     network: &LinkNetwork,
     fields: &Fields,
     declarations: &[LinkId],
+    body: LinkId,
 ) -> Result<()> {
+    if !declarations
+        .iter()
+        .any(|id| field(fields, *id, "sourceLocalState").is_some())
+    {
+        return Ok(());
+    }
+    validate_original_shapes(network, fields, body)?;
     for declaration in declarations {
         let Some(proof) = field(fields, *declaration, "sourceLocalState") else {
             continue;
@@ -260,4 +363,45 @@ pub(super) fn prepare_order(program: &mut Value) -> Result<()> {
         }
     }
     Ok(())
+}
+
+fn normalize_span_order(value: &mut Value, depth: usize, remaining: &mut usize) -> Result<()> {
+    *remaining = remaining
+        .checked_sub(1)
+        .ok_or_else(|| error("owned state span order exceeds its traversal limit"))?;
+    if depth > 256 {
+        return Err(error("owned state span order exceeds its traversal limit"));
+    }
+    if let Some(values) = value.as_array_mut() {
+        for child in values {
+            normalize_span_order(child, depth + 1, remaining)?;
+        }
+    } else if let Some(record) = value.as_object_mut() {
+        if let Some(span) = record.get_mut("span").filter(|span| !span.is_null()) {
+            let start = span["start"].clone();
+            let end = span["end"].clone();
+            let mut ordered = Map::new();
+            ordered.insert("start".to_owned(), start);
+            ordered.insert("end".to_owned(), end);
+            *span = Value::Object(ordered);
+        }
+        for child in record.values_mut() {
+            normalize_span_order(child, depth + 1, remaining)?;
+        }
+    }
+    Ok(())
+}
+
+/// Canonicalize selected order only after original graph and value validation.
+pub(super) fn prepare_decoded_order(program: &mut Value) -> Result<()> {
+    if let Some(declarations) = program["declarations"].as_array_mut() {
+        let mut remaining = 100_000;
+        for declaration in declarations
+            .iter_mut()
+            .filter(|declaration| declaration.get("sourceLocalState").is_some())
+        {
+            normalize_span_order(&mut declaration["body"], 0, &mut remaining)?;
+        }
+    }
+    prepare_order(program)
 }

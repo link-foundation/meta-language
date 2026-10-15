@@ -483,6 +483,7 @@ pub(super) fn encode(program: &Program, provenance: Option<&Value>) -> Result<Ty
             )?;
         }
     }
+    super::owned_local_state::prepare_order(&mut value)?;
     let declarations = value["declarations"]
         .as_array()
         .ok_or_else(|| error("a checked program has no declarations"))?;
