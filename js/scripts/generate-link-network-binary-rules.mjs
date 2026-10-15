@@ -3,15 +3,28 @@
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, unlinkSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import assert from 'node:assert/strict';
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { DecoratorSet } from '../src/decorators.js';
+import { readProjectData, writeProjectData } from './project-data.mjs';
 
-const source = new URL('../src/link-network-binary-rules.js', import.meta.url);
-const styles = new URL('../../parity/self-translation/link-network-binary-rules-decorators.lino', import.meta.url);
-const destination = new URL('../../rust/src/link_network_binary_rules/', import.meta.url);
-const emitted = emitRust(checkProgram(parseJavaScript(readFileSync(source, 'utf8'), { referenceSemantics: false })));
+const candidateMode = process.argv.includes('--metadata-buffer-candidate');
+const originalStyles = new URL('../../parity/self-translation/link-network-binary-rules-decorators.lino', import.meta.url);
+const source = new URL(candidateMode ? '../../experiments/binary-metadata-buffer/candidate.mjs' : '../src/link-network-binary-rules.js', import.meta.url);
+const styles = candidateMode ? new URL('../../experiments/binary-metadata-buffer/native-styles.lino', import.meta.url) : originalStyles;
+const destination = new URL(candidateMode ? '../../experiments/binary-metadata-buffer/native/' : '../../rust/src/link_network_binary_rules/', import.meta.url);
+const candidatePolicyFile = new URL('../../experiments/binary-metadata-buffer/native-policy.lino', import.meta.url);
+const candidatePolicy = candidateMode ? readProjectData(candidatePolicyFile) : null;
+if (candidateMode) assert.deepEqual(candidatePolicy, {schemaVersion: 1, model: 'binary metadata buffer native generation 1',
+  scope: 'native generation input only', parser: {referenceSemantics: false}, checkedProgram: {utf16Strings: true}},
+  'candidate native generation requires its explicit checked UTF-16 String model');
+const checkedSource = checkProgram(parseJavaScript(readFileSync(source, 'utf8'), candidatePolicy?.parser ?? { referenceSemantics: false }));
+// Keep the already selected native UTF-16 String representation after the
+// source no longer needs slice. This explicit generation input uses the
+// existing checked-program flag; it does not claim a serialized source model.
+const emitted = emitRust(candidateMode ? {...checkedSource, ...candidatePolicy.checkedProgram} : checkedSource);
 const items = [...emitted.preludes, ...emitted.definitions];
 const raw = items.join('\n\n');
 const names = [...raw.matchAll(/^pub (?:fn|mod|struct|enum) ([A-Za-z_][A-Za-z_0-9]*)\b/gmu)].map(match => match[1]);
@@ -270,9 +283,15 @@ function recordFollowupReviewedStyles(logPath) {
   }]).toLino());
   console.log(`Recorded ${actions.length} exact source corrections for six authentic binary follow-up diagnostics`);
 }
-if (process.argv.includes('--update-styles')) {
+function readBinaryLibraryAdapter({raw, names, items}, fresh = false) {
   const actions = [];
-  const replace = (from, to) => { if (raw.includes(from)) actions.push({ op: 'replace', field: 'source', from, to }); };
+  let inspected = raw;
+  const replace = (from, to) => {
+    if ((fresh ? inspected : raw).includes(from)) {
+      actions.push({ op: 'replace', field: 'source', from, to });
+      inspected = inspected.split(from).join(to);
+    }
+  };
   // Recorded style changes preserve every emitted branch and fallback.
   let flattened = raw;
   for (;;) {
@@ -318,7 +337,7 @@ if (process.argv.includes('--update-styles')) {
   for (const item of items) {
     const signature = /^pub fn ([A-Za-z_0-9]+)\(([^)]*)\)/mu.exec(item);
     if (!signature) continue;
-    if (item.includes('let header = vec!')) {
+    if (!fresh && item.includes('let header = vec!')) {
       for (const call of item.matchAll(/crate::([A-Za-z_0-9]+)\(input\.clone\(\), header\.clone\(\),/gu)) {
         actions.push({ op: 'replace', field: 'source', from: `super::${call[1]}(input, header,`, to: `super::${call[1]}(input, &header,` });
       }
@@ -332,9 +351,12 @@ if (process.argv.includes('--update-styles')) {
   }
   // Numeric grouping is a representation-only style adjustment.
   for (const token of raw.matchAll(/\b[0-9]{6,}(?:f64|\.0)?\b/gu)) replace(token[0], token[0].replace(/^([0-9]+)(.*)$/u, (_, digits, suffix) => digits.replace(/\B(?=(?:[0-9]{3})+$)/gu, '_') + suffix));
+  return { id: 'binary-network-library-adapter-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions };
+}
+if (process.argv.includes('--update-styles') && !candidateMode) {
   const previous = DecoratorSet.fromLino(readFileSync(styles, 'utf8')).decorators
     .filter(({ id }) => id !== 'binary-network-library-adapter-style');
-  writeFileSync(styles, new DecoratorSet([{ id: 'binary-network-library-adapter-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }, ...previous]).toLino());
+  writeFileSync(styles, new DecoratorSet([readBinaryLibraryAdapter({raw, names, items}), ...previous]).toLino());
 }
 const reviewedIndex = process.argv.indexOf('--reviewed-log');
 if (reviewedIndex >= 0) {
@@ -346,7 +368,7 @@ if (followupIndex >= 0) {
   if (!process.argv[followupIndex + 1]) throw new Error('--reviewed-followup-log needs the authentic CI diagnostic file');
   recordFollowupReviewedStyles(process.argv[followupIndex + 1]);
 }
-const decorators = DecoratorSet.fromLino(readFileSync(styles, 'utf8'));
+function styleBinaryItems(items, decorators) {
 const libraryStyles = new DecoratorSet(decorators.decorators.filter(({ when }) => !when.some(([field]) => field === 'scope')));
 const itemStyles = new DecoratorSet(decorators.decorators.filter(({ when }) => when.some(([field, value]) => field === 'scope' && value === 'formatted-item')));
 let styled = items.map(item => format(libraryStyles.decorate('emitter', { format: 'Rust', source: item }).source));
@@ -362,6 +384,40 @@ for (const decorator of itemStyles.decorators) {
     return corrected === item ? item : format(corrected);
   });
 }
+return styled;
+}
+let candidateReceipt;
+if (candidateMode) {
+  if (reviewedIndex >= 0 || followupIndex >= 0) throw new Error('candidate generation cannot rewrite historical compiler receipts');
+  const gap = readProjectData(new URL('../../experiments/binary-metadata-buffer/generation-gap.lino', import.meta.url));
+  const previousSource = readFileSync(new URL('../../' + gap.baseline.snapshot, import.meta.url), 'utf8');
+  const digest = value => createHash('sha256').update(value).digest('hex');
+  if (digest(previousSource) !== gap.baseline.sha256 || digest(readFileSync(originalStyles)) !== gap.nativeGeneration.originalStylesSha256
+    || digest(readFileSync(source)) !== gap.candidate.sha256) throw new Error('candidate migration inputs differ from their exact frozen sources');
+  const previousEmission = emitRust(checkProgram(parseJavaScript(previousSource, { referenceSemantics: false })));
+  const stringPrelude = previousEmission.preludes.find(item => item.includes('pub mod ml_string {'));
+  if (!stringPrelude || !emitted.preludes.includes(stringPrelude)) throw new Error('candidate generation lost the exact existing native String model');
+  const previousItems = [...previousEmission.preludes, ...previousEmission.definitions];
+  const historical = DecoratorSet.fromLino(readFileSync(originalStyles, 'utf8'));
+  const previousStyled = styleBinaryItems(previousItems, historical);
+  const adapter = readBinaryLibraryAdapter({raw, names, items}, true);
+  const base = styleBinaryItems(items, new DecoratorSet([adapter]));
+  const {readBinaryMetadataCandidateStyles} = await import('./binary-metadata-candidate-styles.mjs');
+  const result = readBinaryMetadataCandidateStyles({items, base, previousItems, previousStyled, adapter, format});
+  const expected = new DecoratorSet(result.decorators).toLino();
+  if (process.argv.includes('--update-styles')) writeFileSync(styles, expected);
+  else if (readFileSync(styles, 'utf8') !== expected) throw new Error('candidate binary library styles are stale');
+  candidateReceipt = {...result.receipt, baselineSourceSha256: digest(previousSource), baselineStylesSha256: digest(readFileSync(originalStyles)),
+    candidateSourceSha256: digest(readFileSync(source)), checkedDeclarations: emitted.definitions.length,
+    generationPolicy: candidatePolicy, generationPolicySha256: digest(readFileSync(candidatePolicyFile)), stringPreludeSha256: digest(stringPrelude),
+    generatorSha256: digest(readFileSync(new URL(import.meta.url))),
+    candidateStyleBuilderSha256: digest(readFileSync(new URL('./binary-metadata-candidate-styles.mjs', import.meta.url))),
+    candidateStylesSha256: digest(expected),
+    historicalReplacementContexts: historical.decorators.filter(row => row.when.some(([field, value]) => field === 'scope' && value === 'formatted-item'))
+      .reduce((count, row) => count + row.actions.filter(action => action.op === 'replace').length, 0)};
+}
+const decorators = DecoratorSet.fromLino(readFileSync(styles, 'utf8'));
+const styled = styleBinaryItems(items, decorators);
 const groups = [];
 let current = [], lines = 0;
 for (const item of styled) {
@@ -384,6 +440,13 @@ const outputs = groups.map((group, index) => {
 });
 outputs.push(['mod.rs', '// Generated module partition; the entire checked algorithm is retained.\n'
   + groups.map((_, index) => `mod part_${index};\npub use part_${index}::*;`).join('\n') + '\n']);
+if (candidateMode) {
+  candidateReceipt.nativeArtifacts = outputs.map(([path, bytes]) => ({path, sha256: createHash('sha256').update(bytes).digest('hex')}));
+  const receiptFile = new URL('../../experiments/binary-metadata-buffer/native-generation.lino', import.meta.url);
+  if (process.argv.includes('--check')) {
+    if (JSON.stringify(readProjectData(receiptFile)) !== JSON.stringify(candidateReceipt)) throw new Error('candidate binary generation receipt is stale');
+  } else writeProjectData(receiptFile, candidateReceipt);
+}
 mkdirSync(destination, { recursive: true });
 for (const [name, expected] of outputs) {
   if (expected.split('\n').length > 900) throw new Error('a generated module exceeds the bounded file target');
@@ -396,8 +459,10 @@ for (const name of readdirSync(destination)) if (name.endsWith('.rs') && !expect
   if (process.argv.includes('--check')) throw new Error('a stale generated partition remains');
   unlinkSync(new URL(name, destination));
 }
+if (!candidateMode) {
 const schema = readFileSync(new URL('../src/data/link-network-binary-schema.lino', import.meta.url));
 const nativeSchema = new URL('../../rust/src/data/link-network-binary-schema.lino', import.meta.url);
 if (process.argv.includes('--check')) { if (!readFileSync(nativeSchema).equals(schema)) throw new Error('native binary schema is stale'); }
 else writeFileSync(nativeSchema, schema);
+}
 console.log(`Binary network framing: ${emitted.definitions.length} checked definitions in ${groups.length} bounded modules`);
