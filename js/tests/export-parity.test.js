@@ -101,6 +101,10 @@ const RUNNERS = Object.freeze({
   accessModeLabel: ([mode]) => [javascript.accessModeLabel(mode)],
   accessModeIsMutable: ([mode]) => [String(javascript.accessModeIsMutable(mode))],
   accessModeIsReadOnly: ([mode]) => [String(javascript.accessModeIsReadOnly(mode))],
+  readSourceTextUnits: ([text]) => javascript.readSourceTextUnits(text).map(String),
+  readSourceTextByteLength: ([text]) => [String(javascript.readSourceTextByteLength(text))],
+  readSourceTextByte: ([text, offset]) => [String(javascript.readSourceTextByte(text, Number(offset)) ?? 'none')],
+  sliceSourceTextBytes: ([text, start, end]) => [javascript.sliceSourceTextBytes(text, Number(start), Number(end)) ?? 'none'],
 });
 
 test('export parity: every public export is listed with a public Rust item', async () => {

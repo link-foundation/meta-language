@@ -12,8 +12,9 @@ use meta_language::{
     AccessMode, FeatureParseOptions, GRAMMAR_DIAGNOSTIC_KINDS, Grammar, GrammarExpr, LinkId,
     RegionDetectionPolicy, SourceAlias, accepts_text, canonical_repeat, canonical_rule_definition,
     carry_rule_docs, choice, compile_feature_grammar, concept_records, detect_embedded_regions,
-    display_grammar_expression, foundation_register, import_ebnf, parse_with_grammar, sequence,
-    sniff_language, source_meanings_in, validate,
+    display_grammar_expression, foundation_register, import_ebnf, parse_with_grammar,
+    read_source_text_byte, read_source_text_byte_length, read_source_text_units, sequence,
+    slice_source_text_bytes, sniff_language, source_meanings_in, validate,
 };
 use serde_json::Value;
 
@@ -204,6 +205,26 @@ fn run(name: &str, input: &[String]) -> Vec<String> {
         "accessModeLabel" => one(&access_mode(arg(0)).label()),
         "accessModeIsMutable" => one(&access_mode(arg(0)).is_mutable()),
         "accessModeIsReadOnly" => one(&access_mode(arg(0)).is_read_only()),
+        "readSourceTextUnits" => read_source_text_units(arg(0))
+            .expect("the corpus text is inside the shared scalar model")
+            .iter()
+            .map(ToString::to_string)
+            .collect(),
+        "readSourceTextByteLength" => one(&read_source_text_byte_length(arg(0))
+            .expect("the corpus text is inside the shared scalar model")),
+        "readSourceTextByte" => one(&read_source_text_byte(
+            arg(0),
+            arg(1).parse().expect("a numeric byte offset"),
+        )
+        .expect("the corpus text is inside the shared scalar model")
+        .map_or_else(|| "none".to_string(), |byte| byte.to_string())),
+        "sliceSourceTextBytes" => one(&slice_source_text_bytes(
+            arg(0),
+            arg(1).parse().expect("a numeric byte start"),
+            arg(2).parse().expect("a numeric byte end"),
+        )
+        .expect("the corpus text is inside the shared scalar model")
+        .unwrap_or("none")),
         other => panic!("{other} has no corpus runner"),
     }
 }
