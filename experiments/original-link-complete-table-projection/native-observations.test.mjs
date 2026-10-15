@@ -3,10 +3,17 @@ import {createHash} from 'node:crypto';
 import {existsSync,mkdirSync,readFileSync,writeFileSync} from 'node:fs';
 import {dirname,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {pathToFileURL} from 'node:url';
+import {createRequire} from 'node:module';
 import test from 'node:test';
 import {readProjectData,writeProjectData,serializeProjectData} from '../../js/scripts/project-data.mjs';
 import {readStructuredDataLino} from '../../js/src/index.js';
-import {ORIGINAL_LINK_COMPLETE_TABLE_MODEL_COMMIT,verifyOriginalLinkCompleteTableNativeModel,originalLinkCompleteTableNativeMode,planOriginalLinkCompleteTableNative,runOriginalLinkCompleteTableNative} from './native-observations.mjs';
+import {ORIGINAL_LINK_COMPLETE_TABLE_MODEL_COMMIT,verifyOriginalLinkCompleteTableNativeModel,originalLinkCompleteTableNativeMode,planOriginalLinkCompleteTableNative,runOriginalLinkCompleteTableNative,runOriginalLinkCompleteTablePlanningPhases} from './native-observations.mjs';
+import {reloadCanonicalArchive,readCanonicalArchiveTransportSource} from './archive-transport.mjs';
+import {LinkNetwork} from '../../js/src/network.js';
+import {LinkMetadata, LinkType, LinkFlags, SourceSpan, ByteRange, Point} from '../../js/src/primitives.js';
+import {encodeLinkStatement} from '../../js/src/lino-serialization.js';
+const {Parser, StreamParser} = await import(pathToFileURL(createRequire(new URL('../../js/package.json', import.meta.url)).resolve('links-notation')).href);
 
 const nativeEnabled=originalLinkCompleteTableNativeMode(process.env);
 const digest=value=>createHash('sha256').update(value).digest('hex');
@@ -14,6 +21,73 @@ const fakeEnvironment={CI:'true',ORIGINAL_LINK_COMPLETE_TABLE_NATIVE:'1',GITHUB_
 function bitStream(observations){const dictionary=[],indices=new Map(),lines=observations.map((row,index)=>{const fields=[String(index),String(row.resultRows.length)];for(const result of row.resultRows){fields.push(String(result.bits.length));for(const bits of result.bits){if(!indices.has(bits)){indices.set(bits,dictionary.length);dictionary.push(bits);}fields.push(indices.get(bits).toString(16));}}return fields.join(':');});return['dictionary:'+dictionary.length+':'+dictionary.join(':'),...lines].join('\n')+'\n';}
 function fakeProcess(stream,override){const calls=[];const spawn=(command,args,options)=>{const phase=args.includes('--crate-type=rlib')?'library':args.includes('--extern')?'consumer':'execute',call={command,args,options,phase};calls.push(call);const replacement=override?.(call);if(replacement)return replacement;if(phase!=='execute')writeFileSync(args[args.indexOf('-o')+1],'injected process artifact; not native evidence');return{status:0,signal:null,stdout:phase==='execute'?stream:'',stderr:''};};return{spawn,calls};}
 const fails=(operation,pattern)=>assert.throws(operation,error=>{assert.ok(error instanceof AggregateError);assert.equal(error.errors.length,1);assert.match(error.message,pattern);return true;});
+
+function tinyCanonicalArchive(){
+ const network=new LinkNetwork(),term=network.insertTypedPoint(LinkType.Concept,'registered Ω');
+ for(let index=0;index<8;index++)network.insertLinkWithOptionalId(20+index,[term,20+(index+1)%8],LinkMetadata.new().withLinkType(LinkType.SourceToken).withNamed(index%2===0).withTerm('token '+index).withDefinition('Ω😀\n%').withLanguage('Rust').withSpan(new SourceSpan(new ByteRange(index,index+1),new Point(0,index),new Point(0,index+1))).withFlags(new LinkFlags({isError:true,hasError:true,isMissing:true,isExtra:true})));
+ return network.toLino();
+}
+
+test('canonical archive transport provenance contains the exact immutable source bytes and digest',()=>{
+ const bytes=readFileSync(new URL('./archive-transport.mjs',import.meta.url)),receipt=readCanonicalArchiveTransportSource();
+ assert.deepEqual(receipt,{file:'experiments/original-link-complete-table-projection/archive-transport.mjs',sha256:digest(bytes),bytes:bytes.length});
+ assert.equal(Object.isFrozen(receipt),true);assert.throws(()=>{receipt.sha256='0'.repeat(64);},TypeError);
+ assert.deepEqual(readCanonicalArchiveTransportSource(),receipt);
+});
+
+test('incremental canonical archives retain every identity, metadata field, reference and registration',()=>{
+ const source=tinyCanonicalArchive(),expected=LinkNetwork.fromLino(source),actual=reloadCanonicalArchive(source);
+ assert.equal(actual.toLino(),expected.toLino());assert.deepEqual(actual._terms,expected._terms);assert.equal(actual._nextId,expected._nextId);
+ assert.deepEqual(actual.links().map(link=>link.id().asU64()),expected.links().map(link=>link.id().asU64()));
+ assert.equal(reloadCanonicalArchive('').toLino(),'');
+ const overwritten=source+encodeLinkStatement(1,[20],LinkMetadata.new().withLinkType(LinkType.Relation).withTerm('last record'))+'\n';
+ const duplicate=reloadCanonicalArchive(overwritten),whole=LinkNetwork.fromLino(overwritten);
+ assert.equal(duplicate.toLino(),whole.toLino());assert.deepEqual(duplicate._terms,whole._terms);
+ assert.equal(duplicate.link(1).metadata().term,'last record');
+});
+
+test('incremental canonical archives retain the existing parser bound per complete record',()=>{
+ const source=tinyCanonicalArchive(),bound=384;
+ assert.ok(source.length>bound);assert.ok(source.trimEnd().split('\n').every(line=>line.length+1<bound));
+ assert.throws(()=>new Parser({comments:false,maxInputSize:bound}).parse(source),/Input size exceeds/u);
+ const createParser=()=>new StreamParser({comments:false,collect:false,maxInputSize:bound,maxBufferSize:bound});
+ assert.equal(reloadCanonicalArchive(source,{createParser}).toLino(),LinkNetwork.fromLino(source).toLino());
+ const oversized=encodeLinkStatement(1,[],LinkMetadata.new().withTerm('x'.repeat(bound)));
+ assert.throws(()=>reloadCanonicalArchive(oversized,{createParser}),/maximum.*size|Input size exceeds/u);
+});
+
+test('incremental canonical archives reject malformed syntax and metadata without dropping a record',()=>{
+ for(const source of['(1: (meta: (t: unknown) (n: 1)))\n','(1: (meta: (t: concept) (n: 1) (def: %GG)))\n','(1: (meta: (t: concept) (n: 1)))\n(2: (meta:','(1: (meta: (t: concept) (n: 1)))\n(2: 1)\n']){
+  assert.throws(()=>LinkNetwork.fromLino(source));assert.throws(()=>reloadCanonicalArchive(source));
+ }
+});
+
+test('complete-table planning finishes full source replay before allocating its matrix',()=>{
+ const native='pub fn original()->bool{true}\r\n// whole Ω😀 source\r\n',prepared=Object.freeze({native}),replay=Object.freeze({scope:'injected replay only'}),result=Object.freeze({scope:'injected matrix only'}),order=[];
+ assert.strictEqual(runOriginalLinkCompleteTablePlanningPhases({
+  prepareSource(){order.push('prepare');return prepared;},
+  replaySource(source){assert.strictEqual(source,native);assert.deepEqual(Buffer.from(source),Buffer.from(native));assert.deepEqual(order,['prepare']);order.push('text','binary');return replay;},
+  buildMatrix(source,receipt){assert.strictEqual(source,prepared);assert.strictEqual(receipt,replay);assert.deepEqual(order,['prepare','text','binary']);order.push('matrix');return result;},
+ }),result);
+ assert.deepEqual(order,['prepare','text','binary','matrix']);
+});
+
+test('complete-table planning keeps failure identity and never builds a matrix before replay succeeds',()=>{
+ for(const failedPhase of['prepare','text','binary','matrix']){
+  const failure=new Error(failedPhase),order=[],record=phase=>{order.push(phase);if(phase===failedPhase)throw failure;};
+  assert.throws(()=>runOriginalLinkCompleteTablePlanningPhases({
+   prepareSource(){record('prepare');return Object.freeze({native:'complete original source'});},
+   replaySource(){record('text');record('binary');return Object.freeze({scope:'injected replay only'});},
+   buildMatrix(){record('matrix');},
+  }),error=>error===failure);
+  assert.deepEqual(order,['prepare','text','binary','matrix'].slice(0,['prepare','text','binary','matrix'].indexOf(failedPhase)+1));
+ }
+});
+
+test('complete-table planning phase injection never authorizes native or injected execution',()=>{
+ const plan=runOriginalLinkCompleteTablePlanningPhases({prepareSource:()=>Object.freeze({native:'injected source'}),replaySource:()=>({}),buildMatrix:()=>({entries:[]})});
+ const fake=fakeProcess('');assert.throws(()=>runOriginalLinkCompleteTableNative(plan,{environment:fakeEnvironment,spawn:fake.spawn}),/exact checked/u);assert.equal(fake.calls.length,0);
+});
 
 // No heavy planner, CST, source-free graph or subprocess work occurs locally.
 test('heavy planning and native processes require their separate explicit CI authorization',()=>{
