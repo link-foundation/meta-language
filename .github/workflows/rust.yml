@@ -679,6 +679,15 @@ jobs:
           RUST_TEXT_VALUE_PROJECTION_NATIVE: '1'
         run: node scripts/with-cache-cleanup.mjs --event test -- node --test experiments/rust-text-value-projection/native-observations.test.mjs
 
+      - name: Retain complete Rust text value source observations
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: rust-text-value-projection-native-observations-${{ github.sha }}
+          path: issue-195-artifacts/rust-text-value-projection-native-observations.lino
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Run doc tests
         if: ${{ !cancelled() && matrix.suite == 'remaining' }}
         shell: bash

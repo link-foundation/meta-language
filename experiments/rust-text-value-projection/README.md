@@ -52,12 +52,22 @@ reference layers, arbitrary calls/effects and borrowed results need additional
 proofs. This experiment supplies no native implementation, production selector,
 ledger evidence or broad borrow-checking claim.
 
+The Rust workflow adds a separate source oracle after the JavaScript workflow
+passes. It compiles all thirteen complete original modules and three coherent
+edits as libraries, preserving each original empty main. A generated external
+consumer calls the actual public function using its checked String, &String or
+&str inputs and compares its UTF-8 result bytes with JavaScript. Successful
+observations are retained in a Links Notation artifact. This source comparison
+does not supply a native implementation of the experimental certificate.
+The oracle requires both `CI=true` and an explicit native switch. Ordinary local
+tests exercise its JavaScript plan and injected process contracts.
+
 Run the bounded checks from the repository root:
 
 ```sh
 node experiments/rust-text-value-projection/generate-rules.mjs --check
 node experiments/rust-text-value-projection/generate-fixtures.mjs --check
-node --test experiments/rust-text-value-projection/model.test.mjs
+RUST_TEXT_VALUE_PROJECTION_NATIVE=0 node scripts/with-cache-cleanup.mjs --event test -- node --test experiments/rust-text-value-projection/model.test.mjs experiments/rust-text-value-projection/native-observations.test.mjs
 ```
 
 The generated [Rust decision artifact](data/rules.rs) is produced automatically

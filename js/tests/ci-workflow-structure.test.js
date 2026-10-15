@@ -742,6 +742,10 @@ function checkRustTextValueNativeStep(parsed) {
   assert.equal(steps.length, 1, 'the complete-source native oracle must execute once in its selected matrix cell');
   assert.equal(packageStepSignature(steps[0], true), '752006807d9fed41319980bd6552d651fb61f841a3952d959a5e595da7cb3fd5',
     'the native source oracle retains its exact condition, command, directory and explicit native switch');
+  const artifacts = parsed.get('test').steps.filter(step => step.name === 'Retain complete Rust text value source observations');
+  assert.equal(artifacts.length, 1, 'the exact native observation receipt must be retained once');
+  assert.equal(packageStepSignature(artifacts[0], true), 'cb344920a23537b6e42f01adee93c496cfca25d73d77d49c18e5635620962117',
+    'the native receipt retains its condition, action, commit identity, Links path and missing-file failure');
 }
 
 test('the complete Rust text source oracle is mandatory after JavaScript and its source changes select Rust', () => {
@@ -782,6 +786,34 @@ test('the complete Rust text source oracle rejects omission, duplication and nat
     ['node --test experiments/', 'node --test --test-name-pattern optional experiments/'],
     ['working-directory: ${{ github.workspace }}', 'working-directory: rust'],
     ['working-directory: ${{ github.workspace }}', 'continue-on-error: true\n        working-directory: ${{ github.workspace }}'],
+  ]) {
+    mutate((steps, index) => {
+      assert.ok(steps[index].text.includes(before));
+      steps[index].text = steps[index].text.replace(before, after);
+    });
+  }
+});
+
+test('the complete Rust text source receipt rejects artifact omission and retention mutations', () => {
+  const mutate = change => {
+    const parsed = jobs('rust.yml');
+    const steps = parsed.get('test').steps;
+    const index = steps.findIndex(step => step.name === 'Retain complete Rust text value source observations');
+    assert.ok(index >= 0);
+    change(steps, index);
+    assert.throws(() => checkRustTextValueNativeStep(parsed), assert.AssertionError);
+  };
+  mutate((steps, index) => steps.splice(index, 1));
+  mutate((steps, index) => steps.push({ ...steps[index] }));
+  for (const [before, after] of [
+    ['!cancelled()', 'success()'],
+    ["matrix.suite == 'translation'", "matrix.suite == 'remaining'"],
+    ["matrix.os == 'ubuntu-latest'", "matrix.os == 'windows-latest'"],
+    ['uses: actions/upload-artifact@v7', 'uses: actions/upload-artifact@v6'],
+    ['${{ github.sha }}', '${{ github.ref }}'],
+    ['native-observations.lino', 'native-observations.json'],
+    ['if-no-files-found: error', 'if-no-files-found: ignore'],
+    ['retention-days: 7', 'retention-days: 0'],
   ]) {
     mutate((steps, index) => {
       assert.ok(steps[index].text.includes(before));
