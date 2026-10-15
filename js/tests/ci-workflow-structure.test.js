@@ -495,6 +495,29 @@ const TYPE_NAMESPACE_PACKAGE_STEPS = [
   ["Check shared Rust type namespace fixtures", "node scripts/generate-rust-type-namespace-fixtures.mjs --check", '5f3554013a2366dfb14e6e6d63013aaa183d7b011ae8db0969ef4977b19053b0', 'generated'],
 ];
 
+// Bulk twenty additions are frozen separately from every earlier gate.
+const PURE_UNIT_PACKAGE_STEPS = [
+  ["Check generated Rust pure Unit call rules", "node scripts/generate-rust-pure-unit-call-rules.mjs --check", 'eca96f54e18ab3e37d09cb936049f3c93160fd9195d5f2577e2e5aadb7b141fc', 'generated'],
+  ["Check shared Rust private pure Unit call fixtures", "node scripts/generate-rust-pure-unit-call-fixtures.mjs --check", '6ffefb18bfe4de23bb4d67093cbac30a7ec4a344bbe9044c1da34b2d835c5561', 'generated'],
+  ["Check shared Rust public pure Unit call fixtures", "node scripts/generate-rust-public-pure-unit-call-fixtures.mjs --check", '725cf8d6c033b6a3ddd8257614a286c4756abe4fecdff78a25cdb65d8ecbafed', 'generated'],
+];
+const SOURCE_SPAN_PACKAGE_STEPS = [
+  ["Check generated source span rules", "node scripts/generate-source-span-rules.mjs --check", 'c3f8959bdaa5024e679a16434036f6eb1d518d6ca0f72ded2101772c38b8fa22', 'generated'],
+  ["Check shared source span offset fixtures", "node scripts/generate-source-span-fixtures.mjs --check", 'd7556f6f378fc8316bf0c3ebc80ab87af09d5bcd05f56aa5392e7dbd44370e33', 'generated'],
+];
+const OWNED_TEXT_GENERATOR_PACKAGE_STEPS = [
+  ["Check generated Rust owned local text state rules", "node ../experiments/generate-rust-owned-local-state-rules.mjs --check", '9f63b3bacdbe0a6bb5a421ff26c75bc5e806e0628f31040b7aaabdc00ea536b8', 'generated'],
+  ["Check shared Rust owned local text state fixtures", "node ../experiments/generate-rust-owned-local-state-fixture.mjs --check", '9705af30ae034ec26327def2f595654344283cd01044b25ff65a0ad5b57f2024', 'generated'],
+  ["Check shared Rust owned local source operation fixtures", "node ../experiments/generate-rust-owned-local-source-operation-fixture.mjs --check", 'e10eb6d30a3db1d756bc191e17e1d04e5e0812ab6f719e19ca3c898d83770d5f', 'generated'],
+  ["Check shared Rust owned local container fixtures", "node ../experiments/generate-rust-owned-local-container-fixture.mjs --check", '24ac4f4ba1655f7fc9c08264f98bfa7997516c5c872c1a7667635d435d0869f3', 'generated'],
+];
+const OWNED_TEXT_EXPERIMENT_PACKAGE_STEPS = [
+  ["Run Rust owned local text state prototype checks", "node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-owned-local-state-prototype.test.mjs", '9efb2471f3674e8a0aab546eb8ecc27422439044bd97b5a7087be640219fe0cb', 'generated'],
+  ["Run Rust owned local text public profile checks", "node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-owned-local-state-public.test.mjs", '6ae0bb72e081015ff45fa7c7ad3aebdc9fff92e8afa2fc1dd4e6aff8aba927fa', 'generated'],
+  ["Run Rust owned local text unit checks", "node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-owned-local-text-units.test.mjs", '8ecf1dadd7f187c39e8483dbf5b5f7e3005eea9202dce2a172b3ad8bcedd66bb', 'generated'],
+  ["Run Rust owned local container checks", "node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-owned-local-container.test.mjs", '0010868feb0f784edacd150e76dec71add2119de452037dc7788b9c8183728d5', 'generated'],
+];
+
 function packageStepSignature(step, includeGroup = false) {
   const fields = includeGroup ? step.text : step.text.replace(/ && matrix\.group == '[a-z-]+'/gu, '');
   const text = fields
@@ -504,7 +527,9 @@ function packageStepSignature(step, includeGroup = false) {
 }
 
 function checkPackageStepConservation(parsed) {
-  const additions = [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS, ...TYPE_NAMESPACE_PACKAGE_STEPS];
+  const additions = [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS, ...TYPE_NAMESPACE_PACKAGE_STEPS,
+    ...PURE_UNIT_PACKAGE_STEPS, ...SOURCE_SPAN_PACKAGE_STEPS, ...OWNED_TEXT_GENERATOR_PACKAGE_STEPS,
+    ...OWNED_TEXT_EXPERIMENT_PACKAGE_STEPS];
   const expected = new Map([
     ...ORIGINAL_PACKAGE_STEPS.map(([name, hash, owner]) => [name, { hash, owner }]),
     ...additions.map(([name, command, hash, owner]) => [name, { hash, owner, command, addition: true }]),
@@ -631,7 +656,8 @@ test('every frozen generator addition rejects omission, duplication, condition, 
     change(steps, index);
     assert.throws(() => checkPackageStepConservation(parsed), assert.AssertionError, name);
   };
-  for (const [name] of [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS, ...TYPE_NAMESPACE_PACKAGE_STEPS]) {
+  for (const [name] of [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS, ...TYPE_NAMESPACE_PACKAGE_STEPS,
+    ...PURE_UNIT_PACKAGE_STEPS, ...SOURCE_SPAN_PACKAGE_STEPS, ...OWNED_TEXT_GENERATOR_PACKAGE_STEPS]) {
     mutate(name, (steps, index) => steps.splice(index, 1));
     mutate(name, (steps, index) => steps.push({ ...steps[index] }));
     for (const [before, after] of [
@@ -642,6 +668,34 @@ test('every frozen generator addition rejects omission, duplication, condition, 
       ['working-directory: js', 'continue-on-error: true\n        working-directory: js'],
     ]) {
       mutate(name, (steps, index) => {
+        steps[index].text = steps[index].text.replace(before, after);
+      });
+    }
+  }
+});
+
+test('every frozen text experiment addition retains its mandatory execution, wrapper, directory and owner', () => {
+  for (const [name] of OWNED_TEXT_EXPERIMENT_PACKAGE_STEPS) {
+    const mutate = change => {
+      const parsed = jobs('js.yml');
+      const steps = parsed.get('package-checks').steps;
+      const index = steps.findIndex(step => step.name === name);
+      assert.ok(index >= 0, `required owned text experiment missing: ${name}`);
+      change(steps, index);
+      assert.throws(() => checkPackageStepConservation(parsed), assert.AssertionError, name);
+    };
+    mutate((steps, index) => steps.splice(index, 1));
+    mutate((steps, index) => steps.push({ ...steps[index] }));
+    for (const [before, after] of [
+      ['!cancelled()', 'success()'],
+      ['--event test --', '--event build --'],
+      ['node --test ../experiments/', 'node --test --test-name-pattern optional ../experiments/'],
+      ['working-directory: js', 'working-directory: .'],
+      ["matrix.group == 'generated'", "matrix.group == 'contracts'"],
+      ['working-directory: js', 'continue-on-error: true\n        working-directory: js'],
+    ]) {
+      mutate((steps, index) => {
+        assert.ok(steps[index].text.includes(before), `the mutation changes the actual experiment step: ${before}`);
         steps[index].text = steps[index].text.replace(before, after);
       });
     }

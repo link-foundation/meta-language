@@ -641,6 +641,71 @@ jobs:
         working-directory: js
         run: node scripts/generate-rust-type-namespace-fixtures.mjs --check
 
+      - name: Check generated Rust pure Unit call rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/generate-rust-pure-unit-call-rules.mjs --check
+
+      - name: Check shared Rust private pure Unit call fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/generate-rust-pure-unit-call-fixtures.mjs --check
+
+      - name: Check shared Rust public pure Unit call fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/generate-rust-public-pure-unit-call-fixtures.mjs --check
+
+      - name: Check generated source span rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/generate-source-span-rules.mjs --check
+
+      - name: Check shared source span offset fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/generate-source-span-fixtures.mjs --check
+
+      - name: Check generated Rust owned local text state rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../experiments/generate-rust-owned-local-state-rules.mjs --check
+
+      - name: Check shared Rust owned local text state fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../experiments/generate-rust-owned-local-state-fixture.mjs --check
+
+      - name: Check shared Rust owned local source operation fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../experiments/generate-rust-owned-local-source-operation-fixture.mjs --check
+
+      - name: Check shared Rust owned local container fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../experiments/generate-rust-owned-local-container-fixture.mjs --check
+
+      - name: Run Rust owned local text state prototype checks
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-owned-local-state-prototype.test.mjs
+
+      - name: Run Rust owned local text public profile checks
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-owned-local-state-public.test.mjs
+
+      - name: Run Rust owned local text unit checks
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-owned-local-text-units.test.mjs
+
+      - name: Run Rust owned local container checks
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-owned-local-container.test.mjs
+
       - name: Check generated Rust empty option rules
         if: ${{ !cancelled() && matrix.group == 'generated' }}
         working-directory: js
