@@ -9,6 +9,10 @@ import { freshNumberArrayCollectorPolicy as policy } from './policy.mjs';
 
 export function freshNumberArrayCollectorRuleSource() {
   return `// Generated from the complete linked collector grammar. Do not edit.
+/** @param {string} name @returns {boolean} */
+export function acceptFreshNumberArrayCollectorBinding(name) {
+  return name !== "" && ${policy.unconditionallyReservedBindings.map(name => 'name !== ' + JSON.stringify(name)).join(' && ')};
+}
 /** @param {number[]} tokens @param {number[]} pattern @returns {boolean} */
 export function acceptFreshNumberArrayCollectorPattern(tokens, pattern) {
   if (tokens.length !== pattern.length || tokens.length > ${policy.maximumTokens}) return false;

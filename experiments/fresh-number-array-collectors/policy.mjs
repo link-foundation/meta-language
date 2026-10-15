@@ -7,6 +7,15 @@ export const freshNumberArrayCollectorPolicy = {
   nameCodeMinimum: 1000,
   maximumTokens: 256,
   maximumSourceUnits: 16384,
+  sourceGrammarBasis: 'https://tc39.es/ecma262/multipage/ecmascript-language-lexical-grammar.html#sec-keywords-and-reserved-words',
+  // This complete grammar is a non-async, non-generator Script without a
+  // strict directive. Contextual await/yield and ordinary globals are not
+  // classified as unconditionally reserved by this table.
+  unconditionallyReservedBindings: ['break', 'case', 'catch', 'class', 'const',
+    'continue', 'debugger', 'default', 'delete', 'do', 'else', 'enum', 'export',
+    'extends', 'false', 'finally', 'for', 'function', 'if', 'import', 'in',
+    'instanceof', 'new', 'null', 'return', 'super', 'switch', 'this', 'throw',
+    'true', 'try', 'typeof', 'var', 'void', 'while', 'with'],
   fixedTokens: ['function', '(', ')', '{', '}', 'const', '=', '[', ']', ';',
     'for', 'let', '0', '1', '<', '.', 'length', '+=', 'push', 'return', '??', '-', 'eof'],
   // Negative entries refer to one actual lexical binder. All four binders

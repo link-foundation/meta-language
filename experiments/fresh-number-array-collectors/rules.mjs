@@ -1,4 +1,8 @@
 // Generated from the complete linked collector grammar. Do not edit.
+/** @param {string} name @returns {boolean} */
+export function acceptFreshNumberArrayCollectorBinding(name) {
+  return name !== "" && name !== "break" && name !== "case" && name !== "catch" && name !== "class" && name !== "const" && name !== "continue" && name !== "debugger" && name !== "default" && name !== "delete" && name !== "do" && name !== "else" && name !== "enum" && name !== "export" && name !== "extends" && name !== "false" && name !== "finally" && name !== "for" && name !== "function" && name !== "if" && name !== "import" && name !== "in" && name !== "instanceof" && name !== "new" && name !== "null" && name !== "return" && name !== "super" && name !== "switch" && name !== "this" && name !== "throw" && name !== "true" && name !== "try" && name !== "typeof" && name !== "var" && name !== "void" && name !== "while" && name !== "with";
+}
 /** @param {number[]} tokens @param {number[]} pattern @returns {boolean} */
 export function acceptFreshNumberArrayCollectorPattern(tokens, pattern) {
   if (tokens.length !== pattern.length || tokens.length > 256) return false;
