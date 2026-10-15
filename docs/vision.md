@@ -498,6 +498,24 @@ under the selected model before its runtime and String conditions are rebound
 to fresh spans. The original model, its narrower literal decisions and its
 fixtures remain separate and unchanged. This extension also remains an
 experiment without a production selector or native parity claim.
+The separate JavaScript-first `closed standard Rust text value projection 1`
+experiment connects complete flat text function sources with zero through two
+String, &String or &str inputs and an independent empty main to their actual
+checked header, parameter, result and body operation owners. Its operations are
+owned String moves, String clones and the selected standard conversions from
+borrowed text to an owned String. A borrowed str clone, a move from a borrowed
+String, a non-text constructor argument or an escaping borrowed result needs a
+different proof and is refused by this interpretation. Source-free text and
+binary reload rechecks every operation against the complete production token
+parser; coherent input and literal edits retain their actual owners. Rust replay
+retains the complete source, and JavaScript execution guards the Unicode scalar
+text input domain. Allocation success conditions belong to actual String
+construction or clone operations; a move adds no allocation condition. This
+value interpretation does not establish pointer, resource, lifetime, failure or
+ABI equivalence. Ordinary source models retain their existing contracts, and
+complete generated runtime wrappers still need an independently proved
+composition. Native library support
+and production selection remain separate obligations.
 The independently selected `closed pure Rust const predicates 1` source model
 owns the actual `const` and `fn` keyword intervals, complete header and body
 intervals, original declaration name and direct primitive source signature.
