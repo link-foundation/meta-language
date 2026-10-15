@@ -133,6 +133,14 @@ Direct native programs can retain dynamic proof widths as floating Number
 values. Their selected validation uses a bounded private comparison view with
 the same fixed-width record adapter as Links decoding; the original proof
 values, own-field order, nulls and unknown fields remain observable and checked.
+Native surface adapters preserve optional-field presence independently of the
+field's value. An omitted array spread flag remains omitted, while explicit
+false remains present. Binding annotations distinguish omission, explicit null
+and a concrete type through the native host representation. These adapters keep
+the existing source-free checker and wire observations; a default value cannot
+replace a presence distinction. Assertion propositions use the same shared
+operand and binding plans during encoding, reload and complete rechecking,
+including each quantified binding's actual lexical identity.
 Owned occurrence paths likewise compare the numeric value of an actual Number
 position, checking the actual array bounds through the shared tuple-index rule.
 Equivalent integral spellings retain their stored scalar, including negative
@@ -1830,6 +1838,14 @@ restoration provenance before replay; source restoration alone cannot prove
 semantic preservation. Native execution of the translated Rust remains a CI
 verification boundary.
 
+Self-translation representation selection uses shared linked decisions and an
+automatically generated native implementation. Its selected UTF-16 prelude is
+extracted from the existing JavaScript emitter without rewriting that runtime.
+The native context carries this explicit selection while preserving ordinary
+module context and constants emission. Selected signatures that still need
+checked Text lowering retain an explicit obligation; emitting a String prelude
+alone does not prove UTF-16 value semantics in Rust.
+
 Everything is extensible with decorators: one decorator API for the importer,
 grammar rules, merge decisions, concept mappings, the executor and recovery,
 CST → AST, transformations, emitters and translation rules. Decorators compose
@@ -1925,6 +1941,11 @@ tails and periodic command progress are retained in live CI output. Each
 thirty-second heartbeat includes a bounded, credential-redacted actual log
 suffix, so a job timeout retains recent test progress even if artifact upload
 cannot run. Original command logs remain unchanged.
+The Rust suite also forwards bounded, credential-redacted live output with
+`--nocapture`, retaining the original command result and complete raw logs.
+Scaling checks report their language, attempt, size and sample outside the
+timed operation. These diagnostics preserve every workload, assertion, budget
+and deadline; they do not establish the cause or resolution of a timeout.
 
 Package validation runs nine required logical check groups across ten parallel
 jobs: native imports, native fixtures, grammar, contracts, generated code and

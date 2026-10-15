@@ -1055,6 +1055,18 @@ const RAW_SOURCE_PACKAGE_STEPS = [
     'f72da9d6daccf08f26d1349d3fdd6e9133b024dee6a6ff7dd2ae4e1b9ef69cef', 'source-model-raw'],
 ];
 
+const NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS = [
+  ['Check shared self translation representation artifacts',
+    'node scripts/generate-self-translation-representation.mjs --native --check',
+    'd1b11a67492ae3cf69623e33b05d9107f8c9ed018e1798ac1f78e3949b1f5a31', 'generated'],
+  ['Check generated Rust cast syntax rules',
+    'node scripts/generate-rust-cast-syntax-rules.mjs --check',
+    'bee80763220356012a3260d7b5166176d16b3a92f78261ebd504fe333572229a', 'generated'],
+  ['Check original link schema source closure',
+    'node ../experiments/original-link-complete-table-projection/generate-raw-schema-source-closure.mjs --check',
+    'c475cb423f76bb88d81206363f5009c6c7b3232c98dc3e986d859c8311720bca', 'generated'],
+];
+
 // Exact physical owners of the unchanged generated checks. Shared Rust setup is
 // per runner; both compiler feedback producers and their upload remain together.
 const GENERATED_PACKAGE_SLICES = ['first', 'second'];
@@ -1085,6 +1097,7 @@ const GENERATED_PACKAGE_SLICE_STEPS = {
     'Check the shared Rust array runtime artifacts',
     'Check the generated TypeScript erasure rules against JavaScript',
     'Check the generated typed program link rules against JavaScript',
+    ...NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS.map(([name]) => name),
     'Check the generated Rust source indirection rules against JavaScript',
     'Check shared scoped Rust lifetime fixtures',
     'Check generated Rust array admission rules',
@@ -1261,7 +1274,9 @@ function checkGeneratedPackageSlices(parsed) {
     assert.equal(condition(parsed.get(id)), '${{ !cancelled() }}');
   }
   const registered = GENERATED_PACKAGE_SLICES.flatMap(slice => GENERATED_PACKAGE_SLICE_STEPS[slice]);
-  assert.equal(registered.length, 126);
+  const repairNames = new Set(NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS.map(([name]) => name));
+  assert.equal(registered.filter(name => !repairNames.has(name)).length, 126);
+  assert.equal(registered.length, 126 + repairNames.size);
   assert.equal(new Set(registered).size, registered.length);
   for (const step of checks.steps) normalizeGeneratedPackageSlice(step);
   const setup = checks.steps.filter(step => step.name === GENERATED_PACKAGE_SHARED_SETUP);
@@ -2089,7 +2104,8 @@ function checkPackageStepConservation(parsed) {
     ...RUST_RAW_BINDING_IDENTIFIER_GENERATOR_STEPS, ...RUST_RAW_BINDING_IDENTIFIER_EXPERIMENT_STEPS,
     ...RUST_TEXT_CERTIFICATE_GENERATOR_STEPS, ...RUST_TEXT_CERTIFICATE_EXPERIMENT_STEPS,
     ...OWNED_SOURCE_ADAPTER_PACKAGE_STEPS, ...ORIGINAL_LINK_PROJECTION_PACKAGE_STEPS, ...ORIGINAL_LINK_SYMBOL_ORACLE_PACKAGE_STEPS,
-    ...COMPLETE_TABLE_PACKAGE_STEPS, ...BINARY_METADATA_PACKAGE_STEPS, ...RAW_SOURCE_PACKAGE_STEPS];
+    ...COMPLETE_TABLE_PACKAGE_STEPS, ...BINARY_METADATA_PACKAGE_STEPS, ...RAW_SOURCE_PACKAGE_STEPS,
+    ...NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS];
   const expected = new Map([
     ...ORIGINAL_PACKAGE_STEPS.map(([name, hash, owner]) => [name, { hash, owner }]),
     ...additions.map(([name, command, hash, owner]) => [name, { hash, owner, command, addition: true }]),
@@ -2172,7 +2188,9 @@ test('generated package slices preserve six logical groups and execute every che
     'Check complete generated owned Rust literal value edit fixtures',
     'Run generated owned Rust literal value edit experiment',
   ]);
-  assert.equal(GENERATED_PACKAGE_SLICE_STEPS.second.length, 123);
+  const repairNames = new Set(NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS.map(([name]) => name));
+  assert.equal(GENERATED_PACKAGE_SLICE_STEPS.second.filter(name => !repairNames.has(name)).length, 123);
+  assert.equal(GENERATED_PACKAGE_SLICE_STEPS.second.length, 123 + repairNames.size);
   const checks = parsed.get('package-checks').steps;
   for (const slice of GENERATED_PACKAGE_SLICES) {
     for (const name of GENERATED_PACKAGE_SLICE_STEPS[slice]) {
@@ -2409,7 +2427,8 @@ test('every frozen generator addition rejects omission, duplication, condition, 
     ...JAVASCRIPT_LINE_TERMINATOR_PACKAGE_STEPS, ...GENERATED_JAVASCRIPT_UNIT_PACKAGE_STEPS,
     ...OWNED_TUPLE_CALL_GENERATOR_PACKAGE_STEPS, ...RUST_LEXICAL_AND_OWNED_MODULE_GENERATOR_STEPS,
     ...RUST_RAW_STRING_AND_LITERAL_EDIT_GENERATOR_STEPS, ...RUST_TEXT_VALUE_PROJECTION_GENERATOR_STEPS,
-    ...RUST_RAW_BINDING_IDENTIFIER_GENERATOR_STEPS, ...RUST_TEXT_CERTIFICATE_GENERATOR_STEPS]) {
+    ...RUST_RAW_BINDING_IDENTIFIER_GENERATOR_STEPS, ...RUST_TEXT_CERTIFICATE_GENERATOR_STEPS,
+    ...NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS]) {
     mutate(name, (steps, index) => steps.splice(index, 1));
     mutate(name, (steps, index) => steps.push({ ...steps[index] }));
     for (const [before, after] of [

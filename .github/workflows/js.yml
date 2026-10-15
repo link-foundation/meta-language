@@ -614,6 +614,21 @@ jobs:
         if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-typed-program-link-rules.mjs --check
 
+      - name: Check shared self translation representation artifacts
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        working-directory: js
+        run: node scripts/generate-self-translation-representation.mjs --native --check
+
+      - name: Check generated Rust cast syntax rules
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        working-directory: js
+        run: node scripts/generate-rust-cast-syntax-rules.mjs --check
+
+      - name: Check original link schema source closure
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        working-directory: js
+        run: node ../experiments/original-link-complete-table-projection/generate-raw-schema-source-closure.mjs --check
+
       - name: Check the generated Rust source indirection rules against JavaScript
         if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-indirection-rules.mjs --check
