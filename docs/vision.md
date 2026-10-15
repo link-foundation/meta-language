@@ -2078,6 +2078,15 @@ actual source hash is a separate receipt checked before and after execution,
 outside the unchanged historical producer bindings. Tiny lifecycle and transport
 checks establish ordering and fidelity; full planner resource fit and native
 observations require CI execution within the existing limits.
+Archive creation likewise expires before reload: only complete encoded text,
+binary bytes and their exact record bound leave the original CST scope. Binary
+and text reload finish in succession without retaining their decoded networks.
+For the authenticated complete generated CSTs, the existing public binary codec
+receives the actual already-materialized link count as its explicit record
+limit; default codec limits and the byte cap remain unchanged. CI phase logs
+retain the selected record count and actual heap use. This configured source
+archive path does not claim that oversized graphs fit the default record
+profile or that tiny checks establish full-workload memory fit.
 
 - CI runs a fast `cargo check` of all targets and features first; the jobs that
   compile and test need it, so a compile error fails once.

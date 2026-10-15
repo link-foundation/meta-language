@@ -9,8 +9,9 @@ import test from 'node:test';
 import {readProjectData,writeProjectData,serializeProjectData} from '../../js/scripts/project-data.mjs';
 import {readStructuredDataLino} from '../../js/src/index.js';
 import {ORIGINAL_LINK_COMPLETE_TABLE_MODEL_COMMIT,verifyOriginalLinkCompleteTableNativeModel,originalLinkCompleteTableNativeMode,planOriginalLinkCompleteTableNative,runOriginalLinkCompleteTableNative,runOriginalLinkCompleteTablePlanningPhases} from './native-observations.mjs';
-import {reloadCanonicalArchive,readCanonicalArchiveTransportSource} from './archive-transport.mjs';
+import {reloadCanonicalArchive,readCanonicalArchiveTransportSource,createCompleteRustSourceArchives,replayCompleteRustSourceArchives} from './archive-transport.mjs';
 import {LinkNetwork} from '../../js/src/network.js';
+import {encodeLinkNetworkBinary,decodeLinkNetworkBinary,BinaryLinksError} from '../../js/src/link-network-binary.js';
 import {LinkMetadata, LinkType, LinkFlags, SourceSpan, ByteRange, Point} from '../../js/src/primitives.js';
 import {encodeLinkStatement} from '../../js/src/lino-serialization.js';
 const {Parser, StreamParser} = await import(pathToFileURL(createRequire(new URL('../../js/package.json', import.meta.url)).resolve('links-notation')).href);
@@ -27,6 +28,47 @@ function tinyCanonicalArchive(){
  for(let index=0;index<8;index++)network.insertLinkWithOptionalId(20+index,[term,20+(index+1)%8],LinkMetadata.new().withLinkType(LinkType.SourceToken).withNamed(index%2===0).withTerm('token '+index).withDefinition('Ω😀\n%').withLanguage('Rust').withSpan(new SourceSpan(new ByteRange(index,index+1),new Point(0,index),new Point(0,index+1))).withFlags(new LinkFlags({isError:true,hasError:true,isMissing:true,isExtra:true})));
  return network.toLino();
 }
+
+test('complete source archives retain only encoded state before full graph reloads',()=>{
+ const source='fn main(){let text="Ω😀";}\r\n',order=[];
+ const options={parseSource:original=>{assert.equal(original,source);return LinkNetwork.parse(original,'Rust');},
+  encodeBinary:(network,bounds)=>{assert.deepEqual(bounds,{recordLimit:network.len()});return encodeLinkNetworkBinary(network,bounds);},
+  decodeBinary:(bytes,bounds)=>{assert.equal(bounds.recordLimit,archives.recordLimit);return decodeLinkNetworkBinary(bytes,bounds);},
+  onPhase:phase=>order.push(phase)};
+ const archives=createCompleteRustSourceArchives(source,options);
+ assert.deepEqual(Object.keys(archives),['text','binary','recordLimit']);assert.equal(Object.isFrozen(archives),true);
+ assert.equal(typeof archives.text,'string');assert.ok(archives.binary instanceof Uint8Array);assert.ok(archives.recordLimit>1);
+ assert.deepEqual(order,['parse complete Rust source','encode complete binary archive','encode complete text archive']);
+ const replay=replayCompleteRustSourceArchives(archives,options);
+ assert.deepEqual(replay,{binaryReplay:source,textReplay:source});
+ assert.deepEqual(order,['parse complete Rust source','encode complete binary archive','encode complete text archive','reload complete binary archive','reload complete text archive','complete source replay finished']);
+});
+
+test('complete source archive profiles preserve every record without changing binary archive defaults',()=>{
+ const network=LinkNetwork.fromLino(tinyCanonicalArchive()),source=network.reconstructText();
+ const defaults=readProjectData(new URL('../../js/src/data/link-network-binary-schema.lino',import.meta.url));
+ assert.equal(defaults.recordLimit,100000);assert.equal(defaults.byteLimit,134217728);
+ assert.throws(()=>encodeLinkNetworkBinary(network,{recordLimit:1}),/record resource limit exceeded/u);
+ const archives=createCompleteRustSourceArchives(source,{parseSource:()=>network,encodeBinary:encodeLinkNetworkBinary});
+ const binary=decodeLinkNetworkBinary(archives.binary,{recordLimit:archives.recordLimit}),text=reloadCanonicalArchive(archives.text);
+ assert.equal(archives.recordLimit,network.len());assert.equal(binary.toLino(),network.toLino());assert.equal(text.toLino(),network.toLino());
+ assert.deepEqual(binary._terms,network._terms);assert.equal(binary._nextId,network._nextId);
+ assert.deepEqual(replayCompleteRustSourceArchives(archives,{decodeBinary:decodeLinkNetworkBinary}),{binaryReplay:source,textReplay:source});
+ assert.throws(()=>decodeLinkNetworkBinary(archives.binary,{recordLimit:1}),BinaryLinksError);
+});
+
+test('complete source archive failures retain byte limits and stop later replay phases',()=>{
+ const network=LinkNetwork.fromLino(tinyCanonicalArchive()),order=[],failure=new Error('source preparation failure');
+ assert.throws(()=>createCompleteRustSourceArchives('',{parseSource:()=>{throw failure;},encodeBinary:()=>assert.fail('no binary work'),onPhase:phase=>order.push(phase)}),error=>error===failure);
+ assert.deepEqual(order,['parse complete Rust source']);order.length=0;
+ assert.throws(()=>createCompleteRustSourceArchives('',{parseSource:()=>network,encodeBinary:(graph,bounds)=>encodeLinkNetworkBinary(graph,{...bounds,byteLimit:16}),onPhase:phase=>order.push(phase)}),/byte resource limit exceeded/u);
+ assert.deepEqual(order,['parse complete Rust source','encode complete binary archive']);order.length=0;
+ const archives=createCompleteRustSourceArchives('',{parseSource:()=>network,encodeBinary:encodeLinkNetworkBinary});
+ assert.throws(()=>replayCompleteRustSourceArchives({...archives,binary:archives.binary.slice(0,-1)},{decodeBinary:decodeLinkNetworkBinary,onPhase:phase=>order.push(phase)}),BinaryLinksError);
+ assert.deepEqual(order,['reload complete binary archive']);order.length=0;
+ assert.throws(()=>replayCompleteRustSourceArchives({...archives,text:archives.text+'(malformed'},{decodeBinary:decodeLinkNetworkBinary,onPhase:phase=>order.push(phase)}));
+ assert.deepEqual(order,['reload complete binary archive','reload complete text archive']);
+});
 
 test('canonical archive transport provenance contains the exact immutable source bytes and digest',()=>{
  const bytes=readFileSync(new URL('./archive-transport.mjs',import.meta.url)),receipt=readCanonicalArchiveTransportSource();

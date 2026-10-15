@@ -30,3 +30,27 @@ export function reloadCanonicalArchive(source, {createParser = () => new StreamP
   parser.end();
   return network;
 }
+
+/** Only encoded archives escape this scope; the original CST is not retained. */
+export function createCompleteRustSourceArchives(source, {parseSource, encodeBinary, onPhase = () => {}}) {
+  onPhase('parse complete Rust source');
+  const network = parseSource(source);
+  const recordLimit = Math.max(1, network.len());
+  onPhase('encode complete binary archive', recordLimit);
+  // This authenticated, already materialized graph selects an exact record
+  // bound through the codec's existing public option. Its byte cap is unchanged.
+  const binary = encodeBinary(network, {recordLimit});
+  onPhase('encode complete text archive', recordLimit);
+  const text = network.toLino();
+  return Object.freeze({text, binary, recordLimit});
+}
+
+/** Each reconstructed graph expires before the next complete replay begins. */
+export function replayCompleteRustSourceArchives(archives, {decodeBinary, onPhase = () => {}}) {
+  onPhase('reload complete binary archive', archives.recordLimit);
+  const binaryReplay = (() => decodeBinary(archives.binary, {recordLimit: archives.recordLimit}).reconstructText())();
+  onPhase('reload complete text archive', archives.recordLimit);
+  const textReplay = (() => reloadCanonicalArchive(archives.text).reconstructText())();
+  onPhase('complete source replay finished', archives.recordLimit);
+  return {binaryReplay, textReplay};
+}

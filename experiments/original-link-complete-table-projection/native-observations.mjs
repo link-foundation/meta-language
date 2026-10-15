@@ -17,7 +17,7 @@ import {emitRustTextValueProjection,encodeRustTextValueProjection} from '../rust
 import {projectOriginalLinkCompleteCertificateTables} from './rules.mjs';
 import {projectOriginalLinkCompleteTables,ORIGINAL_LINK_COMPLETE_TABLE_POLICY as policy} from './transport.mjs';
 import {originalLinkCompleteTablePolicy} from './policy.mjs';
-import {reloadCanonicalArchive,readCanonicalArchiveTransportSource} from './archive-transport.mjs';
+import {createCompleteRustSourceArchives,replayCompleteRustSourceArchives,readCanonicalArchiveTransportSource} from './archive-transport.mjs';
 
 export const ORIGINAL_LINK_COMPLETE_TABLE_MODEL_COMMIT='9a835e469572341e6a8e5c6e9fe6f40b8655dfbe';
 const digests={
@@ -167,7 +167,9 @@ function prepareOriginalLinkCompleteTableSources(){
   declarations:program.items.map((row,index)=>({kind:row.k,name:row.fullName,sha256:sha256(artifact.declarations[index])})),declarationSha256:sha256(JSON.stringify(artifact.declarations))});
 }
 function archiveCompleteTableRustSource(native){
- const cst=LinkNetwork.parse(native,'Rust'),textReplay=reloadCanonicalArchive(cst.toLino()).reconstructText(),binaryReplay=decodeLinkNetworkBinary(encodeLinkNetworkBinary(cst)).reconstructText();assert.deepEqual(textBytes(textReplay),textBytes(native));assert.deepEqual(textBytes(binaryReplay),textBytes(native));
+ const options={parseSource:source=>{const cst=LinkNetwork.parse(source,'Rust');return cst;},encodeBinary:encodeLinkNetworkBinary,decodeBinary:decodeLinkNetworkBinary,
+  onPhase:(phase,count)=>process.stdout.write(`Complete-table source archive: ${phase}; records=${count??'unknown'}; heap=${process.memoryUsage().heapUsed}\n`)};
+ const archives=createCompleteRustSourceArchives(native,options),{textReplay,binaryReplay}=replayCompleteRustSourceArchives(archives,options);assert.deepEqual(textBytes(textReplay),textBytes(native));assert.deepEqual(textBytes(binaryReplay),textBytes(native));
  return{replaySha256:sha256(binaryReplay),textReplaySha256:sha256(textReplay)};
 }
 /** CI planning authenticates full sources and actual JS; it never starts a process. */
