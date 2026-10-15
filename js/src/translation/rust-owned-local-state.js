@@ -6,6 +6,8 @@ import {checkRustSourceSignature} from './rust-source-signatures.js';
 import {checkOwnedProgramContainers} from './owned-program-containers.js';
 import {acceptProgramIntegralMetadata,acceptProgramOrderedPosition} from '../program-numeric-metadata-rules.js';
 import {acceptRustOwnedLocalValueType,acceptRustOwnedLocalExpression,acceptRustOwnedLocalBinaryOperation,acceptRustOwnedLocalContainer,acceptRustOwnedLocalRecordValue,acceptRustOwnedLocalSourceSpan} from './rust-owned-local-state-rules.js';
+import {acceptRustOwnedTupleCallModel} from './rust-owned-tuple-call-rules.js';
+import {RUST_OWNED_TUPLE_CALL_POLICY as callPolicy,ownedTupleCallPairPosition,ownedTupleCallParameters,checkOwnedTupleCallTarget} from './rust-owned-tuple-calls.js';
 export const RUST_OWNED_LOCAL_STATE_POLICY=readRuntimeProjectData(new URL('./data/rust-owned-local-state.lino',import.meta.url));
 const policy=RUST_OWNED_LOCAL_STATE_POLICY;
 const fail=reason=>{throw typeError('Rust owned local state proof: '+reason);};
@@ -63,6 +65,7 @@ function bodyRecords(body){
   if(node.k==='tupleIndex'){if(node.type.kind==='string'&&node.object.k==='var')reads.push({node,path,binding:node.object.name+'.'+node.index});return;}
   for(const key of['arg','left','right','cond','then','else'])if(node[key])visit(node[key],[...path,key]);
   for(const[index,item]of(node.items??[]).entries())visit(item,[...path,'items',index]);
+  for(const[index,arg]of(node.args??[]).entries())visit(arg,[...path,'args',index]);
  }
  visit(body,[]);return{bindings,reads,constructors};
 }
@@ -93,10 +96,12 @@ export function checkRustOwnedLocalStateProof(program){
   if(entry.k!=='fn'||!Array.isArray(entry.modulePath)||entry.modulePath.length||entry.recursive!==false||Object.hasOwn(entry,'generated')&&entry.generated!==false||Object.hasOwn(entry,'mutual')&&entry.mutual!==false||entry.decreasing!=null||Object.hasOwn(entry,'sourceLoop')||Object.hasOwn(entry,'sourcePrimitiveOwners')||policy.reservedOwners.includes(entry.name))fail('a function has an unsupported declaration or standard owner context');
   const proof=entry.sourceLocalState;exact(proof,policy.fields.proof);
   if(!sourceInterval(entry.span))fail('the function must retain its actual nonempty source-owner interval');
-  const copies=proof.model===policy.models.copies;if(!copies&&proof.model!==policy.models.moves||proof.language!=='Rust'||proof.sourceName!==entry.name||!same(proof.interpretation,policy.interpretation))fail('the owned model or explicit value observation boundary is inconsistent');
+  const copies=proof.model===policy.models.copies,calls=acceptRustOwnedTupleCallModel(proof.model),helper=calls&&ownedLocalPair(entry.ret);
+  const interpretation={...policy.interpretation,...(calls?{tupleInitialization:callPolicy.interpretation}:{})};
+  if(!copies&&!calls&&proof.model!==policy.models.moves||proof.language!=='Rust'||proof.sourceName!==entry.name||!same(proof.interpretation,interpretation))fail('the owned model or explicit value observation boundary is inconsistent');
   checkRustSourceSignature(entry.sourceSignature,entry.params.map(parameter=>parameter.type),entry.ret,'Rust');
   if(entry.params.some(parameter=>Object.keys(parameter).some(field=>!policy.parameterFields.includes(field))||Object.values(parameter).some(value=>value===undefined)))fail('a parameter has unrepresented own fields');
-  if(entry.ret.kind!=='string'||entry.sourceSignature.lifetimeBindings.length||[...entry.sourceSignature.parameters,entry.sourceSignature.result].some(position=>!ownedLocalPosition(position))||entry.params.some(parameter=>parameter.guard!=null||parameter.default!=null||Object.hasOwn(parameter,'optional')))fail('the actual standard interface and signed i32 domain must remain unchanged');
+  if(entry.ret.kind!=='string'&&!helper||entry.sourceSignature.lifetimeBindings.length||entry.sourceSignature.parameters.some(position=>!ownedLocalPosition(position))||!(helper?ownedTupleCallPairPosition(entry.sourceSignature.result)&&ownedTupleCallParameters(entry.params):ownedLocalPosition(entry.sourceSignature.result))||entry.params.some(parameter=>parameter.guard!=null||parameter.default!=null||Object.hasOwn(parameter,'optional')))fail('the actual standard interface and signed i32 domain must remain unchanged');
   if(!Array.isArray(proof.bindings)||!Array.isArray(proof.reads)||!Array.isArray(proof.initializers)||!Array.isArray(proof.literalConstructors))fail('state facts must retain their ordered roles');
   const records=bodyRecords(entry.body),bindings=new Map(),reads=new Map(),sourceNames=new Set(entry.params.map(parameter=>parameter.name));
   if(sourceNames.size!==entry.params.length||[...sourceNames].some(name=>policy.reservedOwners.includes(name)))fail('parameters must retain their distinct unshadowed source owners');
@@ -118,7 +123,8 @@ export function checkRustOwnedLocalStateProof(program){
    if(!record||!matchRustOwnedLocalOccurrencePath(record.path,records.reads[index].path)||record.binding!==read.binding||reads.has(key)||!sameType(read.type,record.node.type)||!same(read.span,record.node.span??null)||!policy.readModes.includes(read.mode)||!copies&&read.mode!=='move')fail('an owned move or copy disagrees with its actual occurrence and interpretation');
    reads.set(key,read);
   }
-  if(!copies&&(proof.initializers.length!==1||!proof.bindings.some(binding=>binding.role==='replacement')))fail('the original model requires one actual mutable tuple initialization and replacement');
+  if(!copies&&!helper&&(proof.initializers.length!==1||!proof.bindings.some(binding=>binding.role==='replacement')))fail('the original model requires one actual mutable tuple initialization and replacement');
+  if(helper&&(entry.body.k!=='tuple'||proof.initializers.length||proof.bindings.length))fail('a tuple helper must retain one direct ordered product result without local state or calls');
   if(copies&&proof.initializers.length)fail('canonical immutable output does not counterfeit original tuple state');
   if(records.constructors.length!==proof.literalConstructors.length)fail('each owned String literal needs its actual standard constructor site');
   for(const[index,constructor]of proof.literalConstructors.entries()){
@@ -127,8 +133,9 @@ export function checkRustOwnedLocalStateProof(program){
    if(!same(owner,policy.constructor)||!matchRustOwnedLocalOccurrencePath(record.path,path)||!same(record.node.span??null,span)||!sourceInterval(span)||!sourceInterval(callSpan)||callSpan.start>=span.start||callSpan.end<=span.end||callSpan.start<entry.span.start||callSpan.end>entry.span.end)fail('the standard constructor owner or its actual literal site changed');
   }
   for(const initializer of proof.initializers){
-   exact(initializer,policy.fields.initializer);const binding=bindings.get(JSON.stringify(initializer.path));
+   exact(initializer,calls?callPolicy.initializerFields:policy.fields.initializer);const binding=bindings.get(JSON.stringify(initializer.path));
    if(!binding||binding.name!==initializer.binding||binding.role!=='tuple initializer'||!Array.isArray(initializer.fields)||initializer.fields.length!==2||new Set(initializer.fields).size!==2)fail('the initializer must own its once-evaluated tuple and ordered field slots');
+   if(calls){const record=records.bindings.find(record=>matchRustOwnedLocalOccurrencePath(record.path,initializer.path));checkOwnedTupleCallTarget(program,entry,record.node.value,initializer,fail);}
   }
   let visits=0,mutable=null;
   const clone=scope=>new Map([...scope].map(([name,value])=>[name,{...value,fields:value.fields?.map(field=>({...field}))}]));
@@ -140,7 +147,8 @@ export function checkRustOwnedLocalStateProof(program){
   }
   function expression(node,path,scope,state=new Map(),expectedJoin=null){
    if(++visits>100000||path.length>256)fail('state proof exceeds its semantic traversal limit');
-   if(!node||!acceptRustOwnedLocalExpression(node.k)||Object.keys(node).some(field=>!policy.expressions[node.k].includes(field))||Object.values(node).some(value=>value===undefined)||(!ownedLocalType(node.type)&&!ownedLocalPair(node.type)))fail('an expression has an unsupported value shape or domain');
+   const fields=calls&&node?.k==='call'?callPolicy.callFields:policy.expressions[node?.k];
+   if(!node||!acceptRustOwnedLocalExpression(node.k)&&!(calls&&node.k==='call')||!fields||Object.keys(node).some(field=>!fields.includes(field))||Object.values(node).some(value=>value===undefined)||(!ownedLocalType(node.type)&&!ownedLocalPair(node.type)))fail('an expression has an unsupported value shape or domain');
    if(node.k==='lit'){
     if(node.type.kind==='string'&&typeof node.value!=='string'||node.type.kind==='bool'&&typeof node.value!=='boolean')fail('a primitive literal differs from its actual value domain');
     if(node.type.kind==='fixed'&&(typeof node.value!=='string'||!/^[-]?\d+$/u.test(node.value)||BigInt(node.value)<-2147483648n||BigInt(node.value)>2147483647n))fail('an integer literal exceeds its actual signed i32 domain');
@@ -159,6 +167,11 @@ export function checkRustOwnedLocalStateProof(program){
     if(node.type.kind==='string')readValue(node,path,scope);return;
    }
    if(node.k==='tuple'){if(!ownedLocalPair(node.type)||node.items.length!==2)fail('an initializer has the wrong owned tuple layout');node.items.forEach((item,index)=>expression(item,[...path,'items',index],scope,state));return;}
+   if(calls&&node.k==='call'){
+    const fact=proof.initializers.find(initializer=>matchRustOwnedLocalOccurrencePath([...initializer.path,'value'],path));
+    checkOwnedTupleCallTarget(program,entry,node,fact,fail);
+    node.args.forEach((arg,index)=>expression(arg,[...path,'args',index],scope,state));return;
+   }
    if(node.k==='binary'){
     if(!acceptRustOwnedLocalBinaryOperation(node.op)||node.type.kind!=='bool'||node.left.type.kind==='string'||!sameType(node.left.type,node.right.type)||node.domain&&(!ownedLocalType(node.domain)||!sameType(node.domain,node.left.type)))fail('only exact equality in the actual Boolean/i32 domain is admitted');
     expression(node.left,[...path,'left'],scope,state);expression(node.right,[...path,'right'],scope,state);return;
