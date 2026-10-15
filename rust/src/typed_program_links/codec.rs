@@ -16,6 +16,8 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 #[path = "codec_encoding.rs"]
 mod encoding;
+#[path = "codec_owned_local_state.rs"]
+mod owned_local_state;
 #[path = "codec_scopes.rs"]
 mod scopes;
 pub(super) fn encode(program: &Program, provenance: Option<&Value>) -> Result<TypedProgramLinks> {
@@ -502,6 +504,12 @@ pub(super) fn decode_with_binding_identities(
         }
         declarations.insert(name, *entry);
     }
+    owned_local_state::validate_order(
+        network,
+        &decoder.fields,
+        &declarations.values().copied().collect::<Vec<_>>(),
+        body,
+    )?;
     let mut traversal = scopes::Traversal::new(limits.node_limit);
     let ownership = decoder.ownership(&declarations, &mut traversal.remaining)?;
     decoder.validate_references(&ownership)?;
@@ -563,8 +571,11 @@ pub(super) fn decode_with_binding_identities(
         .map_err(|failure| error(failure.to_string()))?;
     crate::translation::source_empty_options::validate_empty_option_records(&value)
         .map_err(|failure| error(failure.to_string()))?;
+    crate::translation::owned_local_state::validate_owned_local_state_records(&value)
+        .map_err(|failure| error(failure.to_string()))?;
     crate::translation::source_type_namespaces::validate_type_namespace_records(&value)
         .map_err(|failure| error(failure.to_string()))?;
+    owned_local_state::prepare_decoded_order(&mut value)?;
     let program: Program = serde_json::from_value(value.clone()).map_err(|failure| {
         error(format!(
             "the Rust typed links adapter cannot decode this construct: {failure}"

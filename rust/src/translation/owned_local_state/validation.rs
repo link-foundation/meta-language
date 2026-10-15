@@ -3,14 +3,14 @@ use super::expression::{Scope, Slot, Validator};
 use super::records::{Records, key};
 use super::{
     Result, Value, allowed, array, contains, exact, fail, interval, owned_local_position,
-    pair_type, policy, value_type,
+    pair_type, policy, same_order, value_type,
 };
 use crate::translation::source_signatures::{SourceSignature, validate_source_signature};
 use crate::translation::types::Type;
 use serde_json::json;
 use std::collections::{BTreeMap, BTreeSet};
 
-pub(super) fn validate(program: &Value) -> Result<()> {
+pub(super) fn validate(program: &Value, ordered: bool) -> Result<()> {
     let Some(entries) = program["declarations"].as_array() else {
         return Ok(());
     };
@@ -20,6 +20,7 @@ pub(super) fn validate(program: &Value) -> Result<()> {
     {
         return Ok(());
     }
+    super::shapes::validate(program)?;
     let context_error = "the profile requires a complete flat value program without imports, effects or other runtime interpretations";
     if program["sourceLanguage"] != "Rust"
         || array(&program["items"], context_error)?
@@ -49,12 +50,12 @@ pub(super) fn validate(program: &Value) -> Result<()> {
         return Err(fail(context_error));
     }
     for entry in entries {
-        validate_entry(entry)?;
+        validate_entry(entry, ordered)?;
     }
     Ok(())
 }
 
-fn validate_entry(entry: &Value) -> Result<()> {
+fn validate_entry(entry: &Value, ordered: bool) -> Result<()> {
     let policy = policy();
     if !allowed(entry, &policy["declarationFields"]) {
         return Err(fail("a function has unrepresented own fields"));
@@ -83,7 +84,7 @@ fn validate_entry(entry: &Value) -> Result<()> {
     if (!copies && proof["model"] != policy["models"]["moves"])
         || proof["language"] != "Rust"
         || proof["sourceName"] != entry["name"]
-        || proof["interpretation"] != policy["interpretation"]
+        || !same_order(&proof["interpretation"], &policy["interpretation"], ordered)
     {
         return Err(fail(
             "the owned model or explicit value observation boundary is inconsistent",
@@ -222,7 +223,7 @@ fn validate_entry(entry: &Value) -> Result<()> {
             || read["binding"] != record.binding
             || reads.contains_key(&path_key)
             || read["type"] != record.node["type"]
-            || read["span"] != record.node["span"]
+            || !same_order(&read["span"], &record.node["span"], ordered)
             || !contains(&policy["readModes"], &read["mode"])
             || !copies && read["mode"] != "move"
         {
@@ -252,15 +253,20 @@ fn validate_entry(entry: &Value) -> Result<()> {
     }
     for (constructor, record) in constructors.iter().zip(&records.constructors) {
         exact(constructor, &policy["fields"]["constructor"])?;
-        let mut owner = constructor.clone();
-        for field in ["span", "callSpan", "path"] {
-            owner.as_object_mut().unwrap().remove(field);
-        }
+        let owner = Value::Object(
+            constructor
+                .as_object()
+                .unwrap()
+                .iter()
+                .filter(|(field, _)| !["span", "callSpan", "path"].contains(&field.as_str()))
+                .map(|(field, value)| (field.clone(), value.clone()))
+                .collect(),
+        );
         let span = interval(&constructor["span"])?;
         let call_span = interval(&constructor["callSpan"])?;
-        if owner != policy["constructor"]
+        if !same_order(&owner, &policy["constructor"], ordered)
             || constructor["path"] != json!(record.path)
-            || record.node["span"] != constructor["span"]
+            || !same_order(&record.node["span"], &constructor["span"], ordered)
             || call_span.0 >= span.0
             || call_span.1 <= span.1
             || call_span.0 < function_span.0

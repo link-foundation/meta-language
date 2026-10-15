@@ -1,7 +1,9 @@
 //! Bind actual checked records to the shared owned local text decisions.
 use super::diagnostics::{Result, type_error};
 use super::ir::{Expr, Program};
-use super::rust::owned_local_state_rules::accept_rust_owned_local_value_type;
+use super::rust::owned_local_state_rules::{
+    accept_rust_owned_local_container, accept_rust_owned_local_value_type,
+};
 use super::source_signatures::SourceTypeSignature;
 use super::types::Type;
 use serde_json::{Value, json};
@@ -9,6 +11,7 @@ use std::sync::LazyLock;
 
 mod expression;
 mod records;
+mod shapes;
 mod validation;
 
 /// The same inspectable policy consumed by the JavaScript host.
@@ -26,6 +29,9 @@ fn fail(detail: &str) -> super::diagnostics::TranslationError {
 }
 
 fn array<'a>(value: &'a Value, detail: &str) -> Result<&'a [Value]> {
+    if !accept_rust_owned_local_container("array", value.is_array(), false) {
+        return Err(fail(detail));
+    }
     value
         .as_array()
         .map(Vec::as_slice)
@@ -39,7 +45,7 @@ fn contains(values: &Value, value: &Value) -> bool {
 }
 
 fn exact(value: &Value, fields: &Value) -> Result<()> {
-    if value.as_object().is_none_or(|record| {
+    let unrepresented = value.as_object().is_none_or(|record| {
         fields.as_array().is_none_or(|fields| {
             record.len() != fields.len()
                 || fields.iter().any(|field| {
@@ -48,18 +54,45 @@ fn exact(value: &Value, fields: &Value) -> Result<()> {
                         .is_none_or(|field| !record.contains_key(field))
                 })
         })
-    }) {
+    });
+    if !accept_rust_owned_local_container("record", true, unrepresented) {
         return Err(fail("unrecognized or missing owned fields"));
     }
     Ok(())
 }
 
 fn allowed(value: &Value, fields: &Value) -> bool {
-    value.as_object().is_some_and(|record| {
+    let represented = value.as_object().is_some_and(|record| {
         record
             .keys()
             .all(|field| contains(fields, &Value::String(field.clone())))
-    })
+    });
+    accept_rust_owned_local_container("record", true, !represented)
+}
+
+fn same_order(left: &Value, right: &Value, ordered: bool) -> bool {
+    if !ordered {
+        return left == right;
+    }
+    match (left, right) {
+        (Value::Object(left), Value::Object(right)) => {
+            left.len() == right.len()
+                && left
+                    .iter()
+                    .zip(right)
+                    .all(|((name, value), (other, next))| {
+                        name == other && same_order(value, next, true)
+                    })
+        }
+        (Value::Array(left), Value::Array(right)) => {
+            left.len() == right.len()
+                && left
+                    .iter()
+                    .zip(right)
+                    .all(|(value, next)| same_order(value, next, true))
+        }
+        _ => left == right,
+    }
 }
 
 fn interval(value: &Value) -> Result<(u64, u64)> {
@@ -138,12 +171,12 @@ pub fn prepare_owned_local_state_proof(proof: &Value, body: &Expr) -> Result<Val
 
 /// Validate raw selected records before serde can erase unknown or null fields.
 pub fn validate_owned_local_state_records(value: &Value) -> Result<()> {
-    validation::validate(value)
+    validation::validate(value, false)
 }
 
 /// Recheck actual checked IR before source-free emission.
 pub fn validate_owned_local_state(program: &Program) -> Result<()> {
     let value = serde_json::to_value(program)
         .map_err(|_| fail("a checked program cannot be represented"))?;
-    validate_owned_local_state_records(&value)
+    validation::validate(&value, true)
 }
