@@ -400,6 +400,10 @@ fn strict_actual_link_identity_refuses_cloned_targets_tokens_and_assumption_oper
     }
 }
 #[test]
+#[expect(
+    clippy::unreadable_literal,
+    reason = "The JavaScript lexer test reads this complete file and requires this exact suffixed literal."
+)]
 fn malformed_runtime_models_namespace_spans_and_unknown_raw_fields_refuse_before_serde() {
     for (role, name, value) in [
         ("proof", "model", json!("unknown")),
@@ -409,7 +413,7 @@ fn malformed_runtime_models_namespace_spans_and_unknown_raw_fields_refuse_before
         ("worker", "unknown", json!(false)),
         ("main", "sourceRuntimeWorker", Value::Null),
         ("span", "start", json!(-0.0)),
-        ("span", "end", json!(9_007_199_254_740_992_u64)),
+        ("span", "end", json!(9007199254740992_u64)),
     ] {
         let mut packet = example();
         let body = packet.network.link(packet.root).unwrap().references()[0];
