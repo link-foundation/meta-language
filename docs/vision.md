@@ -2157,6 +2157,10 @@ gaps against the target above:
   Carrying
   the entire native unsigned 64-bit domain needs a broader exact representation
   and a separately versioned binary profile; that support is not established.
+  Actual native endpoint capture also needs checked identifier exhaustion: the
+  current native text importer and allocator still increment identifiers without
+  a checked transition at `u64::MAX`. Synthetic word-vector checks establish
+  neither an actual maximum-identifier graph import nor allocator safety.
 
 Self-translation preserves carriage-return sources through a serialized source
 envelope guarded by the original byte length and digest and the complete emitted
