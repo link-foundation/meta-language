@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {DecoratorSet} from '../src/decorators.js';
 import {formatProductRuleSource} from './product-rule-style-corrections.mjs';
@@ -17,7 +18,7 @@ if(!process.argv.includes('--javascript-only')){
  const {emitRust}=await import('../src/translation/emit-rust.js');
  const raw=emitRust(checkProgram(parseJavaScript(source))).definitions.join('\n\n');
  const style=new URL('../../parity/self-translation/rust-runtime-shell-rules-decorators.lino',import.meta.url);
- if(process.argv.includes('--update-styles')){
+ {
   const actions=[];let current=raw;const replace=(from,to)=>{if(current.includes(from)){actions.push({op:'replace',field:'source',from,to});current=current.split(from).join(to);}};
   for(const parameter of ['model','name'])replace(parameter+': String',parameter+': &str');
   for(const match of raw.matchAll(/^pub fn (\w+)\(/gmu))replace('pub fn '+match[1]+'(','/// Read the shared closed runtime-shell admission.\n#[must_use]\npub fn '+match[1]+'(');
@@ -27,11 +28,12 @@ if(!process.argv.includes('--javascript-only')){
    expression=expression.replace(/\(([0-9]+f64)\)/gu,'$1').replace(/\((\w+\s*(?:==|!=|>=|<=)\s*(?:"[^"]*"|[0-9]+f64))\)/gu,'$1');
    expression=expression.replace(/\((!?\w+\.is_empty\(\))\)/gu,'$1');
    expression=expression.replace('value >= '+policy.semantics.thread.stackShiftMinimum+'f64 && value <= '+policy.semantics.thread.stackShiftMaximum+'f64','('+policy.semantics.thread.stackShiftMinimum+'f64..='+policy.semantics.thread.stackShiftMaximum+'f64).contains(&value)');
-   if(block.startsWith('pub fn accept_rust_runtime_shell_reserved_name('))expression='!matches!(name, '+policy.reservedNames.map(name=>JSON.stringify(name)).join(' | ')+')';
+   if(block.startsWith('pub fn accept_rust_runtime_shell_reserved_name(')){const actual=[...block.matchAll(/name == ("[^"\\]*")/gu)].map(match=>JSON.parse(match[1]));assert.deepEqual(actual,policy.reservedNames,'translated runtime name alternatives');expression='!matches!(name, '+actual.map(name=>JSON.stringify(name)).join(' | ')+')';}
    if(block.startsWith('pub fn accept_rust_runtime_shell_stack_shift('))expression='('+policy.semantics.thread.stackShiftMinimum+'f64..='+policy.semantics.thread.stackShiftMaximum+'f64).contains(&value) && value % 1f64 == 0f64';
    replace(block,block.slice(0,open+1)+'\n    '+stripRustSourceHeaderStyleParentheses(expression)+'\n}');
   }
-  writeFileSync(style,new DecoratorSet([{id:'rust-runtime-shell-library-style',level:'emitter',order:0,when:[['format','Rust']],actions}]).toLino());
+  const expectedStyle=new DecoratorSet([{id:'rust-runtime-shell-library-style',level:'emitter',order:0,when:[['format','Rust']],actions}]).toLino();
+  if(process.argv.includes('--update-styles'))writeFileSync(style,expectedStyle);else if(readFileSync(style,'utf8')!==expectedStyle)throw Error('closed runtime-shell style targets differ from the current checked translation; refresh with --update-styles');
  }
  const generated='// Generated through the checked JavaScript translator. Do not edit.\n'+formatProductRuleSource(DecoratorSet.fromLino(readFileSync(style,'utf8')).decorate('emitter',{format:'Rust',source:raw}).source);
  const native=new URL('../../rust/src/translation/runtime_shell_rules.rs',import.meta.url),copy=new URL('../../rust/src/data/rust-runtime-shell.lino',import.meta.url),original=new URL('../src/translation/data/rust-runtime-shell.lino',import.meta.url);
