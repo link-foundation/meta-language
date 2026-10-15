@@ -693,6 +693,11 @@ jobs:
         working-directory: js
         run: node scripts/generate-rust-source-whitespace-rules.mjs --check
 
+      - name: Check generated Rust raw string literal rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/generate-rust-raw-string-rules.mjs --check
+
       - name: Check shared TypeScript documentation pattern fixtures
         if: ${{ !cancelled() && matrix.group == 'generated' }}
         run: node js/scripts/generate-typescript-documentation-fixtures.mjs --check
@@ -817,6 +822,24 @@ jobs:
           TRANSLATION_CHECK_RUST: '0'
           SELF_TRANSLATION_CHECK_RUST: '0'
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/generated-owned-rust/model.test.mjs
+
+      - name: Check generated owned Rust literal value edit experiment rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../experiments/generated-owned-rust/generate-value-edit-rules.mjs --check
+
+      - name: Check complete generated owned Rust literal value edit fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../experiments/generated-owned-rust/generate-value-edit-fixtures.mjs --check
+
+      - name: Run generated owned Rust literal value edit experiment
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        env:
+          TRANSLATION_CHECK_RUST: '0'
+          SELF_TRANSLATION_CHECK_RUST: '0'
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/generated-owned-rust/value-edits.test.mjs
 
       - name: Check generated whole Rust runtime shell rules
         if: ${{ !cancelled() && matrix.group == 'generated' }}
