@@ -15,6 +15,7 @@ import { fixedBounds, sameType } from './translation/types.js';
 import { checkLinkedMatchCoverage } from './translation/check.js';
 import { acceptLinkedTextConversionKind, readNumberDisplayRefusal, readTuplePosition } from './translation/primitive-value-rules.js';
 import { readLinkedPatternBindingScope } from './typed-program-pattern-bindings.js';
+import {checkProgramDeclarationOwners} from './typed-program-declaration-owners.js';
 import { acceptProgramDivisionRounding, acceptProgramExpressionField, acceptProgramExpressionOperation, acceptProgramOptionalAbsence, acceptProgramTupleProductModel, readProgramReferenceRole } from './typed-program-link-rules.js';
 
 const primitives = new Set(['nat', 'int', 'bool', 'string', 'unit', 'float', 'output']);
@@ -89,27 +90,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     else if (value.kind === 'function') { value.params.forEach(type); type(value.ret); }
     else throw new TypeError(`the linked program contains unsupported type ${value.kind}`);
   }
-  const declarations = new Map(program.declarations);
-  const orderedDeclarations = new Set();
-  const containsOwnedLoop = item => item?.k === 'module' ? item.items?.some(containsOwnedLoop) : item?.sourceLoop !== undefined;
-  function orderedItems(items, path = []) {
-    if (!Array.isArray(items)) throw new TypeError('a linked module has no ordered items');
-    for (const item of items) {
-      visit();
-      if (!item || typeof item.name !== 'string' || item.fullName !== [...path, item.name].join('.')) throw new TypeError('the linked ordered item has inconsistent qualified spelling');
-      if (item.k === 'module') {
-        if (containsOwnedLoop(item) && Object.keys(item).some(field => !['k', 'name', 'fullName', 'items', 'span'].includes(field))) throw new TypeError('an owned scalar loop module has an unrecognized namespace field');
-        orderedItems(item.items, [...path, item.name]);
-      }
-      else {
-        if (declarations.get(item.fullName) !== item || orderedDeclarations.has(item)) throw new TypeError('the linked ordered items contain a duplicate or unowned declaration');
-        if (!Array.isArray(item.modulePath) || item.modulePath.length !== path.length || item.modulePath.some((name, index) => name !== path[index])) throw new TypeError('the linked declaration has inconsistent module ownership');
-        orderedDeclarations.add(item);
-      }
-    }
-  }
-  orderedItems(program.items);
-  if (orderedDeclarations.size !== declarations.size) throw new TypeError('the linked declaration mapping and ordered items disagree');
+  const declarations=checkProgramDeclarationOwners(program,visit);
   const constructorOwners = new WeakMap();
   const binderOwners = new WeakMap();
   const patternOwners = new WeakMap();
@@ -120,7 +101,6 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
   }
   for (const external of program.externals ?? []) declarations.set(external.name, external);
   for (const [name, entry] of program.declarations) {
-    if (!entry || entry.fullName !== name || typeof entry.name !== 'string' || !Array.isArray(entry.modulePath)) throw new TypeError('the linked declaration mapping is inconsistent');
     if (entry.k === 'fn') { entry.params.forEach((parameter, index) => { ownBinder(parameter, entry, index); type(parameter.type); }); type(entry.ret); if (entry.sourceSignature !== undefined) checkRustSourceSignature(entry.sourceSignature, entry.params.map(parameter => parameter.type), entry.ret, program.sourceLanguage); if (entry.sourceLoop !== undefined) checkRustScalarLoopProof(entry, program.sourceLanguage); }
     if (entry.k === 'const') type(entry.type);
     if (entry.k === 'data') {
