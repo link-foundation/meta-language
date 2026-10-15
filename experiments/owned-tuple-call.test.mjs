@@ -91,6 +91,31 @@ test('direct selected checking and emission validate the actual conditional and 
  assert.throws(()=>encodeTypedProgramLinks(local),/type|result/u);
 });
 
+test('helper signature domains preserve actual numeric widths through direct checks and source-free archives',()=>{
+ const archive=reload(parse(fixture.cases[0]));
+ for(const value of['32',true,false,null,33]){
+  const program=decodeTypedProgramLinks(archive.network,archive.root);
+  program.declarations.get('seed').sourceSignature.result.type.elements[1].bits=value;
+  for(const run of[checkRustOwnedLocalStateProof,emitJavaScript,encodeTypedProgramLinks])assert.throws(()=>run(program),/source|interface|domain|primitive/u);
+ }
+ const mutate=(kind,definition)=>{
+  const network=LinkNetwork.fromLino(archive.network.toLino()),rows=network.fieldRelations();
+  const field=(parent,name)=>rows.find(row=>row.parent.equals(parent)&&row.label===(TYPED_PROGRAM_LINKS_SCHEMA.fields[name]??name)).child;
+  const helper=rows.find(row=>row.label===(TYPED_PROGRAM_LINKS_SCHEMA.fields.name??'name')&&network.link(row.child).metadata().definition==='seed').parent;
+  const signature=field(helper,'sourceSignature'),result=field(signature,'result'),type=field(result,'type'),elements=field(type,'elements'),integer=network.link(elements).references()[1];
+  const width=rows.find(row=>row.parent.equals(integer)&&row.label===(TYPED_PROGRAM_LINKS_SCHEMA.fields.bits??'bits'));
+  const replacement=network.insertLink([],network.link(width.child).metadata().withTerm(TYPED_PROGRAM_LINKS_SCHEMA.scalars[kind]).withDefinition(definition));
+  width.link.setReferences([width.parent,width.link.references()[1],replacement]);
+  return LinkNetwork.fromLino(network.toLino());
+ };
+ for(const[kind,definition]of[['string','32'],['boolean','true'],['boolean','false'],['null',undefined]])assert.throws(()=>decodeTypedProgramLinks(mutate(kind,definition),archive.root),/source|interface|domain|primitive/u);
+ for(const spelling of['32','32.0','3.2e1']){
+  const restored=decodeTypedProgramLinks(mutate('number',spelling),archive.root);
+  assert.equal(restored.declarations.get('seed').sourceSignature.result.type.elements[1].bits,32);
+  execute(restored,fixture.cases[0].observations);
+ }
+});
+
 test('new shared rule decisions themselves replay from checked Links without a native implementation',()=>{
  const source=rustOwnedTupleCallRules();assert.equal(readFileSync(new URL('../js/src/translation/rust-owned-tuple-call-rules.js',import.meta.url),'utf8'),source);
  const archive=reload(checkProgram(parseJavaScript(source))),program=decodeTypedProgramLinks(archive.network,archive.root),emission=emitJavaScript(program),context={};
