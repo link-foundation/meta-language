@@ -768,7 +768,8 @@ test('the complete Rust text source oracle is mandatory after JavaScript and its
   assert.ok(classifier);
   const addition = '|experiments/rust-text-value-projection/';
   assert.equal(classifier.split(addition).length, 2);
-  assert.equal(classifier.replace(addition, ''),
+  assert.equal(classifier.replace(addition, '').replace('|experiments/rust-raw-binding-identifiers/', '')
+    .replace('|experiments/source-native-observations\\.mjs$', ''),
     '^(rust/|parity/|docs/|scripts/|\\.github/workflows/(ci|rust)\\.yml$|\\.secretlintrc\\.json$)',
     'the native source selection preserves every existing Rust workflow trigger');
   const matches = new RegExp(classifier, 'u');
@@ -831,6 +832,73 @@ test('the complete Rust text source receipt rejects artifact omission and retent
       assert.ok(steps[index].text.includes(before));
       steps[index].text = steps[index].text.replace(before, after);
     });
+  }
+});
+
+const RUST_RAW_BINDING_NATIVE_STEPS = [
+  ['Run complete Rust raw binding source observations', '7e88baee564180b46d5605767bc25d484fdc51b056d030deeb48e8f7ebd5f62a'],
+  ['Retain complete Rust raw binding source observations', '6676c44963694145d41e72076e2919d3c4c59089e8cf2c42d5f5f29d3bce6ff8'],
+];
+
+function checkRustRawBindingNativeSteps(parsed) {
+  for (const [name, hash] of RUST_RAW_BINDING_NATIVE_STEPS) {
+    const steps = parsed.get('test').steps.filter(step => step.name === name);
+    assert.equal(steps.length, 1, `the raw-binding source observation step must execute once: ${name}`);
+    assert.equal(packageStepSignature(steps[0], true), hash, `raw-binding native step changed: ${name}`);
+  }
+}
+
+test('Rust raw-binding source observations retain mandatory compilation, receipt upload and source triggers', () => {
+  checkRustRawBindingNativeSteps(jobs('rust.yml'));
+  const classifier = /rust_paths='([^']+)'/u.exec(workflow('ci.yml'))?.[1];
+  for (const addition of ['|experiments/rust-raw-binding-identifiers/', '|experiments/source-native-observations\\.mjs$']) {
+    assert.equal(classifier.split(addition).length, 2, 'each native source oracle path is selected exactly once');
+  }
+  const matches = new RegExp(classifier, 'u');
+  for (const file of ['model.mjs', 'syntax.mjs', 'data/fixtures.lino', 'native-observations.mjs', 'native-observations.test.mjs']) {
+    assert.ok(matches.test(`experiments/rust-raw-binding-identifiers/${file}`), file);
+  }
+  assert.ok(matches.test('experiments/source-native-observations.mjs'));
+  assert.ok(!matches.test('experiments/source-native-observations.mjs.extra'));
+});
+
+test('Rust raw-binding native observation gates refuse omissions, duplication and compiler or artifact weakening', () => {
+  for (const [name] of RUST_RAW_BINDING_NATIVE_STEPS) {
+    const mutate = change => {
+      const parsed = jobs('rust.yml');
+      const steps = parsed.get('test').steps;
+      const index = steps.findIndex(step => step.name === name);
+      assert.ok(index >= 0);
+      change(steps, index);
+      assert.throws(() => checkRustRawBindingNativeSteps(parsed), assert.AssertionError);
+    };
+    mutate((steps, index) => steps.splice(index, 1));
+    mutate((steps, index) => steps.push({ ...steps[index] }));
+    const edits = [
+      ['!cancelled()', 'success()'],
+      ["matrix.suite == 'translation'", "matrix.suite == 'remaining'"],
+      ["matrix.os == 'ubuntu-latest'", "matrix.os == 'windows-latest'"],
+      ...(name.startsWith('Run ') ? [
+        ["CI: 'true'", "CI: 'false'"],
+        ["RUST_RAW_BINDING_IDENTIFIER_NATIVE: '1'", "RUST_RAW_BINDING_IDENTIFIER_NATIVE: '0'"],
+        ['--event test --', '--event build --'],
+        ['node --test experiments/', 'node --test --test-name-pattern optional experiments/'],
+        ['working-directory: ${{ github.workspace }}', 'working-directory: rust'],
+        ['working-directory: ${{ github.workspace }}', 'continue-on-error: true\n        working-directory: ${{ github.workspace }}'],
+      ] : [
+        ['uses: actions/upload-artifact@v7', 'uses: actions/upload-artifact@v6'],
+        ['${{ github.sha }}', '${{ github.ref }}'],
+        ['native-observations.lino', 'native-observations.json'],
+        ['if-no-files-found: error', 'if-no-files-found: ignore'],
+        ['retention-days: 7', 'retention-days: 0'],
+      ]),
+    ];
+    for (const [before, after] of edits) {
+      mutate((steps, index) => {
+        assert.ok(steps[index].text.includes(before));
+        steps[index].text = steps[index].text.replace(before, after);
+      });
+    }
   }
 });
 
