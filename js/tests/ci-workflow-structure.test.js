@@ -628,6 +628,36 @@ const GENERATED_JAVASCRIPT_UNIT_EXPERIMENT_STEPS = [
   ]
 ];
 
+const OWNED_TUPLE_CALL_GENERATOR_PACKAGE_STEPS = [
+  [
+    'Check generated owned tuple initialization call rules',
+    'node ../experiments/generate-rust-owned-tuple-call-rules.mjs --check',
+    '63bb53648d2af06ed6689d216974f983f82840e6271ead38f77e83f96f421f93',
+    'generated'
+  ],
+  [
+    'Check owned tuple initialization call fixtures',
+    'node ../experiments/generate-owned-tuple-call-fixture.mjs --check',
+    '1d9a99322c68b6fe094fd6f7708db4752aaaa9b90cf8786a132ece9c146d319e',
+    'generated'
+  ],
+  [
+    'Check actual public owned tuple call native archives',
+    'node ../experiments/generate-owned-tuple-call-native-fixture.mjs --check',
+    '3971b503fcfa263040fdf68901bc19fd895075c9bf68bf4358778aeda1339410',
+    'generated'
+  ]
+];
+
+const OWNED_TUPLE_CALL_EXPERIMENT_PACKAGE_STEPS = [
+  [
+    'Run owned tuple initialization call checks',
+    'node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/owned-tuple-call.test.mjs',
+    '2ed9f5b7851a920edd29e9816a42a757baedc840e1739b59a4b60e1f86b19e19',
+    'generated'
+  ]
+];
+
 function packageStepSignature(step, includeGroup = false) {
   const fields = includeGroup ? step.text : step.text.replace(/ && matrix\.group == '[a-z-]+'/gu, '');
   const text = fields
@@ -642,7 +672,8 @@ function checkPackageStepConservation(parsed) {
     ...OWNED_TEXT_EXPERIMENT_PACKAGE_STEPS, ...INTEGRAL_METADATA_PACKAGE_STEPS, ...INTEGRAL_METADATA_EXPERIMENT_PACKAGE_STEPS,
     ...CONST_AND_BYTE_GENERATOR_PACKAGE_STEPS, ...CONST_AND_BYTE_EXPERIMENT_PACKAGE_STEPS, ...RUNTIME_SHELL_PACKAGE_STEPS, ...RUST_NUMBER_PACKAGE_STEPS,
     ...JAVASCRIPT_LINE_TERMINATOR_PACKAGE_STEPS, ...GENERATED_JAVASCRIPT_UNIT_PACKAGE_STEPS,
-    ...GENERATED_JAVASCRIPT_UNIT_EXPERIMENT_STEPS];
+    ...GENERATED_JAVASCRIPT_UNIT_EXPERIMENT_STEPS,
+    ...OWNED_TUPLE_CALL_GENERATOR_PACKAGE_STEPS, ...OWNED_TUPLE_CALL_EXPERIMENT_PACKAGE_STEPS];
   const expected = new Map([
     ...ORIGINAL_PACKAGE_STEPS.map(([name, hash, owner]) => [name, { hash, owner }]),
     ...additions.map(([name, command, hash, owner]) => [name, { hash, owner, command, addition: true }]),
@@ -771,7 +802,8 @@ test('every frozen generator addition rejects omission, duplication, condition, 
   };
   for (const [name] of [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS, ...TYPE_NAMESPACE_PACKAGE_STEPS,
     ...PURE_UNIT_PACKAGE_STEPS, ...SOURCE_SPAN_PACKAGE_STEPS, ...OWNED_TEXT_GENERATOR_PACKAGE_STEPS, ...INTEGRAL_METADATA_PACKAGE_STEPS, ...CONST_AND_BYTE_GENERATOR_PACKAGE_STEPS, ...RUNTIME_SHELL_PACKAGE_STEPS, ...RUST_NUMBER_PACKAGE_STEPS,
-    ...JAVASCRIPT_LINE_TERMINATOR_PACKAGE_STEPS, ...GENERATED_JAVASCRIPT_UNIT_PACKAGE_STEPS]) {
+    ...JAVASCRIPT_LINE_TERMINATOR_PACKAGE_STEPS, ...GENERATED_JAVASCRIPT_UNIT_PACKAGE_STEPS,
+    ...OWNED_TUPLE_CALL_GENERATOR_PACKAGE_STEPS]) {
     mutate(name, (steps, index) => steps.splice(index, 1));
     mutate(name, (steps, index) => steps.push({ ...steps[index] }));
     for (const [before, after] of [
@@ -790,7 +822,7 @@ test('every frozen generator addition rejects omission, duplication, condition, 
 
 test('every frozen text experiment addition retains its mandatory execution, wrapper, directory and owner', () => {
   for (const [name] of [...OWNED_TEXT_EXPERIMENT_PACKAGE_STEPS, ...INTEGRAL_METADATA_EXPERIMENT_PACKAGE_STEPS, ...CONST_AND_BYTE_EXPERIMENT_PACKAGE_STEPS,
-    ...GENERATED_JAVASCRIPT_UNIT_EXPERIMENT_STEPS]) {
+    ...GENERATED_JAVASCRIPT_UNIT_EXPERIMENT_STEPS, ...OWNED_TUPLE_CALL_EXPERIMENT_PACKAGE_STEPS]) {
     const mutate = change => {
       const parsed = jobs('js.yml');
       const steps = parsed.get('package-checks').steps;
