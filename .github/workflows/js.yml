@@ -841,6 +841,24 @@ jobs:
           SELF_TRANSLATION_CHECK_RUST: '0'
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/generated-owned-rust/value-edits.test.mjs
 
+      - name: Check generated Rust text value projection experiment rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../experiments/rust-text-value-projection/generate-rules.mjs --check
+
+      - name: Check complete Rust text value projection experiment fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../experiments/rust-text-value-projection/generate-fixtures.mjs --check
+
+      - name: Run Rust text value projection experiment
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        env:
+          TRANSLATION_CHECK_RUST: '0'
+          SELF_TRANSLATION_CHECK_RUST: '0'
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-text-value-projection/model.test.mjs
+
       - name: Check generated whole Rust runtime shell rules
         if: ${{ !cancelled() && matrix.group == 'generated' }}
         working-directory: js
