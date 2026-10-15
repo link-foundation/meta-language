@@ -8,6 +8,7 @@ import { acceptControlParenthesis, acceptStatementBrace, decodeUnicodeEscape, re
 import { readRustSourceLineBreakEnd, readRustStringContinuationEnd } from './rust-string-rules.js';
 import { acceptRustCookedStringEscapePrefix, readRustAsciiEscapeValue } from './rust-cooked-string-rules.js';
 import { decodeRustUnicodeEscape } from './rust-unicode-escape-rules.js';
+import { decodeRustRawString } from './rust-raw-string-rules.js';
 import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
 import { acceptRustSourceWhitespace, acceptRustSourceByteOrderMark, acceptRustSourceNumberDigitBoundary } from './rust-source-whitespace-rules.js';
 
@@ -88,6 +89,26 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
       tokens.push(templateToken(source, index, encoding));
       index = tokens.at(-1).end;
       continue;
+    }
+    if (language === 'Rust' && char === 'r') {
+      encoding.units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
+      const literal = decodeRustRawString(encoding.units, index);
+      if (literal.$ === 'tooManyDelimiters') throw new TranslationError('syntax', 'Rust raw string exceeds 255 delimiter hashes', { start, end: source.length });
+      if (literal.$ === 'unterminated') throw new TranslationError('syntax', 'unterminated Rust raw string literal', { start, end: source.length });
+      if (literal.$ === 'carriageReturn') throw new TranslationError('syntax', 'isolated carriage return in a Rust string', { start: literal.at, end: literal.at + 1 });
+      if (literal.$ === 'nonScalar') throw new TranslationError('syntax', 'unpaired Unicode surrogate in a Rust raw string', { start: literal.at, end: literal.at + 1 });
+      if (literal.$ === 'literal') {
+        let value = '';
+        let cursor = literal.contentStart;
+        while (cursor < literal.contentEnd) {
+          const end = readRustSourceLineBreakEnd(encoding.units, cursor);
+          if (end >= 0) { value += '\n'; cursor = end; }
+          else { value += source[cursor]; cursor += 1; }
+        }
+        tokens.push({ kind: 'string', value, start, end: literal.end, raw: source.slice(start, literal.end) });
+        index = literal.end;
+        continue;
+      }
     }
     if (char === '"' || (language === 'JavaScript' && char === "'")) {
       const token = stringToken(source, index, language, encoding);
