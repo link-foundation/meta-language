@@ -83,7 +83,9 @@ test('CI splits the Rust and JavaScript tests into matrix jobs with their own ti
   assert.match(job(javascriptWorkflow, 'reports'), /\n {4}if: \$\{\{ !inputs\.external_reports \}\}/u);
   assert.match(job(acceptanceWorkflow, 'js'), /external_reports: true/u);
   const packageGate = job(javascriptWorkflow, 'test');
-  assert.deepEqual(needs(packageGate), ['tests', 'report-assertions', 'package-checks']);
+  assert.deepEqual(needs(packageGate), ['tests', 'report-assertions', 'package-checks', 'translation-test-feedback']);
+  assert.ok(packageGate.includes('TRANSLATION_FEEDBACK_RESULT: ${{ needs.translation-test-feedback.result }}'));
+  assert.ok(packageGate.includes('if [ "$TRANSLATION_FEEDBACK_RESULT" != "success" ]; then'));
   const packageChecks = job(javascriptWorkflow, 'package-checks');
   assert.deepEqual(needs(packageChecks), ['tests', 'report-assertions']);
   assert.match(packageChecks, /timeout-minutes: 10\n/u);

@@ -741,7 +741,7 @@ test('package partitions conserve every original check, condition and artifact o
     assert.match(parsed.get(id).steps.at(-2).run, /external-grammar-cache\.mjs --clean-materialized/u);
   }
   checkPackageStepConservation(parsed);
-  assert.deepEqual(needs(parsed.get('test')), ['tests', 'report-assertions', 'package-checks']);
+  assert.deepEqual(needs(parsed.get('test')), ['tests', 'report-assertions', 'package-checks', 'translation-test-feedback']);
   assert.deepEqual(needs(parsed.get('publish')), ['test']);
   assert.match(parsed.get('publish').header, /needs.test.result == 'success'/u);
 });
@@ -774,6 +774,11 @@ test('the final package gate requires all five partitions, all test groups and s
   assert.ok(gate.afterFailure);
   const originalGate = gate.text
     .replace('          PACKAGE_CHECKS_RESULT: ${{ needs.package-checks.result }}\n', '')
+    .replace('          TRANSLATION_FEEDBACK_RESULT: ${{ needs.translation-test-feedback.result }}\n', '')
+    .replace(
+      '          if [ "$TRANSLATION_FEEDBACK_RESULT" != "success" ]; then\n' +
+      '            echo "::error::Translation feedback merge finished with \'$TRANSLATION_FEEDBACK_RESULT\'; see the Translation Test Feedback job."\n' +
+      '            exit 1\n          fi\n', '')
     .replace(
       '          if [ "$PACKAGE_CHECKS_RESULT" != "success" ]; then\n' +
       '            echo "::error::JavaScript package check groups finished with \'$PACKAGE_CHECKS_RESULT\'; see the JavaScript Package Checks jobs."\n' +
@@ -781,21 +786,23 @@ test('the final package gate requires all five partitions, all test groups and s
   assert.equal(packageStepSignature({ text: originalGate }), 'dd833d50b883ad3316674a59f0638632dacaf701c06bb90ec93e9eae3b994e09',
     'the added partition guard preserves every original final-gate field');
   assert.match(gate.text, /PACKAGE_CHECKS_RESULT: \$\{\{ needs.package-checks.result \}\}/u);
+  assert.match(gate.text, /TRANSLATION_FEEDBACK_RESULT: \$\{\{ needs.translation-test-feedback.result \}\}/u);
   assert.match(gate.text, /TESTS_RESULT: \$\{\{ needs.tests.result \}\}/u);
   assert.match(gate.text, /REPORTS_RESULT: \$\{\{ needs.report-assertions.result \}\}/u);
   const execute = overrides => spawnSync('bash', ['-c', gate.run.replace(/^\|\s*\n/u, '')], {
     encoding: 'utf8', env: {
-      ...process.env, PACKAGE_CHECKS_RESULT: 'success', TESTS_RESULT: 'success',
+      ...process.env, PACKAGE_CHECKS_RESULT: 'success', TESTS_RESULT: 'success', TRANSLATION_FEEDBACK_RESULT: 'success',
       REPORTS_RESULT: 'success', EXTERNAL_REPORTS: 'false', ...overrides,
     },
   });
   assert.equal(execute({}).status, 0);
   assert.equal(execute({ EXTERNAL_REPORTS: 'true', REPORTS_RESULT: 'skipped' }).status, 0);
   for (const result of ['failure', 'cancelled', 'skipped']) {
-    for (const key of ['PACKAGE_CHECKS_RESULT', 'TESTS_RESULT', 'REPORTS_RESULT']) {
+    for (const key of ['PACKAGE_CHECKS_RESULT', 'TESTS_RESULT', 'REPORTS_RESULT', 'TRANSLATION_FEEDBACK_RESULT']) {
       assert.equal(execute({ [key]: result }).status, 1, `${key}=${result} must fail the package gate`);
     }
     assert.equal(execute({ PACKAGE_CHECKS_RESULT: result, EXTERNAL_REPORTS: 'true', REPORTS_RESULT: 'skipped' }).status, 1);
+    assert.equal(execute({ TRANSLATION_FEEDBACK_RESULT: result, EXTERNAL_REPORTS: 'true', REPORTS_RESULT: 'skipped' }).status, 1);
   }
 });
 

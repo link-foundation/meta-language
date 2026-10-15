@@ -7,9 +7,9 @@ import { test } from 'node:test';
 
 import { TEST_GROUPS, partitionGroupFiles, partitionProblems, partitionTests, testFiles } from '../scripts/test-groups.mjs';
 
-test('CI file partitions preserve every original native and conformance file exactly once', () => {
+test('CI file partitions preserve every original native, conformance and translation file exactly once', () => {
   const groups = partitionTests(testFiles()).groups;
-  for (const [name, count] of [['grammar-native', 3], ['conformance', 2]]) {
+  for (const [name, count] of [['grammar-native', 3], ['conformance', 2], ['translation', 3]]) {
     const shards = Array.from({ length: count }, (_, index) => partitionGroupFiles(groups[name], `${index + 1}/${count}`));
     assert.ok(shards.every(files => files.length > 0));
     assert.equal(new Set(shards.flat()).size, groups[name].length);
@@ -77,7 +77,7 @@ test('the JavaScript workflow runs every test group and gates the package check 
   assert.match(tests, /timeout-minutes: 15\n/u);
   assert.match(tests, /fail-fast: false\n/u);
   assert.match(tests, /partition: \[1\]\n/u);
-  for (const [group, count] of [['grammar-native', 3], ['conformance', 2]]) {
+  for (const [group, count] of [['grammar-native', 3], ['conformance', 2], ['translation', 3]]) {
     for (let partition = 1; partition <= count; partition += 1) {
       assert.ok(tests.includes(`{group: ${group}, partition: ${partition}, shards: ${count}}`));
     }
@@ -89,9 +89,11 @@ test('the JavaScript workflow runs every test group and gates the package check 
     /run: node \.\.\/scripts\/with-cache-cleanup\.mjs --event test -- node scripts\/test-groups\.mjs --run "\$TEST_GROUP"\n/u,
   );
   const packageJob = workflow.slice(workflow.indexOf('\n  test:\n'), workflow.indexOf('\n  publish:\n'));
-  assert.match(packageJob, /name: JavaScript Package\n    needs: \[tests, report-assertions, package-checks\]\n    if: \$\{\{ !cancelled\(\) \}\}\n/u);
+  assert.match(packageJob, /name: JavaScript Package\n    needs: \[tests, report-assertions, package-checks, translation-test-feedback\]\n    if: \$\{\{ !cancelled\(\) \}\}\n/u);
   assert.match(packageJob, /PACKAGE_CHECKS_RESULT: \$\{\{ needs\.package-checks\.result \}\}\n/u);
   assert.match(packageJob, /if \[ "\$PACKAGE_CHECKS_RESULT" != "success" \]; then/u);
+  assert.match(packageJob, /TRANSLATION_FEEDBACK_RESULT: \$\{\{ needs.translation-test-feedback.result \}\}\n/u);
+  assert.match(packageJob, /if \[ "\$TRANSLATION_FEEDBACK_RESULT" != "success" \]; then/u);
   assert.match(packageJob, /TESTS_RESULT: \$\{\{ needs\.tests\.result \}\}\n/u);
   assert.match(packageJob, /if \[ "\$TESTS_RESULT" != "success" \]; then/u);
   assert.match(packageJob, /REPORTS_RESULT: \$\{\{ needs\.report-assertions\.result \}\}\n/u);
