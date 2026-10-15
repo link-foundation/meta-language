@@ -1,6 +1,6 @@
 //! Parser adapter for one owned scalar state and its actual ordered writes.
 use super::{
-    Options, Result, RustParser, SExpr, SNode, SParam, SourceOrigin, TokenKind, Type, span,
+    Options, Result, RustParser, SExpr, SNode, SParam, SourceOrigin, Span, TokenKind, Type,
     unsupported,
 };
 use crate::translation::source_loops::{
@@ -186,7 +186,7 @@ impl RustParser {
                 then: Box::new(then),
                 otherwise: Box::new(otherwise),
             },
-            span(&start, self.cursor.peek()),
+            Some(Span::new(start.start, self.cursor.peek().end)),
         ))
     }
     fn scalar_loop_continuation(
@@ -243,7 +243,7 @@ impl RustParser {
                 return Err(unsupported(
                     "Rust scalar loop",
                     "every state slot needs one direct scalar Copy value",
-                    span(&start, self.cursor.peek()),
+                    Some(Span::new(start.start, self.cursor.peek().end)),
                 ));
             }
         } else if state.proof.continuation.is_some()
@@ -273,7 +273,7 @@ impl RustParser {
                 return Err(unsupported(
                     "Rust scalar loop",
                     "parallel state values require direct scalar Copy ownership",
-                    span(&start, self.cursor.peek()),
+                    Some(Span::new(start.start, self.cursor.peek().end)),
                 ));
             }
             values.push(value);
@@ -312,7 +312,7 @@ impl RustParser {
                 )),
                 args: arguments.iter().map(|name| SExpr::name(name)).collect(),
             },
-            span(&start, self.cursor.peek()),
+            Some(Span::new(start.start, self.cursor.peek().end)),
         );
         for (write, value) in writes.into_iter().zip(values).rev() {
             let ty = state
@@ -327,7 +327,7 @@ impl RustParser {
                     value: Box::new(value),
                     body: Box::new(result),
                 },
-                span(&start, self.cursor.peek()),
+                Some(Span::new(start.start, self.cursor.peek().end)),
             );
         }
         Ok(result)

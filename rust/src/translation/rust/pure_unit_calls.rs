@@ -5,7 +5,7 @@ use super::pure_unit_call_rules::{
 };
 use super::{
     Result, RustParser, SEffect, SExpr, SFn, SItem, SMain, SNode, SourceDeclaration, SourceOrigin,
-    Token, UNIT, span, unsupported,
+    Token, UNIT, unsupported,
 };
 use crate::translation::Span;
 use serde_json::{Value, json};
@@ -33,7 +33,7 @@ impl RustParser {
         if !self.pure_unit_call_model.is_empty() && self.cursor.is("#") {
             return Err(source_failure(
                 "attributes require a separate compilation context proof",
-                span(self.cursor.peek(), self.cursor.peek()),
+                Some(actual_span(self.cursor.peek(), self.cursor.peek())),
             ));
         }
         Ok(())
@@ -51,7 +51,7 @@ impl RustParser {
             if !path.is_empty() || !self.cursor.is("fn") {
                 return Err(source_failure(
                     "only flat private pure Unit functions and one ordinary main are admitted",
-                    span(start, self.cursor.peek()),
+                    Some(actual_span(start, self.cursor.peek())),
                 ));
             }
             return Ok(());
@@ -60,20 +60,20 @@ impl RustParser {
         if !path.is_empty() || !self.cursor.is("fn") {
             return Err(source_failure(
                 "only flat bare public pure Unit helpers and one ordinary private main are admitted",
-                span(start, self.cursor.peek()),
+                Some(actual_span(start, self.cursor.peek())),
             ));
         }
         let main = self.cursor.is_at("main", 1);
         if main && public_token.is_some() {
             return Err(source_failure(
                 "the complete source requires an ordinary private main",
-                span(start, self.cursor.peek()),
+                Some(actual_span(start, self.cursor.peek())),
             ));
         }
         if !main && public_token.is_none() {
             return Err(source_failure(
                 "each helper requires its actual bare pub keyword and complete owned Unit header",
-                span(start, self.cursor.peek()),
+                Some(actual_span(start, self.cursor.peek())),
             ));
         }
         self.pure_unit_public_token = public_token;
@@ -104,7 +104,7 @@ impl RustParser {
         if !path.is_empty() || !ordinary_name(&name) {
             return Err(source_failure(
                 "pure Unit functions require an ordinary flat owned name",
-                span(&start, self.cursor.peek()),
+                Some(actual_span(&start, self.cursor.peek())),
             ));
         }
         self.pure_unit_token_pair("zero-argument pure Unit function")?;
@@ -125,7 +125,7 @@ impl RustParser {
         if !self.cursor.is("}") {
             return Err(source_failure(
                 "a helper body must be exactly an empty block or the Unit expression",
-                span(&open, self.cursor.peek()),
+                Some(actual_span(&open, self.cursor.peek())),
             ));
         }
         let close = self.cursor.advance();
@@ -168,7 +168,7 @@ impl RustParser {
         if self.cursor.is("->") {
             return Err(source_failure(
                 "main must retain its ordinary implicit Unit header",
-                span(&start, self.cursor.peek()),
+                Some(actual_span(&start, self.cursor.peek())),
             ));
         }
         self.cursor.expect("{", Some("pure Unit main"))?;
@@ -186,7 +186,7 @@ impl RustParser {
                 if !ordinary_name(&first.value) {
                     return Err(source_failure(
                         "main calls require an ordinary owned pure Unit name",
-                        span(&token, &first),
+                        Some(actual_span(&token, &first)),
                     ));
                 }
                 (first.value, "unqualified name")

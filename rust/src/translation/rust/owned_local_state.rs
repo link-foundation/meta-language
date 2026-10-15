@@ -3,7 +3,7 @@ use super::owned_local_state_rules::accept_rust_owned_local_source_operation;
 use super::owned_tuple_call_rules::accept_rust_owned_tuple_call_model;
 use super::{
     BOOL, BinaryOp, HashMap, HashSet, Options, Result, RustParser, SExpr, SItem, SMain, SNode,
-    SParam, STRING, SourceOrigin, Span, Token, TokenKind, Type, span, unsupported,
+    SParam, STRING, SourceOrigin, Span, Token, TokenKind, Type, unsupported,
 };
 pub(super) use crate::translation::owned_local_state::owned_local_pair as owned_pair;
 use crate::translation::owned_local_state::{

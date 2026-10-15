@@ -247,7 +247,7 @@ fn malformed_source_free_facts_and_actual_raw_nulls_refuse_before_emission() {
         let (parent, field) = match role {
             "fn" => (function, "sourceEmptyOption"),
             "proof" => (proof, "construction"),
-            "owner" => (owner, "sourcePath"),
+            "owner" => (owner, "source path"),
             "main" => (main, "span"),
             _ => (program, "main"),
         };

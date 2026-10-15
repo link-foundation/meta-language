@@ -1,7 +1,7 @@
 //! Ordered source statements; expressions still use the production Rust parser.
 use super::{
     LocalBindingPattern, LocalPattern, LocalState, Options, Result, RustParser, SExpr, SNode, Span,
-    Statement, TokenKind, accept_rust_owned_local_source_operation, fail, span,
+    Statement, TokenKind, accept_rust_owned_local_source_operation, fail,
 };
 impl RustParser {
     fn owned_local_raw_expression(&mut self, path: &[String], options: Options) -> Result<SExpr> {
@@ -156,7 +156,7 @@ impl RustParser {
                     pattern,
                     ty,
                     value,
-                    span: span(&start, self.cursor.peek()),
+                    span: Some(Span::new(start.start, self.cursor.peek().end)),
                 });
             } else if self.cursor.is("if") {
                 let start = self.cursor.advance();
@@ -178,7 +178,7 @@ impl RustParser {
                     condition,
                     then,
                     otherwise,
-                    span: span(&start, self.cursor.peek()),
+                    span: Some(Span::new(start.start, self.cursor.peek().end)),
                 });
             } else if self.cursor.is_kind(TokenKind::Identifier) && self.cursor.is_at("=", 1) {
                 let target = self.cursor.advance();
@@ -187,7 +187,7 @@ impl RustParser {
                 self.cursor
                     .expect(";", Some("owned local state replacement"))?;
                 self.origins.bind(&target.value, &value, path, None)?;
-                let range = span(&target, self.cursor.peek());
+                let range = Some(Span::new(target.start, self.cursor.peek().end));
                 statements.push(Statement::Write {
                     target: target.value,
                     value,

@@ -77,7 +77,11 @@ fn expression(value: &Value, program: &Program) -> Result<Value> {
                     std::iter::once(Value::String(continuation.root.clone()))
                         .chain(continuation.path.iter().cloned().map(Value::String))
                         .collect()
-                } else if owns_type_namespace(program) {
+                } else if owns_type_namespace(program)
+                    || child.as_str().and_then(|name| program.declaration(name)).is_some_and(
+                        |declaration| matches!(declaration, Decl::Fn(function) if function.source_loop.is_some() && !function.module_path.is_empty()),
+                    )
+                {
                     project_declaration_path(child.as_str().unwrap_or_default(), program)?
                         .into_iter()
                         .map(Value::String)

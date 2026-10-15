@@ -580,14 +580,13 @@ fn original_graph_header_domains_unknown_fields_and_interpretation_order_are_che
 
 fn rust_observations(sources: &[(&Value, String)], name: &str) -> String {
     let directory = TemporaryDirectory::new(name);
-    let mut source = String::new();
     let mut calls = String::new();
+    let mut libraries = Vec::new();
     for (index, (case, artifact)) in sources.iter().enumerate() {
-        writeln!(
-            source,
-            "mod observed_{index} {{\n{artifact}\npub fn observe(){{main();"
-        )
-        .unwrap();
+        // Keep the complete artifact at its actual crate root: emitted calls
+        // such as crate::seed must not be relocated into an observation module.
+        let mut source = artifact.clone();
+        source.push_str("\npub fn ml_observe(){main();\n");
         for row in case["observations"].as_array().unwrap() {
             writeln!(
                 source,
@@ -598,22 +597,39 @@ fn rust_observations(sources: &[(&Value, String)], name: &str) -> String {
             )
             .unwrap();
         }
-        writeln!(source, "}}\n}}").unwrap();
-        writeln!(calls, "observed_{index}::observe();").unwrap();
+        source.push_str("}\n");
+        assert!(source.starts_with(artifact.as_str()));
+        let crate_name = format!("observed_{index}");
+        let input = directory.0.join(format!("{crate_name}.rs"));
+        let library = directory.0.join(format!("lib{crate_name}.rlib"));
+        fs::write(&input, source).unwrap();
+        let build = run(Command::new("rustc")
+            .args(["--edition", "2024", "--crate-type", "rlib", "--crate-name"])
+            .arg(&crate_name)
+            .arg(input)
+            .arg("-o")
+            .arg(&library));
+        assert!(build.ok, "{}", build.stderr);
+        writeln!(calls, "{crate_name}::ml_observe();").unwrap();
+        libraries.push((crate_name, library));
     }
-    writeln!(source, "fn main(){{{calls}}}").unwrap();
-    let input = directory.0.join("observed.rs");
+    let consumer = directory.0.join("consumer.rs");
     let binary = directory
         .0
         .join(format!("observed{}", std::env::consts::EXE_SUFFIX));
-    fs::write(&input, source).unwrap();
+    fs::write(&consumer, format!("fn main(){{{calls}}}")).unwrap();
     let mut compiler = Command::new("rustc");
-    compiler.args(["--edition", "2024"]);
+    compiler.args(["--edition", "2024"]).arg(consumer);
     #[cfg(windows)]
     if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
         compiler.arg("-C").arg(format!("linker={linker}"));
     }
-    let build = run(compiler.arg(input).arg("-o").arg(&binary));
+    for (crate_name, library) in libraries {
+        compiler
+            .arg("--extern")
+            .arg(format!("{crate_name}={}", library.display()));
+    }
+    let build = run(compiler.arg("-o").arg(&binary));
     assert!(build.ok, "{}", build.stderr);
     let result = run(&mut Command::new(binary));
     assert!(result.ok, "{}", result.stderr);

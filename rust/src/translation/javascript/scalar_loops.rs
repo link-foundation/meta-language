@@ -1,7 +1,7 @@
 //! Exact emitted loop and immutable write-snapshot parser adapter.
 use super::{
-    JavaScriptParser, Result, SExpr, SItem, SNode, SParam, SProgram, ScanEnd, Scope, TokenKind,
-    span, unsupported,
+    JavaScriptParser, Result, SExpr, SItem, SNode, SParam, SProgram, ScanEnd, Scope, Span,
+    TokenKind, unsupported,
 };
 use crate::translation::scalar_loop_rules::accept_scalar_loop_declaration_model;
 use crate::translation::source_loops::{
@@ -199,7 +199,7 @@ impl JavaScriptParser {
                             value: Box::new(value),
                             body: Box::new(body),
                         },
-                        Some(span(&start, &close)),
+                        Some(Span::new(start.start, close.end)),
                     )
                 }))
         })();
@@ -224,7 +224,7 @@ impl JavaScriptParser {
                 then: Box::new(then),
                 otherwise: Box::new(otherwise),
             },
-            Some(self.to_here(&start)),
+            Some(Span::new(start.start, self.cursor.peek().end)),
         ))
     }
     fn scalar_loop_continuation(&mut self, context: &mut LoopState) -> Result<SExpr> {
@@ -332,7 +332,7 @@ impl JavaScriptParser {
                 )),
                 args: arguments.iter().map(|name| SExpr::name(name)).collect(),
             },
-            Some(self.to_here(&start)),
+            Some(Span::new(start.start, self.cursor.peek().end)),
         ))
     }
 }
