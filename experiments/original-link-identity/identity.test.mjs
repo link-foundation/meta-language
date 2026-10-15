@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import vm from 'node:vm';
+import {createHash} from 'node:crypto';
 import {readProjectData} from '../../js/scripts/project-data.mjs';
 import {LinkNetwork,createTypedProgramLinks,emitTypedProgramLinks,encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../../js/src/index.js';
-import {LinkId} from '../../js/src/primitives.js';
+import {LinkId,LinkMetadata,idKey} from '../../js/src/primitives.js';
+import {encodeLinkStatement} from '../../js/src/lino-serialization.js';
 import {TYPED_PROGRAM_LINKS_SCHEMA as schema} from '../../js/src/typed-program-links.js';
 import {parseJavaScript} from '../../js/src/translation/javascript.js';
 import {checkProgram} from '../../js/src/translation/check.js';
@@ -97,11 +99,29 @@ test('the complete kernel executes after public text and binary Links reload wit
  }
 });
 
-test('dynamic push, Array.from and unsafe public LinkId collisions remain explicit feasibility gaps',()=>{
+test('historical public collisions remain inspectable while live constructors, text and references reject unsafe identities',()=>{
  for(const control of [policy.feasibility.growth,policy.feasibility.arrayFrom])for(const options of [{},{referenceSemantics:true},{referenceSemantics:false}]){
   assert.throws(()=>checkProgram(parseJavaScript(control.source,options)),error=>error.kind===control.kind&&error.reason===control.reason&&error.span.start===control.span.start&&error.span.end===control.span.end);
  }
- for(const[first,second]of policy.feasibility.publicCollisions){const one=LinkId.fromU64(BigInt(first)),two=LinkId.fromU64(BigInt(second));assert.equal(one.equals(two),true);assert.throws(()=>originalLinkIdentityWords(one),/unsafe/u);assert.throws(()=>originalLinkIdentityWords(two),/unsafe/u);assert.notDeepEqual(originalLinkIdentityWords(BigInt(first)),originalLinkIdentityWords(BigInt(second)));}
+ const history=policy.feasibility.historicalPublicLinkId,context={};
+ assert.equal(history.commit,'803c0125630b97a55f49683991422abae86dd8fa');assert.equal(history.path,'js/src/primitives.js');assert.equal(history.fileSha256,'46f8d0850d5e0a1fc13e9651fca8c7cc3efbd1d4c40fcee2f87608dc2d172247');
+ assert.equal(history.sourceSha256,'b3e596ec1602e12e5b0d1d56c4f52dfbddd893c5256d905754c78230ba07629e');assert.equal(Buffer.byteLength(history.source),history.sourceBytes);assert.equal(createHash('sha256').update(history.source).digest('hex'),history.sourceSha256);
+ vm.runInNewContext(history.source.replace('export class LinkId','globalThis.HistoricalLinkId = class LinkId'),context,{timeout:1000});
+ const canonical=(id,references=[])=>`(${id}:${references.length?' '+references.join(' '):''} (meta: (t: concept) (n: 1) (term: identity)))`;
+ const network=new LinkNetwork(),safe=network.insertLink([],LinkMetadata.new()),before=network.toLino();
+ for(const[first,second]of policy.feasibility.publicCollisions){
+  assert.equal(context.HistoricalLinkId.fromU64(BigInt(first)).equals(context.HistoricalLinkId.fromU64(BigInt(second))),true);
+  assert.notDeepEqual(originalLinkIdentityWords(BigInt(first)),originalLinkIdentityWords(BigInt(second)));
+  for(const value of[first,second]){
+   for(const input of[BigInt(value),value,Number(value)]){
+    for(const create of[value=>new LinkId(value),LinkId.from,LinkId.fromU64,idKey])assert.throws(()=>create(input),TypeError);
+    for(const operation of[()=>network.insertLinkWithOptionalId(input),()=>network.insertLink([input]),()=>network.link(safe).setReferences([input]),()=>network.link(input),()=>encodeLinkStatement(input,[],LinkMetadata.new()),()=>encodeLinkStatement(safe,[input],LinkMetadata.new())]){assert.throws(operation,TypeError);assert.equal(network.toLino(),before);assert.equal(network._nextId,2);}
+   }
+   for(const operation of[()=>LinkNetwork.fromLino(canonical(value)),()=>LinkNetwork.fromLino(canonical(1,[value])),()=>LinkNetwork.fromLino(`(${value}: 1)`),()=>LinkNetwork.fromLino(`(1: ${value})`),()=>network.applyLinkCliSubstitutionText(`((${value}: 1)) ()`),()=>network.applyLinkCliSubstitutionText(`() ((${value}: 1))`)]){assert.throws(operation);assert.equal(network.toLino(),before);}
+  }
+ }
+ for(const value of policy.feasibility.livePublicIdentity.invalidDecimalTokens)for(const create of[value=>new LinkId(value),LinkId.from,LinkId.fromU64,idKey])assert.throws(()=>create(value),TypeError);
+ const mutated=LinkId.fromU64(2);mutated.value=9007199254740992;assert.throws(()=>originalLinkIdentityWords(mutated),TypeError);assert.throws(()=>originalLinkIdentityWords(9007199254740992),/unsafe/u);
  assert.equal(exactOriginalLinkIdentity(LinkId.fromU64(7)),7n);
 });
 
