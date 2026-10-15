@@ -299,11 +299,16 @@ impl<'p> RustEmitter<'p> {
             .collect();
         let ret = self.ty(&function.ret);
         let body = self.expr(&body)?;
-        Ok(format!(
-            "pub fn {name}({}) -> {ret} {{\n{}\n}}",
-            binders.join(", "),
-            indent(&body, 1)
-        ))
+        Ok(
+            crate::translation::rust::const_functions::render_const_function_header(
+                function,
+                format!(
+                    "pub fn {name}({}) -> {ret} {{\n{}\n}}",
+                    binders.join(", "),
+                    indent(&body, 1)
+                ),
+            ),
+        )
     }
 
     fn holds_float(&self, name: &str, seen: &mut BTreeSet<String>) -> bool {

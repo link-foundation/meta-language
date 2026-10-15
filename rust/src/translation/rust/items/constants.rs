@@ -1,5 +1,6 @@
 //! Existing constant-item adapter, separated to bound the item module.
-use super::{Options, Result, RustParser, SFn, SourceDeclaration, Type, span, unsupported};
+use super::super::SFn;
+use super::{Options, Result, RustParser, SourceDeclaration, Type, span, unsupported};
 
 impl RustParser {
     /// `const N: T = e;` is a function without parameters.
@@ -42,6 +43,7 @@ impl RustParser {
             source_empty_option: None,
             source_type_namespace: None,
             source_local_state: None,
+            source_const_function: None,
             source_pure_unit: None,
             source_loop: None,
         })

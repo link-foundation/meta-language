@@ -117,6 +117,7 @@ pub fn emit_javascript_with_options(
         super::scoped_binding_emission::validate_program(program, model)?;
     }
     super::owned_local_state::validate_owned_local_state(program)?;
+    super::source_const_functions::validate_const_functions(program)?;
     let mut reserved = KEYWORDS.to_vec();
     if program.declarations.iter().any(|declaration| matches!(declaration, Decl::Fn(function) if function.source_local_state.is_some())) {
         reserved.push("ml_ownedTextInput");
@@ -335,6 +336,21 @@ impl<'p> JavaScriptEmitter<'p> {
                 lines.push(self.owned_local_parameter_guard(param));
             }
             lines.extend(self.parameter_guard(param));
+        }
+        if function.source_const_function.is_some() {
+            for param in &params {
+                let kind = if param.ty.kind() == "bool" {
+                    "boolean"
+                } else {
+                    "number"
+                };
+                let name = &param.name;
+                lines.push(format!(
+                    "if (typeof {name} !== {kind:?}) throw new RangeError({:?});",
+                    format!("const predicate argument {name} requires {kind}")
+                ));
+            }
+            self.state.encode("rust-const-predicate-inputs", "the selected Rust const predicate model admits only primitive Boolean and binary64 input values; const evaluation requests remain outside this source interpretation");
         }
         if function.source_local_state.is_some() {
             self.state.encode("owned-text-input", "the selected Rust local value model admits primitive Unicode scalar text, Boolean and signed i32 inputs; JavaScript rejects other input values before evaluating the body");

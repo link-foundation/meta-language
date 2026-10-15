@@ -83,6 +83,9 @@ pub struct FnDecl {
     /// Ordered owned local String moves, copies and replacements.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_local_state: Option<serde_json::Value>,
+    /// Owned actual const qualification of a closed primitive predicate.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_const_function: Option<serde_json::Value>,
     /// Optional owned scalar loop state and checked continuation interpretation.
     #[serde(
         default,

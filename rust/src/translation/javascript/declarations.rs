@@ -16,6 +16,9 @@ use crate::translation::frontend_rules::find_default_parameter_reference;
 use crate::translation::primitive_value_rules::accept_object_property_definition;
 use crate::translation::surface::SExpr;
 
+mod jsdoc;
+use jsdoc::{jsdoc_type, promised};
+
 /// How a function's body is written: a block, or an arrow's block or expression.
 #[derive(Clone, Copy)]
 enum Body {
@@ -673,6 +676,7 @@ impl JavaScriptParser {
                 source_type_namespace: None,
                 source_loop: Some(Box::new(proof)),
                 source_local_state: None,
+                source_const_function: None,
                 span: Some(self.to_here(doc_token)),
                 generated: false,
                 source_pure_unit: None,
@@ -742,6 +746,7 @@ impl JavaScriptParser {
             source_empty_option: None,
             source_type_namespace: None,
             source_local_state: None,
+            source_const_function: None,
             source_loop: None,
             body,
             span: Some(self.to_here(doc_token)),
@@ -915,86 +920,4 @@ impl JavaScriptParser {
         self.cursor.expect("}", Some("block"))?;
         Ok(statements)
     }
-}
-
-/// `T` of an async function's `@returns {Promise<T>}`.
-fn promised(text: &str) -> Option<&str> {
-    js_trim(text)
-        .strip_prefix("Promise")
-        .map(js_trim)?
-        .strip_prefix('<')?
-        .strip_suffix('>')
-}
-
-/// The portable type a `JSDoc` type names.
-fn jsdoc_type(text: &str, range: Span) -> Result<Type> {
-    let name = js_trim(text);
-    match name {
-        "bigint" => return Ok(INT),
-        "boolean" => return Ok(BOOL),
-        "string" => return Ok(STRING),
-        "number" => return Ok(FLOAT),
-        _ => {}
-    }
-    if let Some(element) = name.strip_suffix("[]") {
-        return Ok(array(jsdoc_type(element, range)?));
-    }
-    if let Some(inner) = name
-        .strip_prefix('[')
-        .and_then(|text| text.strip_suffix(']'))
-    {
-        let mut depth = 0_i64;
-        let mut start = 0;
-        let mut elements = Vec::new();
-        for (index, character) in inner.char_indices() {
-            match character {
-                '[' | '(' | '{' | '<' => depth += 1,
-                ']' | ')' | '}' | '>' => depth -= 1,
-                ',' if depth == 0 => {
-                    let field = js_trim(&inner[start..index]);
-                    if !field.is_empty() {
-                        elements.push(jsdoc_type(field, range)?);
-                    }
-                    start = index + 1;
-                }
-                _ => {}
-            }
-        }
-        let field = js_trim(&inner[start..]);
-        if !field.is_empty() {
-            elements.push(jsdoc_type(field, range)?);
-        }
-        return Ok(Type::Tuple { elements });
-    }
-    let generic = name
-        .strip_prefix("Array<")
-        .or_else(|| name.strip_prefix("ReadonlyArray<"))
-        .and_then(|rest| rest.strip_suffix('>'))
-        .filter(|element| !element.is_empty());
-    if let Some(element) = generic {
-        return Ok(array(jsdoc_type(element, range)?));
-    }
-    let reserved = [
-        "object",
-        "any",
-        "unknown",
-        "void",
-        "undefined",
-        "null",
-        "Object",
-        "Function",
-        "Array",
-        "symbol",
-    ];
-    if !is_identifier_name(name) || reserved.contains(&name) {
-        return Err(unsupported(
-            &format!("JSDoc type {{{name}}}"),
-            "portable types are number, bigint, boolean, string, arrays T[] of them and @typedef data types",
-            Some(range),
-        ));
-    }
-    Ok(Type::Named {
-        path: vec![ROOT.to_owned(), name.to_owned()],
-        span: Some(range),
-    })
 }

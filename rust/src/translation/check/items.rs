@@ -101,6 +101,7 @@ impl Checker {
                     source_loop: function.source_loop.as_deref().cloned(),
                     source_pure_unit: function.source_pure_unit.as_deref().cloned(),
                     source_local_state: function.source_local_state.as_deref().cloned(),
+                    source_const_function: function.source_const_function.as_deref().cloned(),
                 }),
                 SItem::Theorem(theorem) => Decl::Theorem(TheoremDecl {
                     name: name.clone(),

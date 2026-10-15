@@ -158,6 +158,7 @@ impl RustParser {
             source_type_namespace: None,
             source_pure_unit: Some(Box::new(proof)),
             source_local_state: None,
+            source_const_function: None,
         })
     }
     pub(super) fn pure_unit_main(&mut self) -> Result<SMain> {
