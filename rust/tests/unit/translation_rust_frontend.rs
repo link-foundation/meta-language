@@ -1,7 +1,9 @@
 //! The Rust-source frontend: accepted programs parse to the surface objects the JavaScript
 //! frontend builds, and rejected programs raise the same errors with the same messages.
 
+use meta_language::translation::Language;
 use meta_language::translation::diagnostics::ErrorKind;
+use meta_language::translation::lexer::{TokenKind, tokenize};
 use meta_language::translation::rust::parse_rust;
 use serde_json::{Value, json};
 
@@ -271,4 +273,73 @@ fn lexer_errors_surface_unchanged() {
             "unterminated string literal at 54..60".to_owned()
         )
     );
+}
+
+#[test]
+fn decimal_separators_before_complete_integer_suffixes_keep_exact_tokens() {
+    for suffix in [
+        "u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64", "u128", "i128", "usize", "isize",
+    ] {
+        for separators in ["_", "__", "___"] {
+            let source = format!("12_345{separators}{suffix}");
+            let tokens = tokenize(&source, Language::Rust).unwrap();
+            let token = &tokens.tokens[0];
+            assert_eq!(token.kind, TokenKind::Number);
+            assert_eq!(token.value, "12345");
+            assert_eq!(token.suffix, suffix);
+            assert_eq!(token.raw, source);
+            assert_eq!(token.start, 0);
+            assert_eq!(token.end, source.len());
+        }
+    }
+    let source = include_str!("translation_rust_runtime_shell.rs");
+    let tokens = tokenize(source, Language::Rust).unwrap();
+    let token = tokens
+        .tokens
+        .iter()
+        .find(|token| token.raw == "9007199254740992_u64")
+        .unwrap();
+    assert_eq!(token.value, "9007199254740992");
+    assert_eq!(token.suffix, "u64");
+    assert_eq!(
+        tokens.tokens.last().unwrap().end,
+        source.encode_utf16().count()
+    );
+}
+
+#[test]
+fn suffixed_separator_admission_keeps_old_rust_and_javascript_refusals() {
+    for source in [
+        "1_",
+        "1__",
+        "1_u",
+        "1_u7",
+        "1_u64extra",
+        "1_u64_",
+        "1_u64_foo",
+        "1_U64",
+        "1_unknown",
+    ] {
+        let error = tokenize(source, Language::Rust).unwrap_err();
+        assert_eq!(error.kind, ErrorKind::Syntax);
+        assert!(error.message().contains("malformed number"));
+    }
+    for source in [
+        "1_",
+        "1__0",
+        "1_u64",
+        "9_007_199_254_740_992_u64",
+        "1_0n_",
+        "0xff_u8",
+        "08",
+        "1.5n",
+        "3in",
+        "0x_1",
+        "1e_2",
+    ] {
+        assert_eq!(
+            tokenize(source, Language::JavaScript).unwrap_err().kind,
+            ErrorKind::Syntax
+        );
+    }
 }
