@@ -142,11 +142,13 @@ pub fn validate_pure_unit_declaration_record(entry: &Value) -> Result<()> {
     )?;
     let header = span(&proof["headerSpan"])?;
     let body = span(&proof["bodySpan"])?;
+    let header_end = header.1;
+    let body_start = body.0;
     if !accept_rust_pure_unit_header_form(proof["headerForm"].as_str().unwrap_or_default())
         || !accept_rust_pure_unit_body_form(proof["bodyForm"].as_str().unwrap_or_default())
         || header.0 != entry_span.0
         || body.1 != entry_span.1
-        || header.1 > body.0
+        || header_end > body_start
         || !inside(header, entry_span)
         || !inside(body, entry_span)
     {

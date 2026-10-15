@@ -199,7 +199,7 @@ impl RustParser {
         let facts = owner
             .as_ref()
             .and_then(|owner| self.origins.unit_clone_facts.get(&owner.full_name));
-        let owned = accept_rust_type_namespace_unit_clone(
+        let admitted = accept_rust_type_namespace_unit_clone(
             facts.is_some_and(|(proof, _)| proof.is_some()),
             facts.is_some_and(|(_, unit)| *unit),
             origin.proven && origin.wrappers.is_empty(),
@@ -211,7 +211,7 @@ impl RustParser {
         if !accept_rust_type_namespace_body_method(
             !self.type_namespace_model.is_empty() && !discovery,
             name,
-            owned,
+            admitted,
         ) {
             return Err(unsupported(
                 "Rust type namespace body method",
