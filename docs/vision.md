@@ -531,6 +531,11 @@ linked to its actual ordered parameter array. The explicit invocation checker va
 arguments, exact arity, primitive Booleans and signed i32 BigInt bounds before
 observing a call. This interpretation remains experimental; production source
 lexing and native runtime integration require their own paired implementation.
+An independent CI oracle compares the complete automatically translated
+six-selector artifact with actual JavaScript on 644 conditional calls, retaining
+the ordered interfaces and exact binary64 arguments. Its observations concern
+the selectors under their explicit premises; they do not establish a source
+grammar or actual invocation ownership.
 The separate `portable closed Rust text source certificate 1` experiment moves
 the complete finite text certificate into a kernel generated from shared links
 policy. Seventeen typed Number tables retain the actual token, declaration,
