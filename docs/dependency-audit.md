@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 122 | 121 | 1 | 0 |
+| Generators | 124 | 123 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 43 | 0 | 0 | 43 |
+| Published artifact contents | 44 | 0 | 0 | 44 |
 
 ## JavaScript engines
 
@@ -635,6 +635,8 @@ they are.
 | `js/scripts/generate-rust-pure-unit-call-rules.mjs` | `js/scripts/generate-rust-pure-unit-call-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-read-only-query-fixtures.mjs` | `js/scripts/generate-rust-read-only-query-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-read-only-query-rules.mjs` | `js/scripts/generate-rust-read-only-query-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-runtime-shell-fixtures.mjs` | `js/scripts/generate-rust-runtime-shell-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-runtime-shell-rules.mjs` | `js/scripts/generate-rust-runtime-shell-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-scalar-parameter-fixtures.mjs` | `js/scripts/generate-rust-scalar-parameter-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-scalar-parameter-rules.mjs` | `js/scripts/generate-rust-scalar-parameter-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-source-header-emission-fixtures.mjs` | `js/scripts/generate-rust-source-header-emission-fixtures.mjs` | `script` |  | derived | current |  |
@@ -763,6 +765,7 @@ they are.
 | `src/data/rust-primitive-owners.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-pure-unit-calls.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-read-only-queries.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-runtime-shell.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-scalar-loops.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-source-header-emission.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-source-signatures.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |

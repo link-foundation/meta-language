@@ -3935,7 +3935,1025 @@ const SOURCE_PROCESSING_NAME_INVENTORIES=SOURCE_PROCESSING_NAME_BINDINGS.map(({i
  extract:(text,file)=>files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeSourceProcessingName(name)),
  recordOf:name=>Object.values(files).flat().find(entry=>normalizeSourceProcessingName(entry.name)===name).id,
 }));
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES]);
+// Additive exact source bindings for the complete closed Rust runtime graph.
+const RUNTIME_SHELL_NAME_BINDINGS = [
+  {
+    "inventory": "closed Rust runtime shell generated decisions",
+    "files": {
+      "js/src/translation/rust-runtime-shell-rules.js": [
+        {
+          "name": "acceptRustRuntimeShellModel",
+          "id": "translation.accept-rust-runtime-shell-model"
+        },
+        {
+          "name": "acceptRustRuntimeShellReservedName",
+          "id": "translation.accept-rust-runtime-shell-reserved-name"
+        },
+        {
+          "name": "acceptRustRuntimeShellStackShift",
+          "id": "translation.accept-rust-runtime-shell-stack-shift"
+        }
+      ],
+      "rust/src/translation/runtime_shell_rules.rs": [
+        {
+          "name": "accept_rust_runtime_shell_model",
+          "id": "translation.accept-rust-runtime-shell-model"
+        },
+        {
+          "name": "accept_rust_runtime_shell_reserved_name",
+          "id": "translation.accept-rust-runtime-shell-reserved-name"
+        },
+        {
+          "name": "accept_rust_runtime_shell_stack_shift",
+          "id": "translation.accept-rust-runtime-shell-stack-shift"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "closed Rust runtime shell operations",
+    "files": {
+      "js/src/translation/rust-runtime-shell.js": [
+        {
+          "name": "checkRustRuntimeShellContainers",
+          "id": "translation.check-rust-runtime-shell-containers"
+        },
+        {
+          "name": "checkRustRuntimeShell",
+          "id": "translation.check-rust-runtime-shell"
+        },
+        {
+          "name": "captureRustRuntimeShell",
+          "id": "translation.capture-rust-runtime-shell"
+        },
+        {
+          "name": "readRustRuntimeShellSource",
+          "id": "translation.parse-rust-runtime-shell-source"
+        },
+        {
+          "name": "recordRustRuntimeShellAssumptions",
+          "id": "translation.record-rust-runtime-shell-assumptions"
+        },
+        {
+          "name": "emitRustRuntimeShell",
+          "id": "translation.emit-rust-runtime-shell"
+        },
+        {
+          "name": "refuseRustRuntimeShellComposition",
+          "id": "translation.refuse-rust-runtime-shell-composition"
+        },
+        {
+          "name": "data",
+          "id": "translation.check-rust-runtime-shell-data"
+        },
+        {
+          "name": "fields",
+          "id": "translation.check-rust-runtime-shell-record-fields"
+        },
+        {
+          "name": "interval",
+          "id": "translation.check-rust-runtime-shell-source-interval"
+        },
+        {
+          "name": "compare",
+          "id": "translation.compare-rust-runtime-shell-data"
+        },
+        {
+          "name": "assumptions",
+          "id": "translation.create-rust-runtime-shell-operation-assumptions"
+        },
+        {
+          "name": "tokenValue",
+          "id": "translation.read-rust-runtime-shell-token-name"
+        },
+        {
+          "name": "validateTokens",
+          "id": "translation.check-rust-runtime-shell-tokens"
+        },
+        {
+          "name": "compatibleCore",
+          "id": "translation.check-rust-runtime-shell-core"
+        },
+        {
+          "name": "renderTokens",
+          "id": "translation.render-rust-runtime-shell-tokens"
+        }
+      ],
+      "rust/src/translation/runtime_shell.rs": [
+        {
+          "name": "validate_records",
+          "id": "translation.check-rust-runtime-shell"
+        },
+        {
+          "name": "validate_program",
+          "id": "translation.check-rust-runtime-shell"
+        },
+        {
+          "name": "capture_program",
+          "id": "translation.capture-rust-runtime-shell"
+        },
+        {
+          "name": "parse_source",
+          "id": "translation.parse-rust-runtime-shell-source"
+        },
+        {
+          "name": "bounded",
+          "id": "translation.check-rust-runtime-shell-data"
+        },
+        {
+          "name": "fields",
+          "id": "translation.check-rust-runtime-shell-record-fields"
+        },
+        {
+          "name": "source_interval",
+          "id": "translation.check-rust-runtime-shell-source-interval"
+        },
+        {
+          "name": "assumptions",
+          "id": "translation.create-rust-runtime-shell-operation-assumptions"
+        },
+        {
+          "name": "tokens",
+          "id": "translation.check-rust-runtime-shell-tokens"
+        },
+        {
+          "name": "policy",
+          "id": "translation.read-rust-runtime-shell-policy"
+        },
+        {
+          "name": "fail",
+          "id": "translation.create-rust-runtime-shell-proof-error"
+        },
+        {
+          "name": "position",
+          "id": "translation.read-rust-runtime-shell-position"
+        },
+        {
+          "name": "role",
+          "id": "translation.check-rust-runtime-shell-policy-fields"
+        },
+        {
+          "name": "identifier",
+          "id": "translation.accept-rust-runtime-shell-identifier"
+        },
+        {
+          "name": "operation_path",
+          "id": "translation.find-rust-runtime-shell-operation-path"
+        },
+        {
+          "name": "normalize_core",
+          "id": "translation.normalize-rust-runtime-shell-core-view"
+        }
+      ],
+      "js/src/translation/rust-runtime-shell-parser.js": [
+        {
+          "name": "parseRustRuntimeShell",
+          "id": "translation.parse-rust-runtime-shell-source"
+        },
+        {
+          "name": "readRustRuntimeShellSyntax",
+          "id": "translation.read-rust-runtime-shell-syntax"
+        },
+        {
+          "name": "ordinary",
+          "id": "translation.accept-rust-runtime-shell-name"
+        },
+        {
+          "name": "take",
+          "id": "translation.take-rust-runtime-shell-token"
+        },
+        {
+          "name": "literal",
+          "id": "translation.read-rust-runtime-shell-literal"
+        },
+        {
+          "name": "bind",
+          "id": "translation.bind-rust-runtime-shell-name"
+        },
+        {
+          "name": "reference",
+          "id": "translation.read-rust-runtime-shell-binding-reference"
+        },
+        {
+          "name": "helperReference",
+          "id": "translation.read-rust-runtime-shell-helper-reference"
+        },
+        {
+          "name": "match",
+          "id": "translation.match-rust-runtime-shell-pattern"
+        },
+        {
+          "name": "nodes",
+          "id": "translation.find-rust-runtime-shell-operation-nodes"
+        },
+        {
+          "name": "single",
+          "id": "translation.require-rust-runtime-shell-single-operation"
+        },
+        {
+          "name": "range",
+          "id": "translation.read-rust-runtime-shell-source-range"
+        }
+      ],
+      "rust/src/translation/runtime_shell/parser.rs": [
+        {
+          "name": "read_syntax",
+          "id": "translation.read-rust-runtime-shell-syntax"
+        },
+        {
+          "name": "token_name",
+          "id": "translation.read-rust-runtime-shell-token-name"
+        },
+        {
+          "name": "ordinary",
+          "id": "translation.accept-rust-runtime-shell-name"
+        },
+        {
+          "name": "take",
+          "id": "translation.take-rust-runtime-shell-token"
+        },
+        {
+          "name": "match_pattern",
+          "id": "translation.match-rust-runtime-shell-pattern"
+        },
+        {
+          "name": "nodes",
+          "id": "translation.find-rust-runtime-shell-operation-nodes"
+        },
+        {
+          "name": "single",
+          "id": "translation.require-rust-runtime-shell-single-operation"
+        },
+        {
+          "name": "range",
+          "id": "translation.read-rust-runtime-shell-source-range"
+        },
+        {
+          "name": "source_fail",
+          "id": "translation.create-rust-runtime-shell-source-error"
+        },
+        {
+          "name": "token",
+          "id": "translation.read-rust-runtime-shell-referenced-token"
+        }
+      ],
+      "rust/src/translation/runtime_shell/emission.rs": [
+        {
+          "name": "record_assumptions",
+          "id": "translation.record-rust-runtime-shell-assumptions"
+        },
+        {
+          "name": "emit_rust",
+          "id": "translation.emit-rust-runtime-shell"
+        },
+        {
+          "name": "render",
+          "id": "translation.render-rust-runtime-shell-tokens"
+        }
+      ],
+      "rust/src/typed_program_links/codec_runtime_shell.rs": [
+        {
+          "name": "reference_path",
+          "id": "translation.read-rust-runtime-shell-reference-path"
+        },
+        {
+          "name": "operation",
+          "id": "translation.project-rust-runtime-shell-operation-graph"
+        },
+        {
+          "name": "normalize",
+          "id": "translation.normalize-rust-runtime-shell-reference-graph"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "closed Rust runtime shell emission assumptions",
+    "files": {
+      "rust/src/translation/runtime_shell/emission.rs": [
+        {
+          "name": "assumptions",
+          "id": "translation.create-rust-runtime-shell-emission-assumptions"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "closed Rust runtime shell recursive data visitor",
+    "files": {
+      "js/src/translation/rust-runtime-shell.js": [
+        {
+          "name": "visit",
+          "id": "translation.walk-rust-runtime-shell-owned-data"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "closed Rust runtime shell recursive operation visitor",
+    "files": {
+      "rust/src/translation/runtime_shell.rs": [
+        {
+          "name": "visit",
+          "id": "translation.walk-rust-runtime-shell-operation-paths"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "closed Rust runtime shell recursive rendering visitor",
+    "files": {
+      "rust/src/translation/runtime_shell/emission.rs": [
+        {
+          "name": "collect",
+          "id": "translation.collect-rust-runtime-shell-render-token-positions"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "closed Rust runtime shell policy",
+    "files": {
+      "js/src/translation/rust-runtime-shell.js": [
+        {
+          "name": "RUST_RUNTIME_SHELL_POLICY",
+          "id": "translation.rust-runtime-shell-policy"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "closed Rust runtime shell model options",
+    "files": {
+      "js/src/translation/rust.js": [
+        {
+          "name": "runtimeShellModel",
+          "id": "translation.rust-runtime-shell-model-option"
+        }
+      ],
+      "js/src/typed-program-links.js": [
+        {
+          "name": "rustRuntimeShellModel",
+          "id": "translation.typed-program-rust-runtime-shell-model-option"
+        }
+      ],
+      "js/src/index.d.ts": [
+        {
+          "name": "rustRuntimeShellModel",
+          "id": "translation.typed-program-rust-runtime-shell-model-option"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "closed Rust runtime shell source facets",
+    "files": {
+      "js/src/translation/rust-runtime-shell.js": [
+        {
+          "name": "sourceRuntimeShell",
+          "id": "translation.program-source-runtime-shell-field"
+        },
+        {
+          "name": "sourceRuntimeWorker",
+          "id": "translation.main-source-runtime-worker-field"
+        }
+      ],
+      "rust/src/translation/ir.rs": [
+        {
+          "name": "source_runtime_shell",
+          "id": "translation.program-source-runtime-shell-field"
+        },
+        {
+          "name": "source_runtime_worker",
+          "id": "translation.main-source-runtime-worker-field"
+        }
+      ],
+      "rust/src/translation/surface.rs": [
+        {
+          "name": "source_runtime_shell",
+          "id": "translation.program-source-runtime-shell-field"
+        },
+        {
+          "name": "source_runtime_worker",
+          "id": "translation.main-source-runtime-worker-field"
+        }
+      ],
+      "rust/src/translation/runtime_shell.rs": [
+        {
+          "name": "sourceRuntimeShell",
+          "id": "translation.program-source-runtime-shell-field"
+        },
+        {
+          "name": "sourceRuntimeWorker",
+          "id": "translation.main-source-runtime-worker-field"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "closed Rust runtime shell graph relation roles",
+    "files": {
+      "js/src/translation/rust-runtime-shell.js": [
+        {
+          "name": "observationModel",
+          "id": "translation.runtime-observation-model-field"
+        },
+        {
+          "name": "tokens",
+          "id": "translation.runtime-source-token-list-field"
+        },
+        {
+          "name": "operations",
+          "id": "translation.runtime-source-operation-root-field"
+        },
+        {
+          "name": "operationNode",
+          "id": "translation.runtime-assumption-operation-reference-field"
+        },
+        {
+          "name": "declaration",
+          "id": "translation.runtime-token-declaration-reference-field"
+        },
+        {
+          "name": "binding",
+          "id": "translation.runtime-token-binding-reference-field"
+        },
+        {
+          "name": "alias",
+          "id": "translation.runtime-source-occurrence-alias-field"
+        },
+        {
+          "name": "parts",
+          "id": "translation.runtime-operation-part-list-field"
+        }
+      ],
+      "rust/src/translation/runtime_shell.rs": [
+        {
+          "name": "observationModel",
+          "id": "translation.runtime-observation-model-field"
+        },
+        {
+          "name": "tokens",
+          "id": "translation.runtime-source-token-list-field"
+        },
+        {
+          "name": "operations",
+          "id": "translation.runtime-source-operation-root-field"
+        },
+        {
+          "name": "operationNode",
+          "id": "translation.runtime-assumption-operation-reference-field"
+        },
+        {
+          "name": "declaration",
+          "id": "translation.runtime-token-declaration-reference-field"
+        },
+        {
+          "name": "binding",
+          "id": "translation.runtime-token-binding-reference-field"
+        },
+        {
+          "name": "alias",
+          "id": "translation.runtime-source-occurrence-alias-field"
+        },
+        {
+          "name": "parts",
+          "id": "translation.runtime-operation-part-list-field"
+        }
+      ],
+      "rust/src/typed_program_links/codec_runtime_shell.rs": [
+        {
+          "name": "tokens",
+          "id": "translation.runtime-source-token-list-field"
+        },
+        {
+          "name": "operations",
+          "id": "translation.runtime-source-operation-root-field"
+        },
+        {
+          "name": "operationNode",
+          "id": "translation.runtime-assumption-operation-reference-field"
+        },
+        {
+          "name": "declaration",
+          "id": "translation.runtime-token-declaration-reference-field"
+        },
+        {
+          "name": "binding",
+          "id": "translation.runtime-token-binding-reference-field"
+        },
+        {
+          "name": "parts",
+          "id": "translation.runtime-operation-part-list-field"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "closed Rust runtime shell private graph adapter roles",
+    "files": {
+      "rust/src/typed_program_links/codec_runtime_shell.rs": [
+        {
+          "name": "declarationPosition",
+          "id": "translation.runtime-private-declaration-position-field"
+        },
+        {
+          "name": "tokenPosition",
+          "id": "translation.runtime-private-token-position-field"
+        },
+        {
+          "name": "bindingPosition",
+          "id": "translation.runtime-private-binding-position-field"
+        },
+        {
+          "name": "operationPosition",
+          "id": "translation.runtime-private-operation-position-field"
+        }
+      ],
+      "rust/src/translation/runtime_shell.rs": [
+        {
+          "name": "declarationPosition",
+          "id": "translation.runtime-private-declaration-position-field"
+        },
+        {
+          "name": "bindingPosition",
+          "id": "translation.runtime-private-binding-position-field"
+        },
+        {
+          "name": "operationPosition",
+          "id": "translation.runtime-private-operation-position-field"
+        }
+      ],
+      "rust/src/translation/runtime_shell/parser.rs": [
+        {
+          "name": "declarationPosition",
+          "id": "translation.runtime-private-declaration-position-field"
+        },
+        {
+          "name": "tokenPosition",
+          "id": "translation.runtime-private-token-position-field"
+        },
+        {
+          "name": "bindingPosition",
+          "id": "translation.runtime-private-binding-position-field"
+        }
+      ],
+      "rust/src/translation/runtime_shell/emission.rs": [
+        {
+          "name": "tokenPosition",
+          "id": "translation.runtime-private-token-position-field"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "closed Rust runtime shell parser entities",
+    "files": {
+      "rust/src/translation/runtime_shell/parser.rs": [
+        {
+          "name": "Helper",
+          "id": "translation.rust-runtime-shell-owned-helper"
+        },
+        {
+          "name": "Parsed",
+          "id": "translation.rust-runtime-shell-parsed-graph"
+        },
+        {
+          "name": "Cursor",
+          "id": "translation.rust-runtime-shell-token-cursor"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "closed Rust runtime shell codec entities",
+    "files": {
+      "rust/src/typed_program_links/codec_runtime_shell.rs": [
+        {
+          "name": "Graph",
+          "id": "translation.rust-runtime-shell-owned-graph-decoder"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "closed Rust runtime shell linked operation meanings",
+    "files": {
+      "js/src/translation/data/rust-runtime-shell.lino": [
+        {
+          "name": "inert runtime lint attribute",
+          "id": "translation.runtime-inert-runtime-lint-attribute"
+        },
+        {
+          "name": "owned public Unit helper",
+          "id": "translation.runtime-owned-public-unit-helper"
+        },
+        {
+          "name": "pure Unit helper value",
+          "id": "translation.runtime-pure-unit-helper-value"
+        },
+        {
+          "name": "owned Unit call binding",
+          "id": "translation.runtime-owned-unit-call-binding"
+        },
+        {
+          "name": "owned Unit invocation",
+          "id": "translation.runtime-owned-unit-invocation"
+        },
+        {
+          "name": "owned Unit worker definition",
+          "id": "translation.runtime-owned-unit-worker-definition"
+        },
+        {
+          "name": "ordered owned Unit worker calls",
+          "id": "translation.runtime-ordered-owned-unit-worker-calls"
+        },
+        {
+          "name": "complete standard runtime entry",
+          "id": "translation.runtime-complete-standard-runtime-entry"
+        },
+        {
+          "name": "unused Boolean argument scan",
+          "id": "translation.runtime-unused-boolean-argument-scan"
+        },
+        {
+          "name": "standard argument existence test",
+          "id": "translation.runtime-standard-argument-existence-test"
+        },
+        {
+          "name": "standard argument iteration",
+          "id": "translation.runtime-standard-argument-iteration"
+        },
+        {
+          "name": "standard argument owner",
+          "id": "translation.runtime-standard-argument-owner"
+        },
+        {
+          "name": "closed argument predicate",
+          "id": "translation.runtime-closed-argument-predicate"
+        },
+        {
+          "name": "standard argument flag comparison",
+          "id": "translation.runtime-standard-argument-flag-comparison"
+        },
+        {
+          "name": "owned thread handle binding",
+          "id": "translation.runtime-owned-thread-handle-binding"
+        },
+        {
+          "name": "standard thread builder construction",
+          "id": "translation.runtime-standard-thread-builder-construction"
+        },
+        {
+          "name": "standard thread builder owner",
+          "id": "translation.runtime-standard-thread-builder-owner"
+        },
+        {
+          "name": "bounded stack size request",
+          "id": "translation.runtime-bounded-stack-size-request"
+        },
+        {
+          "name": "unsigned stack size shift",
+          "id": "translation.runtime-unsigned-stack-size-shift"
+        },
+        {
+          "name": "standard Unit thread spawn",
+          "id": "translation.runtime-standard-unit-thread-spawn"
+        },
+        {
+          "name": "closed moved Unit worker",
+          "id": "translation.runtime-closed-moved-unit-worker"
+        },
+        {
+          "name": "owned worker invocation",
+          "id": "translation.runtime-owned-worker-invocation"
+        },
+        {
+          "name": "standard thread success requirement",
+          "id": "translation.runtime-standard-thread-success-requirement"
+        },
+        {
+          "name": "retained worker failure branch",
+          "id": "translation.runtime-retained-worker-failure-branch"
+        },
+        {
+          "name": "standard worker failure predicate",
+          "id": "translation.runtime-standard-worker-failure-predicate"
+        },
+        {
+          "name": "standard worker join",
+          "id": "translation.runtime-standard-worker-join"
+        },
+        {
+          "name": "standard worker failure exit",
+          "id": "translation.runtime-standard-worker-failure-exit"
+        },
+        {
+          "name": "standard exit owner",
+          "id": "translation.runtime-standard-exit-owner"
+        },
+        {
+          "name": "complete closed Rust runtime crate",
+          "id": "translation.runtime-complete-closed-rust-runtime-crate"
+        },
+        {
+          "name": "ordered owned helper declarations",
+          "id": "translation.runtime-ordered-owned-helper-declarations"
+        }
+      ],
+      "rust/src/data/rust-runtime-shell.lino": [
+        {
+          "name": "inert runtime lint attribute",
+          "id": "translation.runtime-inert-runtime-lint-attribute"
+        },
+        {
+          "name": "owned public Unit helper",
+          "id": "translation.runtime-owned-public-unit-helper"
+        },
+        {
+          "name": "pure Unit helper value",
+          "id": "translation.runtime-pure-unit-helper-value"
+        },
+        {
+          "name": "owned Unit call binding",
+          "id": "translation.runtime-owned-unit-call-binding"
+        },
+        {
+          "name": "owned Unit invocation",
+          "id": "translation.runtime-owned-unit-invocation"
+        },
+        {
+          "name": "owned Unit worker definition",
+          "id": "translation.runtime-owned-unit-worker-definition"
+        },
+        {
+          "name": "ordered owned Unit worker calls",
+          "id": "translation.runtime-ordered-owned-unit-worker-calls"
+        },
+        {
+          "name": "complete standard runtime entry",
+          "id": "translation.runtime-complete-standard-runtime-entry"
+        },
+        {
+          "name": "unused Boolean argument scan",
+          "id": "translation.runtime-unused-boolean-argument-scan"
+        },
+        {
+          "name": "standard argument existence test",
+          "id": "translation.runtime-standard-argument-existence-test"
+        },
+        {
+          "name": "standard argument iteration",
+          "id": "translation.runtime-standard-argument-iteration"
+        },
+        {
+          "name": "standard argument owner",
+          "id": "translation.runtime-standard-argument-owner"
+        },
+        {
+          "name": "closed argument predicate",
+          "id": "translation.runtime-closed-argument-predicate"
+        },
+        {
+          "name": "standard argument flag comparison",
+          "id": "translation.runtime-standard-argument-flag-comparison"
+        },
+        {
+          "name": "owned thread handle binding",
+          "id": "translation.runtime-owned-thread-handle-binding"
+        },
+        {
+          "name": "standard thread builder construction",
+          "id": "translation.runtime-standard-thread-builder-construction"
+        },
+        {
+          "name": "standard thread builder owner",
+          "id": "translation.runtime-standard-thread-builder-owner"
+        },
+        {
+          "name": "bounded stack size request",
+          "id": "translation.runtime-bounded-stack-size-request"
+        },
+        {
+          "name": "unsigned stack size shift",
+          "id": "translation.runtime-unsigned-stack-size-shift"
+        },
+        {
+          "name": "standard Unit thread spawn",
+          "id": "translation.runtime-standard-unit-thread-spawn"
+        },
+        {
+          "name": "closed moved Unit worker",
+          "id": "translation.runtime-closed-moved-unit-worker"
+        },
+        {
+          "name": "owned worker invocation",
+          "id": "translation.runtime-owned-worker-invocation"
+        },
+        {
+          "name": "standard thread success requirement",
+          "id": "translation.runtime-standard-thread-success-requirement"
+        },
+        {
+          "name": "retained worker failure branch",
+          "id": "translation.runtime-retained-worker-failure-branch"
+        },
+        {
+          "name": "standard worker failure predicate",
+          "id": "translation.runtime-standard-worker-failure-predicate"
+        },
+        {
+          "name": "standard worker join",
+          "id": "translation.runtime-standard-worker-join"
+        },
+        {
+          "name": "standard worker failure exit",
+          "id": "translation.runtime-standard-worker-failure-exit"
+        },
+        {
+          "name": "standard exit owner",
+          "id": "translation.runtime-standard-exit-owner"
+        },
+        {
+          "name": "complete closed Rust runtime crate",
+          "id": "translation.runtime-complete-closed-rust-runtime-crate"
+        },
+        {
+          "name": "ordered owned helper declarations",
+          "id": "translation.runtime-ordered-owned-helper-declarations"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "closed Rust runtime shell fixture model",
+    "files": {
+      "js/scripts/generate-rust-runtime-shell-fixtures.mjs": [
+        {
+          "name": "RUST_RUNTIME_SHELL_MODEL",
+          "id": "repository.rust-runtime-shell-fixture-model"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "closed Rust runtime shell fixture operations",
+    "files": {
+      "js/scripts/generate-rust-runtime-shell-fixtures.mjs": [
+        {
+          "name": "rustRuntimeShellFixture",
+          "id": "repository.create-rust-runtime-shell-fixture"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "closed Rust runtime shell test operations",
+    "files": {
+      "rust/tests/unit/translation_rust_runtime_shell.rs": [
+        {
+          "name": "fixture",
+          "id": "repository.read-rust-runtime-shell-fixture"
+        },
+        {
+          "name": "example",
+          "id": "repository.create-rust-runtime-shell-example"
+        },
+        {
+          "name": "execute_javascript",
+          "id": "repository.execute-rust-runtime-shell-javascript"
+        },
+        {
+          "name": "observe_in_javascript",
+          "id": "repository.observe-rust-runtime-shell-public-packet"
+        },
+        {
+          "name": "reject",
+          "id": "repository.require-rust-runtime-shell-refusal"
+        },
+        {
+          "name": "archive",
+          "id": "repository.save-rust-runtime-shell-test-archive"
+        },
+        {
+          "name": "checked",
+          "id": "repository.read-rust-runtime-shell-checked-program"
+        },
+        {
+          "name": "calls",
+          "id": "repository.read-rust-runtime-shell-test-calls"
+        },
+        {
+          "name": "javascript_packet",
+          "id": "repository.create-rust-runtime-shell-javascript-packet"
+        },
+        {
+          "name": "javascript_refusal",
+          "id": "repository.read-rust-runtime-shell-javascript-refusal"
+        },
+        {
+          "name": "compile_actual_artifact",
+          "id": "repository.compile-rust-runtime-shell-test-artifact"
+        },
+        {
+          "name": "field",
+          "id": "repository.read-rust-runtime-shell-test-field"
+        },
+        {
+          "name": "replace",
+          "id": "repository.replace-rust-runtime-shell-test-field"
+        },
+        {
+          "name": "scalar",
+          "id": "repository.create-rust-runtime-shell-test-scalar"
+        },
+        {
+          "name": "clone_record",
+          "id": "repository.clone-rust-runtime-shell-test-record"
+        },
+        {
+          "name": "api",
+          "id": "repository.read-rust-runtime-shell-test-programming-interface-path"
+        }
+      ],
+      "js/tests/translation-rust-runtime-shell.test.js": [
+        {
+          "name": "example",
+          "id": "repository.create-rust-runtime-shell-example"
+        },
+        {
+          "name": "execute",
+          "id": "repository.execute-rust-runtime-shell-javascript"
+        },
+        {
+          "name": "observe",
+          "id": "repository.observe-rust-runtime-shell-public-packet"
+        },
+        {
+          "name": "operations",
+          "id": "repository.find-rust-runtime-shell-test-operations"
+        },
+        {
+          "name": "assertRefused",
+          "id": "repository.require-rust-runtime-shell-refusal"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "closed Rust runtime shell public consumer operations",
+    "files": {
+      "js/tests/translation-runtime-shell-public-declaration-contracts.test.js": [
+        {
+          "name": "runConsumer",
+          "id": "repository.run-rust-runtime-shell-public-consumer"
+        },
+        {
+          "name": "executeWholeJavaScript",
+          "id": "repository.execute-whole-runtime-consumer-javascript"
+        },
+        {
+          "name": "readOwnedRuntimeOperations",
+          "id": "repository.read-owned-runtime-consumer-operations"
+        },
+        {
+          "name": "checkRuntimeEvidence",
+          "id": "repository.check-runtime-consumer-evidence"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "closed Rust runtime shell factory locations",
+    "files": {
+      "rust/src/translation/rust/source_profiles.rs": [
+        {
+          "name": "parse_rust_with_runtime_shell_model",
+          "id": "translation.parse-rust-source-models"
+        }
+      ],
+      "rust/src/typed_program_links.rs": [
+        {
+          "name": "create_typed_program_links_with_rust_runtime_shell_model",
+          "id": "translation.create-typed-program-links"
+        }
+      ],
+      "rust/src/lib.rs": [
+        {
+          "name": "create_typed_program_links_with_rust_runtime_shell_model",
+          "id": "translation.create-typed-program-links"
+        }
+      ]
+    }
+  }
+];
+const normalizeRuntimeShellName=name=>name.replace(/([a-z])([A-Z])/gu,'$1-$2').replaceAll('_','-').replaceAll(' ','-').toLowerCase().replace(/^api$/u,'programming-interface');
+const RUNTIME_SHELL_NAME_INVENTORIES=RUNTIME_SHELL_NAME_BINDINGS.map(({inventory,files})=>({
+ inventory,files:Object.keys(files),
+ extract:(raw,file)=>{const text=file.endsWith('.lino')?decodeURIComponent(raw):raw;return files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeRuntimeShellName(name));},
+ recordOf:name=>Object.values(files).flat().find(entry=>normalizeRuntimeShellName(entry.name)===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
