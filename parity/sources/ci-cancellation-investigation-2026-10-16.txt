@@ -1,0 +1,3 @@
+<send_user_message_question_reply>
+[{"answer":"No, investigate the workflow","question":"Did you cancel CI run 38431880453? GitHub reports cancellation during a fixture check, with no newer run replacing it. I’m continuing the next draft while investigating the cause.","questionItemId":"[\"request_user_input_async\",\"call_EGHrtFYIa3mF6jAGTGIAbkdO\",0]"}]
+</send_user_message_question_reply>

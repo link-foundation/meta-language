@@ -14,6 +14,7 @@ const externalGrammarIgnoreSource = capture('ignored-external-grammar-folders');
 const associativeDataSource = capture('associative-data-storage');
 const agentReductionSource = capture('gradual-agent-reduction');
 const localResourceScopeSource = 'parity/sources/meta-language-local-resource-scope-2026-10-16.txt';
+const ciCancellationInvestigationSource = 'parity/sources/ci-cancellation-investigation-2026-10-16.txt';
 const inferenceSource = 'parity/sources/grammar-inference-issue-224.txt';
 
 const sourceTooling = {
@@ -100,6 +101,11 @@ function rows(sourceKey, fixture, specification, area, declarations, tooling = f
 }
 
 export const CRITICAL_CONVERSATION_REQUIREMENTS = Object.freeze([
+  ...rows('ciCancellationInvestigationRequest', ciCancellationInvestigationSource, 'critical-conversation-requirements', 'workflow-contract', [
+    ['I195-WORKFLOW-CANCELLED-CI-INVESTIGATION', 'evidence-based investigation of the reported CI run cancellation',
+      'The reported cancellation of CI run 38431880453 is investigated using actual workflow, job or check-run evidence and the relevant workflow configuration. Its cause and supporting evidence are recorded rather than assuming the user cancelled it. The investigation preserves the existing CI follow-through and repair requirements.',
+      ['cancelledWorkflowInvestigated', 'cancellationCauseSupportedByActualWorkflowEvidence']],
+  ], true),
   ...rows('localResourceScopeRequest', localResourceScopeSource, 'critical-conversation-requirements', 'workflow-contract', [
     ['I195-LOCAL-RESOURCE-PROJECT-OWNED-CLEANUP', 'cleanup limited to disk space owned by this meta-language task',
       'Cleanup performed for this task removes only disk space demonstrably owned by meta-language work. Unrelated user files, other projects and system data remain untouched; recovering disk space does not authorize broader deletion.',
