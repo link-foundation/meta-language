@@ -50,6 +50,12 @@ matches and bijective bound-name variants may reuse their validated prior
 correction, while changed declarations receive fresh structural library
 styles. Introduced bindings cannot capture current names; a locally constructed
 header may be borrowed only by the actual checked slice parameter.
+The conservative mapper also keeps qualified callees distinct from local
+bindings, requires the actual generated sibling path for header calls, and
+checks unary-condition and negative-receiver grouping before reusing shared
+spelling operations. Regression controls retain each independently reproduced
+counterexample; the Boolean branch case runs all four inputs through the
+actual Rust frontend and JavaScript emission.
 
 `native-policy.lino` selects the established checked-program UTF-16 String
 flag as an explicit **native generation input**. This experiment does not
