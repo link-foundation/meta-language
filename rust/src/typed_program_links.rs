@@ -22,6 +22,7 @@ use std::sync::OnceLock;
 
 mod checked;
 mod codec;
+pub mod program_numeric_metadata;
 pub mod program_numeric_metadata_rules;
 mod projection;
 pub mod source_span_rules;

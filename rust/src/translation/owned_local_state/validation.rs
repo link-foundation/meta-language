@@ -56,6 +56,14 @@ pub(super) fn validate(program: &Value, ordered: bool) -> Result<()> {
 }
 
 fn validate_entry(entry: &Value, ordered: bool) -> Result<()> {
+    // Dynamic proof types retain their original Number and property order.
+    // Read only a private fixed-width comparison view before typed serde.
+    let mut view = entry.clone();
+    crate::typed_program_links::program_numeric_metadata::normalize_program_integral_metadata(
+        &mut view,
+    )
+    .map_err(|failure| fail(&failure.to_string()))?;
+    let entry = &view;
     let policy = policy();
     if !allowed(entry, &policy["declarationFields"]) {
         return Err(fail("a function has unrepresented own fields"));

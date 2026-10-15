@@ -6,6 +6,8 @@ import {acceptProgramIntegralMetadata} from '../js/src/program-numeric-metadata-
 import {numericMetadataArchive,numericMetadataFixture} from './generate-program-numeric-metadata-fixture.mjs';
 import {createTypedProgramLinks,decodeTypedProgramLinks,encodeTypedProgramLinks,emitTypedProgramLinks} from '../js/src/typed-program-links.js';
 import {LinkNetwork} from '../js/src/network.js';
+import {emitJavaScript} from '../js/src/translation/emit-javascript.js';
+import {emitRust} from '../js/src/translation/emit-rust.js';
 
 const fixture=readProjectData(new URL('./program-numeric-metadata-fixture.lino',import.meta.url));
 test('the generated fixed metadata role admits exactly the existing supported widths',()=>{
@@ -34,4 +36,36 @@ test('primitive negative zero and nonintegral floating values retain their execu
  const emitted=emitTypedProgramLinks(rebuilt.network,rebuilt.root,'JavaScript').code,context={console:{log(){}}};vm.createContext(context);vm.runInContext(emitted,context,{timeout:1000});
  assert.equal(vm.runInContext('Object.is(keep(-0),-0)',context),true);assert.equal(vm.runInContext('keep(1.25)',context),1.25);
  assert.equal(packet.network.toLino(),before);assert.equal(emitTypedProgramLinks(packet.network,packet.root,'JavaScript').code,emitted);
+});
+
+test('direct owned proof Number widths retain the complete program across public validation, encoding and both emitters',()=>{
+ const originals=readProjectData(new URL('./rust-owned-local-state-fixture.lino',import.meta.url));
+ for(const entry of originals.cases){
+  const baseline=decodeTypedProgramLinks(LinkNetwork.fromLino(entry.links),entry.root);
+  for(const nested of[false,true]){
+   const program=structuredClone(baseline),proof=program.items[0].sourceLocalState;
+   const binding=proof.bindings.find(binding=>binding.type.kind===(nested?'tuple':'fixed'));assert.ok(binding,entry.name);
+   const type=nested?binding.type.elements[1]:binding.type;type.bits=Number('32.0');
+   program.items[0].sourceSignature.parameters.find(position=>position.type.kind==='fixed').type.bits=Number('3.2e1');
+   const before=structuredClone(program),archive=encodeTypedProgramLinks(program);
+   assert.deepEqual(program,before);assert.deepEqual(decodeTypedProgramLinks(LinkNetwork.fromLino(archive.network.toLino()),archive.root),baseline);
+   assert.equal(emitJavaScript(program).code,emitJavaScript(baseline).code);assert.equal(emitRust(program).code,emitRust(baseline).code);
+  }
+ }
+});
+
+test('direct owned proof width aliases preserve strict malformed type and ordered owner refusals',()=>{
+ const original=readProjectData(new URL('./rust-owned-local-state-fixture.lino',import.meta.url)).cases[0];
+ const baseline=decodeTypedProgramLinks(LinkNetwork.fromLino(original.links),original.root);
+ for(const bits of[null,-0,16,32.5,-32,'32',true,Number.MAX_SAFE_INTEGER+1]){
+  const program=structuredClone(baseline),binding=program.items[0].sourceLocalState.bindings.find(binding=>binding.type.kind==='fixed');binding.type.bits=bits;
+  assert.throws(()=>encodeTypedProgramLinks(program));assert.throws(()=>emitJavaScript(program));
+ }
+ for(const mutate of[
+  proof=>{proof.bindings.find(binding=>binding.type.kind==='fixed').type.unknown=null;},
+  proof=>{proof.interpretation=Object.fromEntries(Object.entries(proof.interpretation).reverse());}
+ ]){
+  const program=structuredClone(baseline),proof=program.items[0].sourceLocalState;proof.bindings.find(binding=>binding.type.kind==='fixed').type.bits=Number('32.0');mutate(proof);
+  assert.throws(()=>encodeTypedProgramLinks(program));assert.throws(()=>emitJavaScript(program));
+ }
 });

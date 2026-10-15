@@ -1,5 +1,8 @@
 //! Raw integral metadata aliases use the actual Links decoder. Native runs in CI.
 use super::issue_195_translation_pairs::{TemporaryDirectory, run};
+use meta_language::translation::emit_javascript::emit_javascript;
+use meta_language::translation::emit_rust::emit_rust;
+use meta_language::translation::ir::{Decl, Program};
 use meta_language::{
     BinaryLinksOptions, LinkId, LinkNetwork, decode_link_network_binary,
     decode_typed_program_links, emit_typed_program_links, encode_link_network_binary,
@@ -82,6 +85,24 @@ fn occurrence_position(
     function.source_local_state.as_ref().unwrap()["reads"][read]["path"][part]
         .as_f64()
         .unwrap()
+}
+
+fn proof_type(program: &mut Program, nested: bool) -> &mut Value {
+    let Decl::Fn(function) = &mut program.declarations[0] else {
+        unreachable!()
+    };
+    let kind = if nested { "tuple" } else { "fixed" };
+    let binding = function.source_local_state.as_mut().unwrap()["bindings"]
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .find(|binding| binding["type"]["kind"] == kind)
+        .unwrap();
+    if nested {
+        &mut binding["type"]["elements"][1]
+    } else {
+        &mut binding["type"]
+    }
 }
 
 #[test]
@@ -212,4 +233,113 @@ fn actual_owned_occurrence_positions_keep_numeric_meaning_and_stored_zero_sign()
         }
     }
     assert_eq!(aliases, 25);
+}
+
+#[test]
+fn direct_program_dynamic_proof_widths_keep_original_values_and_archive_execution() {
+    let fixture = meta_language::read_structured_data_lino(include_str!(
+        "../../../experiments/rust-owned-local-state-fixture.lino"
+    ))
+    .unwrap();
+    let mut cases = 0;
+    for original in fixture["cases"].as_array().unwrap() {
+        let entry = json!({"archive": original["links"], "root": original["root"],
+            "name": original["name"], "observations": original["observations"]});
+        let (network, root) = archive(&entry, None);
+        let baseline = decode_typed_program_links(&network, root).unwrap();
+        for nested in [false, true] {
+            let mut program = baseline.clone();
+            proof_type(&mut program, nested)["bits"] = json!(32.0);
+            let before = serde_json::to_string(&program).unwrap();
+            assert_eq!(
+                emit_javascript(&program).unwrap().text,
+                emit_javascript(&baseline).unwrap().text
+            );
+            assert_eq!(
+                emit_rust(&program).unwrap().text,
+                emit_rust(&baseline).unwrap().text
+            );
+            let packet = encode_typed_program_links(&program).unwrap();
+            assert_eq!(serde_json::to_string(&program).unwrap(), before);
+            assert_eq!(proof_type(&mut program, nested)["bits"].as_u64(), None);
+            assert!(
+                packet
+                    .network
+                    .links()
+                    .any(|link| link.metadata().term() == Some("number value")
+                        && link.metadata().definition() == Some("32.0"))
+            );
+            let bytes =
+                encode_link_network_binary(&packet.network, BinaryLinksOptions::default()).unwrap();
+            let binary = decode_link_network_binary(&bytes, BinaryLinksOptions::default()).unwrap();
+            for network in [&packet.network, &binary] {
+                assert_eq!(
+                    decode_typed_program_links(network, packet.root).unwrap(),
+                    baseline
+                );
+                for target in ["Rust", "JavaScript"] {
+                    assert_eq!(
+                        emit_typed_program_links(network, packet.root, target)
+                            .unwrap()
+                            .code,
+                        emit_typed_program_links(&packet.network, packet.root, target)
+                            .unwrap()
+                            .code
+                    );
+                }
+            }
+            javascript_archive(&packet.network, packet.root, &entry);
+            cases += 1;
+        }
+    }
+    assert_eq!(cases, 10);
+}
+
+#[test]
+fn direct_dynamic_width_views_keep_unknown_null_and_order_refusals() {
+    let fixture = meta_language::read_structured_data_lino(include_str!(
+        "../../../experiments/rust-owned-local-state-fixture.lino"
+    ))
+    .unwrap();
+    let first = &fixture["cases"][0];
+    let entry = json!({"archive": first["links"], "root": first["root"]});
+    let (network, root) = archive(&entry, None);
+    let baseline = decode_typed_program_links(&network, root).unwrap();
+    for bits in [
+        Value::Null,
+        json!(-0.0),
+        json!(16),
+        json!(32.5),
+        json!(-32),
+        json!("32"),
+        json!(true),
+        json!(9_007_199_254_740_992_u64),
+    ] {
+        let mut program = baseline.clone();
+        proof_type(&mut program, false)["bits"] = bits;
+        assert!(encode_typed_program_links(&program).is_err());
+        assert!(emit_javascript(&program).is_err());
+    }
+    for reverse_order in [false, true] {
+        let mut program = baseline.clone();
+        proof_type(&mut program, false)["bits"] = json!(32.0);
+        if reverse_order {
+            let Decl::Fn(function) = &mut program.declarations[0] else {
+                unreachable!()
+            };
+            let proof = function.source_local_state.as_mut().unwrap();
+            let entries = proof["interpretation"]
+                .as_object()
+                .unwrap()
+                .iter()
+                .rev()
+                .map(|(name, value)| (name.clone(), value.clone()))
+                .collect();
+            proof["interpretation"] = Value::Object(entries);
+        } else {
+            proof_type(&mut program, false)["unknown"] = Value::Null;
+        }
+        assert!(encode_typed_program_links(&program).is_err());
+        assert!(emit_javascript(&program).is_err());
+    }
 }
