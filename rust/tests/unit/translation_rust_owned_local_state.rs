@@ -410,6 +410,36 @@ fn source_free_owned_state_edits_and_raw_unknown_expression_fields_refuse() {
         }
         assert!(encode_typed_program_links(&actual).is_err(), "edit {edit}");
     }
+    let mut numeric = program(case, false);
+    let Decl::Fn(function) = &mut numeric.declarations[0] else {
+        unreachable!()
+    };
+    let proof = function.source_local_state.as_mut().unwrap();
+    for role in ["reads", "literalConstructors"] {
+        let span = &mut proof[role][0][if role == "reads" { "span" } else { "callSpan" }];
+        for coordinate in ["start", "end"] {
+            span[coordinate] = Value::Number(
+                serde_json::Number::from_f64(span[coordinate].as_f64().unwrap()).unwrap(),
+            );
+        }
+    }
+    proof["interpretation"]["integerDomain"]["bits"] = json!(32.0);
+    let packet = encode_typed_program_links(&numeric).unwrap();
+    let code = javascript_public_archive(&packet.network, packet.root);
+    assert!(!javascript_observations(&code, case).is_empty());
+    let mut negative_zero = program(case, false);
+    let Decl::Fn(function) = &mut negative_zero.declarations[0] else {
+        unreachable!()
+    };
+    function.source_local_state.as_mut().unwrap()["reads"][0]["span"]["start"] = json!(-0.0);
+    let Node::Let { value, .. } = &mut function.body.node else {
+        unreachable!()
+    };
+    let Node::Tuple { items, .. } = &mut value.node else {
+        unreachable!()
+    };
+    items[0].span.as_mut().unwrap().start = 0;
+    assert!(encode_typed_program_links(&negative_zero).is_err());
     for role in ["interpretation", "integer domain", "constructor owner"] {
         let mut network = LinkNetwork::from_lino(case["links"].as_str().unwrap()).unwrap();
         let root = LinkId::from_u64(case["root"].as_u64().unwrap());
