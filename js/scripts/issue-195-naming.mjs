@@ -19726,7 +19726,907 @@ const ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES=ORIGINAL_RAW_CANCELLATION_NAME_
  extract:(raw,file)=>{let text=raw;if(file.endsWith('.lino')){const saved=ORIGINAL_RAW_CANCELLATION_SOURCE_TEXTS.get(file);if(!saved||saved.raw!==raw)ORIGINAL_RAW_CANCELLATION_SOURCE_TEXTS.set(file,{raw,text:JSON.stringify(readStructuredDataLino(raw))});text=ORIGINAL_RAW_CANCELLATION_SOURCE_TEXTS.get(file).text;}return files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeOriginalRawCancellationName(name));},
  recordOf:name=>Object.values(files).flat().find(entry=>normalizeOriginalRawCancellationName(entry.name)===name).id,
 }));
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES]);
+// Native repair source, representation and exact host boundary meanings.
+const NATIVE_REPAIR_NAME_BINDINGS=[
+  {
+    "inventory": "selected ordered project fixture members",
+    "files": {
+      "rust/tests/unit/project_data.rs": [
+        {
+          "name": "project_data_member",
+          "id": "repository.project-selected-project-data-member"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "selected ordered project fixture controls",
+    "files": {
+      "rust/tests/unit/project_data.rs": [
+        {
+          "name": "selected_owned_cases_retain_the_complete_archive_and_all_exact_utf16_inputs",
+          "id": "repository.check-selected-owned-fixture-archive-preservation"
+        },
+        {
+          "name": "member_selection_keeps_exact_keys_null_and_host_domain_refusals_distinct",
+          "id": "repository.check-project-member-key-and-host-domains"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "native recovery and fixture repair hosts",
+    "files": {
+      "rust/tests/unit/issue_195_native_grammar_rows.rs": [
+        {
+          "name": "rebuilt_recovery",
+          "id": "repository.reconstruct-recovered-grammar-source"
+        }
+      ],
+      "rust/tests/unit/parse_scaling.rs": [
+        {
+          "name": "report_scaling_progress",
+          "id": "repository.report-parser-scaling-progress"
+        }
+      ],
+      "rust/tests/unit/lino_grammar.rs": [
+        {
+          "name": "read_lino_grammar_cases",
+          "id": "repository.read-links-notation-grammar-fixtures"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "live native evidence log transport",
+    "files": {
+      "js/scripts/issue-195-evidence-command-logs.mjs": [
+        {
+          "name": "createEvidenceCommandLogForwarder",
+          "id": "repository.create-evidence-command-log-forwarder"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "live native evidence line implementation",
+    "files": {
+      "js/scripts/issue-195-evidence-command-logs.mjs": [
+        {
+          "name": "append",
+          "id": "repository.append-bounded-evidence-line"
+        },
+        {
+          "name": "flush",
+          "id": "repository.flush-redacted-evidence-line"
+        },
+        {
+          "name": "consume",
+          "id": "repository.consume-live-evidence-text"
+        },
+        {
+          "name": "write",
+          "id": "repository.write-live-evidence-output"
+        },
+        {
+          "name": "end",
+          "id": "repository.end-live-evidence-output"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "native workflow deadline conservation",
+    "files": {
+      "js/tests/ci-workflow-structure.test.js": [
+        {
+          "name": "checkRustWorkflowTimeouts",
+          "id": "repository.check-rust-workflow-time-limits"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "default native network initialization",
+    "files": {
+      "rust/src/link_network.rs": [
+        {
+          "name": "default",
+          "id": "repository.create-default-link-network"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "surface array item presence representation",
+    "files": {
+      "rust/src/translation/surface/array_item.rs": [
+        {
+          "name": "SArrayItem",
+          "id": "repository.surface-array-item"
+        },
+        {
+          "name": "Fields",
+          "id": "repository.surface-array-item-wire-fields"
+        },
+        {
+          "name": "spread_present",
+          "id": "repository.surface-array-spread-field-presence"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "surface array item presence operations",
+    "files": {
+      "rust/src/translation/surface/array_item.rs": [
+        {
+          "name": "new",
+          "id": "repository.create-explicit-surface-array-item"
+        },
+        {
+          "name": "eq",
+          "id": "repository.compare-surface-array-item-values"
+        },
+        {
+          "name": "serialize",
+          "id": "repository.encode-present-surface-array-item"
+        },
+        {
+          "name": "read_present_spread",
+          "id": "repository.read-present-surface-array-spread"
+        },
+        {
+          "name": "deserialize",
+          "id": "repository.decode-present-surface-array-item"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "surface array item presence controls",
+    "files": {
+      "rust/tests/unit/translation_surface_array_items.rs": [
+        {
+          "name": "shared_math_arguments",
+          "id": "repository.read-shared-mathematical-array-arguments"
+        },
+        {
+          "name": "omitted_and_explicit_spread_flags_keep_exact_wire_presence_and_boolean_values",
+          "id": "repository.check-surface-array-spread-presence-and-values"
+        },
+        {
+          "name": "public_boolean_edits_cannot_hide_a_true_spread_or_erase_an_explicit_false",
+          "id": "repository.check-public-surface-spread-value-edits"
+        },
+        {
+          "name": "present_null_nonboolean_duplicate_and_missing_values_keep_host_refusals",
+          "id": "repository.check-surface-array-item-host-refusals"
+        },
+        {
+          "name": "actual_shared_float_surface_arguments_round_trip_without_inventing_spread_fields",
+          "id": "repository.check-shared-surface-argument-presence"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "nullable surface binding annotation representation",
+    "files": {
+      "rust/src/translation/surface/binding_type_annotation.rs": [
+        {
+          "name": "SurfaceBindingTypeAnnotation",
+          "id": "repository.present-surface-binding-annotation-value"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "nullable surface binding annotation operations",
+    "files": {
+      "rust/src/translation/surface/binding_type_annotation.rs": [
+        {
+          "name": "null",
+          "id": "repository.create-null-surface-binding-annotation"
+        },
+        {
+          "name": "as_ref",
+          "id": "repository.borrow-surface-binding-annotation-type"
+        },
+        {
+          "name": "into_option",
+          "id": "repository.consume-surface-binding-annotation-type"
+        },
+        {
+          "name": "from",
+          "id": "repository.create-typed-surface-binding-annotation"
+        },
+        {
+          "name": "read_present_binding_type_annotation",
+          "id": "repository.read-present-surface-binding-annotation"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "nullable surface binding annotation controls",
+    "files": {
+      "rust/tests/unit/translation_surface_binding_type_annotations.rs": [
+        {
+          "name": "omitted_null_and_concrete_binding_annotations_retain_exact_wire_shapes",
+          "id": "repository.check-surface-binding-annotation-wire-forms"
+        },
+        {
+          "name": "present_invalid_binding_annotations_and_duplicate_fields_still_refuse",
+          "id": "repository.check-surface-binding-annotation-refusals"
+        },
+        {
+          "name": "annotation_presence_preserves_actual_checker_semantics_and_type_refusals",
+          "id": "repository.check-surface-binding-annotation-semantics"
+        },
+        {
+          "name": "unchanged_scalar_reverse_surfaces_keep_every_annotation_after_host_round_trip",
+          "id": "repository.check-reverse-scalar-surface-annotations"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "self translation representation authoring",
+    "files": {
+      "js/scripts/generate-self-translation-representation.mjs": [
+        {
+          "name": "originalSelector",
+          "id": "repository.read-original-self-translation-selector"
+        },
+        {
+          "name": "selfTranslationRepresentationPolicy",
+          "id": "repository.create-self-translation-representation-policy"
+        },
+        {
+          "name": "rules",
+          "id": "repository.render-self-translation-representation-rules"
+        },
+        {
+          "name": "generateSelfTranslationRepresentation",
+          "id": "repository.generate-self-translation-representation"
+        },
+        {
+          "name": "generateSelfTranslationRepresentationNative",
+          "id": "repository.generate-native-self-translation-representation"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "self translation representation digest",
+    "files": {
+      "js/scripts/generate-self-translation-representation.mjs": [
+        {
+          "name": "digest",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        }
+      ],
+      "js/tests/translation-self-representation.test.js": [
+        {
+          "name": "digest",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "shared self translation representation rules",
+    "files": {
+      "js/src/self-translation-representation-rules.js": [
+        {
+          "name": "acceptSelfTranslationUtf16Member",
+          "id": "repository.accept-self-translation-text-member"
+        },
+        {
+          "name": "requireSelfTranslationUtf16Representation",
+          "id": "repository.require-self-translation-text-representation"
+        },
+        {
+          "name": "requireSelfTranslationUtf16Text",
+          "id": "repository.require-self-translation-text-type"
+        }
+      ],
+      "rust/src/self_translation/representation_rules.rs": [
+        {
+          "name": "accept_self_translation_utf16_member",
+          "id": "repository.accept-self-translation-text-member"
+        },
+        {
+          "name": "require_self_translation_utf16_representation",
+          "id": "repository.require-self-translation-text-representation"
+        },
+        {
+          "name": "require_self_translation_utf16_text",
+          "id": "repository.require-self-translation-text-type"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "self translation representation context",
+    "files": {
+      "rust/src/self_translation/representation.rs": [
+        {
+          "name": "Context",
+          "id": "repository.self-translation-representation-context"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "self translation representation native hosts",
+    "files": {
+      "rust/src/self_translation/representation.rs": [
+        {
+          "name": "policy",
+          "id": "repository.read-native-self-translation-representation-policy"
+        },
+        {
+          "name": "string_prelude",
+          "id": "repository.read-native-self-translation-string-prelude"
+        },
+        {
+          "name": "select",
+          "id": "repository.select-native-self-translation-representation"
+        },
+        {
+          "name": "contains_text",
+          "id": "repository.contain-checked-self-translation-text-type"
+        },
+        {
+          "name": "validate",
+          "id": "repository.validate-native-self-translation-representation"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "self translation representation selection fields",
+    "files": {
+      "rust/src/self_translation.rs": [
+        {
+          "name": "utf16_strings",
+          "id": "repository.self-translation-text-representation-selection"
+        }
+      ],
+      "rust/src/self_translation/representation.rs": [
+        {
+          "name": "utf16_strings",
+          "id": "repository.self-translation-text-representation-selection"
+        }
+      ],
+      "rust/src/translation/emit_rust.rs": [
+        {
+          "name": "utf16_strings",
+          "id": "repository.self-translation-text-representation-selection"
+        }
+      ],
+      "js/src/self-translation.js": [
+        {
+          "name": "utf16Strings",
+          "id": "repository.self-translation-text-representation-selection"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "self translation retained exact prelude",
+    "files": {
+      "js/src/translation/string-runtime.js": [
+        {
+          "name": "STRING_PRELUDE",
+          "id": "repository.self-translation-string-prelude"
+        }
+      ],
+      "js/src/data/self-translation-representation.lino": [
+        {
+          "name": "prelude",
+          "id": "repository.self-translation-string-prelude"
+        }
+      ],
+      "rust/src/data/self-translation-representation.lino": [
+        {
+          "name": "prelude",
+          "id": "repository.self-translation-string-prelude"
+        }
+      ],
+      "rust/src/translation/emit_rust.rs": [
+        {
+          "name": "Prelude::String",
+          "id": "repository.self-translation-string-prelude-constructor"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "native selected representation emission",
+    "files": {
+      "rust/src/translation/emit_rust.rs": [
+        {
+          "name": "emit_rust_with_representation",
+          "id": "repository.emit-rust-with-selected-representation"
+        },
+        {
+          "name": "emit_rust_context",
+          "id": "repository.emit-rust-in-representation-context"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "native selected representation item emission",
+    "files": {
+      "rust/src/self_translation/emission.rs": [
+        {
+          "name": "emit_item",
+          "id": "repository.emit-self-translation-item"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "native selected representation controls",
+    "files": {
+      "rust/tests/unit/self_translation_scope.rs": [
+        {
+          "name": "selected_utf16_prelude_retains_scalar_source_and_carries_unproved_text_values",
+          "id": "repository.check-selected-text-prelude-and-source-carrying"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "shared self translation policy roles",
+    "files": {
+      "js/src/data/self-translation-representation.lino": [
+        {
+          "name": "originalSelector",
+          "id": "repository.self-translation-original-selector"
+        },
+        {
+          "name": "memberNames",
+          "id": "repository.self-translation-selected-member-names"
+        },
+        {
+          "name": "nativeBoundary",
+          "id": "repository.self-translation-native-text-boundary"
+        },
+        {
+          "name": "preludeSha256",
+          "id": "repository.self-translation-prelude-digest"
+        }
+      ],
+      "rust/src/data/self-translation-representation.lino": [
+        {
+          "name": "originalSelector",
+          "id": "repository.self-translation-original-selector"
+        },
+        {
+          "name": "memberNames",
+          "id": "repository.self-translation-selected-member-names"
+        },
+        {
+          "name": "nativeBoundary",
+          "id": "repository.self-translation-native-text-boundary"
+        },
+        {
+          "name": "preludeSha256",
+          "id": "repository.self-translation-prelude-digest"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "shared Rust cast source boundary",
+    "files": {
+      "js/src/translation/rust-cast-syntax-rules.js": [
+        {
+          "name": "acceptRustCastFollowingToken",
+          "id": "repository.accept-rust-cast-following-token"
+        },
+        {
+          "name": "readRustCastSyntaxMessage",
+          "id": "repository.read-rust-cast-boundary-message"
+        }
+      ],
+      "rust/src/translation/rust/cast_syntax_rules.rs": [
+        {
+          "name": "accept_rust_cast_following_token",
+          "id": "repository.accept-rust-cast-following-token"
+        },
+        {
+          "name": "read_rust_cast_syntax_message",
+          "id": "repository.read-rust-cast-boundary-message"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "native Rust cast source boundary",
+    "files": {
+      "rust/src/translation/rust/expressions.rs": [
+        {
+          "name": "require_cast_following_token",
+          "id": "repository.require-rust-cast-following-token"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "Rust cast source controls",
+    "files": {
+      "js/tests/translation-rust-cast-syntax.test.js": [
+        {
+          "name": "source",
+          "id": "repository.create-rust-cast-comparison-source"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "Rust cast source digest",
+    "files": {
+      "js/tests/translation-rust-cast-syntax.test.js": [
+        {
+          "name": "sha256",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "native Rust cast source controls",
+    "files": {
+      "rust/tests/unit/translation_rust_frontend.rs": [
+        {
+          "name": "cast_target_grouping_delimits_the_type_before_less_than_comparison",
+          "id": "repository.check-rust-cast-type-comparison-boundary"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "shared proposition transport plans",
+    "files": {
+      "js/src/typed-program-link-rules.js": [
+        {
+          "name": "readProgramPropositionOperandFields",
+          "id": "translation.read-program-proposition-operand-fields"
+        },
+        {
+          "name": "readProgramPropositionBindingForm",
+          "id": "translation.read-program-proposition-binding-form"
+        }
+      ],
+      "rust/src/translation/typed_program_link_rules.rs": [
+        {
+          "name": "read_program_proposition_operand_fields",
+          "id": "translation.read-program-proposition-operand-fields"
+        },
+        {
+          "name": "read_program_proposition_binding_form",
+          "id": "translation.read-program-proposition-binding-form"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "checked proposition surface projection",
+    "files": {
+      "js/src/typed-program-checked-projection.js": [
+        {
+          "name": "projectProposition",
+          "id": "repository.project-checked-assertion-proposition"
+        }
+      ],
+      "rust/src/typed_program_links/checked.rs": [
+        {
+          "name": "project_assertion_proposition",
+          "id": "repository.project-checked-assertion-proposition"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "native proposition encoding normalization",
+    "files": {
+      "rust/src/typed_program_links/codec_encoding.rs": [
+        {
+          "name": "normalize_proposition",
+          "id": "repository.normalize-linked-proposition-operands"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "shared proposition schema roles",
+    "files": {
+      "js/src/data/typed-program-links-schema.lino": [
+        {
+          "name": "propositionOperands",
+          "id": "repository.program-proposition-operand-plan"
+        },
+        {
+          "name": "propositionBindingForms",
+          "id": "repository.program-proposition-binding-plan"
+        }
+      ],
+      "rust/src/data/typed-program-links-schema.lino": [
+        {
+          "name": "propositionOperands",
+          "id": "repository.program-proposition-operand-plan"
+        },
+        {
+          "name": "propositionBindingForms",
+          "id": "repository.program-proposition-binding-plan"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "proposition source generation values",
+    "files": {
+      "js/scripts/generate-typed-program-link-rules.mjs": [
+        {
+          "name": "propositionSource",
+          "id": "repository.program-proposition-generated-source"
+        },
+        {
+          "name": "propositionDefinitions",
+          "id": "repository.program-proposition-generated-declarations"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "native proposition ownership controls",
+    "files": {
+      "rust/tests/unit/typed_program_links.rs": [
+        {
+          "name": "assertion_propositions_preserve_owned_expression_and_quantified_binding_links",
+          "id": "repository.check-assertion-proposition-owned-bindings"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "persistent output comparison controls",
+    "files": {
+      "rust/src/grammar/feature_runtime/walk/tests.rs": [
+        {
+          "name": "token",
+          "id": "repository.create-lazy-comparison-token"
+        },
+        {
+          "name": "assert_linked",
+          "id": "repository.check-persistent-child-list-retention"
+        },
+        {
+          "name": "equal_outputs_preserve_different_lazy_partitions_and_shared_aliases",
+          "id": "repository.check-lazy-output-partitions-and-aliases"
+        },
+        {
+          "name": "different_counts_and_order_refuse_without_flattening",
+          "id": "repository.check-lazy-output-count-and-order"
+        },
+        {
+          "name": "nested_output_metadata_remains_distinct_without_materializing_children",
+          "id": "repository.check-lazy-output-nested-metadata"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "focused Rust source diagnostic controls",
+    "files": {
+      "js/tests/translation-rust-frontend-diagnostics.test.js": [
+        {
+          "name": "surface",
+          "id": "repository.read-rust-diagnostic-surface"
+        },
+        {
+          "name": "source",
+          "id": "repository.create-rust-visibility-control-source"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "focused native Rust source controls",
+    "files": {
+      "rust/tests/unit/translation_rust_frontend.rs": [
+        {
+          "name": "the_original_vector_rejection_source_has_its_exact_supported_array_surface",
+          "id": "repository.check-original-vector-source-array-surface"
+        }
+      ],
+      "rust/tests/unit/translation_rust_lifetimes.rs": [
+        {
+          "name": "ordinary_lifetime_modules_preserve_actual_declaration_and_call_ownership",
+          "id": "repository.check-ordinary-lifetime-module-ownership"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "raw additive schema closure source operations",
+    "files": {
+      "experiments/original-link-complete-table-projection/raw-schema-source-closure.mjs": [
+        {
+          "name": "readOriginalLinkRawHistoricalSources",
+          "id": "repository.read-original-raw-historical-source-bindings"
+        },
+        {
+          "name": "compareOriginalSchema",
+          "id": "repository.compare-original-raw-schema-identity"
+        },
+        {
+          "name": "verifyOriginalLinkRawSchemaSourceClosure",
+          "id": "repository.verify-original-raw-schema-source-closure"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "raw additive schema closure generation",
+    "files": {
+      "experiments/original-link-complete-table-projection/generate-raw-schema-source-closure.mjs": [
+        {
+          "name": "generateOriginalLinkRawSchemaSourceClosure",
+          "id": "repository.generate-original-raw-schema-source-closure"
+        },
+        {
+          "name": "gitSource",
+          "id": "repository.read-committed-schema-source"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "raw additive schema closure digests",
+    "files": {
+      "experiments/original-link-complete-table-projection/raw-schema-source-closure.mjs": [
+        {
+          "name": "sha256",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/generate-raw-schema-source-closure.mjs": [
+        {
+          "name": "sha256",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "raw additive schema closure constants",
+    "files": {
+      "experiments/original-link-complete-table-projection/raw-schema-source-closure.mjs": [
+        {
+          "name": "ORIGINAL_LINK_RAW_SCHEMA_PRODUCER",
+          "id": "repository.original-raw-schema-producer-identity"
+        },
+        {
+          "name": "ORIGINAL_LINK_RAW_SCHEMA_FILE",
+          "id": "repository.original-raw-schema-source-path"
+        },
+        {
+          "name": "ORIGINAL_LINK_RAW_SCHEMA_BASELINE",
+          "id": "repository.original-raw-schema-baseline-digest"
+        },
+        {
+          "name": "ORIGINAL_LINK_RAW_SCHEMA_PROPERTIES",
+          "id": "repository.original-raw-consumed-schema-properties"
+        },
+        {
+          "name": "ORIGINAL_LINK_RAW_SCHEMA_ADDITIONS",
+          "id": "repository.original-raw-unused-schema-additions"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "raw additive schema closure controls",
+    "files": {
+      "experiments/original-link-complete-table-projection/raw-native-observations.test.mjs": [
+        {
+          "name": "schemaClosureFixture",
+          "id": "repository.create-raw-schema-closure-control"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "selected owned source refusal capture",
+    "files": {
+      "experiments/generate-rust-owned-local-source-operation-fixture.mjs": [
+        {
+          "name": "readSourceRefusal",
+          "id": "repository.read-owned-source-operation-refusal"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "selected owned source refusal corpus",
+    "files": {
+      "experiments/generate-rust-owned-local-source-operation-fixture.mjs": [
+        {
+          "name": "borrowedMethodRefusals",
+          "id": "repository.borrowed-owned-source-method-refusal-corpus"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "selected owned source refusal digests",
+    "files": {
+      "js/tests/translation-rust-owned-local-source-operations.test.js": [
+        {
+          "name": "digest",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "selected owned source refusal controls",
+    "files": {
+      "js/tests/translation-rust-owned-local-source-operations.test.js": [
+        {
+          "name": "all six original source-operation cases retain their values and actual ordered graph identities",
+          "id": "repository.check-original-owned-source-refusal-identities"
+        },
+        {
+          "name": "the generated nonempty method corpus records actual complete sources and exact original diagnostics",
+          "id": "repository.check-complete-owned-method-refusal-corpus"
+        },
+        {
+          "name": "actual public source import preserves each selected method receiver refusal and its span",
+          "id": "repository.check-public-owned-method-receiver-refusals"
+        },
+        {
+          "name": "actual owned String clones and literal constructors retain the canonical copy interpretation",
+          "id": "repository.check-owned-string-copy-interpretations"
+        },
+        {
+          "name": "the unselected actual string slice method keeps its prior value projection",
+          "id": "repository.check-unselected-string-slice-projection"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "native adapter repair workflow source gates",
+    "files": {
+      "js/tests/ci-workflow-structure.test.js": [
+        {
+          "name": "NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS",
+          "id": "repository.native-adapter-repair-package-steps"
+        },
+        {
+          "name": "repairNames",
+          "id": "repository.native-adapter-repair-gate-names"
+        }
+      ]
+    }
+  }
+];
+const normalizeNativeRepairName=name=>name.replace(/([A-Z])([A-Z][a-z])/gu,'$1-$2').replace(/([a-z0-9])([A-Z])/gu,'$1-$2').replaceAll('_','-').replaceAll(' ','-').toLowerCase().replace(/^s-array-item$/u,'surface-array-item').replace(/^eq$/u,'equal').replace(/^as-ref$/u,'as-reference').replace(/^serialize$/u,'encode').replace(/^deserialize$/u,'decode').replace(/\butf16\b/gu,'unicode-transformation-format-sixteen-bit').replace(/\bsha256\b/gu,'secure-hash-algorithm-two-hundred-fifty-six').replace(/\bnonboolean\b/gu,'non-boolean').replace(/\btimeouts\b/gu,'time-limits').replace(/\brebuilt\b/gu,'rebuild').replace(/\bomitted\b/gu,'absent').replace(/\bcannot\b/gu,'can-not').replace(/\bless-than\b/gu,'less-token').replace(/\bquantified\b/gu,'quantifier').replace(/\bchildren\b/gu,'child-references').replace(/\btheir\b/gu,'the').replace(/\bnonempty\b/gu,'non-empty');
+const NATIVE_REPAIR_SOURCE_TEXTS=new Map();
+const NATIVE_REPAIR_NAME_INVENTORIES=NATIVE_REPAIR_NAME_BINDINGS.map(({inventory,files})=>({
+ inventory,files:Object.keys(files),
+ extract:(raw,file)=>{let text=raw;if(file.endsWith('.lino')){const saved=NATIVE_REPAIR_SOURCE_TEXTS.get(file);if(!saved||saved.raw!==raw)NATIVE_REPAIR_SOURCE_TEXTS.set(file,{raw,text:JSON.stringify(readStructuredDataLino(raw))});text=NATIVE_REPAIR_SOURCE_TEXTS.get(file).text;}return files[file].filter(({name})=>text.includes(name)).map(({name})=>normalizeNativeRepairName(name));},
+ recordOf:name=>Object.values(files).flat().find(entry=>normalizeNativeRepairName(entry.name)===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
