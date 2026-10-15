@@ -21,7 +21,10 @@ use super::javascript_line_terminator_rules::accept_java_script_line_terminator;
 use super::js_number::js_number_literal;
 use super::{Language, Span};
 
+mod cooked_strings;
 mod number_rules;
+mod source_whitespace;
+mod unicode_escapes;
 
 /// Source text addressed by UTF-16 code units, as JavaScript strings are.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -368,7 +371,16 @@ fn tokenize_region(
         if braced && source.is_char(index, '}') && depth == 0 {
             break;
         }
-        if is_js_space(unit) {
+        let whitespace = if language == Language::Rust {
+            source_whitespace::accept_rust_source_whitespace(f64::from(unit))
+                || source_whitespace::accept_rust_source_byte_order_mark(
+                    f64::from(unit),
+                    index == 0,
+                )
+        } else {
+            is_js_space(unit)
+        };
+        if whitespace {
             index += 1;
             continue;
         }

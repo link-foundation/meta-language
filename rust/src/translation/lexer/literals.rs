@@ -14,7 +14,7 @@ fn rust_number(source: &Source, index: usize, units: &mut Option<Vec<f64>>) -> R
     let floating = bounds[2] > 0.0;
     let raw = source.slice(index, end);
     let digits = source.slice(index, suffix);
-    if !number_rules::accept_rust_number_digit_boundary(
+    if !source_whitespace::accept_rust_source_number_digit_boundary(
         floating,
         digits.ends_with('_'),
         &source.slice(suffix, end),
@@ -136,15 +136,26 @@ fn read_unicode_escape(
     source: &Source,
     cursor: usize,
     language: Language,
+    units: &mut Option<Vec<f64>>,
 ) -> Result<(char, usize)> {
-    let units = source.units()[cursor..source.len().min(cursor + 12)]
-        .iter()
-        .map(|unit| f64::from(*unit))
-        .collect();
-    match decode_unicode_escape(units, language == Language::JavaScript) {
+    let escape = if language == Language::Rust {
+        let encoded = units
+            .get_or_insert_with(|| source.units().iter().map(|unit| f64::from(*unit)).collect());
+        let start = serde_json::Number::from(cursor)
+            .as_f64()
+            .expect("UTF-16 source offset");
+        unicode_escapes::decode_rust_unicode_escape(encoded, start)
+    } else {
+        let encoded = source.units()[cursor..source.len().min(cursor + 12)]
+            .iter()
+            .map(|unit| f64::from(*unit))
+            .collect();
+        decode_unicode_escape(encoded, language == Language::JavaScript)
+    };
+    match escape {
         UnicodeEscape::Scalar(code, end) => {
             // The generated decoder returns integral scalar values and
-            // offsets inside the twelve-code-unit input window.
+            // relative offsets inside the original source or generic window.
             #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
             let character = char::from_u32(code as u32).expect("decoded Unicode scalar");
             #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
@@ -202,18 +213,48 @@ fn string_token(
                 let encoded = units.get_or_insert_with(|| {
                     source.units().iter().map(|unit| f64::from(*unit)).collect()
                 });
-                // The shared decision addresses a borrowed suffix. Convert its
-                // relative end through the existing checked index adapter,
-                // leaving original UTF-16 token offsets and source bytes intact.
-                if let Some(width) = super::frontend_rules::ml_array::number_index(
-                    read_rust_string_continuation_end(&encoded[cursor..], 0.0),
+                let start = serde_json::Number::from(cursor)
+                    .as_f64()
+                    .expect("UTF-16 source offset");
+                if let Some(end) = super::frontend_rules::ml_array::number_index(
+                    read_rust_string_continuation_end(encoded, start),
                 ) {
-                    cursor += width;
+                    cursor = end;
+                    continue;
+                }
+                if !cooked_strings::accept_rust_cooked_string_escape_prefix(
+                    encoded.get(cursor + 1).copied().unwrap_or(-1.0),
+                ) {
+                    return Err(TranslationError::syntax(
+                        format!(
+                            "unsupported string escape \\{}",
+                            escaped_text(source, cursor + 1)
+                        ),
+                        Some(span(cursor, cursor + 2)),
+                    ));
+                }
+                if escaped == Some('x') {
+                    let code = cooked_strings::read_rust_ascii_escape_value(
+                        encoded.get(cursor + 2).copied().unwrap_or(-1.0),
+                        encoded.get(cursor + 3).copied().unwrap_or(-1.0),
+                    );
+                    let character = super::frontend_rules::ml_array::number_index(code)
+                        .and_then(|code| u32::try_from(code).ok())
+                        .and_then(char::from_u32)
+                        .ok_or_else(|| {
+                            TranslationError::syntax(
+                                "malformed Rust ASCII escape",
+                                Some(span(cursor, cursor + 2)),
+                            )
+                        })?;
+                    let mut encoded = [0; 2];
+                    value.extend_from_slice(character.encode_utf16(&mut encoded));
+                    cursor += 4;
                     continue;
                 }
             }
             if escaped == Some('u') || (language == Language::JavaScript && escaped == Some('x')) {
-                let (character, end) = read_unicode_escape(source, cursor, language)?;
+                let (character, end) = read_unicode_escape(source, cursor, language, units)?;
                 let mut encoded = [0; 2];
                 value.extend_from_slice(character.encode_utf16(&mut encoded));
                 cursor += end;
@@ -276,13 +317,20 @@ fn string_token(
             let encoded = units.get_or_insert_with(|| {
                 source.units().iter().map(|unit| f64::from(*unit)).collect()
             });
-            if let Some(width) = super::frontend_rules::ml_array::number_index(
-                read_rust_source_line_break_end(&encoded[cursor..], 0.0),
+            let start = serde_json::Number::from(cursor)
+                .as_f64()
+                .expect("UTF-16 source offset");
+            if let Some(end) = super::frontend_rules::ml_array::number_index(
+                read_rust_source_line_break_end(encoded, start),
             ) {
                 value.push(u16::from(b'\n'));
-                cursor += width;
+                cursor = end;
                 continue;
             }
+            return Err(TranslationError::syntax(
+                "isolated carriage return in a Rust string",
+                Some(span(cursor, cursor + 1)),
+            ));
         }
         if (unit == u16::from(b'\n') || unit == u16::from(b'\r'))
             && language == Language::JavaScript
@@ -316,7 +364,8 @@ fn template_token(source: &Source, index: usize, units: &mut Option<Vec<f64>>) -
         }
         if unit == u16::from(b'\\') {
             if matches!(source.char_at(cursor + 1), Some('u' | 'x')) {
-                let (character, end) = read_unicode_escape(source, cursor, Language::JavaScript)?;
+                let (character, end) =
+                    read_unicode_escape(source, cursor, Language::JavaScript, units)?;
                 let mut encoded = [0; 2];
                 text.extend_from_slice(character.encode_utf16(&mut encoded));
                 cursor += end;
