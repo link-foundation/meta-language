@@ -15546,7 +15546,40 @@ const ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES=ORIGINAL_LINK_VALUE_TABLE_NAME_
  extract:(raw,file)=>{let text=raw;if(file.endsWith('.lino')){const saved=ORIGINAL_LINK_VALUE_TABLE_SOURCE_TEXTS.get(file);if(!saved||saved.raw!==raw)ORIGINAL_LINK_VALUE_TABLE_SOURCE_TEXTS.set(file,{raw,text:JSON.stringify(readStructuredDataLino(raw))});text=ORIGINAL_LINK_VALUE_TABLE_SOURCE_TEXTS.get(file).text;}return files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeOriginalLinkValueTableName(name));},
  recordOf:name=>Object.values(files).flat().find(entry=>normalizeOriginalLinkValueTableName(entry.name)===name).id,
 }));
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES]);
+// Exact physical package scheduling helpers preserve all logical gates.
+const GENERATED_PACKAGE_SCHEDULING_NAME_BINDINGS=[
+  {
+    "name": "GENERATED_PACKAGE_SLICES",
+    "id": "repository.generated-package-physical-slices"
+  },
+  {
+    "name": "GENERATED_PACKAGE_SLICE_STEPS",
+    "id": "repository.generated-package-slice-step-owners"
+  },
+  {
+    "name": "GENERATED_PACKAGE_SHARED_SETUP",
+    "id": "repository.generated-package-shared-setup-step"
+  },
+  {
+    "name": "packageCheckCells",
+    "id": "repository.read-package-check-physical-cells"
+  },
+  {
+    "name": "normalizeGeneratedPackageSlice",
+    "id": "repository.read-generated-package-original-step-text"
+  },
+  {
+    "name": "checkGeneratedPackageSlices",
+    "id": "repository.check-generated-package-physical-slices"
+  }
+];
+const normalizeGeneratedPackageSchedulingName=name=>name.replace(/([a-z0-9])([A-Z])/gu,'$1-$2').replaceAll('_','-').toLowerCase();
+const GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES=[{
+ inventory:'physical generated package scheduling',files:["js/tests/ci-workflow-structure.test.js"],
+ extract:raw=>GENERATED_PACKAGE_SCHEDULING_NAME_BINDINGS.filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(raw)).map(({name})=>normalizeGeneratedPackageSchedulingName(name)),
+ recordOf:name=>GENERATED_PACKAGE_SCHEDULING_NAME_BINDINGS.find(entry=>normalizeGeneratedPackageSchedulingName(entry.name)===name).id,
+}];
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
