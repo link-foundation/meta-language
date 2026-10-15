@@ -2,16 +2,17 @@
 // retains all token spellings and trivia code units, including return/ASI facts.
 import {tokenize} from '../../js/src/translation/lexer.js';
 import {unsupported} from '../../js/src/translation/diagnostics.js';
-import {acceptGeneratedJavaScriptUnitName,acceptGeneratedJavaScriptUnitLineTerminator} from './rules.mjs';
+import {acceptJavaScriptLineTerminator} from '../../js/src/translation/javascript-line-terminator-rules.js';
+import {acceptGeneratedJavaScriptUnitName} from './rules.mjs';
 const fail=(detail,span)=>{throw unsupported('generated JavaScript Unit source',detail,span);};
 const word=name=>typeof name==='string'&&/^[A-Za-z_][A-Za-z0-9_]*$/u.test(name);
 export function readGeneratedJavaScriptUnitName(name,policy,local=false){return word(name)&&acceptGeneratedJavaScriptUnitName(name,local&&new RegExp(policy.generatedLocalPattern,'u').test(name));}
 export function readGeneratedJavaScriptUnitTrivia(units,span){
  let index=0,lineBreak=false,lineCommentAtEnd=false;
  while(index<units.length){const code=units[index];
-  if([9,32].includes(code)||acceptGeneratedJavaScriptUnitLineTerminator(code)){if(acceptGeneratedJavaScriptUnitLineTerminator(code))lineBreak=true;index++;continue;}
-  if(code===47&&units[index+1]===47){index+=2;while(index<units.length&&!acceptGeneratedJavaScriptUnitLineTerminator(units[index]))index++;if(index===units.length)lineCommentAtEnd=true;continue;}
-  if(code===47&&units[index+1]===42){index+=2;let closed=false;while(index<units.length){if(acceptGeneratedJavaScriptUnitLineTerminator(units[index]))lineBreak=true;if(units[index]===42&&units[index+1]===47){index+=2;closed=true;break;}index++;}if(!closed)fail('the owned trivia contains an unclosed block comment',span);continue;}
+  if([9,32].includes(code)||acceptJavaScriptLineTerminator(code)){if(acceptJavaScriptLineTerminator(code))lineBreak=true;index++;continue;}
+  if(code===47&&units[index+1]===47){index+=2;while(index<units.length&&!acceptJavaScriptLineTerminator(units[index]))index++;if(index===units.length)lineCommentAtEnd=true;continue;}
+  if(code===47&&units[index+1]===42){index+=2;let closed=false;while(index<units.length){if(acceptJavaScriptLineTerminator(units[index]))lineBreak=true;if(units[index]===42&&units[index+1]===47){index+=2;closed=true;break;}index++;}if(!closed)fail('the owned trivia contains an unclosed block comment',span);continue;}
   fail('the owned trivia contains an unrepresented active source character',span);
  }
  return {lineBreak,lineCommentAtEnd};
