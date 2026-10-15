@@ -30,17 +30,29 @@ export const TriviaAttachmentPolicy = Object.freeze({
   Combined: 'Combined',
 });
 
+function readLinkIdValue(value) {
+  const original = value instanceof LinkId ? value.value : value;
+  const text = typeof original === 'string' ? original.trim() : null;
+  const numeric = typeof original === 'number' || typeof original === 'bigint'
+    || text !== null && /^[0-9]+$/u.test(text)
+    ? Number(original) : Number.NaN;
+  if (!Number.isSafeInteger(numeric) || numeric < 1) {
+    throw new TypeError('link id must be an exact positive safe integer');
+  }
+  return numeric;
+}
+
 export class LinkId {
   constructor(value) {
-    const numeric = Number(value);
-    if (!Number.isInteger(numeric) || numeric < 1) {
-      throw new TypeError(`link id must be a positive integer, got ${value}`);
-    }
-    this.value = numeric;
+    this.value = readLinkIdValue(value);
   }
 
   static from(value) {
-    return value instanceof LinkId ? value : new LinkId(value);
+    if (value instanceof LinkId) {
+      readLinkIdValue(value);
+      return value;
+    }
+    return new LinkId(value);
   }
 
   static fromU64(value) {
@@ -48,23 +60,23 @@ export class LinkId {
   }
 
   asU64() {
-    return this.value;
+    return readLinkIdValue(this);
   }
 
   equals(other) {
-    return this.value === LinkId.from(other).value;
+    return readLinkIdValue(this) === LinkId.from(other).value;
   }
 
   toJSON() {
-    return this.value;
+    return readLinkIdValue(this);
   }
 
   toString() {
-    return String(this.value);
+    return String(readLinkIdValue(this));
   }
 
   valueOf() {
-    return this.value;
+    return readLinkIdValue(this);
   }
 }
 

@@ -14,6 +14,7 @@ import { Parser } from 'links-notation';
 import {
   ByteRange,
   LinkFlags,
+  LinkId,
   LinkMetadata,
   LinkType,
   Point,
@@ -46,6 +47,14 @@ function parseNumber(value, message) {
   return Number(value);
 }
 
+function parseLinkId(value) {
+  try {
+    if (typeof value !== 'string' || !/^\d+$/u.test(value)) throw new TypeError('invalid numeric token');
+    return LinkId.from(value).asU64();
+  }
+  catch { throw structureError(`invalid link id \`${value}\``); }
+}
+
 /**
  * Decodes canonical statements into `{ id, references, metadata, registered }`
  * records. Throws `LinoSerializationError` on the same inputs Rust's
@@ -57,12 +66,12 @@ export function decodeCanonicalStatements(statements) {
     if (statement.id === null || statement.id === undefined || statement.values.length === 0) {
       throw structureError('top-level statement must be an identified link');
     }
-    const id = parseNumber(statement.id, (value) => `invalid link id \`${value}\``);
+    const id = parseLinkId(statement.id);
     const references = [];
     let metaFields;
     for (const value of statement.values) {
       if (value.values.length === 0 && value.id !== null) {
-        references.push(parseNumber(value.id, (text) => `invalid link id \`${text}\``));
+        references.push(parseLinkId(value.id));
       } else if (value.id === 'meta') {
         metaFields = value.values;
       } else {

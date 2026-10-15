@@ -126,9 +126,9 @@ function parseSide(side) {
 }
 
 function parsePatternLink(link) {
-  const id = link.id === null ? undefined : Number(link.id);
+  const id = link.id === null ? undefined : LinkId.from(link.id).asU64();
   return {
-    id: Number.isFinite(id) ? id : undefined,
+    id,
     references: link.values.map((value) => LinkId.from(value.id)),
   };
 }

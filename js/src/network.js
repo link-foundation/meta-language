@@ -704,11 +704,13 @@ export class LinkNetwork {
   }
 
   _allocateId() {
-    return new LinkId(this._nextId++);
+    const id = new LinkId(this._nextId);
+    this._nextId += 1;
+    return id;
   }
 
   _insertParsedLinoLink(parsed) {
-    const id = parsed.id === null ? undefined : Number(parsed.id);
+    const id = parsed.id === null ? undefined : LinkId.from(parsed.id);
     const references = parsed.values.map((value) => LinkId.from(value.id));
     this.insertLinkWithOptionalId(id, references, LinkMetadata.new().withLinkType(LinkType.Relation));
   }
@@ -735,7 +737,7 @@ export class LinkNetwork {
             .filter(Boolean)
             .map((value) => LinkId.from(value))
         : [];
-      parsed.push({ id: Number(match[1]), references });
+      parsed.push({ id: LinkId.from(match[1]), references });
     }
 
     for (const link of parsed) {
