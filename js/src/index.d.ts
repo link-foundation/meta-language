@@ -917,7 +917,7 @@ export function createTypedProgramLinks(
     /** Resolves qualified and imported standard binary64 owners under explicit source checks. */
     rustPrimitiveOwnerModel?: 'standard primitive Rust binary64 owner 1',
     /** Retains checked owned text state, source moves and canonical local copies. */
-    rustOwnedLocalStateModel?: 'closed owned text local state 1' | 'canonical owned text local copies 1',
+    rustOwnedLocalStateModel?: 'closed owned text local state 1' | 'canonical owned text local copies 1' | 'closed owned text tuple initialization calls 1',
     /** Retains closed zero-argument private or bare-public pure Unit helpers and owned calls. */
     rustRuntimeShellModel?: 'closed pure Rust unit runtime shell 1',
     rustPureUnitCallModel?: 'closed pure Rust unit calls 1' | 'closed public pure Rust unit calls 1',
