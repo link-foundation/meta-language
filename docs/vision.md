@@ -123,6 +123,12 @@ rechecked semantic program. Shared decision data supplies reference roles,
 operand traversal, projection instructions and role-specific absent fields.
 These source-free semantic graphs emit canonical target syntax; byte-identical
 unchanged-source preservation remains the separate lossless CST contract.
+Integral metadata uses the value of its linked Number. The fixed type bit-width
+role accepts equivalent finite spellings such as `32`, `32.0` and `3.2e1`,
+including the same type inside an owned proof. Its supported widths still come
+from the shared typed schema. Native decoding normalizes only that declared
+role before reading its integer field; primitive floating values and all other
+scalar roles keep their existing interpretations.
 Rust source admission retains parsed declaration and lexical pointer origins
 before projecting immutable references and standard boxes into the value core.
 It checks the actual owner and consumed pointer layer under that selected model;

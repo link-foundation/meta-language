@@ -311,6 +311,23 @@ impl Decoder<'_> {
                 for (field, child) in fields {
                     record.insert(field.clone(), self.render(*child, remaining, bytes)?);
                 }
+                // Only the schema's fixed-width metadata role is integral.
+                // Floating literals and every other scalar retain their values.
+                if record.get("kind").and_then(Value::as_str) == Some("fixed")
+                    && let Some(number) = record.get("bits").and_then(Value::as_f64)
+                    && super::program_numeric_metadata_rules::accept_program_integral_metadata(
+                        "fixed",
+                        "bits",
+                        number,
+                        number == 0.0 && number.is_sign_negative(),
+                    )
+                {
+                    let width = number
+                        .to_string()
+                        .parse::<u64>()
+                        .map_err(|_| error("a linked machine integer width is invalid"))?;
+                    record.insert("bits".to_owned(), Value::from(width));
+                }
                 if let Some(references) = self.references.get(&id) {
                     for (label, target) in references {
                         let field = read_program_reference_source_field(

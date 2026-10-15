@@ -505,6 +505,13 @@ const SOURCE_SPAN_PACKAGE_STEPS = [
   ["Check generated source span rules", "node scripts/generate-source-span-rules.mjs --check", 'c3f8959bdaa5024e679a16434036f6eb1d518d6ca0f72ded2101772c38b8fa22', 'generated'],
   ["Check shared source span offset fixtures", "node scripts/generate-source-span-fixtures.mjs --check", 'd7556f6f378fc8316bf0c3ebc80ab87af09d5bcd05f56aa5392e7dbd44370e33', 'generated'],
 ];
+const INTEGRAL_METADATA_PACKAGE_STEPS = [
+  ['Check generated integral program metadata rules', 'node scripts/generate-program-numeric-metadata-rules.mjs --check', '68f2e0a33ba07c5f208f0bc67dcadaa722fb64d10e5e30c99415f32b53f6ef3e', 'generated'],
+  ['Check shared integral program metadata fixtures', 'node ../experiments/generate-program-numeric-metadata-fixture.mjs --check', 'fd284d751def0418595364f1441265a9281ec97dfbac702f5359b38ea39e96bd', 'generated'],
+];
+const INTEGRAL_METADATA_EXPERIMENT_PACKAGE_STEPS = [
+  ['Run integral program metadata checks', 'node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/program-numeric-metadata.test.mjs', '1eff414d8e3fa073988ff08d0e9ba2bf6b80010e1c59a78fd452e2c2d79de54c', 'generated'],
+];
 const OWNED_TEXT_GENERATOR_PACKAGE_STEPS = [
   ["Check generated Rust owned local text state rules", "node ../experiments/generate-rust-owned-local-state-rules.mjs --check", '9f63b3bacdbe0a6bb5a421ff26c75bc5e806e0628f31040b7aaabdc00ea536b8', 'generated'],
   ["Check shared Rust owned local text state fixtures", "node ../experiments/generate-rust-owned-local-state-fixture.mjs --check", '9705af30ae034ec26327def2f595654344283cd01044b25ff65a0ad5b57f2024', 'generated'],
@@ -529,7 +536,7 @@ function packageStepSignature(step, includeGroup = false) {
 function checkPackageStepConservation(parsed) {
   const additions = [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS, ...TYPE_NAMESPACE_PACKAGE_STEPS,
     ...PURE_UNIT_PACKAGE_STEPS, ...SOURCE_SPAN_PACKAGE_STEPS, ...OWNED_TEXT_GENERATOR_PACKAGE_STEPS,
-    ...OWNED_TEXT_EXPERIMENT_PACKAGE_STEPS];
+    ...OWNED_TEXT_EXPERIMENT_PACKAGE_STEPS, ...INTEGRAL_METADATA_PACKAGE_STEPS, ...INTEGRAL_METADATA_EXPERIMENT_PACKAGE_STEPS];
   const expected = new Map([
     ...ORIGINAL_PACKAGE_STEPS.map(([name, hash, owner]) => [name, { hash, owner }]),
     ...additions.map(([name, command, hash, owner]) => [name, { hash, owner, command, addition: true }]),
@@ -657,7 +664,7 @@ test('every frozen generator addition rejects omission, duplication, condition, 
     assert.throws(() => checkPackageStepConservation(parsed), assert.AssertionError, name);
   };
   for (const [name] of [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS, ...TYPE_NAMESPACE_PACKAGE_STEPS,
-    ...PURE_UNIT_PACKAGE_STEPS, ...SOURCE_SPAN_PACKAGE_STEPS, ...OWNED_TEXT_GENERATOR_PACKAGE_STEPS]) {
+    ...PURE_UNIT_PACKAGE_STEPS, ...SOURCE_SPAN_PACKAGE_STEPS, ...OWNED_TEXT_GENERATOR_PACKAGE_STEPS, ...INTEGRAL_METADATA_PACKAGE_STEPS]) {
     mutate(name, (steps, index) => steps.splice(index, 1));
     mutate(name, (steps, index) => steps.push({ ...steps[index] }));
     for (const [before, after] of [
@@ -675,7 +682,7 @@ test('every frozen generator addition rejects omission, duplication, condition, 
 });
 
 test('every frozen text experiment addition retains its mandatory execution, wrapper, directory and owner', () => {
-  for (const [name] of OWNED_TEXT_EXPERIMENT_PACKAGE_STEPS) {
+  for (const [name] of [...OWNED_TEXT_EXPERIMENT_PACKAGE_STEPS, ...INTEGRAL_METADATA_EXPERIMENT_PACKAGE_STEPS]) {
     const mutate = change => {
       const parsed = jobs('js.yml');
       const steps = parsed.get('package-checks').steps;

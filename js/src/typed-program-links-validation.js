@@ -4,6 +4,7 @@ import {checkRustSourceSignature} from './translation/rust-source-signatures.js'
 import {validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes} from './translation/rust-type-namespace.js';
 import {checkRustUnitCloneDerivations} from './translation/rust-unit-clone.js';
 import {validateSourceSpans} from './source-spans.js';
+import {acceptProgramIntegralMetadata} from './program-numeric-metadata-rules.js';
 import {checkRustScalarLoopProof} from './translation/rust-scalar-loops.js';
 import {checkRustPrimitiveOwnerProof} from './translation/rust-primitive-owners.js';
 import {checkRustOwnedLocalStateProof,checkRustOwnedLocalStateRecordShapes} from './translation/rust-owned-local-state.js';
@@ -12,7 +13,7 @@ import { fixedBounds, sameType } from './translation/types.js';
 import { checkLinkedMatchCoverage } from './translation/check.js';
 import { acceptLinkedTextConversionKind, readNumberDisplayRefusal, readTuplePosition } from './translation/primitive-value-rules.js';
 import { readLinkedPatternBindingScope } from './typed-program-pattern-bindings.js';
-import { acceptProgramDivisionRounding, acceptProgramExpressionField, acceptProgramExpressionOperation, acceptProgramMachineIntegerWidth, acceptProgramOptionalAbsence, acceptProgramTupleProductModel, readProgramReferenceRole } from './typed-program-link-rules.js';
+import { acceptProgramDivisionRounding, acceptProgramExpressionField, acceptProgramExpressionOperation, acceptProgramOptionalAbsence, acceptProgramTupleProductModel, readProgramReferenceRole } from './typed-program-link-rules.js';
 
 const primitives = new Set(['nat', 'int', 'bool', 'string', 'unit', 'float', 'output']);
 const operationKinds = new Set(['math', 'stringMap', 'stringTest', 'method', 'collectionRead', 'collectionItems', 'optionalPredicate']);
@@ -64,7 +65,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     if (!value || typeof value !== 'object' || typeof value.kind !== 'string') throw new TypeError('the linked program contains a malformed type');
     if (primitives.has(value.kind)) return;
     if (value.kind === 'fixed') {
-      if (!Number.isSafeInteger(value.bits) || !acceptProgramMachineIntegerWidth(String(value.bits)) || typeof value.signed !== 'boolean') throw new TypeError('the linked program contains an invalid machine integer type');
+      if (!acceptProgramIntegralMetadata(value.kind, 'bits', value.bits, Object.is(value.bits, -0)) || typeof value.signed !== 'boolean') throw new TypeError('the linked program contains an invalid machine integer type');
     } else if (value.kind === 'data') {
       if (typeof value.name !== 'string' || !value.name) throw new TypeError('a linked data type has no name');
       const declaration = declarations.get(value.name);
