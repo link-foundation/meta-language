@@ -531,6 +531,19 @@ linked to its actual ordered parameter array. The explicit invocation checker va
 arguments, exact arity, primitive Booleans and signed i32 BigInt bounds before
 observing a call. This interpretation remains experimental; production source
 lexing and native runtime integration require their own paired implementation.
+The separate `portable closed Rust text source certificate 1` experiment moves
+the complete finite text certificate into a kernel generated from shared links
+policy. Seventeen typed Number tables retain the actual token, declaration,
+parameter, signature, position, expression, operation and condition relations.
+The bridge maps actual graph identities to dense local ordinal handles through
+a checked bijection; spelling symbols preserve value equality separately. The
+kernel checks complete source coverage, ordered ownership, reference layers,
+operation children and condition placement. Its complete program of ninety-two
+declarations executes after typed Links text and binary reload in JavaScript,
+and the actual complete Rust output and declaration inventory are stored as
+links. The host retains lexical/CST, shape and shared signature adapters. Public
+runtime selection and native graph adapters still require their paired
+integration. Actual Rust compiler and execution observations are CI checks.
 The independently selected `closed pure Rust const predicates 1` source model
 owns the actual `const` and `fn` keyword intervals, complete header and body
 intervals, original declaration name and direct primitive source signature.
