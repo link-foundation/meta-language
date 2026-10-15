@@ -71,33 +71,58 @@ fn allowed(value: &Value, fields: &Value) -> bool {
 }
 
 fn same_order(left: &Value, right: &Value, ordered: bool) -> bool {
-    if !ordered {
-        return left == right;
-    }
     match (left, right) {
         (Value::Object(left), Value::Object(right)) => {
             left.len() == right.len()
-                && left
-                    .iter()
-                    .zip(right)
-                    .all(|((name, value), (other, next))| {
-                        name == other && same_order(value, next, true)
+                && if ordered {
+                    left.iter()
+                        .zip(right)
+                        .all(|((name, value), (other, next))| {
+                            name == other && same_order(value, next, true)
+                        })
+                } else {
+                    left.iter().all(|(name, value)| {
+                        right
+                            .get(name)
+                            .is_some_and(|next| same_order(value, next, false))
                     })
+                }
         }
         (Value::Array(left), Value::Array(right)) => {
             left.len() == right.len()
                 && left
                     .iter()
                     .zip(right)
-                    .all(|(value, next)| same_order(value, next, true))
+                    .all(|(value, next)| same_order(value, next, ordered))
+        }
+        (Value::Number(left), Value::Number(right)) => {
+            let bits = |value: f64| if value == 0.0 { 0 } else { value.to_bits() };
+            match (left.as_f64(), right.as_f64()) {
+                (Some(left), Some(right)) => bits(left) == bits(right),
+                _ => false,
+            }
         }
         _ => left == right,
     }
 }
 
+fn read_source_offset(value: &Value, reject_negative_zero: bool) -> Option<u64> {
+    let value = value.as_f64()?;
+    if !crate::typed_program_links::source_span_rules::accept_source_span_offset(
+        value,
+        reject_negative_zero && value == 0.0 && value.is_sign_negative(),
+    ) {
+        return None;
+    }
+    format!("{:.0}", value.abs()).parse().ok()
+}
+
 fn interval(value: &Value) -> Result<(u64, u64)> {
     exact(value, &json!(["start", "end"]))?;
-    match (value["start"].as_u64(), value["end"].as_u64()) {
+    match (
+        read_source_offset(&value["start"], false),
+        read_source_offset(&value["end"], false),
+    ) {
         (Some(start), Some(end)) if start < end && end <= 9_007_199_254_740_991 => Ok((start, end)),
         _ => Err(fail(
             "the function must retain its actual nonempty source-owner interval",
