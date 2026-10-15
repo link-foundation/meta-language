@@ -6,9 +6,10 @@ pub fn accept_rust_number_digit_boundary(
     trailing_separator: bool,
     suffix: &str,
     continued_suffix: bool,
+    following_code_unit: f64,
 ) -> bool {
     (floating || !trailing_separator)
-        || (!continued_suffix
+        || ((!continued_suffix && (following_code_unit < (128f64)))
             && ((((((((((((suffix == "u8") || (suffix == "i8")) || (suffix == "u16"))
                 || (suffix == "i16"))
                 || (suffix == "u32"))

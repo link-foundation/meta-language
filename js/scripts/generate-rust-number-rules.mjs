@@ -12,6 +12,8 @@ const policy = {
   source: 'https://doc.rust-lang.org/reference/tokens.html#integer-literals',
   sourceRule: 'lex.token.literal.int.kind-dec and lex.token.literal.int.suffix',
   admittedBoundary: 'A trailing decimal separator may precede a complete supported integer suffix.',
+  suffixBoundaryUpperExclusive: 128,
+  nonAsciiBoundary: 'Retain the old refusal until Unicode suffix boundaries are classified; this includes Unicode identifier continuations and Unicode whitespace.',
   retainedGap: 'Unsuffixed trailing decimal separators retain the existing portable frontend refusal, including the protected 1_ fixture.',
   scope: 'Existing floating boundaries and non-Rust lexers are unchanged. Radix and arbitrary suffix admission are separate grammar gaps.',
 };
@@ -20,9 +22,9 @@ if (process.argv.includes('--check')) {
   if (!checkProjectData(policyFile, policy)) throw new Error('Rust number boundary policy is stale');
 } else writeProjectData(policyFile, policy);
 const source = '// Generated from the linked Rust numeric boundary policy. Do not edit.\n'
-  + '/** @param {boolean} floating @param {boolean} trailingSeparator @param {string} suffix @param {boolean} continuedSuffix @returns {boolean} */\n'
-  + 'export function acceptRustNumberDigitBoundary(floating, trailingSeparator, suffix, continuedSuffix) {\n'
-  + '  return floating || !trailingSeparator || (!continuedSuffix && ('
+  + '/** @param {boolean} floating @param {boolean} trailingSeparator @param {string} suffix @param {boolean} continuedSuffix @param {number} followingCodeUnit @returns {boolean} */\n'
+  + 'export function acceptRustNumberDigitBoundary(floating, trailingSeparator, suffix, continuedSuffix, followingCodeUnit) {\n'
+  + '  return floating || !trailingSeparator || (!continuedSuffix && followingCodeUnit < ' + policy.suffixBoundaryUpperExclusive + ' && ('
   + policy.integerSuffixes.map(suffix => 'suffix === ' + JSON.stringify(suffix)).join(' || ') + '));\n}\n';
 const javascript = new URL('../src/translation/rust-number-rules.js', import.meta.url);
 if (process.argv.includes('--check')) {

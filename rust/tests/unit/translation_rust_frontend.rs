@@ -319,6 +319,11 @@ fn suffixed_separator_admission_keeps_old_rust_and_javascript_refusals() {
         "1_u64_foo",
         "1_U64",
         "1_unknown",
+        "1_u64é",
+        "1_u64λ",
+        "1_u64\u{0301}",
+        "1_u64𝔘",
+        "1_u64\u{00a0}",
     ] {
         let error = tokenize(source, Language::Rust).unwrap_err();
         assert_eq!(error.kind, ErrorKind::Syntax);

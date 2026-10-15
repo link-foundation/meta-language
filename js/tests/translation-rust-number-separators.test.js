@@ -19,17 +19,18 @@ test('shared Rust numeric boundary admits only complete supported integer suffix
     for (const separators of ['_', '__', '___']) {
       const raw = '12_345' + separators + suffix;
       assert.deepEqual(first(raw), { kind: 'number', value: '12345', suffix, raw, start: 0, end: raw.length });
-      assert.equal(acceptRustNumberDigitBoundary(false, true, suffix, false), true);
-      assert.equal(acceptRustNumberDigitBoundary(false, true, suffix, true), false);
+      assert.equal(acceptRustNumberDigitBoundary(false, true, suffix, false, -1), true);
+      assert.equal(acceptRustNumberDigitBoundary(false, true, suffix, true, 95), false);
+      for (const code of [128, 233, 955, 769, 55349]) assert.equal(acceptRustNumberDigitBoundary(false, true, suffix, false, code), false);
     }
   }
   for (const suffix of ['', 'u', 'u7', 'u64extra', 'U64', 'f80', 'n', 'unknown']) {
-    assert.equal(acceptRustNumberDigitBoundary(false, true, suffix, false), false, suffix);
+    assert.equal(acceptRustNumberDigitBoundary(false, true, suffix, false, -1), false, suffix);
   }
   for (const floating of [false, true]) for (const continued of [false, true]) {
-    assert.equal(acceptRustNumberDigitBoundary(floating, false, '', continued), true);
+    assert.equal(acceptRustNumberDigitBoundary(floating, false, '', continued, -1), true);
   }
-  assert.equal(acceptRustNumberDigitBoundary(true, true, 'f64', false), true);
+  assert.equal(acceptRustNumberDigitBoundary(true, true, 'f64', false, -1), true);
 });
 
 test('Rust separated suffixes retain integer precision, source offsets and emitted executable values', () => {
@@ -65,7 +66,7 @@ test('the actual complete runtime-shell native test file tokenizes without chang
 });
 
 test('protected Rust unsuffixed and incomplete suffix refusals and JavaScript numeric rejections remain intact', () => {
-  for (const raw of ['1_', '1__', '1_u', '1_u7', '1_u64extra', '1_u64_', '1_u64_foo', '1_U64', '1_unknown']) {
+  for (const raw of ['1_', '1__', '1_u', '1_u7', '1_u64extra', '1_u64_', '1_u64_foo', '1_U64', '1_unknown', '1_u64é', '1_u64λ', '1_u64\u0301', '1_u64𝔘', '1_u64\u00a0']) {
     assert.throws(() => tokenize(raw, 'Rust'), error => error.kind === 'syntax' && error.message.includes('malformed number'), raw);
   }
   const fixture = readFileSync(new URL('./fixtures/translation-cases/frontend-rust.mjs', import.meta.url), 'utf8');

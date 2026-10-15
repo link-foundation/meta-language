@@ -19,6 +19,7 @@ fn rust_number(source: &Source, index: usize, units: &mut Option<Vec<f64>>) -> R
         digits.ends_with('_'),
         &source.slice(suffix, end),
         is_identifier_part(source.at(end), Language::Rust),
+        source.at(end).map_or(-1.0, f64::from),
     ) {
         return Err(TranslationError::syntax(
             format!("malformed number {raw}"),
