@@ -35,6 +35,7 @@ include = [
     "src/data/resource-description-ntriples-profile.lino",
     "src/data/link-network-binary-schema.lino",
     "src/data/rust-source-signatures.lino",
+    "src/data/rust-type-namespace.lino",
     "src/data/rust-read-only-queries.lino",
     "src/data/rust-primitive-owners.lino",
     "src/data/rust-borrowed-call-interface.lino",
