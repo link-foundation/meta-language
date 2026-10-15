@@ -782,6 +782,23 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Run complete original link symbol observations
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        working-directory: ${{ github.workspace }}
+        env:
+          CI: 'true'
+          ORIGINAL_LINK_SYMBOL_NATIVE: '1'
+        run: node scripts/with-cache-cleanup.mjs --event test -- node --test experiments/original-link-symbol-projection/native-observations.test.mjs
+
+      - name: Retain complete original link symbol observations
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: original-link-symbol-native-observations-${{ github.sha }}
+          path: issue-195-artifacts/original-link-symbol-native-observations.lino
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Run doc tests
         if: ${{ !cancelled() && matrix.suite == 'remaining' }}
         shell: bash
