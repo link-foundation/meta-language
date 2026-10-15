@@ -24,7 +24,7 @@ fn assumptions(parsed: &Parsed) -> Result<Vec<Assumption>> {
         })
         .collect()
 }
-pub(crate) fn record_assumptions(emitted: &mut Emitted, parsed: &Parsed) -> Result<()> {
+pub fn record_assumptions(emitted: &mut Emitted, parsed: &Parsed) -> Result<()> {
     emitted.assumptions.extend(assumptions(parsed)?);
     emitted.encodings.insert(0,Encoding{id:"closed-pure-rust-runtime-shell".into(),statement:format!("the complete represented source runtime is interpreted under {}; only ordered pure Unit helper calls, empty output and normal completion are projected, with all source runtime operations retained as links",policy()["observationModel"].as_str().unwrap())});
     Ok(())
@@ -76,7 +76,7 @@ fn render(node: &Value, tokens: &[Value], program: &Program) -> Result<String> {
     }
     Ok(result)
 }
-pub(crate) fn emit_rust(program: &Program, parsed: &Parsed) -> Result<Emitted> {
+pub fn emit_rust(program: &Program, parsed: &Parsed) -> Result<Emitted> {
     let tokens = program
         .source_runtime_shell
         .as_ref()

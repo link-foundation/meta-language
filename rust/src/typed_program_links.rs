@@ -27,7 +27,7 @@ pub mod program_numeric_metadata;
 pub mod program_numeric_metadata_rules;
 mod projection;
 pub mod source_span_rules;
-pub(crate) mod source_spans;
+pub mod source_spans;
 
 /// A structural, unsupported or semantic defect in a linked program.
 #[derive(Clone, Debug, PartialEq, Eq)]

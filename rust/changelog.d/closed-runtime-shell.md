@@ -7,3 +7,6 @@ checks actual declaration, token and operation link identities before projecting
 them into owned positions and reattaches those identities on encoding. Native
 compilation and executable replay remain CI obligations. This draft does not
 establish equivalent failure behavior.
+
+Ship the shared runtime policy in the crate and keep internal helper visibility
+within the existing private parent modules without redundant crate qualifiers.

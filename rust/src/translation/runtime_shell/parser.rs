@@ -28,7 +28,7 @@ pub(super) struct Helper {
     pub node: Value,
     pub value: Value,
 }
-pub(crate) struct Parsed {
+pub struct Parsed {
     pub(super) operations: Value,
     pub(super) helpers: Vec<Helper>,
     pub(super) helper_uses: Vec<(usize, usize)>,

@@ -46,6 +46,7 @@ include = [
     "src/data/rust-pure-unit-calls.lino",
     "src/data/rust-owned-local-state.lino",
     "src/data/rust-const-functions.lino",
+    "src/data/rust-runtime-shell.lino",
     "src/data/source-span.lino",
     "src/data/source-text-byte-model.lino",
     "src/data/program-numeric-metadata.lino",

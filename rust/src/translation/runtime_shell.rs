@@ -8,8 +8,8 @@ use serde_json::{Value, json};
 use std::sync::LazyLock;
 mod emission;
 mod parser;
-pub(crate) use parser::Parsed;
-pub(crate) fn policy() -> &'static Value {
+pub use parser::Parsed;
+pub fn policy() -> &'static Value {
     static POLICY: LazyLock<Value> = LazyLock::new(|| {
         crate::read_structured_data_lino(include_str!("../data/rust-runtime-shell.lino"))
             .expect("the shared closed runtime policy is valid")
@@ -19,7 +19,7 @@ pub(crate) fn policy() -> &'static Value {
 fn fail(detail: &str) -> super::diagnostics::TranslationError {
     type_error(format!("Rust runtime shell proof: {detail}"), None)
 }
-pub(crate) fn position(value: &Value, field: &str) -> Result<usize> {
+pub fn position(value: &Value, field: &str) -> Result<usize> {
     if value
         .as_object()
         .is_none_or(|record| record.len() != 1 || !record.contains_key(field))
@@ -33,7 +33,7 @@ pub(crate) fn position(value: &Value, field: &str) -> Result<usize> {
         .and_then(|index| usize::try_from(index).ok())
         .ok_or_else(|| fail("an owned structural position is invalid"))
 }
-pub(crate) fn source_interval(value: &Value, empty: bool) -> Result<(u64, u64)> {
+pub fn source_interval(value: &Value, empty: bool) -> Result<(u64, u64)> {
     if value.as_object().is_none_or(|record| {
         record.len() != 2 || !record.contains_key("start") || !record.contains_key("end")
     }) {
@@ -223,7 +223,7 @@ fn tokens(proof: &Value, program: &Program) -> Result<()> {
     }
     Ok(())
 }
-pub(crate) fn operation_path(root: &Value, label: &str) -> Result<Vec<usize>> {
+pub fn operation_path(root: &Value, label: &str) -> Result<Vec<usize>> {
     fn visit(node: &Value, label: &str, path: &mut Vec<usize>, found: &mut Vec<Vec<usize>>) {
         if node["kind"] == "source operation" {
             if node["op"] == label {
@@ -279,7 +279,7 @@ fn normalize_core(value: &mut Value) {
     }
 }
 /// Reject raw extra/null/role facts before the checked-program serde boundary.
-pub(crate) fn validate_records(value: &Value) -> Result<Option<Parsed>> {
+pub fn validate_records(value: &Value) -> Result<Option<Parsed>> {
     let rooted = value.get("sourceRuntimeShell").is_some();
     let marked = value["main"].get("sourceRuntimeWorker").is_some();
     if !rooted && !marked {
@@ -417,11 +417,11 @@ pub(crate) fn validate_records(value: &Value) -> Result<Option<Parsed>> {
     }
     Ok(Some(parsed))
 }
-pub(crate) fn validate_program(program: &Program) -> Result<Option<Parsed>> {
+pub fn validate_program(program: &Program) -> Result<Option<Parsed>> {
     validate_records(&serde_json::to_value(program).map_err(|failure| fail(&failure.to_string()))?)
 }
 /// Capture real source ownership after the existing core checker creates items.
-pub(crate) fn capture_program(program: &mut Program, source: &Value) -> Result<()> {
+pub fn capture_program(program: &mut Program, source: &Value) -> Result<()> {
     let mut proof = source.clone();
     let raw = proof["tokens"]
         .as_array()
@@ -468,7 +468,7 @@ pub(crate) fn capture_program(program: &mut Program, source: &Value) -> Result<(
     Ok(())
 }
 /// Parse the whole real source under the independently selected versioned model.
-pub(crate) fn parse_source(source: &str, model: &str) -> Result<SProgram> {
+pub fn parse_source(source: &str, model: &str) -> Result<SProgram> {
     if !super::runtime_shell_rules::accept_rust_runtime_shell_model(model) {
         return Err(unsupported(
             "Rust runtime shell model",
@@ -509,4 +509,4 @@ pub(crate) fn parse_source(source: &str, model: &str) -> Result<SProgram> {
     surface["sourceRuntimeShell"] = json!({"model":policy()["model"],"language":policy()["language"],"observationModel":policy()["observationModel"],"span":{"start":0,"end":source.encode_utf16().count()},"tokens":tokens,"operations":parsed.operations,"assumptions":[]});
     serde_json::from_value(surface).map_err(|failure| fail(&failure.to_string()))
 }
-pub(crate) use emission::{emit_rust, record_assumptions};
+pub use emission::{emit_rust, record_assumptions};
