@@ -147,6 +147,9 @@ jobs:
           - {group: grammar-native, partition: 3, shards: 3}
           - {group: conformance, partition: 1, shards: 2}
           - {group: conformance, partition: 2, shards: 2}
+          - {group: translation, partition: 1, shards: 3}
+          - {group: translation, partition: 2, shards: 3}
+          - {group: translation, partition: 3, shards: 3}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -208,14 +211,25 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node scripts/test-groups.mjs --run "$TEST_GROUP"
         working-directory: js
 
+      - name: Capture translation compiler feedback partition
+        if: ${{ !cancelled() && matrix.group == 'translation' }}
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          TRANSLATION_SHARD: ${{ matrix.partition }}/${{ matrix.shards }}
+        run: >-
+          node js/scripts/translation-test-feedback.mjs capture
+          --commit "$GITHUB_SHA" --shard "$TRANSLATION_SHARD"
+          --out "issue-195-artifacts/translation-test-feedback/${{ matrix.partition }}-of-${{ matrix.shards }}"
+
       - name: Retain translation compiler feedback and native observations
         if: ${{ !cancelled() && matrix.group == 'translation' }}
         uses: actions/upload-artifact@v7
         with:
-          name: translation-test-feedback-${{ github.sha }}
+          name: translation-test-feedback-${{ github.sha }}-${{ matrix.partition }}-of-${{ matrix.shards }}
           path: |
-            issue-195-artifacts/compiler-feedback
-            issue-195-results/artifacts/decimal-format-draft-native.lino
+            issue-195-artifacts/translation-test-feedback/${{ matrix.partition }}-of-${{ matrix.shards }}/translation-test-feedback-partition.lino
+            issue-195-artifacts/translation-test-feedback/${{ matrix.partition }}-of-${{ matrix.shards }}/issue-195-artifacts/compiler-feedback
+            issue-195-artifacts/translation-test-feedback/${{ matrix.partition }}-of-${{ matrix.shards }}/issue-195-results/artifacts/decimal-format-draft-native.lino
           retention-days: 7
           if-no-files-found: error
 
@@ -223,6 +237,73 @@ jobs:
         if: ${{ !cancelled() }}
         working-directory: ${{ github.workspace }}
         run: node js/scripts/external-grammar-cache.mjs --clean-materialized
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
+  translation-test-feedback:
+    name: Translation Test Feedback
+    needs: tests
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: check-js-${{ github.ref }}-translation-test-feedback
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install the linked receipt reader
+        run: npm ci --ignore-scripts
+        working-directory: js
+
+      - name: Download every translation feedback partition separately
+        if: ${{ !cancelled() }}
+        uses: actions/download-artifact@v8
+        with:
+          pattern: translation-test-feedback-${{ github.sha }}-*-of-3
+          path: .issue-195-work/translation-test-feedback/partitions
+          merge-multiple: false
+
+      - name: Merge exact-commit translation feedback without overwriting conflicts
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          mkdir -p .issue-195-work/translation-test-feedback
+          node js/scripts/translation-test-feedback.mjs merge \
+            --commit "$GITHUB_SHA" \
+            --inputs .issue-195-work/translation-test-feedback/partitions \
+            --out .issue-195-work/translation-test-feedback/merged \
+            2>&1 | tee .issue-195-work/translation-test-feedback/merge.log
+
+      - name: Retain the complete original translation feedback artifact
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: translation-test-feedback-${{ github.sha }}
+          path: .issue-195-work/translation-test-feedback/merged/
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Retain translation feedback merge diagnostics
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: translation-test-feedback-merge-diagnostics-${{ github.sha }}
+          path: .issue-195-work/translation-test-feedback/merge.log
+          retention-days: 7
+          if-no-files-found: error
 
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
@@ -966,7 +1047,7 @@ jobs:
   # required checks, while still reporting each failure independently.
   test:
     name: JavaScript Package
-    needs: [tests, report-assertions, package-checks]
+    needs: [tests, report-assertions, package-checks, translation-test-feedback]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -1035,12 +1116,17 @@ jobs:
         if: ${{ !cancelled() }}
         env:
           PACKAGE_CHECKS_RESULT: ${{ needs.package-checks.result }}
+          TRANSLATION_FEEDBACK_RESULT: ${{ needs.translation-test-feedback.result }}
           TESTS_RESULT: ${{ needs.tests.result }}
           REPORTS_RESULT: ${{ needs.report-assertions.result }}
           EXTERNAL_REPORTS: ${{ inputs.external_reports }}
         run: |
           if [ "$PACKAGE_CHECKS_RESULT" != "success" ]; then
             echo "::error::JavaScript package check groups finished with '$PACKAGE_CHECKS_RESULT'; see the JavaScript Package Checks jobs."
+            exit 1
+          fi
+          if [ "$TRANSLATION_FEEDBACK_RESULT" != "success" ]; then
+            echo "::error::Translation feedback merge finished with '$TRANSLATION_FEEDBACK_RESULT'; see the Translation Test Feedback job."
             exit 1
           fi
           if [ "$TESTS_RESULT" != "success" ]; then
