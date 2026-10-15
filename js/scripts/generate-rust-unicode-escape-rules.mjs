@@ -36,3 +36,65 @@ const shared=readFileSync(new URL('../src/translation/rust-cooked-string-rules.j
 assert.ok(source.includes(dependency));
 checkProgram(parseJavaScript(shared+'\n'+source.replace(dependency,'')));
 console.log('Rust Unicode scalar escapes: shared hexadecimal classifier and checked original-source decoder');
+
+if(!process.argv.includes('--javascript-only')){
+ const {DecoratorSet}=await import('../src/decorators.js');
+ const {emitRust}=await import('../src/translation/emit-rust.js');
+ const {formatProductRuleSource}=await import('./product-rule-style-corrections.mjs');
+ const {readSourceTextByteLibraryStyles,readSourceTextRustBlock}=await import('./source-text-byte-library-style.mjs');
+ const genericSource=readFileSync(new URL('../src/translation/frontend-rules.js',import.meta.url),'utf8');
+ const alias=parseJavaScript(source.replace(dependency,'')).items.find(item=>item.k==='data'&&item.name==='RustUnicodeEscape');
+ const canonical=parseJavaScript(genericSource).items.find(item=>item.k==='data'&&item.name==='UnicodeEscape');
+ assert.ok(alias&&canonical,'both actual source result definitions are present');
+ assert.deepEqual(alias.ctors,canonical.ctors,'the shared result constructors, semantic fields and ordered Number roles are identical');
+ const imported=new Set(checkProgram(parseJavaScript(shared)).items.map(item=>item.fullName));
+ const checked=checkProgram(parseJavaScript(shared+'\n'+source.replace(dependency,'')));
+ const definitions=emitRust(checked).definitions;
+ assert.equal(definitions.length,checked.items.length,'each actual checked declaration owns its emitted definition');
+ const own=definitions.filter((_,index)=>!imported.has(checked.items[index].fullName));
+ const raw=own.join('\n\n');
+ const aliasDefinition=own.find(definition=>definition.includes('pub enum RustUnicodeEscape {'));
+ assert.ok(aliasDefinition,'the translated result alias is present before library adaptation');
+ const provider=readFileSync(new URL('../../rust/src/translation/frontend_rules.rs',import.meta.url),'utf8');
+ const original=readSourceTextRustBlock(provider,'enum','UnicodeEscape');
+ assert.equal(readSourceTextRustBlock(aliasDefinition,'enum','RustUnicodeEscape').replace('RustUnicodeEscape','UnicodeEscape'),original,'the existing native result has the same actual variant field layout');
+ const resultActions=[{op:'replace',field:'source',from:aliasDefinition,to:''},{op:'replace',field:'source',from:'crate::RustUnicodeEscape',to:'crate::translation::frontend_rules::UnicodeEscape'}];
+ let adapted=raw.replace(aliasDefinition,'').replaceAll('crate::RustUnicodeEscape','crate::translation::frontend_rules::UnicodeEscape');
+ const sharedResult=adapted;
+ adapted=adapted.replaceAll('crate::read_rust_ascii_escape_digit','crate::translation::lexer::cooked_strings::read_rust_ascii_escape_digit');
+ for(const name of ['MlDecodeRustUnicodeEscapeLoop1Result','ml_decode_rust_unicode_escape_loop1'])adapted=adapted.replaceAll('crate::'+name,'crate::translation::lexer::unicode_escapes::'+name);
+ // Optional array reads preserve None and every Number input, including NaN.
+ // Only the five positive nonzero source delimiters use bit equality.
+ let comparisons=0;
+ const compared=[...policy.prefixUnits,policy.closingUnit,policy.separatorUnit];
+ adapted=adapted.replace(/\(Some\(ml_left\), ml_right\) => ml_left == ml_right/gu,()=>{comparisons++;return '(Some(ml_left), ml_right) => ml_left.to_bits() == ml_right.to_bits()';});
+ assert.equal(comparisons,compared.length,'all five actual optional delimiter comparisons are represented');
+ for(const value of compared)assert.ok(value>0&&Number.isFinite(value),'bit comparisons have positive finite nonzero constants');
+ adapted=adapted.replaceAll('mut start: f64','start: f64');
+ // Partial comparison retains NaN != 0 and both signed-zero equalities.
+ assert.ok(adapted.includes('(((start % 1f64)) != (0f64))'));
+ adapted=adapted.replace('(((start % 1f64)) != (0f64))','!matches!((start % 1f64).partial_cmp(&0f64), Some(std::cmp::Ordering::Equal))');
+ // Keep multiplication and addition separately rounded, as in JavaScript.
+ assert.ok(adapted.includes('((code * 16f64) + digit)'));
+ adapted=adapted.replace('((code * 16f64) + digit)','{ let scaled = code * 16f64; scaled + digit }');
+ const array=readSourceTextRustBlock(provider,'mod','ml_array');
+ for(let pass=0;pass<2;pass++){
+  const library=array+'\n\n'+adapted.replace('pub use crate::translation::frontend_rules::ml_array;','').replaceAll('/// Evaluate the shared Unicode source-text byte model.\n#[must_use]\n','');
+  const correction=new DecoratorSet([{id:'rust-unicode-expression-style',level:'emitter',order:0,when:[['format','Rust']],actions:readSourceTextByteLibraryStyles(library,provider)}]);
+  adapted=correction.decorate('emitter',{format:'Rust',source:library}).source;
+ }
+ adapted=adapted.replaceAll('/// Evaluate the shared Unicode source-text byte model.','/// Decode the shared Rust Unicode scalar escape model.')
+  .replaceAll('MlDecodeRustUnicodeEscapeLoop1Done','Done').replaceAll('MlDecodeRustUnicodeEscapeLoop1Return','Return')
+  .replace('pub enum MlDecodeRustUnicodeEscapeLoop1Result','enum MlDecodeRustUnicodeEscapeLoop1Result')
+  .replace('pub fn ml_decode_rust_unicode_escape_loop1','fn ml_decode_rust_unicode_escape_loop1');
+ adapted=adapted.replace('(code >= 55_296f64) && (code <= 57_343f64)','(55_296f64..=57_343f64).contains(&code)');
+ assert.ok(!/Vec<|\.clone\(|\.to_vec\(|crate::RustUnicodeEscape|pub enum RustUnicodeEscape/u.test(adapted),'cached source data and the canonical result are reused without copies');
+ assert.match(adapted,/loop\s*\{/u,'the translated scanner retains its actual iterative lowering');
+ const stylesFile=new URL('../../parity/self-translation/rust-unicode-escape-rules-decorators.lino',import.meta.url);
+ const expected=new DecoratorSet([{id:'rust-unicode-shared-result-type',level:'emitter',order:0,when:[['format','Rust']],actions:resultActions},{id:'rust-unicode-borrowed-library-style',level:'emitter',order:1,when:[['format','Rust']],actions:[{op:'replace',field:'source',from:sharedResult,to:adapted}]}]).toLino();
+ if(process.argv.includes('--update-styles'))writeFileSync(stylesFile,expected);else assert.equal(readFileSync(stylesFile,'utf8'),expected,'Rust Unicode library adaptations are fresh');
+ const decorated=DecoratorSet.fromLino(readFileSync(stylesFile,'utf8')).decorate('emitter',{format:'Rust',source:raw}).source;
+ const generated='// Generated through the checked JavaScript Rust Unicode decoder. Do not edit.\n'+formatProductRuleSource(decorated);
+ const native=new URL('../../rust/src/translation/lexer/unicode_escapes.rs',import.meta.url),copy=new URL('../../rust/src/data/rust-unicode-escapes.lino',import.meta.url);
+ if(process.argv.includes('--check')){assert.equal(readFileSync(native,'utf8'),generated,'the native Rust Unicode decoder is fresh');assert.ok(readFileSync(copy).equals(readFileSync(policyFile)),'the native Unicode policy copy is identical');}else{writeFileSync(native,generated);writeFileSync(copy,readFileSync(policyFile));}
+}

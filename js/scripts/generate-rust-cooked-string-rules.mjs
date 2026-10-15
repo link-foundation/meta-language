@@ -6,7 +6,7 @@ import { checkProjectData, writeProjectData } from './project-data.mjs';
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
-import { formatProductRuleSource } from './product-rule-style-corrections.mjs';
+import { readSourceTextByteLibraryStyles, readSourceTextRustBlock } from './source-text-byte-library-style.mjs';
 
 const policy = {
   schemaVersion: 1,
@@ -69,7 +69,20 @@ if (!process.argv.includes('--javascript-only')) {
     return `unit.to_bits() == ${literal}.to_bits()`;
   });
   if (comparisons !== comparedUnits.length) throw new Error('Rust cooked-string equality inventory changed');
-  adapted = formatProductRuleSource(adapted).replace(/^pub fn /gmu, '/// Read the corresponding shared Rust cooked-string escape decision.\n#[must_use]\npub const fn ');
+  // The shared digit operation returns only -1 or 0..15, so this range
+  // spelling has exactly the original high-digit guard's finite domain.
+  if (!adapted.includes('((high < (0f64)) || (high > (7f64)))')) throw new Error('The actual high-digit guard changed');
+  adapted = adapted.replace('((high < (0f64)) || (high > (7f64)))', '!(0f64..=7f64).contains(&high)');
+  if (!adapted.includes('((high * 16f64) + low)')) throw new Error('The actual ASCII value arithmetic changed');
+  adapted = adapted.replace('((high * 16f64) + low)', '{ let scaled = high * 16f64; scaled + low }');
+  const provider = readFileSync(new URL('../../rust/src/translation/frontend_rules.rs', import.meta.url), 'utf8');
+  const library = readSourceTextRustBlock(provider, 'mod', 'ml_array') + '\n\n' + adapted;
+  const corrections = new DecoratorSet([{ id: 'rust-cooked-string-expression-style', level: 'emitter', order: 0,
+    when: [['format', 'Rust']], actions: readSourceTextByteLibraryStyles(library, provider) }]);
+  adapted = corrections.decorate('emitter', { format: 'Rust', source: library }).source
+    .replace('pub use crate::translation::frontend_rules::ml_array;', '')
+    .replaceAll('/// Evaluate the shared Unicode source-text byte model.', '/// Read the corresponding shared Rust cooked-string escape decision.')
+    .replace(/^pub fn (accept_rust_cooked_string_escape_prefix|read_rust_ascii_escape_digit)\(/gmu, 'pub const fn $1(');
   const stylesFile = new URL('../../parity/self-translation/rust-cooked-string-rules-decorators.lino', import.meta.url);
   const styles = new DecoratorSet([{ id: 'rust-cooked-string-library-style', level: 'emitter', order: 0,
     when: [['format', 'Rust']], actions: [{ op: 'replace', field: 'source', from: raw, to: adapted }] }]).toLino();
