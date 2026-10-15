@@ -27,7 +27,10 @@ function syntax(source) {
   for (let index = 0; index < tokens.length - 1; index += 1) {
     if (tokens[index].kind !== 'macro' || !['(', '[', '{'].includes(tokens[index + 1].value)) continue;
     const close = matching.get(index + 1);
-    for (let at = index + 1; at <= close; at += 1) { macroTokens.add(at); macroOwners.set(at, tokens[index].value); }
+    for (let at = index + 1; at <= close; at += 1) {
+      macroTokens.add(at);
+      macroOwners.set(at, [...(macroOwners.get(at) ?? []), tokens[index].value]);
+    }
   }
   return { tokens, comments, matching, macroTokens, macroOwners };
 }
@@ -172,7 +175,7 @@ function qualify(source, modulePath, names, namespaceExpressionMacros) {
     if (tokens[index].kind === 'identifier' && tokens[index].value === 'crate'
       && tokens[index + 1].kind === 'punct' && tokens[index + 1].value === '::'
       && tokens[index + 2].kind === 'identifier' && names.has(tokens[index + 2].value)) {
-      if (macroTokens.has(index) && !namespaceExpressionMacros.includes(macroOwners.get(index))) {
+      if (macroTokens.has(index) && !macroOwners.get(index).every(owner => namespaceExpressionMacros.includes(owner))) {
         throw new Error('Rust library path inside an unrepresented macro requires a separate rule');
       }
       replacements.push({ start: tokens[index].start, end: tokens[index + 1].end, text: `crate::${modulePath}::` });
