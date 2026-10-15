@@ -103,6 +103,161 @@ fn functions(program: &Program) -> impl Iterator<Item = &meta_language::translat
 }
 
 #[test]
+fn actual_generated_owned_decisions_match_linked_fixtures_and_javascript() {
+    use super::translation::rust::owned_local_state_rules::{
+        accept_rust_owned_local_binary_operation, accept_rust_owned_local_container,
+        accept_rust_owned_local_expression, accept_rust_owned_local_record_value,
+        accept_rust_owned_local_source_operation, accept_rust_owned_local_source_span,
+        accept_rust_owned_local_state_model, accept_rust_owned_local_value_type,
+    };
+    let script = r#"
+import assert from 'node:assert/strict';
+import {pathToFileURL} from 'node:url';
+const root=pathToFileURL(process.argv[1]+'/../');
+const {readProjectData}=await import(new URL('js/scripts/project-data.mjs',root));
+const rules=await import(new URL('js/src/translation/rust-owned-local-state-rules.js',root));
+const policy=readProjectData(new URL('js/src/translation/data/rust-owned-local-state.lino',root));
+const fixture=readProjectData(new URL('experiments/rust-owned-local-container-fixture.lino',root));
+const models=['',...Object.values(policy.models),'unknown','closed owned text tuple initialization calls 1',policy.models.moves+' '];
+const types=['string','bool','fixed','unit','float'].flatMap(kind=>['','32','64'].flatMap(bits=>[false,true].map(signed=>({kind,bits,signed,expected:rules.acceptRustOwnedLocalValueType(kind,bits,signed)}))));
+const observations={
+ models:models.map(model=>({model,expected:rules.acceptRustOwnedLocalStateModel(model)})),
+ types,
+ expressions:[...Object.keys(policy.expressions),'call','borrow','unknown',''].map(kind=>({kind,expected:rules.acceptRustOwnedLocalExpression(kind)})),
+ binaryOperations:['eq','add','sub','unknown',''].map(operation=>({operation,expected:rules.acceptRustOwnedLocalBinaryOperation(operation)})),
+ sourceOperations:[...policy.excludedSourceOperations,'literal','unknown',''].map(operation=>({operation,expected:rules.acceptRustOwnedLocalSourceOperation(operation)})),
+ containerDecisions:fixture.containerDecisions,
+ recordDecisions:fixture.recordDecisions,
+ spanDecisions:fixture.spanDecisions,
+};
+for(const row of fixture.containerDecisions)assert.equal(rules.acceptRustOwnedLocalContainer(row.kind,row.dense,row.unrepresented),row.expected);
+for(const row of fixture.recordDecisions)assert.equal(rules.acceptRustOwnedLocalRecordValue(row.booleanRequired,row.booleanValue),row.expected);
+for(const row of fixture.spanDecisions)assert.equal(rules.acceptRustOwnedLocalSourceSpan(row.present,row.recordShape,row.offsetShape),row.expected);
+for(const rows of Object.values(observations)){assert.ok(rows.some(row=>row.expected));assert.ok(rows.some(row=>!row.expected));}
+process.stdout.write(JSON.stringify(observations));
+"#;
+    let result = run(Command::new("node").args([
+        "--input-type=module",
+        "--eval",
+        script,
+        "--",
+        env!("CARGO_MANIFEST_DIR"),
+    ]));
+    assert!(result.ok, "{}", result.stderr);
+    let observed: Value = serde_json::from_str(&result.stdout).unwrap();
+    for row in observed["models"].as_array().unwrap() {
+        assert_eq!(
+            accept_rust_owned_local_state_model(row["model"].as_str().unwrap()),
+            row["expected"].as_bool().unwrap(),
+            "{row}"
+        );
+    }
+    for row in observed["types"].as_array().unwrap() {
+        assert_eq!(
+            accept_rust_owned_local_value_type(
+                row["kind"].as_str().unwrap(),
+                row["bits"].as_str().unwrap(),
+                row["signed"].as_bool().unwrap()
+            ),
+            row["expected"].as_bool().unwrap(),
+            "{row}"
+        );
+    }
+    for row in observed["expressions"].as_array().unwrap() {
+        assert_eq!(
+            accept_rust_owned_local_expression(row["kind"].as_str().unwrap()),
+            row["expected"].as_bool().unwrap(),
+            "{row}"
+        );
+    }
+    for row in observed["binaryOperations"].as_array().unwrap() {
+        assert_eq!(
+            accept_rust_owned_local_binary_operation(row["operation"].as_str().unwrap()),
+            row["expected"].as_bool().unwrap(),
+            "{row}"
+        );
+    }
+    for row in observed["sourceOperations"].as_array().unwrap() {
+        assert_eq!(
+            accept_rust_owned_local_source_operation(row["operation"].as_str().unwrap()),
+            row["expected"].as_bool().unwrap(),
+            "{row}"
+        );
+    }
+    for row in observed["containerDecisions"].as_array().unwrap() {
+        assert_eq!(
+            accept_rust_owned_local_container(
+                row["kind"].as_str().unwrap(),
+                row["dense"].as_bool().unwrap(),
+                row["unrepresented"].as_bool().unwrap()
+            ),
+            row["expected"].as_bool().unwrap(),
+            "{row}"
+        );
+    }
+    for row in observed["recordDecisions"].as_array().unwrap() {
+        assert_eq!(
+            accept_rust_owned_local_record_value(
+                row["booleanRequired"].as_bool().unwrap(),
+                row["booleanValue"].as_bool().unwrap()
+            ),
+            row["expected"].as_bool().unwrap(),
+            "{row}"
+        );
+    }
+    for row in observed["spanDecisions"].as_array().unwrap() {
+        assert_eq!(
+            accept_rust_owned_local_source_span(
+                row["present"].as_bool().unwrap(),
+                row["recordShape"].as_bool().unwrap(),
+                row["offsetShape"].as_bool().unwrap()
+            ),
+            row["expected"].as_bool().unwrap(),
+            "{row}"
+        );
+    }
+}
+
+#[test]
+fn actual_native_text_renderer_preserves_javascript_bytes_and_utf16_input_decisions() {
+    let renderer =
+        super::translation::rust::owned_local_state_rules::render_rust_owned_local_text_input();
+    let script = r#"
+import assert from 'node:assert/strict';
+import {pathToFileURL} from 'node:url';
+import vm from 'node:vm';
+const root=pathToFileURL(process.argv[1]+'/../');
+const {readProjectData}=await import(new URL('js/scripts/project-data.mjs',root));
+const rules=await import(new URL('js/src/translation/rust-owned-local-state-rules.js',root));
+const fixture=readProjectData(new URL('experiments/rust-owned-local-state-fixture.lino',root));
+assert.equal(process.argv[2],rules.renderRustOwnedLocalTextInput());
+const context={};vm.runInNewContext(process.argv[2],context,{timeout:1000});
+let count=0;
+for(const [role,expected]of [['validText',true],['invalidText',false]]){
+ assert.equal(fixture.inputValues[role].length,7);
+ for(const text of fixture.inputValues[role]){
+  assert.equal(context.ml_ownedTextInput(text),expected);
+  assert.equal(rules.acceptRustOwnedLocalTextInput(text),expected);
+  assert.equal(rules.acceptRustOwnedLocalTextUnits(Array.from({length:text.length},(_,index)=>text.charCodeAt(index))),expected);
+  count++;
+ }
+}
+for(const value of[null,undefined,1,{},new String('boxed')])assert.equal(context.ml_ownedTextInput(value),false);
+assert.equal(count,14);console.log('owned-native-renderer:14:5');
+"#;
+    let result = run(Command::new("node").args([
+        "--input-type=module",
+        "--eval",
+        script,
+        "--",
+        env!("CARGO_MANIFEST_DIR"),
+        &renderer,
+    ]));
+    assert!(result.ok, "{}", result.stderr);
+    assert_eq!(result.stdout, "owned-native-renderer:14:5\n");
+}
+
+#[test]
 fn all_five_actual_sources_match_javascript_programs_and_both_archive_formats() {
     let cases = fixture()["cases"].as_array().unwrap();
     assert_eq!(cases.len(), 5);
@@ -159,12 +314,13 @@ fn all_five_actual_sources_match_javascript_programs_and_both_archive_formats() 
             case["name"].as_str()
         );
         let public_code = javascript_public_archive(&packet.network, packet.root);
-        let expected_output = case["observations"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .map(|row| format!("{}\n", row[3].as_str().unwrap()))
-            .collect::<String>();
+        let expected_output = case["observations"].as_array().unwrap().iter().fold(
+            String::new(),
+            |mut output, row| {
+                writeln!(output, "{}", row[3].as_str().unwrap()).unwrap();
+                output
+            },
+        );
         assert_eq!(javascript_observations(&public_code, case), expected_output);
         let text = LinkNetwork::from_lino(&packet.network.to_lino()).unwrap();
         let bytes =
@@ -176,11 +332,11 @@ fn all_five_actual_sources_match_javascript_programs_and_both_archive_formats() 
                 expected
             );
             for target in ["Rust", "JavaScript"] {
-                assert!(
-                    !emit_typed_program_links(network, packet.root, target)
+                assert_ne!(
+                    emit_typed_program_links(network, packet.root, target)
                         .unwrap()
-                        .code
-                        .is_empty()
+                        .code,
+                    ""
                 );
             }
         }
@@ -246,7 +402,7 @@ fn every_frozen_source_refusal_keeps_its_actual_diagnostic_and_span() {
         .chain(operations["cases"].as_array().unwrap())
         .chain(operations["borrowedMethodRefusals"].as_array().unwrap())
     {
-        let selected_model = entry["model"].as_str().unwrap_or(model(false));
+        let selected_model = entry["model"].as_str().unwrap_or_else(|| model(false));
         let error = parse_rust_with_owned_local_state_model(
             entry["source"].as_str().unwrap(),
             selected_model,
@@ -391,14 +547,14 @@ fn source_free_owned_state_edits_and_raw_unknown_expression_fields_refuse() {
                     .unwrap()
                     .iter_mut()
                     .find(|binding| binding["role"] == "replacement")
-                    .unwrap()["previous"] = json!("count")
+                    .unwrap()["previous"] = json!("count");
             }
             4 => proof["reads"][0]["mode"] = json!("copy"),
             5 => proof["interpretation"]["integerDomain"]["bits"] = json!(64),
             6 => proof["model"] = json!(model(true)),
             7 => proof["sourceName"] = json!("counterfeit"),
             8 => proof["literalConstructors"] = json!([]),
-            9 => proof["literalConstructors"][0]["callSpan"] = json!({"start":0,"end":1000000}),
+            9 => proof["literalConstructors"][0]["callSpan"] = json!({"start":0,"end":1_000_000}),
             10 => proof["literalConstructors"][0]["owner"]["path"] = json!(["String"]),
             11 => proof["bindings"][0]["borrowEscape"] = json!(false),
             12 => function.span = None,
@@ -426,7 +582,7 @@ fn source_free_owned_state_edits_and_raw_unknown_expression_fields_refuse() {
     proof["interpretation"]["integerDomain"]["bits"] = json!(32.0);
     let packet = encode_typed_program_links(&numeric).unwrap();
     let code = javascript_public_archive(&packet.network, packet.root);
-    assert!(!javascript_observations(&code, case).is_empty());
+    assert_ne!(javascript_observations(&code, case), "");
     let mut negative_zero = program(case, false);
     let Decl::Fn(function) = &mut negative_zero.declarations[0] else {
         unreachable!()
@@ -490,14 +646,14 @@ fn source_free_owned_state_edits_and_raw_unknown_expression_fields_refuse() {
     }
     let restored = LinkNetwork::from_lino(&matching.to_lino()).unwrap();
     for target in ["Rust", "JavaScript"] {
-        assert!(
-            !emit_typed_program_links(&restored, root, target)
+        assert_ne!(
+            emit_typed_program_links(&restored, root, target)
                 .unwrap()
-                .code
-                .is_empty()
+                .code,
+            ""
         );
     }
-    assert!(!javascript_public_archive(&restored, root).is_empty());
+    assert_ne!(javascript_public_archive(&restored, root), "");
     let mut network = LinkNetwork::from_lino(case["links"].as_str().unwrap()).unwrap();
     let variable = network
         .links()
@@ -588,8 +744,8 @@ fn rust_observations(sources: &[(&Value, String)], name: &str) -> String {
     if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
         compiler.arg("-C").arg(format!("linker={linker}"));
     }
-    let compiled = run(compiler.arg(&input).arg("-o").arg(&binary));
-    assert!(compiled.ok, "{}", compiled.stderr);
+    let build = run(compiler.arg(&input).arg("-o").arg(&binary));
+    assert!(build.ok, "{}", build.stderr);
     let result = run(&mut Command::new(binary));
     assert!(result.ok, "{}", result.stderr);
     result.stdout
@@ -602,12 +758,13 @@ fn complete_original_and_actual_generated_artifacts_execute_before_and_after_val
     for case in fixture()["cases"].as_array().unwrap() {
         let actual = program(case, false);
         let javascript = emit_javascript(&actual).unwrap();
-        let rows = case["observations"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .map(|row| format!("{}\n", row[3].as_str().unwrap()))
-            .collect::<String>();
+        let rows = case["observations"].as_array().unwrap().iter().fold(
+            String::new(),
+            |mut output, row| {
+                writeln!(output, "{}", row[3].as_str().unwrap()).unwrap();
+                output
+            },
+        );
         assert_eq!(javascript_observations(&javascript.text, case), rows);
         expected.push_str(&rows);
         originals.push((case, case["source"].as_str().unwrap().to_owned()));

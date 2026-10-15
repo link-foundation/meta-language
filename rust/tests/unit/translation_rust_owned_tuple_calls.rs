@@ -80,7 +80,7 @@ fn retarget(program: &mut Program, call: bool, fact: bool) {
         let Node::Call { func, .. } = &mut initializer(function).node else {
             unreachable!()
         };
-        *func = "alternate".to_owned();
+        "alternate".clone_into(func);
     }
     if fact {
         function.source_local_state.as_mut().unwrap()["initializers"][0]["target"] =
@@ -108,8 +108,10 @@ fn expected(rows: &Value) -> String {
     rows.as_array()
         .unwrap()
         .iter()
-        .map(|row| format!("{}\n", row[3].as_str().unwrap()))
-        .collect()
+        .fold(String::new(), |mut output, row| {
+            writeln!(output, "{}", row[3].as_str().unwrap()).unwrap();
+            output
+        })
 }
 fn javascript_archive(packet: &TypedProgramLinks, target: &str) -> String {
     let directory = TemporaryDirectory::new("tuple-call-native-public-archive");
@@ -202,7 +204,7 @@ fn refuses(program: &Program) {
 
 #[test]
 fn actual_generated_native_decisions_match_every_boolean_vector() {
-    use super::translation::owned_tuple_call_rules::{
+    use super::translation::rust::owned_tuple_call_rules::{
         accept_rust_owned_tuple_call_initializer, accept_rust_owned_tuple_call_model,
     };
     assert!(accept_rust_owned_tuple_call_model(model()));
@@ -292,11 +294,11 @@ fn all_five_complete_sources_match_actual_public_archives_and_both_formats() {
                 expected_program
             );
             for target in ["JavaScript", "Rust"] {
-                assert!(
-                    !emit_typed_program_links(&network, packet.root, target)
+                assert_ne!(
+                    emit_typed_program_links(&network, packet.root, target)
                         .unwrap()
-                        .code
-                        .is_empty()
+                        .code,
+                    ""
                 );
             }
             let code = javascript_archive(
@@ -423,7 +425,7 @@ fn coherent_source_free_retargeting_changes_actual_execution_and_one_sided_edits
                         .unwrap()
                         .iter_mut()
                         .find(|binding| binding["role"] == "tuple field" && binding["index"] == 1)
-                        .unwrap()["mutable"] = json!(true)
+                        .unwrap()["mutable"] = json!(true);
                 }
                 _ => proof["initializers"][0]["target"] = json!("choose"),
             }
@@ -611,8 +613,8 @@ fn rust_observations(sources: &[(&Value, String)], name: &str) -> String {
     if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
         compiler.arg("-C").arg(format!("linker={linker}"));
     }
-    let compiled = run(compiler.arg(input).arg("-o").arg(&binary));
-    assert!(compiled.ok, "{}", compiled.stderr);
+    let build = run(compiler.arg(input).arg("-o").arg(&binary));
+    assert!(build.ok, "{}", build.stderr);
     let result = run(&mut Command::new(binary));
     assert!(result.ok, "{}", result.stderr);
     result.stdout
@@ -677,6 +679,9 @@ fn entire_original_and_emitted_rust_artifacts_execute_before_and_after_target_ed
     assert_eq!(fixture()["authentic"]["combined"]["bytes"], 132_002);
     assert_eq!(
         fixture()["authentic"]["initializer"]["originalText"],
-        "let (mut digits, n) = decimal(&format!(\"{:e}\", x.abs()));"
+        concat!(
+            "let (mut digits, n) = decimal(&format!(\"{",
+            ":e}\", x.abs()));"
+        )
     );
 }
