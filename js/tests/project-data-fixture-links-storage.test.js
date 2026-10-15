@@ -60,3 +60,25 @@ test('fixture provenance formatting retains Unicode spellings and whitespace as 
   assert.throws(() => renderFixtureSourceBytes(value, { ...layout, whitespace: [[0, 'source code']] }), /whitespace/);
   assert.throws(() => renderFixtureSourceBytes(value, { ...layout, spellings: [[3, '"a different source"']] }), /spelling/);
 });
+
+test('the stage refresh receipt authenticates the current immutable snapshot and every selected change', () => {
+  const receipt = readProjectData(new URL('../../parity/fixtures/translation-stage-refresh-receipt.lino', import.meta.url));
+  const originalBytes = execFileSync('git', ['show', `${receipt.originalRevision}:${receipt.originalPath}`],
+    { cwd: fileURLToPath(root), maxBuffer: 16 * 1024 * 1024 });
+  const refreshBytes = execFileSync('git', ['show', `${receipt.refreshRevision}:${receipt.refreshPath}`],
+    { cwd: fileURLToPath(root), maxBuffer: 16 * 1024 * 1024 });
+  assert.equal(hash(originalBytes), receipt.originalSha256);
+  assert.equal(hash(refreshBytes), receipt.refreshSha256);
+  assert.deepEqual(readFileSync(new URL(receipt.refreshPath, root)), refreshBytes,
+    'a later generated snapshot needs its own authenticated immutable receipt');
+
+  const historical = JSON.parse(originalBytes.toString('utf8'));
+  const current = readStructuredDataLino(refreshBytes.toString('utf8'));
+  assert.deepEqual(normalizeMigrationTranslationStages(historical, current, receipt.refreshes), historical);
+  const selectedName = 'frontend-rust/frontend-rust-stringEscapes';
+  assert.deepEqual(receipt.refreshes.find(entry => entry.program === selectedName),
+    { program: selectedName, stages: ['parse'] });
+  assert.throws(() => normalizeMigrationTranslationStages(historical, current,
+    receipt.refreshes.filter(entry => entry.program !== selectedName)),
+  /protected translation source and stage fields/u);
+});
