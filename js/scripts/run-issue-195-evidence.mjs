@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import { createHash } from 'node:crypto';
 import { spawn, execFileSync } from 'node:child_process';
+import { writeSync } from 'node:fs';
+import { StringDecoder } from 'node:string_decoder';
 import {
   appendFile,
   copyFile,
@@ -40,7 +42,7 @@ import { verifyEvaluatedCheckout } from './issue-195-merge-enforcement.mjs';
 import { PARITY_ARTIFACT_FILES } from './issue-195-parity-evidence.mjs';
 import { readProjectData, readProjectFileBytes, resolveProjectDataPath, writeProjectData } from './project-data.mjs';
 import { structuredDataRecordToLino } from '../src/structured-data-records.js';
-import { readEvidenceCommandFailureTail } from './issue-195-evidence-command-logs.mjs';
+import { createEvidenceCommandLogForwarder, readEvidenceCommandFailureTail } from './issue-195-evidence-command-logs.mjs';
 import { readEvidenceStageExecutionRecords } from './issue-195-evidence-execution-records.mjs';
 import { javascriptSuiteCommandArguments, javascriptSuiteGroupEntries, javascriptSuiteSelection } from './issue-195-javascript-suite-partitions.mjs';
 
@@ -220,7 +222,8 @@ async function runRustSuite(failures) {
     '--config', 'profile.test.package.meta-language.opt-level=3',
     '--config', 'profile.test.package.meta-language.debug-assertions=true',
     '--config', 'profile.test.package.meta-language.overflow-checks=true',
-  ], { allowFailure: true });
+    '--', '--nocapture',
+  ], { allowFailure: true, forwardOutput: true });
   if (!record.ok) failures.push(`Rust tests failed; see ${record.artifacts[0]}`);
   return bundle(record);
 }
@@ -861,7 +864,7 @@ async function runCommand(
   label,
   command,
   args,
-  { cwd = root, env = boundedEnvironment(process.env), allowFailure = false } = {},
+  { cwd = root, env = boundedEnvironment(process.env), allowFailure = false, forwardOutput = false } = {},
 ) {
   const logPath = path.join(logsDirectory, `${label}.log`);
   const handle = await open(logPath, 'w');
@@ -882,9 +885,42 @@ async function runCommand(
   let code;
   try {
     code = await new Promise((resolve, reject) => {
-      const child = spawn(command, args, { cwd, env, stdio: ['ignore', handle.fd, handle.fd] });
+      const child = spawn(command, args, { cwd, env, stdio: forwardOutput ? ['ignore', 'pipe', 'pipe'] : ['ignore', handle.fd, handle.fd] });
+      let outputError;
+      let outputPaused = false;
+      const forwarder = forwardOutput ? createEvidenceCommandLogForwarder(text => {
+        if (!process.stdout.write(text) && !outputPaused) {
+          outputPaused = true;
+          child.stdout.pause();child.stderr.pause();
+          process.stdout.once('drain', () => {
+            outputPaused = false;
+            child.stdout.resume();child.stderr.resume();
+          });
+        }
+      }, env) : null;
+      const fail = error => { outputError ??= error;child.kill('SIGTERM'); };
+      if (forwarder) for (const stream of [child.stdout, child.stderr]) {
+        const decoder = new StringDecoder('utf8');
+        stream.on('data', chunk => {
+          if (outputError) return;
+          try {
+            let offset = 0;
+            while (offset < chunk.length) {
+              const written = writeSync(handle.fd, chunk, offset, chunk.length - offset);
+              if (written <= 0) throw new Error('the complete evidence command log could not be written');
+              offset += written;
+            }
+            forwarder.write(decoder.write(chunk));
+          } catch (error) { fail(error); }
+        });
+        stream.once('end', () => { try { forwarder.write(decoder.end()); } catch (error) { fail(error); } });
+        stream.once('error', fail);
+      }
       child.once('error', reject);
-      child.once('close', resolve);
+      child.once('close', result => {
+        try { forwarder?.end(); } catch (error) { outputError ??= error; }
+        outputError ? reject(outputError) : resolve(result);
+      });
     });
     await handle.write(`\nexit: ${code}\n`);
   } finally {

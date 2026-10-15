@@ -1,9 +1,14 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, open, readFile, rm, writeFile } from 'node:fs/promises';
+import { readFileSync, writeSync } from 'node:fs';
+import { EventEmitter } from 'node:events';
+import { PassThrough } from 'node:stream';
+import { StringDecoder } from 'node:string_decoder';
+import vm from 'node:vm';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
-import { readEvidenceCommandFailureTail, redactEvidenceCommandLog } from '../scripts/issue-195-evidence-command-logs.mjs';
+import { createEvidenceCommandLogForwarder, readEvidenceCommandFailureTail, redactEvidenceCommandLog } from '../scripts/issue-195-evidence-command-logs.mjs';
 import { readEvidenceStageExecutionRecords } from '../scripts/issue-195-evidence-execution-records.mjs';
 import { evidenceStages, mergeStageRecords, stageFiles, translationGroups } from '../scripts/issue-195-evidence-stages.mjs';
 import { javascriptSuiteCommandArguments, javascriptSuiteGroupEntries, javascriptSuitePartition,
@@ -192,4 +197,91 @@ test('actual failure log tails are bounded, preserve diagnostics and redact cred
     await writeFile(filename, 'sensitive-github-value'.repeat(4000));
     assert.equal(await readEvidenceCommandFailureTail(filename, environment), '');
   } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test('live evidence lines preserve split Unicode and redact split credentials and encoded key blocks', () => {
+  const environment = {GH_TOKEN: 'sensitive-token', PRIVATE_KEY: 'first-secret\nsecond-secret'}, output = [];
+  const source = 'thread Ω😀 panicked at fixture.rs:7\nsensitive-token first-secret\nsecond-secret\n' +
+    'https://user:password@example.test/x?signature=secret\n-----BEGIN PRIVATE KEY-----\n' +
+    'opaque-private-material\n-----END PRIVATE KEY-----\nassertion left != right\nlast partial Ω😀';
+  const bytes = Buffer.from(source), forwarder = createEvidenceCommandLogForwarder(text => output.push(text), environment);
+  for (const byte of bytes) forwarder.write(Buffer.from([byte]));
+  forwarder.end();forwarder.end();
+  const actual = output.join('');
+  assert.match(actual, /thread Ω😀 panicked at fixture\.rs:7\n/u);
+  assert.ok(actual.endsWith('last partial Ω😀'));
+  assert.match(actual, /assertion left != right/u);
+  for (const secret of ['sensitive-token', 'first-secret', 'second-secret', 'password', 'signature=secret', 'opaque-private-material']) {
+    assert.equal(actual.includes(secret), false, secret);
+  }
+  assert.equal(actual.includes('\uFFFD'), false);
+  assert.throws(() => forwarder.write(Buffer.from('late')), /already ended/u);
+  assert.deepEqual(environment, {GH_TOKEN: 'sensitive-token', PRIVATE_KEY: 'first-secret\nsecond-secret'});
+});
+
+test('oversized live lines remain bounded without hiding later panic lines or leaking key headers', () => {
+  const output = [], forwarder = createEvidenceCommandLogForwarder(text => output.push(text), {});
+  for (let index = 0; index < 100; index++) forwarder.write(Buffer.from('x'.repeat(4096)));
+  forwarder.write(Buffer.from('\nthread second panicked at exact.rs:9\n'));
+  forwarder.write(Buffer.from('x'.repeat(33000) + '-----BE'));
+  forwarder.write(Buffer.from('GIN PRIVATE KEY-----\nprivate-body\n-----END PRIVATE KEY-----\nactual final assertion\n'));
+  forwarder.end();
+  assert.ok(output.every(value => Buffer.byteLength(value) < 33000));
+  assert.match(output.join(''), /line omitted: exceeds 32768 bytes/u);
+  assert.match(output.join(''), /thread second panicked at exact\.rs:9/u);
+  assert.ok(output.join('').endsWith('actual final assertion\n'));
+  assert.equal(output.join('').includes('private-body'), false);
+});
+
+test('Rust-only live forwarding retains the complete raw child streams and failure status before process completion', async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'meta-language-evidence-live-'));
+  try {
+    const source = readFileSync(new URL('../scripts/run-issue-195-evidence.mjs', import.meta.url), 'utf8');
+    const definition = source.match(/^async function runCommand\([\s\S]*?^\}/mu)?.[0];assert.ok(definition);
+    const output = [], environment = {GH_TOKEN: 'private-runtime-token'};
+    const stdout = Buffer.from('thread actual panicked at fixture.rs:11\nprivate-runtime-token Ω😀\n' + 'later output\n'.repeat(4000));
+    const stderr = Buffer.from('assertion failed: expected value\n');
+    let ended = false, spawned, paused = 0, resumed = 0, backpressured = false, drained = false;
+    const liveOutput = new EventEmitter();
+    liveOutput.write = text => {
+      output.push(text);
+      if (backpressured || !text.includes('thread actual panicked')) return true;
+      backpressured = true;queueMicrotask(() => {drained = true;liveOutput.emit('drain');});return false;
+    };
+    const spawn = (_command, _args, options) => {
+      spawned = options;
+      const child = new EventEmitter();child.stdout = new PassThrough();child.stderr = new PassThrough();
+      child.stdout.on('pause', () => paused++);child.stderr.on('pause', () => paused++);
+      child.stdout.on('resume', () => {if (drained) resumed++;});child.stderr.on('resume', () => {if (drained) resumed++;});
+      child.kill = () => { throw new Error('the fixture streams must not fail'); };
+      queueMicrotask(() => {
+        child.stdout.write(Buffer.from('private-'));child.stderr.write(Buffer.from('runtime-token\n'));
+        const unicode = Buffer.from('Ω😀');
+        child.stdout.write(unicode.subarray(0, 1));child.stderr.write(Buffer.from('stderr between UTF-8 chunks\n'));
+        child.stdout.write(unicode.subarray(1));child.stdout.write(Buffer.from('\n'));
+        child.stdout.end(stdout);child.stderr.end(stderr);
+        setImmediate(() => {assert.ok(output.join('').includes('thread actual panicked'), 'panic is forwarded before close');ended = true;child.emit('close', 7);});
+      });
+      return child;
+    };
+    const run = vm.runInNewContext(`(${definition})`, {path, root: directory, logsDirectory: directory, open, spawn, writeSync, StringDecoder,
+      createEvidenceCommandLogForwarder, boundedEnvironment: () => environment, renderCommand: (command, args) => [command, ...args].join(' '),
+      relative: filename => path.relative(directory, filename), readEvidenceCommandFailureTail, setInterval, clearInterval,
+      process: {stdout: liveOutput}, console: {log() {}, error() {}}});
+    const record = await run('suite-rust', 'fixture-cargo', ['test', '--', '--nocapture'], {allowFailure: true, forwardOutput: true});
+    assert.equal(ended, true);assert.equal(record.ok, false);
+    assert.deepEqual([...record.commands], ['fixture-cargo test -- --nocapture']);
+    assert.deepEqual([...spawned.stdio], ['ignore', 'pipe', 'pipe']);
+    assert.ok(paused >= 2 && resumed >= 2, 'live output backpressure pauses both complete raw streams until drain, then resumes both');
+    const raw = await readFile(path.join(directory, 'suite-rust.log'), 'utf8');
+    assert.ok(raw.includes(stdout.toString()));assert.ok(raw.includes(stderr.toString()));assert.ok(raw.endsWith('exit: 7\n'));
+    assert.equal(output.join('').includes('private-runtime-token'), false);
+    assert.equal(output.join('').includes('private-'), false, 'split credentials follow the same merged order as the raw log');
+    assert.equal(output.join('').includes('runtime-token'), false);
+    assert.match(output.join(''), /assertion failed: expected value/u);
+    assert.ok(/stderr between UTF-8 chunks\nΩ😀\n/u.test(output.join('')), 'interleaved stderr does not corrupt a split stdout codepoint');
+    assert.equal(output.join('').includes('\uFFFD'), false, 'each child stream decodes its own split UTF-8 before shared redaction');
+    assert.match(source, /\{ allowFailure: true, forwardOutput: true \}/u);
+    assert.equal((source.match(/forwardOutput: true/gu) ?? []).length, 1, 'other command producers retain file-descriptor logging');
+  } finally { await rm(directory, {recursive: true, force: true}); }
 });

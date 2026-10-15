@@ -49,6 +49,67 @@ test('ci.yml calls the JavaScript workflow and then the Rust workflow, which nee
     'ci.yml runs the Rust workflow only after the JavaScript workflow, and skips it when JavaScript fails');
 });
 
+function checkRustWorkflowTimeouts(parsed) {
+  const original = [['detect-changes', 5], ['changelog', 10], ['version-check', 5], ['secrets-scan', 10],
+    ['fresh-merge', 20], ['cargo-lock', 5], ['check', 15], ['msrv', 30], ['lint', 10], ['test', 15],
+    ['coverage', 15], ['coverage-report', 10], ['build', 10], ['auto-release', 30], ['manual-release', 30],
+    ['changelog-pr', 10], ['deploy-docs', 20]];
+  const originalNames = original.map(([name]) => name), actualNames = [...parsed.keys()];
+  assert.deepEqual(actualNames.filter(name => name !== 'original-link-raw-observations'), originalNames);
+  assert.deepEqual(actualNames, [...originalNames.slice(0, 10), 'original-link-raw-observations', ...originalNames.slice(10)]);
+  for (const [name, limit] of [...original, ['original-link-raw-observations', 15]]) {
+    const values = [...parsed.get(name).header.matchAll(/^ {4}timeout-minutes: (.+)$/gmu)].map(match => match[1]);
+    if (name !== 'test') { assert.deepEqual(values, [String(limit)], name);continue; }
+    const expression = "${{ matrix.os == 'windows-latest' && matrix.suite == 'grammar' && 30 || 15 }}";
+    assert.deepEqual(values, [expression], 'retain the exact published matrix limit, including its existing Windows grammar exception');
+    const header = parsed.get(name).header;
+    assert.match(header, /^ {8}os: \[ubuntu-latest, macos-latest, windows-latest\]$/mu);
+    assert.match(header, /^ {8}suite: \[grammar, inference, generative, translation, remaining\]$/mu);
+    for (const os of ['ubuntu-latest', 'macos-latest', 'windows-latest']) for (const suite of ['grammar', 'inference', 'generative', 'translation', 'remaining']) {
+      const actual = Function(`return (${values[0].slice(3, -2).replaceAll('matrix.os', JSON.stringify(os)).replaceAll('matrix.suite', JSON.stringify(suite))});`)();
+      assert.equal(actual, os === 'windows-latest' && suite === 'grammar' ? 30 : limit, `${os}/${suite}`);
+    }
+  }
+}
+
+test('Rust jobs preserve all prior deadlines and the exact published matrix exception with one bounded added oracle', () => {
+  checkRustWorkflowTimeouts(jobs('rust.yml'));
+  for (const name of jobs('rust.yml').keys()) {
+    const mutate = change => {
+      const parsed = jobs('rust.yml');change(parsed);
+      assert.throws(() => checkRustWorkflowTimeouts(parsed), assert.AssertionError, name);
+    };
+    mutate(parsed => parsed.delete(name));
+    mutate(parsed => {parsed.get(name).header = parsed.get(name).header.replace(/^ {4}timeout-minutes: .+\n/mu, '');});
+    mutate(parsed => {parsed.get(name).header = parsed.get(name).header.replace(/^ {4}timeout-minutes: (.+)$/mu,
+      '    timeout-minutes: $1\n    timeout-minutes: $1');});
+    mutate(parsed => {parsed.get(name).header = parsed.get(name).header.replace(/^ {4}timeout-minutes: .+$/mu, '    timeout-minutes: 360');});
+  }
+  for (const [before, after] of [["'windows-latest'", "'ubuntu-latest'"], ["'grammar'", "'translation'"], ['&& 30 || 15', '&& 60 || 15'], ['&& 30 || 15', '&& 30 || 30']]) {
+    const parsed = jobs('rust.yml');parsed.get('test').header = parsed.get('test').header.replace(before, after);
+    assert.throws(() => checkRustWorkflowTimeouts(parsed), assert.AssertionError);
+  }
+});
+
+test('the cancellation investigation joins tooling without changing any prior file assignment', () => {
+  const addition = '|ci-cancellation-investigation$', source = TEST_GROUPS.tooling.source;
+  assert.equal(source.split(addition).length, 2);
+  const originalTooling = new RegExp(source.replace(addition, ''), TEST_GROUPS.tooling.flags);
+  assert.equal(createHash('sha256').update(originalTooling.source).digest('hex'),
+    '52cabb3ce07eb317d238c08c1314cc9b620255b12295b0b32731d468bd304b69');
+  const files = testFiles(), partition = partitionTests(files);
+  assert.deepEqual(partition.unassigned, []);assert.deepEqual(partition.ambiguous, []);
+  assert.equal(Object.values(partition.groups).flat().length, files.length);
+  for (const file of files) {
+    const before = Object.entries(TEST_GROUPS).filter(([name, pattern]) =>
+      (name === 'tooling' ? originalTooling : pattern).test(file.replace(/\.test\.js$/u, ''))).map(([name]) => name);
+    const after = Object.entries(partition.groups).filter(([, members]) => members.includes(file)).map(([name]) => name);
+    assert.deepEqual(after, file === 'ci-cancellation-investigation.test.js' ? ['tooling'] : before, file);
+  }
+  assert.deepEqual(partitionTests(['ci-cancellation-investigation-extra.test.js', 'ci-cancellation-investigationx.test.js']).unassigned,
+    ['ci-cancellation-investigation-extra.test.js', 'ci-cancellation-investigationx.test.js']);
+});
+
 function selectNativeTestInputs(paths, { base = 'base', valid = true } = {}) {
   const step = jobs('ci.yml').get('changes').steps.find(step => step.id === 'paths' || step.name === 'Detect whether the Rust workflow is needed');
   assert.ok(step);

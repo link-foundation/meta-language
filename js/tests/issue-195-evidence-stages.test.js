@@ -222,16 +222,29 @@ test('the acceptance Rust command reuses only the checked fresh-merge test optim
   const [label, command, args, options] = structuredClone(calls[0]);
   assert.equal(label, 'suite-rust');
   assert.equal(command, 'cargo');
-  assert.deepEqual(options, { allowFailure: true });
+  const { forwardOutput, ...originalOptions } = options;
+  assert.deepEqual(originalOptions, { allowFailure: true });
+  assert.equal(forwardOutput, true, 'only the complete Rust suite selects live redacted diagnostics');
   const original = ['test', '--no-fail-fast', '--locked', '--manifest-path', path.join(root, 'rust/Cargo.toml'), '--tests'];
   const settings = ['profile.test.package.meta-language.opt-level=3',
     'profile.test.package.meta-language.debug-assertions=true',
     'profile.test.package.meta-language.overflow-checks=true'];
   const freshMerge = [...read('rust/scripts/simulate-fresh-merge.sh').matchAll(/--config '([^']+)'/gu)].map(match => match[1]);
   assert.deepEqual(settings, freshMerge, 'reuse the existing package-specific test settings exactly');
-  assert.deepEqual(args, [...original, ...settings.flatMap(setting => ['--config', setting])],
-    'retain default features, every test target, enabled debug/overflow checks and the original failure policy');
+  const checkArguments = candidate => {
+    assert.deepEqual(candidate.slice(0, -2), [...original, ...settings.flatMap(setting => ['--config', setting])],
+      'retain default features, every test target, enabled debug/overflow checks and the original failure policy');
+    assert.deepEqual(candidate.slice(-2), ['--', '--nocapture'], 'the only new arguments expose actual panic diagnostics');
+  };
+  checkArguments(args);
   assert.doesNotMatch(args.join(' '), /--release|--profile|--features|--all-features|--no-default-features|--skip|--ignored|debug-assertions=false|overflow-checks=false/u);
+  for (const counterfeit of [args.slice(0, -2), [...args.slice(0, -1), '--show-output'],
+    [...args.slice(0, -2), '--nocapture'], [...args, '--skip', 'slow'],
+    args.filter(value => value !== '--no-fail-fast'), args.map(value => value === '--tests' ? '--lib' : value),
+    args.map(value => value === 'profile.test.package.meta-language.opt-level=3' ? 'profile.test.package.meta-language.opt-level=0' : value),
+    [...args.slice(0, -2), '--no-default-features', '--', '--nocapture']]) {
+    assert.throws(() => checkArguments(counterfeit), assert.AssertionError);
+  }
 });
 
 test('declared toolchains must match exactly; tools a stage does not use are not required', () => {

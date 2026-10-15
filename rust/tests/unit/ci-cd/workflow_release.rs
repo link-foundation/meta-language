@@ -146,14 +146,45 @@ fn release_workflow_jobs_have_explicit_timeouts() {
         .iter()
         .map(|(job_name, _)| *job_name)
         .collect::<Vec<_>>();
-    assert_eq!(actual_jobs, expected_jobs);
+    assert_eq!(
+        actual_jobs
+            .iter()
+            .copied()
+            .filter(|job_name| *job_name != "original-link-raw-observations")
+            .collect::<Vec<_>>(),
+        expected_jobs,
+        "preserve all seventeen original jobs in their original order"
+    );
+    let mut complete_jobs = expected_jobs;
+    complete_jobs.insert(10, "original-link-raw-observations");
+    assert_eq!(actual_jobs, complete_jobs);
 
-    for (job_name, timeout_minutes) in expected_timeouts {
+    for (job_name, timeout_minutes) in expected_timeouts
+        .into_iter()
+        .chain([("original-link-raw-observations", 15)])
+    {
         let job = job_block(&workflow, job_name);
-        let expected = format!("    timeout-minutes: {timeout_minutes}\n");
+        // Keep the published Windows grammar exception exactly; every other
+        // test matrix cell retains the original fifteen-minute deadline.
+        let expected = if job_name == "test" {
+            assert!(job.contains("        os: [ubuntu-latest, macos-latest, windows-latest]\n"));
+            assert!(job.contains(
+                "        suite: [grammar, inference, generative, translation, remaining]\n"
+            ));
+            "    timeout-minutes: ${{ matrix.os == 'windows-latest' && matrix.suite == 'grammar' && 30 || 15 }}\n".to_owned()
+        } else {
+            format!("    timeout-minutes: {timeout_minutes}\n")
+        };
         assert!(
             job.contains(&expected),
             "{job_name} should declare {expected:?}"
+        );
+        assert_eq!(
+            job.lines()
+                .filter(|line| line.starts_with("    timeout-minutes:"))
+                .collect::<Vec<_>>(),
+            [expected.trim_end()],
+            "{job_name} should declare its exact deadline once"
         );
     }
 }
