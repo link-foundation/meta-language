@@ -18,11 +18,20 @@ const ciCancellationInvestigationSource = 'parity/sources/ci-cancellation-invest
 const inferenceSource = 'parity/sources/grammar-inference-issue-224.txt';
 
 const sourceTooling = {
+  'I195-WORKFLOW-CANCELLED-CI-INVESTIGATION': [
+    'js/scripts/ci-cancellation-investigation.mjs', 'js/tests/ci-cancellation-investigation.test.js',
+  ],
   'I195-THEORY-FOUNDATION-PINNED-SOURCE-AUDIT': [
     'js/scripts/meta-theory-foundation-sources.mjs', 'js/tests/issue-195-meta-theory-sources.test.js',
   ],
   'I195-ASSOCIATIVE-STACK-PINNED-SOURCE-AUDIT': [
     'js/scripts/associative-stack-sources.mjs', 'js/tests/issue-195-associative-stack-sources.test.js',
+  ],
+};
+
+const sourceToolingFixtures = {
+  'I195-WORKFLOW-CANCELLED-CI-INVESTIGATION': [
+    { id: 'ci-cancellation-investigation', path: 'parity/fixtures/ci-cancellation-investigation.lino' },
   ],
 };
 
@@ -97,6 +106,7 @@ function rows(sourceKey, fixture, specification, area, declarations, tooling = f
         ...dataTooling[id].fixtures.map(id => ({ id, path: dataToolingFixtures[id] })),
       ],
     } : {}),
+    ...(sourceToolingFixtures[id] ? { additionalFixtures: sourceToolingFixtures[id] } : {}),
   }));
 }
 
