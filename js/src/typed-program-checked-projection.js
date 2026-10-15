@@ -1,6 +1,7 @@
 // Rebuild a linked product program through the existing Surface checker.
 // The adapter carries declarations and shared projection instructions; it
 // does not assign meaning to types, operators, patterns or recursion.
+import {checkRustConstFunctionContainers} from './translation/rust-const-functions.js';
 import { checkProgram } from './translation/check.js';
 import {checkRustOwnedLocalStateRecordShapes} from './translation/rust-owned-local-state.js';
 import { validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes } from './translation/rust-type-namespace.js';
@@ -8,6 +9,7 @@ import { projectLinkedProgramExpression, projectLinkedProgramDeclarationPath } f
 import { readProgramExpressionProjection, readProgramNeutralFieldDefault } from './typed-program-link-rules.js';
 
 export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
+  if(checkRustConstFunctionContainers(program))wholeProgram=true;
   const rootedNamespace = checkRustTypeNamespaceRecordShapes(program);
   if (rootedNamespace) { validateRustTypeNamespace(program); wholeProgram = true; }
   if(checkRustOwnedLocalStateRecordShapes(program))wholeProgram=true;
@@ -61,6 +63,7 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
       params: entry.params.map(parameter => ({ ...parameter, type: projectType(parameter.type) })),
       ret: projectType(entry.ret), body: projectExpression(entry.body), span: entry.span,
       ...(entry.generated !== undefined ? { generated: entry.generated } : {}),
+      ...(entry.sourceConstFunction!==undefined?{sourceConstFunction:entry.sourceConstFunction}:{}),
       ...(entry.sourceSignature !== undefined ? { sourceSignature: entry.sourceSignature } : {}),
       ...(entry.sourceTypeNamespace !== undefined ? { sourceTypeNamespace: entry.sourceTypeNamespace } : {}),
       ...(entry.sourceLoop !== undefined ? { sourceLoop: entry.sourceLoop } : {}),
