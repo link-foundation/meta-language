@@ -25,7 +25,7 @@ mod checked;
 mod codec;
 mod projection;
 pub mod source_span_rules;
-mod source_spans;
+pub(crate) mod source_spans;
 
 /// A structural, unsupported or semantic defect in a linked program.
 #[derive(Clone, Debug, PartialEq, Eq)]

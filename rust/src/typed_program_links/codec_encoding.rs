@@ -327,6 +327,7 @@ struct Encoder {
     types: HashMap<String, LinkId>,
     targets: Targets,
     pending: Vec<(LinkId, String, String)>,
+    runtime_value: Option<Value>,
 }
 impl Encoder {
     fn ordered_items(
@@ -390,6 +391,19 @@ impl Encoder {
         )
     }
     fn value(&mut self, value: &Value, path: &str) -> Result<LinkId> {
+        if self.runtime_value.is_some() && path.starts_with("/sourceRuntimeShell/") {
+            if let Some(target) = super::runtime_shell::reference_path(value)? {
+                let value = self
+                    .runtime_value
+                    .as_ref()
+                    .and_then(|root| root.pointer(&target))
+                    .cloned()
+                    .ok_or_else(|| {
+                        error("a runtime structural reference has no actual owned target")
+                    })?;
+                return self.value(&value, &target);
+            }
+        }
         if let Some(existing) = self.identities.get(path) {
             return Ok(*existing);
         }
@@ -588,6 +602,7 @@ pub(super) fn encode(program: &Program, provenance: Option<&Value>) -> Result<Ty
         types: HashMap::new(),
         targets,
         pending: Vec::new(),
+        runtime_value: program.source_runtime_shell.as_ref().map(|_| value.clone()),
     };
     let body = encoder.container("record");
     for (field, child) in value.as_object().unwrap() {

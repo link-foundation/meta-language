@@ -532,6 +532,16 @@ pub fn emit_rust_with_options(
     program: &Program,
     options: RustEmissionOptions<'_>,
 ) -> Result<Emitted> {
+    if let Some(runtime) = super::runtime_shell::validate_program(program)? {
+        if options.source_header_model.is_some() {
+            return Err(crate::translation::diagnostics::unsupported(
+                "closed Rust runtime shell",
+                "target header changes require an independent runtime composition proof",
+                None,
+            ));
+        }
+        return super::runtime_shell::emit_rust(program, &runtime);
+    }
     let mut emitter = rust_emitter(program);
     if let Some(model) = options.source_header_model {
         if super::borrowed_call_interface_rules::accept_rust_borrowed_call_interface_model(model) {

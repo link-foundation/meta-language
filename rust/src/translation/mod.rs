@@ -36,6 +36,7 @@ pub mod product_emission_rules;
 pub mod proof;
 pub mod rocq;
 pub(crate) mod runtime_shell;
+pub(crate) mod runtime_shell_rules;
 pub mod rust;
 pub(crate) mod scalar_loop_rules;
 pub(crate) mod scoped_binding_emission;
