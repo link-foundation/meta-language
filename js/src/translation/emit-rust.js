@@ -1,3 +1,4 @@
+import {rustEscape,rustString} from './rust-string-literals.js';
 import {checkRustRuntimeShell,emitRustRuntimeShell,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import { renderStringLengthExpression, renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
 // Rust emitter. Naturals and integers are `ml::Big`, an unbounded integer
@@ -1655,25 +1656,9 @@ function block(text) {
   return `{\n${indent(text, 1)}\n}`;
 }
 
-function rustEscape(text) {
-  return [...text].map((char) => {
-    const code = char.codePointAt(0);
-    if (char === '"' || char === '\\') return `\\${char}`;
-    if (char === '\n') return '\\n';
-    if (char === '\r') return '\\r';
-    if (char === '\t') return '\\t';
-    if (code < 0x20 || code === 0x7f) return `\\u{${code.toString(16)}}`;
-    return char;
-  }).join('');
-}
-
 /** Text inside a `format!`-style literal, where braces are doubled. */
 function formatEscape(text) {
   return rustEscape(text).replace(/\{/gu, '{{').replace(/\}/gu, '}}');
-}
-
-function rustString(text) {
-  return `"${rustEscape(text)}"`;
 }
 
 function indent(text, depth) {
