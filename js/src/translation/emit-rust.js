@@ -12,6 +12,7 @@ import { renderStringLengthExpression, renderStringMapExpression, renderStringTe
 
 import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
 import {checkRustConstFunctionProof,renderRustConstFunctionHeader} from './rust-const-functions.js';
+import {checkRustOwnedLocalStateProof} from './rust-owned-local-state.js';
 import { unsupported } from './diagnostics.js';
 import { typeKey } from './types.js';
 import { Scope, renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
@@ -627,6 +628,7 @@ export function readRustArrayPrelude(standard = false) {
 
 export function emitRust(program, options = {}) {
   checkRustConstFunctionProof(program);
+  checkRustOwnedLocalStateProof(program);
   const runtimeShell=checkRustRuntimeShell(program);
   if(runtimeShell){if(options.sourceHeaderModel!==undefined)refuseRustRuntimeShellComposition('target header changes require an independent runtime composition proof');return emitRustRuntimeShell(program,runtimeShell);}
   const borrowedCalls = acceptRustBorrowedCallInterfaceModel(options.sourceHeaderModel) ? readRustBorrowedCallInterface(program, options.sourceHeaderModel) : null;

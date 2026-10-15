@@ -8,6 +8,8 @@ import {parseJavaScript} from '../js/src/translation/javascript.js';
 import {checkProgram} from '../js/src/translation/check.js';
 import {checkRustOwnedLocalStateProof} from '../js/src/translation/rust-owned-local-state.js';
 import {emitJavaScript} from '../js/src/translation/emit-javascript.js';
+import {emitRust} from '../js/src/translation/emit-rust.js';
+import {createTypedProgramLinks,emitTypedProgramLinks} from '../js/src/index.js';
 import {encodeTypedProgramLinks,decodeTypedProgramLinks,TYPED_PROGRAM_LINKS_SCHEMA} from '../js/src/typed-program-links.js';
 import {LinkNetwork} from '../js/src/network.js';
 import {ownedTupleCallFixture} from './generate-owned-tuple-call-fixture.mjs';
@@ -36,6 +38,15 @@ test('all complete selected programs execute from checked Links with one real de
   context.seed=(...args)=>{calls++;return seed(...args);};
   const[text,count,flag,expected]=entry.observations[0];assert.equal(context[name](text,BigInt(count),flag),expected);assert.equal(calls,1);
  }
+});
+
+test('the existing public factory retains the selected call model and user provenance through LiNo reload',()=>{
+ const created=createTypedProgramLinks(fixture.cases[0].source,'Rust',{rustOwnedLocalStateModel:fixture.model,provenance:{caller:'tuple initializer test'}});
+ const network=LinkNetwork.fromLino(created.network.toLino()),relations=network.fieldRelations(),profile=relations.find(row=>row.label==='source profile');
+ assert.ok(profile);assert.ok(relations.some(row=>row.parent.equals(profile.child)&&row.label==='rust owned local state model'&&network.link(row.child).metadata().definition===fixture.model));
+ assert.ok(relations.some(row=>row.label==='caller'&&network.link(row.child).metadata().definition==='tuple initializer test'));
+ const emitted=emitTypedProgramLinks(network,created.root,'JavaScript'),context={};vm.runInNewContext(emitted.code,context,{timeout:1000});
+ for(const[text,count,flag,expected]of fixture.cases[0].observations)assert.equal(context.choose(text,BigInt(count),flag),expected);
 });
 
 test('source-free target edits change actual execution only with matching checked owner and move/Copy facts',()=>{
@@ -73,6 +84,7 @@ test('direct selected checking and emission reject a forged tuple item before re
  const expected=/actual tuple item differs from its declared owned field type/u;
  assert.throws(()=>checkRustOwnedLocalStateProof(program),expected);
  assert.throws(()=>emitJavaScript(program),expected);
+ assert.throws(()=>emitRust(program),expected);
  assert.throws(()=>encodeTypedProgramLinks(program),/tuple|owned field/u);
 });
 
@@ -81,13 +93,13 @@ test('direct selected checking and emission validate the actual conditional and 
  const text=helper.body.items[0],count=helper.body.items[1];
  helper.body.items[0]={k:'if',cond:{k:'lit',value:true,type:{kind:'bool'},span:text.span},then:structuredClone(count),else:text,type:text.type,span:text.span};
  helper.sourceLocalState.reads[0].path=['items',0,'else'];
- for(const run of[checkRustOwnedLocalStateProof,emitJavaScript])assert.throws(()=>run(conditional),/actual conditional branches differ/u);
+ for(const run of[checkRustOwnedLocalStateProof,emitJavaScript,emitRust])assert.throws(()=>run(conditional),/actual conditional branches differ/u);
  assert.throws(()=>encodeTypedProgramLinks(conditional),/conditional|branch/u);
  const local=parse(fixture.cases[0]),fn=local.declarations.get('choose'),path=[];let last=fn.body;
  while(last.body.k==='let'){path.push('body');last=last.body;}
  last.body={k:'var',name:'count',type:fn.params[1].type};
  fn.sourceLocalState.reads=fn.sourceLocalState.reads.filter(read=>JSON.stringify(read.path)!==JSON.stringify([...path,'body']));
- for(const run of[checkRustOwnedLocalStateProof,emitJavaScript])assert.throws(()=>run(local),/actual local body differs/u);
+ for(const run of[checkRustOwnedLocalStateProof,emitJavaScript,emitRust])assert.throws(()=>run(local),/actual local body differs/u);
  assert.throws(()=>encodeTypedProgramLinks(local),/type|result/u);
 });
 
@@ -96,7 +108,7 @@ test('helper signature domains preserve actual numeric widths through direct che
  for(const value of['32',true,false,null,33]){
   const program=decodeTypedProgramLinks(archive.network,archive.root);
   program.declarations.get('seed').sourceSignature.result.type.elements[1].bits=value;
-  for(const run of[checkRustOwnedLocalStateProof,emitJavaScript,encodeTypedProgramLinks])assert.throws(()=>run(program),/source|interface|domain|primitive/u);
+  for(const run of[checkRustOwnedLocalStateProof,emitJavaScript,emitRust,encodeTypedProgramLinks])assert.throws(()=>run(program),/source|interface|domain|primitive/u);
  }
  const mutate=(kind,definition)=>{
   const network=LinkNetwork.fromLino(archive.network.toLino()),rows=network.fieldRelations();
@@ -116,6 +128,32 @@ test('helper signature domains preserve actual numeric widths through direct che
  }
 });
 
+test('direct emission checks actual declaration mapping and ordered ownership before resolving tuple calls',()=>{
+ const entry=fixture.cases.find(row=>row.name==='source-free target');
+ const corruptions=[
+  program=>{program.declarations.get('alternate').fullName='seed';},
+  program=>{program.declarations.get('alternate').name='seed';},
+  program=>{program.declarations.get('alternate').modulePath=['counterfeit'];},
+  program=>{const alternate=program.declarations.get('alternate');program.declarations.delete('alternate');program.declarations.set('other',alternate);},
+  program=>{program.items[1]=structuredClone(program.items[1]);},
+  program=>{program.items.push(program.items[1]);},
+  program=>{program.items.splice(1,1);},
+ ];
+ for(const mutate of corruptions){
+  const program=parse(entry);mutate(program);
+  for(const run of[checkRustOwnedLocalStateProof,emitJavaScript,emitRust,encodeTypedProgramLinks])assert.throws(()=>run(program),/qualified|owner|declaration|mapping/u);
+ }
+});
+
+test('selected equality keeps its actual Boolean or i32 operands before either direct target emission',()=>{
+ const program=parse(fixture.cases[0]),fn=program.declarations.get('choose'),branch=fn.body.body.body.body.value,span=branch.cond.span;
+ const pair=()=>({k:'tuple',items:[structuredClone(branch.then.value),{k:'lit',value:'0',type:{kind:'fixed',bits:32,signed:true}}],type:structuredClone(fn.body.value.type)});
+ branch.cond={k:'binary',op:'eq',left:pair(),right:pair(),type:{kind:'bool'},span};
+ const constructor=fn.sourceLocalState.literalConstructors[0],base=['body','body','body','value','cond'];
+ fn.sourceLocalState.literalConstructors=[{...structuredClone(constructor),path:[...base,'left','items',0]},{...structuredClone(constructor),path:[...base,'right','items',0]},constructor];
+ for(const run of[checkRustOwnedLocalStateProof,emitJavaScript,emitRust,encodeTypedProgramLinks])assert.throws(()=>run(program),/actual Boolean\/i32 domain/u);
+});
+
 test('new shared rule decisions themselves replay from checked Links without a native implementation',()=>{
  const source=rustOwnedTupleCallRules();assert.equal(readFileSync(new URL('../js/src/translation/rust-owned-tuple-call-rules.js',import.meta.url),'utf8'),source);
  const archive=reload(checkProgram(parseJavaScript(source))),program=decodeTypedProgramLinks(archive.network,archive.root),emission=emitJavaScript(program),context={};
@@ -133,4 +171,7 @@ test('the complete authenticated formatter stays an unresolved embedding with it
  assert.equal(fixture.authentic.definition.originalText,'fn decimal(text: &str) -> (String, i32)');
  assert.equal(fixture.authentic.selectedRefusal.kind,'unsupported');assert.match(fixture.authentic.selectedRefusal.reason,/direct standard String, i32 and Boolean interfaces/u);
  assert.ok(fixture.authentic.occurrences.some(row=>row.name==='n'));assert.ok(fixture.authentic.unresolved.length>=4);
+ assert.equal(fixture.emittedArtifact.readers.length,2);assert.ok(fixture.emittedArtifact.readers.every(row=>row.kind==='unsupported'));
+ assert.match(fixture.emittedArtifact.readers[0].reason,/standard String clone/u);
+ assert.match(fixture.emittedArtifact.readers[1].reason,/direct standard String, i32 and Boolean interfaces/u);
 });

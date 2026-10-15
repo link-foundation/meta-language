@@ -4,6 +4,7 @@ import {typeError} from './diagnostics.js';
 import {sameType} from './types.js';
 import {checkRustSourceSignature} from './rust-source-signatures.js';
 import {checkOwnedProgramContainers} from './owned-program-containers.js';
+import {checkProgramDeclarationOwners} from '../typed-program-declaration-owners.js';
 import {acceptProgramOrderedPosition} from '../program-numeric-metadata-rules.js';
 import {acceptRustOwnedLocalExpression,acceptRustOwnedLocalBinaryOperation,acceptRustOwnedLocalContainer,acceptRustOwnedLocalRecordValue,acceptRustOwnedLocalSourceSpan} from './rust-owned-local-state-rules.js';
 import {ownedLocalType,ownedLocalPair,ownedLocalPosition} from './rust-owned-local-domains.js';
@@ -90,6 +91,7 @@ export function checkRustOwnedLocalStateProof(program){
  checkRustOwnedLocalStateRecordShapes(program);
  const entries=[...program.declarations.values()];if(!entries.some(entry=>Object.hasOwn(entry,'sourceLocalState')))return;
  if(program.sourceLanguage!=='Rust'||program.items.some(item=>item.k!=='fn')||program.main?.effects?.length||program.imports?.length||program.externals?.length||['referenceSemantics','utf16Strings','outputThreaded','abortsThreaded'].some(field=>Object.hasOwn(program,field)&&program[field]!==false))fail('the profile requires a complete flat value program without imports, effects or other runtime interpretations');
+ checkProgramDeclarationOwners(program);
  for(const entry of entries){
   if(Object.keys(entry).some(field=>!policy.declarationFields.includes(field))||Object.values(entry).some(value=>value===undefined))fail('a function has unrepresented own fields');
   if(entry.k!=='fn'||!Array.isArray(entry.modulePath)||entry.modulePath.length||entry.recursive!==false||Object.hasOwn(entry,'generated')&&entry.generated!==false||Object.hasOwn(entry,'mutual')&&entry.mutual!==false||entry.decreasing!=null||Object.hasOwn(entry,'sourceLoop')||Object.hasOwn(entry,'sourcePrimitiveOwners')||policy.reservedOwners.includes(entry.name))fail('a function has an unsupported declaration or standard owner context');
@@ -176,7 +178,7 @@ export function checkRustOwnedLocalStateProof(program){
     node.args.forEach((arg,index)=>expression(arg,[...path,'args',index],scope,state));return;
    }
    if(node.k==='binary'){
-    if(!acceptRustOwnedLocalBinaryOperation(node.op)||node.type.kind!=='bool'||node.left.type.kind==='string'||!sameType(node.left.type,node.right.type)||node.domain&&(!ownedLocalType(node.domain)||!sameType(node.domain,node.left.type)))fail('only exact equality in the actual Boolean/i32 domain is admitted');
+    if(!acceptRustOwnedLocalBinaryOperation(node.op)||node.type.kind!=='bool'||!ownedLocalType(node.left.type)||node.left.type.kind==='string'||!sameType(node.left.type,node.right.type)||node.domain&&(!ownedLocalType(node.domain)||!sameType(node.domain,node.left.type)))fail('only exact equality in the actual Boolean/i32 domain is admitted');
     expression(node.left,[...path,'left'],scope,state);expression(node.right,[...path,'right'],scope,state);return;
    }
    if(node.k==='toString'){if(node.type.kind!=='string'||node.arg.k!=='lit'||node.arg.type.kind!=='string')fail('the constructor must be an actual standard literal String value');expression(node.arg,[...path,'arg'],scope,state);return;}

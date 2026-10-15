@@ -5,6 +5,7 @@ import {createHash} from 'node:crypto';
 import {readProjectData,writeProjectData,checkProjectData} from '../js/scripts/project-data.mjs';
 import {parseRust} from '../js/src/translation/rust.js';
 import {checkProgram} from '../js/src/translation/check.js';
+import {emitRust} from '../js/src/translation/emit-rust.js';
 import {tokenize} from '../js/src/translation/lexer.js';
 import {ownedTupleCallPolicy as policy} from './generate-rust-owned-tuple-call-rules.mjs';
 import {withRustOwnedLocalAuthenticSource,RUST_OWNED_LOCAL_AUTHENTIC_SOURCE_COMMIT} from './rust-owned-local-authentic-source.mjs';
@@ -56,7 +57,11 @@ export function ownedTupleCallFixture(){
  });
  // The complete input is always authenticated and parsed, but not copied into fixture data.
  delete authentic.selectedRefusal.source;
- return{version:1,model:policy.model,cases,refusals:invalid.map(refusal),authentic};
+ const emitted=emitRust(checkProgram(parseRust(cases[0].source,{localValueStateModel:policy.model}))).text;
+ const emittedArtifact={sourceCase:cases[0].name,bytes:Buffer.byteLength(emitted),sha256:createHash('sha256').update(emitted).digest('hex'),
+  scope:'The complete actual emitted Rust artifact is parsed unchanged. Its refusal observations do not establish source replay, native execution or formatter support.',
+  readers:[policy.model,'canonical owned text local copies 1'].map(model=>{try{checkProgram(parseRust(emitted,{localValueStateModel:model}));}catch(error){return{model,kind:error.kind,reason:error.reason,span:error.span??null};}throw new Error('the emitted artifact needs a reviewed complete source replay observation');})};
+ return{version:1,model:policy.model,cases,refusals:invalid.map(refusal),authentic,emittedArtifact};
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){
  const file=new URL('./owned-tuple-call-fixture.lino',import.meta.url),data=ownedTupleCallFixture();
