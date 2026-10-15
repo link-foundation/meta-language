@@ -12459,7 +12459,396 @@ const OWNED_SOURCE_ADAPTER_NAME_INVENTORIES=OWNED_SOURCE_ADAPTER_NAME_BINDINGS.m
  extract:(raw,file)=>{let text=raw;if(file.endsWith('.lino')){const saved=OWNED_SOURCE_ADAPTER_SOURCE_TEXTS.get(file);if(!saved||saved.raw!==raw)OWNED_SOURCE_ADAPTER_SOURCE_TEXTS.set(file,{raw,text:JSON.stringify(readStructuredDataLino(raw))});text=OWNED_SOURCE_ADAPTER_SOURCE_TEXTS.get(file).text;}return files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeOwnedSourceAdapterName(name));},
  recordOf:name=>Object.values(files).flat().find(entry=>normalizeOwnedSourceAdapterName(entry.name)===name).id,
 }));
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES]);
+// Actual CI-only source bundle and library oracle identities and safe identifier guards.
+const FINAL_SOURCE_ORACLE_NAME_BINDINGS=[
+  {
+    "inventory": "authenticated native source bundle mechanics",
+    "files": {
+      "experiments/source-native-observations.mjs": [
+        {
+          "name": "prepareBundle",
+          "id": "repository.prepare-native-source-observation-bundle"
+        },
+        {
+          "name": "regularPath",
+          "id": "repository.check-native-source-bundle-file-path"
+        },
+        {
+          "name": "runCheckedProcess",
+          "id": "repository.run-checked-native-source-observation-process"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "authenticated native source bundle data",
+    "files": {
+      "experiments/source-native-observations.mjs": [
+        {
+          "name": "additionalSources",
+          "id": "repository.native-source-observation-bundle"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "native source bundle descriptors",
+    "files": {
+      "experiments/source-native-observations.test.mjs": [
+        {
+          "name": "descriptor",
+          "id": "repository.create-native-source-bundle-descriptor"
+        }
+      ],
+      "experiments/rust-text-certificate-library/native-observations.mjs": [
+        {
+          "name": "sourceReceipt",
+          "id": "repository.create-native-source-bundle-descriptor"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "native source bundle injected controls",
+    "files": {
+      "experiments/source-native-observations.test.mjs": [
+        {
+          "name": "makePlan",
+          "id": "repository.create-native-source-bundle-test-plan"
+        },
+        {
+          "name": "harness",
+          "id": "repository.create-native-source-bundle-test-harness"
+        },
+        {
+          "name": "failure",
+          "id": "repository.require-native-source-bundle-test-failure"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete certificate library source oracle operations",
+    "files": {
+      "experiments/rust-text-certificate-library/native-observations.mjs": [
+        {
+          "name": "verifyRustTextCertificateLibraryModel",
+          "id": "repository.verify-text-certificate-library-native-model"
+        },
+        {
+          "name": "rustTextCertificateLibraryNativeMode",
+          "id": "repository.read-text-certificate-library-native-mode"
+        },
+        {
+          "name": "publicHeader",
+          "id": "repository.check-text-certificate-library-public-header"
+        },
+        {
+          "name": "planRustTextCertificateLibraryNative",
+          "id": "repository.plan-text-certificate-library-native-observations"
+        },
+        {
+          "name": "runRustTextCertificateLibraryNative",
+          "id": "repository.run-text-certificate-library-native-observations"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete certificate library source oracle role RUST_TEXT_CERTIFICATE_LIBRARY_MODEL_COMMIT",
+    "files": {
+      "experiments/rust-text-certificate-library/native-observations.mjs": [
+        {
+          "name": "RUST_TEXT_CERTIFICATE_LIBRARY_MODEL_COMMIT",
+          "id": "repository.text-certificate-library-native-model-revision"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete certificate library source oracle role sourceDigests",
+    "files": {
+      "experiments/rust-text-certificate-library/native-observations.mjs": [
+        {
+          "name": "sourceDigests",
+          "id": "repository.text-certificate-library-native-source-digests"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete certificate library source oracle role checkedPlans",
+    "files": {
+      "experiments/rust-text-certificate-library/native-observations.mjs": [
+        {
+          "name": "checkedPlans",
+          "id": "repository.text-certificate-library-native-plan-set"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete certificate library source oracle role sourceFiles",
+    "files": {
+      "experiments/rust-text-certificate-library/native-observations.mjs": [
+        {
+          "name": "sourceFiles",
+          "id": "repository.text-certificate-library-compilation-source-receipts"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete certificate library source oracle role originalArtifactReceipt",
+    "files": {
+      "experiments/rust-text-certificate-library/native-observations.mjs": [
+        {
+          "name": "originalArtifactReceipt",
+          "id": "repository.text-certificate-library-original-artifact-receipt"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete certificate library source oracle role generationBoundary",
+    "files": {
+      "experiments/rust-text-certificate-library/native-observations.mjs": [
+        {
+          "name": "generationBoundary",
+          "id": "repository.text-certificate-library-generation-boundary"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete certificate library injected controls",
+    "files": {
+      "experiments/rust-text-certificate-library/native-observations.test.mjs": [
+        {
+          "name": "injected",
+          "id": "repository.run-text-certificate-library-injected-contract"
+        },
+        {
+          "name": "failure",
+          "id": "repository.require-text-certificate-library-native-test-failure"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "source bundle and library exact provider source hash",
+    "files": {
+      "experiments/source-native-observations.test.mjs": [
+        {
+          "name": "sha256",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        }
+      ],
+      "experiments/rust-text-certificate-library/native-observations.mjs": [
+        {
+          "name": "sha256",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        }
+      ],
+      "experiments/rust-text-certificate-library/native-observations.test.mjs": [
+        {
+          "name": "sha256",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "source bundle and library exact provider scalar source bytes",
+    "files": {
+      "experiments/source-native-observations.test.mjs": [
+        {
+          "name": "textBytes",
+          "id": "repository.read-rust-text-native-oracle-bytes"
+        }
+      ],
+      "experiments/rust-text-certificate-library/native-observations.mjs": [
+        {
+          "name": "textBytes",
+          "id": "repository.read-rust-text-native-oracle-bytes"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "source bundle and library exact provider immutable plans",
+    "files": {
+      "experiments/rust-text-certificate-library/native-observations.mjs": [
+        {
+          "name": "freeze",
+          "id": "repository.freeze-rust-text-native-observation-plan"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "source bundle and library exact provider shared configured runner",
+    "files": {
+      "experiments/source-native-observations.test.mjs": [
+        {
+          "name": "createSourceNativeObservationRunner",
+          "id": "repository.create-source-native-observation-runner"
+        }
+      ],
+      "experiments/rust-text-certificate-library/native-observations.mjs": [
+        {
+          "name": "createSourceNativeObservationRunner",
+          "id": "repository.create-source-native-observation-runner"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "source bundle and library exact provider original complete oracle",
+    "files": {
+      "experiments/rust-text-certificate-library/native-observations.mjs": [
+        {
+          "name": "planRustTextCertificateNative",
+          "id": "repository.plan-text-certificate-native-observations"
+        }
+      ],
+      "experiments/rust-text-certificate-library/native-observations.test.mjs": [
+        {
+          "name": "planRustTextCertificateNative",
+          "id": "repository.plan-text-certificate-native-observations"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "source bundle and library exact provider complete library builder",
+    "files": {
+      "experiments/rust-text-certificate-library/native-observations.mjs": [
+        {
+          "name": "createTextCertificateLibrary",
+          "id": "repository.create-text-certificate-library"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "source bundle and library exact provider unchanged forty case bit result reader",
+    "files": {
+      "experiments/rust-text-certificate-library/native-observations.mjs": [
+        {
+          "name": "parseObservations",
+          "id": "repository.read-text-certificate-native-observation-stream"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "source bundle and library exact provider original definition ownership",
+    "files": {
+      "experiments/rust-text-certificate-library/native-observations.mjs": [
+        {
+          "name": "definitionOwners",
+          "id": "repository.text-certificate-library-definition-ownership"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "source bundle and library exact provider unchanged argument order",
+    "files": {
+      "experiments/rust-text-certificate-library/native-observations.mjs": [
+        {
+          "name": "tableOrder",
+          "id": "repository.text-certificate-native-argument-order"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "source bundle and library exact provider unchanged output roles",
+    "files": {
+      "experiments/rust-text-certificate-library/native-observations.mjs": [
+        {
+          "name": "outputRoles",
+          "id": "repository.text-certificate-native-output-roles"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "source bundle and library exact provider unchanged input table receipts",
+    "files": {
+      "experiments/rust-text-certificate-library/native-observations.mjs": [
+        {
+          "name": "inputTables",
+          "id": "repository.text-certificate-native-input-table-receipts"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "source bundle and library exact provider unchanged result bit vector",
+    "files": {
+      "experiments/rust-text-certificate-library/native-observations.mjs": [
+        {
+          "name": "resultBits",
+          "id": "repository.text-certificate-native-result-bit-vector"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "source bundle and library exact provider fake bit output processes",
+    "files": {
+      "experiments/rust-text-certificate-library/native-observations.test.mjs": [
+        {
+          "name": "fakeProcess",
+          "id": "repository.create-text-certificate-native-test-process"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "existing safe profile identity validation",
+    "files": {
+      "js/src/primitives.js": [
+        {
+          "name": "readLinkIdValue",
+          "id": "repository.read-safe-link-identity-value"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "existing safe profile identity token parsing",
+    "files": {
+      "js/src/lino-serialization.js": [
+        {
+          "name": "parseLinkId",
+          "id": "repository.parse-safe-link-identity-token"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "safe profile original token controls",
+    "files": {
+      "js/tests/link-id-boundaries.test.js": [
+        {
+          "name": "canonical",
+          "id": "repository.render-link-identity-boundary-test-statement"
+        }
+      ]
+    }
+  }
+];
+const normalizeFinalSourceOracleName=name=>name.replace(/([a-z0-9])([A-Z])/gu,'$1-$2').replaceAll('_','-').replaceAll(' ','-').toLowerCase().replace(/\bsha256\b/gu,'secure-hash-algorithm-two-hundred-fifty-six').replace(/\bid\b/gu,'identity');
+const FINAL_SOURCE_ORACLE_NAME_INVENTORIES=FINAL_SOURCE_ORACLE_NAME_BINDINGS.map(({inventory,files})=>({
+ inventory,files:Object.keys(files),
+ extract:(raw,file)=>files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(raw)).map(({name})=>normalizeFinalSourceOracleName(name)),
+ recordOf:name=>Object.values(files).flat().find(entry=>normalizeFinalSourceOracleName(entry.name)===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
