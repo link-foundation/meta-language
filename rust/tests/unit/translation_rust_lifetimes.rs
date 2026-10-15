@@ -115,3 +115,69 @@ fn original_lifetime_sources_and_emitted_values_have_the_same_outputs() {
         );
     }
 }
+
+#[test]
+fn ordinary_lifetime_modules_preserve_actual_declaration_and_call_ownership() {
+    use meta_language::translation::ir::{Decl, Effect, Item, Node};
+    use meta_language::{decode_typed_program_links, encode_typed_program_links};
+
+    let fixture = fixture();
+    let case = fixture["cases"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|case| case["id"] == "module-local-lifetime-scope")
+        .unwrap();
+    let program = check_program(&parse_rust(case["source"].as_str().unwrap()).unwrap()).unwrap();
+    let encoded = encode_typed_program_links(&program).unwrap();
+    assert_eq!(
+        decode_typed_program_links(&encoded.network, encoded.root).unwrap(),
+        program
+    );
+    for change in 0..6 {
+        let mut changed = program.clone();
+        match change {
+            0 => {
+                let Item::Module { full_name, .. } = &mut changed.items[0] else {
+                    panic!("the fixture owns a module");
+                };
+                *full_name = "foreign".to_owned();
+            }
+            1 | 2 => {
+                let Decl::Fn(function) = &mut changed.declarations[0] else {
+                    panic!("the fixture owns a function");
+                };
+                if change == 1 {
+                    function.module_path.clear();
+                } else {
+                    function.full_name = "foreign.read".to_owned();
+                }
+            }
+            3 => {
+                let Item::Module { items, .. } = &mut changed.items[0] else {
+                    panic!("the fixture owns a module");
+                };
+                items.push(items[0].clone());
+            }
+            4 => {
+                let Effect::Print { expr, .. } = &mut changed.main.as_mut().unwrap().effects[1]
+                else {
+                    panic!("the fixture prints its actual call result");
+                };
+                let Node::ToString { arg, .. } = &mut expr.node else {
+                    panic!("the fixture renders a scalar result");
+                };
+                let Node::Call { func, .. } = &mut arg.node else {
+                    panic!("the fixture calls its actual declaration");
+                };
+                *func = "foreign.read".to_owned();
+            }
+            5 => changed.declarations.clear(),
+            _ => unreachable!(),
+        }
+        assert!(
+            encode_typed_program_links(&changed).is_err(),
+            "module or call ownership edit {change} must refuse"
+        );
+    }
+}

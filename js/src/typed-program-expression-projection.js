@@ -39,8 +39,9 @@ export function projectLinkedProgramExpression(value, declarations = new Map(), 
     else if (mode === 'expressions') result[target] = child.map(project);
     else if (mode === 'name-path') result[target] = [child];
     else if (mode === 'function-path') {
-      let path=rootedNamespace ? projectLinkedProgramDeclarationPath(child, declarations, true) : [child];
       const declaration=declarations.get(child);
+      const qualifiedFunction=declaration?.k==='fn'&&Array.isArray(declaration.modulePath)&&declaration.modulePath.length>0;
+      let path=rootedNamespace||qualifiedFunction ? projectLinkedProgramDeclarationPath(child, declarations, rootedNamespace) : [child];
       if(declaration?.sourceLoop?.continuation!==undefined){
         if(declaration.k!=='fn'||declaration.fullName!==child)throw new TypeError('a projected continuation must target its actual declaration identity');
         const proof=checkRustScalarLoopProof(declaration,declaration.sourceLoop.language,child);

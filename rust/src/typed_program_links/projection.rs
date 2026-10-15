@@ -79,7 +79,7 @@ fn expression(value: &Value, program: &Program) -> Result<Value> {
                         .collect()
                 } else if owns_type_namespace(program)
                     || child.as_str().and_then(|name| program.declaration(name)).is_some_and(
-                        |declaration| matches!(declaration, Decl::Fn(function) if function.source_loop.is_some() && !function.module_path.is_empty()),
+                        |declaration| matches!(declaration, Decl::Fn(function) if !function.module_path.is_empty()),
                     )
                 {
                     project_declaration_path(child.as_str().unwrap_or_default(), program)?

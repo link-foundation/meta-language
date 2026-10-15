@@ -89,11 +89,6 @@ pub(super) fn project_module(
                 "the Rust typed links adapter does not yet recheck module items",
             ));
         };
-        if function.source_loop.is_none() && function.source_type_namespace.is_none() {
-            return Err(error(
-                "the Rust typed links adapter does not yet recheck module items",
-            ));
-        }
         if function.module_path != actual_path
             || function.full_name != *full_name
             || actual_path
