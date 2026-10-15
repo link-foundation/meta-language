@@ -40,12 +40,14 @@ impl RustParser {
             ));
         }
         self.finish_empty_option_source(&mut items, &main)?;
+        let source_pure_unit_calls = self.finish_pure_unit_source(&items, &main)?;
         Ok(SProgram {
             language: Language::Rust,
             items,
             main: Some(main),
             imports: Vec::new(),
             externals: Vec::new(),
+            source_pure_unit_calls,
         })
     }
 
@@ -62,6 +64,7 @@ impl RustParser {
             let derivations = self.attributes()?;
             let start = self.peek();
             self.module_path = path.to_vec();
+            self.pure_unit_item_context(path, &start)?;
             self.visibility()?;
             self.empty_option_item_guard(path, &start)?;
             self.require_unit_clone_attached_enum(&derivations, &start)?;
@@ -122,6 +125,13 @@ impl RustParser {
             }
             if c.is("fn") || c.is("const") {
                 if c.is("fn") && c.is_at("main", 1) && path.is_empty() {
+                    if !self.pure_unit_call_model.is_empty() && self.empty_option_main_seen {
+                        return Err(unsupported(
+                            "Rust pure Unit-call source",
+                            "the complete source must have one owned main declaration",
+                            span(&start, self.cursor.peek()),
+                        ));
+                    }
                     self.empty_option_main_guard(&start)?;
                     self.main = Some(self.main_fn()?);
                     continue;
@@ -422,6 +432,9 @@ impl RustParser {
     }
 
     pub(super) fn function(&mut self, path: &[String]) -> Result<SFn> {
+        if !self.pure_unit_call_model.is_empty() {
+            return self.pure_unit_function(path);
+        }
         let outer_lifetimes = std::mem::take(&mut self.lifetime_bindings);
         let outer_header = std::mem::replace(&mut self.lifetime_header, true);
         let result = if self.empty_option_source_model.is_empty() {
@@ -677,6 +690,7 @@ impl RustParser {
             source_empty_option: None,
             source_type_namespace,
             source_loop: source_loop.map(Box::new),
+            source_pure_unit: None,
         })
     }
 
@@ -720,6 +734,7 @@ impl RustParser {
             source_empty_option: None,
             source_type_namespace: None,
             source_loop: None,
+            source_pure_unit: None,
         })
     }
 
@@ -810,6 +825,9 @@ impl RustParser {
     }
 
     pub(super) fn main_fn(&mut self) -> Result<SMain> {
+        if !self.pure_unit_call_model.is_empty() {
+            return self.pure_unit_main();
+        }
         let start = self.cursor.advance();
         self.cursor.expect("main", Some("fn main"))?;
         self.cursor.expect("(", Some("fn main"))?;
@@ -835,6 +853,8 @@ impl RustParser {
                         value: binding.value,
                         constant: false,
                         span: binding.span,
+
+                        source_pure_unit_call: None,
                     });
                 }
                 continue;

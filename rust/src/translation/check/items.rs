@@ -99,6 +99,7 @@ impl Checker {
                     source_empty_option: function.source_empty_option.as_deref().cloned(),
                     source_type_namespace: function.source_type_namespace.as_deref().cloned(),
                     source_loop: function.source_loop.as_deref().cloned(),
+                    source_pure_unit: function.source_pure_unit.as_deref().cloned(),
                 }),
                 SItem::Theorem(theorem) => Decl::Theorem(TheoremDecl {
                     name: name.clone(),
@@ -437,6 +438,7 @@ impl Checker {
                     value,
                     constant,
                     span,
+                    source_pure_unit_call,
                 } => {
                     let expected = match ty {
                         Some(ty) => Some(self.resolve_type(Some(ty), &[], *span)?),
@@ -457,6 +459,8 @@ impl Checker {
                         value,
                         constant: *constant,
                         span: *span,
+
+                        source_pure_unit_call: source_pure_unit_call.clone(),
                     });
                 }
                 SEffect::Assert { prop, span } => effects.push(Effect::Assert {

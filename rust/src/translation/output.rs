@@ -830,6 +830,7 @@ impl Threader<'_> {
                 value,
                 constant,
                 span,
+                source_pure_unit_call,
             } if self.effects(value) => {
                 let (mut steps, value) = self.run(value)?;
                 steps.push(Effect::Let {
@@ -837,6 +838,7 @@ impl Threader<'_> {
                     value,
                     constant: *constant,
                     span: *span,
+                    source_pure_unit_call: source_pure_unit_call.clone(),
                 });
                 steps
             }
@@ -868,6 +870,7 @@ impl Threader<'_> {
                 value,
                 constant: false,
                 span: e.span,
+                source_pure_unit_call: None,
             },
             Effect::Output {
                 expr: lines,

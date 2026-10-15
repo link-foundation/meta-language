@@ -98,6 +98,7 @@ pub(in crate::translation::javascript) fn lower_top_level(
             value,
             constant: false,
             span: Some(place),
+            source_pure_unit_call: None,
         };
         match (carried.as_slice(), data) {
             ([only], _) => vec![bind(only.source.clone(), value)],

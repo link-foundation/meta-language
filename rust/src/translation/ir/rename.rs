@@ -308,6 +308,7 @@ pub fn rename_main(
                 value,
                 constant,
                 span,
+                source_pure_unit_call,
             } => {
                 let value = rename_expr(value, &env, &mut scope);
                 let fresh = scope.fresh(name);
@@ -317,6 +318,7 @@ pub fn rename_main(
                     value,
                     constant: *constant,
                     span: *span,
+                    source_pure_unit_call: source_pure_unit_call.clone(),
                 }
             }
             Effect::Unwrap {

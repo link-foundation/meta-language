@@ -657,6 +657,8 @@ impl JavaScriptParser {
                             value,
                             constant: true,
                             span: Some(span),
+
+                            source_pure_unit_call: None,
                         },
                         _ => unreachable!("array binding blocks contain only constants"),
                     })
@@ -670,6 +672,7 @@ impl JavaScriptParser {
                 value,
                 constant: true,
                 span: Some(span),
+                source_pure_unit_call: None,
             }]);
         }
         if self.cursor.is("console") && self.cursor.is_at(".", 1) {
@@ -699,6 +702,7 @@ impl JavaScriptParser {
             value,
             constant: false,
             span: Some(self.to_here(&token)),
+            source_pure_unit_call: None,
         }])
     }
 

@@ -159,6 +159,7 @@ impl JavaScriptParser {
             }),
             imports: std::mem::take(&mut self.imports),
             externals: std::mem::take(&mut self.externals),
+            source_pure_unit_calls: None,
         };
         if has_javascript_products(&program, &self.nested_product_bindings) {
             let (mut program, types) = infer_javascript_product_types(program)?;
@@ -674,6 +675,7 @@ impl JavaScriptParser {
                 source_loop: Some(Box::new(proof)),
                 span: Some(self.to_here(doc_token)),
                 generated: false,
+                source_pure_unit: None,
             });
         }
         let statements = match body {
@@ -743,6 +745,7 @@ impl JavaScriptParser {
             body,
             span: Some(self.to_here(doc_token)),
             generated: false,
+            source_pure_unit: None,
         })
     }
 

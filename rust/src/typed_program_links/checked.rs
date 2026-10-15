@@ -119,6 +119,8 @@ fn validate_type_records(
 }
 
 pub(super) fn validate(program: &Program) -> Result<()> {
+    crate::translation::source_pure_unit_calls::validate_source_pure_unit_calls(program)
+        .map_err(|failure| error(failure.to_string()))?;
     crate::translation::source_unit_clone_derivations::validate_source_unit_clone_derivations(
         program,
     )
@@ -216,12 +218,15 @@ pub(super) fn validate(program: &Program) -> Result<()> {
                         value,
                         constant,
                         span,
+                        source_pure_unit_call,
                     } => Ok(SEffect::Let {
                         name: name.clone(),
                         ty: Some(project_type(&value.ty, program)?),
                         value: expression(value, program)?,
                         constant: *constant,
                         span: *span,
+
+                        source_pure_unit_call: source_pure_unit_call.clone(),
                     }),
                     _ => Err(error(
                         "the Rust typed links adapter does not yet recheck this main effect",
@@ -241,6 +246,7 @@ pub(super) fn validate(program: &Program) -> Result<()> {
         main,
         imports: Vec::new(),
         externals: Vec::new(),
+        source_pure_unit_calls: program.source_pure_unit_calls.clone(),
     };
     let checked = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
     if checked != *program {

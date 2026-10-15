@@ -700,6 +700,13 @@ pub enum Effect {
         span: Option<Span>,
     },
     Let {
+        /// Actual ordered owned Unit-call statement site.
+        #[serde(
+            default,
+            rename = "sourcePureUnitCall",
+            skip_serializing_if = "Option::is_none"
+        )]
+        source_pure_unit_call: Option<serde_json::Value>,
         name: String,
         value: Expr,
         #[serde(default, skip_serializing_if = "is_false")]
@@ -746,6 +753,9 @@ pub struct Main {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Program {
+    /// Independently selected complete pure Unit program interpretation.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_pure_unit_calls: Option<serde_json::Value>,
     pub schema_version: u32,
     pub source_language: Language,
     pub items: Vec<Item>,
