@@ -24,14 +24,12 @@ const plainRecord = value => value !== null && typeof value === 'object'
   && [Object.prototype, null].includes(Object.getPrototypeOf(value));
 
 export function readRustRawBindingCertificate(program) {
-  // Actual public checked Programs are data records. A callback or inherited
-  // Program must not hide surviving facts from the own-descriptor selector.
-  if (!plainRecord(program)) fail('the actual program root must be a plain data record');
-  const mainDescriptor = Object.getOwnPropertyDescriptor(program, 'main');
-  if (mainDescriptor && (!Object.hasOwn(mainDescriptor, 'value') || !plainRecord(mainDescriptor.value))) fail('the actual main owner must be a plain data record');
+  // The shared guard rejects non-data roots before its own-descriptor selector.
   const selected = checkOwnedProgramContainers(program, {
     selectedFields: [policy.facetField, policy.contextField], acceptContainer: acceptRustOwnedLocalContainer, fail,
   });
+  const mainDescriptor = Object.getOwnPropertyDescriptor(program, 'main');
+  if (mainDescriptor && (!Object.hasOwn(mainDescriptor, 'value') || !plainRecord(mainDescriptor.value))) fail('the actual main owner must be a plain data record');
   if (!selected) return null;
   // Descriptor validation precedes every selected graph read, including when
   // a fact was misplaced, hidden or replaced by an accessor.

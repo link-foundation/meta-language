@@ -173,6 +173,11 @@ test('stripped, misplaced, null and equal-value cloned certificate facts refuse 
     delete program[policy.facetField]; delete program.main[policy.contextField];
     program.hidden = Object.assign(function host() {}, { [role]: value });
     refused(program);
+    const inherited = decode(create(cases[5]));
+    const inheritedValue = role === policy.facetField ? inherited[role] : inherited.main[role];
+    delete inherited[policy.facetField]; delete inherited.main[policy.contextField];
+    inherited.hidden = Object.create({ [role]: inheritedValue });
+    refused(inherited);
   }
   const nullPrototype = Object.assign(Object.create(null), decode(create()));
   assert.ok(readRustRawBindingCertificate(nullPrototype));
@@ -234,6 +239,12 @@ test('owned invocation premises, source/target profile refusals and accessor gua
   misplaced.hidden = function host() {};
   Object.defineProperty(misplaced.hidden, policy.facetField, { enumerable: true, get() { invoked++; return null; } });
   refused(misplaced);
+  for (const role of [policy.facetField, policy.contextField]) {
+    const inherited = decode(create()), prototype = {};
+    delete inherited[policy.facetField]; delete inherited.main[policy.contextField];
+    Object.defineProperty(prototype, role, { enumerable: true, get() { invoked++; return null; } });
+    inherited.hidden = Object.create(prototype); refused(inherited);
+  }
   assert.equal(invoked, 0);
   for (const name of policy.sourceOptions) assert.throws(() => api.createTypedProgramLinks(source(cases[0]), 'Rust', { ...options, [name]: '' }));
   for (const extra of [{ utf16Strings: true }, { context: {} }, { [policy.sourceOption]: 'unknown' }]) assert.throws(() => api.createTypedProgramLinks(source(cases[0]), 'Rust', { ...options, ...extra }));
@@ -254,6 +265,15 @@ test('the published factory and default lexer retain every protected raw-name re
   const old = published.createTypedProgramLinks(ordinary, 'Rust'), current = api.createTypedProgramLinks(ordinary, 'Rust');
   assert.equal(current.network.toLino(), old.network.toLino());
   assert.deepEqual(api.emitTypedProgramLinks(current.network, current.root, 'JavaScript'), published.emitTypedProgramLinks(old.network, old.root, 'JavaScript'));
+  const program = decode(current);
+  const expected = [overlay.rust.emitRust(program), overlay.javascript.emitJavaScript(program)];
+  Object.defineProperty(program, 'inferredExpressionTypes', { value: new WeakMap() });
+  const nullRoot = Object.defineProperties(Object.create(null), Object.getOwnPropertyDescriptors(program));
+  for (const input of [program, nullRoot]) {
+    assert.equal(readRustRawBindingCertificate(input), null);
+    assert.equal(Object.getOwnPropertyDescriptor(input, 'inferredExpressionTypes').enumerable, false);
+    assert.deepEqual([overlay.rust.emitRust(input), overlay.javascript.emitJavaScript(input)], expected);
+  }
 });
 
 test('shared data, checked module hashes and actual translated predicates regenerate while the native identity gap remains explicit', () => {
