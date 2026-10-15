@@ -14,6 +14,7 @@ import {
   RUST_RAW_BINDING_IDENTIFIER_POLICY as policy, createRustRawBindingIdentifiers,
   createRustRawBindingIdentifierLinks, decodeRustRawBindingIdentifierLinks, encodeRustRawBindingIdentifierLinks,
   checkRustRawBindingIdentifiers, emitRustRawBindingIdentifiers, reconstructRustRawBindingIdentifierSource,
+  checkRustRawBindingIdentifierInvocation,
 } from './model.mjs';
 import { validName } from './syntax.mjs';
 
@@ -25,7 +26,9 @@ function execute(program, proof, name, args) {
   const context = {};
   vm.runInNewContext(emitRustRawBindingIdentifiers(program, proof, 'JavaScript').text, context, { timeout: 1000 });
   const fn = context[name]; assert.equal(typeof fn, 'function', name);
-  return fn(...args.map(value => typeof value === 'string' ? BigInt(value) : value));
+  const values = args.map(value => typeof value === 'string' ? BigInt(value) : value);
+  checkRustRawBindingIdentifierInvocation(program, proof, program.declarations.get(name), values);
+  return fn(...values);
 }
 function refusal(program, proof) {
   assert.throws(() => checkRustRawBindingIdentifiers(program, proof));
@@ -64,6 +67,13 @@ function graphIdentity(packet, { program, proof }) {
     assert.ok(reference, 'the actual checked expression has its core binding or declaration relation');
     assert.ok(reference.child.equals(owner.child), 'the occurrence inverse and checked expression share exactly one actual core owner LinkId');
   }
+  for (const assumptions of fields.filter(row => row.label === label('inputAssumptions'))) {
+    for (const id of packet.network.link(assumptions.child).references()) {
+      const declaration = field(id, 'declaration'), parameters = field(id, 'parameterOwners');
+      assert.ok(actualOwners.has(declaration.child.asU64().toString()));
+      assert.ok(parameters.child.equals(field(declaration.child, 'params').child), 'the saved invocation owns the exact actual ordered parameter-array LinkId');
+    }
+  }
 }
 
 test('the exact opt-in ASCII identity selectors share the existing character concept and forbid all five raw exclusions', () => {
@@ -87,6 +97,10 @@ test('all complete original sources retain actual owners, real LinkIds and Unico
       assert.equal(reconstructRustRawBindingIdentifierSource(program, proof), source);
       assert.deepEqual(Buffer.from(emitRustRawBindingIdentifiers(program, proof, 'Rust').text), Buffer.from(source));
       assert.equal(proof.worker, program.main);
+      for (const [index, premise] of proof.inputAssumptions.entries()) {
+        assert.equal(premise.declaration, program.items[index]);
+        assert.equal(premise.parameterOwners, program.items[index].params);
+      }
       for (const alias of proof.aliases) {
         assert.ok(proof.tokens.includes(alias.token));
         if (alias.kind === 'parameter') assert.ok(program.items.some(item => item.params.includes(alias.checkedOwner)));
@@ -163,6 +177,9 @@ test('counterfeit aliases, expression and binding owners, keyword injection and 
     value => { value.proof.tokens[0].value = 'if'; },
     value => { value.program.items[0].params[1].name = value.program.items[0].params[0].name; },
     value => { value.proof.worker = structuredClone(value.program.main); },
+    value => { value.proof.inputAssumptions[0].declaration = structuredClone(value.program.items[0]); },
+    value => { value.proof.inputAssumptions[0].parameterOwners = [...value.program.items[0].params]; },
+    value => { value.proof.inputAssumptions[0].model = 'unowned invocation'; },
     value => { value.proof.tokens.find(token => token.raw === '#').span.start--; },
   ];
   for (const mutate of mutations) { const value = load(5); mutate(value); refusal(value.program, value.proof); }
@@ -175,6 +192,23 @@ test('counterfeit aliases, expression and binding owners, keyword injection and 
     refusal(value.program, value.proof);
   }
   assert.equal(invoked, 0);
+});
+
+test('actual saved invocation premises enforce exact Boolean and i32 domains and arity without invoking accessors', () => {
+  for (const saved of reloads(createRustRawBindingIdentifierLinks(fixture.cases[5].source))) {
+    const { program, proof } = chosen(saved), declaration = program.items[0];
+    const check = args => checkRustRawBindingIdentifierInvocation(program, proof, declaration, args);
+    for (const args of [[-2147483648n, 2147483647n], [0n, -1n]]) assert.equal(check(args), proof.inputAssumptions[0]);
+    assert.equal(execute(program, proof, 'choose', [-2147483648n, 2147483647n]), -2147483648n);
+    for (const args of [[1, 2], [0.5, 2n], [NaN, 2n], [Infinity, 2n], [-2147483649n, 0n], [2147483648n, 0n], [true, 0n], [1n], [1n, 2n, 3n], [new Number(1), 2n], [Object(1n), 2n]]) assert.throws(() => check(args));
+    assert.throws(() => checkRustRawBindingIdentifierInvocation(program, proof, structuredClone(declaration), [0n, 1n]));
+    const sparse = [0n, 1n]; delete sparse[0]; assert.throws(() => check(sparse));
+    let invoked = 0; const accessor = [0n, 1n]; Object.defineProperty(accessor, '0', { get() { invoked++; return 0n; } });
+    assert.throws(() => check(accessor)); assert.equal(invoked, 0);
+  }
+  const { program, proof } = load(1), declaration = program.items[0];
+  for (const value of [true, false]) assert.equal(checkRustRawBindingIdentifierInvocation(program, proof, declaration, [value]), proof.inputAssumptions[0]);
+  for (const value of [0, 1, 'true', null, undefined, new Boolean(false), 0n]) assert.throws(() => checkRustRawBindingIdentifierInvocation(program, proof, declaration, [value]));
 });
 
 test('default production raw identifier and namespace refusal paths are unchanged by this explicit experiment', () => {

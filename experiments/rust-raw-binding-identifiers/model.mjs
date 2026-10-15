@@ -5,6 +5,7 @@ import { tokenize } from '../../js/src/translation/lexer.js';
 import { parseRustTokenStream } from '../../js/src/translation/rust.js';
 import { checkProgram } from '../../js/src/translation/check.js';
 import { emitJavaScript } from '../../js/src/translation/emit-javascript.js';
+import { fixedBounds } from '../../js/src/translation/types.js';
 import { checkProgramDeclarationOwners } from '../../js/src/typed-program-declaration-owners.js';
 import {
   checkGeneratedOwnedRustData as data, checkGeneratedOwnedRustFields as fields,
@@ -12,7 +13,7 @@ import {
   mapGeneratedOwnedRustSurface as surfaceMap,
 } from '../generated-owned-rust/model.mjs';
 import { encodeGeneratedOwnedRust as encode, decodeGeneratedOwnedRust as decode } from '../generated-owned-rust/codec.mjs';
-import { acceptRustRawBindingIdentifierModel, acceptRustRawBindingIdentifierType, acceptRustRawBindingIdentifierClosure } from './rules.mjs';
+import { acceptRustRawBindingIdentifierModel, acceptRustRawBindingIdentifierType, acceptRustRawBindingIdentifierClosure, acceptRustRawBindingIdentifierInvocationModel, acceptRustRawBindingIdentifierInput } from './rules.mjs';
 import { fail, validName, readRawBindingIdentifierSyntax, renameRawBindingIdentifierSurface } from './syntax.mjs';
 
 export const RUST_RAW_BINDING_IDENTIFIER_POLICY = readRuntimeProjectData(new URL('./data/policy.lino', import.meta.url));
@@ -59,6 +60,11 @@ function check(program, proof) {
     fields(row, policy.fields.occurrence);
     if (row.token !== actual[index].token || row.alias !== actual[index].alias || row.checkedExpression !== actual[index].checkedExpression) fail('an occurrence lost its actual token, inverse alias or checked expression identity');
   }
+  if (!Array.isArray(proof.inputAssumptions) || proof.inputAssumptions.length !== program.items.length) fail('every actual declaration requires its owned invocation premise');
+  for (const [index, premise] of proof.inputAssumptions.entries()) {
+    fields(premise, policy.invocation.fields);
+    if (!acceptRustRawBindingIdentifierInvocationModel(premise.model) || premise.declaration !== program.items[index] || premise.parameterOwners !== premise.declaration.params) fail('an invocation premise lost its actual declaration or ordered parameter array');
+  }
   return { plan, surface };
 }
 export { check as checkRustRawBindingIdentifiers };
@@ -74,7 +80,7 @@ export function createRustRawBindingIdentifiers(source, { model = policy.model }
       ...(token.kind === 'number' ? { suffix: token.suffix ?? '', floating: Boolean(token.floating) } : {}) });
     end = token.end;
   }
-  const proof = { model, language: policy.language, span: { start: 0, end: source.length }, tokens, gaps, aliases: [], occurrences: [], worker: null };
+  const proof = { model, language: policy.language, span: { start: 0, end: source.length }, tokens, gaps, aliases: [], occurrences: [], inputAssumptions: [], worker: null };
   const { plan, expected: program } = parse(proof);
   const entries = new Map(plan.functions.map((row, index) => [row.target, program.items[index]]));
   for (const descriptor of plan.descriptors) {
@@ -92,6 +98,7 @@ export function createRustRawBindingIdentifiers(source, { model = policy.model }
     group.tail[descriptor.kind === 'declaration' ? 'declaration' : 'binding'] = descriptor.checkedOwner;
   }
   proof.worker = program.main;
+  proof.inputAssumptions = program.items.map(declaration => ({ model: policy.invocation.model, declaration, parameterOwners: declaration.params }));
   const bound = parse(proof, program);
   proof.occurrences = occurrences(bound.surface, program, bound.plan);
   check(program, proof); return { program, proof };
@@ -104,6 +111,23 @@ export function decodeRustRawBindingIdentifierLinks(network, root) {
   const result = decode(network, root); check(result.program, result.proof); return result;
 }
 export function encodeRustRawBindingIdentifierLinks(program, proof) { check(program, proof); return encode(program, proof); }
+
+export function checkRustRawBindingIdentifierInvocation(program, proof, declaration, args) {
+  check(program, proof);
+  const premise = proof.inputAssumptions.find(row => row.declaration === declaration);
+  if (!premise || !Array.isArray(args) || Object.getPrototypeOf(args) !== Array.prototype || args.length !== premise.parameterOwners.length) fail('an invocation needs its actual declaration and exact argument arity');
+  const keys = Reflect.ownKeys(args);
+  if (keys.length !== args.length + 1 || keys.some(key => key !== 'length' && (typeof key !== 'string' || !/^(0|[1-9][0-9]*)$/u.test(key) || Number(key) >= args.length))) fail('invocation arguments must be an ordinary dense data array');
+  for (let index = 0; index < args.length; index += 1) {
+    const descriptor = Object.getOwnPropertyDescriptor(args, String(index));
+    if (!descriptor || !Object.hasOwn(descriptor, 'value') || !descriptor.enumerable) fail('invocation arguments cannot contain accessors or holes');
+    const value = descriptor.value, type = premise.parameterOwners[index].type;
+    const bounds = type.kind === 'fixed' ? fixedBounds(type) : null;
+    const integerInput = typeof value === 'bigint' && bounds !== null && value >= bounds.min && value <= bounds.max;
+    if (!acceptRustRawBindingIdentifierInput(type.kind, typeof value === 'boolean', integerInput)) fail('an invocation argument does not satisfy its actual Boolean or signed i32 owner');
+  }
+  return premise;
+}
 
 export function emitRustRawBindingIdentifiers(program, proof, target) {
   check(program, proof);

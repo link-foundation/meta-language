@@ -10,3 +10,7 @@ export function acceptRustRawBindingIdentifierName(name, raw, charactersAccepted
 export function acceptRustRawBindingIdentifierType(kind, signed, bits) { return kind === "bool" || kind === "fixed" && signed && bits === 32; }
 /** @param {boolean} recursive @param {boolean} mutual @returns {boolean} */
 export function acceptRustRawBindingIdentifierClosure(recursive, mutual) { return !recursive && !mutual; }
+/** @param {string} model @returns {boolean} */
+export function acceptRustRawBindingIdentifierInvocationModel(model) { return model === "owned Rust primitive invocation premise 1"; }
+/** @param {string} kind @param {boolean} booleanInput @param {boolean} integerInput @returns {boolean} */
+export function acceptRustRawBindingIdentifierInput(kind, booleanInput, integerInput) { return kind === "bool" && booleanInput || kind === "fixed" && integerInput; }
