@@ -631,6 +631,20 @@ The established raw certificate checker still runs first. Bounded immutable
 array scans and copies do not establish scalability. Native execution, native
 pre-Serde capture, production selection and paired source replay remain
 separate work.
+Its additional CI-only oracle requires the complete unchanged 193,995-byte
+artifact and all sixty-six declarations. Thirteen original graphs and four
+coherent edits retain both archive-format premises; only exactly bit-identical
+primitive transports share a native invocation. Forty-five calls compare every
+result row, cell bit and refusal, with the established object projector and a
+checked original-ID correspondence supplying independent expected values.
+Twenty-eight raw-owner refusals remain separate JavaScript host checks.
+The actual mixed interface has two scalar and fifteen owned vector inputs and
+a nested vector result. A reversible first-observed bit dictionary retains all
+row boundaries while bounding the process protocol to one MiB; the complete
+mechanical consumer has a four MiB source bound. Heavy planning and injected
+contracts run in CI, and only explicit native authorization permits compilation,
+execution and an observation artifact. Native graph capture, production
+integration and resource improvement still require their own evidence.
 The separate `closed fresh Number array collector 1` experiment selects one
 complete JavaScript function with a fresh unaliased array, one counted input
 loop, one ignored one-argument append per iteration and a terminal array return.

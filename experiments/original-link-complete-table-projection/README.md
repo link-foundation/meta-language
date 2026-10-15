@@ -39,6 +39,19 @@ native Program re-encoding or paired source frontend. Rust output is generated
 here; native compilation/execution remains CI work. Other source models and
 whole runtime/resource/termination claims remain outside this experiment.
 
+The separate `native-observations.test.mjs` oracle is CI-only. CI with
+`ORIGINAL_LINK_COMPLETE_TABLE_NATIVE=0` authenticates and plans all 66 unchanged
+definitions and runs injected process contracts. Setting that flag to `1` in CI
+also compiles the complete artifact and an external consumer, then executes 45
+whole-table or exact-refusal comparisons. Thirteen originals and four coherent
+edits retain both archive premises before exactly identical input bits share an
+invocation. The 28 raw-owner refusals are separate JavaScript host checks.
+Strict reversible bit transport retains every row boundary and cell within the
+unchanged one MiB stdout limit; the mechanical consumer is bounded to four MiB.
+Successful actual native execution alone writes
+`issue-195-artifacts/original-link-complete-table-native-observations.lino`.
+Planning, injected contracts and native execution remain pending CI evidence.
+
 Run the bounded checks with Node 22:
 
 ```sh

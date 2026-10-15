@@ -1,6 +1,6 @@
 # Binary metadata buffering experiment
 
-This private candidate buffers one record's metadata before appending its
+This isolated candidate buffers one record's metadata before appending its
 length and payload. It removes the old rewrite of the accumulated output
 prefix. Production rules and native generated files retain their prior bytes.
 
