@@ -552,6 +552,7 @@ pub(super) fn decode_with_binding_identities(
     }
     value["items"] = Value::Array(items);
     value["declarations"] = Value::Array(ordered_declarations);
+    super::source_spans::normalize_source_spans(&mut value)?;
     validate_spans(&value)?;
     scopes::restore_patterns(&mut value)?;
     crate::translation::source_unit_clone_derivations::validate_unit_clone_records(&value)

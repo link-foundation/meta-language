@@ -139,7 +139,8 @@ impl Decoder<'_> {
             }
             let before_nodes = *remaining;
             let before_bytes = bytes;
-            let value = self.render(*id, remaining, &mut bytes)?;
+            let mut value = self.render(*id, remaining, &mut bytes)?;
+            super::super::source_spans::normalize_source_spans(&mut value)?;
             ownership.model_nodes += before_nodes - *remaining;
             ownership.model_bytes += before_bytes - bytes;
             if value.get("sourceUnitCloneDerivation").is_some() {

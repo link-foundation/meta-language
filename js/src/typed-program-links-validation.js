@@ -2,6 +2,7 @@ import {checkRustEmptyOptionProof} from './translation/rust-empty-options.js';
 import {checkRustSourceSignature} from './translation/rust-source-signatures.js';
 import {validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes} from './translation/rust-type-namespace.js';
 import {checkRustUnitCloneDerivations} from './translation/rust-unit-clone.js';
+import {validateSourceSpans} from './source-spans.js';
 import {checkRustScalarLoopProof} from './translation/rust-scalar-loops.js';
 import {checkRustPrimitiveOwnerProof} from './translation/rust-primitive-owners.js';
 // Validate the source-free checked IR boundary before any target emission.
@@ -16,6 +17,7 @@ const operationKinds = new Set(['math', 'stringMap', 'stringTest', 'method', 'co
 
 export function validateLinkedTypedProgram(program, references = new WeakMap(), { graphPatterns = false, patternScopes = new WeakMap() } = {}) {
   checkRustTypeNamespaceRecordShapes(program);
+  validateSourceSpans(program);
   if (!program || program.schemaVersion !== 1 || !['JavaScript', 'Rust', 'Lean', 'Rocq'].includes(program.sourceLanguage)
     || !(program.declarations instanceof Map) || !Array.isArray(program.items)) throw new TypeError('the linked value is not a checked typed program');
   if (program.main != null && (typeof program.main !== 'object' || Array.isArray(program.main)
