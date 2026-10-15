@@ -45,6 +45,12 @@ see [AGENTS.md](AGENTS.md) for the rules that automated contributors follow.
    `node scripts/clean-caches.mjs` prunes the caches to the disk budget at any
    time, and `node scripts/clean-caches.mjs --full` removes all of them.
 
+Use the shared checkout and follow [the resource policy](docs/vision.md#resource-limits)
+for task isolation and prompt release of clean task-owned worktrees. Cache
+cleanup does not remove sibling worktrees. Clean only meta-language-owned
+storage and preserve uncommitted work, verification evidence, active tasks and
+unrelated data. Rust compilation runs exclusively in CI/CD.
+
 ## Code Standards
 
 - Model structural data as links and references to links.

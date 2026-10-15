@@ -614,6 +614,23 @@ observations require actual successful compilation and execution in CI.
 Repeated scans and copied
 accumulation retain potentially quadratic costs; no resource improvement is
 inferred.
+The subsequent `complete original link closed Rust text certificate table
+projection 1` experiment projects all seventeen certificate inputs from actual
+ordered original-LinkId fields and primitive payloads. Shared query recipes
+preserve the established first-observed String order and the fixed 107-symbol
+prefix; an elided core variable name follows its actual binding-reference
+target. Null/non-String sentinels remain distinct from empty String values.
+Exact code-unit checks reject contradictory inherited symbol codes before
+complete table output. The thirteen existing sources are compared through both
+saved formats, with coherent edits and owner forgeries retaining the unchanged
+final certificate. The same checked combined source automatically emits all
+sixty-six native definitions. It embeds the unchanged JavaScript fixed-table
+and symbol sources; generated continuation names follow the combined program.
+No old table or dynamic dictionary is an input to the new numeric projector.
+The established raw certificate checker still runs first. Bounded immutable
+array scans and copies do not establish scalability. Native execution, native
+pre-Serde capture, production selection and paired source replay remain
+separate work.
 The separate `closed fresh Number array collector 1` experiment selects one
 complete JavaScript function with a fresh unaliased array, one counted input
 loop, one ignored one-argument append per iteration and a terminal array return.
@@ -832,6 +849,24 @@ integer values and isolated surrogate strings before corruption. Legacy archives
 can be read, but information absent from their format cannot be restored. This
 graph primitive does not populate missing definitions, implement every link-cli
 path or establish the required complete reconstruction performance measurements.
+A separate binary metadata buffer candidate collects each record's metadata
+before appending its length and payload, replacing the prior accumulated-output
+prefix rewrite. The frozen prior source remains the comparison oracle;
+production JavaScript rules and generated native rules retain their existing
+bytes. Candidate generation preserves the original stale-style failure receipt,
+authenticates all thirty-six historical replacement contexts and derives
+separately checked styles from current complete declarations. Reuse requires an
+exact declaration or a bijective bound-name correspondence. Changed bodies
+receive fresh structural rules that guard namespace capture, actual borrowed
+sibling calls and expression grouping. The explicit UTF-16 String flag is a
+native generation input, not a serialized source model. All fifty-three checked
+declarations and four preludes are retained in the candidate library. A separate
+explicit CI oracle authenticates its five generated files, unchanged array
+provider, wrapper and consumer, then compares seventy-four bounded invocations
+covering both archive versions, every refusal code and offset, input
+preservation and error precedence. Injected process contracts are distinct from
+actual successful native compilation and execution. Production adoption,
+whole-crate parity and performance improvement remain unverified.
 Automatic grammar inference and discovery have the separately tracked
 [issue #224](https://github.com/link-foundation/meta-language/issues/224), with
 modern primary research, concrete algorithms, pinned assumptions and independent
@@ -1903,7 +1938,21 @@ identified correction, so the native runtime remains independent of the oracle.
 ## Resource limits
 
 Local sandboxes and CI runners have a few gigabytes of memory. The tooling
-keeps every run within that bound instead of relying on a larger machine:
+keeps every run within that bound instead of relying on a larger machine.
+
+Use one shared repository checkout for ordinary development, review and bounded
+JavaScript checks, with explicit ownership of edited paths. Do not create a
+worktree or clone for each agent, test or review. The coordinator may select an
+isolated task worktree when the task requires it; share the existing dependency
+installation rather than duplicating it. After its commits are preserved on a
+named branch or integrated and no process or active task uses it, release that
+task-owned worktree promptly with `git worktree remove` without `--force`.
+Before removal, verify tracked and untracked changes and inspect ignored
+contents for retained evidence or unique work. Preserve dirty worktrees,
+evidence, active tasks and unrelated directories. A cache-cleanup run does not
+release sibling worktrees. Cleanup is restricted to meta-language-owned storage;
+it never clears unrelated project or user data. Rust compilation runs only in
+CI/CD. Local Rust checks are limited to formatting changed files.
 
 - CI runs a fast `cargo check` of all targets and features first; the jobs that
   compile and test need it, so a compile error fails once.
@@ -1930,9 +1979,10 @@ keeps every run within that bound instead of relying on a larger machine:
   signature so identical expressions in owned and borrowed contexts cannot
   receive each other's corrections. Reviewed collision repairs retain their
   provenance separately from authentic machine-applicable diagnostics.
-- A local evidence run executes the stages one after another, with
-  `CARGO_BUILD_JOBS=2`, `RUST_TEST_THREADS=2` and `CARGO_INCREMENTAL=0` unless
-  the caller set them, and builds only the default Rust features.
+- Full acceptance and native evidence stages execute in CI. Local validation
+  remains limited to targeted JavaScript checks and changed-file formatting
+  allowed by `AGENTS.md`. CI bounds compiler jobs and test threads with
+  `CARGO_BUILD_JOBS=2`, `RUST_TEST_THREADS=2` and `CARGO_INCREMENTAL=0`.
 - The JavaScript package loads each WebAssembly grammar on first use, compiles
   grammar code with a tiering budget so an idle process does not keep
   recompiling it, reuses one Markdown inline parser for every inline region,

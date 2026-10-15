@@ -106,7 +106,11 @@ suites:
   jobs and the issue 195 acceptance stages, runs them on every push; read its
   logs and artifacts instead.
 - Work in batches: commit each step, re-read the diff and push once per batch.
-  After a batch, run `node scripts/clean-caches.mjs`, remove
-  `.issue-195-work/`, `issue-195-results/`, `issue-195-artifacts/` and any
-  workload clones, and stop leftover `cargo`, `rustc`, `node`, `lean`, `lake`,
-  `coqc` and `rocq` processes after a failure.
+  Use the shared checkout and release completed task-owned worktrees under
+  [the resource policy](docs/vision.md#resource-limits). After each batch run
+  `node scripts/clean-caches.mjs`; remove only meta-language-owned regenerable
+  scratch and stopped workload clones. Preserve verification records and logs,
+  `issue-195-artifacts/`, and `issue-195-results/` outside disposable `work/`
+  scratch. Never remove dirty worktrees, uncommitted work, active tasks or
+  unrelated directories. Stop only leftover processes owned by the failed task.
+  Never compile Rust locally.
