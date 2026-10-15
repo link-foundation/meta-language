@@ -7,7 +7,8 @@ use super::lowering::statement_span;
 use super::{
     AssertionKind, CaseTest, Clause, ERRORS, JavaScriptParser, Result, SComparison, SData, SEffect,
     SExpr, SNode, SProp, SPropNode, ShowStyle, Span, Stmt, Switch, Token, TokenKind,
-    assertion_kind, has_ctor, node, prop_of, span, type_error, unsupported,
+    TranslationError, accept_java_script_line_terminator, assertion_kind, has_ctor, node, prop_of,
+    span, type_error, unsupported,
 };
 
 struct ArrayBinding {
@@ -51,8 +52,9 @@ impl JavaScriptParser {
             }
             self.cursor.advance();
             let next = self.cursor.peek().start;
-            let line_break = token.end < next
-                && self.source.units()[token.end..next].contains(&u16::from(b'\n'));
+            let line_break = self.source.units()[token.end..next]
+                .iter()
+                .any(|unit| accept_java_script_line_terminator(f64::from(*unit)));
             // `return;` returns undefined, the unit value.
             if self.cursor.is(";") || self.cursor.is("}") || line_break {
                 self.cursor.eat(";");
@@ -359,6 +361,15 @@ impl JavaScriptParser {
 
     pub(super) fn throw_statement(&mut self) -> Result<Stmt> {
         let start = self.cursor.advance();
+        if self.source.units()[start.end..self.cursor.peek().start]
+            .iter()
+            .any(|unit| accept_java_script_line_terminator(f64::from(*unit)))
+        {
+            return Err(TranslationError::syntax(
+                "line terminator after throw",
+                Some(span(&start, &start)),
+            ));
+        }
         if self.cursor.eat("new").is_none() {
             return Err(unsupported(
                 "throw of a non-error value",

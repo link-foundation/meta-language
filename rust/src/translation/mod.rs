@@ -25,6 +25,7 @@ pub mod emit_rust;
 pub(crate) mod frontend_rules;
 pub mod ir;
 pub mod javascript;
+mod javascript_line_terminator_rules;
 pub mod js_number;
 pub mod lean;
 pub mod lean_root_names;

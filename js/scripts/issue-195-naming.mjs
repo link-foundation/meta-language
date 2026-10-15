@@ -4953,7 +4953,14 @@ const RUNTIME_SHELL_NAME_INVENTORIES=RUNTIME_SHELL_NAME_BINDINGS.map(({inventory
  extract:(raw,file)=>{const text=file.endsWith('.lino')?decodeURIComponent(raw):raw;return files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeRuntimeShellName(name));},
  recordOf:name=>Object.values(files).flat().find(entry=>normalizeRuntimeShellName(entry.name)===name).id,
 }));
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES]);
+// Shared decimal suffix boundary decision, generated JavaScript first.
+const RUST_NUMBER_BOUNDARY_NAME_INVENTORIES=[{
+ inventory:'Rust decimal integer suffix boundary decisions',
+ files:["js/src/translation/rust-number-rules.js","rust/src/translation/lexer/number_rules.rs"],
+ extract:text=>captures(text,/^(?:export function|pub fn) (acceptRustNumberDigitBoundary|accept_rust_number_digit_boundary)\(/gmu).map(name=>name.replace(/([a-z])([A-Z])/gu,'$1-$2').replaceAll('_','-').toLowerCase()),
+ recordOf:()=> 'translation.accept-rust-number-digit-boundary',
+}];
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {

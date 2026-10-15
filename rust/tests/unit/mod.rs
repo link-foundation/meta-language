@@ -187,6 +187,7 @@ mod translation_emit_rust;
 mod translation_empty_optional_values;
 mod translation_foundation;
 mod translation_javascript_frontend;
+mod translation_javascript_line_terminators;
 mod translation_javascript_loops;
 mod translation_javascript_products;
 mod translation_javascript_scoped_binding_emission;

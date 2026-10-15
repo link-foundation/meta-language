@@ -2,7 +2,7 @@
 
 use super::{
     ASSIGNMENTS, COMPOUND, JavaScriptParser, Jumps, Result, SExpr, SNode, Stmt, Token, TokenKind,
-    TranslationError, joined, node, span, unsupported,
+    TranslationError, accept_java_script_line_terminator, joined, node, span, unsupported,
 };
 use crate::translation::surface::BinaryOp;
 
@@ -390,8 +390,9 @@ impl JavaScriptParser {
         let place = span(&token, &token);
         let next = self.cursor.peek().start;
         // A line break after break or continue ends the statement, so a following name is not a label.
-        let newline =
-            token.end < next && self.source.units()[token.end..next].contains(&u16::from(b'\n'));
+        let newline = self.source.units()[token.end..next]
+            .iter()
+            .any(|unit| accept_java_script_line_terminator(f64::from(*unit)));
         if self.cursor.is_kind(TokenKind::Identifier)
             && !self.cursor.is("case")
             && !self.cursor.is("default")
