@@ -24,6 +24,9 @@ Trivia reuses the shared exact Rust whitespace and initial byte-order-mark rules
 Ordinary line comments and nested block comments retain every code unit. Outermost
 doc comments require an attribute interpretation and are refused; doc-looking
 contents nested within an ordinary block comment remain comment contents.
+Canonical Rust emission reinterprets the complete actual emitted module and binds
+its runtime and String conditions to the new operations and source intervals.
+It retains any conditions reported by the underlying actual core emitter.
 
 The JavaScript target reuses the actual core emitter and shared Unicode String
 input decision, with inspectable linked input-guard decorators. Inputs must be

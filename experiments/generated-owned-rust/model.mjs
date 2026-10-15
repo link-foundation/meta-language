@@ -134,4 +134,11 @@ export function emitGeneratedOwnedRust(program,proof,target){
  return{...emitted,text:decorated.source,assumptions:[...emitted.assumptions,...assumptions,policy.inputAssumption],decorators:decorators.toLino()};
 }
 export function emitGeneratedOwnedRustLinks(network,root,target){const {program,proof}=decodeGeneratedOwnedRustLinks(network,root);return emitGeneratedOwnedRust(program,proof,target);}
-export function emitCanonicalGeneratedOwnedRust(program,proof){checkGeneratedOwnedRust(program,proof);return emitRust(program);}
+export function emitCanonicalGeneratedOwnedRust(program,proof){
+ checkGeneratedOwnedRust(program,proof);const emitted=emitRust(program);
+ // The canonical emitter creates new complete source operations and intervals.
+ // Interpret that actual output before binding any conditions to its operations.
+ const canonical=createGeneratedOwnedRust(emitted.text),rebound=emitGeneratedOwnedRust(canonical.program,canonical.proof,'Rust');
+ if(rebound.text!==emitted.text)fail('the canonical whole source lost its exact interpreted output');
+ return{...emitted,assumptions:[...emitted.assumptions,...rebound.assumptions]};
+}
