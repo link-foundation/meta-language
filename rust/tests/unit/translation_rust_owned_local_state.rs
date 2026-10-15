@@ -137,8 +137,7 @@ fn all_five_actual_sources_match_javascript_programs_and_both_archive_formats() 
             Some(&json!({"fixture":case["name"]})),
         )
         .unwrap();
-        let program_root = packet.network.link(packet.root).unwrap().references()[0];
-        let provenance = relation(&packet.network, program_root, "provenance")[2];
+        let provenance = relation(&packet.network, packet.root, "provenance")[2];
         let profile = relation(&packet.network, provenance, "source profile")[2];
         assert_eq!(
             packet
@@ -335,6 +334,25 @@ fn relation(network: &LinkNetwork, parent: LinkId, label: &str) -> [LinkId; 3] {
         })
         .unwrap()
 }
+fn reverse_record(value: &mut Value) {
+    let record = value.as_object_mut().unwrap();
+    *record = std::mem::take(record).into_iter().rev().collect();
+}
+fn graph_occurrence(network: &LinkNetwork, mut node: LinkId, path: LinkId) -> LinkId {
+    for part in network.link(path).unwrap().references() {
+        let part = network.link(*part).unwrap();
+        let definition = part.metadata().definition().unwrap();
+        node = if part.metadata().term()
+            == meta_language::typed_program_links_schema()["scalars"]["number"].as_str()
+        {
+            network.link(node).unwrap().references()[definition.parse::<usize>().unwrap()]
+        } else {
+            relation(network, node, definition)[2]
+        };
+    }
+    node
+}
+
 fn reorder_two_fields(network: &mut LinkNetwork, owner: LinkId, first: &str, second: &str) {
     let a = relation(network, owner, first);
     let b = relation(network, owner, second);
@@ -354,7 +372,7 @@ fn reorder_two_fields(network: &mut LinkNetwork, owner: LinkId, first: &str, sec
 #[test]
 fn source_free_owned_state_edits_and_raw_unknown_expression_fields_refuse() {
     let case = &fixture()["cases"][0];
-    for edit in 0..13 {
+    for edit in 0..18 {
         let mut actual = program(case, false);
         let Decl::Fn(function) = &mut actual.declarations[0] else {
             unreachable!()
@@ -383,7 +401,12 @@ fn source_free_owned_state_edits_and_raw_unknown_expression_fields_refuse() {
             9 => proof["literalConstructors"][0]["callSpan"] = json!({"start":0,"end":1000000}),
             10 => proof["literalConstructors"][0]["owner"]["path"] = json!(["String"]),
             11 => proof["bindings"][0]["borrowEscape"] = json!(false),
-            _ => function.span = None,
+            12 => function.span = None,
+            13 => reverse_record(&mut proof["interpretation"]),
+            14 => reverse_record(&mut proof["literalConstructors"][0]["owner"]),
+            15 => reverse_record(&mut proof["reads"][0]["span"]),
+            16 => reverse_record(&mut proof["literalConstructors"][0]["span"]),
+            _ => reverse_record(&mut proof["interpretation"]["integerDomain"]),
         }
         assert!(encode_typed_program_links(&actual).is_err(), "edit {edit}");
     }
@@ -418,6 +441,33 @@ fn source_free_owned_state_edits_and_raw_unknown_expression_fields_refuse() {
             );
         }
     }
+    let mut matching = LinkNetwork::from_lino(case["links"].as_str().unwrap()).unwrap();
+    let root = LinkId::from_u64(case["root"].as_u64().unwrap());
+    let program_root = matching.link(root).unwrap().references()[0];
+    let declarations = relation(&matching, program_root, "declarations")[2];
+    let pair = matching.link(declarations).unwrap().references()[0];
+    let function = matching.link(pair).unwrap().references()[1];
+    let proof = relation(&matching, function, "source local state")[2];
+    let reads = relation(&matching, proof, "reads")[2];
+    let read = matching.link(reads).unwrap().references()[0];
+    let body = relation(&matching, function, "body")[2];
+    let occurrence = graph_occurrence(&matching, body, relation(&matching, read, "path")[2]);
+    let actual_span = relation(&matching, occurrence, "span")[2];
+    let proof_span = relation(&matching, read, "span")[2];
+    reorder_two_fields(&mut matching, actual_span, "start", "end");
+    if proof_span != actual_span {
+        reorder_two_fields(&mut matching, proof_span, "start", "end");
+    }
+    let restored = LinkNetwork::from_lino(&matching.to_lino()).unwrap();
+    for target in ["Rust", "JavaScript"] {
+        assert!(
+            !emit_typed_program_links(&restored, root, target)
+                .unwrap()
+                .code
+                .is_empty()
+        );
+    }
+    assert!(!javascript_public_archive(&restored, root).is_empty());
     let mut network = LinkNetwork::from_lino(case["links"].as_str().unwrap()).unwrap();
     let variable = network
         .links()
@@ -592,6 +642,28 @@ fn complete_original_and_actual_generated_artifacts_execute_before_and_after_val
 
 #[test]
 fn actual_unpaired_utf16_fixture_units_reach_the_generated_kernel_without_loss() {
+    let source = "fn hygiene_input(ml_ownedTextInput:String,count:i32,flag:bool)->String{let(mut digits,n)=(ml_ownedTextInput,count);digits=String::from(\"hygiene\");digits}fn main(){}";
+    let actual = selected(source, false);
+    let emitted = emit_javascript(&actual).unwrap();
+    assert!(
+        emitted
+            .assumptions
+            .iter()
+            .any(|assumption| assumption.id == "owned-local-text-input-realm")
+    );
+    let target = &emitted
+        .mappings
+        .iter()
+        .find(|mapping| mapping.source == "hygiene_input")
+        .unwrap()
+        .target;
+    let script = format!(
+        "{}\nif({}(\"😀\",0n,true)!==\"hygiene\")throw new Error('wrong original Unicode value');for(const args of [[String.fromCharCode(0xd800),0n,true],[0,0n,true],[\"text\",0,true],[\"text\",0n,1],[\"text\",2147483648n,true],[\"text\",-2147483649n,true]]){{let refused=false;try{{{}(...args);}}catch(error){{if(!(error instanceof RangeError))throw error;refused=true;}}if(!refused)throw new Error('selected input domain was not checked');}}console.log('owned-inputs');",
+        emitted.text, target, target
+    );
+    let result = run(Command::new("node").args(["--input-type=module", "--eval", &script]));
+    assert!(result.ok, "{}", result.stderr);
+    assert_eq!(result.stdout, "owned-inputs\n");
     let data = read_structured_data_lino_ordered(SOURCE).unwrap();
     let inputs = member(&data, "inputValues");
     for (role, expected) in [("validText", true), ("invalidText", false)] {
