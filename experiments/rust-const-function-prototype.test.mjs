@@ -2,7 +2,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import vm from 'node:vm';
-import {readFileSync} from 'node:fs';
+import {readFileSync,mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {spawnSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {readProjectData} from '../js/scripts/project-data.mjs';
 import {parseRust} from '../js/src/translation/rust.js';
@@ -13,7 +16,7 @@ import {emitJavaScript} from '../js/src/translation/emit-javascript.js';
 import {createTypedProgramLinks,encodeTypedProgramLinks,decodeTypedProgramLinks,emitTypedProgramLinks} from '../js/src/typed-program-links.js';
 import {LinkNetwork} from '../js/src/network.js';
 import {DecoratorSet} from '../js/src/decorators.js';
-import {pinnedRustConstPredicateDefinitions,rustConstFunctionFixture} from './generate-rust-const-function-fixture.mjs';
+import {pinnedRustConstPredicateDefinitions,rustConstFunctionFixture,readRustConstPredicateSources} from './generate-rust-const-function-fixture.mjs';
 import {rustConstFunctionDecorators,rustConstFunctionRules,rustConstFunctionPolicy} from './generate-rust-const-function-rules.mjs';
 import {acceptRustConstFunctionOffset,acceptRustConstFunctionNameCharacter} from '../js/src/translation/rust-const-function-rules.js';
 const fixture=readProjectData(new URL('./rust-const-function-fixture.lino',import.meta.url));
@@ -38,6 +41,35 @@ test('three actual styled complete const definitions retain immutable receipts a
   const proof=fn.sourceConstFunction;assert.equal(entry.source.slice(proof.keywordSpan.start,proof.keywordSpan.end),'const');assert.equal(entry.source.slice(proof.functionKeywordSpan.start,proof.functionKeywordSpan.end),'fn');assert.equal(entry.source[proof.bodySpan.start],'{');assert.equal(entry.source[proof.bodySpan.end-1],'}');
   assert.ok(program.items.every(item=>item.sourceConstFunction));
  }
+});
+
+test('complete const source captures authenticate every original byte and refuse receipt edits',()=>{
+ const captures=readProjectData(new URL('./rust-const-predicate-source-captures.lino',import.meta.url)),sources=readRustConstPredicateSources(captures);
+ assert.equal(sources.length,2);
+ for(const source of sources){
+  const receipts=fixture.cases.filter(entry=>entry.receipt.commit===source.commit&&entry.receipt.file===source.file);
+  assert.ok(receipts.length);
+  for(const entry of receipts){assert.equal(source.fileSha256,entry.receipt.fileSha256);assert.equal(source.source.slice(entry.receipt.start,entry.receipt.end),entry.definition);}
+ }
+ for(const change of[
+  value=>value.sources[0].source+='\n',value=>value.sources[0].bytes++,value=>value.sources[0].sha256='0'.repeat(64),
+  value=>value.sources[0].revision='0'.repeat(40),value=>value.sources[0].blob='0'.repeat(40),value=>value.sources[0].file='different.rs',
+  value=>value.sources[0].source=fixture.cases[0].definition,value=>value.sources.pop(),
+ ]){const changed=structuredClone(captures);change(changed);assert.throws(()=>readRustConstPredicateSources(changed),/authenticated Rust const source capture/u);}
+});
+
+test('const fixture generation needs neither unpublished Git objects nor a Git executable',()=>{
+ const directory=mkdtempSync(join(tmpdir(),'meta-language-const-source-'));
+ try{
+  const env={...process.env,GIT_OBJECT_DIRECTORY:directory,GIT_ALTERNATE_OBJECT_DIRECTORIES:''};
+  for(const commit of['c1e88c8b','87f70e4c']){
+   const hidden=spawnSync('git',['cat-file','-e',commit],{cwd:new URL('../',import.meta.url),env,encoding:'utf8'});
+   assert.equal(hidden.error,undefined);assert.notEqual(hidden.status,0,'the isolated object directory contains no private source commit');
+  }
+  const source=`import {rustConstFunctionFixture} from ${JSON.stringify(new URL('./generate-rust-const-function-fixture.mjs',import.meta.url).href)};process.stdout.write(JSON.stringify(rustConstFunctionFixture()));`;
+  const generated=spawnSync(process.execPath,['--input-type=module','-e',source],{cwd:directory,env:{...env,PATH:directory},encoding:'utf8',maxBuffer:4*1024*1024,timeout:20000});
+  assert.equal(generated.error,undefined);assert.equal(generated.status,0,generated.stderr);assert.deepEqual(JSON.parse(generated.stdout),fixture);
+ }finally{rmSync(directory,{recursive:true,force:true});}
 });
 test('actual styled Rust output replays with its qualification and complete JavaScript output executes',()=>{
  for(const entry of fixture.cases){
