@@ -42,7 +42,10 @@ function regularPath(directory,relativePath){
 function checkFiles(entry,files){
  if(files.additionalSources){
   regularPath(files.directory,'original.rs');regularPath(files.directory,'consumer.rs');
-  for(const name of['liboracle_source.rlib','consumer'])if(existsSync(join(files.directory,name)))regularPath(files.directory,name);
+  for(const name of['liboracle_source.rlib','consumer']){
+   try{lstatSync(join(files.directory,name));}catch(error){if(error.code==='ENOENT')continue;throw error;}
+   regularPath(files.directory,name);
+  }
   for(const source of files.additionalSources){const path=regularPath(files.directory,source.relativePath);assert.deepEqual(readFileSync(path),source.bytes,entry.id+' additional source bytes changed: '+source.relativePath);assert.equal(sha256(readFileSync(path)),source.sourceSha256,entry.id+' additional source hash changed');}
  }
 

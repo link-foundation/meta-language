@@ -137,6 +137,23 @@ test('sidecar files, parent directories and generated artifacts cannot become sy
  }finally{rmSync(outside,{recursive:true,force:true});}
 });
 
+test('dangling library and executable symlinks refuse after every phase before any later process can follow them',()=>{
+ for(const artifact of['liboracle_source.rlib','consumer'])for(const phase of['library','consumer','execute']){
+  const plan=makePlan(),h=harness(plan);
+  failure(()=>h.run(plan,{environment,spawn:h.fake(call=>{
+   if(call.phase!==phase)return;
+   if(phase!=='execute')writeFileSync(call.args[call.args.indexOf('-o')+1],'valid fake compiler artifact');
+   const path=join(call.options.cwd,artifact),target=join(call.options.cwd,'missing-target');
+   rmSync(path,{force:true});symlinkSync(target,path);
+   assert.equal(existsSync(path),false,'following presence checks cannot detect this dangling link');
+   return{status:0,stdout:phase==='execute'?'actual fake output\n':'',stderr:'',signal:null};
+  })}),/symbolic links/u);
+  assert.equal(h.calls.at(-1).phase,phase,'no subsequent compiler or execution can follow a dangling artifact');
+  assert.equal(h.calls.length,['library','consumer','execute'].indexOf(phase)+1);
+  assert.equal(existsSync(h.calls[0].options.cwd),false,'all private paths and dangling links are removed');
+ }
+});
+
 test('failed processes still authenticate the entire bundle and cleanup before reporting failure',()=>{
  for(const phase of['library','consumer','execute']){
   const plan=makePlan(),h=harness(plan);failure(()=>h.run(plan,{environment,spawn:h.fake(call=>{
