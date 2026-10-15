@@ -25,9 +25,9 @@ impl RustParser {
 
     pub(super) fn const_function_item_guard(&self, path: &[String], start: &Token) -> Result<()> {
         let cursor = &self.cursor;
-        if !self.const_function_model.is_empty()
-            && !(cursor.is("const") && cursor.is_at("fn", 1)
-                || path.is_empty() && cursor.is("fn") && cursor.is_at("main", 1))
+        if !(self.const_function_model.is_empty()
+            || cursor.is("const") && cursor.is_at("fn", 1)
+            || path.is_empty() && cursor.is("fn") && cursor.is_at("main", 1))
         {
             return Err(unsupported(
                 "Rust const function context",
@@ -67,10 +67,10 @@ impl RustParser {
 
 #[must_use]
 pub fn render_const_function_header(function: &FnDecl, source: String) -> String {
+    static DECORATORS: OnceLock<DecoratorSet> = OnceLock::new();
     if function.source_const_function.is_none() {
         return source;
     }
-    static DECORATORS: OnceLock<DecoratorSet> = OnceLock::new();
     let decorators = DECORATORS.get_or_init(|| {
         let emission = &policy()["emission"];
         DecoratorSet::new(vec![

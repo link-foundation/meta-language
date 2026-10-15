@@ -133,9 +133,8 @@ pub fn ml_accept_rust_owned_local_text_units_loop1(
                                         continue;
                                     }
                                 }
-                            } else {
-                                crate::translation::rust::owned_local_state_rules::MlAcceptRustOwnedLocalTextUnitsLoop1Result::MlAcceptRustOwnedLocalTextUnitsLoop1Return(false)
                             }
+                            crate::translation::rust::owned_local_state_rules::MlAcceptRustOwnedLocalTextUnitsLoop1Result::MlAcceptRustOwnedLocalTextUnitsLoop1Return(false)
                         }
                     }
                 } else if (56_320f64..=57_343f64).contains(&unit) {

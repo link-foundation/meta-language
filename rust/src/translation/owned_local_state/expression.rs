@@ -157,7 +157,7 @@ impl<'a> Validator<'a> {
         } else {
             &policy()["expressions"][kind]
         };
-        if (!accept_rust_owned_local_expression(kind) && !(self.calls && kind == "call"))
+        if !(accept_rust_owned_local_expression(kind) || self.calls && kind == "call")
             || !allowed(node, fields)
             || (!value_type(&node["type"]) && !pair_type(&node["type"]))
         {
