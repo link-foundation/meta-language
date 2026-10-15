@@ -666,6 +666,16 @@ jobs:
         working-directory: js
         run: node scripts/generate-source-span-fixtures.mjs --check
 
+      - name: Check generated whole Rust runtime shell rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/generate-rust-runtime-shell-rules.mjs --check
+
+      - name: Check complete Rust runtime shell fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/generate-rust-runtime-shell-fixtures.mjs --check
+
       - name: Check generated source text byte rules
         if: ${{ !cancelled() && matrix.group == 'generated' }}
         working-directory: js

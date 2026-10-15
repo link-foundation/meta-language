@@ -569,6 +569,22 @@ const CONST_AND_BYTE_EXPERIMENT_PACKAGE_STEPS = [
   ]
 ];
 
+// Complete runtime-shell gates retain every earlier mandatory gate.
+const RUNTIME_SHELL_PACKAGE_STEPS = [
+  [
+    "Check generated whole Rust runtime shell rules",
+    "node scripts/generate-rust-runtime-shell-rules.mjs --check",
+    "60b3663cb9606f09a83db980710b9409204088635821dc2c9e97c7627bc28e5c",
+    "generated"
+  ],
+  [
+    "Check complete Rust runtime shell fixtures",
+    "node scripts/generate-rust-runtime-shell-fixtures.mjs --check",
+    "38ebdad6ce944c9eeacccce072c633fbefa5fa97f2a763730ee07210c1b1c160",
+    "generated"
+  ]
+];
+
 function packageStepSignature(step, includeGroup = false) {
   const fields = includeGroup ? step.text : step.text.replace(/ && matrix\.group == '[a-z-]+'/gu, '');
   const text = fields
@@ -581,7 +597,7 @@ function checkPackageStepConservation(parsed) {
   const additions = [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS, ...TYPE_NAMESPACE_PACKAGE_STEPS,
     ...PURE_UNIT_PACKAGE_STEPS, ...SOURCE_SPAN_PACKAGE_STEPS, ...OWNED_TEXT_GENERATOR_PACKAGE_STEPS,
     ...OWNED_TEXT_EXPERIMENT_PACKAGE_STEPS, ...INTEGRAL_METADATA_PACKAGE_STEPS, ...INTEGRAL_METADATA_EXPERIMENT_PACKAGE_STEPS,
-    ...CONST_AND_BYTE_GENERATOR_PACKAGE_STEPS, ...CONST_AND_BYTE_EXPERIMENT_PACKAGE_STEPS];
+    ...CONST_AND_BYTE_GENERATOR_PACKAGE_STEPS, ...CONST_AND_BYTE_EXPERIMENT_PACKAGE_STEPS, ...RUNTIME_SHELL_PACKAGE_STEPS];
   const expected = new Map([
     ...ORIGINAL_PACKAGE_STEPS.map(([name, hash, owner]) => [name, { hash, owner }]),
     ...additions.map(([name, command, hash, owner]) => [name, { hash, owner, command, addition: true }]),
@@ -709,7 +725,7 @@ test('every frozen generator addition rejects omission, duplication, condition, 
     assert.throws(() => checkPackageStepConservation(parsed), assert.AssertionError, name);
   };
   for (const [name] of [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS, ...TYPE_NAMESPACE_PACKAGE_STEPS,
-    ...PURE_UNIT_PACKAGE_STEPS, ...SOURCE_SPAN_PACKAGE_STEPS, ...OWNED_TEXT_GENERATOR_PACKAGE_STEPS, ...INTEGRAL_METADATA_PACKAGE_STEPS, ...CONST_AND_BYTE_GENERATOR_PACKAGE_STEPS]) {
+    ...PURE_UNIT_PACKAGE_STEPS, ...SOURCE_SPAN_PACKAGE_STEPS, ...OWNED_TEXT_GENERATOR_PACKAGE_STEPS, ...INTEGRAL_METADATA_PACKAGE_STEPS, ...CONST_AND_BYTE_GENERATOR_PACKAGE_STEPS, ...RUNTIME_SHELL_PACKAGE_STEPS]) {
     mutate(name, (steps, index) => steps.splice(index, 1));
     mutate(name, (steps, index) => steps.push({ ...steps[index] }));
     for (const [before, after] of [
