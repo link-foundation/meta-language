@@ -40,6 +40,33 @@ pub fn accept_rust_owned_local_source_operation(operation: &str) -> bool {
 
 /// Read a shared owned local text state decision.
 #[must_use]
+pub fn accept_rust_owned_local_container(kind: &str, dense: bool, unrepresented: bool) -> bool {
+    kind == "array" && dense && !unrepresented
+        || kind == "map" && !unrepresented
+        || kind == "record" && !unrepresented
+}
+
+/// Read a shared owned local text state decision.
+#[must_use]
+pub const fn accept_rust_owned_local_record_value(
+    boolean_required: bool,
+    boolean_value: bool,
+) -> bool {
+    !boolean_required || boolean_value
+}
+
+/// Read a shared owned local text state decision.
+#[must_use]
+pub const fn accept_rust_owned_local_source_span(
+    present: bool,
+    record_shape: bool,
+    offset_shape: bool,
+) -> bool {
+    !present || record_shape && offset_shape
+}
+
+/// Read a shared owned local text state decision.
+#[must_use]
 pub fn accept_rust_owned_local_text_units(units: &[f64]) -> bool {
     {
         let index = 0f64;

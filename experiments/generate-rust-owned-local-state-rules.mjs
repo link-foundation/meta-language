@@ -3,9 +3,6 @@ import {fileURLToPath} from 'node:url';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {readProjectData} from '../js/scripts/project-data.mjs';
 import {DecoratorSet} from '../js/src/decorators.js';
-import {parseJavaScript} from '../js/src/translation/javascript.js';
-import {checkProgram} from '../js/src/translation/check.js';
-import {emitRust} from '../js/src/translation/emit-rust.js';
 import {formatProductRuleSource} from '../js/scripts/product-rule-style-corrections.mjs';
 const policy=readProjectData(new URL('../js/src/translation/data/rust-owned-local-state.lino',import.meta.url));
 export function rustOwnedLocalStatePortableRules(){
@@ -28,6 +25,9 @@ export function rustOwnedLocalStatePortableRules(){
  + '/** @param {string} kind @returns {boolean} */\nexport function acceptRustOwnedLocalExpression(kind){return '+Object.keys(policy.expressions).map(kind=>'kind === '+JSON.stringify(kind)).join(' || ')+';}\n'
  + '/** @param {string} operation @returns {boolean} */\nexport function acceptRustOwnedLocalBinaryOperation(operation){return operation === "eq";}\n'
  + '/** @param {string} operation @returns {boolean} */\nexport function acceptRustOwnedLocalSourceOperation(operation){return '+policy.excludedSourceOperations.map(operation=>'operation !== '+JSON.stringify(operation)).join(' && ')+';}\n'
+ + '/** @param {string} kind @param {boolean} dense @param {boolean} unrepresented @returns {boolean} */\nexport function acceptRustOwnedLocalContainer(kind,dense,unrepresented){return (kind === '+JSON.stringify(policy.containerKinds[0])+' && dense && !unrepresented) || (kind === '+JSON.stringify(policy.containerKinds[1])+' && !unrepresented) || (kind === '+JSON.stringify(policy.containerKinds[2])+' && !unrepresented);}\n'
+ + '/** @param {boolean} booleanRequired @param {boolean} booleanValue @returns {boolean} */\nexport function acceptRustOwnedLocalRecordValue(booleanRequired,booleanValue){return !booleanRequired || booleanValue;}\n'
+ + '/** @param {boolean} present @param {boolean} recordShape @param {boolean} offsetShape @returns {boolean} */\nexport function acceptRustOwnedLocalSourceSpan(present,recordShape,offsetShape){return !present || (recordShape && offsetShape);}\n'
  + '/** @param {Array<number>} units @returns {boolean} */\nexport function acceptRustOwnedLocalTextUnits(units){\n for(let index=0;index<units.length;index++){\n  const unit=units[index]??-1;\n  if(unit>='+ranges.highStart+'&&unit<='+ranges.highEnd+'){\n   index++;\n   const next=units[index]??-1;\n   if(!(next>='+ranges.lowStart+'&&next<='+ranges.lowEnd+'))return false;\n  }else if(unit>='+ranges.lowStart+'&&unit<='+ranges.lowEnd+')return false;\n }\n return true;\n}\n'
  + '/** @returns {string} */\nexport function renderRustOwnedLocalTextInput(){return '+JSON.stringify(textInput.replace('acceptRustOwnedLocalTextInput','ml_ownedTextInput'))+';}\n';
 }
@@ -41,7 +41,10 @@ export function rustOwnedLocalStateRules(){
  + ' for(let index=0;index<text.length;index++)units.push(text.charCodeAt(index));\n'
  + ' return acceptRustOwnedLocalTextUnits(units);\n}\n';
 }
-function generateNativeOwnedLocalStateRules(){
+async function generateNativeOwnedLocalStateRules(){
+ const [{parseJavaScript},{checkProgram},{emitRust}]=await Promise.all([
+  import('../js/src/translation/javascript.js'),import('../js/src/translation/check.js'),import('../js/src/translation/emit-rust.js'),
+ ]);
  const policyFile=new URL('../js/src/translation/data/rust-owned-local-state.lino',import.meta.url);
  const emitted=emitRust(checkProgram(parseJavaScript(rustOwnedLocalStatePortableRules()))),raw=emitted.definitions.join('\n\n');
  const style=new URL('../parity/self-translation/rust-owned-local-state-rules-decorators.lino',import.meta.url);
@@ -65,18 +68,19 @@ function generateNativeOwnedLocalStateRules(){
    const from=current.slice(start,end+1);replace(from,from.replace(/\} else \{\n\s+if /u,'} else if ').slice(0,-1));
   }
   for(const match of [...current.matchAll(/\(([a-z_]+ == "[^"\n]*"|![_a-z]+|[_a-z]+\.is_empty\(\))\)/gu)])replace(match[0],match[1]);
-  // These three complete classifier bodies contain only the recorded Boolean
+  // These complete classifier bodies contain only the recorded Boolean
   // comparisons. Removing their grouping keeps && tighter than || and each
   // left-to-right short-circuit decision unchanged.
-  for(const name of ['state_model','value_type','expression','source_operation']){
+  for(const name of ['state_model','value_type','expression','source_operation','container','record_value','source_span']){
    const match=current.match(new RegExp('pub fn accept_rust_owned_local_'+name+'\\([^]*?\\) -> bool \\{\\n([^]*?)\\n\\}', 'u'));
    if(match)replace(match[1],match[1].replace('model.is_empty()','model == \"\"').replace(/[()]/gu,'').replace('model == \"\"','model.is_empty()'));
   }
   replace('if (index < serde_json::Number::from(units.len()).as_f64().expect("a UTF16 unit count has a finite Number length"))', 'if index < serde_json::Number::from(units.len()).as_f64().expect("a UTF16 unit count has a finite Number length")');
+  for(const name of ['record_value','source_span'])replace('pub fn accept_rust_owned_local_'+name+'(', 'pub const fn accept_rust_owned_local_'+name+'(');
   replace('if !((56_320f64..=57_343f64).contains(&next))','if !(56_320f64..=57_343f64).contains(&next)');
   for(const match of [...current.matchAll(/let (index_\d+) = \((index(?:_\d+)? \+ 1f64)\);/gu)])replace(match[0],'let '+match[1]+' = '+match[2]+';');
   for(const match of [...current.matchAll(/\((crate::translation::frontend_rules::ml_array::optional_at\([^\n]*\))\)\.unwrap_or/gu)])replace(match[0],match[1]+'.unwrap_or');
-  for(const match of [...current.matchAll(/^pub fn (\w+)/gmu)])replace(match[0],'/// Read a shared owned local text state decision.\n#[must_use]\n'+match[0]);
+  for(const match of [...current.matchAll(/^pub (?:const )?fn (\w+)/gmu)])replace(match[0],'/// Read a shared owned local text state decision.\n#[must_use]\n'+match[0]);
   writeFileSync(style,new DecoratorSet([{id:'rust-owned-local-state-library-style',level:'emitter',order:0,when:[['format','Rust']],actions}]).toLino());
  }
  const generated='// Generated from the shared owned local state JavaScript kernel. Do not edit.\n'+formatProductRuleSource(DecoratorSet.fromLino(readFileSync(style,'utf8')).decorate('emitter',{format:'Rust',source:raw}).source);
@@ -87,5 +91,5 @@ function generateNativeOwnedLocalStateRules(){
 if(process.argv[1]===fileURLToPath(import.meta.url)){
  const output=new URL('../js/src/translation/rust-owned-local-state-rules.js',import.meta.url),source=rustOwnedLocalStateRules();
  if(process.argv.includes('--check')){if(readFileSync(output,'utf8')!==source)throw new Error('owned local state decisions are stale');}else writeFileSync(output,source);
- if(!process.argv.includes('--javascript-only'))generateNativeOwnedLocalStateRules();
+ if(!process.argv.includes('--javascript-only'))await generateNativeOwnedLocalStateRules();
 }
