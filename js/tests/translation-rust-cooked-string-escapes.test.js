@@ -130,7 +130,14 @@ test('the generated prefix preserves the existing draft decision and ASCII decis
     const spelling = code.toString(16).padStart(2, '0');
     assert.equal(readRustAsciiEscapeValue(spelling.charCodeAt(0), spelling.charCodeAt(1)), code);
   }
-  for (const value of [-1, 0.5, 48.5, NaN, Infinity, -Infinity]) assert.equal(readRustAsciiEscapeDigit(value), -1);
+  for (const value of [-1, -0, 0, 0.5, 48.5, 48 - 2 ** -45, 48 + 2 ** -45, Number.MIN_VALUE, Number.MAX_VALUE, NaN, Infinity, -Infinity]) assert.equal(readRustAsciiEscapeDigit(value), -1);
+  // Exact equality keeps the old all-Number domain without coercing host data.
+  for (const value of [undefined, null, false, true, '48', '', [], {}, 48n]) assert.equal(readRustAsciiEscapeDigit(value), -1);
+  for (const unit of Array.from({ length: 512 }, (_, index) => index / 2 - 1)) {
+    const expected = unit % 1 !== 0 ? -1 : unit >= 48 && unit <= 57 ? unit - 48
+      : unit >= 65 && unit <= 70 ? unit - 65 + 10 : unit >= 97 && unit <= 102 ? unit - 97 + 10 : -1;
+    assert.equal(readRustAsciiEscapeDigit(unit), expected);
+  }
   for (const code of fixture.nonAscii) {
     const spelling = code.toString(16);
     assert.equal(readRustAsciiEscapeValue(spelling.charCodeAt(0), spelling.charCodeAt(1)), -1);

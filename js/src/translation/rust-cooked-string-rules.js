@@ -6,10 +6,22 @@ export function acceptRustCookedStringEscapePrefix(unit) {
 
 /** @param {number} unit @returns {number} */
 export function readRustAsciiEscapeDigit(unit) {
-  if (unit % 1 !== 0) return -1;
-  if (unit >= 48 && unit <= 57) return unit - 48 + 0;
-  if (unit >= 65 && unit <= 70) return unit - 65 + 10;
-  if (unit >= 97 && unit <= 102) return unit - 97 + 10;
+  if (unit === 48) return 0;
+  if (unit === 49) return 1;
+  if (unit === 50) return 2;
+  if (unit === 51) return 3;
+  if (unit === 52) return 4;
+  if (unit === 53) return 5;
+  if (unit === 54) return 6;
+  if (unit === 55) return 7;
+  if (unit === 56) return 8;
+  if (unit === 57) return 9;
+  if (unit === 65 || unit === 97) return 10;
+  if (unit === 66 || unit === 98) return 11;
+  if (unit === 67 || unit === 99) return 12;
+  if (unit === 68 || unit === 100) return 13;
+  if (unit === 69 || unit === 101) return 14;
+  if (unit === 70 || unit === 102) return 15;
   return -1;
 }
 
