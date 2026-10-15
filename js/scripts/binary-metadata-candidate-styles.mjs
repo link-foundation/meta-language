@@ -45,6 +45,11 @@ function alphaMapping(previous,current){
    forward.set(left.value,right.value);backward.set(right.value,left.value);
   }else if(previous.source.slice(left.start,left.end)!==current.source.slice(right.start,right.end))return null;
  }
+ // Renaming is applied to identifier tokens. A spelling used both as a local
+ // binder and as a fixed path/field/type name cannot be changed through only
+ // its binder occurrence; every written occurrence must match the same map.
+ for(let index=0;index<previous.tokens.length;index++)if(previous.tokens[index].kind==='identifier'&&forward.has(previous.tokens[index].value)
+  &&forward.get(previous.tokens[index].value)!==current.tokens[index].value)return null;
  return forward;
 }
 function rename(source,names){
@@ -59,6 +64,8 @@ function borrowHeader(source,original,signatures){
   if(token.value!=='header'||!['(',','].includes(tokens[index-1]?.value)||![',',')'].includes(tokens[index+1]?.value))return false;
   let open=index-1;
   while(open>=0&&!(tokens[open].value==='('&&matching.get(open)>index))open--;
+  assert.ok(tokens[open-2]?.value==='::'&&tokens[open-3]?.value==='super'&&!['::','.'].includes(tokens[open-4]?.value),
+   'a constructed header may enter only the actual generated sibling call path');
   const callee=tokens[open-1]?.value;let argument=0;
   for(let at=open+1;at<index;at++){if(['(','[','{'].includes(tokens[at].value)&&tokens[at].kind==='punct')at=matching.get(at);else if(tokens[at].value===',')argument++;}
   assert.equal(signatures.get(callee)?.[argument]?.replace(/\s/gu,''),'header:&[f64]','a constructed header is borrowed only by an actual checked slice parameter');
@@ -70,14 +77,30 @@ function borrowHeader(source,original,signatures){
 }
 function freshSpelling(source,provider){
  const array=readSourceTextRustBlock(provider,'mod','ml_array');
- const current=simplifySourceTextRustParentheses(source).replace(/^#\[must_use\]\n/gmu,'');
+ const current=source.replace(/^#\[must_use\]\n/gmu,'');
+ const{tokens,matching}=syntax(current);
+ // The reused branch utility can complement a complete unary condition.
+ // A leading ! on the first operand of a compound condition is different;
+ // retain its enclosing grouping, and refuse an ungrouped ambiguous input.
+ for(let index=0;index<tokens.length;index++)if(tokens[index].kind==='identifier'&&tokens[index].value==='if'&&tokens[index+1]?.value==='!'){
+  const operand=index+2,end=tokens[operand]?.value==='('?matching.get(operand):operand;
+  assert.ok(tokens[operand]?.value==='('||tokens[operand]?.kind==='identifier','a leading unary condition needs an actual owned operand');
+  assert.equal(tokens[end+1]?.value,'{','a leading unary condition must own the complete condition before branch reversal');
+ }
  const library=array+'\n\n'+current;
  const actions=readProductRuleStyleCorrections(library,'source',provider);
  const corrected=new DecoratorSet([{id:'binary-metadata-structural-library-style',level:'emitter',order:0,when:[['format','Rust']],actions}])
   .decorate('emitter',{format:'Rust',source:library}).source;
  const prefix='pub use crate::translation::frontend_rules::ml_array;';
  assert.ok(corrected.startsWith(prefix),'the actual shared array provider is retained');
- return simplifySourceTextRustParentheses(corrected.slice(prefix.length).trimStart());
+ const owning=corrected.slice(prefix.length).trimStart(),postfix=syntax(owning);
+ for(let index=0;index<postfix.tokens.length;index++)if(postfix.tokens[index].kind==='punct'&&postfix.tokens[index].value==='('){
+  const end=postfix.matching.get(index);
+  if(!['.','[','('].includes(postfix.tokens[end+1]?.value))continue;
+  const operand=postfix.tokens.slice(index+1,end).filter(token=>token.kind!=='punct'||!['(',')'].includes(token.value));
+  assert.ok(!(operand.length===2&&operand[0].value==='-'&&operand[1].kind==='number'),'a negative literal receiver must retain its original unary grouping');
+ }
+ return simplifySourceTextRustParentheses(owning);
 }
 function declaration(source){
  return /^pub (?:const )?(?:fn|mod|struct|enum) (\w+)/mu.exec(source)?.[1]
