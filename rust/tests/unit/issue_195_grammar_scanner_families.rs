@@ -317,7 +317,12 @@ fn requested_scanners_precede_internal_extras_and_composite_extras_keep_separato
     let parser =
         super::issue_195_native_grammar_rows::parser(fixtures[2]["listing"].as_str().unwrap());
     let tree = super::issue_195_native_grammar_rows::parse(&parser, input).unwrap();
-    let projection_fixture = serde_json::json!({});
+    let projection_fixture = serde_json::json!({
+        "hidden": [],
+        "anonymous": [],
+        "extras": [],
+        "oracleKinds": {},
+    });
     let projection = super::issue_195_native_grammar_rows::Rows::new(&projection_fixture);
     let rows = projection.rows(&tree, input);
     assert_eq!(

@@ -1,6 +1,6 @@
 //! Candidate `CSharp` grammar and counted scanner operations are shared Links data.
 use super::issue_195_native_grammar_rows::{
-    Rows, cases, oracle_agrees, oracle_rows, parse, parser, rebuilt, source,
+    Rows, cases, oracle_agrees, oracle_rows, parse, parser, rebuilt, rebuilt_recovery, source,
 };
 use meta_language::{FeatureParseOptions, parse_grammar_links, render_grammar_links};
 use serde_json::Value;
@@ -83,7 +83,7 @@ fn csharp_profile_focused_trees_match_the_independent_oracle() {
             )
             .unwrap();
         assert_eq!(native.rejection.unwrap().reason, "recovered");
-        assert_eq!(rebuilt(&native.tree.unwrap()), source(case));
+        assert_eq!(rebuilt_recovery(&native.tree.unwrap()), source(case));
     }
 }
 

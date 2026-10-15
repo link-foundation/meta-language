@@ -78,6 +78,23 @@ pub fn rebuilt(tree: &SyntaxTree) -> String {
         .collect()
 }
 
+/// Rebuilds recovered UTF-8 source, retaining error text and empty missing leaves.
+pub fn rebuilt_recovery(tree: &SyntaxTree) -> String {
+    leaves(tree)
+        .into_iter()
+        .map(|leaf| match leaf {
+            SyntaxTree::Token { text: leaf, .. } | SyntaxTree::Error { text: leaf, .. } => {
+                text(leaf)
+            }
+            SyntaxTree::Missing { start, end, .. } => {
+                assert_eq!(start, end, "a missing leaf must be zero-width");
+                ""
+            }
+            other => panic!("a recovered source has no {other:?}"),
+        })
+        .collect()
+}
+
 fn kinds<'a>(fixture: &'a Value, key: &str) -> HashSet<&'a str> {
     fixture[key]
         .as_array()
@@ -337,10 +354,13 @@ pub fn oracle_agrees(language: &tree_sitter::Language, fixture: &Value) {
         assert!(!recovers, "{:?}", source(case));
         assert_eq!(Value::Array(rows), case["rows"], "{:?}", source(case));
     }
-    for case in cases(fixture, "divergences")
-        .iter()
-        .chain(cases(fixture, "rejections"))
-    {
+    let divergences = fixture.get("divergences").map_or(&[][..], |value| {
+        value
+            .as_array()
+            .expect("fixture divergence cases")
+            .as_slice()
+    });
+    for case in divergences.iter().chain(cases(fixture, "rejections")) {
         assert!(oracle_rows(language, source(case)).1, "{:?}", source(case));
     }
 }

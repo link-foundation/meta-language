@@ -12,6 +12,7 @@
 //! one multiplies it by the size ratio, so the threshold sits far below the
 //! quadratic signal and far above ordinary measurement noise.
 
+use std::io::Write as _;
 use std::time::Duration;
 use std::time::Instant;
 
@@ -230,12 +231,38 @@ fn edit_duration(source: &str, language: &str) -> Duration {
 /// The casts only lose precision past 2^53 nanoseconds — about 104 days — and
 /// past 2^53 source bytes, neither of which a test input reaches.
 #[allow(clippy::cast_precision_loss)]
-fn nanos_per_byte(source: &str, language: &str, work: fn(&str, &str) -> Duration) -> f64 {
+fn nanos_per_byte(
+    source: &str,
+    language: &str,
+    work: fn(&str, &str) -> Duration,
+    subject: &str,
+    attempt: usize,
+    size: &str,
+) -> f64 {
     let best = (0..SAMPLES)
-        .map(|_| work(source, language))
+        .map(|sample| {
+            report_scaling_progress(format_args!(
+                "scaling {subject} {language} attempt {attempt}/{ATTEMPTS} {size} {} bytes sample {}/{SAMPLES}: begin",
+                source.len(),
+                sample + 1,
+            ));
+            let elapsed = work(source, language);
+            report_scaling_progress(format_args!(
+                "scaling {subject} {language} attempt {attempt}/{ATTEMPTS} {size} {} bytes sample {}/{SAMPLES}: finished {elapsed:?}",
+                source.len(),
+                sample + 1,
+            ));
+            elapsed
+        })
         .min()
         .expect("at least one timing sample");
     best.as_nanos() as f64 / source.len() as f64
+}
+
+// A direct stderr write remains visible while libtest captures the test's output.
+// Callers report only outside the intervals measured by `work`.
+fn report_scaling_progress(message: std::fmt::Arguments<'_>) {
+    let _ = writeln!(std::io::stderr().lock(), "{message}");
 }
 
 struct Measurement {
@@ -267,11 +294,13 @@ fn measure(
     case: &ScalingCase,
     small_units: usize,
     work: fn(&str, &str) -> Duration,
+    subject: &str,
+    attempt: usize,
 ) -> Measurement {
     let small = source_for(case, small_units);
     let large = source_for(case, small_units * SIZE_RATIO);
-    let small_per_byte = nanos_per_byte(&small, case.language, work);
-    let large_per_byte = nanos_per_byte(&large, case.language, work);
+    let small_per_byte = nanos_per_byte(&small, case.language, work, subject, attempt, "small");
+    let large_per_byte = nanos_per_byte(&large, case.language, work, subject, attempt, "large");
     Measurement {
         small_bytes: small.len(),
         large_bytes: large.len(),
@@ -290,8 +319,8 @@ fn assert_scales_linearly(
 ) {
     for case in cases {
         let mut reports = Vec::new();
-        let passed = (0..ATTEMPTS).any(|_| {
-            let measurement = measure(case, small_units, work);
+        let passed = (0..ATTEMPTS).any(|attempt| {
+            let measurement = measure(case, small_units, work, subject, attempt + 1);
             reports.push(measurement.report(case.language));
             measurement.growth() <= MAX_PER_BYTE_GROWTH
         });
