@@ -483,6 +483,7 @@ impl Checker {
             effects,
             span: main.span,
             sequential_async: main.sequential_async,
+            source_runtime_worker: main.source_runtime_worker.clone(),
         })
     }
 

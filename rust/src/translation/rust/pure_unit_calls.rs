@@ -222,6 +222,7 @@ impl RustParser {
             effects,
             span: Some(actual_span(&start, &close)),
             sequential_async: false,
+            source_runtime_worker: None,
         })
     }
     pub(super) fn finish_pure_unit_source(

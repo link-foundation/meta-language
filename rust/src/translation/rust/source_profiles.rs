@@ -2,6 +2,14 @@
 //! Public reexports preserve the frontend API and shared parser implementation.
 use super::{Result, SProgram, SourceProfiles, parse_rust_with_selected_profiles};
 
+/// Read a complete emitted Rust runtime under its independent owned interpretation.
+///
+/// # Errors
+/// Refuses unknown selectors and unproved runtime operations or source context.
+pub fn parse_rust_with_runtime_shell_model(source: &str, model: &str) -> Result<SProgram> {
+    crate::translation::runtime_shell::parse_source(source, model)
+}
+
 /// Reads a Rust program.
 ///
 /// # Errors

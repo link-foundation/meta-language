@@ -741,6 +741,13 @@ pub enum Effect {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Main {
+    /// Owned worker context for an independently selected complete runtime.
+    #[serde(
+        default,
+        rename = "sourceRuntimeWorker",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub source_runtime_worker: Option<serde_json::Value>,
     pub effects: Vec<Effect>,
     #[serde(default)]
     pub span: Option<Span>,
@@ -753,6 +760,9 @@ pub struct Main {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Program {
+    /// Complete owned source runtime interpretation, separate from its pure core.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_runtime_shell: Option<serde_json::Value>,
     /// Independently selected complete pure Unit program interpretation.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_pure_unit_calls: Option<serde_json::Value>,

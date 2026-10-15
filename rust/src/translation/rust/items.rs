@@ -47,6 +47,7 @@ impl RustParser {
             imports: Vec::new(),
             externals: Vec::new(),
             source_pure_unit_calls,
+            source_runtime_shell: None,
         })
     }
 
@@ -606,6 +607,7 @@ impl RustParser {
                 })
             },
             sequential_async: false,
+            source_runtime_worker: None,
         })
     }
 

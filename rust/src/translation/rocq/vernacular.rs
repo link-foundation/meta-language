@@ -18,6 +18,7 @@ impl RocqParser {
             imports: Vec::new(),
             externals: Vec::new(),
             source_pure_unit_calls: None,
+            source_runtime_shell: None,
         })
     }
 
@@ -582,6 +583,7 @@ impl RocqParser {
                 effects,
                 span: Some(main_span),
                 sequential_async: false,
+                source_runtime_worker: None,
             },
             main_span,
         ))
