@@ -37159,7 +37159,7 @@
 (37159: 37164 (meta: (t: semantic) (n: 1) (term: object%20value) (lang: meta-language%20structured%20data)))
 (37160: 37161 37163 (meta: (t: semantic) (n: 1) (term: object%20value) (lang: meta-language%20structured%20data)))
 (37161: 27 17952 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(37162: (meta: (t: semantic) (n: 1) (term: string%20value) (def: unclosed%20%7B%20in%20format%20string%20at%2023..87) (lang: meta-language%20structured%20data)))
+(37162: (meta: (t: semantic) (n: 1) (term: string%20value) (def: unsupported%20string%20escape%20%5C%7B%20at%2084..86) (lang: meta-language%20structured%20data)))
 (37163: 30 37162 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (37164: 25 37160 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (37165: 17 37159 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
