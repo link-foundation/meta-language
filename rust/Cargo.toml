@@ -52,6 +52,7 @@ include = [
     "src/data/rust-cooked-string-escapes.lino",
     "src/data/rust-unicode-escapes.lino",
     "src/data/rust-source-whitespace.lino",
+    "src/data/rust-raw-string-literals.lino",
     "src/data/javascript-line-terminators.lino",
     "src/data/source-span.lino",
     "src/data/source-text-byte-model.lino",

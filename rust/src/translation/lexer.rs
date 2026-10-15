@@ -23,6 +23,7 @@ use super::{Language, Span};
 
 mod cooked_strings;
 mod number_rules;
+mod raw_strings;
 mod source_whitespace;
 mod unicode_escapes;
 
@@ -463,6 +464,14 @@ fn tokenize_region(
         closed = false;
         if language == Language::JavaScript && ch == Some('`') {
             let token = template_token(source, index, units)?;
+            index = token.end;
+            tokens.push(token);
+            continue;
+        }
+        if language == Language::Rust
+            && ch == Some('r')
+            && let Some(token) = raw_string_token(source, index, units)?
+        {
             index = token.end;
             tokens.push(token);
             continue;
