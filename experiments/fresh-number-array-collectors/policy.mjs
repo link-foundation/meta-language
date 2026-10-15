@@ -16,6 +16,14 @@ export const freshNumberArrayCollectorPolicy = {
     'extends', 'false', 'finally', 'for', 'function', 'if', 'import', 'in',
     'instanceof', 'new', 'null', 'return', 'super', 'switch', 'this', 'throw',
     'true', 'try', 'typeof', 'var', 'void', 'while', 'with'],
+  forbiddenGlobalFunctionNames: ['undefined', 'NaN', 'Infinity'],
+  globalFunctionDeclarationBasis: [
+    'https://tc39.es/ecma262/multipage/executable-code-and-execution-contexts.html#sec-candeclareglobalfunction',
+    'https://tc39.es/ecma262/multipage/global-object.html#sec-value-properties-of-the-global-object',
+  ],
+  sourceContext: { sourceGoal: 'Script', initialGlobalRealm: 'fresh standard realm',
+    initialGlobalValueProperties: 'ECMAScript default property descriptors',
+    initialGlobalExtensibility: true, ambientDeclarationChanges: false },
   fixedTokens: ['function', '(', ')', '{', '}', 'const', '=', '[', ']', ';',
     'for', 'let', '0', '1', '<', '.', 'length', '+=', 'push', 'return', '??', '-', 'eof'],
   // Negative entries refer to one actual lexical binder. All four binders

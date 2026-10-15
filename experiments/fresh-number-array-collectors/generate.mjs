@@ -13,6 +13,10 @@ export function freshNumberArrayCollectorRuleSource() {
 export function acceptFreshNumberArrayCollectorBinding(name) {
   return name !== "" && ${policy.unconditionallyReservedBindings.map(name => 'name !== ' + JSON.stringify(name)).join(' && ')};
 }
+/** @param {string} name @returns {boolean} */
+export function acceptFreshNumberArrayCollectorFunctionName(name) {
+  return acceptFreshNumberArrayCollectorBinding(name) && ${policy.forbiddenGlobalFunctionNames.map(name => 'name !== ' + JSON.stringify(name)).join(' && ')};
+}
 /** @param {number[]} tokens @param {number[]} pattern @returns {boolean} */
 export function acceptFreshNumberArrayCollectorPattern(tokens, pattern) {
   if (tokens.length !== pattern.length || tokens.length > ${policy.maximumTokens}) return false;

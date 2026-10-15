@@ -12,7 +12,7 @@ import { emitRust } from '../../js/src/translation/emit-rust.js';
 import { createFreshNumberArrayCollector, checkFreshNumberArrayCollector, encodeFreshNumberArrayCollector,
   decodeFreshNumberArrayCollector, FRESH_NUMBER_ARRAY_COLLECTOR_POLICY as policy } from './model.mjs';
 import { freshNumberArrayCollectorFixtures } from './generate-fixtures.mjs';
-import { acceptFreshNumberArrayCollectorPattern, acceptFreshNumberArrayCollectorBinding } from './rules.mjs';
+import { acceptFreshNumberArrayCollectorPattern, acceptFreshNumberArrayCollectorBinding, acceptFreshNumberArrayCollectorFunctionName } from './rules.mjs';
 
 const create = source => createFreshNumberArrayCollector(source, { model: policy.model });
 const execute = (source, name, input) => {
@@ -33,6 +33,7 @@ test('five complete unchanged sources execute in original order and after value-
     assert.equal(proof.tokens[policy.declarations.collectorKeyword].value, 'const');
     assert.equal(program.referenceSemantics, undefined);
     assert.equal(proof.assumptions.length, 4);
+    assert.deepEqual(proof.sourceContext, policy.sourceContext);
     for (const input of [[], [0], [1, 2, 3, 4, 5]]) {
       assert.deepEqual(execute(emitJavaScript(program).text, entry.name, input), execute(entry.source, entry.name, input));
     }
@@ -48,6 +49,7 @@ test('text and binary Links reload retain actual source binders and checked owne
       assert.equal(restored.proof.declaration, restored.program.declarations.get(entry.name));
       assert.equal(restored.proof.parameter, restored.proof.declaration.params[0]);
       assert.equal(restored.proof.collector, restored.proof.declaration.body);
+      assert.deepEqual(restored.proof.sourceContext, policy.sourceContext);
       assert.deepEqual(execute(emitJavaScript(restored.program).text, entry.name, entry.input), entry.expected);
     }
   }
@@ -102,6 +104,8 @@ test('copied owners, changed source intervals, premises and represented core edi
     ({ proof }) => { proof.assumptions.pop(); },
     ({ proof }) => { proof.assumptions[0].meaning = 'no assumptions'; },
     ({ proof }) => { proof.assumptions[1].premiseOwner = structuredClone(proof.parameter); },
+    ({ proof }) => { proof.sourceContext.sourceGoal = 'Module'; },
+    ({ proof }) => { proof.sourceContext.initialGlobalRealm = 'arbitrary host realm'; },
     ({ proof }) => { proof.extra = true; },
     ({ program }) => { program.main.effects.push({ k: 'print' }); },
     ({ proof }) => { Object.defineProperty(proof.tokens, 'extra', { value: true }); },
@@ -216,4 +220,34 @@ test('every source binder refuses unconditional reserved words using portable po
     const selected = create(valid);
     assert.deepEqual(execute(emitJavaScript(selected.program).text, selected.proof.declaration.name, [3, 4]), [3, 4]);
   }
+});
+
+test('global function declaration restrictions do not become restrictions on valid local binders', () => {
+  const source = freshNumberArrayCollectorFixtures()[0].source;
+  const selected = create(source);
+  const { loweredSource } = checkFreshNumberArrayCollector(selected.program, selected.proof);
+  for (const name of policy.forbiddenGlobalFunctionNames) {
+    assert.equal(acceptFreshNumberArrayCollectorBinding(name), true, 'the local spelling remains valid');
+    assert.equal(acceptFreshNumberArrayCollectorFunctionName(name), false, name);
+    const original = source.replace(/\bcollect\b/gu, name);
+    assert.throws(() => execute(original, name, [3, 4]), error => error.name === 'SyntaxError',
+      'actual Script declaration instantiation rejects the original global function');
+    // Retain the actual former mismatch as a counterexample. The ordinary
+    // value program is compiled independently; it is never selected here.
+    const candidate = emitJavaScript(checkProgram(parseJavaScript(loweredSource.replace(/\bcollect\b/gu, name))));
+    assert.throws(() => execute(candidate.text, name, [3, 4]), error => error.name === 'TypeError',
+      'the emitted Script would reach a different failure when called by the source name');
+    assert.throws(() => create(original), /global function declaration conflicts/u);
+
+    for (const binder of ['values', 'result', 'index']) {
+      const local = source.replace(new RegExp('\\b' + binder + '\\b', 'gu'), name);
+      const localProgram = create(local);
+      assert.deepEqual(execute(local, 'collect', [3, 4]), [3, 4]);
+      assert.deepEqual(execute(emitJavaScript(localProgram.program).text, 'collect', [3, 4]), [3, 4]);
+    }
+  }
+  const ordinary = source.replace(/\bcollect\b/gu, 'collectValues');
+  assert.equal(acceptFreshNumberArrayCollectorFunctionName('collectValues'), true);
+  assert.deepEqual(execute(ordinary, 'collectValues', [3, 4]), [3, 4]);
+  assert.deepEqual(execute(emitJavaScript(create(ordinary).program).text, 'collectValues', [3, 4]), [3, 4]);
 });
