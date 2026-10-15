@@ -6,6 +6,7 @@ import {readProjectData} from '../js/scripts/project-data.mjs';
 import {parseRust} from '../js/src/translation/rust.js';
 import {parseJavaScript} from '../js/src/translation/javascript.js';
 import {checkProgram} from '../js/src/translation/check.js';
+import {checkRustOwnedLocalStateProof} from '../js/src/translation/rust-owned-local-state.js';
 import {emitJavaScript} from '../js/src/translation/emit-javascript.js';
 import {encodeTypedProgramLinks,decodeTypedProgramLinks,TYPED_PROGRAM_LINKS_SCHEMA} from '../js/src/typed-program-links.js';
 import {LinkNetwork} from '../js/src/network.js';
@@ -64,6 +65,15 @@ test('the new concept rejects its exact source counterexamples and preserves pre
  for(const entry of fixture.refusals)assert.throws(()=>parse(entry),error=>{assert.equal(error.kind,entry.kind,entry.name);assert.equal(error.reason,entry.reason,entry.name);assert.deepEqual(error.span??null,entry.span,entry.name);return true;});
  const previous=readProjectData(new URL('./rust-owned-local-state-fixture.lino',import.meta.url));
  for(const entry of previous.cases){const archive=reload(checkProgram(parseRust(entry.source,{localValueStateModel:previous.models.moves})));execute(decodeTypedProgramLinks(archive.network,archive.root),entry.observations,entry.name);}
+});
+
+test('direct selected checking and emission reject a forged tuple item before relying on Links encoding',()=>{
+ const program=parse(fixture.cases[0]),helper=program.declarations.get('seed');
+ helper.body.items[0]=structuredClone(helper.body.items[1]);helper.sourceLocalState.reads=[];
+ const expected=/actual tuple item differs from its declared owned field type/u;
+ assert.throws(()=>checkRustOwnedLocalStateProof(program),expected);
+ assert.throws(()=>emitJavaScript(program),expected);
+ assert.throws(()=>encodeTypedProgramLinks(program),/tuple|owned field/u);
 });
 
 test('new shared rule decisions themselves replay from checked Links without a native implementation',()=>{
