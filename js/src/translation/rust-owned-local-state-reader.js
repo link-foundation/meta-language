@@ -3,6 +3,8 @@ import {unsupported} from './diagnostics.js';
 import {RUST_OWNED_LOCAL_STATE_POLICY as policy,ownedLocalType,ownedLocalPair,ownedLocalPosition} from './rust-owned-local-state.js';
 import {sameType} from './types.js';
 import {acceptRustOwnedLocalSourceOperation} from './rust-owned-local-state-rules.js';
+import {acceptRustOwnedTupleCallModel} from './rust-owned-tuple-call-rules.js';
+import {RUST_OWNED_TUPLE_CALL_POLICY as callPolicy,ownedTupleCallPairPosition,ownedTupleCallParameters} from './rust-owned-tuple-calls.js';
 
 const fail=(reason,span)=>{throw unsupported('Rust owned local state',reason,span);};
 const clone=environment=>new Map([...environment].map(([name,value])=>[name,{...value,fields:value.fields?.map(field=>({...field}))}]));
@@ -12,13 +14,14 @@ const resultType=node=>node.k==='let'?resultType(node.body):node.type;
 
 export function readRustOwnedLocalStateBody(parser,path,name,params,ret,signature){
  const copies=parser.localValueStateModel===policy.models.copies;
- if(path.length||ret.kind!=='string'||signature.lifetimeBindings.length||[...signature.parameters,signature.result].some(position=>!ownedLocalPosition(position)))fail('only direct standard String, i32 and Boolean interfaces with a String result are admitted');
+ const calls=acceptRustOwnedTupleCallModel(parser.localValueStateModel),helper=calls&&ownedLocalPair(ret);
+ if(path.length||ret.kind!=='string'&&!helper||signature.lifetimeBindings.length||signature.parameters.some(position=>!ownedLocalPosition(position))||!(helper?ownedTupleCallPairPosition(signature.result)&&ownedTupleCallParameters(params):ownedLocalPosition(signature.result)))fail('only direct standard String, i32 and Boolean interfaces with a String result are admitted');
  const c=parser.cursor,bindings=[],reads=[],initializers=[],constructors=[];
  const names=new Set(params.map(parameter=>parameter.name));
  if(names.size!==params.length||[...names].some(name=>policy.reservedOwners.includes(name)))fail('source bindings cannot shadow each other or standard owners');
  let temporary=0,mutableSlot=null,writes=0;
  const fresh=()=>{let candidate;do{candidate=`ml_owned_local_value${temporary++}`;}while(parser.reservedNames.has(candidate));parser.reservedNames.add(candidate);return candidate;};
- const proof={model:parser.localValueStateModel,language:'Rust',sourceName:name,interpretation:structuredClone(policy.interpretation),bindings,reads,initializers,literalConstructors:constructors};
+ const proof={model:parser.localValueStateModel,language:'Rust',sourceName:name,interpretation:{...structuredClone(policy.interpretation),...(calls?{tupleInitialization:structuredClone(callPolicy.interpretation)}:{})},bindings,reads,initializers,literalConstructors:constructors};
  const parameterEnvironment=new Map(params.map(parameter=>[parameter.name,{name:parameter.name,type:parameter.type,available:true,mutable:false}]));
  function rawExpression(options={}){
   const start=c.index,expression=parser.expr(path,options);
@@ -54,8 +57,8 @@ export function readRustOwnedLocalStateBody(parser,path,name,params,ret,signatur
    c.expect('}','owned local state block');return statements;
   }finally{parser.origins.scope=previous;}
  }
- const syntax=copies?null:syntaxBlock();
- const canonicalBody=copies?parser.block(path):null;
+ const syntax=copies||helper?null:syntaxBlock();
+ const canonicalBody=copies||helper?parser.block(path):null;
  function binding(record){bindings.push({...record,path:null});}
  function reference(entry,mode,span){
   if(!entry.available)fail('a moved String or tuple field cannot be read again',span);
@@ -66,7 +69,7 @@ export function readRustOwnedLocalStateBody(parser,path,name,params,ret,signatur
   }
   return{k:'name',path:[entry.name],...(span?{span}:{}),type:entry.type};
  }
- function expression(node,environment,constructorLiteral=false){
+ function expression(node,environment,constructorLiteral=false,callInitializer=false){
   const copy=parser.origins.expressions.get(node)?.localValueCopy;
   if(node.k==='name'){
    if(node.path.length!==1||!environment.has(node.path[0]))fail('values require their actual unique local binding owner',node.span);
@@ -101,6 +104,15 @@ export function readRustOwnedLocalStateBody(parser,path,name,params,ret,signatur
    }
    return{...node,object:{k:'name',path:[object.name],span:node.object.span},type};
   }
+  if(calls&&node.k==='app'){
+   if(!callInitializer||node.fn.k!=='name'||node.fn.path.length!==1||environment.has(node.fn.path[0]))fail('calls require one complete tuple initializer with an actual unshadowed declaration owner',node.span);
+   const target=parser.origins.lookup(node.fn.path,path,['fn']);
+   if(!target&&!parser.ownedTupleCallDiscovery)fail('a tuple initializer needs its actual declared target',node.span);
+   if(target&&(!ownedLocalPair(target.result.type)||!ownedTupleCallParameters(target.parameters)))fail('the initializer target must return owned String/i32 from direct String/i32 parameters',node.span);
+   const args=node.args.map(argument=>expression(argument,environment));
+   if(!ownedTupleCallParameters(args))fail('the initializer arguments must retain ordered owned String/i32 domains',node.span);
+   return{...node,args,type:target?.result.type??{kind:'tuple',elements:args.map(argument=>argument.type)}};
+  }
   if(node.k==='binary'){
    if(node.op!=='eq')fail('arithmetic, ordered comparison and overflow need separate source proofs',node.span);
    const left=expression(node.left,environment),right=expression(node.right,environment);
@@ -130,7 +142,7 @@ export function readRustOwnedLocalStateBody(parser,path,name,params,ret,signatur
    return expression(statement.value,environment);
   }
   if(statement.role==='let'){
-   const value=expression(statement.value,environment),pattern=statement.pattern;
+   const pattern=statement.pattern,value=expression(statement.value,environment,false,calls&&pattern.k==='tuple');
    if(statement.type&&!sameType(statement.type,value.type))fail('the actual local annotation differs from its value domain',statement.span);
    if(pattern.k==='name'){
     if(pattern.mutable)fail('the move profile requires one owned tuple-declared mutable String slot',pattern.span);
@@ -143,7 +155,8 @@ export function readRustOwnedLocalStateBody(parser,path,name,params,ret,signatur
    const tupleName=fresh(),fields=pattern.items.map(item=>item.name);
    if(new Set(fields).size!==2||fields.some(name=>names.has(name)||policy.reservedOwners.includes(name)))fail('tuple fields require distinct unshadowed local owners',pattern.span);
    fields.forEach(name=>names.add(name));mutableSlot=fields[0];
-   binding({name:tupleName,sourceName:tupleName,role:'tuple initializer',mutable:false,previous:null,type:value.type,initializer:null,index:null});initializers.push({binding:tupleName,fields,path:null});
+   if(calls&&value.k!=='app')fail('the selected call model requires an actual declared tuple initializer',statement.span);
+   binding({name:tupleName,sourceName:tupleName,role:'tuple initializer',mutable:false,previous:null,type:value.type,initializer:null,index:null});initializers.push({binding:tupleName,fields,path:null,...(calls?{target:value.fn.path[0],fieldModes:[...callPolicy.fieldModes]}:{})});
    pattern.items.forEach((item,index)=>{const type=value.type.elements[index];environment.set(item.name,{name:item.name,type,available:true,mutable:index===0});binding({name:item.name,sourceName:item.name,role:'tuple field',mutable:index===0,previous:null,type,initializer:tupleName,index});});
    reads.push({binding:tupleName+'.0',mode:'move',type:{kind:'string'},span:pattern.items[0].span,path:null});
    let body=sequence(rest,environment,tailSlot);
@@ -165,8 +178,9 @@ export function readRustOwnedLocalStateBody(parser,path,name,params,ret,signatur
   const value={k:'if',cond,then,else:otherwise,span:statement.span,type:slot.type},body=sequence(rest,environment,tailSlot);
   return{k:'let',name:newName,value,body,span:statement.span,type:value.type};
  }
- const body=copies?expression(canonicalBody,parameterEnvironment):sequence(syntax,parameterEnvironment);
- if(!copies&&(!mutableSlot||!writes))fail('the original move profile requires an actual tuple-owned String replacement');
- if(resultType(body).kind!=='string')fail('the selected function must return its actual String value');
+ const body=copies||helper?expression(canonicalBody,parameterEnvironment):sequence(syntax,parameterEnvironment);
+ if(helper&&body.k!=='tuple')fail('a tuple helper must return one direct ordered owned product',body.span);
+ if(!copies&&!helper&&(!mutableSlot||!writes))fail('the original move profile requires an actual tuple-owned String replacement');
+ if(!helper&&resultType(body).kind!=='string')fail('the selected function must return its actual String value');
  return{body,proof};
 }
