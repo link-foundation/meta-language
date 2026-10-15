@@ -52,9 +52,30 @@ Successful actual native execution alone writes
 `issue-195-artifacts/original-link-complete-table-native-observations.lino`.
 Planning, injected contracts and native execution remain pending CI evidence.
 
+The separate `raw-*` component runs before the old decoder and projector. Its
+primitive snapshot retains actual original identities, reference order, metadata
+kinds, UTF-16 units and Number payloads. Shared Links recipes check selected
+structural shape, compatible aliases, lexical bindings and actual proof/core
+owners. The old decoder, 66-definition table projector and 92-definition final
+certificate remain mandatory in the composed wrapper.
+
+`generate-raw.mjs --native` automatically emits the entire 106-definition raw
+kernel as Links data; it never invokes a compiler. `--check` authenticates the
+stored artifact without changing files. Only explicit `--record-attempt` writes
+actual source/diagnostic receipts, and it cannot accompany `--check`. The
+portable source idioms and unimplemented general frontend forms are recorded in
+`data/raw-policy.lino`. `raw-corpus.mjs` lazily shares original sources, coherent
+edits and actual owner mutations between the JavaScript tests and native oracle.
+These bounded graph checks do not establish complete source meaning, native
+graph capture, production integration or scalability. The composed wrapper
+retains the old projector's narrower nullish-String and dangling-reference
+refusals; synthetic identifier words are arithmetic checks only.
+
 Run the bounded checks with Node 22:
 
 ```sh
 node scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 experiments/original-link-complete-table-projection/projection.test.mjs
 node experiments/original-link-complete-table-projection/generate.mjs --check
+node scripts/with-cache-cleanup.mjs --event test -- node --max-old-space-size=1024 --test --test-concurrency=1 experiments/original-link-complete-table-projection/raw-projection.test.mjs
+node --max-old-space-size=1024 experiments/original-link-complete-table-projection/generate-raw.mjs --native --check
 ```
