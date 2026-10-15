@@ -1,0 +1,1 @@
+The issue 195 scope-baseline check now rejects removal or weakening of existing critical classifications, full-scope delivery blockers, checkpoint descriptions or order, and exact-evidence result policies. Additive requirements and stricter forbidden-outcome policies remain accepted. This does not certify that every conversation message has been captured or mapped to obligations.

@@ -1,5 +1,6 @@
 import { access, readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 import { readProjectData, checkProjectData, resolveProjectDataPath } from './project-data.mjs';
 
 import {
@@ -425,6 +426,35 @@ export function evaluateIssue195Acceptance(
 
 export function compareScopeBaseline(baseline, candidate) {
   const errors = [];
+  for (const field of ['checkpoints', 'resultPolicy']) {
+    if (!Object.hasOwn(baseline, field)) continue;
+    const oldPolicy = baseline[field];
+    const newPolicy = candidate[field];
+    if (!oldPolicy || typeof oldPolicy !== 'object' || Array.isArray(oldPolicy) ||
+        !newPolicy || typeof newPolicy !== 'object' || Array.isArray(newPolicy)) {
+      if (!isDeepStrictEqual(oldPolicy, newPolicy)) {
+        errors.push(`protected acceptance policy changed: ${field}`);
+      }
+      continue;
+    }
+    for (const [key, oldValue] of Object.entries(oldPolicy)) {
+      const newValue = newPolicy[key];
+      if (!Object.hasOwn(newPolicy, key) ||
+          (Array.isArray(oldValue)
+            ? !Array.isArray(newValue) || oldValue.some((value) =>
+              !newValue.some((candidateValue) => isDeepStrictEqual(value, candidateValue)))
+            : !isDeepStrictEqual(oldValue, newValue))) {
+        errors.push(`protected acceptance policy changed: ${field}.${key}`);
+      }
+    }
+    if (field === 'checkpoints') {
+      const oldOrder = Object.keys(oldPolicy);
+      const retainedOrder = Object.keys(newPolicy).filter((key) => Object.hasOwn(oldPolicy, key));
+      if (!isDeepStrictEqual(oldOrder, retainedOrder)) {
+        errors.push('protected acceptance checkpoint order changed');
+      }
+    }
+  }
   const baselineRequirements = new Map(
     baseline.atomicRequirements.map((entry) => [entry.id, entry]),
   );
@@ -437,7 +467,7 @@ export function compareScopeBaseline(baseline, candidate) {
       errors.push(`required scope row removed: ${id}`);
       continue;
     }
-    for (const field of ['source', 'area', 'expectedBehavior']) {
+    for (const field of ['source', 'area', 'expectedBehavior', 'critical', 'fullScopeReleaseBlocker']) {
       if (newEntry[field] !== oldEntry[field]) {
         errors.push(`protected requirement field changed for ${id}: ${field}`);
       }
