@@ -568,6 +568,22 @@ seventeen-table projection from original native LinkIds remain separate work.
 The historical constructor collision is retained as a pinned source snapshot
 and executed in an explicitly historical VM; live public boundaries must refuse
 those unsafe identities.
+The subsequent `original link certificate role registration 1` experiment reads
+original ordered relation, label and child identities after the existing raw
+certificate checker passes. Shared role instructions select actual token,
+declaration, parameter, signature, position, core, operation and main identities.
+Only these roles receive compact handles and a checked kinds table; unrelated
+network members create no orphan kinds. Provisional roles must resolve, and
+contradictory concrete roles refuse. The generated numeric boundary validates
+the root, membership limit, edge ordinals and dictionary codes before
+interpretation. All thirteen existing text fixtures retain complete certificate
+decisions through both saved formats when this kinds table replaces the old one
+and the other sixteen tables' identity columns are coherently remapped. Those
+sixteen tables' values still come from the established projector. Twenty complete
+native definitions are automatically emitted under an explicit immutable
+numeric-array value model. Repeated scans and copies retain potentially
+quadratic costs; native execution, the complete native projector and paired
+public capture and replay remain required work.
 The separate `portable closed Rust text source certificate 1` experiment moves
 the complete finite text certificate into a kernel generated from shared links
 policy. Seventeen typed Number tables retain the actual token, declaration,
