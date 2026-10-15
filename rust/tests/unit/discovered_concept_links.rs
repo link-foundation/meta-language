@@ -58,7 +58,7 @@ fn role(network: &LinkNetwork, term: &str) -> Vec<LinkId> {
             link.metadata().language() == Some("meta-language discovered concepts")
                 && link.metadata().term() == Some(term)
         })
-        .map(|link| link.id())
+        .map(meta_language::Link::id)
         .collect()
 }
 

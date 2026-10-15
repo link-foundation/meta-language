@@ -27,10 +27,10 @@ fn contains_cycle(prepared: &Value) -> bool {
             return false;
         }
         states[node] = 1;
-        let first = prepared["offsets"][node].as_u64().unwrap() as usize;
-        let end = prepared["offsets"][node + 1].as_u64().unwrap() as usize;
+        let first = usize::try_from(prepared["offsets"][node].as_u64().unwrap()).unwrap();
+        let end = usize::try_from(prepared["offsets"][node + 1].as_u64().unwrap()).unwrap();
         for edge in first..end {
-            let target = prepared["edges"][edge].as_u64().unwrap() as usize;
+            let target = usize::try_from(prepared["edges"][edge].as_u64().unwrap()).unwrap();
             if visit(target, prepared, states) {
                 return true;
             }
@@ -112,7 +112,7 @@ fn formal_archives_prepare_the_same_shared_cyclic_and_labeled_graphs() {
     assert!(contains_cycle(recursive));
     let mut incoming = vec![0; recursive["shapes"].as_array().unwrap().len()];
     for edge in recursive["edges"].as_array().unwrap() {
-        incoming[edge.as_u64().unwrap() as usize] += 1;
+        incoming[usize::try_from(edge.as_u64().unwrap()).unwrap()] += 1;
     }
     assert!(incoming.iter().any(|count| *count > 1));
     assert!(
@@ -158,8 +158,8 @@ fn formal_certificates_recheck_every_pair_and_copied_premise() {
         .map(|entry| FormalConceptArchive::from_json(&entry["archive"]).unwrap())
         .collect::<Vec<_>>();
     for proof in fixture["proofs"].as_array().unwrap() {
-        let first = &archives[proof["first"].as_u64().unwrap() as usize];
-        let second = &archives[proof["second"].as_u64().unwrap() as usize];
+        let first = &archives[usize::try_from(proof["first"].as_u64().unwrap()).unwrap()];
+        let second = &archives[usize::try_from(proof["second"].as_u64().unwrap()).unwrap()];
         let certificate = FormalConceptArchive::from_json(&proof["certificate"]).unwrap();
         assert!(verify_formal_concept_equivalence(
             first,
@@ -172,8 +172,8 @@ fn formal_certificates_recheck_every_pair_and_copied_premise() {
         assert!(verify_formal_concept_equivalence(first, second, &restored));
     }
     for proof in fixture["invalidCertificates"].as_array().unwrap() {
-        let first = &archives[proof["first"].as_u64().unwrap() as usize];
-        let second = &archives[proof["second"].as_u64().unwrap() as usize];
+        let first = &archives[usize::try_from(proof["first"].as_u64().unwrap()).unwrap()];
+        let second = &archives[usize::try_from(proof["second"].as_u64().unwrap()).unwrap()];
         let certificate = FormalConceptArchive::from_json(&proof["certificate"]).unwrap();
         assert!(
             !verify_formal_concept_equivalence(first, second, &certificate),
@@ -184,8 +184,8 @@ fn formal_certificates_recheck_every_pair_and_copied_premise() {
     for pair in fixture["negativeEquivalences"].as_array().unwrap() {
         assert!(
             prove_formal_concept_equivalence(
-                &archives[pair["first"].as_u64().unwrap() as usize],
-                &archives[pair["second"].as_u64().unwrap() as usize],
+                &archives[usize::try_from(pair["first"].as_u64().unwrap()).unwrap()],
+                &archives[usize::try_from(pair["second"].as_u64().unwrap()).unwrap()],
             )
             .is_none(),
             "{}",
@@ -251,7 +251,7 @@ fn namespace_and_label_identities_remain_explicit_in_recursive_premises() {
         assert!(verify_formal_concept_equivalence(archive, archive, &proof));
     }
     for entry in fixture["rejections"].as_array().unwrap() {
-        let original = &archives[entry["first"].as_u64().unwrap() as usize];
+        let original = &archives[usize::try_from(entry["first"].as_u64().unwrap()).unwrap()];
         let altered = FormalConceptArchive::from_json(&entry["archive"]).unwrap();
         let proof = prove_formal_concept_equivalence(original, original).unwrap();
         assert!(

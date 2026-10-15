@@ -82,8 +82,8 @@ fn native_numeric_profile_matches_the_shared_prepared_definitions_and_preserves_
 fn native_numeric_certificates_share_cross_language_recursion_without_changing_the_old_model() {
     let fixture = fixture();
     for pair in fixture["equivalent"].as_array().unwrap() {
-        let one = &fixture["cases"][pair[0].as_u64().unwrap() as usize];
-        let two = &fixture["cases"][pair[1].as_u64().unwrap() as usize];
+        let one = &fixture["cases"][usize::try_from(pair[0].as_u64().unwrap()).unwrap()];
+        let two = &fixture["cases"][usize::try_from(pair[1].as_u64().unwrap()).unwrap()];
         let first = archive(one);
         let second = archive(two);
         let proof = prove_formal_concept_equivalence(&first, &second).unwrap();
@@ -103,8 +103,8 @@ fn native_numeric_certificates_share_cross_language_recursion_without_changing_t
     for pair in fixture["distinct"].as_array().unwrap() {
         assert!(
             prove_formal_concept_equivalence(
-                &archive(&fixture["cases"][pair[0].as_u64().unwrap() as usize]),
-                &archive(&fixture["cases"][pair[1].as_u64().unwrap() as usize])
+                &archive(&fixture["cases"][usize::try_from(pair[0].as_u64().unwrap()).unwrap()]),
+                &archive(&fixture["cases"][usize::try_from(pair[1].as_u64().unwrap()).unwrap()])
             )
             .is_none()
         );
@@ -133,7 +133,10 @@ fn native_global_registry_reuses_only_checked_shared_numeric_definitions() {
         space["mappings"]["rust:function"]
     );
     assert_eq!(space["concepts"].as_array().unwrap().len(), 1);
-    assert!(!space["proofs"].as_array().unwrap().is_empty());
+    assert_ne!(
+        space["proofs"].as_array().unwrap().as_slice(),
+        [] as [Value; 0]
+    );
     let links = global_concept_space_to_links(&space).unwrap();
     let reload = read_global_concept_space_links(&links, &options).unwrap();
     assert_eq!(reload, space);

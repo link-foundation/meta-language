@@ -95,7 +95,10 @@ fn native_function_selection_preserves_original_ids_and_matches_shared_formal_ma
                 .iter()
                 .any(|entry| entry.full_name() == "unused")
         );
-        assert!(decoded.main.unwrap().effects.is_empty());
+        assert_eq!(
+            decoded.main.unwrap().effects,
+            [] as [meta_language::translation::ir::Effect; 0]
+        );
     }
 }
 
@@ -103,8 +106,8 @@ fn native_function_selection_preserves_original_ids_and_matches_shared_formal_ma
 fn mutual_recursion_and_context_independence_have_closed_reloaded_certificates() {
     let data = fixture();
     for pair in data["equivalent"].as_array().unwrap() {
-        let first = archive(&data["cases"][pair[0].as_u64().unwrap() as usize]);
-        let second = archive(&data["cases"][pair[1].as_u64().unwrap() as usize]);
+        let first = archive(&data["cases"][usize::try_from(pair[0].as_u64().unwrap()).unwrap()]);
+        let second = archive(&data["cases"][usize::try_from(pair[1].as_u64().unwrap()).unwrap()]);
         let proof = prove_formal_concept_equivalence(&first, &second).unwrap();
         let restored = FormalConceptArchive {
             network: LinkNetwork::from_lino(&proof.network.to_lino()).unwrap(),
@@ -115,8 +118,8 @@ fn mutual_recursion_and_context_independence_have_closed_reloaded_certificates()
         ));
     }
     for pair in data["distinct"].as_array().unwrap() {
-        let first = archive(&data["cases"][pair[0].as_u64().unwrap() as usize]);
-        let second = archive(&data["cases"][pair[1].as_u64().unwrap() as usize]);
+        let first = archive(&data["cases"][usize::try_from(pair[0].as_u64().unwrap()).unwrap()]);
+        let second = archive(&data["cases"][usize::try_from(pair[1].as_u64().unwrap()).unwrap()]);
         assert!(prove_formal_concept_equivalence(&first, &second).is_none());
     }
 }

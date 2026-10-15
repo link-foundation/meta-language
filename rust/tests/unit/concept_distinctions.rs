@@ -99,7 +99,10 @@ fn custom_record_alias_and_definition_changes_remain_visible() {
         Some("The revised declared meaning.")
     );
     records[0].source_aliases.pop();
-    assert!(source_meanings_in(&records, &register, &first, None).is_empty());
+    assert_eq!(
+        source_meanings_in(&records, &register, &first, None),
+        [] as [String; 0]
+    );
 }
 
 fn kinds(records: &[ConceptRecord], register: &FoundationRegister) -> Vec<&'static str> {

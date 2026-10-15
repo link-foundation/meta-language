@@ -426,11 +426,11 @@ fn floating_point_special_spellings_cannot_become_undefined_identifiers() {
             .map(|value| value.as_str().unwrap().to_owned())
             .collect::<Vec<_>>();
         assert_eq!(run_javascript(&emitted.code), expected);
-        assert!(
-            !emit_typed_program_links(&changed, root, "Rust")
+        assert_ne!(
+            emit_typed_program_links(&changed, root, "Rust")
                 .unwrap()
-                .code
-                .is_empty()
+                .code,
+            ""
         );
     }
 }

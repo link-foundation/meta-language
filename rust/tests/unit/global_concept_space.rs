@@ -260,7 +260,7 @@ fn global_identity_survives_reordering_incremental_import_and_safe_splitting() {
     );
     let incremental = GlobalConceptOptions {
         previous: Some(initial.clone()),
-        ..options.clone()
+        ..options
     };
     assert_eq!(
         create_global_concept_space(&input, &incremental).unwrap(),
@@ -279,7 +279,7 @@ fn global_identity_survives_reordering_incremental_import_and_safe_splitting() {
         expanded["mappings"]["earlier:atom"],
         initial["mappings"]["first:atom"]
     );
-    let mut changed = data.clone();
+    let mut changed = data;
     changed["sources"][1]["grammar"]["rules"][1]["expression"] =
         json!({"kind":"literal","value":"β"});
     let split = create_global_concept_space(&sources(&changed), &incremental).unwrap();
@@ -532,7 +532,10 @@ fn global_proof_discovery_resolves_catalog_aliases_of_real_native_grammars() {
         .find(|concept| &concept["id"] == shared_id)
         .unwrap();
     assert_eq!(shared["origins"].as_array().unwrap().len(), 2);
-    assert!(!shared["proofs"].as_array().unwrap().is_empty());
+    assert_ne!(
+        shared["proofs"].as_array().unwrap().as_slice(),
+        [] as [Value; 0]
+    );
     assert_eq!(
         space["mappings"].as_object().unwrap().len(),
         input
@@ -551,7 +554,10 @@ fn global_proof_discovery_resolves_catalog_aliases_of_real_native_grammars() {
         translated["origins"][0]["alias"],
         "pinned-racket:block_comment"
     );
-    assert!(!translated["proofs"].as_array().unwrap().is_empty());
+    assert_ne!(
+        translated["proofs"].as_array().unwrap().as_slice(),
+        [] as [Value; 0]
+    );
     assert_eq!(
         translate_global_construct(&space, "pinned-scheme:program", "Racket", None)["relation"],
         "untranslatable"

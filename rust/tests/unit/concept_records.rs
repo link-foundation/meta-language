@@ -69,7 +69,10 @@ fn source_name_lookup_preserves_order_and_returns_independent_vectors() {
     first.reverse();
     first.pop();
     assert_eq!(concept_records_for_source_name("Python", "="), expected);
-    assert!(concept_records_for_source_name("absent source", "absent name").is_empty());
+    assert_eq!(
+        concept_records_for_source_name("absent source", "absent name"),
+        [] as [&meta_language::ConceptRecord; 0]
+    );
 }
 
 fn has_alias(network: &LinkNetwork, concept: &str, vocabulary: &str, name: &str) -> bool {
