@@ -171,7 +171,7 @@ impl RustParser {
                 } else {
                     Vec::new()
                 };
-                self.cursor.eat(";");
+                let _ = self.cursor.eat(";");
                 statements.push(Statement::If {
                     condition,
                     then,

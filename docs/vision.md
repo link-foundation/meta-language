@@ -324,6 +324,26 @@ constructor-overwritten identities require separate proofs. The existing
 source-signature model's exact refusals remain required. This draft does not
 establish arbitrary runtime-wrapper replay or pointer, outlives and ABI
 equivalence. Native compilation and executable parity run in CI.
+Two independently selected owned-text source models retain local ownership
+before projecting it into value semantics. `closed owned text local state 1`
+records one once-evaluated standard `(String, i32)` initialization, its ordered
+field ownership, String moves, replacements and conditional joins.
+`canonical owned text local copies 1` records actual standard String clones in
+emitted definition replay. Both models own their direct standard String, signed
+i32 and Boolean source interfaces and retain `sourceLocalState` as inspectable
+links through source-free reload and value edits. Five complete original programs
+and their actual emitted definition replays, together with thirty-three exact
+source refusals, exercise this boundary. Ordered interpretation, constructor and
+occurrence facts remain checked; malformed record fields and container properties
+cannot disappear during projection. JavaScript input guards admit primitive
+Unicode scalar text, Boolean and signed i32 values before evaluating the body;
+the standard unmodified `String.prototype.charCodeAt` realm remains an explicit
+assumption. The observation model excludes allocation failures and counts,
+pointer identity, storage release timing, custom destruction and ABI behavior.
+Actual whole emitted artifacts are executed in CI, while source reimport of the
+complete generated runtime shell and the full binary formatter still need their
+separate source interpretations. Existing source-profile refusals remain exact;
+native compilation, execution and cross-runtime observations are CI checks.
 The typed-program adapter's shared schema gives abbreviated host fields readable
 English relation names, including the Unicode code unit string model. The finite formal
 definition adapter checks closed recursive correspondences under supported
