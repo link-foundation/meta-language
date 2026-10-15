@@ -542,6 +542,15 @@ six-selector artifact with actual JavaScript on 644 conditional calls, retaining
 the ordered interfaces and exact binary64 arguments. Its observations concern
 the selectors under their explicit premises; they do not establish a source
 grammar or actual invocation ownership.
+The isolated program-owned raw-binding adapter decorates five actual JavaScript
+modules in a temporary directory. The program facet and its actual main context
+retain the same source extent; original declaration, parameter, occurrence and
+invocation owners survive both saved formats. Factory, codec, validation,
+recheck and both direct emitters require the selected facts. Checked coherent
+owner edits reconstruct complete Rust source and actual raw target spellings.
+JavaScript invocation still requires the explicit premise checker. The option
+exists only in the isolated overlay; native facets, complete source checking
+and original-LinkId authentication before native lowering remain absent.
 The separate `portable closed Rust text source certificate 1` experiment moves
 the complete finite text certificate into a kernel generated from shared links
 policy. Seventeen typed Number tables retain the actual token, declaration,
@@ -555,6 +564,27 @@ and the actual complete Rust output and declaration inventory are stored as
 links. The host retains lexical/CST, shape and shared signature adapters. Public
 runtime selection and native graph adapters still require their paired
 integration. Actual Rust compiler and execution observations are CI checks.
+An isolated JavaScript adapter attaches that text proof to the actual program
+and requires it at the same real codec, validation, recheck and emitter entry
+points through recorded exact-source decorators. Its temporary graph view
+retains original LinkIds and exposes the same proof node to the established
+codec, preserving actual core anchors before the unchanged kernel runs.
+Emission snapshots ordinary and null-prototype record representations only
+after original-graph certification and rechecks the snapshot with that kernel.
+The prototype still indexes and clones the whole network; selected traversal
+limits do not establish scalability for a large global space. Native identity
+projection before Serde, direct native facets, re-encoding and paired source
+capture/replay remain gaps. This adapter adds no production selector.
+The separate complete-library packaging draft preserves all ninety-two emitted
+definitions and their ordered whole-item owners. Recorded Links decorators
+remove only supported redundant tail blocks, compact indentation outside
+tokens and comments, and qualify represented crate paths into one lexical
+module. Every enclosing macro must have an explicit namespace rule. Unknown
+macro contexts, semantic inner attributes and oversized individual items
+refuse. Four whole-item include parts retain private sibling scope and the
+original artifact remains unchanged. These syntax receipts apply to the
+supported generated pure-decision artifact; native comparison, strict lint,
+formatted size and broader temporary or destructor semantics remain unverified.
 The independently selected `closed pure Rust const predicates 1` source model
 owns the actual `const` and `fn` keyword intervals, complete header and body
 intervals, original declaration name and direct primitive source signature.
@@ -1697,7 +1727,8 @@ tails and periodic command progress are retained in live CI output.
 Package validation runs six required parallel check groups: native imports,
 native fixtures, grammar, contracts, generated code and source models. The
 source-model group executes the new raw-binding and complete text-certificate
-checks without adding work to the original generated-code group. Each retains the
+checks, isolated owned-certificate adapters and library packaging generators
+without adding work to the original generated-code group. Each retains the
 ten-minute deadline and its own setup and cleanup. The final package job requires
 every group, every JavaScript test partition and the complete report assertion
 job before packaging or publication. It also requires the validated merge of
