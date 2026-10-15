@@ -1075,6 +1075,11 @@ jobs:
         working-directory: js
         run: node scripts/generate-link-network-binary-rules.mjs --metadata-buffer-candidate --check
 
+      - name: Check generated record-local binary link network rules
+        if: ${{ !cancelled() && matrix.group == 'binary-candidates' }}
+        working-directory: js
+        run: node scripts/generate-link-network-binary-record-rules.mjs --check
+
       - name: Run binary metadata buffer candidate checks
         if: ${{ !cancelled() && matrix.group == 'binary-candidates' }}
         working-directory: js

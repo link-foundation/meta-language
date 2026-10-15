@@ -2095,6 +2095,17 @@ project-owned baseline, eight bounded synthetic controls and three tiny actual
 language parses check the change. They do not establish full-source memory fit,
 native performance or the cause of an earlier timeout; the full CST inventories
 and runtime-parity checks remain required in CI.
+Binary archive framing keeps each metadata length patch local to its own record.
+An increasing identity skips a search through earlier identities, while unordered
+and duplicate identities retain the existing validation and exact error offsets.
+The optimized checked JavaScript operation reuses the original primitive
+operations and generates the native replacement automatically. Its separate Links
+generator adaptation first authenticates the unchanged historical producer and
+every historical compiler correction against the frozen original algorithm,
+then derives fresh declaration styles for the changed operation. Both old
+generation checks and the new generation check remain mandatory. Tiny byte,
+refusal, precedence and string-work controls cannot establish whole-source
+resource fit; the existing CI time, heap, record and byte bounds still apply.
 
 - CI runs a fast `cargo check` of all targets and features first; the jobs that
   compile and test need it, so a compile error fails once.

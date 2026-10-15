@@ -3,7 +3,9 @@
 import { LinkNetwork } from './network.js';
 import { LinkId, LinkMetadata, LinkFlags, LinkType, ByteRange, Point, SourceSpan } from './primitives.js';
 import { readRuntimeProjectData } from './project-data-loader.js';
-import { acceptLinkNetworkBinaryInteger, acceptLinkNetworkBinaryUnicode, transcodeLinkNetworkBinary } from './link-network-binary-rules.js';
+import { acceptLinkNetworkBinaryInteger, acceptLinkNetworkBinaryUnicode } from './link-network-binary-rules.js';
+
+import { transcodeLinkNetworkBinary } from './link-network-binary-record-rules.js';
 
 const schema = readRuntimeProjectData(new URL('./data/link-network-binary-schema.lino', import.meta.url));
 const encoder = new TextEncoder();

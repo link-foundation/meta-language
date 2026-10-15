@@ -33,6 +33,7 @@ mod line_index;
 pub mod link_flags;
 pub mod link_network;
 mod link_network_binary;
+mod link_network_binary_record_rules;
 mod link_network_binary_rules;
 mod lino_grammar;
 mod lino_parser;
