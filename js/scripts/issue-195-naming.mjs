@@ -13921,7 +13921,125 @@ const ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES=ORIGINAL_LINK_AND_COLLECTOR_N
  extract:(raw,file)=>{let text=raw;if(file.endsWith('.lino')){const saved=ORIGINAL_LINK_AND_COLLECTOR_SOURCE_TEXTS.get(file);if(!saved||saved.raw!==raw)ORIGINAL_LINK_AND_COLLECTOR_SOURCE_TEXTS.set(file,{raw,text:JSON.stringify(readStructuredDataLino(raw))});text=ORIGINAL_LINK_AND_COLLECTOR_SOURCE_TEXTS.get(file).text;}return files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeOriginalLinkAndCollectorName(name));},
  recordOf:name=>Object.values(files).flat().find(entry=>normalizeOriginalLinkAndCollectorName(entry.name)===name).id,
 }));
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES]);
+// Exact finite global function admission and explicit collector Script context.
+const FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_BINDINGS=[
+  {
+    "inventory": "fresh collector global function name decision",
+    "files": {
+      "experiments/fresh-number-array-collectors/rules.mjs": [
+        {
+          "name": "acceptFreshNumberArrayCollectorFunctionName",
+          "id": "repository.accept-fresh-number-array-collector-function-name"
+        }
+      ],
+      "experiments/fresh-number-array-collectors/model.mjs": [
+        {
+          "name": "acceptFreshNumberArrayCollectorFunctionName",
+          "id": "repository.accept-fresh-number-array-collector-function-name"
+        }
+      ],
+      "experiments/fresh-number-array-collectors/generate.mjs": [
+        {
+          "name": "acceptFreshNumberArrayCollectorFunctionName",
+          "id": "repository.accept-fresh-number-array-collector-function-name"
+        }
+      ],
+      "experiments/fresh-number-array-collectors/data/rule-translation.lino": [
+        {
+          "name": "accept_fresh_number_array_collector_function_name",
+          "id": "repository.accept-fresh-number-array-collector-function-name"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "fresh collector explicit Script source context",
+    "files": {
+      "experiments/fresh-number-array-collectors/policy.mjs": [
+        {
+          "name": "forbiddenGlobalFunctionNames",
+          "id": "repository.fresh-number-array-collector-global-function-exclusions"
+        },
+        {
+          "name": "globalFunctionDeclarationBasis",
+          "id": "repository.fresh-number-array-collector-global-function-authorities"
+        },
+        {
+          "name": "sourceContext",
+          "id": "repository.fresh-number-array-collector-source-context"
+        },
+        {
+          "name": "sourceGoal",
+          "id": "repository.fresh-number-array-collector-source-goal"
+        },
+        {
+          "name": "initialGlobalRealm",
+          "id": "repository.fresh-number-array-collector-initial-global-realm"
+        },
+        {
+          "name": "initialGlobalValueProperties",
+          "id": "repository.fresh-number-array-collector-global-value-properties"
+        },
+        {
+          "name": "initialGlobalExtensibility",
+          "id": "repository.fresh-number-array-collector-extensible-global-object"
+        },
+        {
+          "name": "ambientDeclarationChanges",
+          "id": "repository.fresh-number-array-collector-ambient-declaration-changes"
+        }
+      ],
+      "experiments/fresh-number-array-collectors/data/policy.lino": [
+        {
+          "name": "forbiddenGlobalFunctionNames",
+          "id": "repository.fresh-number-array-collector-global-function-exclusions"
+        },
+        {
+          "name": "globalFunctionDeclarationBasis",
+          "id": "repository.fresh-number-array-collector-global-function-authorities"
+        },
+        {
+          "name": "sourceContext",
+          "id": "repository.fresh-number-array-collector-source-context"
+        },
+        {
+          "name": "sourceGoal",
+          "id": "repository.fresh-number-array-collector-source-goal"
+        },
+        {
+          "name": "initialGlobalRealm",
+          "id": "repository.fresh-number-array-collector-initial-global-realm"
+        },
+        {
+          "name": "initialGlobalValueProperties",
+          "id": "repository.fresh-number-array-collector-global-value-properties"
+        },
+        {
+          "name": "initialGlobalExtensibility",
+          "id": "repository.fresh-number-array-collector-extensible-global-object"
+        },
+        {
+          "name": "ambientDeclarationChanges",
+          "id": "repository.fresh-number-array-collector-ambient-declaration-changes"
+        }
+      ],
+      "experiments/fresh-number-array-collectors/model.mjs": [
+        {
+          "name": "sourceContext",
+          "id": "repository.fresh-number-array-collector-source-context"
+        }
+      ]
+    }
+  }
+];
+const normalizeFreshCollectorGlobalContextName=name=>name.replace(/([a-z0-9])([A-Z])/gu,'$1-$2').replaceAll('_','-').toLowerCase().replace(/\bextensibility\b/gu,'capacity-for-extension');
+const FRESH_COLLECTOR_GLOBAL_CONTEXT_SOURCE_TEXTS=new Map();
+const FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES=FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_BINDINGS.map(({inventory,files})=>({
+ inventory,files:Object.keys(files),
+ extract:(raw,file)=>{let text=raw;if(file.endsWith('.lino')){const saved=FRESH_COLLECTOR_GLOBAL_CONTEXT_SOURCE_TEXTS.get(file);if(!saved||saved.raw!==raw)FRESH_COLLECTOR_GLOBAL_CONTEXT_SOURCE_TEXTS.set(file,{raw,text:JSON.stringify(readStructuredDataLino(raw))});text=FRESH_COLLECTOR_GLOBAL_CONTEXT_SOURCE_TEXTS.get(file).text;}return files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeFreshCollectorGlobalContextName(name));},
+ recordOf:name=>Object.values(files).flat().find(entry=>normalizeFreshCollectorGlobalContextName(entry.name)===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
