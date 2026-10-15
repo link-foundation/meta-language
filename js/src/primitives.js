@@ -31,12 +31,13 @@ export const TriviaAttachmentPolicy = Object.freeze({
 });
 
 function readLinkIdValue(value) {
-  const original = value instanceof LinkId ? value.value : value;
+  const identifier = value instanceof LinkId;
+  const original = identifier ? value.value : value;
   const text = typeof original === 'string' ? original.trim() : null;
   const numeric = typeof original === 'number' || typeof original === 'bigint'
     || text !== null && /^[0-9]+$/u.test(text)
     ? Number(original) : Number.NaN;
-  if (!Number.isSafeInteger(numeric) || numeric < 1) {
+  if (identifier && typeof original !== 'number' || !Number.isSafeInteger(numeric) || numeric < 1) {
     throw new TypeError('link id must be an exact positive safe integer');
   }
   return numeric;
