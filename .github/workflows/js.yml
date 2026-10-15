@@ -313,7 +313,7 @@ jobs:
   # Separate the native import and oracle fixture costs from other package
   # checks. Every group is required; a failure never cancels its siblings.
   package-checks:
-    name: JavaScript Package Checks (${{ matrix.group }}, ${{ matrix.generated_slice }})
+    name: JavaScript Package Checks (${{ matrix.group }})${{ matrix.generated_slice == 'second' && ' / second' || '' }}
     needs: [tests, report-assertions]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
