@@ -8,7 +8,7 @@
 //! issue #163 rule: a feature added to one language forces the other to follow.
 
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 
 use meta_language::API_OPERATIONS;
 use serde_json::Value;
@@ -110,8 +110,11 @@ fn every_feature_row_declares_both_languages_with_existing_rust_evidence() {
                     let relative = path
                         .as_str()
                         .unwrap_or_else(|| panic!("{id} rust evidence entries must be strings"));
+                    let actual =
+                        meta_language::project_data::resolve_project_data_path(root.join(relative))
+                            .unwrap_or_else(|error| panic!("{id} rust evidence storage: {error}"));
                     assert!(
-                        root.join(relative).exists(),
+                        actual.exists(),
                         "{id} rust evidence does not exist: {relative}"
                     );
                 }
@@ -232,9 +235,22 @@ fn rust_evidence_paths_live_inside_the_rust_or_shared_trees() {
             let in_shared_tree = ["docs/", "parity/"]
                 .iter()
                 .any(|prefix| relative.starts_with(prefix));
+            let shared_experiment_data = relative.starts_with("experiments/")
+                && Path::new(relative)
+                    .extension()
+                    .and_then(|value| value.to_str())
+                    == Some("lino")
+                && Path::new(relative)
+                    .components()
+                    .all(|component| matches!(component, Component::Normal(_)))
+                && feature["javascript"]["evidence"]
+                    .as_array()
+                    .expect("JavaScript evidence array")
+                    .iter()
+                    .any(|evidence| evidence.as_str() == Some(relative));
             assert!(
-                in_rust_tree || in_shared_tree,
-                "{id} rust evidence {relative} must live under rust/ or a shared docs/parity tree"
+                in_rust_tree || in_shared_tree || shared_experiment_data,
+                "{id} rust evidence {relative} must live under rust/ or a shared docs/parity tree, or be experiment Links data cited by both runtimes"
             );
         }
     }
