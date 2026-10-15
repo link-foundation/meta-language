@@ -20,6 +20,8 @@ use super::frontend_rules::{
 use super::js_number::js_number_literal;
 use super::{Language, Span};
 
+mod number_rules;
+
 /// Source text addressed by UTF-16 code units, as JavaScript strings are.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Source {
