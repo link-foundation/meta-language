@@ -739,6 +739,23 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Run complete Rust text certificate library observations
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        working-directory: ${{ github.workspace }}
+        env:
+          CI: 'true'
+          RUST_TEXT_CERTIFICATE_LIBRARY_NATIVE: '1'
+        run: node scripts/with-cache-cleanup.mjs --event test -- node --test experiments/rust-text-certificate-library/native-observations.test.mjs
+
+      - name: Retain complete Rust text certificate library observations
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: rust-text-certificate-library-native-observations-${{ github.sha }}
+          path: issue-195-artifacts/rust-text-certificate-library-native-observations.lino
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Run doc tests
         if: ${{ !cancelled() && matrix.suite == 'remaining' }}
         shell: bash

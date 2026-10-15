@@ -777,6 +777,11 @@ const OWNED_SOURCE_ADAPTER_PACKAGE_STEPS = [
   ['Check complete Rust text certificate library packaging',
     'node ../experiments/rust-text-certificate-library/generate.mjs --check',
     'f3a126c1750b14af4d696d47b9b8e38c2db4c8f1bd99da0d19f37c3d31826adf', 'source-models'],
+  ['Run complete Rust source oracle contracts',
+    'node ../scripts/with-cache-cleanup.mjs --event test -- node --test ' +
+    '../experiments/source-native-observations.test.mjs ' +
+    '../experiments/rust-text-certificate-library/native-observations.test.mjs',
+    'e259a15270916aeaa4a42b29020abb8b7288b74f29058b6afba9b0fdbe07d583', 'source-models'],
 ];
 
 function packageStepSignature(step, includeGroup = false) {
@@ -1076,6 +1081,65 @@ test('Rust raw-binding rule native observation gates refuse omissions, duplicati
         steps[index].text = steps[index].text.replace(before, after);
       });
     }
+  }
+});
+
+const RUST_TEXT_CERTIFICATE_LIBRARY_NATIVE_STEPS = [
+  ['Run complete Rust text certificate library observations', '3cc6f191da33b2065b98915a0622858d60fc9b2a7ac2a699acbb8f16c1c3df8a'],
+  ['Retain complete Rust text certificate library observations', '773b4482ac2646ce711c0d5db13ac83fc151a6c339fb7815c0ba38e60bce9a17'],
+];
+
+function checkRustTextCertificateLibraryNativeSteps(parsed) {
+  for (const [name, hash] of RUST_TEXT_CERTIFICATE_LIBRARY_NATIVE_STEPS) {
+    const steps = parsed.get('test').steps.filter(step => step.name === name);
+    assert.equal(steps.length, 1, `the complete library observation step executes once: ${name}`);
+    assert.equal(packageStepSignature(steps[0], true), hash, `complete library native step changed: ${name}`);
+  }
+}
+
+test('the complete generated Rust library retains mandatory native observations and source selection', () => {
+  checkRustTextCertificateLibraryNativeSteps(jobs('rust.yml'));
+  assert.ok(needs(jobs('ci.yml').get('rust')).includes('js'));
+  const classifier = /rust_paths='([^']+)'/u.exec(workflow('ci.yml'))?.[1];
+  const matches = new RegExp(classifier, 'u');
+  for (const file of ['data/library.lino', 'data/decorators.lino', 'native-observations.mjs', 'native-observations.test.mjs']) {
+    assert.ok(matches.test(`experiments/rust-text-certificate-library/${file}`), file);
+  }
+});
+
+test('complete generated Rust library observations refuse compiler or receipt gate weakening', () => {
+  for (const [name] of RUST_TEXT_CERTIFICATE_LIBRARY_NATIVE_STEPS) {
+    const mutate = change => {
+      const parsed = jobs('rust.yml'), steps = parsed.get('test').steps;
+      const index = steps.findIndex(step => step.name === name);
+      assert.ok(index >= 0);
+      change(steps, index);
+      assert.throws(() => checkRustTextCertificateLibraryNativeSteps(parsed), assert.AssertionError);
+    };
+    mutate((steps, index) => steps.splice(index, 1));
+    mutate((steps, index) => steps.push({ ...steps[index] }));
+    for (const [from, to] of [
+      ['!cancelled()', 'success()'],
+      ["matrix.suite == 'translation'", "matrix.suite == 'remaining'"],
+      ["matrix.os == 'ubuntu-latest'", "matrix.os == 'windows-latest'"],
+      ...(name.startsWith('Run ') ? [
+        ["CI: 'true'", "CI: 'false'"],
+        ["RUST_TEXT_CERTIFICATE_LIBRARY_NATIVE: '1'", "RUST_TEXT_CERTIFICATE_LIBRARY_NATIVE: '0'"],
+        ['--event test --', '--event build --'],
+        ['node --test experiments/', 'node --test --test-name-pattern optional experiments/'],
+        ['working-directory: ${{ github.workspace }}', 'working-directory: rust'],
+        ['working-directory: ${{ github.workspace }}', 'continue-on-error: true\n        working-directory: ${{ github.workspace }}'],
+      ] : [
+        ['uses: actions/upload-artifact@v7', 'uses: actions/upload-artifact@v6'],
+        ['${{ github.sha }}', '${{ github.ref }}'],
+        ['native-observations.lino', 'native-observations.json'],
+        ['if-no-files-found: error', 'if-no-files-found: ignore'],
+        ['retention-days: 7', 'retention-days: 0'],
+      ]),
+    ]) mutate((steps, index) => {
+      assert.ok(steps[index].text.includes(from));
+      steps[index].text = steps[index].text.replace(from, to);
+    });
   }
 });
 
