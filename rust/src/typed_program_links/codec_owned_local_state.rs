@@ -334,21 +334,27 @@ fn value_occurrence<'a>(mut value: &'a Value, path: &Value) -> Result<&'a Value>
         ));
     }
     for part in path {
-        value = if let Some(field) = part.as_str() {
-            value.get(field)
-        } else {
-            let values = value
-                .as_array()
-                .ok_or_else(|| error("an owned state occurrence path is invalid"))?;
-            let length = serde_json::Number::from(values.len())
-                .as_f64()
-                .ok_or_else(|| error("an owned state occurrence path is invalid"))?;
-            let index =
-                crate::translation::owned_local_state::read_owned_local_position(part, length)
-                    .map_err(|failure| error(failure.to_string()))?;
-            values.get(index)
-        }
-        .ok_or_else(|| error("an owned state occurrence path is invalid"))?;
+        value = part.as_str().map_or_else(
+            || {
+                let values = value
+                    .as_array()
+                    .ok_or_else(|| error("an owned state occurrence path is invalid"))?;
+                let length = serde_json::Number::from(values.len())
+                    .as_f64()
+                    .ok_or_else(|| error("an owned state occurrence path is invalid"))?;
+                let index =
+                    crate::translation::owned_local_state::read_owned_local_position(part, length)
+                        .map_err(|failure| error(failure.to_string()))?;
+                values
+                    .get(index)
+                    .ok_or_else(|| error("an owned state occurrence path is invalid"))
+            },
+            |field| {
+                value
+                    .get(field)
+                    .ok_or_else(|| error("an owned state occurrence path is invalid"))
+            },
+        )?;
     }
     Ok(value)
 }

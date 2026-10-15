@@ -129,6 +129,10 @@ including the same type inside an owned proof. Its supported widths still come
 from the shared typed schema. Native decoding normalizes only that declared
 role before reading its integer field; primitive floating values and all other
 scalar roles keep their existing interpretations.
+Direct native programs can retain dynamic proof widths as floating Number
+values. Their selected validation uses a bounded private comparison view with
+the same fixed-width record adapter as Links decoding; the original proof
+values, own-field order, nulls and unknown fields remain observable and checked.
 Owned occurrence paths likewise compare the numeric value of an actual Number
 position, checking the actual array bounds through the shared tuple-index rule.
 Equivalent integral spellings retain their stored scalar, including negative

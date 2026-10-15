@@ -92,9 +92,16 @@ fn validate_type_records(
         }
         if value["kind"] == "fixed" {
             let width = value["bits"]
-                .as_u64()
-                .map(|width| width.to_string())
-                .unwrap_or_default();
+                .as_f64()
+                .filter(|width| {
+                    super::program_numeric_metadata_rules::accept_program_integral_metadata(
+                        "fixed",
+                        "bits",
+                        *width,
+                        *width == 0.0 && width.is_sign_negative(),
+                    )
+                })
+                .map_or_else(String::new, |width| width.to_string());
             if !accept_program_machine_integer_width(&width) || !value["signed"].is_boolean() {
                 return Err(error(
                     "the linked program contains an invalid machine integer type",
