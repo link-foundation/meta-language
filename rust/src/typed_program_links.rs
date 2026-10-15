@@ -12,9 +12,8 @@ use crate::translation::ir::Program;
 use crate::translation::javascript::{parse_javascript, parse_javascript_with_scalar_loop_model};
 use crate::translation::rust::{
     parse_rust, parse_rust_with_empty_option_source_model, parse_rust_with_loop_profiles,
-    parse_rust_with_primitive_owner_model, parse_rust_with_pure_unit_call_model,
-    parse_rust_with_owned_local_state_model,
-    parse_rust_with_type_namespace_model,
+    parse_rust_with_owned_local_state_model, parse_rust_with_primitive_owner_model,
+    parse_rust_with_pure_unit_call_model, parse_rust_with_type_namespace_model,
 };
 use crate::{LinkId, LinkMetadata, LinkNetwork, LinkType};
 use serde_json::Value;

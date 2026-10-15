@@ -39,8 +39,7 @@ impl JavaScriptParser {
         self.global_binding_names.clone_from(&self.scope.tdz);
         self.prescan_product_bindings();
         self.async_names = self.async_declarations(self.cursor.index);
-        // Top-level statements that declare or assign variables, lowered together
-        // before the next statement that prints, binds a constant or asserts.
+        // Top-level statements that declare or assign variables, lowered together before the next statement that prints, binds a constant or asserts.
         let mut pending = Vec::new();
         while !self.cursor.at_end() {
             let start = self.peek();
