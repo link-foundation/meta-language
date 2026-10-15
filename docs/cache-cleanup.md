@@ -24,6 +24,11 @@ node scripts/clean-caches.mjs --help
 
 The script works on the git worktree that contains the current directory.
 Outside a git worktree, or without git, it reports `skipped` and exits 0.
+It protects sibling worktrees and does not count their storage toward this
+worktree's cache budget. Contributors use the shared checkout and release
+completed, verified clean task worktrees under the
+[resource policy](vision.md#resource-limits), preserving commits, uncommitted
+work, evidence and unrelated data. Rust compilation belongs exclusively to CI/CD.
 Every run prints the bytes before, after and reclaimed. Real runs also write
 the full report to `.git/meta-language-cache/last-run.lino` and a scoped
 summary record to `.git/meta-language-cache/history.lino`, which keeps the last 200

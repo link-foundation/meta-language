@@ -107,9 +107,10 @@ suites:
   logs and artifacts instead.
 - Work in batches: commit each step, re-read the diff and push once per batch.
   Use the shared checkout and release completed task-owned worktrees under
-  [the resource policy](docs/vision.md#resource-limits). After each batch run
-  `node scripts/clean-caches.mjs`; remove only meta-language-owned regenerable
-  scratch and stopped workload clones. Preserve verification records and logs,
+  [the resource policy](docs/vision.md#resource-limits).
+  After a batch, run `node scripts/clean-caches.mjs`; remove only
+  meta-language-owned regenerable scratch and stopped workload clones.
+  Preserve verification records and logs,
   `issue-195-artifacts/`, and `issue-195-results/` outside disposable `work/`
   scratch. Never remove dirty worktrees, uncommitted work, active tasks or
   unrelated directories. Stop only leftover processes owned by the failed task.

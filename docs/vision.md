@@ -906,6 +906,11 @@ continues implementation and CI follow-up until the required work is complete,
 as reiterated in the [captured follow-through instruction](../parity/sources/ci-follow-through-2026-10-13.txt).
 Local validation uses targeted JavaScript checks and never compiles
 Rust; compiled parity and expensive workloads belong to CI.
+The [local resource instruction](../parity/sources/meta-language-local-resource-scope-2026-10-16.txt)
+restricts cleanup to meta-language-owned disk space and requires local work to
+respect available disk, memory and process capacity. Rust compilation is
+exclusive to CI/CD. The [resource limits](#resource-limits) govern shared
+checkout use and the prompt, verified release of completed task worktrees.
 The instruction to gradually reduce agents remains a separate hashed source and
 critical obligation for that historical coordination phase. Contributors finished
 their existing work and the coordinator continued alone. The subsequent
@@ -1863,9 +1868,10 @@ thirty-second heartbeat includes a bounded, credential-redacted actual log
 suffix, so a job timeout retains recent test progress even if artifact upload
 cannot run. Original command logs remain unchanged.
 
-Package validation runs six required logical check groups across seven parallel
+Package validation runs eight required logical check groups across nine parallel
 jobs: native imports, native fixtures, grammar, contracts, generated code and
-source models. The generated group has two physical slices. One retains the
+source models, complete original-link tables and binary candidates. The
+generated group has two physical slices. One retains the
 literal-edit rule, fixture and experiment triplet; the other retains every
 remaining generated check, including both compiler-feedback producers and their
 single upload. All checks execute exactly once in their original relative order;
@@ -1876,8 +1882,13 @@ source-model group executes the new raw-binding and complete text-certificate
 checks, isolated owned-certificate adapters, original-identity and role
 projection checks, complete String-symbol and eleven-table projection checks,
 fresh collector certificates and library packaging generators
-without adding work to the original generated-code group. Each retains the
-ten-minute deadline and its own setup and cleanup. The final package job requires
+without adding work to the original generated-code group. Two additional matrix
+cells own the complete seventeen-table projection and binary metadata candidate
+checks. They retain the same setup, cleanup and ten-minute deadline. Their
+native runner contracts execute with actual compilation disabled; separate
+required Rust steps compile and execute the complete artifacts only after the
+JavaScript workflow passes. The new cells preserve the original six matrix
+groups, seven physical cells and check-context names. The final package job requires
 every group, every JavaScript test partition and the complete report assertion
 job before packaging or publication. It also requires the validated merge of
 translation compiler feedback. Frozen step-conservation checks retain every
