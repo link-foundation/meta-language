@@ -48,6 +48,8 @@ pub(crate) mod source_primitive_owners;
 pub(crate) mod source_pure_unit_calls;
 pub(crate) mod source_signature_rules;
 pub mod source_signatures;
+pub(crate) mod source_text_byte_rules;
+pub(crate) mod source_text_bytes;
 pub(crate) mod source_type_namespaces;
 pub(crate) mod source_unit_clone_derivations;
 pub mod structured_type_rules;

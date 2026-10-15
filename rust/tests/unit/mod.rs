@@ -170,6 +170,7 @@ mod self_translation_scope;
 mod shared_numeric_function_links;
 mod source_generation;
 mod source_points;
+mod source_text_bytes;
 mod storage;
 mod structured_data_links;
 mod structured_data_records;

@@ -666,6 +666,21 @@ jobs:
         working-directory: js
         run: node scripts/generate-source-span-fixtures.mjs --check
 
+      - name: Check generated source text byte rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/generate-source-text-byte-rules.mjs --check
+
+      - name: Check shared source text byte fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/generate-source-text-byte-fixtures.mjs --check
+
+      - name: Check portable source text byte kernels
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/source-text-byte-kernel.test.mjs ../experiments/complete-binary-formatter-probe.test.mjs
+
       - name: Check generated integral program metadata rules
         if: ${{ !cancelled() && matrix.group == 'generated' }}
         working-directory: js

@@ -894,6 +894,15 @@ export interface TypedProgramLinksEmissionOptions {
   /** Allocates JavaScript aliases from actual checked local binding owners. */
   readonly javaScriptScopedBindingEmissionModel?: 'owned JavaScript scoped bindings 1';
 }
+/** Actual UTF-16 units of primitive Unicode scalar text; rejects unpaired surrogates. */
+export function readSourceTextUnits(text: string): number[];
+/** Exact UTF-8 byte length under the bounded Unicode scalar text model. */
+export function readSourceTextByteLength(text: string): number;
+/** Exact UTF-8 byte, or null for a nonintegral or out-of-bounds offset. */
+export function readSourceTextByte(text: string, offset: number): number | null;
+/** Unchanged substring at ordered UTF-8 scalar boundaries, or null. */
+export function sliceSourceTextBytes(text: string, start: number, end: number): string | null;
+
 /** Imports the supported checked JavaScript or Rust core as editable semantic links. */
 export function createTypedProgramLinks(
   source: string,

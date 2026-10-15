@@ -364,6 +364,10 @@ pub use transform::{
     QuasiquoteError, QuasiquoteTemplate, ReplacementReport, ReplacementRule,
     SourceTextPredicateHost, TextReplacement,
 };
+pub use translation::source_text_bytes::{
+    read_source_text_byte, read_source_text_byte_length, read_source_text_units,
+    slice_source_text_bytes,
+};
 pub use translation_rules::{
     TranslationRule, TranslationRuleRegistry, TranslationRuleSet, TranslationRuleSetLoadError,
     TranslationTemplate,

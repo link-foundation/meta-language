@@ -8,6 +8,9 @@ pub mod frontend_rules;
 #[path = "../../src/translation/rust/owned_local_state_rules.rs"]
 pub mod owned_local_state_rules;
 
+#[path = "../../src/translation/source_text_byte_rules.rs"]
+pub mod source_text_byte_rules;
+
 pub mod rust {
     pub use super::owned_local_state_rules;
 }

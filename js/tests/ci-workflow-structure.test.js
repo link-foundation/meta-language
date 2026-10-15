@@ -527,6 +527,48 @@ const OWNED_TEXT_EXPERIMENT_PACKAGE_STEPS = [
   ["Run Rust owned local container checks", "node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-owned-local-container.test.mjs", '0010868feb0f784edacd150e76dec71add2119de452037dc7788b9c8183728d5', 'generated'],
 ];
 
+// Const-predicate and byte gates add exact obligations without changing earlier records.
+const CONST_AND_BYTE_GENERATOR_PACKAGE_STEPS = [
+  [
+    "Check generated closed Rust const predicate rules",
+    "node ../experiments/generate-rust-const-function-rules.mjs --check",
+    "9496f2280a290cab8bfde47cda20d0dfa426c1ba2edf84c0ab531d63665f4378",
+    "generated"
+  ],
+  [
+    "Check actual styled Rust const predicate fixtures",
+    "node ../experiments/generate-rust-const-function-fixture.mjs --check",
+    "51371b5cc85d2a8df9364cd0206b00a9df0ad53646fd5999c85b8d6c2e05c85c",
+    "generated"
+  ],
+  [
+    "Check generated source text byte rules",
+    "node scripts/generate-source-text-byte-rules.mjs --check",
+    "47f08f82382a4fc64326166292e0f32e7c1150bf483b5278f16d5d9dc772579f",
+    "generated"
+  ],
+  [
+    "Check shared source text byte fixtures",
+    "node scripts/generate-source-text-byte-fixtures.mjs --check",
+    "75cda79cebdd7fff01bc4352311916289b7c1c0dc9107395bac48e246e0c0f6e",
+    "generated"
+  ]
+];
+const CONST_AND_BYTE_EXPERIMENT_PACKAGE_STEPS = [
+  [
+    "Run closed Rust const predicate prototype checks",
+    "node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-const-function-prototype.test.mjs",
+    "d4444582ae1106fcd4bce1e49ccf1ba1a185c3acf9fb978605eefb4ecd1a5df3",
+    "generated"
+  ],
+  [
+    "Check portable source text byte kernels",
+    "node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/source-text-byte-kernel.test.mjs ../experiments/complete-binary-formatter-probe.test.mjs",
+    "2082ceaa9c585324089ee5e3174f5cc155e1b1d397dda9c2659feddda7b11b30",
+    "generated"
+  ]
+];
+
 function packageStepSignature(step, includeGroup = false) {
   const fields = includeGroup ? step.text : step.text.replace(/ && matrix\.group == '[a-z-]+'/gu, '');
   const text = fields
@@ -538,7 +580,8 @@ function packageStepSignature(step, includeGroup = false) {
 function checkPackageStepConservation(parsed) {
   const additions = [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS, ...TYPE_NAMESPACE_PACKAGE_STEPS,
     ...PURE_UNIT_PACKAGE_STEPS, ...SOURCE_SPAN_PACKAGE_STEPS, ...OWNED_TEXT_GENERATOR_PACKAGE_STEPS,
-    ...OWNED_TEXT_EXPERIMENT_PACKAGE_STEPS, ...INTEGRAL_METADATA_PACKAGE_STEPS, ...INTEGRAL_METADATA_EXPERIMENT_PACKAGE_STEPS];
+    ...OWNED_TEXT_EXPERIMENT_PACKAGE_STEPS, ...INTEGRAL_METADATA_PACKAGE_STEPS, ...INTEGRAL_METADATA_EXPERIMENT_PACKAGE_STEPS,
+    ...CONST_AND_BYTE_GENERATOR_PACKAGE_STEPS, ...CONST_AND_BYTE_EXPERIMENT_PACKAGE_STEPS];
   const expected = new Map([
     ...ORIGINAL_PACKAGE_STEPS.map(([name, hash, owner]) => [name, { hash, owner }]),
     ...additions.map(([name, command, hash, owner]) => [name, { hash, owner, command, addition: true }]),
@@ -666,7 +709,7 @@ test('every frozen generator addition rejects omission, duplication, condition, 
     assert.throws(() => checkPackageStepConservation(parsed), assert.AssertionError, name);
   };
   for (const [name] of [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS, ...TYPE_NAMESPACE_PACKAGE_STEPS,
-    ...PURE_UNIT_PACKAGE_STEPS, ...SOURCE_SPAN_PACKAGE_STEPS, ...OWNED_TEXT_GENERATOR_PACKAGE_STEPS, ...INTEGRAL_METADATA_PACKAGE_STEPS]) {
+    ...PURE_UNIT_PACKAGE_STEPS, ...SOURCE_SPAN_PACKAGE_STEPS, ...OWNED_TEXT_GENERATOR_PACKAGE_STEPS, ...INTEGRAL_METADATA_PACKAGE_STEPS, ...CONST_AND_BYTE_GENERATOR_PACKAGE_STEPS]) {
     mutate(name, (steps, index) => steps.splice(index, 1));
     mutate(name, (steps, index) => steps.push({ ...steps[index] }));
     for (const [before, after] of [
@@ -684,7 +727,7 @@ test('every frozen generator addition rejects omission, duplication, condition, 
 });
 
 test('every frozen text experiment addition retains its mandatory execution, wrapper, directory and owner', () => {
-  for (const [name] of [...OWNED_TEXT_EXPERIMENT_PACKAGE_STEPS, ...INTEGRAL_METADATA_EXPERIMENT_PACKAGE_STEPS]) {
+  for (const [name] of [...OWNED_TEXT_EXPERIMENT_PACKAGE_STEPS, ...INTEGRAL_METADATA_EXPERIMENT_PACKAGE_STEPS, ...CONST_AND_BYTE_EXPERIMENT_PACKAGE_STEPS]) {
     const mutate = change => {
       const parsed = jobs('js.yml');
       const steps = parsed.get('package-checks').steps;

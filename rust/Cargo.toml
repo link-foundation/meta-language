@@ -47,6 +47,7 @@ include = [
     "src/data/rust-owned-local-state.lino",
     "src/data/rust-const-functions.lino",
     "src/data/source-span.lino",
+    "src/data/source-text-byte-model.lino",
     "src/data/program-numeric-metadata.lino",
     "src/translation/rust/float-predicates.lino",
     "src/translation/rust/completions.lino",

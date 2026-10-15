@@ -602,6 +602,13 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "read_resource_description_ntriples_source",
         "function",
     ),
+    ("readSourceTextByte", "read_source_text_byte", "function"),
+    (
+        "readSourceTextByteLength",
+        "read_source_text_byte_length",
+        "function",
+    ),
+    ("readSourceTextUnits", "read_source_text_units", "function"),
     (
         "readStructuredDataLino",
         "read_structured_data_lino",
@@ -668,6 +675,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("sequence", "sequence", "function"),
     ("serializeGrammar", "serialize_grammar", "function"),
     ("sharedRuleDecisions", "shared_rule_decisions", "function"),
+    (
+        "sliceSourceTextBytes",
+        "slice_source_text_bytes",
+        "function",
+    ),
     ("sniffLanguage", "sniff_language", "function"),
     ("sourceMeanings", "source_meanings_in", "function"),
     ("sourceTextPredicateHost", "SourceTextPredicateHost", "type"),

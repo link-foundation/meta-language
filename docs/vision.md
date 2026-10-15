@@ -187,7 +187,15 @@ admission for direct scalar and string elements, with read-only empty checks and
 length conversion explicitly projected to the Number model. Ownership moves,
 borrowed results, mutable arrays and full generated runtime wrappers still need
 their separate obligations. Rust string continuations and CRLF normalization
-use shared checked rules while preserving original source-token spans.
+use shared checked rules while preserving original source-token spans. The
+bounded Unicode scalar source text byte model exposes actual UTF-16 units, exact
+UTF-8 length, individual bytes and scalar-boundary slices in both packages.
+Shared numeric rules generate the native byte decisions; thin host adapters
+validate primitive text and numeric offsets before materializing the result.
+Unpaired JavaScript surrogates are refused rather than replaced. A complete
+pinned formatter probe still refuses its unsupported formatting, parsing and
+ownership operations; these byte primitives alone do not establish formatter
+translation.
 
 Standard immutable text emptiness and zero-argument `String::new()` use actual
 unshadowed standard owners, including proved imported aliases. Inclusive
