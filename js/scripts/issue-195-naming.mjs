@@ -10611,7 +10611,1855 @@ const RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES=RAW_BINDING_RULE_ORACLE_NAME_BIND
  extract:(raw,file)=>files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(raw)).map(({name})=>normalizeRawBindingRuleOracleName(name)),
  recordOf:name=>Object.values(files).flat().find(entry=>normalizeRawBindingRuleOracleName(entry.name)===name).id,
 }));
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES]);
+// Actual isolated owned source adapters, library packaging and unchanged helper aliases.
+const OWNED_SOURCE_ADAPTER_NAME_BINDINGS=[
+  {
+    "inventory": "owned text certificate adapter operations",
+    "files": {
+      "experiments/rust-text-certificate-adapter/model.mjs": [
+        {
+          "name": "readOwnedRustTextCertificate",
+          "id": "repository.read-owned-rust-text-certificate"
+        },
+        {
+          "name": "checkOwnedRustTextCertificate",
+          "id": "repository.check-owned-rust-text-certificate"
+        },
+        {
+          "name": "captureOwnedRustTextCertificate",
+          "id": "repository.capture-owned-rust-text-certificate"
+        },
+        {
+          "name": "emitOwnedRustTextCertificate",
+          "id": "repository.emit-owned-rust-text-certificate"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned text source proof facet",
+    "files": {
+      "experiments/rust-text-certificate-adapter/policy.mjs": [
+        {
+          "name": "RUST_TEXT_VALUE_FACET",
+          "id": "repository.owned-text-certificate-program-facet"
+        },
+        {
+          "name": "sourceTextValueProjection",
+          "id": "repository.owned-text-certificate-program-facet"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned text certificate adapter policy",
+    "files": {
+      "experiments/rust-text-certificate-adapter/policy.mjs": [
+        {
+          "name": "rustTextCertificateAdapterPolicy",
+          "id": "repository.owned-text-certificate-adapter-policy"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned text original link transport",
+    "files": {
+      "experiments/rust-text-certificate-adapter/policy.mjs": [
+        {
+          "name": "rustTextCertificateIdentityTransport",
+          "id": "repository.owned-text-certificate-identity-transport"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned text raw link boundary operations",
+    "files": {
+      "experiments/rust-text-certificate-adapter/raw-identity.mjs": [
+        {
+          "name": "decodeRustTextCertificateFacet",
+          "id": "repository.decode-rust-text-certificate-facet"
+        },
+        {
+          "name": "scan",
+          "id": "repository.find-owned-text-certificate-markers"
+        },
+        {
+          "name": "fieldName",
+          "id": "repository.read-owned-text-certificate-field-name"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "exact link identity keys",
+    "files": {
+      "experiments/rust-text-certificate-adapter/raw-identity.mjs": [
+        {
+          "name": "key",
+          "id": "repository.read-exact-link-identity-key"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "checked module overlay operations overlay.mjs",
+    "files": {
+      "experiments/rust-text-certificate-adapter/overlay.mjs": [
+        {
+          "name": "relocateCheckedModuleImports",
+          "id": "repository.relocate-checked-module-imports"
+        },
+        {
+          "name": "relocate",
+          "id": "repository.relocate-checked-module-specifier"
+        },
+        {
+          "name": "createCheckedModuleOverlay",
+          "id": "repository.create-checked-module-overlay"
+        },
+        {
+          "name": "importModule",
+          "id": "repository.import-checked-overlay-module"
+        },
+        {
+          "name": "dispose",
+          "id": "repository.remove-checked-module-overlay"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "checked module overlay operations runtime.mjs",
+    "files": {
+      "experiments/rust-text-certificate-adapter/runtime.mjs": [
+        {
+          "name": "createRustTextCertificatePublicOverlay",
+          "id": "repository.create-rust-text-certificate-public-overlay"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "checked module overlay operations generate.mjs",
+    "files": {
+      "experiments/rust-text-certificate-adapter/generate.mjs": [
+        {
+          "name": "rustTextCertificateOverlayRecords",
+          "id": "repository.generate-rust-text-certificate-overlay-records"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned raw binding certificate decisions",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/rules.mjs": [
+        {
+          "name": "acceptRustRawBindingCertificateSource",
+          "id": "repository.accept-rust-raw-binding-certificate-source"
+        },
+        {
+          "name": "acceptRustRawBindingCertificateContext",
+          "id": "repository.accept-rust-raw-binding-certificate-context"
+        },
+        {
+          "name": "acceptRustRawBindingCertificateRoots",
+          "id": "repository.accept-rust-raw-binding-certificate-facet-presence"
+        },
+        {
+          "name": "acceptRustRawBindingCertificateOwners",
+          "id": "repository.accept-rust-raw-binding-certificate-owners"
+        }
+      ],
+      "experiments/rust-raw-binding-certificate-adapter/data/rules.rs": [
+        {
+          "name": "accept_rust_raw_binding_certificate_source",
+          "id": "repository.accept-rust-raw-binding-certificate-source"
+        },
+        {
+          "name": "accept_rust_raw_binding_certificate_context",
+          "id": "repository.accept-rust-raw-binding-certificate-context"
+        },
+        {
+          "name": "accept_rust_raw_binding_certificate_roots",
+          "id": "repository.accept-rust-raw-binding-certificate-facet-presence"
+        },
+        {
+          "name": "accept_rust_raw_binding_certificate_owners",
+          "id": "repository.accept-rust-raw-binding-certificate-owners"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned raw binding certificate policy",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/generate-rules.mjs": [
+        {
+          "name": "rawBindingCertificatePolicy",
+          "id": "repository.owned-raw-binding-certificate-policy"
+        }
+      ],
+      "experiments/rust-raw-binding-certificate-adapter/certificate.mjs": [
+        {
+          "name": "RAW_BINDING_CERTIFICATE_POLICY",
+          "id": "repository.owned-raw-binding-certificate-policy"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned raw binding certificate bridge operations",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/certificate.mjs": [
+        {
+          "name": "readRustRawBindingCertificate",
+          "id": "repository.read-rust-raw-binding-certificate"
+        },
+        {
+          "name": "captureRustRawBindingCertificate",
+          "id": "repository.capture-rust-raw-binding-certificate"
+        },
+        {
+          "name": "checkRustRawBindingCertificateInvocation",
+          "id": "repository.check-rust-raw-binding-certificate-invocation"
+        },
+        {
+          "name": "assumptions",
+          "id": "repository.read-raw-binding-certificate-emission-premises"
+        },
+        {
+          "name": "decorateRustRawBindingCertificateEmission",
+          "id": "repository.decorate-rust-raw-binding-certificate-emission"
+        },
+        {
+          "name": "emitRustRawBindingCertificate",
+          "id": "repository.emit-rust-raw-binding-certificate"
+        },
+        {
+          "name": "plainRecord",
+          "id": "repository.accept-raw-binding-certificate-data-record"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned raw binding certificate role sourceRawBindingIdentifiers",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/data/policy.lino": [
+        {
+          "name": "sourceRawBindingIdentifiers",
+          "id": "repository.owned-raw-binding-certificate-program-facet"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned raw binding certificate role sourceRawBindingIdentifierContext",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/data/policy.lino": [
+        {
+          "name": "sourceRawBindingIdentifierContext",
+          "id": "repository.owned-raw-binding-certificate-main-context"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned raw binding certificate role sourceExtent",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/data/policy.lino": [
+        {
+          "name": "sourceExtent",
+          "id": "repository.owned-raw-binding-certificate-source-extent-target"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned raw binding certificate authoring generate-rules.mjs",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/generate-rules.mjs": [
+        {
+          "name": "rawBindingCertificateRules",
+          "id": "repository.generate-raw-binding-certificate-rules"
+        },
+        {
+          "name": "checkRawBindingCertificateRules",
+          "id": "repository.check-raw-binding-certificate-rules"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned raw binding certificate authoring generate-overlay.mjs",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/generate-overlay.mjs": [
+        {
+          "name": "rawBindingCertificateOverlayRecords",
+          "id": "repository.generate-raw-binding-certificate-overlay-records"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned raw binding certificate authoring runtime.mjs",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/runtime.mjs": [
+        {
+          "name": "createRustRawBindingCertificateOverlay",
+          "id": "repository.create-rust-raw-binding-certificate-overlay"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "shared emitted source parts",
+    "files": {
+      "js/src/translation/emit-common.js": [
+        {
+          "name": "withParts",
+          "id": "translation.attach-source-output-parts"
+        }
+      ],
+      "experiments/rust-raw-binding-certificate-adapter/certificate.mjs": [
+        {
+          "name": "withParts",
+          "id": "translation.attach-source-output-parts"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned source adapter shared provider checkOwnedProgramContainers",
+    "files": {
+      "experiments/rust-text-certificate-adapter/model.mjs": [
+        {
+          "name": "checkOwnedProgramContainers",
+          "id": "translation.check-owned-program-containers"
+        }
+      ],
+      "experiments/rust-raw-binding-certificate-adapter/certificate.mjs": [
+        {
+          "name": "checkOwnedProgramContainers",
+          "id": "translation.check-owned-program-containers"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned source adapter shared provider acceptRustOwnedLocalContainer",
+    "files": {
+      "experiments/rust-text-certificate-adapter/model.mjs": [
+        {
+          "name": "acceptRustOwnedLocalContainer",
+          "id": "translation.accept-rust-owned-local-container"
+        }
+      ],
+      "experiments/rust-raw-binding-certificate-adapter/certificate.mjs": [
+        {
+          "name": "acceptRustOwnedLocalContainer",
+          "id": "translation.accept-rust-owned-local-container"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned source adapter shared provider checkPortableRustTextCertificate",
+    "files": {
+      "experiments/rust-text-certificate-adapter/model.mjs": [
+        {
+          "name": "checkPortableRustTextCertificate",
+          "id": "repository.check-portable-rust-text-certificate"
+        }
+      ],
+      "experiments/rust-text-certificate-adapter/raw-identity.mjs": [
+        {
+          "name": "checkPortableRustTextCertificate",
+          "id": "repository.check-portable-rust-text-certificate"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned source adapter shared provider createPortableRustTextCertificate",
+    "files": {
+      "experiments/rust-text-certificate-adapter/model.mjs": [
+        {
+          "name": "createPortableRustTextCertificate",
+          "id": "repository.create-portable-rust-text-certificate"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned source adapter shared provider encodeGeneratedOwnedRust",
+    "files": {
+      "experiments/rust-text-certificate-adapter/model.mjs": [
+        {
+          "name": "encodeGeneratedOwnedRust",
+          "id": "repository.encode-generated-owned-rust"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned source adapter shared provider decodeGeneratedOwnedRust",
+    "files": {
+      "experiments/rust-text-certificate-adapter/model.mjs": [
+        {
+          "name": "decodeGeneratedOwnedRust",
+          "id": "repository.decode-generated-owned-rust"
+        }
+      ],
+      "experiments/rust-text-certificate-adapter/raw-identity.mjs": [
+        {
+          "name": "decodeGeneratedOwnedRust",
+          "id": "repository.decode-generated-owned-rust"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned source adapter shared provider emitRustTextValueProjection",
+    "files": {
+      "experiments/rust-text-certificate-adapter/model.mjs": [
+        {
+          "name": "emitRustTextValueProjection",
+          "id": "repository.emit-rust-text-value-projection"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned source adapter shared provider acceptProgramSchemaRoot",
+    "files": {
+      "experiments/rust-text-certificate-adapter/raw-identity.mjs": [
+        {
+          "name": "acceptProgramSchemaRoot",
+          "id": "translation.accept-program-schema-root"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned source adapter shared provider readProgramContainerKind",
+    "files": {
+      "experiments/rust-text-certificate-adapter/raw-identity.mjs": [
+        {
+          "name": "readProgramContainerKind",
+          "id": "translation.read-program-container-kind"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned source adapter shared provider createCheckedModuleOverlay",
+    "files": {
+      "experiments/rust-text-certificate-adapter/runtime.mjs": [
+        {
+          "name": "createCheckedModuleOverlay",
+          "id": "repository.create-checked-module-overlay"
+        }
+      ],
+      "experiments/rust-raw-binding-certificate-adapter/runtime.mjs": [
+        {
+          "name": "createCheckedModuleOverlay",
+          "id": "repository.create-checked-module-overlay"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned source adapter shared provider createRustRawBindingIdentifiers",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/certificate.mjs": [
+        {
+          "name": "createRustRawBindingIdentifiers",
+          "id": "repository.create-rust-raw-binding-identifiers"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned source adapter shared provider checkRustRawBindingIdentifiers",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/certificate.mjs": [
+        {
+          "name": "checkRustRawBindingIdentifiers",
+          "id": "repository.check-rust-raw-binding-identifiers"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned source adapter shared provider checkRustRawBindingIdentifierInvocation",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/certificate.mjs": [
+        {
+          "name": "checkRustRawBindingIdentifierInvocation",
+          "id": "repository.check-rust-raw-binding-identifier-invocation"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned source adapter shared provider emitRustRawBindingIdentifiers",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/certificate.mjs": [
+        {
+          "name": "emitRustRawBindingIdentifiers",
+          "id": "repository.emit-rust-raw-binding-identifiers"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned source adapter shared provider readRawBindingIdentifierSyntax",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/certificate.mjs": [
+        {
+          "name": "readRawBindingIdentifierSyntax",
+          "id": "repository.read-raw-binding-identifier-syntax"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned source adapter shared provider checkGeneratedOwnedRustData",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/certificate.mjs": [
+        {
+          "name": "checkGeneratedOwnedRustData",
+          "id": "repository.check-generated-owned-rust-data-graph"
+        },
+        {
+          "name": "data",
+          "id": "repository.check-generated-owned-rust-data-graph"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned source adapter shared provider checkGeneratedOwnedRustFields",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/certificate.mjs": [
+        {
+          "name": "checkGeneratedOwnedRustFields",
+          "id": "repository.check-generated-owned-rust-record-fields"
+        },
+        {
+          "name": "fields",
+          "id": "repository.check-generated-owned-rust-record-fields"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned source adapter shared hash",
+    "files": {
+      "experiments/rust-text-certificate-adapter/overlay.mjs": [
+        {
+          "name": "hash",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        }
+      ],
+      "experiments/rust-text-certificate-adapter/generate.mjs": [
+        {
+          "name": "hash",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        }
+      ],
+      "experiments/rust-text-certificate-adapter/overlay.test.mjs": [
+        {
+          "name": "hash",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        }
+      ],
+      "experiments/rust-raw-binding-certificate-adapter/generate-overlay.mjs": [
+        {
+          "name": "hash",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned text unchanged table context",
+    "files": {
+      "experiments/rust-text-certificate-adapter/data/identity-transport.lino": [
+        {
+          "name": "context",
+          "id": "repository.text-certificate-context-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned text unchanged table kinds",
+    "files": {
+      "experiments/rust-text-certificate-adapter/data/identity-transport.lino": [
+        {
+          "name": "kinds",
+          "id": "repository.text-certificate-identity-kind-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned text unchanged table tokens",
+    "files": {
+      "experiments/rust-text-certificate-adapter/data/identity-transport.lino": [
+        {
+          "name": "tokens",
+          "id": "repository.text-certificate-token-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned text unchanged table declarations",
+    "files": {
+      "experiments/rust-text-certificate-adapter/data/identity-transport.lino": [
+        {
+          "name": "declarations",
+          "id": "repository.text-certificate-declaration-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned text unchanged table parameters",
+    "files": {
+      "experiments/rust-text-certificate-adapter/data/identity-transport.lino": [
+        {
+          "name": "parameters",
+          "id": "repository.text-certificate-parameter-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned text unchanged table positions",
+    "files": {
+      "experiments/rust-text-certificate-adapter/data/identity-transport.lino": [
+        {
+          "name": "positions",
+          "id": "repository.text-certificate-source-position-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned text unchanged table paths",
+    "files": {
+      "experiments/rust-text-certificate-adapter/data/identity-transport.lino": [
+        {
+          "name": "paths",
+          "id": "repository.text-certificate-owner-path-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned text unchanged table layers",
+    "files": {
+      "experiments/rust-text-certificate-adapter/data/identity-transport.lino": [
+        {
+          "name": "layers",
+          "id": "repository.text-certificate-reference-layer-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned text unchanged table cores",
+    "files": {
+      "experiments/rust-text-certificate-adapter/data/identity-transport.lino": [
+        {
+          "name": "cores",
+          "id": "repository.text-certificate-expression-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned text unchanged table functions",
+    "files": {
+      "experiments/rust-text-certificate-adapter/data/identity-transport.lino": [
+        {
+          "name": "functions",
+          "id": "repository.text-certificate-function-fact-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned text unchanged table operations",
+    "files": {
+      "experiments/rust-text-certificate-adapter/data/identity-transport.lino": [
+        {
+          "name": "operations",
+          "id": "repository.text-certificate-operation-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned text unchanged table parts",
+    "files": {
+      "experiments/rust-text-certificate-adapter/data/identity-transport.lino": [
+        {
+          "name": "parts",
+          "id": "repository.text-certificate-operation-part-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned text unchanged table inputs",
+    "files": {
+      "experiments/rust-text-certificate-adapter/data/identity-transport.lino": [
+        {
+          "name": "inputs",
+          "id": "repository.text-certificate-input-condition-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned text unchanged table allocations",
+    "files": {
+      "experiments/rust-text-certificate-adapter/data/identity-transport.lino": [
+        {
+          "name": "allocations",
+          "id": "repository.text-certificate-allocation-condition-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned text unchanged table names",
+    "files": {
+      "experiments/rust-text-certificate-adapter/data/identity-transport.lino": [
+        {
+          "name": "names",
+          "id": "repository.text-certificate-symbol-range-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned text unchanged table units",
+    "files": {
+      "experiments/rust-text-certificate-adapter/data/identity-transport.lino": [
+        {
+          "name": "units",
+          "id": "repository.text-certificate-symbol-unit-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned text unchanged table items",
+    "files": {
+      "experiments/rust-text-certificate-adapter/data/identity-transport.lino": [
+        {
+          "name": "items",
+          "id": "repository.text-certificate-declaration-order-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned raw unchanged proof role checkedOwner",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/model.test.mjs": [
+        {
+          "name": "checkedOwner",
+          "id": "repository.raw-binding-checked-owner-target"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned raw unchanged proof role checkedExpression",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/model.test.mjs": [
+        {
+          "name": "checkedExpression",
+          "id": "repository.raw-binding-checked-expression-target"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned raw unchanged proof role parameterOwners",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/certificate.mjs": [
+        {
+          "name": "parameterOwners",
+          "id": "repository.raw-binding-invocation-parameter-array-target"
+        }
+      ],
+      "experiments/rust-raw-binding-certificate-adapter/model.test.mjs": [
+        {
+          "name": "parameterOwners",
+          "id": "repository.raw-binding-invocation-parameter-array-target"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete Rust library packaging operations",
+    "files": {
+      "js/scripts/rust-library-packaging.mjs": [
+        {
+          "name": "syntax",
+          "id": "repository.read-rust-library-source-structure"
+        },
+        {
+          "name": "readRustLibraryNesting",
+          "id": "repository.read-rust-library-nesting"
+        },
+        {
+          "name": "readRustLibraryItems",
+          "id": "repository.read-rust-library-items"
+        },
+        {
+          "name": "edits",
+          "id": "repository.apply-rust-library-source-edits"
+        },
+        {
+          "name": "conditional",
+          "id": "repository.read-rust-library-tail-conditional"
+        },
+        {
+          "name": "flattenBranches",
+          "id": "repository.flatten-rust-library-tail-alternatives"
+        },
+        {
+          "name": "compactIndentation",
+          "id": "repository.compact-rust-library-indentation"
+        },
+        {
+          "name": "qualify",
+          "id": "repository.qualify-rust-library-item-paths"
+        },
+        {
+          "name": "readRustLibraryStyles",
+          "id": "repository.read-rust-library-styles"
+        },
+        {
+          "name": "packageRustLibrary",
+          "id": "repository.package-rust-library"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete text certificate library builders",
+    "files": {
+      "experiments/rust-text-certificate-library/generate.mjs": [
+        {
+          "name": "createTextCertificateLibrary",
+          "id": "repository.create-text-certificate-library"
+        },
+        {
+          "name": "materializeTextCertificateLibrary",
+          "id": "repository.materialize-text-certificate-library"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete text certificate library policy",
+    "files": {
+      "experiments/rust-text-certificate-library/data/policy.lino": [
+        {
+          "name": "model",
+          "id": "repository.complete-text-certificate-library-policy"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete text certificate library role definitions",
+    "files": {
+      "experiments/rust-text-certificate-library/generate.mjs": [
+        {
+          "name": "definitions",
+          "id": "repository.text-certificate-library-definition-ownership"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete text certificate library role originalHeaders",
+    "files": {
+      "experiments/rust-text-certificate-library/generate.mjs": [
+        {
+          "name": "originalHeaders",
+          "id": "repository.text-certificate-library-original-headers"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete text certificate library role originalTrailingSource",
+    "files": {
+      "experiments/rust-text-certificate-library/generate.mjs": [
+        {
+          "name": "originalTrailingSource",
+          "id": "repository.text-certificate-library-original-trailing-source"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete text certificate library role modules",
+    "files": {
+      "experiments/rust-text-certificate-library/generate.mjs": [
+        {
+          "name": "modules",
+          "id": "repository.text-certificate-library-complete-modules"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete library shared source hash",
+    "files": {
+      "experiments/rust-text-certificate-library/generate.mjs": [
+        {
+          "name": "sha256",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "library unchanged shared source name admission",
+    "files": {
+      "js/scripts/rust-library-packaging.mjs": [
+        {
+          "name": "acceptRustPureUnitName",
+          "id": "translation.accept-rust-pure-unit-name"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete library shared tooling packageRustLibrary",
+    "files": {
+      "experiments/rust-text-certificate-library/generate.mjs": [
+        {
+          "name": "packageRustLibrary",
+          "id": "repository.package-rust-library"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete library shared tooling readRustLibraryNesting",
+    "files": {
+      "experiments/rust-text-certificate-library/generate.mjs": [
+        {
+          "name": "readRustLibraryNesting",
+          "id": "repository.read-rust-library-nesting"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete library original definition aliases",
+    "files": {
+      "experiments/rust-text-certificate-library/data/library.lino": [
+        {
+          "name": "acceptRustPureUnitCallModel",
+          "id": "translation.accept-rust-pure-unit-call-model"
+        },
+        {
+          "name": "accept_rust_pure_unit_call_model",
+          "id": "translation.accept-rust-pure-unit-call-model"
+        },
+        {
+          "name": "acceptRustPureUnitNameCharacter",
+          "id": "translation.accept-rust-pure-unit-name-character"
+        },
+        {
+          "name": "accept_rust_pure_unit_name_character",
+          "id": "translation.accept-rust-pure-unit-name-character"
+        },
+        {
+          "name": "acceptRustPureUnitName",
+          "id": "translation.accept-rust-pure-unit-name"
+        },
+        {
+          "name": "accept_rust_pure_unit_name",
+          "id": "translation.accept-rust-pure-unit-name"
+        },
+        {
+          "name": "acceptRustPureUnitHeaderForm",
+          "id": "translation.accept-rust-pure-unit-header-form"
+        },
+        {
+          "name": "accept_rust_pure_unit_header_form",
+          "id": "translation.accept-rust-pure-unit-header-form"
+        },
+        {
+          "name": "acceptRustPureUnitBodyForm",
+          "id": "translation.accept-rust-pure-unit-body-form"
+        },
+        {
+          "name": "accept_rust_pure_unit_body_form",
+          "id": "translation.accept-rust-pure-unit-body-form"
+        },
+        {
+          "name": "acceptRustPureUnitPathForm",
+          "id": "translation.accept-rust-pure-unit-path-form"
+        },
+        {
+          "name": "accept_rust_pure_unit_path_form",
+          "id": "translation.accept-rust-pure-unit-path-form"
+        },
+        {
+          "name": "acceptRustPureUnitContext",
+          "id": "translation.accept-rust-pure-unit-context"
+        },
+        {
+          "name": "accept_rust_pure_unit_context",
+          "id": "translation.accept-rust-pure-unit-context"
+        },
+        {
+          "name": "acceptRustPureUnitVisibility",
+          "id": "translation.accept-rust-pure-unit-visibility"
+        },
+        {
+          "name": "accept_rust_pure_unit_visibility",
+          "id": "translation.accept-rust-pure-unit-visibility"
+        },
+        {
+          "name": "acceptRustPureUnitContainer",
+          "id": "translation.accept-rust-pure-unit-container"
+        },
+        {
+          "name": "accept_rust_pure_unit_container",
+          "id": "translation.accept-rust-pure-unit-container"
+        },
+        {
+          "name": "acceptRustPureUnitSourceOffset",
+          "id": "translation.accept-rust-pure-unit-source-offset"
+        },
+        {
+          "name": "accept_rust_pure_unit_source_offset",
+          "id": "translation.accept-rust-pure-unit-source-offset"
+        },
+        {
+          "name": "acceptRustTextValueProjectionModel",
+          "id": "repository.accept-rust-text-value-projection-model"
+        },
+        {
+          "name": "accept_rust_text_value_projection_model",
+          "id": "repository.accept-rust-text-value-projection-model"
+        },
+        {
+          "name": "readRustTextValueProjectionDomain",
+          "id": "repository.read-rust-text-value-projection-domain"
+        },
+        {
+          "name": "read_rust_text_value_projection_domain",
+          "id": "repository.read-rust-text-value-projection-domain"
+        },
+        {
+          "name": "acceptRustTextValueProjectionOperation",
+          "id": "repository.accept-rust-text-value-projection-operation"
+        },
+        {
+          "name": "accept_rust_text_value_projection_operation",
+          "id": "repository.accept-rust-text-value-projection-operation"
+        },
+        {
+          "name": "acceptRustOwnedLocalStateModel",
+          "id": "translation.accept-rust-owned-local-state-model"
+        },
+        {
+          "name": "accept_rust_owned_local_state_model",
+          "id": "translation.accept-rust-owned-local-state-model"
+        },
+        {
+          "name": "acceptRustOwnedLocalValueType",
+          "id": "translation.accept-rust-owned-local-value-type"
+        },
+        {
+          "name": "accept_rust_owned_local_value_type",
+          "id": "translation.accept-rust-owned-local-value-type"
+        },
+        {
+          "name": "acceptRustOwnedLocalExpression",
+          "id": "translation.accept-rust-owned-local-expression"
+        },
+        {
+          "name": "accept_rust_owned_local_expression",
+          "id": "translation.accept-rust-owned-local-expression"
+        },
+        {
+          "name": "acceptRustOwnedLocalBinaryOperation",
+          "id": "translation.accept-rust-owned-local-binary-operation"
+        },
+        {
+          "name": "accept_rust_owned_local_binary_operation",
+          "id": "translation.accept-rust-owned-local-binary-operation"
+        },
+        {
+          "name": "acceptRustOwnedLocalSourceOperation",
+          "id": "translation.accept-rust-owned-local-source-operation"
+        },
+        {
+          "name": "accept_rust_owned_local_source_operation",
+          "id": "translation.accept-rust-owned-local-source-operation"
+        },
+        {
+          "name": "acceptRustOwnedLocalContainer",
+          "id": "translation.accept-rust-owned-local-container"
+        },
+        {
+          "name": "accept_rust_owned_local_container",
+          "id": "translation.accept-rust-owned-local-container"
+        },
+        {
+          "name": "acceptRustOwnedLocalRecordValue",
+          "id": "translation.accept-rust-owned-local-record-value"
+        },
+        {
+          "name": "accept_rust_owned_local_record_value",
+          "id": "translation.accept-rust-owned-local-record-value"
+        },
+        {
+          "name": "acceptRustOwnedLocalSourceSpan",
+          "id": "translation.accept-rust-owned-local-source-span"
+        },
+        {
+          "name": "accept_rust_owned_local_source_span",
+          "id": "translation.accept-rust-owned-local-source-span"
+        },
+        {
+          "name": "acceptRustOwnedLocalTextUnits",
+          "id": "translation.accept-rust-owned-local-text-units"
+        },
+        {
+          "name": "accept_rust_owned_local_text_units",
+          "id": "translation.accept-rust-owned-local-text-units"
+        },
+        {
+          "name": "renderRustOwnedLocalTextInput",
+          "id": "translation.render-rust-owned-local-text-input"
+        },
+        {
+          "name": "render_rust_owned_local_text_input",
+          "id": "translation.render-rust-owned-local-text-input"
+        },
+        {
+          "name": "readTextCertificateKnownSymbol",
+          "id": "repository.read-text-certificate-known-symbol"
+        },
+        {
+          "name": "read_text_certificate_known_symbol",
+          "id": "repository.read-text-certificate-known-symbol"
+        },
+        {
+          "name": "acceptTextCertificateStorage",
+          "id": "repository.accept-text-certificate-storage"
+        },
+        {
+          "name": "accept_text_certificate_storage",
+          "id": "repository.accept-text-certificate-storage"
+        },
+        {
+          "name": "findTextCertificateRow",
+          "id": "repository.find-text-certificate-row"
+        },
+        {
+          "name": "find_text_certificate_row",
+          "id": "repository.find-text-certificate-row"
+        },
+        {
+          "name": "acceptTextCertificateNumbers",
+          "id": "repository.accept-text-certificate-numbers"
+        },
+        {
+          "name": "accept_text_certificate_numbers",
+          "id": "repository.accept-text-certificate-numbers"
+        },
+        {
+          "name": "acceptTextCertificateIdentities",
+          "id": "repository.accept-text-certificate-identities"
+        },
+        {
+          "name": "accept_text_certificate_identities",
+          "id": "repository.accept-text-certificate-identities"
+        },
+        {
+          "name": "acceptTextCertificateName",
+          "id": "repository.accept-text-certificate-name"
+        },
+        {
+          "name": "accept_text_certificate_name",
+          "id": "repository.accept-text-certificate-name"
+        },
+        {
+          "name": "readTextCertificateDomain",
+          "id": "repository.read-text-certificate-domain"
+        },
+        {
+          "name": "read_text_certificate_domain",
+          "id": "repository.read-text-certificate-domain"
+        },
+        {
+          "name": "readTextCertificateType",
+          "id": "repository.read-text-certificate-type"
+        },
+        {
+          "name": "read_text_certificate_type",
+          "id": "repository.read-text-certificate-type"
+        },
+        {
+          "name": "readTextCertificatePrefix",
+          "id": "repository.read-text-certificate-prefix"
+        },
+        {
+          "name": "read_text_certificate_prefix",
+          "id": "repository.read-text-certificate-prefix"
+        },
+        {
+          "name": "readTextCertificateSuffix",
+          "id": "repository.read-text-certificate-suffix"
+        },
+        {
+          "name": "read_text_certificate_suffix",
+          "id": "repository.read-text-certificate-suffix"
+        },
+        {
+          "name": "readTextCertificateOperation",
+          "id": "repository.read-text-certificate-operation"
+        },
+        {
+          "name": "read_text_certificate_operation",
+          "id": "repository.read-text-certificate-operation"
+        },
+        {
+          "name": "readTextCertificateDomainName",
+          "id": "repository.read-text-certificate-domain-name"
+        },
+        {
+          "name": "read_text_certificate_domain_name",
+          "id": "repository.read-text-certificate-domain-name"
+        },
+        {
+          "name": "acceptTextCertificateAllocation",
+          "id": "repository.accept-text-certificate-allocation"
+        },
+        {
+          "name": "accept_text_certificate_allocation",
+          "id": "repository.accept-text-certificate-allocation"
+        },
+        {
+          "name": "matchTextCertificateSyntax",
+          "id": "repository.match-text-certificate-syntax"
+        },
+        {
+          "name": "match_text_certificate_syntax",
+          "id": "repository.match-text-certificate-syntax"
+        },
+        {
+          "name": "acceptTextCertificateToken",
+          "id": "repository.accept-text-certificate-token"
+        },
+        {
+          "name": "accept_text_certificate_token",
+          "id": "repository.accept-text-certificate-token"
+        },
+        {
+          "name": "acceptTextCertificateOperation",
+          "id": "repository.accept-text-certificate-operation"
+        },
+        {
+          "name": "accept_text_certificate_operation",
+          "id": "repository.accept-text-certificate-operation"
+        },
+        {
+          "name": "acceptTextCertificateTokenOperation",
+          "id": "repository.accept-text-certificate-token-operation"
+        },
+        {
+          "name": "accept_text_certificate_token_operation",
+          "id": "repository.accept-text-certificate-token-operation"
+        },
+        {
+          "name": "acceptTextCertificateCondition",
+          "id": "repository.accept-text-certificate-condition"
+        },
+        {
+          "name": "accept_text_certificate_condition",
+          "id": "repository.accept-text-certificate-condition"
+        },
+        {
+          "name": "checkRustTextCertificate",
+          "id": "repository.check-rust-text-certificate"
+        },
+        {
+          "name": "check_rust_text_certificate",
+          "id": "repository.check-rust-text-certificate"
+        },
+        {
+          "name": "ml_acceptRustOwnedLocalTextUnits_loop1_result",
+          "id": "repository.rust-owned-local-text-scalar-sequence-control-result"
+        },
+        {
+          "name": "MlAcceptRustOwnedLocalTextUnitsLoop1Result",
+          "id": "repository.rust-owned-local-text-scalar-sequence-control-result"
+        },
+        {
+          "name": "ml_acceptRustOwnedLocalTextUnits_loop1",
+          "id": "repository.continue-rust-owned-local-text-scalar-sequence"
+        },
+        {
+          "name": "ml_accept_rust_owned_local_text_units_loop1",
+          "id": "repository.continue-rust-owned-local-text-scalar-sequence"
+        },
+        {
+          "name": "ml_acceptTextCertificateStorage_loop5_result",
+          "id": "repository.text-certificate-symbol-dictionary-storage-control-result"
+        },
+        {
+          "name": "MlAcceptTextCertificateStorageLoop5Result",
+          "id": "repository.text-certificate-symbol-dictionary-storage-control-result"
+        },
+        {
+          "name": "ml_acceptTextCertificateStorage_loop7_result",
+          "id": "repository.text-certificate-prior-symbol-uniqueness-control-result"
+        },
+        {
+          "name": "MlAcceptTextCertificateStorageLoop7Result",
+          "id": "repository.text-certificate-prior-symbol-uniqueness-control-result"
+        },
+        {
+          "name": "ml_acceptTextCertificateStorage_loop8",
+          "id": "repository.continue-text-certificate-symbol-unit-comparison"
+        },
+        {
+          "name": "ml_accept_text_certificate_storage_loop8",
+          "id": "repository.continue-text-certificate-symbol-unit-comparison"
+        },
+        {
+          "name": "ml_acceptTextCertificateStorage_loop7",
+          "id": "repository.continue-text-certificate-prior-symbol-uniqueness"
+        },
+        {
+          "name": "ml_accept_text_certificate_storage_loop7",
+          "id": "repository.continue-text-certificate-prior-symbol-uniqueness"
+        },
+        {
+          "name": "ml_acceptTextCertificateStorage_join6",
+          "id": "repository.text-certificate-fixed-symbol-comparison-control-result"
+        },
+        {
+          "name": "MlAcceptTextCertificateStorageJoin6",
+          "id": "repository.text-certificate-fixed-symbol-comparison-control-result"
+        },
+        {
+          "name": "ml_acceptTextCertificateStorage_loop9_result",
+          "id": "repository.text-certificate-fixed-symbol-units-control-result"
+        },
+        {
+          "name": "MlAcceptTextCertificateStorageLoop9Result",
+          "id": "repository.text-certificate-fixed-symbol-units-control-result"
+        },
+        {
+          "name": "ml_acceptTextCertificateStorage_loop9",
+          "id": "repository.continue-text-certificate-fixed-symbol-units"
+        },
+        {
+          "name": "ml_accept_text_certificate_storage_loop9",
+          "id": "repository.continue-text-certificate-fixed-symbol-units"
+        },
+        {
+          "name": "ml_acceptTextCertificateStorage_loop5",
+          "id": "repository.continue-text-certificate-symbol-dictionary-storage"
+        },
+        {
+          "name": "ml_accept_text_certificate_storage_loop5",
+          "id": "repository.continue-text-certificate-symbol-dictionary-storage"
+        },
+        {
+          "name": "ml_acceptTextCertificateStorage_loop4_result",
+          "id": "repository.text-certificate-structural-identity-coverage-control-result"
+        },
+        {
+          "name": "MlAcceptTextCertificateStorageLoop4Result",
+          "id": "repository.text-certificate-structural-identity-coverage-control-result"
+        },
+        {
+          "name": "ml_acceptTextCertificateStorage_join10",
+          "id": "repository.text-certificate-role-occurrence-count-control-result"
+        },
+        {
+          "name": "MlAcceptTextCertificateStorageJoin10",
+          "id": "repository.text-certificate-role-occurrence-count-control-result"
+        },
+        {
+          "name": "ml_acceptTextCertificateStorage_loop11",
+          "id": "repository.continue-text-certificate-token-identity-count"
+        },
+        {
+          "name": "ml_accept_text_certificate_storage_loop11",
+          "id": "repository.continue-text-certificate-token-identity-count"
+        },
+        {
+          "name": "ml_acceptTextCertificateStorage_loop12",
+          "id": "repository.continue-text-certificate-declaration-identity-count"
+        },
+        {
+          "name": "ml_accept_text_certificate_storage_loop12",
+          "id": "repository.continue-text-certificate-declaration-identity-count"
+        },
+        {
+          "name": "ml_acceptTextCertificateStorage_loop13",
+          "id": "repository.continue-text-certificate-parameter-identity-count"
+        },
+        {
+          "name": "ml_accept_text_certificate_storage_loop13",
+          "id": "repository.continue-text-certificate-parameter-identity-count"
+        },
+        {
+          "name": "ml_acceptTextCertificateStorage_loop14",
+          "id": "repository.continue-text-certificate-signature-identity-count"
+        },
+        {
+          "name": "ml_accept_text_certificate_storage_loop14",
+          "id": "repository.continue-text-certificate-signature-identity-count"
+        },
+        {
+          "name": "ml_acceptTextCertificateStorage_loop15",
+          "id": "repository.continue-text-certificate-source-position-identity-count"
+        },
+        {
+          "name": "ml_accept_text_certificate_storage_loop15",
+          "id": "repository.continue-text-certificate-source-position-identity-count"
+        },
+        {
+          "name": "ml_acceptTextCertificateStorage_loop16",
+          "id": "repository.continue-text-certificate-expression-identity-count"
+        },
+        {
+          "name": "ml_accept_text_certificate_storage_loop16",
+          "id": "repository.continue-text-certificate-expression-identity-count"
+        },
+        {
+          "name": "ml_acceptTextCertificateStorage_loop17",
+          "id": "repository.continue-text-certificate-operation-identity-count"
+        },
+        {
+          "name": "ml_accept_text_certificate_storage_loop17",
+          "id": "repository.continue-text-certificate-operation-identity-count"
+        },
+        {
+          "name": "ml_acceptTextCertificateStorage_loop4",
+          "id": "repository.continue-text-certificate-structural-identity-coverage"
+        },
+        {
+          "name": "ml_accept_text_certificate_storage_loop4",
+          "id": "repository.continue-text-certificate-structural-identity-coverage"
+        },
+        {
+          "name": "ml_acceptTextCertificateStorage_loop3_result",
+          "id": "repository.text-certificate-source-position-storage-ranges-control-result"
+        },
+        {
+          "name": "MlAcceptTextCertificateStorageLoop3Result",
+          "id": "repository.text-certificate-source-position-storage-ranges-control-result"
+        },
+        {
+          "name": "ml_acceptTextCertificateStorage_loop3",
+          "id": "repository.continue-text-certificate-source-position-storage-ranges"
+        },
+        {
+          "name": "ml_accept_text_certificate_storage_loop3",
+          "id": "repository.continue-text-certificate-source-position-storage-ranges"
+        },
+        {
+          "name": "ml_acceptTextCertificateStorage_loop2_result",
+          "id": "repository.text-certificate-operation-part-ranges-control-result"
+        },
+        {
+          "name": "MlAcceptTextCertificateStorageLoop2Result",
+          "id": "repository.text-certificate-operation-part-ranges-control-result"
+        },
+        {
+          "name": "ml_acceptTextCertificateStorage_loop2",
+          "id": "repository.continue-text-certificate-operation-part-ranges"
+        },
+        {
+          "name": "ml_accept_text_certificate_storage_loop2",
+          "id": "repository.continue-text-certificate-operation-part-ranges"
+        },
+        {
+          "name": "ml_findTextCertificateRow_loop18_result",
+          "id": "repository.text-certificate-unique-row-search-control-result"
+        },
+        {
+          "name": "MlFindTextCertificateRowLoop18Result",
+          "id": "repository.text-certificate-unique-row-search-control-result"
+        },
+        {
+          "name": "ml_findTextCertificateRow_loop18",
+          "id": "repository.continue-text-certificate-unique-row-search"
+        },
+        {
+          "name": "ml_find_text_certificate_row_loop18",
+          "id": "repository.continue-text-certificate-unique-row-search"
+        },
+        {
+          "name": "ml_acceptTextCertificateNumbers_loop19_result",
+          "id": "repository.text-certificate-numeric-domain-scan-control-result"
+        },
+        {
+          "name": "MlAcceptTextCertificateNumbersLoop19Result",
+          "id": "repository.text-certificate-numeric-domain-scan-control-result"
+        },
+        {
+          "name": "ml_acceptTextCertificateNumbers_loop19",
+          "id": "repository.continue-text-certificate-numeric-domain-scan"
+        },
+        {
+          "name": "ml_accept_text_certificate_numbers_loop19",
+          "id": "repository.continue-text-certificate-numeric-domain-scan"
+        },
+        {
+          "name": "ml_acceptTextCertificateIdentities_loop20_result",
+          "id": "repository.text-certificate-row-identity-scan-control-result"
+        },
+        {
+          "name": "MlAcceptTextCertificateIdentitiesLoop20Result",
+          "id": "repository.text-certificate-row-identity-scan-control-result"
+        },
+        {
+          "name": "ml_acceptTextCertificateIdentities_loop20",
+          "id": "repository.continue-text-certificate-row-identity-scan"
+        },
+        {
+          "name": "ml_accept_text_certificate_identities_loop20",
+          "id": "repository.continue-text-certificate-row-identity-scan"
+        },
+        {
+          "name": "ml_acceptTextCertificateName_loop21_result",
+          "id": "repository.text-certificate-name-character-scan-control-result"
+        },
+        {
+          "name": "MlAcceptTextCertificateNameLoop21Result",
+          "id": "repository.text-certificate-name-character-scan-control-result"
+        },
+        {
+          "name": "ml_acceptTextCertificateName_loop21",
+          "id": "repository.continue-text-certificate-name-character-scan"
+        },
+        {
+          "name": "ml_accept_text_certificate_name_loop21",
+          "id": "repository.continue-text-certificate-name-character-scan"
+        },
+        {
+          "name": "ml_readTextCertificateDomain_loop22_result",
+          "id": "repository.text-certificate-reference-layer-scan-control-result"
+        },
+        {
+          "name": "MlReadTextCertificateDomainLoop22Result",
+          "id": "repository.text-certificate-reference-layer-scan-control-result"
+        },
+        {
+          "name": "ml_readTextCertificateDomain_loop22",
+          "id": "repository.continue-text-certificate-reference-layer-scan"
+        },
+        {
+          "name": "ml_read_text_certificate_domain_loop22",
+          "id": "repository.continue-text-certificate-reference-layer-scan"
+        },
+        {
+          "name": "ml_matchTextCertificateSyntax_loop23_result",
+          "id": "repository.text-certificate-fixed-syntax-scan-control-result"
+        },
+        {
+          "name": "MlMatchTextCertificateSyntaxLoop23Result",
+          "id": "repository.text-certificate-fixed-syntax-scan-control-result"
+        },
+        {
+          "name": "ml_matchTextCertificateSyntax_loop23",
+          "id": "repository.continue-text-certificate-fixed-syntax-scan"
+        },
+        {
+          "name": "ml_match_text_certificate_syntax_loop23",
+          "id": "repository.continue-text-certificate-fixed-syntax-scan"
+        },
+        {
+          "name": "ml_acceptTextCertificateOperation_loop24_result",
+          "id": "repository.text-certificate-operation-part-comparison-control-result"
+        },
+        {
+          "name": "MlAcceptTextCertificateOperationLoop24Result",
+          "id": "repository.text-certificate-operation-part-comparison-control-result"
+        },
+        {
+          "name": "ml_acceptTextCertificateOperation_loop24",
+          "id": "repository.continue-text-certificate-operation-part-comparison"
+        },
+        {
+          "name": "ml_accept_text_certificate_operation_loop24",
+          "id": "repository.continue-text-certificate-operation-part-comparison"
+        },
+        {
+          "name": "ml_acceptTextCertificateTokenOperation_loop25_result",
+          "id": "repository.text-certificate-operation-token-comparison-control-result"
+        },
+        {
+          "name": "MlAcceptTextCertificateTokenOperationLoop25Result",
+          "id": "repository.text-certificate-operation-token-comparison-control-result"
+        },
+        {
+          "name": "ml_acceptTextCertificateTokenOperation_loop25",
+          "id": "repository.continue-text-certificate-operation-token-comparison"
+        },
+        {
+          "name": "ml_accept_text_certificate_token_operation_loop25",
+          "id": "repository.continue-text-certificate-operation-token-comparison"
+        },
+        {
+          "name": "ml_checkRustTextCertificate_loop27_result",
+          "id": "repository.text-certificate-complete-function-scan-control-result"
+        },
+        {
+          "name": "MlCheckRustTextCertificateLoop27Result",
+          "id": "repository.text-certificate-complete-function-scan-control-result"
+        },
+        {
+          "name": "ml_checkRustTextCertificate_join31",
+          "id": "repository.text-certificate-input-condition-selection-control-result"
+        },
+        {
+          "name": "MlCheckRustTextCertificateJoin31",
+          "id": "repository.text-certificate-input-condition-selection-control-result"
+        },
+        {
+          "name": "ml_checkRustTextCertificate_join30",
+          "id": "repository.text-certificate-body-domain-selection-control-result"
+        },
+        {
+          "name": "MlCheckRustTextCertificateJoin30",
+          "id": "repository.text-certificate-body-domain-selection-control-result"
+        },
+        {
+          "name": "ml_checkRustTextCertificate_loop29_result",
+          "id": "repository.text-certificate-function-parameter-scan-control-result"
+        },
+        {
+          "name": "MlCheckRustTextCertificateLoop29Result",
+          "id": "repository.text-certificate-function-parameter-scan-control-result"
+        },
+        {
+          "name": "ml_checkRustTextCertificate_loop29",
+          "id": "repository.continue-text-certificate-function-parameter-scan"
+        },
+        {
+          "name": "ml_check_rust_text_certificate_loop29",
+          "id": "repository.continue-text-certificate-function-parameter-scan"
+        },
+        {
+          "name": "ml_checkRustTextCertificate_loop28_result",
+          "id": "repository.text-certificate-prior-declaration-name-scan-control-result"
+        },
+        {
+          "name": "MlCheckRustTextCertificateLoop28Result",
+          "id": "repository.text-certificate-prior-declaration-name-scan-control-result"
+        },
+        {
+          "name": "ml_checkRustTextCertificate_loop28",
+          "id": "repository.continue-text-certificate-prior-declaration-name-scan"
+        },
+        {
+          "name": "ml_check_rust_text_certificate_loop28",
+          "id": "repository.continue-text-certificate-prior-declaration-name-scan"
+        },
+        {
+          "name": "ml_checkRustTextCertificate_loop27",
+          "id": "repository.continue-text-certificate-complete-function-scan"
+        },
+        {
+          "name": "ml_check_rust_text_certificate_loop27",
+          "id": "repository.continue-text-certificate-complete-function-scan"
+        },
+        {
+          "name": "ml_checkRustTextCertificate_loop26_result",
+          "id": "repository.text-certificate-symbol-unit-bound-scan-control-result"
+        },
+        {
+          "name": "MlCheckRustTextCertificateLoop26Result",
+          "id": "repository.text-certificate-symbol-unit-bound-scan-control-result"
+        },
+        {
+          "name": "ml_checkRustTextCertificate_loop26",
+          "id": "repository.continue-text-certificate-symbol-unit-bound-scan"
+        },
+        {
+          "name": "ml_check_rust_text_certificate_loop26",
+          "id": "repository.continue-text-certificate-symbol-unit-bound-scan"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned text certificate model controls",
+    "files": {
+      "experiments/rust-text-certificate-adapter/model.test.mjs": [
+        {
+          "name": "execute",
+          "id": "repository.execute-owned-text-certificate-test-artifact"
+        },
+        {
+          "name": "refuse",
+          "id": "repository.require-owned-text-certificate-test-refusal"
+        },
+        {
+          "name": "retarget",
+          "id": "repository.change-owned-text-certificate-test-input"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned text shared saved field reader",
+    "files": {
+      "experiments/rust-text-certificate-adapter/model.test.mjs": [
+        {
+          "name": "field",
+          "id": "repository.read-text-certificate-test-field"
+        }
+      ],
+      "experiments/rust-text-certificate-adapter/raw-identity.test.mjs": [
+        {
+          "name": "field",
+          "id": "repository.read-text-certificate-test-field"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned text shared saved field replacement",
+    "files": {
+      "experiments/rust-text-certificate-adapter/model.test.mjs": [
+        {
+          "name": "replaceField",
+          "id": "repository.replace-text-certificate-test-field"
+        }
+      ],
+      "experiments/rust-text-certificate-adapter/raw-identity.test.mjs": [
+        {
+          "name": "replaceField",
+          "id": "repository.replace-text-certificate-test-field"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned text proof control entry",
+    "files": {
+      "experiments/rust-text-certificate-adapter/model.test.mjs": [
+        {
+          "name": "proofId",
+          "id": "repository.read-owned-text-certificate-test-proof"
+        }
+      ],
+      "experiments/rust-text-certificate-adapter/raw-identity.test.mjs": [
+        {
+          "name": "proofId",
+          "id": "repository.read-owned-text-certificate-test-proof"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned text raw identity controls",
+    "files": {
+      "experiments/rust-text-certificate-adapter/raw-identity.test.mjs": [
+        {
+          "name": "rows",
+          "id": "repository.read-owned-text-certificate-test-rows"
+        },
+        {
+          "name": "attach",
+          "id": "repository.attach-owned-text-certificate-test-proof"
+        },
+        {
+          "name": "cloneRecord",
+          "id": "repository.clone-owned-text-certificate-test-record"
+        },
+        {
+          "name": "scalar",
+          "id": "repository.create-owned-text-certificate-test-scalar"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned raw certificate controls",
+    "files": {
+      "experiments/rust-raw-binding-certificate-adapter/model.test.mjs": [
+        {
+          "name": "field",
+          "id": "repository.read-owned-raw-certificate-test-field"
+        },
+        {
+          "name": "replaceChild",
+          "id": "repository.replace-owned-raw-certificate-test-target"
+        },
+        {
+          "name": "cloneRecord",
+          "id": "repository.clone-owned-raw-certificate-test-record"
+        },
+        {
+          "name": "execute",
+          "id": "repository.execute-owned-raw-certificate-test-artifact"
+        },
+        {
+          "name": "refused",
+          "id": "repository.require-owned-raw-certificate-test-refusal"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete Rust library structural controls",
+    "files": {
+      "js/tests/translation-rust-library-packaging.test.js": [
+        {
+          "name": "tokens",
+          "id": "repository.read-rust-library-test-tokens"
+        },
+        {
+          "name": "styled",
+          "id": "repository.render-rust-library-test-styles"
+        }
+      ]
+    }
+  }
+];
+const normalizeOwnedSourceAdapterName=name=>name.replace(/([a-z0-9])([A-Z])/gu,'$1-$2').replaceAll('_','-').replaceAll(' ','-').toLowerCase().replace(/\bcst\b/gu,'concrete-source-tree').replace(/\bstr\b/gu,'string-slice').replace(/^retarget$/u,'change-target').replace(/^tokenize-/u,'read-tokens-').replace(/\bsha256\b/gu,'secure-hash-algorithm-two-hundred-fifty-six').replace(/\bml\b/gu,'meta-language').replace(/\bid\b/gu,'identity').replace(/\b(loop|join)([0-9]+)\b/gu,(whole,kind,digits)=>{const words={1:'one',2:'two',3:'three',4:'four',5:'five',6:'six',7:'seven',8:'eight',9:'nine',10:'ten',11:'eleven',12:'twelve',13:'thirteen',14:'fourteen',15:'fifteen',16:'sixteen',17:'seventeen',18:'eighteen',19:'nineteen',20:'twenty',21:'twenty-one',22:'twenty-two',23:'twenty-three',24:'twenty-four',25:'twenty-five',26:'twenty-six',27:'twenty-seven',28:'twenty-eight',29:'twenty-nine',30:'thirty',31:'thirty-one'};return words[digits]?kind+'-'+words[digits]:whole;});
+const OWNED_SOURCE_ADAPTER_SOURCE_TEXTS=new Map();
+const OWNED_SOURCE_ADAPTER_NAME_INVENTORIES=OWNED_SOURCE_ADAPTER_NAME_BINDINGS.map(({inventory,files})=>({
+ inventory,files:Object.keys(files),
+ extract:(raw,file)=>{let text=raw;if(file.endsWith('.lino')){const saved=OWNED_SOURCE_ADAPTER_SOURCE_TEXTS.get(file);if(!saved||saved.raw!==raw)OWNED_SOURCE_ADAPTER_SOURCE_TEXTS.set(file,{raw,text:JSON.stringify(readStructuredDataLino(raw))});text=OWNED_SOURCE_ADAPTER_SOURCE_TEXTS.get(file).text;}return files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeOwnedSourceAdapterName(name));},
+ recordOf:name=>Object.values(files).flat().find(entry=>normalizeOwnedSourceAdapterName(entry.name)===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
