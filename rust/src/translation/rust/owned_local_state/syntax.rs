@@ -128,7 +128,7 @@ impl RustParser {
                 match &pattern {
                     LocalBindingPattern::Name(binding) => {
                         self.origins
-                            .bind(&binding.name, &value, path, origin.as_ref())?
+                            .bind(&binding.name, &value, path, origin.as_ref())?;
                     }
                     LocalBindingPattern::Tuple { items, .. } => {
                         let name = state.fresh(self);

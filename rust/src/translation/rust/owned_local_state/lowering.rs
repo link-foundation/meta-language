@@ -161,7 +161,7 @@ impl LocalState {
                 let slot = environment.get_mut(target).unwrap();
                 let previous = slot.name.clone();
                 let name = self.fresh(parser);
-                slot.name = name.clone();
+                slot.name.clone_from(&name);
                 slot.available = true;
                 self.writes += 1;
                 self.bind(json!({"name":name,"sourceName":target,"role":"replacement","mutable":false,"previous":previous,"type":STRING,"initializer":null,"index":null}));
@@ -195,7 +195,7 @@ impl LocalState {
                 )?;
                 let name = self.fresh(parser);
                 let slot = environment.get_mut(&mutable_slot).unwrap();
-                slot.name = name.clone();
+                slot.name.clone_from(&name);
                 slot.available = true;
                 self.bind(json!({"name":name,"sourceName":mutable_slot,"role":"join","mutable":false,"previous":previous,"type":STRING,"initializer":null,"index":null}));
                 let value = LocalExpression {
