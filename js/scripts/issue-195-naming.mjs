@@ -5190,7 +5190,420 @@ const JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES=JAVASCRIPT_LINE_BOUNDARY_NAME_BI
  extract:(raw,file)=>{const text=file.endsWith('.lino')?decodeURIComponent(raw):raw;return files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeJavaScriptLineBoundaryName(name));},
  recordOf:name=>Object.values(files).flat().find(entry=>normalizeJavaScriptLineBoundaryName(entry.name)===name).id,
 }));
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES]);
+// Actual paired owned tuple initialization source and helper identities.
+const OWNED_TUPLE_CALL_NAME_BINDINGS=[
+  {
+    "inventory": "owned tuple initialization shared decisions",
+    "files": {
+      "js/src/translation/rust-owned-tuple-call-rules.js": [
+        {
+          "name": "acceptRustOwnedTupleCallModel",
+          "id": "translation.accept-rust-owned-tuple-call-model"
+        },
+        {
+          "name": "acceptRustOwnedTupleCallInitializer",
+          "id": "translation.accept-rust-owned-tuple-call-initializer"
+        }
+      ],
+      "rust/src/translation/rust/owned_tuple_call_rules.rs": [
+        {
+          "name": "accept_rust_owned_tuple_call_model",
+          "id": "translation.accept-rust-owned-tuple-call-model"
+        },
+        {
+          "name": "accept_rust_owned_tuple_call_initializer",
+          "id": "translation.accept-rust-owned-tuple-call-initializer"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned tuple initialization operations",
+    "files": {
+      "js/src/translation/rust-owned-tuple-calls.js": [
+        {
+          "name": "ownedTupleCallPairPosition",
+          "id": "translation.check-owned-tuple-call-source-position"
+        },
+        {
+          "name": "ownedTupleCallParameters",
+          "id": "translation.check-owned-tuple-call-parameters"
+        },
+        {
+          "name": "checkOwnedTupleCallTarget",
+          "id": "translation.check-owned-tuple-call-target"
+        }
+      ],
+      "rust/src/translation/owned_local_state.rs": [
+        {
+          "name": "owned_tuple_call_position",
+          "id": "translation.check-owned-tuple-call-source-position"
+        },
+        {
+          "name": "tuple_call_policy",
+          "id": "translation.read-owned-tuple-call-policy"
+        }
+      ],
+      "rust/src/translation/owned_local_state/tuple_calls.rs": [
+        {
+          "name": "parameters",
+          "id": "translation.check-owned-tuple-call-parameters"
+        },
+        {
+          "name": "target",
+          "id": "translation.check-owned-tuple-call-target"
+        },
+        {
+          "name": "declarations",
+          "id": "translation.check-owned-tuple-call-declaration-map"
+        }
+      ],
+      "rust/src/translation/owned_local_state/validation.rs": [
+        {
+          "name": "validate_entry",
+          "id": "translation.validate-rust-owned-local-declaration"
+        }
+      ],
+      "rust/src/translation/rust/owned_local_state/expressions.rs": [
+        {
+          "name": "initializer_expression",
+          "id": "translation.lower-owned-tuple-call-initializer-expression"
+        }
+      ],
+      "rust/src/typed_program_links/codec_owned_local_state.rs": [
+        {
+          "name": "interpretation",
+          "id": "translation.read-owned-local-state-interpretation"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "program declaration ownership operations",
+    "files": {
+      "js/src/typed-program-declaration-owners.js": [
+        {
+          "name": "checkProgramDeclarationOwners",
+          "id": "translation.check-program-declaration-owners"
+        },
+        {
+          "name": "orderedItems",
+          "id": "translation.check-program-declaration-item-order"
+        },
+        {
+          "name": "containsOwnedLoop",
+          "id": "translation.check-program-owned-loop-presence"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned tuple initialization policy",
+    "files": {
+      "js/src/translation/rust-owned-tuple-calls.js": [
+        {
+          "name": "RUST_OWNED_TUPLE_CALL_POLICY",
+          "id": "translation.rust-owned-tuple-call-policy"
+        }
+      ],
+      "experiments/generate-rust-owned-tuple-call-rules.mjs": [
+        {
+          "name": "ownedTupleCallPolicy",
+          "id": "translation.rust-owned-tuple-call-policy"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned tuple initialization discovery context",
+    "files": {
+      "js/src/translation/rust.js": [
+        {
+          "name": "ownedTupleCallDiscovery",
+          "id": "translation.owned-tuple-call-discovery-context"
+        }
+      ],
+      "rust/src/translation/rust.rs": [
+        {
+          "name": "owned_tuple_call_discovery",
+          "id": "translation.owned-tuple-call-discovery-context"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned tuple initialization source fact roles",
+    "files": {
+      "js/src/translation/rust-owned-local-state-reader.js": [
+        {
+          "name": "tupleInitialization",
+          "id": "translation.owned-tuple-initialization-interpretation-field"
+        },
+        {
+          "name": "target",
+          "id": "translation.owned-tuple-initializer-target-name-field"
+        },
+        {
+          "name": "fieldModes",
+          "id": "translation.owned-tuple-initializer-field-mode-list-field"
+        }
+      ],
+      "rust/src/translation/rust/owned_local_state.rs": [
+        {
+          "name": "tupleInitialization",
+          "id": "translation.owned-tuple-initialization-interpretation-field"
+        }
+      ],
+      "rust/src/translation/rust/owned_local_state/lowering.rs": [
+        {
+          "name": "target",
+          "id": "translation.owned-tuple-initializer-target-name-field"
+        },
+        {
+          "name": "fieldModes",
+          "id": "translation.owned-tuple-initializer-field-mode-list-field"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "extracted owned local domain operations",
+    "files": {
+      "js/src/translation/rust-owned-local-domains.js": [
+        {
+          "name": "ownedLocalType",
+          "id": "translation.check-rust-owned-local-value-type"
+        },
+        {
+          "name": "ownedLocalPair",
+          "id": "translation.check-rust-owned-local-pair-type"
+        },
+        {
+          "name": "ownedLocalPosition",
+          "id": "translation.check-rust-owned-local-source-position"
+        },
+        {
+          "name": "acceptProgramIntegralMetadata",
+          "id": "translation.accept-program-integral-metadata"
+        },
+        {
+          "name": "acceptRustOwnedLocalValueType",
+          "id": "translation.accept-rust-owned-local-value-type"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned local expression context implementations",
+    "files": {
+      "rust/src/translation/rust/owned_local_state/expressions.rs": [
+        {
+          "name": "expression_in_context",
+          "id": "translation.lower-rust-owned-local-expression"
+        }
+      ],
+      "js/src/translation/rust-owned-local-state-reader.js": [
+        {
+          "name": "expression",
+          "id": "translation.lower-rust-owned-local-expression"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned tuple initialization rule authoring operations",
+    "files": {
+      "experiments/generate-rust-owned-tuple-call-rules.mjs": [
+        {
+          "name": "rustOwnedTupleCallRules",
+          "id": "repository.generate-rust-owned-tuple-call-rules"
+        },
+        {
+          "name": "generateNativeRules",
+          "id": "repository.generate-native-owned-tuple-call-rules"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned tuple initialization fixture operations",
+    "files": {
+      "experiments/generate-owned-tuple-call-fixture.mjs": [
+        {
+          "name": "ownedTupleCallFixture",
+          "id": "repository.create-owned-tuple-call-fixture"
+        }
+      ],
+      "experiments/generate-owned-tuple-call-native-fixture.mjs": [
+        {
+          "name": "ownedTupleCallNativeFixture",
+          "id": "repository.create-owned-tuple-call-native-fixture"
+        }
+      ],
+      "experiments/owned-tuple-call.test.mjs": [
+        {
+          "name": "reload",
+          "id": "repository.reload-owned-tuple-call-test-program"
+        },
+        {
+          "name": "execute",
+          "id": "repository.execute-owned-tuple-call-test-program"
+        },
+        {
+          "name": "call",
+          "id": "repository.find-owned-tuple-call-test-initializer"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned tuple initialization public consumer operations",
+    "files": {
+      "js/tests/translation-owned-tuple-call-public-declaration-contracts.test.js": [
+        {
+          "name": "runConsumer",
+          "id": "repository.run-owned-tuple-call-public-consumer"
+        },
+        {
+          "name": "findTupleInitializer",
+          "id": "repository.find-public-owned-tuple-call-initializer"
+        },
+        {
+          "name": "executeTupleCall",
+          "id": "repository.execute-public-owned-tuple-call"
+        },
+        {
+          "name": "checkTupleCallPacket",
+          "id": "repository.check-public-owned-tuple-call-packet"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned tuple initialization native test operations",
+    "files": {
+      "rust/tests/unit/translation_rust_owned_tuple_calls.rs": [
+        {
+          "name": "fixture",
+          "id": "repository.read-owned-tuple-call-test-fixture"
+        },
+        {
+          "name": "archives",
+          "id": "repository.read-owned-tuple-call-native-test-archives"
+        },
+        {
+          "name": "model",
+          "id": "repository.read-owned-tuple-call-test-model"
+        },
+        {
+          "name": "archive",
+          "id": "repository.reload-owned-tuple-call-native-test-archive"
+        },
+        {
+          "name": "program",
+          "id": "repository.read-owned-tuple-call-native-test-program"
+        },
+        {
+          "name": "selected",
+          "id": "repository.parse-owned-tuple-call-native-test-source"
+        },
+        {
+          "name": "function_mut",
+          "id": "repository.read-mutable-owned-tuple-test-function"
+        },
+        {
+          "name": "initializer",
+          "id": "repository.find-native-owned-tuple-test-initializer"
+        },
+        {
+          "name": "retarget",
+          "id": "repository.change-owned-tuple-test-target"
+        },
+        {
+          "name": "observe_javascript",
+          "id": "repository.observe-owned-tuple-test-javascript"
+        },
+        {
+          "name": "expected",
+          "id": "repository.read-owned-tuple-test-expected-output"
+        },
+        {
+          "name": "javascript_archive",
+          "id": "repository.emit-owned-tuple-test-archive-through-javascript"
+        },
+        {
+          "name": "relation",
+          "id": "repository.read-owned-tuple-test-relation"
+        },
+        {
+          "name": "declaration",
+          "id": "repository.read-owned-tuple-test-declaration"
+        },
+        {
+          "name": "replace_field",
+          "id": "repository.replace-owned-tuple-test-field"
+        },
+        {
+          "name": "scalar_metadata",
+          "id": "repository.create-owned-tuple-test-scalar-metadata"
+        },
+        {
+          "name": "refuses",
+          "id": "repository.require-owned-tuple-test-refusal"
+        },
+        {
+          "name": "rust_observations",
+          "id": "repository.execute-owned-tuple-test-rust-artifacts"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "retained Rust constant predicate source operations",
+    "files": {
+      "experiments/generate-rust-const-function-fixture.mjs": [
+        {
+          "name": "readRustConstPredicateSources",
+          "id": "repository.read-rust-constant-predicate-sources"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "evidence workflow dependency test operations",
+    "files": {
+      "js/tests/issue-195-evidence-dag.test.js": [
+        {
+          "name": "read",
+          "id": "repository.read-evidence-workflow-source"
+        },
+        {
+          "name": "matrixEntries",
+          "id": "repository.read-evidence-workflow-matrix-entries"
+        },
+        {
+          "name": "needs",
+          "id": "repository.read-evidence-workflow-job-dependencies"
+        },
+        {
+          "name": "condition",
+          "id": "repository.read-evidence-workflow-job-condition"
+        },
+        {
+          "name": "assertEvidenceDagConservation",
+          "id": "repository.check-evidence-workflow-dependency-conservation"
+        }
+      ]
+    }
+  }
+];
+const normalizeOwnedTupleCallName=name=>name.replace(/([a-z])([A-Z])/gu,'$1-$2').replaceAll('_','-').toLowerCase().replace(/\bmut\b/gu,'mutable').replace(/^retarget$/u,'change-target').replace(/\bconst\b/gu,'constant').replace(/\bdag\b/gu,'directed-acyclic-graph');
+const OWNED_TUPLE_CALL_NAME_INVENTORIES=OWNED_TUPLE_CALL_NAME_BINDINGS.map(({inventory,files})=>({
+ inventory,files:Object.keys(files),
+ extract:(raw,file)=>{const text=file.endsWith('.lino')?decodeURIComponent(raw):raw;return files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeOwnedTupleCallName(name));},
+ recordOf:name=>Object.values(files).flat().find(entry=>normalizeOwnedTupleCallName(entry.name)===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
