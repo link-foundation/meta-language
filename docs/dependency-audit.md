@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 114 | 113 | 1 | 0 |
+| Generators | 119 | 118 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 36 | 0 | 0 | 36 |
+| Published artifact contents | 40 | 0 | 0 | 40 |
 
 ## JavaScript engines
 
@@ -629,6 +629,9 @@ they are.
 | `js/scripts/generate-rust-primitive-owner-fixtures.mjs` | `js/scripts/generate-rust-primitive-owner-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-primitive-owner-rules.mjs` | `js/scripts/generate-rust-primitive-owner-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-product-rules.mjs` | `js/scripts/generate-rust-product-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-public-pure-unit-call-fixtures.mjs` | `js/scripts/generate-rust-public-pure-unit-call-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-pure-unit-call-fixtures.mjs` | `js/scripts/generate-rust-pure-unit-call-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-pure-unit-call-rules.mjs` | `js/scripts/generate-rust-pure-unit-call-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-read-only-query-fixtures.mjs` | `js/scripts/generate-rust-read-only-query-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-read-only-query-rules.mjs` | `js/scripts/generate-rust-read-only-query-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-scalar-parameter-fixtures.mjs` | `js/scripts/generate-rust-scalar-parameter-fixtures.mjs` | `script` |  | derived | current |  |
@@ -646,6 +649,8 @@ they are.
 | `js/scripts/generate-self-translation-report.mjs` | `js/scripts/generate-self-translation-report.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-shared-numeric-function-fixtures.mjs` | `js/scripts/generate-shared-numeric-function-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-shared-numeric-function-rules.mjs` | `js/scripts/generate-shared-numeric-function-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-source-span-fixtures.mjs` | `js/scripts/generate-source-span-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-source-span-rules.mjs` | `js/scripts/generate-source-span-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-stateful-extra-fixtures.mjs` | `js/scripts/generate-stateful-extra-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-structured-data-link-rules.mjs` | `js/scripts/generate-structured-data-link-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-structured-data-migration-revisions.mjs` | `js/scripts/generate-structured-data-migration-revisions.mjs` | `script` |  | derived | current |  |
@@ -749,12 +754,16 @@ they are.
 | `src/data/resource-description-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-borrowed-call-interface.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-empty-options.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-owned-local-state.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-primitive-owners.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-pure-unit-calls.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-read-only-queries.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-scalar-loops.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-source-header-emission.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-source-signatures.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-type-namespace.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/semantic-lexicon.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/source-span.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/typed-program-links-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/typescript-erasure.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/typescript-portable-typing.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
