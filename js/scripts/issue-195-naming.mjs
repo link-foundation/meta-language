@@ -20856,7 +20856,210 @@ const ARCHIVE_LIFECYCLE_NAME_INVENTORIES=ARCHIVE_LIFECYCLE_NAME_BINDINGS.map(({i
  extract:(text,file)=>files[file].filter(({name})=>text.includes(name)).map(({name})=>normalizeArchiveLifecycleName(name)),
  recordOf:name=>Object.values(files).flat().find(entry=>normalizeArchiveLifecycleName(entry.name)===name).id,
 }));
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES]);
+// Complete source archive graph lifetime and selected record profile meanings.
+const ARCHIVE_RELOAD_NAME_BINDINGS=[
+  {
+    "inventory": "create complete rust source archives",
+    "files": {
+      "experiments/original-link-complete-table-projection/archive-transport.mjs": [
+        {
+          "name": "createCompleteRustSourceArchives",
+          "id": "repository.create-complete-rust-source-archives"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/native-observations.mjs": [
+        {
+          "name": "createCompleteRustSourceArchives",
+          "id": "repository.create-complete-rust-source-archives"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/raw-native-observations.mjs": [
+        {
+          "name": "createCompleteRustSourceArchives",
+          "id": "repository.create-complete-rust-source-archives"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/native-observations.test.mjs": [
+        {
+          "name": "createCompleteRustSourceArchives",
+          "id": "repository.create-complete-rust-source-archives"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "replay complete rust source archives",
+    "files": {
+      "experiments/original-link-complete-table-projection/archive-transport.mjs": [
+        {
+          "name": "replayCompleteRustSourceArchives",
+          "id": "repository.replay-complete-rust-source-archives"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/native-observations.mjs": [
+        {
+          "name": "replayCompleteRustSourceArchives",
+          "id": "repository.replay-complete-rust-source-archives"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/raw-native-observations.mjs": [
+        {
+          "name": "replayCompleteRustSourceArchives",
+          "id": "repository.replay-complete-rust-source-archives"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/native-observations.test.mjs": [
+        {
+          "name": "replayCompleteRustSourceArchives",
+          "id": "repository.replay-complete-rust-source-archives"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete source archive pair",
+    "files": {
+      "experiments/original-link-complete-table-projection/archive-transport.mjs": [
+        {
+          "name": "archives",
+          "id": "repository.complete-source-archive-pair"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/native-observations.mjs": [
+        {
+          "name": "archives",
+          "id": "repository.complete-source-archive-pair"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/raw-native-observations.mjs": [
+        {
+          "name": "archives",
+          "id": "repository.complete-source-archive-pair"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/native-observations.test.mjs": [
+        {
+          "name": "archives",
+          "id": "repository.complete-source-archive-pair"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete source parser callback",
+    "files": {
+      "experiments/original-link-complete-table-projection/archive-transport.mjs": [
+        {
+          "name": "parseSource",
+          "id": "repository.complete-source-parser-callback"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/native-observations.mjs": [
+        {
+          "name": "parseSource",
+          "id": "repository.complete-source-parser-callback"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/raw-native-observations.mjs": [
+        {
+          "name": "parseSource",
+          "id": "repository.complete-source-parser-callback"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/native-observations.test.mjs": [
+        {
+          "name": "parseSource",
+          "id": "repository.complete-source-parser-callback"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "source archive phase callback",
+    "files": {
+      "experiments/original-link-complete-table-projection/archive-transport.mjs": [
+        {
+          "name": "onPhase",
+          "id": "repository.source-archive-phase-callback"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/native-observations.mjs": [
+        {
+          "name": "onPhase",
+          "id": "repository.source-archive-phase-callback"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/raw-native-observations.mjs": [
+        {
+          "name": "onPhase",
+          "id": "repository.source-archive-phase-callback"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/native-observations.test.mjs": [
+        {
+          "name": "onPhase",
+          "id": "repository.source-archive-phase-callback"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete source archive record bound",
+    "files": {
+      "experiments/original-link-complete-table-projection/archive-transport.mjs": [
+        {
+          "name": "recordLimit",
+          "id": "repository.complete-source-archive-record-bound"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/native-observations.test.mjs": [
+        {
+          "name": "recordLimit",
+          "id": "repository.complete-source-archive-record-bound"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "check complete source archive lifetime",
+    "files": {
+      "experiments/original-link-complete-table-projection/native-observations.test.mjs": [
+        {
+          "name": "complete source archives retain only encoded state before full graph reloads",
+          "id": "repository.check-complete-source-archive-lifetime"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "check complete source archive record profile",
+    "files": {
+      "experiments/original-link-complete-table-projection/native-observations.test.mjs": [
+        {
+          "name": "complete source archive profiles preserve every record without changing binary archive defaults",
+          "id": "repository.check-complete-source-archive-record-profile"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "check complete source archive failures",
+    "files": {
+      "experiments/original-link-complete-table-projection/native-observations.test.mjs": [
+        {
+          "name": "complete source archive failures retain byte limits and stop later replay phases",
+          "id": "repository.check-complete-source-archive-failures"
+        }
+      ]
+    }
+  }
+];
+const ARCHIVE_RELOAD_NAME_INVENTORIES=ARCHIVE_RELOAD_NAME_BINDINGS.map(({inventory,files})=>({
+ inventory,files:Object.keys(files),
+ extract:(text,file)=>files[file].filter(({name})=>text.includes(name)).map(({name})=>normalizeArchiveLifecycleName(name)),
+ recordOf:name=>Object.values(files).flat().find(entry=>normalizeArchiveLifecycleName(entry.name)===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
