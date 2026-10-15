@@ -57,10 +57,10 @@ fn render(node: &Value, tokens: &[Value], program: &Program) -> Result<String> {
         if let Some(previous) = previous {
             let word =
                 |token: &Value| matches!(token["kind"].as_str(), Some("identifier" | "number"));
-            if source_interval(&previous["span"], true)?.1
-                != source_interval(&token["span"], true)?.0
-                || word(previous) && word(token)
-            {
+            let previous_end = source_interval(&previous["span"], true)?.1;
+            let current_start = source_interval(&token["span"], true)?.0;
+            let has_source_gap = previous_end != current_start;
+            if has_source_gap || word(previous) && word(token) {
                 result.push(' ');
             }
         }
