@@ -1,5 +1,9 @@
 import { fileURLToPath } from 'node:url';
-import { checkProjectData, writeProjectData } from './project-data.mjs';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { checkProjectData, readProjectData, writeProjectData } from './project-data.mjs';
+import { DecoratorSet } from '../src/decorators.js';
 import { parseRust } from '../src/translation/rust.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitJavaScript } from '../src/translation/emit-javascript.js';
@@ -37,19 +41,34 @@ const refused = [
   ['borrowed-string-elements', 'fn main(){let values=vec!["borrowed"]; }'],
 ];
 export function rustArraySourceFixture() {
+  const policy = readProjectData(new URL('../src/translation/data/rust-cast-syntax.lino', import.meta.url));
+  const correction = policy.sourceCorrection;
+  const styles = DecoratorSet.fromLino(readFileSync(new URL('../../' + correction.decoratorFile, import.meta.url), 'utf8'));
+  const sha256 = source => createHash('sha256').update(source).digest('hex');
+  assert.equal(sha256(correction.originalSource), correction.originalSourceSha256, 'the exact historical source is authenticated');
   return {
     schemaVersion: 1, id: 'rust-array-source', sourceModel: 'immutable Rust value projection',
     premises: ['standard vector owners are resolved and unshadowed', 'elements are direct immutable scalar or owned string values', 'length observations explicitly select the binary64 Number model with as f64', 'source vector moves, array results and mutable borrowing require separate proofs'],
     cases: sources.map(([id, body, name, inputs, expected]) => {
-      const source = body + ' fn main(){}';
+      const originalSource = body + ' fn main(){}';
+      const source = styles.decorate('transformation', { fixture: 'rust-array-source', case: id, format: 'Rust', source: originalSource }).source;
+      let sourceCorrection;
+      if (id === correction.caseId) {
+        assert.equal(originalSource, correction.originalSource, 'the recorded correction owns the unchanged historical case');
+        assert.notEqual(source, originalSource, 'the recorded grouping decorator changes the positive source before parsing');
+        sourceCorrection = { model: policy.model, originalSource, originalSourceSha256: sha256(originalSource), correctedSourceSha256: sha256(source), decoratorId: correction.decoratorId, decoratorFile: correction.decoratorFile };
+      } else assert.equal(source, originalSource, 'unrelated source cases are unchanged');
       const surface = parseRust(source), program = checkProgram(surface);
       const definitions = emitRust(program).definitions.join('\n\n');
       const replay = checkProgram(parseRust(definitions + '\nfn main(){}'));
-      return { id, source, name, inputs, expected, surface: JSON.parse(JSON.stringify(surface)), javascript: emitJavaScript(program).text, rustDefinitions: definitions, replayJavaScript: emitJavaScript(replay).text };
+      return { id, source, name, inputs, expected, surface: JSON.parse(JSON.stringify(surface)), javascript: emitJavaScript(program).text, rustDefinitions: definitions, replayJavaScript: emitJavaScript(replay).text, ...(sourceCorrection ? { sourceCorrection } : {}) };
     }),
-    invalid: refused.map(([id, body]) => {
+    invalid: [...refused, [correction.invalidId, correction.originalSource]].map(([id, body]) => {
       const source = body + (body.includes('fn main()') ? '' : ' fn main(){}');
-      try { checkProgram(parseRust(source)); } catch (error) { return { id, source, kind: error.kind, reason: error.reason, span: error.span ?? null }; }
+      try { checkProgram(parseRust(source)); } catch (error) {
+        return { id, source, kind: error.kind, reason: error.reason, span: error.span ?? null,
+          ...(id === correction.invalidId ? { sourceCorrection: { caseId: correction.caseId, originalSourceSha256: correction.originalSourceSha256, decoratorId: correction.decoratorId } } : {}) };
+      }
       throw new Error(`source array admission unexpectedly accepted ${id}`);
     }),
   };

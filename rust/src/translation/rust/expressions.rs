@@ -4,13 +4,14 @@ mod control;
 mod read_only_queries;
 
 use super::array_rules::{accept_rust_source_array_element, accept_rust_source_array_owner};
+use super::cast_syntax_rules::{accept_rust_cast_following_token, read_rust_cast_syntax_message};
 use super::indirection_rules::accept_rust_source_box_owner;
 use super::{
     Alias, BOOL, BinaryOp, FLOAT, Flavor, Options, Result, RustParser, SArrayItem, SExpr, SNode,
-    SPattern, SPatternNode, SRow, STRING, SourceOrigin, Span, Token, TokenKind, Type, UnaryOp,
-    additive_op, binary, comparison_op, describe, format, is_if_or_match, joined, method_call,
-    multiplicative_op, operator, pattern_value, rust_fixed_type, rust_macro_message, span,
-    type_error, unsupported,
+    SPattern, SPatternNode, SRow, STRING, SourceOrigin, Span, Token, TokenKind, TranslationError,
+    Type, UnaryOp, additive_op, binary, comparison_op, describe, format, is_if_or_match, joined,
+    method_call, multiplicative_op, operator, pattern_value, rust_fixed_type, rust_macro_message,
+    span, type_error, unsupported,
 };
 
 impl RustParser {
@@ -115,6 +116,7 @@ impl RustParser {
         let mut value = self.unary(path, options)?;
         while self.cursor.is("as") {
             let token = self.cursor.advance();
+            let parenthesized_type = self.cursor.is("(");
             let to = self.parse_type()?;
             if !self.origins.collecting && !self.origins.current_type.wrappers.is_empty() {
                 return Err(unsupported(
@@ -123,6 +125,7 @@ impl RustParser {
                     span(&token, self.cursor.peek()),
                 ));
             }
+            self.require_cast_following_token(parenthesized_type)?;
             let range = joined(value.span, span(&token, self.cursor.peek()), &token);
             value = SExpr::new(
                 SNode::Cast {
@@ -135,6 +138,18 @@ impl RustParser {
             );
         }
         Ok(value)
+    }
+
+    fn require_cast_following_token(&self, parenthesized_type: bool) -> Result<()> {
+        let token = self.cursor.peek();
+        if accept_rust_cast_following_token(&token.value, parenthesized_type) {
+            Ok(())
+        } else {
+            Err(TranslationError::syntax(
+                read_rust_cast_syntax_message(),
+                Some(token.span()),
+            ))
+        }
     }
 
     pub(super) fn unary(&mut self, path: &[String], options: Options) -> Result<SExpr> {
@@ -533,6 +548,7 @@ impl RustParser {
             }
             self.cursor.advance();
             self.cursor.advance();
+            self.require_cast_following_token(false)?;
             length
         } else {
             let zero = SExpr::new(

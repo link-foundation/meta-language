@@ -24,6 +24,7 @@ use super::types::{BOOL, FLOAT, STRING, Type, UNIT, rust_fixed_type};
 use super::{Language, Span};
 
 mod array_rules;
+mod cast_syntax_rules;
 mod completion_rules;
 pub(crate) mod const_function_rules;
 pub(crate) mod const_functions;

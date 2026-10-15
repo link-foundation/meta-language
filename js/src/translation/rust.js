@@ -45,6 +45,7 @@ import {acceptRustOwnedTupleCallModel} from './rust-owned-tuple-call-rules.js';
 import {RUST_OWNED_LOCAL_STATE_POLICY} from './rust-owned-local-state.js';
 import {acceptRustConstFunctionModel} from './rust-const-function-rules.js';
 import {createRustConstFunctionProof} from './rust-const-functions.js';
+import { acceptRustCastFollowingToken, readRustCastSyntaxMessage } from './rust-cast-syntax-rules.js';
 
 const ACCEPTED_DERIVES = new Set(['Clone', 'Copy', 'Debug', 'PartialEq', 'Eq', 'Hash', 'PartialOrd', 'Ord']);
 const ACCEPTED_LINTS = new Set(['allow', 'warn', 'deny', 'expect', 'must_use', 'inline']);
@@ -963,11 +964,20 @@ class RustParser {
     let value = this.unary(path, options);
     while (this.cursor.is('as')) {
       const token = this.cursor.next();
+      const parenthesizedType = this.cursor.is('(');
       const to = this.type();
       if (!this.origins.collecting && this.origins.type.wrappers.length) throw unsupported('source cast', 'numeric casts require a direct source and target value type', span(token, this.cursor.peek()));
+      this.requireCastFollowingToken(parenthesizedType);
       value = { k: 'cast', arg: value, to, flavor: 'exact', span: joined(value, { span: span(token, this.cursor.peek()) }, token) };
     }
     return value;
+  }
+
+  requireCastFollowingToken(parenthesizedType) {
+    const token = this.cursor.peek();
+    if (!acceptRustCastFollowingToken(token.value, parenthesizedType)) {
+      throw new TranslationError('syntax', readRustCastSyntaxMessage(), token);
+    }
   }
 
   unary(path, options) {
@@ -1101,6 +1111,7 @@ class RustParser {
         const c = this.cursor;
         if (!c.is('as') || !c.is('f64', 1)) throw unsupported('Rust array length', 'the selected Number length model requires an explicit as f64 conversion', range);
         c.next(); c.next();
+        this.requireCastFollowingToken(false);
       } else node = { k: 'binary', op: 'eq', left: length, right: { k: 'num', value: '0', type: FLOAT, span: range }, span: range };
       return this.origins.mark(node, { type: method.value === 'len' ? FLOAT : BOOL, floatSourceModel: method.value === 'len' ? 'binary64 scalar' : null, path: [...this.modulePath], wrappers: [], textSourceModel: null, fields: null, proven: true, copyEvidence: true });
     }

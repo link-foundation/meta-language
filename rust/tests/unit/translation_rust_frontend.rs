@@ -283,6 +283,54 @@ fn the_original_vector_rejection_source_has_its_exact_supported_array_surface() 
 }
 
 #[test]
+fn cast_target_grouping_delimits_the_type_before_less_than_comparison() {
+    for body in [
+        "value as f64 < limit",
+        "value as f64 /* < trivia */ < limit",
+    ] {
+        let source = format!("fn below(value:f64,limit:f64)->bool {{ {body} }} fn main(){{}}");
+        let start = source.rfind('<').unwrap();
+        let type_start = source.find("as f64").unwrap() + 3;
+        assert_eq!(
+            failure(&source),
+            (
+                ErrorKind::Unsupported,
+                format!(
+                    "type f64<…>: generic types are outside the portable core at {type_start}..{start}"
+                )
+            )
+        );
+        let error = meta_language::translation::rust::parse_rust_with_primitive_owner_model(
+            &source,
+            "standard primitive Rust binary64 owner 1",
+            "",
+        )
+        .expect_err("a selected primitive owner still requires cast grouping");
+        assert_eq!(
+            (error.kind, error.message()),
+            (
+                ErrorKind::Syntax,
+                format!(
+                    "a cast before < requires parentheses at {start}..{}",
+                    start + 1
+                )
+            )
+        );
+    }
+    for body in [
+        "(value as f64) < limit",
+        "value as (f64) < limit",
+        "value as ((f64)) < limit",
+        "value as f64 <= limit",
+        "value as f64 >= limit",
+        "value as f64 > limit",
+    ] {
+        let source = format!("fn below(value:f64,limit:f64)->bool {{ {body} }} fn main(){{}}");
+        assert!(parse_rust(&source).is_ok(), "{source}");
+    }
+}
+
+#[test]
 fn lexer_errors_surface_unchanged() {
     assert_eq!(
         failure("fn f(n: u64) -> u64 {\n  \"abc\n}\nfn main() { println!(\"x\"); }\n"),
