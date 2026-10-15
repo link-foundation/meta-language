@@ -329,6 +329,10 @@ jobs:
         include:
           - group: generated
             generated_slice: second
+          - group: source-model-tables
+            generated_slice: first
+          - group: binary-candidates
+            generated_slice: first
     steps:
       - uses: actions/checkout@v7
         with:
@@ -1019,6 +1023,67 @@ jobs:
           TRANSLATION_CHECK_RUST: '0'
           SELF_TRANSLATION_CHECK_RUST: '0'
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/original-link-table-projection/projection.test.mjs
+
+      - name: Check complete original link table projection kernel
+        if: ${{ !cancelled() && matrix.group == 'source-model-tables' }}
+        working-directory: js
+        run: node ../experiments/original-link-complete-table-projection/generate.mjs --check
+
+      - name: Run complete original link table projection checks
+        if: ${{ !cancelled() && matrix.group == 'source-model-tables' }}
+        working-directory: js
+        env:
+          TRANSLATION_CHECK_RUST: '0'
+          SELF_TRANSLATION_CHECK_RUST: '0'
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 ../experiments/original-link-complete-table-projection/projection.test.mjs
+
+      - name: Run complete original link table native oracle contracts
+        if: ${{ !cancelled() && matrix.group == 'source-model-tables' }}
+        working-directory: js
+        env:
+          CI: 'true'
+          TRANSLATION_CHECK_RUST: '0'
+          SELF_TRANSLATION_CHECK_RUST: '0'
+          ORIGINAL_LINK_COMPLETE_TABLE_NATIVE: '0'
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 ../experiments/original-link-complete-table-projection/native-observations.test.mjs
+
+      - name: Setup Rust formatting for binary metadata candidate
+        if: ${{ !cancelled() && matrix.group == 'binary-candidates' }}
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Check generated binary metadata buffer candidate
+        if: ${{ !cancelled() && matrix.group == 'binary-candidates' }}
+        working-directory: js
+        run: node scripts/generate-link-network-binary-rules.mjs --metadata-buffer-candidate --check
+
+      - name: Run binary metadata buffer candidate checks
+        if: ${{ !cancelled() && matrix.group == 'binary-candidates' }}
+        working-directory: js
+        env:
+          TRANSLATION_CHECK_RUST: '0'
+          SELF_TRANSLATION_CHECK_RUST: '0'
+          BINARY_METADATA_BUFFER_NATIVE: '0'
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 ../experiments/binary-metadata-buffer/model.test.mjs
+
+      - name: Run binary metadata buffer candidate style checks
+        if: ${{ !cancelled() && matrix.group == 'binary-candidates' }}
+        working-directory: js
+        env:
+          TRANSLATION_CHECK_RUST: '0'
+          SELF_TRANSLATION_CHECK_RUST: '0'
+          BINARY_METADATA_BUFFER_NATIVE: '0'
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 ../experiments/binary-metadata-buffer/styles.test.mjs
+
+      - name: Run binary metadata buffer native oracle contracts
+        if: ${{ !cancelled() && matrix.group == 'binary-candidates' }}
+        working-directory: js
+        env:
+          TRANSLATION_CHECK_RUST: '0'
+          SELF_TRANSLATION_CHECK_RUST: '0'
+          BINARY_METADATA_BUFFER_NATIVE: '0'
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 ../experiments/binary-metadata-buffer/native-observations.test.mjs
 
       - name: Check generated whole Rust runtime shell rules
         if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}

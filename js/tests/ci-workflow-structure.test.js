@@ -481,6 +481,10 @@ test('the Rust coverage shards run the test suites and their merged report count
 // Hashes include all non-comment fields, commands, conditions and artifact
 // identities. Only the added matrix selector is removed for comparison.
 const PACKAGE_GROUPS = ['native-imports', 'native-fixtures', 'grammar', 'contracts', 'generated', 'source-models'];
+const ADDITIONAL_SOURCE_PACKAGE_CELLS = [
+  { group: 'source-model-tables', generated_slice: 'first' },
+  { group: 'binary-candidates', generated_slice: 'first' },
+];
 const ORIGINAL_PACKAGE_STEPS = [
   ["- uses: actions/checkout@v7", '6a4e22587a1c1ab9a1a80858c0b1d31d26580233f884253c583c43c5e5452297', 'all'],
   ["Simulate fresh merge with base branch", '7a5dda6e63b412064d418cdd82ae8a57f69b1f232aa50f2e72fe0a8f4461467e', 'all'],
@@ -947,6 +951,35 @@ const ORIGINAL_LINK_SYMBOL_ORACLE_PACKAGE_STEPS = [
     '698b65e2a0045c584b8e7c6305069b501a57048e6cf53df6da91120f83b107e5', 'source-models'],
 ];
 
+const COMPLETE_TABLE_PACKAGE_STEPS = [
+  ['Check complete original link table projection kernel',
+    'node ../experiments/original-link-complete-table-projection/generate.mjs --check',
+    '30c11ef000a16337cc347216d950c3ee36eceb2e136f7a84a471c18b22002b78', 'source-model-tables'],
+  ['Run complete original link table projection checks',
+    'node ../scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 ../experiments/original-link-complete-table-projection/projection.test.mjs',
+    'cf502913f15b101b3155cf8433a453464e22ccba5470a3bb64676dab3407aea4', 'source-model-tables'],
+  ['Run complete original link table native oracle contracts',
+    'node ../scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 ../experiments/original-link-complete-table-projection/native-observations.test.mjs',
+    '2b4c55ed3f961fed7ffc7f2d568e790572c9b9033f393fe1d4fb5eb1f8fea5f2', 'source-model-tables'],
+];
+
+const BINARY_METADATA_PACKAGE_STEPS = [
+  ['Setup Rust formatting for binary metadata candidate', '',
+    '68918d6dd7d379b6e5970cbd22d5621c0ed91b6cd790a2d606474c648aa5dbb6', 'binary-candidates'],
+  ['Check generated binary metadata buffer candidate',
+    'node scripts/generate-link-network-binary-rules.mjs --metadata-buffer-candidate --check',
+    '8aa8a2a1cf6ea4f7e729b56a2c969843c05d620e2d1227b2628c81592c65928f', 'binary-candidates'],
+  ['Run binary metadata buffer candidate checks',
+    'node ../scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 ../experiments/binary-metadata-buffer/model.test.mjs',
+    '71e441a0e138430dad15b29d987d193a74a68e4276430fda79f8af50d44c6676', 'binary-candidates'],
+  ['Run binary metadata buffer candidate style checks',
+    'node ../scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 ../experiments/binary-metadata-buffer/styles.test.mjs',
+    '7b17cfc69ffefb4a66b0be6b7489e7e0c5752fcc730659b0982d3e1b6767b0c1', 'binary-candidates'],
+  ['Run binary metadata buffer native oracle contracts',
+    'node ../scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 ../experiments/binary-metadata-buffer/native-observations.test.mjs',
+    '504f362f65879d332962e1fcbc260e9dc583fc58464058d8bbaabcf67e49163f', 'binary-candidates'],
+];
+
 // Exact physical owners of the unchanged generated checks. Shared Rust setup is
 // per runner; both compiler feedback producers and their upload remain together.
 const GENERATED_PACKAGE_SLICES = ['first', 'second'];
@@ -1106,8 +1139,12 @@ function packageCheckCells(checks) {
     '        generated_slice: [first]\n' +
     '        include:\n' +
     '          - group: generated\n' +
-    '            generated_slice: second\n';
-  assert.equal(matrix, expected, 'six logical groups expand to exactly seven required physical cells');
+    '            generated_slice: second\n' +
+    '          - group: source-model-tables\n' +
+    '            generated_slice: first\n' +
+    '          - group: binary-candidates\n' +
+    '            generated_slice: first\n';
+  assert.equal(matrix, expected, 'the seven published cells retain their order before exactly two new source-model cells');
   const groups = /^ {8}group: \[([^\]]+)\]$/mu.exec(matrix)[1].split(', ');
   const slice = /^ {8}generated_slice: \[([^\]]+)\]$/mu.exec(matrix)[1];
   const included = [...matrix.matchAll(/^ {10}- group: ([a-z-]+)\n {12}generated_slice: ([a-z]+)$/gmu)]
@@ -1118,8 +1155,8 @@ function packageCheckCells(checks) {
 function checkGeneratedPackageSlices(parsed) {
   const checks = parsed.get('package-checks');
   const cells = packageCheckCells(checks);
-  assert.equal(cells.length, 7);
-  assert.equal(new Set(cells.map(cell => `${cell.group}:${cell.generated_slice}`)).size, 7);
+  assert.equal(cells.length, 9);
+  assert.equal(new Set(cells.map(cell => `${cell.group}:${cell.generated_slice}`)).size, 9);
   const display = /^ {4}name: (.+)$/mu.exec(checks.header)?.[1];
   const secondLabel = "${{ matrix.generated_slice == 'second' && ' / second' || '' }}";
   assert.equal(display, 'JavaScript Package Checks (${{ matrix.group }})' + secondLabel);
@@ -1127,7 +1164,9 @@ function checkGeneratedPackageSlices(parsed) {
     .replace(secondLabel, cell.generated_slice === 'second' ? ' / second' : ''));
   assert.deepEqual(displayNames.slice(0, 6), PACKAGE_GROUPS.map(group => `JavaScript Package Checks (${group})`),
     'all six published check context names remain unchanged');
-  assert.equal(new Set(displayNames).size, 7);
+  assert.equal(displayNames[6], 'JavaScript Package Checks (generated) / second');
+  assert.deepEqual(cells.slice(7), ADDITIONAL_SOURCE_PACKAGE_CELLS);
+  assert.equal(new Set(displayNames).size, 9);
   const concurrencyGroups = [...checks.header.matchAll(/^ {6}group: (.+)$/gmu)].map(match => match[1]);
   assert.equal(concurrencyGroups.length, 1);
   const concurrency = concurrencyGroups[0];
@@ -1135,7 +1174,7 @@ function checkGeneratedPackageSlices(parsed) {
     'both generated runners require independent concurrency identities');
   const physicalNames = cells.map(cell => concurrency
     .replace('${{ matrix.group }}', cell.group).replace('${{ matrix.generated_slice }}', cell.generated_slice));
-  assert.equal(new Set(physicalNames).size, 7, 'a slice must never cancel a sibling runner');
+  assert.equal(new Set(physicalNames).size, 9, 'a slice must never cancel a sibling runner');
   assert.match(checks.header, /^ {6}cancel-in-progress: true$/mu);
   assert.match(checks.header, /^ {6}fail-fast: false$/mu);
   for (const id of ['package-checks', 'test']) {
@@ -1208,6 +1247,12 @@ test('the complete Rust text source oracle is mandatory after JavaScript and its
     .replace('|experiments/original-link-role-projection/', '')
     .replace('|experiments/original-link-symbol-projection/', '')
     .replace('|experiments/original-link-table-projection/', '')
+    .replace('|experiments/original-link-complete-table-projection/', '')
+    .replace('|experiments/binary-metadata-buffer/', '')
+    .replace('|js/scripts/generate-link-network-binary-rules\\.mjs$', '')
+    .replace('|js/scripts/binary-metadata-candidate-styles\\.mjs$', '')
+    .replace('|js/scripts/source-text-byte-library-style\\.mjs$', '')
+    .replace('|js/scripts/product-rule-style-corrections\\.mjs$', '')
     .replace('|experiments/fresh-number-array-collectors/', '')
     .replace('|js/scripts/rust-library-packaging\\.mjs$', '')
     .replace('|experiments/source-native-observations\\.mjs$', ''),
@@ -1676,6 +1721,168 @@ test('original linked symbol and table projection gates retain complete paths an
   }
 });
 
+const BINARY_METADATA_NATIVE_STEPS = [
+  ['Run complete binary metadata buffer candidate observations', '1ce517ff5e2b6cffb6240bd0b75c28f7164a9c81321d8af6cca9ad8c885e7fbf'],
+  ['Retain complete binary metadata buffer candidate observations', '099e5b6d8e1f8657c02ed895c60335cb694599318a0a788d8c04a0fcae1e252f'],
+];
+
+const COMPLETE_TABLE_NATIVE_STEPS = [
+  ['Run complete original link table observations', 'dfff389c0b95019abc112515449504b3e643e4870497e15a2c37cad5bb62c3de'],
+  ['Retain complete original link table observations', '01f4bc2789f501b76a7ed435cd51dff0db73831f074e6645e8072615f2be8df5'],
+];
+
+function checkBinaryMetadataNativeSteps(parsed) {
+  for (const [name, hash] of BINARY_METADATA_NATIVE_STEPS) {
+    const steps = parsed.get('test').steps.filter(step => step.name === name);
+    assert.equal(steps.length, 1, `the binary candidate native observation step executes once: ${name}`);
+    assert.equal(packageStepSignature(steps[0], true), hash, `binary candidate native step changed: ${name}`);
+  }
+}
+
+function checkCompleteTableNativeSteps(parsed) {
+  for (const [name, hash] of COMPLETE_TABLE_NATIVE_STEPS) {
+    const steps = parsed.get('test').steps.filter(step => step.name === name);
+    assert.equal(steps.length, 1, `the complete table native observation step executes once: ${name}`);
+    assert.equal(packageStepSignature(steps[0], true), hash, `complete table native step changed: ${name}`);
+  }
+}
+
+test('new source-model cells append to the original seven cells without moving any existing checks', () => {
+  const parsed = jobs('js.yml'), cells = checkGeneratedPackageSlices(parsed);
+  assert.deepEqual(cells.slice(7), ADDITIONAL_SOURCE_PACKAGE_CELLS);
+  checkPackageStepConservation(parsed);
+  const checks = parsed.get('package-checks').steps;
+  for (const table of [COMPLETE_TABLE_PACKAGE_STEPS, BINARY_METADATA_PACKAGE_STEPS]) {
+    const owner = table[0][3];
+    assert.deepEqual(checks.filter(step => step.text.includes(`matrix.group == '${owner}'`)).map(step => step.name),
+      table.map(([name]) => name), 'new generators, injected contracts and formatting prerequisites retain their producer order');
+  }
+  assert.ok(checks.findIndex(step => step.name === BINARY_METADATA_PACKAGE_STEPS[0][0]) <
+    checks.findIndex(step => step.name === BINARY_METADATA_PACKAGE_STEPS[1][0]));
+});
+
+test('new source-model cells reject missing, repeated, reassigned and weakened checks', () => {
+  for (const [name, , , owner] of [...COMPLETE_TABLE_PACKAGE_STEPS, ...BINARY_METADATA_PACKAGE_STEPS]) {
+    const mutate = change => {
+      const parsed = jobs('js.yml'), steps = parsed.get('package-checks').steps;
+      const index = steps.findIndex(step => step.name === name);
+      assert.ok(index >= 0);
+      change(steps, index);
+      assert.throws(() => checkPackageStepConservation(parsed), assert.AssertionError, name);
+    };
+    mutate((steps, index) => steps.splice(index, 1));
+    mutate((steps, index) => steps.push({ ...steps[index] }));
+    for (const [before, after] of [
+      ['!cancelled()', 'success()'],
+      [`matrix.group == '${owner}'`, "matrix.group == 'source-models'"],
+      [name, name + '\n        continue-on-error: true'],
+      ...(name.startsWith('Run ') ? [
+        ['--event test --', '--event build --'],
+        ['--test-concurrency=1', '--test-concurrency=2'],
+        ["TRANSLATION_CHECK_RUST: '0'", "TRANSLATION_CHECK_RUST: '1'"],
+        ...(name.includes('binary metadata') ? [["BINARY_METADATA_BUFFER_NATIVE: '0'", "BINARY_METADATA_BUFFER_NATIVE: '1'"]] : []),
+        ...(name === 'Run complete original link table native oracle contracts' ? [
+          ["CI: 'true'", "CI: 'false'"],
+          ["ORIGINAL_LINK_COMPLETE_TABLE_NATIVE: '0'", "ORIGINAL_LINK_COMPLETE_TABLE_NATIVE: '1'"],
+        ] : []),
+      ] : name.startsWith('Check ') ? [['--check', '--javascript-only']] : [['components: rustfmt, clippy', 'components: clippy']]),
+    ]) mutate((steps, index) => {
+      assert.ok(steps[index].text.includes(before), `${name}: ${before}`);
+      steps[index].text = steps[index].text.replace(before, after);
+    });
+  }
+  for (const cell of ADDITIONAL_SOURCE_PACKAGE_CELLS) {
+    const row = `          - group: ${cell.group}\n            generated_slice: first\n`;
+    for (const replacement of ['', row + row, row.replace('first', 'second'), row.replace(cell.group, 'source-models')]) {
+      const parsed = jobs('js.yml'), checks = parsed.get('package-checks');
+      assert.ok(checks.header.includes(row));
+      checks.header = checks.header.replace(row, replacement);
+      assert.throws(() => checkGeneratedPackageSlices(parsed), assert.AssertionError);
+    }
+  }
+});
+
+test('new native source paths preserve the exact old selector and reach every native prerequisite after JavaScript', () => {
+  const step = jobs('ci.yml').get('changes').steps.find(step => step.name === 'Detect whether the Rust workflow is needed');
+  assert.ok(step);
+  const additions = ['experiments/original-link-complete-table-projection/', 'experiments/binary-metadata-buffer/',
+    'js/scripts/generate-link-network-binary-rules\\.mjs$', 'js/scripts/binary-metadata-candidate-styles\\.mjs$',
+    'js/scripts/source-text-byte-library-style\\.mjs$', 'js/scripts/product-rule-style-corrections\\.mjs$'];
+  let original = step.run;
+  const classifier = /rust_paths='([^']+)'/u.exec(step.run)[1], matches = new RegExp(classifier, 'u');
+  for (const addition of additions) {
+    assert.equal(classifier.split('|' + addition).length, 2, `${addition} is registered exactly once`);
+    original = original.replace('|' + addition, '');
+  }
+  const inner = '|^js/scripts/(generate-link-network-binary-rules|binary-metadata-candidate-styles|source-text-byte-library-style|product-rule-style-corrections)\\.mjs$';
+  assert.equal(original.split(inner).length, 2);
+  original = original.replace(inner, '');
+  assert.equal(createHash('sha256').update(original).digest('hex'), 'd66cc6c3e7004b34a9914cefb9548150933b57939f700112f7704493906ed633',
+    'removing only the six registered additions restores every old selector byte');
+  const paths = [
+    'experiments/original-link-complete-table-projection/data/native-definitions.lino',
+    'experiments/original-link-complete-table-projection/projection.test.mjs',
+    'experiments/original-link-complete-table-projection/native-observations.mjs',
+    'experiments/original-link-complete-table-projection/native-observations.test.mjs',
+    'experiments/binary-metadata-buffer/native-observations.test.mjs',
+    'experiments/binary-metadata-buffer/native/part_0.rs',
+    ...additions.slice(2).map(file => file.replace('\\.', '.').replace(/\$$/u, '')),
+  ];
+  for (const file of paths) {
+    assert.ok(matches.test(file), file);
+    const chain = nativeInputJobChain([file]);
+    assert.deepEqual(chain.selection, { rust: true, native_test_inputs_changed: true }, file);
+    for (const job of ['outer', 'cargo-lock', 'check', 'test']) assert.equal(chain[job], true, `${file}: ${job}`);
+    assert.equal(nativeInputJobChain([file], { javascript: 'failure' }).outer, false, file);
+  }
+  for (const file of ['experiments/original-link-complete-table-projection/README.md',
+    'experiments/binary-metadata-buffer/README.md', 'experiments/original-link-complete-table-projection-other/model.mjs',
+    'experiments/binary-metadata-buffer-other/model.mjs', 'js/scripts/binary-metadata-candidate-styles.mjs.extra']) {
+    assert.equal(nativeInputJobChain([file]).selection.native_test_inputs_changed, false, file);
+  }
+});
+
+test('complete table and binary native observations require real native switches and mandatory exact-commit receipts', () => {
+  const families = [
+    [BINARY_METADATA_NATIVE_STEPS, checkBinaryMetadataNativeSteps, 'BINARY_METADATA_BUFFER_NATIVE', 'binary-metadata-buffer'],
+    [COMPLETE_TABLE_NATIVE_STEPS, checkCompleteTableNativeSteps, 'ORIGINAL_LINK_COMPLETE_TABLE_NATIVE', 'original-link-complete-table-projection'],
+  ];
+  for (const [table, check, nativeSwitch, directory] of families) {
+    check(jobs('rust.yml'));
+    for (const file of ['native-observations.mjs', 'native-observations.test.mjs']) assert.ok(read(`experiments/${directory}/${file}`).length > 0);
+    assert.ok(needs(jobs('ci.yml').get('rust')).includes('js'));
+    for (const [name] of table) {
+      const mutate = change => {
+        const parsed = jobs('rust.yml'), steps = parsed.get('test').steps;
+        const index = steps.findIndex(step => step.name === name);
+        assert.ok(index >= 0);
+        change(steps, index);
+        assert.throws(() => check(parsed), assert.AssertionError);
+      };
+      mutate((steps, index) => steps.splice(index, 1));
+      mutate((steps, index) => steps.push({ ...steps[index] }));
+      for (const [before, after] of [
+        ['!cancelled()', 'success()'],
+        ["matrix.suite == 'translation'", "matrix.suite == 'remaining'"],
+        ["matrix.os == 'ubuntu-latest'", "matrix.os == 'windows-latest'"],
+        [name, name + '\n        continue-on-error: true'],
+        ...(name.startsWith('Run ') ? [
+          ["CI: 'true'", "CI: 'false'"], [`${nativeSwitch}: '1'`, `${nativeSwitch}: '0'`],
+          ['--event test --', '--event build --'], ['--test-concurrency=1', '--test-concurrency=2'],
+          ['working-directory: ${{ github.workspace }}', 'working-directory: rust'],
+        ] : [
+          ['uses: actions/upload-artifact@v7', 'uses: actions/upload-artifact@v6'], ['${{ github.sha }}', '${{ github.ref }}'],
+          ['native-observations.lino', 'native-observations.json'], ['if-no-files-found: error', 'if-no-files-found: ignore'],
+          ['retention-days: 7', 'retention-days: 0'],
+        ]),
+      ]) mutate((steps, index) => {
+        assert.ok(steps[index].text.includes(before));
+        steps[index].text = steps[index].text.replace(before, after);
+      });
+    }
+  }
+});
+
 function checkPackageStepConservation(parsed) {
   const cells = checkGeneratedPackageSlices(parsed);
   const additions = [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS, ...TYPE_NAMESPACE_PACKAGE_STEPS,
@@ -1690,7 +1897,8 @@ function checkPackageStepConservation(parsed) {
     ...RUST_TEXT_VALUE_PROJECTION_GENERATOR_STEPS, ...RUST_TEXT_VALUE_PROJECTION_EXPERIMENT_STEPS,
     ...RUST_RAW_BINDING_IDENTIFIER_GENERATOR_STEPS, ...RUST_RAW_BINDING_IDENTIFIER_EXPERIMENT_STEPS,
     ...RUST_TEXT_CERTIFICATE_GENERATOR_STEPS, ...RUST_TEXT_CERTIFICATE_EXPERIMENT_STEPS,
-    ...OWNED_SOURCE_ADAPTER_PACKAGE_STEPS, ...ORIGINAL_LINK_PROJECTION_PACKAGE_STEPS, ...ORIGINAL_LINK_SYMBOL_ORACLE_PACKAGE_STEPS];
+    ...OWNED_SOURCE_ADAPTER_PACKAGE_STEPS, ...ORIGINAL_LINK_PROJECTION_PACKAGE_STEPS, ...ORIGINAL_LINK_SYMBOL_ORACLE_PACKAGE_STEPS,
+    ...COMPLETE_TABLE_PACKAGE_STEPS, ...BINARY_METADATA_PACKAGE_STEPS];
   const expected = new Map([
     ...ORIGINAL_PACKAGE_STEPS.map(([name, hash, owner]) => [name, { hash, owner }]),
     ...additions.map(([name, command, hash, owner]) => [name, { hash, owner, command, addition: true }]),
@@ -1718,7 +1926,8 @@ function checkPackageStepConservation(parsed) {
       if (id === 'package-checks') {
         assert.equal((step.text.match(/matrix\.group/gu) ?? []).length, baseline.owner === 'all' ? 0 : 1,
           `package step has an ambiguous group selector: ${step.name}`);
-        assert.ok(group === undefined || PACKAGE_GROUPS.includes(group));
+        assert.ok(group === undefined || PACKAGE_GROUPS.includes(group) ||
+          ADDITIONAL_SOURCE_PACKAGE_CELLS.some(cell => cell.group === group));
       }
       const slice = /matrix\.generated_slice == '([a-z]+)'/u.exec(step.text)?.[1];
       const executions = id === 'package-checks'
@@ -1763,7 +1972,7 @@ test('package partitions conserve every original check, condition and artifact o
 test('generated package slices preserve six logical groups and execute every check exactly once across seven cells', () => {
   const parsed = jobs('js.yml');
   const cells = checkGeneratedPackageSlices(parsed);
-  assert.deepEqual(cells, [
+  assert.deepEqual(cells.slice(0, 7), [
     ...PACKAGE_GROUPS.map(group => ({ group, generated_slice: 'first' })),
     { group: 'generated', generated_slice: 'second' },
   ]);

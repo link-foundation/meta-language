@@ -799,6 +799,40 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Run complete binary metadata buffer candidate observations
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        working-directory: ${{ github.workspace }}
+        env:
+          CI: 'true'
+          BINARY_METADATA_BUFFER_NATIVE: '1'
+        run: node scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 experiments/binary-metadata-buffer/native-observations.test.mjs
+
+      - name: Retain complete binary metadata buffer candidate observations
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: binary-metadata-buffer-native-observations-${{ github.sha }}
+          path: issue-195-artifacts/binary-metadata-buffer-native-observations.lino
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Run complete original link table observations
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        working-directory: ${{ github.workspace }}
+        env:
+          CI: 'true'
+          ORIGINAL_LINK_COMPLETE_TABLE_NATIVE: '1'
+        run: node scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 experiments/original-link-complete-table-projection/native-observations.test.mjs
+
+      - name: Retain complete original link table observations
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: original-link-complete-table-native-observations-${{ github.sha }}
+          path: issue-195-artifacts/original-link-complete-table-native-observations.lino
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Run doc tests
         if: ${{ !cancelled() && matrix.suite == 'remaining' }}
         shell: bash
