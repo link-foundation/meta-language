@@ -231,13 +231,19 @@ impl Link {
 }
 
 /// Mutable links network for CST, AST, semantic, and self-description links.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LinkNetwork {
     pub(crate) next_id: u64,
     pub(crate) links: BTreeMap<LinkId, Arc<Link>>,
     pub(crate) terms: BTreeMap<Arc<str>, LinkId>,
     pub(crate) concept_syntax: BTreeMap<(Arc<str>, Arc<str>), Arc<str>>,
     pub(crate) strings: BTreeSet<Arc<str>>,
+}
+
+impl Default for LinkNetwork {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl LinkNetwork {
