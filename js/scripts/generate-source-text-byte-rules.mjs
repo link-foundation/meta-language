@@ -17,10 +17,10 @@ if(process.argv.includes('--check')){if(readFileSync(javascript,'utf8')!==source
 else writeFileSync(javascript,source);
 const emitted=emitRust(checkProgram(parseJavaScript(source)));
 const raw=formatProductRuleSource(readSourceTextRustBlock(emitted.text,'mod','ml_array')+'\n\n'+readSourceTextRustBlock(emitted.text,'fn','is_integer')+'\n\n'+emitted.definitions.join('\n\n'));
-if(process.argv.includes('--update-styles')){
- const provider=readFileSync(new URL('../../rust/src/translation/frontend_rules.rs',import.meta.url),'utf8');
- writeFileSync(style,new DecoratorSet([{id:'source-text-byte-library-style',level:'emitter',order:0,when:[['format','Rust']],actions:readSourceTextByteLibraryStyles(raw,provider)}]).toLino());
-}
+const provider=readFileSync(new URL('../../rust/src/translation/frontend_rules.rs',import.meta.url),'utf8');
+const expectedStyle=new DecoratorSet([{id:'source-text-byte-library-style',level:'emitter',order:0,when:[['format','Rust']],actions:readSourceTextByteLibraryStyles(raw,provider)}]).toLino();
+if(process.argv.includes('--update-styles'))writeFileSync(style,expectedStyle);
+else if(readFileSync(style,'utf8')!==expectedStyle)throw new Error('source text byte library styles are stale; regenerate the recorded styles');
 const decorated=DecoratorSet.fromLino(readFileSync(style,'utf8')).decorate('emitter',{format:'Rust',source:raw}).source;
 const output='// Generated automatically from the linked source-text byte JavaScript kernel. Do not edit.\n'+formatProductRuleSource(decorated);
 if(process.argv.includes('--check')){if(readFileSync(native,'utf8')!==output)throw new Error('source-text native numeric rules are stale');}

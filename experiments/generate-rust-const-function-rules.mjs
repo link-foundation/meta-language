@@ -34,7 +34,7 @@ export function rustConstFunctionDecorators(policy=rustConstFunctionPolicy){retu
 async function generateNativeRules(){
  const [{parseJavaScript},{checkProgram},{emitRust}]=await Promise.all([import('../js/src/translation/javascript.js'),import('../js/src/translation/check.js'),import('../js/src/translation/emit-rust.js')]);
  const raw=emitRust(checkProgram(parseJavaScript(rustConstFunctionRules()))).definitions.join('\n\n'),style=new URL('../parity/self-translation/rust-const-function-rules-decorators.lino',import.meta.url);
- if(process.argv.includes('--update-styles')){
+ const expectedStyle=(()=>{
   const actions=[];let current=raw;const replace=(from,to)=>{if(!current.includes(from))throw new Error('const rule style target disappeared: '+from);actions.push({op:'replace',field:'source',from,to});current=current.split(from).join(to);};
   for(const parameter of['model','kind','operation','name'])replace(parameter+': String',parameter+': &str');
   for(const match of[...current.matchAll(/pub fn accept_rust_const_function_[\s\S]*?\n\}/gu)]){
@@ -51,8 +51,10 @@ async function generateNativeRules(){
    const header=definition.slice(0,opening+1).replace(/pub fn (accept_rust_const_function_(?:interval|finite_literal))\(/u,'pub const fn $1(');
    replace(definition,'/// Apply a shared closed const predicate source decision.\n#[must_use]\n'+header+'\n    '+body+'\n}');
   }
-  writeFileSync(style,new DecoratorSet([{id:'rust-const-function-library-style',level:'emitter',order:0,when:[['format','Rust']],actions}]).toLino());
- }
+  return new DecoratorSet([{id:'rust-const-function-library-style',level:'emitter',order:0,when:[['format','Rust']],actions}]).toLino();
+ })();
+ if(process.argv.includes('--update-styles'))writeFileSync(style,expectedStyle);
+ else if(readFileSync(style,'utf8')!==expectedStyle)throw new Error('const predicate library styles are stale; regenerate the recorded styles');
  const generated='// Generated through the checked JavaScript translator. Do not edit.\n'+formatProductRuleSource(DecoratorSet.fromLino(readFileSync(style,'utf8')).decorate('emitter',{format:'Rust',source:raw}).source),native=new URL('../rust/src/translation/rust/const_function_rules.rs',import.meta.url),copy=new URL('../rust/src/data/rust-const-functions.lino',import.meta.url),data=new URL('../js/src/translation/data/rust-const-functions.lino',import.meta.url);
  if(process.argv.includes('--check')){if(readFileSync(native,'utf8')!==generated||!readFileSync(copy).equals(readFileSync(data)))throw new Error('native const predicate rules or policy are stale');}else{writeFileSync(native,generated);writeFileSync(copy,readFileSync(data));}
 }

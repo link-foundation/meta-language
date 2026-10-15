@@ -30,7 +30,7 @@ if(!process.argv.includes('--javascript-only')){
  const {emitRust}=await import('../src/translation/emit-rust.js');
  const raw=emitRust(checkProgram(parseJavaScript(source))).definitions.join('\n\n');
  const style=new URL('../../parity/self-translation/program-numeric-metadata-rules-decorators.lino',import.meta.url);
- if(process.argv.includes('--update-styles')){
+ const expectedStyle=(()=>{
   const actions=[];
   for(const match of raw.matchAll(/pub fn (\w+)\([^]*?\n\}/gu)){
   const original=match[0],opening=original.indexOf('{'),body=original.slice(opening+1,-1);
@@ -60,8 +60,10 @@ if(!process.argv.includes('--javascript-only')){
   for(const parameter of['kind','field'])header=header.replace(parameter+': String',parameter+': &str');
   actions.push({op:'replace',field:'source',from:original,to:'/// Apply a shared integral metadata role decision.\n#[must_use]\n'+header+'\n    '+corrected+'\n}'});
   }
-  writeFileSync(style,new DecoratorSet([{id:'program-numeric-metadata-library-style',level:'emitter',order:0,when:[['format','Rust']],actions}]).toLino());
- }
+  return new DecoratorSet([{id:'program-numeric-metadata-library-style',level:'emitter',order:0,when:[['format','Rust']],actions}]).toLino();
+ })();
+ if(process.argv.includes('--update-styles'))writeFileSync(style,expectedStyle);
+ else if(readFileSync(style,'utf8')!==expectedStyle)throw new Error('numeric metadata library styles are stale; regenerate the recorded styles');
  const decorated=DecoratorSet.fromLino(readFileSync(style,'utf8')).decorate('emitter',{format:'Rust',source:raw}).source;
  const formatted=spawnSync('rustfmt',['--edition','2024','--emit','stdout'],{input:decorated,encoding:'utf8'});
  if(formatted.error||formatted.status!==0)throw formatted.error??new Error(formatted.stderr);
