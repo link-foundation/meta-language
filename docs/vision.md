@@ -358,6 +358,28 @@ actual emitted Rust definitions three times under the public model, using the
 canonical empty main. Coherent declaration renames and call-order edits change
 the actual target bindings. The complete runtime shell, standard-library calls,
 effects, arguments, attributes and broader visibility require separate proofs.
+The JavaScript-first `closed pure Rust unit runtime shell 1` draft is a
+separate whole-artifact interpretation for actual emitted closed Unit programs.
+It consumes the entire lexer-owned crate, retains its lint attribute, public
+helpers, private worker, standard argument scan, thread builder, stack request,
+closed move closure, spawn requirement, join test and process-exit failure branch
+as inspectable linked operations with original spans and actual binding links.
+The checked main retains an independent worker-context marker, so removing only
+the root proof cannot erase its source runtime operations and assumptions.
+Its `successful closed pure Unit worker observation 1` explicitly assumes
+successful argument enumeration, thread creation on a word size of at least 29
+bits, normal worker completion and join, and no asynchronous termination.
+Only ordered owned Unit calls, empty output and normal completion are projected
+under those assumptions; failure-path equivalence, allocation, timing and physical
+thread identity remain outside that observation. Rechecking reparses the complete
+saved operation graph and checks its Unit projection through the real checker.
+Coherent linked declaration, lexical-binding and bounded resource edits must pass
+both checks, and Rust emission renders the actual owned shell rather than replacing
+it with a default wrapper. No source envelope or selected-function substitute is
+used. Comments and layout are not a byte-preserving CST round trip under this
+semantic model. The old default and both Unit models retain their exact refusals.
+The paired native implementation and native execution remain required before this
+draft constitutes runtime parity support.
 Named source spans compare safe, nonnegative integral offsets by value, including
 equivalent decimal and exponent spellings. Source-position negative zero remains
 invalid while primitive floating-point negative zero retains its value.

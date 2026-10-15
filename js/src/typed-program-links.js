@@ -331,8 +331,14 @@ export function createTypedProgramLinks(source, language, options = {}) {
   const ownedLocalSelected=options.rustOwnedLocalStateModel!==undefined;
   const constFunctionSelected=options.rustConstFunctionModel!==undefined;
   const namespaceSelected = options.rustTypeNamespaceModel !== undefined;
+  const runtimeShellSelected=options.rustRuntimeShellModel!==undefined;
   const pureUnitSelected=options.rustPureUnitCallModel!==undefined;
+<<<<<<< HEAD
   const selected = arraySelected || completionSelected || signatureSelected || loopSelected || javaScriptLoopSelected||primitiveSelected||emptyOptionSelected||namespaceSelected||pureUnitSelected||ownedLocalSelected||constFunctionSelected;
+=======
+  const selected = arraySelected || completionSelected || signatureSelected || loopSelected || javaScriptLoopSelected||primitiveSelected||emptyOptionSelected||namespaceSelected||pureUnitSelected||ownedLocalSelected||runtimeShellSelected;
+  if(runtimeShellSelected&&canonical!=='Rust')throw new TypeError('a Rust runtime shell model requires Rust source');
+>>>>>>> b4037e97 (Draft complete closed Unit runtime shell interpretation in JavaScript)
   if(pureUnitSelected&&canonical!=='Rust')throw new TypeError('a Rust pure Unit-call model requires Rust source');
   if(emptyOptionSelected&&canonical!=='Rust')throw new TypeError('a Rust empty option source model requires Rust source');
   if (namespaceSelected && canonical !== 'Rust') throw new TypeError('a Rust type namespace model requires Rust source');
@@ -344,10 +350,17 @@ export function createTypedProgramLinks(source, language, options = {}) {
   if (signatureSelected && canonical !== 'Rust') throw new TypeError('a Rust source signature model requires Rust source');
   if (loopSelected && canonical !== 'Rust') throw new TypeError('a Rust scalar loop model requires Rust source');
   if (javaScriptLoopSelected && canonical !== 'JavaScript') throw new TypeError('a JavaScript scalar loop model requires JavaScript source');
+<<<<<<< HEAD
   const program = checkProgram(canonical === 'Rust' ? parseRust(source, { arrayResultModel: options.rustArrayResultModel, completionModel: options.rustCompletionModel, sourceSignatureModel: options.rustSourceSignatureModel, scalarLoopModel: options.rustScalarLoopModel,primitiveOwnerModel:options.rustPrimitiveOwnerModel,emptyOptionSourceModel:options.rustEmptyOptionSourceModel,typeNamespaceModel:options.rustTypeNamespaceModel,pureUnitCallModel:options.rustPureUnitCallModel,localValueStateModel:options.rustOwnedLocalStateModel,constFunctionModel:options.rustConstFunctionModel }) : parseJavaScript(source, {...options.context, ...(javaScriptLoopSelected ? {scalarLoopModel: options.javaScriptScalarLoopModel} : {})}));
   if (options.utf16Strings) program.utf16Strings = true;
   const provenance = selected ? {
     sourceProfile: { language: canonical, ...(arraySelected ? { rustArrayResultModel: options.rustArrayResultModel } : {}), ...(completionSelected ? { rustCompletionModel: options.rustCompletionModel } : {}), ...(signatureSelected ? { rustSourceSignatureModel: options.rustSourceSignatureModel } : {}), ...(loopSelected ? {rustScalarLoopModel: options.rustScalarLoopModel} : {}), ...(javaScriptLoopSelected ? {javaScriptScalarLoopModel: options.javaScriptScalarLoopModel} : {}),...(primitiveSelected?{rustPrimitiveOwnerModel:options.rustPrimitiveOwnerModel}:{}),...(emptyOptionSelected?{rustEmptyOptionSourceModel:options.rustEmptyOptionSourceModel}:{}),...(namespaceSelected?{rustTypeNamespaceModel:options.rustTypeNamespaceModel}:{}),...(pureUnitSelected?{rustPureUnitCallModel:options.rustPureUnitCallModel}:{}),...(ownedLocalSelected?{rustOwnedLocalStateModel:options.rustOwnedLocalStateModel}:{}),...(constFunctionSelected?{rustConstFunctionModel:options.rustConstFunctionModel}:{}) },
+=======
+  const program = checkProgram(canonical === 'Rust' ? parseRust(source, { arrayResultModel: options.rustArrayResultModel, completionModel: options.rustCompletionModel, sourceSignatureModel: options.rustSourceSignatureModel, scalarLoopModel: options.rustScalarLoopModel,primitiveOwnerModel:options.rustPrimitiveOwnerModel,emptyOptionSourceModel:options.rustEmptyOptionSourceModel,typeNamespaceModel:options.rustTypeNamespaceModel,pureUnitCallModel:options.rustPureUnitCallModel,localValueStateModel:options.rustOwnedLocalStateModel,runtimeShellModel:options.rustRuntimeShellModel }) : parseJavaScript(source, {...options.context, ...(javaScriptLoopSelected ? {scalarLoopModel: options.javaScriptScalarLoopModel} : {})}));
+  if (options.utf16Strings) program.utf16Strings = true;
+  const provenance = selected ? {
+    sourceProfile: { language: canonical, ...(arraySelected ? { rustArrayResultModel: options.rustArrayResultModel } : {}), ...(completionSelected ? { rustCompletionModel: options.rustCompletionModel } : {}), ...(signatureSelected ? { rustSourceSignatureModel: options.rustSourceSignatureModel } : {}), ...(loopSelected ? {rustScalarLoopModel: options.rustScalarLoopModel} : {}), ...(javaScriptLoopSelected ? {javaScriptScalarLoopModel: options.javaScriptScalarLoopModel} : {}),...(primitiveSelected?{rustPrimitiveOwnerModel:options.rustPrimitiveOwnerModel}:{}),...(emptyOptionSelected?{rustEmptyOptionSourceModel:options.rustEmptyOptionSourceModel}:{}),...(namespaceSelected?{rustTypeNamespaceModel:options.rustTypeNamespaceModel}:{}),...(pureUnitSelected?{rustPureUnitCallModel:options.rustPureUnitCallModel}:{}),...(ownedLocalSelected?{rustOwnedLocalStateModel:options.rustOwnedLocalStateModel}:{}),...(runtimeShellSelected?{rustRuntimeShellModel:options.rustRuntimeShellModel}:{}) },
+>>>>>>> b4037e97 (Draft complete closed Unit runtime shell interpretation in JavaScript)
     userProvenance: options.provenance ?? null,
   } : options.provenance;
   return encodeTypedProgramLinks(program, { ...options, provenance });
