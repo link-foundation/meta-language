@@ -1,0 +1,1 @@
+(decorator preserve-owned-rust-const-function-keyword (level emitter) (order 0) (when (format Rust)) (replace source pub%20fn%20 pub%20const%20fn%20))
