@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 119 | 118 | 1 | 0 |
+| Generators | 122 | 121 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 40 | 0 | 0 | 40 |
+| Published artifact contents | 43 | 0 | 0 | 43 |
 
 ## JavaScript engines
 
@@ -599,6 +599,7 @@ they are.
 | `js/scripts/generate-product-emission-rules.mjs` | `js/scripts/generate-product-emission-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-product-source-rules.mjs` | `js/scripts/generate-product-source-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-product-unit-fixture.mjs` | `js/scripts/generate-product-unit-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-program-numeric-metadata-rules.mjs` | `js/scripts/generate-program-numeric-metadata-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-project-data-tooling-fixture.mjs` | `js/scripts/generate-project-data-tooling-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-resource-description-fixture.mjs` | `js/scripts/generate-resource-description-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-resource-description-ntriples-characters.mjs` | `js/scripts/generate-resource-description-ntriples-characters.mjs` | `script` |  | derived | current |  |
@@ -651,6 +652,8 @@ they are.
 | `js/scripts/generate-shared-numeric-function-rules.mjs` | `js/scripts/generate-shared-numeric-function-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-source-span-fixtures.mjs` | `js/scripts/generate-source-span-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-source-span-rules.mjs` | `js/scripts/generate-source-span-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-source-text-byte-fixtures.mjs` | `js/scripts/generate-source-text-byte-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-source-text-byte-rules.mjs` | `js/scripts/generate-source-text-byte-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-stateful-extra-fixtures.mjs` | `js/scripts/generate-stateful-extra-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-structured-data-link-rules.mjs` | `js/scripts/generate-structured-data-link-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-structured-data-migration-revisions.mjs` | `js/scripts/generate-structured-data-migration-revisions.mjs` | `script` |  | derived | current |  |
@@ -749,10 +752,12 @@ they are.
 | `src/data/native-grammars/*.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/native-text-grammar.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/native-text-metadata.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/program-numeric-metadata.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/reference-operations.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/resource-description-ntriples-profile.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/resource-description-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-borrowed-call-interface.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-const-functions.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-empty-options.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-owned-local-state.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-primitive-owners.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
@@ -764,6 +769,7 @@ they are.
 | `src/data/rust-type-namespace.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/semantic-lexicon.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/source-span.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/source-text-byte-model.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/typed-program-links-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/typescript-erasure.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/typescript-portable-typing.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
