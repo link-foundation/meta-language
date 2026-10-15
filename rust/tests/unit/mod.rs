@@ -211,6 +211,7 @@ mod translation_rust_float_operations;
 mod translation_rust_float_predicates;
 mod translation_rust_frontend;
 mod translation_rust_indirection;
+mod translation_rust_lexical_rules;
 mod translation_rust_lifetimes;
 mod translation_rust_owned_local_state;
 mod translation_rust_owned_tuple_calls;
