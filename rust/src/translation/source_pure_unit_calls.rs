@@ -4,9 +4,10 @@ use super::diagnostics::{Result, type_error};
 use super::ir::Program;
 use super::rust::pure_unit_call_rules::{
     accept_rust_pure_unit_body_form, accept_rust_pure_unit_call_model,
-    accept_rust_pure_unit_context, accept_rust_pure_unit_header_form, accept_rust_pure_unit_name,
+    accept_rust_pure_unit_container, accept_rust_pure_unit_context,
+    accept_rust_pure_unit_header_form, accept_rust_pure_unit_name,
     accept_rust_pure_unit_name_character, accept_rust_pure_unit_path_form,
-    accept_rust_pure_unit_visibility,
+    accept_rust_pure_unit_source_offset, accept_rust_pure_unit_visibility,
 };
 use serde_json::{Value, json};
 use std::collections::HashSet;
@@ -51,6 +52,10 @@ fn exact(value: &Value, role: &str) -> Result<()> {
     Ok(())
 }
 fn array<'a>(value: &'a Value, detail: &str) -> Result<&'a [Value]> {
+    // JSON/native arrays prove density and absence of extra host properties.
+    if !accept_rust_pure_unit_container("array", value.is_array(), false) {
+        return Err(fail(detail));
+    }
     value
         .as_array()
         .map(Vec::as_slice)
@@ -58,10 +63,7 @@ fn array<'a>(value: &'a Value, detail: &str) -> Result<&'a [Value]> {
 }
 fn source_offset(value: &Value) -> Option<u64> {
     let number = value.as_f64()?;
-    if !crate::typed_program_links::source_span_rules::accept_source_span_offset(
-        number,
-        number == 0.0 && number.is_sign_negative(),
-    ) {
+    if !accept_rust_pure_unit_source_offset(number, number == 0.0 && number.is_sign_negative()) {
         return None;
     }
     // The shared policy proves a finite, exact safe unsigned integer. Preserve

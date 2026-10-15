@@ -6,9 +6,9 @@ use super::rust::type_namespaces::{
 };
 use super::source_signatures::{SourceTypeSignature, validate_source_signature};
 use super::type_namespace_rules::{
-    accept_rust_type_namespace_declaration, accept_rust_type_namespace_fields,
-    accept_rust_type_namespace_model, accept_rust_type_namespace_position,
-    accept_rust_type_namespace_record_value,
+    accept_rust_type_namespace_container, accept_rust_type_namespace_declaration,
+    accept_rust_type_namespace_fields, accept_rust_type_namespace_model,
+    accept_rust_type_namespace_position, accept_rust_type_namespace_record_value,
 };
 use serde_json::Value;
 use std::sync::LazyLock;
@@ -135,6 +135,13 @@ pub fn validate_type_namespace_declaration_record(entry: &Value) -> Result<()> {
     {
         return Err(fail(
             "requires original declarations with absent or false generated facts",
+        ));
+    }
+    // Native arrays have dense positions and cannot carry host properties;
+    // the shared decision still selects the actual raw parameter container.
+    if !accept_rust_type_namespace_container("array", entry["params"].is_array(), false) {
+        return Err(fail(
+            "parameter contains unrepresented interface fields or defaults",
         ));
     }
     let parameters = entry["params"]
