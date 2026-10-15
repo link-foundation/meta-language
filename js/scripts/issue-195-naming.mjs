@@ -1157,7 +1157,7 @@ const BASE_NAME_INVENTORIES = Object.freeze([
     files: ['js/src/data/typed-program-links-schema.json', 'rust/src/data/typed-program-links-schema.json'],
     extract: (text) => {
       const schema = JSON.parse(text);
-      return [schema.root, ...Object.values(schema.containers), ...Object.values(schema.scalars), ...Object.values(schema.fields), ...Object.values(schema.references)].map((name) => name.toLowerCase().replaceAll('datatype', 'data type').replaceAll(' ', '-'));
+      return [schema.root, ...Object.values(schema.containers), ...Object.values(schema.scalars), ...Object.values(schema.fields), ...Object.values(schema.references)].map((name) => name.toLowerCase().replaceAll('datatype', 'data type').replace(/\bconst\b/gu,'constant').replaceAll(' ', '-'));
     },
     recordOf: (name) => ({
       'string-value': 'translation.string-scalar-value',
@@ -1194,6 +1194,14 @@ const BASE_NAME_INVENTORIES = Object.freeze([
       'external-option-roots': 'translation.program-source-external-option-root-list-field',
       'declared-function-names': 'translation.program-source-declared-function-name-list-field',
       'source-derivation-data-type-owner': 'translation.source-derivation-data-type-owner',
+      'source-constant-function': 'translation.function-source-constant-qualification-proof-field',
+      'keyword': 'translation.source-keyword-field',
+      'keyword-span': 'translation.source-keyword-span-field',
+      'function-keyword-span': 'translation.source-function-keyword-span-field',
+      'header-span': 'translation.function-header-source-span-field',
+      'body-span': 'translation.function-body-source-span-field',
+      'source-name': 'translation.source-name-field',
+      'rust-constant-function-model': 'translation.program-rust-constant-function-model-field',
       'source-derivation-data-type-owner': 'translation.source-derivation-data-type-owner',
       'source-derivation-data-type-owner': 'translation.source-derivation-data-type-owner',
       'source-derivation-data-type-owner': 'translation.source-derivation-data-type-owner',
@@ -3214,7 +3222,720 @@ const VALUE_SOURCE_NAME_INVENTORIES = VALUE_SOURCE_NAME_BINDINGS.map(({inventory
  extract:(text,file)=>files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeValueSourceName(name)),
  recordOf:name=>Object.values(files).flat().find(binding=>normalizeValueSourceName(binding.name)===name).id,
 }));
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES]);
+// Additive source bindings for source qualification, numeric aliases and text bytes.
+const SOURCE_PROCESSING_NAME_BINDINGS = [
+  {
+    "inventory": "owned Rust constant predicate decisions",
+    "files": {
+      "js/src/translation/rust-const-function-rules.js": [
+        {
+          "name": "acceptRustConstFunctionModel",
+          "id": "translation.accept-rust-constant-function-model"
+        },
+        {
+          "name": "acceptRustConstFunctionType",
+          "id": "translation.accept-rust-constant-function-type"
+        },
+        {
+          "name": "acceptRustConstFunctionBinary",
+          "id": "translation.accept-rust-constant-function-binary"
+        },
+        {
+          "name": "acceptRustConstFunctionContainer",
+          "id": "translation.accept-rust-constant-function-container"
+        },
+        {
+          "name": "acceptRustConstFunctionOffset",
+          "id": "translation.accept-rust-constant-function-offset"
+        },
+        {
+          "name": "acceptRustConstFunctionInterval",
+          "id": "translation.accept-rust-constant-function-interval"
+        },
+        {
+          "name": "acceptRustConstFunctionNameCharacter",
+          "id": "translation.accept-rust-constant-function-name-character"
+        },
+        {
+          "name": "acceptRustConstFunctionName",
+          "id": "translation.accept-rust-constant-function-name"
+        },
+        {
+          "name": "acceptRustConstFunctionFiniteLiteral",
+          "id": "translation.accept-rust-constant-function-finite-literal"
+        }
+      ],
+      "rust/src/translation/rust/const_function_rules.rs": [
+        {
+          "name": "accept_rust_const_function_model",
+          "id": "translation.accept-rust-constant-function-model"
+        },
+        {
+          "name": "accept_rust_const_function_type",
+          "id": "translation.accept-rust-constant-function-type"
+        },
+        {
+          "name": "accept_rust_const_function_binary",
+          "id": "translation.accept-rust-constant-function-binary"
+        },
+        {
+          "name": "accept_rust_const_function_container",
+          "id": "translation.accept-rust-constant-function-container"
+        },
+        {
+          "name": "accept_rust_const_function_offset",
+          "id": "translation.accept-rust-constant-function-offset"
+        },
+        {
+          "name": "accept_rust_const_function_interval",
+          "id": "translation.accept-rust-constant-function-interval"
+        },
+        {
+          "name": "accept_rust_const_function_name_character",
+          "id": "translation.accept-rust-constant-function-name-character"
+        },
+        {
+          "name": "accept_rust_const_function_name",
+          "id": "translation.accept-rust-constant-function-name"
+        },
+        {
+          "name": "accept_rust_const_function_finite_literal",
+          "id": "translation.accept-rust-constant-function-finite-literal"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned Rust constant predicate source operations",
+    "files": {
+      "js/src/translation/rust-const-functions.js": [
+        {
+          "name": "checkRustConstFunctionContainers",
+          "id": "translation.check-rust-constant-function-containers"
+        },
+        {
+          "name": "createRustConstFunctionProof",
+          "id": "translation.create-rust-constant-function-proof"
+        },
+        {
+          "name": "checkRustConstFunctionProof",
+          "id": "translation.check-rust-constant-function-proof"
+        },
+        {
+          "name": "renderRustConstFunctionHeader",
+          "id": "translation.render-rust-constant-function-header"
+        }
+      ],
+      "rust/src/translation/rust/const_functions.rs": [
+        {
+          "name": "create_const_function_proof",
+          "id": "translation.create-rust-constant-function-proof"
+        },
+        {
+          "name": "render_const_function_header",
+          "id": "translation.render-rust-constant-function-header"
+        },
+        {
+          "name": "const_function_visibility_guard",
+          "id": "translation.require-rust-constant-function-visibility"
+        },
+        {
+          "name": "const_function_item_guard",
+          "id": "translation.require-rust-constant-function-item"
+        },
+        {
+          "name": "require_const_function_program",
+          "id": "translation.require-rust-constant-function-program"
+        }
+      ],
+      "rust/src/translation/source_const_functions.rs": [
+        {
+          "name": "validate_const_function_records",
+          "id": "translation.check-rust-constant-function-proof"
+        },
+        {
+          "name": "validate_const_functions",
+          "id": "translation.check-rust-constant-function-proof"
+        },
+        {
+          "name": "policy",
+          "id": "translation.read-rust-constant-function-policy"
+        },
+        {
+          "name": "validate_interface",
+          "id": "translation.validate-rust-constant-function-interface"
+        },
+        {
+          "name": "validate_declaration",
+          "id": "translation.validate-rust-constant-function-declaration"
+        }
+      ],
+      "rust/src/translation/source_const_functions/expression.rs": [
+        {
+          "name": "validate",
+          "id": "translation.validate-rust-constant-function-expression"
+        }
+      ],
+      "rust/src/typed_program_links/codec_const_functions.rs": [
+        {
+          "name": "validate_order",
+          "id": "translation.validate-constant-function-field-order"
+        },
+        {
+          "name": "prepare_order",
+          "id": "translation.prepare-constant-function-field-order"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned Rust constant predicate policy",
+    "files": {
+      "js/src/translation/rust-const-functions.js": [
+        {
+          "name": "RUST_CONST_FUNCTION_POLICY",
+          "id": "translation.rust-constant-function-policy"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned Rust constant predicate model options",
+    "files": {
+      "js/src/translation/rust.js": [
+        {
+          "name": "constFunctionModel",
+          "id": "translation.rust-constant-function-model-option"
+        }
+      ],
+      "rust/src/translation/rust.rs": [
+        {
+          "name": "const_function_model",
+          "id": "translation.rust-constant-function-model-option"
+        },
+        {
+          "name": "const_function",
+          "id": "translation.rust-constant-function-model-option"
+        }
+      ],
+      "js/src/typed-program-links.js": [
+        {
+          "name": "rustConstFunctionModel",
+          "id": "translation.typed-program-rust-constant-function-model-option"
+        }
+      ],
+      "js/src/index.d.ts": [
+        {
+          "name": "rustConstFunctionModel",
+          "id": "translation.typed-program-rust-constant-function-model-option"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned source qualification relation roles",
+    "files": {
+      "js/src/translation/rust-const-functions.js": [
+        {
+          "name": "sourceConstFunction",
+          "id": "translation.function-source-constant-qualification-proof-field"
+        },
+        {
+          "name": "keyword",
+          "id": "translation.source-keyword-field"
+        },
+        {
+          "name": "keywordSpan",
+          "id": "translation.source-keyword-span-field"
+        },
+        {
+          "name": "functionKeywordSpan",
+          "id": "translation.source-function-keyword-span-field"
+        },
+        {
+          "name": "headerSpan",
+          "id": "translation.function-header-source-span-field"
+        },
+        {
+          "name": "bodySpan",
+          "id": "translation.function-body-source-span-field"
+        },
+        {
+          "name": "sourceName",
+          "id": "translation.source-name-field"
+        }
+      ],
+      "rust/src/translation/ir/declarations.rs": [
+        {
+          "name": "source_const_function",
+          "id": "translation.function-source-constant-qualification-proof-field"
+        }
+      ],
+      "rust/src/translation/surface.rs": [
+        {
+          "name": "source_const_function",
+          "id": "translation.function-source-constant-qualification-proof-field"
+        }
+      ],
+      "js/src/typed-program-links.js": [
+        {
+          "name": "rustConstFunctionModel",
+          "id": "translation.program-rust-constant-function-model-field"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "constant predicate fixture and rule authoring",
+    "files": {
+      "experiments/generate-rust-const-function-rules.mjs": [
+        {
+          "name": "rustConstFunctionPolicy",
+          "id": "translation.rust-constant-function-policy"
+        },
+        {
+          "name": "rustConstFunctionRules",
+          "id": "repository.generate-rust-constant-function-rules"
+        },
+        {
+          "name": "rustConstFunctionDecorators",
+          "id": "repository.generate-rust-constant-function-decorators"
+        },
+        {
+          "name": "generateNativeRules",
+          "id": "repository.generate-native-constant-function-rules"
+        }
+      ],
+      "experiments/generate-rust-const-function-fixture.mjs": [
+        {
+          "name": "pinnedRustConstPredicateDefinitions",
+          "id": "repository.read-fixed-rust-constant-predicate-definitions"
+        },
+        {
+          "name": "rustConstFunctionFixture",
+          "id": "repository.create-rust-constant-function-fixture"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "typed integral metadata operations",
+    "files": {
+      "js/src/program-numeric-metadata-rules.js": [
+        {
+          "name": "acceptProgramIntegralMetadata",
+          "id": "translation.accept-program-integral-metadata"
+        },
+        {
+          "name": "acceptProgramOrderedPosition",
+          "id": "translation.accept-program-ordered-position"
+        }
+      ],
+      "rust/src/typed_program_links/program_numeric_metadata_rules.rs": [
+        {
+          "name": "accept_program_integral_metadata",
+          "id": "translation.accept-program-integral-metadata"
+        },
+        {
+          "name": "accept_program_ordered_position",
+          "id": "translation.accept-program-ordered-position"
+        }
+      ],
+      "js/src/translation/rust-owned-local-state.js": [
+        {
+          "name": "matchRustOwnedLocalOccurrencePath",
+          "id": "translation.match-rust-owned-local-occurrence-path"
+        }
+      ],
+      "rust/src/translation/owned_local_state.rs": [
+        {
+          "name": "read_owned_local_position",
+          "id": "translation.read-owned-local-position"
+        }
+      ],
+      "rust/src/typed_program_links/program_numeric_metadata.rs": [
+        {
+          "name": "normalize_program_integral_metadata_record",
+          "id": "translation.normalize-program-integral-metadata-record"
+        },
+        {
+          "name": "normalize_program_integral_metadata",
+          "id": "translation.normalize-program-integral-metadata"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "integral metadata fixture authoring",
+    "files": {
+      "experiments/generate-program-numeric-metadata-fixture.mjs": [
+        {
+          "name": "numericMetadataArchive",
+          "id": "repository.create-integral-metadata-archive"
+        },
+        {
+          "name": "numericMetadataFixture",
+          "id": "repository.create-integral-metadata-fixture"
+        }
+      ],
+      "experiments/generate-owned-occurrence-position-fixture.mjs": [
+        {
+          "name": "ownedOccurrencePositionArchive",
+          "id": "repository.create-owned-occurrence-position-archive"
+        },
+        {
+          "name": "ownedOccurrencePositionFixture",
+          "id": "repository.create-owned-occurrence-position-fixture"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "source text byte unit operations",
+    "files": {
+      "js/src/translation/source-text-byte-rules.js": [
+        {
+          "name": "readSourceTextScalar",
+          "id": "translation.read-source-text-scalar"
+        },
+        {
+          "name": "readSourceTextScalarByteWidth",
+          "id": "translation.read-source-text-scalar-byte-width"
+        },
+        {
+          "name": "readSourceTextByteLength",
+          "id": "translation.read-source-text-unit-byte-length"
+        },
+        {
+          "name": "acceptSourceTextScalarUnits",
+          "id": "translation.accept-source-text-scalar-units"
+        },
+        {
+          "name": "readSourceTextCodeUnitOffset",
+          "id": "translation.read-source-text-code-unit-offset"
+        },
+        {
+          "name": "acceptSourceTextByteSlice",
+          "id": "translation.accept-source-text-byte-slice"
+        },
+        {
+          "name": "readSourceTextByte",
+          "id": "translation.read-source-text-unit-byte"
+        },
+        {
+          "name": "acceptSourceTextUnitCount",
+          "id": "translation.accept-source-text-unit-count"
+        }
+      ],
+      "rust/src/translation/source_text_byte_rules.rs": [
+        {
+          "name": "read_source_text_scalar",
+          "id": "translation.read-source-text-scalar"
+        },
+        {
+          "name": "read_source_text_scalar_byte_width",
+          "id": "translation.read-source-text-scalar-byte-width"
+        },
+        {
+          "name": "read_source_text_byte_length",
+          "id": "translation.read-source-text-unit-byte-length"
+        },
+        {
+          "name": "accept_source_text_scalar_units",
+          "id": "translation.accept-source-text-scalar-units"
+        },
+        {
+          "name": "read_source_text_code_unit_offset",
+          "id": "translation.read-source-text-code-unit-offset"
+        },
+        {
+          "name": "accept_source_text_byte_slice",
+          "id": "translation.accept-source-text-byte-slice"
+        },
+        {
+          "name": "read_source_text_byte",
+          "id": "translation.read-source-text-unit-byte"
+        },
+        {
+          "name": "accept_source_text_unit_count",
+          "id": "translation.accept-source-text-unit-count"
+        },
+        {
+          "name": "source_text_integer",
+          "id": "translation.check-source-text-integral-number"
+        }
+      ],
+      "experiments/source-text-byte-rules.mjs": [
+        {
+          "name": "readSourceTextScalar",
+          "id": "translation.read-source-text-scalar"
+        },
+        {
+          "name": "readSourceTextScalarByteWidth",
+          "id": "translation.read-source-text-scalar-byte-width"
+        },
+        {
+          "name": "readSourceTextByteLength",
+          "id": "translation.read-source-text-unit-byte-length"
+        },
+        {
+          "name": "acceptSourceTextScalarUnits",
+          "id": "translation.accept-source-text-scalar-units"
+        },
+        {
+          "name": "readSourceTextCodeUnitOffset",
+          "id": "translation.read-source-text-code-unit-offset"
+        },
+        {
+          "name": "acceptSourceTextByteSlice",
+          "id": "translation.accept-source-text-byte-slice"
+        },
+        {
+          "name": "readSourceTextByte",
+          "id": "translation.read-source-text-unit-byte"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "primitive source text byte operations",
+    "files": {
+      "js/src/translation/source-text-bytes.js": [
+        {
+          "name": "readSourceTextUnits",
+          "id": "translation.read-source-text-units"
+        },
+        {
+          "name": "readSourceTextByteLength",
+          "id": "translation.read-source-text-byte-length"
+        },
+        {
+          "name": "readSourceTextByte",
+          "id": "translation.read-source-text-byte"
+        },
+        {
+          "name": "sliceSourceTextBytes",
+          "id": "translation.slice-source-text-bytes"
+        }
+      ],
+      "rust/src/translation/source_text_bytes.rs": [
+        {
+          "name": "read_source_text_units",
+          "id": "translation.read-source-text-units"
+        },
+        {
+          "name": "read_source_text_byte_length",
+          "id": "translation.read-source-text-byte-length"
+        },
+        {
+          "name": "read_source_text_byte",
+          "id": "translation.read-source-text-byte"
+        },
+        {
+          "name": "slice_source_text_bytes",
+          "id": "translation.slice-source-text-bytes"
+        }
+      ],
+      "js/src/index.js": [
+        {
+          "name": "readSourceTextUnits",
+          "id": "translation.read-source-text-units"
+        },
+        {
+          "name": "readSourceTextByteLength",
+          "id": "translation.read-source-text-byte-length"
+        },
+        {
+          "name": "readSourceTextByte",
+          "id": "translation.read-source-text-byte"
+        },
+        {
+          "name": "sliceSourceTextBytes",
+          "id": "translation.slice-source-text-bytes"
+        }
+      ],
+      "js/src/index.d.ts": [
+        {
+          "name": "readSourceTextUnits",
+          "id": "translation.read-source-text-units"
+        },
+        {
+          "name": "readSourceTextByteLength",
+          "id": "translation.read-source-text-byte-length"
+        },
+        {
+          "name": "readSourceTextByte",
+          "id": "translation.read-source-text-byte"
+        },
+        {
+          "name": "sliceSourceTextBytes",
+          "id": "translation.slice-source-text-bytes"
+        }
+      ],
+      "rust/src/lib.rs": [
+        {
+          "name": "read_source_text_units",
+          "id": "translation.read-source-text-units"
+        },
+        {
+          "name": "read_source_text_byte_length",
+          "id": "translation.read-source-text-byte-length"
+        },
+        {
+          "name": "read_source_text_byte",
+          "id": "translation.read-source-text-byte"
+        },
+        {
+          "name": "slice_source_text_bytes",
+          "id": "translation.slice-source-text-bytes"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "source text byte authoring operations",
+    "files": {
+      "experiments/generate-source-text-byte-rules.mjs": [
+        {
+          "name": "sourceTextByteRulesSource",
+          "id": "repository.generate-source-text-byte-rules"
+        }
+      ],
+      "experiments/complete-binary-formatter-probe.mjs": [
+        {
+          "name": "completeBinaryFormatterProbe",
+          "id": "repository.probe-complete-binary-format-source"
+        }
+      ],
+      "js/scripts/source-text-byte-library-style.mjs": [
+        {
+          "name": "readSourceTextRustBlock",
+          "id": "repository.read-source-text-native-source-block"
+        },
+        {
+          "name": "readSourceTextByteLibraryStyles",
+          "id": "repository.read-source-text-byte-library-styles"
+        },
+        {
+          "name": "syntax",
+          "id": "repository.read-source-text-style-token-pairs"
+        },
+        {
+          "name": "parentheses",
+          "id": "repository.remove-source-text-style-parentheses"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "pinned associative provider audit operations",
+    "files": {
+      "js/scripts/associative-stack-sources.mjs": [
+        {
+          "name": "checkAssociativeStackProviderRoles",
+          "id": "foundation.check-associative-stack-provider-roles"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "pinned associative audit source mapping",
+    "files": {
+      "js/scripts/issue-195-conversation-requirements.mjs": [
+        {
+          "name": "sourceTooling",
+          "id": "repository.fixed-associative-audit-source-map"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "reviewed compiler diagnostic test receipt",
+    "files": {
+      "js/tests/translation-bulk-twenty-ci-feedback.test.js": [
+        {
+          "name": "receipt",
+          "id": "repository.reviewed-compiler-diagnostic-receipt"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "constant predicate public consumer operations",
+    "files": {
+      "js/tests/translation-const-public-declaration-contracts.test.js": [
+        {
+          "name": "runConsumer",
+          "id": "repository.run-constant-predicate-public-consumer"
+        },
+        {
+          "name": "observe",
+          "id": "repository.observe-constant-predicate-public-values"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "source text byte public consumer operations",
+    "files": {
+      "js/tests/translation-source-text-byte-public-declaration-contracts.test.js": [
+        {
+          "name": "runConsumer",
+          "id": "repository.run-source-text-byte-public-consumer"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "extracted source function and documentation readers",
+    "files": {
+      "rust/src/translation/rust/items/functions.rs": [
+        {
+          "name": "function",
+          "id": "translation.read-rust-source-function"
+        },
+        {
+          "name": "function_with_lifetimes",
+          "id": "translation.read-rust-source-function-with-lifetimes"
+        }
+      ],
+      "rust/src/translation/javascript/declarations/jsdoc.rs": [
+        {
+          "name": "promised",
+          "id": "translation.read-javascript-promised-type"
+        },
+        {
+          "name": "jsdoc_type",
+          "id": "translation.read-javascript-documentation-type"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "native constant source factory locations",
+    "files": {
+      "rust/src/translation/rust.rs": [
+        {
+          "name": "parse_rust_with_const_function_model",
+          "id": "translation.parse-rust-source-models"
+        }
+      ],
+      "rust/src/typed_program_links.rs": [
+        {
+          "name": "create_typed_program_links_with_rust_const_function_model",
+          "id": "translation.create-typed-program-links"
+        }
+      ]
+    }
+  }
+];
+const normalizeSourceProcessingName=name=>name.replace(/([a-z])([A-Z])/gu,'$1-$2').replaceAll('_','-').toLowerCase().replace(/\bconst\b/gu,'constant').replace(/\bjsdoc\b/gu,'javascript-documentation').replace(/\bpinned\b/gu,'fixed').replace(/\bformatter\b/gu,'format');
+const SOURCE_PROCESSING_NAME_INVENTORIES=SOURCE_PROCESSING_NAME_BINDINGS.map(({inventory,files})=>({
+ inventory,files:Object.keys(files),
+ extract:(text,file)=>files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeSourceProcessingName(name)),
+ recordOf:name=>Object.values(files).flat().find(entry=>normalizeSourceProcessingName(entry.name)===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
