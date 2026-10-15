@@ -41,3 +41,32 @@ admission refusal. It needs a separately reviewed mapping of the preserved
 corrections to the new actual generated declarations. No Rust compilation,
 large experiment, local timing profile or CI speedup claim accompanies this
 candidate.
+
+The subsequent explicit candidate generation mode preserves that failed
+attempt and the original production pipeline. It first emits the complete
+frozen prior source and validates all 36 historical replacement contexts.
+It then derives separate styles from complete current declarations: exact
+matches and bijective bound-name variants may reuse their validated prior
+correction, while changed declarations receive fresh structural library
+styles. Introduced bindings cannot capture current names; a locally constructed
+header may be borrowed only by the actual checked slice parameter.
+
+`native-policy.lino` selects the established checked-program UTF-16 String
+flag as an explicit **native generation input**. This experiment does not
+claim that input flag is serialized as a source-free program model. The
+generator also checks the exact previous String prelude. Its receipt binds
+the source, policy, generator, style builder, fresh styles, complete declaration
+order and generated native bytes. Every check recomputes expected styles;
+stale candidate styles are rejected.
+
+Generate and check from the root:
+
+```sh
+node js/scripts/generate-link-network-binary-rules.mjs --metadata-buffer-candidate --update-styles
+node js/scripts/generate-link-network-binary-rules.mjs --metadata-buffer-candidate --check
+node js/scripts/generate-link-network-binary-rules.mjs --check
+```
+
+The generated candidate lives in `native/`; production source and native
+rules remain unchanged. Native compilation and byte equivalence still require
+the separate CI oracle. There is no runtime improvement claim.
