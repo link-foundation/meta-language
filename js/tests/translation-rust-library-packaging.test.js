@@ -89,6 +89,11 @@ test('uninterpreted macro token trees and semantic inner attributes cannot be si
   assert.ok(selected.decorated[0].source.includes('vec![crate::text_certificate_library::item()]'));
   assert.throws(() => readRustLibraryStyles('pub fn value() -> f64 { vec![custom!(crate::value())][0] }',
     { modulePath, namespaceExpressionMacros: ['vec'] }), /unrepresented macro/u);
+  assert.throws(() => readRustLibraryStyles('pub fn item() -> f64 { 1f64 }\npub fn value() -> Vec<f64> { custom!(vec![crate::item()]) }',
+    { modulePath, namespaceExpressionMacros: ['vec'] }), /unrepresented macro/u);
+  const nested = readRustLibraryStyles('pub fn item() -> f64 { 1f64 }\npub fn value() -> Vec<Vec<f64>> { vec![vec![crate::item()]] }',
+    { modulePath, namespaceExpressionMacros: ['vec'] });
+  assert.ok(nested.decorated[1].source.includes('vec![vec![crate::text_certificate_library::item()]]'));
 });
 
 test('namespace qualification changes actual known crate paths and preserves external paths and strings', () => {
