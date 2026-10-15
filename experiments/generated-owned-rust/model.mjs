@@ -4,21 +4,28 @@ import {isDeepStrictEqual} from 'node:util';
 import {readRuntimeProjectData} from '../../js/src/project-data-loader.js';
 import {checkOwnedProgramContainers} from '../../js/src/translation/owned-program-containers.js';
 import {acceptRustOwnedLocalContainer,acceptRustOwnedLocalTextInput,renderRustOwnedLocalTextInput} from '../../js/src/translation/rust-owned-local-state-rules.js';
-import {readRustStringContinuationDraft} from '../issue-199-rust-string-continuation-adapter.mjs';
 import {acceptSourceSpanOffset} from '../../js/src/source-span-rules.js';
 import {checkProgram} from '../../js/src/translation/check.js';
 import {checkProgramDeclarationOwners} from '../../js/src/typed-program-declaration-owners.js';
 import {emitJavaScript} from '../../js/src/translation/emit-javascript.js';
 import {emitRust} from '../../js/src/translation/emit-rust.js';
+import {rustString} from '../../js/src/translation/rust-string-literals.js';
 import {DecoratorSet} from '../../js/src/decorators.js';
 import {tokenize} from '../../js/src/translation/lexer.js';
 import {acceptGeneratedOwnedRustModel,acceptGeneratedOwnedRustCodeUnit} from './rules.mjs';
-import {parseGeneratedOwnedRust,readGeneratedOwnedRust,tokenName} from './parser.mjs';
+import {parseGeneratedOwnedRust,readGeneratedOwnedRust,readGeneratedOwnedRustCookedLiteral,tokenName} from './parser.mjs';
+import {acceptGeneratedOwnedRustValueEditModel,acceptGeneratedOwnedRustLiteralEditOwner,acceptGeneratedOwnedRustSignOwner} from './value-edit-rules.mjs';
 import {encodeGeneratedOwnedRust,decodeGeneratedOwnedRust} from './codec.mjs';
 import {readGeneratedOwnedRustTrivia} from './trivia.mjs';
 export const GENERATED_OWNED_RUST_POLICY=readRuntimeProjectData(new URL('./data/policy.lino',import.meta.url));
+export const GENERATED_OWNED_RUST_VALUE_EDIT_POLICY=readRuntimeProjectData(new URL('./data/value-edit-policy.lino',import.meta.url));
 const policy=GENERATED_OWNED_RUST_POLICY,own=(value,name)=>Object.hasOwn(value,name);
 const fail=reason=>{throw new TypeError('Generated whole owned Rust proof: '+reason);};
+function sourcePolicy(model){
+ if(acceptGeneratedOwnedRustModel(model))return policy;
+ if(acceptGeneratedOwnedRustValueEditModel(model)){const edits=GENERATED_OWNED_RUST_VALUE_EDIT_POLICY;return{...policy,model:edits.model,literalValueEdits:edits,fields:{...policy.fields,proof:[...policy.fields.proof,edits.proofField]}};}
+ return null;
+}
 function fields(value,names,exact=true){if(!value||typeof value!=='object'||Array.isArray(value)||value instanceof Map||Object.keys(value).some(name=>!names.includes(name))||exact&&Object.keys(value).length!==names.length)fail('unrecognized or missing owned fields');}
 function interval(span,empty=false){fields(span,['start','end']);if(typeof span.start!=='number'||typeof span.end!=='number'||!acceptSourceSpanOffset(span.start,Object.is(span.start,-0))||!acceptSourceSpanOffset(span.end,Object.is(span.end,-0))||(empty?span.end<span.start:span.end<=span.start))fail('the actual source interval is malformed');}
 function data(program,proof){
@@ -34,7 +41,7 @@ function surfaceMap(surface,program){
   for(const field of ['value','body','cond','then','else','left','right','object'])if(source[field]){if(!node[field])fail('the actual checked expression lost a source role');walk(source[field],node[field]);}}
  for(const item of surface.items){const entry=program.declarations.get(item.name);if(!entry)fail('the actual source helper lost its checked declaration');result.set(item,entry);walk(item.body,entry.body);}return result;
 }
-function checkCst(proof){
+function checkCst(proof,selected){
  if(!Array.isArray(proof.tokens)||!Array.isArray(proof.gaps)||proof.tokens.length!==proof.gaps.length||!proof.tokens.length||proof.tokens.length>100_000||new Set(proof.tokens).size!==proof.tokens.length)fail('the whole source requires every distinct token and trivia interval');
  let text='',end=0;
  for(const[index,token]of proof.tokens.entries()){
@@ -51,22 +58,36 @@ function checkCst(proof){
  const lexical=tokenize(text,'Rust').tokens;if(lexical.length!==proof.tokens.length)fail('the trivia or literal spelling changes active source tokens');
  for(const[index,original]of lexical.entries()){
   const token=proof.tokens[index];if(original.kind!==token.kind||original.start!==token.span.start||original.end!==token.span.end||text.slice(original.start,original.end)!==token.raw||token.kind==='number'&&(original.suffix!==token.suffix||Boolean(original.floating)!==token.floating)||!['declaration','binding','literal'].some(role=>own(token,role))&&original.value!==token.value)fail('the stored source token differs from the actual whole-source lexer');
-  if(token.kind==='string'){if(!token.raw.startsWith('"'))fail('only actual generated cooked strings have an interpretation');readRustStringContinuationDraft(token.raw);}
+  if(token.kind==='string'){if(!token.raw.startsWith('"'))fail('only actual generated cooked strings have an interpretation');readGeneratedOwnedRustCookedLiteral(token.raw,selected);}
  }
  return new Set(proof.tokens);
 }
+function literalEdits(parsed,mapped,operations=parsed.operations){return parsed.literals.filter(row=>row.node&&acceptGeneratedOwnedRustLiteralEditOwner(mapped.get(row.surface).type.kind,row.node.op)).map(row=>{
+ const node=operationNodes(operations,row.node.op).find(node=>node.parts.length===row.node.parts.length&&node.parts.every((part,index)=>part===row.node.parts[index]));
+ if(!node)fail('an editable literal lost its actual source operation');
+ return{operationNode:node,literal:mapped.get(row.surface),signToken:row.sourceSign};
+});}
+function operationAssumptions(proof){return[...proof.assumptions,...proof.valueAssumptions].map(row=>({id:row.id,statement:row.meaning,details:['actual complete source operation '+row.operationNode.op+' at '+row.operationNode.span.start+'..'+row.operationNode.span.end]}));}
 export function checkGeneratedOwnedRust(program,proof){
- data(program,proof);fields(proof,policy.fields.proof);interval(proof.span,true);
- if(!acceptGeneratedOwnedRustModel(proof.model)||proof.language!==policy.language||proof.observationModel!==policy.observationModel||proof.worker!==program.main)fail('the source interpretation or actual worker identity is inconsistent');
+ data(program,proof);const selected=sourcePolicy(proof.model);if(!selected)fail('the source interpretation or actual worker identity is inconsistent');fields(proof,selected.fields.proof);interval(proof.span,true);
+ if(proof.language!==selected.language||proof.observationModel!==selected.observationModel||proof.worker!==program.main)fail('the source interpretation or actual worker identity is inconsistent');
  checkProgramDeclarationOwners(program);if(program.sourceLanguage!=='Rust'||program.main?.effects?.length||program.imports?.length||program.externals?.length||['referenceSemantics','utf16Strings','outputThreaded','abortsThreaded'].some(field=>own(program,field)&&program[field]!==false))fail('the actual closed source context acquired effects, imports or an independent string/runtime model');
- const identities=checkCst(proof),catalog=new Map([...program.declarations].map(([name,entry])=>[name,entry]));
- const parsed=readGeneratedOwnedRust(proof.tokens,policy,{program,catalog});
+ const identities=checkCst(proof,selected),catalog=new Map([...program.declarations].map(([name,entry])=>[name,entry]));
+ const parsed=readGeneratedOwnedRust(proof.tokens,selected,{program,catalog});
  if(!compare(proof.operations,parsed.operations,identities))fail('the actual operation graph differs from the complete source tokens');
  const expected=checkProgram(parsed.surface);if(!isDeepStrictEqual(program,expected)||!isDeepStrictEqual([...program.declarations.keys()],[...expected.declarations.keys()]))fail('the actual core differs from its entire checked source interpretation or canonical declaration order');
  const mapped=surfaceMap(parsed.surface,program);
  for(const row of parsed.helperRows){if(row.name.declaration!==mapped.get(row.surface))fail('a source header lost its actual declaration identity');for(const[index,param]of row.parameters.entries())if(param.row.token.binding!==row.name.declaration.params[index])fail('a source parameter lost its actual checked binder');}
  for(const row of parsed.bindings)if(row.surface?.k==='let'&&row.token.binding!==mapped.get(row.surface))fail('a source local lost its actual checked binder');
  for(const row of parsed.literals)if(row.token.literal!==mapped.get(row.surface))fail('a source literal lost its actual checked expression');
+ if(selected.literalValueEdits){
+  const expected=literalEdits(parsed,mapped,proof.operations);
+  if(!Array.isArray(proof.literalEdits)||proof.literalEdits.length!==expected.length)fail('every editable String and i32 literal requires its actual operation and sign owners');
+  for(const[index,row]of proof.literalEdits.entries()){
+   fields(row,selected.literalValueEdits.fields);const actual=expected[index],minus=row.signToken!==null&&identities.has(row.signToken)&&row.signToken.kind==='punct'&&row.signToken.raw==='-'&&row.operationNode?.parts[0]===row.signToken;
+   if(row.operationNode!==actual.operationNode||row.literal!==actual.literal||row.signToken!==actual.signToken||!acceptGeneratedOwnedRustLiteralEditOwner(row.literal.type.kind,row.operationNode.op)||!acceptGeneratedOwnedRustSignOwner(actual.signToken!==null,minus))fail('a literal edit lost its actual checked literal, source operation or unary-minus token');
+  }
+ }
  if(!Array.isArray(proof.assumptions)||proof.assumptions.length!==policy.runtimeAssumptions.length)fail('the actual runtime lost an explicit successful-operation assumption');
  for(const[index,assumption]of proof.assumptions.entries()){
   fields(assumption,policy.fields.assumption);const expected=policy.runtimeAssumptions[index],nodes=operationNodes(proof.operations,expected.operation);
@@ -83,8 +104,8 @@ export function checkGeneratedOwnedRust(program,proof){
  return parsed;
 }
 export function createGeneratedOwnedRust(source,{model=policy.model}={}){
- if(!acceptGeneratedOwnedRustModel(model))fail('select the explicit experimental whole owned Rust model');
- const parsed=parseGeneratedOwnedRust(source,policy),program=checkProgram(parsed.surface),proof=parsed.proof,mapped=surfaceMap(parsed.surface,program);
+ const selected=sourcePolicy(model);if(!selected)fail('select the explicit experimental whole owned Rust model');
+ const parsed=parseGeneratedOwnedRust(source,selected),program=checkProgram(parsed.surface),proof=parsed.proof,mapped=surfaceMap(parsed.surface,program);
  const bind=(token,role,value)=>{delete token.value;token[role]=value;};
  for(const row of parsed.helperRows){bind(row.name,'declaration',mapped.get(row.surface));for(const[index,param]of row.parameters.entries())bind(param.row.token,'binding',mapped.get(row.surface).params[index]);}
  for(const row of parsed.bindings)if(row.surface?.k==='let')bind(row.token,'binding',mapped.get(row.surface));
@@ -92,20 +113,22 @@ export function createGeneratedOwnedRust(source,{model=policy.model}={}){
  for(const row of parsed.calls)bind(row.token,'declaration',program.declarations.get(tokenName(row.token)));
  for(const row of parsed.literals)bind(row.token,'literal',mapped.get(row.surface));
  for(const row of parsed.runtimeUses)bind(row.token,'binding',row.target);
- const bound=readGeneratedOwnedRust(proof.tokens,policy,{program,catalog:program.declarations}),boundMap=surfaceMap(bound.surface,program);
+ const bound=readGeneratedOwnedRust(proof.tokens,selected,{program,catalog:program.declarations}),boundMap=surfaceMap(bound.surface,program);
  proof.operations=bound.operations;proof.worker=program.main;
  proof.assumptions=policy.runtimeAssumptions.map(row=>({id:row.id,meaning:row.meaning,operationNode:bound.single(row.operation)}));
  proof.valueAssumptions=policy.valueAssumption.operations.flatMap(label=>operationNodes(proof.operations,label)).map(operationNode=>({id:policy.valueAssumption.id,meaning:policy.valueAssumption.meaning,operationNode}));
  proof.clones=bound.clones.map(row=>({operationNode:row.node,receiver:boundMap.get(row.receiver),owner:[...policy.clone.owner],method:policy.clone.method}));
+ if(selected.literalValueEdits)proof.literalEdits=literalEdits(bound,boundMap);
  checkGeneratedOwnedRust(program,proof);return{program,proof};
 }
 export function createGeneratedOwnedRustLinks(source,options){const {program,proof}=createGeneratedOwnedRust(source,options);return encodeGeneratedOwnedRust(program,proof);}
 export function decodeGeneratedOwnedRustLinks(network,root){const {program,proof}=decodeGeneratedOwnedRust(network,root);checkGeneratedOwnedRust(program,proof);return{program,proof};}
 export function encodeGeneratedOwnedRustLinks(program,proof){checkGeneratedOwnedRust(program,proof);return encodeGeneratedOwnedRust(program,proof);}
-function tokenText(token,index,proof){
+function tokenText(token,index,proof,selected,signs){
  if(token.declaration)return token.declaration.name;if(token.binding)return token.binding.name??token.binding.value;
+ if(signs?.has(token)){const literal=signs.get(token).literal,original='-'+proof.tokens[index+1].raw.slice(0,-3);if(BigInt(original).toString()!==literal.value&&!literal.value.startsWith('-'))return selected.literalValueEdits.integer.removedSignReplacement;}
  if(token.literal){
-  if(token.literal.type.kind==='string')return readRustStringContinuationDraft(token.raw).value===token.literal.value?token.raw:JSON.stringify(token.literal.value);
+  if(token.literal.type.kind==='string')return readGeneratedOwnedRustCookedLiteral(token.raw,selected)===token.literal.value?token.raw:selected.literalValueEdits?rustString(token.literal.value):JSON.stringify(token.literal.value);
   if(token.literal.type.kind==='bool')return (token.raw==='true')===token.literal.value?token.raw:String(token.literal.value);
   const negative=index>0&&proof.tokens[index-1].raw==='-',original=(negative?'-':'')+token.raw.slice(0,-3);
   if(BigInt(original).toString()===token.literal.value)return token.raw;
@@ -115,8 +138,13 @@ function tokenText(token,index,proof){
 }
 export function emitGeneratedOwnedRust(program,proof,target){
  checkGeneratedOwnedRust(program,proof);
- const assumptions=[...proof.assumptions,...proof.valueAssumptions].map(row=>({id:row.id,statement:row.meaning,details:['actual complete source operation '+row.operationNode.op+' at '+row.operationNode.span.start+'..'+row.operationNode.span.end]}));
- if(target==='Rust')return{language:target,text:proof.tokens.map((token,index)=>proof.gaps[index].units.map(unit=>String.fromCharCode(unit)).join('')+tokenText(token,index,proof)).join(''),assumptions};
+ const selected=sourcePolicy(proof.model),assumptions=operationAssumptions(proof);
+ if(target==='Rust'){
+  const signs=selected.literalValueEdits?new Map(proof.literalEdits.filter(row=>row.signToken!==null).map(row=>[row.signToken,row])):null;
+  const text=proof.tokens.map((token,index)=>proof.gaps[index].units.map(unit=>String.fromCharCode(unit)).join('')+tokenText(token,index,proof,selected,signs)).join('');
+  if(selected.literalValueEdits){const rebound=createGeneratedOwnedRust(text,{model:proof.model});return{language:target,text,assumptions:operationAssumptions(rebound.proof)};}
+  return{language:target,text,assumptions};
+ }
  if(target!=='JavaScript')fail('only Rust source replay and JavaScript value execution are covered by the experiment');
  const emitted=emitJavaScript(program),guards=[renderRustOwnedLocalTextInput()];
  for(const[index,entry]of [...program.declarations.values()].entries()){
@@ -138,7 +166,7 @@ export function emitCanonicalGeneratedOwnedRust(program,proof){
  checkGeneratedOwnedRust(program,proof);const emitted=emitRust(program);
  // The canonical emitter creates new complete source operations and intervals.
  // Interpret that actual output before binding any conditions to its operations.
- const canonical=createGeneratedOwnedRust(emitted.text),rebound=emitGeneratedOwnedRust(canonical.program,canonical.proof,'Rust');
+ const canonical=createGeneratedOwnedRust(emitted.text,{model:proof.model}),rebound=emitGeneratedOwnedRust(canonical.program,canonical.proof,'Rust');
  if(rebound.text!==emitted.text)fail('the canonical whole source lost its exact interpreted output');
  return{...emitted,assumptions:[...emitted.assumptions,...rebound.assumptions]};
 }

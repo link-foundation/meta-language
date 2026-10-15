@@ -13,6 +13,12 @@ import {readGeneratedOwnedRustTrivia} from './trivia.mjs';
 const fail=(reason,span)=>{throw unsupported('generated whole owned Rust',reason,span);};
 const range=(first,last)=>({start:first.span.start,end:last.span.end});
 export const tokenName=token=>token.declaration?.name??token.binding?.name??token.binding?.value??token.literal?.value??token.value;
+export function readGeneratedOwnedRustCookedLiteral(raw,policy){
+ if(!policy.literalValueEdits)return readRustStringContinuationDraft(raw).value;
+ const tokens=tokenize(raw,'Rust').tokens,token=tokens[0];
+ if(tokens.length!==2||token.kind!=='string'||token.start!==0||token.end!==raw.length||!raw.startsWith('"')||tokens[1].kind!=='eof')fail('the literal needs one complete actual Rust cooked-string token');
+ return token.value;
+}
 export function readGeneratedOwnedRust(tokens,policy,{program=null,catalog=null}={}){
  let index=0,visits=0;const helperRows=[],bindings=[],uses=[],calls=[],literals=[],clones=[],captures=new Map(),runtimeUses=[];
  const current=()=>tokens[index],take=()=>{if(++visits>100_000||!current())fail('the complete source exceeds its operation limit',current()?.span);return tokens[index++];};
@@ -45,10 +51,10 @@ export function readGeneratedOwnedRust(tokens,policy,{program=null,catalog=null}
   }else if(current().value==='String'){
    const start=literal('String'),separator=literal('::'),method=literal('from'),open=literal('('),token=take();
    if(token.kind!=='string'||!token.raw.startsWith('"'))fail('the standard String constructor requires its actual cooked literal argument',token.span);
-   readRustStringContinuationDraft(token.raw);
+   readGeneratedOwnedRustCookedLiteral(token.raw,policy);
    const value=actualLiteral(token,'string'),surface={k:'str',value,span:token.span},close=literal(')');
-   if(!acceptRustOwnedLocalTextInput(value)||[...value].some(letter=>!acceptGeneratedOwnedRustLiteralCodePoint(letter.codePointAt(0))))fail('the literal requires Unicode scalar text and its supported Rust quoting domain',token.span);
-   literals.push({token,surface});result={surface,type:{kind:'string'},node:operation('owned standard String literal construction',[start,separator,method,open,token,close])};
+   if(!acceptRustOwnedLocalTextInput(value)||!policy.literalValueEdits&&[...value].some(letter=>!acceptGeneratedOwnedRustLiteralCodePoint(letter.codePointAt(0))))fail('the literal requires Unicode scalar text and its supported Rust quoting domain',token.span);
+   result={surface,type:{kind:'string'},node:operation('owned standard String literal construction',[start,separator,method,open,token,close])};literals.push({token,surface,node:result.node,sourceSign:null});
   }else if(current().value==='crate'){
    const first=literal('crate'),separator=literal('::'),token=binder(),open=literal('('),args=[],parts=[first,separator,token,open];
    while(current().value!==')'){const value=expression(scope,depth+1);args.push(value);parts.push(value.node);if(current().value!==',')break;parts.push(literal(','));}
@@ -64,8 +70,8 @@ export function readGeneratedOwnedRust(tokens,policy,{program=null,catalog=null}
    const spelling=token.literal?token.raw.slice(0,-3):token.value;
    if(token.kind!=='number'||token.suffix!=='i32'||token.floating||!/^\d+$/u.test(spelling))fail('the literal requires its actual signed i32 suffix and value',token.span);
    const value=program?actualLiteral(token,'fixed'):(parts.length===2?'-':'')+token.value;if(typeof value!=='string'||!/^[-]?\d+$/u.test(value)||BigInt(value)<-2147483648n||BigInt(value)>2147483647n)fail('the actual integer literal exceeds signed i32',token.span);
-   if(parts.length===2&&!value.startsWith('-')&&BigInt(value)!==0n)fail('a negative source operation cannot become a positive value without a new sign interpretation',token.span);
-   const surface={k:'num',value:value.replace(/^-/u,''),negative:value.startsWith('-'),type:policy.domains.i32,span:range(parts[0],token)};literals.push({token,surface});result={surface,type:policy.domains.i32,node:operation('owned signed i32 literal',parts)};
+   if(parts.length===2&&!value.startsWith('-')&&BigInt(value)!==0n&&!policy.literalValueEdits)fail('a negative source operation cannot become a positive value without a new sign interpretation',token.span);
+   const surface={k:'num',value:value.replace(/^-/u,''),negative:value.startsWith('-'),type:policy.domains.i32,span:range(parts[0],token)};result={surface,type:policy.domains.i32,node:operation('owned signed i32 literal',parts)};literals.push({token,surface,node:result.node,sourceSign:parts.length===2?parts[0]:null});
   }else{
    const token=binder(true),name=tokenName(token),entry=scope.get(name);
    if(!entry||program&&token.binding!==entry.token.binding)fail('a value token lost its actual lexical owner',token.span);
