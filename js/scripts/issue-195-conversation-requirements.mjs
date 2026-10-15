@@ -13,6 +13,7 @@ const externalGrammarSource = capture('temporary-external-grammar-inputs');
 const externalGrammarIgnoreSource = capture('ignored-external-grammar-folders');
 const associativeDataSource = capture('associative-data-storage');
 const agentReductionSource = capture('gradual-agent-reduction');
+const localResourceScopeSource = 'parity/sources/meta-language-local-resource-scope-2026-10-16.txt';
 const inferenceSource = 'parity/sources/grammar-inference-issue-224.txt';
 
 const sourceTooling = {
@@ -99,6 +100,17 @@ function rows(sourceKey, fixture, specification, area, declarations, tooling = f
 }
 
 export const CRITICAL_CONVERSATION_REQUIREMENTS = Object.freeze([
+  ...rows('localResourceScopeRequest', localResourceScopeSource, 'critical-conversation-requirements', 'workflow-contract', [
+    ['I195-LOCAL-RESOURCE-PROJECT-OWNED-CLEANUP', 'cleanup limited to disk space owned by this meta-language task',
+      'Cleanup performed for this task removes only disk space demonstrably owned by meta-language work. Unrelated user files, other projects and system data remain untouched; recovering disk space does not authorize broader deletion.',
+      ['metaLanguageOwnershipEstablishedBeforeCleanup', 'unrelatedDiskSpacePreserved']],
+    ['I195-LOCAL-RESOURCE-CAREFUL-BOUNDED-USE', 'careful local resource use within available capacity',
+      'Contributors check available system resources and keep local disk, memory and process use bounded while performing this task, preventing meta-language work from exhausting the host resources. Resource care does not remove inherited project requirements or replace required CI verification.',
+      ['localResourceUseChecked', 'localWorkBoundedToAvailableResources']],
+    ['I195-LOCAL-RESOURCE-RUST-COMPILATION-CI-ONLY', 'Rust compilation exclusively in CI/CD for this task',
+      'No contributor compiles Rust locally for any purpose during this task. Rust compilation and compiled validation run only in CI/CD; local authoring and bounded JavaScript checks preserve all required native verification obligations.',
+      ['noLocalRustCompilation', 'rustCompilationRunsOnlyInCi']],
+  ], true),
   ...rows('agentReductionRequest', agentReductionSource, 'critical-conversation-requirements', 'workflow-contract', [
     ['I195-WORKFLOW-GRADUAL-AGENT-REDUCTION', 'gradual conclusion of agent work followed by coordinator-only implementation',
       'After the later user steering, active contributors finish their existing scoped work and agent activity gradually concludes. Once all active contributors finish, the coordinator continues implementation and CI follow-up alone. The earlier parallel drafting phase remains recorded, and no inherited project scope is removed.',

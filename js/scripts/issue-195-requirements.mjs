@@ -87,6 +87,8 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'parity/sources/ci-follow-through-2026-10-13.txt',
   expandedDelegationRequest:
     'parity/sources/expanded-agent-delegation-2026-10-13.txt',
+  localResourceScopeRequest:
+    'parity/sources/meta-language-local-resource-scope-2026-10-16.txt',
   grammarInferenceIssue:
     'https://github.com/link-foundation/meta-language/issues/224',
 });

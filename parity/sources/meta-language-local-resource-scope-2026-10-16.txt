@@ -1,0 +1,3 @@
+Double check we are using system resources carefully in this task we lost all disk space.
+
+Clear only meta language related disk space, don't compile Rust locally, use only CI/CD for that.
