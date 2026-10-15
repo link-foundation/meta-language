@@ -8,6 +8,7 @@ export const originalLinkRolePolicy={
  maximumMembership:100000,maximumOccurrences:4096,maximumEdges:1000000,
  fields:['sourceTextValueProjection','declarations','tokens','params','parameters','sourceSignature','result','body','main','operations','parts','kind'],
  stringSymbols:['source operation'],identityKinds:certificate.identityKinds,
+ transportDomains:{root:{minimum:1,maximum:'membershipCount'},ordinals:['fieldParents','fieldChildren','referenceParents','referenceChildren'],labels:{vector:'fieldLabels',minimum:0,maximum:'fields.length'},strings:{vector:'stringValues',minimum:0,maximum:'stringSymbols.length'},precedence:['vector shape','root domain','membership bound','edge and code domains','role interpretation'],holes:'findIndex visits every numeric array position, including holes; missing values refuse'},
  instructions:[
   {name:'tokens',role:certificate.identityKinds.token,root:'proof',path:['tokens'],form:'references'},
   {name:'declarations',role:certificate.identityKinds.declaration,root:'body',path:['declarations'],form:'mapping values'},
@@ -21,6 +22,7 @@ export const originalLinkRolePolicy={
  output:{success:['1','registered count','occurrence count','registered original membership ordinals','kinds including leading zero','ordered occurrence handles'],refusals:{membership:[-1],shape:[-2],member:[-3,'occurrence'],role:[-4,'occurrence'],contradiction:[-5,'occurrence'],unregistered:[-6,'original membership ordinal'],root:[-10],transport:[-11],operations:[-12]}},
  interpretation:[
   'Original LinkIds and relation/label/child references stay in host transport; exact lookup uses the existing original-link-identity kernel. No u64 is converted to a Number.',
+  'Before role interpretation, every dense root/edge handle is an integral Number from one through the actual membership count. Label and string codes are integral Numbers from zero through their shared dictionary bounds; zero retains unknown symbols.',
   'Only actual token, declaration, parameter, signature, position, core, operation and main roles become certificate identities. Membership of unrelated nodes creates no kind-table row.',
   'Repeated original identities share one compact handle. Equal-valued distinct original IDs remain distinct. Role 9 can be provisional but cannot remain unregistered; contradictory concrete roles refuse.',
   'The selected archive must first pass the unchanged existing raw text-certificate checker. This partial projection neither chooses source operations nor proves ownership from membership.',
@@ -83,6 +85,9 @@ export function registerOriginalLinkRoles(membershipCount,members,roles){
 /** @param {number} membershipCount @param {number} root @param {number[]} fieldParents @param {number[]} fieldLabels @param {number[]} fieldChildren @param {number[]} referenceParents @param {number[]} referenceChildren @param {number[]} stringValues @returns {number[]} */
 export function projectOriginalLinkRoleRegistry(membershipCount,root,fieldParents,fieldLabels,fieldChildren,referenceParents,referenceChildren,stringValues){
  if(fieldParents.length!==fieldLabels.length||fieldParents.length!==fieldChildren.length||referenceParents.length!==referenceChildren.length||fieldParents.length>${p.maximumEdges}||referenceParents.length>${p.maximumEdges}||stringValues.length!==membershipCount)return [-11];
+ if(!Number.isInteger(root)||root<${p.transportDomains.root.minimum}||root>membershipCount)return [-10];
+ if(membershipCount>${p.maximumMembership})return [-1];
+ if(${p.transportDomains.ordinals.map(name=>`${name}.findIndex(value=>!Number.isInteger(value)||value<1||value>membershipCount)>=0`).concat([`${p.transportDomains.labels.vector}.findIndex(value=>!Number.isInteger(value)||value<${p.transportDomains.labels.minimum}||value>${p.fields.length})>=0`,`${p.transportDomains.strings.vector}.findIndex(value=>!Number.isInteger(value)||value<${p.transportDomains.strings.minimum}||value>${p.stringSymbols.length})>=0`]).join('||')})return [-11];
  const rootValues=${refs('root')};if(rootValues.length!==1)return [-10];
  const body=rootValues[0]??-1;const proof=${field('body','sourceTextValueProjection')};
 ${lines}

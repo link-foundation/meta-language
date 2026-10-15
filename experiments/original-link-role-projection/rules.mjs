@@ -28,6 +28,9 @@ export function registerOriginalLinkRoles(membershipCount,members,roles){
 /** @param {number} membershipCount @param {number} root @param {number[]} fieldParents @param {number[]} fieldLabels @param {number[]} fieldChildren @param {number[]} referenceParents @param {number[]} referenceChildren @param {number[]} stringValues @returns {number[]} */
 export function projectOriginalLinkRoleRegistry(membershipCount,root,fieldParents,fieldLabels,fieldChildren,referenceParents,referenceChildren,stringValues){
  if(fieldParents.length!==fieldLabels.length||fieldParents.length!==fieldChildren.length||referenceParents.length!==referenceChildren.length||fieldParents.length>1000000||referenceParents.length>1000000||stringValues.length!==membershipCount)return [-11];
+ if(!Number.isInteger(root)||root<1||root>membershipCount)return [-10];
+ if(membershipCount>100000)return [-1];
+ if(fieldParents.findIndex(value=>!Number.isInteger(value)||value<1||value>membershipCount)>=0||fieldChildren.findIndex(value=>!Number.isInteger(value)||value<1||value>membershipCount)>=0||referenceParents.findIndex(value=>!Number.isInteger(value)||value<1||value>membershipCount)>=0||referenceChildren.findIndex(value=>!Number.isInteger(value)||value<1||value>membershipCount)>=0||fieldLabels.findIndex(value=>!Number.isInteger(value)||value<0||value>12)>=0||stringValues.findIndex(value=>!Number.isInteger(value)||value<0||value>1)>=0)return [-11];
  const rootValues=readOriginalLinkRoleReferences(referenceParents,referenceChildren,root);if(rootValues.length!==1)return [-10];
  const body=rootValues[0]??-1;const proof=readOriginalLinkRoleField(fieldParents,fieldLabels,fieldChildren,body,1);
  const tokens=readOriginalLinkRoleReferences(referenceParents,referenceChildren,readOriginalLinkRoleField(fieldParents,fieldLabels,fieldChildren,proof,3));
