@@ -1,4 +1,4 @@
-//! Existing JSDoc type readers, separated to bound declaration source size.
+//! Existing `JSDoc` type readers, separated to bound declaration source size.
 use super::{
     BOOL, FLOAT, INT, ROOT, Result, STRING, Span, Type, array, is_identifier_name, js_trim,
     unsupported,
