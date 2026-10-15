@@ -40,11 +40,14 @@ archive adapter is JavaScript-only and still needs a faithful native boundary;
 the generated matcher alone does not implement it. General object/Map projection
 and the existing identity bridge's member-array mutations remain separate gaps.
 
-Seven bounded tests compare independently authored original-source outcomes
+Ten bounded tests compare independently authored original-source outcomes
 with emitted JavaScript, including pre-append argument scope, and repeat those
 checks after Links text and binary reload. Actual checked owner and lexical
 binder identities are checked separately from value equality. Source and graph
 corruptions, the old default refusals and excluded source forms stay rejected.
+An automatically translated reserved-binding table rejects invalid original
+JavaScript names. Saved premise links use the separate `premise owner` role;
+ordered declarations and the actual mapping must share the same owned nodes.
 No original-Rust-source reimport or paired-runtime support is claimed.
 
 From the repository root, run only:
