@@ -12,7 +12,7 @@ const namespace=readProjectData(new URL('../../parity/fixtures/rust-type-namespa
 const models=[
  {source:'const fn keep(value:bool)->bool{value}fn main(){}',options:{rustConstFunctionModel:'closed pure Rust const predicates 1'},markers:['sourceConstFunction']},
  {source:owned.cases[0].source,options:{rustOwnedLocalStateModel:owned.models.moves},markers:['sourceLocalState']},
- {source:namespace.cases[0].source,options:{rustTypeNamespaceModel:namespace.typeNamespaceModel},markers:['sourceTypeNamespace','sourceUnitCloneDerivation'],directEmitters:false},
+ {source:namespace.cases[0].source,options:{rustTypeNamespaceModel:namespace.typeNamespaceModel},markers:['sourceTypeNamespace','sourceUnitCloneDerivation']},
 ];
 const create=entry=>{const packet=createTypedProgramLinks(entry.source,'Rust',entry.options);return decodeTypedProgramLinks(packet.network,packet.root);};
 function removeMarkers(program,markers){
@@ -26,13 +26,22 @@ test('actual public const, owned text and namespace programs refuse function roo
   let program=create(entry),calls=0;
   if(form==='root')program=Object.assign(function host(){},program);
   else{const[marker,proof]=removeMarkers(program,entry.markers);program.hidden=function host(){};if(form==='getter')Object.defineProperty(program.hidden,marker,{get(){calls++;return proof;},enumerable:true});else program.hidden[marker]=proof;}
-  const checks=[()=>validateLinkedTypedProgram(program),()=>recheckLinkedTypedProgram(program),()=>encodeTypedProgramLinks(program)];
-  // Namespace direct emitters have no namespace guard; that independent gap
-  // is outside this shared-walker fix. Const and owned-text emitters do.
-  if(entry.directEmitters!==false)checks.push(()=>emitRust(program),()=>emitJavaScript(program));
+  const checks=[()=>validateLinkedTypedProgram(program),()=>recheckLinkedTypedProgram(program),()=>encodeTypedProgramLinks(program),()=>emitRust(program),()=>emitJavaScript(program)];
   for(const check of checks)assert.throws(check,entry.markers[0]+' '+form);
   assert.equal(calls,0,'source marker accessors must not run');
  }
+});
+
+test('actual source-free namespace facts are revalidated before either direct emitter',()=>{
+ const entry=models[2],mutations=[
+  program=>{program.declarations.get('nested.header').sourceTypeNamespace=null;},
+  program=>{program.declarations.get('nested.header').sourceTypeNamespace.result=['unknown'];},
+  program=>{program.declarations.get('nested.header').sourceTypeNamespace.parameters[0]=['bool'];},
+  program=>{program.declarations.get('nested.header').generated=true;},
+ ];
+ for(const mutate of mutations){const program=create(entry);mutate(program);assert.throws(()=>emitRust(program));assert.throws(()=>emitJavaScript(program));}
+ const program=create(entry),packet=encodeTypedProgramLinks(program),restored=decodeTypedProgramLinks(packet.network,packet.root);
+ assert.deepEqual(emitRust(restored),emitRust(program));assert.deepEqual(emitJavaScript(restored),emitJavaScript(program));
 });
 
 test('ordinary unselected callback metadata retains the existing direct-emitter fallback without observing accessors',()=>{

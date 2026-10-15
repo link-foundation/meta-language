@@ -19,6 +19,7 @@ import {readJavaScriptScopedBindingEmission} from './javascript-scoped-binding-e
 import {reserveJavaScriptScopedBindingDeclarationNames} from './javascript-scoped-binding-emission-rules.js';
 import {checkRustConstFunctionProof} from './rust-const-functions.js';
 import {checkRustOwnedLocalStateProof,RUST_OWNED_LOCAL_STATE_POLICY} from './rust-owned-local-state.js';
+import {validateRustTypeNamespace} from './rust-type-namespace.js';
 import {renderRustOwnedLocalTextInput} from './rust-owned-local-state-rules.js';
 import { EmitState, withParts } from './emit-common.js';
 
@@ -110,6 +111,7 @@ function ident(name) {
 }
 
 export function emitJavaScript(program, options = {}) {
+  validateRustTypeNamespace(program);
   checkRustConstFunctionProof(program);
   const runtimeShell=checkRustRuntimeShell(program);
   if(runtimeShell&&options.scopedBindingModel!==undefined)refuseRustRuntimeShellComposition('scoped target bindings require an independent runtime composition proof');
