@@ -929,6 +929,19 @@ jobs:
           SELF_TRANSLATION_CHECK_RUST: '0'
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/source-native-observations.test.mjs ../experiments/rust-text-certificate-library/native-observations.test.mjs
 
+      - name: Check exact original link identity kernel
+        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        working-directory: js
+        run: node ../experiments/original-link-identity/generate.mjs --check
+
+      - name: Run exact original link identity checks
+        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        working-directory: js
+        env:
+          TRANSLATION_CHECK_RUST: '0'
+          SELF_TRANSLATION_CHECK_RUST: '0'
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/original-link-identity/identity.test.mjs
+
       - name: Check generated whole Rust runtime shell rules
         if: ${{ !cancelled() && matrix.group == 'generated' }}
         working-directory: js

@@ -782,6 +782,12 @@ const OWNED_SOURCE_ADAPTER_PACKAGE_STEPS = [
     '../experiments/source-native-observations.test.mjs ' +
     '../experiments/rust-text-certificate-library/native-observations.test.mjs',
     'e259a15270916aeaa4a42b29020abb8b7288b74f29058b6afba9b0fdbe07d583', 'source-models'],
+  ['Check exact original link identity kernel',
+    'node ../experiments/original-link-identity/generate.mjs --check',
+    'f0f905b7863523c494c2ee2b77ccb22dd95127b1e3adb5757ded3b7c681d32e5', 'source-models'],
+  ['Run exact original link identity checks',
+    'node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/original-link-identity/identity.test.mjs',
+    '897a38592267f3399b503775f93027045bc882fa339c1e69c71592b5210d0875', 'source-models'],
 ];
 
 function packageStepSignature(step, includeGroup = false) {

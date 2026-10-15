@@ -551,6 +551,23 @@ owner edits reconstruct complete Rust source and actual raw target spellings.
 JavaScript invocation still requires the explicit premise checker. The option
 exists only in the isolated overlay; native facets, complete source checking
 and original-LinkId authentication before native lowering remain absent.
+The separate `exact original link identity ordinal lookup 1` experiment retains
+exact unsigned 64-bit keys as high and low 32-bit Number words. A checked sorted
+unique index resolves ordered queries to positive ordinal handles while the host
+retains the actual original LinkId anchors. Repeated references receive the same
+handle; adjacent identities above the Number safe range stay distinct. Zero is
+an identity key in this transport and remains distinct from the null handle.
+The existing public JavaScript LinkId model still admits only positive safe
+integers; exact BigInt-origin transport does not expand that public graph domain
+or recover bits from an already rounded Number. Actual certificate-role anchors
+survive Links text and binary reload, and an existing cross-function owner check
+still refuses a forged relation whose target passes membership lookup. Eleven
+complete native definitions are automatically emitted from the same checked
+source. Native execution, the shared-array copy costs and the complete
+seventeen-table projection from original native LinkIds remain separate work.
+The historical constructor collision is retained as a pinned source snapshot
+and executed in an explicitly historical VM; live public boundaries must refuse
+those unsafe identities.
 The separate `portable closed Rust text source certificate 1` experiment moves
 the complete finite text certificate into a kernel generated from shared links
 policy. Seventeen typed Number tables retain the actual token, declaration,
