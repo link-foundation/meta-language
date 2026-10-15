@@ -432,6 +432,7 @@ impl Checker {
             imports: surface.imports.clone(),
             externals: self.externals,
             source_pure_unit_calls: surface.source_pure_unit_calls.clone(),
+            source_runtime_shell: surface.source_runtime_shell.clone(),
         };
         super::source_unit_clone_derivations::validate_source_unit_clone_derivations(&program)?;
         super::source_primitive_owners::validate_source_primitive_owners(&program)?;

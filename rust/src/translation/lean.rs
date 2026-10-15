@@ -323,6 +323,7 @@ impl<'a> LeanParser<'a> {
             imports: Vec::new(),
             externals: Vec::new(),
             source_pure_unit_calls: None,
+            source_runtime_shell: None,
         })
     }
 
@@ -722,6 +723,7 @@ impl<'a> LeanParser<'a> {
                 effects,
                 span: Some(at),
                 sequential_async: false,
+                source_runtime_worker: None,
             },
             at,
         ))

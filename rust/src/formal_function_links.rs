@@ -385,6 +385,7 @@ pub fn encode_formal_function_definition(
         effects: vec![],
         span: None,
         sequential_async: false,
+        source_runtime_worker: None,
     });
     let generated = encode_typed_program_links(&program).map_err(|error| error.to_string())?;
     let (_, prepared) = directory(

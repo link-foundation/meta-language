@@ -158,10 +158,12 @@ impl JavaScriptParser {
                 effects,
                 span: Some(Span::new(0, self.source.len())),
                 sequential_async: self.sequential_async,
+                source_runtime_worker: None,
             }),
             imports: std::mem::take(&mut self.imports),
             externals: std::mem::take(&mut self.externals),
             source_pure_unit_calls: None,
+            source_runtime_shell: None,
         };
         if has_javascript_products(&program, &self.nested_product_bindings) {
             let (mut program, types) = infer_javascript_product_types(program)?;

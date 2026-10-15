@@ -248,6 +248,7 @@ pub(super) fn validate(program: &Program) -> Result<()> {
                 effects,
                 span: main.span,
                 sequential_async: main.sequential_async,
+                source_runtime_worker: main.source_runtime_worker.clone(),
             })
         })
         .transpose()?;
@@ -258,6 +259,7 @@ pub(super) fn validate(program: &Program) -> Result<()> {
         imports: Vec::new(),
         externals: Vec::new(),
         source_pure_unit_calls: program.source_pure_unit_calls.clone(),
+        source_runtime_shell: program.source_runtime_shell.clone(),
     };
     let checked = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
     if checked != *program {

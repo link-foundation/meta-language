@@ -912,6 +912,13 @@ pub enum SEffect {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SMain {
+    /// Owned worker context for an independently selected complete runtime.
+    #[serde(
+        default,
+        rename = "sourceRuntimeWorker",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub source_runtime_worker: Option<serde_json::Value>,
     pub effects: Vec<SEffect>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub span: Option<Span>,
@@ -923,6 +930,13 @@ pub struct SMain {
 /// A parsed source program.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SProgram {
+    /// Complete owned source runtime interpretation, separate from its pure core.
+    #[serde(
+        default,
+        rename = "sourceRuntimeShell",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub source_runtime_shell: Option<serde_json::Value>,
     /// Independently selected complete pure Unit program interpretation.
     #[serde(
         default,
