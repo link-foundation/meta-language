@@ -559,6 +559,13 @@ the recorded later grammar snapshot; it does not claim that snapshot existed at
 conversion time. Frozen migration hashes remain unchanged. Current generated
 fixtures must pass their own registered checks before the conversion witness
 can accept an updated output.
+The same correction register records that the historical Pascal conversion
+added `rootIncludesLeadingTrivia: true` before `matches`. Its receipt
+authenticates the original Git value and a later immutable native grammar
+inventory with the same grammar and projection metadata. Replay permits only
+that absent Boolean field at its recorded position; every original field,
+source, golden row, alias and occurrence order remains unchanged. The receipt
+does not claim the later inventory existed at conversion time.
 
 ## Links Notation fitness
 

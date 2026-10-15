@@ -41,10 +41,48 @@ function revisionOf(entry, recorded, fallback, field) {
 function applyRecordedCorrections(original, corrections, logicalPath, migrationRevision, repository) {
   if (!Array.isArray(corrections)) throw new Error('migration corrections must be recorded data');
   if (!corrections.length) return { value: original, observations: [] };
-  const value = structuredClone(original);
+  let value = structuredClone(original);
   const observations = [];
   const targets = new Set();
   for (const rule of corrections) {
+    if (rule.kind === 'native grammar leading trivia metadata addition') {
+      if (rule.logicalPath !== logicalPath || rule.nativeGrammar !== `native-${original.id}`
+        || logicalPath !== `parity/fixtures/native-grammars/${original.id}.json`
+        || rule.addedField !== 'rootIncludesLeadingTrivia' || rule.addedValue !== true || rule.beforeField !== 'matches'
+        || !digest.test(rule.originalDecodedSha256 ?? '') || !digest.test(rule.inventorySha256 ?? '')
+        || !fullRevision.test(rule.inventoryRevision ?? '')
+        || rule.inventoryFile !== 'parity/language-grammar-inventory.lino'
+        || rule.temporalRelation !== 'later committed native grammar inventory') {
+        throw new Error('unsupported or unauthenticated leading trivia metadata addition');
+      }
+      if (sha256(JSON.stringify(original)) !== rule.originalDecodedSha256) throw new Error('migration correction does not authenticate the original committed JSON value');
+      if (Object.hasOwn(value, rule.addedField) || !Array.isArray(value.matches)) throw new Error('leading trivia metadata addition must preserve an absent field and existing matches');
+      const target = `${rule.nativeGrammar}\0${rule.addedField}`;
+      if (targets.has(target)) throw new Error('migration corrections repeat a leading trivia field');
+      targets.add(target);
+      if (rule.inventoryRevision === migrationRevision) throw new Error('the correction artifact must be explicitly later than the historical conversion');
+      if (git(repository, ['rev-parse', '--verify', `${rule.inventoryRevision}^{commit}`]).toString('utf8').trim() !== rule.inventoryRevision) {
+        throw new Error('the correction artifact does not name the exact immutable commit');
+      }
+      try { git(repository, ['merge-base', '--is-ancestor', migrationRevision, rule.inventoryRevision]); }
+      catch { throw new Error('the correction artifact is not the recorded later native grammar inventory'); }
+      const bytes = git(repository, ['show', `${rule.inventoryRevision}:${rule.inventoryFile}`]);
+      if (sha256(bytes) !== rule.inventorySha256) throw new Error('the correction inventory differs from its immutable bytes');
+      const inventory = readStructuredDataLino(bytes.toString('utf8'));
+      const grammar = inventory.nativeGrammars?.[rule.nativeGrammar];
+      if (!grammar || grammar.grammar !== original.grammar || grammar.rootIncludesLeadingTrivia !== true
+        || !['hidden', 'anonymous', 'extras'].every(field => isDeepStrictEqual(grammar[field], original[field]))) {
+        throw new Error('the correction inventory does not authenticate the original native grammar projection');
+      }
+      // Record the historical metadata addition without changing a golden row,
+      // source, assertion, alias or existing field's value and relative order.
+      value = Object.fromEntries(Object.entries(value).flatMap(([name, field]) => name === rule.beforeField
+        ? [[rule.addedField, rule.addedValue], [name, field]] : [[name, field]]));
+      observations.push({ nativeGrammar: rule.nativeGrammar, addedField: rule.addedField, addedValue: rule.addedValue,
+        beforeField: rule.beforeField, inventoryRevision: rule.inventoryRevision, inventorySha256: rule.inventorySha256,
+        temporalRelation: rule.temporalRelation });
+      continue;
+    }
     if (rule.kind !== 'grammar parser fingerprint receipt correction' || rule.logicalPath !== logicalPath
       || typeof rule.language !== 'string' || typeof rule.provider !== 'string'
       || !digest.test(rule.previousSha256 ?? '') || !digest.test(rule.originalDecodedSha256 ?? '')
