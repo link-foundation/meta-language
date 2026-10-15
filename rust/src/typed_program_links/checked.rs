@@ -6,7 +6,7 @@ use crate::translation::ir::{Decl, Effect, Item, Program};
 use crate::translation::primitive_value_rules::{
     accept_linked_text_conversion_kind, read_number_display_refusal,
 };
-use crate::translation::surface::{SEffect, SItem, SMain, SProgram, ShowStyle};
+use crate::translation::surface::{SEffect, SMain, SProgram, ShowStyle};
 use crate::translation::typed_program_link_rules::{
     accept_program_division_rounding, accept_program_expression_operation,
     accept_program_machine_integer_width, accept_program_optional_absence,

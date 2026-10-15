@@ -78,7 +78,7 @@ pub fn parse_rust_with_scalar_loop_model(source: &str, model: &str) -> Result<SP
     parse_rust_with_loop_profiles(source, "", "", "", model)
 }
 
-pub(crate) fn parse_rust_with_loop_profiles(
+pub fn parse_rust_with_loop_profiles(
     source: &str,
     array_result_model: &str,
     completion_model: &str,

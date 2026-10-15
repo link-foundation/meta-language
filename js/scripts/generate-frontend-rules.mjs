@@ -100,7 +100,7 @@ for (let index = 0; index < starts.length - 1; index += 1) {
 }
 const modules = continuations.map((_, index) => index === 0 ? 'continuations' : `continuations_${index + 1}`);
 const outputs = [
-  [outputPath, notice + final.stdout.slice(0, strings) + 'mod strings;\npub use strings::*;\nmod rust_strings;\npub use rust_strings::*;\n' + modules.map((name) => `mod ${name};\npub use ${name}::*;\n`).join('')],
+  [outputPath, notice + final.stdout.slice(0, strings) + '#[path = "frontend_rules/strings.rs"]\nmod strings;\npub use strings::*;\n#[path = "frontend_rules/rust_strings.rs"]\nmod rust_strings;\npub use rust_strings::*;\n' + modules.map((name) => `#[path = "frontend_rules/${name}.rs"]\nmod ${name};\npub use ${name}::*;\n`).join('')],
   [new URL('../../rust/src/translation/frontend_rules/strings.rs', import.meta.url), notice + 'use super::*;\n\n' + final.stdout.slice(strings, boundary).trimEnd() + '\n'],
   ...modules.map((name, index) => [new URL(`../../rust/src/translation/frontend_rules/${name}.rs`, import.meta.url), notice + 'use super::*;\n\n' + continuations[index].trim() + '\n']),
 ];

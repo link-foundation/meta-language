@@ -951,11 +951,15 @@ pub fn read_string_test_support(target: &str, operation: &str) -> String {
     }
 }
 
+#[path = "frontend_rules/strings.rs"]
 mod strings;
 pub use strings::*;
+#[path = "frontend_rules/rust_strings.rs"]
 mod rust_strings;
 pub use rust_strings::*;
+#[path = "frontend_rules/continuations.rs"]
 mod continuations;
 pub use continuations::*;
+#[path = "frontend_rules/continuations_2.rs"]
 mod continuations_2;
 pub use continuations_2::*;

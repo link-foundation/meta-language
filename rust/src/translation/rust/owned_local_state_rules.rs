@@ -125,9 +125,7 @@ pub fn ml_accept_rust_owned_local_text_units_loop1(
                                 crate::translation::frontend_rules::ml_array::number_index(index_2),
                             )
                             .unwrap_or(-1f64);
-                            if !(56_320f64..=57_343f64).contains(&next) {
-                                crate::translation::rust::owned_local_state_rules::MlAcceptRustOwnedLocalTextUnitsLoop1Result::MlAcceptRustOwnedLocalTextUnitsLoop1Return(false)
-                            } else {
+                            if (56_320f64..=57_343f64).contains(&next) {
                                 {
                                     let index_3 = index_2 + 1f64;
                                     {
@@ -135,6 +133,8 @@ pub fn ml_accept_rust_owned_local_text_units_loop1(
                                         continue;
                                     }
                                 }
+                            } else {
+                                crate::translation::rust::owned_local_state_rules::MlAcceptRustOwnedLocalTextUnitsLoop1Result::MlAcceptRustOwnedLocalTextUnitsLoop1Return(false)
                             }
                         }
                     }

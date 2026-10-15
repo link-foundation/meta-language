@@ -22,7 +22,7 @@ export function acceptRustOwnedLocalTextUnits(units){
   if(unit>=55296&&unit<=56319){
    index++;
    const next=units[index]??-1;
-   if(!(next>=56320&&next<=57343))return false;
+   if(next>=56320&&next<=57343){ }else return false;
   }else if(unit>=56320&&unit<=57343)return false;
  }
  return true;

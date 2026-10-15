@@ -118,5 +118,5 @@ pub fn accept_rust_pure_unit_container(kind: &str, dense: bool, unrepresented: b
 /// Read a shared pure Rust Unit-call admission.
 #[must_use]
 pub fn accept_rust_pure_unit_source_offset(value: f64, negative_zero: bool) -> bool {
-    !negative_zero && (0f64..=9007199254740991f64).contains(&value) && value % 1f64 == 0f64
+    !negative_zero && (0f64..=9_007_199_254_740_991_f64).contains(&value) && value % 1f64 == 0f64
 }

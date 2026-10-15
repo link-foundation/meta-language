@@ -44,7 +44,7 @@ if (!process.argv.includes('--javascript-only')) {
   const {checkProgram} = await import('../src/translation/check.js');
   const {emitRust} = await import('../src/translation/emit-rust.js');
   const raw = emitRust(checkProgram(parseJavaScript(source))).definitions.join('\n\n');
-  if (process.argv.includes('--update-styles')) {
+  {
     const actions = []; let current = raw;
     const replace = (from, to) => { if (current.includes(from)) { actions.push({op: 'replace', field: 'source', from, to}); current = current.split(from).join(to); } };
     for (const name of ['model', 'language', 'form', 'kind', 'element', 'absence', 'role', 'owner', 'name','field']) replace(`${name}: String`, `${name}: &str`);
@@ -63,7 +63,9 @@ if (!process.argv.includes('--javascript-only')) {
     }
     const renderer = current.match(/pub fn render_java_script_scoped_binding_identifier[\s\S]*?\n\}/u)?.[0];
     if (renderer) replace(renderer, `pub fn render_java_script_scoped_binding_identifier(name: &str, preserve: bool) -> String {\n    if preserve { name.to_owned() } else { format!("${policy.prefix}{name}") }\n}`);
-    writeFileSync(style, new DecoratorSet([{id: 'javascript-scoped-binding-emission-library-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions}]).toLino());
+    const expectedStyle = new DecoratorSet([{id: 'javascript-scoped-binding-emission-library-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions}]).toLino();
+    if (process.argv.includes('--update-styles')) writeFileSync(style, expectedStyle);
+    else if (readFileSync(style, 'utf8') !== expectedStyle) throw new Error('scoped binding styles are stale; regenerate --update-styles from the current shared policy');
   }
   const decorated = DecoratorSet.fromLino(readFileSync(style, 'utf8')).decorate('emitter', {format: 'Rust', source: raw}).source;
   const formatted = spawnSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], {input: decorated, encoding: 'utf8'});

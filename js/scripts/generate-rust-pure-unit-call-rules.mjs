@@ -42,7 +42,7 @@ if(!process.argv.includes('--javascript-only')){
     expression='!name.is_empty() && name != "_" && !name.starts_with("ml_") && !matches!(name, '+excluded.map(value=>JSON.stringify(value)).join(' | ')+')';
    }
    if(block.startsWith('pub fn accept_rust_pure_unit_source_offset(')){
-    expression=(policy.sourceOffsets.negativeZero?'true':'!negative_zero')+' && ('+policy.sourceOffsets.minimum+'f64..='+policy.sourceOffsets.maximum+'f64).contains(&value) && value % 1f64 == 0f64';
+    expression=(policy.sourceOffsets.negativeZero?'true':'!negative_zero')+' && ('+policy.sourceOffsets.minimum+'f64..='+String(policy.sourceOffsets.maximum).replace(/\B(?=(\d{3})+(?!\d))/gu,'_')+'_f64).contains(&value) && value % 1f64 == 0f64';
    }
    expression=stripRustSourceHeaderStyleParentheses(expression);
    replace(block,block.slice(0,open+1)+'\n    '+expression+'\n}');
