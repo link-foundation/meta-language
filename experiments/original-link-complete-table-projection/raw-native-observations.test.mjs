@@ -1,9 +1,74 @@
 // Heavy contracts deliberately require CI, including when the native flag is 0.
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {existsSync, mkdirSync, readFileSync, writeFileSync} from 'node:fs';
 import {dirname, join} from 'node:path';
 import test from 'node:test';
 import {requireOriginalLinkRawPlanning, originalLinkRawNativeMode, planOriginalLinkRawNative, runOriginalLinkRawNative, verifyOriginalLinkRawNativeModel} from './raw-native-observations.mjs';
+import {readStructuredDataLino, structuredDataToLino} from '../../js/src/structured-data-links.js';
+import {readOriginalLinkRawHistoricalSources, verifyOriginalLinkRawSchemaSourceClosure} from './raw-schema-source-closure.mjs';
+
+const schemaClosureFixture = () => ({
+  receipt: readStructuredDataLino(readFileSync(new URL('./data/raw-schema-source-closure.lino', import.meta.url), 'utf8')),
+  bytes: readFileSync(new URL('../../js/src/data/typed-program-links-schema.lino', import.meta.url)),
+  historicalSources: readOriginalLinkRawHistoricalSources(readFileSync(new URL('./raw-native-observations.mjs', import.meta.url), 'utf8')),
+});
+
+test('the additive schema closure retains exact original source bytes and every historical producer binding', () => {
+  const {receipt, bytes, historicalSources} = schemaClosureFixture();
+  const closure = verifyOriginalLinkRawSchemaSourceClosure(receipt, bytes, historicalSources);
+  assert.equal(closure.producerCommit, '9123dd5d19fc26c95a9d31eff47dd9655c33da53');
+  assert.equal(closure.baselineSha256, '377101200a12b4ada15e0a34a583900e8b6d62adb1fb685f9b2d6f161cacafdc');
+  assert.equal(receipt.baseline.bytes, Buffer.byteLength(receipt.baseline.source));
+  const sources = verifyOriginalLinkRawNativeModel();assert.equal(sources.length, 47);
+  const row = sources.find(row => row.file === '../../js/src/data/typed-program-links-schema.lino');
+  assert.equal(row.producerSha256, closure.baselineSha256);assert.equal(row.sha256, closure.sha256);
+  assert.deepEqual(row.schemaSourceClosure, closure);
+  assert.equal(receipt.generation.definitionCount, 106);
+  assert.equal(receipt.generation.completeRustBytes, 351746);
+  assert.match(receipt.scope, /no native execution/u);
+});
+
+test('coherent new schema hashes cannot excuse changed, removed, reordered or unexpected old data', () => {
+  for (const mutate of [
+    schema => {schema.fields.k = 'counterfeit construct kind';},
+    schema => {delete schema.root;},
+    schema => {delete schema.fields.k;},
+    schema => {schema.fields = Object.fromEntries(Object.entries(schema.fields).reverse());},
+    schema => {const entries = Object.entries(schema);[entries[0], entries[1]] = [entries[1], entries[0]];return Object.fromEntries(entries);},
+    schema => {schema.unexpectedUnusedPlan = {};},
+    schema => {delete schema.propositionOperands;},
+  ]) {
+    const {receipt, bytes, historicalSources} = schemaClosureFixture();
+    const schema = readStructuredDataLino(bytes.toString('utf8')), changed = mutate(schema) ?? schema;
+    const counterfeit = Buffer.from(structuredDataToLino(changed));
+    receipt.current.bytes = counterfeit.length;
+    receipt.current.sha256 = createHash('sha256').update(counterfeit).digest('hex');
+    assert.throws(() => verifyOriginalLinkRawSchemaSourceClosure(receipt, counterfeit, historicalSources), assert.AssertionError);
+  }
+});
+
+test('schema closure receipts cannot forge source hashes, byte counts, producer bindings or generation results', () => {
+  for (const mutate of [
+    receipt => {receipt.baseline.sha256 = '0'.repeat(64);},
+    receipt => {receipt.current.sha256 = '0'.repeat(64);},
+    receipt => {receipt.baseline.source += '\n';},
+    receipt => {receipt.baseline.bytes--;},
+    receipt => {receipt.current.bytes--;},
+    receipt => {receipt.producerCommit = '0'.repeat(40);},
+    receipt => {receipt.consumedSchemaProperties.reverse();},
+    receipt => {receipt.consumedSchemaProperties.pop();},
+    receipt => {receipt.addedUnusedSchemaProperties.push('unexpected');},
+    receipt => {receipt.historicalSources['policy.mjs'] = '0'.repeat(64);},
+    receipt => {receipt.historicalSources = Object.fromEntries(Object.entries(receipt.historicalSources).reverse());},
+    receipt => {receipt.generation.exitCode = 1;},
+    receipt => {receipt.generation.definitionCount = 105;},
+    receipt => {receipt.generation.completeRustSha256 = '0'.repeat(64);},
+  ]) {
+    const {receipt, bytes, historicalSources} = schemaClosureFixture();mutate(receipt);
+    assert.throws(() => verifyOriginalLinkRawSchemaSourceClosure(receipt, bytes, historicalSources), assert.AssertionError);
+  }
+});
 
 test('heavy raw planning refuses before fixture imports outside CI', async () => {
   for (const environment of [{}, {CI: 'false'}]) {

@@ -5,6 +5,8 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {createSourceNativeObservationRunner} from '../source-native-observations.mjs';
+import {readStructuredDataLino} from '../../js/src/structured-data-links.js';
+import {verifyOriginalLinkRawSchemaSourceClosure} from './raw-schema-source-closure.mjs';
 
 // Actual immutable producer and source closure; no capability declaration substitutes for execution.
 export const ORIGINAL_LINK_RAW_MODEL_COMMIT = '9123dd5d19fc26c95a9d31eff47dd9655c33da53';
@@ -57,6 +59,9 @@ const sourceDigests = {
   "../generated-owned-rust/data/value-edit-policy.lino": "74ee5344d0c05192f497b7672c0a26f193debce64a9ed338d986e5ebeb3fd8bb",
   "../issue-199-rust-string-continuation-adapter.mjs": "d28bfe1dca0c6b87a82bd6b2680cebebef5e3242ae42399f142025fec8e64de2"
 };
+// All forty-seven producer bindings above remain unchanged. The receipt keeps
+// the original schema bytes while authenticating only an additive host schema.
+const schemaClosureReceiptSha256 = '4279200cc6d7f1aa36aa7090461b3d2f09d3e711c42cee6c86d29e8bf8873375';
 // Ordered inventory derived from the frozen fixture/corpus sources, without constructing graphs.
 const frozenFixtureIds = [
   "authentic-owned-clone",
@@ -180,7 +185,14 @@ export function originalLinkRawNativeMode(environment = process.env) {
 export function verifyOriginalLinkRawNativeModel(read = readFileSync) {
   assert.match(ORIGINAL_LINK_RAW_MODEL_COMMIT ?? '', /^[0-9a-f]{40}$/u, 'raw producer commit is not frozen');
   return Object.entries(sourceDigests).map(([file, expected]) => {
-    const actual = sha256(read(new URL(file, import.meta.url)));
+    const bytes = read(new URL(file, import.meta.url)), actual = sha256(bytes);
+    if (file === '../../js/src/data/typed-program-links-schema.lino') {
+      const receiptBytes = read(new URL('./data/raw-schema-source-closure.lino', import.meta.url));
+      assert.equal(sha256(receiptBytes), schemaClosureReceiptSha256, 'the frozen raw schema source-closure receipt changed');
+      const closure = verifyOriginalLinkRawSchemaSourceClosure(readStructuredDataLino(receiptBytes.toString('utf8')), bytes, sourceDigests);
+      assert.equal(closure.baselineSha256, expected);
+      return {file, sha256: actual, producerSha256: expected, schemaSourceClosure: closure, sourceClosureReceiptSha256: schemaClosureReceiptSha256};
+    }
     assert.equal(actual, expected, 'the frozen raw component changed: ' + file); return {file, sha256: actual};
   });
 }
