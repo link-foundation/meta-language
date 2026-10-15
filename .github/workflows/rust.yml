@@ -858,6 +858,66 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: node scripts/clean-caches.mjs --event ci-teardown
 
+  original-link-raw-observations:
+    name: Original Link Raw Native Observations
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: rust-${{ github.ref }}-original-link-raw-observations
+      cancel-in-progress: true
+    needs: [detect-changes, changelog, cargo-lock, check]
+    if: |
+      !cancelled() &&
+      needs.cargo-lock.result == 'success' &&
+      needs.check.result == 'success' &&
+      (needs.changelog.result == 'success' || needs.changelog.result == 'skipped') && (
+        github.event_name == 'push' ||
+        github.event_name == 'workflow_dispatch' ||
+        inputs.native_test_inputs_changed == true ||
+        needs.detect-changes.outputs.any-code-changed == 'true' ||
+        needs.detect-changes.outputs.rs-changed == 'true' ||
+        needs.detect-changes.outputs.toml-changed == 'true' ||
+        needs.detect-changes.outputs.workflow-changed == 'true'
+      )
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Node.js for raw source observations
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install raw source observation dependencies
+        working-directory: js
+        run: npm ci --ignore-scripts
+
+      - name: Run complete original link raw observations
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        env:
+          CI: 'true'
+          ORIGINAL_LINK_RAW_NATIVE: '1'
+        run: node scripts/with-cache-cleanup.mjs --event test -- node --max-old-space-size=1024 --test --test-concurrency=1 experiments/original-link-complete-table-projection/raw-native-observations.test.mjs
+
+      - name: Retain complete original link raw observations
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: original-link-raw-native-observations-${{ github.sha }}
+          path: issue-195-artifacts/original-link-raw-native-observations.lino
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Clean raw source observation caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
   # === CODE COVERAGE ===
   # Generate code coverage with cargo-llvm-cov in the suites of the test job,
   # so that each shard runs a part of the tests under instrumentation within

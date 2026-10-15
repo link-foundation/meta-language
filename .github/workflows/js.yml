@@ -333,6 +333,8 @@ jobs:
             generated_slice: first
           - group: binary-candidates
             generated_slice: first
+          - group: source-model-raw
+            generated_slice: first
     steps:
       - uses: actions/checkout@v7
         with:
@@ -1084,6 +1086,31 @@ jobs:
           SELF_TRANSLATION_CHECK_RUST: '0'
           BINARY_METADATA_BUFFER_NATIVE: '0'
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 ../experiments/binary-metadata-buffer/native-observations.test.mjs
+
+      - name: Check complete original link raw projection native generation
+        if: ${{ !cancelled() && matrix.group == 'source-model-raw' }}
+        working-directory: js
+        run: node --max-old-space-size=1024 ../experiments/original-link-complete-table-projection/generate-raw.mjs --native --check
+
+      - name: Run complete original link raw projection checks
+        if: ${{ !cancelled() && matrix.group == 'source-model-raw' }}
+        working-directory: js
+        env:
+          CI: 'true'
+          TRANSLATION_CHECK_RUST: '0'
+          SELF_TRANSLATION_CHECK_RUST: '0'
+          ORIGINAL_LINK_RAW_NATIVE: '0'
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --max-old-space-size=1024 --test --test-concurrency=1 ../experiments/original-link-complete-table-projection/raw-projection.test.mjs
+
+      - name: Run complete original link raw native oracle contracts
+        if: ${{ !cancelled() && matrix.group == 'source-model-raw' }}
+        working-directory: js
+        env:
+          CI: 'true'
+          TRANSLATION_CHECK_RUST: '0'
+          SELF_TRANSLATION_CHECK_RUST: '0'
+          ORIGINAL_LINK_RAW_NATIVE: '0'
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --max-old-space-size=1024 --test --test-concurrency=1 ../experiments/original-link-complete-table-projection/raw-native-observations.test.mjs
 
       - name: Check generated whole Rust runtime shell rules
         if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}

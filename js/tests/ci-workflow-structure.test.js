@@ -153,7 +153,8 @@ test('the optional native-input workflow interface preserves defaults, JavaScrip
   assert.match(ci.get('rust').header, /native_test_inputs_changed: \$\{\{ needs\.changes\.outputs\.native_test_inputs_changed == 'true' \}\}/u);
   assert.ok(needs(ci.get('rust')).includes('js'));assert.doesNotMatch(nativeInputCondition(ci.get('rust')), /always\(|cancelled\(/u);
   const changed = [...rust].filter(([, job]) => job.header.includes('inputs.native_test_inputs_changed')).map(([name]) => name).sort();
-  assert.deepEqual(changed, ['cargo-lock', 'check', 'test']);
+  assert.deepEqual(changed.filter(name => name !== 'original-link-raw-observations'), ['cargo-lock', 'check', 'test']);
+  assert.deepEqual(changed, ['cargo-lock', 'check', 'original-link-raw-observations', 'test']);
   assert.deepEqual(needs(rust.get('check')), ['detect-changes', 'cargo-lock']);assert.deepEqual(needs(rust.get('test')), ['detect-changes', 'changelog', 'cargo-lock', 'check']);
   for (const [name, fields] of [['cargo-lock', ['rs-changed', 'toml-changed', 'workflow-changed', 'any-code-changed']], ['check', ['any-code-changed', 'rs-changed', 'toml-changed', 'workflow-changed']], ['test', ['any-code-changed', 'rs-changed', 'toml-changed', 'workflow-changed']]]) {
     const expression = nativeInputCondition(rust.get(name));assert.match(expression, /!cancelled\(\)/u);assert.match(expression, /github\.event_name == 'push'/u);assert.match(expression, /github\.event_name == 'workflow_dispatch'/u);
@@ -485,6 +486,7 @@ const ADDITIONAL_SOURCE_PACKAGE_CELLS = [
   { group: 'source-model-tables', generated_slice: 'first' },
   { group: 'binary-candidates', generated_slice: 'first' },
 ];
+const RAW_SOURCE_PACKAGE_CELLS = [{ group: 'source-model-raw', generated_slice: 'first' }];
 const ORIGINAL_PACKAGE_STEPS = [
   ["- uses: actions/checkout@v7", '6a4e22587a1c1ab9a1a80858c0b1d31d26580233f884253c583c43c5e5452297', 'all'],
   ["Simulate fresh merge with base branch", '7a5dda6e63b412064d418cdd82ae8a57f69b1f232aa50f2e72fe0a8f4461467e', 'all'],
@@ -980,6 +982,18 @@ const BINARY_METADATA_PACKAGE_STEPS = [
     '504f362f65879d332962e1fcbc260e9dc583fc58464058d8bbaabcf67e49163f', 'binary-candidates'],
 ];
 
+const RAW_SOURCE_PACKAGE_STEPS = [
+  ['Check complete original link raw projection native generation',
+    'node --max-old-space-size=1024 ../experiments/original-link-complete-table-projection/generate-raw.mjs --native --check',
+    '782f3d892233bd48031233fe49a68326d36efcd07a597de6d238856e124a4702', 'source-model-raw'],
+  ['Run complete original link raw projection checks',
+    'node ../scripts/with-cache-cleanup.mjs --event test -- node --max-old-space-size=1024 --test --test-concurrency=1 ../experiments/original-link-complete-table-projection/raw-projection.test.mjs',
+    'feeb3304cdf5b2a92381a149477a6cd97c484ca292cc58f102e6d3f569661f40', 'source-model-raw'],
+  ['Run complete original link raw native oracle contracts',
+    'node ../scripts/with-cache-cleanup.mjs --event test -- node --max-old-space-size=1024 --test --test-concurrency=1 ../experiments/original-link-complete-table-projection/raw-native-observations.test.mjs',
+    'f72da9d6daccf08f26d1349d3fdd6e9133b024dee6a6ff7dd2ae4e1b9ef69cef', 'source-model-raw'],
+];
+
 // Exact physical owners of the unchanged generated checks. Shared Rust setup is
 // per runner; both compiler feedback producers and their upload remain together.
 const GENERATED_PACKAGE_SLICES = ['first', 'second'];
@@ -1143,8 +1157,10 @@ function packageCheckCells(checks) {
     '          - group: source-model-tables\n' +
     '            generated_slice: first\n' +
     '          - group: binary-candidates\n' +
+    '            generated_slice: first\n' +
+    '          - group: source-model-raw\n' +
     '            generated_slice: first\n';
-  assert.equal(matrix, expected, 'the seven published cells retain their order before exactly two new source-model cells');
+  assert.equal(matrix, expected, 'the nine published cells retain their order before the separate raw source cell');
   const groups = /^ {8}group: \[([^\]]+)\]$/mu.exec(matrix)[1].split(', ');
   const slice = /^ {8}generated_slice: \[([^\]]+)\]$/mu.exec(matrix)[1];
   const included = [...matrix.matchAll(/^ {10}- group: ([a-z-]+)\n {12}generated_slice: ([a-z]+)$/gmu)]
@@ -1155,8 +1171,8 @@ function packageCheckCells(checks) {
 function checkGeneratedPackageSlices(parsed) {
   const checks = parsed.get('package-checks');
   const cells = packageCheckCells(checks);
-  assert.equal(cells.length, 9);
-  assert.equal(new Set(cells.map(cell => `${cell.group}:${cell.generated_slice}`)).size, 9);
+  assert.equal(cells.length, 10);
+  assert.equal(new Set(cells.map(cell => `${cell.group}:${cell.generated_slice}`)).size, 10);
   const display = /^ {4}name: (.+)$/mu.exec(checks.header)?.[1];
   const secondLabel = "${{ matrix.generated_slice == 'second' && ' / second' || '' }}";
   assert.equal(display, 'JavaScript Package Checks (${{ matrix.group }})' + secondLabel);
@@ -1165,8 +1181,10 @@ function checkGeneratedPackageSlices(parsed) {
   assert.deepEqual(displayNames.slice(0, 6), PACKAGE_GROUPS.map(group => `JavaScript Package Checks (${group})`),
     'all six published check context names remain unchanged');
   assert.equal(displayNames[6], 'JavaScript Package Checks (generated) / second');
-  assert.deepEqual(cells.slice(7), ADDITIONAL_SOURCE_PACKAGE_CELLS);
-  assert.equal(new Set(displayNames).size, 9);
+  assert.deepEqual(cells.slice(7, 9), ADDITIONAL_SOURCE_PACKAGE_CELLS);
+  assert.deepEqual(cells.slice(9), RAW_SOURCE_PACKAGE_CELLS);
+  assert.equal(displayNames[9], 'JavaScript Package Checks (source-model-raw)');
+  assert.equal(new Set(displayNames).size, 10);
   const concurrencyGroups = [...checks.header.matchAll(/^ {6}group: (.+)$/gmu)].map(match => match[1]);
   assert.equal(concurrencyGroups.length, 1);
   const concurrency = concurrencyGroups[0];
@@ -1174,7 +1192,7 @@ function checkGeneratedPackageSlices(parsed) {
     'both generated runners require independent concurrency identities');
   const physicalNames = cells.map(cell => concurrency
     .replace('${{ matrix.group }}', cell.group).replace('${{ matrix.generated_slice }}', cell.generated_slice));
-  assert.equal(new Set(physicalNames).size, 9, 'a slice must never cancel a sibling runner');
+  assert.equal(new Set(physicalNames).size, 10, 'a slice must never cancel a sibling runner');
   assert.match(checks.header, /^ {6}cancel-in-progress: true$/mu);
   assert.match(checks.header, /^ {6}fail-fast: false$/mu);
   for (const id of ['package-checks', 'test']) {
@@ -1747,9 +1765,121 @@ function checkCompleteTableNativeSteps(parsed) {
   }
 }
 
+const ORIGINAL_LINK_RAW_NATIVE_JOB = 'original-link-raw-observations';
+
+function checkOriginalLinkRawNativeJob(parsed) {
+  const matching = [...parsed.values()].filter(job => job.id === ORIGINAL_LINK_RAW_NATIVE_JOB);
+  assert.equal(matching.length, 1, 'the complete raw native oracle has one independent job');
+  const job = matching[0];
+  assert.deepEqual(needs(job), needs(parsed.get('test')), 'the raw oracle retains every existing Cargo test prerequisite');
+  assert.equal(nativeInputCondition(job), nativeInputCondition(parsed.get('test')), 'the complete existing test admission condition is unchanged');
+  assert.equal(packageStepSignature({text: job.header + job.steps.map(step => step.text).join('')}, true),
+    '35e9be5d27a7b6bdc0b730fb0a7b8c38a2485b491ccc2cd9eec4889e89889291',
+    'the raw oracle retains its complete setup, bounds, source command, native switch, receipt and cleanup');
+  return job;
+}
+
+test('the separate raw source cell conserves the previous nine cells and runs every new check once', () => {
+  const parsed = jobs('js.yml'), cells = checkGeneratedPackageSlices(parsed);
+  assert.deepEqual(cells.slice(0, 9), [...PACKAGE_GROUPS.map(group => ({group, generated_slice: 'first'})),
+    {group: 'generated', generated_slice: 'second'}, ...ADDITIONAL_SOURCE_PACKAGE_CELLS]);
+  assert.deepEqual(cells.slice(9), RAW_SOURCE_PACKAGE_CELLS);
+  assert.deepEqual(parsed.get('package-checks').steps.filter(step => step.text.includes("matrix.group == 'source-model-raw'"))
+    .map(step => step.name), RAW_SOURCE_PACKAGE_STEPS.map(([name]) => name));
+  checkPackageStepConservation(parsed);
+  const row = '          - group: source-model-raw\n            generated_slice: first\n';
+  for (const replacement of ['', row + row, row.replace('first', 'second'), row.replace('source-model-raw', 'source-models')]) {
+    const forged = jobs('js.yml');
+    forged.get('package-checks').header = forged.get('package-checks').header.replace(row, replacement);
+    assert.throws(() => checkGeneratedPackageSlices(forged), assert.AssertionError);
+  }
+});
+
+test('raw source checks reject missing, duplicated, parallel, unbounded or native-enabled JavaScript gates', () => {
+  for (const [name] of RAW_SOURCE_PACKAGE_STEPS) {
+    const mutate = change => {
+      const parsed = jobs('js.yml'), steps = parsed.get('package-checks').steps, index = steps.findIndex(step => step.name === name);
+      assert.ok(index >= 0);change(steps, index);
+      assert.throws(() => checkPackageStepConservation(parsed), assert.AssertionError, name);
+    };
+    mutate((steps, index) => steps.splice(index, 1));
+    mutate((steps, index) => steps.push({...steps[index]}));
+    for (const [before, after] of [
+      ['!cancelled()', 'success()'], ["matrix.group == 'source-model-raw'", "matrix.group == 'source-models'"],
+      ['--max-old-space-size=1024', '--max-old-space-size=2048'], [name, name + '\n        continue-on-error: true'],
+      ...(name.startsWith('Run ') ? [
+        ['--test-concurrency=1', '--test-concurrency=2'], ['--event test --', '--event build --'],
+        ["CI: 'true'", "CI: 'false'"], ["ORIGINAL_LINK_RAW_NATIVE: '0'", "ORIGINAL_LINK_RAW_NATIVE: '1'"],
+        ["TRANSLATION_CHECK_RUST: '0'", "TRANSLATION_CHECK_RUST: '1'"],
+      ] : [['--native --check', '--check'], ['--native --check', '--native --check --record-attempt']]),
+    ]) mutate((steps, index) => {
+      assert.ok(steps[index].text.includes(before));steps[index].text = steps[index].text.replace(before, after);
+    });
+  }
+});
+
+test('raw native observations run in parallel with old suites under identical JavaScript and Cargo prerequisites', () => {
+  const parsed = jobs('rust.yml'), job = checkOriginalLinkRawNativeJob(parsed);
+  assert.equal([...workflow('rust.yml').matchAll(/^ {2}original-link-raw-observations:$/gmu)].length, 1);
+  assert.ok(!needs(job).includes('test'), 'the raw oracle adds no cumulative work to the old native test matrix');
+  const context = {event: 'pull_request', input: true, selection: {rust: true}, outputs: {
+    'any-code-changed': false, 'rs-changed': false, 'toml-changed': false, 'workflow-changed': false,
+  }, results: {'detect-changes': 'success', changelog: 'success', 'cargo-lock': 'success', check: 'success'}};
+  assert.equal(evaluateNativeInputCondition(job, context), true);
+  for (const prerequisite of ['changelog', 'cargo-lock', 'check']) for (const result of ['failure', 'cancelled', 'skipped']) {
+    const actual = evaluateNativeInputCondition(job, {...context, results: {...context.results, [prerequisite]: result}});
+    assert.equal(actual, prerequisite === 'changelog' && result === 'skipped', `${prerequisite}: ${result}`);
+  }
+  assert.equal(evaluateNativeInputCondition(job, {...context, cancelled: true}), false);
+  assert.equal(evaluateNativeInputCondition(job, {...context, input: false}), false);
+  assert.equal(evaluateNativeInputCondition(job, {...context, input: false, event: 'push'}), true);
+  for (const file of ['generate-raw.mjs', 'raw-policy.mjs', 'raw-rules.mjs', 'raw-transport.mjs', 'raw-fixtures.mjs',
+    'raw-corpus.mjs', 'raw-projection.test.mjs', 'raw-native-observations.mjs', 'raw-native-observations.test.mjs',
+    'data/raw-policy.lino', 'data/raw-native-definitions.lino', 'data/raw-translation-attempts.lino']) {
+    const source = 'experiments/original-link-complete-table-projection/' + file, chain = nativeInputJobChain([source]);
+    assert.deepEqual(chain.selection, {rust: true, native_test_inputs_changed: true}, source);
+    for (const prerequisite of ['outer', 'cargo-lock', 'check', 'test']) assert.equal(chain[prerequisite], true, source);
+    assert.equal(nativeInputJobChain([source], {javascript: 'failure'}).outer, false, source);
+  }
+});
+
+test('the independent raw oracle rejects prerequisite, execution, artifact and resource-bound weakening', () => {
+  const mutate = change => {
+    const parsed = jobs('rust.yml');change(parsed);
+    assert.throws(() => checkOriginalLinkRawNativeJob(parsed), assert.AssertionError);
+  };
+  mutate(parsed => parsed.delete(ORIGINAL_LINK_RAW_NATIVE_JOB));
+  mutate(parsed => parsed.set('duplicate', {...parsed.get(ORIGINAL_LINK_RAW_NATIVE_JOB)}));
+  for (const [before, after] of [
+    ['needs: [detect-changes, changelog, cargo-lock, check]', 'needs: [detect-changes, check]'],
+    ['!cancelled()', 'success()'], ["needs.check.result == 'success'", 'true'],
+    ['timeout-minutes: 15', 'timeout-minutes: 30'], ['runs-on: ubuntu-latest', 'runs-on: windows-latest'],
+    ['-original-link-raw-observations', '-test-ubuntu-latest-translation'],
+  ]) mutate(parsed => {
+    const job = parsed.get(ORIGINAL_LINK_RAW_NATIVE_JOB);assert.ok(job.header.includes(before));job.header = job.header.replace(before, after);
+  });
+  const actual = jobs('rust.yml').get(ORIGINAL_LINK_RAW_NATIVE_JOB);
+  for (const original of actual.steps) {
+    const name = original.name;
+    mutate(parsed => {const steps = parsed.get(ORIGINAL_LINK_RAW_NATIVE_JOB).steps;steps.splice(steps.findIndex(step => step.name === name), 1);});
+    mutate(parsed => {const steps = parsed.get(ORIGINAL_LINK_RAW_NATIVE_JOB).steps;steps.push({...steps.find(step => step.name === name)});});
+    for (const [before, after] of [
+      ['!cancelled()', 'success()'], ["CI: 'true'", "CI: 'false'"], ["ORIGINAL_LINK_RAW_NATIVE: '1'", "ORIGINAL_LINK_RAW_NATIVE: '0'"],
+      ['--max-old-space-size=1024', '--max-old-space-size=2048'], ['--test-concurrency=1', '--test-concurrency=2'],
+      ['--event test --', '--event build --'], ['working-directory: ${{ github.workspace }}', 'working-directory: rust'],
+      ['uses: actions/upload-artifact@v7', 'uses: actions/upload-artifact@v6'], ['${{ github.sha }}', '${{ github.ref }}'],
+      ['native-observations.lino', 'native-observations.json'], ['if-no-files-found: error', 'if-no-files-found: ignore'],
+      ['retention-days: 7', 'retention-days: 0'],
+      [name, name + '\n        continue-on-error: true'],
+    ]) if (original.text.includes(before)) mutate(parsed => {
+      const step = parsed.get(ORIGINAL_LINK_RAW_NATIVE_JOB).steps.find(step => step.name === name);step.text = step.text.replace(before, after);
+    });
+  }
+});
+
 test('new source-model cells append to the original seven cells without moving any existing checks', () => {
   const parsed = jobs('js.yml'), cells = checkGeneratedPackageSlices(parsed);
-  assert.deepEqual(cells.slice(7), ADDITIONAL_SOURCE_PACKAGE_CELLS);
+  assert.deepEqual(cells.slice(7, 9), ADDITIONAL_SOURCE_PACKAGE_CELLS);
   checkPackageStepConservation(parsed);
   const checks = parsed.get('package-checks').steps;
   for (const table of [COMPLETE_TABLE_PACKAGE_STEPS, BINARY_METADATA_PACKAGE_STEPS]) {
@@ -1898,7 +2028,7 @@ function checkPackageStepConservation(parsed) {
     ...RUST_RAW_BINDING_IDENTIFIER_GENERATOR_STEPS, ...RUST_RAW_BINDING_IDENTIFIER_EXPERIMENT_STEPS,
     ...RUST_TEXT_CERTIFICATE_GENERATOR_STEPS, ...RUST_TEXT_CERTIFICATE_EXPERIMENT_STEPS,
     ...OWNED_SOURCE_ADAPTER_PACKAGE_STEPS, ...ORIGINAL_LINK_PROJECTION_PACKAGE_STEPS, ...ORIGINAL_LINK_SYMBOL_ORACLE_PACKAGE_STEPS,
-    ...COMPLETE_TABLE_PACKAGE_STEPS, ...BINARY_METADATA_PACKAGE_STEPS];
+    ...COMPLETE_TABLE_PACKAGE_STEPS, ...BINARY_METADATA_PACKAGE_STEPS, ...RAW_SOURCE_PACKAGE_STEPS];
   const expected = new Map([
     ...ORIGINAL_PACKAGE_STEPS.map(([name, hash, owner]) => [name, { hash, owner }]),
     ...additions.map(([name, command, hash, owner]) => [name, { hash, owner, command, addition: true }]),
@@ -1927,7 +2057,7 @@ function checkPackageStepConservation(parsed) {
         assert.equal((step.text.match(/matrix\.group/gu) ?? []).length, baseline.owner === 'all' ? 0 : 1,
           `package step has an ambiguous group selector: ${step.name}`);
         assert.ok(group === undefined || PACKAGE_GROUPS.includes(group) ||
-          ADDITIONAL_SOURCE_PACKAGE_CELLS.some(cell => cell.group === group));
+          ADDITIONAL_SOURCE_PACKAGE_CELLS.some(cell => cell.group === group) || RAW_SOURCE_PACKAGE_CELLS.some(cell => cell.group === group));
       }
       const slice = /matrix\.generated_slice == '([a-z]+)'/u.exec(step.text)?.[1];
       const executions = id === 'package-checks'
