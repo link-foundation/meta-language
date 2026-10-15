@@ -981,6 +981,32 @@ jobs:
           SELF_TRANSLATION_CHECK_RUST: '0'
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/original-link-role-projection/projection.test.mjs
 
+      - name: Check original link symbol projection kernel
+        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        working-directory: js
+        run: node ../experiments/original-link-symbol-projection/generate.mjs --check
+
+      - name: Run original link symbol projection checks
+        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        working-directory: js
+        env:
+          TRANSLATION_CHECK_RUST: '0'
+          SELF_TRANSLATION_CHECK_RUST: '0'
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/original-link-symbol-projection/projection.test.mjs
+
+      - name: Check original link table projection kernel
+        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        working-directory: js
+        run: node ../experiments/original-link-table-projection/generate.mjs --check
+
+      - name: Run original link table projection checks
+        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        working-directory: js
+        env:
+          TRANSLATION_CHECK_RUST: '0'
+          SELF_TRANSLATION_CHECK_RUST: '0'
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/original-link-table-projection/projection.test.mjs
+
       - name: Check generated whole Rust runtime shell rules
         if: ${{ !cancelled() && matrix.group == 'generated' }}
         working-directory: js
