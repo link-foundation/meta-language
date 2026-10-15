@@ -584,6 +584,19 @@ native definitions are automatically emitted under an explicit immutable
 numeric-array value model. Repeated scans and copies retain potentially
 quadratic costs; native execution, the complete native projector and paired
 public capture and replay remain required work.
+The `ordered original String value symbol projection 1` experiment separately
+projects an ordered primitive String sequence after a fixed dictionary. Exact
+UTF-16 values share a positive symbol; dynamic values retain first-observed
+order. The null-name row, non-String sentinel and empty String remain distinct.
+Complete names and units match all thirteen existing certificate dictionaries
+after both saved formats, and an actual source rename changes the output.
+The complete checked kernel executes after source-free typed Links reload and
+automatically emits all twenty-two native definitions under an explicit
+immutable-array value model. This establishes value interning only. Actual
+scalar owners, graph traversal order, the six dynamic certificate tables and
+native execution still require separate integration. Repeated scans and copied
+accumulation retain potentially quadratic costs; no resource improvement is
+inferred.
 The separate `closed fresh Number array collector 1` experiment selects one
 complete JavaScript function with a fresh unaliased array, one counted input
 loop, one ignored one-argument append per iteration and a terminal array return.
