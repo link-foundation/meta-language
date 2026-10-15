@@ -15579,7 +15579,2216 @@ const GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES=[{
  extract:raw=>GENERATED_PACKAGE_SCHEDULING_NAME_BINDINGS.filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(raw)).map(({name})=>normalizeGeneratedPackageSchedulingName(name)),
  recordOf:name=>GENERATED_PACKAGE_SCHEDULING_NAME_BINDINGS.find(entry=>normalizeGeneratedPackageSchedulingName(entry.name)===name).id,
 }];
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES]);
+// Exact complete original tables and isolated record metadata buffer meanings.
+const COMPLETE_TABLE_BINARY_CANDIDATE_NAME_BINDINGS=[
+  {
+    "inventory": "complete original table decisions",
+    "files": {
+      "experiments/original-link-complete-table-projection/rules.mjs": [
+        {
+          "name": "readOriginalLinkCompleteTokenRole",
+          "id": "repository.read-complete-original-link-token-role"
+        },
+        {
+          "name": "readOriginalLinkCompleteTokenTarget",
+          "id": "repository.read-complete-original-link-token-target"
+        },
+        {
+          "name": "readOriginalLinkCompleteTokenValue",
+          "id": "repository.read-complete-original-link-token-value"
+        },
+        {
+          "name": "readOriginalLinkCompleteValue",
+          "id": "repository.read-complete-original-link-expression-value"
+        },
+        {
+          "name": "readOriginalLinkCompleteSymbol",
+          "id": "repository.read-complete-original-link-value-symbol"
+        },
+        {
+          "name": "readOriginalLinkCompleteScalarSymbol",
+          "id": "repository.read-complete-original-link-scalar-symbol"
+        },
+        {
+          "name": "readOriginalLinkCompleteStringPrefix",
+          "id": "repository.read-complete-original-link-string-prefix"
+        },
+        {
+          "name": "readOriginalLinkCompleteParameterPrefix",
+          "id": "repository.read-complete-original-link-parameter-prefix"
+        },
+        {
+          "name": "readOriginalLinkCompletePositionQueries",
+          "id": "repository.read-complete-original-link-position-queries"
+        },
+        {
+          "name": "readOriginalLinkCompleteStringQueries",
+          "id": "repository.read-complete-original-link-string-queries"
+        },
+        {
+          "name": "projectOriginalLinkCompleteCertificateTables",
+          "id": "repository.project-complete-original-link-certificate-tables"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/data/native-definitions.lino": [
+        {
+          "name": "read_original_link_complete_token_role",
+          "id": "repository.read-complete-original-link-token-role"
+        },
+        {
+          "name": "read_original_link_complete_token_target",
+          "id": "repository.read-complete-original-link-token-target"
+        },
+        {
+          "name": "read_original_link_complete_token_value",
+          "id": "repository.read-complete-original-link-token-value"
+        },
+        {
+          "name": "read_original_link_complete_value",
+          "id": "repository.read-complete-original-link-expression-value"
+        },
+        {
+          "name": "read_original_link_complete_symbol",
+          "id": "repository.read-complete-original-link-value-symbol"
+        },
+        {
+          "name": "read_original_link_complete_scalar_symbol",
+          "id": "repository.read-complete-original-link-scalar-symbol"
+        },
+        {
+          "name": "read_original_link_complete_string_prefix",
+          "id": "repository.read-complete-original-link-string-prefix"
+        },
+        {
+          "name": "read_original_link_complete_parameter_prefix",
+          "id": "repository.read-complete-original-link-parameter-prefix"
+        },
+        {
+          "name": "read_original_link_complete_position_queries",
+          "id": "repository.read-complete-original-link-position-queries"
+        },
+        {
+          "name": "read_original_link_complete_string_queries",
+          "id": "repository.read-complete-original-link-string-queries"
+        },
+        {
+          "name": "project_original_link_complete_certificate_tables",
+          "id": "repository.project-complete-original-link-certificate-tables"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete original table source operations",
+    "files": {
+      "experiments/original-link-complete-table-projection/policy.mjs": [
+        {
+          "name": "originalLinkCompleteTablePolicy",
+          "id": "repository.complete-original-link-table-policy"
+        },
+        {
+          "name": "originalLinkCompleteTableRulesSource",
+          "id": "repository.render-complete-original-link-table-rules"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/transport.mjs": [
+        {
+          "name": "ORIGINAL_LINK_COMPLETE_TABLE_POLICY",
+          "id": "repository.complete-original-link-table-policy"
+        },
+        {
+          "name": "readOriginalLinkCompleteTableTransport",
+          "id": "repository.read-complete-original-link-table-transport"
+        },
+        {
+          "name": "projectOriginalLinkCompleteTables",
+          "id": "repository.project-complete-original-link-tables"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/generate.mjs": [
+        {
+          "name": "generateOriginalLinkCompleteTableProjection",
+          "id": "repository.generate-complete-original-link-table-data"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete table reversible field labels",
+    "files": {
+      "experiments/original-link-complete-table-projection/transport.mjs": [
+        {
+          "name": "fieldName",
+          "id": "repository.read-owned-text-certificate-field-name"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete table original primitive String transport",
+    "files": {
+      "experiments/original-link-complete-table-projection/transport.mjs": [
+        {
+          "name": "primitiveStrings",
+          "id": "repository.collect-original-string-test-units"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete original table recipe authoring",
+    "files": {
+      "experiments/original-link-complete-table-projection/policy.mjs": [
+        {
+          "name": "cell",
+          "id": "repository.create-complete-original-link-column-instruction"
+        },
+        {
+          "name": "f",
+          "id": "repository.read-complete-original-link-field-code"
+        },
+        {
+          "name": "fld",
+          "id": "repository.render-complete-original-link-field-path"
+        },
+        {
+          "name": "refs",
+          "id": "repository.render-complete-original-link-reference-read"
+        },
+        {
+          "name": "identity",
+          "id": "repository.render-complete-original-link-identity-read"
+        },
+        {
+          "name": "symbol",
+          "id": "repository.render-complete-original-link-symbol-read"
+        },
+        {
+          "name": "number",
+          "id": "repository.render-complete-original-link-number-read"
+        },
+        {
+          "name": "rendered",
+          "id": "repository.render-complete-original-link-expression-read"
+        },
+        {
+          "name": "tokenRole",
+          "id": "repository.render-complete-original-link-token-role"
+        },
+        {
+          "name": "target",
+          "id": "repository.render-complete-original-link-token-target"
+        },
+        {
+          "name": "tokenValue",
+          "id": "repository.render-complete-original-link-token-value"
+        },
+        {
+          "name": "queryColumns",
+          "id": "repository.read-complete-original-link-query-columns"
+        },
+        {
+          "name": "queryCell",
+          "id": "repository.render-complete-original-link-query-cell"
+        },
+        {
+          "name": "queryArray",
+          "id": "repository.render-complete-original-link-query-array"
+        },
+        {
+          "name": "flush",
+          "id": "repository.append-complete-original-link-query-segment"
+        },
+        {
+          "name": "cells",
+          "id": "repository.render-complete-original-link-table-cell"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete original table generated result wrappers",
+    "files": {
+      "experiments/original-link-complete-table-projection/data/native-definitions.lino": [
+        {
+          "name": "ml_readOriginalLinkCompleteScalarSymbol_loop20_result",
+          "id": "repository.complete-original-link-fixed-scalar-scan-control-result"
+        },
+        {
+          "name": "MlReadOriginalLinkCompleteScalarSymbolLoop20Result",
+          "id": "repository.complete-original-link-fixed-scalar-scan-control-result"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete original table generated constructors",
+    "files": {
+      "experiments/original-link-complete-table-projection/data/native-definitions.lino": [
+        {
+          "name": "MlReadOriginalLinkCompleteScalarSymbolLoop20Done",
+          "id": "repository.complete-original-link-fixed-scalar-scan-completion-constructor"
+        },
+        {
+          "name": "MlReadOriginalLinkCompleteScalarSymbolLoop20Return",
+          "id": "repository.complete-original-link-fixed-scalar-scan-return-constructor"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete original table generated continuations",
+    "files": {
+      "experiments/original-link-complete-table-projection/data/native-definitions.lino": [
+        {
+          "name": "ml_readOriginalLinkCompleteScalarSymbol_loop20",
+          "id": "repository.continue-complete-original-link-fixed-scalar-scan"
+        },
+        {
+          "name": "ml_read_original_link_complete_scalar_symbol_loop20",
+          "id": "repository.continue-complete-original-link-fixed-scalar-scan"
+        },
+        {
+          "name": "ml_readOriginalLinkCompleteStringPrefix_loop21",
+          "id": "repository.continue-complete-original-link-string-prefix-scan"
+        },
+        {
+          "name": "ml_read_original_link_complete_string_prefix_loop21",
+          "id": "repository.continue-complete-original-link-string-prefix-scan"
+        },
+        {
+          "name": "ml_readOriginalLinkCompleteParameterPrefix_loop22",
+          "id": "repository.continue-complete-original-link-parameter-prefix-scan"
+        },
+        {
+          "name": "ml_read_original_link_complete_parameter_prefix_loop22",
+          "id": "repository.continue-complete-original-link-parameter-prefix-scan"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete table checked inherited declarations",
+    "files": {
+      "experiments/original-link-complete-table-projection/data/native-definitions.lino": [
+        {
+          "name": "readOriginalLinkRoleField",
+          "id": "repository.read-original-link-role-field"
+        },
+        {
+          "name": "read_original_link_role_field",
+          "id": "repository.read-original-link-role-field"
+        },
+        {
+          "name": "readOriginalLinkRoleReferences",
+          "id": "repository.read-original-link-role-references"
+        },
+        {
+          "name": "read_original_link_role_references",
+          "id": "repository.read-original-link-role-references"
+        },
+        {
+          "name": "readOriginalLinkRoleOperation",
+          "id": "repository.accept-original-link-role-operation"
+        },
+        {
+          "name": "read_original_link_role_operation",
+          "id": "repository.accept-original-link-role-operation"
+        },
+        {
+          "name": "firstOriginalLinkRoleOccurrence",
+          "id": "repository.accept-first-original-link-role-occurrence"
+        },
+        {
+          "name": "first_original_link_role_occurrence",
+          "id": "repository.accept-first-original-link-role-occurrence"
+        },
+        {
+          "name": "readOriginalLinkRoleKind",
+          "id": "repository.read-original-link-concrete-role-kind"
+        },
+        {
+          "name": "read_original_link_role_kind",
+          "id": "repository.read-original-link-concrete-role-kind"
+        },
+        {
+          "name": "registerOriginalLinkRoles",
+          "id": "repository.register-original-link-certificate-roles"
+        },
+        {
+          "name": "register_original_link_roles",
+          "id": "repository.register-original-link-certificate-roles"
+        },
+        {
+          "name": "projectOriginalLinkRoleRegistry",
+          "id": "repository.project-original-link-role-registry"
+        },
+        {
+          "name": "project_original_link_role_registry",
+          "id": "repository.project-original-link-role-registry"
+        },
+        {
+          "name": "readOriginalLinkTableIdentity",
+          "id": "repository.read-original-link-table-identity"
+        },
+        {
+          "name": "read_original_link_table_identity",
+          "id": "repository.read-original-link-table-identity"
+        },
+        {
+          "name": "readOriginalLinkTableSymbol",
+          "id": "repository.read-original-link-table-symbol"
+        },
+        {
+          "name": "read_original_link_table_symbol",
+          "id": "repository.read-original-link-table-symbol"
+        },
+        {
+          "name": "readOriginalLinkTableNumber",
+          "id": "repository.read-original-link-table-number"
+        },
+        {
+          "name": "read_original_link_table_number",
+          "id": "repository.read-original-link-table-number"
+        },
+        {
+          "name": "readOriginalLinkTableOperationCode",
+          "id": "repository.read-original-link-table-operation-code"
+        },
+        {
+          "name": "read_original_link_table_operation_code",
+          "id": "repository.read-original-link-table-operation-code"
+        },
+        {
+          "name": "readOriginalLinkTableRole",
+          "id": "repository.read-original-link-table-role"
+        },
+        {
+          "name": "read_original_link_table_role",
+          "id": "repository.read-original-link-table-role"
+        },
+        {
+          "name": "readOriginalLinkTablePrefix",
+          "id": "repository.read-original-link-table-prefix"
+        },
+        {
+          "name": "read_original_link_table_prefix",
+          "id": "repository.read-original-link-table-prefix"
+        },
+        {
+          "name": "readOriginalLinkTableLayers",
+          "id": "repository.read-original-link-table-layers"
+        },
+        {
+          "name": "read_original_link_table_layers",
+          "id": "repository.read-original-link-table-layers"
+        },
+        {
+          "name": "projectOriginalLinkCertificateTables",
+          "id": "repository.project-original-link-certificate-tables"
+        },
+        {
+          "name": "project_original_link_certificate_tables",
+          "id": "repository.project-original-link-certificate-tables"
+        },
+        {
+          "name": "ml_readOriginalLinkRoleField_loop1_result",
+          "id": "repository.original-link-role-unique-field-scan-control-result"
+        },
+        {
+          "name": "MlReadOriginalLinkRoleFieldLoop1Result",
+          "id": "repository.original-link-role-unique-field-scan-control-result"
+        },
+        {
+          "name": "ml_readOriginalLinkRoleField_loop1",
+          "id": "repository.continue-original-link-role-unique-field-scan"
+        },
+        {
+          "name": "ml_read_original_link_role_field_loop1",
+          "id": "repository.continue-original-link-role-unique-field-scan"
+        },
+        {
+          "name": "ml_firstOriginalLinkRoleOccurrence_loop2_result",
+          "id": "repository.original-link-role-first-occurrence-scan-control-result"
+        },
+        {
+          "name": "MlFirstOriginalLinkRoleOccurrenceLoop2Result",
+          "id": "repository.original-link-role-first-occurrence-scan-control-result"
+        },
+        {
+          "name": "ml_firstOriginalLinkRoleOccurrence_loop2",
+          "id": "repository.continue-original-link-role-first-occurrence-scan"
+        },
+        {
+          "name": "ml_first_original_link_role_occurrence_loop2",
+          "id": "repository.continue-original-link-role-first-occurrence-scan"
+        },
+        {
+          "name": "ml_readOriginalLinkRoleKind_loop3",
+          "id": "repository.continue-original-link-role-concrete-kind-scan"
+        },
+        {
+          "name": "ml_read_original_link_role_kind_loop3",
+          "id": "repository.continue-original-link-role-concrete-kind-scan"
+        },
+        {
+          "name": "ml_registerOriginalLinkRoles_loop5_result",
+          "id": "repository.original-link-role-unresolved-kind-scan-control-result"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop5Result",
+          "id": "repository.original-link-role-unresolved-kind-scan-control-result"
+        },
+        {
+          "name": "ml_registerOriginalLinkRoles_loop5",
+          "id": "repository.continue-original-link-role-unresolved-kind-scan"
+        },
+        {
+          "name": "ml_register_original_link_roles_loop5",
+          "id": "repository.continue-original-link-role-unresolved-kind-scan"
+        },
+        {
+          "name": "ml_registerOriginalLinkRoles_loop4_result",
+          "id": "repository.original-link-role-occurrence-validation-control-result"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop4Result",
+          "id": "repository.original-link-role-occurrence-validation-control-result"
+        },
+        {
+          "name": "ml_registerOriginalLinkRoles_loop6_result",
+          "id": "repository.original-link-role-contradiction-scan-control-result"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop6Result",
+          "id": "repository.original-link-role-contradiction-scan-control-result"
+        },
+        {
+          "name": "ml_registerOriginalLinkRoles_loop6",
+          "id": "repository.continue-original-link-role-contradiction-scan"
+        },
+        {
+          "name": "ml_register_original_link_roles_loop6",
+          "id": "repository.continue-original-link-role-contradiction-scan"
+        },
+        {
+          "name": "ml_registerOriginalLinkRoles_loop4",
+          "id": "repository.continue-original-link-role-occurrence-validation"
+        },
+        {
+          "name": "ml_register_original_link_roles_loop4",
+          "id": "repository.continue-original-link-role-occurrence-validation"
+        },
+        {
+          "name": "ml_projectOriginalLinkRoleRegistry_loop7_result",
+          "id": "repository.original-link-role-ordered-operation-traversal-control-result"
+        },
+        {
+          "name": "MlProjectOriginalLinkRoleRegistryLoop7Result",
+          "id": "repository.original-link-role-ordered-operation-traversal-control-result"
+        },
+        {
+          "name": "ml_projectOriginalLinkRoleRegistry_loop7",
+          "id": "repository.continue-original-link-role-ordered-operation-traversal"
+        },
+        {
+          "name": "ml_project_original_link_role_registry_loop7",
+          "id": "repository.continue-original-link-role-ordered-operation-traversal"
+        },
+        {
+          "name": "ml_readOriginalLinkTablePrefix_loop8",
+          "id": "repository.continue-original-link-table-prefix-scan"
+        },
+        {
+          "name": "ml_read_original_link_table_prefix_loop8",
+          "id": "repository.continue-original-link-table-prefix-scan"
+        },
+        {
+          "name": "acceptOriginalLinkSymbolInteger",
+          "id": "repository.accept-original-link-symbol-integer"
+        },
+        {
+          "name": "accept_original_link_symbol_integer",
+          "id": "repository.accept-original-link-symbol-integer"
+        },
+        {
+          "name": "checkOriginalLinkSymbolTransport",
+          "id": "repository.check-original-link-symbol-transport"
+        },
+        {
+          "name": "check_original_link_symbol_transport",
+          "id": "repository.check-original-link-symbol-transport"
+        },
+        {
+          "name": "equalOriginalLinkSymbolUnits",
+          "id": "repository.compare-original-link-symbol-units"
+        },
+        {
+          "name": "equal_original_link_symbol_units",
+          "id": "repository.compare-original-link-symbol-units"
+        },
+        {
+          "name": "projectOriginalLinkSymbolValues",
+          "id": "repository.project-original-link-symbol-values"
+        },
+        {
+          "name": "project_original_link_symbol_values",
+          "id": "repository.project-original-link-symbol-values"
+        },
+        {
+          "name": "ml_checkOriginalLinkSymbolTransport_loop10_result",
+          "id": "repository.original-link-symbol-code-unit-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkSymbolTransportLoop10Result",
+          "id": "repository.original-link-symbol-code-unit-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkSymbolTransport_loop10",
+          "id": "repository.continue-original-link-symbol-code-unit-scan"
+        },
+        {
+          "name": "ml_check_original_link_symbol_transport_loop10",
+          "id": "repository.continue-original-link-symbol-code-unit-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkSymbolTransport_loop9_result",
+          "id": "repository.original-link-symbol-offset-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkSymbolTransportLoop9Result",
+          "id": "repository.original-link-symbol-offset-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkSymbolTransport_loop9",
+          "id": "repository.continue-original-link-symbol-offset-scan"
+        },
+        {
+          "name": "ml_check_original_link_symbol_transport_loop9",
+          "id": "repository.continue-original-link-symbol-offset-scan"
+        },
+        {
+          "name": "ml_equalOriginalLinkSymbolUnits_loop11_result",
+          "id": "repository.original-link-symbol-span-comparison-control-result"
+        },
+        {
+          "name": "MlEqualOriginalLinkSymbolUnitsLoop11Result",
+          "id": "repository.original-link-symbol-span-comparison-control-result"
+        },
+        {
+          "name": "ml_equalOriginalLinkSymbolUnits_loop11",
+          "id": "repository.continue-original-link-symbol-span-comparison"
+        },
+        {
+          "name": "ml_equal_original_link_symbol_units_loop11",
+          "id": "repository.continue-original-link-symbol-span-comparison"
+        },
+        {
+          "name": "ml_projectOriginalLinkSymbolValues_loop14_result",
+          "id": "repository.original-link-symbol-source-construction-control-result"
+        },
+        {
+          "name": "MlProjectOriginalLinkSymbolValuesLoop14Result",
+          "id": "repository.original-link-symbol-source-construction-control-result"
+        },
+        {
+          "name": "ml_projectOriginalLinkSymbolValues_loop15",
+          "id": "repository.continue-original-link-symbol-existing-name-search"
+        },
+        {
+          "name": "ml_project_original_link_symbol_values_loop15",
+          "id": "repository.continue-original-link-symbol-existing-name-search"
+        },
+        {
+          "name": "ml_projectOriginalLinkSymbolValues_join16",
+          "id": "repository.original-link-symbol-source-branch-state-control-result"
+        },
+        {
+          "name": "MlProjectOriginalLinkSymbolValuesJoin16",
+          "id": "repository.original-link-symbol-source-branch-state-control-result"
+        },
+        {
+          "name": "ml_projectOriginalLinkSymbolValues_loop17",
+          "id": "repository.continue-original-link-symbol-dynamic-unit-copy"
+        },
+        {
+          "name": "ml_project_original_link_symbol_values_loop17",
+          "id": "repository.continue-original-link-symbol-dynamic-unit-copy"
+        },
+        {
+          "name": "ml_projectOriginalLinkSymbolValues_loop14",
+          "id": "repository.continue-original-link-symbol-source-construction"
+        },
+        {
+          "name": "ml_project_original_link_symbol_values_loop14",
+          "id": "repository.continue-original-link-symbol-source-construction"
+        },
+        {
+          "name": "ml_projectOriginalLinkSymbolValues_loop13_result",
+          "id": "repository.original-link-symbol-fixed-construction-control-result"
+        },
+        {
+          "name": "MlProjectOriginalLinkSymbolValuesLoop13Result",
+          "id": "repository.original-link-symbol-fixed-construction-control-result"
+        },
+        {
+          "name": "ml_projectOriginalLinkSymbolValues_loop18",
+          "id": "repository.continue-original-link-symbol-fixed-unit-copy"
+        },
+        {
+          "name": "ml_project_original_link_symbol_values_loop18",
+          "id": "repository.continue-original-link-symbol-fixed-unit-copy"
+        },
+        {
+          "name": "ml_projectOriginalLinkSymbolValues_loop13",
+          "id": "repository.continue-original-link-symbol-fixed-construction"
+        },
+        {
+          "name": "ml_project_original_link_symbol_values_loop13",
+          "id": "repository.continue-original-link-symbol-fixed-construction"
+        },
+        {
+          "name": "ml_projectOriginalLinkSymbolValues_loop12_result",
+          "id": "repository.original-link-symbol-fixed-duplicate-scan-control-result"
+        },
+        {
+          "name": "MlProjectOriginalLinkSymbolValuesLoop12Result",
+          "id": "repository.original-link-symbol-fixed-duplicate-scan-control-result"
+        },
+        {
+          "name": "ml_projectOriginalLinkSymbolValues_loop19_result",
+          "id": "repository.original-link-symbol-prior-fixed-comparison-control-result"
+        },
+        {
+          "name": "MlProjectOriginalLinkSymbolValuesLoop19Result",
+          "id": "repository.original-link-symbol-prior-fixed-comparison-control-result"
+        },
+        {
+          "name": "ml_projectOriginalLinkSymbolValues_loop19",
+          "id": "repository.continue-original-link-symbol-prior-fixed-comparison"
+        },
+        {
+          "name": "ml_project_original_link_symbol_values_loop19",
+          "id": "repository.continue-original-link-symbol-prior-fixed-comparison"
+        },
+        {
+          "name": "ml_projectOriginalLinkSymbolValues_loop12",
+          "id": "repository.continue-original-link-symbol-fixed-duplicate-scan"
+        },
+        {
+          "name": "ml_project_original_link_symbol_values_loop12",
+          "id": "repository.continue-original-link-symbol-fixed-duplicate-scan"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete table exact inherited source",
+    "files": {
+      "experiments/original-link-complete-table-projection/rules.mjs": [
+        {
+          "name": "readOriginalLinkRoleField",
+          "id": "repository.read-original-link-role-field"
+        },
+        {
+          "name": "readOriginalLinkRoleReferences",
+          "id": "repository.read-original-link-role-references"
+        },
+        {
+          "name": "readOriginalLinkRoleOperation",
+          "id": "repository.accept-original-link-role-operation"
+        },
+        {
+          "name": "firstOriginalLinkRoleOccurrence",
+          "id": "repository.accept-first-original-link-role-occurrence"
+        },
+        {
+          "name": "readOriginalLinkRoleKind",
+          "id": "repository.read-original-link-concrete-role-kind"
+        },
+        {
+          "name": "registerOriginalLinkRoles",
+          "id": "repository.register-original-link-certificate-roles"
+        },
+        {
+          "name": "projectOriginalLinkRoleRegistry",
+          "id": "repository.project-original-link-role-registry"
+        },
+        {
+          "name": "readOriginalLinkTableIdentity",
+          "id": "repository.read-original-link-table-identity"
+        },
+        {
+          "name": "readOriginalLinkTableSymbol",
+          "id": "repository.read-original-link-table-symbol"
+        },
+        {
+          "name": "readOriginalLinkTableNumber",
+          "id": "repository.read-original-link-table-number"
+        },
+        {
+          "name": "readOriginalLinkTableOperationCode",
+          "id": "repository.read-original-link-table-operation-code"
+        },
+        {
+          "name": "readOriginalLinkTableRole",
+          "id": "repository.read-original-link-table-role"
+        },
+        {
+          "name": "readOriginalLinkTablePrefix",
+          "id": "repository.read-original-link-table-prefix"
+        },
+        {
+          "name": "readOriginalLinkTableLayers",
+          "id": "repository.read-original-link-table-layers"
+        },
+        {
+          "name": "projectOriginalLinkCertificateTables",
+          "id": "repository.project-original-link-certificate-tables"
+        },
+        {
+          "name": "acceptOriginalLinkSymbolInteger",
+          "id": "repository.accept-original-link-symbol-integer"
+        },
+        {
+          "name": "checkOriginalLinkSymbolTransport",
+          "id": "repository.check-original-link-symbol-transport"
+        },
+        {
+          "name": "equalOriginalLinkSymbolUnits",
+          "id": "repository.compare-original-link-symbol-units"
+        },
+        {
+          "name": "projectOriginalLinkSymbolValues",
+          "id": "repository.project-original-link-symbol-values"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete table checked inherited constructors",
+    "files": {
+      "experiments/original-link-complete-table-projection/data/native-definitions.lino": [
+        {
+          "name": "MlReadOriginalLinkRoleFieldLoop1Done",
+          "id": "repository.original-link-role-unique-field-scan-completion-constructor"
+        },
+        {
+          "name": "MlReadOriginalLinkRoleFieldLoop1Return",
+          "id": "repository.original-link-role-unique-field-scan-return-constructor"
+        },
+        {
+          "name": "MlFirstOriginalLinkRoleOccurrenceLoop2Done",
+          "id": "repository.original-link-role-first-occurrence-scan-completion-constructor"
+        },
+        {
+          "name": "MlFirstOriginalLinkRoleOccurrenceLoop2Return",
+          "id": "repository.original-link-role-first-occurrence-scan-return-constructor"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop5Done",
+          "id": "repository.original-link-role-unresolved-kind-scan-completion-constructor"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop5Return",
+          "id": "repository.original-link-role-unresolved-kind-scan-return-constructor"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop4Done",
+          "id": "repository.original-link-role-occurrence-validation-completion-constructor"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop4Return",
+          "id": "repository.original-link-role-occurrence-validation-return-constructor"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop6Done",
+          "id": "repository.original-link-role-contradiction-scan-completion-constructor"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop6Return",
+          "id": "repository.original-link-role-contradiction-scan-return-constructor"
+        },
+        {
+          "name": "MlProjectOriginalLinkRoleRegistryLoop7Done",
+          "id": "repository.original-link-role-ordered-operation-traversal-completion-constructor"
+        },
+        {
+          "name": "MlProjectOriginalLinkRoleRegistryLoop7Return",
+          "id": "repository.original-link-role-ordered-operation-traversal-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkSymbolTransportLoop10Done",
+          "id": "repository.original-link-symbol-code-unit-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkSymbolTransportLoop10Return",
+          "id": "repository.original-link-symbol-code-unit-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkSymbolTransportLoop9Done",
+          "id": "repository.original-link-symbol-offset-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkSymbolTransportLoop9Return",
+          "id": "repository.original-link-symbol-offset-scan-return-constructor"
+        },
+        {
+          "name": "MlEqualOriginalLinkSymbolUnitsLoop11Done",
+          "id": "repository.original-link-symbol-span-comparison-completion-constructor"
+        },
+        {
+          "name": "MlEqualOriginalLinkSymbolUnitsLoop11Return",
+          "id": "repository.original-link-symbol-span-comparison-return-constructor"
+        },
+        {
+          "name": "MlProjectOriginalLinkSymbolValuesLoop14Done",
+          "id": "repository.original-link-symbol-source-construction-completion-constructor"
+        },
+        {
+          "name": "MlProjectOriginalLinkSymbolValuesJoin16Next",
+          "id": "repository.original-link-symbol-source-branch-state-next-state-constructor"
+        },
+        {
+          "name": "MlProjectOriginalLinkSymbolValuesLoop13Done",
+          "id": "repository.original-link-symbol-fixed-construction-completion-constructor"
+        },
+        {
+          "name": "MlProjectOriginalLinkSymbolValuesLoop12Done",
+          "id": "repository.original-link-symbol-fixed-duplicate-scan-completion-constructor"
+        },
+        {
+          "name": "MlProjectOriginalLinkSymbolValuesLoop12Return",
+          "id": "repository.original-link-symbol-fixed-duplicate-scan-return-constructor"
+        },
+        {
+          "name": "MlProjectOriginalLinkSymbolValuesLoop19Done",
+          "id": "repository.original-link-symbol-prior-fixed-comparison-completion-constructor"
+        },
+        {
+          "name": "MlProjectOriginalLinkSymbolValuesLoop19Return",
+          "id": "repository.original-link-symbol-prior-fixed-comparison-return-constructor"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete certificate existing table formats",
+    "files": {
+      "experiments/original-link-complete-table-projection/data/policy.lino": [
+        {
+          "name": "context",
+          "id": "repository.text-certificate-context-table"
+        },
+        {
+          "name": "kinds",
+          "id": "repository.text-certificate-identity-kind-table"
+        },
+        {
+          "name": "tokens",
+          "id": "repository.text-certificate-token-table"
+        },
+        {
+          "name": "declarations",
+          "id": "repository.text-certificate-declaration-table"
+        },
+        {
+          "name": "parameters",
+          "id": "repository.text-certificate-parameter-table"
+        },
+        {
+          "name": "positions",
+          "id": "repository.text-certificate-source-position-table"
+        },
+        {
+          "name": "paths",
+          "id": "repository.text-certificate-owner-path-table"
+        },
+        {
+          "name": "layers",
+          "id": "repository.text-certificate-reference-layer-table"
+        },
+        {
+          "name": "cores",
+          "id": "repository.text-certificate-expression-table"
+        },
+        {
+          "name": "functions",
+          "id": "repository.text-certificate-function-fact-table"
+        },
+        {
+          "name": "operations",
+          "id": "repository.text-certificate-operation-table"
+        },
+        {
+          "name": "parts",
+          "id": "repository.text-certificate-operation-part-table"
+        },
+        {
+          "name": "inputs",
+          "id": "repository.text-certificate-input-condition-table"
+        },
+        {
+          "name": "allocations",
+          "id": "repository.text-certificate-allocation-condition-table"
+        },
+        {
+          "name": "names",
+          "id": "repository.text-certificate-symbol-range-table"
+        },
+        {
+          "name": "units",
+          "id": "repository.text-certificate-symbol-unit-table"
+        },
+        {
+          "name": "items",
+          "id": "repository.text-certificate-declaration-order-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete table exact saved control providers",
+    "files": {
+      "experiments/original-link-complete-table-projection/projection.test.mjs": [
+        {
+          "name": "key",
+          "id": "repository.read-exact-link-identity-key"
+        },
+        {
+          "name": "label",
+          "id": "repository.render-certificate-test-field-label"
+        },
+        {
+          "name": "field",
+          "id": "repository.read-unique-original-link-role-test-field"
+        },
+        {
+          "name": "refs",
+          "id": "repository.read-original-link-role-test-references"
+        },
+        {
+          "name": "body",
+          "id": "repository.read-original-link-role-test-body"
+        },
+        {
+          "name": "proof",
+          "id": "repository.read-original-link-role-test-proof"
+        },
+        {
+          "name": "rows",
+          "id": "repository.read-original-link-role-test-proof-rows"
+        },
+        {
+          "name": "replace",
+          "id": "repository.replace-text-certificate-test-field"
+        },
+        {
+          "name": "attach",
+          "id": "repository.attach-owned-text-certificate-test-proof"
+        },
+        {
+          "name": "create",
+          "id": "repository.create-original-link-role-test-packet"
+        },
+        {
+          "name": "copy",
+          "id": "repository.copy-original-link-table-test-arguments"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete original table independent controls",
+    "files": {
+      "experiments/original-link-complete-table-projection/projection.test.mjs": [
+        {
+          "name": "expectedTables",
+          "id": "repository.read-complete-original-link-reference-tables"
+        },
+        {
+          "name": "compare",
+          "id": "repository.check-complete-original-link-table-output"
+        },
+        {
+          "name": "tableRows",
+          "id": "repository.read-complete-original-link-test-rows"
+        },
+        {
+          "name": "ordinal",
+          "id": "repository.read-complete-original-link-test-member"
+        },
+        {
+          "name": "scalar",
+          "id": "repository.read-complete-original-link-test-scalar"
+        },
+        {
+          "name": "execute",
+          "id": "repository.execute-complete-original-link-test-javascript"
+        },
+        {
+          "name": "expectedQueries",
+          "id": "repository.read-complete-original-link-reference-queries"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "binary candidate exact primitive providers",
+    "files": {
+      "experiments/binary-metadata-buffer/candidate.mjs": [
+        {
+          "name": "linkNetworkBinaryUnit",
+          "id": "links.read-link-network-binary-unit"
+        },
+        {
+          "name": "acceptLinkNetworkBinaryInteger",
+          "id": "links.accept-link-network-binary-integer"
+        },
+        {
+          "name": "readLinkNetworkBinaryInteger",
+          "id": "links.read-link-network-binary-integer"
+        },
+        {
+          "name": "linkNetworkBinaryIntegerByte",
+          "id": "links.read-link-network-binary-integer-byte"
+        },
+        {
+          "name": "acceptLinkNetworkBinaryUnicode",
+          "id": "links.accept-link-network-binary-unicode"
+        },
+        {
+          "name": "renderLinkNetworkBinaryHexadecimalDigit",
+          "id": "links.render-link-network-binary-hexadecimal-digit"
+        },
+        {
+          "name": "renderLinkNetworkBinaryField",
+          "id": "links.render-link-network-binary-field"
+        }
+      ],
+      "experiments/binary-metadata-buffer/prior-rules.mjs": [
+        {
+          "name": "linkNetworkBinaryUnit",
+          "id": "links.read-link-network-binary-unit"
+        },
+        {
+          "name": "acceptLinkNetworkBinaryInteger",
+          "id": "links.accept-link-network-binary-integer"
+        },
+        {
+          "name": "readLinkNetworkBinaryInteger",
+          "id": "links.read-link-network-binary-integer"
+        },
+        {
+          "name": "linkNetworkBinaryIntegerByte",
+          "id": "links.read-link-network-binary-integer-byte"
+        },
+        {
+          "name": "acceptLinkNetworkBinaryUnicode",
+          "id": "links.accept-link-network-binary-unicode"
+        },
+        {
+          "name": "renderLinkNetworkBinaryHexadecimalDigit",
+          "id": "links.render-link-network-binary-hexadecimal-digit"
+        },
+        {
+          "name": "renderLinkNetworkBinaryField",
+          "id": "links.render-link-network-binary-field"
+        }
+      ],
+      "experiments/binary-metadata-buffer/native/part_0.rs": [
+        {
+          "name": "link_network_binary_unit",
+          "id": "links.read-link-network-binary-unit"
+        },
+        {
+          "name": "accept_link_network_binary_integer",
+          "id": "links.accept-link-network-binary-integer"
+        },
+        {
+          "name": "read_link_network_binary_integer",
+          "id": "links.read-link-network-binary-integer"
+        },
+        {
+          "name": "link_network_binary_integer_byte",
+          "id": "links.read-link-network-binary-integer-byte"
+        },
+        {
+          "name": "accept_link_network_binary_unicode",
+          "id": "links.accept-link-network-binary-unicode"
+        },
+        {
+          "name": "render_link_network_binary_hexadecimal_digit",
+          "id": "links.render-link-network-binary-hexadecimal-digit"
+        },
+        {
+          "name": "render_link_network_binary_field",
+          "id": "links.render-link-network-binary-field"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "binary candidate exact historical source",
+    "files": {
+      "experiments/binary-metadata-buffer/prior-rules.mjs": [
+        {
+          "name": "transcodeLinkNetworkBinary",
+          "id": "links.convert-link-network-binary-encoding"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "binary candidate record accumulator",
+    "files": {
+      "experiments/binary-metadata-buffer/candidate.mjs": [
+        {
+          "name": "transcodeLinkNetworkBinary",
+          "id": "repository.convert-record-buffered-link-network-binary"
+        }
+      ],
+      "experiments/binary-metadata-buffer/native/part_1.rs": [
+        {
+          "name": "transcode_link_network_binary",
+          "id": "repository.convert-record-buffered-link-network-binary"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "binary candidate complete support modules",
+    "files": {
+      "experiments/binary-metadata-buffer/native/part_0.rs": [
+        {
+          "name": "ml_number",
+          "id": "repository.binary-candidate-number-provider"
+        },
+        {
+          "name": "ml_math",
+          "id": "repository.binary-candidate-mathematical-provider"
+        },
+        {
+          "name": "ml_array",
+          "id": "repository.binary-candidate-array-provider"
+        },
+        {
+          "name": "ml_string",
+          "id": "repository.binary-candidate-text-provider"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "binary candidate generated result wrappers",
+    "files": {
+      "experiments/binary-metadata-buffer/native/part_1.rs": [
+        {
+          "name": "MlReadLinkNetworkBinaryIntegerLoop1Result",
+          "id": "repository.binary-framed-integer-scan-control-result"
+        },
+        {
+          "name": "MlAcceptLinkNetworkBinaryUnicodeLoop3Result",
+          "id": "repository.binary-scalar-unicode-scan-control-result"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryJoin8",
+          "id": "repository.record-buffered-binary-record-stage-control-result"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop9Result",
+          "id": "repository.record-buffered-binary-state-section-scan-control-result"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop11Result",
+          "id": "repository.record-buffered-binary-state-entry-scan-control-result"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryJoin13",
+          "id": "repository.record-buffered-binary-cache-stage-control-result"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop12Result",
+          "id": "repository.record-buffered-binary-state-string-scan-control-result"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop16Result",
+          "id": "repository.record-buffered-binary-state-text-copy-control-result"
+        }
+      ],
+      "experiments/binary-metadata-buffer/native/part_2.rs": [
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop7Result",
+          "id": "repository.record-buffered-binary-record-scan-control-result"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryJoin23",
+          "id": "repository.record-buffered-binary-optional-span-stage-control-result"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop25Result",
+          "id": "repository.record-buffered-binary-span-field-scan-control-result"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop22Result",
+          "id": "repository.record-buffered-binary-metadata-text-scan-control-result"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop28Result",
+          "id": "repository.record-buffered-binary-metadata-text-copy-control-result"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop21Result",
+          "id": "repository.record-buffered-binary-metadata-header-scan-control-result"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryJoin20",
+          "id": "repository.record-buffered-binary-metadata-boundary-stage-control-result"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop19Result",
+          "id": "repository.record-buffered-binary-reference-scan-control-result"
+        }
+      ],
+      "experiments/binary-metadata-buffer/native/part_3.rs": [
+        {
+          "name": "MlTranscodeLinkNetworkBinaryJoin5",
+          "id": "repository.record-buffered-binary-next-identity-stage-control-result"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryJoin4",
+          "id": "repository.record-buffered-binary-version-stage-control-result"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop31Result",
+          "id": "repository.record-buffered-binary-magic-header-scan-control-result"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "binary candidate generated constructors",
+    "files": {
+      "experiments/binary-metadata-buffer/native/part_1.rs": [
+        {
+          "name": "MlReadLinkNetworkBinaryIntegerLoop1Done",
+          "id": "repository.binary-framed-integer-scan-completion-constructor"
+        },
+        {
+          "name": "MlReadLinkNetworkBinaryIntegerLoop1Return",
+          "id": "repository.binary-framed-integer-scan-return-constructor"
+        },
+        {
+          "name": "MlAcceptLinkNetworkBinaryUnicodeLoop3Done",
+          "id": "repository.binary-scalar-unicode-scan-completion-constructor"
+        },
+        {
+          "name": "MlAcceptLinkNetworkBinaryUnicodeLoop3Return",
+          "id": "repository.binary-scalar-unicode-scan-return-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryJoin8Next",
+          "id": "repository.record-buffered-binary-record-stage-next-state-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryJoin8Return",
+          "id": "repository.record-buffered-binary-record-stage-return-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop9Done",
+          "id": "repository.record-buffered-binary-state-section-scan-completion-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop9Return",
+          "id": "repository.record-buffered-binary-state-section-scan-return-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop11Done",
+          "id": "repository.record-buffered-binary-state-entry-scan-completion-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop11Return",
+          "id": "repository.record-buffered-binary-state-entry-scan-return-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryJoin13Next",
+          "id": "repository.record-buffered-binary-cache-stage-next-state-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryJoin13Return",
+          "id": "repository.record-buffered-binary-cache-stage-return-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop12Done",
+          "id": "repository.record-buffered-binary-state-string-scan-completion-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop12Return",
+          "id": "repository.record-buffered-binary-state-string-scan-return-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop16Done",
+          "id": "repository.record-buffered-binary-state-text-copy-completion-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop16Return",
+          "id": "repository.record-buffered-binary-state-text-copy-return-constructor"
+        }
+      ],
+      "experiments/binary-metadata-buffer/native/part_2.rs": [
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop7Done",
+          "id": "repository.record-buffered-binary-record-scan-completion-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop7Return",
+          "id": "repository.record-buffered-binary-record-scan-return-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryJoin23Next",
+          "id": "repository.record-buffered-binary-optional-span-stage-next-state-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryJoin23Return",
+          "id": "repository.record-buffered-binary-optional-span-stage-return-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop25Done",
+          "id": "repository.record-buffered-binary-span-field-scan-completion-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop25Return",
+          "id": "repository.record-buffered-binary-span-field-scan-return-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop22Done",
+          "id": "repository.record-buffered-binary-metadata-text-scan-completion-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop22Return",
+          "id": "repository.record-buffered-binary-metadata-text-scan-return-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop28Done",
+          "id": "repository.record-buffered-binary-metadata-text-copy-completion-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop28Return",
+          "id": "repository.record-buffered-binary-metadata-text-copy-return-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop21Done",
+          "id": "repository.record-buffered-binary-metadata-header-scan-completion-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop21Return",
+          "id": "repository.record-buffered-binary-metadata-header-scan-return-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryJoin20Next",
+          "id": "repository.record-buffered-binary-metadata-boundary-stage-next-state-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryJoin20Return",
+          "id": "repository.record-buffered-binary-metadata-boundary-stage-return-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop19Done",
+          "id": "repository.record-buffered-binary-reference-scan-completion-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop19Return",
+          "id": "repository.record-buffered-binary-reference-scan-return-constructor"
+        }
+      ],
+      "experiments/binary-metadata-buffer/native/part_3.rs": [
+        {
+          "name": "MlTranscodeLinkNetworkBinaryJoin5Next",
+          "id": "repository.record-buffered-binary-next-identity-stage-next-state-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryJoin5Return",
+          "id": "repository.record-buffered-binary-next-identity-stage-return-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryJoin4Next",
+          "id": "repository.record-buffered-binary-version-stage-next-state-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryJoin4Return",
+          "id": "repository.record-buffered-binary-version-stage-return-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop31Done",
+          "id": "repository.record-buffered-binary-magic-header-scan-completion-constructor"
+        },
+        {
+          "name": "MlTranscodeLinkNetworkBinaryLoop31Return",
+          "id": "repository.record-buffered-binary-magic-header-scan-return-constructor"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "binary candidate generated continuations",
+    "files": {
+      "experiments/binary-metadata-buffer/native/part_1.rs": [
+        {
+          "name": "ml_read_link_network_binary_integer_loop1",
+          "id": "repository.continue-binary-framed-integer-scan"
+        },
+        {
+          "name": "ml_link_network_binary_integer_byte_loop2",
+          "id": "repository.continue-binary-integer-byte-scan"
+        },
+        {
+          "name": "ml_accept_link_network_binary_unicode_loop3",
+          "id": "repository.continue-binary-scalar-unicode-scan"
+        },
+        {
+          "name": "ml_transcode_link_network_binary_loop6",
+          "id": "repository.continue-record-buffered-binary-count-write"
+        },
+        {
+          "name": "ml_transcode_link_network_binary_loop10",
+          "id": "repository.continue-record-buffered-binary-state-count-write"
+        },
+        {
+          "name": "ml_transcode_link_network_binary_loop14",
+          "id": "repository.continue-record-buffered-binary-cache-identity-write"
+        },
+        {
+          "name": "ml_transcode_link_network_binary_loop15",
+          "id": "repository.continue-record-buffered-binary-state-text-length-write"
+        },
+        {
+          "name": "ml_transcode_link_network_binary_loop16",
+          "id": "repository.continue-record-buffered-binary-state-text-copy"
+        },
+        {
+          "name": "ml_transcode_link_network_binary_loop12",
+          "id": "repository.continue-record-buffered-binary-state-string-scan"
+        },
+        {
+          "name": "ml_transcode_link_network_binary_loop11",
+          "id": "repository.continue-record-buffered-binary-state-entry-scan"
+        }
+      ],
+      "experiments/binary-metadata-buffer/native/part_2.rs": [
+        {
+          "name": "ml_transcode_link_network_binary_loop9",
+          "id": "repository.continue-record-buffered-binary-state-section-scan"
+        },
+        {
+          "name": "ml_transcode_link_network_binary_loop17",
+          "id": "repository.continue-record-buffered-binary-record-identity-write"
+        },
+        {
+          "name": "ml_transcode_link_network_binary_loop18",
+          "id": "repository.continue-record-buffered-binary-reference-count-write"
+        },
+        {
+          "name": "ml_transcode_link_network_binary_loop24",
+          "id": "repository.continue-record-buffered-binary-metadata-size-write"
+        },
+        {
+          "name": "ml_transcode_link_network_binary_loop26",
+          "id": "repository.continue-record-buffered-binary-span-scalar-write"
+        },
+        {
+          "name": "ml_transcode_link_network_binary_loop25",
+          "id": "repository.continue-record-buffered-binary-span-field-scan"
+        },
+        {
+          "name": "ml_transcode_link_network_binary_loop27",
+          "id": "repository.continue-record-buffered-binary-metadata-text-length-write"
+        },
+        {
+          "name": "ml_transcode_link_network_binary_loop28",
+          "id": "repository.continue-record-buffered-binary-metadata-text-copy"
+        },
+        {
+          "name": "ml_transcode_link_network_binary_loop22",
+          "id": "repository.continue-record-buffered-binary-metadata-text-scan"
+        },
+        {
+          "name": "ml_transcode_link_network_binary_loop21",
+          "id": "repository.continue-record-buffered-binary-metadata-header-scan"
+        },
+        {
+          "name": "ml_transcode_link_network_binary_loop29",
+          "id": "repository.continue-record-buffered-binary-target-identity-write"
+        },
+        {
+          "name": "ml_transcode_link_network_binary_loop19",
+          "id": "repository.continue-record-buffered-binary-reference-scan"
+        }
+      ],
+      "experiments/binary-metadata-buffer/native/part_3.rs": [
+        {
+          "name": "ml_transcode_link_network_binary_loop7",
+          "id": "repository.continue-record-buffered-binary-record-scan"
+        },
+        {
+          "name": "ml_transcode_link_network_binary_loop30",
+          "id": "repository.continue-record-buffered-binary-next-identity-write"
+        },
+        {
+          "name": "ml_transcode_link_network_binary_loop31",
+          "id": "repository.continue-record-buffered-binary-magic-header-scan"
+        },
+        {
+          "name": "ml_transcode_link_network_binary_loop32",
+          "id": "repository.continue-record-buffered-binary-magic-header-write"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "binary candidate source and style controls",
+    "files": {
+      "js/scripts/binary-metadata-candidate-styles.mjs": [
+        {
+          "name": "syntax",
+          "id": "repository.read-binary-candidate-rust-syntax"
+        },
+        {
+          "name": "generated",
+          "id": "repository.accept-binary-candidate-generated-spelling"
+        },
+        {
+          "name": "alphaMapping",
+          "id": "repository.prove-binary-candidate-style-correspondence"
+        },
+        {
+          "name": "rename",
+          "id": "repository.rename-binary-candidate-style-identifiers"
+        },
+        {
+          "name": "borrowHeader",
+          "id": "repository.adapt-binary-candidate-header-borrow"
+        },
+        {
+          "name": "freshSpelling",
+          "id": "repository.derive-binary-candidate-structural-style"
+        },
+        {
+          "name": "declaration",
+          "id": "repository.read-binary-candidate-declaration-symbol"
+        },
+        {
+          "name": "readBinaryMetadataCandidateStyles",
+          "id": "repository.read-binary-candidate-library-styles"
+        }
+      ],
+      "js/scripts/generate-link-network-binary-rules.mjs": [
+        {
+          "name": "styleBinaryItems",
+          "id": "repository.style-binary-candidate-complete-declarations"
+        }
+      ],
+      "js/scripts/source-text-byte-library-style.mjs": [
+        {
+          "name": "simplifySourceTextRustParentheses",
+          "id": "repository.simplify-source-text-rust-parentheses"
+        }
+      ],
+      "experiments/binary-metadata-buffer/model.test.mjs": [
+        {
+          "name": "compare",
+          "id": "repository.compare-binary-metadata-candidate-framing"
+        },
+        {
+          "name": "replace",
+          "id": "repository.replace-binary-candidate-test-cell"
+        }
+      ],
+      "experiments/binary-metadata-buffer/styles.test.mjs": [
+        {
+          "name": "derive",
+          "id": "repository.derive-binary-candidate-test-style"
+        },
+        {
+          "name": "apply",
+          "id": "repository.apply-binary-candidate-test-style"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "binary candidate scalar framing test readers",
+    "files": {
+      "experiments/binary-metadata-buffer/model.test.mjs": [
+        {
+          "name": "bytes",
+          "id": "repository.read-binary-candidate-test-bytes"
+        },
+        {
+          "name": "fields",
+          "id": "repository.read-binary-candidate-test-fields"
+        }
+      ],
+      "experiments/binary-metadata-buffer/native-observations.mjs": [
+        {
+          "name": "bytes",
+          "id": "repository.read-binary-candidate-test-bytes"
+        },
+        {
+          "name": "fields",
+          "id": "repository.read-binary-candidate-test-fields"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "binary candidate generation receipt roles",
+    "files": {
+      "experiments/binary-metadata-buffer/native-generation.lino": [
+        {
+          "name": "generationPolicy",
+          "id": "repository.binary-candidate-native-generation-policy"
+        },
+        {
+          "name": "candidateSourceSha256",
+          "id": "repository.binary-candidate-source-digest"
+        },
+        {
+          "name": "recordedCandidateContexts",
+          "id": "repository.binary-candidate-style-context-count"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "binary metadata candidate native source oracle",
+    "files": {
+      "experiments/binary-metadata-buffer/native-observations.mjs": [
+        {
+          "name": "BINARY_METADATA_BUFFER_MODEL_COMMIT",
+          "id": "repository.binary-candidate-native-model-revision"
+        },
+        {
+          "name": "verifyBinaryMetadataBufferNativeModel",
+          "id": "repository.verify-binary-candidate-native-model"
+        },
+        {
+          "name": "binaryMetadataBufferNativeMode",
+          "id": "repository.select-binary-candidate-native-observation"
+        },
+        {
+          "name": "planBinaryMetadataBufferNative",
+          "id": "repository.plan-binary-candidate-native-observation"
+        },
+        {
+          "name": "runBinaryMetadataBufferNative",
+          "id": "repository.run-binary-candidate-native-observation"
+        },
+        {
+          "name": "inventory",
+          "id": "repository.read-binary-candidate-native-inventory"
+        },
+        {
+          "name": "nativeInterface",
+          "id": "repository.read-binary-candidate-native-interface"
+        },
+        {
+          "name": "archiveReceipt",
+          "id": "repository.archive-binary-candidate-native-source"
+        },
+        {
+          "name": "cases",
+          "id": "repository.read-binary-candidate-native-cases"
+        },
+        {
+          "name": "consumerSource",
+          "id": "repository.render-binary-candidate-native-consumer"
+        },
+        {
+          "name": "emittedJavaScript",
+          "id": "repository.execute-binary-candidate-generated-javascript"
+        },
+        {
+          "name": "parseObservations",
+          "id": "repository.read-binary-candidate-native-observations"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "binary metadata candidate exact native providers",
+    "files": {
+      "experiments/binary-metadata-buffer/native-observations.mjs": [
+        {
+          "name": "sha256",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        },
+        {
+          "name": "textBytes",
+          "id": "repository.read-rust-text-native-oracle-bytes"
+        },
+        {
+          "name": "freeze",
+          "id": "repository.freeze-rust-text-native-observation-plan"
+        },
+        {
+          "name": "numberBits",
+          "id": "repository.encode-text-certificate-native-number-bits"
+        },
+        {
+          "name": "bitsNumber",
+          "id": "repository.decode-text-certificate-native-number-bits"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "binary metadata candidate shared complete source runner",
+    "files": {
+      "experiments/binary-metadata-buffer/native-observations.mjs": [
+        {
+          "name": "createSourceNativeObservationRunner",
+          "id": "repository.create-source-native-observation-runner"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "binary metadata candidate exact test digests",
+    "files": {
+      "experiments/binary-metadata-buffer/native-observations.test.mjs": [
+        {
+          "name": "digest",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "binary metadata candidate complete fake process contracts",
+    "files": {
+      "experiments/binary-metadata-buffer/native-observations.test.mjs": [
+        {
+          "name": "fakeProcess",
+          "id": "repository.create-text-certificate-native-test-process"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "binary metadata candidate exact aggregate failure contracts",
+    "files": {
+      "experiments/binary-metadata-buffer/native-observations.test.mjs": [
+        {
+          "name": "fails",
+          "id": "repository.require-text-certificate-native-test-failure"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "binary metadata candidate injected observation contracts",
+    "files": {
+      "experiments/binary-metadata-buffer/native-observations.test.mjs": [
+        {
+          "name": "injected",
+          "id": "repository.run-binary-candidate-injected-contract"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete original table native source oracle",
+    "files": {
+      "experiments/original-link-complete-table-projection/native-observations.mjs": [
+        {
+          "name": "ORIGINAL_LINK_COMPLETE_TABLE_MODEL_COMMIT",
+          "id": "repository.complete-original-table-native-model-revision"
+        },
+        {
+          "name": "verifyOriginalLinkCompleteTableNativeModel",
+          "id": "repository.verify-complete-original-table-native-model"
+        },
+        {
+          "name": "originalLinkCompleteTableNativeMode",
+          "id": "repository.select-complete-original-table-native-observation"
+        },
+        {
+          "name": "planOriginalLinkCompleteTableNative",
+          "id": "repository.plan-complete-original-table-native-observation"
+        },
+        {
+          "name": "runOriginalLinkCompleteTableNative",
+          "id": "repository.run-complete-original-table-native-observation"
+        },
+        {
+          "name": "argumentBits",
+          "id": "repository.encode-complete-table-native-arguments"
+        },
+        {
+          "name": "fieldRelation",
+          "id": "repository.read-complete-table-native-field"
+        },
+        {
+          "name": "selectedProof",
+          "id": "repository.read-complete-table-native-source-proof"
+        },
+        {
+          "name": "proofRows",
+          "id": "repository.read-complete-table-native-proof-rows"
+        },
+        {
+          "name": "attachFixture",
+          "id": "repository.attach-complete-table-native-fixture-proof"
+        },
+        {
+          "name": "fixturePacket",
+          "id": "repository.create-complete-table-native-fixture-packet"
+        },
+        {
+          "name": "archivePacket",
+          "id": "repository.archive-complete-table-native-packet"
+        },
+        {
+          "name": "actualOrdinal",
+          "id": "repository.read-complete-table-native-original-ordinal"
+        },
+        {
+          "name": "scalarOrdinal",
+          "id": "repository.read-complete-table-native-scalar-ordinal"
+        },
+        {
+          "name": "nativeInterface",
+          "id": "repository.read-complete-table-native-interface"
+        },
+        {
+          "name": "expectedTables",
+          "id": "repository.read-complete-table-native-reference-tables"
+        },
+        {
+          "name": "certificateObservation",
+          "id": "repository.observe-complete-table-reference-certificate"
+        },
+        {
+          "name": "actualExecution",
+          "id": "repository.execute-complete-table-reference-javascript"
+        },
+        {
+          "name": "cases",
+          "id": "repository.read-complete-table-native-cases"
+        },
+        {
+          "name": "protocolStream",
+          "id": "repository.render-complete-table-native-bit-protocol"
+        },
+        {
+          "name": "consumerSource",
+          "id": "repository.render-complete-table-native-consumer"
+        },
+        {
+          "name": "parseObservations",
+          "id": "repository.read-complete-table-native-observations"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete original table exact native providers",
+    "files": {
+      "experiments/original-link-complete-table-projection/native-observations.mjs": [
+        {
+          "name": "sha256",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        },
+        {
+          "name": "textBytes",
+          "id": "repository.read-rust-text-native-oracle-bytes"
+        },
+        {
+          "name": "freeze",
+          "id": "repository.freeze-rust-text-native-observation-plan"
+        },
+        {
+          "name": "numberBits",
+          "id": "repository.encode-text-certificate-native-number-bits"
+        },
+        {
+          "name": "bitsNumber",
+          "id": "repository.decode-text-certificate-native-number-bits"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete original table shared complete source runner",
+    "files": {
+      "experiments/original-link-complete-table-projection/native-observations.mjs": [
+        {
+          "name": "createSourceNativeObservationRunner",
+          "id": "repository.create-source-native-observation-runner"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete original table exact test digests",
+    "files": {
+      "experiments/original-link-complete-table-projection/native-observations.test.mjs": [
+        {
+          "name": "digest",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete original table complete fake process contracts",
+    "files": {
+      "experiments/original-link-complete-table-projection/native-observations.test.mjs": [
+        {
+          "name": "fakeProcess",
+          "id": "repository.create-text-certificate-native-test-process"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete original table exact aggregate failure contracts",
+    "files": {
+      "experiments/original-link-complete-table-projection/native-observations.test.mjs": [
+        {
+          "name": "fails",
+          "id": "repository.require-text-certificate-native-test-failure"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete original table injected observation contracts",
+    "files": {
+      "experiments/original-link-complete-table-projection/native-observations.test.mjs": [
+        {
+          "name": "injected",
+          "id": "repository.run-complete-original-table-injected-contract"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete table native shared actual owner controls",
+    "files": {
+      "experiments/original-link-complete-table-projection/native-observations.mjs": [
+        {
+          "name": "copyArguments",
+          "id": "repository.copy-original-link-table-test-arguments"
+        },
+        {
+          "name": "key",
+          "id": "repository.read-exact-link-identity-key"
+        },
+        {
+          "name": "fieldLabel",
+          "id": "repository.render-certificate-test-field-label"
+        },
+        {
+          "name": "references",
+          "id": "repository.read-original-link-role-test-references"
+        },
+        {
+          "name": "selectedBody",
+          "id": "repository.read-original-link-role-test-body"
+        },
+        {
+          "name": "replaceField",
+          "id": "repository.replace-text-certificate-test-field"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete table injected protocol controls",
+    "files": {
+      "experiments/original-link-complete-table-projection/native-observations.test.mjs": [
+        {
+          "name": "bitStream",
+          "id": "repository.render-complete-table-test-bit-protocol"
+        },
+        {
+          "name": "finite",
+          "id": "repository.decode-complete-table-test-number"
+        },
+        {
+          "name": "altered",
+          "id": "repository.alter-complete-table-test-protocol"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete table scoped native oracle controls",
+    "files": {
+      "experiments/original-link-complete-table-projection/native-observations.mjs": [
+        {
+          "name": "bind",
+          "id": "repository.bind-complete-table-reference-owner"
+        },
+        {
+          "name": "fld",
+          "id": "repository.read-complete-table-reference-field"
+        },
+        {
+          "name": "children",
+          "id": "repository.read-complete-table-reference-child"
+        },
+        {
+          "name": "walk",
+          "id": "repository.walk-complete-table-reference-operation"
+        },
+        {
+          "name": "identity",
+          "id": "repository.map-complete-table-reference-identity"
+        },
+        {
+          "name": "rewrite",
+          "id": "repository.rewrite-complete-table-reference-identity-columns"
+        },
+        {
+          "name": "add",
+          "id": "repository.append-complete-table-native-observation"
+        },
+        {
+          "name": "graphCase",
+          "id": "repository.observe-complete-table-native-graph-case"
+        },
+        {
+          "name": "mutation",
+          "id": "repository.mutate-complete-table-native-transport"
+        },
+        {
+          "name": "pool",
+          "id": "repository.pool-complete-table-native-bit-vector"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "binary candidate scoped native oracle controls",
+    "files": {
+      "experiments/binary-metadata-buffer/native-observations.mjs": [
+        {
+          "name": "add",
+          "id": "repository.append-binary-candidate-native-observation"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "native oracle exact transport and host distinctions",
+    "files": {
+      "experiments/original-link-complete-table-projection/native-observations.mjs": [
+        {
+          "name": "inputArguments",
+          "id": "repository.complete-table-native-input-arguments"
+        },
+        {
+          "name": "resultRows",
+          "id": "repository.complete-table-native-result-rows"
+        },
+        {
+          "name": "rawRefusals",
+          "id": "repository.complete-table-native-host-refusals"
+        },
+        {
+          "name": "certificate",
+          "id": "repository.complete-table-reference-certificate-observation"
+        },
+        {
+          "name": "provenance",
+          "id": "repository.complete-table-native-archive-provenance"
+        },
+        {
+          "name": "maximumProtocolBytes",
+          "id": "repository.complete-table-native-protocol-bound"
+        },
+        {
+          "name": "maximumConsumerBytes",
+          "id": "repository.complete-table-native-consumer-bound"
+        }
+      ],
+      "experiments/binary-metadata-buffer/native-observations.mjs": [
+        {
+          "name": "resultHex",
+          "id": "repository.binary-candidate-native-result-bytes"
+        },
+        {
+          "name": "recordLimitBits",
+          "id": "repository.binary-candidate-native-record-limit"
+        },
+        {
+          "name": "byteLimitBits",
+          "id": "repository.binary-candidate-native-byte-limit"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned native generated decision coverage",
+    "files": {
+      "rust/tests/unit/translation_rust_owned_local_state.rs": [
+        {
+          "name": "actual_generated_owned_decisions_match_linked_fixtures_and_javascript",
+          "id": "repository.check-native-owned-decision-fixture-parity"
+        },
+        {
+          "name": "actual_native_text_renderer_preserves_javascript_bytes_and_utf16_input_decisions",
+          "id": "repository.check-native-owned-text-output-parity"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete table and binary workflow conservation",
+    "files": {
+      "js/tests/ci-workflow-structure.test.js": [
+        {
+          "name": "checkBinaryMetadataNativeSteps",
+          "id": "repository.check-binary-metadata-native-workflow-steps"
+        },
+        {
+          "name": "checkCompleteTableNativeSteps",
+          "id": "repository.check-complete-table-native-workflow-steps"
+        },
+        {
+          "name": "ADDITIONAL_SOURCE_PACKAGE_CELLS",
+          "id": "repository.additional-source-package-cells"
+        },
+        {
+          "name": "COMPLETE_TABLE_PACKAGE_STEPS",
+          "id": "repository.complete-table-package-steps"
+        },
+        {
+          "name": "BINARY_METADATA_PACKAGE_STEPS",
+          "id": "repository.binary-metadata-package-steps"
+        },
+        {
+          "name": "BINARY_METADATA_NATIVE_STEPS",
+          "id": "repository.binary-metadata-native-steps"
+        },
+        {
+          "name": "COMPLETE_TABLE_NATIVE_STEPS",
+          "id": "repository.complete-table-native-steps"
+        }
+      ]
+    }
+  }
+];
+const normalizeCompleteTableBinaryCandidateName=name=>name.replace(/([a-z0-9])([A-Z])/gu,'$1-$2').replaceAll('_','-').replaceAll(' ','-').toLowerCase().replace(/^fld$/u,'field-path').replace(/^refs$/u,'references').replace(/^children$/u,'child-references').replace(/^emitted-/u,'emit-').replace(/\brenderer\b/gu,'rendering').replace(/\butf16\b/gu,'unicode-transformation-format-sixteen-bit').replace(/^f$/u,'field-code').replace(/\bsha256\b/gu,'secure-hash-algorithm-two-hundred-fifty-six').replace(/\bid\b/gu,'identity').replace(/\bml\b/gu,'meta-language').replace(/\b(loop|join)([0-9]+)\b/gu,(whole,kind,digits)=>{const words={1:'one',2:'two',3:'three',4:'four',5:'five',6:'six',7:'seven',8:'eight',9:'nine',10:'ten',11:'eleven',12:'twelve',13:'thirteen',14:'fourteen',15:'fifteen',16:'sixteen',17:'seventeen',18:'eighteen',19:'nineteen',20:'twenty',21:'twenty-one',22:'twenty-two',23:'twenty-three',24:'twenty-four',25:'twenty-five',26:'twenty-six',27:'twenty-seven',28:'twenty-eight',29:'twenty-nine',30:'thirty',31:'thirty-one',32:'thirty-two'};return words[digits]?kind+'-'+words[digits]:whole;});
+const COMPLETE_TABLE_BINARY_CANDIDATE_SOURCE_TEXTS=new Map();
+const COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES=COMPLETE_TABLE_BINARY_CANDIDATE_NAME_BINDINGS.map(({inventory,files})=>({
+ inventory,files:Object.keys(files),
+ extract:(raw,file)=>{let text=raw;if(file.endsWith('.lino')){const saved=COMPLETE_TABLE_BINARY_CANDIDATE_SOURCE_TEXTS.get(file);if(!saved||saved.raw!==raw)COMPLETE_TABLE_BINARY_CANDIDATE_SOURCE_TEXTS.set(file,{raw,text:JSON.stringify(readStructuredDataLino(raw))});text=COMPLETE_TABLE_BINARY_CANDIDATE_SOURCE_TEXTS.get(file).text;}return files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeCompleteTableBinaryCandidateName(name));},
+ recordOf:name=>Object.values(files).flat().find(entry=>normalizeCompleteTableBinaryCandidateName(entry.name)===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
