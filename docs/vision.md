@@ -606,7 +606,12 @@ The complete checked kernel executes after source-free typed Links reload and
 automatically emits all twenty-two native definitions under an explicit
 immutable-array value model. This establishes value interning only. Actual
 scalar owners, graph traversal order, the six dynamic certificate tables and
-native execution still require separate integration. Repeated scans and copied
+native execution still require separate integration. Its additional CI-only
+native oracle compiles the entire unchanged artifact and calls the actual
+six-vector value interface for eighty-four bounded comparisons of complete
+output bits. Injected process contracts validate the runner locally; native
+observations require actual successful compilation and execution in CI.
+Repeated scans and copied
 accumulation retain potentially quadratic costs; no resource improvement is
 inferred.
 The separate `closed fresh Number array collector 1` experiment selects one
