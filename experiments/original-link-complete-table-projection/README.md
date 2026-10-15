@@ -14,9 +14,11 @@ sentinel from an empty String. Original owner handles, ordered references and
 primitive Number payloads remain separate from String values.
 
 `policy.mjs` generates the complete JavaScript rules and a Links artifact with
-all 66 automatically translated Rust definitions: the unchanged 29 fixed-table
-definitions, the unchanged 22 symbol definitions, and 15 additional definitions
-(including generated loop continuations). The host only collects primitive tags, Number/Boolean values, exact UTF-16 units,
+all 66 automatically translated Rust definitions. It embeds the unchanged
+JavaScript fixed-table and symbol rule sources (29 and 22 native definitions
+when translated separately), then adds query, table and consistency rules.
+Generated continuation names follow the combined program. The host only
+collects primitive tags, Number/Boolean values, exact UTF-16 units,
 actual ordered references and the frozen symbol prefix. It supplies no old
 projected table or dynamic dictionary to the numeric kernel. The resulting 17
 tables are checked by the unchanged complete certificate kernel.
