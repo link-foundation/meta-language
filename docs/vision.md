@@ -2087,6 +2087,14 @@ limit; default codec limits and the byte cap remain unchanged. CI phase logs
 retain the selected record count and actual heap use. This configured source
 archive path does not claim that oversized graphs fit the default record
 profile or that tiny checks establish full-workload memory fit.
+The JavaScript native-tree projection normalizes leading trivia once before
+projecting descendants and memoizes derived node spans for that one immutable
+tree. This avoids repeated subtree copies and span traversal while retaining
+the same projected fields, ordered children, flags and byte offsets. A frozen
+project-owned baseline, eight bounded synthetic controls and three tiny actual
+language parses check the change. They do not establish full-source memory fit,
+native performance or the cause of an earlier timeout; the full CST inventories
+and runtime-parity checks remain required in CI.
 
 - CI runs a fast `cargo check` of all targets and features first; the jobs that
   compile and test need it, so a compile error fails once.
