@@ -41,6 +41,70 @@ fn field(network: &LinkNetwork, parent: LinkId, label: &str) -> Option<LinkId> {
 }
 
 #[test]
+fn owned_source_header_fixed_width_domains_refuse_foreign_scalar_values() {
+    use meta_language::translation::source_signatures::SourceSignature;
+    use serde_json::json;
+    for (source, position) in [
+        (
+            "pub fn keep(value:i32)->i32{value} fn main(){}",
+            "/parameters/0/type",
+        ),
+        (
+            "pub fn keep(value:(bool,i32))->i32{value.1} fn main(){}",
+            "/parameters/0/type/elements/1",
+        ),
+        (
+            "pub fn keep(value:&[i32])->i32{0i32} fn main(){}",
+            "/parameters/0/type/element",
+        ),
+    ] {
+        let surface =
+            parse_rust_with_source_signature_model(source, "Rust source function signature 1")
+                .unwrap();
+        let program = check_program(&surface).unwrap();
+        let original = signature(&program, "keep");
+        let unchanged: SourceSignature = serde_json::from_value(original.clone()).unwrap();
+        assert_eq!(serde_json::to_value(unchanged).unwrap(), original);
+        for (field, values) in [
+            (
+                "bits",
+                vec![
+                    json!("32"),
+                    json!(true),
+                    Value::Null,
+                    json!(32.5),
+                    json!({"value":32}),
+                ],
+            ),
+            (
+                "signed",
+                vec![
+                    json!("true"),
+                    json!("false"),
+                    json!(1),
+                    json!(0),
+                    Value::Null,
+                ],
+            ),
+        ] {
+            for value in values {
+                let mut changed = original.clone();
+                changed
+                    .pointer_mut(position)
+                    .unwrap()
+                    .as_object_mut()
+                    .unwrap()
+                    .insert(field.to_owned(), value);
+                assert!(
+                    serde_json::from_value::<SourceSignature>(changed).is_err(),
+                    "{source}: {field}"
+                );
+            }
+        }
+    }
+}
+
+#[test]
 fn actual_rust_header_owners_qualifiers_and_positions_survive_both_runtime_archives() {
     let data = fixture();
     let model = data["sourceSignatureModel"].as_str().unwrap();

@@ -2,6 +2,7 @@
 import {readRuntimeProjectData} from '../project-data-loader.js';
 import {unsupported,typeError} from './diagnostics.js';
 import {typeKey} from './types.js';
+import {acceptProgramIntegralMetadata} from '../program-numeric-metadata-rules.js';
 import {acceptRustSourceLifetimeBinding} from './rust-indirection-rules.js';
 import {acceptRustSourceSignatureModel,acceptRustSourceSignaturePrimitive,acceptRustSourceSignatureWrapper,acceptRustSourceSignatureOwnerKind} from './rust-source-signature-rules.js';
 export const RUST_SOURCE_SIGNATURE_POLICY=readRuntimeProjectData(new URL('./data/rust-source-signatures.lino',import.meta.url));
@@ -66,6 +67,7 @@ export function checkRustSourceSignature(signature,parameters,result,language,re
     const fields=policy.valueTypeFields[value?.kind];
     if(!fields)throw typeError('an owned Rust source type has an unsupported value type');
     exact(value,fields);
+    if(value.kind==='fixed'&&(!acceptProgramIntegralMetadata(value.kind,'bits',value.bits,Object.is(value.bits,-0))||typeof value.signed!=='boolean'))throw typeError('an owned Rust source type has invalid fixed-width metadata');
     if(value.kind==='array')valueType(value.element,allowNamed,depth+1);
     if(value.kind==='tuple') {if(!Array.isArray(value.elements))throw typeError('an owned Rust source tuple has invalid fields');value.elements.forEach(child=>valueType(child,allowNamed,depth+1));}
   }

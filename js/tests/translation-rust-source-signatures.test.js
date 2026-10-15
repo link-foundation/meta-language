@@ -15,6 +15,34 @@ const options={sourceSignatureModel:fixture.sourceSignatureModel};
 function output(code){const values=[];vm.runInNewContext(code,{console:{log:(...args)=>values.push(args.map(String).join(' '))}},{timeout:1000});return values;}
 function field(network,parent,label){return network.fieldRelations().find(row=>row.parent.equals(parent)&&row.label===label)?.child;}
 
+test('owned source headers bind actual integral Number widths and Boolean signedness before type comparison',()=>{
+ const cases=[
+  ['pub fn keep(value:i32)->i32{value} fn main(){}',position=>position.type],
+  ['pub fn keep(value:(bool,i32))->i32{value.1} fn main(){}',position=>position.type.elements[1]],
+  ['pub fn keep(value:&[i32])->i32{0i32} fn main(){}',position=>position.type.element],
+ ];
+ for(const[source,select]of cases){
+  const original=createTypedProgramLinks(source,'Rust',{rustSourceSignatureModel:fixture.sourceSignatureModel});
+  const load=()=>decodeTypedProgramLinks(LinkNetwork.fromLino(original.network.toLino()),original.root);
+  for(const[slot,values]of [['bits',['32',new Number(32),null,true,32.5,-0,NaN,Infinity,7,0]],['signed',['true','false',1,0,null,new Boolean(true)]]]){
+   for(const value of values){
+    const program=load(),declaration=[...program.declarations.values()][0];
+    declaration.sourceSignature.parameters[0].type=structuredClone(declaration.sourceSignature.parameters[0].type);
+    select(declaration.sourceSignature.parameters[0])[slot]=value;
+    assert.throws(()=>encodeTypedProgramLinks(program),undefined,source+' '+slot+' '+String(value));
+   }
+  }
+  for(const width of[32,32.0,3.2e1]){
+   const program=load(),declaration=[...program.declarations.values()][0];
+   select(declaration.sourceSignature.parameters[0]).bits=width;
+   const saved=encodeTypedProgramLinks(program),network=LinkNetwork.fromLino(saved.network.toLino());
+   const decoded=decodeTypedProgramLinks(network,saved.root);
+   assert.equal(typeof select([...decoded.declarations.values()][0].sourceSignature.parameters[0]).bits,'number');
+   for(const target of['Rust','JavaScript'])assert.equal(emitTypedProgramLinks(network,saved.root,target).code,emitTypedProgramLinks(original.network,original.root,target).code);
+  }
+ }
+});
+
 test('nineteen actual Rust headers retain independently specified type owners, wrappers and lifetime positions',()=>{
  assert.deepEqual(rustSourceSignatureFixture(),fixture);
  assert.equal(fixture.cases.length,19);
