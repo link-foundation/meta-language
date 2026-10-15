@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 126 | 125 | 1 | 0 |
+| Generators | 131 | 130 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 47 | 0 | 0 | 47 |
+| Published artifact contents | 50 | 0 | 0 | 50 |
 
 ## JavaScript engines
 
@@ -557,7 +557,9 @@ they are.
 | `js/scripts/build-merge-quality-evidence.mjs` | `js/scripts/build-merge-quality-evidence.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-native-grammar-concept-reuse.mjs` | `js/scripts/build-native-grammar-concept-reuse.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-native-text-grammars.mjs` | `js/scripts/build-native-text-grammars.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-rust-cooked-string-escape-fixtures.mjs` | `js/scripts/build-rust-cooked-string-escape-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-rust-string-continuation-fixtures.mjs` | `js/scripts/build-rust-string-continuation-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-rust-unicode-escape-fixtures.mjs` | `js/scripts/build-rust-unicode-escape-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-translation-stage-fixtures.mjs` | `js/scripts/build-translation-stage-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-unicode-identifier-properties.mjs` | `js/scripts/build-unicode-identifier-properties.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-vendored-grammars.mjs` | `js/scripts/build-vendored-grammars.mjs` | `script` |  | derived | current |  |
@@ -620,6 +622,7 @@ they are.
 | `js/scripts/generate-rust-completion-fixtures.mjs` | `js/scripts/generate-rust-completion-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-completion-panic-fixtures.mjs` | `js/scripts/generate-rust-completion-panic-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-completion-rules.mjs` | `js/scripts/generate-rust-completion-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-cooked-string-rules.mjs` | `js/scripts/generate-rust-cooked-string-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-empty-option-fixtures.mjs` | `js/scripts/generate-rust-empty-option-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-empty-option-rules.mjs` | `js/scripts/generate-rust-empty-option-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-float-constant-fixtures.mjs` | `js/scripts/generate-rust-float-constant-fixtures.mjs` | `script` |  | derived | current |  |
@@ -646,9 +649,11 @@ they are.
 | `js/scripts/generate-rust-source-indirection-fixtures.mjs` | `js/scripts/generate-rust-source-indirection-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-source-signature-fixtures.mjs` | `js/scripts/generate-rust-source-signature-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-source-signature-rules.mjs` | `js/scripts/generate-rust-source-signature-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-source-whitespace-rules.mjs` | `js/scripts/generate-rust-source-whitespace-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-string-rules.mjs` | `js/scripts/generate-rust-string-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-type-namespace-fixtures.mjs` | `js/scripts/generate-rust-type-namespace-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-type-namespace-rules.mjs` | `js/scripts/generate-rust-type-namespace-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-unicode-escape-rules.mjs` | `js/scripts/generate-rust-unicode-escape-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-scalar-loop-rules.mjs` | `js/scripts/generate-scalar-loop-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-cases.mjs` | `js/scripts/generate-self-translation-cases.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-report.mjs` | `js/scripts/generate-self-translation-report.mjs` | `script` |  | derived | current |  |
@@ -763,6 +768,7 @@ they are.
 | `src/data/resource-description-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-borrowed-call-interface.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-const-functions.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-cooked-string-escapes.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-empty-options.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-number-literals.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-owned-local-state.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
@@ -774,7 +780,9 @@ they are.
 | `src/data/rust-scalar-loops.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-source-header-emission.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-source-signatures.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-source-whitespace.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-type-namespace.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-unicode-escapes.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/semantic-lexicon.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/source-span.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/source-text-byte-model.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |

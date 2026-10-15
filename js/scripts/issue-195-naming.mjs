@@ -5603,7 +5603,1022 @@ const OWNED_TUPLE_CALL_NAME_INVENTORIES=OWNED_TUPLE_CALL_NAME_BINDINGS.map(({inv
  extract:(raw,file)=>{const text=file.endsWith('.lino')?decodeURIComponent(raw):raw;return files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeOwnedTupleCallName(name));},
  recordOf:name=>Object.values(files).flat().find(entry=>normalizeOwnedTupleCallName(entry.name)===name).id,
 }));
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES]);
+// Actual paired Rust lexical, transport tooling and isolated whole source experiment identities.
+const RUST_LEXICAL_SOURCE_NAME_BINDINGS=[
+  {
+    "inventory": "paired Rust lexical decisions",
+    "files": {
+      "js/src/translation/rust-cooked-string-rules.js": [
+        {
+          "name": "acceptRustCookedStringEscapePrefix",
+          "id": "translation.accept-rust-cooked-string-escape-prefix"
+        },
+        {
+          "name": "readRustAsciiEscapeDigit",
+          "id": "translation.read-rust-hexadecimal-escape-digit"
+        },
+        {
+          "name": "readRustAsciiEscapeValue",
+          "id": "translation.read-rust-cooked-byte-escape-value"
+        }
+      ],
+      "rust/src/translation/lexer/cooked_strings.rs": [
+        {
+          "name": "accept_rust_cooked_string_escape_prefix",
+          "id": "translation.accept-rust-cooked-string-escape-prefix"
+        },
+        {
+          "name": "read_rust_ascii_escape_digit",
+          "id": "translation.read-rust-hexadecimal-escape-digit"
+        },
+        {
+          "name": "read_rust_ascii_escape_value",
+          "id": "translation.read-rust-cooked-byte-escape-value"
+        }
+      ],
+      "js/src/translation/rust-unicode-escape-rules.js": [
+        {
+          "name": "decodeRustUnicodeEscape",
+          "id": "translation.decode-rust-unicode-escape"
+        }
+      ],
+      "rust/src/translation/lexer/unicode_escapes.rs": [
+        {
+          "name": "decode_rust_unicode_escape",
+          "id": "translation.decode-rust-unicode-escape"
+        }
+      ],
+      "js/src/translation/rust-source-whitespace-rules.js": [
+        {
+          "name": "acceptRustSourceWhitespace",
+          "id": "translation.accept-rust-source-whitespace"
+        },
+        {
+          "name": "acceptRustSourceByteOrderMark",
+          "id": "translation.accept-rust-source-byte-order-mark"
+        },
+        {
+          "name": "acceptRustSourceNumberDigitBoundary",
+          "id": "translation.accept-rust-source-number-digit-boundary"
+        }
+      ],
+      "rust/src/translation/lexer/source_whitespace.rs": [
+        {
+          "name": "accept_rust_source_whitespace",
+          "id": "translation.accept-rust-source-whitespace"
+        },
+        {
+          "name": "accept_rust_source_byte_order_mark",
+          "id": "translation.accept-rust-source-byte-order-mark"
+        },
+        {
+          "name": "accept_rust_source_number_digit_boundary",
+          "id": "translation.accept-rust-source-number-digit-boundary"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "reused Rust hexadecimal classifier",
+    "files": {
+      "js/src/translation/rust-unicode-escape-rules.js": [
+        {
+          "name": "readRustAsciiEscapeDigit",
+          "id": "translation.read-rust-hexadecimal-escape-digit"
+        }
+      ],
+      "rust/src/translation/lexer/unicode_escapes.rs": [
+        {
+          "name": "read_rust_ascii_escape_digit",
+          "id": "translation.read-rust-hexadecimal-escape-digit"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "reused Rust numeric boundary",
+    "files": {
+      "js/src/translation/rust-source-whitespace-rules.js": [
+        {
+          "name": "acceptRustNumberDigitBoundary",
+          "id": "translation.accept-rust-number-digit-boundary"
+        }
+      ],
+      "rust/src/translation/lexer/source_whitespace.rs": [
+        {
+          "name": "accept_rust_number_digit_boundary",
+          "id": "translation.accept-rust-number-digit-boundary"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "canonical Unicode escape result",
+    "files": {
+      "js/src/translation/rust-unicode-escape-rules.js": [
+        {
+          "name": "RustUnicodeEscape",
+          "id": "translation.unicode-escape"
+        }
+      ],
+      "rust/src/translation/lexer/unicode_escapes.rs": [
+        {
+          "name": "UnicodeEscape",
+          "id": "translation.unicode-escape"
+        }
+      ],
+      "js/scripts/generate-rust-unicode-escape-rules.mjs": [
+        {
+          "name": "RustUnicodeEscape",
+          "id": "translation.unicode-escape"
+        },
+        {
+          "name": "UnicodeEscape",
+          "id": "translation.unicode-escape"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "Rust Unicode escape continuation",
+    "files": {
+      "rust/src/translation/lexer/unicode_escapes.rs": [
+        {
+          "name": "ml_decode_rust_unicode_escape_loop1",
+          "id": "translation.continue-rust-unicode-escape"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "Rust Unicode escape continuation result",
+    "files": {
+      "rust/src/translation/lexer/unicode_escapes.rs": [
+        {
+          "name": "MlDecodeRustUnicodeEscapeLoop1Result",
+          "id": "translation.rust-unicode-escape-continuation-result"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "Rust lexical policy cooked-string",
+    "files": {
+      "js/scripts/generate-rust-cooked-string-rules.mjs": [
+        {
+          "name": "policy",
+          "id": "translation.rust-cooked-string-escape-policy"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "Rust lexical policy unicode-escape",
+    "files": {
+      "js/scripts/generate-rust-unicode-escape-rules.mjs": [
+        {
+          "name": "policy",
+          "id": "translation.rust-unicode-scalar-escape-policy"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "Rust lexical policy source-whitespace",
+    "files": {
+      "js/scripts/generate-rust-source-whitespace-rules.mjs": [
+        {
+          "name": "policy",
+          "id": "translation.rust-source-whitespace-policy"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "reused cooked string digit policy",
+    "files": {
+      "js/scripts/generate-rust-unicode-escape-rules.mjs": [
+        {
+          "name": "digitPolicy",
+          "id": "translation.rust-cooked-string-escape-policy"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "reused native lexical library authoring readSourceTextByteLibraryStyles",
+    "files": {
+      "js/scripts/generate-rust-cooked-string-rules.mjs": [
+        {
+          "name": "readSourceTextByteLibraryStyles",
+          "id": "repository.read-source-text-byte-library-styles"
+        }
+      ],
+      "js/scripts/generate-rust-unicode-escape-rules.mjs": [
+        {
+          "name": "readSourceTextByteLibraryStyles",
+          "id": "repository.read-source-text-byte-library-styles"
+        }
+      ],
+      "js/scripts/generate-rust-source-whitespace-rules.mjs": [
+        {
+          "name": "readSourceTextByteLibraryStyles",
+          "id": "repository.read-source-text-byte-library-styles"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "reused native lexical library authoring readSourceTextRustBlock",
+    "files": {
+      "js/scripts/generate-rust-cooked-string-rules.mjs": [
+        {
+          "name": "readSourceTextRustBlock",
+          "id": "repository.read-source-text-native-source-block"
+        }
+      ],
+      "js/scripts/generate-rust-unicode-escape-rules.mjs": [
+        {
+          "name": "readSourceTextRustBlock",
+          "id": "repository.read-source-text-native-source-block"
+        }
+      ],
+      "js/scripts/generate-rust-source-whitespace-rules.mjs": [
+        {
+          "name": "readSourceTextRustBlock",
+          "id": "repository.read-source-text-native-source-block"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "Rust Unicode escape fixture authoring",
+    "files": {
+      "js/scripts/build-rust-unicode-escape-fixtures.mjs": [
+        {
+          "name": "rustUnicodeEscapeFixture",
+          "id": "repository.create-rust-unicode-escape-fixture"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "Rust cooked string fixture authoring",
+    "files": {
+      "js/scripts/build-rust-cooked-string-escape-fixtures.mjs": [
+        {
+          "name": "fixture",
+          "id": "repository.rust-cooked-string-escape-fixture"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "Rust lexical JavaScript test execute",
+    "files": {
+      "js/tests/translation-rust-unicode-escapes.test.js": [
+        {
+          "name": "execute",
+          "id": "repository.execute-rust-unicode-test-artifact"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "Rust lexical JavaScript test replay",
+    "files": {
+      "js/tests/translation-rust-source-whitespace.test.js": [
+        {
+          "name": "replay",
+          "id": "repository.replay-rust-source-whitespace-test"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "Rust lexical native test operations",
+    "files": {
+      "rust/tests/unit/translation_rust_lexical_rules.rs": [
+        {
+          "name": "cooked_fixture",
+          "id": "repository.read-rust-cooked-string-test-fixture"
+        },
+        {
+          "name": "unicode_fixture",
+          "id": "repository.read-rust-unicode-test-fixture"
+        },
+        {
+          "name": "source_for",
+          "id": "repository.create-rust-lexical-test-source"
+        },
+        {
+          "name": "original_offset",
+          "id": "repository.read-rust-lexical-original-offset"
+        },
+        {
+          "name": "archives",
+          "id": "repository.reload-rust-lexical-test-archives"
+        },
+        {
+          "name": "string_value",
+          "id": "repository.read-rust-lexical-test-string-value"
+        },
+        {
+          "name": "complete_program",
+          "id": "repository.create-complete-rust-lexical-test-program"
+        },
+        {
+          "name": "observe_javascript",
+          "id": "repository.observe-rust-lexical-javascript-artifact"
+        },
+        {
+          "name": "compile_and_observe",
+          "id": "repository.execute-rust-lexical-native-test-artifact"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "translation feedback transport operations",
+    "files": {
+      "js/scripts/translation-test-feedback.mjs": [
+        {
+          "name": "captureTranslationTestFeedbackPartition",
+          "id": "repository.capture-translation-test-feedback-partition"
+        },
+        {
+          "name": "mergeTranslationTestFeedbackPartitions",
+          "id": "repository.merge-translation-test-feedback-partitions"
+        },
+        {
+          "name": "commitIdentity",
+          "id": "repository.check-translation-feedback-commit-identity"
+        },
+        {
+          "name": "partitionFiles",
+          "id": "repository.read-translation-feedback-partition-files"
+        },
+        {
+          "name": "filesWithin",
+          "id": "repository.read-translation-feedback-payload-files"
+        },
+        {
+          "name": "payloadPath",
+          "id": "repository.check-translation-feedback-payload-path"
+        },
+        {
+          "name": "targetDirectory",
+          "id": "repository.check-translation-feedback-target-directory"
+        },
+        {
+          "name": "fingerprint",
+          "id": "repository.read-translation-feedback-payload-fingerprint"
+        },
+        {
+          "name": "main",
+          "id": "repository.run-translation-test-feedback-command"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "translation feedback transport constants",
+    "files": {
+      "js/scripts/translation-test-feedback.mjs": [
+        {
+          "name": "PARTS",
+          "id": "repository.translation-feedback-partition-count"
+        },
+        {
+          "name": "RECEIPT",
+          "id": "repository.translation-feedback-receipt-file-name"
+        },
+        {
+          "name": "KIND",
+          "id": "repository.translation-feedback-receipt-kind"
+        },
+        {
+          "name": "SOURCES",
+          "id": "repository.translation-feedback-payload-source-list"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "translation feedback transport test operations",
+    "files": {
+      "js/tests/issue-195-evidence-translation-feedback.test.js": [
+        {
+          "name": "fixture",
+          "id": "repository.create-translation-feedback-test-partitions"
+        },
+        {
+          "name": "editReceipt",
+          "id": "repository.change-translation-feedback-test-receipt"
+        },
+        {
+          "name": "assertInitialTranslationShards",
+          "id": "repository.check-initial-translation-test-shards"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned Rust decisions",
+    "files": {
+      "experiments/generated-owned-rust/rules.mjs": [
+        {
+          "name": "acceptGeneratedOwnedRustModel",
+          "id": "repository.accept-generated-owned-rust-model"
+        },
+        {
+          "name": "acceptGeneratedOwnedRustClone",
+          "id": "repository.accept-generated-owned-rust-clone"
+        },
+        {
+          "name": "acceptGeneratedOwnedRustLiteralCodePoint",
+          "id": "repository.accept-generated-owned-rust-literal-code-point"
+        },
+        {
+          "name": "acceptGeneratedOwnedRustEqualityGrouping",
+          "id": "repository.accept-generated-owned-rust-equality-grouping"
+        },
+        {
+          "name": "acceptGeneratedOwnedRustOrdinaryComment",
+          "id": "repository.accept-generated-owned-rust-ordinary-comment"
+        }
+      ],
+      "experiments/generated-owned-rust/data/rules.rs": [
+        {
+          "name": "accept_generated_owned_rust_model",
+          "id": "repository.accept-generated-owned-rust-model"
+        },
+        {
+          "name": "accept_generated_owned_rust_clone",
+          "id": "repository.accept-generated-owned-rust-clone"
+        },
+        {
+          "name": "accept_generated_owned_rust_literal_code_point",
+          "id": "repository.accept-generated-owned-rust-literal-code-point"
+        },
+        {
+          "name": "accept_generated_owned_rust_equality_grouping",
+          "id": "repository.accept-generated-owned-rust-equality-grouping"
+        },
+        {
+          "name": "accept_generated_owned_rust_ordinary_comment",
+          "id": "repository.accept-generated-owned-rust-ordinary-comment"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "shared experimental code unit decision",
+    "files": {
+      "experiments/generated-owned-rust/rules.mjs": [
+        {
+          "name": "acceptGeneratedOwnedRustCodeUnit",
+          "id": "repository.accept-experimental-source-code-unit"
+        }
+      ],
+      "experiments/generated-owned-rust/data/rules.rs": [
+        {
+          "name": "accept_generated_owned_rust_code_unit",
+          "id": "repository.accept-experimental-source-code-unit"
+        }
+      ],
+      "experiments/generated-javascript-unit/rules.mjs": [
+        {
+          "name": "acceptGeneratedJavaScriptUnitCodeUnit",
+          "id": "repository.accept-experimental-source-code-unit"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned Rust model operations",
+    "files": {
+      "experiments/generated-owned-rust/model.mjs": [
+        {
+          "name": "checkGeneratedOwnedRust",
+          "id": "repository.check-generated-owned-rust"
+        },
+        {
+          "name": "createGeneratedOwnedRust",
+          "id": "repository.create-generated-owned-rust"
+        },
+        {
+          "name": "createGeneratedOwnedRustLinks",
+          "id": "repository.create-generated-owned-rust-links"
+        },
+        {
+          "name": "decodeGeneratedOwnedRustLinks",
+          "id": "repository.decode-generated-owned-rust-links"
+        },
+        {
+          "name": "encodeGeneratedOwnedRustLinks",
+          "id": "repository.encode-generated-owned-rust-links"
+        },
+        {
+          "name": "emitGeneratedOwnedRust",
+          "id": "repository.emit-generated-owned-rust"
+        },
+        {
+          "name": "emitGeneratedOwnedRustLinks",
+          "id": "repository.emit-generated-owned-rust-links"
+        },
+        {
+          "name": "emitCanonicalGeneratedOwnedRust",
+          "id": "repository.emit-canonical-generated-owned-rust"
+        },
+        {
+          "name": "fields",
+          "id": "repository.check-generated-owned-rust-record-fields"
+        },
+        {
+          "name": "interval",
+          "id": "repository.check-generated-owned-rust-source-interval"
+        },
+        {
+          "name": "data",
+          "id": "repository.check-generated-owned-rust-data-graph"
+        },
+        {
+          "name": "compare",
+          "id": "repository.compare-generated-owned-rust-proof"
+        },
+        {
+          "name": "operationNodes",
+          "id": "repository.read-generated-owned-rust-operation-nodes"
+        },
+        {
+          "name": "surfaceMap",
+          "id": "repository.map-generated-owned-rust-core-identities"
+        },
+        {
+          "name": "checkCst",
+          "id": "repository.check-generated-owned-rust-concrete-source-tree"
+        },
+        {
+          "name": "tokenText",
+          "id": "repository.render-generated-owned-rust-token"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned Rust parser operations",
+    "files": {
+      "experiments/generated-owned-rust/parser.mjs": [
+        {
+          "name": "tokenName",
+          "id": "repository.read-generated-owned-rust-token-name"
+        },
+        {
+          "name": "readGeneratedOwnedRust",
+          "id": "repository.read-generated-owned-rust"
+        },
+        {
+          "name": "parseGeneratedOwnedRust",
+          "id": "repository.parse-generated-owned-rust"
+        },
+        {
+          "name": "binder",
+          "id": "repository.read-generated-owned-rust-binder"
+        },
+        {
+          "name": "readType",
+          "id": "repository.read-generated-owned-rust-type"
+        },
+        {
+          "name": "expression",
+          "id": "repository.read-generated-owned-rust-expression"
+        },
+        {
+          "name": "block",
+          "id": "repository.read-generated-owned-rust-block"
+        },
+        {
+          "name": "helper",
+          "id": "repository.read-generated-owned-rust-helper"
+        },
+        {
+          "name": "match",
+          "id": "repository.match-generated-owned-rust-runtime-descriptor"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned Rust codec operations",
+    "files": {
+      "experiments/generated-owned-rust/codec.mjs": [
+        {
+          "name": "encodeGeneratedOwnedRust",
+          "id": "repository.encode-generated-owned-rust"
+        },
+        {
+          "name": "decodeGeneratedOwnedRust",
+          "id": "repository.decode-generated-owned-rust"
+        },
+        {
+          "name": "bind",
+          "id": "repository.bind-generated-owned-rust-core-links"
+        },
+        {
+          "name": "read",
+          "id": "repository.read-generated-owned-rust-proof-links"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned Rust trivia operation",
+    "files": {
+      "experiments/generated-owned-rust/trivia.mjs": [
+        {
+          "name": "readGeneratedOwnedRustTrivia",
+          "id": "repository.read-generated-owned-rust-trivia"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental reuse of exact Rust whitespace",
+    "files": {
+      "experiments/generated-owned-rust/trivia.mjs": [
+        {
+          "name": "acceptRustSourceWhitespace",
+          "id": "translation.accept-rust-source-whitespace"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental reuse of initial source byte order mark",
+    "files": {
+      "experiments/generated-owned-rust/trivia.mjs": [
+        {
+          "name": "acceptRustSourceByteOrderMark",
+          "id": "translation.accept-rust-source-byte-order-mark"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental reuse of source interval offsets",
+    "files": {
+      "experiments/generated-owned-rust/model.mjs": [
+        {
+          "name": "acceptSourceSpanOffset",
+          "id": "translation.accept-source-span-offset"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned Rust policy",
+    "files": {
+      "experiments/generated-owned-rust/model.mjs": [
+        {
+          "name": "GENERATED_OWNED_RUST_POLICY",
+          "id": "repository.generated-owned-rust-policy"
+        }
+      ],
+      "experiments/generated-owned-rust/generate-rules.mjs": [
+        {
+          "name": "generatedOwnedRustPolicy",
+          "id": "repository.generated-owned-rust-policy"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned Rust authoring generate-rules.mjs",
+    "files": {
+      "experiments/generated-owned-rust/generate-rules.mjs": [
+        {
+          "name": "generatedOwnedRustRules",
+          "id": "repository.generate-owned-rust-experimental-rules"
+        },
+        {
+          "name": "nativeDecisions",
+          "id": "repository.translate-owned-rust-experimental-decisions"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned Rust authoring generate-fixtures.mjs",
+    "files": {
+      "experiments/generated-owned-rust/generate-fixtures.mjs": [
+        {
+          "name": "generatedOwnedRustFixture",
+          "id": "repository.create-generated-owned-rust-fixture"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned Rust authoring model.test.mjs",
+    "files": {
+      "experiments/generated-owned-rust/model.test.mjs": [
+        {
+          "name": "call",
+          "id": "repository.find-generated-owned-rust-test-call"
+        },
+        {
+          "name": "execute",
+          "id": "repository.execute-generated-owned-rust-test-artifact"
+        },
+        {
+          "name": "coherentTarget",
+          "id": "repository.change-generated-owned-rust-test-target"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned Rust source role owner",
+    "files": {
+      "experiments/generated-owned-rust/model.mjs": [
+        {
+          "name": "owner",
+          "id": "repository.generated-owned-rust-clone-owner-path"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned Rust source role receiver",
+    "files": {
+      "experiments/generated-owned-rust/model.mjs": [
+        {
+          "name": "receiver",
+          "id": "repository.generated-owned-rust-clone-receiver"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned Rust source role binding",
+    "files": {
+      "experiments/generated-owned-rust/model.mjs": [
+        {
+          "name": "binding",
+          "id": "repository.generated-owned-rust-lexical-binding-target"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned Rust source role declaration",
+    "files": {
+      "experiments/generated-owned-rust/model.mjs": [
+        {
+          "name": "declaration",
+          "id": "repository.generated-owned-rust-declaration-target"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned Rust source role literal",
+    "files": {
+      "experiments/generated-owned-rust/model.mjs": [
+        {
+          "name": "literal",
+          "id": "repository.generated-owned-rust-literal-target"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned Rust source role worker",
+    "files": {
+      "experiments/generated-owned-rust/model.mjs": [
+        {
+          "name": "worker",
+          "id": "repository.generated-owned-rust-worker-target"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned Rust source role valueAssumptions",
+    "files": {
+      "experiments/generated-owned-rust/model.mjs": [
+        {
+          "name": "valueAssumptions",
+          "id": "repository.generated-owned-rust-value-assumption-list"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned Rust source role gaps",
+    "files": {
+      "experiments/generated-owned-rust/model.mjs": [
+        {
+          "name": "gaps",
+          "id": "repository.generated-owned-rust-trivia-gap-list"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned Rust source role clones",
+    "files": {
+      "experiments/generated-owned-rust/model.mjs": [
+        {
+          "name": "clones",
+          "id": "repository.generated-owned-rust-clone-proof-list"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned Rust source role experimentalSourceModel",
+    "files": {
+      "experiments/generated-owned-rust/codec.mjs": [
+        {
+          "name": "experimentalSourceModel",
+          "id": "repository.generated-owned-rust-provenance-model-field"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned Rust source role sourceInterpretation",
+    "files": {
+      "experiments/generated-owned-rust/codec.mjs": [
+        {
+          "name": "sourceInterpretation",
+          "id": "repository.generated-owned-rust-provenance-proof-field"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental owned Rust source operations",
+    "files": {
+      "experiments/generated-owned-rust/data/policy.lino": [
+        {
+          "name": "owned generated value helper",
+          "id": "repository.owned-generated-value-helper-source-operation"
+        },
+        {
+          "name": "owned standard String clone",
+          "id": "repository.owned-standard-string-clone-source-operation"
+        },
+        {
+          "name": "owned standard String literal construction",
+          "id": "repository.owned-standard-string-literal-construction-source-operation"
+        },
+        {
+          "name": "owned lexical value",
+          "id": "repository.owned-lexical-value-source-operation"
+        },
+        {
+          "name": "owned ordered product",
+          "id": "repository.owned-ordered-product-source-operation"
+        },
+        {
+          "name": "owned product field",
+          "id": "repository.owned-product-field-source-operation"
+        },
+        {
+          "name": "owned immutable local",
+          "id": "repository.owned-immutable-local-source-operation"
+        },
+        {
+          "name": "owned scalar equality",
+          "id": "repository.owned-scalar-equality-source-operation"
+        },
+        {
+          "name": "owned conditional value",
+          "id": "repository.owned-conditional-value-source-operation"
+        },
+        {
+          "name": "owned declared product call",
+          "id": "repository.owned-declared-product-call-source-operation"
+        }
+      ],
+      "experiments/generated-owned-rust/parser.mjs": [
+        {
+          "name": "complete generated owned Rust module",
+          "id": "repository.complete-generated-owned-rust-module-source-operation"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "reused actual runtime syntax operations",
+    "files": {
+      "experiments/generated-owned-rust/data/policy.lino": [
+        {
+          "name": "inert runtime lint attribute",
+          "id": "translation.runtime-inert-runtime-lint-attribute"
+        },
+        {
+          "name": "owned Unit worker definition",
+          "id": "translation.runtime-owned-unit-worker-definition"
+        },
+        {
+          "name": "complete standard runtime entry",
+          "id": "translation.runtime-complete-standard-runtime-entry"
+        },
+        {
+          "name": "unused Boolean argument scan",
+          "id": "translation.runtime-unused-boolean-argument-scan"
+        },
+        {
+          "name": "standard argument existence test",
+          "id": "translation.runtime-standard-argument-existence-test"
+        },
+        {
+          "name": "standard argument iteration",
+          "id": "translation.runtime-standard-argument-iteration"
+        },
+        {
+          "name": "standard argument owner",
+          "id": "translation.runtime-standard-argument-owner"
+        },
+        {
+          "name": "closed argument predicate",
+          "id": "translation.runtime-closed-argument-predicate"
+        },
+        {
+          "name": "standard argument flag comparison",
+          "id": "translation.runtime-standard-argument-flag-comparison"
+        },
+        {
+          "name": "owned thread handle binding",
+          "id": "translation.runtime-owned-thread-handle-binding"
+        },
+        {
+          "name": "standard thread builder construction",
+          "id": "translation.runtime-standard-thread-builder-construction"
+        },
+        {
+          "name": "standard thread builder owner",
+          "id": "translation.runtime-standard-thread-builder-owner"
+        },
+        {
+          "name": "bounded stack size request",
+          "id": "translation.runtime-bounded-stack-size-request"
+        },
+        {
+          "name": "unsigned stack size shift",
+          "id": "translation.runtime-unsigned-stack-size-shift"
+        },
+        {
+          "name": "standard Unit thread spawn",
+          "id": "translation.runtime-standard-unit-thread-spawn"
+        },
+        {
+          "name": "closed moved Unit worker",
+          "id": "translation.runtime-closed-moved-unit-worker"
+        },
+        {
+          "name": "owned worker invocation",
+          "id": "translation.runtime-owned-worker-invocation"
+        },
+        {
+          "name": "standard thread success requirement",
+          "id": "translation.runtime-standard-thread-success-requirement"
+        },
+        {
+          "name": "retained worker failure branch",
+          "id": "translation.runtime-retained-worker-failure-branch"
+        },
+        {
+          "name": "standard worker failure predicate",
+          "id": "translation.runtime-standard-worker-failure-predicate"
+        },
+        {
+          "name": "standard worker join",
+          "id": "translation.runtime-standard-worker-join"
+        },
+        {
+          "name": "standard worker failure exit",
+          "id": "translation.runtime-standard-worker-failure-exit"
+        },
+        {
+          "name": "standard exit owner",
+          "id": "translation.runtime-standard-exit-owner"
+        }
+      ]
+    }
+  }
+];
+const normalizeRustLexicalSourceName=name=>name.replace(/([a-z0-9])([A-Z])/gu,'$1-$2').replaceAll('_','-').replaceAll(' ','-').toLowerCase().replace(/\bascii\b/gu,'american-standard-code-for-information-interchange').replace(/\bcst\b/gu,'concrete-source-tree').replace(/\bml\b/gu,'meta-language').replace(/loop1/gu,'loop-one').replace(/\bconst\b/gu,'constant');
+const RUST_LEXICAL_SOURCE_NAME_INVENTORIES=RUST_LEXICAL_SOURCE_NAME_BINDINGS.map(({inventory,files})=>({
+ inventory,files:Object.keys(files),
+ extract:(raw,file)=>{const text=file.endsWith('.lino')?decodeURIComponent(raw):raw;return files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeRustLexicalSourceName(name));},
+ recordOf:name=>Object.values(files).flat().find(entry=>normalizeRustLexicalSourceName(entry.name)===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
