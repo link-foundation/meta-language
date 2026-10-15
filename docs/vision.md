@@ -596,7 +596,12 @@ that order. Aliases, escaped collectors, observed append results and unknown
 source forms require separate proofs. The direct checker validates actual
 ordered declaration ownership, source binders reject reserved words using the
 shared JavaScript word register, and premise links use their own role rather
-than a source-type-owner label. Both saved formats retain these facts. The
+than a source-type-owner label. The policy and each certificate explicitly
+select Script execution in a fresh extensible standard realm with default
+global descriptors and no ambient declaration changes. The function-name role
+refuses the three standard non-configurable global names; valid local shadows
+remain admitted. Both saved formats retain and validate this source context
+alongside the four operation premises. The
 complete matcher and five lowered programs are automatically emitted as Rust
 source data. Default production append refusals remain; native source capture,
 execution and general member-array or Map projection remain required work.
