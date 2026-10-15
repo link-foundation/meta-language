@@ -947,8 +947,227 @@ const ORIGINAL_LINK_SYMBOL_ORACLE_PACKAGE_STEPS = [
     '698b65e2a0045c584b8e7c6305069b501a57048e6cf53df6da91120f83b107e5', 'source-models'],
 ];
 
+// Exact physical owners of the unchanged generated checks. Shared Rust setup is
+// per runner; both compiler feedback producers and their upload remain together.
+const GENERATED_PACKAGE_SLICES = ['first', 'second'];
+const GENERATED_PACKAGE_SHARED_SETUP = 'Setup Rust formatting for generated frontend rules';
+const GENERATED_PACKAGE_SLICE_STEPS = {
+  first: [
+    'Check generated owned Rust literal value edit experiment rules',
+    'Check complete generated owned Rust literal value edit fixtures',
+    'Run generated owned Rust literal value edit experiment',
+  ],
+  second: [
+    'Check the generated Rust frontend rules against JavaScript',
+    'Check the generated global concept rules against JavaScript',
+    'Check the generated discovery integration rules',
+    'Check shared discovered concept graph fixtures',
+    'Check generated concept view admission rules',
+    'Check shared ontology and taxonomy view fixtures',
+    'Check generated binary link network rules',
+    'Check shared binary link network fixtures',
+    'Check the generated Resource Description Framework rules',
+    'Check shared Resource Description Framework graph fixtures',
+    'Check generated resource triple syntax character rules',
+    'Check generated resource triple syntax token rules',
+    'Check shared resource triple syntax fixtures',
+    'Check the generated grammar merge decisions against JavaScript',
+    'Check the generated structural type rules against JavaScript',
+    'Check the generated primitive value rules against JavaScript',
+    'Check the shared Rust array runtime artifacts',
+    'Check the generated TypeScript erasure rules against JavaScript',
+    'Check the generated typed program link rules against JavaScript',
+    'Check the generated Rust source indirection rules against JavaScript',
+    'Check shared scoped Rust lifetime fixtures',
+    'Check generated Rust array admission rules',
+    'Check generated Rust floating point predicate rules',
+    'Check shared Rust floating point predicate fixtures',
+    'Check shared Rust floating point operation fixtures',
+    'Check shared Rust floating point constant fixtures',
+    'Check generated Rust guarded function completion rules',
+    'Check shared Rust guarded function completion fixtures',
+    'Check shared Rust guarded completion panic fixtures',
+    'Check generated read-only Rust scalar parameter rules',
+    'Check shared read-only Rust scalar parameter fixtures',
+    'Check shared Rust array source fixtures',
+    'Check shared fresh Rust scalar vector result fixtures',
+    'Check generated Rust string continuation rules',
+    'Check shared Rust string continuation fixtures',
+    'Check generated Rust cooked string escape rules',
+    'Check shared Rust cooked string escape fixtures',
+    'Check generated Rust Unicode scalar escape rules',
+    'Check shared Rust Unicode scalar escape fixtures',
+    'Check generated Rust source whitespace and boundary rules',
+    'Check generated Rust raw string literal rules',
+    'Check shared TypeScript documentation pattern fixtures',
+    'Check generated formal function selection rules',
+    'Check shared formal function definition fixtures',
+    'Check generated shared numeric function rules',
+    'Check generated Rust source signature rules',
+    'Check shared Rust source signature fixtures',
+    'Check generated Rust borrowed call interface rules',
+    'Check shared Rust borrowed call interface fixtures',
+    'Check generated Rust primitive owner rules',
+    'Check shared Rust primitive owner fixtures',
+    'Check generated Rust type namespace rules',
+    'Check shared Rust type namespace fixtures',
+    'Check generated Rust pure Unit call rules',
+    'Check shared Rust private pure Unit call fixtures',
+    'Check shared Rust public pure Unit call fixtures',
+    'Check generated source span rules',
+    'Check shared source span offset fixtures',
+    'Check generated Rust numeric boundary rules',
+    'Check generated JavaScript line terminator rules',
+    'Check generated JavaScript Unit module experiment rules',
+    'Check complete generated JavaScript Unit module experiment fixtures',
+    'Run generated JavaScript Unit module experiment',
+    'Check generated owned Rust module experiment rules',
+    'Check complete generated owned Rust module experiment fixtures',
+    'Run generated owned Rust module experiment',
+    'Check generated Rust text value projection experiment rules',
+    'Check complete Rust text value projection experiment fixtures',
+    'Run Rust text value projection experiment',
+    'Check generated whole Rust runtime shell rules',
+    'Check complete Rust runtime shell fixtures',
+    'Check generated source text byte rules',
+    'Check shared source text byte fixtures',
+    'Check portable source text byte kernels',
+    'Check generated integral program metadata rules',
+    'Check shared integral program metadata fixtures',
+    'Run integral program metadata checks',
+    'Check shared owned occurrence position fixtures',
+    'Run owned occurrence position checks',
+    'Check generated closed Rust const predicate rules',
+    'Check actual styled Rust const predicate fixtures',
+    'Run closed Rust const predicate prototype checks',
+    'Check generated Rust owned local text state rules',
+    'Check generated owned tuple initialization call rules',
+    'Check owned tuple initialization call fixtures',
+    'Check actual public owned tuple call native archives',
+    'Run owned tuple initialization call checks',
+    'Check shared Rust owned local text state fixtures',
+    'Check shared Rust owned local source operation fixtures',
+    'Check shared Rust owned local container fixtures',
+    'Run Rust owned local text state prototype checks',
+    'Run Rust owned local text public profile checks',
+    'Run Rust owned local text unit checks',
+    'Run Rust owned local container checks',
+    'Check generated Rust empty option rules',
+    'Check shared Rust empty option fixtures',
+    'Check generated JavaScript scoped binding emission rules',
+    'Check shared JavaScript scoped binding emission fixtures',
+    'Check generated standard Rust readonly query rules',
+    'Check standard Rust readonly query fixtures',
+    'Check generated shared scalar loop rules',
+    'Check shared scalar loop source fixtures',
+    'Check owned declaration scalar loop source fixtures',
+    'Check generated primitive borrowed Rust header rules',
+    'Check primitive borrowed Rust header fixtures',
+    'Check shared numeric function definition fixtures',
+    'Check strict public declaration consumers',
+    'Authenticate reviewed generated-stage migration refreshes',
+    'Check the generated Rust source product rules against JavaScript',
+    'Check the generated immutable product emission rules against JavaScript',
+    'Check the generated closed product source proofs against JavaScript',
+    'Check shared source-free typed program fixtures',
+    'Check shared editable algebraic program fixtures',
+    'Check shared editable immutable product fixtures',
+    'Check shared product unit value fixtures',
+    'Check the associative data tooling fixture',
+    'Check the recorded original structured data conversion revisions',
+    'Check shared formal definition and certificate fixtures',
+    'Check generated formal relation identities',
+    'Check shared formal relation identity fixtures',
+    'Check generated frontend rule compilation and style',
+    'Check generated global concept rule compilation and style',
+    'Retain exact generated sources and compiler feedback',
+  ],
+};
+
+function normalizeGeneratedPackageSlice(step) {
+  const owners = GENERATED_PACKAGE_SLICES.filter(slice => GENERATED_PACKAGE_SLICE_STEPS[slice].includes(step.name));
+  assert.ok(owners.length <= 1, `generated check has multiple physical owners: ${step.name}`);
+  if (!owners.length) {
+    assert.ok(!step.text.includes('matrix.generated_slice'), `unregistered slice selector: ${step.name}`);
+    return step.text;
+  }
+  const appendix = ` && matrix.generated_slice == '${owners[0]}'`;
+  const expected = `        if: \${{ !cancelled() && matrix.group == 'generated'${appendix} }}`;
+  const predicates = step.text.split('\n').filter(line => /^\s+if:/u.test(line));
+  assert.deepEqual(predicates, [expected], `generated slice must only append its exact admission: ${step.name}`);
+  assert.equal(step.text.split('matrix.generated_slice').length, 2, `ambiguous physical owner: ${step.name}`);
+  return step.text.replace(appendix, '');
+}
+
+function packageCheckCells(checks) {
+  assert.equal([...checks.header.matchAll(/^ {6}matrix:$/gmu)].length, 1);
+  const matrix = /^ {6}matrix:\n([\s\S]*?)^ {4}steps:\n$/mu.exec(checks.header)?.[1];
+  const expected = `        group: [${PACKAGE_GROUPS.join(', ')}]\n` +
+    '        generated_slice: [first]\n' +
+    '        include:\n' +
+    '          - group: generated\n' +
+    '            generated_slice: second\n';
+  assert.equal(matrix, expected, 'six logical groups expand to exactly seven required physical cells');
+  const groups = /^ {8}group: \[([^\]]+)\]$/mu.exec(matrix)[1].split(', ');
+  const slice = /^ {8}generated_slice: \[([^\]]+)\]$/mu.exec(matrix)[1];
+  const included = [...matrix.matchAll(/^ {10}- group: ([a-z-]+)\n {12}generated_slice: ([a-z]+)$/gmu)]
+    .map(([, group, generated_slice]) => ({ group, generated_slice }));
+  return [...groups.map(group => ({ group, generated_slice: slice })), ...included];
+}
+
+function checkGeneratedPackageSlices(parsed) {
+  const checks = parsed.get('package-checks');
+  const cells = packageCheckCells(checks);
+  assert.equal(cells.length, 7);
+  assert.equal(new Set(cells.map(cell => `${cell.group}:${cell.generated_slice}`)).size, 7);
+  assert.equal(/^ {4}name: (.+)$/mu.exec(checks.header)?.[1],
+    'JavaScript Package Checks (${{ matrix.group }}, ${{ matrix.generated_slice }})');
+  const concurrencyGroups = [...checks.header.matchAll(/^ {6}group: (.+)$/gmu)].map(match => match[1]);
+  assert.equal(concurrencyGroups.length, 1);
+  const concurrency = concurrencyGroups[0];
+  assert.equal(concurrency, 'check-js-${{ github.ref }}-javascript-package-checks-${{ matrix.group }}-${{ matrix.generated_slice }}',
+    'both generated runners require independent concurrency identities');
+  const physicalNames = cells.map(cell => concurrency
+    .replace('${{ matrix.group }}', cell.group).replace('${{ matrix.generated_slice }}', cell.generated_slice));
+  assert.equal(new Set(physicalNames).size, 7, 'a slice must never cancel a sibling runner');
+  assert.match(checks.header, /^ {6}cancel-in-progress: true$/mu);
+  assert.match(checks.header, /^ {6}fail-fast: false$/mu);
+  for (const id of ['package-checks', 'test']) {
+    assert.deepEqual([...parsed.get(id).header.matchAll(/^ {4}timeout-minutes: (.+)$/gmu)].map(match => match[1]), ['10']);
+    assert.equal(condition(parsed.get(id)), '${{ !cancelled() }}');
+  }
+  const registered = GENERATED_PACKAGE_SLICES.flatMap(slice => GENERATED_PACKAGE_SLICE_STEPS[slice]);
+  assert.equal(registered.length, 126);
+  assert.equal(new Set(registered).size, registered.length);
+  for (const step of checks.steps) normalizeGeneratedPackageSlice(step);
+  const setup = checks.steps.filter(step => step.name === GENERATED_PACKAGE_SHARED_SETUP);
+  assert.equal(setup.length, 1, 'formatting setup remains available in both physical generated runners');
+  assert.equal(/^\s+if: (.+)$/mu.exec(setup[0].text)?.[1], "${{ !cancelled() && matrix.group == 'generated' }}");
+  for (const slice of GENERATED_PACKAGE_SLICES) {
+    const actual = checks.steps.filter(step => step.text.includes(`matrix.generated_slice == '${slice}'`));
+    assert.deepEqual(actual.map(step => step.name), GENERATED_PACKAGE_SLICE_STEPS[slice],
+      'every generated check retains one owner and its original producer/consumer order');
+    assert.ok(checks.steps.indexOf(setup[0]) < checks.steps.indexOf(actual[0]));
+  }
+  const feedback = [
+    'Check generated frontend rule compilation and style',
+    'Check generated global concept rule compilation and style',
+    'Retain exact generated sources and compiler feedback',
+  ];
+  assert.deepEqual(GENERATED_PACKAGE_SLICE_STEPS.second.slice(-3), feedback,
+    'both feedback producers and their single upload execute in the same runner');
+  assert.ok(needs(parsed.get('test')).includes('package-checks'));
+  const gate = parsed.get('test').steps.filter(step => step.name === 'Require every JavaScript test group');
+  assert.equal(gate.length, 1);
+  assert.match(gate[0].text, /PACKAGE_CHECKS_RESULT: \$\{\{ needs.package-checks.result \}\}/u);
+  assert.match(gate[0].text, /^\s+if: \$\{\{ !cancelled\(\) \}\}$/mu);
+  assert.ok(gate[0].run.includes('if [ "$PACKAGE_CHECKS_RESULT" != "success" ]; then'));
+  return cells;
+}
+
 function packageStepSignature(step, includeGroup = false) {
-  const fields = includeGroup ? step.text : step.text.replace(/ && matrix\.group == '[a-z-]+'/gu, '');
+  const normalized = normalizeGeneratedPackageSlice(step);
+  const fields = includeGroup ? normalized : normalized.replace(/ && matrix\.group == '[a-z-]+'/gu, '');
   const text = fields
     .split('\n').filter(line => line.trim() && !/^\s*#/u.test(line))
     .map(line => line.trimEnd()).join('\n');
@@ -1452,6 +1671,7 @@ test('original linked symbol and table projection gates retain complete paths an
 });
 
 function checkPackageStepConservation(parsed) {
+  const cells = checkGeneratedPackageSlices(parsed);
   const additions = [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS, ...TYPE_NAMESPACE_PACKAGE_STEPS,
     ...PURE_UNIT_PACKAGE_STEPS, ...SOURCE_SPAN_PACKAGE_STEPS, ...OWNED_TEXT_GENERATOR_PACKAGE_STEPS,
     ...OWNED_TEXT_EXPERIMENT_PACKAGE_STEPS, ...INTEGRAL_METADATA_PACKAGE_STEPS, ...INTEGRAL_METADATA_EXPERIMENT_PACKAGE_STEPS,
@@ -1494,7 +1714,9 @@ function checkPackageStepConservation(parsed) {
           `package step has an ambiguous group selector: ${step.name}`);
         assert.ok(group === undefined || PACKAGE_GROUPS.includes(group));
       }
-      const executions = id === 'package-checks' && !group ? PACKAGE_GROUPS.length : 1;
+      const slice = /matrix\.generated_slice == '([a-z]+)'/u.exec(step.text)?.[1];
+      const executions = id === 'package-checks'
+        ? cells.filter(cell => (!group || cell.group === group) && (!slice || cell.generated_slice === slice)).length : 1;
       found.set(step.name, (found.get(step.name) ?? 0) + executions);
     }
   }
@@ -1502,7 +1724,8 @@ function checkPackageStepConservation(parsed) {
     if (baseline.owner === 'all') {
       for (const id of ['package-checks', 'test']) assert.ok(shared.has(`${id}:${name}`), `shared package setup/cleanup missing: ${id}:${name}`);
     }
-    assert.equal(found.get(name), baseline.owner === 'all' ? PACKAGE_GROUPS.length + 1 : 1,
+    const executions = baseline.owner === 'all' ? cells.length + 1 : name === GENERATED_PACKAGE_SHARED_SETUP ? 2 : 1;
+    assert.equal(found.get(name), executions,
       `package step omitted or duplicated: ${name}`);
   }
 }
@@ -1529,6 +1752,131 @@ test('package partitions conserve every original check, condition and artifact o
   assert.deepEqual(needs(parsed.get('test')), ['tests', 'report-assertions', 'package-checks', 'translation-test-feedback']);
   assert.deepEqual(needs(parsed.get('publish')), ['test']);
   assert.match(parsed.get('publish').header, /needs.test.result == 'success'/u);
+});
+
+test('generated package slices preserve six logical groups and execute every check exactly once across seven cells', () => {
+  const parsed = jobs('js.yml');
+  const cells = checkGeneratedPackageSlices(parsed);
+  assert.deepEqual(cells, [
+    ...PACKAGE_GROUPS.map(group => ({ group, generated_slice: 'first' })),
+    { group: 'generated', generated_slice: 'second' },
+  ]);
+  assert.deepEqual(GENERATED_PACKAGE_SLICE_STEPS.first, [
+    'Check generated owned Rust literal value edit experiment rules',
+    'Check complete generated owned Rust literal value edit fixtures',
+    'Run generated owned Rust literal value edit experiment',
+  ]);
+  assert.equal(GENERATED_PACKAGE_SLICE_STEPS.second.length, 123);
+  const checks = parsed.get('package-checks').steps;
+  for (const slice of GENERATED_PACKAGE_SLICES) {
+    for (const name of GENERATED_PACKAGE_SLICE_STEPS[slice]) {
+      const step = checks.find(step => step.name === name);
+      assert.ok(step.afterFailure, `${name} must report its own failure after an earlier failed check`);
+      assert.equal(cells.filter(cell => cell.group === 'generated' && cell.generated_slice === slice).length, 1);
+      assert.equal(normalizeGeneratedPackageSlice(step).includes('matrix.generated_slice'), false);
+    }
+  }
+  checkPackageStepConservation(parsed);
+});
+
+test('generated slice conservation refuses every omitted, duplicated, reassigned or altered check', () => {
+  for (const slice of GENERATED_PACKAGE_SLICES) {
+    for (const name of GENERATED_PACKAGE_SLICE_STEPS[slice]) {
+      const mutate = change => {
+        const parsed = jobs('js.yml'), steps = parsed.get('package-checks').steps;
+        const index = steps.findIndex(step => step.name === name);
+        assert.ok(index >= 0);
+        change(steps, index);
+        assert.throws(() => checkPackageStepConservation(parsed), assert.AssertionError, name);
+      };
+      mutate((steps, index) => steps.splice(index, 1));
+      mutate((steps, index) => steps.push({ ...steps[index] }));
+      for (const [before, after] of [
+        [` && matrix.generated_slice == '${slice}'`, ''],
+        [`matrix.generated_slice == '${slice}'`, `matrix.generated_slice == '${slice === 'first' ? 'second' : 'first'}'`],
+        [`matrix.generated_slice == '${slice}'`, `(matrix.generated_slice == '${slice}' || true)`],
+        ['!cancelled()', 'success()'],
+        ["matrix.group == 'generated'", "matrix.group == 'contracts'"],
+      ]) mutate((steps, index) => {
+        assert.ok(steps[index].text.includes(before));
+        steps[index].text = steps[index].text.replace(before, after);
+      });
+      mutate((steps, index) => {
+        const key = steps[index].run ? 'run:' : 'uses:';
+        assert.ok(steps[index].text.includes(key));
+        steps[index].text = steps[index].text.replace(key, `${key} optional-replacement `);
+      });
+    }
+  }
+});
+
+test('physical generated cells reject exclusions, extra cells, shared concurrency and longer deadlines', () => {
+  const mutate = change => {
+    const parsed = jobs('js.yml');
+    change(parsed);
+    assert.throws(() => checkGeneratedPackageSlices(parsed), assert.AssertionError);
+  };
+  for (const [before, after] of [
+    ['        generated_slice: [first]\n', '        generated_slice: [first, second]\n'],
+    ['          - group: generated\n            generated_slice: second\n', ''],
+    ['            generated_slice: second\n', '            generated_slice: first\n'],
+    ['            generated_slice: second\n', '            generated_slice: second\n          - group: generated\n            generated_slice: second\n'],
+    ['        include:\n', '        exclude:\n          - group: generated\n            generated_slice: first\n        include:\n'],
+    ['            generated_slice: second\n', '            generated_slice: second\n\n        exclude:\n          - group: generated\n            generated_slice: second\n'],
+    ['generated, source-models]', 'source-models]'],
+    ['-${{ matrix.generated_slice }}', ''],
+    ['      cancel-in-progress: true', '      group: shared-generated-runner\n      cancel-in-progress: true'],
+    ['(${{ matrix.group }}, ${{ matrix.generated_slice }})', '(${{ matrix.group }})'],
+    ['      fail-fast: false', '      fail-fast: true'],
+  ]) mutate(parsed => {
+    const job = parsed.get('package-checks');
+    assert.ok(job.header.includes(before));
+    job.header = job.header.replace(before, after);
+  });
+  for (const id of ['package-checks', 'test']) {
+    for (const minutes of ['9', '11', '20']) mutate(parsed => {
+      parsed.get(id).header = parsed.get(id).header.replace('timeout-minutes: 10', `timeout-minutes: ${minutes}`);
+    });
+    mutate(parsed => {
+      parsed.get(id).header = parsed.get(id).header.replace('if: ${{ !cancelled() }}', 'if: ${{ success() }}');
+    });
+  }
+  mutate(parsed => {
+    const steps = parsed.get('package-checks').steps;
+    const index = steps.findIndex(step => step.name === GENERATED_PACKAGE_SHARED_SETUP);
+    steps.splice(index, 1);
+  });
+});
+
+test('the unchanged final package gate rejects a failed, cancelled or skipped result from either physical generated cell', () => {
+  const parsed = jobs('js.yml'), cells = checkGeneratedPackageSlices(parsed);
+  const gate = parsed.get('test').steps.find(step => step.name === 'Require every JavaScript test group');
+  const execute = results => spawnSync('bash', ['-c', gate.run.replace(/^\|\s*\n/u, '')], {
+    encoding: 'utf8', env: {
+      ...process.env, TESTS_RESULT: 'success', REPORTS_RESULT: 'success', TRANSLATION_FEEDBACK_RESULT: 'success',
+      EXTERNAL_REPORTS: 'false', PACKAGE_CHECKS_RESULT: results.every(result => result === 'success') ? 'success' : 'failure',
+    },
+  });
+  assert.equal(execute(cells.map(() => 'success')).status, 0);
+  for (const [index, cell] of cells.entries()) {
+    for (const result of ['failure', 'cancelled', 'skipped']) {
+      const results = cells.map(() => 'success');
+      results[index] = result;
+      assert.equal(execute(results).status, 1, `${cell.group}:${cell.generated_slice}=${result}`);
+    }
+  }
+  for (const change of [
+    job => { job.header = job.header.replace('package-checks, ', ''); },
+    job => { job.steps = job.steps.filter(step => step.name !== gate.name); },
+    job => {
+      const step = job.steps.find(step => step.name === gate.name);
+      step.text = step.text.replace('needs.package-checks.result', 'needs.tests.result');
+    },
+  ]) {
+    const changed = jobs('js.yml');
+    change(changed.get('test'));
+    assert.throws(() => checkGeneratedPackageSlices(changed), assert.AssertionError);
+  }
 });
 
 test('frozen package conservation rejects omissions, duplicates, reassignment and command or condition edits', () => {
