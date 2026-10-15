@@ -80,6 +80,9 @@ pub struct FnDecl {
     /// Optional actual Rust type spellings with rechecked scoped ownership.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_type_namespace: Option<serde_json::Value>,
+    /// Ordered owned local String moves, copies and replacements.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_local_state: Option<serde_json::Value>,
     /// Optional owned scalar loop state and checked continuation interpretation.
     #[serde(
         default,

@@ -129,6 +129,8 @@ pub(super) fn validate(program: &Program) -> Result<()> {
         .map_err(|failure| error(failure.to_string()))?;
     crate::translation::source_primitive_owners::validate_source_primitive_owners(program)
         .map_err(|failure| error(failure.to_string()))?;
+    crate::translation::owned_local_state::validate_owned_local_state(program)
+        .map_err(|failure| error(failure.to_string()))?;
     crate::translation::source_type_namespaces::validate_source_type_namespaces(program)
         .map_err(|failure| error(failure.to_string()))?;
     let data_names = program

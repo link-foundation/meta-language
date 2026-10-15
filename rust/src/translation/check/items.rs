@@ -100,6 +100,7 @@ impl Checker {
                     source_type_namespace: function.source_type_namespace.as_deref().cloned(),
                     source_loop: function.source_loop.as_deref().cloned(),
                     source_pure_unit: function.source_pure_unit.as_deref().cloned(),
+                    source_local_state: function.source_local_state.as_deref().cloned(),
                 }),
                 SItem::Theorem(theorem) => Decl::Theorem(TheoremDecl {
                     name: name.clone(),
@@ -243,6 +244,14 @@ impl Checker {
                     let body = self.coerce(body, &ret, item.span)?;
                     if let Some(Decl::Fn(entry)) = self.decls.get_mut(&name) {
                         entry.body = body;
+                        if let Some(proof) = &entry.source_local_state {
+                            entry.source_local_state = Some(
+                                super::super::owned_local_state::prepare_owned_local_state_proof(
+                                    proof,
+                                    &entry.body,
+                                )?,
+                            );
+                        }
                         if let Some(proof) = &entry.source_primitive_owners {
                             entry.source_primitive_owners=Some(super::super::source_primitive_owners::prepare_primitive_owner_proof(proof,&entry.body)?);
                         }

@@ -32,6 +32,8 @@ mod float_predicate_rules;
 mod float_predicates;
 pub(super) mod indirection_rules;
 mod items;
+mod owned_local_state;
+pub(crate) mod owned_local_state_rules;
 pub(crate) mod primitive_owner_rules;
 pub(crate) mod primitive_owners;
 mod product_rules;
@@ -112,6 +114,25 @@ pub use source_profiles::{
     parse_rust_with_source_signature_model, parse_rust_with_type_namespace_model,
 };
 
+/// Read explicit owned String local state and its exact source interface.
+///
+/// # Errors
+/// Refuses unknown models and unproved source ownership or local state.
+pub fn parse_rust_with_owned_local_state_model(
+    source: &str,
+    model: &str,
+    source_signature_model: &str,
+) -> Result<SProgram> {
+    parse_rust_with_selected_profiles(
+        source,
+        SourceProfiles {
+            local_value_state: model,
+            source_signature: source_signature_model,
+            ..SourceProfiles::default()
+        },
+    )
+}
+
 #[derive(Clone, Copy, Default)]
 struct SourceProfiles<'a> {
     array_result: &'a str,
@@ -122,6 +143,7 @@ struct SourceProfiles<'a> {
     empty_option_source: &'a str,
     type_namespace: &'a str,
     pure_unit_call: &'a str,
+    local_value_state: &'a str,
 }
 
 fn parse_rust_with_selected_profiles(
@@ -137,6 +159,7 @@ fn parse_rust_with_selected_profiles(
         empty_option_source: empty_option_source_model,
         type_namespace: type_namespace_model,
         pure_unit_call: pure_unit_call_model,
+        local_value_state: local_value_state_model,
     } = profiles;
     if !pure_unit_call_rules::accept_rust_pure_unit_call_model(pure_unit_call_model) {
         return Err(unsupported(
@@ -161,6 +184,13 @@ fn parse_rust_with_selected_profiles(
         return Err(unsupported(
             "Rust pure Unit-call model",
             "the closed Unit-call interpretation requires its independent source profile",
+            None,
+        ));
+    }
+        if !owned_local_state_rules::accept_rust_owned_local_state_model(local_value_state_model) {
+        return Err(unsupported(
+            "Rust owned local state model",
+            "select the original move profile or canonical String copy profile",
             None,
         ));
     }
@@ -221,6 +251,7 @@ fn parse_rust_with_selected_profiles(
             scalar_loop_model,
             primitive_owner_model,
             type_namespace_model,
+            local_value_state_model,
         ]
         .iter()
         .any(|model| !model.is_empty())
@@ -336,6 +367,9 @@ struct RustParser {
     type_namespace_model: String,
     pure_unit_call_model: String,
     pure_unit_public_token: Option<Token>,
+    local_value_state_model: String,
+    local_value_copies: HashSet<Span>,
+    local_value_constructors: HashMap<Span, Span>,
     type_namespace_frames: Vec<Vec<Vec<String>>>,
     /// Selected initial catalog discovery, never a later collecting pass.
     type_namespace_discovery: Option<()>,
@@ -356,7 +390,7 @@ struct RustParser {
 impl RustParser {
     fn new(
         tokens: Vec<Token>,
-        origins: SourceOrigins,
+        mut origins: SourceOrigins,
         profiles: SourceProfiles<'_>,
         initial_discovery: bool,
     ) -> Self {
@@ -365,6 +399,7 @@ impl RustParser {
             .filter(|token| token.kind == TokenKind::Identifier)
             .map(|token| token.value.clone())
             .collect();
+        origins.owned_local_values = !profiles.local_value_state.is_empty();
         Self {
             cursor: TokenCursor::new(tokens, Language::Rust),
             aliases: HashMap::new(),
@@ -374,7 +409,7 @@ impl RustParser {
             origins,
             completion_model: profiles.completion.to_owned(),
             source_signature_model: if profiles.source_signature.is_empty()
-                && !profiles.type_namespace.is_empty()
+                && (!profiles.type_namespace.is_empty() || !profiles.local_value_state.is_empty())
             {
                 "Rust source function signature 1".to_owned()
             } else {
@@ -386,6 +421,9 @@ impl RustParser {
             type_namespace_model: profiles.type_namespace.to_owned(),
             pure_unit_call_model: profiles.pure_unit_call.to_owned(),
             pure_unit_public_token: None,
+            local_value_state_model: profiles.local_value_state.to_owned(),
+            local_value_copies: HashSet::new(),
+            local_value_constructors: HashMap::new(),
             type_namespace_frames: Vec::new(),
             type_namespace_discovery: (!profiles.type_namespace.is_empty() && initial_discovery)
                 .then_some(()),

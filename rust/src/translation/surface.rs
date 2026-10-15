@@ -816,6 +816,13 @@ pub struct SFn {
         skip_serializing_if = "Option::is_none"
     )]
     pub source_type_namespace: Option<Box<serde_json::Value>>,
+    /// Ordered owned local String moves, copies and replacements.
+    #[serde(
+        default,
+        rename = "sourceLocalState",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub source_local_state: Option<Box<serde_json::Value>>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

@@ -205,6 +205,7 @@ impl RustParser {
             source_empty_option: Some(Box::new(proof)),
             source_type_namespace: None,
             source_pure_unit: None,
+            source_local_state: None,
         })
     }
 }

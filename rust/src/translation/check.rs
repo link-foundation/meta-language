@@ -438,6 +438,7 @@ impl Checker {
         super::source_empty_options::validate_source_empty_options(&program)?;
         super::source_type_namespaces::validate_source_type_namespaces(&program)?;
         super::source_pure_unit_calls::validate_source_pure_unit_calls(&program)?;
+        super::owned_local_state::validate_owned_local_state(&program)?;
         Ok(program)
     }
 

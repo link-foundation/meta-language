@@ -177,6 +177,7 @@ pub(super) struct SourceLookup {
 
 pub(super) struct SourceOrigins {
     pub(super) array_result_model: String,
+    pub(super) owned_local_values: bool,
     fresh_calls: HashSet<Span>,
     pub(super) collecting: bool,
     pub(super) catalog: HashMap<String, SourceDeclaration>,
@@ -195,6 +196,7 @@ impl SourceOrigins {
     pub(super) fn new(catalog: Option<HashMap<String, SourceDeclaration>>, model: &str) -> Self {
         Self {
             array_result_model: model.to_owned(),
+            owned_local_values: false,
             fresh_calls: HashSet::new(),
             collecting: catalog.is_none(),
             catalog: catalog.unwrap_or_default(),
@@ -225,7 +227,10 @@ impl SourceOrigins {
         origin: &SourceOrigin,
         span: Option<Span>,
     ) -> Result<()> {
-        if !self.collecting && (origin.fields.is_none() || !origin.direct_copy_value()) {
+        if !self.collecting
+            && (origin.fields.is_none()
+                || (!origin.direct_copy_value() && !self.owned_local_product(origin)))
+        {
             return Err(unsupported(
                 "immutable Rust tuple product",
                 "every field requires a direct recursively immutable scalar Copy source value",
@@ -245,7 +250,18 @@ impl SourceOrigins {
             return Ok(());
         };
         let fields: Vec<_> = items.iter().map(|item| self.origin(item, path)).collect();
+        let ty = self
+            .owned_local_values
+            .then(|| {
+                fields
+                    .iter()
+                    .map(|field| field.ty.clone())
+                    .collect::<Option<Vec<_>>>()
+            })
+            .flatten()
+            .map(|elements| Type::Tuple { elements });
         let origin = SourceOrigin {
+            ty,
             copy_evidence: fields
                 .iter()
                 .all(SourceOrigin::direct_copy_value)
@@ -256,6 +272,24 @@ impl SourceOrigins {
         self.require_product_origin(&origin, span)?;
         self.mark(node, origin);
         Ok(())
+    }
+
+    fn owned_local_product(&self, origin: &SourceOrigin) -> bool {
+        self.owned_local_values
+            && origin
+                .ty
+                .as_ref()
+                .is_some_and(super::owned_local_state::owned_pair)
+            && origin.proven
+            && origin.wrappers.is_empty()
+            && origin.fields.as_ref().is_some_and(|fields| {
+                fields
+                    .iter()
+                    .all(|field| field.proven && field.wrappers.is_empty())
+                    && fields
+                        .first()
+                        .is_some_and(SourceOrigin::direct_string_value)
+            })
     }
 
     pub(super) fn product_projection(

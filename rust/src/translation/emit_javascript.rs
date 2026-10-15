@@ -116,11 +116,16 @@ pub fn emit_javascript_with_options(
     if let Some(model) = options.scoped_binding_model {
         super::scoped_binding_emission::validate_program(program, model)?;
     }
+    super::owned_local_state::validate_owned_local_state(program)?;
+    let mut reserved = KEYWORDS.to_vec();
+    if program.declarations.iter().any(|declaration| matches!(declaration, Decl::Fn(function) if function.source_local_state.is_some())) {
+        reserved.push("ml_ownedTextInput");
+    }
     let state = EmitState::new(
         program,
         Language::JavaScript,
         ident,
-        KEYWORDS,
+        &reserved,
         EmitOptions {
             modules_share_term_space: true,
             type_space: true,
@@ -324,10 +329,24 @@ impl<'p> JavaScriptEmitter<'p> {
         }
         let name = self.state.local_name(&function.full_name).to_owned();
         self.state.map(entry, &name);
-        let mut lines: Vec<String> = params
-            .iter()
-            .filter_map(|param| self.parameter_guard(param))
-            .collect();
+        let mut lines = Vec::new();
+        for param in &params {
+            if function.source_local_state.is_some() {
+                lines.push(self.owned_local_parameter_guard(param));
+            }
+            lines.extend(self.parameter_guard(param));
+        }
+        if function.source_local_state.is_some() {
+            self.state.encode("owned-text-input", "the selected Rust local value model admits primitive Unicode scalar text, Boolean and signed i32 inputs; JavaScript rejects other input values before evaluating the body");
+            let assumption = &super::owned_local_state::policy()["targetInputAssumption"];
+            self.state.assume(
+                super::emit_common::AssumptionText {
+                    id: assumption["id"].as_str().unwrap(),
+                    statement: assumption["statement"].as_str().unwrap(),
+                },
+                None,
+            );
+        }
         if tail_loop(function) {
             // A lifted loop runs as a loop: each iteration assigns the parameters their next values.
             let names = params.iter().map(|param| param.name.clone()).collect();
@@ -346,6 +365,35 @@ impl<'p> JavaScriptEmitter<'p> {
             names.join(", "),
             indent(&lines.join("\n"), 1)
         ))
+    }
+
+    fn owned_local_parameter_guard(&mut self, param: &Param) -> String {
+        if param.ty == super::types::STRING {
+            self.helpers.insert(Helper::OwnedTextInput);
+            return format!(
+                "if (!ml_ownedTextInput({})) throw new RangeError({});",
+                param.name,
+                json_string(&format!(
+                    "String argument {} requires Unicode scalar text",
+                    param.name
+                ))
+            );
+        }
+        let kind = if param.ty == super::types::BOOL {
+            "boolean"
+        } else {
+            "bigint"
+        };
+        format!(
+            "if (typeof {} !== {}) throw new RangeError({});",
+            param.name,
+            json_string(kind),
+            json_string(&format!(
+                "{} argument {} requires {kind}",
+                param.ty.key(),
+                param.name
+            ))
+        )
     }
 
     /// Machine-integer parameters are range-checked, as the Rust type guarantees.

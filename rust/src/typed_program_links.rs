@@ -13,6 +13,7 @@ use crate::translation::javascript::{parse_javascript, parse_javascript_with_sca
 use crate::translation::rust::{
     parse_rust, parse_rust_with_empty_option_source_model, parse_rust_with_loop_profiles,
     parse_rust_with_primitive_owner_model, parse_rust_with_pure_unit_call_model,
+    parse_rust_with_owned_local_state_model,
     parse_rust_with_type_namespace_model,
 };
 use crate::{LinkId, LinkMetadata, LinkNetwork, LinkType};
@@ -376,6 +377,43 @@ pub fn create_typed_program_links_with_rust_pure_unit_call_model(
         .map_err(|failure| error(failure.to_string()))?;
     let program = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
     let selected = serde_json::json!({"sourceProfile":{"language":"Rust","rustPureUnitCallModel":model},"userProvenance":provenance});
+    encode_typed_program_links_with_provenance(&program, Some(&selected))
+}
+
+/// Import explicit owned String moves or canonical local copies as editable links.
+///
+/// # Errors
+/// Refuses non-Rust source, unknown models and unproved ownership or local state.
+pub fn create_typed_program_links_with_rust_owned_local_state_model(
+    source: &str,
+    language: &str,
+    model: &str,
+    source_signature_model: Option<&str>,
+    provenance: Option<&Value>,
+) -> Result<TypedProgramLinks> {
+    if !matches!(language.to_ascii_lowercase().as_str(), "rust" | "rs") {
+        return Err(error("a Rust owned local state model requires Rust source"));
+    }
+    let surface = parse_rust_with_owned_local_state_model(
+        source,
+        model,
+        source_signature_model.unwrap_or(""),
+    )
+    .map_err(|failure| error(failure.to_string()))?;
+    let program = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
+    let mut profile = serde_json::Map::new();
+    profile.insert("language".into(), Value::String("Rust".into()));
+    profile.insert(
+        "rustOwnedLocalStateModel".into(),
+        Value::String(model.into()),
+    );
+    if let Some(model) = source_signature_model {
+        profile.insert(
+            "rustSourceSignatureModel".into(),
+            Value::String(model.into()),
+        );
+    }
+    let selected = serde_json::json!({"sourceProfile":profile,"userProvenance":provenance});
     encode_typed_program_links_with_provenance(&program, Some(&selected))
 }
 

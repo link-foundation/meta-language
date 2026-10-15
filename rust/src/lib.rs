@@ -376,6 +376,7 @@ pub use typed_program_links::{
     create_typed_program_links_with_rust_array_result_model,
     create_typed_program_links_with_rust_completion_model,
     create_typed_program_links_with_rust_empty_option_source_model,
+    create_typed_program_links_with_rust_owned_local_state_model,
     create_typed_program_links_with_rust_primitive_owner_model,
     create_typed_program_links_with_rust_pure_unit_call_model,
     create_typed_program_links_with_rust_scalar_loop_model,
