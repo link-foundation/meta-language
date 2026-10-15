@@ -7,6 +7,7 @@ import { TranslationError } from './diagnostics.js';
 import { acceptControlParenthesis, acceptStatementBrace, decodeUnicodeEscape, readRustNumberBounds, regularExpressionEnd, startRegularExpression } from './frontend-rules.js';
 import { readRustSourceLineBreakEnd, readRustStringContinuationEnd } from './rust-string-rules.js';
 import { acceptRustCookedStringEscapePrefix, readRustAsciiEscapeValue } from './rust-cooked-string-rules.js';
+import { decodeRustUnicodeEscape } from './rust-unicode-escape-rules.js';
 import { acceptRustNumberDigitBoundary } from './rust-number-rules.js';
 import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
 
@@ -228,10 +229,16 @@ function blockCommentEnd(source, index, comments) {
 // A \u escape at `at`: \u{X..} in JavaScript and Rust, and \uXXXX in
 // JavaScript, where a surrogate pair of two such escapes is one code point.
 // A lone surrogate is refused, because Rust strings cannot hold it.
-function unicodeEscape(source, at, language) {
-  const units = [];
-  for (let index = at; index < Math.min(source.length, at + 12); index += 1) units.push(source.charCodeAt(index));
-  const escape = decodeUnicodeEscape(units, language === 'JavaScript');
+function unicodeEscape(source, at, language, encoding = { units: null }) {
+  let escape;
+  if (language === 'Rust') {
+    encoding.units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
+    escape = decodeRustUnicodeEscape(encoding.units, at);
+  } else {
+    const units = [];
+    for (let index = at; index < Math.min(source.length, at + 12); index += 1) units.push(source.charCodeAt(index));
+    escape = decodeUnicodeEscape(units, language === 'JavaScript');
+  }
   if (escape.$ === 'malformed') throw new TranslationError('syntax', 'malformed unicode escape', { start: at, end: at + 2 });
   if (escape.$ === 'unsupported') {
     throw new TranslationError('unsupported', `unicode escape ${source.slice(at, at + escape.escapeLength)} is not a scalar value; Rust strings hold scalar values only`, { start: at, end: at + escape.end });
@@ -279,7 +286,7 @@ function stringToken(source, index, language, encoding) {
       }
       const simple = { n: '\n', t: '\t', r: '\r', b: '\b', f: '\f', v: '\v', '\\': '\\', '"': '"', "'": "'", 0: '\0', '{': language === 'JavaScript' ? '{' : '\\{' };
       if (escaped === 'u' || (language === 'JavaScript' && escaped === 'x')) {
-        const escape = unicodeEscape(source, cursor, language);
+        const escape = unicodeEscape(source, cursor, language, encoding);
         value += escape.text;
         cursor = escape.end;
         continue;
