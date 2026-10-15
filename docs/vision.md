@@ -671,6 +671,15 @@ and old decoder independently admit them. Public JavaScript graph anchors remain
 safe integers; synthetic high/low word tests do not establish native graph
 capture. Native execution, pre-Serde integration, production selection and paired
 source replay remain separate obligations.
+Its CI-only native oracle authenticates forty-seven source files and the whole
+automatic artifact. Seventy-eight shared fixtures retain all 195 declared-format
+premises: 190 numeric transports and five actual binary-serializer refusals.
+Twenty-one synthetic numeric controls and thirty-two JavaScript-only String/hole
+controls have separate scopes. Exact bit blocks retain every input and output
+under the unchanged consumer, stdout and process limits. Additional lexical,
+inventory, field-role and resource controls remain in the independently required
+fifty-five-group JavaScript suite; this oracle does not native-observe them.
+Actual native results, runtime fit and saved observations remain CI evidence.
 The separate `closed fresh Number array collector 1` experiment selects one
 complete JavaScript function with a fresh unaliased array, one counted input
 loop, one ignored one-argument append per iteration and a terminal array return.
@@ -1917,9 +1926,10 @@ thirty-second heartbeat includes a bounded, credential-redacted actual log
 suffix, so a job timeout retains recent test progress even if artifact upload
 cannot run. Original command logs remain unchanged.
 
-Package validation runs eight required logical check groups across nine parallel
+Package validation runs nine required logical check groups across ten parallel
 jobs: native imports, native fixtures, grammar, contracts, generated code and
-source models, complete original-link tables and binary candidates. The
+source models, complete original-link tables, binary candidates and raw graph
+preflight. The
 generated group has two physical slices. One retains the
 literal-edit rule, fixture and experiment triplet; the other retains every
 remaining generated check, including both compiler-feedback producers and their
@@ -1942,6 +1952,15 @@ every group, every JavaScript test partition and the complete report assertion
 job before packaging or publication. It also requires the validated merge of
 translation compiler feedback. Frozen step-conservation checks retain every
 original command, condition and artifact owner exactly once across the groups.
+The raw graph cell separately checks the complete automatic native generation,
+the serial JavaScript graph contracts and the CI-only injected native oracle.
+Its checks use a one-GiB heap bound and retain the existing ten-minute deadline.
+Its actual native oracle is a separate parallel Rust job with the complete
+existing Cargo test prerequisites and admission condition. It preserves the
+fifteen-minute Ubuntu test deadline, requires a SHA-qualified observation
+artifact and adds no work to the nine existing native oracles. Removing
+only this cell, its three steps and the new job restores the previous workflows
+byte for byte; the global JavaScript-first caller and path selector are unchanged.
 
 The JavaScript package checks also compile the generated shared frontend rules
 as a standalone Rust module with the crate's Clippy lint groups and warnings

@@ -71,6 +71,18 @@ graph capture, production integration or scalability. The composed wrapper
 retains the old projector's narrower nullish-String and dangling-reference
 refusals; synthetic identifier words are arithmetic checks only.
 
+`raw-native-observations.test.mjs` plans only in CI. Its frozen scope is 78
+shared fixtures and 195 declared formats: 190 numeric graph premises and five
+actual binary-serializer refusals, with 21 additional synthetic numeric controls
+and 32 JavaScript-only String/hole controls. It authenticates 47 source files and
+the complete automatically emitted artifact. Reversible bit blocks preserve
+every input column and result within the existing four-MiB consumer and one-MiB
+stdout bounds. The separate 55-group JavaScript suite also checks lexical,
+inventory, field-role and resource cases beyond that shared native corpus.
+Those additional cases are not native observations from this oracle. Both
+planning and injected contracts remain CI work; actual execution and the
+observation artifact additionally require `ORIGINAL_LINK_RAW_NATIVE=1`.
+
 Run the bounded checks with Node 22:
 
 ```sh
