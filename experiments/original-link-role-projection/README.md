@@ -20,6 +20,10 @@ transport, registers only those nodes and returns compact anchors, a dense
 equal-looking distinct IDs remain distinct. Contradictory concrete roles and
 provisional role nine without an eventual concrete registration refuse. Unrelated
 network members create no certificate rows.
+Before interpretation, the numeric boundary checks the root and every edge
+handle against the actual membership count, and label/string codes against the
+shared dictionary bounds. Unknown codes retain zero; sparse or malformed
+positions refuse. These domain checks do not approve graph ownership.
 
 All thirteen existing complete source fixtures pass through text and binary
 archives. The tests bind the existing table identities to the same actual raw

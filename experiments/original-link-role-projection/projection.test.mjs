@@ -127,6 +127,25 @@ test('transport shape and root errors refuse before role registration',()=>{
  const wrong=actual.transport.arguments.map(value=>Array.isArray(value)?[...value]:value);wrong[1]=actual.members[0];assert.deepEqual(project(...wrong),[-10]);
 });
 
+test('actual primitive transport rejects alien roots and malformed edge or dictionary domains',()=>{
+ const packet=create(fixtures.cases.find(row=>row.id==='equal-valued-distinct-owners')),actual=projectOriginalLinkCertificateRoles(packet.network,packet.root),base=actual.transport.arguments;
+ const copy=()=>base.map(value=>Array.isArray(value)?[...value]:value);
+ // Exact independent-review counterexample: make every root edge follow the
+ // same alien owner, so interpretation alone would still find the real body.
+ const rebound=copy(),oldRoot=rebound[1];rebound[1]=rebound[0]+1;rebound[5]=rebound[5].map(value=>value===oldRoot?rebound[1]:value);assert.deepEqual(project(...rebound),[-10]);
+ for(const value of [0,-0,-1,base[0]+1,0.5,NaN,Infinity,-Infinity,true,'1',null,undefined]){const args=copy();args[1]=value;assert.deepEqual(project(...args),[-10]);}
+ for(const vector of [2,4,5,6]){
+  for(const value of [0,-0,-1,base[0]+1,0.5,NaN,Infinity,-Infinity,true,'1',null,undefined]){const args=copy();args[vector][0]=value;assert.deepEqual(project(...args),[-11],`ordinal vector ${vector}`);}
+  const hole=copy();delete hole[vector][0];assert.deepEqual(project(...hole),[-11],`hole in ordinal vector ${vector}`);
+ }
+ for(const[vector,maximum]of[[3,policy.fields.length],[7,policy.stringSymbols.length]]){
+  for(const value of [-1,maximum+1,0.5,NaN,Infinity,-Infinity,true,'0',null,undefined]){const args=copy();args[vector][0]=value;assert.deepEqual(project(...args),[-11],`code vector ${vector}`);}
+  const hole=copy();delete hole[vector][0];assert.deepEqual(project(...hole),[-11],`hole in code vector ${vector}`);
+ }
+ assert.ok(base[3].includes(0));assert.ok(base[7].includes(0));assert.equal(project(...base)[0],1,'actual unknown label/string codes retain zero');
+ const precedence=copy();precedence[1]=base[0]+1;precedence[2].pop();assert.deepEqual(project(...precedence),[-11],'existing shape failure still precedes root admission');
+});
+
 test('shared instructions and the entire emitted Rust artifact regenerate without native compilation',()=>{
  const result=generateOriginalLinkRoleProjection(true);assert.equal(result.declarations.length,20);assert.ok(result.completeRust.includes('pub fn project_original_link_role_registry('));assert.ok(result.completeRust.includes('fn main('));assert.ok(result.declarationNames.includes('registerOriginalLinkRoles'));assert.equal(result.model,policy.model);
 });
