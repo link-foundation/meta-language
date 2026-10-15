@@ -14039,7 +14039,1514 @@ const FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES=FRESH_COLLECTOR_GLOBAL_CON
  extract:(raw,file)=>{let text=raw;if(file.endsWith('.lino')){const saved=FRESH_COLLECTOR_GLOBAL_CONTEXT_SOURCE_TEXTS.get(file);if(!saved||saved.raw!==raw)FRESH_COLLECTOR_GLOBAL_CONTEXT_SOURCE_TEXTS.set(file,{raw,text:JSON.stringify(readStructuredDataLino(raw))});text=FRESH_COLLECTOR_GLOBAL_CONTEXT_SOURCE_TEXTS.get(file).text;}return files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeFreshCollectorGlobalContextName(name));},
  recordOf:name=>Object.values(files).flat().find(entry=>normalizeFreshCollectorGlobalContextName(entry.name)===name).id,
 }));
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES]);
+// Exact isolated String value, fixed table and complete source oracle meanings.
+const ORIGINAL_LINK_VALUE_TABLE_NAME_BINDINGS=[
+  {
+    "inventory": "ordered original String value decisions",
+    "files": {
+      "experiments/original-link-symbol-projection/rules.mjs": [
+        {
+          "name": "acceptOriginalLinkSymbolInteger",
+          "id": "repository.accept-original-link-symbol-integer"
+        },
+        {
+          "name": "checkOriginalLinkSymbolTransport",
+          "id": "repository.check-original-link-symbol-transport"
+        },
+        {
+          "name": "equalOriginalLinkSymbolUnits",
+          "id": "repository.compare-original-link-symbol-units"
+        },
+        {
+          "name": "projectOriginalLinkSymbolValues",
+          "id": "repository.project-original-link-symbol-values"
+        }
+      ],
+      "experiments/original-link-symbol-projection/data/native-definitions.lino": [
+        {
+          "name": "accept_original_link_symbol_integer",
+          "id": "repository.accept-original-link-symbol-integer"
+        },
+        {
+          "name": "check_original_link_symbol_transport",
+          "id": "repository.check-original-link-symbol-transport"
+        },
+        {
+          "name": "equal_original_link_symbol_units",
+          "id": "repository.compare-original-link-symbol-units"
+        },
+        {
+          "name": "project_original_link_symbol_values",
+          "id": "repository.project-original-link-symbol-values"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "ordered original String projection source authoring",
+    "files": {
+      "experiments/original-link-symbol-projection/policy.mjs": [
+        {
+          "name": "originalLinkSymbolPolicy",
+          "id": "repository.original-link-symbol-policy"
+        },
+        {
+          "name": "originalLinkSymbolRulesSource",
+          "id": "repository.render-original-link-symbol-rules"
+        }
+      ],
+      "experiments/original-link-symbol-projection/generate.mjs": [
+        {
+          "name": "generateOriginalLinkSymbolProjection",
+          "id": "repository.generate-original-link-symbol-data"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "ordered original String projection data roles",
+    "files": {
+      "experiments/original-link-symbol-projection/rules.mjs": [
+        {
+          "name": "symbols",
+          "id": "repository.original-link-string-value-symbols"
+        },
+        {
+          "name": "names",
+          "id": "repository.original-link-string-value-name-ranges"
+        },
+        {
+          "name": "units",
+          "id": "repository.original-link-string-value-code-units"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experiments/original-link-symbol-projection/translated control wrappers",
+    "files": {
+      "experiments/original-link-symbol-projection/data/native-definitions.lino": [
+        {
+          "name": "ml_checkOriginalLinkSymbolTransport_loop2_result",
+          "id": "repository.original-link-symbol-code-unit-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkSymbolTransportLoop2Result",
+          "id": "repository.original-link-symbol-code-unit-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkSymbolTransport_loop1_result",
+          "id": "repository.original-link-symbol-offset-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkSymbolTransportLoop1Result",
+          "id": "repository.original-link-symbol-offset-scan-control-result"
+        },
+        {
+          "name": "ml_equalOriginalLinkSymbolUnits_loop3_result",
+          "id": "repository.original-link-symbol-span-comparison-control-result"
+        },
+        {
+          "name": "MlEqualOriginalLinkSymbolUnitsLoop3Result",
+          "id": "repository.original-link-symbol-span-comparison-control-result"
+        },
+        {
+          "name": "ml_projectOriginalLinkSymbolValues_loop6_result",
+          "id": "repository.original-link-symbol-source-construction-control-result"
+        },
+        {
+          "name": "MlProjectOriginalLinkSymbolValuesLoop6Result",
+          "id": "repository.original-link-symbol-source-construction-control-result"
+        },
+        {
+          "name": "ml_projectOriginalLinkSymbolValues_join8",
+          "id": "repository.original-link-symbol-source-branch-state-control-result"
+        },
+        {
+          "name": "MlProjectOriginalLinkSymbolValuesJoin8",
+          "id": "repository.original-link-symbol-source-branch-state-control-result"
+        },
+        {
+          "name": "ml_projectOriginalLinkSymbolValues_loop5_result",
+          "id": "repository.original-link-symbol-fixed-construction-control-result"
+        },
+        {
+          "name": "MlProjectOriginalLinkSymbolValuesLoop5Result",
+          "id": "repository.original-link-symbol-fixed-construction-control-result"
+        },
+        {
+          "name": "ml_projectOriginalLinkSymbolValues_loop4_result",
+          "id": "repository.original-link-symbol-fixed-duplicate-scan-control-result"
+        },
+        {
+          "name": "MlProjectOriginalLinkSymbolValuesLoop4Result",
+          "id": "repository.original-link-symbol-fixed-duplicate-scan-control-result"
+        },
+        {
+          "name": "ml_projectOriginalLinkSymbolValues_loop11_result",
+          "id": "repository.original-link-symbol-prior-fixed-comparison-control-result"
+        },
+        {
+          "name": "MlProjectOriginalLinkSymbolValuesLoop11Result",
+          "id": "repository.original-link-symbol-prior-fixed-comparison-control-result"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experiments/original-link-symbol-projection/translated state constructors",
+    "files": {
+      "experiments/original-link-symbol-projection/data/native-definitions.lino": [
+        {
+          "name": "MlCheckOriginalLinkSymbolTransportLoop2Done",
+          "id": "repository.original-link-symbol-code-unit-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkSymbolTransportLoop2Return",
+          "id": "repository.original-link-symbol-code-unit-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkSymbolTransportLoop1Done",
+          "id": "repository.original-link-symbol-offset-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkSymbolTransportLoop1Return",
+          "id": "repository.original-link-symbol-offset-scan-return-constructor"
+        },
+        {
+          "name": "MlEqualOriginalLinkSymbolUnitsLoop3Done",
+          "id": "repository.original-link-symbol-span-comparison-completion-constructor"
+        },
+        {
+          "name": "MlEqualOriginalLinkSymbolUnitsLoop3Return",
+          "id": "repository.original-link-symbol-span-comparison-return-constructor"
+        },
+        {
+          "name": "MlProjectOriginalLinkSymbolValuesLoop6Done",
+          "id": "repository.original-link-symbol-source-construction-completion-constructor"
+        },
+        {
+          "name": "MlProjectOriginalLinkSymbolValuesJoin8Next",
+          "id": "repository.original-link-symbol-source-branch-state-next-state-constructor"
+        },
+        {
+          "name": "MlProjectOriginalLinkSymbolValuesLoop5Done",
+          "id": "repository.original-link-symbol-fixed-construction-completion-constructor"
+        },
+        {
+          "name": "MlProjectOriginalLinkSymbolValuesLoop4Done",
+          "id": "repository.original-link-symbol-fixed-duplicate-scan-completion-constructor"
+        },
+        {
+          "name": "MlProjectOriginalLinkSymbolValuesLoop4Return",
+          "id": "repository.original-link-symbol-fixed-duplicate-scan-return-constructor"
+        },
+        {
+          "name": "MlProjectOriginalLinkSymbolValuesLoop11Done",
+          "id": "repository.original-link-symbol-prior-fixed-comparison-completion-constructor"
+        },
+        {
+          "name": "MlProjectOriginalLinkSymbolValuesLoop11Return",
+          "id": "repository.original-link-symbol-prior-fixed-comparison-return-constructor"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experiments/original-link-symbol-projection/translated continuations",
+    "files": {
+      "experiments/original-link-symbol-projection/data/native-definitions.lino": [
+        {
+          "name": "ml_checkOriginalLinkSymbolTransport_loop2",
+          "id": "repository.continue-original-link-symbol-code-unit-scan"
+        },
+        {
+          "name": "ml_check_original_link_symbol_transport_loop2",
+          "id": "repository.continue-original-link-symbol-code-unit-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkSymbolTransport_loop1",
+          "id": "repository.continue-original-link-symbol-offset-scan"
+        },
+        {
+          "name": "ml_check_original_link_symbol_transport_loop1",
+          "id": "repository.continue-original-link-symbol-offset-scan"
+        },
+        {
+          "name": "ml_equalOriginalLinkSymbolUnits_loop3",
+          "id": "repository.continue-original-link-symbol-span-comparison"
+        },
+        {
+          "name": "ml_equal_original_link_symbol_units_loop3",
+          "id": "repository.continue-original-link-symbol-span-comparison"
+        },
+        {
+          "name": "ml_projectOriginalLinkSymbolValues_loop7",
+          "id": "repository.continue-original-link-symbol-existing-name-search"
+        },
+        {
+          "name": "ml_project_original_link_symbol_values_loop7",
+          "id": "repository.continue-original-link-symbol-existing-name-search"
+        },
+        {
+          "name": "ml_projectOriginalLinkSymbolValues_loop9",
+          "id": "repository.continue-original-link-symbol-dynamic-unit-copy"
+        },
+        {
+          "name": "ml_project_original_link_symbol_values_loop9",
+          "id": "repository.continue-original-link-symbol-dynamic-unit-copy"
+        },
+        {
+          "name": "ml_projectOriginalLinkSymbolValues_loop6",
+          "id": "repository.continue-original-link-symbol-source-construction"
+        },
+        {
+          "name": "ml_project_original_link_symbol_values_loop6",
+          "id": "repository.continue-original-link-symbol-source-construction"
+        },
+        {
+          "name": "ml_projectOriginalLinkSymbolValues_loop10",
+          "id": "repository.continue-original-link-symbol-fixed-unit-copy"
+        },
+        {
+          "name": "ml_project_original_link_symbol_values_loop10",
+          "id": "repository.continue-original-link-symbol-fixed-unit-copy"
+        },
+        {
+          "name": "ml_projectOriginalLinkSymbolValues_loop5",
+          "id": "repository.continue-original-link-symbol-fixed-construction"
+        },
+        {
+          "name": "ml_project_original_link_symbol_values_loop5",
+          "id": "repository.continue-original-link-symbol-fixed-construction"
+        },
+        {
+          "name": "ml_projectOriginalLinkSymbolValues_loop11",
+          "id": "repository.continue-original-link-symbol-prior-fixed-comparison"
+        },
+        {
+          "name": "ml_project_original_link_symbol_values_loop11",
+          "id": "repository.continue-original-link-symbol-prior-fixed-comparison"
+        },
+        {
+          "name": "ml_projectOriginalLinkSymbolValues_loop4",
+          "id": "repository.continue-original-link-symbol-fixed-duplicate-scan"
+        },
+        {
+          "name": "ml_project_original_link_symbol_values_loop4",
+          "id": "repository.continue-original-link-symbol-fixed-duplicate-scan"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original link fixed symbol table decisions",
+    "files": {
+      "experiments/original-link-table-projection/rules.mjs": [
+        {
+          "name": "readOriginalLinkTableIdentity",
+          "id": "repository.read-original-link-table-identity"
+        },
+        {
+          "name": "readOriginalLinkTableSymbol",
+          "id": "repository.read-original-link-table-symbol"
+        },
+        {
+          "name": "readOriginalLinkTableNumber",
+          "id": "repository.read-original-link-table-number"
+        },
+        {
+          "name": "readOriginalLinkTableOperationCode",
+          "id": "repository.read-original-link-table-operation-code"
+        },
+        {
+          "name": "readOriginalLinkTableRole",
+          "id": "repository.read-original-link-table-role"
+        },
+        {
+          "name": "readOriginalLinkTablePrefix",
+          "id": "repository.read-original-link-table-prefix"
+        },
+        {
+          "name": "readOriginalLinkTableLayers",
+          "id": "repository.read-original-link-table-layers"
+        },
+        {
+          "name": "projectOriginalLinkCertificateTables",
+          "id": "repository.project-original-link-certificate-tables"
+        }
+      ],
+      "experiments/original-link-table-projection/data/native-definitions.lino": [
+        {
+          "name": "read_original_link_table_identity",
+          "id": "repository.read-original-link-table-identity"
+        },
+        {
+          "name": "read_original_link_table_symbol",
+          "id": "repository.read-original-link-table-symbol"
+        },
+        {
+          "name": "read_original_link_table_number",
+          "id": "repository.read-original-link-table-number"
+        },
+        {
+          "name": "read_original_link_table_operation_code",
+          "id": "repository.read-original-link-table-operation-code"
+        },
+        {
+          "name": "read_original_link_table_role",
+          "id": "repository.read-original-link-table-role"
+        },
+        {
+          "name": "read_original_link_table_prefix",
+          "id": "repository.read-original-link-table-prefix"
+        },
+        {
+          "name": "read_original_link_table_layers",
+          "id": "repository.read-original-link-table-layers"
+        },
+        {
+          "name": "project_original_link_certificate_tables",
+          "id": "repository.project-original-link-certificate-tables"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original link fixed symbol source operations",
+    "files": {
+      "experiments/original-link-table-projection/policy.mjs": [
+        {
+          "name": "originalLinkTablePolicy",
+          "id": "repository.original-link-table-policy"
+        },
+        {
+          "name": "originalLinkTableRulesSource",
+          "id": "repository.render-original-link-table-rules"
+        }
+      ],
+      "experiments/original-link-table-projection/transport.mjs": [
+        {
+          "name": "ORIGINAL_LINK_TABLE_POLICY",
+          "id": "repository.original-link-table-policy"
+        },
+        {
+          "name": "readOriginalLinkTableTransport",
+          "id": "repository.read-original-link-table-transport"
+        },
+        {
+          "name": "projectOriginalLinkFixedSymbolTables",
+          "id": "repository.project-original-link-fixed-symbol-tables"
+        }
+      ],
+      "experiments/original-link-table-projection/generate.mjs": [
+        {
+          "name": "generateOriginalLinkTableProjection",
+          "id": "repository.generate-original-link-table-data"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original link table exact scalar transport roles",
+    "files": {
+      "experiments/original-link-table-projection/rules.mjs": [
+        {
+          "name": "scalarKinds",
+          "id": "repository.original-link-table-scalar-tags"
+        },
+        {
+          "name": "scalarNumbers",
+          "id": "repository.original-link-table-number-payloads"
+        },
+        {
+          "name": "scalarSymbols",
+          "id": "repository.original-link-table-fixed-symbol-codes"
+        }
+      ],
+      "experiments/original-link-table-projection/policy.mjs": [
+        {
+          "name": "operationMarker",
+          "id": "repository.original-link-table-operation-marker"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original link table linked instruction authoring",
+    "files": {
+      "experiments/original-link-table-projection/policy.mjs": [
+        {
+          "name": "cell",
+          "id": "repository.create-original-link-table-column-instruction"
+        },
+        {
+          "name": "f",
+          "id": "repository.read-original-link-table-field-code"
+        },
+        {
+          "name": "fld",
+          "id": "repository.render-original-link-table-field-path"
+        },
+        {
+          "name": "refs",
+          "id": "repository.render-original-link-table-reference-read"
+        },
+        {
+          "name": "identity",
+          "id": "repository.render-original-link-table-identity-read"
+        },
+        {
+          "name": "symbol",
+          "id": "repository.render-original-link-table-symbol-read"
+        },
+        {
+          "name": "number",
+          "id": "repository.render-original-link-table-number-read"
+        },
+        {
+          "name": "expression",
+          "id": "repository.render-original-link-table-cell-expression"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original link table linked column data",
+    "files": {
+      "experiments/original-link-table-projection/policy.mjs": [
+        {
+          "name": "tables",
+          "id": "repository.original-link-table-column-instructions"
+        }
+      ],
+      "experiments/original-link-table-projection/data/policy.lino": [
+        {
+          "name": "tables",
+          "id": "repository.original-link-table-column-instructions"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role declaration readOriginalLinkRoleField",
+    "files": {
+      "experiments/original-link-table-projection/data/native-definitions.lino": [
+        {
+          "name": "readOriginalLinkRoleField",
+          "id": "repository.read-original-link-role-field"
+        },
+        {
+          "name": "read_original_link_role_field",
+          "id": "repository.read-original-link-role-field"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role source readOriginalLinkRoleField",
+    "files": {
+      "experiments/original-link-table-projection/rules.mjs": [
+        {
+          "name": "readOriginalLinkRoleField",
+          "id": "repository.read-original-link-role-field"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role declaration readOriginalLinkRoleReferences",
+    "files": {
+      "experiments/original-link-table-projection/data/native-definitions.lino": [
+        {
+          "name": "readOriginalLinkRoleReferences",
+          "id": "repository.read-original-link-role-references"
+        },
+        {
+          "name": "read_original_link_role_references",
+          "id": "repository.read-original-link-role-references"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role source readOriginalLinkRoleReferences",
+    "files": {
+      "experiments/original-link-table-projection/rules.mjs": [
+        {
+          "name": "readOriginalLinkRoleReferences",
+          "id": "repository.read-original-link-role-references"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role declaration readOriginalLinkRoleOperation",
+    "files": {
+      "experiments/original-link-table-projection/data/native-definitions.lino": [
+        {
+          "name": "readOriginalLinkRoleOperation",
+          "id": "repository.accept-original-link-role-operation"
+        },
+        {
+          "name": "read_original_link_role_operation",
+          "id": "repository.accept-original-link-role-operation"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role source readOriginalLinkRoleOperation",
+    "files": {
+      "experiments/original-link-table-projection/rules.mjs": [
+        {
+          "name": "readOriginalLinkRoleOperation",
+          "id": "repository.accept-original-link-role-operation"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role declaration firstOriginalLinkRoleOccurrence",
+    "files": {
+      "experiments/original-link-table-projection/data/native-definitions.lino": [
+        {
+          "name": "firstOriginalLinkRoleOccurrence",
+          "id": "repository.accept-first-original-link-role-occurrence"
+        },
+        {
+          "name": "first_original_link_role_occurrence",
+          "id": "repository.accept-first-original-link-role-occurrence"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role source firstOriginalLinkRoleOccurrence",
+    "files": {
+      "experiments/original-link-table-projection/rules.mjs": [
+        {
+          "name": "firstOriginalLinkRoleOccurrence",
+          "id": "repository.accept-first-original-link-role-occurrence"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role declaration readOriginalLinkRoleKind",
+    "files": {
+      "experiments/original-link-table-projection/data/native-definitions.lino": [
+        {
+          "name": "readOriginalLinkRoleKind",
+          "id": "repository.read-original-link-concrete-role-kind"
+        },
+        {
+          "name": "read_original_link_role_kind",
+          "id": "repository.read-original-link-concrete-role-kind"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role source readOriginalLinkRoleKind",
+    "files": {
+      "experiments/original-link-table-projection/rules.mjs": [
+        {
+          "name": "readOriginalLinkRoleKind",
+          "id": "repository.read-original-link-concrete-role-kind"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role declaration registerOriginalLinkRoles",
+    "files": {
+      "experiments/original-link-table-projection/data/native-definitions.lino": [
+        {
+          "name": "registerOriginalLinkRoles",
+          "id": "repository.register-original-link-certificate-roles"
+        },
+        {
+          "name": "register_original_link_roles",
+          "id": "repository.register-original-link-certificate-roles"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role source registerOriginalLinkRoles",
+    "files": {
+      "experiments/original-link-table-projection/rules.mjs": [
+        {
+          "name": "registerOriginalLinkRoles",
+          "id": "repository.register-original-link-certificate-roles"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role declaration projectOriginalLinkRoleRegistry",
+    "files": {
+      "experiments/original-link-table-projection/data/native-definitions.lino": [
+        {
+          "name": "projectOriginalLinkRoleRegistry",
+          "id": "repository.project-original-link-role-registry"
+        },
+        {
+          "name": "project_original_link_role_registry",
+          "id": "repository.project-original-link-role-registry"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role source projectOriginalLinkRoleRegistry",
+    "files": {
+      "experiments/original-link-table-projection/rules.mjs": [
+        {
+          "name": "projectOriginalLinkRoleRegistry",
+          "id": "repository.project-original-link-role-registry"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role declaration ml_readOriginalLinkRoleField_loop1_result",
+    "files": {
+      "experiments/original-link-table-projection/data/native-definitions.lino": [
+        {
+          "name": "ml_readOriginalLinkRoleField_loop1_result",
+          "id": "repository.original-link-role-unique-field-scan-control-result"
+        },
+        {
+          "name": "MlReadOriginalLinkRoleFieldLoop1Result",
+          "id": "repository.original-link-role-unique-field-scan-control-result"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role state constructors",
+    "files": {
+      "experiments/original-link-table-projection/data/native-definitions.lino": [
+        {
+          "name": "MlReadOriginalLinkRoleFieldLoop1Done",
+          "id": "repository.original-link-role-unique-field-scan-completion-constructor"
+        },
+        {
+          "name": "MlReadOriginalLinkRoleFieldLoop1Return",
+          "id": "repository.original-link-role-unique-field-scan-return-constructor"
+        },
+        {
+          "name": "MlFirstOriginalLinkRoleOccurrenceLoop2Done",
+          "id": "repository.original-link-role-first-occurrence-scan-completion-constructor"
+        },
+        {
+          "name": "MlFirstOriginalLinkRoleOccurrenceLoop2Return",
+          "id": "repository.original-link-role-first-occurrence-scan-return-constructor"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop5Done",
+          "id": "repository.original-link-role-unresolved-kind-scan-completion-constructor"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop5Return",
+          "id": "repository.original-link-role-unresolved-kind-scan-return-constructor"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop4Done",
+          "id": "repository.original-link-role-occurrence-validation-completion-constructor"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop4Return",
+          "id": "repository.original-link-role-occurrence-validation-return-constructor"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop6Done",
+          "id": "repository.original-link-role-contradiction-scan-completion-constructor"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop6Return",
+          "id": "repository.original-link-role-contradiction-scan-return-constructor"
+        },
+        {
+          "name": "MlProjectOriginalLinkRoleRegistryLoop7Done",
+          "id": "repository.original-link-role-ordered-operation-traversal-completion-constructor"
+        },
+        {
+          "name": "MlProjectOriginalLinkRoleRegistryLoop7Return",
+          "id": "repository.original-link-role-ordered-operation-traversal-return-constructor"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role declaration ml_readOriginalLinkRoleField_loop1",
+    "files": {
+      "experiments/original-link-table-projection/data/native-definitions.lino": [
+        {
+          "name": "ml_readOriginalLinkRoleField_loop1",
+          "id": "repository.continue-original-link-role-unique-field-scan"
+        },
+        {
+          "name": "ml_read_original_link_role_field_loop1",
+          "id": "repository.continue-original-link-role-unique-field-scan"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role declaration ml_firstOriginalLinkRoleOccurrence_loop2_result",
+    "files": {
+      "experiments/original-link-table-projection/data/native-definitions.lino": [
+        {
+          "name": "ml_firstOriginalLinkRoleOccurrence_loop2_result",
+          "id": "repository.original-link-role-first-occurrence-scan-control-result"
+        },
+        {
+          "name": "MlFirstOriginalLinkRoleOccurrenceLoop2Result",
+          "id": "repository.original-link-role-first-occurrence-scan-control-result"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role declaration ml_firstOriginalLinkRoleOccurrence_loop2",
+    "files": {
+      "experiments/original-link-table-projection/data/native-definitions.lino": [
+        {
+          "name": "ml_firstOriginalLinkRoleOccurrence_loop2",
+          "id": "repository.continue-original-link-role-first-occurrence-scan"
+        },
+        {
+          "name": "ml_first_original_link_role_occurrence_loop2",
+          "id": "repository.continue-original-link-role-first-occurrence-scan"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role declaration ml_readOriginalLinkRoleKind_loop3",
+    "files": {
+      "experiments/original-link-table-projection/data/native-definitions.lino": [
+        {
+          "name": "ml_readOriginalLinkRoleKind_loop3",
+          "id": "repository.continue-original-link-role-concrete-kind-scan"
+        },
+        {
+          "name": "ml_read_original_link_role_kind_loop3",
+          "id": "repository.continue-original-link-role-concrete-kind-scan"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role declaration ml_registerOriginalLinkRoles_loop5_result",
+    "files": {
+      "experiments/original-link-table-projection/data/native-definitions.lino": [
+        {
+          "name": "ml_registerOriginalLinkRoles_loop5_result",
+          "id": "repository.original-link-role-unresolved-kind-scan-control-result"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop5Result",
+          "id": "repository.original-link-role-unresolved-kind-scan-control-result"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role declaration ml_registerOriginalLinkRoles_loop5",
+    "files": {
+      "experiments/original-link-table-projection/data/native-definitions.lino": [
+        {
+          "name": "ml_registerOriginalLinkRoles_loop5",
+          "id": "repository.continue-original-link-role-unresolved-kind-scan"
+        },
+        {
+          "name": "ml_register_original_link_roles_loop5",
+          "id": "repository.continue-original-link-role-unresolved-kind-scan"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role declaration ml_registerOriginalLinkRoles_loop4_result",
+    "files": {
+      "experiments/original-link-table-projection/data/native-definitions.lino": [
+        {
+          "name": "ml_registerOriginalLinkRoles_loop4_result",
+          "id": "repository.original-link-role-occurrence-validation-control-result"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop4Result",
+          "id": "repository.original-link-role-occurrence-validation-control-result"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role declaration ml_registerOriginalLinkRoles_loop6_result",
+    "files": {
+      "experiments/original-link-table-projection/data/native-definitions.lino": [
+        {
+          "name": "ml_registerOriginalLinkRoles_loop6_result",
+          "id": "repository.original-link-role-contradiction-scan-control-result"
+        },
+        {
+          "name": "MlRegisterOriginalLinkRolesLoop6Result",
+          "id": "repository.original-link-role-contradiction-scan-control-result"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role declaration ml_registerOriginalLinkRoles_loop6",
+    "files": {
+      "experiments/original-link-table-projection/data/native-definitions.lino": [
+        {
+          "name": "ml_registerOriginalLinkRoles_loop6",
+          "id": "repository.continue-original-link-role-contradiction-scan"
+        },
+        {
+          "name": "ml_register_original_link_roles_loop6",
+          "id": "repository.continue-original-link-role-contradiction-scan"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role declaration ml_registerOriginalLinkRoles_loop4",
+    "files": {
+      "experiments/original-link-table-projection/data/native-definitions.lino": [
+        {
+          "name": "ml_registerOriginalLinkRoles_loop4",
+          "id": "repository.continue-original-link-role-occurrence-validation"
+        },
+        {
+          "name": "ml_register_original_link_roles_loop4",
+          "id": "repository.continue-original-link-role-occurrence-validation"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role declaration ml_projectOriginalLinkRoleRegistry_loop7_result",
+    "files": {
+      "experiments/original-link-table-projection/data/native-definitions.lino": [
+        {
+          "name": "ml_projectOriginalLinkRoleRegistry_loop7_result",
+          "id": "repository.original-link-role-ordered-operation-traversal-control-result"
+        },
+        {
+          "name": "MlProjectOriginalLinkRoleRegistryLoop7Result",
+          "id": "repository.original-link-role-ordered-operation-traversal-control-result"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role declaration ml_projectOriginalLinkRoleRegistry_loop7",
+    "files": {
+      "experiments/original-link-table-projection/data/native-definitions.lino": [
+        {
+          "name": "ml_projectOriginalLinkRoleRegistry_loop7",
+          "id": "repository.continue-original-link-role-ordered-operation-traversal"
+        },
+        {
+          "name": "ml_project_original_link_role_registry_loop7",
+          "id": "repository.continue-original-link-role-ordered-operation-traversal"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experiments/original-link-table-projection/translated continuations",
+    "files": {
+      "experiments/original-link-table-projection/data/native-definitions.lino": [
+        {
+          "name": "ml_readOriginalLinkTablePrefix_loop8",
+          "id": "repository.continue-original-link-table-prefix-scan"
+        },
+        {
+          "name": "ml_read_original_link_table_prefix_loop8",
+          "id": "repository.continue-original-link-table-prefix-scan"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact reversible field names",
+    "files": {
+      "experiments/original-link-table-projection/transport.mjs": [
+        {
+          "name": "fieldName",
+          "id": "repository.read-owned-text-certificate-field-name"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact original role host",
+    "files": {
+      "experiments/original-link-table-projection/transport.mjs": [
+        {
+          "name": "projectOriginalLinkCertificateRoles",
+          "id": "repository.project-original-link-certificate-roles"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role source renderer",
+    "files": {
+      "experiments/original-link-table-projection/policy.mjs": [
+        {
+          "name": "originalLinkRoleRulesSource",
+          "id": "repository.render-original-link-role-rules"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table exact shared role policy",
+    "files": {
+      "experiments/original-link-table-projection/policy.mjs": [
+        {
+          "name": "originalLinkRolePolicy",
+          "id": "repository.original-link-role-policy"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "existing complete certificate table role context",
+    "files": {
+      "experiments/original-link-table-projection/rules.mjs": [
+        {
+          "name": "table_context",
+          "id": "repository.text-certificate-context-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "existing complete certificate table role kinds",
+    "files": {
+      "experiments/original-link-table-projection/rules.mjs": [
+        {
+          "name": "kinds",
+          "id": "repository.text-certificate-identity-kind-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "existing complete certificate table role positions",
+    "files": {
+      "experiments/original-link-table-projection/rules.mjs": [
+        {
+          "name": "table_positions",
+          "id": "repository.text-certificate-source-position-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "existing complete certificate table role paths",
+    "files": {
+      "experiments/original-link-table-projection/rules.mjs": [
+        {
+          "name": "table_paths",
+          "id": "repository.text-certificate-owner-path-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "existing complete certificate table role layers",
+    "files": {
+      "experiments/original-link-table-projection/rules.mjs": [
+        {
+          "name": "table_layers",
+          "id": "repository.text-certificate-reference-layer-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "existing complete certificate table role functions",
+    "files": {
+      "experiments/original-link-table-projection/rules.mjs": [
+        {
+          "name": "table_functions",
+          "id": "repository.text-certificate-function-fact-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "existing complete certificate table role operations",
+    "files": {
+      "experiments/original-link-table-projection/rules.mjs": [
+        {
+          "name": "table_operations",
+          "id": "repository.text-certificate-operation-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "existing complete certificate table role parts",
+    "files": {
+      "experiments/original-link-table-projection/rules.mjs": [
+        {
+          "name": "table_parts",
+          "id": "repository.text-certificate-operation-part-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "existing complete certificate table role inputs",
+    "files": {
+      "experiments/original-link-table-projection/rules.mjs": [
+        {
+          "name": "table_inputs",
+          "id": "repository.text-certificate-input-condition-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "existing complete certificate table role allocations",
+    "files": {
+      "experiments/original-link-table-projection/rules.mjs": [
+        {
+          "name": "table_allocations",
+          "id": "repository.text-certificate-allocation-condition-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "existing complete certificate table role items",
+    "files": {
+      "experiments/original-link-table-projection/rules.mjs": [
+        {
+          "name": "table_items",
+          "id": "repository.text-certificate-declaration-order-table"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original String independent reference operations",
+    "files": {
+      "experiments/original-link-symbol-projection/projection.test.mjs": [
+        {
+          "name": "transport",
+          "id": "repository.collect-original-string-test-units"
+        },
+        {
+          "name": "reference",
+          "id": "repository.project-original-string-reference-values"
+        }
+      ],
+      "experiments/original-link-symbol-projection/native-observations.mjs": [
+        {
+          "name": "transport",
+          "id": "repository.collect-original-string-test-units"
+        },
+        {
+          "name": "reference",
+          "id": "repository.project-original-string-reference-values"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original String independent projection controls",
+    "files": {
+      "experiments/original-link-symbol-projection/projection.test.mjs": [
+        {
+          "name": "argumentsFor",
+          "id": "repository.create-original-string-test-arguments"
+        },
+        {
+          "name": "unpack",
+          "id": "repository.read-original-string-test-output"
+        },
+        {
+          "name": "assertProjection",
+          "id": "repository.check-original-string-test-projection"
+        },
+        {
+          "name": "stringsFrom",
+          "id": "repository.read-original-certificate-test-strings"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table existing exact original test provider key",
+    "files": {
+      "experiments/original-link-table-projection/projection.test.mjs": [
+        {
+          "name": "key",
+          "id": "repository.read-exact-link-identity-key"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table existing exact original test provider label",
+    "files": {
+      "experiments/original-link-table-projection/projection.test.mjs": [
+        {
+          "name": "label",
+          "id": "repository.render-certificate-test-field-label"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table existing exact original test provider field",
+    "files": {
+      "experiments/original-link-table-projection/projection.test.mjs": [
+        {
+          "name": "field",
+          "id": "repository.read-unique-original-link-role-test-field"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table existing exact original test provider refs",
+    "files": {
+      "experiments/original-link-table-projection/projection.test.mjs": [
+        {
+          "name": "refs",
+          "id": "repository.read-original-link-role-test-references"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table existing exact original test provider body",
+    "files": {
+      "experiments/original-link-table-projection/projection.test.mjs": [
+        {
+          "name": "body",
+          "id": "repository.read-original-link-role-test-body"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table existing exact original test provider proof",
+    "files": {
+      "experiments/original-link-table-projection/projection.test.mjs": [
+        {
+          "name": "proof",
+          "id": "repository.read-original-link-role-test-proof"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table existing exact original test provider rows",
+    "files": {
+      "experiments/original-link-table-projection/projection.test.mjs": [
+        {
+          "name": "rows",
+          "id": "repository.read-original-link-role-test-proof-rows"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table existing exact original test provider replace",
+    "files": {
+      "experiments/original-link-table-projection/projection.test.mjs": [
+        {
+          "name": "replace",
+          "id": "repository.replace-text-certificate-test-field"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table existing exact original test provider attach",
+    "files": {
+      "experiments/original-link-table-projection/projection.test.mjs": [
+        {
+          "name": "attach",
+          "id": "repository.attach-owned-text-certificate-test-proof"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "table existing exact original test provider create",
+    "files": {
+      "experiments/original-link-table-projection/projection.test.mjs": [
+        {
+          "name": "create",
+          "id": "repository.create-original-link-role-test-packet"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original link table independent controls",
+    "files": {
+      "experiments/original-link-table-projection/projection.test.mjs": [
+        {
+          "name": "copy",
+          "id": "repository.copy-original-link-table-test-arguments"
+        },
+        {
+          "name": "expectedTables",
+          "id": "repository.project-original-link-table-reference-correspondence"
+        },
+        {
+          "name": "compare",
+          "id": "repository.check-original-link-table-reference-output"
+        },
+        {
+          "name": "tableRows",
+          "id": "repository.read-original-link-table-test-output"
+        },
+        {
+          "name": "ordinal",
+          "id": "repository.read-original-link-table-test-member"
+        },
+        {
+          "name": "scalar",
+          "id": "repository.read-original-link-table-test-scalar-position"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete String projection source oracle",
+    "files": {
+      "experiments/original-link-symbol-projection/native-observations.mjs": [
+        {
+          "name": "verifyOriginalLinkSymbolNativeModel",
+          "id": "repository.verify-original-link-symbol-native-model"
+        },
+        {
+          "name": "originalLinkSymbolNativeMode",
+          "id": "repository.read-original-link-symbol-native-mode"
+        },
+        {
+          "name": "nativeInterface",
+          "id": "repository.read-original-link-symbol-native-interface"
+        },
+        {
+          "name": "cases",
+          "id": "repository.build-original-link-symbol-native-cases"
+        },
+        {
+          "name": "consumerSource",
+          "id": "repository.render-original-link-symbol-native-consumer"
+        },
+        {
+          "name": "planOriginalLinkSymbolNative",
+          "id": "repository.plan-original-link-symbol-native-observations"
+        },
+        {
+          "name": "parseObservations",
+          "id": "repository.read-original-link-symbol-native-observation-stream"
+        },
+        {
+          "name": "runOriginalLinkSymbolNative",
+          "id": "repository.run-original-link-symbol-native-observations"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete String projection source oracle roles",
+    "files": {
+      "experiments/original-link-symbol-projection/native-observations.mjs": [
+        {
+          "name": "ORIGINAL_LINK_SYMBOL_MODEL_COMMIT",
+          "id": "repository.original-link-symbol-native-model-revision"
+        },
+        {
+          "name": "maximumObservedInputCells",
+          "id": "repository.original-link-symbol-native-input-bound"
+        },
+        {
+          "name": "maximumObservedOutputCells",
+          "id": "repository.original-link-symbol-native-output-bound"
+        },
+        {
+          "name": "inputVectors",
+          "id": "repository.original-link-symbol-native-input-receipts"
+        },
+        {
+          "name": "resultBits",
+          "id": "repository.original-link-symbol-native-result-bits"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "String projection exact oracle provider source digest",
+    "files": {
+      "experiments/original-link-symbol-projection/native-observations.mjs": [
+        {
+          "name": "sha256",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        }
+      ],
+      "experiments/original-link-symbol-projection/native-observations.test.mjs": [
+        {
+          "name": "digest",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "String projection exact oracle provider source bytes",
+    "files": {
+      "experiments/original-link-symbol-projection/native-observations.mjs": [
+        {
+          "name": "textBytes",
+          "id": "repository.read-rust-text-native-oracle-bytes"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "String projection exact oracle provider immutable source plan",
+    "files": {
+      "experiments/original-link-symbol-projection/native-observations.mjs": [
+        {
+          "name": "freeze",
+          "id": "repository.freeze-rust-text-native-observation-plan"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "String projection exact oracle provider input bit words",
+    "files": {
+      "experiments/original-link-symbol-projection/native-observations.mjs": [
+        {
+          "name": "numberBits",
+          "id": "repository.encode-text-certificate-native-number-bits"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "String projection exact oracle provider output bit words",
+    "files": {
+      "experiments/original-link-symbol-projection/native-observations.mjs": [
+        {
+          "name": "bitsNumber",
+          "id": "repository.decode-text-certificate-native-number-bits"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "String projection exact oracle provider shared source runner",
+    "files": {
+      "experiments/original-link-symbol-projection/native-observations.mjs": [
+        {
+          "name": "createSourceNativeObservationRunner",
+          "id": "repository.create-source-native-observation-runner"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "String projection exact oracle provider fake complete source processes",
+    "files": {
+      "experiments/original-link-symbol-projection/native-observations.test.mjs": [
+        {
+          "name": "fakeProcess",
+          "id": "repository.create-text-certificate-native-test-process"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "String projection exact oracle provider exact aggregated failures",
+    "files": {
+      "experiments/original-link-symbol-projection/native-observations.test.mjs": [
+        {
+          "name": "fails",
+          "id": "repository.require-text-certificate-native-test-failure"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "String projection injected oracle contracts",
+    "files": {
+      "experiments/original-link-symbol-projection/native-observations.test.mjs": [
+        {
+          "name": "injected",
+          "id": "repository.run-original-link-symbol-injected-contract"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "String projection native output controls",
+    "files": {
+      "experiments/original-link-symbol-projection/native-observations.test.mjs": [
+        {
+          "name": "outputParts",
+          "id": "repository.read-original-link-symbol-test-output"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original link projection workflow conservation",
+    "files": {
+      "js/tests/ci-workflow-structure.test.js": [
+        {
+          "name": "checkOriginalLinkProjectionPaths",
+          "id": "repository.check-original-link-projection-workflow-paths"
+        },
+        {
+          "name": "checkOriginalLinkSymbolNativeSteps",
+          "id": "repository.check-original-link-symbol-native-steps"
+        },
+        {
+          "name": "ORIGINAL_LINK_PROJECTION_PACKAGE_STEPS",
+          "id": "repository.original-link-projection-package-steps"
+        },
+        {
+          "name": "ORIGINAL_LINK_SYMBOL_ORACLE_PACKAGE_STEPS",
+          "id": "repository.original-link-symbol-oracle-package-steps"
+        },
+        {
+          "name": "ORIGINAL_LINK_SYMBOL_NATIVE_STEPS",
+          "id": "repository.original-link-symbol-native-steps"
+        }
+      ]
+    }
+  }
+];
+const normalizeOriginalLinkValueTableName=name=>name.replace(/([a-z0-9])([A-Z])/gu,'$1-$2').replaceAll('_','-').replaceAll(' ','-').toLowerCase().replace(/^assert-/u,'check-').replace(/^fld$/u,'field-path').replace(/^refs$/u,'references').replace(/^f$/u,'field-code').replace(/\bsha256\b/gu,'secure-hash-algorithm-two-hundred-fifty-six').replace(/\bid\b/gu,'identity').replace(/\bml\b/gu,'meta-language').replace(/\b(loop|join)([0-9]+)\b/gu,(whole,kind,digits)=>{const words={1:'one',2:'two',3:'three',4:'four',5:'five',6:'six',7:'seven',8:'eight',9:'nine',10:'ten',11:'eleven'};return words[digits]?kind+'-'+words[digits]:whole;});
+const ORIGINAL_LINK_VALUE_TABLE_SOURCE_TEXTS=new Map();
+const ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES=ORIGINAL_LINK_VALUE_TABLE_NAME_BINDINGS.map(({inventory,files})=>({
+ inventory,files:Object.keys(files),
+ extract:(raw,file)=>{let text=raw;if(file.endsWith('.lino')){const saved=ORIGINAL_LINK_VALUE_TABLE_SOURCE_TEXTS.get(file);if(!saved||saved.raw!==raw)ORIGINAL_LINK_VALUE_TABLE_SOURCE_TEXTS.set(file,{raw,text:JSON.stringify(readStructuredDataLino(raw))});text=ORIGINAL_LINK_VALUE_TABLE_SOURCE_TEXTS.get(file).text;}return files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeOriginalLinkValueTableName(name));},
+ recordOf:name=>Object.values(files).flat().find(entry=>normalizeOriginalLinkValueTableName(entry.name)===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
