@@ -14,6 +14,7 @@ import { renderStringLengthExpression, renderStringMapExpression, renderStringTe
 import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
 import {checkRustConstFunctionProof,renderRustConstFunctionHeader} from './rust-const-functions.js';
 import {checkRustOwnedLocalStateProof} from './rust-owned-local-state.js';
+import {validateRustTypeNamespace} from './rust-type-namespace.js';
 import { unsupported } from './diagnostics.js';
 import { typeKey } from './types.js';
 import { Scope, renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
@@ -628,6 +629,7 @@ export function readRustArrayPrelude(standard = false) {
 }
 
 export function emitRust(program, options = {}) {
+  validateRustTypeNamespace(program);
   checkRustConstFunctionProof(program);
   checkRustOwnedLocalStateProof(program);
   const runtimeShell=checkRustRuntimeShell(program);
