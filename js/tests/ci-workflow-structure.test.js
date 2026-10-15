@@ -914,6 +914,21 @@ const OWNED_SOURCE_ADAPTER_PACKAGE_STEPS = [
     'fadcdf19bc24ef39bced296e54ac578f7e9ab9d5424016147152ea1d8764b7ab', 'source-models'],
 ];
 
+const ORIGINAL_LINK_PROJECTION_PACKAGE_STEPS = [
+  ['Check original link symbol projection kernel',
+    'node ../experiments/original-link-symbol-projection/generate.mjs --check',
+    '5843066c61fe0eca8380f88997ff9152b5e9f3b677b6f7c6ebe699b0a667f381', 'source-models'],
+  ['Run original link symbol projection checks',
+    'node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/original-link-symbol-projection/projection.test.mjs',
+    'deba4c68eb88722927d29a68270523a759b94ad5659a54dce370e89aaf945d4f', 'source-models'],
+  ['Check original link table projection kernel',
+    'node ../experiments/original-link-table-projection/generate.mjs --check',
+    'a1e7ed7050764669f5ac6d0202e8cc8f533318fcb6412a6899d83f97e78f4cfb', 'source-models'],
+  ['Run original link table projection checks',
+    'node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/original-link-table-projection/projection.test.mjs',
+    '91b5611fcaabd12768c1c2238263ee06ae46d7d0bd5aded7154e4d9133efa1c6', 'source-models'],
+];
+
 function packageStepSignature(step, includeGroup = false) {
   const fields = includeGroup ? step.text : step.text.replace(/ && matrix\.group == '[a-z-]+'/gu, '');
   const text = fields
@@ -948,6 +963,8 @@ test('the complete Rust text source oracle is mandatory after JavaScript and its
     .replace('|experiments/rust-text-certificate-library/', '')
     .replace('|experiments/original-link-identity/', '')
     .replace('|experiments/original-link-role-projection/', '')
+    .replace('|experiments/original-link-symbol-projection/', '')
+    .replace('|experiments/original-link-table-projection/', '')
     .replace('|experiments/fresh-number-array-collectors/', '')
     .replace('|js/scripts/rust-library-packaging\\.mjs$', '')
     .replace('|experiments/source-native-observations\\.mjs$', ''),
@@ -1337,6 +1354,34 @@ test('exact original link identity native gates reject execution and receipt wea
   }
 });
 
+function checkOriginalLinkProjectionPaths(classifier) {
+  const matches = new RegExp(classifier, 'u');
+  for (const name of ['symbol', 'table']) {
+    const prefix = `experiments/original-link-${name}-projection/`;
+    assert.equal(classifier.split(`|${prefix}`).length, 2, `${prefix} is registered exactly once`);
+    for (const file of ['generate.mjs', 'projection.test.mjs', 'policy.mjs', 'rules.mjs', 'transport.mjs', 'data/policy.lino', 'data/native-definitions.lino']) assert.ok(matches.test(prefix + file), prefix + file);
+    assert.equal(matches.test(prefix.replace(/\/$/u, '-other/projection.test.mjs')), false);
+  }
+}
+
+test('original linked symbol and table projection gates retain complete paths and reach native prerequisites', () => {
+  checkPackageStepConservation(jobs('js.yml'));
+  const classifier = /rust_paths='([^']+)'/u.exec(workflow('ci.yml'))?.[1];checkOriginalLinkProjectionPaths(classifier);
+  for (const name of ['symbol', 'table']) {
+    const prefix = `experiments/original-link-${name}-projection/`;
+    for (const file of ['generate.mjs', 'projection.test.mjs']) assert.ok(read(prefix + file).length > 0);
+    for (const file of ['projection.test.mjs', 'data/policy.lino']) {
+      const chain = nativeInputJobChain([prefix + file]);
+      assert.deepEqual(chain.selection, { rust: true, native_test_inputs_changed: true });
+      for (const job of ['outer', 'cargo-lock', 'check', 'test']) assert.equal(chain[job], true, prefix + file + ': ' + job);
+      assert.equal(chain.changelog, false);
+      assert.equal(nativeInputJobChain([prefix + file], { javascript: 'failure' }).outer, false);
+    }
+    assert.equal(nativeInputJobChain([prefix + 'README.md']).selection.native_test_inputs_changed, false);
+    for (const forged of [classifier.replace(`|${prefix}`, ''), classifier.replace(`|${prefix}`, `|${prefix}|${prefix}`), classifier.replace(`|${prefix}`, `|${prefix}other/`)]) assert.throws(() => checkOriginalLinkProjectionPaths(forged), assert.AssertionError);
+  }
+});
+
 function checkPackageStepConservation(parsed) {
   const additions = [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS, ...TYPE_NAMESPACE_PACKAGE_STEPS,
     ...PURE_UNIT_PACKAGE_STEPS, ...SOURCE_SPAN_PACKAGE_STEPS, ...OWNED_TEXT_GENERATOR_PACKAGE_STEPS,
@@ -1350,7 +1395,7 @@ function checkPackageStepConservation(parsed) {
     ...RUST_TEXT_VALUE_PROJECTION_GENERATOR_STEPS, ...RUST_TEXT_VALUE_PROJECTION_EXPERIMENT_STEPS,
     ...RUST_RAW_BINDING_IDENTIFIER_GENERATOR_STEPS, ...RUST_RAW_BINDING_IDENTIFIER_EXPERIMENT_STEPS,
     ...RUST_TEXT_CERTIFICATE_GENERATOR_STEPS, ...RUST_TEXT_CERTIFICATE_EXPERIMENT_STEPS,
-    ...OWNED_SOURCE_ADAPTER_PACKAGE_STEPS];
+    ...OWNED_SOURCE_ADAPTER_PACKAGE_STEPS, ...ORIGINAL_LINK_PROJECTION_PACKAGE_STEPS];
   const expected = new Map([
     ...ORIGINAL_PACKAGE_STEPS.map(([name, hash, owner]) => [name, { hash, owner }]),
     ...additions.map(([name, command, hash, owner]) => [name, { hash, owner, command, addition: true }]),
@@ -1442,7 +1487,7 @@ test('frozen package conservation rejects omissions, duplicates, reassignment an
 
 test('owned source adapters retain all bounded checks and refuse gate weakening', () => {
   checkPackageStepConservation(jobs('js.yml'));
-  for (const [name] of OWNED_SOURCE_ADAPTER_PACKAGE_STEPS) {
+  for (const [name] of [...OWNED_SOURCE_ADAPTER_PACKAGE_STEPS, ...ORIGINAL_LINK_PROJECTION_PACKAGE_STEPS]) {
     const mutate = change => {
       const parsed = jobs('js.yml'), steps = parsed.get('package-checks').steps;
       const index = steps.findIndex(step => step.name === name);
