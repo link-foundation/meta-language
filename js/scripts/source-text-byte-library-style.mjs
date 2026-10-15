@@ -75,3 +75,5 @@ export function readSourceTextByteLibraryStyles(raw,provider){
  for(const match of [...current.matchAll(/^#\[must_use\]\npub fn (\w+)\(/gmu)])replace(match[0],`/// Evaluate the shared Unicode source-text byte model.\n${match[0]}`);
  return actions;
 }
+
+export {parentheses as simplifySourceTextRustParentheses};

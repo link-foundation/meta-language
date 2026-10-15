@@ -31,6 +31,66 @@ test('the regression oracle is the exact previous portable rule, with its immuta
   assert.ok(source.includes('output = output.slice(0, lengthSlot) + encodedLength + output.slice(lengthSlot + 16);'));
 });
 
+test('the candidate generation receipt binds the explicit native model, source, builder, styles and every complete artifact',()=>{
+  const root=new URL('../../',import.meta.url),digest=path=>createHash('sha256').update(readFileSync(new URL(path,root))).digest('hex');
+  const gap=readProjectData(new URL('./generation-gap.lino',import.meta.url));
+  const receipt=readProjectData(new URL('./native-generation.lino',import.meta.url));
+  assert.equal(digest('experiments/binary-metadata-buffer/candidate.mjs'),gap.candidate.sha256);
+  assert.equal(receipt.candidateSourceSha256,gap.candidate.sha256);
+  assert.equal(receipt.baselineSourceSha256,gap.baseline.sha256);
+  assert.equal(receipt.baselineStylesSha256,gap.nativeGeneration.originalStylesSha256);
+  assert.equal(receipt.generatorSha256,digest('js/scripts/generate-link-network-binary-rules.mjs'));
+  assert.equal(receipt.candidateStyleBuilderSha256,digest('js/scripts/binary-metadata-candidate-styles.mjs'));
+  assert.equal(receipt.candidateStylesSha256,digest('experiments/binary-metadata-buffer/native-styles.lino'));
+  assert.equal(receipt.generationPolicySha256,digest('experiments/binary-metadata-buffer/native-policy.lino'));
+  assert.deepEqual(receipt.generationPolicy,readProjectData(new URL('./native-policy.lino',import.meta.url)));
+  assert.deepEqual(receipt.generationPolicy.checkedProgram,{utf16Strings:true});
+  assert.equal(receipt.generationPolicy.scope,'native generation input only');
+  assert.equal(receipt.checkedDeclarations,53);
+  assert.equal(receipt.historicalReplacementContexts,36);
+  const names=receipt.declarations.map(row=>row.name);
+  assert.equal(new Set(names).size,names.length);
+  assert.ok(names.includes('transcode_link_network_binary'));
+  assert.equal(receipt.nativeArtifacts.length,5);
+  for(const artifact of receipt.nativeArtifacts)assert.equal(artifact.sha256,digest('experiments/binary-metadata-buffer/native/'+artifact.path));
+});
+
+test('multiple distinct metadata records preserve exact encoded-size thresholds and malformed-record precedence',()=>{
+  const network=new LinkNetwork();
+  network.insertLinkWithOptionalId(1,[2],LinkMetadata.new().withDefinition('first α😀').withLanguage('Rust'));
+  network.insertLinkWithOptionalId(2,[1],LinkMetadata.new().withDefinition('second \0 Ω').withLanguage('JavaScript'));
+  network.setTerm(1,'named first');network.setTerm(2,'different second');
+  const current=[...encodeLinkNetworkBinary(network)];
+  const flat=fields(previous(current,true,10000,limit));
+  const firstOnly=new LinkNetwork();
+  firstOnly.insertLinkWithOptionalId(1,[2],LinkMetadata.new().withDefinition('first α😀').withLanguage('Rust'));
+  firstOnly.setTerm(1,'named first');
+  const firstRecord=fields(previous([...encodeLinkNetworkBinary(firstOnly)],true,10000,limit)).slice(3,-2);
+  assert.deepEqual(flat.slice(3,3+firstRecord.length),firstRecord);
+  for(const version of[1,2]){
+    // The frozen public v2 archive is projected through its actual reader;
+    // v1 shares those same real, distinct record fields without v2 caches.
+    const input=version===2?flat:[1,...flat.slice(2,-2)];
+    const encoded=compare(input,false);
+    assert.ok(!encoded.startsWith('-'));
+    const width=encoded.length/2;
+    assert.ok(input.length<width);
+    assert.equal(compare(input,false,10000,width),encoded);
+    assert.equal(compare(input,false,10000,width+1),encoded);
+    assert.ok(compare(input,false,10000,width-1).startsWith('-2,'));
+    const archive=bytes(encoded);
+    assert.equal(compare(archive,true,10000,width),previous(archive,true,10000,limit));
+    assert.equal(compare(archive,true,10000,width-1),'-2,0,');
+    // Decode the second record cursor from the real flattened metadata; the
+    // repeated identity is rejected before this record's final output limit.
+    const second=(version===2?3:2)+firstRecord.length;
+    assert.equal(input[second],2);
+    const malformed=replace(input,second,1);
+    assert.equal(compare(malformed,false,10000,width-1),previous(malformed,false,10000,limit));
+    assert.ok(compare(malformed,false,10000,width-1).startsWith('-8,'));
+  }
+});
+
 test('actual legacy and current graph archives retain every byte and decoded field across both portable directions',()=>{
   const archives=[fixture.legacyVersion1Bytes,fixture.version2Bytes];
   for(const count of[0,1,8,32]){
