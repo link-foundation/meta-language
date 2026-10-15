@@ -1174,6 +1174,16 @@ points need an explicit model or projection for the doublet vertex. Current
 concept-record English definitions and host metadata do not yet implement the
 deep recursive formal linked definitions required above.
 
+The executable source audit separately identifies the 0.0.2 archive and the two
+0.0.3 draft documents captured at the same immutable revision. Four adopted
+structural definitions and three premises retain exact source excerpts, line
+ranges and hashes, actual JavaScript and Rust representation anchors, and shared
+model references. Bounded JavaScript observations exercise ordered variable-arity
+links, repeated and cyclic references, source-free reload, unary interned points
+and explicit doublet self-loops. This establishes the pinned source-audit trace;
+faithful point projections, upstream proof certification and project-wide formal
+application remain separate requirements.
+
 ## Downstream consumers
 
 Two consumers define the concrete downstream workloads:

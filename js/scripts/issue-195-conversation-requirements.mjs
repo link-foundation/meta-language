@@ -16,6 +16,9 @@ const agentReductionSource = capture('gradual-agent-reduction');
 const inferenceSource = 'parity/sources/grammar-inference-issue-224.txt';
 
 const sourceTooling = {
+  'I195-THEORY-FOUNDATION-PINNED-SOURCE-AUDIT': [
+    'js/scripts/meta-theory-foundation-sources.mjs', 'js/tests/issue-195-meta-theory-sources.test.js',
+  ],
   'I195-ASSOCIATIVE-STACK-PINNED-SOURCE-AUDIT': [
     'js/scripts/associative-stack-sources.mjs', 'js/tests/issue-195-associative-stack-sources.test.js',
   ],
