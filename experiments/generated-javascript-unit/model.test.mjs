@@ -75,6 +75,7 @@ test('actual final invocation and null Unit domain exclude ordinary functions, n
 });
 
 test('all four actual JavaScript line terminators govern return ASI and line-comment active source',()=>{
+ const shared=readProjectData(new URL('../../js/src/translation/data/javascript-line-terminators.lino',import.meta.url));assert.deepEqual(policy.lineTerminatorCodeUnits,[10,13,8232,8233]);assert.deepEqual(policy.lineTerminatorCodeUnits,shared.codeUnits);assert.equal(policy.lineTerminatorPolicy.model,shared.model);assert.equal(policy.lineTerminatorPolicy.source,shared.source);
  for(const code of policy.lineTerminatorCodeUnits){const newline=String.fromCharCode(code),asi=plain.replace('return null','return/*'+newline+'*/null');assert.equal(execute(asi).context.leaf(),undefined);assert.throws(()=>load(asi),undefined,'actual return ASI '+code);
   const active=plain.replace("'use strict';","'use strict'; // hidden"+newline+"console.log('ACTIVE');\n");assert.equal(execute(active).output,'ACTIVE');assert.throws(()=>load(active),undefined,'actual active source after line comment '+code);
  }
