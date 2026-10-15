@@ -16,6 +16,7 @@
 use std::collections::{HashMap, HashSet};
 
 use super::diagnostics::{Result, TranslationError, type_error, unsupported};
+use super::javascript_line_terminator_rules::accept_java_script_line_terminator;
 use super::lexer::{
     Comment, Source, Token, TokenCursor, TokenKind, describe, is_js_space, tokenize,
 };

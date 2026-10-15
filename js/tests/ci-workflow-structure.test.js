@@ -595,6 +595,15 @@ const RUST_NUMBER_PACKAGE_STEPS = [
   ]
 ];
 
+const JAVASCRIPT_LINE_TERMINATOR_PACKAGE_STEPS = [
+  [
+    "Check generated JavaScript line terminator rules",
+    "node scripts/generate-javascript-line-terminator-rules.mjs --check",
+    "3f1c47883f675612b6286db36236cf4af8aba614c0ada9db0f0eafde92cd7906",
+    "generated"
+  ]
+];
+
 function packageStepSignature(step, includeGroup = false) {
   const fields = includeGroup ? step.text : step.text.replace(/ && matrix\.group == '[a-z-]+'/gu, '');
   const text = fields
@@ -607,7 +616,8 @@ function checkPackageStepConservation(parsed) {
   const additions = [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS, ...TYPE_NAMESPACE_PACKAGE_STEPS,
     ...PURE_UNIT_PACKAGE_STEPS, ...SOURCE_SPAN_PACKAGE_STEPS, ...OWNED_TEXT_GENERATOR_PACKAGE_STEPS,
     ...OWNED_TEXT_EXPERIMENT_PACKAGE_STEPS, ...INTEGRAL_METADATA_PACKAGE_STEPS, ...INTEGRAL_METADATA_EXPERIMENT_PACKAGE_STEPS,
-    ...CONST_AND_BYTE_GENERATOR_PACKAGE_STEPS, ...CONST_AND_BYTE_EXPERIMENT_PACKAGE_STEPS, ...RUNTIME_SHELL_PACKAGE_STEPS, ...RUST_NUMBER_PACKAGE_STEPS];
+    ...CONST_AND_BYTE_GENERATOR_PACKAGE_STEPS, ...CONST_AND_BYTE_EXPERIMENT_PACKAGE_STEPS, ...RUNTIME_SHELL_PACKAGE_STEPS, ...RUST_NUMBER_PACKAGE_STEPS,
+    ...JAVASCRIPT_LINE_TERMINATOR_PACKAGE_STEPS];
   const expected = new Map([
     ...ORIGINAL_PACKAGE_STEPS.map(([name, hash, owner]) => [name, { hash, owner }]),
     ...additions.map(([name, command, hash, owner]) => [name, { hash, owner, command, addition: true }]),

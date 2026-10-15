@@ -191,6 +191,12 @@ shared generated lexical boundary decision, preserving exact integer text and
 UTF-16 source spans. The narrow ASCII-boundary extension retains unsuffixed
 trailing-separator and non-ASCII suffix-boundary refusals; JavaScript numbers,
 floating boundaries and radix gaps retain their existing interpretations.
+JavaScript line comments and the supported return, break, continue and throw
+boundaries use one shared generated ECMAScript line-terminator policy. Carriage
+returns, line separators and paragraph separators cannot hide active statements
+or turn an automatic empty return into a value return. A line terminator inside
+a block comment retains its restricted-production meaning; other languages keep
+their own comment boundaries.
 Rust string continuations and CRLF normalization
 use shared checked rules while preserving original source-token spans. The
 bounded Unicode scalar source text byte model exposes actual UTF-16 units, exact

@@ -22,6 +22,7 @@ import { acceptObjectFreezeOperand, acceptObjectPropertyDefinition } from './pri
 import { validateJavaScriptProducts } from './javascript-products.js';
 import {acceptRustScalarLoopModel} from './rust-scalar-loops.js';
 import {isJavaScriptScalarLoop, readJavaScriptScalarLoop, finishJavaScriptScalarLoops} from './javascript-scalar-loops.js';
+import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
 
 // The string predicates of the portable core: each reads the whole string,
 // so it means the same over UTF-16, UTF-8 and code points.
@@ -729,7 +730,7 @@ class JavaScriptParser {
       if (this.topLevel) throw unsupported('top-level return statement', 'return leaves a function, and a module has none to leave', span(token, token));
       c.next();
       // `return;` returns undefined, the unit value.
-      if (c.is(';') || c.is('}') || this.source.slice(token.end, c.peek().start).includes('\n')) {
+      if (c.is(';') || c.is('}') || findJavaScriptLineTerminator(this.source, token.end, c.peek().start) < c.peek().start) {
         c.eat(';');
         return { s: 'return', expr: { k: 'unit', span: span(token, token) }, span: span(token, c.peek()) };
       }
@@ -1066,7 +1067,7 @@ class JavaScriptParser {
     const c = this.cursor;
     const token = c.next();
     const where = span(token, token);
-    if (c.isKind('identifier') && !c.is('case') && !c.is('default') && !this.source.slice(token.end, c.peek().start).includes('\n')) {
+    if (c.isKind('identifier') && !c.is('case') && !c.is('default') && findJavaScriptLineTerminator(this.source, token.end, c.peek().start) === c.peek().start) {
       throw unsupported(`labelled ${token.value}`, 'labels are outside the portable core; a break or continue applies to the innermost loop', span(token, c.peek()));
     }
     if (token.value === 'continue' && !this.jumps.loops) throw new TranslationError('syntax', 'continue outside a loop', where);
@@ -1078,6 +1079,9 @@ class JavaScriptParser {
   throwStatement() {
     const c = this.cursor;
     const start = c.next();
+    if (findJavaScriptLineTerminator(this.source, start.end, c.peek().start) < c.peek().start) {
+      throw new TranslationError('syntax', 'line terminator after throw', span(start, start));
+    }
     if (!c.eat('new')) throw unsupported('throw of a non-error value', 'throw new Error(\'…\'), which aborts the program', span(start, c.peek()));
     const kind = c.identifier('throw');
     if (!ERRORS.has(kind.value)) throw unsupported(`throw new ${kind.value}`, 'throw an Error, RangeError or TypeError', span(kind, kind));

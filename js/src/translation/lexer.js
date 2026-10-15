@@ -7,6 +7,7 @@ import { TranslationError } from './diagnostics.js';
 import { acceptControlParenthesis, acceptStatementBrace, decodeUnicodeEscape, readRustNumberBounds, regularExpressionEnd, startRegularExpression } from './frontend-rules.js';
 import { readRustSourceLineBreakEnd, readRustStringContinuationEnd } from './rust-string-rules.js';
 import { acceptRustNumberDigitBoundary } from './rust-number-rules.js';
+import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
 
 const OPERATORS = {
   JavaScript: [
@@ -52,7 +53,7 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
       continue;
     }
     if (comments.line && source.startsWith(comments.line, index)) {
-      const end = source.indexOf('\n', index);
+      const end = language === 'JavaScript' ? findJavaScriptLineTerminator(source, index) : source.indexOf('\n', index);
       const stop = end === -1 ? source.length : end;
       commentList.push({ text: source.slice(index, stop), start: index, end: stop });
       index = stop;

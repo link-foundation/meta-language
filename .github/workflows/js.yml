@@ -671,6 +671,11 @@ jobs:
         working-directory: js
         run: node scripts/generate-rust-number-rules.mjs --check
 
+      - name: Check generated JavaScript line terminator rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/generate-javascript-line-terminator-rules.mjs --check
+
       - name: Check generated whole Rust runtime shell rules
         if: ${{ !cancelled() && matrix.group == 'generated' }}
         working-directory: js

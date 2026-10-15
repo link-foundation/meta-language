@@ -17,6 +17,7 @@ use super::frontend_rules::{
     read_rust_number_bounds, read_rust_source_line_break_end, read_rust_string_continuation_end,
     regular_expression_end, start_regular_expression,
 };
+use super::javascript_line_terminator_rules::accept_java_script_line_terminator;
 use super::js_number::js_number_literal;
 use super::{Language, Span};
 
@@ -374,7 +375,14 @@ fn tokenize_region(
         if let Some(line) = comments.line
             && source.starts_with(line, index)
         {
-            let stop = source.index_of("\n", index).unwrap_or(source.len());
+            let stop = if language == Language::JavaScript {
+                source.units[index..]
+                    .iter()
+                    .position(|unit| accept_java_script_line_terminator(f64::from(*unit)))
+                    .map_or(source.len(), |offset| index + offset)
+            } else {
+                source.index_of("\n", index).unwrap_or(source.len())
+            };
             comment_list.push(Comment {
                 text: source.slice(index, stop),
                 start: index,
