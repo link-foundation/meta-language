@@ -666,6 +666,21 @@ jobs:
         working-directory: js
         run: node scripts/generate-source-span-fixtures.mjs --check
 
+      - name: Check generated integral program metadata rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/generate-program-numeric-metadata-rules.mjs --check
+
+      - name: Check shared integral program metadata fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../experiments/generate-program-numeric-metadata-fixture.mjs --check
+
+      - name: Run integral program metadata checks
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/program-numeric-metadata.test.mjs
+
       - name: Check generated Rust owned local text state rules
         if: ${{ !cancelled() && matrix.group == 'generated' }}
         working-directory: js

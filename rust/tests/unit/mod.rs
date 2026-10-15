@@ -227,6 +227,7 @@ mod translation_top_level_statements;
 mod translation_void_functions;
 mod typed_program_algebraic;
 mod typed_program_links;
+mod typed_program_numeric_metadata;
 mod typed_program_source_spans;
 mod typescript_erasure;
 mod typescript_portable_typing;
