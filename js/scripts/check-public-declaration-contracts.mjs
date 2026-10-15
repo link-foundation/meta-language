@@ -19,6 +19,8 @@ export function publicDeclarationConsumers(moduleSpecifier = publicModule) {
   const publicUnitFixture = readProjectData(new URL('../../parity/fixtures/rust-public-pure-unit-calls.lino', import.meta.url));
   const constFunctionFixture = readProjectData(new URL('../../experiments/rust-const-function-fixture.lino', import.meta.url));
   const sourceTextByteFixture = readProjectData(new URL('../../parity/fixtures/source-text-bytes.lino', import.meta.url));
+  const runtimeShellFixture = readProjectData(new URL('../../parity/fixtures/rust-runtime-shell.lino', import.meta.url));
+  const repeatedRuntime = runtimeShellFixture.cases.find(entry => entry.id === 'ordered-repeated');
   const imports = `import { importEbnf, encodeFormalConceptDefinition, createDiscoveredConceptLinks,
     readDiscoveredConceptLinks, importResourceDescriptionGraph, decodeResourceDescriptionGraph,
     mergeResourceDescriptionGraphs, verifyResourceDescriptionGraphWitnesses } from ${module};\n`;
@@ -748,6 +750,89 @@ export function slice(text:string,start:number,end:number):string|null { return 
     {
       name: 'reject-source-text-byte-null-as-string', expectedDiagnostics: ['TS2322'],
       source: `import { sliceSourceTextBytes } from ${module};\nconst value:string = sliceSourceTextBytes('A',1,0);\nexport const contractEvidence = {value};\n`,
+    },
+    ...runtimeShellFixture.cases.filter(entry => ['empty-program', 'ordered-repeated'].includes(entry.id)).map(entry => ({
+      name: `valid-runtime-shell-whole-artifact-${entry.id}`, expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks, LinkNetwork } from ${module};
+const options = {rustRuntimeShellModel:${JSON.stringify(runtimeShellFixture.model)}} as const;
+const original = createTypedProgramLinks(${JSON.stringify(entry.original)},'JavaScript');
+const originalRust = emitTypedProgramLinks(original.network,original.root,'Rust');
+const packet = createTypedProgramLinks(originalRust.code,'Rust',{...options,provenance:{consumer:${JSON.stringify(entry.id)}}});
+const network = LinkNetwork.fromLino(packet.network.toLino());
+const javascript = emitTypedProgramLinks(network,packet.root,'JavaScript');
+const rust = emitTypedProgramLinks(network,packet.root,'Rust');
+export function reimportWholeRustArtifact(source:string) {
+  const packet = createTypedProgramLinks(source,'Rust',options);
+  const network = LinkNetwork.fromLino(packet.network.toLino());
+  return {network,root:packet.root,program:decodeTypedProgramLinks(network,packet.root),
+    javascript:emitTypedProgramLinks(network,packet.root,'JavaScript'),rust:emitTypedProgramLinks(network,packet.root,'Rust')};
+}
+export const contractEvidence = {network,root:packet.root,program:decodeTypedProgramLinks(network,packet.root),
+  javascript,rust,originalRustCode:originalRust.code};
+`,
+    })),
+    {
+      name: 'valid-source-free-runtime-shell-resource-edit', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks, LinkNetwork } from ${module};
+const packet = createTypedProgramLinks(${JSON.stringify(repeatedRuntime.fullEmittedRust)},'Rust',
+  {rustRuntimeShellModel:${JSON.stringify(runtimeShellFixture.model)}});
+const network = LinkNetwork.fromLino(packet.network.toLino());
+const shift = network.links().find(link=>link.metadata().term==='string value'&&link.metadata().definition==='28');
+if(!shift) throw new Error('the actual whole-runtime stack shift token is missing');
+shift.metadata().definition = '20';
+const restored = LinkNetwork.fromLino(network.toLino());
+export const contractEvidence = {network:restored,root:packet.root,program:decodeTypedProgramLinks(restored,packet.root),
+  javascript:emitTypedProgramLinks(restored,packet.root,'JavaScript'),rust:emitTypedProgramLinks(restored,packet.root,'Rust')};
+`,
+    },
+    {
+      name: 'reject-unregistered-runtime-shell-model-version', expectedDiagnostics: ['TS2322'],
+      source: `import { createTypedProgramLinks } from ${module};
+createTypedProgramLinks(${JSON.stringify(repeatedRuntime.fullEmittedRust)},'Rust',
+  {rustRuntimeShellModel:'closed pure Rust unit runtime shell 99'});
+`,
+    },
+    {
+      name: 'valid-runtime-shell-selector-type-with-wrong-source-language', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks } from ${module};
+export function createWrongLanguagePacket() {
+  return createTypedProgramLinks('function empty(){}','JavaScript',
+    {rustRuntimeShellModel:${JSON.stringify(runtimeShellFixture.model)}});
+}
+`,
+    },
+    {
+      name: 'valid-runtime-shell-selector-type-with-independent-source-profile', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks } from ${module};
+export function createIncompatibleSourcePacket() {
+  return createTypedProgramLinks(${JSON.stringify(repeatedRuntime.fullEmittedRust)},'Rust',
+    {rustRuntimeShellModel:${JSON.stringify(runtimeShellFixture.model)},rustPureUnitCallModel:'closed public pure Rust unit calls 1'});
+}
+`,
+    },
+    {
+      name: 'valid-runtime-shell-selector-type-with-independent-target-profile', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, emitTypedProgramLinks } from ${module};
+const packet = createTypedProgramLinks(${JSON.stringify(repeatedRuntime.fullEmittedRust)},'Rust',
+  {rustRuntimeShellModel:${JSON.stringify(runtimeShellFixture.model)}});
+export function emitIncompatibleTargetPacket() {
+  return emitTypedProgramLinks(packet.network,packet.root,'Rust',
+    {rustSourceHeaderEmissionModel:'primitive borrowed Rust function header 1'});
+}
+`,
+    },
+    {
+      name: 'valid-runtime-shell-legacy-replay-boundaries', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, emitTypedProgramLinks } from ${module};
+const source = ${JSON.stringify(repeatedRuntime.fullEmittedRust)};
+const packet = createTypedProgramLinks(source,'Rust',{rustRuntimeShellModel:${JSON.stringify(runtimeShellFixture.model)}});
+const javascript = emitTypedProgramLinks(packet.network,packet.root,'JavaScript');
+export const replayBoundaryEvidence = {rustSource:source,javaScriptSource:javascript.code};
+export function createWithoutSelectedRustModel() { return createTypedProgramLinks(source,'Rust'); }
+export function reimportCompleteJavaScriptWithoutGeneratedBindingModel() {
+  return createTypedProgramLinks(javascript.code,'JavaScript');
+}
+`,
     },
   ];
 }
