@@ -152,6 +152,11 @@ if (!process.argv.includes('--javascript-only')) {
       when: [['format', 'Rust']], actions: readSourceTextByteLibraryStyles(library, provider) }]);
     adapted = correction.decorate('emitter', { format: 'Rust', source: library }).source;
   }
+  // CI rejects this sole effect-free binding block as unnecessary braces.
+  // Keep its original return value and every surrounding loop operation.
+  assert.equal([...adapted.matchAll(/return \{\s*opening\s*\};/gu)].length, 1,
+    'the recorded raw-reader return style owns its exact generated context');
+  adapted = adapted.replace(/return \{\s*opening\s*\};/u, 'return opening;');
   adapted = adapted.replaceAll('/// Evaluate the shared Unicode source-text byte model.', '/// Read the shared original-source Rust raw string model.');
   for (const [from, to] of [
     ['MlDecodeRustRawStringLoop6Done', 'Done'], ['MlDecodeRustRawStringLoop6Return', 'Return'],
