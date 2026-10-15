@@ -13,10 +13,11 @@ export function qualifyGeneratedRustRootPaths(source, namespace) {
   let depth = 0;
   for (let index = 0; index < tokens.length; index += 1) {
     const token = tokens[index];
-    // This lexer does not admit raw Rust strings. Their embedded quotes could
-    // otherwise expose literal text as paths, so reject that wider input scope.
-    if (token.kind === 'identifier' && ['r', 'br'].includes(token.value)
-      && (tokens[index + 1]?.value === '#' || tokens[index + 1]?.kind === 'string')) {
+    // The closed generated model excludes raw strings even when the production
+    // lexer represents their entire spelling as one opaque string token.
+    if ((token.kind === 'string' && token.raw.startsWith('r'))
+      || (token.kind === 'identifier' && ['r', 'br'].includes(token.value)
+        && (tokens[index + 1]?.value === '#' || tokens[index + 1]?.kind === 'string'))) {
       throw new TypeError('the closed generated program does not admit raw string literals');
     }
     if (!depth && token.kind === 'identifier' && ['fn', 'mod', 'struct', 'enum', 'type', 'const', 'static'].includes(token.value)
