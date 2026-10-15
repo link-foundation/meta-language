@@ -1,5 +1,4 @@
 // Pinned complete styled definitions, never a rewritten or qualifier-stripped oracle.
-import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {readProjectData,writeProjectData,checkProjectData} from '../js/scripts/project-data.mjs';
@@ -9,13 +8,26 @@ import {checkProgram} from '../js/src/translation/check.js';
 import {emitRust} from '../js/src/translation/emit-rust.js';
 import {emitJavaScript} from '../js/src/translation/emit-javascript.js';
 import {encodeTypedProgramLinks} from '../js/src/typed-program-links.js';
-const root=fileURLToPath(new URL('../',import.meta.url));
 const policy=readProjectData(new URL('../js/src/translation/data/rust-const-functions.lino',import.meta.url));
 const sha=text=>createHash('sha256').update(text).digest('hex');
+const sources=[
+ {commit:'c1e88c8b',revision:'c1e88c8be7d3f8e63cebc49a46bb4d48823ba329',file:'rust/src/translation/rust/owned_local_state_rules.rs',fileSha256:'b36f7104270c568db448ae3b488349228f3ef162c2bcf0620901557691b892ba',names:['accept_rust_owned_local_record_value','accept_rust_owned_local_source_span']},
+ {commit:'87f70e4c',revision:'87f70e4cce215ce7722e01c79c5c8e6e4a6f22cf',file:'rust/src/typed_program_links/source_span_rules.rs',fileSha256:'ad1a00d53521e702b316c70b48307b6d01c4a5f72007ded81c60d9469119a232',names:['accept_source_span_interval']},
+];
+export function readRustConstPredicateSources(captures=readProjectData(new URL('./rust-const-predicate-source-captures.lino',import.meta.url))){
+ const fail=()=>{throw new Error('the authenticated Rust const source capture differs from its original immutable receipt');};
+ if(captures.schemaVersion!==1||!Array.isArray(captures.sources)||captures.sources.length!==sources.length)fail();
+ return sources.map(owner=>{
+  const capture=captures.sources.find(value=>value.commit===owner.commit&&value.file===owner.file);
+  if(!capture||capture.revision!==owner.revision||capture.sha256!==owner.fileSha256||typeof capture.source!=='string')fail();
+  const bytes=Buffer.from(capture.source,'utf8');
+  if(bytes.length!==capture.bytes||sha(bytes)!==owner.fileSha256||createHash('sha1').update(Buffer.from('blob '+bytes.length+'\0')).update(bytes).digest('hex')!==capture.blob)fail();
+  return{...owner,source:capture.source};
+ });
+}
 export function pinnedRustConstPredicateDefinitions(){
- const sources=[{commit:'c1e88c8b',file:'rust/src/translation/rust/owned_local_state_rules.rs',names:['accept_rust_owned_local_record_value','accept_rust_owned_local_source_span']},{commit:'87f70e4c',file:'rust/src/typed_program_links/source_span_rules.rs',names:['accept_source_span_interval']}];
- return sources.flatMap(owner=>{
-  const source=execFileSync('git',['show',owner.commit+':'+owner.file],{cwd:root,encoding:'utf8',maxBuffer:1024*1024});const tokens=tokenize(source,'Rust').tokens;
+ return readRustConstPredicateSources().flatMap(owner=>{
+  const source=owner.source,tokens=tokenize(source,'Rust').tokens;
   return owner.names.map(name=>{
    const index=tokens.findIndex((token,index)=>token.value==='const'&&tokens[index+1]?.value==='fn'&&tokens[index+2]?.value===name);if(index<0)throw new Error('the actual styled const definition disappeared '+name);
    const open=tokens.findIndex((token,at)=>at>index&&token.value==='{');let depth=0,end;
