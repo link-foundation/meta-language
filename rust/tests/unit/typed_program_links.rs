@@ -1,10 +1,113 @@
 //! Shared source-free graph reload, edit and rejection cases.
+use meta_language::translation::ir::{Binder, Comparison, Effect, Expr, Prop};
+use meta_language::translation::types::Type;
 use meta_language::{
-    LinkId, LinkNetwork, LinkType, create_typed_program_links, decode_typed_program_links,
-    emit_typed_program_links, percent_encode_links_text, read_structured_data_lino,
+    BinaryLinksOptions, LinkId, LinkNetwork, LinkType, create_typed_program_links,
+    decode_link_network_binary, decode_typed_program_links, emit_typed_program_links,
+    encode_link_network_binary, encode_typed_program_links, percent_encode_links_text,
+    read_structured_data_lino, read_typed_program_binding_identities, typed_program_links_schema,
 };
 use serde_json::Value;
 use std::process::Command;
+
+#[test]
+fn assertion_propositions_preserve_owned_expression_and_quantified_binding_links() {
+    let original = create_typed_program_links(
+        "fn main(){let count=2f64;assert_eq!(count,2f64);assert!(!false);println!(\"ok\");}",
+        "Rust",
+    )
+    .unwrap();
+    let mut program = decode_typed_program_links(&original.network, original.root).unwrap();
+    for _ in 0..2 {
+        program.main.as_mut().unwrap().effects.push(Effect::Assert {
+            prop: Prop::Forall {
+                binders: vec![Binder {
+                    name: "flag".into(),
+                    ty: Type::Bool,
+                }],
+                body: Box::new(Prop::Eq(Comparison {
+                    left: Expr::var("flag", Type::Bool),
+                    right: Expr::var("flag", Type::Bool),
+                    domain: Type::Bool,
+                    same_value: false,
+                })),
+            },
+            span: None,
+        });
+    }
+    let saved = encode_typed_program_links(&program).unwrap();
+    let binary = encode_link_network_binary(&saved.network, BinaryLinksOptions::default()).unwrap();
+    for network in [
+        LinkNetwork::from_lino(&saved.network.to_lino()).unwrap(),
+        decode_link_network_binary(&binary, BinaryLinksOptions::default()).unwrap(),
+    ] {
+        assert_eq!(
+            decode_typed_program_links(&network, saved.root).unwrap(),
+            program
+        );
+        assert_eq!(
+            read_typed_program_binding_identities(&network, saved.root)
+                .unwrap()
+                .len(),
+            3
+        );
+        assert_eq!(
+            run_javascript(
+                &emit_typed_program_links(&network, saved.root, "JavaScript")
+                    .unwrap()
+                    .code
+            ),
+            ["ok"]
+        );
+        assert!(
+            emit_typed_program_links(&network, saved.root, "Rust")
+                .unwrap()
+                .code
+                .contains("assert!")
+        );
+        let lookup = |parent, key: &str| {
+            field(
+                &network,
+                parent,
+                typed_program_links_schema()["fields"][key]
+                    .as_str()
+                    .unwrap_or(key),
+            )
+        };
+        let body = network.link(saved.root).unwrap().references()[0];
+        let main = lookup(body, "main");
+        let effects = network.link(lookup(main, "effects")).unwrap().references();
+        let first = lookup(effects[effects.len() - 2], "prop");
+        let second = lookup(effects[effects.len() - 1], "prop");
+        let foreign_binder = network.link(lookup(first, "binders")).unwrap().references()[0];
+        let actual_binder = network
+            .link(lookup(second, "binders"))
+            .unwrap()
+            .references()[0];
+        assert_ne!(actual_binder, foreign_binder);
+        let variable = lookup(lookup(second, "body"), "left");
+        let relation = network
+            .links()
+            .find(|link| match link.references() {
+                [owner, name, _] => {
+                    *owner == variable
+                        && network.link(*name).and_then(|name| name.metadata().term())
+                            == Some("binding reference")
+                }
+                _ => false,
+            })
+            .unwrap();
+        let changed = edit_references(
+            &network,
+            relation.id(),
+            &[variable, relation.references()[1], foreign_binder],
+        );
+        assert!(decode_typed_program_links(&changed, saved.root).is_err());
+        for target in ["Rust", "JavaScript"] {
+            assert!(emit_typed_program_links(&changed, saved.root, target).is_err());
+        }
+    }
+}
 
 #[test]
 fn linked_text_conversion_rejects_structured_operands_and_unmodeled_rust_display() {

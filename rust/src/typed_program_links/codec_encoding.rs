@@ -6,7 +6,8 @@ use crate::translation::check::read_checked_match_pattern_bindings;
 use crate::translation::ir::{Decl, Effect, Expr, Node, Program};
 use crate::translation::typed_program_link_rules::{
     is_unsafe_program_field, read_program_expression_operand_fields,
-    read_program_pattern_binding_form, read_program_reference_source_field,
+    read_program_pattern_binding_form, read_program_proposition_binding_form,
+    read_program_proposition_operand_fields, read_program_reference_source_field,
 };
 use crate::{LinkId, LinkNetwork};
 use serde_json::Value;
@@ -121,6 +122,30 @@ fn normalize_expression(value: &mut Value, expression: &Expr, program: &Program)
     Ok(())
 }
 
+fn normalize_proposition(value: &mut Value, program: &Program) -> Result<()> {
+    let kind = value["p"]
+        .as_str()
+        .ok_or_else(|| error("a checked assertion has no proposition kind"))?;
+    let form = read_program_proposition_binding_form(kind);
+    if form.is_empty() {
+        return Err(error("a checked proposition has no shared operand plan"));
+    }
+    let fields = read_program_proposition_operand_fields(kind);
+    for field in fields.split_whitespace() {
+        let operand = value
+            .get_mut(field)
+            .ok_or_else(|| error("a checked proposition is missing a shared operand"))?;
+        if form == "expressions" {
+            let expression: Expr = serde_json::from_value(operand.clone())
+                .map_err(|failure| error(failure.to_string()))?;
+            normalize_expression(operand, &expression, program)?;
+        } else {
+            normalize_proposition(operand, program)?;
+        }
+    }
+    Ok(())
+}
+
 fn semantic_targets(
     value: &Value,
     path: &str,
@@ -202,6 +227,39 @@ fn bindings(
         .checked_sub(1)
         .ok_or_else(|| error("the linked program exceeds its binding resource limit"))?;
     let kind = value["k"].as_str().unwrap_or_default();
+    if let Some(proposition) = value["p"].as_str() {
+        let form = read_program_proposition_binding_form(proposition);
+        if form.is_empty() {
+            return Err(error("a checked proposition has no shared operand plan"));
+        }
+        let mut inner = environment.clone();
+        if form == "binders" {
+            for (index, binder) in value["binders"]
+                .as_array()
+                .ok_or_else(|| error("a checked proposition has no binders"))?
+                .iter()
+                .enumerate()
+            {
+                let name = binder["name"]
+                    .as_str()
+                    .ok_or_else(|| error("a checked proposition binder has no name"))?;
+                inner.insert(
+                    name.to_owned(),
+                    child_path(&child_path(path, "binders"), index),
+                );
+            }
+        }
+        for field in read_program_proposition_operand_fields(proposition).split_whitespace() {
+            bindings(
+                &value[field],
+                &child_path(path, field),
+                &inner,
+                targets,
+                remaining,
+            )?;
+        }
+        return Ok(());
+    }
     if kind == "var" {
         let name = value["name"]
             .as_str()
@@ -485,6 +543,10 @@ pub(super) fn encode(program: &Program, provenance: Option<&Value>) -> Result<Ty
             let (field, expression) = match effect {
                 Effect::Print { expr, .. } => ("expr", expr),
                 Effect::Let { value, .. } => ("value", value),
+                Effect::Assert { .. } => {
+                    normalize_proposition(&mut value["main"]["effects"][index]["prop"], program)?;
+                    continue;
+                }
                 _ => {
                     return Err(error(
                         "the Rust typed links adapter does not yet represent this main effect",
@@ -579,6 +641,8 @@ pub(super) fn encode(program: &Program, provenance: Option<&Value>) -> Result<Ty
             let path = child_path("/main/effects", index);
             let field = if effect["k"] == "let" {
                 "value"
+            } else if effect["k"] == "assert" {
+                "prop"
             } else {
                 "expr"
             };

@@ -258,6 +258,9 @@ fn source_free_body_edits_change_execution_without_changing_owned_headers() {
 }
 
 fn relation(network: &LinkNetwork, parent: LinkId, label: &str) -> [LinkId; 3] {
+    let label = meta_language::typed_program_links_schema()["fields"][label]
+        .as_str()
+        .unwrap_or(label);
     network
         .links()
         .find_map(|link| match link.references() {

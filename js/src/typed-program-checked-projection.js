@@ -7,7 +7,7 @@ import { checkProgram } from './translation/check.js';
 import {checkRustOwnedLocalStateRecordShapes} from './translation/rust-owned-local-state.js';
 import { validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes } from './translation/rust-type-namespace.js';
 import { projectLinkedProgramExpression, projectLinkedProgramDeclarationPath } from './typed-program-expression-projection.js';
-import { readProgramExpressionProjection, readProgramNeutralFieldDefault } from './typed-program-link-rules.js';
+import { readProgramExpressionProjection, readProgramNeutralFieldDefault, readProgramPropositionOperandFields, readProgramPropositionBindingForm } from './typed-program-link-rules.js';
 
 export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
   if(checkRustConstFunctionContainers(program))wholeProgram=true;
@@ -51,6 +51,16 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
     if (value.kind === 'function') return { ...value, params: value.params.map(projectType), ret: projectType(value.ret) };
     return value;
   }
+  function projectProposition(value) {
+    const form = readProgramPropositionBindingForm(value.p ?? '');
+    if (!form) throw new TypeError('the linked proposition has no checked surface projection');
+    const result = { ...value };
+    if (form === 'binders') result.binders = value.binders.map(binder => ({ ...binder, type: projectType(binder.type) }));
+    for (const field of readProgramPropositionOperandFields(value.p).split(' ').filter(Boolean)) {
+      result[field] = form === 'expressions' ? projectExpression(value[field]) : projectProposition(value[field]);
+    }
+    return result;
+  }
   function projectItem(entry) {
     if (entry.k === 'module') return { k: 'module', name: entry.name, items: entry.items.map(projectItem), span: entry.span };
     if (entry.k === 'data') return {
@@ -80,6 +90,7 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
       ...(program.main.sequentialAsync !== undefined ? { sequentialAsync: program.main.sequentialAsync } : {}),
       effects: program.main.effects.map(effect => {
         if (effect.k === 'print') return { k: 'print', expr: projectExpression(effect.expr), style: 'js-console', span: effect.span };
+        if (effect.k === 'assert') return { k: 'assert', prop: projectProposition(effect.prop), span: effect.span };
         if (effect.k === 'let') return { k: 'let', name: effect.name, type: projectType(effect.value.type),
           value: projectExpression(effect.value), span: effect.span, ...(effect.constant !== undefined ? { constant: effect.constant } : {}),
           ...(effect.sourcePureUnitCall!==undefined?{sourcePureUnitCall:effect.sourcePureUnitCall}:{}),

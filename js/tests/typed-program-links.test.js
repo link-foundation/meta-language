@@ -5,6 +5,9 @@ import { LinkNetwork } from '../src/network.js';
 import { createTypedProgramLinks, decodeTypedProgramLinks, encodeTypedProgramLinks, emitTypedProgramLinks, readTypedProgramBindingIdentities } from '../src/typed-program-links.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { checkProgram } from '../src/translation/check.js';
+import { encodeLinkNetworkBinary, decodeLinkNetworkBinary } from '../src/link-network-binary.js';
+import { recheckLinkedTypedProgram } from '../src/typed-program-checked-projection.js';
+import { TYPED_PROGRAM_LINKS_SCHEMA } from '../src/typed-program-links.js';
 
 function run(code) {
   const output = [];
@@ -26,6 +29,42 @@ function replaceField(network, parent, label, child) {
   assert.ok(relation, `missing ${label} relation`);
   relation.link.setReferences([parent, relation.link.references()[1], child]);
 }
+
+test('assertion propositions retain main locals and distinct quantified binding owners in both archives', () => {
+  const original = createTypedProgramLinks('fn main(){let count=2f64;assert_eq!(count,2f64);assert!(!false);println!("ok");}', 'Rust');
+  const program = decodeTypedProgramLinks(original.network, original.root);
+  for (let index = 0; index < 2; index += 1) {
+    const type = { kind: 'bool' };
+    program.main.effects.push({ k: 'assert', span: null, prop: {
+      p: 'forall', binders: [{ name: 'flag', type }], body: {
+        p: 'eq', left: { k: 'var', name: 'flag', type }, right: { k: 'var', name: 'flag', type }, domain: type,
+      },
+    } });
+  }
+  recheckLinkedTypedProgram(program, { wholeProgram: true });
+  const saved = encodeTypedProgramLinks(program);
+  const label = name => TYPED_PROGRAM_LINKS_SCHEMA.fields[name] ?? name;
+  for (const network of [LinkNetwork.fromLino(saved.network.toLino()), decodeLinkNetworkBinary(encodeLinkNetworkBinary(saved.network))]) {
+    const decoded = decodeTypedProgramLinks(network, saved.root);
+    recheckLinkedTypedProgram(decoded, { wholeProgram: true });
+    assert.deepEqual(decoded, program);
+    assert.equal(readTypedProgramBindingIdentities(network, saved.root).length, 3);
+    assert.deepEqual(run(emitTypedProgramLinks(network, saved.root, 'JavaScript').code), ['ok']);
+    assert.match(emitTypedProgramLinks(network, saved.root, 'Rust').code, /assert!/u);
+    const body = network.link(saved.root).references()[0];
+    const main = field(network, body, label('main'));
+    const effects = network.link(field(network, main, label('effects'))).references();
+    const first = field(network, effects.at(-2), label('prop'));
+    const second = field(network, effects.at(-1), label('prop'));
+    const foreignBinder = network.link(field(network, first, label('binders'))).references()[0];
+    const actualBinder = network.link(field(network, second, label('binders'))).references()[0];
+    assert.notEqual(actualBinder.asU64(), foreignBinder.asU64());
+    const comparison = field(network, second, label('body'));
+    const variable = field(network, comparison, label('left'));
+    replaceField(network, variable, 'binding reference', foreignBinder);
+    assert.throws(() => decodeTypedProgramLinks(network, saved.root), /outside its scope/u);
+  }
+});
 
 for (const [language, source] of [
   ['JavaScript', 'function add(a,b) { return a+b; } console.log(add(2,3));'],

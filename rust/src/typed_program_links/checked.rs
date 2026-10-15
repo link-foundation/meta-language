@@ -10,6 +10,7 @@ use crate::translation::surface::{SEffect, SMain, SProgram, ShowStyle};
 use crate::translation::typed_program_link_rules::{
     accept_program_division_rounding, accept_program_expression_operation,
     accept_program_machine_integer_width, accept_program_optional_absence,
+    read_program_proposition_binding_form, read_program_proposition_operand_fields,
 };
 use regex::Regex;
 use serde_json::Value;
@@ -18,6 +19,42 @@ use std::sync::OnceLock;
 
 mod declarations;
 mod loop_modules;
+
+fn project_assertion_proposition(mut value: Value, program: &Program) -> Result<Value> {
+    let kind = value["p"].as_str().unwrap_or_default();
+    let form = read_program_proposition_binding_form(kind);
+    if form.is_empty() {
+        return Err(error(
+            "the linked proposition has no checked surface projection",
+        ));
+    }
+    let fields = read_program_proposition_operand_fields(kind);
+    if form == "binders" {
+        for binder in value["binders"]
+            .as_array_mut()
+            .ok_or_else(|| error("a linked proposition has no owned binder list"))?
+        {
+            let ty = serde_json::from_value(binder["type"].clone())
+                .map_err(|failure| error(failure.to_string()))?;
+            binder["type"] = serde_json::to_value(project_type(&ty, program)?)
+                .map_err(|failure| error(failure.to_string()))?;
+        }
+    }
+    for field in fields.split_whitespace() {
+        let child = value
+            .get_mut(field)
+            .ok_or_else(|| error("a linked proposition has no shared operand"))?;
+        *child = if form == "expressions" {
+            let checked = serde_json::from_value(child.clone())
+                .map_err(|failure| error(failure.to_string()))?;
+            serde_json::to_value(expression(&checked, program)?)
+                .map_err(|failure| error(failure.to_string()))?
+        } else {
+            project_assertion_proposition(child.clone(), program)?
+        };
+    }
+    Ok(value)
+}
 
 fn valid_float(value: &str) -> bool {
     static SPELLING: OnceLock<Regex> = OnceLock::new();
@@ -228,6 +265,15 @@ pub(super) fn validate(program: &Program) -> Result<()> {
                     Effect::Print { expr, span } => Ok(SEffect::Print {
                         expr: expression(expr, program)?,
                         style: ShowStyle::JsConsole,
+                        span: *span,
+                    }),
+                    Effect::Assert { prop, span } => Ok(SEffect::Assert {
+                        prop: serde_json::from_value(project_assertion_proposition(
+                            serde_json::to_value(prop)
+                                .map_err(|failure| error(failure.to_string()))?,
+                            program,
+                        )?)
+                        .map_err(|failure| error(failure.to_string()))?,
                         span: *span,
                     }),
                     Effect::Let {

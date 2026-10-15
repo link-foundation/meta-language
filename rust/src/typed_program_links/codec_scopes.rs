@@ -6,6 +6,7 @@ use crate::translation::check::read_checked_match_pattern_bindings;
 use crate::translation::ir::{Decl, Pattern};
 use crate::translation::typed_program_link_rules::{
     read_program_expression_operand_fields, read_program_pattern_binding_form,
+    read_program_proposition_binding_form, read_program_proposition_operand_fields,
     read_program_reference_role, read_program_reference_source_field,
     read_program_reference_target_field,
 };
@@ -409,6 +410,14 @@ impl Decoder<'_> {
                         traversal,
                         false,
                     )?,
+                    "assert" => self.bindings(
+                        self.field(*effect, "prop")
+                            .ok_or_else(|| error("a linked assertion has no proposition"))?,
+                        &inner,
+                        ownership,
+                        traversal,
+                        false,
+                    )?,
                     _ => {
                         return Err(error(
                             "the Rust typed links adapter does not yet represent this main effect",
@@ -419,6 +428,40 @@ impl Decoder<'_> {
             return Ok(());
         }
         let kind = self.kind(id);
+        let proposition = self.tag(id, "p");
+        if !proposition.is_empty() {
+            let form = read_program_proposition_binding_form(proposition);
+            if form.is_empty() {
+                return Err(error("a linked proposition has no shared operand plan"));
+            }
+            let mut inner = environment.clone();
+            if form == "binders" {
+                for (slot, binder) in self
+                    .array(
+                        self.field(id, "binders").ok_or_else(|| {
+                            error("a linked proposition has no owned binder list")
+                        })?,
+                    )?
+                    .iter()
+                    .enumerate()
+                {
+                    own_binding(&mut traversal.binding_owners, *binder, id, slot)?;
+                    traversal.identities.insert(*binder);
+                    inner.insert(self.name(*binder)?, *binder);
+                }
+            }
+            for field in read_program_proposition_operand_fields(proposition).split_whitespace() {
+                self.bindings(
+                    self.field(id, field)
+                        .ok_or_else(|| error("a linked proposition has no shared operand"))?,
+                    &inner,
+                    ownership,
+                    traversal,
+                    false,
+                )?;
+            }
+            return Ok(());
+        }
         if kind == "var" {
             let target = self.references.get(&id).and_then(|references| {
                 references.iter().find_map(|(label, target)| {

@@ -317,6 +317,7 @@ class JavaScriptEmitter {
   prop(prop) {
     switch (prop.p) {
       case 'forall': {
+        this.helpers.add('forall');
         const body = this.prop(prop.body);
         return prop.binders.reduceRight(
           (inner, binder) => `ml_forall(${this.domain(binder.type, 3)}, (${binder.name}) => ${inner})`,

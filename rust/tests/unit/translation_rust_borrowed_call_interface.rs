@@ -49,6 +49,9 @@ fn replay(definitions: &[String], data: &Value) -> meta_language::TypedProgramLi
     .unwrap()
 }
 fn field(network: &LinkNetwork, parent: LinkId, label: &str) -> (LinkId, LinkId) {
+    let label = meta_language::typed_program_links_schema()["fields"][label]
+        .as_str()
+        .unwrap_or(label);
     network
         .links()
         .find_map(|link| match link.references() {
@@ -276,14 +279,27 @@ fn linked_value_and_nested_reference_edits_change_actual_calls_without_source_re
     let data = fixture();
     let (network, root) = reload(&data["cases"][0]);
     let program = decode_typed_program_links(&network, root).unwrap();
-    let scalar = network
-        .links()
-        .find(|link| {
-            link.metadata().term() == Some("string value")
-                && link.metadata().definition() == Some("1.0")
-        })
+    let body = network.link(root).unwrap().references()[0];
+    let declarations = field(&network, body, "declarations").1;
+    let leaf = network
+        .link(declarations)
         .unwrap()
-        .id();
+        .references()
+        .iter()
+        .find_map(|entry| {
+            let pair = network.link(*entry).unwrap().references();
+            (network.link(pair[0]).unwrap().metadata().definition() == Some("leaf"))
+                .then_some(pair[1])
+        })
+        .unwrap();
+    let expression = field(&network, leaf, "body").1;
+    let literal = field(&network, expression, "right").1;
+    let scalar = field(&network, literal, "value").1;
+    let checked = serde_json::to_value(&function(&program, "leaf").body).unwrap();
+    assert_eq!(
+        network.link(scalar).unwrap().metadata().definition(),
+        checked["right"]["value"].as_str()
+    );
     let edited = edit_definition(&network, scalar, "2.0");
     let changed = decode_typed_program_links(&edited, root).unwrap();
     for original in &program.declarations {

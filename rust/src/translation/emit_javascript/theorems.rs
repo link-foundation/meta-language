@@ -129,6 +129,7 @@ impl JavaScriptEmitter<'_> {
     pub(super) fn prop(&mut self, prop: &Prop) -> Result<String> {
         Ok(match prop {
             Prop::Forall { binders, body } => {
+                self.helpers.insert(Helper::Forall);
                 let mut inner = self.prop(body)?;
                 for binder in binders.iter().rev() {
                     let domain = self.domain(&binder.ty, 3)?;

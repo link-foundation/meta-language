@@ -215,3 +215,21 @@ export function acceptProgramOptionalAbsence(absence) {
 export function acceptProgramDivisionRounding(rounding) {
   return rounding === "trunc" || rounding === "euclid" || rounding === "floor";
 }
+
+/** @param {string} kind @returns {string} */
+export function readProgramPropositionOperandFields(kind) {
+  if ((kind === "forall")) return "body";
+  if ((kind === "and") || (kind === "or") || (kind === "implies")) return "left right";
+  if ((kind === "not")) return "arg";
+  if ((kind === "bool")) return "expr";
+  if ((kind === "eq") || (kind === "ne") || (kind === "lt") || (kind === "le") || (kind === "gt") || (kind === "ge")) return "left right";
+  return "";
+}
+
+/** @param {string} kind @returns {string} */
+export function readProgramPropositionBindingForm(kind) {
+  if ((kind === "forall")) return "binders";
+  if ((kind === "and") || (kind === "or") || (kind === "implies") || (kind === "not")) return "propositions";
+  if ((kind === "bool") || (kind === "eq") || (kind === "ne") || (kind === "lt") || (kind === "le") || (kind === "gt") || (kind === "ge")) return "expressions";
+  return "";
+}

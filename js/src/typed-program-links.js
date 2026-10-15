@@ -11,7 +11,7 @@ import { emitRust } from './translation/emit-rust.js';
 import { validateLinkedTypedProgram } from './typed-program-links-validation.js';
 import { recheckLinkedTypedProgram } from './typed-program-checked-projection.js';
 import { readLinkedPatternBindingScope } from './typed-program-pattern-bindings.js';
-import { acceptProgramContainerFields, acceptProgramReferenceField, acceptProgramSchemaRoot, isUnsafeProgramField, readProgramContainerKind, readProgramScalarKind, readProgramReferenceSourceField, readProgramReferenceTargetField, readProgramExpressionOperandFields } from './typed-program-link-rules.js';
+import { acceptProgramContainerFields, acceptProgramReferenceField, acceptProgramSchemaRoot, isUnsafeProgramField, readProgramContainerKind, readProgramScalarKind, readProgramReferenceSourceField, readProgramReferenceTargetField, readProgramExpressionOperandFields, readProgramPropositionOperandFields, readProgramPropositionBindingForm } from './typed-program-link-rules.js';
 
 export const TYPED_PROGRAM_LINKS_SCHEMA = Object.freeze(readRuntimeProjectData(new URL('./data/typed-program-links-schema.json', import.meta.url)));
 const schema = TYPED_PROGRAM_LINKS_SCHEMA;
@@ -65,10 +65,10 @@ function bindingTargets(program) {
       }
       return;
     }
-    if (node.p === 'forall') {
+    if (readProgramPropositionBindingForm(node.p ?? '') === 'binders') {
       const inner = new Map(environment);
       for (const binder of node.binders) inner.set(binder.name, binder);
-      walk(node.body, inner);
+      for (const field of readProgramPropositionOperandFields(node.p).split(' ').filter(Boolean)) walk(node[field], inner);
       return;
     }
     if (node.k === 'let') {
@@ -289,15 +289,13 @@ export function readTypedProgramBindingIdentities(network, root) {
   }
   function proposition(node) {
     if (!admit(node, propositions)) return;
-    if (node.p === 'forall') {
+    const form = readProgramPropositionBindingForm(node.p ?? '');
+    if (form === 'binders') {
       for (const binder of node.binders) bindings.add(binder);
-      proposition(node.body);
-    } else if (['and', 'or', 'implies'].includes(node.p)) {
-      proposition(node.left); proposition(node.right);
-    } else if (node.p === 'not') proposition(node.arg);
-    else if (node.p === 'bool') expression(node.expr);
-    else if (['eq', 'ne', 'lt', 'le', 'gt', 'ge'].includes(node.p)) {
-      expression(node.left); expression(node.right);
+    }
+    for (const field of readProgramPropositionOperandFields(node.p ?? '').split(' ').filter(Boolean)) {
+      if (form === 'expressions') expression(node[field]);
+      else proposition(node[field]);
     }
   }
   for (const entry of program.declarations.values()) {

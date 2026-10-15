@@ -472,3 +472,41 @@ pub fn accept_program_optional_absence(absence: &str) -> bool {
 pub fn accept_program_division_rounding(rounding: &str) -> bool {
     (rounding == "trunc" || rounding == "euclid") || rounding == "floor"
 }
+
+/// Read the corresponding decision of the shared typed program links schema.
+#[must_use]
+pub fn read_program_proposition_operand_fields(kind: &str) -> String {
+    if kind == "forall" {
+        String::from("body")
+    } else if (kind == "and" || kind == "or") || kind == "implies" {
+        String::from("left right")
+    } else if kind == "not" {
+        String::from("arg")
+    } else if kind == "bool" {
+        String::from("expr")
+    } else if ((((kind == "eq" || kind == "ne") || kind == "lt") || kind == "le") || kind == "gt")
+        || kind == "ge"
+    {
+        String::from("left right")
+    } else {
+        String::new()
+    }
+}
+
+/// Read the corresponding decision of the shared typed program links schema.
+#[must_use]
+pub fn read_program_proposition_binding_form(kind: &str) -> String {
+    if kind == "forall" {
+        String::from("binders")
+    } else if ((kind == "and" || kind == "or") || kind == "implies") || kind == "not" {
+        String::from("propositions")
+    } else if (((((kind == "bool" || kind == "eq") || kind == "ne") || kind == "lt")
+        || kind == "le")
+        || kind == "gt")
+        || kind == "ge"
+    {
+        String::from("expressions")
+    } else {
+        String::new()
+    }
+}
