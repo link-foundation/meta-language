@@ -1,0 +1,1 @@
+JavaScript evidence partitions that do not read downstream workload reports can start while those workloads run. The downstream partition still waits for its reports, and Rust still waits for every JavaScript partition to pass. Test scopes, artifact identities, toolchains, deadlines and aggregate evidence validation are retained.
