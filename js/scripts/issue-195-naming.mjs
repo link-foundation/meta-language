@@ -17788,7 +17788,1945 @@ const COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES=COMPLETE_TABLE_BINARY_CAN
  extract:(raw,file)=>{let text=raw;if(file.endsWith('.lino')){const saved=COMPLETE_TABLE_BINARY_CANDIDATE_SOURCE_TEXTS.get(file);if(!saved||saved.raw!==raw)COMPLETE_TABLE_BINARY_CANDIDATE_SOURCE_TEXTS.set(file,{raw,text:JSON.stringify(readStructuredDataLino(raw))});text=COMPLETE_TABLE_BINARY_CANDIDATE_SOURCE_TEXTS.get(file).text;}return files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeCompleteTableBinaryCandidateName(name));},
  recordOf:name=>Object.values(files).flat().find(entry=>normalizeCompleteTableBinaryCandidateName(entry.name)===name).id,
 }));
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES]);
+// Original raw graph, finite cancellation evidence and exact source oracle meanings.
+const ORIGINAL_RAW_CANCELLATION_NAME_BINDINGS=[
+  {
+    "inventory": "raw exact JavaScript identity source",
+    "files": {
+      "experiments/original-link-complete-table-projection/raw-rules.mjs": [
+        {
+          "name": "acceptOriginalLinkIdentityWord",
+          "id": "repository.accept-original-link-identity-word"
+        },
+        {
+          "name": "checkOriginalLinkIdentityIndex",
+          "id": "repository.check-original-link-identity-index"
+        },
+        {
+          "name": "findOriginalLinkIdentityOrdinal",
+          "id": "repository.find-original-link-identity-ordinal"
+        },
+        {
+          "name": "readOriginalLinkIdentityOrdinals",
+          "id": "repository.read-original-link-identity-ordinals"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/data/raw-native-definitions.lino": [
+        {
+          "name": "acceptOriginalLinkIdentityWord",
+          "id": "repository.accept-original-link-identity-word"
+        },
+        {
+          "name": "checkOriginalLinkIdentityIndex",
+          "id": "repository.check-original-link-identity-index"
+        },
+        {
+          "name": "findOriginalLinkIdentityOrdinal",
+          "id": "repository.find-original-link-identity-ordinal"
+        },
+        {
+          "name": "readOriginalLinkIdentityOrdinals",
+          "id": "repository.read-original-link-identity-ordinals"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "raw exact native scalar provider",
+    "files": {
+      "experiments/original-link-complete-table-projection/data/raw-native-definitions.lino": [
+        {
+          "name": "accept_original_link_identity_word",
+          "id": "repository.accept-original-link-identity-word"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "raw exact native Boolean scan wrapper",
+    "files": {
+      "experiments/original-link-complete-table-projection/data/raw-native-definitions.lino": [
+        {
+          "name": "MlCheckOriginalLinkIdentityIndexLoop1Result",
+          "id": "repository.original-link-identity-index-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkIdentityIndexLoop1Done",
+          "id": "repository.original-link-identity-index-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkIdentityIndexLoop1Return",
+          "id": "repository.original-link-identity-index-scan-return-constructor"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "raw exact native Boolean source wrapper",
+    "files": {
+      "experiments/original-link-complete-table-projection/data/raw-native-definitions.lino": [
+        {
+          "name": "ml_checkOriginalLinkIdentityIndex_loop1_result",
+          "id": "repository.original-link-identity-index-scan-control-result"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original raw graph pure operations",
+    "files": {
+      "experiments/original-link-complete-table-projection/raw-rules.mjs": [
+        {
+          "name": "readOriginalRawPolicy",
+          "id": "repository.read-original-raw-graph-policy"
+        },
+        {
+          "name": "acceptOriginalRawInteger",
+          "id": "repository.accept-original-raw-graph-integer"
+        },
+        {
+          "name": "hasOriginalRawMember",
+          "id": "repository.contain-original-raw-graph-member"
+        },
+        {
+          "name": "readOriginalRawMemberPosition",
+          "id": "repository.read-original-raw-graph-member-position"
+        },
+        {
+          "name": "equalOriginalRawUnits",
+          "id": "repository.equal-original-raw-graph-unit-ranges"
+        },
+        {
+          "name": "readOriginalRawTextCode",
+          "id": "repository.read-original-raw-graph-text-code"
+        },
+        {
+          "name": "readOriginalRawFieldCode",
+          "id": "repository.read-original-raw-graph-field-code"
+        },
+        {
+          "name": "readOriginalRawReferenceRole",
+          "id": "repository.read-original-raw-graph-reference-role"
+        },
+        {
+          "name": "readOriginalRawReferences",
+          "id": "repository.read-original-raw-graph-references"
+        },
+        {
+          "name": "readOriginalRawField",
+          "id": "repository.read-original-raw-graph-field"
+        },
+        {
+          "name": "equalOriginalRawStrings",
+          "id": "repository.equal-original-raw-graph-strings"
+        },
+        {
+          "name": "acceptOriginalRawNumberText",
+          "id": "repository.accept-original-raw-graph-number-text"
+        },
+        {
+          "name": "readOriginalRawRoleField",
+          "id": "repository.read-original-raw-graph-role-field"
+        },
+        {
+          "name": "readOriginalRawRoleList",
+          "id": "repository.read-original-raw-graph-role-list"
+        },
+        {
+          "name": "equalOriginalRawOptionalOwner",
+          "id": "repository.equal-original-raw-graph-optional-owner"
+        },
+        {
+          "name": "checkOriginalLinkRawRoles",
+          "id": "repository.check-original-raw-graph-owned-roles"
+        },
+        {
+          "name": "checkOriginalLinkRawShape",
+          "id": "repository.check-original-raw-graph-shape"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/data/raw-native-definitions.lino": [
+        {
+          "name": "readOriginalRawPolicy",
+          "id": "repository.read-original-raw-graph-policy"
+        },
+        {
+          "name": "read_original_raw_policy",
+          "id": "repository.read-original-raw-graph-policy"
+        },
+        {
+          "name": "acceptOriginalRawInteger",
+          "id": "repository.accept-original-raw-graph-integer"
+        },
+        {
+          "name": "accept_original_raw_integer",
+          "id": "repository.accept-original-raw-graph-integer"
+        },
+        {
+          "name": "hasOriginalRawMember",
+          "id": "repository.contain-original-raw-graph-member"
+        },
+        {
+          "name": "has_original_raw_member",
+          "id": "repository.contain-original-raw-graph-member"
+        },
+        {
+          "name": "readOriginalRawMemberPosition",
+          "id": "repository.read-original-raw-graph-member-position"
+        },
+        {
+          "name": "read_original_raw_member_position",
+          "id": "repository.read-original-raw-graph-member-position"
+        },
+        {
+          "name": "equalOriginalRawUnits",
+          "id": "repository.equal-original-raw-graph-unit-ranges"
+        },
+        {
+          "name": "equal_original_raw_units",
+          "id": "repository.equal-original-raw-graph-unit-ranges"
+        },
+        {
+          "name": "readOriginalRawTextCode",
+          "id": "repository.read-original-raw-graph-text-code"
+        },
+        {
+          "name": "read_original_raw_text_code",
+          "id": "repository.read-original-raw-graph-text-code"
+        },
+        {
+          "name": "readOriginalRawFieldCode",
+          "id": "repository.read-original-raw-graph-field-code"
+        },
+        {
+          "name": "read_original_raw_field_code",
+          "id": "repository.read-original-raw-graph-field-code"
+        },
+        {
+          "name": "readOriginalRawReferenceRole",
+          "id": "repository.read-original-raw-graph-reference-role"
+        },
+        {
+          "name": "read_original_raw_reference_role",
+          "id": "repository.read-original-raw-graph-reference-role"
+        },
+        {
+          "name": "readOriginalRawReferences",
+          "id": "repository.read-original-raw-graph-references"
+        },
+        {
+          "name": "read_original_raw_references",
+          "id": "repository.read-original-raw-graph-references"
+        },
+        {
+          "name": "readOriginalRawField",
+          "id": "repository.read-original-raw-graph-field"
+        },
+        {
+          "name": "read_original_raw_field",
+          "id": "repository.read-original-raw-graph-field"
+        },
+        {
+          "name": "equalOriginalRawStrings",
+          "id": "repository.equal-original-raw-graph-strings"
+        },
+        {
+          "name": "equal_original_raw_strings",
+          "id": "repository.equal-original-raw-graph-strings"
+        },
+        {
+          "name": "acceptOriginalRawNumberText",
+          "id": "repository.accept-original-raw-graph-number-text"
+        },
+        {
+          "name": "accept_original_raw_number_text",
+          "id": "repository.accept-original-raw-graph-number-text"
+        },
+        {
+          "name": "readOriginalRawRoleField",
+          "id": "repository.read-original-raw-graph-role-field"
+        },
+        {
+          "name": "read_original_raw_role_field",
+          "id": "repository.read-original-raw-graph-role-field"
+        },
+        {
+          "name": "readOriginalRawRoleList",
+          "id": "repository.read-original-raw-graph-role-list"
+        },
+        {
+          "name": "read_original_raw_role_list",
+          "id": "repository.read-original-raw-graph-role-list"
+        },
+        {
+          "name": "equalOriginalRawOptionalOwner",
+          "id": "repository.equal-original-raw-graph-optional-owner"
+        },
+        {
+          "name": "equal_original_raw_optional_owner",
+          "id": "repository.equal-original-raw-graph-optional-owner"
+        },
+        {
+          "name": "checkOriginalLinkRawRoles",
+          "id": "repository.check-original-raw-graph-owned-roles"
+        },
+        {
+          "name": "check_original_link_raw_roles",
+          "id": "repository.check-original-raw-graph-owned-roles"
+        },
+        {
+          "name": "checkOriginalLinkRawShape",
+          "id": "repository.check-original-raw-graph-shape"
+        },
+        {
+          "name": "check_original_link_raw_shape",
+          "id": "repository.check-original-raw-graph-shape"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original raw graph source and policy operations",
+    "files": {
+      "experiments/original-link-complete-table-projection/raw-policy.mjs": [
+        {
+          "name": "originalLinkRawPolicy",
+          "id": "repository.original-raw-graph-policy"
+        },
+        {
+          "name": "originalLinkRawInstructions",
+          "id": "repository.create-original-raw-graph-instructions"
+        },
+        {
+          "name": "renderOriginalLinkRawInstructions",
+          "id": "repository.render-original-raw-graph-instructions"
+        },
+        {
+          "name": "record",
+          "id": "repository.create-original-raw-graph-record-recipe"
+        },
+        {
+          "name": "list",
+          "id": "repository.create-original-raw-graph-list-recipe"
+        },
+        {
+          "name": "pack",
+          "id": "repository.pack-original-raw-graph-policy-text"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/raw-transport.mjs": [
+        {
+          "name": "kind",
+          "id": "repository.read-original-raw-graph-host-kind"
+        },
+        {
+          "name": "readOriginalLinkRawTransport",
+          "id": "repository.read-original-raw-graph-transport"
+        },
+        {
+          "name": "checkOriginalLinkRawSelectedGraph",
+          "id": "repository.check-original-raw-graph-selected-source"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/generate-raw.mjs": [
+        {
+          "name": "generateOriginalLinkRawJavaScript",
+          "id": "repository.generate-original-raw-graph-javascript"
+        },
+        {
+          "name": "generateOriginalLinkRawNative",
+          "id": "repository.generate-original-raw-graph-native-artifact"
+        },
+        {
+          "name": "recordOriginalLinkRawTranslationAttempt",
+          "id": "repository.record-original-raw-graph-translation-attempt"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "raw owned native identity realizations",
+    "files": {
+      "experiments/original-link-complete-table-projection/data/raw-native-definitions.lino": [
+        {
+          "name": "check_original_link_identity_index",
+          "id": "repository.check-owned-original-link-identity-index"
+        },
+        {
+          "name": "find_original_link_identity_ordinal",
+          "id": "repository.find-owned-original-link-identity-ordinal"
+        },
+        {
+          "name": "read_original_link_identity_ordinals",
+          "id": "repository.read-owned-original-link-identity-ordinals"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original raw generated continuations",
+    "files": {
+      "experiments/original-link-complete-table-projection/data/raw-native-definitions.lino": [
+        {
+          "name": "ml_checkOriginalLinkIdentityIndex_loop1",
+          "id": "repository.continue-owned-original-identity-index-scan"
+        },
+        {
+          "name": "ml_check_original_link_identity_index_loop1",
+          "id": "repository.continue-owned-original-identity-index-scan"
+        },
+        {
+          "name": "ml_findOriginalLinkIdentityOrdinal_loop2",
+          "id": "repository.continue-owned-original-identity-ordinal-search"
+        },
+        {
+          "name": "ml_find_original_link_identity_ordinal_loop2",
+          "id": "repository.continue-owned-original-identity-ordinal-search"
+        },
+        {
+          "name": "ml_readOriginalLinkIdentityOrdinals_loop4",
+          "id": "repository.continue-owned-original-identity-result-scan"
+        },
+        {
+          "name": "ml_read_original_link_identity_ordinals_loop4",
+          "id": "repository.continue-owned-original-identity-result-scan"
+        },
+        {
+          "name": "ml_readOriginalLinkIdentityOrdinals_loop3",
+          "id": "repository.continue-owned-original-identity-query-scan"
+        },
+        {
+          "name": "ml_read_original_link_identity_ordinals_loop3",
+          "id": "repository.continue-owned-original-identity-query-scan"
+        },
+        {
+          "name": "ml_equalOriginalRawUnits_loop5",
+          "id": "repository.continue-original-raw-unit-range-scan"
+        },
+        {
+          "name": "ml_equal_original_raw_units_loop5",
+          "id": "repository.continue-original-raw-unit-range-scan"
+        },
+        {
+          "name": "ml_readOriginalRawTextCode_loop6",
+          "id": "repository.continue-original-raw-fixed-text-scan"
+        },
+        {
+          "name": "ml_read_original_raw_text_code_loop6",
+          "id": "repository.continue-original-raw-fixed-text-scan"
+        },
+        {
+          "name": "ml_readOriginalRawFieldCode_loop8",
+          "id": "repository.continue-original-raw-field-normalization"
+        },
+        {
+          "name": "ml_read_original_raw_field_code_loop8",
+          "id": "repository.continue-original-raw-field-normalization"
+        },
+        {
+          "name": "ml_readOriginalRawFieldCode_loop9",
+          "id": "repository.continue-original-raw-field-dictionary-scan"
+        },
+        {
+          "name": "ml_read_original_raw_field_code_loop9",
+          "id": "repository.continue-original-raw-field-dictionary-scan"
+        },
+        {
+          "name": "ml_readOriginalRawFieldCode_loop7",
+          "id": "repository.continue-original-raw-field-alias-scan"
+        },
+        {
+          "name": "ml_read_original_raw_field_code_loop7",
+          "id": "repository.continue-original-raw-field-alias-scan"
+        },
+        {
+          "name": "ml_readOriginalRawReferenceRole_loop10",
+          "id": "repository.continue-original-raw-reference-label-scan"
+        },
+        {
+          "name": "ml_read_original_raw_reference_role_loop10",
+          "id": "repository.continue-original-raw-reference-label-scan"
+        },
+        {
+          "name": "ml_acceptOriginalRawNumberText_loop14",
+          "id": "repository.continue-original-raw-exponent-digit-scan"
+        },
+        {
+          "name": "ml_accept_original_raw_number_text_loop14",
+          "id": "repository.continue-original-raw-exponent-digit-scan"
+        },
+        {
+          "name": "ml_acceptOriginalRawNumberText_loop15",
+          "id": "repository.continue-original-raw-fraction-digit-scan"
+        },
+        {
+          "name": "ml_accept_original_raw_number_text_loop15",
+          "id": "repository.continue-original-raw-fraction-digit-scan"
+        },
+        {
+          "name": "ml_acceptOriginalRawNumberText_loop11",
+          "id": "repository.continue-original-raw-leading-digit-scan"
+        },
+        {
+          "name": "ml_accept_original_raw_number_text_loop11",
+          "id": "repository.continue-original-raw-leading-digit-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop31",
+          "id": "repository.continue-original-raw-condition-member-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_roles_loop31",
+          "id": "repository.continue-original-raw-condition-member-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop30",
+          "id": "repository.continue-original-raw-condition-owner-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_roles_loop30",
+          "id": "repository.continue-original-raw-condition-owner-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop29",
+          "id": "repository.continue-original-raw-condition-field-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_roles_loop29",
+          "id": "repository.continue-original-raw-condition-field-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop28",
+          "id": "repository.continue-original-raw-token-owner-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_roles_loop28",
+          "id": "repository.continue-original-raw-token-owner-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop27",
+          "id": "repository.continue-original-raw-function-proof-owner-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_roles_loop27",
+          "id": "repository.continue-original-raw-function-proof-owner-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop32",
+          "id": "repository.continue-original-raw-operation-part-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_roles_loop32",
+          "id": "repository.continue-original-raw-operation-part-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop26",
+          "id": "repository.continue-original-raw-operation-owner-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_roles_loop26",
+          "id": "repository.continue-original-raw-operation-owner-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop34",
+          "id": "repository.continue-original-raw-position-owner-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_roles_loop34",
+          "id": "repository.continue-original-raw-position-owner-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop35",
+          "id": "repository.continue-original-raw-parameter-name-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_roles_loop35",
+          "id": "repository.continue-original-raw-parameter-name-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop33",
+          "id": "repository.continue-original-raw-parameter-owner-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_roles_loop33",
+          "id": "repository.continue-original-raw-parameter-owner-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop25",
+          "id": "repository.continue-original-raw-declaration-owner-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_roles_loop25",
+          "id": "repository.continue-original-raw-declaration-owner-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop40",
+          "id": "repository.continue-original-raw-number-token-field-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_roles_loop40",
+          "id": "repository.continue-original-raw-number-token-field-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop37",
+          "id": "repository.continue-original-raw-required-field-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_roles_loop37",
+          "id": "repository.continue-original-raw-required-field-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop41",
+          "id": "repository.continue-original-raw-field-role-instruction-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_roles_loop41",
+          "id": "repository.continue-original-raw-field-role-instruction-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop36",
+          "id": "repository.continue-original-raw-represented-field-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_roles_loop36",
+          "id": "repository.continue-original-raw-represented-field-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop24",
+          "id": "repository.continue-original-raw-role-obligation-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_roles_loop24",
+          "id": "repository.continue-original-raw-role-obligation-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawShape_loop53",
+          "id": "repository.continue-original-raw-mapping-key-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_shape_loop53",
+          "id": "repository.continue-original-raw-mapping-key-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawShape_loop52",
+          "id": "repository.continue-original-raw-mapping-pair-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_shape_loop52",
+          "id": "repository.continue-original-raw-mapping-pair-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawShape_loop50",
+          "id": "repository.continue-original-raw-owned-structure-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_shape_loop50",
+          "id": "repository.continue-original-raw-owned-structure-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawShape_loop49",
+          "id": "repository.continue-original-raw-field-claim-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_shape_loop49",
+          "id": "repository.continue-original-raw-field-claim-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawShape_loop54",
+          "id": "repository.continue-original-raw-facet-field-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_shape_loop54",
+          "id": "repository.continue-original-raw-facet-field-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawShape_loop48",
+          "id": "repository.continue-original-raw-selected-facet-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_shape_loop48",
+          "id": "repository.continue-original-raw-selected-facet-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawShape_loop55",
+          "id": "repository.continue-original-raw-ignored-metadata-cell-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_shape_loop55",
+          "id": "repository.continue-original-raw-ignored-metadata-cell-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawShape_loop47",
+          "id": "repository.continue-original-raw-ignored-metadata-row-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_shape_loop47",
+          "id": "repository.continue-original-raw-ignored-metadata-row-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawShape_loop46",
+          "id": "repository.continue-original-raw-metadata-slot-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_shape_loop46",
+          "id": "repository.continue-original-raw-metadata-slot-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawShape_loop45",
+          "id": "repository.continue-original-raw-reference-word-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_shape_loop45",
+          "id": "repository.continue-original-raw-reference-word-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawShape_loop57",
+          "id": "repository.continue-original-raw-primitive-number-cell-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_shape_loop57",
+          "id": "repository.continue-original-raw-primitive-number-cell-scan"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawShape_loop44",
+          "id": "repository.continue-original-raw-transport-column-scan"
+        },
+        {
+          "name": "ml_check_original_link_raw_shape_loop44",
+          "id": "repository.continue-original-raw-transport-column-scan"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original raw generated result wrappers",
+    "files": {
+      "experiments/original-link-complete-table-projection/data/raw-native-definitions.lino": [
+        {
+          "name": "ml_readOriginalLinkIdentityOrdinals_loop4_result",
+          "id": "repository.owned-original-identity-result-scan-control-result"
+        },
+        {
+          "name": "MlReadOriginalLinkIdentityOrdinalsLoop4Result",
+          "id": "repository.owned-original-identity-result-scan-control-result"
+        },
+        {
+          "name": "ml_readOriginalLinkIdentityOrdinals_loop3_result",
+          "id": "repository.owned-original-identity-query-scan-control-result"
+        },
+        {
+          "name": "MlReadOriginalLinkIdentityOrdinalsLoop3Result",
+          "id": "repository.owned-original-identity-query-scan-control-result"
+        },
+        {
+          "name": "ml_equalOriginalRawUnits_loop5_result",
+          "id": "repository.original-raw-unit-range-scan-control-result"
+        },
+        {
+          "name": "MlEqualOriginalRawUnitsLoop5Result",
+          "id": "repository.original-raw-unit-range-scan-control-result"
+        },
+        {
+          "name": "ml_readOriginalRawTextCode_loop6_result",
+          "id": "repository.original-raw-fixed-text-scan-control-result"
+        },
+        {
+          "name": "MlReadOriginalRawTextCodeLoop6Result",
+          "id": "repository.original-raw-fixed-text-scan-control-result"
+        },
+        {
+          "name": "ml_readOriginalRawFieldCode_loop9_result",
+          "id": "repository.original-raw-field-dictionary-scan-control-result"
+        },
+        {
+          "name": "MlReadOriginalRawFieldCodeLoop9Result",
+          "id": "repository.original-raw-field-dictionary-scan-control-result"
+        },
+        {
+          "name": "ml_readOriginalRawFieldCode_loop7_result",
+          "id": "repository.original-raw-field-alias-scan-control-result"
+        },
+        {
+          "name": "MlReadOriginalRawFieldCodeLoop7Result",
+          "id": "repository.original-raw-field-alias-scan-control-result"
+        },
+        {
+          "name": "ml_readOriginalRawReferenceRole_loop10_result",
+          "id": "repository.original-raw-reference-label-scan-control-result"
+        },
+        {
+          "name": "MlReadOriginalRawReferenceRoleLoop10Result",
+          "id": "repository.original-raw-reference-label-scan-control-result"
+        },
+        {
+          "name": "ml_acceptOriginalRawNumberText_join13",
+          "id": "repository.original-raw-exponent-stage-control-result"
+        },
+        {
+          "name": "MlAcceptOriginalRawNumberTextJoin13",
+          "id": "repository.original-raw-exponent-stage-control-result"
+        },
+        {
+          "name": "ml_acceptOriginalRawNumberText_loop14_result",
+          "id": "repository.original-raw-exponent-digit-scan-control-result"
+        },
+        {
+          "name": "MlAcceptOriginalRawNumberTextLoop14Result",
+          "id": "repository.original-raw-exponent-digit-scan-control-result"
+        },
+        {
+          "name": "ml_acceptOriginalRawNumberText_join12",
+          "id": "repository.original-raw-fraction-stage-control-result"
+        },
+        {
+          "name": "MlAcceptOriginalRawNumberTextJoin12",
+          "id": "repository.original-raw-fraction-stage-control-result"
+        },
+        {
+          "name": "ml_acceptOriginalRawNumberText_loop15_result",
+          "id": "repository.original-raw-fraction-digit-scan-control-result"
+        },
+        {
+          "name": "MlAcceptOriginalRawNumberTextLoop15Result",
+          "id": "repository.original-raw-fraction-digit-scan-control-result"
+        },
+        {
+          "name": "ml_acceptOriginalRawNumberText_loop11_result",
+          "id": "repository.original-raw-leading-digit-scan-control-result"
+        },
+        {
+          "name": "MlAcceptOriginalRawNumberTextLoop11Result",
+          "id": "repository.original-raw-leading-digit-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop29_result",
+          "id": "repository.original-raw-condition-field-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop29Result",
+          "id": "repository.original-raw-condition-field-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop30_result",
+          "id": "repository.original-raw-condition-owner-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop30Result",
+          "id": "repository.original-raw-condition-owner-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop31_result",
+          "id": "repository.original-raw-condition-member-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop31Result",
+          "id": "repository.original-raw-condition-member-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop28_result",
+          "id": "repository.original-raw-token-owner-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop28Result",
+          "id": "repository.original-raw-token-owner-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop27_result",
+          "id": "repository.original-raw-function-proof-owner-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop27Result",
+          "id": "repository.original-raw-function-proof-owner-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop26_result",
+          "id": "repository.original-raw-operation-owner-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop26Result",
+          "id": "repository.original-raw-operation-owner-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop32_result",
+          "id": "repository.original-raw-operation-part-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop32Result",
+          "id": "repository.original-raw-operation-part-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop25_result",
+          "id": "repository.original-raw-declaration-owner-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop25Result",
+          "id": "repository.original-raw-declaration-owner-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop34_result",
+          "id": "repository.original-raw-position-owner-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop34Result",
+          "id": "repository.original-raw-position-owner-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop33_result",
+          "id": "repository.original-raw-parameter-owner-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop33Result",
+          "id": "repository.original-raw-parameter-owner-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop35_result",
+          "id": "repository.original-raw-parameter-name-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop35Result",
+          "id": "repository.original-raw-parameter-name-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop24_result",
+          "id": "repository.original-raw-role-obligation-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop24Result",
+          "id": "repository.original-raw-role-obligation-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_join39",
+          "id": "repository.original-raw-token-form-stage-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesJoin39",
+          "id": "repository.original-raw-token-form-stage-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop40_result",
+          "id": "repository.original-raw-number-token-field-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop40Result",
+          "id": "repository.original-raw-number-token-field-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_join38",
+          "id": "repository.original-raw-core-form-stage-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesJoin38",
+          "id": "repository.original-raw-core-form-stage-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop37_result",
+          "id": "repository.original-raw-required-field-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop37Result",
+          "id": "repository.original-raw-required-field-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawRoles_loop36_result",
+          "id": "repository.original-raw-represented-field-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop36Result",
+          "id": "repository.original-raw-represented-field-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawShape_loop50_result",
+          "id": "repository.original-raw-owned-structure-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop50Result",
+          "id": "repository.original-raw-owned-structure-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawShape_join51",
+          "id": "repository.original-raw-container-form-stage-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeJoin51",
+          "id": "repository.original-raw-container-form-stage-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawShape_loop52_result",
+          "id": "repository.original-raw-mapping-pair-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop52Result",
+          "id": "repository.original-raw-mapping-pair-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawShape_loop53_result",
+          "id": "repository.original-raw-mapping-key-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop53Result",
+          "id": "repository.original-raw-mapping-key-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawShape_loop49_result",
+          "id": "repository.original-raw-field-claim-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop49Result",
+          "id": "repository.original-raw-field-claim-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawShape_loop48_result",
+          "id": "repository.original-raw-selected-facet-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop48Result",
+          "id": "repository.original-raw-selected-facet-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawShape_loop54_result",
+          "id": "repository.original-raw-facet-field-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop54Result",
+          "id": "repository.original-raw-facet-field-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawShape_loop47_result",
+          "id": "repository.original-raw-ignored-metadata-row-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop47Result",
+          "id": "repository.original-raw-ignored-metadata-row-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawShape_loop55_result",
+          "id": "repository.original-raw-ignored-metadata-cell-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop55Result",
+          "id": "repository.original-raw-ignored-metadata-cell-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawShape_loop46_result",
+          "id": "repository.original-raw-metadata-slot-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop46Result",
+          "id": "repository.original-raw-metadata-slot-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawShape_join56",
+          "id": "repository.original-raw-metadata-string-stage-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeJoin56",
+          "id": "repository.original-raw-metadata-string-stage-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawShape_loop45_result",
+          "id": "repository.original-raw-reference-word-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop45Result",
+          "id": "repository.original-raw-reference-word-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawShape_loop44_result",
+          "id": "repository.original-raw-transport-column-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop44Result",
+          "id": "repository.original-raw-transport-column-scan-control-result"
+        },
+        {
+          "name": "ml_checkOriginalLinkRawShape_loop57_result",
+          "id": "repository.original-raw-primitive-number-cell-scan-control-result"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop57Result",
+          "id": "repository.original-raw-primitive-number-cell-scan-control-result"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original raw generated constructors",
+    "files": {
+      "experiments/original-link-complete-table-projection/data/raw-native-definitions.lino": [
+        {
+          "name": "MlReadOriginalLinkIdentityOrdinalsLoop4Done",
+          "id": "repository.owned-original-identity-result-scan-completion-constructor"
+        },
+        {
+          "name": "MlReadOriginalLinkIdentityOrdinalsLoop4Return",
+          "id": "repository.owned-original-identity-result-scan-return-constructor"
+        },
+        {
+          "name": "MlReadOriginalLinkIdentityOrdinalsLoop3Done",
+          "id": "repository.owned-original-identity-query-scan-completion-constructor"
+        },
+        {
+          "name": "MlReadOriginalLinkIdentityOrdinalsLoop3Return",
+          "id": "repository.owned-original-identity-query-scan-return-constructor"
+        },
+        {
+          "name": "MlEqualOriginalRawUnitsLoop5Done",
+          "id": "repository.original-raw-unit-range-scan-completion-constructor"
+        },
+        {
+          "name": "MlEqualOriginalRawUnitsLoop5Return",
+          "id": "repository.original-raw-unit-range-scan-return-constructor"
+        },
+        {
+          "name": "MlReadOriginalRawTextCodeLoop6Done",
+          "id": "repository.original-raw-fixed-text-scan-completion-constructor"
+        },
+        {
+          "name": "MlReadOriginalRawTextCodeLoop6Return",
+          "id": "repository.original-raw-fixed-text-scan-return-constructor"
+        },
+        {
+          "name": "MlReadOriginalRawFieldCodeLoop9Done",
+          "id": "repository.original-raw-field-dictionary-scan-completion-constructor"
+        },
+        {
+          "name": "MlReadOriginalRawFieldCodeLoop9Return",
+          "id": "repository.original-raw-field-dictionary-scan-return-constructor"
+        },
+        {
+          "name": "MlReadOriginalRawFieldCodeLoop7Done",
+          "id": "repository.original-raw-field-alias-scan-completion-constructor"
+        },
+        {
+          "name": "MlReadOriginalRawFieldCodeLoop7Return",
+          "id": "repository.original-raw-field-alias-scan-return-constructor"
+        },
+        {
+          "name": "MlReadOriginalRawReferenceRoleLoop10Done",
+          "id": "repository.original-raw-reference-label-scan-completion-constructor"
+        },
+        {
+          "name": "MlReadOriginalRawReferenceRoleLoop10Return",
+          "id": "repository.original-raw-reference-label-scan-return-constructor"
+        },
+        {
+          "name": "MlAcceptOriginalRawNumberTextJoin13Next",
+          "id": "repository.original-raw-exponent-stage-next-state-constructor"
+        },
+        {
+          "name": "MlAcceptOriginalRawNumberTextJoin13Return",
+          "id": "repository.original-raw-exponent-stage-return-constructor"
+        },
+        {
+          "name": "MlAcceptOriginalRawNumberTextLoop14Done",
+          "id": "repository.original-raw-exponent-digit-scan-completion-constructor"
+        },
+        {
+          "name": "MlAcceptOriginalRawNumberTextJoin12Next",
+          "id": "repository.original-raw-fraction-stage-next-state-constructor"
+        },
+        {
+          "name": "MlAcceptOriginalRawNumberTextJoin12Return",
+          "id": "repository.original-raw-fraction-stage-return-constructor"
+        },
+        {
+          "name": "MlAcceptOriginalRawNumberTextLoop15Done",
+          "id": "repository.original-raw-fraction-digit-scan-completion-constructor"
+        },
+        {
+          "name": "MlAcceptOriginalRawNumberTextLoop11Done",
+          "id": "repository.original-raw-leading-digit-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop29Done",
+          "id": "repository.original-raw-condition-field-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop29Return",
+          "id": "repository.original-raw-condition-field-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop30Done",
+          "id": "repository.original-raw-condition-owner-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop30Return",
+          "id": "repository.original-raw-condition-owner-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop31Done",
+          "id": "repository.original-raw-condition-member-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop31Return",
+          "id": "repository.original-raw-condition-member-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop28Done",
+          "id": "repository.original-raw-token-owner-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop28Return",
+          "id": "repository.original-raw-token-owner-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop27Done",
+          "id": "repository.original-raw-function-proof-owner-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop27Return",
+          "id": "repository.original-raw-function-proof-owner-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop26Done",
+          "id": "repository.original-raw-operation-owner-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop26Return",
+          "id": "repository.original-raw-operation-owner-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop32Done",
+          "id": "repository.original-raw-operation-part-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop25Done",
+          "id": "repository.original-raw-declaration-owner-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop25Return",
+          "id": "repository.original-raw-declaration-owner-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop34Done",
+          "id": "repository.original-raw-position-owner-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop34Return",
+          "id": "repository.original-raw-position-owner-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop33Done",
+          "id": "repository.original-raw-parameter-owner-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop33Return",
+          "id": "repository.original-raw-parameter-owner-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop35Done",
+          "id": "repository.original-raw-parameter-name-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop35Return",
+          "id": "repository.original-raw-parameter-name-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop24Done",
+          "id": "repository.original-raw-role-obligation-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop24Return",
+          "id": "repository.original-raw-role-obligation-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesJoin39Next",
+          "id": "repository.original-raw-token-form-stage-next-state-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesJoin39Return",
+          "id": "repository.original-raw-token-form-stage-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop40Done",
+          "id": "repository.original-raw-number-token-field-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop40Return",
+          "id": "repository.original-raw-number-token-field-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesJoin38Next",
+          "id": "repository.original-raw-core-form-stage-next-state-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesJoin38Return",
+          "id": "repository.original-raw-core-form-stage-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop37Done",
+          "id": "repository.original-raw-required-field-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop37Return",
+          "id": "repository.original-raw-required-field-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop36Done",
+          "id": "repository.original-raw-represented-field-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawRolesLoop36Return",
+          "id": "repository.original-raw-represented-field-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop50Done",
+          "id": "repository.original-raw-owned-structure-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop50Return",
+          "id": "repository.original-raw-owned-structure-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeJoin51Next",
+          "id": "repository.original-raw-container-form-stage-next-state-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeJoin51Return",
+          "id": "repository.original-raw-container-form-stage-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop52Done",
+          "id": "repository.original-raw-mapping-pair-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop52Return",
+          "id": "repository.original-raw-mapping-pair-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop53Done",
+          "id": "repository.original-raw-mapping-key-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop53Return",
+          "id": "repository.original-raw-mapping-key-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop49Done",
+          "id": "repository.original-raw-field-claim-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop49Return",
+          "id": "repository.original-raw-field-claim-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop48Done",
+          "id": "repository.original-raw-selected-facet-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop48Return",
+          "id": "repository.original-raw-selected-facet-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop54Done",
+          "id": "repository.original-raw-facet-field-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop54Return",
+          "id": "repository.original-raw-facet-field-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop47Done",
+          "id": "repository.original-raw-ignored-metadata-row-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop47Return",
+          "id": "repository.original-raw-ignored-metadata-row-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop55Done",
+          "id": "repository.original-raw-ignored-metadata-cell-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop55Return",
+          "id": "repository.original-raw-ignored-metadata-cell-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop46Done",
+          "id": "repository.original-raw-metadata-slot-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop46Return",
+          "id": "repository.original-raw-metadata-slot-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeJoin56Next",
+          "id": "repository.original-raw-metadata-string-stage-next-state-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeJoin56Return",
+          "id": "repository.original-raw-metadata-string-stage-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop45Done",
+          "id": "repository.original-raw-reference-word-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop45Return",
+          "id": "repository.original-raw-reference-word-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop44Done",
+          "id": "repository.original-raw-transport-column-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop44Return",
+          "id": "repository.original-raw-transport-column-scan-return-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop57Done",
+          "id": "repository.original-raw-primitive-number-cell-scan-completion-constructor"
+        },
+        {
+          "name": "MlCheckOriginalLinkRawShapeLoop57Return",
+          "id": "repository.original-raw-primitive-number-cell-scan-return-constructor"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "raw exact original identity and field controls",
+    "files": {
+      "experiments/original-link-complete-table-projection/raw-fixtures.mjs": [
+        {
+          "name": "label",
+          "id": "repository.render-certificate-test-field-label"
+        },
+        {
+          "name": "key",
+          "id": "repository.read-exact-link-identity-key"
+        },
+        {
+          "name": "replace",
+          "id": "repository.replace-text-certificate-test-field"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/raw-corpus.mjs": [
+        {
+          "name": "label",
+          "id": "repository.render-certificate-test-field-label"
+        },
+        {
+          "name": "key",
+          "id": "repository.read-exact-link-identity-key"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/raw-projection.test.mjs": [
+        {
+          "name": "label",
+          "id": "repository.render-certificate-test-field-label"
+        },
+        {
+          "name": "replace",
+          "id": "repository.replace-text-certificate-test-field"
+        },
+        {
+          "name": "children",
+          "id": "repository.read-original-link-role-test-references"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "raw selected controls raw-fixtures.mjs",
+    "files": {
+      "experiments/original-link-complete-table-projection/raw-fixtures.mjs": [
+        {
+          "name": "field",
+          "id": "repository.read-original-raw-fixture-field"
+        },
+        {
+          "name": "body",
+          "id": "repository.read-original-raw-fixture-body"
+        },
+        {
+          "name": "marker",
+          "id": "repository.read-original-raw-fixture-marker"
+        },
+        {
+          "name": "proof",
+          "id": "repository.read-original-raw-fixture-proof"
+        },
+        {
+          "name": "scalar",
+          "id": "repository.create-original-raw-fixture-scalar"
+        },
+        {
+          "name": "functionFacts",
+          "id": "repository.read-original-raw-fixture-function-facts"
+        },
+        {
+          "name": "declaration",
+          "id": "repository.find-original-raw-fixture-declaration"
+        },
+        {
+          "name": "parameter",
+          "id": "repository.read-original-raw-fixture-parameter"
+        },
+        {
+          "name": "readEndOfFileRawString",
+          "id": "repository.read-original-raw-end-of-file-string"
+        },
+        {
+          "name": "replaceStringDefinition",
+          "id": "repository.replace-original-raw-string-definition"
+        },
+        {
+          "name": "createRawTextCertificateFixture",
+          "id": "repository.create-original-raw-source-fixture"
+        },
+        {
+          "name": "example",
+          "id": "repository.create-original-raw-fixture-contract"
+        },
+        {
+          "name": "originalLinkRawAdversarialFixtures",
+          "id": "repository.read-original-raw-challenge-fixtures"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "raw selected controls raw-projection.test.mjs",
+    "files": {
+      "experiments/original-link-complete-table-projection/raw-projection.test.mjs": [
+        {
+          "name": "archive",
+          "id": "repository.archive-original-raw-test-packet"
+        },
+        {
+          "name": "field",
+          "id": "repository.read-original-raw-test-field"
+        },
+        {
+          "name": "programBody",
+          "id": "repository.read-original-raw-test-body"
+        },
+        {
+          "name": "selectedProof",
+          "id": "repository.read-original-raw-test-proof"
+        },
+        {
+          "name": "facts",
+          "id": "repository.read-original-raw-test-function-facts"
+        },
+        {
+          "name": "checkWhole",
+          "id": "repository.check-original-raw-test-interpretation"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "raw test exact source digest",
+    "files": {
+      "experiments/original-link-complete-table-projection/raw-projection.test.mjs": [
+        {
+          "name": "hash",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original raw lazy certificate corpus",
+    "files": {
+      "experiments/original-link-complete-table-projection/raw-corpus.mjs": [
+        {
+          "name": "createOriginalLinkRawEditedFixture",
+          "id": "repository.create-original-raw-graph-edited-fixture"
+        },
+        {
+          "name": "createOriginalLinkRawOwnerForgery",
+          "id": "repository.create-original-raw-graph-owner-forgery"
+        },
+        {
+          "name": "originalLinkRawCertificateCorpus",
+          "id": "repository.read-original-raw-graph-certificate-corpus"
+        },
+        {
+          "name": "originalLinkRawNumericMetadataCorpus",
+          "id": "repository.read-original-raw-graph-number-metadata-corpus"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original raw lazy corpus controls",
+    "files": {
+      "experiments/original-link-complete-table-projection/raw-corpus.mjs": [
+        {
+          "name": "attachEditedPacket",
+          "id": "repository.attach-original-raw-edited-proof"
+        },
+        {
+          "name": "sourceFixtures",
+          "id": "repository.read-original-raw-source-fixtures"
+        },
+        {
+          "name": "field",
+          "id": "repository.read-original-raw-corpus-field"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original raw linked policy roles",
+    "files": {
+      "experiments/original-link-complete-table-projection/raw-policy.mjs": [
+        {
+          "name": "schema",
+          "id": "repository.original-raw-graph-schema"
+        },
+        {
+          "name": "roleNames",
+          "id": "repository.original-raw-graph-role-names"
+        },
+        {
+          "name": "roleRecipes",
+          "id": "repository.original-raw-graph-role-recipes"
+        },
+        {
+          "name": "transport",
+          "id": "repository.original-raw-graph-transport"
+        },
+        {
+          "name": "output",
+          "id": "repository.original-raw-graph-output"
+        },
+        {
+          "name": "refusalStages",
+          "id": "repository.original-raw-graph-refusal-stages"
+        },
+        {
+          "name": "observedFrontendBoundaries",
+          "id": "repository.original-raw-graph-observed-front-end-boundaries"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/data/raw-policy.lino": [
+        {
+          "name": "schema",
+          "id": "repository.original-raw-graph-schema"
+        },
+        {
+          "name": "roleNames",
+          "id": "repository.original-raw-graph-role-names"
+        },
+        {
+          "name": "roleRecipes",
+          "id": "repository.original-raw-graph-role-recipes"
+        },
+        {
+          "name": "transport",
+          "id": "repository.original-raw-graph-transport"
+        },
+        {
+          "name": "output",
+          "id": "repository.original-raw-graph-output"
+        },
+        {
+          "name": "refusalStages",
+          "id": "repository.original-raw-graph-refusal-stages"
+        },
+        {
+          "name": "observedFrontendBoundaries",
+          "id": "repository.original-raw-graph-observed-front-end-boundaries"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "historical cancellation evidence operations",
+    "files": {
+      "js/scripts/ci-cancellation-investigation.mjs": [
+        {
+          "name": "instant",
+          "id": "repository.read-cancellation-investigation-instant"
+        },
+        {
+          "name": "workflowSource",
+          "id": "repository.decode-cancellation-investigation-workflow-source"
+        },
+        {
+          "name": "unknown",
+          "id": "repository.create-unknown-cancellation-observation"
+        },
+        {
+          "name": "classifyWorkflowCancellation",
+          "id": "repository.classify-historical-workflow-cancellation"
+        },
+        {
+          "name": "checkWorkflowCancellationEvidence",
+          "id": "repository.check-historical-cancellation-evidence"
+        },
+        {
+          "name": "captureWorkflowCancellationEvidence",
+          "id": "repository.capture-historical-cancellation-evidence"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "historical cancellation independent controls",
+    "files": {
+      "js/tests/ci-cancellation-investigation.test.js": [
+        {
+          "name": "file",
+          "id": "repository.resolve-cancellation-investigation-project-file"
+        },
+        {
+          "name": "facts",
+          "id": "repository.copy-cancellation-investigation-facts"
+        },
+        {
+          "name": "sourceEdit",
+          "id": "repository.edit-cancellation-investigation-test-source"
+        },
+        {
+          "name": "refused",
+          "id": "repository.check-unknown-cancellation-investigation-result"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "historical cancellation evidence pins",
+    "files": {
+      "js/scripts/ci-cancellation-investigation.mjs": [
+        {
+          "name": "CANCELLATION_INVESTIGATION_FIXTURE",
+          "id": "repository.historical-cancellation-fixture"
+        },
+        {
+          "name": "CANCELLATION_INVESTIGATION_HEAD",
+          "id": "repository.historical-cancellation-head"
+        },
+        {
+          "name": "pinnedResponseHashes",
+          "id": "repository.historical-cancellation-fixed-response-hashes"
+        },
+        {
+          "name": "maximumResponseBytes",
+          "id": "repository.historical-cancellation-maximum-response-bytes"
+        },
+        {
+          "name": "maximumFixtureBytes",
+          "id": "repository.historical-cancellation-maximum-fixture-bytes"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "raw and cancellation exact secure digest",
+    "files": {
+      "js/scripts/ci-cancellation-investigation.mjs": [
+        {
+          "name": "sha256",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        }
+      ],
+      "js/tests/ci-cancellation-investigation.test.js": [
+        {
+          "name": "sha256",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/generate-raw.mjs": [
+        {
+          "name": "sha256",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original raw complete source oracle",
+    "files": {
+      "experiments/original-link-complete-table-projection/raw-native-observations.mjs": [
+        {
+          "name": "ORIGINAL_LINK_RAW_MODEL_COMMIT",
+          "id": "repository.original-raw-native-model-revision"
+        },
+        {
+          "name": "requireOriginalLinkRawPlanning",
+          "id": "repository.require-original-raw-native-planning-context"
+        },
+        {
+          "name": "originalLinkRawNativeMode",
+          "id": "repository.select-original-raw-native-observation"
+        },
+        {
+          "name": "verifyOriginalLinkRawNativeModel",
+          "id": "repository.verify-original-raw-native-model"
+        },
+        {
+          "name": "planOriginalLinkRawNative",
+          "id": "repository.plan-original-raw-native-observation"
+        },
+        {
+          "name": "runOriginalLinkRawNative",
+          "id": "repository.run-original-raw-native-observation"
+        },
+        {
+          "name": "textBytes",
+          "id": "repository.read-original-raw-native-source-bytes"
+        },
+        {
+          "name": "argumentBits",
+          "id": "repository.encode-original-raw-native-arguments"
+        },
+        {
+          "name": "createCarrier",
+          "id": "repository.create-original-raw-native-bit-carrier"
+        },
+        {
+          "name": "vectorBits",
+          "id": "repository.read-original-raw-native-carrier-vector"
+        },
+        {
+          "name": "protocol",
+          "id": "repository.render-original-raw-native-bit-protocol"
+        },
+        {
+          "name": "archiveCompleteRustSource",
+          "id": "repository.archive-original-raw-native-source"
+        },
+        {
+          "name": "nativeInterface",
+          "id": "repository.read-original-raw-native-interface"
+        },
+        {
+          "name": "consumerSource",
+          "id": "repository.render-original-raw-native-consumer"
+        },
+        {
+          "name": "parseObservations",
+          "id": "repository.read-original-raw-native-observations"
+        },
+        {
+          "name": "vector",
+          "id": "repository.encode-original-raw-native-carrier-vector"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original raw exact oracle providers",
+    "files": {
+      "experiments/original-link-complete-table-projection/raw-native-observations.mjs": [
+        {
+          "name": "sha256",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        },
+        {
+          "name": "freeze",
+          "id": "repository.freeze-rust-text-native-observation-plan"
+        },
+        {
+          "name": "numberBits",
+          "id": "repository.encode-text-certificate-native-number-bits"
+        },
+        {
+          "name": "createSourceNativeObservationRunner",
+          "id": "repository.create-source-native-observation-runner"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original raw injected native contracts",
+    "files": {
+      "experiments/original-link-complete-table-projection/raw-native-observations.test.mjs": [
+        {
+          "name": "fakeProcess",
+          "id": "repository.create-original-raw-native-test-process"
+        },
+        {
+          "name": "run",
+          "id": "repository.run-original-raw-native-injected-contract"
+        },
+        {
+          "name": "fails",
+          "id": "repository.check-original-raw-native-test-failure"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original raw native transport distinctions",
+    "files": {
+      "experiments/original-link-complete-table-projection/raw-native-observations.mjs": [
+        {
+          "name": "fixtureInventory",
+          "id": "repository.original-raw-native-fixture-inventory"
+        },
+        {
+          "name": "inventoryCounts",
+          "id": "repository.original-raw-native-premise-counts"
+        },
+        {
+          "name": "independentJavaScriptControls",
+          "id": "repository.original-raw-independent-javascript-controls"
+        },
+        {
+          "name": "premises",
+          "id": "repository.original-raw-native-premises"
+        },
+        {
+          "name": "serializationRefusals",
+          "id": "repository.original-raw-native-serialization-refusals"
+        },
+        {
+          "name": "hostChecks",
+          "id": "repository.original-raw-native-host-checks"
+        },
+        {
+          "name": "observations",
+          "id": "repository.original-raw-native-observation-rows"
+        },
+        {
+          "name": "carrierSha256",
+          "id": "repository.original-raw-native-carrier-digest"
+        },
+        {
+          "name": "sizes",
+          "id": "repository.original-raw-native-source-bounds"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original raw workflow conservation",
+    "files": {
+      "js/tests/ci-workflow-structure.test.js": [
+        {
+          "name": "checkOriginalLinkRawNativeJob",
+          "id": "repository.check-original-raw-native-workflow-job"
+        },
+        {
+          "name": "RAW_SOURCE_PACKAGE_CELLS",
+          "id": "repository.original-raw-source-package-cells"
+        },
+        {
+          "name": "RAW_SOURCE_PACKAGE_STEPS",
+          "id": "repository.original-raw-source-package-steps"
+        },
+        {
+          "name": "ORIGINAL_LINK_RAW_NATIVE_JOB",
+          "id": "repository.original-raw-native-workflow-job"
+        }
+      ]
+    }
+  }
+];
+const normalizeOriginalRawCancellationName=name=>name.replace(/([a-z0-9])([A-Z])/gu,'$1-$2').replaceAll('_','-').replaceAll(' ','-').toLowerCase().replace(/^has-/u,'contain-').replace(/^children$/u,'child-references').replace(/\badversarial\b/gu,'challenge').replace(/\bfrontend\b/gu,'front-end').replace(/^pinned-/u,'fixed-').replace(/\bsha256\b/gu,'secure-hash-algorithm-two-hundred-fifty-six').replace(/\bml\b/gu,'meta-language').replace(/\b(loop|join)([0-9]+)\b/gu,(whole,kind,digits)=>{const small=['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'],tens={2:'twenty',3:'thirty',4:'forty',5:'fifty'},number=Number(digits);if(number<20)return kind+'-'+small[number];return number<=57?kind+'-'+tens[Math.floor(number/10)]+(number%10?'-'+small[number%10]:''):whole;});
+const ORIGINAL_RAW_CANCELLATION_SOURCE_TEXTS=new Map();
+const ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES=ORIGINAL_RAW_CANCELLATION_NAME_BINDINGS.map(({inventory,files})=>({
+ inventory,files:Object.keys(files),
+ extract:(raw,file)=>{let text=raw;if(file.endsWith('.lino')){const saved=ORIGINAL_RAW_CANCELLATION_SOURCE_TEXTS.get(file);if(!saved||saved.raw!==raw)ORIGINAL_RAW_CANCELLATION_SOURCE_TEXTS.set(file,{raw,text:JSON.stringify(readStructuredDataLino(raw))});text=ORIGINAL_RAW_CANCELLATION_SOURCE_TEXTS.get(file).text;}return files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeOriginalRawCancellationName(name));},
+ recordOf:name=>Object.values(files).flat().find(entry=>normalizeOriginalRawCancellationName(entry.name)===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
