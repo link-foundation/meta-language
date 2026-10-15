@@ -671,6 +671,14 @@ jobs:
         # The filters are word-split on purpose: they are separate arguments.
         run: node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --no-fail-fast --all-features --tests --verbose -- $SUITE_FILTERS
 
+      - name: Run complete Rust text value source observations
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        working-directory: ${{ github.workspace }}
+        env:
+          CI: 'true'
+          RUST_TEXT_VALUE_PROJECTION_NATIVE: '1'
+        run: node scripts/with-cache-cleanup.mjs --event test -- node --test experiments/rust-text-value-projection/native-observations.test.mjs
+
       - name: Run doc tests
         if: ${{ !cancelled() && matrix.suite == 'remaining' }}
         shell: bash

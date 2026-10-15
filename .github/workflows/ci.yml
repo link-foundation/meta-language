@@ -48,7 +48,7 @@ jobs:
         env:
           BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
         run: |
-          rust_paths='^(rust/|parity/|docs/|scripts/|\.github/workflows/(ci|rust)\.yml$|\.secretlintrc\.json$)'
+          rust_paths='^(rust/|parity/|docs/|scripts/|experiments/rust-text-value-projection/|\.github/workflows/(ci|rust)\.yml$|\.secretlintrc\.json$)'
           if [ -z "$BASE_SHA" ] || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
             rust=true
           elif git diff --name-only "$BASE_SHA" HEAD | grep -Eq "$rust_paths"; then

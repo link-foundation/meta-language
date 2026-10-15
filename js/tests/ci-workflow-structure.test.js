@@ -737,6 +737,59 @@ function packageStepSignature(step, includeGroup = false) {
   return createHash('sha256').update(text).digest('hex');
 }
 
+function checkRustTextValueNativeStep(parsed) {
+  const steps = parsed.get('test').steps.filter(step => step.name === 'Run complete Rust text value source observations');
+  assert.equal(steps.length, 1, 'the complete-source native oracle must execute once in its selected matrix cell');
+  assert.equal(packageStepSignature(steps[0], true), '752006807d9fed41319980bd6552d651fb61f841a3952d959a5e595da7cb3fd5',
+    'the native source oracle retains its exact condition, command, directory and explicit native switch');
+}
+
+test('the complete Rust text source oracle is mandatory after JavaScript and its source changes select Rust', () => {
+  checkRustTextValueNativeStep(jobs('rust.yml'));
+  const parsed = jobs('ci.yml');
+  assert.ok(needs(parsed.get('rust')).includes('js'));
+  const classifier = /rust_paths='([^']+)'/u.exec(workflow('ci.yml'))?.[1];
+  assert.ok(classifier);
+  const addition = '|experiments/rust-text-value-projection/';
+  assert.equal(classifier.split(addition).length, 2);
+  assert.equal(classifier.replace(addition, ''),
+    '^(rust/|parity/|docs/|scripts/|\\.github/workflows/(ci|rust)\\.yml$|\\.secretlintrc\\.json$)',
+    'the native source selection preserves every existing Rust workflow trigger');
+  const matches = new RegExp(classifier, 'u');
+  for (const file of ['model.mjs', 'source.mjs', 'data/fixtures.lino', 'native-observations.mjs', 'native-observations.test.mjs']) {
+    assert.ok(matches.test(`experiments/rust-text-value-projection/${file}`), file);
+  }
+});
+
+test('the complete Rust text source oracle rejects omission, duplication and native gate mutations', () => {
+  const mutate = change => {
+    const parsed = jobs('rust.yml');
+    const steps = parsed.get('test').steps;
+    const index = steps.findIndex(step => step.name === 'Run complete Rust text value source observations');
+    assert.ok(index >= 0);
+    change(steps, index);
+    assert.throws(() => checkRustTextValueNativeStep(parsed), assert.AssertionError);
+  };
+  mutate((steps, index) => steps.splice(index, 1));
+  mutate((steps, index) => steps.push({ ...steps[index] }));
+  for (const [before, after] of [
+    ['!cancelled()', 'success()'],
+    ["matrix.suite == 'translation'", "matrix.suite == 'remaining'"],
+    ["matrix.os == 'ubuntu-latest'", "matrix.os == 'windows-latest'"],
+    ["CI: 'true'", "CI: 'false'"],
+    ["RUST_TEXT_VALUE_PROJECTION_NATIVE: '1'", "RUST_TEXT_VALUE_PROJECTION_NATIVE: '0'"],
+    ['--event test --', '--event build --'],
+    ['node --test experiments/', 'node --test --test-name-pattern optional experiments/'],
+    ['working-directory: ${{ github.workspace }}', 'working-directory: rust'],
+    ['working-directory: ${{ github.workspace }}', 'continue-on-error: true\n        working-directory: ${{ github.workspace }}'],
+  ]) {
+    mutate((steps, index) => {
+      assert.ok(steps[index].text.includes(before));
+      steps[index].text = steps[index].text.replace(before, after);
+    });
+  }
+});
+
 function checkPackageStepConservation(parsed) {
   const additions = [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS, ...TYPE_NAMESPACE_PACKAGE_STEPS,
     ...PURE_UNIT_PACKAGE_STEPS, ...SOURCE_SPAN_PACKAGE_STEPS, ...OWNED_TEXT_GENERATOR_PACKAGE_STEPS,
