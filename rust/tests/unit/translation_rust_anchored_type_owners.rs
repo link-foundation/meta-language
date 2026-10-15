@@ -101,5 +101,5 @@ fn anchored_type_owner_lookup_never_falls_through_a_value_namespace_hit() {
         panic!("actual source contains a checked call")
     };
     assert_eq!(func, "nested.f64");
-    assert!(args.is_empty());
+    assert_eq!(args.as_slice(), []);
 }

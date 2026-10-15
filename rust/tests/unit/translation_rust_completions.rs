@@ -293,7 +293,7 @@ fn linked_return_edit_and_abort_continuation_change_only_the_selected_branch() {
         let result = run(&mut Command::new(compile_rust(&source, &directory.0, name)));
         assert!(!result.ok);
         assert!(result.stderr.contains("selected failure"));
-        assert!(result.stdout.is_empty());
+        assert_eq!(result.stdout, "");
     }
     let observed = format!(
         "{}\nconsole.log(choose(false));",
@@ -377,7 +377,7 @@ fn canonical_literal_panic_replays_exact_data_and_preserves_default_refusals() {
                 &format!("failed_{name}_{index}"),
             )));
             assert!(!result.ok);
-            assert!(result.stdout.is_empty());
+            assert_eq!(result.stdout, "");
             assert!(result.stderr.contains(message));
         }
     }

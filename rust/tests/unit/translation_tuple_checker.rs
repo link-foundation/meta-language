@@ -8,8 +8,8 @@ use meta_language::translation::{
 use serde_json::{Value, json};
 
 fn checked(
-    body: Value,
-    ret: Value,
+    body: &Value,
+    ret: &Value,
 ) -> meta_language::translation::diagnostics::Result<meta_language::translation::ir::Expr> {
     let surface: SProgram = serde_json::from_value(json!({
         "language": "JavaScript",
@@ -38,7 +38,7 @@ fn product() -> Value {
 #[test]
 fn positional_products_preserve_types_and_safe_constant_projection() {
     let ret = json!({"kind": "tuple", "elements": [{"kind": "float"}, {"kind": "bool"}]});
-    let expression = checked(product(), ret).unwrap();
+    let expression = checked(&product(), &ret).unwrap();
     let Node::Tuple { items, frozen, .. } = &expression.node else {
         panic!("not a product")
     };
@@ -49,8 +49,8 @@ fn positional_products_preserve_types_and_safe_constant_projection() {
     );
     assert_eq!(expression.children().len(), 2);
     let projected = checked(
-        json!({"k": "tupleIndex", "object": product(), "index": 1}),
-        json!({"kind": "bool"}),
+        &json!({"k": "tupleIndex", "object": product(), "index": 1}),
+        &json!({"kind": "bool"}),
     )
     .unwrap();
     assert_eq!(projected.ty, Type::Bool);
@@ -81,7 +81,7 @@ fn selected_product_model_is_retained_and_refuses_a_contradictory_freeze_edit() 
     let ty = json!({"kind": "tuple", "elements": [{"kind": "float"}, {"kind": "bool"}]});
     let mut source = product();
     source["productModel"] = json!("immutable value product");
-    let expression = checked(source.clone(), ty.clone()).unwrap();
+    let expression = checked(&source, &ty).unwrap();
     assert_eq!(
         serde_json::to_value(&expression).unwrap()["productModel"],
         "immutable value product"
@@ -94,9 +94,9 @@ fn selected_product_model_is_retained_and_refuses_a_contradictory_freeze_edit() 
         serde_json::from_value(serde_json::to_value(&expression).unwrap()).unwrap();
     assert_eq!(round_trip, expression);
     source["frozen"] = json!(false);
-    assert!(checked(source.clone(), ty.clone()).is_err());
+    assert!(checked(&source, &ty).is_err());
     source.as_object_mut().unwrap().remove("productModel");
-    assert!(checked(source, ty).is_ok());
+    assert!(checked(&source, &ty).is_ok());
     for invalid in [Value::Null, json!(7), json!(true)] {
         let mut malformed = serde_json::to_value(&expression).unwrap();
         malformed["productModel"] = invalid;
@@ -123,47 +123,47 @@ fn products_reject_wrong_shape_and_mutable_inner_values_without_changing_legacy_
     }
     assert!(
         checked(
-            json!({"k": "tupleIndex", "object": product(), "index": 2}),
-            json!({"kind": "float"})
+            &json!({"k": "tupleIndex", "object": product(), "index": 2}),
+            &json!({"kind": "float"})
         )
         .is_err()
     );
     assert!(
         checked(
-            product(),
-            json!({"kind": "tuple", "elements": [{"kind": "float"}]})
+            &product(),
+            &json!({"kind": "tuple", "elements": [{"kind": "float"}]})
         )
         .is_err()
     );
     assert!(
         checked(
-            json!({"k": "tuple", "frozen": true, "items": [{"k": "str", "value": "owned"}]}),
-            json!({"kind": "tuple", "elements": [{"kind": "string"}]})
+            &json!({"k": "tuple", "frozen": true, "items": [{"k": "str", "value": "owned"}]}),
+            &json!({"kind": "tuple", "elements": [{"kind": "string"}]})
         )
         .is_err()
     );
     let ret =
         json!({"kind": "tuple", "elements": [{"kind": "tuple", "elements": [{"kind": "float"}]}]});
     let mutable_inner = json!({"k": "tuple", "frozen": true, "items": [{"k": "tuple", "items": [{"k": "num", "value": "5", "type": {"kind": "float"}}]}]});
-    assert!(checked(mutable_inner, ret).is_err());
+    assert!(checked(&mutable_inner, &ret).is_err());
     let inner_type =
         json!({"kind": "tuple", "elements": [{"kind": "tuple", "elements": [{"kind": "float"}]}]});
     let wrapped = |frozen| json!({"k": "tuple", "frozen": true, "items": [{"k": "let", "name": "inner", "value": {"k": "tuple", "frozen": frozen, "items": [{"k": "num", "value": "5", "type": {"kind": "float"}}]}, "body": {"k": "name", "path": ["inner"]}}]});
-    assert!(checked(wrapped(false), inner_type.clone()).is_err());
-    assert!(checked(wrapped(true), inner_type).is_ok());
+    assert!(checked(&wrapped(false), &inner_type).is_err());
+    assert!(checked(&wrapped(true), &inner_type).is_ok());
     let outer_binding = |frozen| json!({"k": "let", "name": "inner", "value": {"k": "tuple", "frozen": frozen, "items": [{"k": "num", "value": "5", "type": {"kind": "float"}}]}, "body": {"k": "tuple", "frozen": true, "items": [{"k": "name", "path": ["inner"]}]}});
     let nested =
         json!({"kind": "tuple", "elements": [{"kind": "tuple", "elements": [{"kind": "float"}]}]});
-    assert!(checked(outer_binding(true), nested.clone()).is_ok());
-    assert!(checked(outer_binding(false), nested).is_err());
+    assert!(checked(&outer_binding(true), &nested).is_ok());
+    assert!(checked(&outer_binding(false), &nested).is_err());
     assert!(
         checked(
-            json!({"k": "tuple", "frozen": true, "items": []}),
-            json!({"kind": "tuple", "elements": []})
+            &json!({"k": "tuple", "frozen": true, "items": []}),
+            &json!({"kind": "tuple", "elements": []})
         )
         .is_err()
     );
-    let ordinary = checked(json!({"k": "array", "items": [{"spread": false, "value": {"k": "str", "value": "owned"}}]}), json!({"kind": "tuple", "elements": [{"kind": "string"}]})).unwrap();
+    let ordinary = checked(&json!({"k": "array", "items": [{"spread": false, "value": {"k": "str", "value": "owned"}}]}), &json!({"kind": "tuple", "elements": [{"kind": "string"}]})).unwrap();
     assert!(matches!(ordinary.node, Node::Tuple { frozen: false, .. }));
 }
 
@@ -171,8 +171,8 @@ fn products_reject_wrong_shape_and_mutable_inner_values_without_changing_legacy_
 fn tuple_comparisons_need_a_separate_value_or_identity_model() {
     for op in ["eq", "ne"] {
         let error = checked(
-            json!({"k": "binary", "op": op, "left": product(), "right": product()}),
-            json!({"kind": "bool"}),
+            &json!({"k": "binary", "op": op, "left": product(), "right": product()}),
+            &json!({"kind": "bool"}),
         )
         .unwrap_err();
         assert!(error.to_string().contains("comparison of tuples"));

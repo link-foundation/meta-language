@@ -77,13 +77,13 @@ fn run_rust(code: &str, directory: &Path, name: &str) -> Vec<String> {
     let source = directory.join(format!("{name}.rs"));
     let binary = directory.join(format!("{name}{}", std::env::consts::EXE_SUFFIX));
     fs::write(&source, code).expect("the source writes");
-    let mut compiler = Command::new("rustc");
-    compiler.args(["--edition", "2024"]);
+    let mut build_command = Command::new("rustc");
+    build_command.args(["--edition", "2024"]);
     #[cfg(windows)]
     if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
-        compiler.arg("-C").arg(format!("linker={linker}"));
+        build_command.arg("-C").arg(format!("linker={linker}"));
     }
-    let compiled = run(compiler.arg(&source).arg("-o").arg(&binary));
+    let compiled = run(build_command.arg(&source).arg("-o").arg(&binary));
     assert!(compiled.ok, "{name}: {}", compiled.stderr);
     let executed = run(&mut Command::new(binary));
     assert!(executed.ok, "{name}: {}", executed.stderr);

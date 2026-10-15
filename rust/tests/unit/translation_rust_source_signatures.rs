@@ -46,7 +46,7 @@ fn owned_source_header_fixed_width_domains_refuse_foreign_scalar_values() {
     use serde_json::json;
     for (source, position) in [
         (
-            "pub fn keep(value:i32)->i32{value} fn main(){}",
+            concat!("pub fn keep(value:i32)->i32{", "value} fn main(){}"),
             "/parameters/0/type",
         ),
         (
@@ -286,14 +286,14 @@ fn source_free_body_edit_changes_the_independent_runtime_witness_without_erasing
     let source = path.join("original.rs");
     let binary = path.join(format!("original{}", std::env::consts::EXE_SUFFIX));
     fs::write(&source, original["source"].as_str().unwrap()).unwrap();
-    let mut compiler = Command::new("rustc");
-    compiler.args(["--edition", "2024"]);
+    let mut build_command = Command::new("rustc");
+    build_command.args(["--edition", "2024"]);
     #[cfg(windows)]
     if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
-        compiler.arg("-C").arg(format!("linker={linker}"));
+        build_command.arg("-C").arg(format!("linker={linker}"));
     }
-    compiler.arg(&source).arg("-o").arg(&binary);
-    let compiled = run(&mut compiler);
+    build_command.arg(&source).arg("-o").arg(&binary);
+    let compiled = run(&mut build_command);
     assert!(compiled.ok, "{}", compiled.stderr);
     let original_result = run(&mut Command::new(&binary));
     assert!(original_result.ok, "{}", original_result.stderr);

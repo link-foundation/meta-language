@@ -33,7 +33,10 @@ fn the_empty_value_preserves_its_number_element_and_undefined_policy() {
             absence: "undefined".into()
         }
     );
-    assert!(function.body.children().is_empty());
+    assert_eq!(
+        function.body.children(),
+        [] as [&meta_language::translation::ir::Expr; 0]
+    );
     let unchanged = function
         .body
         .map_children(&mut |_| panic!("an empty optional value has no operands"));

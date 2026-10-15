@@ -479,7 +479,7 @@ fn primitive_literals_numeric_interval_aliases_and_ordered_multiple_predicates_k
             assert!(emit_javascript(&actual).is_err());
         } else {
             let packet = encode_typed_program_links(&actual).unwrap();
-            assert!(!javascript_public_archive(&packet).is_empty());
+            assert_ne!(javascript_public_archive(&packet), "");
             assert!(emit_rust(&actual).unwrap().definitions[0].starts_with("pub const fn "));
         }
     }
@@ -524,15 +524,15 @@ fn complete_original_and_actual_emitted_rust_artifacts_execute_in_ci() {
         .0
         .join(format!("observed{}", std::env::consts::EXE_SUFFIX));
     fs::write(&input, source).unwrap();
-    let mut compiler = Command::new("rustc");
-    compiler.args(["--edition", "2024"]);
+    let mut build_command = Command::new("rustc");
+    build_command.args(["--edition", "2024"]);
     #[cfg(windows)]
     if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
-        compiler.arg("-C").arg(format!("linker={linker}"));
+        build_command.arg("-C").arg(format!("linker={linker}"));
     }
-    let compiled = run(compiler.arg(&input).arg("-o").arg(&binary));
+    let compiled = run(build_command.arg(&input).arg("-o").arg(&binary));
     assert!(compiled.ok, "{}", compiled.stderr);
     let result = run(&mut Command::new(binary));
     assert!(result.ok, "{}", result.stderr);
-    assert!(result.stdout.is_empty());
+    assert_eq!(result.stdout, "");
 }

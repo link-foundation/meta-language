@@ -90,12 +90,12 @@ fn complete_original_names_and_ordered_state_replay_through_both_frontends_and_a
             .unwrap();
             let network = LinkNetwork::from_lino(&imported.network.to_lino()).unwrap();
             let restored = decode_typed_program_links(&network, imported.root).unwrap();
-            let javascript = emit_javascript(&restored).unwrap().text;
+            let emitted_text = emit_javascript(&restored).unwrap().text;
             assert_eq!(
                 emit_typed_program_links(&network, imported.root, "JavaScript")
                     .unwrap()
                     .code,
-                javascript
+                emitted_text
             );
             assert!(
                 emit_typed_program_links(&network, imported.root, "Rust")

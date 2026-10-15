@@ -201,13 +201,13 @@ fn original_emitted_reparsed_and_reverse_definitions_match_native_bit_oracles() 
             .0
             .join(format!("variant_{variant}{}", std::env::consts::EXE_SUFFIX));
         fs::write(&source, code).unwrap();
-        let mut compiler = Command::new("rustc");
-        compiler.args(["--edition", "2024"]);
+        let mut build_command = Command::new("rustc");
+        build_command.args(["--edition", "2024"]);
         #[cfg(windows)]
         if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
-            compiler.arg("-C").arg(format!("linker={linker}"));
+            build_command.arg("-C").arg(format!("linker={linker}"));
         }
-        let compiled = run(compiler.arg(&source).arg("-o").arg(&binary));
+        let compiled = run(build_command.arg(&source).arg("-o").arg(&binary));
         assert!(compiled.ok, "{field}: {}", compiled.stderr);
         let executed = run(&mut Command::new(binary));
         assert!(executed.ok, "{field}: {}", executed.stderr);

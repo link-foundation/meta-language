@@ -431,8 +431,8 @@ fn qualified_owner_facets_compose_with_retained_primitive_reference_headers() {
                 format!("{code}\n{}", harness(&observations, &program, true)),
             )
             .unwrap();
-            let mut compiler = Command::new("rustc");
-            compiler.args([
+            let mut build_command = Command::new("rustc");
+            build_command.args([
                 "--edition",
                 "2024",
                 "--test",
@@ -441,10 +441,10 @@ fn qualified_owner_facets_compose_with_retained_primitive_reference_headers() {
             ]);
             #[cfg(windows)]
             if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
-                compiler.arg("-C").arg(format!("linker={linker}"));
+                build_command.arg("-C").arg(format!("linker={linker}"));
             }
-            compiler.arg(&path).arg("-o").arg(&binary);
-            let compiled = run(&mut compiler);
+            build_command.arg(&path).arg("-o").arg(&binary);
+            let compiled = run(&mut build_command);
             assert!(compiled.ok, "{owner}:{kind}: {}", compiled.stderr);
             let executed = run(&mut Command::new(&binary));
             assert!(
@@ -481,8 +481,8 @@ fn independently_compiled_originals_and_linked_rust_preserve_non_nan_bits_and_na
                 format!("{source}\n{}", harness(case, &program, original)),
             )
             .unwrap();
-            let mut compiler = Command::new("rustc");
-            compiler.args([
+            let mut build_command = Command::new("rustc");
+            build_command.args([
                 "--edition",
                 "2024",
                 "--test",
@@ -491,10 +491,10 @@ fn independently_compiled_originals_and_linked_rust_preserve_non_nan_bits_and_na
             ]);
             #[cfg(windows)]
             if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
-                compiler.arg("-C").arg(format!("linker={linker}"));
+                build_command.arg("-C").arg(format!("linker={linker}"));
             }
-            compiler.arg(&path).arg("-o").arg(&binary);
-            let compiled = run(&mut compiler);
+            build_command.arg(&path).arg("-o").arg(&binary);
+            let compiled = run(&mut build_command);
             assert!(compiled.ok, "{id}:{kind}: {}", compiled.stderr);
             let executed = run(&mut Command::new(&binary));
             assert!(

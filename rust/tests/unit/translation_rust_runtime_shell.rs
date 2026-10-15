@@ -92,7 +92,7 @@ fn compile_actual_artifact(source: &str) {
     assert!(compiled.ok, "{}", compiled.stderr);
     let executed = run(&mut Command::new(output));
     assert!(executed.ok, "{}", executed.stderr);
-    assert!(executed.stdout.is_empty());
+    assert_eq!(executed.stdout, "");
 }
 fn example() -> TypedProgramLinks {
     let data = fixture();
@@ -409,7 +409,7 @@ fn malformed_runtime_models_namespace_spans_and_unknown_raw_fields_refuse_before
         ("worker", "unknown", json!(false)),
         ("main", "sourceRuntimeWorker", Value::Null),
         ("span", "start", json!(-0.0)),
-        ("span", "end", json!(9007199254740992_u64)),
+        ("span", "end", json!(9_007_199_254_740_992_u64)),
     ] {
         let mut packet = example();
         let body = packet.network.link(packet.root).unwrap().references()[0];

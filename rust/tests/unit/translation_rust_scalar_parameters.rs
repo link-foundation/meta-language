@@ -101,13 +101,13 @@ fn original_and_generated_scalar_sources_match_independent_stdout() {
                 std::env::consts::EXE_SUFFIX
             ));
             fs::write(&file, source).unwrap();
-            let mut compiler = Command::new("rustc");
-            compiler.args(["--edition", "2024"]);
+            let mut build_command = Command::new("rustc");
+            build_command.args(["--edition", "2024"]);
             #[cfg(windows)]
             if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
-                compiler.arg("-C").arg(format!("linker={linker}"));
+                build_command.arg("-C").arg(format!("linker={linker}"));
             }
-            let compiled = run(compiler.arg(&file).arg("-o").arg(&binary));
+            let compiled = run(build_command.arg(&file).arg("-o").arg(&binary));
             assert!(compiled.ok, "{index}: {variant}: {}", compiled.stderr);
             let observed = run(&mut Command::new(binary));
             assert!(observed.ok, "{index}: {variant}: {}", observed.stderr);

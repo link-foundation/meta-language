@@ -500,7 +500,7 @@ fn actual_raw_linked_records_refuse_opaque_ownership_before_native_normalization
                 &options(&data),
             )
             .unwrap_err();
-            assert!(!failure.message.is_empty());
+            assert_ne!(failure.message, "");
             if field != "source empty option" {
                 assert!(
                     failure

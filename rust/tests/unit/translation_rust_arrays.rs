@@ -121,17 +121,20 @@ fn original_and_reparsed_array_policies_observe_the_same_bounded_inputs() {
                     .unwrap()
                     .iter()
                     .map(|value| {
-                        if let Some(text) = value.as_str() {
-                            format!("String::from({text:?})")
-                        } else if floating {
-                            if value.as_i64().is_some() {
-                                format!("{value}.0f64")
-                            } else {
-                                format!("{value}f64")
-                            }
-                        } else {
-                            value.to_string()
-                        }
+                        value.as_str().map_or_else(
+                            || {
+                                if floating {
+                                    if value.as_i64().is_some() {
+                                        format!("{value}.0f64")
+                                    } else {
+                                        format!("{value}f64")
+                                    }
+                                } else {
+                                    value.to_string()
+                                }
+                            },
+                            |text| format!("String::from({text:?})"),
+                        )
                     })
                     .collect::<Vec<_>>()
                     .join(",");
@@ -153,13 +156,13 @@ fn original_and_reparsed_array_policies_observe_the_same_bounded_inputs() {
                 std::env::consts::EXE_SUFFIX
             ));
             fs::write(&source, format!("{definition}\nfn main(){{{calls}}}")).unwrap();
-            let mut compiler = Command::new("rustc");
-            compiler.args(["--edition", "2024"]);
+            let mut build_command = Command::new("rustc");
+            build_command.args(["--edition", "2024"]);
             #[cfg(windows)]
             if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
-                compiler.arg("-C").arg(format!("linker={linker}"));
+                build_command.arg("-C").arg(format!("linker={linker}"));
             }
-            let compiled = run(compiler.arg(&source).arg("-o").arg(&binary));
+            let compiled = run(build_command.arg(&source).arg("-o").arg(&binary));
             assert!(compiled.ok, "{case_index}: {variant}: {}", compiled.stderr);
             let observed = run(&mut Command::new(binary));
             assert!(observed.ok, "{case_index}: {variant}: {}", observed.stderr);

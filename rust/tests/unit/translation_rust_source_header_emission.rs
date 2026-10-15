@@ -512,13 +512,13 @@ fn compile_and_observe(code: &str, harness: &str) {
         .0
         .join(format!("witness{}", std::env::consts::EXE_SUFFIX));
     fs::write(&source, format!("{code}\n{harness}")).unwrap();
-    let mut compiler = Command::new("rustc");
-    compiler.args(["--edition", "2024", "--test"]);
+    let mut build_command = Command::new("rustc");
+    build_command.args(["--edition", "2024", "--test"]);
     #[cfg(windows)]
     if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
-        compiler.arg("-C").arg(format!("linker={linker}"));
+        build_command.arg("-C").arg(format!("linker={linker}"));
     }
-    let compiled = run(compiler.arg(&source).arg("-o").arg(&binary));
+    let compiled = run(build_command.arg(&source).arg("-o").arg(&binary));
     assert!(compiled.ok, "{}", compiled.stderr);
     let observed = run(Command::new(&binary).args(["--exact", "source_header_observations"]));
     assert!(observed.ok, "{}\n{}", observed.stdout, observed.stderr);

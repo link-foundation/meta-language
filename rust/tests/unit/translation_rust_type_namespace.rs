@@ -573,13 +573,13 @@ fn native_emitted_modules_execute_all_fifteen_shared_observations_in_ci() {
                 .code,
         )
         .unwrap();
-        let mut compiler = Command::new("rustc");
-        compiler.args(["--edition", "2024", "--crate-name", "owned_type_namespace"]);
+        let mut build_command = Command::new("rustc");
+        build_command.args(["--edition", "2024", "--crate-name", "owned_type_namespace"]);
         #[cfg(windows)]
         if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
-            compiler.arg("-C").arg(format!("linker={linker}"));
+            build_command.arg("-C").arg(format!("linker={linker}"));
         }
-        let compiled = run(compiler.arg(&source).arg("-o").arg(&binary));
+        let compiled = run(build_command.arg(&source).arg("-o").arg(&binary));
         assert!(compiled.ok, "{id}: {}", compiled.stderr);
         let observed = run(&mut Command::new(&binary));
         assert!(observed.ok, "{id}: {}", observed.stderr);

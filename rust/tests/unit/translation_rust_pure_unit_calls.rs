@@ -98,7 +98,7 @@ fn compile_and_execute(code: &str) {
     assert!(compiled.ok, "{}", compiled.stderr);
     let executed = run(&mut Command::new(&executable));
     assert!(executed.ok, "{}", executed.stderr);
-    assert!(executed.stdout.is_empty());
+    assert_eq!(executed.stdout, "");
 }
 
 #[test]
@@ -172,7 +172,10 @@ fn five_actual_complete_javascript_definition_sets_replay_three_times() {
         for _ in 0..3 {
             let program = checked(&packet);
             assert_eq!(names(&program), entry["names"]);
-            assert!(program.main.as_ref().unwrap().effects.is_empty());
+            assert_eq!(
+                program.main.as_ref().unwrap().effects,
+                [] as [meta_language::translation::ir::Effect; 0]
+            );
             let javascript =
                 emit_typed_program_links(&packet.network, packet.root, "JavaScript").unwrap();
             assert_eq!(
@@ -585,7 +588,7 @@ fn labeled_span_offsets_survive_reordered_raw_records_and_reject_negative_zero()
             json!(-0.0),
             json!(-1),
             json!(1.5),
-            json!(9007199254740992_u64),
+            json!(9_007_199_254_740_992_u64),
         ] {
             let mut malformed = checked(&archive(entry));
             let Decl::Fn(function) = &mut malformed.declarations[0] else {
@@ -596,7 +599,7 @@ fn labeled_span_offsets_survive_reordered_raw_records_and_reject_negative_zero()
         }
         let mut maximum = checked(&archive(entry));
         maximum.main.as_mut().unwrap().span.as_mut().unwrap().end =
-            usize::try_from(9007199254740991_u64).unwrap();
+            usize::try_from(9_007_199_254_740_991_u64).unwrap();
         assert!(encode_typed_program_links(&maximum).is_ok());
     }
     let packet = create_typed_program_links(
