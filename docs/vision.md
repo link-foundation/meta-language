@@ -584,6 +584,22 @@ native definitions are automatically emitted under an explicit immutable
 numeric-array value model. Repeated scans and copies retain potentially
 quadratic costs; native execution, the complete native projector and paired
 public capture and replay remain required work.
+The separate `closed fresh Number array collector 1` experiment selects one
+complete JavaScript function with a fresh unaliased array, one counted input
+loop, one ignored one-argument append per iteration and a terminal array return.
+Shared grammar and lowering decorators preserve original tokens, trivia,
+lexical binders and actual checked declaration owners. Its explicit premises
+require standard intrinsics, dense read-only Number input, successful allocation
+under a value observation and the derived array-length bound. The selected pure
+argument evaluates once before append; observing the old collector length keeps
+that order. Aliases, escaped collectors, observed append results and unknown
+source forms require separate proofs. The direct checker validates actual
+ordered declaration ownership, source binders reject reserved words using the
+shared JavaScript word register, and premise links use their own role rather
+than a source-type-owner label. Both saved formats retain these facts. The
+complete matcher and five lowered programs are automatically emitted as Rust
+source data. Default production append refusals remain; native source capture,
+execution and general member-array or Map projection remain required work.
 The separate `portable closed Rust text source certificate 1` experiment moves
 the complete finite text certificate into a kernel generated from shared links
 policy. Seventeen typed Number tables retain the actual token, declaration,
