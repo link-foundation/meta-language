@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 132 | 131 | 1 | 0 |
+| Generators | 134 | 133 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 51 | 0 | 0 | 51 |
+| Published artifact contents | 53 | 0 | 0 | 53 |
 
 ## JavaScript engines
 
@@ -619,6 +619,7 @@ they are.
 | `js/scripts/generate-rust-array-source-fixtures.mjs` | `js/scripts/generate-rust-array-source-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-borrowed-call-interface-fixtures.mjs` | `js/scripts/generate-rust-borrowed-call-interface-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-borrowed-call-interface-rules.mjs` | `js/scripts/generate-rust-borrowed-call-interface-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-cast-syntax-rules.mjs` | `js/scripts/generate-rust-cast-syntax-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-completion-fixtures.mjs` | `js/scripts/generate-rust-completion-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-completion-panic-fixtures.mjs` | `js/scripts/generate-rust-completion-panic-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-completion-rules.mjs` | `js/scripts/generate-rust-completion-rules.mjs` | `script` |  | derived | current |  |
@@ -658,6 +659,7 @@ they are.
 | `js/scripts/generate-scalar-loop-rules.mjs` | `js/scripts/generate-scalar-loop-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-cases.mjs` | `js/scripts/generate-self-translation-cases.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-report.mjs` | `js/scripts/generate-self-translation-report.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-self-translation-representation.mjs` | `js/scripts/generate-self-translation-representation.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-shared-numeric-function-fixtures.mjs` | `js/scripts/generate-shared-numeric-function-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-shared-numeric-function-rules.mjs` | `js/scripts/generate-shared-numeric-function-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-source-span-fixtures.mjs` | `js/scripts/generate-source-span-fixtures.mjs` | `script` |  | derived | current |  |
@@ -768,6 +770,7 @@ they are.
 | `src/data/resource-description-ntriples-profile.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/resource-description-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-borrowed-call-interface.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-cast-syntax.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-const-functions.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-cooked-string-escapes.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-empty-options.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
@@ -785,6 +788,7 @@ they are.
 | `src/data/rust-source-whitespace.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-type-namespace.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-unicode-escapes.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/self-translation-representation.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/semantic-lexicon.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/source-span.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/source-text-byte-model.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |

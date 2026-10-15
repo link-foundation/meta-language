@@ -17,6 +17,7 @@ test('shared representation data retains the actual original selector and comple
   assert.equal(policy.prelude, STRING_PRELUDE);
   assert.equal(digest(STRING_PRELUDE), policy.preludeSha256);
   assert.equal(readFileSync(new URL('../src/data/self-translation-representation.lino', import.meta.url), 'utf8'), readFileSync(new URL('../../rust/src/data/self-translation-representation.lino', import.meta.url), 'utf8'));
+  assert.match(readFileSync(new URL('../../rust/Cargo.toml', import.meta.url), 'utf8'), /^    "src\/data\/self-translation-representation\.lino",$/mu);
   generateSelfTranslationRepresentation(true);
 });
 

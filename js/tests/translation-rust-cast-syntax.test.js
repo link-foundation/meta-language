@@ -20,6 +20,8 @@ test('the linked cast rule distinguishes a bare type path from an already groupe
   assert.equal(policy.ambiguousFollowingToken, '<');
   assert.equal(policy.parenthesizedTypeStart, '(');
   assert.equal(readRustCastSyntaxMessage(), policy.reason);
+  assert.equal(readFileSync(new URL('../src/translation/data/rust-cast-syntax.lino', import.meta.url), 'utf8'), readFileSync(new URL('../../rust/src/data/rust-cast-syntax.lino', import.meta.url), 'utf8'));
+  assert.match(readFileSync(new URL('../../rust/Cargo.toml', import.meta.url), 'utf8'), /^    "src\/data\/rust-cast-syntax\.lino",$/mu);
   for (const token of ['<', '<=', '>', '>=', '==', '!=', ')', '}', 'as', '']) {
     assert.equal(acceptRustCastFollowingToken(token, false), token !== '<', token);
     assert.equal(acceptRustCastFollowingToken(token, true), true, token);
