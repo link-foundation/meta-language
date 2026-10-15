@@ -441,11 +441,12 @@ fn the_merge_forwards_formal_operational_premises_and_retains_unknown_origins() 
     options.formal_definitions = None;
     let unknown = merge_grammars(&list, &options).expect("unknown concepts remain copied");
     assert_eq!(unknown.status(), "incomplete");
-    assert!(
+    assert_eq!(
         unknown.global_concept_space["proofs"]
             .as_array()
             .expect("proofs")
-            .is_empty()
+            .as_slice(),
+        [] as [Value; 0]
     );
     assert_eq!(
         unknown.global_concept_space["formalDefinitions"],

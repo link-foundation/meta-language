@@ -2,7 +2,7 @@
 use serde::de::DeserializeOwned;
 use std::path::{Path, PathBuf};
 
-pub(super) fn read_project_data<T: DeserializeOwned>(text: &str) -> Result<T, String> {
+pub fn read_project_data<T: DeserializeOwned>(text: &str) -> Result<T, String> {
     let value = if text.trim_start().starts_with('(') {
         meta_language::structured_data_links::read_structured_data_lino(text)?
     } else {
@@ -11,7 +11,7 @@ pub(super) fn read_project_data<T: DeserializeOwned>(text: &str) -> Result<T, St
     serde_json::from_value(value).map_err(|error| error.to_string())
 }
 
-pub(super) fn resolve_project_data_path(file: impl AsRef<Path>) -> Result<PathBuf, String> {
+pub fn resolve_project_data_path(file: impl AsRef<Path>) -> Result<PathBuf, String> {
     meta_language::project_data::resolve_project_data_path(file)
 }
 

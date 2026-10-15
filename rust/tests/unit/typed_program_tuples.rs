@@ -99,13 +99,13 @@ fn run_rust(code: &str, directory: &Path, name: &str) -> Vec<String> {
     let source = directory.join(format!("{name}.rs"));
     let binary = directory.join(format!("{name}{}", std::env::consts::EXE_SUFFIX));
     fs::write(&source, code).unwrap();
-    let mut compiler = Command::new("rustc");
-    compiler.args(["--edition", "2024"]);
+    let mut invocation = Command::new("rustc");
+    invocation.args(["--edition", "2024"]);
     #[cfg(windows)]
     if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
-        compiler.arg("-C").arg(format!("linker={linker}"));
+        invocation.arg("-C").arg(format!("linker={linker}"));
     }
-    let compiled = compiler
+    let compiled = invocation
         .arg(&source)
         .arg("-o")
         .arg(&binary)
@@ -227,7 +227,7 @@ fn linked_tuple_models_layouts_and_binding_identities_survive_reload() {
             assert!(tuples.is_empty(), "Rust unit is not a zero-field tuple");
             continue;
         }
-        assert!(!tuples.is_empty());
+        assert_ne!(tuples, [] as [&meta_language::Link; 0]);
         for tuple in tuples {
             let frozen = field(&network, tuple.id(), "constructor immutability").unwrap();
             assert_eq!(
@@ -240,7 +240,7 @@ fn linked_tuple_models_layouts_and_binding_identities_survive_reload() {
                 Some("immutable value product")
             );
             let items = field(&network, tuple.id(), "items").unwrap();
-            assert!(!network.link(items).unwrap().references().is_empty());
+            assert_ne!(network.link(items).unwrap().references(), []);
         }
         let identities = identities(&network);
         assert!(

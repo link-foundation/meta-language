@@ -76,10 +76,9 @@ fn native_natural_language_rules_execute_with_lossless_spans_and_diagnostics() {
             .collect();
         assert_eq!(represented, expected, "{language}");
         if case["hasError"].as_bool().unwrap_or(false) {
-            assert!(
-                !network
-                    .query_links(&LinkQuery::by_type(LinkType::Syntax).with_term("ERROR"))
-                    .is_empty()
+            assert_ne!(
+                network.query_links(&LinkQuery::by_type(LinkType::Syntax).with_term("ERROR")),
+                [] as [&meta_language::Link; 0]
             );
             assert!(!network.verify_full_match(None).is_clean());
         }

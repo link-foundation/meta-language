@@ -27,10 +27,16 @@ fn long_lexical_extras_preserve_the_tree_when_optional_caches_exhaust_a_small_bu
     let parser = parser(fixture["grammar"].as_str().unwrap());
     let source = format!(
         "#{}\nx;",
-        "a".repeat(fixture["commentLength"].as_u64().unwrap() as usize)
+        "a".repeat(
+            usize::try_from(fixture["commentLength"].as_u64().unwrap())
+                .expect("comment length fits usize")
+        )
     );
     let limited = FeatureParseOptions {
-        memory_limit: Some(fixture["memoryLimit"].as_u64().unwrap() as usize),
+        memory_limit: Some(
+            usize::try_from(fixture["memoryLimit"].as_u64().unwrap())
+                .expect("memory limit fits usize"),
+        ),
         ..FeatureParseOptions::default()
     };
     let expected = parser
@@ -76,7 +82,7 @@ fn original_zig_diagnostic_comment_ci_input_fits_the_unchanged_default_memory_bu
         })
         .unwrap();
     let source = selected["source"].as_str().unwrap();
-    assert_eq!(source.len(), 495499);
+    assert_eq!(source.len(), 495_499);
     let parser = parser(include_str!("../../../parity/grammars/native/zig.lino"));
     let fixture: Value = super::project_data::read_project_data(include_str!(
         "../../../parity/fixtures/native-grammars/zig.lino"
@@ -88,7 +94,7 @@ fn original_zig_diagnostic_comment_ci_input_fits_the_unchanged_default_memory_bu
         .parse_tree(source.as_bytes(), &FeatureParseOptions::default())
         .unwrap();
     assert!(actual.ok, "{:?}", actual.rejection);
-    assert!(actual.ambiguities.is_empty());
+    assert_eq!(actual.ambiguities, [] as [meta_language::Ambiguity; 0]);
     let tree = actual.tree.unwrap();
     assert_eq!(Rows::new(&fixture).rows(&tree, source), expected);
     assert_eq!(rebuilt(&tree), source);

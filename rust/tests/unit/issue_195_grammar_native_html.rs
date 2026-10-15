@@ -158,7 +158,7 @@ fn native_html_upstream_corpus_matches_the_independent_oracle() {
 fn native_html_focused_embedded_raw_text_preserves_leading_whitespace() {
     for (tag, language, body) in [
         ("script", "JavaScript", "\n  let leaf=7;\n"),
-        ("style", "CSS", "\n  p {color:green}\n"),
+        ("style", "CSS", concat!("\n  p {", "color:green", "}\n")),
     ] {
         let source = format!("<{tag}>{body}</{tag}>");
         let network = LinkNetwork::parse(&source, "HTML", ParseConfiguration::default());

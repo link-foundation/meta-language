@@ -121,7 +121,7 @@ fn ruby_profile_upstream_corpus_matches_the_independent_oracle() {
     let rows = Rows::new(&fixture);
     let language = tree_sitter_ruby::LANGUAGE.into();
     let inputs = corpus["cases"].as_array().unwrap();
-    assert!(!inputs.is_empty());
+    assert_ne!(inputs.as_slice(), [] as [Value; 0]);
     let mut failures = Vec::new();
     for case in inputs {
         let (expected, recovers) = oracle_rows(&language, source(case));

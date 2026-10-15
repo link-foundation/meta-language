@@ -1,4 +1,4 @@
-//! Historical fixture source digests remain independent of physical LiNo hashes.
+//! Historical fixture source digests remain independent of physical `LiNo` hashes.
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -57,7 +57,7 @@ fn scalar_meaning(token: &str) -> Value {
 }
 
 /// Recreate the source bytes pinned by unchanged fixture manifest metadata.
-pub(super) fn read_fixture_source_bytes(file: impl AsRef<Path>) -> Vec<u8> {
+pub fn read_fixture_source_bytes(file: impl AsRef<Path>) -> Vec<u8> {
     let logical = file.as_ref();
     let actual = resolve_project_data_path(logical).expect("one fixture storage format");
     if logical

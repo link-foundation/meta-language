@@ -1,4 +1,4 @@
-//! Candidate CSharp grammar and counted scanner operations are shared Links data.
+//! Candidate `CSharp` grammar and counted scanner operations are shared Links data.
 use super::issue_195_native_grammar_rows::{
     Rows, cases, oracle_agrees, oracle_rows, parse, parser, rebuilt, source,
 };
@@ -96,7 +96,7 @@ fn csharp_profile_upstream_corpus_matches_the_independent_oracle() {
     let rows = Rows::new(&fixture);
     let language = tree_sitter_c_sharp::LANGUAGE.into();
     let inputs = corpus["cases"].as_array().unwrap();
-    assert!(!inputs.is_empty());
+    assert_ne!(inputs.as_slice(), [] as [Value; 0]);
     let mut failures = Vec::new();
     for case in inputs {
         let (expected, recovers) = oracle_rows(&language, source(case));

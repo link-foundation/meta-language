@@ -36,7 +36,10 @@ fn native_rule_summaries_are_independent_caller_values() {
     returned[0].concept = Some("invalid caller edit".to_owned());
     returned.pop();
     assert_eq!(native_grammar_rule_concepts("native-json"), expected);
-    assert!(native_grammar_rule_concepts("absent grammar").is_empty());
+    assert_eq!(
+        native_grammar_rule_concepts("absent grammar"),
+        [] as [meta_language::NativeRuleConcept; 0]
+    );
 }
 
 fn observe(requirement_id: &str, fixture_file: &'static str, assertions: &[&str], test_name: &str) {

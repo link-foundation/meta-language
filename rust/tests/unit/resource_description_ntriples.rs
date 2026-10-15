@@ -1,5 +1,5 @@
 //! Shared independent syntax oracles, canonical conversion and linked mutations.
-//! Native execution is performed by CI; fixture storage is LiNo throughout.
+//! Native execution is performed by CI; fixture storage is `LiNo` throughout.
 
 use meta_language::{
     LinkId, LinkNetwork, ResourceDescriptionLinks, decode_resource_description_graph,

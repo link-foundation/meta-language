@@ -27,7 +27,7 @@ fn role(network: &LinkNetwork, kind: &str) -> Vec<LinkId> {
     network
         .links()
         .filter(|link| link.metadata().term() == data["terms"][kind].as_str())
-        .map(|link| link.id())
+        .map(meta_language::Link::id)
         .collect()
 }
 
@@ -250,7 +250,10 @@ fn scope_and_exact_literal_identity_preserve_owl_axioms_without_entailing_identi
         .unwrap();
     assert_eq!(axiom[0]["value"], "urn:left");
     assert_eq!(axiom[2]["value"], "urn:right");
-    assert!(!role(&merged.network, "witness").is_empty());
+    assert_ne!(
+        role(&merged.network, "witness"),
+        [] as [meta_language::LinkId; 0]
+    );
     assert!(verify_resource_description_graph_witnesses(&merged.network, merged.root).unwrap());
 }
 

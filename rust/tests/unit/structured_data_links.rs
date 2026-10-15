@@ -147,7 +147,7 @@ fn shared_javascript_data_reloads_and_encodes_exact_ordered_links() {
 
 #[test]
 fn json_convenience_preserves_integer_consumers_and_finite_float_bits() {
-    let value = json!({"schemaVersion": 1, "root": 9007199254740992_u64, "text": "漢字", "array": [true, false, null, 1.25]});
+    let value = json!({"schemaVersion": 1, "root": 9_007_199_254_740_992_u64, "text": "漢字", "array": [true, false, null, 1.25]});
     let graph = encode_structured_data_links(&value).unwrap();
     let decoded = decode_structured_data_links(&graph.network, graph.root).unwrap();
     assert_eq!(decoded, value);
@@ -157,7 +157,7 @@ fn json_convenience_preserves_integer_consumers_and_finite_float_bits() {
         read_structured_data_lino(&structured_data_to_lino(&value).unwrap()).unwrap(),
         value
     );
-    assert!(encode_structured_data_links(&json!(9007199254740993_u64)).is_err());
+    assert!(encode_structured_data_links(&json!(9_007_199_254_740_993_u64)).is_err());
     assert!(encode_structured_data_links(&json!(i64::MAX)).is_err());
     for number in [f64::from_bits(1), f64::MAX, -0.0, 1e20, 1e21, 1e-6, 1e-7] {
         let source = structured_data_to_lino_ordered(&StructuredDataValue::Number(number)).unwrap();

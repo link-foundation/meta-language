@@ -162,7 +162,7 @@ fn native_agda_focused_layout_divergences_are_explicit_and_lossless() {
     let divergent = cases(&fixture, "divergences");
     assert_eq!(divergent.len(), 4);
     for case in divergent {
-        assert!(!case["reason"].as_str().unwrap().is_empty());
+        assert_ne!(case["reason"].as_str().unwrap(), "");
         let tree = parse(&parser, source(case)).expect("layout queue is preserved");
         assert_eq!(Value::Array(rows.rows(&tree, source(case))), case["rows"]);
         assert_eq!(rebuilt(&tree), source(case));
