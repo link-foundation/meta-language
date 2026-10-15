@@ -213,6 +213,14 @@ decoder and other source languages retain their original contracts. Rust token
 separation uses its exact eleven Pattern White Space code points and permits a
 byte order mark only at original source offset zero. All of these decisions
 retain original UTF-16 spans and serialize their policy as shared links.
+Rust raw string literals retain their complete zero-through-255-hash delimiters
+and literal backslashes. Their shared reader reuses the existing source scalar
+and line-break decisions, normalizes carriage-return/line-feed pairs and refuses
+isolated carriage returns and unpaired source surrogates. Decoded values enter
+the existing String paths with their original source intervals. Closed models
+that select fixed decoded runtime strings retain those values and actual
+operation owners; the explicitly raw-excluding generated namespace model keeps
+its refusal.
 The bounded Unicode scalar source text byte model exposes actual UTF-16 units, exact
 UTF-8 length, individual bytes and scalar-boundary slices in both packages.
 Shared numeric rules generate the native byte decisions; thin host adapters
@@ -473,6 +481,17 @@ emission reinterprets the complete emitted module to bind conditions to its new
 spans. This remains an isolated experiment without a production selector or
 native parity claim. Existing production source refusals and the complete
 binary formatter gap remain explicit.
+The separately selected `closed generated owned Rust literal value edits 1`
+experiment adds ordered links from each editable String or signed i32 literal
+to its actual source operation and optional owned unary-minus token. It reuses
+the production Rust emitter's string quoter for all Unicode scalar values,
+including control characters. Signed edits retain the complete i32 domain and
+every original comment. Removing an actual minus inserts a recorded separator
+to preserve token boundaries. Every emitted complete module is reinterpreted
+under the selected model before its runtime and String conditions are rebound
+to fresh spans. The original model, its narrower literal decisions and its
+fixtures remain separate and unchanged. This extension also remains an
+experiment without a production selector or native parity claim.
 The independently selected `closed pure Rust const predicates 1` source model
 owns the actual `const` and `fn` keyword intervals, complete header and body
 intervals, original declaration name and direct primitive source signature.
