@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 125 | 124 | 1 | 0 |
+| Generators | 126 | 125 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 45 | 0 | 0 | 45 |
+| Published artifact contents | 46 | 0 | 0 | 46 |
 
 ## JavaScript engines
 
@@ -585,6 +585,7 @@ they are.
 | `js/scripts/generate-grammar-prefix-operand-fixtures.mjs` | `js/scripts/generate-grammar-prefix-operand-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-issue-195-conformance.mjs` | `js/scripts/generate-issue-195-conformance.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-issue-195-generative.mjs` | `js/scripts/generate-issue-195-generative.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-line-terminator-rules.mjs` | `js/scripts/generate-javascript-line-terminator-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-javascript-scoped-binding-emission-fixtures.mjs` | `js/scripts/generate-javascript-scoped-binding-emission-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-javascript-scoped-binding-emission-rules.mjs` | `js/scripts/generate-javascript-scoped-binding-emission-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-link-network-binary-fixtures.mjs` | `js/scripts/generate-link-network-binary-fixtures.mjs` | `script` |  | derived | current |  |
@@ -748,6 +749,7 @@ they are.
 | `src/data/formal-concept-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/foundation-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/grammar-lock.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-line-terminators.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-scoped-binding-emission.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/language-catalog.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/language-trigrams.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
