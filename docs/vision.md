@@ -1727,6 +1727,10 @@ partition retains its report dependencies. Both JavaScript collections must
 succeed before Rust evidence starts, and both remain dependencies of the
 aggregate with their original physical scope and artifact identities.
 The Rust evidence suite starts only after the entire JavaScript matrix passes.
+Its default-feature Cargo command retains every test target, the lockfile and
+`--no-fail-fast`. It reuses the fresh-merge command's package-specific test
+optimization with debug assertions and overflow checks explicitly enabled;
+no release profile, feature selection or test filter replaces the suite.
 Both suites provision their required formatter and compiler tools. Failure
 tails and periodic command progress are retained in live CI output. Each
 thirty-second heartbeat includes a bounded, credential-redacted actual log
