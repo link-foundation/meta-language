@@ -11,7 +11,7 @@ import { normalizeMigrationTranslationStages } from './validate-structured-data-
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const originalRevision = '2b2a72a74e4ba74a2dda9bd55edc02086c50eb68';
-const refreshRevision = "8436c0cd7f896b1a5f96849aa42b8e9b62b50d53";
+const refreshRevision = '834e73ed57458967466197251203649cd5eaa9be';
 const originalPath = 'parity/fixtures/translation-stages.json';
 const refreshPath = 'parity/fixtures/translation-stages.lino';
 const destination = new URL('../../parity/fixtures/translation-stage-refresh-receipt.lino', import.meta.url);
