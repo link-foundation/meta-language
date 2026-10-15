@@ -125,3 +125,37 @@ test('hidden record fields and callback-shaped ordered fields cannot be normaliz
   Object.defineProperty(owner,name,{get(){invoked++;return value;},enumerable:true});assert.throws(()=>encodeTypedProgramLinks(program),/unrepresented own fields/u,role+' '+name);assert.equal(invoked,0,role+' '+name+' callback');
  }
 });
+
+test('validated source spans compare their labeled offsets across actual reordered serialized records',()=>{
+ for(const model of [fixture.model,'closed public pure Rust unit calls 1']){
+  const source=(model===fixture.model?'':'pub ')+'fn empty(){}fn main(){empty();}',packet=createTypedProgramLinks(source,'Rust',{rustPureUnitCallModel:model});
+  const program=decodeTypedProgramLinks(packet.network,packet.root),effect=program.main.effects[0];
+  effect.value.span={end:effect.span.end,start:effect.span.start};
+  effect.sourcePureUnitCall.span={end:effect.span.end,start:effect.span.start};
+  const encoded=encodeTypedProgramLinks(program),network=LinkNetwork.fromLino(encoded.network.toLino()),restored=decodeTypedProgramLinks(network,encoded.root);
+  assert.deepEqual(Object.keys(restored.main.effects[0].value.span),['end','start']);
+  assert.deepEqual(Object.keys(restored.main.effects[0].span),['start','end']);
+  assert.deepEqual(restored.main.effects[0].value.span,{end:effect.span.end,start:effect.span.start});
+  assert.deepEqual(observeCalls({network,root:encoded.root}),['empty']);
+  assert.match(emitTypedProgramLinks(network,encoded.root,'Rust').code,/crate::empty\(\)/u);
+ }
+});
+
+test('selected source offsets reject negative zero and unsafe bounds while primitive Float negative zero remains exact',()=>{
+ for(const model of [fixture.model,'closed public pure Rust unit calls 1']){
+  const source=(model===fixture.model?'':'pub ')+'fn empty(){}fn main(){empty();}';
+  for(const offset of [-0,-1,1.5,Number.MAX_SAFE_INTEGER+1,NaN,Infinity]){
+   const packet=createTypedProgramLinks(source,'Rust',{rustPureUnitCallModel:model}),program=decodeTypedProgramLinks(packet.network,packet.root);
+   program.main.span.start=offset;assert.throws(()=>encodeTypedProgramLinks(program),/actual source span is malformed/u,String(offset));
+  }
+  for(const spelling of ['-0','-0.0','9007199254740992']){
+   const packet=createTypedProgramLinks(source,'Rust',{rustPureUnitCallModel:model}),network=packet.network,program=network.link(packet.root).references()[0],main=field(network,program,'main').child,span=field(network,main,'span').child,offset=field(network,span,'start').child;
+   const scalar=network.link(offset);scalar.setMetadata(scalar.metadata().withDefinition(spelling));const raw=LinkNetwork.fromLino(network.toLino());assert.throws(()=>decodeTypedProgramLinks(raw,packet.root));for(const target of ['Rust','JavaScript'])assert.throws(()=>emitTypedProgramLinks(raw,packet.root,target));
+  }
+  const packet=createTypedProgramLinks(source,'Rust',{rustPureUnitCallModel:model}),program=decodeTypedProgramLinks(packet.network,packet.root);program.main.span.end=Number.MAX_SAFE_INTEGER;
+  const encoded=encodeTypedProgramLinks(program);assert.equal(decodeTypedProgramLinks(LinkNetwork.fromLino(encoded.network.toLino()),encoded.root).main.span.end,Number.MAX_SAFE_INTEGER);
+ }
+ const packet=createTypedProgramLinks('/** @returns {number} */function negative(){return -0;}console.log(negative());','JavaScript'),program=decodeTypedProgramLinks(packet.network,packet.root);
+ assert.equal(program.declarations.get('negative').body.value,'-0');
+ const context=vm.createContext({console:{log(){}}});vm.runInContext(emitTypedProgramLinks(packet.network,packet.root,'JavaScript').code,context,{timeout:1000});assert.equal(Object.is(context.negative(),-0),true);
+});

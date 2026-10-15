@@ -15,7 +15,8 @@ const source='// Generated from linked pure Rust Unit-call policy. Do not edit.\
  +'/** @param {string} form @returns {boolean} */\nexport function acceptRustPureUnitPathForm(form){return '+policy.pathForms.map(form=>'form === '+JSON.stringify(form)).join(' || ')+';}\n'
  +'/** @param {string} language @param {boolean} forbidden @returns {boolean} */\nexport function acceptRustPureUnitContext(language,forbidden){return language === "Rust" && !forbidden;}\n'
  +'/** @param {string} model @param {string} form @returns {boolean} */\nexport function acceptRustPureUnitVisibility(model,form){return model === '+JSON.stringify(policy.model)+' && form === '+JSON.stringify(policy.visibilityForms.private)+' || model === '+JSON.stringify(policy.publicModel)+' && form === '+JSON.stringify(policy.visibilityForms.public)+';}\n'
- +'/** @param {string} kind @param {boolean} dense @param {boolean} unrepresented @returns {boolean} */\nexport function acceptRustPureUnitContainer(kind,dense,unrepresented){return !unrepresented && (kind === '+JSON.stringify(policy.containerKinds.array)+' && dense || kind === '+JSON.stringify(policy.containerKinds.map)+');}\n';
+ +'/** @param {string} kind @param {boolean} dense @param {boolean} unrepresented @returns {boolean} */\nexport function acceptRustPureUnitContainer(kind,dense,unrepresented){return !unrepresented && (kind === '+JSON.stringify(policy.containerKinds.array)+' && dense || kind === '+JSON.stringify(policy.containerKinds.map)+');}\n'
+ +'/** @param {number} value @param {boolean} negativeZero @returns {boolean} */\nexport function acceptRustPureUnitSourceOffset(value,negativeZero){return '+(policy.sourceOffsets.negativeZero?'true':'!negativeZero')+' && value >= '+policy.sourceOffsets.minimum+' && value <= '+policy.sourceOffsets.maximum+' && value % 1 === 0;}\n';
 const js=new URL('../src/translation/rust-pure-unit-call-rules.js',import.meta.url),native=new URL('../../rust/src/translation/rust/pure_unit_call_rules.rs',import.meta.url),copy=new URL('../../rust/src/data/rust-pure-unit-calls.lino',import.meta.url),style=new URL('../../parity/self-translation/rust-pure-unit-call-rules-decorators.lino',import.meta.url);
 if(process.argv.includes('--check')){if(readFileSync(js,'utf8')!==source)throw Error('JavaScript pure Unit-call rules are stale');}else writeFileSync(js,source);
 if(!process.argv.includes('--javascript-only')){
@@ -39,6 +40,9 @@ if(!process.argv.includes('--javascript-only')){
    if(block.startsWith('pub fn accept_rust_pure_unit_name(')){
     const excluded=[...block.matchAll(/name == ("[^"\\]*")/gu)].map(match=>JSON.parse(match[1]));assert.deepEqual(excluded,policy.forbiddenNames);
     expression='!name.is_empty() && name != "_" && !name.starts_with("ml_") && !matches!(name, '+excluded.map(value=>JSON.stringify(value)).join(' | ')+')';
+   }
+   if(block.startsWith('pub fn accept_rust_pure_unit_source_offset(')){
+    expression=(policy.sourceOffsets.negativeZero?'true':'!negative_zero')+' && ('+policy.sourceOffsets.minimum+'f64..='+policy.sourceOffsets.maximum+'f64).contains(&value) && value % 1f64 == 0f64';
    }
    expression=stripRustSourceHeaderStyleParentheses(expression);
    replace(block,block.slice(0,open+1)+'\n    '+expression+'\n}');

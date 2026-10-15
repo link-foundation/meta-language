@@ -2,7 +2,7 @@
 import {readRuntimeProjectData} from '../project-data-loader.js';
 import {unsupported,typeError} from './diagnostics.js';
 import {UNIT} from './types.js';
-import {acceptRustPureUnitCallModel,acceptRustPureUnitNameCharacter,acceptRustPureUnitName,acceptRustPureUnitHeaderForm,acceptRustPureUnitBodyForm,acceptRustPureUnitPathForm,acceptRustPureUnitContext,acceptRustPureUnitContainer,acceptRustPureUnitVisibility} from './rust-pure-unit-call-rules.js';
+import {acceptRustPureUnitCallModel,acceptRustPureUnitNameCharacter,acceptRustPureUnitName,acceptRustPureUnitHeaderForm,acceptRustPureUnitBodyForm,acceptRustPureUnitPathForm,acceptRustPureUnitContext,acceptRustPureUnitContainer,acceptRustPureUnitVisibility,acceptRustPureUnitSourceOffset} from './rust-pure-unit-call-rules.js';
 export const RUST_PURE_UNIT_CALL_POLICY=readRuntimeProjectData(new URL('./data/rust-pure-unit-calls.lino',import.meta.url));
 const policy=RUST_PURE_UNIT_CALL_POLICY;
 const same=(left,right)=>JSON.stringify(left)===JSON.stringify(right);
@@ -40,7 +40,8 @@ function checkOwnedContainers(root){
  }
  visit(root);
 }
-function validSpan(value){exact(value,['start','end']);if(!Number.isSafeInteger(value.start)||!Number.isSafeInteger(value.end)||value.start<0||value.end<=value.start)fail('an actual source span is malformed');}
+function validSpan(value){exact(value,['start','end']);if(typeof value.start!=='number'||typeof value.end!=='number'||!acceptRustPureUnitSourceOffset(value.start,Object.is(value.start,-0))||!acceptRustPureUnitSourceOffset(value.end,Object.is(value.end,-0))||value.end<=value.start)fail('an actual source span is malformed');}
+function equalRustPureUnitSourceSpans(left,right){return left.start===right.start&&left.end===right.end;}
 function inside(inner,outer){return inner.start>=outer.start&&inner.end<=outer.end;}
 function nameAccepted(name){return typeof name==='string'&&acceptRustPureUnitName(name)&&[...name].every((character,index)=>acceptRustPureUnitNameCharacter(character.codePointAt(0),index===0));}
 function readName(parser,context){const token=parser.cursor.identifier(context);if(!nameAccepted(token.value))sourceFail('the selected name requires an ordinary unreserved ASCII Rust identifier',range(token,token));return token;}
@@ -132,8 +133,8 @@ export function checkRustPureUnitCalls(program){
   exact(effect,policy.fields.effect);validSpan(effect.span);
   if(effect.k!=='let'||!nameAccepted(effect.name)||locals.has(effect.name)||names.has(effect.name)||!inside(effect.span,program.main.span))fail('a Unit call statement has no distinct unreserved local binding or actual main site');
   locals.add(effect.name);exact(effect.value,policy.fields.call);exact(effect.value.type,policy.fields.unitType);validSpan(effect.value.span);
-  if(effect.value.k!=='call'||!same(effect.value.args,[])||effect.value.type.kind!=='unit'||!same(effect.value.span,effect.span)||!owned.has(program.declarations.get(effect.value.fn)))fail('a main statement must call the exact owned zero-argument pure Unit declaration');
+  if(effect.value.k!=='call'||!same(effect.value.args,[])||effect.value.type.kind!=='unit'||!equalRustPureUnitSourceSpans(effect.value.span,effect.span)||!owned.has(program.declarations.get(effect.value.fn)))fail('a main statement must call the exact owned zero-argument pure Unit declaration');
   const proof=effect.sourcePureUnitCall;exact(proof,policy.fields.callProof);validSpan(proof.span);
-  if(proof.model!==model||proof.language!==policy.language||!acceptRustPureUnitPathForm(proof.pathForm)||!same(proof.span,effect.span))fail('a Unit call statement has invalid selected source facts');
+  if(proof.model!==model||proof.language!==policy.language||!acceptRustPureUnitPathForm(proof.pathForm)||!equalRustPureUnitSourceSpans(proof.span,effect.span))fail('a Unit call statement has invalid selected source facts');
  }
 }
