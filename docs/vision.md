@@ -514,8 +514,23 @@ construction or clone operations; a move adds no allocation condition. This
 value interpretation does not establish pointer, resource, lifetime, failure or
 ABI equivalence. Ordinary source models retain their existing contracts, and
 complete generated runtime wrappers still need an independently proved
-composition. Native library support
-and production selection remain separate obligations.
+composition. Native library support and production selection remain separate
+obligations.
+The separate JavaScript-first `Rust raw binding identifier interpretation 1`
+experiment retains original ASCII raw function and parameter names, including
+keyword spellings, in complete source tokens. It derives temporary parser
+aliases without collisions, with checked inverse links to actual declaration,
+parameter and expression owners. Raw and ordinary spellings of the same name
+resolve to one identifier in each lexical scope; distinct scopes retain distinct
+owners.
+Canonical duplicates, forbidden raw names, separated prefixes, primitive values
+used as calls and recursive calls refuse. Complete sources with Boolean or i32
+values, copies and direct calls retain their bytes through text and binary Links
+reload and coherent owner edits. Every declaration has an invocation premise
+linked to its actual ordered parameter array. The explicit invocation checker validates dense
+arguments, exact arity, primitive Booleans and signed i32 BigInt bounds before
+observing a call. This interpretation remains experimental; production source
+lexing and native runtime integration require their own paired implementation.
 The independently selected `closed pure Rust const predicates 1` source model
 owns the actual `const` and `fn` keyword intervals, complete header and body
 intervals, original declaration name and direct primitive source signature.
