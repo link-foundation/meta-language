@@ -8,9 +8,8 @@ import { acceptControlParenthesis, acceptStatementBrace, decodeUnicodeEscape, re
 import { readRustSourceLineBreakEnd, readRustStringContinuationEnd } from './rust-string-rules.js';
 import { acceptRustCookedStringEscapePrefix, readRustAsciiEscapeValue } from './rust-cooked-string-rules.js';
 import { decodeRustUnicodeEscape } from './rust-unicode-escape-rules.js';
-import { acceptRustNumberDigitBoundary } from './rust-number-rules.js';
 import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
-import { acceptRustSourceWhitespace, acceptRustSourceByteOrderMark } from './rust-source-whitespace-rules.js';
+import { acceptRustSourceWhitespace, acceptRustSourceByteOrderMark, acceptRustSourceNumberDigitBoundary } from './rust-source-whitespace-rules.js';
 
 const OPERATORS = {
   JavaScript: [
@@ -111,7 +110,7 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
         const [end, suffixStart, floating] = readRustNumberBounds(encoding.units, index);
         const raw = source.slice(index, end);
         const digits = source.slice(index, suffixStart);
-        if (!acceptRustNumberDigitBoundary(floating, digits.endsWith('_'), source.slice(suffixStart, end), isIdentifierPart(source[end] ?? '', 'Rust'), end < source.length ? source.charCodeAt(end) : -1)) throw new TranslationError('syntax', `malformed number ${raw}`, { start, end });
+        if (!acceptRustSourceNumberDigitBoundary(floating, digits.endsWith('_'), source.slice(suffixStart, end), isIdentifierPart(source[end] ?? '', 'Rust'), end < source.length ? source.charCodeAt(end) : -1)) throw new TranslationError('syntax', `malformed number ${raw}`, { start, end });
         if (floating && !Number.isFinite(Number(digits.replaceAll('_', '')))) throw new TranslationError('syntax', `floating-point literal out of range ${raw}`, { start, end });
         tokens.push({ kind: 'number', ...(floating && { floating: true }), value: floating ? String(Number(digits.replaceAll('_', ''))) : digits.replaceAll('_', ''), suffix: source.slice(suffixStart, end), raw, start, end });
         index = end;
