@@ -1,5 +1,5 @@
 //! Whole-source closed runtime interpretation over shared linked syntax.
-//! Native positional references project real owned LinkIds, never copied names.
+//! Native positional references project real owned `LinkIds`, never copied names.
 use super::Language;
 use super::diagnostics::{Result, type_error, unsupported};
 use super::ir::{Decl, Program};

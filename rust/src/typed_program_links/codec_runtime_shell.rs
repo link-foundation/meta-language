@@ -1,5 +1,5 @@
 //! Identity certificates for the complete runtime graph before tree projection.
-//! References are checked against real owned LinkIds; equal record copies fail.
+//! References are checked against real owned `LinkIds`; equal record copies fail.
 use super::super::{Result, error};
 use super::{Data, Decoder};
 use crate::LinkId;
