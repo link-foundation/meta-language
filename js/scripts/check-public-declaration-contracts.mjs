@@ -17,6 +17,8 @@ export function publicDeclarationConsumers(moduleSpecifier = publicModule) {
   const ownedTextFixture = readProjectData(new URL('../../experiments/rust-owned-local-state-fixture.lino', import.meta.url));
   const privateUnitFixture = readProjectData(new URL('../../parity/fixtures/rust-pure-unit-calls.lino', import.meta.url));
   const publicUnitFixture = readProjectData(new URL('../../parity/fixtures/rust-public-pure-unit-calls.lino', import.meta.url));
+  const constFunctionFixture = readProjectData(new URL('../../experiments/rust-const-function-fixture.lino', import.meta.url));
+  const sourceTextByteFixture = readProjectData(new URL('../../parity/fixtures/source-text-bytes.lino', import.meta.url));
   const imports = `import { importEbnf, encodeFormalConceptDefinition, createDiscoveredConceptLinks,
     readDiscoveredConceptLinks, importResourceDescriptionGraph, decodeResourceDescriptionGraph,
     mergeResourceDescriptionGraphs, verifyResourceDescriptionGraphWitnesses } from ${module};\n`;
@@ -630,6 +632,123 @@ export function createWrongLanguagePacket() {
 }
 `,
     })),
+    ...constFunctionFixture.cases.flatMap(entry => ['implicit', 'explicit'].map(selection => ({
+      name: `valid-const-predicate-${selection}-${entry.name}`, expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks, LinkNetwork } from ${module};
+const options = {rustConstFunctionModel:${JSON.stringify(constFunctionFixture.model)}${selection === 'explicit' ? ",rustSourceSignatureModel:'Rust source function signature 1'" : ''}} as const;
+const packet = createTypedProgramLinks(${JSON.stringify(entry.source)},'Rust',{...options,provenance:{consumer:${JSON.stringify(entry.name)}}});
+const network = LinkNetwork.fromLino(packet.network.toLino());
+const program = decodeTypedProgramLinks(network,packet.root);
+const javascript = emitTypedProgramLinks(network,packet.root,'JavaScript');
+const rust = emitTypedProgramLinks(network,packet.root,'Rust');
+export function reimportActualRustDefinitions(definitions:string) {
+  const packet = createTypedProgramLinks(definitions+'\\nfn main(){}','Rust',options);
+  const network = LinkNetwork.fromLino(packet.network.toLino());
+  return {network,root:packet.root,program:decodeTypedProgramLinks(network,packet.root),
+    code:emitTypedProgramLinks(network,packet.root,'JavaScript').code};
+}
+export const contractEvidence = {network,root:packet.root,program,code:javascript.code,rustCode:rust.code};
+`,
+    }))),
+    {
+      name: 'valid-source-free-const-predicate-operation-edit', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks, LinkNetwork, LinkId } from ${module};
+const options = {rustConstFunctionModel:${JSON.stringify(constFunctionFixture.model)}} as const;
+const packet = createTypedProgramLinks(${JSON.stringify(constFunctionFixture.cases[0].source)},'Rust',options);
+const network = LinkNetwork.fromLino(packet.network.toLino());
+const original = emitTypedProgramLinks(network,packet.root,'JavaScript');
+const relations = network.links().filter(link=>link.references().length===3);
+const field = (parent:LinkId,label:string):LinkId => {
+  const relation = relations.find(link=>link.references()[0].equals(parent)
+    &&network.link(link.references()[1])?.metadata().term===label);
+  if(!relation) throw new Error('missing actual const predicate field '+label);
+  return relation.references()[2];
+};
+const declaration = relations.find(link=>network.link(link.references()[1])?.metadata().term==='full name'
+  &&network.link(link.references()[2])?.metadata().definition===${JSON.stringify(constFunctionFixture.cases[0].name)});
+if(!declaration) throw new Error('missing actual const predicate declaration');
+const operation = network.link(field(field(declaration.references()[0],'body'),'operation'));
+if(!operation||operation.metadata().definition!=='or') throw new Error('the actual editable predicate operation differs');
+operation.metadata().definition = 'and';
+const restored = LinkNetwork.fromLino(network.toLino());
+const javascript = emitTypedProgramLinks(restored,packet.root,'JavaScript');
+const rust = emitTypedProgramLinks(restored,packet.root,'Rust');
+export function reimportActualRustDefinitions(definitions:string) {
+  const packet = createTypedProgramLinks(definitions+'\\nfn main(){}','Rust',options);
+  const network = LinkNetwork.fromLino(packet.network.toLino());
+  return {network,root:packet.root,program:decodeTypedProgramLinks(network,packet.root),
+    code:emitTypedProgramLinks(network,packet.root,'JavaScript').code};
+}
+export const contractEvidence = {network:restored,root:packet.root,program:decodeTypedProgramLinks(restored,packet.root),
+  originalCode:original.code,code:javascript.code,rustCode:rust.code};
+`,
+    },
+    {
+      name: 'reject-unregistered-const-predicate-model-version', expectedDiagnostics: ['TS2322'],
+      source: `import { createTypedProgramLinks } from ${module};
+createTypedProgramLinks(${JSON.stringify(constFunctionFixture.cases[0].source)},'Rust',
+  {rustConstFunctionModel:'closed pure Rust const predicates 99'});
+`,
+    },
+    {
+      name: 'valid-const-predicate-selector-type-with-wrong-source-language', expectedDiagnostics: [],
+      source: `import { createTypedProgramLinks } from ${module};
+export function createWrongLanguagePacket() {
+  return createTypedProgramLinks('function predicate(value){return value;}','JavaScript',
+    {rustConstFunctionModel:${JSON.stringify(constFunctionFixture.model)}});
+}
+`,
+    },
+    {
+      name: 'reject-unregistered-explicit-const-predicate-signature-model', expectedDiagnostics: ['TS2322'],
+      source: `import { createTypedProgramLinks } from ${module};
+createTypedProgramLinks(${JSON.stringify(constFunctionFixture.cases[0].source)},'Rust',
+  {rustConstFunctionModel:${JSON.stringify(constFunctionFixture.model)},rustSourceSignatureModel:'Rust source function signature 99'});
+`,
+    },
+    ...sourceTextByteFixture.cases.map((entry,index) => ({
+      name: `valid-source-text-byte-facades-${index}`, expectedDiagnostics: [],
+      source: `import { readSourceTextUnits, readSourceTextByteLength, readSourceTextByte, sliceSourceTextBytes } from ${module};
+const text = ${JSON.stringify(String.fromCharCode(...entry.units))};
+const units:number[] = readSourceTextUnits(text);
+const length:number = readSourceTextByteLength(text);
+const firstByte:number|null = readSourceTextByte(text,0);
+const whole:string|null = sliceSourceTextBytes(text,0,length);
+export function byteAt(offset:number):number|null { return readSourceTextByte(text,offset); }
+export function sliceAt(start:number,end:number):string|null { return sliceSourceTextBytes(text,start,end); }
+export const contractEvidence = {text,units,length,firstByte,whole};
+`,
+    })),
+    {
+      name: 'valid-source-text-byte-runtime-boundaries', expectedDiagnostics: [],
+      source: `import { readSourceTextUnits, readSourceTextByteLength, readSourceTextByte, sliceSourceTextBytes } from ${module};
+export function units(text:string):number[] { return readSourceTextUnits(text); }
+export function length(text:string):number { return readSourceTextByteLength(text); }
+export function byte(text:string,offset:number):number|null { return readSourceTextByte(text,offset); }
+export function slice(text:string,start:number,end:number):string|null { return sliceSourceTextBytes(text,start,end); }
+`,
+    },
+    ...[
+      ['units', 'readSourceTextUnits(1)'], ['length', 'readSourceTextByteLength(1)'],
+      ['byte', 'readSourceTextByte(1,0)'], ['slice', 'sliceSourceTextBytes(1,0,1)'],
+    ].map(([selection, expression]) => ({
+      name: `reject-source-text-byte-nonstring-${selection}`, expectedDiagnostics: ['TS2345'],
+      source: `import { readSourceTextUnits, readSourceTextByteLength, readSourceTextByte, sliceSourceTextBytes } from ${module};\n${expression};\n`,
+    })),
+    ...[
+      ['byte', "readSourceTextByte('A','0')"], ['slice', "sliceSourceTextBytes('A',0,'1')"],
+    ].map(([selection, expression]) => ({
+      name: `reject-source-text-byte-foreign-offset-${selection}`, expectedDiagnostics: ['TS2345'],
+      source: `import { readSourceTextByte, sliceSourceTextBytes } from ${module};\nexport const contractEvidence = {value:${expression}};\n`,
+    })),
+    {
+      name: 'reject-source-text-byte-null-as-number', expectedDiagnostics: ['TS2322'],
+      source: `import { readSourceTextByte } from ${module};\nconst value:number = readSourceTextByte('',0);\nexport const contractEvidence = {value};\n`,
+    },
+    {
+      name: 'reject-source-text-byte-null-as-string', expectedDiagnostics: ['TS2322'],
+      source: `import { sliceSourceTextBytes } from ${module};\nconst value:string = sliceSourceTextBytes('A',1,0);\nexport const contractEvidence = {value};\n`,
+    },
   ];
 }
 
