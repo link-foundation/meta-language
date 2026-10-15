@@ -20626,7 +20626,237 @@ const NATIVE_REPAIR_NAME_INVENTORIES=NATIVE_REPAIR_NAME_BINDINGS.map(({inventory
  extract:(raw,file)=>{let text=raw;if(file.endsWith('.lino')){const saved=NATIVE_REPAIR_SOURCE_TEXTS.get(file);if(!saved||saved.raw!==raw)NATIVE_REPAIR_SOURCE_TEXTS.set(file,{raw,text:JSON.stringify(readStructuredDataLino(raw))});text=NATIVE_REPAIR_SOURCE_TEXTS.get(file).text;}return files[file].filter(({name})=>text.includes(name)).map(({name})=>normalizeNativeRepairName(name));},
  recordOf:name=>Object.values(files).flat().find(entry=>normalizeNativeRepairName(entry.name)===name).id,
 }));
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES]);
+// Complete archive transport and scoped source lifecycle meanings.
+const ARCHIVE_LIFECYCLE_NAME_BINDINGS=[
+  {
+    "inventory": "canonical source archive transport operations",
+    "files": {
+      "experiments/original-link-complete-table-projection/archive-transport.mjs": [
+        {
+          "name": "reloadCanonicalArchive",
+          "id": "repository.reload-canonical-source-archive"
+        },
+        {
+          "name": "readCanonicalArchiveTransportSource",
+          "id": "repository.read-canonical-archive-transport-source"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "complete table source lifecycle operations",
+    "files": {
+      "experiments/original-link-complete-table-projection/native-observations.mjs": [
+        {
+          "name": "prepareOriginalLinkCompleteTableSources",
+          "id": "repository.prepare-complete-table-oracle-source"
+        },
+        {
+          "name": "archiveCompleteTableRustSource",
+          "id": "repository.replay-complete-table-native-source"
+        },
+        {
+          "name": "runOriginalLinkCompleteTablePlanningPhases",
+          "id": "repository.run-complete-table-planning-phases"
+        },
+        {
+          "name": "buildOriginalLinkCompleteTablePlan",
+          "id": "repository.build-complete-table-native-observation-plan"
+        },
+        {
+          "name": "runCheckedCompleteTableNative",
+          "id": "repository.invoke-checked-complete-table-native-runner"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original raw source lifecycle operations",
+    "files": {
+      "experiments/original-link-complete-table-projection/raw-native-observations.mjs": [
+        {
+          "name": "prepareOriginalLinkRawSource",
+          "id": "repository.prepare-original-raw-oracle-source"
+        },
+        {
+          "name": "runOriginalLinkRawPlanningPhases",
+          "id": "repository.run-original-raw-planning-phases"
+        },
+        {
+          "name": "buildOriginalLinkRawPlan",
+          "id": "repository.build-original-raw-native-observation-plan"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "source oracle injected lifecycle roles",
+    "files": {
+      "experiments/original-link-complete-table-projection/native-observations.mjs": [
+        {
+          "name": "prepareSource",
+          "id": "repository.source-oracle-preparation-callback"
+        },
+        {
+          "name": "replaySource",
+          "id": "repository.source-oracle-replay-callback"
+        },
+        {
+          "name": "buildMatrix",
+          "id": "repository.source-oracle-matrix-callback"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/native-observations.test.mjs": [
+        {
+          "name": "prepareSource",
+          "id": "repository.source-oracle-preparation-callback"
+        },
+        {
+          "name": "replaySource",
+          "id": "repository.source-oracle-replay-callback"
+        },
+        {
+          "name": "buildMatrix",
+          "id": "repository.source-oracle-matrix-callback"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/raw-native-observations.mjs": [
+        {
+          "name": "prepareSource",
+          "id": "repository.source-oracle-preparation-callback"
+        },
+        {
+          "name": "replaySource",
+          "id": "repository.source-oracle-replay-callback"
+        },
+        {
+          "name": "buildMatrix",
+          "id": "repository.source-oracle-matrix-callback"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/raw-native-observations.test.mjs": [
+        {
+          "name": "prepareSource",
+          "id": "repository.source-oracle-preparation-callback"
+        },
+        {
+          "name": "replaySource",
+          "id": "repository.source-oracle-replay-callback"
+        },
+        {
+          "name": "buildMatrix",
+          "id": "repository.source-oracle-matrix-callback"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "source oracle transport provenance role",
+    "files": {
+      "experiments/original-link-complete-table-projection/native-observations.mjs": [
+        {
+          "name": "transportSources",
+          "id": "repository.source-oracle-transport-source-receipts"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/raw-native-observations.mjs": [
+        {
+          "name": "transportSources",
+          "id": "repository.source-oracle-transport-source-receipts"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "canonical archive transport controls",
+    "files": {
+      "experiments/original-link-complete-table-projection/native-observations.test.mjs": [
+        {
+          "name": "tinyCanonicalArchive",
+          "id": "repository.create-small-canonical-archive-control"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "canonical archive parser construction role",
+    "files": {
+      "experiments/original-link-complete-table-projection/archive-transport.mjs": [
+        {
+          "name": "createParser",
+          "id": "repository.canonical-archive-parser-factory"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/native-observations.test.mjs": [
+        {
+          "name": "createParser",
+          "id": "repository.canonical-archive-parser-factory"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "canonical transport and table lifecycle controls",
+    "files": {
+      "experiments/original-link-complete-table-projection/native-observations.test.mjs": [
+        {
+          "name": "canonical archive transport provenance contains the exact immutable source bytes and digest",
+          "id": "repository.check-canonical-archive-source-receipt"
+        },
+        {
+          "name": "incremental canonical archives retain every identity, metadata field, reference and registration",
+          "id": "repository.check-canonical-archive-record-preservation"
+        },
+        {
+          "name": "incremental canonical archives retain the existing parser bound per complete record",
+          "id": "repository.check-canonical-archive-record-limits"
+        },
+        {
+          "name": "incremental canonical archives reject malformed syntax and metadata without dropping a record",
+          "id": "repository.check-canonical-archive-malformed-records"
+        },
+        {
+          "name": "complete-table planning finishes full source replay before allocating its matrix",
+          "id": "repository.check-complete-table-source-replay-order"
+        },
+        {
+          "name": "complete-table planning keeps failure identity and never builds a matrix before replay succeeds",
+          "id": "repository.check-complete-table-source-phase-failures"
+        },
+        {
+          "name": "complete-table planning phase injection never authorizes native or injected execution",
+          "id": "repository.check-complete-table-phase-authorization"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "original raw lifecycle controls",
+    "files": {
+      "experiments/original-link-complete-table-projection/raw-native-observations.test.mjs": [
+        {
+          "name": "raw planning phases finish exact source replay before allocating the observation matrix",
+          "id": "repository.check-original-raw-source-replay-order"
+        },
+        {
+          "name": "raw planning phases preserve failure identity and never allocate a matrix before successful replay",
+          "id": "repository.check-original-raw-source-phase-failures"
+        },
+        {
+          "name": "raw planning phases cannot authorize a fabricated matrix for native or injected execution",
+          "id": "repository.check-original-raw-phase-authorization"
+        }
+      ]
+    }
+  }
+];
+const normalizeArchiveLifecycleName=name=>name.replace(/([A-Z])([A-Z][a-z])/gu,'$1-$2').replace(/([a-z0-9])([A-Z])/gu,'$1-$2').replaceAll(',','').replaceAll('_','-').replaceAll(' ','-').toLowerCase().replace(/\bcannot\b/gu,'can-not').replace(/\bper\b/gu,'for-each');
+const ARCHIVE_LIFECYCLE_NAME_INVENTORIES=ARCHIVE_LIFECYCLE_NAME_BINDINGS.map(({inventory,files})=>({
+ inventory,files:Object.keys(files),
+ extract:(text,file)=>files[file].filter(({name})=>text.includes(name)).map(({name})=>normalizeArchiveLifecycleName(name)),
+ recordOf:name=>Object.values(files).flat().find(entry=>normalizeArchiveLifecycleName(entry.name)===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
