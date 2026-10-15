@@ -7124,7 +7124,763 @@ const RUST_LITERAL_VALUE_NAME_INVENTORIES=RUST_LITERAL_VALUE_NAME_BINDINGS.map((
  extract:(raw,file)=>{const text=file.endsWith('.lino')?decodeURIComponent(raw):raw;return files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeRustLiteralValueName(name));},
  recordOf:name=>Object.values(files).flat().find(entry=>normalizeRustLiteralValueName(entry.name)===name).id,
 }));
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES]);
+// Actual isolated source text value operations and unchanged helper aliases.
+const RUST_TEXT_PROJECTION_NAME_BINDINGS=[
+  {
+    "inventory": "shared experimental source proof aliases",
+    "files": {
+      "experiments/generated-owned-rust/model.mjs": [
+        {
+          "name": "checkGeneratedOwnedRustData",
+          "id": "repository.check-generated-owned-rust-data-graph"
+        },
+        {
+          "name": "checkGeneratedOwnedRustFields",
+          "id": "repository.check-generated-owned-rust-record-fields"
+        },
+        {
+          "name": "checkGeneratedOwnedRustInterval",
+          "id": "repository.check-generated-owned-rust-source-interval"
+        },
+        {
+          "name": "compareGeneratedOwnedRustData",
+          "id": "repository.compare-generated-owned-rust-proof"
+        },
+        {
+          "name": "mapGeneratedOwnedRustSurface",
+          "id": "repository.map-generated-owned-rust-core-identities"
+        },
+        {
+          "name": "readGeneratedOwnedRustOperations",
+          "id": "repository.read-generated-owned-rust-operation-nodes"
+        },
+        {
+          "name": "checkGeneratedOwnedRustCst",
+          "id": "repository.check-generated-owned-rust-concrete-source-tree"
+        }
+      ],
+      "experiments/rust-text-value-projection/model.mjs": [
+        {
+          "name": "checkGeneratedOwnedRustData",
+          "id": "repository.check-generated-owned-rust-data-graph"
+        },
+        {
+          "name": "checkGeneratedOwnedRustFields",
+          "id": "repository.check-generated-owned-rust-record-fields"
+        },
+        {
+          "name": "checkGeneratedOwnedRustInterval",
+          "id": "repository.check-generated-owned-rust-source-interval"
+        },
+        {
+          "name": "compareGeneratedOwnedRustData",
+          "id": "repository.compare-generated-owned-rust-proof"
+        },
+        {
+          "name": "checkGeneratedOwnedRustCst",
+          "id": "repository.check-generated-owned-rust-concrete-source-tree"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental text projection decisions",
+    "files": {
+      "experiments/rust-text-value-projection/rules.mjs": [
+        {
+          "name": "acceptRustTextValueProjectionModel",
+          "id": "repository.accept-rust-text-value-projection-model"
+        },
+        {
+          "name": "readRustTextValueProjectionDomain",
+          "id": "repository.read-rust-text-value-projection-domain"
+        },
+        {
+          "name": "acceptRustTextValueProjectionOperation",
+          "id": "repository.accept-rust-text-value-projection-operation"
+        }
+      ],
+      "experiments/rust-text-value-projection/data/rules.rs": [
+        {
+          "name": "accept_rust_text_value_projection_model",
+          "id": "repository.accept-rust-text-value-projection-model"
+        },
+        {
+          "name": "read_rust_text_value_projection_domain",
+          "id": "repository.read-rust-text-value-projection-domain"
+        },
+        {
+          "name": "accept_rust_text_value_projection_operation",
+          "id": "repository.accept-rust-text-value-projection-operation"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental text projection policy",
+    "files": {
+      "experiments/rust-text-value-projection/generate-rules.mjs": [
+        {
+          "name": "rustTextValueProjectionPolicy",
+          "id": "repository.rust-text-value-projection-policy"
+        }
+      ],
+      "experiments/rust-text-value-projection/model.mjs": [
+        {
+          "name": "RUST_TEXT_VALUE_PROJECTION_POLICY",
+          "id": "repository.rust-text-value-projection-policy"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental text projection model operations",
+    "files": {
+      "experiments/rust-text-value-projection/model.mjs": [
+        {
+          "name": "actualOperation",
+          "id": "repository.find-text-value-projection-source-operation"
+        },
+        {
+          "name": "facts",
+          "id": "repository.read-text-value-projection-function-facts"
+        },
+        {
+          "name": "assumption",
+          "id": "repository.create-text-value-projection-assumption"
+        },
+        {
+          "name": "conditions",
+          "id": "repository.read-text-value-projection-conditions"
+        },
+        {
+          "name": "checkRows",
+          "id": "repository.check-text-value-projection-proof-rows"
+        },
+        {
+          "name": "checkRustTextValueProjection",
+          "id": "repository.check-rust-text-value-projection"
+        },
+        {
+          "name": "createRustTextValueProjection",
+          "id": "repository.create-rust-text-value-projection"
+        },
+        {
+          "name": "encodeRustTextValueProjection",
+          "id": "repository.encode-rust-text-value-projection"
+        },
+        {
+          "name": "createRustTextValueProjectionLinks",
+          "id": "repository.create-rust-text-value-projection-links"
+        },
+        {
+          "name": "decodeRustTextValueProjection",
+          "id": "repository.decode-rust-text-value-projection"
+        },
+        {
+          "name": "emissionConditions",
+          "id": "repository.read-text-value-projection-emission-conditions"
+        },
+        {
+          "name": "replayToken",
+          "id": "repository.render-text-value-projection-source-token"
+        },
+        {
+          "name": "emitRustTextValueProjection",
+          "id": "repository.emit-rust-text-value-projection"
+        },
+        {
+          "name": "emitRustTextValueProjectionLinks",
+          "id": "repository.emit-rust-text-value-projection-links"
+        },
+        {
+          "name": "emitGenericRustTextValueProjection",
+          "id": "repository.emit-generic-rust-text-value-projection"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental text projection source operations",
+    "files": {
+      "experiments/rust-text-value-projection/source.mjs": [
+        {
+          "name": "tokenValue",
+          "id": "repository.read-text-projection-token-value"
+        },
+        {
+          "name": "textPositionDomain",
+          "id": "repository.read-text-projection-source-position-domain"
+        },
+        {
+          "name": "parseTextProjectionCore",
+          "id": "repository.parse-text-projection-core"
+        },
+        {
+          "name": "tokenizeTextProjection",
+          "id": "repository.read-text-projection-source-tokens"
+        },
+        {
+          "name": "readTextProjectionSource",
+          "id": "repository.read-text-projection-source"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental text projection authoring generate-rules.mjs",
+    "files": {
+      "experiments/rust-text-value-projection/generate-rules.mjs": [
+        {
+          "name": "rustTextValueProjectionRules",
+          "id": "repository.generate-rust-text-value-projection-rules"
+        },
+        {
+          "name": "nativeRules",
+          "id": "repository.translate-rust-text-value-projection-rules"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental text projection authoring generate-fixtures.mjs",
+    "files": {
+      "experiments/rust-text-value-projection/generate-fixtures.mjs": [
+        {
+          "name": "rustTextValueProjectionFixtures",
+          "id": "repository.create-rust-text-value-projection-fixtures"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental text projection authoring model.test.mjs",
+    "files": {
+      "experiments/rust-text-value-projection/model.test.mjs": [
+        {
+          "name": "field",
+          "id": "repository.read-text-value-projection-test-field"
+        },
+        {
+          "name": "replaceField",
+          "id": "repository.replace-text-value-projection-test-field"
+        },
+        {
+          "name": "rawProof",
+          "id": "repository.read-text-value-projection-test-proof"
+        },
+        {
+          "name": "rows",
+          "id": "repository.read-text-value-projection-test-rows"
+        },
+        {
+          "name": "execute",
+          "id": "repository.execute-text-value-projection-test-artifact"
+        },
+        {
+          "name": "reject",
+          "id": "repository.require-text-value-projection-test-refusal"
+        },
+        {
+          "name": "retarget",
+          "id": "repository.change-text-value-projection-test-input"
+        },
+        {
+          "name": "verifyWhole",
+          "id": "repository.check-complete-text-value-projection-test-output"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental text projection role functions",
+    "files": {
+      "experiments/rust-text-value-projection/model.mjs": [
+        {
+          "name": "functions",
+          "id": "repository.text-value-projection-function-fact-list"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental text projection role worker",
+    "files": {
+      "experiments/rust-text-value-projection/model.mjs": [
+        {
+          "name": "worker",
+          "id": "repository.text-value-projection-empty-main-target"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental text projection role inputAssumptions",
+    "files": {
+      "experiments/rust-text-value-projection/model.mjs": [
+        {
+          "name": "inputAssumptions",
+          "id": "repository.text-value-projection-input-condition-list"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental text projection role valueAssumptions",
+    "files": {
+      "experiments/rust-text-value-projection/model.mjs": [
+        {
+          "name": "valueAssumptions",
+          "id": "repository.text-value-projection-allocation-condition-list"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental text projection role declaration",
+    "files": {
+      "experiments/rust-text-value-projection/source.mjs": [
+        {
+          "name": "declaration",
+          "id": "repository.text-value-projection-declaration-target"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental text projection role signature",
+    "files": {
+      "experiments/rust-text-value-projection/source.mjs": [
+        {
+          "name": "signature",
+          "id": "repository.text-value-projection-signature-target"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental text projection role resultPosition",
+    "files": {
+      "experiments/rust-text-value-projection/source.mjs": [
+        {
+          "name": "resultPosition",
+          "id": "repository.text-value-projection-result-position-target"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental text projection role operationNode",
+    "files": {
+      "experiments/rust-text-value-projection/source.mjs": [
+        {
+          "name": "operationNode",
+          "id": "repository.text-value-projection-operation-target"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental text projection role coreValue",
+    "files": {
+      "experiments/rust-text-value-projection/source.mjs": [
+        {
+          "name": "coreValue",
+          "id": "repository.text-value-projection-core-value-target"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental text projection role input",
+    "files": {
+      "experiments/rust-text-value-projection/source.mjs": [
+        {
+          "name": "input",
+          "id": "repository.text-value-projection-input-target"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental text projection role position",
+    "files": {
+      "experiments/rust-text-value-projection/source.mjs": [
+        {
+          "name": "position",
+          "id": "repository.text-value-projection-input-position-target"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental text projection role literal",
+    "files": {
+      "experiments/rust-text-value-projection/source.mjs": [
+        {
+          "name": "literal",
+          "id": "repository.text-value-projection-literal-target"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental text projection source operation labels",
+    "files": {
+      "experiments/rust-text-value-projection/data/policy.lino": [
+        {
+          "name": "owned standard String move",
+          "id": "repository.text-value-owned-standard-string-move-source-operation"
+        },
+        {
+          "name": "standard String construction from borrowed text",
+          "id": "repository.text-value-standard-string-construction-from-borrowed-text-source-operation"
+        },
+        {
+          "name": "standard String clone",
+          "id": "repository.text-value-standard-string-clone-source-operation"
+        },
+        {
+          "name": "standard borrowed str owned construction",
+          "id": "repository.text-value-standard-borrowed-string-slice-owned-construction-source-operation"
+        },
+        {
+          "name": "standard borrowed str display construction",
+          "id": "repository.text-value-standard-borrowed-string-slice-display-construction-source-operation"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental text projection source structure",
+    "files": {
+      "experiments/rust-text-value-projection/source.mjs": [
+        {
+          "name": "text value body",
+          "id": "repository.text-value-body-source-operation"
+        },
+        {
+          "name": "text value function",
+          "id": "repository.text-value-function-source-operation"
+        },
+        {
+          "name": "complete standard Rust text value module",
+          "id": "repository.complete-standard-rust-text-value-module-source-operation"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "independent ordinary empty Rust entry",
+    "files": {
+      "experiments/rust-text-value-projection/source.mjs": [
+        {
+          "name": "independent empty main",
+          "id": "repository.independent-empty-main-source-operation"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental text projection domain owned",
+    "files": {
+      "experiments/rust-text-value-projection/data/policy.lino": [
+        {
+          "name": "owned standard String",
+          "id": "repository.owned-standard-string-text-domain"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental text projection domain reference",
+    "files": {
+      "experiments/rust-text-value-projection/data/policy.lino": [
+        {
+          "name": "shared standard String",
+          "id": "repository.shared-standard-string-text-domain"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental text projection domain slice",
+    "files": {
+      "experiments/rust-text-value-projection/data/policy.lino": [
+        {
+          "name": "shared primitive str",
+          "id": "repository.shared-primitive-string-slice-text-domain"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental text projection domain literal",
+    "files": {
+      "experiments/rust-text-value-projection/data/policy.lino": [
+        {
+          "name": "static primitive str literal",
+          "id": "repository.static-primitive-string-slice-text-domain"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental reused source operation ownedLocalType",
+    "files": {
+      "experiments/rust-text-value-projection/source.mjs": [
+        {
+          "name": "ownedLocalType",
+          "id": "translation.check-rust-owned-local-value-type"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental reused source operation ownedLocalPosition",
+    "files": {
+      "experiments/rust-text-value-projection/source.mjs": [
+        {
+          "name": "ownedLocalPosition",
+          "id": "translation.check-rust-owned-local-source-position"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental reused source operation rustString",
+    "files": {
+      "experiments/rust-text-value-projection/model.mjs": [
+        {
+          "name": "rustString",
+          "id": "translation.render-rust-string-literal"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental reused source operation encodeGeneratedOwnedRust",
+    "files": {
+      "experiments/rust-text-value-projection/model.mjs": [
+        {
+          "name": "encodeGeneratedOwnedRust",
+          "id": "repository.encode-generated-owned-rust"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental reused source operation decodeGeneratedOwnedRust",
+    "files": {
+      "experiments/rust-text-value-projection/model.mjs": [
+        {
+          "name": "decodeGeneratedOwnedRust",
+          "id": "repository.decode-generated-owned-rust"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental reused primitive checkRustSourceSignature",
+    "files": {
+      "experiments/rust-text-value-projection/source.mjs": [
+        {
+          "name": "checkRustSourceSignature",
+          "id": "translation.check-rust-source-signature"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental reused primitive acceptRustOwnedLocalTextInput",
+    "files": {
+      "experiments/rust-text-value-projection/source.mjs": [
+        {
+          "name": "acceptRustOwnedLocalTextInput",
+          "id": "translation.accept-rust-owned-local-text-input"
+        }
+      ],
+      "experiments/rust-text-value-projection/model.mjs": [
+        {
+          "name": "acceptRustOwnedLocalTextInput",
+          "id": "translation.accept-rust-owned-local-text-input"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "experimental reused primitive renderRustOwnedLocalTextInput",
+    "files": {
+      "experiments/rust-text-value-projection/model.mjs": [
+        {
+          "name": "renderRustOwnedLocalTextInput",
+          "id": "translation.render-rust-owned-local-text-input"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "text projection native source oracle gate",
+    "files": {
+      "js/tests/ci-workflow-structure.test.js": [
+        {
+          "name": "checkRustTextValueNativeStep",
+          "id": "repository.check-rust-text-value-native-oracle-step"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "text projection external native oracle operations",
+    "files": {
+      "experiments/rust-text-value-projection/native-observations.mjs": [
+        {
+          "name": "verifyRustTextValueProjectionModel",
+          "id": "repository.verify-rust-text-value-oracle-model"
+        },
+        {
+          "name": "rustTextNativeMode",
+          "id": "repository.read-rust-text-native-oracle-mode"
+        },
+        {
+          "name": "planRustTextValueProjectionNative",
+          "id": "repository.plan-rust-text-value-native-observations"
+        },
+        {
+          "name": "runRustTextValueProjectionNative",
+          "id": "repository.run-rust-text-value-native-observations"
+        },
+        {
+          "name": "sha256",
+          "id": "repository.hash-rust-text-native-oracle-content"
+        },
+        {
+          "name": "textBytes",
+          "id": "repository.read-rust-text-native-oracle-bytes"
+        },
+        {
+          "name": "freeze",
+          "id": "repository.freeze-rust-text-native-observation-plan"
+        },
+        {
+          "name": "archiveSource",
+          "id": "repository.reload-rust-text-native-oracle-source"
+        },
+        {
+          "name": "parameterMode",
+          "id": "repository.read-rust-text-native-consumer-parameter-mode"
+        },
+        {
+          "name": "publicTarget",
+          "id": "repository.check-rust-text-native-consumer-target"
+        },
+        {
+          "name": "consumerSource",
+          "id": "repository.create-rust-text-native-consumer-source"
+        },
+        {
+          "name": "preparedEntry",
+          "id": "repository.create-rust-text-native-observation-entry"
+        },
+        {
+          "name": "editedSources",
+          "id": "repository.create-rust-text-native-oracle-edits"
+        },
+        {
+          "name": "checkFiles",
+          "id": "repository.check-rust-text-native-oracle-files"
+        },
+        {
+          "name": "runProcess",
+          "id": "repository.run-rust-text-native-oracle-process"
+        },
+        {
+          "name": "parseObservations",
+          "id": "repository.read-rust-text-native-observation-stream"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "text projection external native oracle data",
+    "files": {
+      "experiments/rust-text-value-projection/native-observations.mjs": [
+        {
+          "name": "RUST_TEXT_VALUE_PROJECTION_MODEL_COMMIT",
+          "id": "repository.rust-text-native-oracle-model-revision"
+        },
+        {
+          "name": "modelDigests",
+          "id": "repository.rust-text-native-oracle-model-digest-map"
+        },
+        {
+          "name": "checkedPlans",
+          "id": "repository.rust-text-native-authenticated-plan-set"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "text projection oracle reused model operations",
+    "files": {
+      "experiments/rust-text-value-projection/native-observations.mjs": [
+        {
+          "name": "createRustTextValueProjectionLinks",
+          "id": "repository.create-rust-text-value-projection-links"
+        },
+        {
+          "name": "decodeRustTextValueProjection",
+          "id": "repository.decode-rust-text-value-projection"
+        },
+        {
+          "name": "emitRustTextValueProjection",
+          "id": "repository.emit-rust-text-value-projection"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "text projection oracle reused scalar admission",
+    "files": {
+      "experiments/rust-text-value-projection/native-observations.mjs": [
+        {
+          "name": "acceptRustOwnedLocalTextInput",
+          "id": "translation.accept-rust-owned-local-text-input"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "text projection injected native runner contracts",
+    "files": {
+      "experiments/rust-text-value-projection/native-observations.test.mjs": [
+        {
+          "name": "stream",
+          "id": "repository.create-rust-text-native-test-observation-stream"
+        },
+        {
+          "name": "fakeProcess",
+          "id": "repository.create-rust-text-native-test-process"
+        },
+        {
+          "name": "injected",
+          "id": "repository.run-rust-text-native-injected-contract"
+        },
+        {
+          "name": "fails",
+          "id": "repository.require-rust-text-native-test-failure"
+        }
+      ]
+    }
+  }
+];
+const normalizeRustTextProjectionName=name=>name.replace(/([a-z0-9])([A-Z])/gu,'$1-$2').replaceAll('_','-').replaceAll(' ','-').toLowerCase().replace(/\bcst\b/gu,'concrete-source-tree').replace(/\bstr\b/gu,'string-slice').replace(/^retarget$/u,'change-target').replace(/^tokenize-/u,'read-tokens-').replace(/\bsha256\b/gu,'secure-hash-algorithm-two-hundred-fifty-six');
+const RUST_TEXT_PROJECTION_NAME_INVENTORIES=RUST_TEXT_PROJECTION_NAME_BINDINGS.map(({inventory,files})=>({
+ inventory,files:Object.keys(files),
+ extract:(raw,file)=>{const text=file.endsWith('.lino')?decodeURIComponent(raw):raw;return files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeRustTextProjectionName(name));},
+ recordOf:name=>Object.values(files).flat().find(entry=>normalizeRustTextProjectionName(entry.name)===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
