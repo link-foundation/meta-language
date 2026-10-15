@@ -26,27 +26,22 @@ use sha2::{Digest, Sha256};
 
 use crate::decorators::DecoratorSet;
 use crate::grammar::decorate_emitted;
-use crate::translation::check::check_program;
-use crate::translation::diagnostics::TranslationError;
-use crate::translation::emit_common::Emitted;
-use crate::translation::javascript::ModuleContext;
 use crate::translation::surface::External;
-use crate::translation::{
-    emit_javascript::emit_javascript,
-    emit_rust::{emit_rust, emit_rust_constants},
-    javascript::parse_javascript_bound_in,
-    rust::parse_rust,
-};
 use crate::{LinkNetwork, ParseConfiguration};
 
 mod binding;
+mod emission;
+pub(crate) mod representation;
+mod representation_rules;
+use emission::emit_item;
+use representation::Context;
 mod scope;
 mod typescript_erasure;
 mod typescript_erasure_rules;
 mod typescript_portable_typing;
 use scope::translate_binding_groups;
 
-use self::binding::{Binder, declared_signatures};
+use self::binding::Binder;
 use typescript_erasure::requires_type_script_erasure;
 pub use typescript_erasure::{ErasedTypeScript, Erasure, erase_type_script};
 pub use typescript_portable_typing::project_type_script_typing;
@@ -69,6 +64,8 @@ pub struct SelfTranslationOptions {
     /// The signatures [`self_translation_signatures`] gives for each module
     /// the module imports, by import specifier, which bind the imported names.
     pub imports: BTreeMap<String, Vec<SelfTranslationSignature>>,
+    /// Select the shared UTF16 prelude; actual Text lowering remains a carried obligation.
+    pub utf16_strings: bool,
 }
 
 /// The languages self-translation reads and writes.
@@ -283,8 +280,9 @@ fn translate_module(
     let decorators = &options.decorators;
     let from = required(source_language)?;
     let to = required(target_language)?;
-    let reconstructed =
-        LinkNetwork::parse(source, from, ParseConfiguration::default()).reconstruct_text();
+    let network = LinkNetwork::parse(source, from, ParseConfiguration::default());
+    let reconstructed = network.reconstruct_text();
+    let utf16_strings = representation::select(&network, source, from, options.utf16_strings);
     if reconstructed != source {
         return Err(SelfTranslationError {
             message: format!("the {from} links of the source do not reproduce it"),
@@ -325,16 +323,29 @@ fn translate_module(
             decorators,
             module_directory: &options.module_directory,
             imports: &options.imports,
+            utf16_strings,
         }
         .translate()
     } else {
         let outs = groups
             .iter()
-            .map(|group| translate_group(group, from, to, decorators, &ModuleContext::default()))
+            .map(|group| {
+                translate_group(
+                    group,
+                    from,
+                    to,
+                    decorators,
+                    &Context {
+                        utf16_strings,
+                        ..Context::default()
+                    },
+                )
+            })
             .collect();
         (outs, Vec::new())
     };
-    let results = translate_binding_groups(&groups, source, from, to, decorators, &outs);
+    let results =
+        translate_binding_groups(&groups, source, from, to, decorators, &outs, utf16_strings);
     let exported_names: HashSet<&str> = scans
         .iter()
         .flatten()
@@ -734,7 +745,7 @@ fn translate_group(
     from: &str,
     to: &str,
     decorators: &DecoratorSet,
-    context: &ModuleContext,
+    context: &Context,
 ) -> Translated {
     translate_group_bound(group, from, to, decorators, context, &HashMap::new())
 }
@@ -744,7 +755,7 @@ fn translate_group_bound(
     from: &str,
     to: &str,
     decorators: &DecoratorSet,
-    context: &ModuleContext,
+    context: &Context,
     literal_bindings: &HashMap<String, SExpr>,
 ) -> Translated {
     let done = |code: String, status: &'static str| Translated {
@@ -820,7 +831,9 @@ fn translate_group_bound(
                 text,
                 term,
                 from,
-                if from == "TypeScript" {
+                if from == "TypeScript"
+                    || error.construct.as_deref() == Some("UTF16 Text representation")
+                {
                     &error.reason
                 } else {
                     error.kind.as_str()
@@ -869,64 +882,6 @@ fn translate_group_bound(
         reason: None,
         signatures,
     }
-}
-
-/// The item emitted by the portable core with the signatures it gives the
-/// module's other items, or `None` for a top-level statement.
-fn emit_item(
-    text: &str,
-    from: &str,
-    to: &str,
-    context: &ModuleContext,
-    literal_bindings: &HashMap<String, SExpr>,
-) -> Result<Option<(Emitted, Vec<External>)>, TranslationError> {
-    let surface = if family(from) == "Rust" {
-        // The Rust frontend reads a program, so an item alone gets an empty main.
-        if RUST_MAIN.is_match(text) {
-            parse_rust(text)?
-        } else {
-            parse_rust(&format!("{text}\nfn main() {{}}\n"))?
-        }
-    } else {
-        if from == "TypeScript" {
-            parse_javascript_bound_in(
-                &project_type_script_typing(text)?,
-                context,
-                literal_bindings,
-                family(to) == "Rust",
-            )?
-        } else {
-            parse_javascript_bound_in(text, context, literal_bindings, family(to) == "Rust")?
-        }
-    };
-    let program = check_program(&surface)?;
-    // A top-level constant is a Rust constant; other top-level statements run
-    // once, as a program.
-    let constants = if family(to) == "Rust" {
-        emit_rust_constants(&program)?
-    } else {
-        None
-    };
-    let is_constant = constants.is_some();
-    if !is_constant
-        && program
-            .main
-            .as_ref()
-            .is_some_and(|main| !main.effects.is_empty())
-    {
-        return Ok(None);
-    }
-    let emitted = match constants {
-        Some(emitted) => emitted,
-        None if family(to) == "Rust" => emit_rust(&program)?,
-        None => emit_javascript(&program)?,
-    };
-    let signatures = if program.imports.is_empty() {
-        declared_signatures(&program, is_constant)
-    } else {
-        context.externals.clone()
-    };
-    Ok(Some((emitted, signatures)))
 }
 
 fn carry(text: &str, term: &str, from: &str, reason: &str) -> Translated {

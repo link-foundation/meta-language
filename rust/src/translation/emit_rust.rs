@@ -532,6 +532,21 @@ pub fn emit_rust_with_options(
     program: &Program,
     options: RustEmissionOptions<'_>,
 ) -> Result<Emitted> {
+    emit_rust_context(program, options, false)
+}
+
+pub(crate) fn emit_rust_with_representation(
+    program: &Program,
+    utf16_strings: bool,
+) -> Result<Emitted> {
+    emit_rust_context(program, RustEmissionOptions::default(), utf16_strings)
+}
+
+fn emit_rust_context(
+    program: &Program,
+    options: RustEmissionOptions<'_>,
+    utf16_strings: bool,
+) -> Result<Emitted> {
     super::source_type_namespaces::validate_source_type_namespaces(program)?;
     super::source_const_functions::validate_const_functions(program)?;
     super::owned_local_state::validate_owned_local_state(program)?;
@@ -546,6 +561,10 @@ pub fn emit_rust_with_options(
         return super::runtime_shell::emit_rust(program, &runtime);
     }
     let mut emitter = rust_emitter(program);
+    emitter.utf16_strings = utf16_strings;
+    if emitter.utf16_strings {
+        emitter.state.encode("utf16-strings", "strings are sequences of UTF-16 code units, retaining isolated surrogates and JavaScript offsets; output replaces isolated surrogates as Node writes UTF-8");
+    }
     if let Some(model) = options.source_header_model {
         if super::borrowed_call_interface_rules::accept_rust_borrowed_call_interface_model(model) {
             let interface =
@@ -593,6 +612,7 @@ fn rust_emitter(program: &Program) -> RustEmitter<'_> {
         source_headers: BTreeMap::new(),
         borrowed_call_targets: None,
         borrowed_call_scope: None,
+        utf16_strings: false,
     }
 }
 
@@ -655,6 +675,7 @@ pub fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> {
             Prelude::Number => NUMBER_PRELUDE.to_owned(),
             Prelude::Math => MATH_PRELUDE.to_owned(),
             Prelude::Array => ARRAY_PRELUDE.to_owned(),
+            Prelude::String => crate::self_translation::representation::string_prelude(),
             Prelude::Optional => super::structured_type_rules::read_rust_optional_prelude(),
         })
         .collect();
@@ -694,6 +715,7 @@ enum Prelude {
     Number,
     Math,
     Array,
+    String,
     Optional,
 }
 
@@ -713,6 +735,8 @@ struct RustEmitter<'p> {
     borrowed_call_targets: Option<BTreeMap<String, super::source_signatures::SourceSignature>>,
     /// Per-function hygienic names, reserved against every argument and binder.
     borrowed_call_scope: Option<Scope<'p>>,
+    /// Internal self-translation representation; actual Text values are guarded.
+    utf16_strings: bool,
 }
 
 fn is_copy(ty: &Type, product_model: Option<&str>) -> bool {

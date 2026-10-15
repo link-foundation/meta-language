@@ -1,6 +1,8 @@
 //! Retrying declaration scopes while retaining the dependency binder's results.
 //! Mirrors translateBindingGroups and collectLiteralBindings in JavaScript.
-use super::{Group, GroupKind, Translated, family, translate_group, translate_group_bound};
+use super::{
+    Context, Group, GroupKind, Translated, family, translate_group, translate_group_bound,
+};
 use crate::decorators::DecoratorSet;
 use crate::translation::frontend_rules::{
     accept_binding_scope, accept_literal_binding, accept_module_binding_scope, find_binding_run_end,
@@ -18,9 +20,11 @@ pub(super) fn translate_binding_groups<'a>(
     to: &str,
     decorators: &DecoratorSet,
     initial: &[Translated],
+    utf16_strings: bool,
 ) -> Vec<(Group<'a>, Translated)> {
     let bind = family(from) == "JavaScript" && family(to) == "Rust";
-    let (literals, literal_groups) = collect_literal_bindings(groups, bind, from, to, decorators);
+    let (literals, literal_groups) =
+        collect_literal_bindings(groups, bind, from, to, decorators, utf16_strings);
     let terms: Vec<String> = groups
         .iter()
         .enumerate()
@@ -76,7 +80,10 @@ pub(super) fn translate_binding_groups<'a>(
                 from,
                 to,
                 decorators,
-                &ModuleContext::default(),
+                &Context {
+                    utf16_strings,
+                    ..Context::default()
+                },
                 &literals,
             );
             if out.status == "translated" {
@@ -129,7 +136,10 @@ pub(super) fn translate_binding_groups<'a>(
             from,
             to,
             decorators,
-            &ModuleContext::default(),
+            &Context {
+                utf16_strings,
+                ..Context::default()
+            },
             &literals,
         );
         if out.status == "translated" {
@@ -145,6 +155,7 @@ fn collect_literal_bindings(
     from: &str,
     to: &str,
     decorators: &DecoratorSet,
+    utf16_strings: bool,
 ) -> (HashMap<String, SExpr>, HashSet<usize>) {
     let mut literals = HashMap::new();
     let mut literal_groups = HashSet::new();
@@ -192,7 +203,17 @@ fn collect_literal_bindings(
                 main.effects.len() as f64,
                 parsed.items.len() as f64,
             ) {
-                if translate_group(group, from, to, decorators, &ModuleContext::default()).status
+                if translate_group(
+                    group,
+                    from,
+                    to,
+                    decorators,
+                    &Context {
+                        utf16_strings,
+                        ..Context::default()
+                    },
+                )
+                .status
                     != "translated"
                 {
                     continue;

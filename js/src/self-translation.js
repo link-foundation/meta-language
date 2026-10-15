@@ -13,6 +13,7 @@ import { decorateEmitted } from './grammar-emitters/common.js';
 import { LinkNetwork } from './network.js';
 import { ParseConfiguration } from './primitives.js';
 import { parseProgrammingLanguage } from './programming-language-parser.js';
+import { acceptSelfTranslationUtf16Member, requireSelfTranslationUtf16Representation } from './self-translation-representation-rules.js';
 import { checkProgram } from './translation/check.js';
 import { TranslationError } from './translation/diagnostics.js';
 import { emitJavaScript } from './translation/emit-javascript.js';
@@ -127,11 +128,10 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
     throw new SelfTranslationError(`the ${from} links of the source do not reproduce it`);
   }
   const items = topLevelItems(bytes, parsed);
-  const stringMethods = new Set(['split', 'slice', 'indexOf', 'lastIndexOf', 'replace', 'replaceAll', 'codePointAt', 'repeat', 'padStart', 'padEnd']);
   const usesStringMethods = (node) => (node.term === 'member_expression' && node.children.some((child) =>
-    child.field === 'property' && stringMethods.has(bytes.subarray(child.span.byteRange.start, child.span.byteRange.end).toString('utf8'))))
+    child.field === 'property' && acceptSelfTranslationUtf16Member(bytes.subarray(child.span.byteRange.start, child.span.byteRange.end).toString('utf8'))))
     || node.children.some(usesStringMethods);
-  const representation = utf16Strings || (family(from) === 'JavaScript' && usesStringMethods(parsed.tree));
+  const representation = requireSelfTranslationUtf16Representation(utf16Strings, family(from), !utf16Strings && family(from) === 'JavaScript' && usesStringMethods(parsed.tree));
   const keptFamily = from === 'JavaScript' || (from === 'TypeScript' && !requiresTypeScriptErasure(parsed));
   if (family(from) === family(to) && (from === to || (keptFamily && !text.startsWith(HEADER)))) {
     return { translation: freeze(from, to, reconstructed, items.map(({ term, start, end }) => ({ term, start, end, status: 'kept', reason: null }))), signatures: [] };

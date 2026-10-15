@@ -269,6 +269,15 @@ let options = SelfTranslationOptions {
 self_translate_with(&quad_source, "JavaScript", "Rust", &options)?;
 ```
 
+The `utf16Strings` option (`utf16_strings` in Rust) selects the retained
+UTF-16 representation for the module. Exact source member names can also
+select it automatically, including `slice` on a numeric array. Both packages
+share the selector and the complete emitted prelude as Links data. Native
+self-translation currently admits this selection when its checked values and
+bound signatures do not require a String representation; other selected items
+remain carried with the explicit Text-lowering obligation. This internal
+context does not add a field to saved typed-program graphs.
+
 A bound function is named in snake case on both sides of `as`, as its own
 translation names it. Without signatures the import still translates and the
 items that use its names are carried. Default and namespace imports, Node.js

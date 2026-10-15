@@ -7,7 +7,7 @@
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 
-use super::{Group, GroupKind, Translated, translate_group};
+use super::{Context, Group, GroupKind, Translated, translate_group};
 use crate::decorators::DecoratorSet;
 use crate::translation::Language;
 use crate::translation::ir::{Decl, Effect, Node, Program};
@@ -176,6 +176,7 @@ pub(super) struct Binder<'g, 'a> {
     pub(super) decorators: &'g DecoratorSet,
     pub(super) module_directory: &'g [String],
     pub(super) imports: &'g BTreeMap<String, Vec<External>>,
+    pub(super) utf16_strings: bool,
 }
 
 impl Binder<'_, '_> {
@@ -233,7 +234,10 @@ impl Binder<'_, '_> {
                 self.from,
                 self.to,
                 self.decorators,
-                &ModuleContext::default(),
+                &Context {
+                    utf16_strings: self.utf16_strings,
+                    ..Context::default()
+                },
             ));
             return;
         };
@@ -280,9 +284,12 @@ impl Binder<'_, '_> {
                 }
             }
         }
-        let context = ModuleContext {
-            externals,
-            module_directory: Some(self.module_directory.to_vec()),
+        let context = Context {
+            module: ModuleContext {
+                externals,
+                module_directory: Some(self.module_directory.to_vec()),
+            },
+            utf16_strings: self.utf16_strings,
         };
         state.outs[index] = Some(translate_group(
             group,

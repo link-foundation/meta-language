@@ -89,3 +89,69 @@ fn scope_retry_exports_signatures_to_importing_modules() {
             .contains("use crate::frontend_rules::read_array_method_form as form;")
     );
 }
+
+#[test]
+fn selected_utf16_prelude_retains_scalar_source_and_carries_unproved_text_values() {
+    let source = "/** @param {number} value @returns {number} */\nexport function keep(value) { return value; }\n";
+    let options = SelfTranslationOptions {
+        utf16_strings: true,
+        ..SelfTranslationOptions::default()
+    };
+    let default = self_translate(source, "JavaScript", "Rust").unwrap();
+    assert!(!default.code.contains("pub mod ml_string {"));
+    let selected = self_translate_with(source, "JavaScript", "Rust", &options).unwrap();
+    assert_eq!(selected.code.matches("pub mod ml_string {").count(), 1);
+    assert!(selected.items.iter().all(|item| item.status != "carried"));
+    assert_eq!(
+        self_translate(&selected.code, "Rust", "JavaScript")
+            .unwrap()
+            .code,
+        source
+    );
+    for source in [
+        "/** @param {string} value @returns {string} */\nexport function keep(value) { return value; }\n",
+        "/** @param {string[]} values @returns {string[]} */\nexport function keep(values) { return values; }\n",
+    ] {
+        let carried = self_translate_with(source, "JavaScript", "Rust", &options).unwrap();
+        assert!(carried.items.iter().any(|item| {
+            item.status == "carried"
+                && item.reason.as_deref().is_some_and(|reason| {
+                    reason.contains("Text lowering")
+                        && reason.contains("independently paired rendering support")
+                })
+        }));
+        assert_eq!(
+            self_translate(&carried.code, "Rust", "JavaScript")
+                .unwrap()
+                .code,
+            source
+        );
+    }
+    let external = SelfTranslationOptions {
+        imports: BTreeMap::from([(
+            "./text.mjs".to_owned(),
+            vec![meta_language::translation::surface::External::Function {
+                name: "readLabel".to_owned(),
+                params: Vec::new(),
+                ret: meta_language::translation::types::Type::String,
+            }],
+        )]),
+        utf16_strings: true,
+        ..SelfTranslationOptions::default()
+    };
+    let source = "import { readLabel } from './text.mjs';\n/** @returns {number} */\nexport function count() { return readLabel().length; }\n";
+    let carried = self_translate_with(source, "JavaScript", "Rust", &external).unwrap();
+    assert!(carried.items.iter().any(|item| {
+        item.status == "carried"
+            && item.reason.as_deref().is_some_and(|reason| {
+                reason.contains("Text lowering")
+                    && reason.contains("independently paired rendering support")
+            })
+    }));
+    assert_eq!(
+        self_translate(&carried.code, "Rust", "JavaScript")
+            .unwrap()
+            .code,
+        source
+    );
+}

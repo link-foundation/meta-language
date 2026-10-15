@@ -14,6 +14,9 @@ use super::{
 
 impl<'p> RustEmitter<'p> {
     pub(super) fn file(mut self) -> Result<Emitted> {
+        if self.utf16_strings {
+            self.preludes.insert(Prelude::String);
+        }
         let mut tree = ModuleTree::default();
         let program = self.program;
         for entry in &program.declarations {
@@ -60,6 +63,7 @@ impl<'p> RustEmitter<'p> {
                 Prelude::Number => NUMBER_PRELUDE.to_owned(),
                 Prelude::Math => MATH_PRELUDE.to_owned(),
                 Prelude::Array => ARRAY_PRELUDE.to_owned(),
+                Prelude::String => crate::self_translation::representation::string_prelude(),
                 Prelude::Optional => read_rust_optional_prelude(),
             })
             .collect();
