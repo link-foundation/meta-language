@@ -1828,11 +1828,19 @@ thirty-second heartbeat includes a bounded, credential-redacted actual log
 suffix, so a job timeout retains recent test progress even if artifact upload
 cannot run. Original command logs remain unchanged.
 
-Package validation runs six required parallel check groups: native imports,
-native fixtures, grammar, contracts, generated code and source models. The
+Package validation runs six required logical check groups across seven parallel
+jobs: native imports, native fixtures, grammar, contracts, generated code and
+source models. The generated group has two physical slices. One retains the
+literal-edit rule, fixture and experiment triplet; the other retains every
+remaining generated check, including both compiler-feedback producers and their
+single upload. All checks execute exactly once in their original relative order;
+each runner keeps the same setup and ten-minute deadline. Distinct concurrency
+identities prevent sibling cancellation. All six earlier check-context names
+remain, and the additional generated slice has its own name. The
 source-model group executes the new raw-binding and complete text-certificate
 checks, isolated owned-certificate adapters, original-identity and role
-projection checks, fresh collector certificates and library packaging generators
+projection checks, complete String-symbol and eleven-table projection checks,
+fresh collector certificates and library packaging generators
 without adding work to the original generated-code group. Each retains the
 ten-minute deadline and its own setup and cleanup. The final package job requires
 every group, every JavaScript test partition and the complete report assertion
