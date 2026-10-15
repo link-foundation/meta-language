@@ -1,11 +1,14 @@
 //! Source adapters around the existing Rust parser and shared owned state policy.
 use super::owned_local_state_rules::accept_rust_owned_local_source_operation;
+use super::owned_tuple_call_rules::accept_rust_owned_tuple_call_model;
 use super::{
     BOOL, BinaryOp, HashMap, HashSet, Options, Result, RustParser, SExpr, SItem, SMain, SNode,
     SParam, STRING, SourceOrigin, Span, Token, TokenKind, Type, span, unsupported,
 };
 pub(super) use crate::translation::owned_local_state::owned_local_pair as owned_pair;
-use crate::translation::owned_local_state::{owned_local_position, owned_local_type, policy};
+use crate::translation::owned_local_state::{
+    owned_local_position, owned_local_type, owned_tuple_call_position, policy, tuple_call_policy,
+};
 use crate::translation::source_signatures::SourceSignature;
 use serde_json::{Value, json};
 
@@ -80,6 +83,7 @@ enum Statement {
 }
 struct LocalState {
     copies: bool,
+    calls: bool,
     names: HashSet<String>,
     temporary: usize,
     mutable_slot: Option<String>,
@@ -245,14 +249,28 @@ impl RustParser {
                 None,
             ));
         };
+        let calls = accept_rust_owned_tuple_call_model(&self.local_value_state_model);
+        let helper = calls && owned_pair(ret);
+        let parameter_pair = Type::Tuple {
+            elements: params
+                .iter()
+                .filter_map(|parameter| parameter.ty.clone())
+                .collect(),
+        };
         if !path.is_empty()
-            || *ret != STRING
+            || (*ret != STRING && !helper)
             || !signature.lifetime_bindings.is_empty()
             || signature
                 .parameters
                 .iter()
-                .chain(std::iter::once(&signature.result))
                 .any(|position| !owned_local_position(position))
+            || if helper {
+                !owned_tuple_call_position(&signature.result)
+                    || params.len() != 2
+                    || !owned_pair(&parameter_pair)
+            } else {
+                !owned_local_position(&signature.result)
+            }
         {
             return Err(fail(
                 "only direct standard String, i32 and Boolean interfaces with a String result are admitted",
@@ -261,6 +279,7 @@ impl RustParser {
         }
         let mut state = LocalState {
             copies: self.local_value_state_model == policy()["models"]["copies"],
+            calls,
             names: HashSet::new(),
             temporary: 0,
             mutable_slot: None,
@@ -286,27 +305,41 @@ impl RustParser {
                 )
             })
             .collect();
-        let body = if state.copies {
+        let body = if state.copies || helper {
             let body = self.block(path)?;
             state.expression(self, body, &mut environment, false)?
         } else {
             let syntax = self.owned_local_syntax_block(path, &mut state)?;
             state.sequence(self, &syntax, &mut environment, None)?
         };
-        if !state.copies && (state.mutable_slot.is_none() || state.writes == 0) {
+        if !state.copies && !helper && (state.mutable_slot.is_none() || state.writes == 0) {
             return Err(fail(
                 "the original move profile requires an actual tuple-owned String replacement",
                 None,
             ));
         }
-        if body.ty != STRING {
+        if body.ty != *ret {
             return Err(fail(
                 "the selected function must return its actual String value",
                 None,
             ));
         }
+        if helper
+            && (!matches!(body.value.node, SNode::Tuple { .. })
+                || !state.bindings.is_empty()
+                || !state.initializers.is_empty())
+        {
+            return Err(fail(
+                "a tuple helper must retain one direct ordered product result without local state or calls",
+                None,
+            ));
+        }
+        let mut interpretation = policy()["interpretation"].clone();
+        if calls {
+            interpretation["tupleInitialization"] = tuple_call_policy()["interpretation"].clone();
+        }
         let proof = json!({"model": self.local_value_state_model, "language":"Rust", "sourceName": name,
-            "interpretation": policy()["interpretation"], "bindings":state.bindings, "reads":state.reads,
+            "interpretation": interpretation, "bindings":state.bindings, "reads":state.reads,
             "initializers":state.initializers, "literalConstructors":state.constructors});
         Ok((body.value, proof))
     }

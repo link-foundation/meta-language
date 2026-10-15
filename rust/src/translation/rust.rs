@@ -36,6 +36,7 @@ pub(super) mod indirection_rules;
 mod items;
 mod owned_local_state;
 pub(crate) mod owned_local_state_rules;
+pub(crate) mod owned_tuple_call_rules;
 pub(crate) mod primitive_owner_rules;
 pub(crate) mod primitive_owners;
 mod product_rules;
@@ -239,7 +240,9 @@ fn parse_rust_with_selected_profiles(
             None,
         ));
     }
-    if !owned_local_state_rules::accept_rust_owned_local_state_model(local_value_state_model) {
+    if !owned_local_state_rules::accept_rust_owned_local_state_model(local_value_state_model)
+        && !owned_tuple_call_rules::accept_rust_owned_tuple_call_model(local_value_state_model)
+    {
         return Err(unsupported(
             "Rust owned local state model",
             "select the original move profile or canonical String copy profile",
@@ -422,6 +425,7 @@ struct RustParser {
     pure_unit_call_model: String,
     pure_unit_public_token: Option<Token>,
     local_value_state_model: String,
+    owned_tuple_call_discovery: Option<()>,
     local_value_copies: HashSet<Span>,
     local_value_constructors: HashMap<Span, Span>,
     type_namespace_frames: Vec<Vec<Vec<String>>>,
@@ -480,6 +484,11 @@ impl RustParser {
             pure_unit_call_model: profiles.pure_unit_call.to_owned(),
             pure_unit_public_token: None,
             local_value_state_model: profiles.local_value_state.to_owned(),
+            owned_tuple_call_discovery:
+                (owned_tuple_call_rules::accept_rust_owned_tuple_call_model(
+                    profiles.local_value_state,
+                ) && initial_discovery)
+                    .then_some(()),
             local_value_copies: HashSet::new(),
             local_value_constructors: HashMap::new(),
             type_namespace_frames: Vec::new(),

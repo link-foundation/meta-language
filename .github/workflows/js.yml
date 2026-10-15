@@ -763,6 +763,26 @@ jobs:
         working-directory: js
         run: node ../experiments/generate-rust-owned-local-state-rules.mjs --check
 
+      - name: Check generated owned tuple initialization call rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../experiments/generate-rust-owned-tuple-call-rules.mjs --check
+
+      - name: Check owned tuple initialization call fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../experiments/generate-owned-tuple-call-fixture.mjs --check
+
+      - name: Check actual public owned tuple call native archives
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../experiments/generate-owned-tuple-call-native-fixture.mjs --check
+
+      - name: Run owned tuple initialization call checks
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/owned-tuple-call.test.mjs
+
       - name: Check shared Rust owned local text state fixtures
         if: ${{ !cancelled() && matrix.group == 'generated' }}
         working-directory: js

@@ -430,6 +430,22 @@ Actual whole emitted artifacts are executed in CI, while source reimport of the
 complete generated runtime shell and the full binary formatter still need their
 separate source interpretations. Existing source-profile refusals remain exact;
 native compilation, execution and cross-runtime observations are CI checks.
+The independently selected `closed owned text tuple initialization calls 1`
+extends that ordered move model with an actual declaration-owned initializer.
+A closed helper takes direct `(String, i32)` parameters and returns one direct
+ordered `(String, i32)` product. A caller evaluates its complete initializer
+call once, with arguments evaluated left to right, then owns the String move and
+i32 Copy field slots through the existing replacement and join proof. The
+initializer target retains its real declaration link and ordered field modes;
+source-free target edits must preserve both. Declaration mapping identities,
+actual item ownership, source signatures and every composite result type are
+rechecked before either target emission. Equality remains confined to Boolean
+and signed i32 operands. Five complete programs, thirteen exact source refusals,
+actual public producer archives and complete emitted Rust artifacts bound this
+interpretation. Borrowed inputs, computed tuple helpers, the full binary
+formatter and source replay of generated String clones or runtime wrappers need
+independent interpretations. This model adds no claim of a general source fixed
+point; native compilation and complete cross-runtime execution remain CI checks.
 The independently selected `closed pure Rust const predicates 1` source model
 owns the actual `const` and `fn` keyword intervals, complete header and body
 intervals, original declaration name and direct primitive source signature.
