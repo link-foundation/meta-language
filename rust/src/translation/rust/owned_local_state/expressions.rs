@@ -46,6 +46,26 @@ impl LocalState {
         environment: &mut Environment,
         constructor_literal: bool,
     ) -> Result<LocalExpression> {
+        self.expression_in_context(parser, node, environment, constructor_literal, false)
+    }
+
+    pub(super) fn initializer_expression(
+        &mut self,
+        parser: &mut RustParser,
+        node: SExpr,
+        environment: &mut Environment,
+    ) -> Result<LocalExpression> {
+        self.expression_in_context(parser, node, environment, false, true)
+    }
+
+    fn expression_in_context(
+        &mut self,
+        parser: &mut RustParser,
+        node: SExpr,
+        environment: &mut Environment,
+        constructor_literal: bool,
+        call_initializer: bool,
+    ) -> Result<LocalExpression> {
         let span = node.span;
         let copy = span.is_some_and(|range| parser.local_value_copies.contains(&range));
         let value = match node.node {
@@ -109,6 +129,80 @@ impl LocalState {
                 value: SExpr::new(SNode::Bool { value }, span),
                 ty: BOOL,
             },
+            SNode::App { func, args } if self.calls => {
+                let SNode::Name { path } = &func.node else {
+                    return Err(fail(
+                        "calls require one complete tuple initializer with an actual unshadowed declaration owner",
+                        span,
+                    ));
+                };
+                if !call_initializer || path.len() != 1 || environment.contains_key(&path[0]) {
+                    return Err(fail(
+                        "calls require one complete tuple initializer with an actual unshadowed declaration owner",
+                        span,
+                    ));
+                }
+                let target = parser.origins.lookup(path, &[]).and_then(|entry| {
+                    if let super::super::source_origins::SourceDeclaration::Function {
+                        parameters,
+                        result,
+                    } = entry.declaration
+                    {
+                        Some((parameters, result))
+                    } else {
+                        None
+                    }
+                });
+                if target.is_none() && parser.owned_tuple_call_discovery.is_none() {
+                    return Err(fail(
+                        "a tuple initializer needs its actual declared target",
+                        span,
+                    ));
+                }
+                if let Some((parameters, result)) = &target {
+                    let parameter_pair = Type::Tuple {
+                        elements: parameters
+                            .iter()
+                            .filter_map(|parameter| parameter.ty.clone())
+                            .collect(),
+                    };
+                    if !result.ty.as_ref().is_some_and(owned_pair)
+                        || parameters.len() != 2
+                        || !owned_pair(&parameter_pair)
+                    {
+                        return Err(fail(
+                            "the initializer target must return owned String/i32 from direct String/i32 parameters",
+                            span,
+                        ));
+                    }
+                }
+                let values = args
+                    .into_iter()
+                    .map(|argument| self.expression(parser, argument, environment, false))
+                    .collect::<Result<Vec<_>>>()?;
+                let argument_pair = Type::Tuple {
+                    elements: values.iter().map(|argument| argument.ty.clone()).collect(),
+                };
+                if !owned_pair(&argument_pair) {
+                    return Err(fail(
+                        "the initializer arguments must retain ordered owned String/i32 domains",
+                        span,
+                    ));
+                }
+                let ty = target
+                    .and_then(|(_, result)| result.ty)
+                    .unwrap_or(argument_pair);
+                LocalExpression {
+                    value: SExpr::new(
+                        SNode::App {
+                            func,
+                            args: values.into_iter().map(|argument| argument.value).collect(),
+                        },
+                        span,
+                    ),
+                    ty,
+                }
+            }
             SNode::ToString { arg } => {
                 let constructor_span = span
                     .and_then(|range| parser.local_value_constructors.get(&range))

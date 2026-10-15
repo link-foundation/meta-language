@@ -533,6 +533,7 @@ pub fn emit_rust_with_options(
     options: RustEmissionOptions<'_>,
 ) -> Result<Emitted> {
     super::source_const_functions::validate_const_functions(program)?;
+    super::owned_local_state::validate_owned_local_state(program)?;
     if let Some(runtime) = super::runtime_shell::validate_program(program)? {
         if options.source_header_model.is_some() {
             return Err(crate::translation::diagnostics::unsupported(

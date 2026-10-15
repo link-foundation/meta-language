@@ -2,7 +2,7 @@
 use super::{
     BOOL, Environment, LocalBindingPattern, LocalExpression, LocalState, LocalValue, Result,
     RustParser, SExpr, SNode, STRING, Statement, Type, binding_expression, fail, json, owned_pair,
-    reserved,
+    reserved, tuple_call_policy,
 };
 impl LocalState {
     pub(super) fn sequence(
@@ -43,7 +43,11 @@ impl LocalState {
                 value,
                 span,
             } => {
-                let value = self.expression(parser, value.clone(), environment, false)?;
+                let value = if self.calls && matches!(pattern, LocalBindingPattern::Tuple { .. }) {
+                    self.initializer_expression(parser, value.clone(), environment)?
+                } else {
+                    self.expression(parser, value.clone(), environment, false)?
+                };
                 if ty.as_ref().is_some_and(|ty| *ty != value.ty) {
                     return Err(fail(
                         "the actual local annotation differs from its value domain",
@@ -98,9 +102,27 @@ impl LocalState {
                 }
                 self.names.extend(fields.iter().cloned());
                 self.mutable_slot = Some(fields[0].clone());
+                let target = if self.calls {
+                    let SNode::App { func, .. } = &value.value.node else {
+                        return Err(fail(
+                            "the selected call model requires an actual declared tuple initializer",
+                            *span,
+                        ));
+                    };
+                    let SNode::Name { path } = &func.node else {
+                        unreachable!()
+                    };
+                    Some(path[0].clone())
+                } else {
+                    None
+                };
                 self.bind(json!({"name":tuple_name,"sourceName":tuple_name,"role":"tuple initializer","mutable":false,"previous":null,"type":value.ty,"initializer":null,"index":null}));
-                self.initializers
-                    .push(json!({"binding":tuple_name,"fields":fields,"path":null}));
+                let mut initializer = json!({"binding":tuple_name,"fields":fields,"path":null});
+                if let Some(target) = target {
+                    initializer["target"] = json!(target);
+                    initializer["fieldModes"] = tuple_call_policy()["fieldModes"].clone();
+                }
+                self.initializers.push(initializer);
                 let Type::Tuple { elements } = &value.ty else {
                     unreachable!()
                 };
