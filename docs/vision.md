@@ -188,8 +188,11 @@ length conversion explicitly projected to the Number model. Ownership moves,
 borrowed results, mutable arrays and full generated runtime wrappers still need
 their separate obligations. Rust decimal integer separators before the existing supported suffixes use a
 shared generated lexical boundary decision, preserving exact integer text and
-UTF-16 source spans. The narrow ASCII-boundary extension retains unsuffixed
-trailing-separator and non-ASCII suffix-boundary refusals; JavaScript numbers,
+UTF-16 source spans. Its original boundary decision retains unsuffixed
+trailing-separator and non-ASCII suffix-boundary refusals. A separate source
+composition also admits the exact proved Rust whitespace boundaries by reusing
+that decision with its existing ASCII space observation. Unknown Unicode suffix
+continuations and non-Rust whitespace remain refused; JavaScript numbers,
 floating boundaries and radix gaps retain their existing interpretations.
 JavaScript line comments and the supported return, break, continue and throw
 boundaries use one shared generated ECMAScript line-terminator policy. Carriage
@@ -198,8 +201,19 @@ or turn an automatic empty return into a value return. A line terminator inside
 a block comment retains its restricted-production meaning; other languages keep
 their own comment boundaries.
 Rust string continuations and CRLF normalization
-use shared checked rules while preserving original source-token spans. The
-bounded Unicode scalar source text byte model exposes actual UTF-16 units, exact
+use shared checked rules while preserving original source-token spans.
+Cooked Rust strings admit the exact simple escape prefixes and two-digit
+seven-bit hexadecimal escapes; invalid prefixes, non-ASCII hexadecimal values
+and isolated source carriage returns refuse. A Rust-specific Unicode decoder
+counts one through six actual hexadecimal digits and retains permitted interior
+and trailing underscores without a fixed escape-width cap. It reuses the same
+hexadecimal digit operation and one lazy full-source unit buffer. Its result is
+the existing scalar, malformed or unsupported escape meaning; the generic
+decoder and other source languages retain their original contracts. Rust token
+separation uses its exact eleven Pattern White Space code points and permits a
+byte order mark only at original source offset zero. All of these decisions
+retain original UTF-16 spans and serialize their policy as shared links.
+The bounded Unicode scalar source text byte model exposes actual UTF-16 units, exact
 UTF-8 length, individual bytes and scalar-boundary slices in both packages.
 Shared numeric rules generate the native byte decisions; thin host adapters
 validate primitive text and numeric offsets before materializing the result.
@@ -446,6 +460,19 @@ interpretation. Borrowed inputs, computed tuple helpers, the full binary
 formatter and source replay of generated String clones or runtime wrappers need
 independent interpretations. This model adds no claim of a general source fixed
 point; native compilation and complete cross-runtime execution remain CI checks.
+The separate JavaScript-first `closed generated owned Rust module 1` experiment
+reads five complete actual emitted owned String/i32 modules, including their
+clone operations, crate-qualified calls and empty Unit worker shell. Complete
+tokens and trivia retain the original bytes, while checked core nodes anchor
+actual declaration, parameter, local, literal and clone-owner identities.
+Source-free callee, declaration-name and Unicode literal edits revalidate those
+links and execute through JavaScript; unchanged alternative literal spellings
+retain their original concrete syntax through whole-module replay. Runtime and
+String success assumptions remain bound to their actual operations. Canonical
+emission reinterprets the complete emitted module to bind conditions to its new
+spans. This remains an isolated experiment without a production selector or
+native parity claim. Existing production source refusals and the complete
+binary formatter gap remain explicit.
 The independently selected `closed pure Rust const predicates 1` source model
 owns the actual `const` and `fn` keyword intervals, complete header and body
 intervals, original declaration name and direct primitive source signature.
@@ -1577,6 +1604,10 @@ under a distinct identity. The aggregate requires every declared partition and
 the complete test-file union before accepting the logical JavaScript suite;
 missing, duplicate, mixed or foreign scope remains a gate error. The current
 15 partitions cover all file groups within the existing 60-minute job limit.
+Fourteen partitions run beside downstream workload producers; the downstream
+partition retains its report dependencies. Both JavaScript collections must
+succeed before Rust evidence starts, and both remain dependencies of the
+aggregate with their original physical scope and artifact identities.
 The Rust evidence suite starts only after the entire JavaScript matrix passes.
 Both suites provision their required formatter and compiler tools. Failure
 tails and periodic command progress are retained in live CI output.
@@ -1585,7 +1616,8 @@ Package validation runs five required parallel check groups: native imports,
 native fixtures, grammar, contracts and generated code. Each group retains the
 ten-minute deadline and its own setup and cleanup. The final package job requires
 every group, every JavaScript test partition and the complete report assertion
-job before packaging or publication. Frozen step-conservation checks retain every
+job before packaging or publication. It also requires the validated merge of
+translation compiler feedback. Frozen step-conservation checks retain every
 original command, condition and artifact owner exactly once across the groups.
 
 The JavaScript package checks also compile the generated shared frontend rules
@@ -1617,10 +1649,16 @@ the following module's imports. Contexts and results travel as LiNo records;
 completed rows retain their original order. Local reports remain sequential,
 and CI keeps the same report deadlines and verification gates.
 
-The native grammar and conformance test groups run in disjoint CI file
+The initial translation, native grammar and conformance test groups run in disjoint CI file
 partitions. Their union retains every original file exactly once, and each job
 keeps the existing time limit. File partitioning does not change assertions,
 fixtures, runtime obligations or the requirement scope.
+Three initial translation partitions retain the fifteen-minute deadline. Each
+transports feedback with a LiNo receipt of the exact commit, selected files and
+payload hashes. A required merge validates every partition, permits an empty
+individual partition, rejects missing, stale or conflicting inputs, and restores
+the original combined artifact name, paths and retention. An empty complete
+collection still fails. Acceptance retains its separate fifteen physical scopes.
 
 A separate JavaScript test group checks these published reports after all
 report shards finish. It uses the producers' exact checkout and source hashes,

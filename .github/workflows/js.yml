@@ -668,6 +668,31 @@ jobs:
         if: ${{ !cancelled() && matrix.group == 'generated' }}
         run: node js/scripts/build-rust-string-continuation-fixtures.mjs --check
 
+      - name: Check generated Rust cooked string escape rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/generate-rust-cooked-string-rules.mjs --check
+
+      - name: Check shared Rust cooked string escape fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/build-rust-cooked-string-escape-fixtures.mjs --check
+
+      - name: Check generated Rust Unicode scalar escape rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/generate-rust-unicode-escape-rules.mjs --check
+
+      - name: Check shared Rust Unicode scalar escape fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/build-rust-unicode-escape-fixtures.mjs --check
+
+      - name: Check generated Rust source whitespace and boundary rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node scripts/generate-rust-source-whitespace-rules.mjs --check
+
       - name: Check shared TypeScript documentation pattern fixtures
         if: ${{ !cancelled() && matrix.group == 'generated' }}
         run: node js/scripts/generate-typescript-documentation-fixtures.mjs --check
@@ -774,6 +799,24 @@ jobs:
           TRANSLATION_CHECK_RUST: '0'
           SELF_TRANSLATION_CHECK_RUST: '0'
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/generated-javascript-unit/model.test.mjs
+
+      - name: Check generated owned Rust module experiment rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../experiments/generated-owned-rust/generate-rules.mjs --check
+
+      - name: Check complete generated owned Rust module experiment fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../experiments/generated-owned-rust/generate-fixtures.mjs --check
+
+      - name: Run generated owned Rust module experiment
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        env:
+          TRANSLATION_CHECK_RUST: '0'
+          SELF_TRANSLATION_CHECK_RUST: '0'
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/generated-owned-rust/model.test.mjs
 
       - name: Check generated whole Rust runtime shell rules
         if: ${{ !cancelled() && matrix.group == 'generated' }}

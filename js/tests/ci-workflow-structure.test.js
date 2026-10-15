@@ -666,6 +666,36 @@ const OWNED_TUPLE_CALL_EXPERIMENT_PACKAGE_STEPS = [
   ]
 ];
 
+const RUST_LEXICAL_AND_OWNED_MODULE_GENERATOR_STEPS = [
+  ['Check generated Rust cooked string escape rules',
+    'node scripts/generate-rust-cooked-string-rules.mjs --check',
+    '52f1ba5e4cc7587870bd1bfa1e9d3cd18435a9b790f2454d388f32269e63cd5f', 'generated'],
+  ['Check shared Rust cooked string escape fixtures',
+    'node scripts/build-rust-cooked-string-escape-fixtures.mjs --check',
+    '345c8bc5486e854fde308e6ebb92b67bb4a7abafbc4e5b75450877ddfa2dfc44', 'generated'],
+  ['Check generated Rust Unicode scalar escape rules',
+    'node scripts/generate-rust-unicode-escape-rules.mjs --check',
+    'bf9496b12449d314d40d8b1944394a2926d6550a9372d1f0f6156ec7f65c590c', 'generated'],
+  ['Check shared Rust Unicode scalar escape fixtures',
+    'node scripts/build-rust-unicode-escape-fixtures.mjs --check',
+    '5eac32a1287035c4f6045ff7b1f46c30ab1e45635ed511de3a81301ed2ba5372', 'generated'],
+  ['Check generated Rust source whitespace and boundary rules',
+    'node scripts/generate-rust-source-whitespace-rules.mjs --check',
+    '39e7b178926e8ccfa9723de5aacae66b0664a8699f4a27b8ab4e02e20e231cda', 'generated'],
+  ['Check generated owned Rust module experiment rules',
+    'node ../experiments/generated-owned-rust/generate-rules.mjs --check',
+    'dd990ba959a39dc3562855c15eb2c7f4a0984536308a4f4f701eae75408a31de', 'generated'],
+  ['Check complete generated owned Rust module experiment fixtures',
+    'node ../experiments/generated-owned-rust/generate-fixtures.mjs --check',
+    'cb69f420d26ffea65c21d8bc8f8695fb38e94e69fde2d09127451b462c818fa3', 'generated']
+];
+
+const GENERATED_OWNED_RUST_MODULE_EXPERIMENT_STEPS = [
+  ['Run generated owned Rust module experiment',
+    'node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/generated-owned-rust/model.test.mjs',
+    '456ff45cb502154ebcf1bf135d3db1da3589f4848f6e521ed7a033b1c5298b01', 'generated']
+];
+
 function packageStepSignature(step, includeGroup = false) {
   const fields = includeGroup ? step.text : step.text.replace(/ && matrix\.group == '[a-z-]+'/gu, '');
   const text = fields
@@ -681,7 +711,8 @@ function checkPackageStepConservation(parsed) {
     ...CONST_AND_BYTE_GENERATOR_PACKAGE_STEPS, ...CONST_AND_BYTE_EXPERIMENT_PACKAGE_STEPS, ...RUNTIME_SHELL_PACKAGE_STEPS, ...RUST_NUMBER_PACKAGE_STEPS,
     ...JAVASCRIPT_LINE_TERMINATOR_PACKAGE_STEPS, ...GENERATED_JAVASCRIPT_UNIT_PACKAGE_STEPS,
     ...GENERATED_JAVASCRIPT_UNIT_EXPERIMENT_STEPS,
-    ...OWNED_TUPLE_CALL_GENERATOR_PACKAGE_STEPS, ...OWNED_TUPLE_CALL_EXPERIMENT_PACKAGE_STEPS];
+    ...OWNED_TUPLE_CALL_GENERATOR_PACKAGE_STEPS, ...OWNED_TUPLE_CALL_EXPERIMENT_PACKAGE_STEPS,
+    ...RUST_LEXICAL_AND_OWNED_MODULE_GENERATOR_STEPS, ...GENERATED_OWNED_RUST_MODULE_EXPERIMENT_STEPS];
   const expected = new Map([
     ...ORIGINAL_PACKAGE_STEPS.map(([name, hash, owner]) => [name, { hash, owner }]),
     ...additions.map(([name, command, hash, owner]) => [name, { hash, owner, command, addition: true }]),
@@ -818,7 +849,7 @@ test('every frozen generator addition rejects omission, duplication, condition, 
   for (const [name] of [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS, ...TYPE_NAMESPACE_PACKAGE_STEPS,
     ...PURE_UNIT_PACKAGE_STEPS, ...SOURCE_SPAN_PACKAGE_STEPS, ...OWNED_TEXT_GENERATOR_PACKAGE_STEPS, ...INTEGRAL_METADATA_PACKAGE_STEPS, ...CONST_AND_BYTE_GENERATOR_PACKAGE_STEPS, ...RUNTIME_SHELL_PACKAGE_STEPS, ...RUST_NUMBER_PACKAGE_STEPS,
     ...JAVASCRIPT_LINE_TERMINATOR_PACKAGE_STEPS, ...GENERATED_JAVASCRIPT_UNIT_PACKAGE_STEPS,
-    ...OWNED_TUPLE_CALL_GENERATOR_PACKAGE_STEPS]) {
+    ...OWNED_TUPLE_CALL_GENERATOR_PACKAGE_STEPS, ...RUST_LEXICAL_AND_OWNED_MODULE_GENERATOR_STEPS]) {
     mutate(name, (steps, index) => steps.splice(index, 1));
     mutate(name, (steps, index) => steps.push({ ...steps[index] }));
     for (const [before, after] of [
@@ -837,7 +868,8 @@ test('every frozen generator addition rejects omission, duplication, condition, 
 
 test('every frozen text experiment addition retains its mandatory execution, wrapper, directory and owner', () => {
   for (const [name] of [...OWNED_TEXT_EXPERIMENT_PACKAGE_STEPS, ...INTEGRAL_METADATA_EXPERIMENT_PACKAGE_STEPS, ...CONST_AND_BYTE_EXPERIMENT_PACKAGE_STEPS,
-    ...GENERATED_JAVASCRIPT_UNIT_EXPERIMENT_STEPS, ...OWNED_TUPLE_CALL_EXPERIMENT_PACKAGE_STEPS]) {
+    ...GENERATED_JAVASCRIPT_UNIT_EXPERIMENT_STEPS, ...OWNED_TUPLE_CALL_EXPERIMENT_PACKAGE_STEPS,
+    ...GENERATED_OWNED_RUST_MODULE_EXPERIMENT_STEPS]) {
     const mutate = change => {
       const parsed = jobs('js.yml');
       const steps = parsed.get('package-checks').steps;
