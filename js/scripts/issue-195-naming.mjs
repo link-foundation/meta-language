@@ -1409,7 +1409,7 @@ const BASE_NAME_INVENTORIES = Object.freeze([
   },
   {
     inventory: 'associative foundation audit operations',
-    files: ['js/scripts/associative-stack-sources.mjs'],
+    files: ['js/scripts/associative-stack-sources.mjs', 'js/scripts/meta-theory-foundation-sources.mjs'],
     extract: (text) => captures(text, /^export function ([a-zA-Z][a-zA-Z_]+)\(/gmu)
       .map((name) => name.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase()),
     recordOf: (name) => `foundation.${name}`,
