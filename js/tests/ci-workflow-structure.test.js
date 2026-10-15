@@ -362,7 +362,7 @@ test('the Rust coverage shards run the test suites and their merged report count
 // Frozen from the 115 original package steps at 0203b814, before partitioning.
 // Hashes include all non-comment fields, commands, conditions and artifact
 // identities. Only the added matrix selector is removed for comparison.
-const PACKAGE_GROUPS = ['native-imports', 'native-fixtures', 'grammar', 'contracts', 'generated'];
+const PACKAGE_GROUPS = ['native-imports', 'native-fixtures', 'grammar', 'contracts', 'generated', 'source-models'];
 const ORIGINAL_PACKAGE_STEPS = [
   ["- uses: actions/checkout@v7", '6a4e22587a1c1ab9a1a80858c0b1d31d26580233f884253c583c43c5e5452297', 'all'],
   ["Simulate fresh merge with base branch", '7a5dda6e63b412064d418cdd82ae8a57f69b1f232aa50f2e72fe0a8f4461467e', 'all'],
@@ -732,28 +732,28 @@ const RUST_TEXT_VALUE_PROJECTION_EXPERIMENT_STEPS = [
 const RUST_RAW_BINDING_IDENTIFIER_GENERATOR_STEPS = [
   ['Check generated Rust raw binding identifier experiment rules and fixtures',
     'node ../experiments/rust-raw-binding-identifiers/generate-rules.mjs --check',
-    '25e142dda8a54bac341fa04df427c62804b5d340c46d1fd5835adb014b075382', 'generated']
+    '5502b13100d0d342741905624167acb3cc9de64228a9c795c0c9bed9df342a80', 'source-models']
 ];
 
 const RUST_RAW_BINDING_IDENTIFIER_EXPERIMENT_STEPS = [
   ['Run Rust raw binding identifier experiment',
     'node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-raw-binding-identifiers/model.test.mjs',
-    '7c9a8ae9fe9e0cccf5791f0c22cf2e87198d150f496fb5842860da5c7fe24122', 'generated']
+    '7c986492eab66bb0347d115d513ec11af833e3acb42822aa6a73998c6b3edcbe', 'source-models']
 ];
 
 const RUST_TEXT_CERTIFICATE_GENERATOR_STEPS = [
   ['Check generated complete Rust text certificate kernel',
     'node ../experiments/rust-text-certificate/generate.mjs --check',
-    'cf7a9c83c853aafd882c00845534dddb8808fbd47994795962ec83fa8648c96f', 'generated']
+    '94403fbdacab7b68d43a94f3c7e12456604703b4037e039e110eedcc387fd399', 'source-models']
 ];
 
 const RUST_TEXT_CERTIFICATE_EXPERIMENT_STEPS = [
   ['Run portable Rust text certificate feasibility checks',
     'node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-text-certificate/feasibility.mjs',
-    'edec431f90737e92f42b23e21f7c257fd9234aa7e131df4bdc6ece9819b743da', 'generated'],
+    'cf534d4a66964b2b953d8ba5725270b745426887b3bc469fb9a2aec745ebdaf0', 'source-models'],
   ['Run complete portable Rust text certificate kernel',
     'node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-text-certificate/kernel.test.mjs',
-    '79f01a89fe43fb77a117afa87dfff0d1563c61d9fcc99cd1ac902ca30d773f47', 'generated']
+    'c6d370c7e06647c6ce0d2cf06c5cb9866084b5e0e426cfa66552cea87b67a481', 'source-models']
 ];
 
 function packageStepSignature(step, includeGroup = false) {
@@ -1044,6 +1044,8 @@ test('package partitions conserve every original check, condition and artifact o
   const parsed = jobs('js.yml');
   const checks = parsed.get('package-checks');
   const groups = /^ {8}group: \[([^\]]+)\]/mu.exec(checks.header)?.[1].split(',').map(value => value.trim());
+  assert.deepEqual(groups.slice(0, 5), ['native-imports', 'native-fixtures', 'grammar', 'contracts', 'generated'],
+    'all five published partitions remain required in their original order');
   assert.deepEqual(groups, PACKAGE_GROUPS);
   assert.match(checks.header, /fail-fast: false/u);
   assert.match(checks.header, /group: check-js-\$\{\{ github.ref \}\}-javascript-package-checks-\$\{\{ matrix.group \}\}/u);
@@ -1131,7 +1133,7 @@ test('every frozen generator addition rejects omission, duplication, condition, 
     change(steps, index);
     assert.throws(() => checkPackageStepConservation(parsed), assert.AssertionError, name);
   };
-  for (const [name] of [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS, ...TYPE_NAMESPACE_PACKAGE_STEPS,
+  for (const [name, , , owner] of [...ADDITIONAL_PACKAGE_STEPS, ...EMPTY_OPTION_PACKAGE_STEPS, ...TYPE_NAMESPACE_PACKAGE_STEPS,
     ...PURE_UNIT_PACKAGE_STEPS, ...SOURCE_SPAN_PACKAGE_STEPS, ...OWNED_TEXT_GENERATOR_PACKAGE_STEPS, ...INTEGRAL_METADATA_PACKAGE_STEPS, ...CONST_AND_BYTE_GENERATOR_PACKAGE_STEPS, ...RUNTIME_SHELL_PACKAGE_STEPS, ...RUST_NUMBER_PACKAGE_STEPS,
     ...JAVASCRIPT_LINE_TERMINATOR_PACKAGE_STEPS, ...GENERATED_JAVASCRIPT_UNIT_PACKAGE_STEPS,
     ...OWNED_TUPLE_CALL_GENERATOR_PACKAGE_STEPS, ...RUST_LEXICAL_AND_OWNED_MODULE_GENERATOR_STEPS,
@@ -1143,7 +1145,7 @@ test('every frozen generator addition rejects omission, duplication, condition, 
       ['!cancelled()', 'success()'],
       ['--check', '--javascript-only'],
       ['working-directory: js', 'working-directory: .'],
-      ["matrix.group == 'generated'", "matrix.group == 'contracts'"],
+      [`matrix.group == '${owner}'`, "matrix.group == 'contracts'"],
       ['working-directory: js', 'continue-on-error: true\n        working-directory: js'],
     ]) {
       mutate(name, (steps, index) => {
@@ -1154,7 +1156,7 @@ test('every frozen generator addition rejects omission, duplication, condition, 
 });
 
 test('every frozen text experiment addition retains its mandatory execution, wrapper, directory and owner', () => {
-  for (const [name] of [...OWNED_TEXT_EXPERIMENT_PACKAGE_STEPS, ...INTEGRAL_METADATA_EXPERIMENT_PACKAGE_STEPS, ...CONST_AND_BYTE_EXPERIMENT_PACKAGE_STEPS,
+  for (const [name, , , owner] of [...OWNED_TEXT_EXPERIMENT_PACKAGE_STEPS, ...INTEGRAL_METADATA_EXPERIMENT_PACKAGE_STEPS, ...CONST_AND_BYTE_EXPERIMENT_PACKAGE_STEPS,
     ...GENERATED_JAVASCRIPT_UNIT_EXPERIMENT_STEPS, ...OWNED_TUPLE_CALL_EXPERIMENT_PACKAGE_STEPS,
     ...GENERATED_OWNED_RUST_MODULE_EXPERIMENT_STEPS, ...OWNED_RUST_LITERAL_EDIT_EXPERIMENT_STEPS,
     ...RUST_TEXT_VALUE_PROJECTION_EXPERIMENT_STEPS, ...RUST_RAW_BINDING_IDENTIFIER_EXPERIMENT_STEPS,
@@ -1174,7 +1176,7 @@ test('every frozen text experiment addition retains its mandatory execution, wra
       ['--event test --', '--event build --'],
       ['node --test ../experiments/', 'node --test --test-name-pattern optional ../experiments/'],
       ['working-directory: js', 'working-directory: .'],
-      ["matrix.group == 'generated'", "matrix.group == 'contracts'"],
+      [`matrix.group == '${owner}'`, "matrix.group == 'contracts'"],
       ['working-directory: js', 'continue-on-error: true\n        working-directory: js'],
     ]) {
       mutate((steps, index) => {

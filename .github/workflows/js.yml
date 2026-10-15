@@ -324,7 +324,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        group: [native-imports, native-fixtures, grammar, contracts, generated]
+        group: [native-imports, native-fixtures, grammar, contracts, generated, source-models]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -860,12 +860,12 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-text-value-projection/model.test.mjs
 
       - name: Check generated Rust raw binding identifier experiment rules and fixtures
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' }}
         working-directory: js
         run: node ../experiments/rust-raw-binding-identifiers/generate-rules.mjs --check
 
       - name: Run Rust raw binding identifier experiment
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -873,12 +873,12 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-raw-binding-identifiers/model.test.mjs
 
       - name: Check generated complete Rust text certificate kernel
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' }}
         working-directory: js
         run: node ../experiments/rust-text-certificate/generate.mjs --check
 
       - name: Run portable Rust text certificate feasibility checks
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
@@ -886,7 +886,7 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-text-certificate/feasibility.mjs
 
       - name: Run complete portable Rust text certificate kernel
-        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        if: ${{ !cancelled() && matrix.group == 'source-models' }}
         working-directory: js
         env:
           TRANSLATION_CHECK_RUST: '0'
