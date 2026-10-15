@@ -50,8 +50,11 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
   while (index < source.length) {
     const char = source[index];
     if (braced && char === '}' && depth === 0) break;
+    // Classify the current one-unit character without another source-unit read.
+    // Full-source encoding remains lazy and shared by the escape algorithms.
+    const rustUnit = language === 'Rust' ? char.codePointAt(0) : -1;
     if (language === 'Rust'
-      ? acceptRustSourceWhitespace(source.charCodeAt(index)) || acceptRustSourceByteOrderMark(source.charCodeAt(index), index === 0)
+      ? acceptRustSourceWhitespace(rustUnit) || acceptRustSourceByteOrderMark(rustUnit, index === 0)
       : /\s/u.test(char)) {
       index += 1;
       continue;
