@@ -65,7 +65,9 @@ pub(super) fn walk_output(node: SExpr, effects: &mut Vec<SEffect>) -> Result<()>
             check_portable(&value)?;
             effects.push(SEffect::Let {
                 name,
-                ty,
+                ty: ty.and_then(
+                    crate::translation::surface::SurfaceBindingTypeAnnotation::into_option,
+                ),
                 value: *value,
                 constant: false,
                 span: node_span,

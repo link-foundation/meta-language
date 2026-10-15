@@ -9,6 +9,7 @@ use crate::translation::source_loops::{
     ScalarLoopTransition, ScalarLoopWrite, SourceLoop, scalar_loop_policy,
     scalar_loop_snapshot_binding, validate_source_loop,
 };
+use crate::translation::surface::SurfaceBindingTypeAnnotation;
 use std::collections::HashSet;
 
 pub(super) fn finish_scalar_loops(program: &mut SProgram) -> Result<()> {
@@ -195,7 +196,7 @@ impl JavaScriptParser {
                     SExpr::new(
                         SNode::Let {
                             name,
-                            ty: None,
+                            ty: Some(SurfaceBindingTypeAnnotation::null()),
                             value: Box::new(value),
                             body: Box::new(body),
                         },

@@ -12,6 +12,8 @@ mod externals;
 pub use externals::{External, ExternalParam, SImport, SImportName};
 mod array_item;
 pub use array_item::SArrayItem;
+mod binding_type_annotation;
+pub use binding_type_annotation::SurfaceBindingTypeAnnotation;
 
 #[allow(clippy::trivially_copy_pass_by_ref)] // serde passes fields by reference
 const fn is_false(value: &bool) -> bool {
@@ -258,8 +260,13 @@ pub enum SNode {
     },
     Let {
         name: String,
-        #[serde(rename = "type", default, skip_serializing_if = "Option::is_none")]
-        ty: Option<Type>,
+        #[serde(
+            rename = "type",
+            default,
+            skip_serializing_if = "Option::is_none",
+            deserialize_with = "binding_type_annotation::read_present_binding_type_annotation"
+        )]
+        ty: Option<SurfaceBindingTypeAnnotation>,
         value: Box<SExpr>,
         body: Box<SExpr>,
     },

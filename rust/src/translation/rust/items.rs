@@ -536,7 +536,7 @@ impl RustParser {
             SExpr::new(
                 SNode::Let {
                     name: binding.name,
-                    ty: binding.ty,
+                    ty: binding.ty.map(Into::into),
                     value: Box::new(binding.value),
                     body: Box::new(body),
                 },

@@ -133,7 +133,7 @@ impl RustParser {
                 SExpr::new(
                     SNode::Let {
                         name: binding.name,
-                        ty: binding.ty,
+                        ty: binding.ty.map(Into::into),
                         value: Box::new(binding.value),
                         body: Box::new(body),
                     },
@@ -323,7 +323,7 @@ impl RustParser {
             result = SExpr::new(
                 SNode::Let {
                     name: write.binding,
-                    ty,
+                    ty: ty.map(Into::into),
                     value: Box::new(value),
                     body: Box::new(result),
                 },

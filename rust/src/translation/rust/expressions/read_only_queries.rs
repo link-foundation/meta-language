@@ -94,7 +94,7 @@ impl RustParser {
             result = SExpr::new(
                 SNode::Let {
                     name,
-                    ty: Some(FLOAT),
+                    ty: Some(FLOAT.into()),
                     value: Box::new(value),
                     body: Box::new(result),
                 },

@@ -7,6 +7,7 @@ use super::{
     binary_node, cast_to, coerce, comparison, fixed_bounds, negate_number, op_name, plain_binary,
     text_lit, type_error, unsupported,
 };
+use crate::translation::surface::SurfaceBindingTypeAnnotation;
 use crate::translation::typed_program_link_rules::{
     accept_program_optional_absence, accept_program_tuple_product_model,
 };
@@ -279,7 +280,7 @@ impl Checker {
                 value,
                 body,
             } => {
-                let declared = match ty {
+                let declared = match ty.as_ref().and_then(SurfaceBindingTypeAnnotation::as_ref) {
                     Some(ty) => Some(self.resolve_type(Some(ty), path, span)?),
                     None => None,
                 };

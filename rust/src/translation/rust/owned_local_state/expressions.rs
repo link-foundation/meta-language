@@ -338,7 +338,7 @@ impl LocalState {
                     LocalValue::new(name.clone(), value.ty.clone(), false),
                 );
                 let fact_type = match &value.value.node {
-                    SNode::Let { ty: Some(ty), .. } => ty,
+                    SNode::Let { ty: Some(ty), .. } => ty.as_ref().unwrap_or(&value.ty),
                     _ => &value.ty,
                 };
                 self.bind(json!({"name":name,"sourceName":name,"role":if owned_pair(fact_type) {"tuple initializer"} else {"immutable"},"mutable":false,"previous":null,"type":fact_type,"initializer":null,"index":null}));

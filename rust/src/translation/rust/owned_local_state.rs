@@ -144,7 +144,7 @@ fn binding_expression(
         value: SExpr::new(
             SNode::Let {
                 name,
-                ty: Some(value.ty),
+                ty: Some(value.ty.into()),
                 value: Box::new(value.value),
                 body: Box::new(body.value),
             },

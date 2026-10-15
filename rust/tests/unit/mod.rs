@@ -283,6 +283,7 @@ mod translation_array_construction;
 mod translation_product_unit;
 mod translation_rust_floating_literals;
 mod translation_surface_array_items;
+mod translation_surface_binding_type_annotations;
 mod translation_tuple_checker;
 mod typed_program_tuples;
 
