@@ -4,6 +4,7 @@ import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
 import { readProjectData } from '../../js/scripts/project-data.mjs';
 import { LinkNetwork, encodeLinkNetworkBinary, decodeLinkNetworkBinary } from '../../js/src/index.js';
+import { TYPED_PROGRAM_LINKS_SCHEMA as schema } from '../../js/src/typed-program-links.js';
 import { checkProgram } from '../../js/src/translation/check.js';
 import { parseJavaScript } from '../../js/src/translation/javascript.js';
 import { emitJavaScript } from '../../js/src/translation/emit-javascript.js';
@@ -11,7 +12,7 @@ import { emitRust } from '../../js/src/translation/emit-rust.js';
 import { createFreshNumberArrayCollector, checkFreshNumberArrayCollector, encodeFreshNumberArrayCollector,
   decodeFreshNumberArrayCollector, FRESH_NUMBER_ARRAY_COLLECTOR_POLICY as policy } from './model.mjs';
 import { freshNumberArrayCollectorFixtures } from './generate-fixtures.mjs';
-import { acceptFreshNumberArrayCollectorPattern } from './rules.mjs';
+import { acceptFreshNumberArrayCollectorPattern, acceptFreshNumberArrayCollectorBinding } from './rules.mjs';
 
 const create = source => createFreshNumberArrayCollector(source, { model: policy.model });
 const execute = (source, name, input) => {
@@ -100,7 +101,7 @@ test('copied owners, changed source intervals, premises and represented core edi
     ({ proof }) => { proof.lowering[1].to = 'result=[];'; },
     ({ proof }) => { proof.assumptions.pop(); },
     ({ proof }) => { proof.assumptions[0].meaning = 'no assumptions'; },
-    ({ proof }) => { proof.assumptions[1].owner = structuredClone(proof.parameter); },
+    ({ proof }) => { proof.assumptions[1].premiseOwner = structuredClone(proof.parameter); },
     ({ proof }) => { proof.extra = true; },
     ({ program }) => { program.main.effects.push({ k: 'print' }); },
     ({ proof }) => { Object.defineProperty(proof.tokens, 'extra', { value: true }); },
@@ -137,5 +138,82 @@ test('portable pattern identity codes are bounded integers and every lexical use
   for (const index of [2, 3, 4, 5, 6, 7]) {
     const changed = [...codes]; changed[index] = 1000;
     assert.equal(acceptFreshNumberArrayCollectorPattern(changed, pattern), false);
+  }
+});
+
+test('premise relations use their actual operation-owner role and saved core LinkIds', () => {
+  const { program, proof } = create(freshNumberArrayCollectorFixtures()[0].source);
+  const packet = encodeFreshNumberArrayCollector(program, proof);
+  const fields = packet.network.fieldRelations();
+  const field = (parent, name) => fields.find(row => row.parent.equals(parent) && row.label === (schema.fields[name] ?? name.replace(/[A-Z]/gu, letter => ' ' + letter.toLowerCase())));
+  const body = packet.network.link(packet.root).references()[0];
+  const mapping = field(body, 'declarations');
+  const declarations = packet.network.link(mapping.child).references().map(pair => packet.network.link(pair).references()[1]);
+  const mainDeclaration = declarations.find(id => packet.network.link(field(id, 'name').child).metadata().definition === proof.declaration.name);
+  const parameters = packet.network.link(field(mainDeclaration, 'params').child).references();
+  const collector = field(mainDeclaration, 'body').child;
+  const loop = declarations.find(id => !id.equals(mainDeclaration));
+  const owners = fields.filter(row => row.label === 'premise owner');
+  assert.equal(owners.length, 4);
+  assert.equal(fields.filter(row => row.label === schema.fields.owner).length, 0,
+    'collector premises are not registered source-type-owner facts');
+  assert.deepEqual(owners.map(row => row.child.asU64().toString()),
+    [mainDeclaration, parameters[0], collector, loop].map(id => id.asU64().toString()));
+  assert.ok(owners.every(row => row.child.equals(field(row.parent, 'premiseOwner').child)));
+});
+
+test('direct checks and saved declaration edges reject split ordered-item and mapping ownership', () => {
+  const source = freshNumberArrayCollectorFixtures()[0].source;
+  for (const splitMap of [false, true]) {
+    const { program, proof } = create(source);
+    const declaration = proof.declaration, copied = { ...declaration };
+    if (splitMap) {
+      program.declarations.set(declaration.fullName, copied);
+      proof.declaration = copied;
+      proof.assumptions[0].premiseOwner = copied;
+    } else program.items[program.items.indexOf(declaration)] = copied;
+    assert.throws(() => checkFreshNumberArrayCollector(program, proof), /ordered items.*unowned declaration/u);
+  }
+  for (const splitMap of [false, true]) {
+    const { program, proof } = create(source);
+    const packet = encodeFreshNumberArrayCollector(program, proof), network = packet.network;
+    const fields = network.fieldRelations();
+    const field = (parent, name) => fields.find(row => row.parent.equals(parent) && row.label === (schema.fields[name] ?? name));
+    const body = network.link(packet.root).references()[0], mapping = field(body, 'declarations');
+    const pair = network.link(mapping.child).references()[0];
+    const [key, declaration] = network.link(pair).references();
+    const original = network.link(declaration);
+    const copied = network.insertLink(original.references(), original.metadata().clone());
+    for (const row of fields.filter(row => row.parent.equals(declaration))) network.insertFieldRelation(copied, row.label, row.child);
+    if (splitMap) {
+      network.link(pair).setReferences([key, copied]);
+      for (const row of fields.filter(row => row.child.equals(declaration) && ['declaration', 'premise owner'].includes(row.label))) {
+        row.link.setReferences([row.parent, row.link.references()[1], copied]);
+      }
+    } else {
+      const items = field(body, 'items');
+      network.link(items.child).setReferences(network.link(items.child).references().map(id => id.equals(declaration) ? copied : id));
+    }
+    const restored = LinkNetwork.fromLino(network.toLino());
+    assert.throws(() => decodeFreshNumberArrayCollector(restored, packet.root), /declaration|binding|identity|owner/u);
+  }
+});
+
+test('every source binder refuses unconditional reserved words using portable policy and an independent syntax oracle', () => {
+  const source = freshNumberArrayCollectorFixtures()[0].source;
+  for (const name of policy.unconditionallyReservedBindings) {
+    assert.equal(acceptFreshNumberArrayCollectorBinding(name), false, name);
+    for (const binder of ['collect', 'values', 'result', 'index']) {
+      const invalid = source.replace(new RegExp('\\b' + binder + '\\b', 'gu'), name);
+      assert.throws(() => new vm.Script(invalid), error => error.name === 'SyntaxError', binder + ':' + name);
+      assert.throws(() => create(invalid), /Fresh Number array collector|unsupported|syntax/u, binder + ':' + name);
+    }
+  }
+  for (const [binder, name] of [['collect', 'enumCount'], ['values', 'Array'], ['result', 'undefined'], ['result', 'NaN']]) {
+    assert.equal(acceptFreshNumberArrayCollectorBinding(name), true, name);
+    const valid = source.replace(new RegExp('\\b' + binder + '\\b', 'gu'), name);
+    assert.doesNotThrow(() => new vm.Script(valid));
+    const selected = create(valid);
+    assert.deepEqual(execute(emitJavaScript(selected.program).text, selected.proof.declaration.name, [3, 4]), [3, 4]);
   }
 });

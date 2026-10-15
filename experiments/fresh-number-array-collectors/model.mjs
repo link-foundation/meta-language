@@ -7,8 +7,9 @@ import { DecoratorSet } from '../../js/src/decorators.js';
 import { tokenize } from '../../js/src/translation/lexer.js';
 import { parseJavaScript } from '../../js/src/translation/javascript.js';
 import { checkProgram } from '../../js/src/translation/check.js';
+import { checkProgramDeclarationOwners } from '../../js/src/typed-program-declaration-owners.js';
 import { encodeGeneratedOwnedRust, decodeGeneratedOwnedRust } from '../generated-owned-rust/codec.mjs';
-import { acceptFreshNumberArrayCollectorPattern } from './rules.mjs';
+import { acceptFreshNumberArrayCollectorPattern, acceptFreshNumberArrayCollectorBinding } from './rules.mjs';
 
 export const FRESH_NUMBER_ARRAY_COLLECTOR_POLICY = readProjectData(new URL('./data/policy.lino', import.meta.url));
 const policy = FRESH_NUMBER_ARRAY_COLLECTOR_POLICY;
@@ -61,7 +62,7 @@ function sourceFacts(source) {
   const codes = tokens.map(token => {
     if (token.kind === 'eof') return fixed.get('eof');
     if (fixed.has(token.raw) && token.raw === token.value) return fixed.get(token.raw);
-    if (token.kind !== 'identifier' || !/^[A-Za-z][A-Za-z0-9_]*$/u.test(token.raw) || token.raw !== token.value) return -99;
+    if (token.kind !== 'identifier' || !/^[A-Za-z][A-Za-z0-9_]*$/u.test(token.raw) || token.raw !== token.value || !acceptFreshNumberArrayCollectorBinding(token.value)) return -99;
     if (!names.has(token.value)) names.set(token.value, policy.nameCodeMinimum + names.size);
     return names.get(token.value);
   });
@@ -127,7 +128,7 @@ function certificate(facts, program) {
     argumentRule: policy.arguments[facts.selection].id, lowering: facts.actions,
     declaration, parameter: declaration.params[0], collector: declaration.body, loop,
     assumptions: policy.assumptions.map((assumption, index) => ({ ...assumption,
-      owner: [declaration, declaration.params[0], declaration.body, loop][index] })) };
+      premiseOwner: [declaration, declaration.params[0], declaration.body, loop][index] })) };
 }
 
 function originalSource(proof) {
@@ -155,6 +156,7 @@ export function createFreshNumberArrayCollector(source, { model = '' } = {}) {
 
 export function checkFreshNumberArrayCollector(program, proof) {
   checkContainers({ program, proof });
+  checkProgramDeclarationOwners(program);
   if (proof?.model !== policy.model) fail('unknown selected source interpretation');
   const source = originalSource(proof);
   const rebuilt = compile(source);
@@ -166,7 +168,7 @@ export function checkFreshNumberArrayCollector(program, proof) {
     const expectedBinding = rebuilt.facts.tokens[index].binding;
     if (expectedBinding && token.binding !== proof.bindings[policy.roles.indexOf(expectedBinding.role)]) fail('a source use lost its actual lexical binder identity');
   }
-  proof.assumptions.forEach((assumption, index) => { if (assumption.owner !== expected.assumptions[index].owner) fail('a premise lost its actual operation owner'); });
+  proof.assumptions.forEach((assumption, index) => { if (assumption.premiseOwner !== expected.assumptions[index].premiseOwner) fail('a premise lost its actual operation owner'); });
   return { source, loweredSource: rebuilt.facts.lowered };
 }
 
