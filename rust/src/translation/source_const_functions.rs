@@ -232,22 +232,23 @@ fn validate_declaration(entry: &Value) -> Result<()> {
             "the actual const source qualification or observation boundary changed",
         ));
     }
-    let site = interval(&entry["span"], true)?;
-    let keyword = interval(&proof["keywordSpan"], true)?;
-    let function_keyword = interval(&proof["functionKeywordSpan"], true)?;
-    let header = interval(&proof["headerSpan"], true)?;
+    let (site_start, site_end) = interval(&entry["span"], true)?;
+    let (keyword_start, keyword_end) = interval(&proof["keywordSpan"], true)?;
+    let (function_start, function_end) = interval(&proof["functionKeywordSpan"], true)?;
+    let (header_start, header_end) = interval(&proof["headerSpan"], true)?;
     let body = interval(&proof["bodySpan"], true)?;
+    let (body_start, body_end) = body;
     let keyword_width = u64::try_from(policy()["keyword"].as_str().unwrap().len()).unwrap();
     let function_width =
         u64::try_from(policy()["functionKeyword"].as_str().unwrap().len()).unwrap();
-    if keyword.1 - keyword.0 != keyword_width
-        || function_keyword.1 - function_keyword.0 != function_width
-        || keyword.1 > function_keyword.0
-        || header.0 != keyword.0
-        || site.0 != keyword.0
-        || header.1 != body.0
-        || function_keyword.1 >= header.1
-        || body.1 > site.1
+    if keyword_end - keyword_start != keyword_width
+        || function_end - function_start != function_width
+        || keyword_end > function_start
+        || header_start != keyword_start
+        || site_start != keyword_start
+        || header_end != body_start
+        || function_end >= header_end
+        || body_end > site_end
     {
         return Err(fail(
             "the keyword, header and body intervals have contradictory ownership",
