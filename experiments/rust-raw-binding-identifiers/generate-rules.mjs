@@ -28,8 +28,15 @@ export const rustRawBindingIdentifierPolicy = {
   types: ['i32', 'bool'],
   primitiveKinds: ['fixed signed 32', 'bool'],
   aliases: { declarationPrefix: 'sourceFunction', parameterPrefix: 'sourceParameter' },
+  invocation: {
+    model: 'owned Rust primitive invocation premise 1',
+    fields: ['model', 'declaration', 'parameterOwners'],
+    integerBoundsOperation: 'fixedBounds',
+    integerBoundsSource: 'js/src/translation/types.js',
+    meaning: 'The premise owns the actual checked declaration and its actual ordered parameter array. An explicit invocation check requires exact arity, primitive Boolean arguments or BigInt arguments within the existing signed i32 bounds.',
+  },
   fields: {
-    proof: ['model', 'language', 'span', 'tokens', 'gaps', 'aliases', 'occurrences', 'worker'],
+    proof: ['model', 'language', 'span', 'tokens', 'gaps', 'aliases', 'occurrences', 'inputAssumptions', 'worker'],
     alias: ['kind', 'value', 'checkedOwner', 'token'],
     occurrence: ['token', 'alias', 'checkedExpression'],
   },
@@ -63,7 +70,11 @@ export function rustRawBindingIdentifierRules() {
     + '/** @param {string} kind @param {boolean} signed @param {number} bits @returns {boolean} */\n'
     + 'export function acceptRustRawBindingIdentifierType(kind, signed, bits) { return kind === "bool" || kind === "fixed" && signed && bits === 32; }\n'
     + '/** @param {boolean} recursive @param {boolean} mutual @returns {boolean} */\n'
-    + 'export function acceptRustRawBindingIdentifierClosure(recursive, mutual) { return !recursive && !mutual; }\n';
+    + 'export function acceptRustRawBindingIdentifierClosure(recursive, mutual) { return !recursive && !mutual; }\n'
+    + '/** @param {string} model @returns {boolean} */\n'
+    + `export function acceptRustRawBindingIdentifierInvocationModel(model) { return model === ${JSON.stringify(policy.invocation.model)}; }\n`
+    + '/** @param {string} kind @param {boolean} booleanInput @param {boolean} integerInput @returns {boolean} */\n'
+    + 'export function acceptRustRawBindingIdentifierInput(kind, booleanInput, integerInput) { return kind === "bool" && booleanInput || kind === "fixed" && integerInput; }\n';
 }
 export const rustRawBindingIdentifierFixtures = {
   schemaVersion: 1,

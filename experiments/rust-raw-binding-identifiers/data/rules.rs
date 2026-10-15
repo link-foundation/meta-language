@@ -86,3 +86,19 @@ pub fn accept_rust_raw_binding_identifier_type(kind: &str, signed: bool, bits: f
 pub const fn accept_rust_raw_binding_identifier_closure(recursive: bool, mutual: bool) -> bool {
     !recursive && !mutual
 }
+
+/// Experimental raw binding identity decision.
+#[must_use]
+pub fn accept_rust_raw_binding_identifier_invocation_model(model: &str) -> bool {
+    model == "owned Rust primitive invocation premise 1"
+}
+
+/// Experimental raw binding identity decision.
+#[must_use]
+pub fn accept_rust_raw_binding_identifier_input(
+    kind: &str,
+    boolean_input: bool,
+    integer_input: bool,
+) -> bool {
+    ((kind == "bool") && boolean_input) || ((kind == "fixed") && integer_input)
+}
