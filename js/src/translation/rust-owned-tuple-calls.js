@@ -2,10 +2,11 @@
 import {readRuntimeProjectData} from '../project-data-loader.js';
 import {sameType} from './types.js';
 import {acceptRustOwnedTupleCallInitializer} from './rust-owned-tuple-call-rules.js';
+import {ownedLocalPair} from './rust-owned-local-domains.js';
 export const RUST_OWNED_TUPLE_CALL_POLICY=readRuntimeProjectData(new URL('./data/rust-owned-tuple-calls.lino',import.meta.url));
 const policy=RUST_OWNED_TUPLE_CALL_POLICY;
 export function ownedTupleCallPairPosition(position){
- return position.wrappers.length===0&&position.lifetimes.length===0&&position.owner.kind==='tuple'&&position.owner.path.length===0&&position.owner.arguments.length===2
+ return ownedLocalPair(position.type)&&position.wrappers.length===0&&position.lifetimes.length===0&&position.owner.kind==='tuple'&&position.owner.path.length===0&&position.owner.arguments.length===2
   &&position.owner.arguments[0].kind==='library'&&position.owner.arguments[0].path.join('::')==='std::string::String'&&position.owner.arguments[0].arguments.length===0
   &&position.owner.arguments[1].kind==='primitive'&&position.owner.arguments[1].path.join('::')==='i32'&&position.owner.arguments[1].arguments.length===0;
 }
