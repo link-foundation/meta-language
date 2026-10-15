@@ -113,6 +113,14 @@ pub fn emit_javascript_with_options(
     program: &Program,
     options: JavaScriptEmissionOptions<'_>,
 ) -> Result<Emitted> {
+    let runtime = super::runtime_shell::validate_program(program)?;
+    if runtime.is_some() && options.scoped_binding_model.is_some() {
+        return Err(crate::translation::diagnostics::unsupported(
+            "closed Rust runtime shell",
+            "scoped target bindings require an independent runtime composition proof",
+            None,
+        ));
+    }
     if let Some(model) = options.scoped_binding_model {
         super::scoped_binding_emission::validate_program(program, model)?;
     }
@@ -133,7 +141,7 @@ pub fn emit_javascript_with_options(
             ..EmitOptions::default()
         },
     );
-    JavaScriptEmitter {
+    let mut emitted = JavaScriptEmitter {
         program,
         state,
         helpers: BTreeSet::new(),
@@ -143,7 +151,11 @@ pub fn emit_javascript_with_options(
         loop_params: None,
         scoped_bindings: options.scoped_binding_model.is_some(),
     }
-    .file()
+    .file()?;
+    if let Some(runtime) = runtime {
+        super::runtime_shell::record_assumptions(&mut emitted, &runtime)?;
+    }
+    Ok(emitted)
 }
 
 /// Declarations grouped by module, in source order.

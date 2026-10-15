@@ -20,6 +20,8 @@ mod const_functions;
 mod encoding;
 #[path = "codec_owned_local_state.rs"]
 mod owned_local_state;
+#[path = "codec_runtime_shell.rs"]
+mod runtime_shell;
 #[path = "codec_scopes.rs"]
 mod scopes;
 pub(super) fn encode(program: &Program, provenance: Option<&Value>) -> Result<TypedProgramLinks> {
@@ -571,8 +573,16 @@ pub(super) fn decode_with_binding_identities(
     const_functions::prepare_order(&mut value)?;
     crate::translation::source_const_functions::validate_const_function_records(&value)
         .map_err(|failure| error(failure.to_string()))?;
+    runtime_shell::normalize(
+        &decoder,
+        body,
+        &entries.iter().map(|(_, entry)| *entry).collect::<Vec<_>>(),
+        &mut value,
+    )?;
     super::source_spans::normalize_source_spans(&mut value)?;
     validate_spans(&value)?;
+    crate::translation::runtime_shell::validate_records(&value)
+        .map_err(|failure| error(failure.to_string()))?;
     crate::translation::source_pure_unit_calls::validate_pure_unit_records(&value)
         .map_err(|failure| error(failure.to_string()))?;
     scopes::restore_patterns(&mut value)?;

@@ -378,8 +378,11 @@ both checks, and Rust emission renders the actual owned shell rather than replac
 it with a default wrapper. No source envelope or selected-function substitute is
 used. Comments and layout are not a byte-preserving CST round trip under this
 semantic model. The old default and both Unit models retain their exact refusals.
-The paired native implementation and native execution remain required before this
-draft constitutes runtime parity support.
+The native adapter uses checked owned positions internally and validates real
+declaration, token and operation link identities before projecting saved graphs;
+encoding reattaches those same owned nodes. Native compilation and the complete
+executable cross-runtime replay checks remain CI obligations before this draft
+constitutes runtime parity support.
 Named source spans compare safe, nonnegative integral offsets by value, including
 equivalent decimal and exponent spellings. Source-position negative zero remains
 invalid while primitive floating-point negative zero retains its value.

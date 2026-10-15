@@ -2,5 +2,8 @@ Draft an independent whole-artifact Rust runtime-shell interpretation in
 JavaScript for actual emitted closed pure Unit programs. The linked graph retains
 the real standard argument scan, thread operations, source bindings, resource
 arguments and failure branches. Successful replay carries four explicit runtime
-assumptions and rechecks the complete graph after edits. This JavaScript-first
-draft does not establish paired native support or equivalent failure behavior.
+assumptions and rechecks the complete graph after edits. The native adapter
+checks actual declaration, token and operation link identities before projecting
+them into owned positions and reattaches those identities on encoding. Native
+compilation and executable replay remain CI obligations. This draft does not
+establish equivalent failure behavior.

@@ -421,7 +421,7 @@ impl Checker {
             .filter_map(|name| self.decls.remove(name))
             .collect();
         analyse_recursion(&mut declarations);
-        let program = Program {
+        let mut program = Program {
             schema_version: 1,
             source_language: self.language,
             items,
@@ -441,6 +441,10 @@ impl Checker {
         super::source_pure_unit_calls::validate_source_pure_unit_calls(&program)?;
         super::owned_local_state::validate_owned_local_state(&program)?;
         super::source_const_functions::validate_const_functions(&program)?;
+        if let Some(source) = &surface.source_runtime_shell {
+            super::runtime_shell::capture_program(&mut program, source)?;
+        }
+        super::runtime_shell::validate_program(&program)?;
         Ok(program)
     }
 
