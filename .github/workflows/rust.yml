@@ -756,6 +756,23 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Run complete original link identity observations
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        working-directory: ${{ github.workspace }}
+        env:
+          CI: 'true'
+          ORIGINAL_LINK_IDENTITY_NATIVE: '1'
+        run: node scripts/with-cache-cleanup.mjs --event test -- node --test experiments/original-link-identity/native-observations.test.mjs
+
+      - name: Retain complete original link identity observations
+        if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: original-link-identity-native-observations-${{ github.sha }}
+          path: issue-195-artifacts/original-link-identity-native-observations.lino
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Run doc tests
         if: ${{ !cancelled() && matrix.suite == 'remaining' }}
         shell: bash

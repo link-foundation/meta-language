@@ -942,6 +942,14 @@ jobs:
           SELF_TRANSLATION_CHECK_RUST: '0'
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/original-link-identity/identity.test.mjs
 
+      - name: Run exact original link identity oracle contracts
+        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        working-directory: js
+        env:
+          TRANSLATION_CHECK_RUST: '0'
+          SELF_TRANSLATION_CHECK_RUST: '0'
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/original-link-identity/native-observations.test.mjs
+
       - name: Check generated whole Rust runtime shell rules
         if: ${{ !cancelled() && matrix.group == 'generated' }}
         working-directory: js

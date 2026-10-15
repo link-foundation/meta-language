@@ -788,6 +788,9 @@ const OWNED_SOURCE_ADAPTER_PACKAGE_STEPS = [
   ['Run exact original link identity checks',
     'node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/original-link-identity/identity.test.mjs',
     '897a38592267f3399b503775f93027045bc882fa339c1e69c71592b5210d0875', 'source-models'],
+  ['Run exact original link identity oracle contracts',
+    'node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/original-link-identity/native-observations.test.mjs',
+    'b6e2ec0b38634255126b994944962796f0419f66c7a1848d91d2df8187d54539', 'source-models'],
 ];
 
 function packageStepSignature(step, includeGroup = false) {
@@ -822,6 +825,7 @@ test('the complete Rust text source oracle is mandatory after JavaScript and its
     .replace('|experiments/rust-raw-binding-certificate-adapter/', '')
     .replace('|experiments/rust-text-certificate-adapter/', '')
     .replace('|experiments/rust-text-certificate-library/', '')
+    .replace('|experiments/original-link-identity/', '')
     .replace('|js/scripts/rust-library-packaging\\.mjs$', '')
     .replace('|experiments/source-native-observations\\.mjs$', ''),
     '^(rust/|parity/|docs/|scripts/|\\.github/workflows/(ci|rust)\\.yml$|\\.secretlintrc\\.json$)',
@@ -1131,6 +1135,67 @@ test('complete generated Rust library observations refuse compiler or receipt ga
       ...(name.startsWith('Run ') ? [
         ["CI: 'true'", "CI: 'false'"],
         ["RUST_TEXT_CERTIFICATE_LIBRARY_NATIVE: '1'", "RUST_TEXT_CERTIFICATE_LIBRARY_NATIVE: '0'"],
+        ['--event test --', '--event build --'],
+        ['node --test experiments/', 'node --test --test-name-pattern optional experiments/'],
+        ['working-directory: ${{ github.workspace }}', 'working-directory: rust'],
+        ['working-directory: ${{ github.workspace }}', 'continue-on-error: true\n        working-directory: ${{ github.workspace }}'],
+      ] : [
+        ['uses: actions/upload-artifact@v7', 'uses: actions/upload-artifact@v6'],
+        ['${{ github.sha }}', '${{ github.ref }}'],
+        ['native-observations.lino', 'native-observations.json'],
+        ['if-no-files-found: error', 'if-no-files-found: ignore'],
+        ['retention-days: 7', 'retention-days: 0'],
+      ]),
+    ]) mutate((steps, index) => {
+      assert.ok(steps[index].text.includes(from));
+      steps[index].text = steps[index].text.replace(from, to);
+    });
+  }
+});
+
+const ORIGINAL_LINK_IDENTITY_NATIVE_STEPS = [
+  ['Run complete original link identity observations', 'aee6d2b321dcd0e99cfe2a4ff4d172d1e2b18aa4e23ba0f076ffba32fe615134'],
+  ['Retain complete original link identity observations', '1f5a23112645595696663d701691ed2761397745490d7ef7e104e313760a1d76'],
+];
+
+function checkOriginalLinkIdentityNativeSteps(parsed) {
+  for (const [name, hash] of ORIGINAL_LINK_IDENTITY_NATIVE_STEPS) {
+    const steps = parsed.get('test').steps.filter(step => step.name === name);
+    assert.equal(steps.length, 1, `the complete identity observation step executes once: ${name}`);
+    assert.equal(packageStepSignature(steps[0], true), hash, `complete identity native step changed: ${name}`);
+  }
+}
+
+test('exact original link identity observations require JavaScript, native execution and complete source selection', () => {
+  checkOriginalLinkIdentityNativeSteps(jobs('rust.yml'));
+  assert.ok(needs(jobs('ci.yml').get('rust')).includes('js'));
+  const classifier = /rust_paths='([^']+)'/u.exec(workflow('ci.yml'))?.[1];
+  assert.equal(classifier.split('|experiments/original-link-identity/').length, 2);
+  const matches = new RegExp(classifier, 'u');
+  for (const file of ['policy.mjs', 'rules.mjs', 'generate.mjs', 'data/policy.lino', 'data/native-definitions.lino',
+    'identity.test.mjs', 'native-observations.mjs', 'native-observations.test.mjs']) {
+    assert.ok(matches.test(`experiments/original-link-identity/${file}`), file);
+  }
+});
+
+test('exact original link identity native gates reject execution and receipt weakening', () => {
+  for (const [name] of ORIGINAL_LINK_IDENTITY_NATIVE_STEPS) {
+    const mutate = change => {
+      const parsed = jobs('rust.yml'), steps = parsed.get('test').steps;
+      const index = steps.findIndex(step => step.name === name);
+      assert.ok(index >= 0);
+      change(steps, index);
+      assert.throws(() => checkOriginalLinkIdentityNativeSteps(parsed), assert.AssertionError);
+    };
+    mutate((steps, index) => steps.splice(index, 1));
+    mutate((steps, index) => steps.push({ ...steps[index] }));
+    for (const [from, to] of [
+      ['!cancelled()', 'success()'],
+      ["matrix.suite == 'translation'", "matrix.suite == 'remaining'"],
+      ["matrix.os == 'ubuntu-latest'", "matrix.os == 'windows-latest'"],
+      ...(name.startsWith('Run ') ? [
+        ["CI: 'true'", "CI: 'false'"],
+        ["ORIGINAL_LINK_IDENTITY_NATIVE: '1'", "ORIGINAL_LINK_IDENTITY_NATIVE: '0'"],
         ['--event test --', '--event build --'],
         ['node --test experiments/', 'node --test --test-name-pattern optional experiments/'],
         ['working-directory: ${{ github.workspace }}', 'working-directory: rust'],
