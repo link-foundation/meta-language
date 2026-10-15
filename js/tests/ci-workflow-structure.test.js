@@ -48,6 +48,112 @@ test('ci.yml calls the JavaScript workflow and then the Rust workflow, which nee
     'ci.yml runs the Rust workflow only after the JavaScript workflow, and skips it when JavaScript fails');
 });
 
+function selectNativeTestInputs(paths, { base = 'base', valid = true } = {}) {
+  const step = jobs('ci.yml').get('changes').steps.find(step => step.id === 'paths' || step.name === 'Detect whether the Rust workflow is needed');
+  assert.ok(step);
+  const stub = `git() {
+    case "$1" in
+      cat-file) [ "$TEST_NATIVE_BASE_VALID" = true ] ;;
+      diff) printf '%s\\n' "$TEST_NATIVE_CHANGED_PATHS" ;;
+      *) return 99 ;;
+    esac
+  }\n`;
+  const result = spawnSync('bash', ['-e', '-o', 'pipefail', '-c', stub + step.run.replace(/^\|\s*\n/u, '')], {
+    encoding: 'utf8', env: { ...process.env, BASE_SHA: base, GITHUB_OUTPUT: '/dev/stdout',
+      TEST_NATIVE_BASE_VALID: String(valid), TEST_NATIVE_CHANGED_PATHS: paths.join('\n') },
+  });
+  assert.equal(result.status, 0, result.stderr);
+  return Object.fromEntries([...result.stdout.matchAll(/^(rust|native_test_inputs_changed)=(true|false)$/gmu)].map(([, key, value]) => [key, value === 'true']));
+}
+
+function nativeInputCondition(job) {
+  const lines = job.header.split('\n'), index = lines.findIndex(line => /^ {4}if:/u.test(line));
+  assert.ok(index >= 0, job.id);
+  let expression = lines[index].replace(/^ {4}if:\s*/u, '');
+  if (expression === '|') expression = lines.slice(index + 1).filter((line, offset, rest) =>
+    !rest.slice(0, offset + 1).some(previous => /^ {4}\S/u.test(previous))).join('\n').trim();
+  return expression.replace(/^\$\{\{\s*|\s*\}\}$/gu, '');
+}
+
+function evaluateNativeInputCondition(job, context) {
+  let expression = nativeInputCondition(job);
+  if (!/\b(?:always|cancelled|failure|success)\(/u.test(expression)
+    && (context.cancelled || needs(job).some(name => context.results[name] !== 'success'))) return false;
+  expression = expression.replaceAll('!cancelled()', String(!context.cancelled))
+    .replaceAll('github.event_name', JSON.stringify(context.event))
+    .replaceAll('inputs.native_test_inputs_changed', String(context.input ?? false))
+    .replaceAll('needs.changes.outputs.rust', JSON.stringify(String(context.selection.rust)));
+  for (const [name, value] of Object.entries(context.outputs)) expression = expression.replaceAll(`needs.detect-changes.outputs.${name}`, JSON.stringify(String(value)));
+  for (const [name, value] of Object.entries(context.results)) expression = expression.replaceAll(`needs.${name}.result`, JSON.stringify(value));
+  assert.doesNotMatch(expression, /needs\.|inputs\.|github\./u, expression);
+  return Function(`return (${expression});`)();
+}
+
+function nativeInputJobChain(paths, { event = 'pull_request', javascript = 'success', input, base, valid } = {}) {
+  const selection = selectNativeTestInputs(paths, { base, valid });
+  const detector = read('rust/scripts/detect-code-changes.rs');
+  const excluded = [.../let excluded_folders = \[([\s\S]*?)\];/u.exec(detector)[1].matchAll(/"([^"]+)"/gu)].map(match => match[1]);
+  const pattern = new RegExp(/fn code_change_pattern\(\)[\s\S]*?r"([^"]+)"/u.exec(detector)[1], 'u');
+  const included = paths.filter(file => !file.endsWith('.md') && !excluded.some(folder =>
+    file.startsWith(folder) || file.replace(/^(?:rust|js)\//u, '').startsWith(folder)));
+  const context = { event, input: input ?? selection.native_test_inputs_changed, selection, outputs: {
+    'rs-changed': included.some(file => file.endsWith('.rs')),
+    'toml-changed': included.some(file => file.endsWith('.toml') || file.endsWith('Cargo.lock')),
+    'workflow-changed': included.some(file => file.startsWith('.github/workflows/')),
+    'any-code-changed': included.some(file => pattern.test(file)),
+  }, results: { changes: 'success', js: javascript, 'self-translation-report-validation': 'success', 'detect-changes': 'success' } };
+  const outer = evaluateNativeInputCondition(jobs('ci.yml').get('rust'), context), results = {};
+  for (const name of ['changelog', 'cargo-lock', 'check', 'test']) {
+    results[name] = outer && evaluateNativeInputCondition(jobs('rust.yml').get(name), context);
+    context.results[name] = results[name] ? 'success' : 'skipped';
+  }
+  return { selection, outputs: context.outputs, outer, ...results };
+}
+
+test('registered native experiments and Links data select the complete prerequisite chain without changing ordinary exclusions', () => {
+  for (const file of ['experiments/original-link-identity/policy.mjs', 'experiments/original-link-identity/data/policy.lino',
+    'experiments/rust-text-value-projection/native-observations.test.mjs', 'experiments/source-native-observations.mjs',
+    'parity/fixtures/link-network-binary.lino', 'rust/src/data/link-network-binary-schema.lino']) {
+    const actual = nativeInputJobChain([file]);
+    assert.deepEqual(actual.selection, { rust: true, native_test_inputs_changed: true }, file);
+    assert.deepEqual(actual.outputs, { 'rs-changed': false, 'toml-changed': false, 'workflow-changed': false, 'any-code-changed': false }, file);
+    assert.equal(actual.changelog, false, file);for (const job of ['outer', 'cargo-lock', 'check', 'test']) assert.equal(actual[job], true, `${file}: ${job}`);
+    assert.equal(nativeInputJobChain([file], { javascript: 'failure' }).outer, false, file);
+    assert.equal(nativeInputJobChain([file], { input: false }).test, false, 'the new input closes the actual old gate-chain gap');
+  }
+  for (const file of ['experiments/repro.mjs', 'experiments/repro.lino', 'js/experiments/repro.mjs', 'docs/notes.md',
+    'experiments/original-link-identity/README.md', 'parity/README.md', 'js/src/plain.js']) {
+    const actual = nativeInputJobChain([file]);assert.equal(actual.selection.native_test_inputs_changed, false, file);assert.equal(actual.test, false, file);
+  }
+  const rust = nativeInputJobChain(['rust/src/link_network.rs']);assert.equal(rust.selection.native_test_inputs_changed, false);assert.equal(rust.changelog, true);assert.equal(rust.test, true);
+  for (const options of [{ base: '' }, { valid: false }]) {
+    const unknown = nativeInputJobChain([], options);assert.deepEqual(unknown.selection, { rust: true, native_test_inputs_changed: true });assert.equal(unknown.test, true);
+  }
+  assert.equal(nativeInputJobChain(['docs/notes.md'], { event: 'push' }).test, true);
+  assert.equal(nativeInputJobChain(['experiments/original-link-identity/data/policy.lino'], { event: 'push' }).test, true);
+  assert.equal(nativeInputJobChain(['experiments/repro.mjs'], { event: 'push' }).outer, false);
+});
+
+test('the optional native-input workflow interface preserves defaults, JavaScript gating and all original prerequisites', () => {
+  const ci = jobs('ci.yml'), rust = jobs('rust.yml');
+  assert.match(workflow('rust.yml'), /^ {2}workflow_call:\n {4}inputs:\n {6}native_test_inputs_changed:\n {8}description: [^\n]+\n {8}type: boolean\n {8}required: false\n {8}default: false$/mu);
+  assert.match(ci.get('changes').header, /native_test_inputs_changed: \$\{\{ steps\.paths\.outputs\.native_test_inputs_changed \}\}/u);
+  assert.match(ci.get('rust').header, /native_test_inputs_changed: \$\{\{ needs\.changes\.outputs\.native_test_inputs_changed == 'true' \}\}/u);
+  assert.ok(needs(ci.get('rust')).includes('js'));assert.doesNotMatch(nativeInputCondition(ci.get('rust')), /always\(|cancelled\(/u);
+  const changed = [...rust].filter(([, job]) => job.header.includes('inputs.native_test_inputs_changed')).map(([name]) => name).sort();
+  assert.deepEqual(changed, ['cargo-lock', 'check', 'test']);
+  assert.deepEqual(needs(rust.get('check')), ['detect-changes', 'cargo-lock']);assert.deepEqual(needs(rust.get('test')), ['detect-changes', 'changelog', 'cargo-lock', 'check']);
+  for (const [name, fields] of [['cargo-lock', ['rs-changed', 'toml-changed', 'workflow-changed', 'any-code-changed']], ['check', ['any-code-changed', 'rs-changed', 'toml-changed', 'workflow-changed']], ['test', ['any-code-changed', 'rs-changed', 'toml-changed', 'workflow-changed']]]) {
+    const expression = nativeInputCondition(rust.get(name));assert.match(expression, /!cancelled\(\)/u);assert.match(expression, /github\.event_name == 'push'/u);assert.match(expression, /github\.event_name == 'workflow_dispatch'/u);
+    for (const field of fields) assert.ok(expression.includes(`needs.detect-changes.outputs.${field} == 'true'`));
+    const context = { event: 'pull_request', selection: { rust: true }, outputs: Object.fromEntries(fields.map(field => [field, false])), results: { 'detect-changes': 'success', 'cargo-lock': 'success', check: 'success', changelog: 'skipped' } };
+    assert.equal(evaluateNativeInputCondition(rust.get(name), context), false, 'default false preserves old selection');
+    assert.equal(evaluateNativeInputCondition(rust.get(name), { ...context, input: true }), true);
+    if (name !== 'cargo-lock') assert.equal(evaluateNativeInputCondition(rust.get(name), { ...context, input: true, results: { ...context.results, 'cargo-lock': 'failure' } }), false);
+    if (name === 'test') for (const failed of ['check', 'changelog']) assert.equal(evaluateNativeInputCondition(rust.get(name), { ...context, input: true, results: { ...context.results, [failed]: 'failure' } }), false);
+  }
+});
+
 test('js.yml and rust.yml are called by ci.yml and have no push or pull_request triggers of their own', () => {
   for (const name of ['js.yml', 'rust.yml']) {
     const on = triggers(workflow(name));
