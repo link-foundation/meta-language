@@ -5,19 +5,35 @@ export function checkOwnedProgramContainers(root, { acceptContainer, fail, selec
     fail('the owned program root must be a plain data record');
   }
   const visited = new WeakSet();
+  const inspectedPrototypes = new WeakSet();
   let selected = false;
   let defect;
   let visits = 0;
+  let prototypeVisits = 0;
   const reject = detail => { defect ??= detail; };
+  function inspectPrototypes(value) {
+    let depth = 0;
+    for (let prototype = Object.getPrototypeOf(value); prototype && !inspectedPrototypes.has(prototype);
+      prototype = Object.getPrototypeOf(prototype)) {
+      if (++depth > 256 || ++prototypeVisits > 100_000) {
+        fail('the owned prototype graph exceeds its resource limit');
+      }
+      inspectedPrototypes.add(prototype);
+      if (selectedFields.some(field => Object.getOwnPropertyDescriptor(prototype, field))) {
+        selected = true;
+        reject('a source marker is inherited instead of represented as an own field');
+      }
+    }
+  }
   function visit(value, depth = 0) {
     if (!value || typeof value !== 'object' && typeof value !== 'function' || visited.has(value)) return;
     if (depth > 256 || ++visits > 100_000) {
-      reject('the owned container graph exceeds its resource limit');
-      return;
+      fail('the owned container graph exceeds its resource limit');
     }
     visited.add(value);
     const keys = Reflect.ownKeys(value);
     if (keys.some(key => selectedFields.includes(key))) selected = true;
+    inspectPrototypes(value);
     if (value instanceof Map) {
       if (!acceptContainer('map', true, keys.length > 0 || Object.getPrototypeOf(value) !== Map.prototype)) reject('a declaration Map has unrepresented own fields');
       for (const [key, child] of Map.prototype.entries.call(value)) { visit(key, depth + 1); visit(child, depth + 1); }

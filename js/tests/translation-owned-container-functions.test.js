@@ -40,6 +40,33 @@ test('inherited program fields cannot conceal an invalid actual const qualificat
  }
 });
 
+test('inherited function records and proof descriptors cannot hide invalid actual const facts',()=>{
+ for(const form of['function','chain','proof','getter','depth']){
+  const program=create(models[0]),original=program.items[0];let calls=0;
+  original.sourceConstFunction.keyword='not-const';
+  let replacement;
+  if(form==='function')replacement=Object.create(original);
+  else if(form==='chain')replacement=Object.create(Object.create(original));
+  else if(form==='depth'){replacement=original;for(let index=0;index<257;index++)replacement=Object.create(replacement);}
+  else{
+   const prototype={};
+   if(form==='getter')Object.defineProperty(prototype,'sourceConstFunction',{get(){calls++;return original.sourceConstFunction;}});
+   else prototype.sourceConstFunction=original.sourceConstFunction;
+   replacement=Object.defineProperties(Object.create(prototype),Object.getOwnPropertyDescriptors(original));delete replacement.sourceConstFunction;
+  }
+  program.items[0]=replacement;program.declarations.set(original.fullName,replacement);
+  assert.equal(program.items[0],program.declarations.get(original.fullName));
+  for(const check of[()=>validateLinkedTypedProgram(program),()=>recheckLinkedTypedProgram(program),()=>encodeTypedProgramLinks(program),()=>emitRust(program),()=>emitJavaScript(program)])assert.throws(check,form);
+  assert.equal(calls,0,'inherited proof accessors must not run');
+ }
+});
+
+test('an uninspected deep record graph cannot hide surviving invalid const facts',()=>{
+ const program=create(models[0]),[marker,proof]=removeMarkers(program,models[0].markers);proof.keyword='not-const';
+ let hidden={[marker]:proof};for(let index=0;index<257;index++)hidden={next:hidden};program.hidden=hidden;
+ for(const check of[()=>validateLinkedTypedProgram(program),()=>recheckLinkedTypedProgram(program),()=>encodeTypedProgramLinks(program),()=>emitRust(program),()=>emitJavaScript(program)])assert.throws(check);
+});
+
 test('actual source-free namespace facts are revalidated before either direct emitter',()=>{
  const entry=models[2],mutations=[
   program=>{program.declarations.get('nested.header').sourceTypeNamespace=null;},
@@ -57,6 +84,8 @@ test('ordinary unselected callback metadata retains the existing direct-emitter 
  program.hidden=function host(){};Object.defineProperty(program.hidden,'irrelevant',{get(){calls++;return false;}});
  assert.deepEqual([emitRust(program),emitJavaScript(program)],expected);assert.equal(calls,0);
  Object.defineProperty(program,'inferredExpressionTypes',{value:new WeakMap()});
+ const prototype={};Object.defineProperty(prototype,'irrelevant',{get(){calls++;return false;}});
+ program.unselectedMetadata=Object.create(prototype);
  const nullRoot=Object.assign(Object.create(null),program);
  for(const input of[program,nullRoot])assert.deepEqual([emitRust(input),emitJavaScript(input)],expected);
  assert.equal(calls,0);
