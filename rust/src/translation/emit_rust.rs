@@ -532,6 +532,7 @@ pub fn emit_rust_with_options(
     program: &Program,
     options: RustEmissionOptions<'_>,
 ) -> Result<Emitted> {
+    super::source_const_functions::validate_const_functions(program)?;
     let mut emitter = rust_emitter(program);
     if let Some(model) = options.source_header_model {
         if super::borrowed_call_interface_rules::accept_rust_borrowed_call_interface_model(model) {

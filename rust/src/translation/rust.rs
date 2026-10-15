@@ -25,6 +25,8 @@ use super::{Language, Span};
 
 mod array_rules;
 mod completion_rules;
+pub(crate) mod const_function_rules;
+pub(crate) mod const_functions;
 pub(crate) mod empty_option_rules;
 mod empty_options;
 mod expressions;
@@ -133,8 +135,23 @@ pub fn parse_rust_with_owned_local_state_model(
     )
 }
 
+/// Read owned const qualification on closed primitive Rust predicates.
+///
+/// # Errors
+/// Refuses unknown models and unsupported source or compilation context.
+pub fn parse_rust_with_const_function_model(source: &str, model: &str) -> Result<SProgram> {
+    parse_rust_with_selected_profiles(
+        source,
+        SourceProfiles {
+            const_function: model,
+            ..SourceProfiles::default()
+        },
+    )
+}
+
 #[derive(Clone, Copy, Default)]
 struct SourceProfiles<'a> {
+    const_function: &'a str,
     array_result: &'a str,
     completion: &'a str,
     source_signature: &'a str,
@@ -151,6 +168,7 @@ fn parse_rust_with_selected_profiles(
     profiles: SourceProfiles<'_>,
 ) -> Result<SProgram> {
     let SourceProfiles {
+        const_function: const_function_model,
         array_result: array_result_model,
         completion: completion_model,
         source_signature: source_signature_model,
@@ -161,6 +179,33 @@ fn parse_rust_with_selected_profiles(
         pure_unit_call: pure_unit_call_model,
         local_value_state: local_value_state_model,
     } = profiles;
+    if !const_function_rules::accept_rust_const_function_model(const_function_model) {
+        return Err(unsupported(
+            "Rust const function model",
+            "select the legacy model or closed pure Rust const predicates 1",
+            None,
+        ));
+    }
+    if !const_function_model.is_empty()
+        && [
+            array_result_model,
+            completion_model,
+            scalar_loop_model,
+            primitive_owner_model,
+            empty_option_source_model,
+            type_namespace_model,
+            local_value_state_model,
+            pure_unit_call_model,
+        ]
+        .iter()
+        .any(|model| !model.is_empty())
+    {
+        return Err(unsupported(
+            "Rust const function model",
+            "other source interpretations require independent composition proofs",
+            None,
+        ));
+    }
     if !pure_unit_call_rules::accept_rust_pure_unit_call_model(pure_unit_call_model) {
         return Err(unsupported(
             "Rust pure Unit-call model",
@@ -353,6 +398,8 @@ impl ProductBindingPattern {
 }
 
 struct RustParser {
+    const_function_model: String,
+    const_function_keyword: Option<Token>,
     cursor: TokenCursor,
     /// `use` aliases, per module path.
     aliases: HashMap<String, HashMap<String, Vec<String>>>,
@@ -402,6 +449,8 @@ impl RustParser {
             .collect();
         origins.owned_local_values = !profiles.local_value_state.is_empty();
         Self {
+            const_function_model: profiles.const_function.to_owned(),
+            const_function_keyword: None,
             cursor: TokenCursor::new(tokens, Language::Rust),
             aliases: HashMap::new(),
             module_path: Vec::new(),
@@ -410,7 +459,9 @@ impl RustParser {
             origins,
             completion_model: profiles.completion.to_owned(),
             source_signature_model: if profiles.source_signature.is_empty()
-                && (!profiles.type_namespace.is_empty() || !profiles.local_value_state.is_empty())
+                && (!profiles.type_namespace.is_empty()
+                    || !profiles.local_value_state.is_empty()
+                    || !profiles.const_function.is_empty())
             {
                 "Rust source function signature 1".to_owned()
             } else {

@@ -823,6 +823,13 @@ pub struct SFn {
         skip_serializing_if = "Option::is_none"
     )]
     pub source_local_state: Option<Box<serde_json::Value>>,
+    /// Owned actual const qualification of a closed primitive predicate.
+    #[serde(
+        default,
+        rename = "sourceConstFunction",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub source_const_function: Option<Box<serde_json::Value>>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

@@ -206,6 +206,7 @@ impl RustParser {
             source_type_namespace: None,
             source_pure_unit: None,
             source_local_state: None,
+            source_const_function: None,
         })
     }
 }

@@ -7,6 +7,14 @@ use super::super::{
 
 impl RustParser {
     pub(in super::super) fn inner_attributes(&mut self) -> Result<()> {
+        if !self.const_function_model.is_empty() && self.cursor.is("#") && self.cursor.is_at("!", 1)
+        {
+            return Err(unsupported(
+                "Rust const function context",
+                "crate attributes require an independent compilation interpretation",
+                None,
+            ));
+        }
         self.pure_unit_attribute_guard()?;
         self.empty_option_attribute_guard()?;
         while self.cursor.is("#") && self.cursor.is_at("!", 1) {
@@ -35,6 +43,13 @@ impl RustParser {
         let c = &mut self.cursor;
         c.expect("[", Some("attribute"))?;
         let name = c.identifier(Some("attribute"))?.value;
+        if !self.const_function_model.is_empty() && (name != "must_use" || !c.is("]")) {
+            return Err(unsupported(
+                "Rust const function attribute",
+                "only the actual zero-argument must_use function attribute is admitted",
+                None,
+            ));
+        }
         let mut traits = Vec::new();
         if name == "derive" {
             c.expect("(", Some("derive"))?;

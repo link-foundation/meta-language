@@ -376,7 +376,7 @@ native compilation, execution and cross-runtime observations are CI checks.
 The independently selected `closed pure Rust const predicates 1` source model
 owns the actual `const` and `fn` keyword intervals, complete header and body
 intervals, original declaration name and direct primitive source signature.
-Its initial JavaScript-first experiment admits only flat, closed Boolean
+Its bounded source interpretation admits only flat, closed Boolean
 predicates over primitive Boolean and binary64 parameters, with Boolean
 negation and comparisons and an empty ordinary main. Shared links policy and
 generated decisions reject calls, allocations, arithmetic, imported owners,
@@ -386,7 +386,8 @@ qualification. Three immutable complete styled generated predicates exercise
 actual definition replay, source-free body edits and executable JavaScript
 observations. This source qualification does not establish general compile-time
 invocation, evaluation or diagnostics, public visibility or ABI equivalence;
-native adapters and CI execution remain required for paired support.
+the paired native adapter retains the same owned facets, with native compilation
+and executable cross-runtime parity checked in CI.
 The typed-program adapter's shared schema gives abbreviated host fields readable
 English relation names, including the Unicode code unit string model. The finite formal
 definition adapter checks closed recursive correspondences under supported

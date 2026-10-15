@@ -690,6 +690,20 @@ jobs:
         if: ${{ !cancelled() && matrix.group == 'generated' }}
         working-directory: js
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/owned-occurrence-position.test.mjs
+      - name: Check generated closed Rust const predicate rules
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../experiments/generate-rust-const-function-rules.mjs --check
+
+      - name: Check actual styled Rust const predicate fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../experiments/generate-rust-const-function-fixture.mjs --check
+
+      - name: Run closed Rust const predicate prototype checks
+        if: ${{ !cancelled() && matrix.group == 'generated' }}
+        working-directory: js
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-const-function-prototype.test.mjs
 
       - name: Check generated Rust owned local text state rules
         if: ${{ !cancelled() && matrix.group == 'generated' }}

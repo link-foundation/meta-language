@@ -15,6 +15,7 @@ import {LinkNetwork} from '../js/src/network.js';
 import {DecoratorSet} from '../js/src/decorators.js';
 import {pinnedRustConstPredicateDefinitions,rustConstFunctionFixture} from './generate-rust-const-function-fixture.mjs';
 import {rustConstFunctionDecorators,rustConstFunctionRules,rustConstFunctionPolicy} from './generate-rust-const-function-rules.mjs';
+import {acceptRustConstFunctionOffset,acceptRustConstFunctionNameCharacter} from '../js/src/translation/rust-const-function-rules.js';
 const fixture=readProjectData(new URL('./rust-const-function-fixture.lino',import.meta.url));
 const loaded=entry=>decodeTypedProgramLinks(LinkNetwork.fromLino(entry.links),entry.root);
 const archive=program=>{const packet=encodeTypedProgramLinks(program);return{network:LinkNetwork.fromLino(packet.network.toLino()),root:packet.root};};
@@ -109,4 +110,6 @@ test('the new decisions and selected header decoration are generated from links 
  assert.equal(readFileSync(new URL('../parity/self-translation/rust-const-function-emission-decorators.lino',import.meta.url),'utf8'),rustConstFunctionDecorators());
  const decorated=DecoratorSet.fromLino(rustConstFunctionDecorators()).decorate('emitter',{format:'Rust',source:'pub fn actual(value: bool) -> bool { value }'});assert.equal(decorated.source,'pub const fn actual(value: bool) -> bool { value }');
  const kernel=checkProgram(parseJavaScript(rustConstFunctionRules())),translated=emitRust(kernel);assert.equal(translated.definitions.length,9);assert.ok(translated.definitions.every(definition=>definition.startsWith('pub fn accept_rust_const_function_')));
+ for(const value of[-Infinity,-1,-0,0,.5,1,Number.MAX_SAFE_INTEGER,Number.MAX_SAFE_INTEGER+1,Infinity,NaN])assert.equal(acceptRustConstFunctionOffset(value,Object.is(value,-0)),Number.isSafeInteger(value)&&value>=0&&!Object.is(value,-0));
+ for(let code=0;code<128;code++)for(const first of[false,true])assert.equal(acceptRustConstFunctionNameCharacter(code,first),(first?/^[A-Za-z_]$/u:/^[A-Za-z_0-9]$/u).test(String.fromCodePoint(code)));
 });

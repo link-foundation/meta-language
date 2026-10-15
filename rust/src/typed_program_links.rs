@@ -11,9 +11,10 @@ use crate::translation::emit_rust::{RustEmissionOptions, emit_rust_with_options}
 use crate::translation::ir::Program;
 use crate::translation::javascript::{parse_javascript, parse_javascript_with_scalar_loop_model};
 use crate::translation::rust::{
-    parse_rust, parse_rust_with_empty_option_source_model, parse_rust_with_loop_profiles,
-    parse_rust_with_owned_local_state_model, parse_rust_with_primitive_owner_model,
-    parse_rust_with_pure_unit_call_model, parse_rust_with_type_namespace_model,
+    parse_rust, parse_rust_with_const_function_model, parse_rust_with_empty_option_source_model,
+    parse_rust_with_loop_profiles, parse_rust_with_owned_local_state_model,
+    parse_rust_with_primitive_owner_model, parse_rust_with_pure_unit_call_model,
+    parse_rust_with_type_namespace_model,
 };
 use crate::{LinkId, LinkMetadata, LinkNetwork, LinkType};
 use serde_json::Value;
@@ -378,6 +379,26 @@ pub fn create_typed_program_links_with_rust_pure_unit_call_model(
         .map_err(|failure| error(failure.to_string()))?;
     let program = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
     let selected = serde_json::json!({"sourceProfile":{"language":"Rust","rustPureUnitCallModel":model},"userProvenance":provenance});
+    encode_typed_program_links_with_provenance(&program, Some(&selected))
+}
+
+/// Import owned const qualification on closed primitive Rust predicates.
+///
+/// # Errors
+/// Refuses non-Rust sources, unknown models and unproved predicate context.
+pub fn create_typed_program_links_with_rust_const_function_model(
+    source: &str,
+    language: &str,
+    model: &str,
+    provenance: Option<&Value>,
+) -> Result<TypedProgramLinks> {
+    if !matches!(language.to_ascii_lowercase().as_str(), "rust" | "rs") {
+        return Err(error("a Rust const function model requires Rust source"));
+    }
+    let surface = parse_rust_with_const_function_model(source, model)
+        .map_err(|failure| error(failure.to_string()))?;
+    let program = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
+    let selected = serde_json::json!({"sourceProfile":{"language":"Rust","rustConstFunctionModel":model},"userProvenance":provenance});
     encode_typed_program_links_with_provenance(&program, Some(&selected))
 }
 

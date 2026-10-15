@@ -126,6 +126,8 @@ fn validate_type_records(
 }
 
 pub(super) fn validate(program: &Program) -> Result<()> {
+    crate::translation::source_const_functions::validate_const_functions(program)
+        .map_err(|failure| error(failure.to_string()))?;
     crate::translation::source_pure_unit_calls::validate_source_pure_unit_calls(program)
         .map_err(|failure| error(failure.to_string()))?;
     crate::translation::source_unit_clone_derivations::validate_source_unit_clone_derivations(

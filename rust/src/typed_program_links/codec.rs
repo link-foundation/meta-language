@@ -14,6 +14,8 @@ use crate::{LinkId, LinkNetwork, LinkType};
 use serde_json::{Map, Value, json};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
+#[path = "codec_const_functions.rs"]
+mod const_functions;
 #[path = "codec_encoding.rs"]
 mod encoding;
 #[path = "codec_owned_local_state.rs"]
@@ -509,6 +511,7 @@ pub(super) fn decode_with_binding_identities(
         }
         declarations.insert(name, *entry);
     }
+    const_functions::validate_order(network, &decoder.fields, mapping, body)?;
     owned_local_state::validate_order(
         network,
         &decoder.fields,
@@ -565,6 +568,9 @@ pub(super) fn decode_with_binding_identities(
     }
     value["items"] = Value::Array(items);
     value["declarations"] = Value::Array(ordered_declarations);
+    const_functions::prepare_order(&mut value)?;
+    crate::translation::source_const_functions::validate_const_function_records(&value)
+        .map_err(|failure| error(failure.to_string()))?;
     super::source_spans::normalize_source_spans(&mut value)?;
     validate_spans(&value)?;
     crate::translation::source_pure_unit_calls::validate_pure_unit_records(&value)
