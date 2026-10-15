@@ -584,6 +584,18 @@ native definitions are automatically emitted under an explicit immutable
 numeric-array value model. Repeated scans and copies retain potentially
 quadratic costs; native execution, the complete native projector and paired
 public capture and replay remain required work.
+The following `original link fixed-symbol certificate tables 1` experiment
+projects eleven complete tables from original ordered raw graph fields:
+context, kinds, positions, paths, layers, functions, operations, parts, inputs,
+allocations and items. Shared row and column instructions replace their old
+projected values, retaining actual identity anchors. All thirteen saved text and
+binary fixtures preserve whole-table values under the checked correspondence;
+coherent saved edits and owner/payload forgeries exercise the same final
+certificate. Root and child operation markers require their actual String
+scalar tags. All twenty-nine native definitions are emitted automatically.
+Tokens, declarations, parameters, cores, names and units still use the old
+projector. The complete raw checker remains mandatory; native host integration,
+the remaining dynamic tables and native execution are separate work.
 The `ordered original String value symbol projection 1` experiment separately
 projects an ordered primitive String sequence after a fixed dictionary. Exact
 UTF-16 values share a positive symbol; dynamic values retain first-observed
