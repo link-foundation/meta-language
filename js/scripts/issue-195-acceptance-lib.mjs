@@ -467,8 +467,17 @@ export function compareScopeBaseline(baseline, candidate) {
       errors.push(`required scope row removed: ${id}`);
       continue;
     }
-    for (const field of ['source', 'area', 'expectedBehavior', 'critical', 'fullScopeReleaseBlocker']) {
+    for (const field of ['source', 'area', 'expectedBehavior']) {
       if (newEntry[field] !== oldEntry[field]) {
+        errors.push(`protected requirement field changed for ${id}: ${field}`);
+      }
+    }
+    for (const field of ['critical', 'fullScopeReleaseBlocker']) {
+      const oldPresent = Object.hasOwn(oldEntry, field);
+      const newPresent = Object.hasOwn(newEntry, field);
+      const strengthened = newPresent && newEntry[field] === true &&
+        (!oldPresent || oldEntry[field] === false);
+      if (!strengthened && (oldPresent !== newPresent || newEntry[field] !== oldEntry[field])) {
         errors.push(`protected requirement field changed for ${id}: ${field}`);
       }
     }

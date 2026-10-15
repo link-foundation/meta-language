@@ -218,6 +218,41 @@ test('scope baseline conserves critical classification and full-scope delivery b
   }
 });
 
+test('scope baseline accepts stronger critical classification from legacy ledgers', async (context) => {
+  await context.test('both legacy flags may be absent before they become true', () => {
+    const { manifest } = syntheticCase();
+    const baseline = clone(manifest);
+    delete baseline.atomicRequirements[0].critical;
+    delete baseline.atomicRequirements[0].fullScopeReleaseBlocker;
+    assert.deepEqual(compareScopeBaseline(baseline, manifest), []);
+    assert.deepEqual(compareScopeBaseline(baseline, clone(baseline)), []);
+  });
+  for (const field of ['critical', 'fullScopeReleaseBlocker']) {
+    await context.test(`${field} false may strengthen to true`, () => {
+      const { manifest } = syntheticCase();
+      const baseline = clone(manifest);
+      baseline.atomicRequirements[0][field] = false;
+      assert.deepEqual(compareScopeBaseline(baseline, manifest), []);
+    });
+    await context.test(`${field} false cannot be removed`, () => {
+      const { manifest } = syntheticCase();
+      manifest.atomicRequirements[0][field] = false;
+      const candidate = clone(manifest);
+      delete candidate.atomicRequirements[0][field];
+      assert.match(compareScopeBaseline(manifest, candidate).join('\n'),
+        new RegExp(`protected requirement field changed for I195-SYNTHETIC: ${field}`, 'u'));
+    });
+    await context.test(`${field} absent cannot become false`, () => {
+      const { manifest } = syntheticCase();
+      const baseline = clone(manifest);
+      delete baseline.atomicRequirements[0][field];
+      manifest.atomicRequirements[0][field] = false;
+      assert.match(compareScopeBaseline(baseline, manifest).join('\n'),
+        new RegExp(`protected requirement field changed for I195-SYNTHETIC: ${field}`, 'u'));
+    });
+  }
+});
+
 test('scope baseline rejects removed or weakened exact-evidence policies', async (context) => {
   for (const [name, mutate, expected] of [
     ['result policy removed', (candidate) => { delete candidate.resultPolicy; }, /acceptance policy changed: resultPolicy/u],
