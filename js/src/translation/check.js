@@ -1,3 +1,4 @@
+import {captureRustRuntimeShell,checkRustRuntimeShellContainers} from './rust-runtime-shell.js';
 import {checkRustPureUnitCalls} from './rust-pure-unit-calls.js';
 import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 // Resolves names, checks types, and fixes the exact operator semantics of a
@@ -72,6 +73,7 @@ function immutableProductValue(value, bindings = new Map()) {
 }
 
 export function checkProgram(surface) {
+  checkRustRuntimeShellContainers(surface);
   checkRustTypeNamespaceRecordShapes(surface);
   checkRustOwnedLocalStateContainers(surface);
   const checker = new Checker(surface.language, surface.externals ?? [], Boolean(surface.referenceSemantics));
@@ -149,6 +151,7 @@ class Checker {
     validateRustTypeNamespace(program);
     checkRustPureUnitCalls(program);
     checkRustOwnedLocalStateProof(program);
+    if(Object.hasOwn(surface,'sourceRuntimeShell'))captureRustRuntimeShell(program,surface.sourceRuntimeShell);
     return program;
   }
 

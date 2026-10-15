@@ -1,3 +1,4 @@
+import {checkRustRuntimeShell,emitRustRuntimeShell,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import { renderStringLengthExpression, renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
 // Rust emitter. Naturals and integers are `ml::Big`, an unbounded integer
 // the translation carries in its own prelude, so no value is ever narrowed;
@@ -624,6 +625,8 @@ export function readRustArrayPrelude(standard = false) {
 }
 
 export function emitRust(program, options = {}) {
+  const runtimeShell=checkRustRuntimeShell(program);
+  if(runtimeShell){if(options.sourceHeaderModel!==undefined)refuseRustRuntimeShellComposition('target header changes require an independent runtime composition proof');return emitRustRuntimeShell(program,runtimeShell);}
   const borrowedCalls = acceptRustBorrowedCallInterfaceModel(options.sourceHeaderModel) ? readRustBorrowedCallInterface(program, options.sourceHeaderModel) : null;
   const sourceHeaders = borrowedCalls?.headers ?? (options.sourceHeaderModel === undefined ? null : readRustSourceHeaderEmission(program, options.sourceHeaderModel));
   const state = new EmitState(program, 'Rust', snake, KEYWORDS, {

@@ -1,3 +1,5 @@
+import {acceptRustRuntimeShellModel} from './rust-runtime-shell-rules.js';
+import {readRustRuntimeShellSource,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import {acceptRustPureUnitCallModel} from './rust-pure-unit-call-rules.js';
 import {readRustPureUnitFunction,readRustPureUnitMain,finishRustPureUnitSource,readRustPureUnitItemContext} from './rust-pure-unit-calls.js';
 import {acceptRustEmptyOptionSourceModel} from './rust-empty-option-rules.js';
@@ -48,7 +50,9 @@ const ADDITIVE = { '+': 'add', '-': 'sub' };
 const MULTIPLICATIVE = { '*': 'mul', '/': 'div', '%': 'rem' };
 const RESERVED_ITEMS = new Set(['impl', 'trait', 'struct', 'union', 'static', 'type', 'extern', 'macro_rules', 'async', 'unsafe']);
 
-export function parseRust(source, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '', pureUnitCallModel = '', localValueStateModel = '' } = {}) {
+export function parseRust(source, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '', pureUnitCallModel = '', localValueStateModel = '', runtimeShellModel = '' } = {}) {
+  if(!acceptRustRuntimeShellModel(runtimeShellModel))throw unsupported('Rust runtime shell model','select the legacy model or closed pure Rust unit runtime shell 1');
+  if(runtimeShellModel){if([arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel].some(Boolean))refuseRustRuntimeShellComposition('the whole runtime interpretation requires its independent source profile');return readRustRuntimeShellSource(source);}
   if (!acceptRustTypeNamespaceModel(typeNamespaceModel)) throw unsupported('Rust type namespace model', 'select the legacy model or resolved Rust type namespace 1');
   if(!acceptRustOwnedLocalStateModel(localValueStateModel))throw unsupported('Rust owned local state model','select the original move profile or canonical String copy profile');
   if(localValueStateModel&&(arrayResultModel||completionModel||scalarLoopModel||primitiveOwnerModel||emptyOptionSourceModel||typeNamespaceModel||pureUnitCallModel))throw unsupported('Rust owned local state model','other source state and completion profiles require independent composition proofs');

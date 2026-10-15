@@ -1,3 +1,4 @@
+import {checkRustRuntimeShell} from './translation/rust-runtime-shell.js';
 // Rebuild a linked product program through the existing Surface checker.
 // The adapter carries declarations and shared projection instructions; it
 // does not assign meaning to types, operators, patterns or recursion.
@@ -8,6 +9,7 @@ import { projectLinkedProgramExpression, projectLinkedProgramDeclarationPath } f
 import { readProgramExpressionProjection, readProgramNeutralFieldDefault } from './typed-program-link-rules.js';
 
 export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
+  if(checkRustRuntimeShell(program))return program;
   const rootedNamespace = checkRustTypeNamespaceRecordShapes(program);
   if (rootedNamespace) { validateRustTypeNamespace(program); wholeProgram = true; }
   if(checkRustOwnedLocalStateRecordShapes(program))wholeProgram=true;

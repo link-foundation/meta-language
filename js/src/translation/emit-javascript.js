@@ -1,3 +1,4 @@
+import {checkRustRuntimeShell,recordRustRuntimeShellAssumptions,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import { renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
 // JavaScript emitter. Every portable integer is a BigInt, so naturals and
 // integers stay unbounded and machine integers are range-checked exactly as
@@ -108,11 +109,14 @@ function ident(name) {
 }
 
 export function emitJavaScript(program, options = {}) {
+  const runtimeShell=checkRustRuntimeShell(program);
+  if(runtimeShell&&options.scopedBindingModel!==undefined)refuseRustRuntimeShellComposition('scoped target bindings require an independent runtime composition proof');
   checkRustOwnedLocalStateProof(program);
   const scopedBindings = options.scopedBindingModel === undefined ? null : readJavaScriptScopedBindingEmission(program, options.scopedBindingModel);
   const reserved = new Set(KEYWORDS);
   if ([...program.declarations.values()].some(entry => Object.hasOwn(entry, 'sourceLocalState'))) reserved.add('ml_ownedTextInput');
   const state = new EmitState(program, 'JavaScript', ident, reserved, { modulesShareTermSpace: true, typeSpace: true });
+  recordRustRuntimeShellAssumptions(state,runtimeShell);
   return new JavaScriptEmitter(program, state, scopedBindings).file();
 }
 

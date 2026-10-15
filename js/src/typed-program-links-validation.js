@@ -1,3 +1,4 @@
+import {checkRustRuntimeShell} from './translation/rust-runtime-shell.js';
 import {checkRustPureUnitCalls} from './translation/rust-pure-unit-calls.js';
 import {checkRustEmptyOptionProof} from './translation/rust-empty-options.js';
 import {checkRustSourceSignature} from './translation/rust-source-signatures.js';
@@ -18,6 +19,7 @@ const primitives = new Set(['nat', 'int', 'bool', 'string', 'unit', 'float', 'ou
 const operationKinds = new Set(['math', 'stringMap', 'stringTest', 'method', 'collectionRead', 'collectionItems', 'optionalPredicate']);
 
 export function validateLinkedTypedProgram(program, references = new WeakMap(), { graphPatterns = false, patternScopes = new WeakMap() } = {}) {
+  checkRustRuntimeShell(program);
   checkRustTypeNamespaceRecordShapes(program);
   // The independently selected Unit profile owns plain data throughout its
   // graph. Check descriptors before reading even the initial role fields.
