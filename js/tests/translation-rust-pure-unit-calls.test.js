@@ -159,3 +159,19 @@ test('selected source offsets reject negative zero and unsafe bounds while primi
  assert.equal(program.declarations.get('negative').body.value,'-0');
  const context=vm.createContext({console:{log(){}}});vm.runInContext(emitTypedProgramLinks(packet.network,packet.root,'JavaScript').code,context,{timeout:1000});assert.equal(Object.is(context.negative(),-0),true);
 });
+
+test('raw decimal and exponent offsets retain the actual complete owned Unit proof and target artifacts',()=>{
+ for(const model of [fixture.model,'closed public pure Rust unit calls 1']){
+  const source=(model===fixture.model?'':'pub ')+'fn empty()->(){()}fn main(){empty();}';
+  const original=createTypedProgramLinks(source,'Rust',{rustPureUnitCallModel:model}),expected=new Map(['Rust','JavaScript'].map(target=>[target,emitTypedProgramLinks(original.network,original.root,target).code]));
+  for(const role of ['headerSpan','bodySpan',...(model===fixture.model?[]:['visibility'])])for(const form of ['.0','e0','E+0','.00e+0']){
+   const packet=createTypedProgramLinks(source,'Rust',{rustPureUnitCallModel:model}),network=packet.network,proof=network.fieldRelations().find(row=>row.label===label('sourcePureUnit')).child;
+   const span=role==='visibility'?field(network,field(network,proof,'visibility').child,'span').child:field(network,proof,role).child;
+   for(const name of ['start','end']){const scalar=network.link(field(network,span,name).child),value=scalar.metadata().definition;scalar.setMetadata(scalar.metadata().withDefinition(value+form));assert.equal(scalar.metadata().definition,value+form);}
+   const raw=LinkNetwork.fromLino(network.toLino()),program=decodeTypedProgramLinks(raw,packet.root);
+   assert.equal(program.declarations.get('empty').sourcePureUnit.model,model);
+   assert.deepEqual(observeCalls({network:raw,root:packet.root}),['empty']);
+   for(const target of ['Rust','JavaScript'])assert.equal(emitTypedProgramLinks(raw,packet.root,target).code,expected.get(target),role+' '+form+' '+target);
+  }
+ }
+});

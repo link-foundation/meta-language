@@ -6,7 +6,7 @@ use super::rust::pure_unit_call_rules::{
     accept_rust_pure_unit_body_form, accept_rust_pure_unit_call_model,
     accept_rust_pure_unit_context, accept_rust_pure_unit_header_form, accept_rust_pure_unit_name,
     accept_rust_pure_unit_name_character, accept_rust_pure_unit_path_form,
-    accept_rust_pure_unit_source_offset, accept_rust_pure_unit_visibility,
+    accept_rust_pure_unit_visibility,
 };
 use serde_json::{Value, json};
 use std::collections::HashSet;
@@ -57,12 +57,16 @@ fn array<'a>(value: &'a Value, detail: &str) -> Result<&'a [Value]> {
         .ok_or_else(|| fail(detail))
 }
 fn source_offset(value: &Value) -> Option<u64> {
-    // Preserve the native integer representation before serde's usize projection.
-    // Other raw numeric lexemes remain a separate codec normalization boundary.
-    let integer = value.as_u64()?;
     let number = value.as_f64()?;
-    accept_rust_pure_unit_source_offset(number, number == 0.0 && number.is_sign_negative())
-        .then_some(integer)
+    if !crate::typed_program_links::source_span_rules::accept_source_span_offset(
+        number,
+        number == 0.0 && number.is_sign_negative(),
+    ) {
+        return None;
+    }
+    // The shared policy proves a finite, exact safe unsigned integer. Preserve
+    // that meaning for decimal and exponent aliases without changing literals.
+    number.to_string().parse().ok()
 }
 fn span(value: &Value) -> Result<(u64, u64)> {
     if value.as_object().is_none_or(|record| {

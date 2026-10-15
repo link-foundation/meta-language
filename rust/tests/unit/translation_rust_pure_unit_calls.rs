@@ -617,3 +617,102 @@ fn labeled_span_offsets_survive_reordered_raw_records_and_reject_negative_zero()
         "-0\ntrue"
     );
 }
+
+#[test]
+fn numeric_source_span_aliases_preserve_owned_unit_proofs_and_complete_artifacts() {
+    for fixture in fixtures() {
+        let entry = &fixture["cases"][1];
+        let original = archive(entry);
+        let expected_rust = emit_typed_program_links(&original.network, original.root, "Rust")
+            .unwrap()
+            .code;
+        let expected_javascript =
+            emit_typed_program_links(&original.network, original.root, "JavaScript")
+                .unwrap()
+                .code;
+        let mut roles = vec!["headerSpan", "bodySpan"];
+        if fixture["model"] == "closed public pure Rust unit calls 1" {
+            roles.push("visibility");
+        }
+        for role in roles {
+            for suffix in [".0", "e0", "E+0", ".00e+0"] {
+                let mut packet = archive(entry);
+                let network = &mut packet.network;
+                let proof = network
+                    .links()
+                    .find_map(|link| match link.references() {
+                        [_, key, child]
+                            if network.link(*key).and_then(|key| key.metadata().term())
+                                == Some("source pure unit") =>
+                        {
+                            Some(*child)
+                        }
+                        _ => None,
+                    })
+                    .unwrap();
+                let site = if role == "visibility" {
+                    field(network, field(network, proof, "visibility").1, "span").1
+                } else {
+                    field(network, proof, role).1
+                };
+                for name in ["start", "end"] {
+                    let (relation, value) = field(network, site, name);
+                    let spelling = format!(
+                        "{}{suffix}",
+                        network
+                            .link(value)
+                            .unwrap()
+                            .metadata()
+                            .definition()
+                            .unwrap()
+                    );
+                    let metadata = network
+                        .link(value)
+                        .unwrap()
+                        .metadata()
+                        .clone()
+                        .with_definition(&spelling);
+                    let replacement = network.insert_link([], metadata);
+                    let old: [LinkId; 3] = network
+                        .link(relation)
+                        .unwrap()
+                        .references()
+                        .try_into()
+                        .unwrap();
+                    assert_eq!(
+                        network
+                            .apply_substitution(&SubstitutionRule::new(
+                                old,
+                                [old[0], old[1], replacement]
+                            ))
+                            .updated()
+                            .len(),
+                        1
+                    );
+                    assert_eq!(
+                        network.link(replacement).unwrap().metadata().definition(),
+                        Some(spelling.as_str())
+                    );
+                }
+                let raw = LinkNetwork::from_lino(&network.to_lino()).unwrap();
+                let program = decode_typed_program_links(&raw, packet.root).unwrap();
+                assert_eq!(calls(&program), entry["calls"]);
+                assert_eq!(
+                    emit_typed_program_links(&raw, packet.root, "Rust")
+                        .unwrap()
+                        .code,
+                    expected_rust,
+                    "{role} {suffix}"
+                );
+                assert_eq!(
+                    emit_typed_program_links(&raw, packet.root, "JavaScript")
+                        .unwrap()
+                        .code,
+                    expected_javascript,
+                    "{role} {suffix}"
+                );
+                assert!(encode_typed_program_links(&program).is_ok());
+            }
+        }
+    }
+}
