@@ -56,10 +56,16 @@ test('the public factory owns its selected model and user provenance across sour
   const rows=network.fieldRelations(),profile=rows.find(row=>row.label==='source profile');assert.ok(profile);
   assert.ok(rows.some(row=>row.parent.equals(profile.child)&&row.label==='rust const function model'&&network.link(row.child).metadata().definition===fixture.model));
   assert.ok(rows.some(row=>row.label==='caller'&&network.link(row.child).metadata().definition==='const predicate experiment'));
+  for(const signature of['','Rust source function signature 1']){
+   const selected=createTypedProgramLinks(entry.source,'Rust',{rustConstFunctionModel:fixture.model,rustSourceSignatureModel:signature}),reloaded=LinkNetwork.fromLino(selected.network.toLino()),relations=reloaded.fieldRelations(),profile=relations.find(row=>row.label==='source profile');assert.ok(profile);
+   assert.ok(relations.some(row=>row.parent.equals(profile.child)&&row.label==='rust source signature model'&&reloaded.link(row.child).metadata().definition===signature));
+   assert.deepEqual(decodeTypedProgramLinks(reloaded,selected.root).items[0].sourceConstFunction,entry.proof);observe(emitTypedProgramLinks(reloaded,selected.root,'JavaScript').code,entry);
+  }
   assert.throws(()=>createTypedProgramLinks(entry.source,'Rust'),error=>{assert.equal(error.kind,entry.originalRefusal.kind);assert.equal(error.reason,entry.originalRefusal.reason);assert.deepEqual(error.span,entry.originalRefusal.span);return true;});
  }
  assert.throws(()=>createTypedProgramLinks('function simple(){return true;}','JavaScript',{rustConstFunctionModel:fixture.model}),/requires Rust source/u);
  assert.throws(()=>createTypedProgramLinks(fixture.cases[0].source,'Rust',{rustConstFunctionModel:'unknown'}),/const function model/u);
+ assert.throws(()=>createTypedProgramLinks(fixture.cases[0].source,'Rust',{rustConstFunctionModel:fixture.model,rustSourceSignatureModel:'unknown'}),/source signature model/u);
 });
 test('closed primitive const source boundaries retain exact full-source diagnostics',()=>{
  assert.equal(fixture.invalid.length,27);

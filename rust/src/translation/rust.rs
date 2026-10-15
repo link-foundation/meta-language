@@ -139,11 +139,16 @@ pub fn parse_rust_with_owned_local_state_model(
 ///
 /// # Errors
 /// Refuses unknown models and unsupported source or compilation context.
-pub fn parse_rust_with_const_function_model(source: &str, model: &str) -> Result<SProgram> {
+pub fn parse_rust_with_const_function_model(
+    source: &str,
+    model: &str,
+    source_signature_model: &str,
+) -> Result<SProgram> {
     parse_rust_with_selected_profiles(
         source,
         SourceProfiles {
             const_function: model,
+            source_signature: source_signature_model,
             ..SourceProfiles::default()
         },
     )

@@ -390,15 +390,26 @@ pub fn create_typed_program_links_with_rust_const_function_model(
     source: &str,
     language: &str,
     model: &str,
+    source_signature_model: Option<&str>,
     provenance: Option<&Value>,
 ) -> Result<TypedProgramLinks> {
     if !matches!(language.to_ascii_lowercase().as_str(), "rust" | "rs") {
         return Err(error("a Rust const function model requires Rust source"));
     }
-    let surface = parse_rust_with_const_function_model(source, model)
-        .map_err(|failure| error(failure.to_string()))?;
+    let surface =
+        parse_rust_with_const_function_model(source, model, source_signature_model.unwrap_or(""))
+            .map_err(|failure| error(failure.to_string()))?;
     let program = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
-    let selected = serde_json::json!({"sourceProfile":{"language":"Rust","rustConstFunctionModel":model},"userProvenance":provenance});
+    let mut profile = serde_json::Map::new();
+    profile.insert("language".into(), Value::String("Rust".into()));
+    profile.insert("rustConstFunctionModel".into(), Value::String(model.into()));
+    if let Some(model) = source_signature_model {
+        profile.insert(
+            "rustSourceSignatureModel".into(),
+            Value::String(model.into()),
+        );
+    }
+    let selected = serde_json::json!({"sourceProfile":profile,"userProvenance":provenance});
     encode_typed_program_links_with_provenance(&program, Some(&selected))
 }
 

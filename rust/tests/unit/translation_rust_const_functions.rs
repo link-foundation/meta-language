@@ -41,7 +41,7 @@ fn program(entry: &Value) -> Program {
     decode_typed_program_links(&packet.network, packet.root).unwrap()
 }
 fn selected(source: &str) -> Program {
-    check_program(&parse_rust_with_const_function_model(source, model()).unwrap()).unwrap()
+    check_program(&parse_rust_with_const_function_model(source, model(), "").unwrap()).unwrap()
 }
 fn observe_javascript(code: &str, entry: &Value, edited: bool) {
     let name = entry["name"].as_str().unwrap();
@@ -121,11 +121,12 @@ fn three_actual_complete_styled_sources_and_archives_retain_const_qualification(
             emitted.definitions.join("\n\n")
         ));
         assert_eq!(emit_rust(&replay).unwrap().definitions, emitted.definitions);
-        assert!(parse_rust_with_const_function_model(&emitted.text, model()).is_err());
+        assert!(parse_rust_with_const_function_model(&emitted.text, model(), "").is_err());
         let native = create_typed_program_links_with_rust_const_function_model(
             entry["source"].as_str().unwrap(),
             "rs",
             model(),
+            None,
             Some(&json!({"fixture":entry["name"]})),
         )
         .unwrap();
@@ -148,16 +149,48 @@ fn three_actual_complete_styled_sources_and_archives_retain_const_qualification(
         }
         let code = javascript_public_archive(&native);
         observe_javascript(&code, entry, false);
+        for signature in [None, Some(""), Some("Rust source function signature 1")] {
+            let packet = create_typed_program_links_with_rust_const_function_model(
+                entry["source"].as_str().unwrap(),
+                "Rust",
+                model(),
+                signature,
+                None,
+            )
+            .unwrap();
+            let provenance = relation(&packet.network, packet.root, "provenance")[2];
+            let profile = relation(&packet.network, provenance, "source profile")[2];
+            let represented=packet.network.links().any(|link|matches!(link.references(),[owner,label,child] if *owner==profile&&packet.network.link(*label).and_then(|label|label.metadata().term())==Some("rust source signature model")&&packet.network.link(*child).and_then(|child|child.metadata().definition())==signature));
+            assert_eq!(represented, signature.is_some());
+            assert_eq!(
+                decode_typed_program_links(&packet.network, packet.root).unwrap(),
+                actual
+            );
+        }
         assert_eq!(
             emit_javascript(&actual).unwrap().text,
             entry["javascript"].as_str().unwrap()
         );
     }
     assert!(
-        create_typed_program_links_with_rust_const_function_model("", "JavaScript", model(), None)
-            .is_err()
+        create_typed_program_links_with_rust_const_function_model(
+            "",
+            "JavaScript",
+            model(),
+            None,
+            None
+        )
+        .is_err()
     );
-    assert!(parse_rust_with_const_function_model("", "unknown").is_err());
+    assert!(parse_rust_with_const_function_model("", "unknown", "").is_err());
+    assert!(
+        parse_rust_with_const_function_model(
+            fixture()["cases"][0]["source"].as_str().unwrap(),
+            model(),
+            "unknown"
+        )
+        .is_err()
+    );
 }
 
 #[test]
@@ -166,7 +199,7 @@ fn all_twenty_seven_source_refusals_keep_their_frozen_diagnostics() {
     assert_eq!(entries.len(), 27);
     for entry in entries {
         let failure =
-            parse_rust_with_const_function_model(entry["source"].as_str().unwrap(), model())
+            parse_rust_with_const_function_model(entry["source"].as_str().unwrap(), model(), "")
                 .and_then(|surface| check_program(&surface))
                 .unwrap_err();
         assert_eq!(
