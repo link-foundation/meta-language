@@ -9,7 +9,7 @@ import { parseJavaScript } from '../../js/src/translation/javascript.js';
 import { checkProgram } from '../../js/src/translation/check.js';
 import { checkProgramDeclarationOwners } from '../../js/src/typed-program-declaration-owners.js';
 import { encodeGeneratedOwnedRust, decodeGeneratedOwnedRust } from '../generated-owned-rust/codec.mjs';
-import { acceptFreshNumberArrayCollectorPattern, acceptFreshNumberArrayCollectorBinding } from './rules.mjs';
+import { acceptFreshNumberArrayCollectorPattern, acceptFreshNumberArrayCollectorBinding, acceptFreshNumberArrayCollectorFunctionName } from './rules.mjs';
 
 export const FRESH_NUMBER_ARRAY_COLLECTOR_POLICY = readProjectData(new URL('./data/policy.lino', import.meta.url));
 const policy = FRESH_NUMBER_ARRAY_COLLECTOR_POLICY;
@@ -68,6 +68,7 @@ function sourceFacts(source) {
   });
   const selection = patterns.findIndex(pattern => acceptFreshNumberArrayCollectorPattern(codes, pattern));
   if (selection < 0) fail('the complete source is outside the closed fresh, unaliased, one-argument, ignored-result grammar');
+  if (!acceptFreshNumberArrayCollectorFunctionName(tokens[policy.declarations.function].value)) fail('the global function declaration conflicts with a nonconfigurable standard value property');
   const pattern = patterns[selection];
   const bindings = policy.roles.map((role, index) => {
     const token = tokens[policy.declarations[role]];
@@ -124,6 +125,7 @@ function certificate(facts, program) {
   const declaration = program.declarations.get(facts.bindings[0].name);
   const loop = [...program.declarations.values()].find(entry => entry !== declaration);
   return { model: policy.model, language: policy.language, interpretation: policy.interpretation,
+    sourceContext: { ...policy.sourceContext },
     tokens: facts.tokens, gaps: facts.gaps, bindings: facts.bindings,
     argumentRule: policy.arguments[facts.selection].id, lowering: facts.actions,
     declaration, parameter: declaration.params[0], collector: declaration.body, loop,

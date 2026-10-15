@@ -40,7 +40,7 @@ archive adapter is JavaScript-only and still needs a faithful native boundary;
 the generated matcher alone does not implement it. General object/Map projection
 and the existing identity bridge's member-array mutations remain separate gaps.
 
-Ten bounded tests compare independently authored original-source outcomes
+Eleven bounded tests compare independently authored original-source outcomes
 with emitted JavaScript, including pre-append argument scope, and repeat those
 checks after Links text and binary reload. Actual checked owner and lexical
 binder identities are checked separately from value equality. Source and graph
@@ -48,6 +48,12 @@ corruptions, the old default refusals and excluded source forms stay rejected.
 An automatically translated reserved-binding table rejects invalid original
 JavaScript names. Saved premise links use the separate `premise owner` role;
 ordered declarations and the actual mapping must share the same owned nodes.
+A separate generated function-role guard excludes the three nonconfigurable
+standard global value properties while retaining valid local shadowing.
+The policy and each certificate retain an explicit `sourceContext`: Script
+execution in a fresh extensible standard realm, default global descriptors and
+no ambient declaration changes. The finite guard does not inspect or certify
+arbitrary host environments with additional nonconfigurable global properties.
 No original-Rust-source reimport or paired-runtime support is claimed.
 
 From the repository root, run only:
