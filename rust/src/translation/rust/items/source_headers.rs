@@ -160,7 +160,7 @@ impl RustParser {
         };
         self.origins.current_type.source_owner = Some(owner.clone());
         let namespace_spelling = if head[0] != "&" && head[0] != "(" {
-            head.clone()
+            head
         } else if namespace_children.len() == 1 && !head.iter().any(|part| part == "[") {
             namespace_children[0].clone()
         } else if head[0] == "&" && !head.iter().any(|part| part == "[") {
