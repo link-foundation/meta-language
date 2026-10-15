@@ -177,6 +177,7 @@ fn parse_rust_with_selected_profiles(
             primitive_owner_model,
             empty_option_source_model,
             type_namespace_model,
+            local_value_state_model,
         ]
         .iter()
         .any(|model| !model.is_empty())
@@ -187,7 +188,7 @@ fn parse_rust_with_selected_profiles(
             None,
         ));
     }
-        if !owned_local_state_rules::accept_rust_owned_local_state_model(local_value_state_model) {
+    if !owned_local_state_rules::accept_rust_owned_local_state_model(local_value_state_model) {
         return Err(unsupported(
             "Rust owned local state model",
             "select the original move profile or canonical String copy profile",

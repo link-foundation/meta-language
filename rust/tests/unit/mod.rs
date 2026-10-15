@@ -212,6 +212,7 @@ mod translation_rust_lifetimes;
 mod translation_rust_owned_local_state;
 mod translation_rust_primitive_owners;
 mod translation_rust_products;
+mod translation_rust_pure_unit_calls;
 mod translation_rust_read_only_queries;
 mod translation_rust_scalar_loop_declarations;
 mod translation_rust_scalar_loops;

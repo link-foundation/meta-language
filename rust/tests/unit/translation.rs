@@ -4,3 +4,10 @@
 
 #[path = "../../src/translation/frontend_rules.rs"]
 pub mod frontend_rules;
+
+#[path = "../../src/translation/rust/owned_local_state_rules.rs"]
+pub mod owned_local_state_rules;
+
+pub mod rust {
+    pub use super::owned_local_state_rules;
+}
