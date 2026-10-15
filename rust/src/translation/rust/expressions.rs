@@ -878,7 +878,11 @@ impl RustParser {
             && (accept_rust_source_box_owner(&owner.join("::"), false)
                 || accept_rust_source_box_owner(&resolved_owner.join("::"), false))
         {
-            if !self.local_value_state_model.is_empty() {
+            if !self.local_value_state_model.is_empty()
+                && !super::owned_local_state_rules::accept_rust_owned_local_source_operation(
+                    "box construction",
+                )
+            {
                 return Err(unsupported(
                     "Rust owned local state",
                     "Box allocation requires a separate source ownership interpretation",

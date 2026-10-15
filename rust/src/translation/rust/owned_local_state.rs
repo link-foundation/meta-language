@@ -1,4 +1,5 @@
 //! Source adapters around the existing Rust parser and shared owned state policy.
+use super::owned_local_state_rules::accept_rust_owned_local_source_operation;
 use super::{
     BOOL, BinaryOp, HashMap, HashSet, Options, Result, RustParser, SExpr, SItem, SMain, SNode,
     SParam, STRING, SourceOrigin, Span, Token, TokenKind, Type, span, unsupported,
@@ -151,9 +152,10 @@ fn binding_expression(
 impl RustParser {
     pub(super) fn require_owned_local_indirection(&self, token: &Token) -> Result<()> {
         if !self.local_value_state_model.is_empty()
-            && (token.value == "*"
+            && (token.value == "*" && !accept_rust_owned_local_source_operation("dereference")
                 || self.local_value_state_model == policy()["models"]["copies"]
-                    && ["&", "&&"].contains(&token.value.as_str()))
+                    && ["&", "&&"].contains(&token.value.as_str())
+                    && !accept_rust_owned_local_source_operation("borrow"))
         {
             return Err(fail(
                 "source indirection requires a separate ownership interpretation",
