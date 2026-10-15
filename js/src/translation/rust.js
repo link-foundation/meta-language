@@ -41,6 +41,7 @@ import {acceptRustPrimitiveOwnerModel} from './rust-primitive-owner-rules.js';
 import {readRustStandardPrimitivePosition,createRustPrimitiveOwnerProof,acceptRustPrimitiveOwnerImportName} from './rust-primitive-owners.js';
 import {acceptRustOwnedLocalStateModel,acceptRustOwnedLocalSourceOperation} from './rust-owned-local-state-rules.js';
 import {readRustOwnedLocalStateBody} from './rust-owned-local-state-reader.js';
+import {acceptRustOwnedTupleCallModel} from './rust-owned-tuple-call-rules.js';
 import {RUST_OWNED_LOCAL_STATE_POLICY} from './rust-owned-local-state.js';
 import {acceptRustConstFunctionModel} from './rust-const-function-rules.js';
 import {createRustConstFunctionProof} from './rust-const-functions.js';
@@ -58,7 +59,7 @@ export function parseRust(source, { arrayResultModel = '', completionModel = '',
   if(!acceptRustRuntimeShellModel(runtimeShellModel))throw unsupported('Rust runtime shell model','select the legacy model or closed pure Rust unit runtime shell 1');
   if(runtimeShellModel){if([arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel].some(Boolean))refuseRustRuntimeShellComposition('the whole runtime interpretation requires its independent source profile');return readRustRuntimeShellSource(source);}
   if (!acceptRustTypeNamespaceModel(typeNamespaceModel)) throw unsupported('Rust type namespace model', 'select the legacy model or resolved Rust type namespace 1');
-  if(!acceptRustOwnedLocalStateModel(localValueStateModel))throw unsupported('Rust owned local state model','select the original move profile or canonical String copy profile');
+  if(!acceptRustOwnedLocalStateModel(localValueStateModel)&&!acceptRustOwnedTupleCallModel(localValueStateModel))throw unsupported('Rust owned local state model','select the original move profile or canonical String copy profile');
   if(localValueStateModel&&(arrayResultModel||completionModel||scalarLoopModel||primitiveOwnerModel||emptyOptionSourceModel||typeNamespaceModel||pureUnitCallModel))throw unsupported('Rust owned local state model','other source state and completion profiles require independent composition proofs');
   if(!acceptRustPrimitiveOwnerModel(primitiveOwnerModel))throw unsupported('Rust primitive owner model','select the legacy model or standard primitive Rust binary64 owner 1');
   if (!acceptRustScalarLoopModel(scalarLoopModel)) throw unsupported('Rust scalar loop model', 'select the legacy model or closed primitive scalar loop 1');
@@ -97,6 +98,7 @@ class RustParser {
     this.crateDeclarations = new Set();
     this.origins = new RustSourceOrigins(catalog, arrayResultModel,localValueStateModel);
     this.localValueStateModel=localValueStateModel;
+    this.ownedTupleCallDiscovery=Boolean(acceptRustOwnedTupleCallModel(localValueStateModel)&&catalog===null);
     this.constFunctionModel=constFunctionModel;
     this.completionModel = completionModel;
     this.sourceSignatureModel = sourceSignatureModel || (typeNamespaceModel||constFunctionModel ? 'Rust source function signature 1' : '');
