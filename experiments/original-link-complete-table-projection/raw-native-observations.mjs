@@ -7,6 +7,7 @@ import vm from 'node:vm';
 import {createSourceNativeObservationRunner} from '../source-native-observations.mjs';
 import {readStructuredDataLino} from '../../js/src/structured-data-links.js';
 import {verifyOriginalLinkRawSchemaSourceClosure} from './raw-schema-source-closure.mjs';
+import {reloadCanonicalArchive, readCanonicalArchiveTransportSource} from './archive-transport.mjs';
 
 // Actual immutable producer and source closure; no capability declaration substitutes for execution.
 export const ORIGINAL_LINK_RAW_MODEL_COMMIT = '9123dd5d19fc26c95a9d31eff47dd9655c33da53';
@@ -225,7 +226,7 @@ const vectorBits = (carrier, index) => carrier.vectors[index].flatMap(index => c
 const protocol = (observations, carrier) => observations.map((row, index) => [index, row.resultBits.length, ...carrier.vectors[carrier.invocations[index].result].map(value => value.toString(16))].join(':')).join('\n') + '\n';
 function archiveCompleteRustSource(source, LinkNetwork, encodeBinary, decodeBinary) {
   const graph = LinkNetwork.parse(source, 'Rust');
-  const textReplay = LinkNetwork.fromLino(graph.toLino()).reconstructText(); assert.equal(textReplay, source);
+  const textReplay = reloadCanonicalArchive(graph.toLino()).reconstructText(); assert.equal(textReplay, source);
   const binaryReplay = decodeBinary(encodeBinary(graph)).reconstructText(); assert.equal(binaryReplay, source);
   // The large temporary source graphs are not retained in the observation plan.
   return {sourceSha256: sha256(source), textReplaySha256: sha256(textReplay), binaryReplaySha256: sha256(binaryReplay)};
@@ -276,21 +277,30 @@ print!("{output}");}
 `;
 }
 
-export async function planOriginalLinkRawNative(environment = process.env) {
-  requireOriginalLinkRawPlanning(environment);
-  const modelSources = verifyOriginalLinkRawNativeModel();
-  // Nothing above this point loads grammars, creates fixtures or reconstructs a CST.
-  const [{readProjectData}, {LinkNetwork, encodeLinkNetworkBinary, decodeLinkNetworkBinary}, {parseJavaScript}, {checkProgram}, {emitRust}, {emitJavaScript}, {tokenize}, fixtures, corpus, transport, rules, oldDecoder, oldProjector, textProjection] = await Promise.all([
-    import('../../js/scripts/project-data.mjs'), import('../../js/src/index.js'), import('../../js/src/translation/javascript.js'), import('../../js/src/translation/check.js'), import('../../js/src/translation/emit-rust.js'), import('../../js/src/translation/emit-javascript.js'), import('../../js/src/translation/lexer.js'), import('./raw-fixtures.mjs'), import('./raw-corpus.mjs'), import('./raw-transport.mjs'), import('./raw-rules.mjs'), import('../rust-text-certificate-adapter/raw-identity.mjs'), import('./transport.mjs'), import('../rust-text-value-projection/model.mjs'),
-  ]);
+// Only immutable texts, their interface, and declaration identities escape this
+// scope. The checked surface/IR and duplicate artifact definitions are temporary.
+function prepareOriginalLinkRawSource({readProjectData, parseJavaScript, checkProgram, emitRust, emitJavaScript, tokenize}) {
   const artifact = readProjectData(new URL('./data/raw-native-definitions.lino', import.meta.url)), source = readFileSync(new URL('./raw-rules.mjs', import.meta.url), 'utf8');
   const program = checkProgram(parseJavaScript(source, {referenceSemantics: false})), rust = emitRust(program);
   assert.equal(artifact.version, 1); assert.equal(artifact.model, frozenNative.model); assert.equal(rust.definitions.length, frozenNative.definitionCount);
   assert.equal(artifact.sourceSha256, sha256(source)); assert.deepEqual(artifact.declarationNames, program.items.map(row => row.fullName)); assert.deepEqual(artifact.declarations, rust.definitions); assert.equal(artifact.completeRust, rust.text);
   assert.equal(textBytes(rust.text).length, frozenNative.sourceBytes); assert.equal(sha256(rust.text), frozenNative.sourceSha256);
-  const header = nativeInterface(rust.text, tokenize), emitted = emitJavaScript(program), context = {};
-  vm.runInNewContext(emitted.text, context, {timeout: 2000});
-  const target = emitted.mappings.find(row => row.kind === 'function' && row.source === 'checkOriginalLinkRawShape')?.target; assert.equal(typeof context[target], 'function');
+  const header = nativeInterface(rust.text, tokenize), emitted = emitJavaScript(program);
+  const target = emitted.mappings.find(row => row.kind === 'function' && row.source === 'checkOriginalLinkRawShape')?.target;
+  return freeze({model: artifact.model, source: rust.text, javascript: emitted.text, target, header,
+    declarationNames: artifact.declarationNames, definitionCount: rust.definitions.length, preludeCount: rust.preludes.length});
+}
+
+/** Complete source replay before allocating any observation-matrix state. */
+export function runOriginalLinkRawPlanningPhases({prepareSource, replaySource, buildMatrix}) {
+  const prepared = prepareSource();
+  const originalReceipt = replaySource(prepared.source);
+  return buildMatrix(prepared, originalReceipt);
+}
+
+function buildOriginalLinkRawPlan(prepared, originalReceipt, modelSources, transportSources, {LinkNetwork, encodeLinkNetworkBinary, decodeLinkNetworkBinary, fixtures, corpus, transport, rules, oldDecoder, oldProjector, textProjection}) {
+  const {header, target} = prepared, context = {};
+  vm.runInNewContext(prepared.javascript, context, {timeout: 2000}); assert.equal(typeof context[target], 'function');
   const inventory = [...fixtures.originalLinkRawAdversarialFixtures(), ...corpus.originalLinkRawCertificateCorpus(), ...corpus.originalLinkRawNumericMetadataCorpus()];
   assert.deepEqual(inventory.map(row => row.id), frozenFixtureIds); assert.equal(new Set(frozenFixtureIds).size, frozenFixtureIds.length); assert.equal(inventory.length, frozenInventory.fixtures);
   const observations = [], observationIndex = new Map(), premises = [], serializationRefusals = [], hostChecks = [];
@@ -371,12 +381,26 @@ export async function planOriginalLinkRawNative(environment = process.env) {
   }
   for (const value of [NaN, -1, 0.5, 4294967296]) add('numeric root-word corruption ' + numberBits(value), [value, authentic[1], authentic[2].map(row => [...row])], {scope: 'synthetic numeric root-word transport only', payloadBits: numberBits(value)}, 'refused');
   const carrier = createCarrier(observations), consumer = consumerSource(observations, carrier, header), stream = protocol(observations, carrier);
-  const sizes = {sourceBytes: textBytes(rust.text).length, consumerBytes: textBytes(consumer).length, protocolBytes: Buffer.byteLength(stream), originalInputCells: observations.reduce((sum, row) => sum + row.inputBits[2].reduce((sum, cells) => sum + cells.length, 0), 0), uniqueWords: carrier.words.length, uniqueBlocks: carrier.blocks.length, uniqueBlockCells: carrier.blocks.reduce((sum, block) => sum + block.length, 0), vectors: carrier.vectors.length};
+  const sizes = {sourceBytes: textBytes(prepared.source).length, consumerBytes: textBytes(consumer).length, protocolBytes: Buffer.byteLength(stream), originalInputCells: observations.reduce((sum, row) => sum + row.inputBits[2].reduce((sum, cells) => sum + cells.length, 0), 0), uniqueWords: carrier.words.length, uniqueBlocks: carrier.blocks.length, uniqueBlockCells: carrier.blocks.reduce((sum, block) => sum + block.length, 0), vectors: carrier.vectors.length};
   process.stdout.write('Raw native oracle planned sizes: ' + JSON.stringify(sizes) + '\n');
   assert.ok(sizes.consumerBytes <= maximumConsumerBytes, 'complete consumer exceeds unchanged budget'); assert.ok(sizes.protocolBytes <= maximumProtocolBytes, 'complete result protocol exceeds unchanged budget');
-  const originalReceipt = archiveCompleteRustSource(rust.text, LinkNetwork, encodeLinkNetworkBinary, decodeLinkNetworkBinary);
-  const entry = {id: 'complete original raw graph component', kind: 'whole automatically emitted raw component', fixtureId: 'experiments/original-link-complete-table-projection/data/raw-native-definitions.lino', source: rust.text, sourceBytes: sizes.sourceBytes, sourceSha256: sha256(rust.text), replaySha256: originalReceipt.binaryReplaySha256, ...header, declarationNames: artifact.declarationNames, definitionCount: rust.definitions.length, preludeCount: rust.preludes.length, fixtureInventory: frozenFixtureIds, inventoryCounts: frozenInventory, independentJavaScriptControls, originalReceipt, consumerSource: consumer, consumerSha256: sha256(consumer), javaScriptSha256: sha256(emitted.text), carrier, carrierSha256: sha256(JSON.stringify(carrier)), sizes, genuineFormatPremiseCount, serializationRefusals, premises, hostChecks, observations, observationScope: 'Bounded complete primitive decisions over actual JavaScript direct/archive transports and separately labeled synthetic u64 word controls. Failed serialization is separately observed, never converted into a native vector. Old decoders/projectors remain independently observed. No native LinkNetwork capture, public selector, source signature proof, whole-crate parity, completion or performance claim.'};
-  const plan = freeze({model: artifact.model, modelCommit: ORIGINAL_LINK_RAW_MODEL_COMMIT, modelSources, originalCount: 1, fixtureInventory: frozenFixtureIds, inventoryCounts: frozenInventory, entries: [entry]}); checkedPlans.add(plan); return plan;
+  const entry = {id: 'complete original raw graph component', kind: 'whole automatically emitted raw component', fixtureId: 'experiments/original-link-complete-table-projection/data/raw-native-definitions.lino', source: prepared.source, sourceBytes: sizes.sourceBytes, sourceSha256: sha256(prepared.source), replaySha256: originalReceipt.binaryReplaySha256, ...header, declarationNames: prepared.declarationNames, definitionCount: prepared.definitionCount, preludeCount: prepared.preludeCount, fixtureInventory: frozenFixtureIds, inventoryCounts: frozenInventory, independentJavaScriptControls, originalReceipt, consumerSource: consumer, consumerSha256: sha256(consumer), javaScriptSha256: sha256(prepared.javascript), carrier, carrierSha256: sha256(JSON.stringify(carrier)), sizes, genuineFormatPremiseCount, serializationRefusals, premises, hostChecks, observations, observationScope: 'Bounded complete primitive decisions over actual JavaScript direct/archive transports and separately labeled synthetic u64 word controls. Failed serialization is separately observed, never converted into a native vector. Old decoders/projectors remain independently observed. No native LinkNetwork capture, public selector, source signature proof, whole-crate parity, completion or performance claim.'};
+  const plan = freeze({model: prepared.model, modelCommit: ORIGINAL_LINK_RAW_MODEL_COMMIT, modelSources, transportSources, originalCount: 1, fixtureInventory: frozenFixtureIds, inventoryCounts: frozenInventory, entries: [entry]}); checkedPlans.add(plan); return plan;
+}
+
+export async function planOriginalLinkRawNative(environment = process.env) {
+  requireOriginalLinkRawPlanning(environment);
+  const modelSources = verifyOriginalLinkRawNativeModel();
+  const transportSources = freeze([readCanonicalArchiveTransportSource()]);
+  // Nothing above this point loads grammars, creates fixtures or reconstructs a CST.
+  const [{readProjectData}, {LinkNetwork, encodeLinkNetworkBinary, decodeLinkNetworkBinary}, {parseJavaScript}, {checkProgram}, {emitRust}, {emitJavaScript}, {tokenize}, fixtures, corpus, transport, rules, oldDecoder, oldProjector, textProjection] = await Promise.all([
+    import('../../js/scripts/project-data.mjs'), import('../../js/src/index.js'), import('../../js/src/translation/javascript.js'), import('../../js/src/translation/check.js'), import('../../js/src/translation/emit-rust.js'), import('../../js/src/translation/emit-javascript.js'), import('../../js/src/translation/lexer.js'), import('./raw-fixtures.mjs'), import('./raw-corpus.mjs'), import('./raw-transport.mjs'), import('./raw-rules.mjs'), import('../rust-text-certificate-adapter/raw-identity.mjs'), import('./transport.mjs'), import('../rust-text-value-projection/model.mjs'),
+  ]);
+  return runOriginalLinkRawPlanningPhases({
+    prepareSource: () => prepareOriginalLinkRawSource({readProjectData, parseJavaScript, checkProgram, emitRust, emitJavaScript, tokenize}),
+    replaySource: source => archiveCompleteRustSource(source, LinkNetwork, encodeLinkNetworkBinary, decodeLinkNetworkBinary),
+    buildMatrix: (prepared, receipt) => buildOriginalLinkRawPlan(prepared, receipt, modelSources, transportSources, {LinkNetwork, encodeLinkNetworkBinary, decodeLinkNetworkBinary, fixtures, corpus, transport, rules, oldDecoder, oldProjector, textProjection}),
+  });
 }
 
 function parseObservations(output, expected, carrier) {
@@ -394,8 +418,11 @@ const expectedCarriers = new WeakMap();
 export function runOriginalLinkRawNative(plan, options) {
   requireOriginalLinkRawPlanning(options?.environment ?? process.env);
   assert.ok(checkedPlans.has(plan), 'only the exact checked raw plan may execute');
+  assert.deepEqual(plan.transportSources, [readCanonicalArchiveTransportSource()], 'the raw archive transport source changed before execution');
   for (const entry of plan.entries) expectedCarriers.set(entry.observations, entry.carrier);
   // An immutable environment keeps both CI authorizations true for every runner phase.
   const environment = Object.freeze({...options?.environment ?? process.env});
-  return runChecked(plan, {...options, environment});
+  const receipt = runChecked(plan, {...options, environment});
+  assert.deepEqual(plan.transportSources, [readCanonicalArchiveTransportSource()], 'the raw archive transport source changed during execution');
+  return {...receipt, transportSources: plan.transportSources};
 }

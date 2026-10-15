@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 import {existsSync, mkdirSync, readFileSync, writeFileSync} from 'node:fs';
 import {dirname, join} from 'node:path';
 import test from 'node:test';
-import {requireOriginalLinkRawPlanning, originalLinkRawNativeMode, planOriginalLinkRawNative, runOriginalLinkRawNative, verifyOriginalLinkRawNativeModel} from './raw-native-observations.mjs';
+import {requireOriginalLinkRawPlanning, originalLinkRawNativeMode, planOriginalLinkRawNative, runOriginalLinkRawNative, runOriginalLinkRawPlanningPhases, verifyOriginalLinkRawNativeModel} from './raw-native-observations.mjs';
 import {readStructuredDataLino, structuredDataToLino} from '../../js/src/structured-data-links.js';
 import {readOriginalLinkRawHistoricalSources, verifyOriginalLinkRawSchemaSourceClosure} from './raw-schema-source-closure.mjs';
 
@@ -12,6 +12,51 @@ const schemaClosureFixture = () => ({
   receipt: readStructuredDataLino(readFileSync(new URL('./data/raw-schema-source-closure.lino', import.meta.url), 'utf8')),
   bytes: readFileSync(new URL('../../js/src/data/typed-program-links-schema.lino', import.meta.url)),
   historicalSources: readOriginalLinkRawHistoricalSources(readFileSync(new URL('./raw-native-observations.mjs', import.meta.url), 'utf8')),
+});
+
+test('raw planning phases finish exact source replay before allocating the observation matrix', () => {
+  const source = 'pub fn example()->&\'static str{"whole 🌍 source"}\r\nfn main(){}\r\n';
+  const prepared = Object.freeze({source, javascript: 'function example(){return "whole 🌍 source";}'});
+  const receipt = Object.freeze({scope: 'injected lifecycle receipt only'}), result = Object.freeze({scope: 'injected matrix only'}), order = [];
+  const actual = runOriginalLinkRawPlanningPhases({
+    prepareSource() {order.push('prepare');return prepared;},
+    replaySource(original) {
+      assert.equal(original, source);assert.deepEqual(Buffer.from(original), Buffer.from(source));
+      assert.deepEqual(order, ['prepare']);order.push('text replay', 'binary replay');return receipt;
+    },
+    buildMatrix(original, replayed) {
+      assert.strictEqual(original, prepared);assert.strictEqual(replayed, receipt);
+      assert.deepEqual(order, ['prepare', 'text replay', 'binary replay']);order.push('matrix');return result;
+    },
+  });
+  assert.strictEqual(actual, result);assert.deepEqual(order, ['prepare', 'text replay', 'binary replay', 'matrix']);
+});
+
+test('raw planning phases preserve failure identity and never allocate a matrix before successful replay', () => {
+  for (const failedPhase of ['prepare', 'text replay', 'binary replay', 'matrix']) {
+    const failure = new Error(failedPhase), order = [];
+    const record = phase => {order.push(phase);if (phase === failedPhase) throw failure;};
+    assert.throws(() => runOriginalLinkRawPlanningPhases({
+      prepareSource() {record('prepare');return Object.freeze({source: 'complete original bytes'});},
+      replaySource() {record('text replay');record('binary replay');return Object.freeze({scope: 'injected replay only'});},
+      buildMatrix() {record('matrix');},
+    }), error => error === failure);
+    assert.deepEqual(order, ['prepare', 'text replay', 'binary replay', 'matrix'].slice(0, ['prepare', 'text replay', 'binary replay', 'matrix'].indexOf(failedPhase) + 1));
+  }
+});
+
+test('raw planning phases cannot authorize a fabricated matrix for native or injected execution', () => {
+  const plan = runOriginalLinkRawPlanningPhases({
+    prepareSource: () => Object.freeze({source: 'injected bytes'}),
+    replaySource: () => Object.freeze({scope: 'injected replay only'}),
+    buildMatrix: () => Object.freeze({entries: []}),
+  });
+  let processes = 0;
+  assert.throws(() => runOriginalLinkRawNative(plan, {
+    environment: {CI: 'true', ORIGINAL_LINK_RAW_NATIVE: '1'},
+    spawn() {processes++;throw new Error('a fabricated lifecycle result cannot launch a process');},
+  }), /exact checked raw plan/u);
+  assert.equal(processes, 0);
 });
 
 test('the additive schema closure retains exact original source bytes and every historical producer binding', () => {
