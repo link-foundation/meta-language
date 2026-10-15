@@ -80,6 +80,13 @@ async function generateNativeOwnedLocalStateRules(){
   replace('if !((56_320f64..=57_343f64).contains(&next))','if !(56_320f64..=57_343f64).contains(&next)');
   for(const match of [...current.matchAll(/let (index_\d+) = \((index(?:_\d+)? \+ 1f64)\);/gu)])replace(match[0],'let '+match[1]+' = '+match[2]+';');
   for(const match of [...current.matchAll(/\((crate::translation::frontend_rules::ml_array::optional_at\([^\n]*\))\)\.unwrap_or/gu)])replace(match[0],match[1]+'.unwrap_or');
+  // The successful low-surrogate arm ends in continue. Its false completion
+  // therefore has exactly the same reachability after the if as in its else.
+  const completion='crate::translation::rust::owned_local_state_rules::MlAcceptRustOwnedLocalTextUnitsLoop1Result::MlAcceptRustOwnedLocalTextUnitsLoop1Return(false)';
+  const redundantElse=new RegExp('\\} else \\{\\n(\\s+)'+completion.replace(/[.*+?^${}()|[\]\\]/gu,'\\$&')+'\\n(\\s+)\\}', 'gu');
+  const completionArms=[...current.matchAll(redundantElse)];
+  if(completionArms.length!==1)throw new Error('expected the one owned-text low-surrogate false completion after continue');
+  replace(completionArms[0][0],'}\n'+completionArms[0][2]+completion);
   for(const match of [...current.matchAll(/^pub (?:const )?fn (\w+)/gmu)])replace(match[0],'/// Read a shared owned local text state decision.\n#[must_use]\n'+match[0]);
   writeFileSync(style,new DecoratorSet([{id:'rust-owned-local-state-library-style',level:'emitter',order:0,when:[['format','Rust']],actions}]).toLino());
  }
