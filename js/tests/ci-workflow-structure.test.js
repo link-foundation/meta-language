@@ -941,6 +941,12 @@ const ORIGINAL_LINK_PROJECTION_PACKAGE_STEPS = [
     '91b5611fcaabd12768c1c2238263ee06ae46d7d0bd5aded7154e4d9133efa1c6', 'source-models'],
 ];
 
+const ORIGINAL_LINK_SYMBOL_ORACLE_PACKAGE_STEPS = [
+  ['Run original link symbol native oracle contracts',
+    'node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/original-link-symbol-projection/native-observations.test.mjs',
+    '698b65e2a0045c584b8e7c6305069b501a57048e6cf53df6da91120f83b107e5', 'source-models'],
+];
+
 function packageStepSignature(step, includeGroup = false) {
   const fields = includeGroup ? step.text : step.text.replace(/ && matrix\.group == '[a-z-]+'/gu, '');
   const text = fields
@@ -1366,6 +1372,57 @@ test('exact original link identity native gates reject execution and receipt wea
   }
 });
 
+const ORIGINAL_LINK_SYMBOL_NATIVE_STEPS = [
+  ['Run complete original link symbol observations', 'db01f6b5227e91fbb3418482ef26703301cdc2629b0c184e19f2e66c543e4eeb'],
+  ['Retain complete original link symbol observations', 'b74c66243d9d077ba5d84277a4e37a7948eaec3ea08adfdaca024ba2f938e80f'],
+];
+
+function checkOriginalLinkSymbolNativeSteps(parsed) {
+  for (const [name, hash] of ORIGINAL_LINK_SYMBOL_NATIVE_STEPS) {
+    const steps = parsed.get('test').steps.filter(step => step.name === name);
+    assert.equal(steps.length, 1, `the complete symbol observation step executes once: ${name}`);
+    assert.equal(packageStepSignature(steps[0], true), hash, `complete symbol native step changed: ${name}`);
+  }
+}
+
+test('complete original symbol observations retain injected JavaScript contracts and mandatory native execution after JavaScript', () => {
+  checkPackageStepConservation(jobs('js.yml'));checkOriginalLinkSymbolNativeSteps(jobs('rust.yml'));
+  assert.ok(needs(jobs('ci.yml').get('rust')).includes('js'));
+  assert.match(read('experiments/original-link-symbol-projection/native-observations.test.mjs'), /if\(nativeEnabled\)test\(/u);
+  for (const file of ['native-observations.mjs', 'native-observations.test.mjs']) {
+    const source = `experiments/original-link-symbol-projection/${file}`, chain = nativeInputJobChain([source]);
+    assert.deepEqual(chain.selection, { rust: true, native_test_inputs_changed: true });assert.equal(chain.test, true);
+    assert.equal(nativeInputJobChain([source], { javascript: 'failure' }).outer, false);
+  }
+});
+
+test('complete original symbol observation gates reject native execution and receipt weakening', () => {
+  for (const [name] of ORIGINAL_LINK_SYMBOL_NATIVE_STEPS) {
+    const mutate = change => {
+      const parsed = jobs('rust.yml'), steps = parsed.get('test').steps, index = steps.findIndex(step => step.name === name);assert.ok(index >= 0);
+      change(steps, index);assert.throws(() => checkOriginalLinkSymbolNativeSteps(parsed), assert.AssertionError);
+    };
+    mutate((steps, index) => steps.splice(index, 1));mutate((steps, index) => steps.push({ ...steps[index] }));
+    for (const [from, to] of [
+      ['!cancelled()', 'success()'],
+      ["matrix.suite == 'translation'", "matrix.suite == 'remaining'"],
+      ["matrix.os == 'ubuntu-latest'", "matrix.os == 'windows-latest'"],
+      ...(name.startsWith('Run ') ? [
+        ["CI: 'true'", "CI: 'false'"], ["ORIGINAL_LINK_SYMBOL_NATIVE: '1'", "ORIGINAL_LINK_SYMBOL_NATIVE: '0'"],
+        ['--event test --', '--event build --'], ['node --test experiments/', 'node --test --test-name-pattern optional experiments/'],
+        ['working-directory: ${{ github.workspace }}', 'working-directory: rust'],
+        ['working-directory: ${{ github.workspace }}', 'continue-on-error: true\n        working-directory: ${{ github.workspace }}'],
+      ] : [
+        ['uses: actions/upload-artifact@v7', 'uses: actions/upload-artifact@v6'], ['${{ github.sha }}', '${{ github.ref }}'],
+        ['native-observations.lino', 'native-observations.json'], ['if-no-files-found: error', 'if-no-files-found: ignore'], ['retention-days: 7', 'retention-days: 0'],
+      ]),
+    ]) mutate((steps, index) => {assert.ok(steps[index].text.includes(from));steps[index].text = steps[index].text.replace(from, to);});
+  }
+  const parsed = jobs('js.yml'), step = parsed.get('package-checks').steps.find(step => step.name === ORIGINAL_LINK_SYMBOL_ORACLE_PACKAGE_STEPS[0][0]);
+  assert.ok(step);step.text = step.text.replace("ORIGINAL_LINK_SYMBOL_NATIVE: '0'", "ORIGINAL_LINK_SYMBOL_NATIVE: '1'");
+  assert.throws(() => checkPackageStepConservation(parsed), assert.AssertionError);
+});
+
 function checkOriginalLinkProjectionPaths(classifier) {
   const matches = new RegExp(classifier, 'u');
   for (const name of ['symbol', 'table']) {
@@ -1407,7 +1464,7 @@ function checkPackageStepConservation(parsed) {
     ...RUST_TEXT_VALUE_PROJECTION_GENERATOR_STEPS, ...RUST_TEXT_VALUE_PROJECTION_EXPERIMENT_STEPS,
     ...RUST_RAW_BINDING_IDENTIFIER_GENERATOR_STEPS, ...RUST_RAW_BINDING_IDENTIFIER_EXPERIMENT_STEPS,
     ...RUST_TEXT_CERTIFICATE_GENERATOR_STEPS, ...RUST_TEXT_CERTIFICATE_EXPERIMENT_STEPS,
-    ...OWNED_SOURCE_ADAPTER_PACKAGE_STEPS, ...ORIGINAL_LINK_PROJECTION_PACKAGE_STEPS];
+    ...OWNED_SOURCE_ADAPTER_PACKAGE_STEPS, ...ORIGINAL_LINK_PROJECTION_PACKAGE_STEPS, ...ORIGINAL_LINK_SYMBOL_ORACLE_PACKAGE_STEPS];
   const expected = new Map([
     ...ORIGINAL_PACKAGE_STEPS.map(([name, hash, owner]) => [name, { hash, owner }]),
     ...additions.map(([name, command, hash, owner]) => [name, { hash, owner, command, addition: true }]),
@@ -1499,7 +1556,7 @@ test('frozen package conservation rejects omissions, duplicates, reassignment an
 
 test('owned source adapters retain all bounded checks and refuse gate weakening', () => {
   checkPackageStepConservation(jobs('js.yml'));
-  for (const [name] of [...OWNED_SOURCE_ADAPTER_PACKAGE_STEPS, ...ORIGINAL_LINK_PROJECTION_PACKAGE_STEPS]) {
+  for (const [name] of [...OWNED_SOURCE_ADAPTER_PACKAGE_STEPS, ...ORIGINAL_LINK_PROJECTION_PACKAGE_STEPS, ...ORIGINAL_LINK_SYMBOL_ORACLE_PACKAGE_STEPS]) {
     const mutate = change => {
       const parsed = jobs('js.yml'), steps = parsed.get('package-checks').steps;
       const index = steps.findIndex(step => step.name === name);

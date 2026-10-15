@@ -994,6 +994,15 @@ jobs:
           SELF_TRANSLATION_CHECK_RUST: '0'
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/original-link-symbol-projection/projection.test.mjs
 
+      - name: Run original link symbol native oracle contracts
+        if: ${{ !cancelled() && matrix.group == 'source-models' }}
+        working-directory: js
+        env:
+          TRANSLATION_CHECK_RUST: '0'
+          SELF_TRANSLATION_CHECK_RUST: '0'
+          ORIGINAL_LINK_SYMBOL_NATIVE: '0'
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/original-link-symbol-projection/native-observations.test.mjs
+
       - name: Check original link table projection kernel
         if: ${{ !cancelled() && matrix.group == 'source-models' }}
         working-directory: js
