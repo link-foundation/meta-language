@@ -1,4 +1,4 @@
-// JavaScript-first raw string decisions; native generation follows the batch freeze.
+// Generate the frozen shared raw string decisions and their native library ABI.
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { readProjectData, checkProjectData, writeProjectData } from './project-data.mjs';
@@ -93,9 +93,90 @@ const source = '// Generated from the shared linked Rust raw string literal poli
 const javascript = new URL('../src/translation/rust-raw-string-rules.js', import.meta.url);
 if (process.argv.includes('--check')) assert.equal(readFileSync(javascript, 'utf8'), source, 'Rust raw-string JavaScript decisions are fresh');
 else writeFileSync(javascript, source);
-// Check the actual dependency and kernel as one portable program. This phase
-// intentionally writes no native module, native policy copy or Rust styles.
+// Check the actual dependencies and kernel as one portable program.
 const shared = readFileSync(new URL('../src/translation/rust-string-rules.js', import.meta.url), 'utf8');
 const scalars = readFileSync(new URL('../src/translation/source-text-byte-rules.js', import.meta.url), 'utf8');
-checkProgram(parseJavaScript(shared + '\n' + scalars + '\n' + source.replace(dependency, '')));
+const checked = checkProgram(parseJavaScript(shared + '\n' + scalars + '\n' + source.replace(dependency, '')));
 console.log('Rust raw strings: checked original-source decoder with shared CRLF decisions');
+
+if (!process.argv.includes('--javascript-only')) {
+  const { DecoratorSet } = await import('../src/decorators.js');
+  const { emitRust } = await import('../src/translation/emit-rust.js');
+  const { formatProductRuleSource } = await import('./product-rule-style-corrections.mjs');
+  const { readSourceTextByteLibraryStyles, readSourceTextRustBlock } = await import('./source-text-byte-library-style.mjs');
+  const imported = new Set(checkProgram(parseJavaScript(shared + '\n' + scalars)).items.map(item => item.fullName));
+  const definitions = emitRust(checked).definitions;
+  assert.equal(definitions.length, checked.items.length, 'each actual checked declaration owns its emitted definition');
+  const raw = definitions.filter((_, index) => !imported.has(checked.items[index].fullName)).join('\n\n');
+  assert.ok(raw.includes('pub enum RustRawString {'), 'the actual translated raw-string result is present');
+  const provider = readFileSync(new URL('../../rust/src/translation/frontend_rules.rs', import.meta.url), 'utf8');
+  let adapted = raw.replaceAll('crate::read_rust_source_line_break_end', 'crate::translation::frontend_rules::read_rust_source_line_break_end')
+    .replaceAll('crate::read_source_text_scalar', 'crate::translation::source_text_byte_rules::read_source_text_scalar');
+  for (const match of [...adapted.matchAll(/crate::(?:RustRawString|MlDecodeRustRawString\w+|ml_decode_rust_raw_string_\w+)\b/gu)]) {
+    adapted = adapted.replaceAll(match[0], match[0].replace('crate::', 'crate::translation::lexer::raw_strings::'));
+  }
+  // These six optional comparisons have positive nonzero finite constants;
+  // bit equality has exactly the original Number equality for each constant.
+  const compared = [...adapted.matchAll(/match \(crate::ml_array::optional_at\([^\n]+?, (\d+)f64\) \{ \(Some\(ml_left\), ml_right\) => ml_left == ml_right/gu)]
+    .map(match => Number(match[1]));
+  assert.deepEqual(compared, [policy.prefixUnit, policy.quoteUnit, policy.delimiterUnit, policy.delimiterUnit, policy.quoteUnit, policy.carriageReturnUnit],
+    'the actual translated comparison constants retain their shared policy roles');
+  let comparisons = 0;
+  adapted = adapted.replace(/\(Some\(ml_left\), ml_right\) => ml_left == ml_right/gu, () => {
+    comparisons += 1;
+    return '(Some(ml_left), ml_right) => ml_left.to_bits() == ml_right.to_bits()';
+  });
+  assert.equal(comparisons, 6, 'every actual optional raw delimiter comparison is represented');
+  for (const value of [policy.prefixUnit, policy.delimiterUnit, policy.quoteUnit, policy.carriageReturnUnit]) {
+    assert.ok(value > 0 && Number.isFinite(value), 'delimiter bit comparisons use positive finite nonzero constants');
+  }
+  // Both arithmetic tests preserve unordered NaN and signed-zero behavior.
+  assert.ok(adapted.includes('(((start % 1f64)) != (0f64))'));
+  adapted = adapted.replace('(((start % 1f64)) != (0f64))', '!matches!((start % 1f64).partial_cmp(&0f64), Some(std::cmp::Ordering::Equal))');
+  assert.ok(adapted.includes('(matched_2 == delimiters)'));
+  adapted = adapted.replace('(matched_2 == delimiters)', 'matches!(matched_2.partial_cmp(&delimiters), Some(std::cmp::Ordering::Equal))');
+  adapted = adapted.replaceAll('mut delimiters: f64', 'delimiters: f64');
+  assert.ok(adapted.includes('ml_decode_rust_raw_string_loop6(mut units: Vec<f64>, mut opening: f64,'));
+  adapted = adapted.replace('ml_decode_rust_raw_string_loop6(mut units: Vec<f64>, mut opening: f64,', 'ml_decode_rust_raw_string_loop6(mut units: Vec<f64>, opening: f64,');
+  // A single-constructor continuation is the same destructuring binding.
+  const singleton = /match ml_s7\.clone\(\) \{\n([ \t]+)(crate::translation::lexer::raw_strings::MlDecodeRustRawStringLoop8Result::MlDecodeRustRawStringLoop8Done\(closing_2, matched_2\)) => \{([\s\S]*?)\n\1\}\n[ \t]+\}/u;
+  assert.match(adapted, singleton, 'the actual inner delimiter loop has its one constructor');
+  adapted = adapted.replace(singleton, 'let $2 = ml_s7;\n$3');
+  assert.ok(adapted.includes('RustRawString::Literal((opening + 1f64), cursor, closing_2)'));
+  adapted = adapted.replace('RustRawString::Literal((opening + 1f64), cursor, closing_2)', 'RustRawString::Literal(opening + 1f64, cursor, closing_2)');
+  const array = readSourceTextRustBlock(provider, 'mod', 'ml_array');
+  for (let pass = 0; pass < 2; pass += 1) {
+    const library = array + '\n\n' + adapted.replace('pub use crate::translation::frontend_rules::ml_array;', '')
+      .replaceAll('/// Evaluate the shared Unicode source-text byte model.\n#[must_use]\n', '');
+    const correction = new DecoratorSet([{ id: 'rust-raw-string-expression-style', level: 'emitter', order: 0,
+      when: [['format', 'Rust']], actions: readSourceTextByteLibraryStyles(library, provider) }]);
+    adapted = correction.decorate('emitter', { format: 'Rust', source: library }).source;
+  }
+  adapted = adapted.replaceAll('/// Evaluate the shared Unicode source-text byte model.', '/// Read the shared original-source Rust raw string model.');
+  for (const [from, to] of [
+    ['MlDecodeRustRawStringLoop6Done', 'Done'], ['MlDecodeRustRawStringLoop6Return', 'Return'],
+    ['MlDecodeRustRawStringJoin7Next', 'Next'], ['MlDecodeRustRawStringJoin7Return', 'Return'],
+    ['MlDecodeRustRawStringLoop8Done', 'Done'],
+  ]) adapted = adapted.replaceAll(from, to);
+  adapted = adapted.replaceAll('pub enum MlDecodeRustRawString', 'enum MlDecodeRustRawString')
+    .replaceAll('pub fn ml_decode_rust_raw_string_', 'fn ml_decode_rust_raw_string_');
+  assert.ok(!/Vec<|\.clone\(|\.to_vec\(|#\[(?:allow|expect)\b/u.test(adapted), 'the full cached source remains borrowed without copies or lint suppression');
+  assert.equal([...adapted.matchAll(/\bloop\s*\{/gu)].length, 3, 'all three actual scanning loops retain iterative lowering');
+  const stylesFile = new URL('../../parity/self-translation/rust-raw-string-rules-decorators.lino', import.meta.url);
+  const expected = new DecoratorSet([{ id: 'rust-raw-string-borrowed-library-style', level: 'emitter', order: 0,
+    when: [['format', 'Rust']], actions: [{ op: 'replace', field: 'source', from: raw, to: adapted }] }]).toLino();
+  if (process.argv.includes('--update-styles')) writeFileSync(stylesFile, expected);
+  else assert.equal(readFileSync(stylesFile, 'utf8'), expected, 'Rust raw string library adaptations are fresh');
+  const decorated = DecoratorSet.fromLino(readFileSync(stylesFile, 'utf8')).decorate('emitter', { format: 'Rust', source: raw }).source;
+  const generated = '// Generated through the checked JavaScript Rust raw string decoder. Do not edit.\n' + formatProductRuleSource(decorated);
+  assert.ok(generated.split('\n').length <= 1000, 'the native raw-string module remains bounded');
+  const native = new URL('../../rust/src/translation/lexer/raw_strings.rs', import.meta.url);
+  const copy = new URL('../../rust/src/data/rust-raw-string-literals.lino', import.meta.url);
+  if (process.argv.includes('--check')) {
+    assert.equal(readFileSync(native, 'utf8'), generated, 'the native Rust raw-string decoder is fresh');
+    assert.ok(readFileSync(copy).equals(readFileSync(policyFile)), 'the native raw-string policy copy is identical');
+  } else {
+    writeFileSync(native, generated);
+    writeFileSync(copy, readFileSync(policyFile));
+  }
+}
