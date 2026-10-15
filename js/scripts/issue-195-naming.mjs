@@ -21059,7 +21059,99 @@ const ARCHIVE_RELOAD_NAME_INVENTORIES=ARCHIVE_RELOAD_NAME_BINDINGS.map(({invento
  extract:(text,file)=>files[file].filter(({name})=>text.includes(name)).map(({name})=>normalizeArchiveLifecycleName(name)),
  recordOf:name=>Object.values(files).flat().find(entry=>normalizeArchiveLifecycleName(entry.name)===name).id,
 }));
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES]);
+// Bounded native tree projection preservation and derived span cache meanings.
+const PROJECTION_MEMORY_NAME_BINDINGS=[
+  {
+    "inventory": "native projection derived span caches",
+    "files": {
+      "js/src/native-grammar-parser.js": [
+        {
+          "name": "spans",
+          "id": "repository.native-projection-node-span-cache"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "bounded native projection control operations",
+    "files": {
+      "js/tests/native-tree-projection-memory.test.js": [
+        {
+          "name": "extractNativeProjection",
+          "id": "repository.extract-native-projection-control-source"
+        },
+        {
+          "name": "readProjectionBaseline",
+          "id": "repository.read-frozen-native-projection-baseline"
+        },
+        {
+          "name": "observeNativeProjection",
+          "id": "repository.observe-bounded-native-projection"
+        },
+        {
+          "name": "createProjectionControlTree",
+          "id": "repository.create-native-projection-control-tree"
+        },
+        {
+          "name": "freezeProjectionControl",
+          "id": "repository.freeze-native-projection-control"
+        },
+        {
+          "name": "leaf",
+          "id": "repository.create-native-projection-control-leaf"
+        },
+        {
+          "name": "branch",
+          "id": "repository.create-native-projection-control-branch"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "native projection control data and metrics",
+    "files": {
+      "js/tests/native-tree-projection-memory.test.js": [
+        {
+          "name": "controls",
+          "id": "repository.native-projection-controls"
+        },
+        {
+          "name": "hoistCalls",
+          "id": "repository.native-normalization-invocation-count"
+        },
+        {
+          "name": "spanCalls",
+          "id": "repository.native-span-invocation-count"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "native projection preservation and cost checks",
+    "files": {
+      "js/tests/native-tree-projection-memory.test.js": [
+        {
+          "name": "native tree projection preserves frozen controls with bounded normalization and span visits",
+          "id": "repository.check-native-projection-preservation-and-visits"
+        },
+        {
+          "name": "native parsing retains frozen projected trees for small Rust JavaScript and JavaScript Object Notation sources",
+          "id": "repository.check-small-native-language-projection"
+        },
+        {
+          "name": "native projection controls reject changed baseline source and false provenance",
+          "id": "repository.check-native-projection-baseline-provenance"
+        }
+      ]
+    }
+  }
+];
+const PROJECTION_MEMORY_NAME_INVENTORIES=PROJECTION_MEMORY_NAME_BINDINGS.map(({inventory,files})=>({
+ inventory,files:Object.keys(files),
+ extract:(text,file)=>files[file].filter(({name})=>text.includes(name)).map(({name})=>normalizeArchiveLifecycleName(name)),
+ recordOf:name=>Object.values(files).flat().find(entry=>normalizeArchiveLifecycleName(entry.name)===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
