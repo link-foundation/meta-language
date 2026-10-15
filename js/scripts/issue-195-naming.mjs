@@ -847,7 +847,7 @@ const BASE_NAME_INVENTORIES = Object.freeze([
   },
   {
     inventory: 'Rust source model parser entry points',
-    files: ['js/src/translation/rust.js', 'rust/src/translation/rust.rs'],
+    files: ['js/src/translation/rust.js', 'rust/src/translation/rust/source_profiles.rs'],
     extract: (text) => captures(text, /^(?:export function|pub(?:\(crate\))? fn) (parseRust|parse_rust|parse_rust_with_array_result_model|parse_rust_with_completion_model|parse_rust_with_source_models|parse_rust_with_source_signature_model|parse_rust_with_source_profiles|parse_rust_with_scalar_loop_model|parse_rust_with_primitive_owner_model|parse_rust_with_loop_profiles|parse_rust_with_empty_option_source_model|parse_rust_with_type_namespace_model)\(/gmu)
       .map(name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase()),
     recordOf: () => 'translation.parse-rust-source-models',
@@ -2250,7 +2250,971 @@ const RESOLVED_SOURCE_NAME_INVENTORIES = RESOLVED_SOURCE_NAME_BINDINGS.map(({inv
   extract: (text, file) => files[file].filter(({name}) => new RegExp('\\b' + name + '\\b', 'u').test(text)).map(({name}) => normalizeResolvedSourceName(name)),
   recordOf: name => Object.values(files).flat().find(binding => normalizeResolvedSourceName(binding.name) === name).id,
 }));
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES]);
+// Additive source bindings for paired owned text, pure Unit calls and source span numbers.
+const VALUE_SOURCE_NAME_BINDINGS = [
+  {
+    "inventory": "owned Rust local text decisions",
+    "files": {
+      "js/src/translation/rust-owned-local-state-rules.js": [
+        {
+          "name": "acceptRustOwnedLocalStateModel",
+          "id": "translation.accept-rust-owned-local-state-model"
+        },
+        {
+          "name": "acceptRustOwnedLocalValueType",
+          "id": "translation.accept-rust-owned-local-value-type"
+        },
+        {
+          "name": "acceptRustOwnedLocalExpression",
+          "id": "translation.accept-rust-owned-local-expression"
+        },
+        {
+          "name": "acceptRustOwnedLocalBinaryOperation",
+          "id": "translation.accept-rust-owned-local-binary-operation"
+        },
+        {
+          "name": "acceptRustOwnedLocalSourceOperation",
+          "id": "translation.accept-rust-owned-local-source-operation"
+        },
+        {
+          "name": "acceptRustOwnedLocalContainer",
+          "id": "translation.accept-rust-owned-local-container"
+        },
+        {
+          "name": "acceptRustOwnedLocalRecordValue",
+          "id": "translation.accept-rust-owned-local-record-value"
+        },
+        {
+          "name": "acceptRustOwnedLocalSourceSpan",
+          "id": "translation.accept-rust-owned-local-source-span"
+        },
+        {
+          "name": "acceptRustOwnedLocalTextUnits",
+          "id": "translation.accept-rust-owned-local-text-units"
+        }
+      ],
+      "rust/src/translation/rust/owned_local_state_rules.rs": [
+        {
+          "name": "accept_rust_owned_local_state_model",
+          "id": "translation.accept-rust-owned-local-state-model"
+        },
+        {
+          "name": "accept_rust_owned_local_value_type",
+          "id": "translation.accept-rust-owned-local-value-type"
+        },
+        {
+          "name": "accept_rust_owned_local_expression",
+          "id": "translation.accept-rust-owned-local-expression"
+        },
+        {
+          "name": "accept_rust_owned_local_binary_operation",
+          "id": "translation.accept-rust-owned-local-binary-operation"
+        },
+        {
+          "name": "accept_rust_owned_local_source_operation",
+          "id": "translation.accept-rust-owned-local-source-operation"
+        },
+        {
+          "name": "accept_rust_owned_local_container",
+          "id": "translation.accept-rust-owned-local-container"
+        },
+        {
+          "name": "accept_rust_owned_local_record_value",
+          "id": "translation.accept-rust-owned-local-record-value"
+        },
+        {
+          "name": "accept_rust_owned_local_source_span",
+          "id": "translation.accept-rust-owned-local-source-span"
+        },
+        {
+          "name": "accept_rust_owned_local_text_units",
+          "id": "translation.accept-rust-owned-local-text-units"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned Rust local text source operations",
+    "files": {
+      "js/src/translation/rust-owned-local-state-rules.js": [
+        {
+          "name": "renderRustOwnedLocalTextInput",
+          "id": "translation.render-rust-owned-local-text-input"
+        },
+        {
+          "name": "acceptRustOwnedLocalTextInput",
+          "id": "translation.accept-rust-owned-local-text-input"
+        }
+      ],
+      "rust/src/translation/rust/owned_local_state_rules.rs": [
+        {
+          "name": "render_rust_owned_local_text_input",
+          "id": "translation.render-rust-owned-local-text-input"
+        }
+      ],
+      "js/src/translation/rust-owned-local-state.js": [
+        {
+          "name": "checkRustOwnedLocalStateContainers",
+          "id": "translation.check-rust-owned-local-state-containers"
+        },
+        {
+          "name": "checkRustOwnedLocalStateRecordShapes",
+          "id": "translation.check-rust-owned-local-state-record-shapes"
+        },
+        {
+          "name": "ownedLocalType",
+          "id": "translation.check-rust-owned-local-value-type"
+        },
+        {
+          "name": "ownedLocalPair",
+          "id": "translation.check-rust-owned-local-pair-type"
+        },
+        {
+          "name": "ownedLocalPosition",
+          "id": "translation.check-rust-owned-local-source-position"
+        },
+        {
+          "name": "prepareRustOwnedLocalStateProof",
+          "id": "translation.prepare-rust-owned-local-state-proof"
+        },
+        {
+          "name": "checkRustOwnedLocalStateProof",
+          "id": "translation.check-rust-owned-local-state-proof"
+        },
+        {
+          "name": "bodyRecords",
+          "id": "translation.read-rust-owned-local-body-records"
+        }
+      ],
+      "rust/src/translation/owned_local_state.rs": [
+        {
+          "name": "owned_local_type",
+          "id": "translation.check-rust-owned-local-value-type"
+        },
+        {
+          "name": "value_type",
+          "id": "translation.check-rust-owned-local-value-type"
+        },
+        {
+          "name": "owned_local_pair",
+          "id": "translation.check-rust-owned-local-pair-type"
+        },
+        {
+          "name": "pair_type",
+          "id": "translation.check-rust-owned-local-pair-type"
+        },
+        {
+          "name": "owned_local_position",
+          "id": "translation.check-rust-owned-local-source-position"
+        },
+        {
+          "name": "prepare_owned_local_state_proof",
+          "id": "translation.prepare-rust-owned-local-state-proof"
+        },
+        {
+          "name": "validate_owned_local_state",
+          "id": "translation.check-rust-owned-local-state-proof"
+        },
+        {
+          "name": "validate_owned_local_state_records",
+          "id": "translation.check-rust-owned-local-state-proof"
+        },
+        {
+          "name": "policy",
+          "id": "translation.read-rust-owned-local-state-policy"
+        },
+        {
+          "name": "same_order",
+          "id": "translation.compare-rust-owned-local-record-order"
+        },
+        {
+          "name": "read_source_offset",
+          "id": "translation.read-rust-owned-local-source-offset"
+        }
+      ],
+      "rust/src/translation/owned_local_state/records.rs": [
+        {
+          "name": "prepare",
+          "id": "translation.prepare-rust-owned-local-state-proof"
+        },
+        {
+          "name": "collect",
+          "id": "translation.read-rust-owned-local-body-records"
+        },
+        {
+          "name": "visit",
+          "id": "translation.read-rust-owned-local-body-records"
+        }
+      ],
+      "rust/src/translation/owned_local_state/validation.rs": [
+        {
+          "name": "validate",
+          "id": "translation.check-rust-owned-local-state-proof"
+        }
+      ],
+      "js/src/translation/rust-owned-local-state-reader.js": [
+        {
+          "name": "readRustOwnedLocalStateBody",
+          "id": "translation.read-rust-owned-local-state-body"
+        },
+        {
+          "name": "mergeAvailability",
+          "id": "translation.merge-rust-owned-local-value-availability"
+        }
+      ],
+      "rust/src/translation/rust/owned_local_state.rs": [
+        {
+          "name": "read_owned_local_state_body",
+          "id": "translation.read-rust-owned-local-state-body"
+        },
+        {
+          "name": "merge_availability",
+          "id": "translation.merge-rust-owned-local-value-availability"
+        },
+        {
+          "name": "require_owned_local_indirection",
+          "id": "translation.require-rust-owned-local-indirection-proof"
+        },
+        {
+          "name": "read_owned_local_copy",
+          "id": "translation.read-rust-owned-local-copy"
+        },
+        {
+          "name": "require_owned_local_program",
+          "id": "translation.require-rust-owned-local-program"
+        },
+        {
+          "name": "binding_expression",
+          "id": "translation.create-rust-owned-local-binding-expression"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned Rust local text checked body operations",
+    "files": {
+      "rust/src/translation/owned_local_state/expression.rs": [
+        {
+          "name": "expression",
+          "id": "translation.check-rust-owned-local-expression"
+        },
+        {
+          "name": "read",
+          "id": "translation.check-rust-owned-local-read"
+        },
+        {
+          "name": "binding",
+          "id": "translation.check-rust-owned-local-binding"
+        },
+        {
+          "name": "tuple_index",
+          "id": "translation.check-rust-owned-local-tuple-index"
+        },
+        {
+          "name": "literal",
+          "id": "translation.check-rust-owned-local-literal"
+        }
+      ],
+      "rust/src/translation/rust/owned_local_state/syntax.rs": [
+        {
+          "name": "owned_local_raw_expression",
+          "id": "translation.read-rust-owned-local-raw-expression"
+        },
+        {
+          "name": "owned_local_pattern",
+          "id": "translation.read-rust-owned-local-pattern"
+        },
+        {
+          "name": "owned_local_pattern_name",
+          "id": "translation.read-rust-owned-local-pattern-name"
+        },
+        {
+          "name": "owned_local_pattern_at_depth",
+          "id": "translation.read-rust-owned-local-pattern-at-depth"
+        },
+        {
+          "name": "owned_local_syntax_block",
+          "id": "translation.read-rust-owned-local-syntax-block"
+        },
+        {
+          "name": "owned_local_statements",
+          "id": "translation.read-rust-owned-local-statements"
+        }
+      ],
+      "rust/src/translation/rust/owned_local_state/lowering.rs": [
+        {
+          "name": "sequence",
+          "id": "translation.lower-rust-owned-local-sequence"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned Rust local text source expression lowering",
+    "files": {
+      "rust/src/translation/rust/owned_local_state/expressions.rs": [
+        {
+          "name": "reference",
+          "id": "translation.read-rust-owned-local-value-reference"
+        },
+        {
+          "name": "expression",
+          "id": "translation.lower-rust-owned-local-expression"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned Rust local text record shape operations",
+    "files": {
+      "rust/src/translation/owned_local_state/shapes.rs": [
+        {
+          "name": "validate",
+          "id": "translation.check-rust-owned-local-state-record-shapes"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned Rust local text linked order operations",
+    "files": {
+      "rust/src/typed_program_links/codec_owned_local_state.rs": [
+        {
+          "name": "validate_order",
+          "id": "translation.validate-owned-local-state-field-order"
+        },
+        {
+          "name": "prepare_order",
+          "id": "translation.prepare-owned-local-state-field-order"
+        },
+        {
+          "name": "prepare_decoded_order",
+          "id": "translation.prepare-decoded-owned-local-state-order"
+        },
+        {
+          "name": "validate_original_shapes",
+          "id": "translation.validate-owned-local-state-original-shapes"
+        },
+        {
+          "name": "compare_policy_order",
+          "id": "translation.compare-owned-local-state-policy-order"
+        },
+        {
+          "name": "compare_occurrence_span_order",
+          "id": "translation.compare-owned-local-state-occurrence-order"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned Rust local text fixture and rule generators",
+    "files": {
+      "experiments/generate-rust-owned-local-state-fixture.mjs": [
+        {
+          "name": "rustOwnedLocalStateFixture",
+          "id": "repository.create-rust-owned-local-state-fixture"
+        }
+      ],
+      "experiments/generate-rust-owned-local-container-fixture.mjs": [
+        {
+          "name": "rustOwnedLocalContainerFixture",
+          "id": "repository.create-rust-owned-local-container-fixture"
+        },
+        {
+          "name": "readRustOwnedLocalContainerOwner",
+          "id": "repository.read-rust-owned-local-container-fixture-owner"
+        },
+        {
+          "name": "applyRustOwnedLocalContainerMutation",
+          "id": "repository.apply-rust-owned-local-container-fixture-mutation"
+        }
+      ],
+      "experiments/generate-rust-owned-local-source-operation-fixture.mjs": [
+        {
+          "name": "rustOwnedLocalSourceOperationFixture",
+          "id": "repository.create-rust-owned-local-source-operation-fixture"
+        }
+      ],
+      "experiments/rust-owned-local-authentic-source.mjs": [
+        {
+          "name": "withRustOwnedLocalAuthenticSource",
+          "id": "repository.read-authentic-owned-local-rust-source"
+        }
+      ],
+      "experiments/generate-rust-owned-local-state-rules.mjs": [
+        {
+          "name": "rustOwnedLocalStatePortableRules",
+          "id": "repository.generate-rust-owned-local-portable-rules"
+        },
+        {
+          "name": "rustOwnedLocalStateRules",
+          "id": "repository.generate-rust-owned-local-state-rules"
+        },
+        {
+          "name": "generateNativeOwnedLocalStateRules",
+          "id": "repository.generate-native-owned-local-state-rules"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned Rust local text model selections",
+    "files": {
+      "js/src/translation/rust.js": [
+        {
+          "name": "localValueStateModel",
+          "id": "translation.rust-owned-local-state-model-option"
+        }
+      ],
+      "rust/src/translation/rust.rs": [
+        {
+          "name": "local_value_state_model",
+          "id": "translation.rust-owned-local-state-model-option"
+        },
+        {
+          "name": "local_value_state",
+          "id": "translation.rust-owned-local-state-model-option"
+        }
+      ],
+      "js/src/typed-program-links.js": [
+        {
+          "name": "rustOwnedLocalStateModel",
+          "id": "translation.typed-program-rust-owned-local-state-model-option"
+        }
+      ],
+      "js/src/index.d.ts": [
+        {
+          "name": "rustOwnedLocalStateModel",
+          "id": "translation.typed-program-rust-owned-local-state-model-option"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "owned local text source proof roles",
+    "files": {
+      "js/src/typed-program-checked-projection.js": [
+        {
+          "name": "sourceLocalState",
+          "id": "translation.function-source-owned-local-state-proof-field"
+        }
+      ],
+      "rust/src/translation/ir/declarations.rs": [
+        {
+          "name": "source_local_state",
+          "id": "translation.function-source-owned-local-state-proof-field"
+        }
+      ],
+      "rust/src/translation/surface.rs": [
+        {
+          "name": "source_local_state",
+          "id": "translation.function-source-owned-local-state-proof-field"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "closed Rust pure Unit source decisions",
+    "files": {
+      "js/src/translation/rust-pure-unit-call-rules.js": [
+        {
+          "name": "acceptRustPureUnitCallModel",
+          "id": "translation.accept-rust-pure-unit-call-model"
+        },
+        {
+          "name": "acceptRustPureUnitNameCharacter",
+          "id": "translation.accept-rust-pure-unit-name-character"
+        },
+        {
+          "name": "acceptRustPureUnitName",
+          "id": "translation.accept-rust-pure-unit-name"
+        },
+        {
+          "name": "acceptRustPureUnitHeaderForm",
+          "id": "translation.accept-rust-pure-unit-header-form"
+        },
+        {
+          "name": "acceptRustPureUnitBodyForm",
+          "id": "translation.accept-rust-pure-unit-body-form"
+        },
+        {
+          "name": "acceptRustPureUnitPathForm",
+          "id": "translation.accept-rust-pure-unit-path-form"
+        },
+        {
+          "name": "acceptRustPureUnitContext",
+          "id": "translation.accept-rust-pure-unit-context"
+        },
+        {
+          "name": "acceptRustPureUnitVisibility",
+          "id": "translation.accept-rust-pure-unit-visibility"
+        },
+        {
+          "name": "acceptRustPureUnitContainer",
+          "id": "translation.accept-rust-pure-unit-container"
+        },
+        {
+          "name": "acceptRustPureUnitSourceOffset",
+          "id": "translation.accept-rust-pure-unit-source-offset"
+        }
+      ],
+      "rust/src/translation/rust/pure_unit_call_rules.rs": [
+        {
+          "name": "accept_rust_pure_unit_call_model",
+          "id": "translation.accept-rust-pure-unit-call-model"
+        },
+        {
+          "name": "accept_rust_pure_unit_name_character",
+          "id": "translation.accept-rust-pure-unit-name-character"
+        },
+        {
+          "name": "accept_rust_pure_unit_name",
+          "id": "translation.accept-rust-pure-unit-name"
+        },
+        {
+          "name": "accept_rust_pure_unit_header_form",
+          "id": "translation.accept-rust-pure-unit-header-form"
+        },
+        {
+          "name": "accept_rust_pure_unit_body_form",
+          "id": "translation.accept-rust-pure-unit-body-form"
+        },
+        {
+          "name": "accept_rust_pure_unit_path_form",
+          "id": "translation.accept-rust-pure-unit-path-form"
+        },
+        {
+          "name": "accept_rust_pure_unit_context",
+          "id": "translation.accept-rust-pure-unit-context"
+        },
+        {
+          "name": "accept_rust_pure_unit_visibility",
+          "id": "translation.accept-rust-pure-unit-visibility"
+        },
+        {
+          "name": "accept_rust_pure_unit_container",
+          "id": "translation.accept-rust-pure-unit-container"
+        },
+        {
+          "name": "accept_rust_pure_unit_source_offset",
+          "id": "translation.accept-rust-pure-unit-source-offset"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "closed Rust pure Unit source operations",
+    "files": {
+      "js/src/translation/rust-pure-unit-calls.js": [
+        {
+          "name": "readRustPureUnitItemContext",
+          "id": "translation.read-rust-pure-unit-item-context"
+        },
+        {
+          "name": "readRustPureUnitFunction",
+          "id": "translation.read-rust-pure-unit-function"
+        },
+        {
+          "name": "readRustPureUnitMain",
+          "id": "translation.read-rust-pure-unit-main"
+        },
+        {
+          "name": "finishRustPureUnitSource",
+          "id": "translation.finish-rust-pure-unit-source"
+        },
+        {
+          "name": "checkRustPureUnitCalls",
+          "id": "translation.check-rust-pure-unit-calls"
+        },
+        {
+          "name": "equalRustPureUnitSourceSpans",
+          "id": "translation.equal-rust-pure-unit-source-spans"
+        },
+        {
+          "name": "nameAccepted",
+          "id": "translation.check-rust-pure-unit-source-name"
+        },
+        {
+          "name": "readName",
+          "id": "translation.read-rust-pure-unit-name"
+        },
+        {
+          "name": "readUnit",
+          "id": "translation.read-rust-pure-unit-token-pair"
+        },
+        {
+          "name": "range",
+          "id": "translation.create-rust-pure-unit-source-span"
+        }
+      ],
+      "rust/src/translation/rust/pure_unit_calls.rs": [
+        {
+          "name": "pure_unit_item_context",
+          "id": "translation.read-rust-pure-unit-item-context"
+        },
+        {
+          "name": "pure_unit_function",
+          "id": "translation.read-rust-pure-unit-function"
+        },
+        {
+          "name": "pure_unit_main",
+          "id": "translation.read-rust-pure-unit-main"
+        },
+        {
+          "name": "finish_pure_unit_source",
+          "id": "translation.finish-rust-pure-unit-source"
+        },
+        {
+          "name": "pure_unit_attribute_guard",
+          "id": "translation.require-rust-pure-unit-source-attributes"
+        },
+        {
+          "name": "ordinary_name",
+          "id": "translation.check-rust-pure-unit-source-name"
+        },
+        {
+          "name": "pure_unit_name",
+          "id": "translation.read-rust-pure-unit-name"
+        },
+        {
+          "name": "pure_unit_token_pair",
+          "id": "translation.read-rust-pure-unit-token-pair"
+        },
+        {
+          "name": "actual_span",
+          "id": "translation.create-rust-pure-unit-source-span"
+        }
+      ],
+      "rust/src/translation/source_pure_unit_calls.rs": [
+        {
+          "name": "validate_source_pure_unit_calls",
+          "id": "translation.check-rust-pure-unit-calls"
+        },
+        {
+          "name": "validate_pure_unit_records",
+          "id": "translation.check-rust-pure-unit-calls"
+        },
+        {
+          "name": "validate_pure_unit_declaration_record",
+          "id": "translation.validate-rust-pure-unit-declaration-record"
+        },
+        {
+          "name": "policy",
+          "id": "translation.read-rust-pure-unit-policy"
+        },
+        {
+          "name": "source_offset",
+          "id": "translation.read-rust-pure-unit-source-offset"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "closed Rust pure Unit model selections",
+    "files": {
+      "js/src/translation/rust.js": [
+        {
+          "name": "pureUnitCallModel",
+          "id": "translation.rust-pure-unit-call-model-option"
+        }
+      ],
+      "rust/src/translation/rust.rs": [
+        {
+          "name": "pure_unit_call_model",
+          "id": "translation.rust-pure-unit-call-model-option"
+        },
+        {
+          "name": "pure_unit_call",
+          "id": "translation.rust-pure-unit-call-model-option"
+        }
+      ],
+      "rust/src/translation/rust/source_profiles.rs": [
+        {
+          "name": "pure_unit_call",
+          "id": "translation.rust-pure-unit-call-model-option"
+        }
+      ],
+      "js/src/typed-program-links.js": [
+        {
+          "name": "rustPureUnitCallModel",
+          "id": "translation.typed-program-rust-pure-unit-call-model-option"
+        }
+      ],
+      "js/src/index.d.ts": [
+        {
+          "name": "rustPureUnitCallModel",
+          "id": "translation.typed-program-rust-pure-unit-call-model-option"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "closed Rust pure Unit source proof roles",
+    "files": {
+      "js/src/translation/rust-pure-unit-calls.js": [
+        {
+          "name": "sourcePureUnitCalls",
+          "id": "translation.program-source-pure-unit-call-model-field"
+        },
+        {
+          "name": "sourcePureUnit",
+          "id": "translation.function-source-pure-unit-proof-field"
+        },
+        {
+          "name": "sourcePureUnitCall",
+          "id": "translation.statement-source-pure-unit-call-proof-field"
+        }
+      ],
+      "rust/src/translation/ir.rs": [
+        {
+          "name": "source_pure_unit_calls",
+          "id": "translation.program-source-pure-unit-call-model-field"
+        },
+        {
+          "name": "source_pure_unit_call",
+          "id": "translation.statement-source-pure-unit-call-proof-field"
+        }
+      ],
+      "rust/src/translation/surface.rs": [
+        {
+          "name": "source_pure_unit_calls",
+          "id": "translation.program-source-pure-unit-call-model-field"
+        },
+        {
+          "name": "source_pure_unit",
+          "id": "translation.function-source-pure-unit-proof-field"
+        },
+        {
+          "name": "source_pure_unit_call",
+          "id": "translation.statement-source-pure-unit-call-proof-field"
+        }
+      ],
+      "rust/src/translation/ir/declarations.rs": [
+        {
+          "name": "source_pure_unit",
+          "id": "translation.function-source-pure-unit-proof-field"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "closed Rust pure Unit fixture generators",
+    "files": {
+      "js/scripts/generate-rust-pure-unit-call-fixtures.mjs": [
+        {
+          "name": "rustPureUnitCallFixture",
+          "id": "repository.create-rust-pure-unit-call-fixture"
+        },
+        {
+          "name": "applyPureUnitContainerMutation",
+          "id": "repository.apply-pure-unit-container-fixture-mutation"
+        }
+      ],
+      "js/scripts/generate-rust-public-pure-unit-call-fixtures.mjs": [
+        {
+          "name": "rustPublicPureUnitCallFixture",
+          "id": "repository.create-rust-public-pure-unit-call-fixture"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "shared source span numerical operations",
+    "files": {
+      "js/src/source-span-rules.js": [
+        {
+          "name": "acceptSourceSpanOffset",
+          "id": "translation.accept-source-span-offset"
+        },
+        {
+          "name": "acceptSourceSpanInterval",
+          "id": "translation.accept-source-span-interval"
+        }
+      ],
+      "rust/src/typed_program_links/source_span_rules.rs": [
+        {
+          "name": "accept_source_span_offset",
+          "id": "translation.accept-source-span-offset"
+        },
+        {
+          "name": "accept_source_span_interval",
+          "id": "translation.accept-source-span-interval"
+        }
+      ],
+      "js/src/source-spans.js": [
+        {
+          "name": "acceptSourceSpanRecord",
+          "id": "translation.accept-source-span-record"
+        },
+        {
+          "name": "validateSourceSpans",
+          "id": "translation.validate-source-spans"
+        }
+      ],
+      "rust/src/typed_program_links/source_spans.rs": [
+        {
+          "name": "read_source_span_offset",
+          "id": "translation.read-source-span-offset"
+        },
+        {
+          "name": "normalize_source_spans",
+          "id": "translation.normalize-source-spans"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "shared source span numerical policy",
+    "files": {
+      "js/src/source-spans.js": [
+        {
+          "name": "SOURCE_SPAN_POLICY",
+          "id": "translation.source-span-offset-policy"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "shared source span fixture generators",
+    "files": {
+      "js/scripts/generate-source-span-fixtures.mjs": [
+        {
+          "name": "sourceSpanNumberArchive",
+          "id": "repository.create-source-span-number-archive"
+        },
+        {
+          "name": "sourceSpanNumberFixture",
+          "id": "repository.create-source-span-number-fixture"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "native Rust source factory locations",
+    "files": {
+      "rust/src/translation/rust/source_profiles.rs": [
+        {
+          "name": "parse_rust",
+          "id": "translation.parse-rust-source-models"
+        },
+        {
+          "name": "parse_rust_with_array_result_model",
+          "id": "translation.parse-rust-source-models"
+        },
+        {
+          "name": "parse_rust_with_completion_model",
+          "id": "translation.parse-rust-source-models"
+        },
+        {
+          "name": "parse_rust_with_source_models",
+          "id": "translation.parse-rust-source-models"
+        },
+        {
+          "name": "parse_rust_with_source_signature_model",
+          "id": "translation.parse-rust-source-models"
+        },
+        {
+          "name": "parse_rust_with_source_profiles",
+          "id": "translation.parse-rust-source-models"
+        },
+        {
+          "name": "parse_rust_with_scalar_loop_model",
+          "id": "translation.parse-rust-source-models"
+        },
+        {
+          "name": "parse_rust_with_primitive_owner_model",
+          "id": "translation.parse-rust-source-models"
+        },
+        {
+          "name": "parse_rust_with_loop_profiles",
+          "id": "translation.parse-rust-source-models"
+        },
+        {
+          "name": "parse_rust_with_empty_option_source_model",
+          "id": "translation.parse-rust-source-models"
+        },
+        {
+          "name": "parse_rust_with_type_namespace_model",
+          "id": "translation.parse-rust-source-models"
+        },
+        {
+          "name": "parse_rust_with_pure_unit_call_model",
+          "id": "translation.parse-rust-source-models"
+        }
+      ],
+      "rust/src/translation/rust.rs": [
+        {
+          "name": "parse_rust_with_owned_local_state_model",
+          "id": "translation.parse-rust-source-models"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "native Rust typed source factory locations",
+    "files": {
+      "rust/src/typed_program_links.rs": [
+        {
+          "name": "create_typed_program_links_with_rust_owned_local_state_model",
+          "id": "translation.create-typed-program-links"
+        },
+        {
+          "name": "create_typed_program_links_with_rust_pure_unit_call_model",
+          "id": "translation.create-typed-program-links"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "extracted source import and external entities",
+    "files": {
+      "rust/src/translation/surface/externals.rs": [
+        {
+          "name": "SImport",
+          "id": "translation.source-module-import"
+        },
+        {
+          "name": "SImportName",
+          "id": "translation.source-import-name"
+        },
+        {
+          "name": "External",
+          "id": "translation.source-external-item"
+        },
+        {
+          "name": "ExternalParam",
+          "id": "translation.source-external-parameter"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "extracted source external operations",
+    "files": {
+      "rust/src/translation/surface/externals.rs": [
+        {
+          "name": "name",
+          "id": "translation.read-source-external-item-name"
+        },
+        {
+          "name": "signature",
+          "id": "translation.read-source-external-item-signature"
+        },
+        {
+          "name": "renamed",
+          "id": "translation.rename-source-external-item"
+        }
+      ]
+    }
+  }
+];
+const normalizeValueSourceName = name => name.replace(/([a-z])([A-Z])/gu, '$1-$2').replaceAll('_', '-').toLowerCase().replace(/^simport(?=-|$)/u,'source-import').replace(/^external-param$/u,'external-parameter');
+const VALUE_SOURCE_NAME_INVENTORIES = VALUE_SOURCE_NAME_BINDINGS.map(({inventory,files})=>({
+ inventory, files:Object.keys(files),
+ extract:(text,file)=>files[file].filter(({name})=>new RegExp('\\b'+name+'\\b','u').test(text)).map(({name})=>normalizeValueSourceName(name)),
+ recordOf:name=>Object.values(files).flat().find(binding=>normalizeValueSourceName(binding.name)===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
