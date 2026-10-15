@@ -756,6 +756,29 @@ const RUST_TEXT_CERTIFICATE_EXPERIMENT_STEPS = [
     'c6d370c7e06647c6ce0d2cf06c5cb9866084b5e0e426cfa66552cea87b67a481', 'source-models']
 ];
 
+const OWNED_SOURCE_ADAPTER_PACKAGE_STEPS = [
+  ['Check owned Rust text certificate overlay receipts',
+    'node ../experiments/rust-text-certificate-adapter/generate.mjs --check',
+    '02d73621214b349c2589547bcb283a2f2d32334756a1ecd84b2559d49ef52182', 'source-models'],
+  ['Check owned Rust raw binding certificate rules',
+    'node ../experiments/rust-raw-binding-certificate-adapter/generate-rules.mjs --check',
+    '13a97ec8398b85d38b0e97e166a1569da66eaf71b34b7af5aa9e9fdcf053fbb8', 'source-models'],
+  ['Check owned Rust raw binding overlay receipts',
+    'node ../experiments/rust-raw-binding-certificate-adapter/generate-overlay.mjs --check',
+    '6eab228a6f69af59e97ad1bb7c8f129c87ba0106b0e23ed9f8271c321ca5b591', 'source-models'],
+  ['Run owned Rust text and raw binding certificate adapters',
+    'node ../scripts/with-cache-cleanup.mjs --event test -- node --test ' +
+    '../experiments/rust-text-certificate-adapter/overlay-builder.test.mjs ' +
+    '../experiments/rust-text-certificate-adapter/overlay.test.mjs ' +
+    '../experiments/rust-text-certificate-adapter/model.test.mjs ' +
+    '../experiments/rust-text-certificate-adapter/raw-identity.test.mjs ' +
+    '../experiments/rust-raw-binding-certificate-adapter/model.test.mjs',
+    '88b05f1085040735263e8ae8592ab9f25630de62735435f370749437b545ac5b', 'source-models'],
+  ['Check complete Rust text certificate library packaging',
+    'node ../experiments/rust-text-certificate-library/generate.mjs --check',
+    'f3a126c1750b14af4d696d47b9b8e38c2db4c8f1bd99da0d19f37c3d31826adf', 'source-models'],
+];
+
 function packageStepSignature(step, includeGroup = false) {
   const fields = includeGroup ? step.text : step.text.replace(/ && matrix\.group == '[a-z-]+'/gu, '');
   const text = fields
@@ -786,6 +809,9 @@ test('the complete Rust text source oracle is mandatory after JavaScript and its
   assert.equal(classifier.replace(addition, '').replace('|experiments/rust-raw-binding-identifiers/', '')
     .replace('|experiments/rust-text-certificate/', '')
     .replace('|experiments/rust-raw-binding-certificate-adapter/', '')
+    .replace('|experiments/rust-text-certificate-adapter/', '')
+    .replace('|experiments/rust-text-certificate-library/', '')
+    .replace('|js/scripts/rust-library-packaging\\.mjs$', '')
     .replace('|experiments/source-native-observations\\.mjs$', ''),
     '^(rust/|parity/|docs/|scripts/|\\.github/workflows/(ci|rust)\\.yml$|\\.secretlintrc\\.json$)',
     'the native source selection preserves every existing Rust workflow trigger');
@@ -1065,7 +1091,8 @@ function checkPackageStepConservation(parsed) {
     ...RUST_RAW_STRING_AND_LITERAL_EDIT_GENERATOR_STEPS, ...OWNED_RUST_LITERAL_EDIT_EXPERIMENT_STEPS,
     ...RUST_TEXT_VALUE_PROJECTION_GENERATOR_STEPS, ...RUST_TEXT_VALUE_PROJECTION_EXPERIMENT_STEPS,
     ...RUST_RAW_BINDING_IDENTIFIER_GENERATOR_STEPS, ...RUST_RAW_BINDING_IDENTIFIER_EXPERIMENT_STEPS,
-    ...RUST_TEXT_CERTIFICATE_GENERATOR_STEPS, ...RUST_TEXT_CERTIFICATE_EXPERIMENT_STEPS];
+    ...RUST_TEXT_CERTIFICATE_GENERATOR_STEPS, ...RUST_TEXT_CERTIFICATE_EXPERIMENT_STEPS,
+    ...OWNED_SOURCE_ADAPTER_PACKAGE_STEPS];
   const expected = new Map([
     ...ORIGINAL_PACKAGE_STEPS.map(([name, hash, owner]) => [name, { hash, owner }]),
     ...additions.map(([name, command, hash, owner]) => [name, { hash, owner, command, addition: true }]),
@@ -1153,6 +1180,50 @@ test('frozen package conservation rejects omissions, duplicates, reassignment an
     const step = steps[index(steps)];
     step.text = step.text.replace('!cancelled()', 'success()');
   });
+});
+
+test('owned source adapters retain all bounded checks and refuse gate weakening', () => {
+  checkPackageStepConservation(jobs('js.yml'));
+  for (const [name] of OWNED_SOURCE_ADAPTER_PACKAGE_STEPS) {
+    const mutate = change => {
+      const parsed = jobs('js.yml'), steps = parsed.get('package-checks').steps;
+      const index = steps.findIndex(step => step.name === name);
+      assert.ok(index >= 0);
+      change(steps, index);
+      assert.throws(() => checkPackageStepConservation(parsed), assert.AssertionError);
+    };
+    mutate((steps, index) => steps.splice(index, 1));
+    mutate((steps, index) => steps.push({ ...steps[index] }));
+    for (const [from, to] of [
+      ['!cancelled()', 'success()'],
+      ["matrix.group == 'source-models'", "matrix.group == 'generated'"],
+      ['working-directory: js', 'working-directory: rust'],
+      ['working-directory: js', 'continue-on-error: true\n        working-directory: js'],
+      ...(name.startsWith('Run ') ? [
+        ["TRANSLATION_CHECK_RUST: '0'", "TRANSLATION_CHECK_RUST: '1'"],
+        ["SELF_TRANSLATION_CHECK_RUST: '0'", "SELF_TRANSLATION_CHECK_RUST: '1'"],
+        ['--event test --', '--event build --'],
+        ['node --test ', 'node --test --test-name-pattern optional '],
+      ] : [['--check', '--write']]),
+    ]) mutate((steps, index) => {
+      assert.ok(steps[index].text.includes(from));
+      steps[index].text = steps[index].text.replace(from, to);
+    });
+  }
+  const classifier = /rust_paths='([^']+)'/u.exec(workflow('ci.yml'))?.[1];
+  const matches = new RegExp(classifier, 'u');
+  for (const path of [
+    'experiments/rust-text-certificate-adapter/',
+    'experiments/rust-text-certificate-library/',
+    'js/scripts/rust-library-packaging\\.mjs$',
+  ]) assert.equal(classifier.split('|' + path).length, 2, 'the source path is selected once');
+  for (const file of [
+    'experiments/rust-text-certificate-adapter/model.mjs',
+    'experiments/rust-text-certificate-adapter/data/identity-transport.lino',
+    'experiments/rust-text-certificate-library/data/library.lino',
+    'js/scripts/rust-library-packaging.mjs',
+  ]) assert.ok(matches.test(file), file);
+  assert.ok(!matches.test('js/scripts/rust-library-packaging.mjs.extra'));
 });
 
 test('the final package gate requires all five partitions, all test groups and standalone report assertions', () => {
