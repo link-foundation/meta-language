@@ -8,3 +8,9 @@ The default parser retains its original refusals. Imports, arguments, arbitrary
 public interfaces, attributes, effects and the generated standard-library runtime
 wrapper require separate proofs. Rust surface and checked records gain optional
 owned source facets; native struct-literal callers must initialize the new fields.
+
+Selected source spans compare their labeled start and end offsets independently
+of record field order. Offsets are canonical nonnegative safe integers; negative
+zero and unsafe bounds refuse before source facts authorize emission. Primitive
+floating-point negative zero retains its existing value semantics. Other raw
+numeric spellings retain the existing codec boundary.
