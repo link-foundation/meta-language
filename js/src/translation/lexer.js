@@ -10,6 +10,7 @@ import { acceptRustCookedStringEscapePrefix, readRustAsciiEscapeValue } from './
 import { decodeRustUnicodeEscape } from './rust-unicode-escape-rules.js';
 import { acceptRustNumberDigitBoundary } from './rust-number-rules.js';
 import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
+import { acceptRustSourceWhitespace, acceptRustSourceByteOrderMark } from './rust-source-whitespace-rules.js';
 
 const OPERATORS = {
   JavaScript: [
@@ -50,7 +51,9 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
   while (index < source.length) {
     const char = source[index];
     if (braced && char === '}' && depth === 0) break;
-    if (/\s/u.test(char)) {
+    if (language === 'Rust'
+      ? acceptRustSourceWhitespace(source.charCodeAt(index)) || acceptRustSourceByteOrderMark(source.charCodeAt(index), index === 0)
+      : /\s/u.test(char)) {
       index += 1;
       continue;
     }
