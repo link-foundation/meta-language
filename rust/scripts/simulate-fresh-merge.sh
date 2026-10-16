@@ -44,6 +44,8 @@ if ! git merge --no-edit "${HEAD_SHA}"; then
 fi
 
 echo "Merge succeeded. Running checks on the merged tree..."
+export META_LANGUAGE_MERGE_BASE="${BASE_SHA}"
+export META_LANGUAGE_MERGE_HEAD="${HEAD_SHA}"
 
 # This repository is a Rust/JavaScript monorepo. Cargo commands must run from
 # the Rust package rather than the repository root.
@@ -57,6 +59,13 @@ npm ci --ignore-scripts
 node scripts/external-grammar-cache.mjs --all --materialize
 cd "${REPO_ROOT}/rust"
 
+# The Cargo host runner lists and partitions each real test executable while
+# preserving the existing Cargo invocation. Configure this same shell too.
+if [ -n "${META_LANGUAGE_SHARD_PROFILE:-}" ]; then
+  runner_configuration="$(node ../js/scripts/rust-test-shards.mjs --configure --shell)"
+  eval "${runner_configuration}"
+fi
+
 status=0
 echo "::group::cargo fmt --all -- --check"
 cargo fmt --all -- --check || status=1
@@ -66,20 +75,36 @@ echo "::group::cargo clippy --all-targets --all-features"
 cargo clippy --all-targets --all-features || status=1
 echo "::endgroup::"
 
+test_settings=(
+  --config 'profile.test.package.meta-language.opt-level=3'
+  --config 'profile.test.package.meta-language.debug-assertions=true'
+  --config 'profile.test.package.meta-language.overflow-checks=true'
+)
 echo "::group::cargo test --no-fail-fast --all-features"
 # Native parsing is also optimized in the installed formal-ai workload run.
 # Keep the full suite and its debug assertions; avoid timing it in an
 # unoptimized parser build and clean its linked binaries before cache saving.
-node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --no-fail-fast --all-features \
-  --config 'profile.test.package.meta-language.opt-level=3' \
-  --config 'profile.test.package.meta-language.debug-assertions=true' \
-  --config 'profile.test.package.meta-language.overflow-checks=true' || status=1
+node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --no-fail-fast --all-features --tests \
+  "${test_settings[@]}" || status=1
 echo "::endgroup::"
+
+# Cargo's default invocation previously included doctests. The first physical
+# cell retains all of them; the other cells partition only native harnesses.
+if [ "${META_LANGUAGE_SHARD_INDEX:-1}" = 1 ]; then
+  node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --no-fail-fast --all-features --doc \
+    "${test_settings[@]}" || status=1
+  node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --no-fail-fast --all-features --examples --no-run \
+    "${test_settings[@]}" || status=1
+fi
 
 if [ "${status}" -ne 0 ]; then
   echo "::error::Checks failed on the simulated merge with origin/${BASE_REF} even though they pass on the pull request head. This is a semantic merge conflict."
 fi
 
 node ../js/scripts/external-grammar-cache.mjs --clean-materialized || status=1
+if [ -n "${META_LANGUAGE_SHARD_PROFILE:-}" ]; then
+  if [ "${status}" -eq 0 ]; then partition_result=success; else partition_result=failure; fi
+  META_LANGUAGE_SHARD_RESULT="${partition_result}" node ../js/scripts/rust-test-shards.mjs --finish || status=1
+fi
 git checkout --force - >/dev/null 2>&1 || true
 exit "${status}"

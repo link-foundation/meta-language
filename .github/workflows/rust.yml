@@ -180,10 +180,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     concurrency:
-      group: rust-${{ github.ref }}-fresh-merge
+      group: rust-${{ github.ref }}-fresh-merge-${{ matrix.physical_shard }}
       cancel-in-progress: true
     needs: [detect-changes, check]
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true' && needs.check.result == 'success'
+    strategy:
+      fail-fast: false
+      matrix:
+        physical_shard: [1, 2, 3, 4, 5, 6, 7, 8]
+    env:
+      META_LANGUAGE_SHARD_PROFILE: fresh-merge
+      META_LANGUAGE_SHARD_PLATFORM: ubuntu-latest
+      META_LANGUAGE_SHARD_SUITE: all
+      META_LANGUAGE_SHARD_INDEX: ${{ matrix.physical_shard }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -213,6 +222,15 @@ jobs:
         env:
           GITHUB_BASE_REF: ${{ github.base_ref }}
         run: bash rust/scripts/simulate-fresh-merge.sh
+
+      - name: Retain authenticated fresh merge partition
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: rust-physical-fresh-merge-ubuntu-latest-all-${{ matrix.physical_shard }}-${{ github.sha }}
+          path: issue-195-artifacts/rust-physical-shards/
+          if-no-files-found: error
+          retention-days: 30
 
   # === CARGO.LOCK GUARD ===
   cargo-lock:
@@ -531,13 +549,13 @@ jobs:
   # outran the job's timeout on Windows. Each language's fixture cases and
   # run-time cases are two tests, so the two run side by side.
   test:
-    name: Test (${{ matrix.os }}, ${{ matrix.suite }})
+    name: Test (${{ matrix.os }}, ${{ matrix.logical_suite || matrix.suite }})
     runs-on: ${{ matrix.os }}
     # Cold Windows grammar builds exhausted the 15-minute job deadline while
     # tests were still running. Preserve every test and bound this job at 30.
     timeout-minutes: ${{ matrix.os == 'windows-latest' && matrix.suite == 'grammar' && 30 || 15 }}
     concurrency:
-      group: rust-${{ github.ref }}-test-${{ matrix.os }}-${{ matrix.suite }}
+      group: rust-${{ github.ref }}-test-${{ matrix.os }}-${{ matrix.suite }}-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}
       cancel-in-progress: true
     needs: [detect-changes, changelog, cargo-lock, check]
     defaults:
@@ -572,6 +590,146 @@ jobs:
             filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
           - suite: remaining
             filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
+          - suite: physical
+            os: ubuntu-latest
+            logical_suite: grammar
+            physical_shard: 2
+            filters: grammar_
+          - suite: physical
+            os: ubuntu-latest
+            logical_suite: grammar
+            physical_shard: 3
+            filters: grammar_
+          - suite: physical
+            os: ubuntu-latest
+            logical_suite: grammar
+            physical_shard: 4
+            filters: grammar_
+          - suite: physical
+            os: ubuntu-latest
+            logical_suite: translation
+            physical_shard: 2
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: ubuntu-latest
+            logical_suite: translation
+            physical_shard: 3
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: ubuntu-latest
+            logical_suite: translation
+            physical_shard: 4
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: ubuntu-latest
+            logical_suite: remaining
+            physical_shard: 2
+            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
+          - suite: physical
+            os: ubuntu-latest
+            logical_suite: remaining
+            physical_shard: 3
+            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
+          - suite: physical
+            os: ubuntu-latest
+            logical_suite: remaining
+            physical_shard: 4
+            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
+          - suite: physical
+            os: macos-latest
+            logical_suite: grammar
+            physical_shard: 2
+            filters: grammar_
+          - suite: physical
+            os: macos-latest
+            logical_suite: grammar
+            physical_shard: 3
+            filters: grammar_
+          - suite: physical
+            os: macos-latest
+            logical_suite: grammar
+            physical_shard: 4
+            filters: grammar_
+          - suite: physical
+            os: macos-latest
+            logical_suite: translation
+            physical_shard: 2
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: macos-latest
+            logical_suite: translation
+            physical_shard: 3
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: macos-latest
+            logical_suite: translation
+            physical_shard: 4
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: macos-latest
+            logical_suite: remaining
+            physical_shard: 2
+            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
+          - suite: physical
+            os: macos-latest
+            logical_suite: remaining
+            physical_shard: 3
+            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
+          - suite: physical
+            os: macos-latest
+            logical_suite: remaining
+            physical_shard: 4
+            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
+          - suite: physical
+            os: windows-latest
+            logical_suite: grammar
+            physical_shard: 2
+            filters: grammar_
+          - suite: physical
+            os: windows-latest
+            logical_suite: grammar
+            physical_shard: 3
+            filters: grammar_
+          - suite: physical
+            os: windows-latest
+            logical_suite: grammar
+            physical_shard: 4
+            filters: grammar_
+          - suite: physical
+            os: windows-latest
+            logical_suite: translation
+            physical_shard: 2
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: windows-latest
+            logical_suite: translation
+            physical_shard: 3
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: windows-latest
+            logical_suite: translation
+            physical_shard: 4
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: windows-latest
+            logical_suite: remaining
+            physical_shard: 2
+            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
+          - suite: physical
+            os: windows-latest
+            logical_suite: remaining
+            physical_shard: 3
+            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
+          - suite: physical
+            os: windows-latest
+            logical_suite: remaining
+            physical_shard: 4
+            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
+    env:
+      META_LANGUAGE_SHARD_PROFILE: test
+      META_LANGUAGE_SHARD_PLATFORM: ${{ matrix.os }}
+      META_LANGUAGE_SHARD_SUITE: ${{ matrix.logical_suite || matrix.suite }}
+      META_LANGUAGE_SHARD_INDEX: ${{ matrix.physical_shard || 1 }}
     steps:
       - uses: actions/checkout@v7
 
@@ -673,6 +831,10 @@ jobs:
 
       # Tests and doc tests run through the cleanup wrapper; examples are
       # only checked, not linked, so the target stays small.
+      - name: Configure actual native test partitions
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/rust-test-shards.mjs --configure
+
       - name: Run tests
         shell: bash
         env:
@@ -848,6 +1010,31 @@ jobs:
         shell: bash
         run: cargo check --examples --all-features
 
+      - name: Retain complete native process diagnostics
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: source-native-diagnostics-${{ matrix.os }}-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}-${{ github.sha }}
+          path: issue-195-artifacts/source-native-observations/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Seal complete native partition results
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        env:
+          META_LANGUAGE_SHARD_RESULT: ${{ job.status }}
+        run: node js/scripts/rust-test-shards.mjs --finish
+
+      - name: Retain authenticated native partition
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: rust-physical-test-${{ matrix.os }}-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}-${{ github.sha }}
+          path: issue-195-artifacts/rust-physical-shards/
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Remove the temporary external grammar inputs
         if: ${{ !cancelled() }}
         working-directory: ${{ github.workspace }}
@@ -924,11 +1111,11 @@ jobs:
   # its timeout, then merge the shards' reports, enforce the line coverage
   # floor on the merged report and upload it to Codecov.
   coverage:
-    name: Code Coverage (${{ matrix.suite }})
+    name: Code Coverage (${{ matrix.logical_suite || matrix.suite }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
     concurrency:
-      group: rust-${{ github.ref }}-coverage-${{ matrix.suite }}
+      group: rust-${{ github.ref }}-coverage-${{ matrix.suite }}-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}
       cancel-in-progress: true
     needs: [detect-changes, cargo-lock, check]
     defaults:
@@ -956,6 +1143,47 @@ jobs:
             filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
           - suite: remaining
             filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
+          - suite: physical
+            logical_suite: grammar
+            physical_shard: 2
+            filters: grammar_
+          - suite: physical
+            logical_suite: grammar
+            physical_shard: 3
+            filters: grammar_
+          - suite: physical
+            logical_suite: grammar
+            physical_shard: 4
+            filters: grammar_
+          - suite: physical
+            logical_suite: translation
+            physical_shard: 2
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            logical_suite: translation
+            physical_shard: 3
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            logical_suite: translation
+            physical_shard: 4
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            logical_suite: remaining
+            physical_shard: 2
+            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
+          - suite: physical
+            logical_suite: remaining
+            physical_shard: 3
+            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
+          - suite: physical
+            logical_suite: remaining
+            physical_shard: 4
+            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
+    env:
+      META_LANGUAGE_SHARD_PROFILE: coverage
+      META_LANGUAGE_SHARD_PLATFORM: ubuntu-latest
+      META_LANGUAGE_SHARD_SUITE: ${{ matrix.logical_suite || matrix.suite }}
+      META_LANGUAGE_SHARD_INDEX: ${{ matrix.physical_shard || 1 }}
     steps:
       - uses: actions/checkout@v7
 
@@ -993,6 +1221,10 @@ jobs:
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
 
+      - name: Configure actual native test partitions
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/rust-test-shards.mjs --configure
+
       # The filters are word-split on purpose: they are separate arguments.
       - name: Generate code coverage
         shell: bash
@@ -1003,9 +1235,25 @@ jobs:
       - name: Upload the shard's coverage report
         uses: actions/upload-artifact@v7
         with:
-          name: coverage-${{ matrix.suite }}
+          name: coverage-${{ matrix.suite }}-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}
           path: rust/lcov.info
           retention-days: 1
+
+      - name: Seal complete native partition results
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        env:
+          META_LANGUAGE_SHARD_RESULT: ${{ job.status }}
+        run: node js/scripts/rust-test-shards.mjs --finish
+
+      - name: Retain authenticated native partition
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: rust-physical-coverage-ubuntu-latest-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}-${{ github.sha }}
+          path: issue-195-artifacts/rust-physical-shards/
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Remove the temporary external grammar inputs
         if: ${{ !cancelled() }}

@@ -1550,7 +1550,7 @@ jobs:
 
   acceptance:
     name: Full Requirements Aggregate
-    needs: [js, self-translation-report-validation, candidates, consumers, rml-workloads, formal-ai-workloads, javascript-suite-independent, runtime-parity, native-javascript, native-rust, native-translations, javascript-suite, rust-suite, delivery]
+    needs: [js, rust, self-translation-report-validation, candidates, consumers, rml-workloads, formal-ai-workloads, javascript-suite-independent, runtime-parity, native-javascript, native-rust, native-translations, javascript-suite, rust-suite, delivery]
     # GitHub reports a skipped job as a successful required check. This job
     # always runs and fails itself when there are no candidates to evaluate.
     if: ${{ always() }}
@@ -1601,6 +1601,33 @@ jobs:
 
       - name: Provision the authenticated grammar input for manifest validation
         run: node js/scripts/external-grammar-cache.mjs --asset parity/grammars/links-notation-0.22.0.pegjs --materialize
+
+      - name: Identify admitted Rust physical profiles
+        id: rust-physical-admission
+        if: ${{ !cancelled() && needs.rust.result != 'skipped' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs?per_page=100" --paginate --slurp > "$RUNNER_TEMP/rust-physical-jobs.json"
+          node js/scripts/rust-test-shards.mjs --admission "$RUNNER_TEMP/rust-physical-jobs.json"
+
+      - name: Download complete Rust physical partitions
+        if: ${{ !cancelled() && steps.rust-physical-admission.outputs.enabled == 'true' }}
+        uses: actions/download-artifact@v8
+        with:
+          pattern: rust-physical-*-${{ github.sha }}
+          path: issue-195-artifacts/rust-physical-partitions
+
+      - name: Require the complete authenticated Rust test union
+        if: ${{ !cancelled() && needs.rust.result != 'skipped' }}
+        env:
+          RUST_WORKFLOW_RESULT: ${{ needs.rust.result }}
+          META_LANGUAGE_SHARD_EXPECTED_PROFILES: ${{ steps.rust-physical-admission.outputs.profiles }}
+        run: |
+          if [ -n "$META_LANGUAGE_SHARD_EXPECTED_PROFILES" ]; then
+            node js/scripts/rust-test-shards.mjs --verify issue-195-artifacts/rust-physical-partitions
+          fi
+          test "$RUST_WORKFLOW_RESULT" = success
 
       - name: Validate atomic manifest and protected scope baseline
         env:
