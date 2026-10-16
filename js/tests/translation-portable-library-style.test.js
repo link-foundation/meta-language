@@ -4,11 +4,13 @@ import {runInNewContext} from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {parseJavaScript} from '../src/translation/javascript.js';
+import {parseRust} from '../src/translation/rust.js';
 import {checkProgram} from '../src/translation/check.js';
 import {emitRust} from '../src/translation/emit-rust.js';
 import {emitJavaScript} from '../src/translation/emit-javascript.js';
 import {readPortableSourceParameterStyles, readPortableSourceLintStyles, partitionPortableRustLibrary} from '../scripts/portable-source-library-style.mjs';
 import {readSourceTextRustBlock} from '../scripts/source-text-byte-library-style.mjs';
+import {DecoratorSet} from '../src/decorators.js';
 
 test('actual multi-line lint attributes remain attached to complete partitioned declarations', () => {
   const source = Array.from({length: 18}, (_, index) =>
@@ -306,4 +308,80 @@ test('known String emptiness and numeric Option copies retain unknown ownership 
   assert.equal(grouped.includes('#[must_use]'), false, 'an intervening scoped expectation does not duplicate its attached must_use attribute');
   assert.ok(styled.includes('#[must_use]\n#[expect(clippy::cast_possible_truncation'));
   assert.ok(styled.includes('#[must_use] #[inline] pub fn value'), 'nested runtime prefixes keep their complete existing attribute group');
+});
+
+test('actual repeated string predicates factor only immutable standard receiver reads', () => {
+  const provider = readFileSync(new URL('../src/translation/primitive-method-rules.js', import.meta.url), 'utf8');
+  const start = provider.indexOf('export function readPrimitiveMethodMaximumArguments(');
+  assert.ok(start >= 0);
+  const source = provider.slice(provider.lastIndexOf('/**', start), provider.indexOf('\n}', start) + 2);
+  const checked = checkProgram(parseJavaScript(source, {referenceSemantics: false}));
+  const raw = emitRust(checked, {arrayConsumption: true}).definitions.join('\n\n');
+  const loaned = readPortableSourceParameterStyles(raw).source;
+  const reviewed = readPortableSourceLintStyles(loaned);
+  const block = readSourceTextRustBlock(reviewed.source, 'fn', 'read_primitive_method_maximum_arguments');
+  assert.equal((block.match(/receiver == "array"/gu) ?? []).length, 1, 'the actual merged receiver predicate is evaluated once');
+  for (const operation of ['slice', 'includes', 'indexOf', 'lastIndexOf']) assert.ok(block.includes('operation == "' + operation + '"'));
+  const styles = new DecoratorSet([{id: 'pure-repeated-string-control', level: 'emitter', order: 0,
+    when: [['format', 'Rust']], actions: reviewed.actions}]);
+  assert.equal(styles.decorate('emitter', {format: 'Rust', source: loaned}).source, reviewed.source);
+  const context = {};
+  runInNewContext(emitJavaScript(checked).text, context, {timeout: 1000});
+  for (const receiver of ['array', 'string', 'unknown']) for (const operation of ['slice', 'includes', 'indexOf', 'lastIndexOf', 'repeat', 'codePointAt', 'split', 'replace', 'padStart', 'unknown']) {
+    const expected = receiver === 'array' ? ['slice', 'includes', 'indexOf', 'lastIndexOf'].includes(operation) ? 2 : -1
+      : receiver === 'string' ? ['repeat', 'codePointAt'].includes(operation) ? 1
+        : ['split', 'slice', 'indexOf', 'lastIndexOf', 'replace', 'replaceAll', 'padStart', 'padEnd'].includes(operation) ? 2 : -1 : -1;
+    assert.equal(context.readPrimitiveMethodMaximumArguments(receiver, operation), expected);
+  }
+  const condition = '((receiver == "array") && (operation == "slice")) || ((receiver == "array") && (operation == "includes"))';
+  for (const type of ['String', '&str']) {
+    const predicateSource = 'pub fn pure(receiver: ' + type + ', operation: ' + type + ') -> bool { ' + condition + ' }';
+    const result = readPortableSourceLintStyles(predicateSource).source;
+    assert.equal((result.match(/receiver == "array"/gu) ?? []).length, 1);
+    if (type === 'String') {
+      const contexts = [predicateSource, result].map(candidate => {
+        const replay = {};
+        runInNewContext(emitJavaScript(checkProgram(parseRust(candidate + '\nfn main(){}'))).text, replay, {timeout: 1000});
+        return replay;
+      });
+      for (const receiver of ['array', 'string', 'unknown', '', '𝌆']) for (const operation of ['slice', 'includes', 'indexOf', '', '𝌆']) {
+        const expected = receiver === 'array' && (operation === 'slice' || operation === 'includes');
+        assert.equal(contexts[0].pure(receiver, operation), expected, 'the original owned String predicate has the independent expected behavior');
+        assert.equal(contexts[1].pure(receiver, operation), contexts[0].pure(receiver, operation), 'factoring preserves the checked Rust predicate behavior');
+      }
+    }
+  }
+  const declined = [
+    'pub fn custom(receiver: Custom, operation: &str) -> bool { ' + condition + ' }',
+    'struct String;\npub fn custom(receiver: String, operation: String) -> bool { ' + condition + ' }',
+    'pub fn effect(receiver: &str, operation: &str) -> bool { ((receiver == "array") && self::observe()) || ((receiver == "array") && (operation == "slice")) }',
+    'pub fn comment(receiver: &str, operation: &str) -> bool { ((receiver == "array") /* retain */ && (operation == "slice")) || ((receiver == "array") && (operation == "includes")) }',
+    'pub fn shadow(receiver: &str, operation: &str) -> bool { let receiver = other(); ' + condition + ' }',
+  ];
+  for (const candidate of declined) assert.equal((readPortableSourceLintStyles(candidate).source.match(/receiver == "array"/gu) ?? []).length, 2);
+  assert.ok(readPortableSourceLintStyles(declined[3]).source.includes('/* retain */'));
+});
+
+test('qualified String return proofs require the declared local module namespace', () => {
+  const source = readFileSync(new URL('../src/translation/fact-column-rules.js', import.meta.url), 'utf8')
+    + '/** @param {string[]} columns @param {number} size @param {number} node @returns {boolean} */ function present(columns,size,node){return readRequiredTextFact(columns,size+node)!=="";}';
+  const checked = checkProgram(parseJavaScript(source, {referenceSemantics: false}));
+  const modulePath = 'crate::translation::surface_reference_analysis_rules';
+  const raw = emitRust(checked, {arrayConsumption: true}).definitions.join('\n\n')
+    .replaceAll('crate::read_required_text_fact', modulePath + '::read_required_text_fact');
+  const loaned = readPortableSourceParameterStyles(raw).source;
+  const defaultResult = readPortableSourceLintStyles(loaned).source;
+  assert.equal(readSourceTextRustBlock(defaultResult, 'fn', 'present').includes('.is_empty()'), false);
+  const reviewed = readPortableSourceLintStyles(loaned, {modulePath});
+  const present = readSourceTextRustBlock(reviewed.source, 'fn', 'present');
+  assert.ok(present.includes('.is_empty()'));
+  assert.equal((present.match(/::read_required_text_fact\(/gu) ?? []).length, 1, 'the effectful call and its arithmetic argument remain single evaluations');
+  assert.ok(present.includes('size + node'));
+  const unrelated = loaned.replaceAll(modulePath + '::read_required_text_fact', 'crate::unrelated::read_required_text_fact');
+  assert.equal(readSourceTextRustBlock(readPortableSourceLintStyles(unrelated, {modulePath}).source, 'fn', 'present').includes('.is_empty()'), false);
+  const unknown = 'pub fn value() -> Custom { self::make() }\npub fn present() -> bool { (' + modulePath + '::value()) != "" }';
+  assert.equal(readPortableSourceLintStyles(unknown, {modulePath}).source.includes('.is_empty()'), false);
+  const styles = new DecoratorSet([{id: 'qualified-string-return-control', level: 'emitter', order: 0,
+    when: [['format', 'Rust']], actions: reviewed.actions}]);
+  assert.equal(styles.decorate('emitter', {format: 'Rust', source: loaned}).source, reviewed.source);
 });

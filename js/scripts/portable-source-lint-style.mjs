@@ -150,7 +150,7 @@ function simplifyPortableBooleanOptionMatches(source, functionNames) {
 
 /** Known String and &str receivers admit is_empty without evaluating their
  * expression twice. Type evidence comes from actual parameters/initializers. */
-function simplifyPortableEmptyStringComparisons(source, stringFunctions) {
+function simplifyPortableEmptyStringComparisons(source, stringFunctions, modulePath) {
   const {tokens, comments, matching, opaque} = readPortableLintTokens(source), edits = [];
   const strings = new Set(), declarations = new Map(), counts = new Map();
   const header = /^pub fn \w+\(([^)]*)\)/u.exec(source)?.[1] ?? '';
@@ -158,8 +158,9 @@ function simplifyPortableEmptyStringComparisons(source, stringFunctions) {
   const known = expression => {
     const bare = stripRustSourceHeaderStyleParentheses(expression);
     if (strings.has(bare) || /^String::(?:from|new)\(/u.test(bare)) return true;
-    const call = /^(?:self::|crate::)?([A-Za-z_][A-Za-z_0-9]*)\(/u.exec(bare);
-    if (call && stringFunctions.has(call[1])) return true;
+    const call = /^((?:[A-Za-z_][A-Za-z_0-9]*::)*)([A-Za-z_][A-Za-z_0-9]*)\(/u.exec(bare);
+    const local = call && ['', 'self::', 'crate::', ...(modulePath ? [modulePath + '::'] : [])].includes(call[1]);
+    if (local && stringFunctions.has(call[2])) return true;
     const copied = /^(\w+)\.(?:clone|to_owned)\(\)$/u.exec(bare);
     return copied !== null && strings.has(copied[1]);
   };
@@ -201,6 +202,79 @@ function simplifyPortableEmptyStringComparisons(source, stringFunctions) {
   }
   for (const [start, end, text] of edits.reverse()) source = source.slice(0, start) + text + source.slice(end);
   return source;
+}
+
+/** Factor repeated standard-string predicates only when every operand is a
+ * read of immutable parameters. Calls, binders and comments stay untouched. */
+function simplifyPortableRepeatedStringConditions(source, context) {
+  const header = /^pub fn \w+\(([^)]*)\)/u.exec(source)?.[1];
+  if (header === undefined) return source;
+  const parameters = new Set([...header.matchAll(/(?:^|,)\s*(\w+):\s*(?:String|&str)(?=\s*(?:,|$))/gu)].map(match => match[1]));
+  if (parameters.size === 0) return source;
+  const whole = readPortableLintTokens(context).tokens;
+  for (let at = 0; at < whole.length; at += 1) {
+    if (whole[at].kind === 'macro' && !['format', 'vec', 'panic', 'assert'].includes(whole[at].value)) return source;
+    if (whole[at].kind === 'identifier' && ['struct', 'enum', 'type', 'trait', 'mod'].includes(whole[at].value)
+      && ['String', 'str'].includes(whole[at + 1]?.value)) return source;
+    if (whole[at].kind === 'identifier' && whole[at].value === 'use') {
+      let end = at + 1;
+      while (end < whole.length && whole[end].value !== ';') end += 1;
+      if (whole.slice(at, end).some(token => ['String', 'str', '*'].includes(token.value))) return source;
+    }
+  }
+  for (let pass = 0; pass < 100; pass += 1) {
+    const {tokens, comments, matching, opaque} = readPortableLintTokens(source);
+    const body = tokens.findIndex(token => token.kind === 'punct' && token.value === '{');
+    const end = matching.get(body);
+    if (tokens.slice(body + 1, end).some(token => token.kind === 'identifier'
+      && ['let', 'match', 'for', 'while', 'loop', 'fn', 'unsafe'].includes(token.value)
+      || token.kind === 'punct' && ['=', '+=', '-=', '*=', '/=', '%=', '|', '&='].includes(token.value))) return source;
+    const parse = (start, finish) => {
+      while (tokens[start]?.value === '(' && matching.get(start) === finish - 1) { start += 1; finish -= 1; }
+      for (const operation of ['||', '&&']) {
+        let split;
+        for (let at = start; at < finish; at += 1) {
+          if (opaque.has(at)) return undefined;
+          if (matching.get(at) > at) { at = matching.get(at); continue; }
+          if (tokens[at].kind === 'punct' && tokens[at].value === operation) split = at;
+        }
+        if (split !== undefined) {
+          const left = parse(start, split), right = parse(split + 1, finish);
+          return left && right ? {start, finish, operation, left, right} : undefined;
+        }
+      }
+      if (finish - start !== 3 || tokens[start + 1]?.kind !== 'punct' || tokens[start + 1].value !== '==') return undefined;
+      const left = tokens[start], right = tokens[start + 2];
+      if (!(left.kind === 'identifier' && parameters.has(left.value) && right.kind === 'string'
+        || right.kind === 'identifier' && parameters.has(right.value) && left.kind === 'string')) return undefined;
+      return {start, finish, key: JSON.stringify(tokens.slice(start, finish).map(token => [token.kind, token.value]))};
+    };
+    const select = node => {
+      if (!node) return undefined;
+      if (node.operation === '||' && node.left.operation === '&&' && node.right.operation === '&&'
+        && node.left.left.key && node.left.left.key === node.right.left.key) return node;
+      return node.operation ? select(node.left) ?? select(node.right) : undefined;
+    };
+    const regions = [[body + 1, end]];
+    for (let at = body + 1; at < end; at += 1) {
+      if (opaque.has(at) || tokens[at].kind !== 'identifier' || tokens[at].value !== 'if') continue;
+      let open = at + 1;
+      while (open < end && !['{', ';', ')', ']', '}'].includes(tokens[open].value)) open = matching.get(open) > open ? matching.get(open) + 1 : open + 1;
+      if (tokens[open]?.value === '{') regions.push([at + 1, open]);
+    }
+    let changed = false;
+    for (const [start, finish] of regions) {
+      if (start >= finish || comments.some(comment => comment.start >= tokens[start - 1].end && comment.end <= tokens[finish].start)) continue;
+      const selected = select(parse(start, finish));
+      if (!selected) continue;
+      const text = node => source.slice(tokens[node.start].start, tokens[node.finish - 1].end);
+      const replacement = '(' + text(selected.left.left) + ') && ((' + text(selected.left.right) + ') || (' + text(selected.right.right) + '))';
+      source = source.slice(0, tokens[selected.start].start) + replacement + source.slice(tokens[selected.finish - 1].end);
+      changed = true; break;
+    }
+    if (!changed) return source;
+  }
+  throw new Error('repeated immutable string predicates must converge');
 }
 
 function simplifyPortableStringFormats(source, stringFunctions) {
@@ -334,7 +408,8 @@ function acceptPortableMustUseAttribute(prefix) {
 
 /** Preserve IEEE equality, separate arithmetic rounding and existing guarded
  * index conversions; correct only mechanical styles of actual checked output. */
-export function readPortableSourceLintStyles(source) {
+export function readPortableSourceLintStyles(source, {modulePath} = {}) {
+  if (modulePath !== undefined) assert.match(modulePath, /^(?:crate|self)(?:::[A-Za-z_][A-Za-z_0-9]*)+$/u, 'a qualified local call needs its explicit module path');
   let adapted = source;
   const actions = [];
   const replace = (from, to) => {
@@ -389,13 +464,14 @@ export function readPortableSourceLintStyles(source) {
     styled = simplifyPortablePanicBranches(styled);
     styled = simplifyPortableMechanicalExpressions(styled, functionNames);
     styled = simplifyPortableReturnedBindings(styled);
-    styled = simplifyPortableEmptyStringComparisons(styled, stringFunctions);
+    styled = simplifyPortableEmptyStringComparisons(styled, stringFunctions, modulePath);
     styled = liftFamilyLibraryTruthinessConditions(styled);
     styled = flattenFamilyLibraryElseIf(styled);
     styled = mergeFamilyLibraryIdenticalBranches(styled);
-    styled = invertFamilyLibraryInequalityBranches(styled, {context: adapted});
-    styled = bindFamilyLibraryInequalityConditions(styled);
+    styled = simplifyPortableRepeatedStringConditions(styled, adapted);
     styled = simplifyFamilyLibraryNegatedConjunctions(styled);
+    styled = invertFamilyLibraryInequalityBranches(styled, {context: adapted});
+    styled = bindFamilyLibraryInequalityConditions(styled, {context: adapted});
     const codeStarts = new Set(readPortableLintTokens(styled).tokens.map(token => token.start));
     styled = styled.replace(/\(([A-Za-z_][A-Za-z_0-9]*)\s*>=\s*(-?[0-9]+(?:\.[0-9]+)?f64)\)\s*&&\s*\(\1\s*(<=|<)\s*(-?[0-9]+(?:\.[0-9]+)?f64)\)/gu,
       (match, value, lower, upperOperation, upper, offset) => codeStarts.has(offset)

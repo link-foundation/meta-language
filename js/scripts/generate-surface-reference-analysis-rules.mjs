@@ -85,7 +85,7 @@ actions.push(...loans.actions);
 adapted = loans.source;
 const grouped = simplifySourceTextRustParentheses(adapted);
 replace(adapted, grouped);
-const reviewed = readPortableSourceLintStyles(adapted);
+const reviewed = readPortableSourceLintStyles(adapted, {modulePath: 'crate::translation::surface_reference_analysis_rules'});
 actions.push(...reviewed.actions);
 adapted = reviewed.source;
 const styles = new DecoratorSet([{ id: 'surface-reference-analysis-library-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }]);
