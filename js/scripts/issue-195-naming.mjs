@@ -23,7 +23,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { areSynonyms, baseForms, PARTS_OF_SPEECH, partsOfSpeech } from './english-vocabulary.mjs';
+import { areSynonyms, baseForms, PARTS_OF_SPEECH, partsOfSpeech, synsetsOf } from './english-vocabulary.mjs';
 import { readProjectData, resolveProjectDataPath } from './project-data.mjs';
 import { readStructuredDataLino } from '../src/structured-data-links.js';
 
@@ -201,6 +201,54 @@ function synonymousPhrases(first, second, role, context) {
   );
 }
 
+// A synonym pair shares an exact word or an allowed WordNet synset at every
+// position. Index one position's complete candidate superset, then keep the
+// original predicate and pair order. All caches belong to this invocation, so
+// a later mutation of records or vocabulary is checked independently.
+function* synonymCandidatePairs(concepts, context) {
+  const groups = new Map();
+  const lexical = new Map();
+  const entries = concepts.map((record, index) => {
+    const words = wordsOf(record.phrase);
+    if (words.length === 0) return null;
+    let lengths = groups.get(record.role);
+    if (!lengths) groups.set(record.role, lengths = new Map());
+    let positions = lengths.get(words.length);
+    if (!positions) lengths.set(words.length, positions = words.map(() => new Map()));
+    const keys = words.map((word, position) => {
+      const found = [JSON.stringify(['word', word])];
+      for (const part of comparedParts(record.role, position)) {
+        const lookup = JSON.stringify([part, word]);
+        let synsets = lexical.get(lookup);
+        if (!synsets) lexical.set(lookup, synsets = synsetsOf(context.wordnet, word, part));
+        for (const synset of synsets) found.push(JSON.stringify(['synset', part, synset]));
+      }
+      for (const key of found) {
+        let posting = positions[position].get(key);
+        if (!posting) positions[position].set(key, posting = []);
+        posting.push(index);
+      }
+      return found;
+    });
+    return { positions, keys };
+  });
+  for (let index = 0; index < entries.length; index += 1) {
+    const entry = entries[index];
+    if (!entry) continue;
+    let selected = 0;
+    let smallest = Infinity;
+    for (let position = 0; position < entry.keys.length; position += 1) {
+      const size = entry.keys[position].reduce((sum, key) => sum + entry.positions[position].get(key).length, 0);
+      if (size < smallest) { smallest = size; selected = position; }
+    }
+    const candidates = new Set();
+    for (const key of entry.keys[selected]) {
+      for (const other of entry.positions[selected].get(key)) if (other > index) candidates.add(other);
+    }
+    for (const other of [...candidates].sort((first, second) => first - second)) yield [index, other];
+  }
+}
+
 /**
  * The semantic duplicates: two concepts whose phrases WordNet lists as
  * synonyms, unless one of them states why they differ (`distinctFrom`).
@@ -222,17 +270,16 @@ function synonymProblems(concepts, byId, context) {
       }
     }
   }
-  concepts.forEach((record, index) => {
-    for (const other of concepts.slice(index + 1)) {
-      if (record.role !== other.role || !synonymousPhrases(record.phrase, other.phrase, record.role, context)) continue;
-      if (stated(record, other) || stated(other, record)) continue;
-      problems.push({
-        kind: 'duplicate',
-        id: other.id,
-        message: `${other.id}: "${other.phrase}" is a synonym of "${record.phrase}" (${record.id}) in ${context.wordnet.source}; one concept has one name`,
-      });
-    }
-  });
+  for (const [index, otherIndex] of synonymCandidatePairs(concepts, context)) {
+    const record = concepts[index], other = concepts[otherIndex];
+    if (record.role !== other.role || !synonymousPhrases(record.phrase, other.phrase, record.role, context)) continue;
+    if (stated(record, other) || stated(other, record)) continue;
+    problems.push({
+      kind: 'duplicate',
+      id: other.id,
+      message: `${other.id}: "${other.phrase}" is a synonym of "${record.phrase}" (${record.id}) in ${context.wordnet.source}; one concept has one name`,
+    });
+  }
   return problems;
 }
 
@@ -21658,7 +21705,68 @@ const NATIVE_SOURCE_POSITION_NAME_INVENTORIES=[{
  extract: text => text.includes("callPosition") ? [normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName("callPosition"))] : [],
  recordOf: () => "repository.native-source-parser-position-diagnostics",
 }];
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES]);
+// Compiler style checks retain all closed modules and keep native execution in CI.
+const COMPILER_STYLE_BOUNDARY_NAME_BINDINGS=[
+  {
+    "id": "repository.compiler-style-execution-commands",
+    "name": "scripts"
+  },
+  {
+    "id": "repository.check-local-compiler-style-refusal",
+    "name": "native compiler style commands refuse local execution before creating scratch"
+  },
+  {
+    "id": "repository.check-offline-compiler-feedback-entry",
+    "name": "offline compiler feedback arguments remain available without native execution"
+  },
+  {
+    "id": "repository.compiler-style-closure-controls",
+    "name": "controls"
+  },
+  {
+    "id": "repository.check-closed-global-concept-compiler-inputs",
+    "name": "global concept compiler check retains both entire generated modules and original flags"
+  }
+];
+const COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES=[{
+ inventory: "compiler style execution boundary controls", files: ["js/tests/translation-compiler-style-ci-guard.test.js"],
+ extract: text => COMPILER_STYLE_BOUNDARY_NAME_BINDINGS.filter(row=>text.includes(row.name)).map(row=>normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))),
+ recordOf: name => COMPILER_STYLE_BOUNDARY_NAME_BINDINGS.find(row=>normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))===name).id,
+}];
+// Indexed naming and shared lazy-child controls preserve the original semantics.
+const RESOURCE_CONTROL_NAME_BINDINGS=[
+  {
+    "id": "repository.enumerate-synonym-candidate-pairs",
+    "name": "synonymCandidatePairs",
+    "source": "js/scripts/issue-195-naming.mjs"
+  },
+  {
+    "id": "grammar.read-chain-children",
+    "name": "readChainChildren",
+    "source": "js/src/grammar-runtime/executor.js"
+  },
+  {
+    "id": "repository.naming-candidate-controls",
+    "name": "controls",
+    "source": "js/tests/issue-195-naming-candidates.test.js"
+  },
+  {
+    "id": "repository.check-indexed-synonym-diagnostics",
+    "name": "indexed synonym candidates preserve complete ordered original WordNet diagnostics",
+    "source": "js/tests/issue-195-naming-candidates.test.js"
+  },
+  {
+    "id": "repository.check-shared-child-accessor-identities",
+    "name": "lazy child owners share one accessor while chains and frozen output identities remain exact",
+    "source": "js/tests/grammar-keyword-context-memory.test.js"
+  }
+];
+const RESOURCE_CONTROL_NAME_INVENTORIES=[...new Set(RESOURCE_CONTROL_NAME_BINDINGS.map(row=>row.source))].map(source=>({
+ inventory: "indexed naming and lazy child controls for "+source, files: [source],
+ extract: text => RESOURCE_CONTROL_NAME_BINDINGS.filter(row=>row.source===source&&text.includes(row.name)).map(row=>normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))),
+ recordOf: name => RESOURCE_CONTROL_NAME_BINDINGS.find(row=>row.source===source&&normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {

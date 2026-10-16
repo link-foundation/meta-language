@@ -181,6 +181,41 @@ test('rule call key construction preserves every frozen key byte',async()=>{
   assert.deepEqual(trace(current),trace(previous),'field reads and string coercions retain their original order');
 });
 
+test('lazy child owners share one accessor while chains and frozen output identities remain exact',async()=>{
+  await frozenKeywordParser();
+  const readOperations=source=>{
+    const start=source.indexOf("const CHAIN = Symbol('children chain');");
+    const end=source.indexOf('// A copy of a result with',start);
+    assert.ok(start>=0&&end>start);
+    return new Function(source.slice(start,end)+'\nreturn {CHAIN,shareChildren,copyNode,partOf,childCount};')();
+  };
+  const original=readOperations(controls.baseline.modules[0].source);
+  const current=readOperations(readFileSync(new URL('../src/grammar-runtime/executor.js',import.meta.url),'utf8'));
+  const build=operations=>{
+    const first={kind:'first'},second={kind:'second'},third={kind:'third'};
+    const chain={left:[first],right:[second],length:2};
+    const independent={left:[third],right:[],length:1};
+    const owner=operations.shareChildren({kind:'owner'},{[operations.CHAIN]:chain});
+    const copy=operations.copyNode(owner,{kind:'copy'});
+    const other=operations.shareChildren({kind:'other'},{[operations.CHAIN]:independent});
+    const descriptors=[owner,copy,other].map(value=>Object.getOwnPropertyDescriptor(value,'children'));
+    for(const descriptor of descriptors){assert.equal(descriptor.enumerable,true);assert.equal(descriptor.configurable,true);assert.equal(descriptor.set,undefined);}
+    assert.equal(chain.flat,undefined);assert.equal(independent.flat,undefined);
+    assert.equal(operations.childCount(owner),2);assert.equal(operations.childCount(other),1);
+    assert.equal(operations.partOf(owner),chain);assert.equal(operations.partOf(copy),chain);
+    assert.equal(copy.children,owner.children);assert.deepEqual(owner.children,[first,second]);
+    assert.equal(independent.flat,undefined,'reading one chain does not flatten another');
+    assert.deepEqual(other.children,[third]);assert.notEqual(other.children,owner.children);
+    assert.equal(chain.left,null);assert.equal(chain.right,null);
+    assert.equal(independent.left,null);assert.equal(independent.right,null);
+    return {descriptors,owners:structuredClone([owner,copy,other])};
+  };
+  const expected=build(original),actual=build(current);
+  assert.deepEqual(actual.owners,expected.owners);
+  assert.equal(new Set(actual.descriptors.map(row=>row.get)).size,1,'all lazy owners use the same accessor');
+  assert.equal(new Set(expected.descriptors.map(row=>row.get)).size,3,'the authenticated original allocated a getter for every owner');
+});
+
 test('complete source diagnostics observe real native runs and restore the executor',async()=>{
   const {createCompleteRustSourceArchives,replayCompleteRustSourceArchives}=await import('../../experiments/original-link-complete-table-projection/archive-transport.mjs');
   const {LinkNetwork}=await import('../src/network.js');

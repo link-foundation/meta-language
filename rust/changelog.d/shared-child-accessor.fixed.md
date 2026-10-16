@@ -1,0 +1,1 @@
+Use one JavaScript lazy-child accessor across parser results and nodes, preserving chains and complete parse outcomes while reducing retained closures. Full generated-source resource fit is checked in CI.

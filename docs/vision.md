@@ -2150,6 +2150,17 @@ string storage. Both forms preserve the original separators, field-read order,
 coercions and exact key contents, checked against the authenticated original
 expression and full tiny parser outcomes. Isolated bounded key-map measurements
 describe only that representation; whole-parser resource fit remains a CI check.
+Lazy child owners share one accessor that reads the receiver's own chain, rather
+than retaining a new closure for every joined result or copied node. Chains,
+shared child arrays, independent flattening and property descriptors remain
+exact against the frozen parser; full-source resource fit still requires CI.
+The naming gate indexes exact words and every allowed WordNet synset by phrase
+role, length and position before applying its unchanged synonym predicate.
+Candidate pairs retain their original record order and every distinction rule.
+Bounded comparisons with the authenticated original check preserve complete
+ordered diagnostics, including later record and vocabulary mutations. The
+inventory test extracts its unchanged source inventory once per immutable check
+instead of rereading it for each described inventory; every assertion remains.
 Binary archive framing keeps each metadata length patch local to its own record.
 An increasing identity skips a search through earlier identities, while unordered
 and duplicate identities retain the existing validation and exact error offsets.

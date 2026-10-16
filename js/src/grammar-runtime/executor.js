@@ -2006,6 +2006,12 @@ function flattenChain(chain) {
   return flat;
 }
 
+// One accessor also lets lazy owners share their property descriptors. The
+// chain belongs to the receiver, rather than a closure retained by each owner.
+function readChainChildren() {
+  return flattenChain(this[CHAIN]);
+}
+
 // Gives `target` the children of `source`, shared and still unflattened.
 function shareChildren(target, source) {
   const chain = source[CHAIN];
@@ -2017,7 +2023,7 @@ function shareChildren(target, source) {
   Object.defineProperty(target, 'children', {
     configurable: true,
     enumerable: true,
-    get() { return flattenChain(chain); },
+    get: readChainChildren,
   });
   return target;
 }
