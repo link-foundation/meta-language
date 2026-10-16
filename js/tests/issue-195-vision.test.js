@@ -100,7 +100,9 @@ test('docs/vision.md specifies every section of the repository-wide directive', 
 test('the entry documents link to the vision and the subsystem documents defer to it', () => {
   assert.match(read('README.md'), /\[`docs\/vision\.md`\]\(docs\/vision\.md\) is the authoritative specification/u);
   assert.match(read('CONTRIBUTING.md'), /\[`docs\/vision\.md`\]\(docs\/vision\.md\) is the authoritative vision/u);
-  assert.match(read('AGENTS.md'), /\[`docs\/vision\.md`\]\(docs\/vision\.md\) is the authoritative vision/u);
+  const agentInstructions = read('AGENTS.md').replace(/\s+/gu, ' ');
+  assert.match(agentInstructions, /Read \[docs\/vision\.md\]\(docs\/vision\.md\) first\./u);
+  assert.match(agentInstructions, /It alone defines architecture/u);
   for (const [document, link] of [
     ['docs/grammar/architecture.md', '../vision.md'],
     ['docs/grammar/README.md', '../vision.md'],

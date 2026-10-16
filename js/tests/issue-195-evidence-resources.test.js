@@ -131,13 +131,13 @@ test('AGENTS.md and CONTRIBUTING.md keep local runs targeted, bounded and cleane
   const agents = read('AGENTS.md');
   const section = agents.slice(agents.indexOf('## Local checks and resources'));
   const contributing = read('CONTRIBUTING.md');
-  assert.match(section, /Run only the checks that cover the change/u);
+  assert.match(section, /Only targeted JavaScript tests/u);
   assert.match(section, /node --test tests\/<area>\*\.test\.js/u);
   for (const text of [section, contributing]) {
     assert.match(text, /rustfmt --edition 2024 --check/u);
     assert.match(text, /--config skip_children=true/u);
     assert.match(text, /Never compile Rust locally/u);
-    assert.match(text, /let CI run native\s+compilation, tests and runtime parity/u);
+    assert.match(text.replace(/\s+/gu, ' '), /(?:let CI run native|runs native) compilation, tests and runtime parity/u);
     assert.match(text, /with-cache-cleanup\.mjs --event test --/u);
   }
   assert.match(contributing, /CARGO_BUILD_JOBS=2 RUST_TEST_THREADS=2 CARGO_INCREMENTAL=0/u);
@@ -150,9 +150,9 @@ test('AGENTS.md and CONTRIBUTING.md keep local runs targeted, bounded and cleane
     'clean-consumer installs', 'workload clones', 'cargo llvm-cov', 'whole grammar registry']) {
     assert.ok(section.replace(/\s+/gu, ' ').includes(forbidden), `AGENTS.md forbids ${forbidden} locally`);
   }
-  assert.match(section, /Work in batches: commit each step, re-read the diff and push once per batch/u);
+  assert.match(agents.replace(/\s+/gu, ' '), /Bulk work: commit steps, review diffs, push once per batch after previous CI finishes and its errors are addressed/u);
   assert.match(section, /node scripts\/clean-caches\.mjs/u);
-  assert.match(section, /`CI` workflow\s+\(`\.github\/workflows\/ci\.yml`\)[^;]*\s+runs them on every push/u);
+  assert.match(section.replace(/\s+/gu, ' '), /\[CI workflow\]\(\.github\/workflows\/ci\.yml\) runs native compilation, tests and runtime parity, full suites/u);
   observe('I195-RESOURCE-AGENT-RULES', [
     'targetedChecksDocumented',
     'boundedParallelismDocumented',
@@ -163,9 +163,9 @@ test('AGENTS.md and CONTRIBUTING.md keep local runs targeted, bounded and cleane
 });
 
 test('the cleanup wrapper is the documented way to run long local commands and bounds them', () => {
-  assert.match(read('AGENTS.md'), /Wrap long runs in `node scripts\/with-cache-cleanup\.mjs --event test -- <command>`/u);
+  assert.match(read('AGENTS.md'), /Wrap long checks with `node scripts\/with-cache-cleanup\.mjs --event test -- <command>`/u);
   assert.match(read('docs/cache-cleanup.md'), /`node scripts\/with-cache-cleanup\.mjs --event <event> -- <command>` runs the command and cleans afterwards, also when it fails/u);
-  assert.match(read('AGENTS.md'), /After a batch, run `node scripts\/clean-caches\.mjs`/u);
+  assert.match(read('AGENTS.md'), /After batches run `node scripts\/clean-caches\.mjs`/u);
   const env = boundedEnvironment({ PATH: '/bin', META_LANGUAGE_JOBS: '2' });
   assert.deepEqual(
     [env.CARGO_BUILD_JOBS, env.RUST_TEST_THREADS, env.CARGO_INCREMENTAL],
