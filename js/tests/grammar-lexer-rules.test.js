@@ -10,6 +10,8 @@ import {
   readGrammarLexerDeclarationIssue, readGrammarLexerEntryForm,
   readGrammarLexerLazyNormalization, readGrammarLexerObligationPositions,
   readGrammarLexerSectionRulePositions, readGrammarLexerLiteralRulePosition, readGrammarLexerBindingNames,
+  readGrammarLexerLiteralExtension,
+  readGrammarLexerOwnerComparison,
 } from '../src/translation/grammar-lexer-rules.js';
 import { GRAMMAR_LEXER_FORMS } from '../src/grammar-lexer-forms.js';
 import { grammarLexerRulesPolicy, readGrammarLexerSourceModule, renderGrammarLexerNativeForms } from '../scripts/generate-grammar-lexer-rules.mjs';
@@ -52,6 +54,35 @@ test('portable lexer source plans preserve original section ownership and token 
   assert.deepEqual(readGrammarLexerBindingNames(['WORD', 'UNUSED', 'TEXT'], ['WORD'], ['RAW', 'DROP'], ['TEXT', ''],
     ['WORD', 'SKIP'], ['emit', 'skip']), ['WORD', 'RAW', 'TEXT', 'DROP']);
   assert.throws(() => readGrammarLexerSectionRulePositions(0, [], [], [], [0], []), /invalid required text fact|missing required text fact/u);
+});
+
+test('portable lexer literal extension retains priority, original indices and later implicit identities', () => {
+  const kinds = ['lexicalMode', 'lexicalOwner', 'lexicalLiteral', 'lexicalRule', 'lexicalRule'];
+  const names = ['default', 'start', '@literal:0', '@literal:0', 'A'];
+  const values = ['', '', 'later', '', ''];
+  const targets = ['', 'start', '', '', ''];
+  const items = ['', 'ref', '', 'literal', 'literal'];
+  const bodies = ['', '', '', 'later', 'a'];
+  const plan = (value, literals = [value, 'later']) => readGrammarLexerLiteralExtension('start', value, kinds, names, values, targets, items, bodies, literals);
+  assert.deepEqual(plan('new'), [1, 2, 0, 2, 1, 3, 1]);
+  assert.deepEqual(plan('new', ['later', 'new']), [1, 4, 1]);
+  assert.deepEqual(plan('a'), [2, 2, 4]);
+  assert.deepEqual(plan('later'), [0, -1, -1]);
+  assert.deepEqual(plan(''), [0, -1, -1]);
+  assert.deepEqual(readGrammarLexerLiteralExtension('other', 'new', kinds, names, values, targets, items, bodies, []), [0, -1, -1]);
+  assert.deepEqual(plan('new', ['later']), [-1]);
+  assert.deepEqual(readGrammarLexerLiteralExtension('start', 'new', kinds, [], values, targets, items, bodies, ['new']), [-1]);
+  assert.deepEqual(readGrammarLexerLiteralExtension('start', 'a', [...kinds, 'lexicalRule'], [...names, 'B'], [...values, ''], [...targets, ''], [...items, 'literal'], [...bodies, 'a'], ['a', 'later']), [3, 2, -1]);
+});
+
+test('portable lexer owner comparison requires bijective actual references and preserves lexical rule identities', () => {
+  assert.deepEqual(readGrammarLexerOwnerComparison(['lexicalOwner', 'lexicalOwner', 'lexicalObligation', 'lexicalObligation', 'lexicalRule'],
+    ['start', 'word', 'word', 'A', 'A'], ['start', 'term', '', '', '']), [0, 0, 1, 1, 2, 1]);
+  assert.deepEqual(readGrammarLexerOwnerComparison(['lexicalOwner', 'lexicalOwner'], ['word', 'word'], ['term', 'other']), [-1]);
+  assert.deepEqual(readGrammarLexerOwnerComparison(['lexicalOwner', 'lexicalOwner'], ['word', 'other'], ['term', 'term']), [-1]);
+  assert.deepEqual(readGrammarLexerOwnerComparison(['lexicalOwner'], ['word'], ['']), [-1]);
+  assert.deepEqual(readGrammarLexerOwnerComparison(['lexicalOwner', 'lexicalRule'], ['word', 'word'], ['term', '']), [-1]);
+  assert.deepEqual(readGrammarLexerOwnerComparison(['lexicalOwner'], [], []), [-1]);
 });
 
 const issue = (entries, actionRows = []) => readGrammarLexerDeclarationIssue(entries.map(({ kind }) => kind), entries.map(({ name = '' }) => name),
@@ -145,7 +176,7 @@ test('complete portable lexical rules translate from the actual shared JavaScrip
   const checked = checkProgram(parseJavaScript(source, { referenceSemantics: false }));
   const output = emitRust(checked, { arrayConsumption: true });
   for (const name of ['read_grammar_lexer_entry_form', 'read_grammar_lexer_command_plan', 'read_grammar_lexer_declaration_issue',
-    'read_grammar_lexer_obligation_positions', 'read_grammar_lexer_lazy_normalization']) assert.equal(output.text.includes(name), true);
+    'read_grammar_lexer_obligation_positions', 'read_grammar_lexer_lazy_normalization', 'read_grammar_lexer_literal_extension', 'read_grammar_lexer_owner_comparison']) assert.equal(output.text.includes(name), true);
   assert.equal(output.text.includes('native lexer callback'), false);
   assert.match(output.text, /refuse_required_text_fact/u);
   assert.match(output.text, /panic!/u);

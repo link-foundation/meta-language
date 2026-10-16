@@ -217,7 +217,7 @@ pub use grammar::{
     GRAMMAR_ROUND_TRIP_MARKER, GrammarEmitFn, GrammarImportFn, GrammarRoundTrip,
     GrammarRoundTripError, GrammarRoundTripFailure, GrammarRoundTripFailureKind,
     GrammarRoundTripReport, GrammarRoundTripStage, GrammarRoundTripStatus,
-    check_grammar_round_trip, mutate_grammar_start_rule,
+    check_grammar_round_trip, mutate_grammar_start_rule, render_grammar_lexical_owner_comparison,
 };
 pub use grammar::{
     GrammarReverseConversion, GrammarReverseFailure, GrammarReverseFailureKind,

@@ -7,7 +7,7 @@ import test from 'node:test';
 import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 import { createFixtureSourceLayout, readFixtureSourceBytes, renderFixtureSourceBytes } from '../scripts/fixture-source-bytes.mjs';
 import { readStructuredDataLino } from '../src/structured-data-links.js';
-import { normalizeMigrationProviderReceipts, normalizeMigrationTranslationStages } from '../scripts/validate-structured-data-migration.mjs';
+import { normalizeMigrationProviderReceipts, normalizeMigrationTranslationStages, normalizeMigrationAntlrLexerDeclarations } from '../scripts/validate-structured-data-migration.mjs';
 
 const root = new URL('../../', import.meta.url);
 const hash = value => createHash('sha256').update(value).digest('hex');
@@ -25,7 +25,7 @@ test('fixture Links data preserves every original ordered decoded baseline', () 
     let protectedValue = readProjectData(file);
     const freshness = contract.currentFreshnessChecks.find(check => check.logicalPaths.includes(logicalPath));
     const refresh = freshness?.providerReceiptRefresh;
-    if (refresh || freshness?.translationStageRefresh) {
+    if (refresh || freshness?.translationStageRefresh || freshness?.antlrLexerDeclarationRefresh) {
       const revision = revisions.find(entry => entry.logicalPath === logicalPath)?.migrationRevision;
       assert.match(revision, /^[0-9a-f]{40}$/u);
       const historical = readStructuredDataLino(execFileSync('git', ['show', `${revision}:${logicalPath.replace(/\.json$/u, '.lino')}`],
@@ -42,6 +42,11 @@ test('fixture Links data preserves every original ordered decoded baseline', () 
         assert.deepEqual(freshness.command, ['node', 'js/scripts/build-translation-stage-fixtures.mjs', '--check'],
           'the complete current pipeline remains a required CI freshness check');
         protectedValue = normalizeMigrationTranslationStages(historical, protectedValue, freshness.translationStageRefresh);
+      }
+      if (freshness.antlrLexerDeclarationRefresh) {
+        assert.deepEqual(freshness.command, ['node', 'js/scripts/generate-antlr-reverse-fixture.mjs', '--check'],
+          'the bounded complete ANTLR reverse fixture remains a required freshness check');
+        protectedValue = normalizeMigrationAntlrLexerDeclarations(historical, protectedValue);
       }
     }
     assert.equal(hash(JSON.stringify(protectedValue)), decodedSha256, `${logicalPath}: values and ordered occurrences`);

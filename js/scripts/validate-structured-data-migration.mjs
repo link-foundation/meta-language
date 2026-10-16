@@ -10,6 +10,8 @@ import { convertStructuredData } from './convert-structured-data.mjs';
 import { renderFixtureSourceBytes } from './fixture-source-bytes.mjs';
 import { checkProjectData, readProjectData, resolveProjectDataPath } from './project-data.mjs';
 import { readStructuredDataLino, structuredDataToLino } from '../src/structured-data-links.js';
+import { normalizeMigrationAntlrLexerDeclarations } from './antlr-reverse-fixture-lexers.mjs';
+export { normalizeMigrationAntlrLexerDeclarations } from './antlr-reverse-fixture-lexers.mjs';
 
 const repositoryRoot = fileURLToPath(new URL('../../', import.meta.url));
 const baselinePath = 'parity/fixtures/structured-data-migration-baselines.lino';
@@ -283,6 +285,11 @@ export function validateStructuredDataMigration({
       || check.command[0] !== 'node' || !/\.(?:mjs|js)$/u.test(check.command[1]) || !check.command.includes('--check')) {
       throw new Error('current freshness needs a registered JavaScript generator --check command and its output identities');
     }
+    if (check.antlrLexerDeclarationRefresh !== undefined && (check.antlrLexerDeclarationRefresh !== true
+      || !isDeepStrictEqual(check.logicalPaths, ['parity/fixtures/grammar-importers.json'])
+      || !isDeepStrictEqual(check.command, ['node', 'js/scripts/generate-antlr-reverse-fixture.mjs', '--check']))) {
+      throw new Error('ANTLR lexical refresh must retain its bounded authenticated generator and exact fixture identity');
+    }
     for (const path of check.logicalPaths) {
       if (!names.has(path) || checksByPath.has(path)) throw new Error(`current freshness has an unknown or duplicate output identity: ${path}`);
       checksByPath.set(path, check);
@@ -370,6 +377,9 @@ export function validateStructuredDataMigration({
         }
         if (check.translationStageRefresh) {
           normalizeMigrationTranslationStages(historical, migrated, check.translationStageRefresh);
+        }
+        if (check.antlrLexerDeclarationRefresh) {
+          compareStructuredDataMigrationValues(historical, normalizeMigrationAntlrLexerDeclarations(historical, migrated), `${entry.logicalPath}: additive lexical declarations`);
         }
         freshness = verifyFreshness(check);
         if (freshness instanceof Error) throw freshness;

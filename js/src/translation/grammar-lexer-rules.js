@@ -110,6 +110,140 @@ export function readGrammarLexerLiteralRulePosition(value, sectionKind, kinds, v
   return -1;
 }
 
+/** @param {string[]} values @param {string} value @returns {number} */
+function readGrammarLexerTextPosition(values, value) {
+  let index = 0;
+  while (index < values.length) {
+    if (readRequiredTextFact(values, index) === value) return index;
+    index += 1;
+  }
+  return -1;
+}
+
+/**
+ * Extend a parser owner's literal pool without changing original token order.
+ * Result: [action, insertion position, identity, ...entry/implicit-identity pairs].
+ * Actions: 0 unchanged, 1 implicit token, 2 existing explicit token, 3 unresolved
+ * literal; -1 refuses invalid projected columns. An explicit identity is an
+ * original entry position. An implicit identity is its source-ordered ordinal.
+ * @param {string} owner @param {string} value
+ * @param {string[]} kinds @param {string[]} names @param {string[]} values
+ * @param {string[]} targets @param {string[]} itemKinds @param {string[]} itemValues
+ * @param {string[]} parserLiterals @returns {number[]}
+ */
+export function readGrammarLexerLiteralExtension(owner, value, kinds, names, values, targets, itemKinds, itemValues, parserLiterals) {
+  const count = kinds.length;
+  if (names.length !== count || values.length !== count || targets.length !== count
+    || itemKinds.length !== count || itemValues.length !== count) return [-1];
+  let owned = false;
+  let index = 0;
+  const candidates = [];
+  const literals = [];
+  while (index < count) {
+    const form = readGrammarLexerEntryForm(readRequiredTextFact(kinds, index));
+    const name = readRequiredTextFact(names, index);
+    if (form === 1 && readRequiredTextFact(targets, index) === owner) owned = true;
+    if (form === 3 && readRequiredTextFact(values, index) === value) return [0, -1, -1];
+    candidates.push(form === 7 && !name.startsWith('@literal:') ? 'token' : 'silent');
+    literals.push(readRequiredTextFact(itemKinds, index) === 'literal');
+    index += 1;
+  }
+  if (!owned || value === '') return [0, -1, -1];
+  const order = readGrammarLexerTextPosition(parserLiterals, value);
+  if (order < 0) return [-1];
+  const selected = readGrammarLexerLiteralRulePosition(value, 'combined', candidates, itemValues, literals);
+  let insertion = count;
+  index = 0;
+  while (index < count) {
+    const form = readGrammarLexerEntryForm(readRequiredTextFact(kinds, index));
+    if (form === 3) {
+      const position = readGrammarLexerTextPosition(parserLiterals, readRequiredTextFact(values, index));
+      if (position < 0) return [-1];
+      if (position > order && insertion === count) insertion = index;
+    } else if (form === 7 && !readRequiredTextFact(names, index).startsWith('@literal:') && insertion === count) insertion = index;
+    index += 1;
+  }
+  if (selected >= 0) return [2, insertion, selected];
+  if (selected === -2) return [3, insertion, -1];
+  let identity = 0;
+  const renames = [];
+  index = 0;
+  while (index < count) {
+    const name = readRequiredTextFact(names, index);
+    if (readGrammarLexerEntryForm(readRequiredTextFact(kinds, index)) === 3 && name.startsWith('@literal:')) {
+      if (index < insertion) identity += 1;
+      else {
+        renames.push(index, identity + 1);
+        let target = 0;
+        let found = false;
+        while (target < count) {
+          if (readGrammarLexerEntryForm(readRequiredTextFact(kinds, target)) === 7 && readRequiredTextFact(names, target) === name) {
+            renames.push(target, identity + 1);
+            found = true;
+          }
+          target += 1;
+        }
+        if (!found) return [-1];
+        identity += 1;
+      }
+    }
+    index += 1;
+  }
+  let preceding = 0;
+  index = 0;
+  while (index < insertion) {
+    if (readGrammarLexerEntryForm(readRequiredTextFact(kinds, index)) === 3 && readRequiredTextFact(names, index).startsWith('@literal:')) preceding += 1;
+    index += 1;
+  }
+  const result = [1, insertion, preceding];
+  index = 0;
+  while (index < renames.length) {
+    result.push(readRequiredNumberFact(renames, index));
+    index += 1;
+  }
+  return result;
+}
+
+/**
+ * Checked alpha-renaming rows [entry position, actual owner entry position].
+ * Only original parser-owner labels and their owner-obligation keys qualify.
+ * Actual public bindings must form a bijection; raw token identities are fixed.
+ * @param {string[]} kinds @param {string[]} names @param {string[]} targets
+ * @returns {number[]}
+ */
+export function readGrammarLexerOwnerComparison(kinds, names, targets) {
+  if (kinds.length !== names.length || kinds.length !== targets.length) return [-1];
+  const originals = [];
+  const publics = [];
+  const positions = [];
+  const result = [];
+  let index = 0;
+  while (index < kinds.length) {
+    if (readGrammarLexerEntryForm(readRequiredTextFact(kinds, index)) === 1) {
+      const original = readRequiredTextFact(names, index);
+      const target = readRequiredTextFact(targets, index);
+      if (original === '' || target === '' || containsGrammarLexerText(originals, original) || containsGrammarLexerText(publics, target)) return [-1];
+      originals.push(original);
+      publics.push(target);
+      positions.push(index);
+      result.push(index, index);
+    }
+    index += 1;
+  }
+  index = 0;
+  while (index < kinds.length) {
+    const form = readGrammarLexerEntryForm(readRequiredTextFact(kinds, index));
+    const name = readRequiredTextFact(names, index);
+    if ((form === 7 || form === 8) && containsGrammarLexerText(originals, name)) return [-1];
+    if (form === 6 && name !== '') {
+      const owner = readGrammarLexerTextPosition(originals, name);
+      if (owner >= 0) result.push(index, readRequiredNumberFact(positions, owner));
+    }
+    index += 1;
+  }
+  return result;
+}
+
 /**
  * Public token identities in original declaration order. Declared but unused
  * types remain inspectable metadata without synthetic public productions.

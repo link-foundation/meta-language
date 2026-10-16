@@ -246,10 +246,45 @@ fn issue_195_lossless_mode_reconstructs_every_source_exactly_from_links() {
             assert_eq!(report.lossy, strings(expected, "lossy"), "{id}");
             let reimported = import(&source).expect("lossless output re-imports");
             assert_eq!(
-                render_grammar_links(&reimported),
-                text(expected, "links"),
+                meta_language::render_grammar_lexical_owner_comparison(&reimported)
+                    .expect("checked reimported owner bijection"),
+                meta_language::render_grammar_lexical_owner_comparison(edited)
+                    .expect("checked original owner bijection"),
                 "{id}"
             );
+            if format == "antlr" && *expected == renamed {
+                let mut checked = 0;
+                for lexer in &decoded.declarations().lexers {
+                    let meta_language::GrammarExpr::Sequence(entries) = &lexer.expression else {
+                        panic!("the fixture retains its original ordered lexical clauses");
+                    };
+                    for entry in entries {
+                        let meta_language::GrammarExpr::Feature(feature) = entry else {
+                            continue;
+                        };
+                        let meta_language::FeatureExpr::Form(owner) = &**feature else {
+                            continue;
+                        };
+                        if owner.head == "lexicalOwner"
+                            && matches!(owner.expression("item"), Some(meta_language::GrammarExpr::NonTerminal(target)) if target == text(renamed, "from"))
+                        {
+                            checked += 1;
+                            assert!(edited.declarations().lexers.iter().any(|lexer| match &lexer.expression {
+                                meta_language::GrammarExpr::Sequence(entries) => entries.iter().any(|entry| match entry {
+                                    meta_language::GrammarExpr::Feature(feature) => match &**feature {
+                                        meta_language::FeatureExpr::Form(candidate) => candidate.head == "lexicalOwner" && candidate.text("name") == owner.text("name")
+                                            && matches!(candidate.expression("item"), Some(meta_language::GrammarExpr::NonTerminal(target)) if target == text(renamed, "to")), _ => false,
+                                    }, _ => false,
+                                }), _ => false,
+                            }), "{id}: preserve the actual original owner alias after its public binding rename");
+                        }
+                    }
+                }
+                assert!(
+                    checked > 0,
+                    "{id}: the original source owner was independently checked"
+                );
+            }
             // Every definition the edit left alone keeps its original text.
             let edited_links = render_grammar_links(edited);
             let lines = edited_links.lines().collect::<Vec<_>>();

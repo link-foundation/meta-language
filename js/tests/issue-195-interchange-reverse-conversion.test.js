@@ -31,8 +31,10 @@ import {
   renameGrammarRule,
   renderGrammarLayoutLinks,
   renderGrammarLinks,
+  renderGrammarLexicalOwnerComparison,
 } from '../src/index.js';
 import { ISSUE_195_FIXTURE_FILES, recordIssue195Observations } from './support/issue-195-observations.js';
+import { percentEncodeLinksText } from '../src/grammar-links.js';
 
 const corpus = readProjectData(new URL('../../parity/fixtures/grammar-importers.json', import.meta.url));
 
@@ -148,7 +150,18 @@ test('issue 195 lossless mode reconstructs every source exactly from links', () 
       const emitted = emitGrammarLossless(edited, decodedLayout);
       assert.equal(emitted.source, expected.source, fixture.id);
       assert.deepEqual(emitted.report.lossy, expected.lossy, fixture.id);
-      assert.equal(renderGrammarLinks(importGrammar(emitted.source)), expected.links, fixture.id);
+      const reimported = importGrammar(emitted.source);
+      assert.equal(renderGrammarLexicalOwnerComparison(reimported), renderGrammarLexicalOwnerComparison(edited), fixture.id);
+      if (fixture.format === 'antlr' && expected === fixture.renamed) {
+        const originalOwners = decoded.declarations.lexers.flatMap(({ expression }) => expression.items)
+          .filter((entry) => entry.kind === 'lexicalOwner' && entry.item.name === fixture.renamed.from);
+        assert.ok(originalOwners.length > 0, fixture.id);
+        for (const owner of originalOwners) {
+          assert.ok(edited.declarations.lexers.some(({ expression }) => expression.items.some((entry) =>
+            entry.kind === 'lexicalOwner' && entry.name === owner.name && entry.item.name === fixture.renamed.to)), `${fixture.id} retains original owner ${owner.name}`);
+          assert.ok(renderGrammarLinks(edited).includes(`(lexicalOwner ${percentEncodeLinksText(owner.name)} (ref ${percentEncodeLinksText(fixture.renamed.to)}))`), fixture.id);
+        }
+      }
       // Every definition the edit left alone keeps its original text.
       const lines = renderGrammarLinks(edited).split('\n');
       const untouched = layout.members.filter((member) => lines.includes(member.fingerprint));

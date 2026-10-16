@@ -4,6 +4,239 @@ use super::*;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn read_grammar_lexer_literal_extension(
+    owner: self::ml_string::Text,
+    value: self::ml_string::Text,
+    kinds: &[self::ml_string::Text],
+    names: &[self::ml_string::Text],
+    values: &[self::ml_string::Text],
+    targets: &[self::ml_string::Text],
+    item_kinds: &[self::ml_string::Text],
+    item_values: &[self::ml_string::Text],
+    parser_literals: &[self::ml_string::Text],
+) -> Vec<f64> {
+    {
+        let count = kinds.len() as f64;
+        if (((((names.len() as f64) != count) || ((values.len() as f64) != count))
+            || ((targets.len() as f64) != count))
+            || ((item_kinds.len() as f64) != count))
+            || ((item_values.len() as f64) != count)
+        {
+            vec![-1f64]
+        } else {
+            {
+                let owned = false;
+                {
+                    let index = 0f64;
+                    {
+                        let candidates = Vec::<self::ml_string::Text>::new();
+                        {
+                            let literals = Vec::<bool>::new();
+                            {
+                                let ml_s8 = self::ml_read_grammar_lexer_literal_extension_loop10(
+                                    owner.clone(),
+                                    value.clone(),
+                                    kinds,
+                                    names,
+                                    values,
+                                    targets,
+                                    item_kinds,
+                                    count,
+                                    owned,
+                                    index,
+                                    candidates,
+                                    literals,
+                                );
+                                match ml_s8 {
+                                    self::MlReadGrammarLexerLiteralExtensionLoop10Result::MlReadGrammarLexerLiteralExtensionLoop10Done(owned_2, index_2, candidates_2, literals_2) => {
+                                        if owned_2 || (value == (self::ml_string::Text::from_units(vec![]))) {
+                                            {
+                                                let order = self::read_grammar_lexer_text_position(parser_literals, value.clone());
+                                                if order < 0f64 {
+                                                    vec![-1f64]
+                                                } else {
+                                                    {
+                                                        let selected = self::read_grammar_lexer_literal_rule_position(value.clone(), self::ml_string::Text::from_units(vec![99, 111, 109, 98, 105, 110, 101, 100]), &(candidates_2), item_values, &(literals_2));
+                                                        {
+                                                            let insertion = count;
+                                                            {
+                                                                let index_3 = 0f64;
+                                                                {
+                                                                    let ml_s9 = self::ml_read_grammar_lexer_literal_extension_loop11(kinds, names, values, parser_literals, count, index_3, order, insertion);
+                                                                    match ml_s9 {
+                                                                        self::MlReadGrammarLexerLiteralExtensionLoop11Result::MlReadGrammarLexerLiteralExtensionLoop11Done(index_4, insertion_2) => {
+                                                                            if selected >= 0f64 {
+                                                                                vec![2f64, insertion_2, selected]
+                                                                            } else if selected == -2f64 {
+                                                                                    vec![3f64, insertion_2, -1f64]
+                                                                                } else {
+                                                                                    {
+                                                                                        let identity = 0f64;
+                                                                                        {
+                                                                                            let renames = Vec::<f64>::new();
+                                                                                            {
+                                                                                                let index_5 = 0f64;
+                                                                                                {
+                                                                                                    let ml_s10 = self::ml_read_grammar_lexer_literal_extension_loop12(kinds, names, count, index_5, insertion_2, identity, renames);
+                                                                                                    match ml_s10 {
+                                                                                                        self::MlReadGrammarLexerLiteralExtensionLoop12Result::MlReadGrammarLexerLiteralExtensionLoop12Done(index_6, renames_2) => {
+                                                                                                            {
+                                                                                                                let preceding = 0f64;
+                                                                                                                {
+                                                                                                                    let index_7 = 0f64;
+                                                                                                                    {
+                                                                                                                        let ml_s11 = self::ml_read_grammar_lexer_literal_extension_loop13(kinds, names, index_7, insertion_2, preceding);
+                                                                                                                        match ml_s11 {
+                                                                                                                            self::MlReadGrammarLexerLiteralExtensionLoop13Result::MlReadGrammarLexerLiteralExtensionLoop13Done(index_8, preceding_2) => {
+                                                                                                                                {
+                                                                                                                                    let result = vec![1f64, insertion_2, preceding_2];
+                                                                                                                                    {
+                                                                                                                                        let index_9 = 0f64;
+                                                                                                                                        {
+                                                                                                                                            self::ml_read_grammar_lexer_literal_extension_loop14(index_9, &(renames_2), result)
+                                                                                                                                        }
+                                                                                                                                    }
+                                                                                                                                }
+                                                                                                                            }
+                                                                                                                        }
+                                                                                                                    }
+                                                                                                                }
+                                                                                                            }
+                                                                                                        }
+                                                                                                        self::MlReadGrammarLexerLiteralExtensionLoop12Result::MlReadGrammarLexerLiteralExtensionLoop12Return(ml_result14) => {
+                                                                                                            ml_result14
+                                                                                                        }
+                                                                                                    }
+                                                                                                }
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                        }
+                                                                        self::MlReadGrammarLexerLiteralExtensionLoop11Result::MlReadGrammarLexerLiteralExtensionLoop11Return(ml_result17) => {
+                                                                            ml_result17
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        } else {
+                                            vec![0f64, -1f64, -1f64]
+                                        }
+                                    }
+                                    self::MlReadGrammarLexerLiteralExtensionLoop10Result::MlReadGrammarLexerLiteralExtensionLoop10Return(ml_result18) => {
+                                        ml_result18
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_grammar_lexer_owner_comparison(
+    kinds: &[self::ml_string::Text],
+    names: &[self::ml_string::Text],
+    targets: &[self::ml_string::Text],
+) -> Vec<f64> {
+    if ((kinds.len() as f64) != (names.len() as f64))
+        || ((kinds.len() as f64) != (targets.len() as f64))
+    {
+        vec![-1f64]
+    } else {
+        {
+            let originals = Vec::<self::ml_string::Text>::new();
+            {
+                let publics = Vec::<self::ml_string::Text>::new();
+                {
+                    let positions = Vec::<f64>::new();
+                    {
+                        let result = Vec::<f64>::new();
+                        {
+                            let index = 0f64;
+                            {
+                                let ml_s12 = self::ml_read_grammar_lexer_owner_comparison_loop19(
+                                    kinds, names, targets, originals, publics, positions, result,
+                                    index,
+                                );
+                                match ml_s12 {
+                                    self::MlReadGrammarLexerOwnerComparisonLoop19Result::MlReadGrammarLexerOwnerComparisonLoop19Done(originals_2, positions_2, result_2, index_2) => {
+                                        {
+                                            let index_3 = 0f64;
+                                            {
+                                                let ml_s13 = self::ml_read_grammar_lexer_owner_comparison_loop20(kinds, names, &(originals_2), &(positions_2), result_2, index_3);
+                                                match ml_s13 {
+                                                    self::MlReadGrammarLexerOwnerComparisonLoop20Result::MlReadGrammarLexerOwnerComparisonLoop20Done(result_3) => {
+                                                        result_3
+                                                    }
+                                                    self::MlReadGrammarLexerOwnerComparisonLoop20Result::MlReadGrammarLexerOwnerComparisonLoop20Return(ml_result20) => {
+                                                        ml_result20
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    self::MlReadGrammarLexerOwnerComparisonLoop19Result::MlReadGrammarLexerOwnerComparisonLoop19Return(ml_result20_2) => {
+                                        ml_result20_2
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_grammar_lexer_binding_names(
+    declared: &[self::ml_string::Text],
+    references: &[self::ml_string::Text],
+    names: &[self::ml_string::Text],
+    legacy_types: &[self::ml_string::Text],
+    emitted_types: &[self::ml_string::Text],
+    dispositions: &[self::ml_string::Text],
+) -> Vec<self::ml_string::Text> {
+    {
+        let bindings = Vec::<self::ml_string::Text>::new();
+        {
+            let index = 0f64;
+            {
+                let ml_s14 = self::ml_read_grammar_lexer_binding_names_loop22(
+                    declared, references, bindings, index,
+                );
+                match ml_s14 {
+                    self::MlReadGrammarLexerBindingNamesLoop22Result::MlReadGrammarLexerBindingNamesLoop22Done(bindings_2, index_2) => {
+                        {
+                            let index_3 = 0f64;
+                            {
+                                self::ml_read_grammar_lexer_binding_names_loop23(names, legacy_types, emitted_types, dispositions, bindings_2, index_3)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_grammar_lexer_command_plan(
     command: self::ml_string::Text,
     name: self::ml_string::Text,
@@ -37,16 +270,17 @@ pub fn read_grammar_lexer_command_plan(
                                 {
                                     let index = 0f64;
                                     {
-                                        let ml_s8 = self::ml_read_grammar_lexer_command_plan_loop11(
-                                            type_,
-                                            channel,
-                                            disposition,
-                                            actions,
-                                            &(pieces),
-                                            index,
-                                        );
-                                        match ml_s8 {
-                                            self::MlReadGrammarLexerCommandPlanLoop11Result::MlReadGrammarLexerCommandPlanLoop11Done(type_2, channel_2, disposition_2, actions_2) => {
+                                        let ml_s15 =
+                                            self::ml_read_grammar_lexer_command_plan_loop24(
+                                                type_,
+                                                channel,
+                                                disposition,
+                                                actions,
+                                                &(pieces),
+                                                index,
+                                            );
+                                        match ml_s15 {
+                                            self::MlReadGrammarLexerCommandPlanLoop24Result::MlReadGrammarLexerCommandPlanLoop24Done(type_2, channel_2, disposition_2, actions_2) => {
                                                 self::ml_array::append(vec![type_2.clone(), channel_2.clone(), disposition_2.clone()], actions_2)
                                             }
                                         }
@@ -159,26 +393,26 @@ pub fn read_grammar_lexer_declaration_issue(
                                     {
                                         let index = 0f64;
                                         {
-                                            let ml_s9 = self::ml_read_grammar_lexer_declaration_issue_loop15(kinds, names, items, values, count, binding_names, owner_names, literal_values, local_names, declared_modes, declared_channels, index);
-                                            match ml_s9 {
-                                                self::MlReadGrammarLexerDeclarationIssueLoop15Result::MlReadGrammarLexerDeclarationIssueLoop15Done(declared_modes_2, declared_channels_2, index_2) => {
+                                            let ml_s16 = self::ml_read_grammar_lexer_declaration_issue_loop28(kinds, names, items, values, count, binding_names, owner_names, literal_values, local_names, declared_modes, declared_channels, index);
+                                            match ml_s16 {
+                                                self::MlReadGrammarLexerDeclarationIssueLoop28Result::MlReadGrammarLexerDeclarationIssueLoop28Done(declared_modes_2, declared_channels_2, index_2) => {
                                                     {
                                                         let index_3 = 0f64;
                                                         {
-                                                            let ml_s10 = self::ml_read_grammar_lexer_declaration_issue_loop16(kinds, modes, channels, dispositions, action_owners, actions, action_modes, count, &(declared_modes_2), &(declared_channels_2), index_3);
-                                                            match ml_s10 {
-                                                                self::MlReadGrammarLexerDeclarationIssueLoop16Result::MlReadGrammarLexerDeclarationIssueLoop16Done => {
+                                                            let ml_s17 = self::ml_read_grammar_lexer_declaration_issue_loop29(kinds, modes, channels, dispositions, action_owners, actions, action_modes, count, &(declared_modes_2), &(declared_channels_2), index_3);
+                                                            match ml_s17 {
+                                                                self::MlReadGrammarLexerDeclarationIssueLoop29Result::MlReadGrammarLexerDeclarationIssueLoop29Done => {
                                                                     vec![0f64, -1f64, -1f64]
                                                                 }
-                                                                self::MlReadGrammarLexerDeclarationIssueLoop16Result::MlReadGrammarLexerDeclarationIssueLoop16Return(ml_result16) => {
-                                                                    ml_result16
+                                                                self::MlReadGrammarLexerDeclarationIssueLoop29Result::MlReadGrammarLexerDeclarationIssueLoop29Return(ml_result29) => {
+                                                                    ml_result29
                                                                 }
                                                             }
                                                         }
                                                     }
                                                 }
-                                                self::MlReadGrammarLexerDeclarationIssueLoop15Result::MlReadGrammarLexerDeclarationIssueLoop15Return(ml_result19) => {
-                                                    ml_result19
+                                                self::MlReadGrammarLexerDeclarationIssueLoop28Result::MlReadGrammarLexerDeclarationIssueLoop28Return(ml_result32) => {
+                                                    ml_result32
                                                 }
                                             }
                                         }
@@ -221,7 +455,7 @@ pub fn read_grammar_lexer_obligation_positions(
                     {
                         let cursor = 0f64;
                         {
-                            let ml_s11 = self::ml_read_grammar_lexer_obligation_positions_loop24(
+                            let ml_s18 = self::ml_read_grammar_lexer_obligation_positions_loop37(
                                 count,
                                 edge_sources,
                                 edge_targets,
@@ -230,20 +464,20 @@ pub fn read_grammar_lexer_obligation_positions(
                                 pending,
                                 cursor,
                             );
-                            match ml_s11 {
-                                self::MlReadGrammarLexerObligationPositionsLoop24Result::MlReadGrammarLexerObligationPositionsLoop24Done(reached_2, index_2) => {
+                            match ml_s18 {
+                                self::MlReadGrammarLexerObligationPositionsLoop37Result::MlReadGrammarLexerObligationPositionsLoop37Done(reached_2, index_2) => {
                                     {
                                         let selected = Vec::<f64>::new();
                                         {
                                             let index_3 = 0f64;
                                             {
-                                                self::ml_read_grammar_lexer_obligation_positions_loop25(count, root, owners, categories, &(reached_2), index_3, selected)
+                                                self::ml_read_grammar_lexer_obligation_positions_loop38(count, root, owners, categories, &(reached_2), index_3, selected)
                                             }
                                         }
                                     }
                                 }
-                                self::MlReadGrammarLexerObligationPositionsLoop24Result::MlReadGrammarLexerObligationPositionsLoop24Return(ml_result25) => {
-                                    ml_result25
+                                self::MlReadGrammarLexerObligationPositionsLoop37Result::MlReadGrammarLexerObligationPositionsLoop37Return(ml_result38) => {
+                                    ml_result38
                                 }
                             }
                         }
@@ -277,7 +511,7 @@ pub fn read_grammar_lexer_lazy_normalization(
                 {
                     let index = 0f64;
                     {
-                        self::ml_read_grammar_lexer_lazy_normalization_loop28(
+                        self::ml_read_grammar_lexer_lazy_normalization_loop41(
                             kinds,
                             labels,
                             texts,
@@ -586,7 +820,7 @@ pub fn ml_read_grammar_lexer_literal_rule_position_loop7(
     loop {
         return if index < (kinds.len() as f64) {
             {
-                let ml_s12 = if (((self::read_required_text_fact(kinds, index))
+                let ml_s19 = if (((self::read_required_text_fact(kinds, index))
                     == (self::ml_string::Text::from_units(vec![116, 111, 107, 101, 110])))
                     && self::read_required_boolean_fact(literals, index))
                     && ((self::read_required_text_fact(values, index)) == value)
@@ -601,7 +835,7 @@ pub fn ml_read_grammar_lexer_literal_rule_position_loop7(
                 } else {
                     self::MlReadGrammarLexerLiteralRulePositionJoin8::MlReadGrammarLexerLiteralRulePositionJoin8Next(selected, count)
                 };
-                match ml_s12 {
+                match ml_s19 {
                     self::MlReadGrammarLexerLiteralRulePositionJoin8::MlReadGrammarLexerLiteralRulePositionJoin8Next(selected_3, count_3) => {
                         {
                             let index_2 = index + 1f64;
@@ -619,196 +853,34 @@ pub fn ml_read_grammar_lexer_literal_rule_position_loop7(
     }
 }
 
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_read_grammar_lexer_binding_names_loop10(
-    names: &[self::ml_string::Text],
-    legacy_types: &[self::ml_string::Text],
-    emitted_types: &[self::ml_string::Text],
-    dispositions: &[self::ml_string::Text],
-    mut bindings: Vec<self::ml_string::Text>,
-    mut index: f64,
-) -> Vec<self::ml_string::Text> {
-    loop {
-        if index < (names.len() as f64) {
-            {
-                let name = self::read_required_text_fact(names, index);
-                {
-                    let legacy = self::read_required_text_fact(legacy_types, index);
-                    {
-                        let emitted = self::read_required_text_fact(emitted_types, index);
-                        {
-                            let bindings_3 =
-                                if (self::contains_grammar_lexer_text(&(bindings), name.clone())) {
-                                    bindings
-                                } else {
-                                    {
-                                        {
-                                            let (ml_append_right, ml_append_left) =
-                                                (vec![name.clone()], bindings);
-                                            self::ml_array::append(ml_append_left, ml_append_right)
-                                        }
-                                    }
-                                };
-                            {
-                                let bindings_5 = if (legacy
-                                    != (self::ml_string::Text::from_units(vec![])))
-                                    && !(self::contains_grammar_lexer_text(
-                                        &(bindings_3),
-                                        legacy.clone(),
-                                    )) {
-                                    {
-                                        {
-                                            let (ml_append_right, ml_append_left) =
-                                                (vec![legacy.clone()], bindings_3);
-                                            self::ml_array::append(ml_append_left, ml_append_right)
-                                        }
-                                    }
-                                } else {
-                                    bindings_3
-                                };
-                                {
-                                    let bindings_7 =
-                                        if ((self::read_required_text_fact(dispositions, index))
-                                            == (self::ml_string::Text::from_units(vec![
-                                                101, 109, 105, 116,
-                                            ])))
-                                            && !(self::contains_grammar_lexer_text(
-                                                &(bindings_5),
-                                                emitted.clone(),
-                                            ))
-                                        {
-                                            {
-                                                {
-                                                    let (ml_append_right, ml_append_left) =
-                                                        (vec![emitted.clone()], bindings_5);
-                                                    self::ml_array::append(
-                                                        ml_append_left,
-                                                        ml_append_right,
-                                                    )
-                                                }
-                                            }
-                                        } else {
-                                            bindings_5
-                                        };
-                                    {
-                                        let index_2 = index + 1f64;
-                                        {
-                                            (bindings, index) = (bindings_7, index_2);
-                                            continue;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return { bindings };
-    }
-}
-
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlReadGrammarLexerBindingNamesLoop9Result {
-    MlReadGrammarLexerBindingNamesLoop9Done(Vec<self::ml_string::Text>, f64),
+pub enum MlReadGrammarLexerTextPositionLoop9Result {
+    MlReadGrammarLexerTextPositionLoop9Done,
+    MlReadGrammarLexerTextPositionLoop9Return(f64),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_grammar_lexer_binding_names_loop9(
-    declared: &[self::ml_string::Text],
-    references: &[self::ml_string::Text],
-    mut bindings: Vec<self::ml_string::Text>,
+pub fn ml_read_grammar_lexer_text_position_loop9(
+    values: &[self::ml_string::Text],
+    mut value: self::ml_string::Text,
     mut index: f64,
-) -> self::MlReadGrammarLexerBindingNamesLoop9Result {
+) -> self::MlReadGrammarLexerTextPositionLoop9Result {
     loop {
-        if index < (declared.len() as f64) {
-            {
-                let name = self::read_required_text_fact(declared, index);
+        return if index < (values.len() as f64) {
+            if (self::read_required_text_fact(values, index)) == value {
+                self::MlReadGrammarLexerTextPositionLoop9Result::MlReadGrammarLexerTextPositionLoop9Return(index)
+            } else {
                 {
-                    let bindings_3 = if self::contains_grammar_lexer_text(references, name.clone())
-                        && !(self::contains_grammar_lexer_text(&(bindings), name.clone()))
+                    let index_2 = index + 1f64;
                     {
-                        {
-                            {
-                                let (ml_append_right, ml_append_left) =
-                                    (vec![name.clone()], bindings);
-                                self::ml_array::append(ml_append_left, ml_append_right)
-                            }
-                        }
-                    } else {
-                        bindings
-                    };
-                    {
-                        let index_2 = index + 1f64;
-                        {
-                            (bindings, index) = (bindings_3, index_2);
-                            continue;
-                        }
-                    }
-                }
-            }
-        }
-        return {
-            self::MlReadGrammarLexerBindingNamesLoop9Result::MlReadGrammarLexerBindingNamesLoop9Done(
-                bindings, index,
-            )
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlReadGrammarLexerCommandPlanLoop11Result {
-    MlReadGrammarLexerCommandPlanLoop11Done(
-        self::ml_string::Text,
-        self::ml_string::Text,
-        self::ml_string::Text,
-        Vec<self::ml_string::Text>,
-    ),
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlReadGrammarLexerCommandPlanJoin13 {
-    MlReadGrammarLexerCommandPlanJoin13Next(
-        self::ml_string::Text,
-        self::ml_string::Text,
-        self::ml_string::Text,
-        Vec<self::ml_string::Text>,
-    ),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_read_grammar_lexer_command_plan_loop14(
-    mut argument: self::ml_string::Text,
-    mut zero: bool,
-    mut offset: f64,
-) -> bool {
-    loop {
-        if offset < (argument.length()) {
-            {
-                let zero_3 = if (argument.slice(offset, (offset + 1f64)))
-                    != (self::ml_string::Text::from_units(vec![48]))
-                {
-                    { false }
-                } else {
-                    zero
-                };
-                {
-                    let offset_2 = offset + 1f64;
-                    {
-                        (zero, offset) = (zero_3, offset_2);
+                        index = index_2;
                         continue;
                     }
                 }
             }
-        }
-        return { zero };
+        } else {
+            self::MlReadGrammarLexerTextPositionLoop9Result::MlReadGrammarLexerTextPositionLoop9Done
+        };
     }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlReadGrammarLexerCommandPlanJoin12 {
-    MlReadGrammarLexerCommandPlanJoin12Next(self::ml_string::Text, self::ml_string::Text, bool),
 }

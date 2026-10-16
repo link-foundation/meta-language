@@ -823,31 +823,21 @@ pub fn read_grammar_lexer_literal_rule_position(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_grammar_lexer_binding_names(
-    declared: &[self::ml_string::Text],
-    references: &[self::ml_string::Text],
-    names: &[self::ml_string::Text],
-    legacy_types: &[self::ml_string::Text],
-    emitted_types: &[self::ml_string::Text],
-    dispositions: &[self::ml_string::Text],
-) -> Vec<self::ml_string::Text> {
+pub fn read_grammar_lexer_text_position(
+    values: &[self::ml_string::Text],
+    value: self::ml_string::Text,
+) -> f64 {
     {
-        let bindings = Vec::<self::ml_string::Text>::new();
+        let index = 0f64;
         {
-            let index = 0f64;
-            {
-                let ml_s7 = self::ml_read_grammar_lexer_binding_names_loop9(
-                    declared, references, bindings, index,
-                );
-                match ml_s7 {
-                    self::MlReadGrammarLexerBindingNamesLoop9Result::MlReadGrammarLexerBindingNamesLoop9Done(bindings_2, index_2) => {
-                        {
-                            let index_3 = 0f64;
-                            {
-                                self::ml_read_grammar_lexer_binding_names_loop10(names, legacy_types, emitted_types, dispositions, bindings_2, index_3)
-                            }
-                        }
-                    }
+            let ml_s7 =
+                self::ml_read_grammar_lexer_text_position_loop9(values, value.clone(), index);
+            match ml_s7 {
+                self::MlReadGrammarLexerTextPositionLoop9Result::MlReadGrammarLexerTextPositionLoop9Done => {
+                    -1f64
+                }
+                self::MlReadGrammarLexerTextPositionLoop9Result::MlReadGrammarLexerTextPositionLoop9Return(ml_result9) => {
+                    ml_result9
                 }
             }
         }

@@ -68,6 +68,29 @@ pub(crate) fn literal_rule(
     )
 }
 
+pub(crate) fn literal_extension(
+    owner: &str,
+    value: &str,
+    columns: &[Vec<String>; 6],
+    parser_literals: &[String],
+) -> Vec<f64> {
+    rules::read_grammar_lexer_literal_extension(
+        text(owner),
+        text(value),
+        &texts(&columns[0]),
+        &texts(&columns[1]),
+        &texts(&columns[2]),
+        &texts(&columns[3]),
+        &texts(&columns[4]),
+        &texts(&columns[5]),
+        &texts(parser_literals),
+    )
+}
+
+pub(crate) fn owner_comparison(kinds: &[String], names: &[String], targets: &[String]) -> Vec<f64> {
+    rules::read_grammar_lexer_owner_comparison(&texts(kinds), &texts(names), &texts(targets))
+}
+
 pub(crate) fn binding_names(
     declared: &[String],
     references: &[String],
@@ -163,5 +186,5 @@ pub(super) fn expected_token(expected: &str, actual: &str, wildcard: bool) -> bo
 }
 
 pub(super) fn winner(ends: &[f64], eligible: &[bool]) -> f64 {
-    crate::translation::frontend_rules::read_lexical_winner_index(ends.to_vec(), eligible.to_vec())
+    crate::translation::frontend_rules::read_lexical_winner_index(ends, eligible)
 }

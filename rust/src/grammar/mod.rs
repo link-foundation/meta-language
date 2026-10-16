@@ -147,6 +147,7 @@ pub use round_trip::{
     GrammarRoundTripError, GrammarRoundTripFailure, GrammarRoundTripFailureKind,
     GrammarRoundTripReport, GrammarRoundTripStage, GrammarRoundTripStatus, accepts_text,
     canonical_rule_definition, check_grammar_round_trip, mutate_grammar_start_rule,
+    render_grammar_lexical_owner_comparison,
 };
 pub use runtime::{GrammarParser, register_grammar, with_grammar};
 pub use surface::{

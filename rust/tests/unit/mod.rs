@@ -52,6 +52,7 @@ mod grammar_native_ruby_literal_ci;
 mod grammar_native_ruby_patterns;
 mod grammar_parsing;
 mod grammar_render;
+mod grammar_round_trip_lexical_mutation;
 mod grammar_runtime;
 mod grammar_scanner_indentation;
 mod grammar_surface;
