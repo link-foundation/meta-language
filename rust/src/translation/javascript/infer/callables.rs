@@ -154,7 +154,7 @@ impl Inference {
             _ => None,
         };
         if rules::require_callable_named_inference(
-            head.kind(),
+            head.node.kind(),
             super::super::callables::number(path.len()),
             local.is_some(),
         ) {

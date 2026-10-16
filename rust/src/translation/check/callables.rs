@@ -90,7 +90,7 @@ impl Checker {
             _ => None,
         };
         let accepted = rules::accept_callable_function_reference(
-            node.kind(),
+            node.node.kind(),
             expected.kind(),
             if function.is_some() { "fn" } else { "" },
         );

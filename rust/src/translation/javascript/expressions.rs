@@ -62,7 +62,7 @@ impl JavaScriptParser {
                         "left",
                         coalesced,
                         parenthesized,
-                        left.kind(),
+                        left.node.kind(),
                         operation,
                     );
                 if !error.is_empty() {
@@ -83,7 +83,7 @@ impl JavaScriptParser {
                         "right",
                         coalesced,
                         parenthesized,
-                        right.kind(),
+                        right.node.kind(),
                         operation,
                     );
                 if !error.is_empty() {

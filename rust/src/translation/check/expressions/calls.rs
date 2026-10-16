@@ -28,7 +28,7 @@ impl Checker {
             .as_f64()
             .expect("an arity has a Number representation");
         if crate::translation::callable_source_rules::require_callable_computed_application(
-            head.kind(),
+            head.node.kind(),
             path_length,
             &local_kind,
         ) {
