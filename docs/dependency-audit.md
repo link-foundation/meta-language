@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 156 | 155 | 1 | 0 |
+| Generators | 161 | 160 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 67 | 0 | 0 | 67 |
+| Published artifact contents | 72 | 0 | 0 | 72 |
 
 ## JavaScript engines
 
@@ -565,6 +565,8 @@ they are.
 | `js/scripts/build-vendored-grammars.mjs` | `js/scripts/build-vendored-grammars.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-web-tree-sitter-runtime.mjs` | `js/scripts/build-web-tree-sitter-runtime.mjs` | `script` |  | derived | behind | Built from `image emscripten/emsdk@4.0.15`, which is behind (see its reason). |
 | `js/scripts/generate-antlr-reverse-fixture.mjs` | `js/scripts/generate-antlr-reverse-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-array-binding-rules.mjs` | `js/scripts/generate-array-binding-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-array-from-rules.mjs` | `js/scripts/generate-array-from-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-array-value-rules.mjs` | `js/scripts/generate-array-value-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-assertion-version-policy.mjs` | `js/scripts/generate-assertion-version-policy.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-builtin-cst-expectations.mjs` | `js/scripts/generate-builtin-cst-expectations.mjs` | `script` |  | derived | current |  |
@@ -607,9 +609,11 @@ they are.
 | `js/scripts/generate-native-recovery.mjs` | `js/scripts/generate-native-recovery.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-native-scanner-profile-fixtures.mjs` | `js/scripts/generate-native-scanner-profile-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-native-scanner-profiles.mjs` | `js/scripts/generate-native-scanner-profiles.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-network-projection-rules.mjs` | `js/scripts/generate-network-projection-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-nullable-type-syntax-rules.mjs` | `js/scripts/generate-nullable-type-syntax-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-optional-rules.mjs` | `js/scripts/generate-optional-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-owned-array-append-rules.mjs` | `js/scripts/generate-owned-array-append-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-partial-callable-rules.mjs` | `js/scripts/generate-partial-callable-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-pdf-grammar-cases.mjs` | `js/scripts/generate-pdf-grammar-cases.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-primitive-method-rules.mjs` | `js/scripts/generate-primitive-method-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-primitive-value-rules.mjs` | `js/scripts/generate-primitive-value-rules.mjs` | `script` |  | derived | current |  |
@@ -617,6 +621,7 @@ they are.
 | `js/scripts/generate-product-emission-rules.mjs` | `js/scripts/generate-product-emission-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-product-source-rules.mjs` | `js/scripts/generate-product-source-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-product-unit-fixture.mjs` | `js/scripts/generate-product-unit-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-program-number-projection-rules.mjs` | `js/scripts/generate-program-number-projection-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-program-numeric-metadata-rules.mjs` | `js/scripts/generate-program-numeric-metadata-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-project-data-tooling-fixture.mjs` | `js/scripts/generate-project-data-tooling-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-record-emission-rules.mjs` | `js/scripts/generate-record-emission-rules.mjs` | `script` |  | derived | current |  |
@@ -775,6 +780,8 @@ they are.
 | `examples/**/*.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `README.md` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/**/*.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/array-bindings.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/array-from-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/array-values.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/callable-emission-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/callable-source-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
@@ -792,9 +799,12 @@ they are.
 | `src/data/native-grammars/*.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/native-text-grammar.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/native-text-metadata.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/network-projection-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/nullable-type-syntax.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/optional-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/owned-array-append.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/partial-callable-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/program-number-projection-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/program-numeric-metadata.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/record-emission.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/record-type-syntax.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
