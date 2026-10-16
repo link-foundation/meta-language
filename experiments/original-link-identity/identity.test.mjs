@@ -101,7 +101,12 @@ test('the complete kernel executes after public text and binary Links reload wit
 
 test('historical public collisions remain inspectable while live constructors, text and references reject unsafe identities',()=>{
  for(const control of [policy.feasibility.growth,policy.feasibility.arrayFrom])for(const options of [{},{referenceSemantics:true},{referenceSemantics:false}]){
-  assert.throws(()=>checkProgram(parseJavaScript(control.source,options)),error=>error.kind===control.kind&&error.reason===control.reason&&error.span.start===control.span.start&&error.span.end===control.span.end);
+  // Keep both the original reference refusal and the recorded CI owned-read
+  // diagnostic. Explicit reference selection retains the actual heap operation.
+  const profile=options.referenceSemantics===true?'reference':options.referenceSemantics===false?'owned':'automatic';
+  const expected=policy.feasibility.growthProfiles.find(row=>row.profile===profile).expected;
+  const current=control===policy.feasibility.growth?policy.feasibility[expected]:control;
+  assert.throws(()=>checkProgram(parseJavaScript(control.source,options)),error=>error.kind===current.kind&&error.reason===current.reason&&error.span.start===current.span.start&&error.span.end===current.span.end);
  }
  const history=policy.feasibility.historicalPublicLinkId,context={};
  assert.equal(history.commit,'803c0125630b97a55f49683991422abae86dd8fa');assert.equal(history.path,'js/src/primitives.js');assert.equal(history.fileSha256,'46f8d0850d5e0a1fc13e9651fca8c7cc3efbd1d4c40fcee2f87608dc2d172247');

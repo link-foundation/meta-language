@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
 import { readProjectData } from '../../js/scripts/project-data.mjs';
 import { LinkNetwork, encodeLinkNetworkBinary, decodeLinkNetworkBinary } from '../../js/src/index.js';
-import { TYPED_PROGRAM_LINKS_SCHEMA as schema } from '../../js/src/typed-program-links.js';
+import { TYPED_PROGRAM_LINKS_SCHEMA as schema, encodeTypedProgramLinks, decodeTypedProgramLinks } from '../../js/src/typed-program-links.js';
 import { checkProgram } from '../../js/src/translation/check.js';
 import { parseJavaScript } from '../../js/src/translation/javascript.js';
 import { emitJavaScript } from '../../js/src/translation/emit-javascript.js';
@@ -55,12 +55,38 @@ test('text and binary Links reload retain actual source binders and checked owne
   }
 });
 
-test('all existing default push refusals remain exact and selection must be explicit', () => {
+test('the experimental model remains explicit while original fresh collectors also use production append proofs', () => {
   const source = freshNumberArrayCollectorFixtures()[0].source;
   assert.throws(() => createFreshNumberArrayCollector(source), /select the exact experimental source model/u);
   assert.throws(() => createFreshNumberArrayCollector(source, { model: 'another collector' }), /select the exact/u);
-  for (const referenceSemantics of [undefined, true, false]) {
-    assert.throws(() => checkProgram(parseJavaScript(source, { referenceSemantics })), /\.push\(\).*has no checked operation/u);
+  // CI 38911564946 job 117015296609 showed that the former unconditional
+  // default refusal is obsolete for owned construction. Explicit reference
+  // selection still retains the original operation and its exact refusal.
+  for (const entry of freshNumberArrayCollectorFixtures()) for (const referenceSemantics of [undefined, true, false]) {
+    if (referenceSemantics === true) {
+      const operation = /\b[A-Za-z][A-Za-z_0-9]*\.push\([^;]+\)/u.exec(entry.source);
+      assert.ok(operation, entry.id);
+      assert.throws(() => checkProgram(parseJavaScript(entry.source, { referenceSemantics })), error => error.kind === 'unsupported'
+        && error.reason === 'method call .push(): .push() has no checked operation on array:float'
+        && error.span.start === operation.index && error.span.end === operation.index + operation[0].length, entry.id);
+      continue;
+    }
+    const program = checkProgram(parseJavaScript(entry.source, { referenceSemantics }));
+    assert.deepEqual(execute(entry.source, entry.name, entry.input), entry.expected);
+    assert.deepEqual(execute(emitJavaScript(program).text, entry.name, entry.input), entry.expected);
+    const packet = encodeTypedProgramLinks(program);
+    for (const network of [LinkNetwork.fromLino(packet.network.toLino()), decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))]) {
+      const restored = decodeTypedProgramLinks(network, packet.root);
+      assert.deepEqual(execute(emitJavaScript(restored).text, entry.name, entry.input), entry.expected);
+    }
+  }
+  for (const invalid of [
+    source.replace('result.push(', 'const alias=result;result.push('),
+    source.replace('result.push(', 'const size=result.push('),
+    source.replace('result.push(values[index]??-1);', 'return result.push(values[index]??-1);'),
+    source.replace('const result=[];', 'const result=values;'),
+  ]) {
+    assert.throws(() => checkProgram(parseJavaScript(invalid, { referenceSemantics: false })), /\.push\(\)|type|expected/u);
   }
 });
 

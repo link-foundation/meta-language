@@ -105,8 +105,9 @@ function sourceFacts(source) {
 
 function compile(source) {
   const facts = sourceFacts(source);
-  // Both complete modules use the real frontend. The source's default push
-  // still has its reference interpretation and remains refused by the checker.
+  // Both complete modules use the real frontend. Production also has its own
+  // fresh-local append proof; this selected certificate retains its independent
+  // finite source grammar and owned token/lowering facts.
   const original = parseJavaScript(source);
   const originalEntry = original.items.find(entry => entry.k === 'fn' && entry.name === facts.bindings[0].name);
   const numberArray = type => type?.kind === 'array' && type.element.kind === 'float';

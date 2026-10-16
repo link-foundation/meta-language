@@ -1,15 +1,15 @@
 // Exact-source decorators for an isolated prototype; production files are read only.
-import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { DecoratorSet } from '../../js/src/decorators.js';
 import { writeProjectData, checkProjectData } from '../../js/scripts/project-data.mjs';
 import { rawBindingCertificatePolicy } from './generate-rules.mjs';
+import { readReviewedOverlayProviderSources, writeReviewedOverlayProviderPolicy } from '../rust-text-certificate-adapter/reviewed-providers.mjs';
 
 const hash = source => createHash('sha256').update(source).digest('hex');
 const modules = ['typed-program-links.js', 'typed-program-links-validation.js', 'typed-program-checked-projection.js', 'translation/emit-javascript.js', 'translation/emit-rust.js'];
 export function rawBindingCertificateOverlayRecords() {
-  const sources = new Map(modules.map(module => [module, readFileSync(new URL('../../js/src/' + module, import.meta.url), 'utf8')]));
+  const { sources, revision } = readReviewedOverlayProviderSources({ experiment: 'rust-raw-binding-certificate-adapter', modules });
   const changes = new Map([...sources].map(([module, source]) => [module, [{
     from: source.split('\n')[0],
     to: "import { readRustRawBindingCertificate, captureRustRawBindingCertificate, decorateRustRawBindingCertificateEmission, emitRustRawBindingCertificate } from '"
@@ -43,11 +43,12 @@ export function rawBindingCertificateOverlayRecords() {
     }]).toLino();
     const actual = DecoratorSet.fromLino(decorators).decorate('translation-rule', { module, source }).source;
     if (actual !== current) throw new TypeError('the linked raw-binding decorator differs from its exact recipe');
-    return { module, sourceSha256: hash(source), overlaySha256: hash(actual), decorators, changes: changes.get(module).length };
+    return { module, sourceSha256: hash(source), overlaySha256: hash(actual), decorators, changes: changes.get(module).length, providerRevision: revision.sourceCommit };
   });
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const file = new URL('./data/overlays.lino', import.meta.url), records = rawBindingCertificateOverlayRecords();
+  writeReviewedOverlayProviderPolicy(process.argv.includes('--check'));
+  const file = new URL('./data/overlays-current.lino', import.meta.url), records = rawBindingCertificateOverlayRecords();
   if (process.argv.includes('--check')) checkProjectData(file, records); else writeProjectData(file, records);
   console.log('Raw binding certificate: five exact-source module decorator receipts');
 }

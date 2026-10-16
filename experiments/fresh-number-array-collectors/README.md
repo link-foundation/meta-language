@@ -3,7 +3,10 @@
 This opt-in JavaScript experiment selects `closed fresh Number array collector 1`.
 It preserves each complete original `const out=[]; … out.push(value); …` source
 as ordered lexical tokens, exact trivia code units and actual binding records.
-The default production parser/checker still refuses the original mutation.
+Production also has a shared fresh-local append proof. This experiment keeps
+its independent, explicitly selected source certificate and narrower grammar.
+The production proof applies to owned construction; explicit reference selection
+retains the original heap operation and its refusal.
 
 The linked grammar accepts exactly one function, one fresh collector, and one
 counted loop from zero below the unchanged input length, incrementing by one.
@@ -44,7 +47,9 @@ Eleven bounded tests compare independently authored original-source outcomes
 with emitted JavaScript, including pre-append argument scope, and repeat those
 checks after Links text and binary reload. Actual checked owner and lexical
 binder identities are checked separately from value equality. Source and graph
-corruptions, the old default refusals and excluded source forms stay rejected.
+corruptions and excluded source forms stay rejected. The original collector
+inputs also exercise production append admission and source-free Links replay;
+aliased collectors and observed push results retain separate refusal controls.
 An automatically translated reserved-binding table rejects invalid original
 JavaScript names. Saved premise links use the separate `premise owner` role;
 ordered declarations and the actual mapping must share the same owned nodes.

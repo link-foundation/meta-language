@@ -5,7 +5,7 @@ export async function createRustRawBindingCertificateOverlay() {
   const sourceRoot = new URL('../../js/src/', import.meta.url);
   const virtual = new URL('rust-raw-binding-certificate-adapter.js', sourceRoot).href;
   const overlay = await createCheckedModuleOverlay({
-    records: readProjectData(new URL('./data/overlays.lino', import.meta.url)), sourceRoot,
+    records: readProjectData(new URL('./data/overlays-current.lino', import.meta.url)), sourceRoot,
     virtualModules: new Map([[virtual, new URL('./certificate.mjs', import.meta.url).href]]),
   });
   try {

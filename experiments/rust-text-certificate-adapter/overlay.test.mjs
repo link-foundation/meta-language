@@ -14,6 +14,7 @@ const hash=value=>createHash('sha256').update(value).digest('hex');
 test('exact decorator receipts refuse changed providers and preserve all original source bytes',async()=>{
  const records=rustTextCertificateOverlayRecords(),root=new URL('../../js/src/',import.meta.url);for(const row of records)assert.equal(hash(readFileSync(new URL(row.module,root))),row.sourceSha256);
  const changed=records.map((row,index)=>index?row:{...row,sourceSha256:'0'.repeat(64)});await assert.rejects(createCheckedModuleOverlay({records:changed}),/exact overlay provider changed/u);
+ const changedOverlay=records.map((row,index)=>index?row:{...row,overlaySha256:'0'.repeat(64)});await assert.rejects(createCheckedModuleOverlay({records:changedOverlay}),/checked overlay transformation differs/u);
  const overlay=await createRustTextCertificatePublicOverlay();try{assert.deepEqual(overlay.receipts,records.map(({module,sourceSha256,overlaySha256})=>({module,sourceSha256,overlaySha256})));}finally{overlay.dispose();}
  for(const row of records)assert.equal(hash(readFileSync(new URL(row.module,root))),row.sourceSha256);
 });

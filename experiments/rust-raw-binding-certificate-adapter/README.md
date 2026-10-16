@@ -57,3 +57,8 @@ output, recorded emitter styles and exact source/decorator hashes. Bounded
 tests exercise the decorated public API, saved graph substitutions, coherent
 source-free edits, emitted programs, unchanged defaults and zero getter reads.
 Native compilation belongs to CI.
+
+The original `data/overlays.lino` stays unchanged. Current execution uses
+`data/overlays-current.lino`, generated only for a complete provider revision
+authenticated by the shared reviewed-provider policy. A changed source byte,
+unknown revision or changed decorator output refuses before overlay execution.

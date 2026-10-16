@@ -8,7 +8,8 @@ at actual codec, validation, recheck and emission entry points. No production
 file, package index, public declaration, source option, old model, fixture or
 acceptance assertion is changed.
 
-[data/overlays.lino](data/overlays.lino) records exact source hashes, checked
+[data/overlays.lino](data/overlays.lino) retains the original provider receipts.
+[data/overlays-current.lino](data/overlays-current.lino) records the selected reviewed source hashes, checked
 Links decorators and resulting hashes for five actual production modules. The
 reusable [overlay.mjs](overlay.mjs) materializes only those complete modules in
 a temporary directory, preserves their original resource base, links imports

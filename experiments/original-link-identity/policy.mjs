@@ -13,6 +13,14 @@ export const originalLinkIdentityPolicy={
  feasibility:{
   growth:{source:'/** @param {Array<number>} words @returns {Array<number>} */\nfunction identityGrowth(words){const result=[1];for(let index=0;index<words.length;index++){result.push(words[index]);}return result;}',kind:'unsupported',reason:'method call .push(): .push() has no checked operation on array:float',span:{start:153,end:178}},
   arrayFrom:{source:'/** @param {Array<number>} words @returns {Array<number>} */\nfunction identityFixed(words){return Array.from({length:words.length},(_,index)=>words[index]);}',kind:'unsupported',reason:'Array.from: this iterable needs an operational iterator encoding',span:{start:98,end:155}},
+  currentGrowth:{kind:'type',reason:'expected float but found option:undefined:float',span:{start:165,end:177},
+   observation:'CI 38911564946 source-models job 117015296609 retained the exact identityGrowth source and reported this earlier argument-type refusal after fresh-local append promotion.',
+   boundary:'The original unguarded words[index] read remains optional. Fresh append admission does not erase an absent element or prove this indexed loop read total.'},
+  growthProfiles:[
+   {profile:'automatic',expected:'currentGrowth',provenance:'The original CI diagnostic remains the active automatic-owned construction refusal.'},
+   {profile:'owned',expected:'currentGrowth',provenance:'Explicit referenceSemantics:false selects the same owned construction; the optional read remains unproved.'},
+   {profile:'reference',expected:'growth',provenance:'B46 retains explicit reference operations instead of privately rebinding them. The original whole-push refusal remains exact.'},
+  ],
   publicCollisions:[['9007199254740992','9007199254740993'],['18446744073709551614','18446744073709551615']],
   historicalPublicLinkId,
   livePublicIdentity:{model:'exact positive safe public link identities',unsafeSources:['original BigInt','original decimal token','unsafe Number','mutated unsafe LinkId instance'],boundaries:['constructor','from','fromU64','idKey','canonical text','plain text','text writer','network insertion','reference update','network lookup','link-cli numeric target'],invalidDecimalTokens:['9007199254740991.1','1.00000000000000001'],scope:'Rejection prevents aliasing; it does not provide public high-unsigned64 graph identities.'},
