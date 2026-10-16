@@ -1,6 +1,8 @@
 // Pin identifier properties as shared numeric ranges instead of category approximations.
 import { readProjectData, writeProjectData } from './project-data.mjs';
-if (process.versions.unicode !== '17.0') throw new Error('regenerate identifier properties with the pinned Unicode 17.0 toolchain');
+import { selectUnicodeIdentifierAssertion } from './unicode-identifier-assertions.mjs';
+const expectation = selectUnicodeIdentifierAssertion(process.versions.unicode);
+if (process.versions.unicode !== expectation.expected) throw new Error('the active Unicode version differs from its selected identifier property expectation');
 const properties = {};
 for (const property of ['ID_Start', 'ID_Continue', 'XID_Start', 'XID_Continue']) {
   const matches = new RegExp(`^\\p{${property}}$`, 'u');
