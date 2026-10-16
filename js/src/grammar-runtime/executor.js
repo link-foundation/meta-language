@@ -3605,7 +3605,16 @@ export class Executor {
     const key = `${rule.index}|${position}|${state.key}|${inToken ? 1 : 0}|${this.inExtra}|${this.extraStart}${quiet}`;
     const known = this.memo.get(key);
     if (known) {
-      known.keywordContext?.parents.add(this.callStack[this.callStack.length - 1]?.keywordContext ?? null);
+      if (known.keywordContext) {
+        const parent = this.callStack[this.callStack.length - 1]?.keywordContext ?? null;
+        const parents = known.keywordContext.parents;
+        if (Array.isArray(parents)) {
+          if (!parents.includes(parent)) {
+            parents.push(parent);
+            if (parents.length > 8) known.keywordContext.parents = new Set(parents);
+          }
+        } else parents.add(parent);
+      }
       if (!known.evaluating) return known.results;
       // Left recursion: answer with the current seed and mark every call
       // between the two as depending on it, so none of them is memoized.
@@ -3622,7 +3631,7 @@ export class Executor {
     // Keyword decisions need the live call ancestry, not this memo entry's
     // result trees or left-recursive seeds. Parents reference only contexts,
     // so keyword matches cannot keep retired memo results alive.
-    if (this.keywords) entry.keywordContext = { parents: new Set([this.callStack[this.callStack.length - 1]?.keywordContext ?? null]), position, builds: rule.kind === 'normal', nodeKind: rule.nodeKind, name };
+    if (this.keywords) entry.keywordContext = { parents: [this.callStack[this.callStack.length - 1]?.keywordContext ?? null], position, builds: rule.kind === 'normal', nodeKind: rule.nodeKind, name };
     this.retain(1);
     this.memo.set(key, entry);
     this.callStack.push(entry);

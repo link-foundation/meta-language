@@ -2124,11 +2124,18 @@ its preceding measurements. Both executor methods are restored on observer
 failure; enabling diagnostics preserves the exact encoded archives.
 After a JavaScript rule call finishes, its memo cell keeps only the exact result
 array and live keyword context. Rule identities, call positions, recursion seeds
-and temporary lexer state belong to the active call and leave the memo when it
-retires. This changes retained storage, not memo admission or accounting. Frozen
+and temporary lexer state belong to the active call; the retired memo drops its
+full rule objects, duplicate positions and seeds while keeping the compact
+ancestry metadata needed by keyword decisions. This changes retained storage,
+not memo admission or accounting. Frozen
 tiny Rust controls compare full public outputs and per-run trees, steps, charged
 cells and retained memo counts with memo limits of zero, twenty and the existing
 default. Full-source fit and native parity still require CI evidence.
+Keyword parent relations use a small ordered array for at most eight distinct
+parents and promote to a set when another distinct parent arrives. Identity,
+insertion order, duplicate suppression and live shared or cyclic ancestry stay
+the same. The actual tiny Rust parses retain the complete frozen call graphs;
+they exercise both representations without replacing parse results or budgets.
 Binary archive framing keeps each metadata length patch local to its own record.
 An increasing identity skips a search through earlier identities, while unordered
 and duplicate identities retain the existing validation and exact error offsets.

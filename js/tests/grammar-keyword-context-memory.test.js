@@ -30,6 +30,27 @@ async function frozenKeywordParser() {
   return import(frozenKeywordModule(driver,overrides));
 }
 
+function readKeywordCallGraph(executor) {
+  const pending=[],indices=new Map(),nodes=[];
+  const index=call=>{
+    if(call===null)return null;
+    if(!indices.has(call)){indices.set(call,pending.length);pending.push(call);}
+    return indices.get(call);
+  };
+  for(const cell of executor.memo.values())index(cell.keywordContext??cell);
+  for(const collection of[executor.keywords.matched,executor.keywords.matchedImmediate,executor.keywords.matchedSeparators])for(const calls of collection.values())for(const call of calls)index(call);
+  for(const join of executor.keywords.matchedJoins.values())for(const call of join.calls)index(call);
+  let arrays=0,sets=0;
+  for(let at=0;at<pending.length;at++){
+    const call=pending[at],parents=[...call.parents];
+    assert.equal(new Set(parents).size,parents.length);
+    if(Array.isArray(call.parents)){arrays++;assert.ok(parents.length<=8);}
+    else sets++;
+    nodes.push({position:call.position,builds:call.builds,nodeKind:call.nodeKind,name:call.name,parents:parents.map(index)});
+  }
+  return {nodes,arrays,sets};
+}
+
 test('keyword call contexts retain live ancestry without memo results or seeds',()=>{
   const parent={parents:new Set([null]),position:0,builds:true,nodeKind:'parent',name:'parent'};
   const child={parents:new Set([parent]),position:1,builds:true,nodeKind:'child',name:'child'};
@@ -113,6 +134,24 @@ test('finished rule call storage preserves parse decisions and budgets',async()=
   }
   assert.ok(actual.some(run=>run.memo>20));
   assert.deepEqual(actual,expected,'all full run results, step counts, cell budgets and memo admission counts remain equal');
+});
+
+test('small keyword parent collections preserve the entire frozen call graph',async()=>{
+  const baseline=await frozenKeywordParser();
+  const frozen=await import(frozenKeywordModule(controls.baseline.modules[0]));
+  const grammar=parseGrammarLinks(nativeGrammarText('native-rust'));
+  const current=createGrammarParser(grammar),previous=baseline.createGrammarParser(grammar);
+  const original=Executor.prototype.run,prior=frozen.Executor.prototype.run;
+  const actual=[],expected=[];
+  Executor.prototype.run=function(...args){const result=original.apply(this,args);actual.push(readKeywordCallGraph(this));return result;};
+  frozen.Executor.prototype.run=function(...args){const result=prior.apply(this,args);expected.push(readKeywordCallGraph(this));return result;};
+  try{
+    for(const source of controls.sources)assert.deepEqual(current.parseTree(source,{errorRecovery:true,recovery:'accept'}),previous.parseTree(source,{errorRecovery:true,recovery:'accept'}));
+  }finally{Executor.prototype.run=original;frozen.Executor.prototype.run=prior;}
+  assert.deepEqual(actual.map(row=>row.nodes),expected.map(row=>row.nodes),'all call identities, cyclic edges, shared parents and insertion order remain exact');
+  assert.ok(actual.every(row=>row.arrays>row.sets));
+  assert.ok(expected.every(row=>row.arrays===0));
+  assert.ok(actual.some(row=>row.nodes.some(node=>node.parents.length>8)),'actual parsing reaches promotion to a set');
 });
 
 test('complete source diagnostics observe real native runs and restore the executor',async()=>{
