@@ -495,6 +495,11 @@ jobs:
           DOCS_RS: 1
         run: cargo check --no-default-features
 
+      - name: Check the complete bulk translation rule source freshness
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/check-bulk-translation-rules.mjs
+
       - name: Collect changed files
         if: ${{ !cancelled() }}
         id: changed-files
