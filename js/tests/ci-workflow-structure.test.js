@@ -759,7 +759,13 @@ const CONST_AND_BYTE_GENERATOR_PACKAGE_STEPS = [
     "node scripts/generate-source-text-byte-fixtures.mjs --check",
     "75cda79cebdd7fff01bc4352311916289b7c1c0dc9107395bac48e246e0c0f6e",
     "generated"
-  ]
+  ],
+  ["Check generated Boolean Rust const decision rules",
+    "node ../experiments/generate-rust-const-branch-rules.mjs --native --check",
+    "4fda3cadef7f146e3c08d08b753a468f3f6fb749eab8475829a9694b6c6a4c61", "generated"],
+  ["Check Boolean Rust const decision fixtures",
+    "node ../experiments/generate-rust-const-branch-fixture.mjs --check",
+    "6aa393b971b2d7c6b17d624008d49329eb258f95533b7815bab365ccee7d5094", "generated"]
 ];
 const CONST_AND_BYTE_EXPERIMENT_PACKAGE_STEPS = [
   [
@@ -773,7 +779,10 @@ const CONST_AND_BYTE_EXPERIMENT_PACKAGE_STEPS = [
     "node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/source-text-byte-kernel.test.mjs ../experiments/complete-binary-formatter-probe.test.mjs",
     "2082ceaa9c585324089ee5e3174f5cc155e1b1d397dda9c2659feddda7b11b30",
     "generated"
-  ]
+  ],
+  ["Run Boolean Rust const decision prototype checks",
+    "node ../scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 ../experiments/rust-const-branch-prototype.test.mjs",
+    "2600755e59fa93118b21228fbb24d8e782d81b9c0a28580fa22dab012c31716b", "generated"]
 ];
 
 // Complete runtime-shell gates retain every earlier mandatory gate.
@@ -1202,6 +1211,9 @@ const GENERATED_PACKAGE_SLICE_STEPS = {
     'Check generated closed Rust const predicate rules',
     'Check actual styled Rust const predicate fixtures',
     'Run closed Rust const predicate prototype checks',
+    'Check generated Boolean Rust const decision rules',
+    'Check Boolean Rust const decision fixtures',
+    'Run Boolean Rust const decision prototype checks',
     'Check generated Rust owned local text state rules',
     'Check generated owned tuple initialization call rules',
     'Check owned tuple initialization call fixtures',
@@ -1315,7 +1327,9 @@ function checkGeneratedPackageSlices(parsed) {
     assert.equal(condition(parsed.get(id)), '${{ !cancelled() }}');
   }
   const registered = GENERATED_PACKAGE_SLICES.flatMap(slice => GENERATED_PACKAGE_SLICE_STEPS[slice]);
-  const repairNames = new Set(NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS.map(([name]) => name));
+  const repairNames = new Set([...NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS.map(([name]) => name),
+    'Check generated Boolean Rust const decision rules', 'Check Boolean Rust const decision fixtures',
+    'Run Boolean Rust const decision prototype checks']);
   assert.equal(registered.filter(name => !repairNames.has(name)).length, 126);
   assert.equal(registered.length, 126 + repairNames.size);
   assert.equal(new Set(registered).size, registered.length);
@@ -2231,7 +2245,9 @@ test('generated package slices preserve six logical groups and execute every che
     'Check complete generated owned Rust literal value edit fixtures',
     'Run generated owned Rust literal value edit experiment',
   ]);
-  const repairNames = new Set(NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS.map(([name]) => name));
+  const repairNames = new Set([...NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS.map(([name]) => name),
+    'Check generated Boolean Rust const decision rules', 'Check Boolean Rust const decision fixtures',
+    'Run Boolean Rust const decision prototype checks']);
   assert.equal(GENERATED_PACKAGE_SLICE_STEPS.second.filter(name => !repairNames.has(name)).length, 123);
   assert.equal(GENERATED_PACKAGE_SLICE_STEPS.second.length, 123 + repairNames.size);
   const checks = parsed.get('package-checks').steps;
@@ -2507,7 +2523,10 @@ test('every frozen text experiment addition retains its mandatory execution, wra
     for (const [before, after] of [
       ['!cancelled()', 'success()'],
       ['--event test --', '--event build --'],
-      ['node --test ../experiments/', 'node --test --test-name-pattern optional ../experiments/'],
+      ...(name === 'Run Boolean Rust const decision prototype checks'
+        ? [['node --test --test-concurrency=1 ../experiments/', 'node --test --test-concurrency=1 --test-name-pattern optional ../experiments/'],
+          ['--test-concurrency=1', '--test-concurrency=2']]
+        : [['node --test ../experiments/', 'node --test --test-name-pattern optional ../experiments/']]),
       ['working-directory: js', 'working-directory: .'],
       [`matrix.group == '${owner}'`, "matrix.group == 'contracts'"],
       ['working-directory: js', 'continue-on-error: true\n        working-directory: js'],

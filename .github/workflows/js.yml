@@ -1234,6 +1234,21 @@ jobs:
         working-directory: js
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-const-function-prototype.test.mjs
 
+      - name: Check generated Boolean Rust const decision rules
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        working-directory: js
+        run: node ../experiments/generate-rust-const-branch-rules.mjs --native --check
+
+      - name: Check Boolean Rust const decision fixtures
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        working-directory: js
+        run: node ../experiments/generate-rust-const-branch-fixture.mjs --check
+
+      - name: Run Boolean Rust const decision prototype checks
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        working-directory: js
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 ../experiments/rust-const-branch-prototype.test.mjs
+
       - name: Check generated Rust owned local text state rules
         if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         working-directory: js
