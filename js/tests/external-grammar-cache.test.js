@@ -158,3 +158,215 @@ test('outside-worktree temporary caches retain checked acquisition without editi
   assert.deepEqual(readExternalGrammarAsset('vendor/source.txt', configured), bytes);
   assert.equal(existsSync(join(options.root, '.gitignore')), false);
 });
+
+test('transient HTTP downloads recover with capped attempts, backoffs and fresh timeout signals', async context => {
+  const bytes = Buffer.from('pinned source');
+  for (const status of [408, 429, 500, 503, 599]) {
+    const options = workspace(context, { 'source/grammar.txt': receipt(bytes) });
+    const delays = [], signals = [];
+    let requests = 0;
+    const results = await downloadExternalGrammarAssets({ ...options, all: true, materialize: true,
+      fetchImpl: async (url, { signal }) => {
+        assert.equal(url, 'https://assets.example.test/pinned');
+        assert.equal(existsSync(options.cacheRoot), false, 'no partial attempt was published');
+        assert.equal(existsSync(join(options.root, 'source/grammar.txt')), false);
+        assert.ok(signal instanceof AbortSignal);
+        signals.push(signal);
+        requests++;
+        return requests < 3 ? new Response('temporary failure', { status }) : new Response(bytes);
+      }, sleepImpl: async delay => { delays.push(delay); } });
+    assert.equal(requests, 3);
+    assert.equal(new Set(signals).size, 3);
+    assert.deepEqual(delays, [250, 500]);
+    assert.deepEqual(results, [{ path: 'source/grammar.txt', reused: false }]);
+    assert.deepEqual(readExternalGrammarAsset('source/grammar.txt', options), bytes);
+    assert.deepEqual(readFileSync(join(options.cacheRoot, 'source/grammar.txt')), bytes);
+  }
+});
+
+test('transport and timeout download failures retry without publishing incomplete assets', async context => {
+  const bytes = Buffer.from('pinned source');
+  for (const failure of [
+    new TypeError('fetch failed', { cause: Object.assign(new Error('connection reset'), { code: 'ECONNRESET' }) }),
+    Object.assign(new Error('connection timed out'), { code: 'ETIMEDOUT' }),
+    Object.assign(new Error('temporary name lookup failure'), { code: 'EAI_AGAIN' }),
+    Object.assign(new Error('request timeout'), { name: 'TimeoutError' }),
+    Object.assign(new Error('request aborted'), { name: 'AbortError' }),
+  ]) {
+    const options = workspace(context, { 'source/grammar.txt': receipt(bytes) });
+    const delays = [];
+    let requests = 0;
+    await downloadExternalGrammarAssets({ ...options, all: true, materialize: true,
+      fetchImpl: async () => {
+        assert.equal(existsSync(options.cacheRoot), false);
+        assert.equal(existsSync(join(options.root, 'source/grammar.txt')), false);
+        if (++requests === 1) throw failure;
+        return new Response(bytes);
+      }, sleepImpl: async delay => { delays.push(delay); } });
+    assert.equal(requests, 2);
+    assert.deepEqual(delays, [250]);
+    assert.deepEqual(readExternalGrammarAsset('source/grammar.txt', options), bytes);
+  }
+});
+
+test('interrupted response bodies restart from authenticated complete bytes', async context => {
+  const bytes = Buffer.from('pinned complete source');
+  const options = workspace(context, { 'source/grammar.txt': receipt(bytes) });
+  const delays = [];
+  let requests = 0, prefixes = 0;
+  await downloadExternalGrammarAssets({ ...options, all: true, materialize: true,
+    fetchImpl: async () => {
+      assert.equal(existsSync(options.cacheRoot), false);
+      assert.equal(existsSync(join(options.root, 'source/grammar.txt')), false);
+      if (++requests === 3) return new Response(bytes);
+      return { ok: true, url: 'https://assets.example.test/pinned', body: (async function* () {
+        prefixes++;
+        yield bytes.subarray(0, 6);
+        throw Object.assign(new Error('body connection reset'), { code: 'UND_ERR_SOCKET' });
+      })() };
+    }, sleepImpl: async delay => { delays.push(delay); } });
+  assert.equal(requests, 3);
+  assert.equal(prefixes, 2);
+  assert.deepEqual(delays, [250, 500]);
+  assert.deepEqual(readFileSync(join(options.cacheRoot, 'source/grammar.txt')), bytes);
+  assert.deepEqual(readFileSync(join(options.root, 'source/grammar.txt')), bytes);
+});
+
+test('persistent transient failures exhaust each pinned mirror with bounded requests and no publication', async context => {
+  const bytes = Buffer.from('pinned source');
+  const asset = receipt(bytes);
+  asset.downloads.push({ url: 'https://mirror.example.test/pinned', transform: 'identity' });
+  const options = workspace(context, { 'source/grammar.txt': asset });
+  const requests = [], delays = [];
+  await assert.rejects(downloadExternalGrammarAssets({ ...options, all: true, materialize: true,
+    fetchImpl: async url => { requests.push(url); return new Response('still unavailable', { status: 503 }); },
+    sleepImpl: async delay => { delays.push(delay); } }), /HTTP 503/u);
+  assert.deepEqual(requests, [...Array(3).fill(asset.downloads[0].url), ...Array(3).fill(asset.downloads[1].url)]);
+  assert.deepEqual(delays, [250, 500, 250, 500]);
+  assert.equal(existsSync(options.cacheRoot), false);
+  assert.equal(existsSync(join(options.root, 'source/grammar.txt')), false);
+  let transportRequests = 0;
+  const transportDelays = [];
+  await assert.rejects(downloadExternalGrammarAssets({ ...options, all: true,
+    fetchImpl: async () => { transportRequests++; throw Object.assign(new Error('network unreachable'), { code: 'ENETUNREACH' }); },
+    sleepImpl: async delay => { transportDelays.push(delay); } }), /network unreachable/u);
+  assert.equal(transportRequests, 6);
+  assert.deepEqual(transportDelays, delays);
+  assert.equal(existsSync(options.cacheRoot), false);
+});
+
+test('permanent HTTP failures are not retried and retain authenticated mirror fallback', async context => {
+  const bytes = Buffer.from('pinned source');
+  for (const status of [400, 401, 403, 404, 410]) {
+    const options = workspace(context, { 'source/grammar.txt': receipt(bytes) });
+    const delays = [];
+    let requests = 0;
+    await assert.rejects(downloadExternalGrammarAssets({ ...options, all: true,
+      fetchImpl: async () => { requests++; return new Response('permanent failure', { status }); },
+      sleepImpl: async delay => { delays.push(delay); } }), new RegExp(`HTTP ${status}`, 'u'));
+    assert.equal(requests, 1);
+    assert.deepEqual(delays, []);
+    assert.equal(existsSync(options.cacheRoot), false);
+  }
+  const asset = receipt(bytes);
+  asset.downloads.push({ url: 'https://mirror.example.test/pinned', transform: 'identity' });
+  const options = workspace(context, { 'source/grammar.txt': asset });
+  const requests = [], delays = [];
+  await downloadExternalGrammarAssets({ ...options, all: true,
+    fetchImpl: async url => { requests.push(url); return requests.length === 1 ? new Response('missing', { status: 404 }) : new Response(bytes); },
+    sleepImpl: async delay => { delays.push(delay); } });
+  assert.deepEqual(requests, asset.downloads.map(({ url }) => url));
+  assert.deepEqual(delays, []);
+  assert.deepEqual(readExternalGrammarAsset('source/grammar.txt', options), bytes);
+});
+
+test('integrity and HTTPS failures are fatal without retries or concealment by another mirror', async context => {
+  const bytes = Buffer.from('pinned source');
+  const raw = Buffer.from('decoded source');
+  const compressed = gzipSync(raw, { level: 9 });
+  for (const entry of [
+    { asset: receipt(bytes), response: () => new Response(Buffer.alloc(bytes.length, 0)), error: /checksum mismatch/u },
+    { asset: receipt(bytes), response: () => new Response(Buffer.concat([bytes, Buffer.from('!')])), error: /exceeds its pinned size/u },
+    { asset: receipt(bytes), response: () => {
+      const response = new Response(bytes);
+      Object.defineProperty(response, 'url', { value: 'http://assets.example.test/redirected' });
+      return response;
+    }, error: /redirect requires HTTPS/u },
+    { asset: receipt(bytes), response: () => {
+      const response = new Response('temporary failure', { status: 503 });
+      Object.defineProperty(response, 'url', { value: 'http://assets.example.test/redirected' });
+      return response;
+    }, error: /redirect requires HTTPS/u },
+    { asset: { ...receipt(compressed), encoding: 'gzip', decodedBytes: raw.length, decodedSha256: '0'.repeat(64) },
+      response: () => new Response(compressed), error: /decoded external grammar asset checksum mismatch/u },
+  ]) {
+    entry.asset.downloads.push({ url: 'https://mirror.example.test/pinned', transform: 'identity' });
+    const options = workspace(context, { 'source/grammar.txt': entry.asset });
+    const delays = [];
+    let requests = 0;
+    await assert.rejects(downloadExternalGrammarAssets({ ...options, all: true, materialize: true,
+      fetchImpl: async () => { requests++; return entry.response(); },
+      sleepImpl: async delay => { delays.push(delay); } }), entry.error);
+    assert.equal(requests, 1);
+    assert.deepEqual(delays, []);
+    assert.equal(existsSync(options.cacheRoot), false);
+    assert.equal(existsSync(join(options.root, 'source/grammar.txt')), false);
+  }
+  const unsafe = receipt(bytes);
+  unsafe.downloads[0].url = 'http://assets.example.test/pinned';
+  unsafe.downloads.push({ url: 'https://mirror.example.test/pinned', transform: 'identity' });
+  const options = workspace(context, { 'source/grammar.txt': unsafe });
+  await assert.rejects(downloadExternalGrammarAssets({ ...options, all: true,
+    fetchImpl: () => { throw new Error('unsafe URLs must be refused before fetching'); },
+    sleepImpl: () => { throw new Error('unsafe URLs must never retry'); } }), /downloads require HTTPS/u);
+  assert.equal(existsSync(options.cacheRoot), false);
+});
+
+test('TLS, unsafe redirect and unclassified programming errors do not enter transport retries', async context => {
+  const bytes = Buffer.from('pinned source');
+  for (const failure of [
+    new TypeError('fetch failed', { cause: Object.assign(new Error('expired certificate'), { code: 'CERT_HAS_EXPIRED' }) }),
+    new TypeError('fetch failed', { cause: Object.assign(new Error('certificate name mismatch'), { code: 'ERR_TLS_CERT_ALTNAME_INVALID' }) }),
+    new TypeError('fetch failed', { cause: Object.assign(new Error('invalid redirect URL'), { code: 'ERR_INVALID_URL' }) }),
+    new TypeError('unexpected host programming error'),
+  ]) {
+    const asset = receipt(bytes);
+    asset.downloads.push({ url: 'https://mirror.example.test/pinned', transform: 'identity' });
+    const options = workspace(context, { 'source/grammar.txt': asset });
+    const delays = [];
+    let requests = 0;
+    await assert.rejects(downloadExternalGrammarAssets({ ...options, all: true,
+      fetchImpl: async () => { requests++; throw failure; }, sleepImpl: async delay => { delays.push(delay); } }), /fetch failed|programming error/u);
+    assert.equal(requests, 1);
+    assert.deepEqual(delays, []);
+    assert.equal(existsSync(options.cacheRoot), false);
+  }
+});
+
+test('download retry attempts remain inside the unchanged finite worker concurrency', async context => {
+  const bytes = Buffer.from('pinned source');
+  const assets = Object.fromEntries(Array.from({ length: 4 }, (_, index) => {
+    const asset = receipt(bytes);
+    asset.downloads[0].url = `https://assets.example.test/${index}`;
+    return [`source/${index}.txt`, asset];
+  }));
+  const options = workspace(context, assets);
+  const requests = new Map(), delays = [];
+  let active = 0, maximum = 0;
+  const result = await downloadExternalGrammarAssets({ ...options, all: true, jobs: 2,
+    fetchImpl: async url => {
+      active++;
+      maximum = Math.max(maximum, active);
+      assert.ok(active <= 2);
+      await Promise.resolve();
+      active--;
+      const count = (requests.get(url) ?? 0) + 1;
+      requests.set(url, count);
+      return count === 1 ? new Response('unavailable', { status: 503 }) : new Response(bytes);
+    }, sleepImpl: async delay => { delays.push(delay); } });
+  assert.equal(result.length, 4);
+  assert.equal(maximum, 2);
+  assert.deepEqual([...requests.values()], [2, 2, 2, 2]);
+  assert.deepEqual(delays, [250, 250, 250, 250]);
+  for (const path of Object.keys(assets)) assert.deepEqual(readExternalGrammarAsset(path, options), bytes);
+});

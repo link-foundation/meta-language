@@ -7,6 +7,7 @@ import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, renameSyn
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync, gzipSync } from 'node:zlib';
+import { setTimeout as sleep } from 'node:timers/promises';
 import { readStructuredDataLino } from '../src/structured-data-links.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -169,9 +170,29 @@ function verifyCacheDirectory(context, paths) {
   }
 }
 
+class GrammarDownloadResponseError extends Error {
+  constructor(status) {
+    super(`HTTP ${status}`);
+    this.status = status;
+  }
+}
+
+function isTransientDownloadError(error) {
+  if (error instanceof GrammarDownloadResponseError) return error.status === 408 || error.status === 429 || error.status >= 500 && error.status <= 599;
+  if (error?.name === 'TimeoutError' || error?.name === 'AbortError') return true;
+  const codes = ['ECONNRESET', 'ECONNREFUSED', 'ECONNABORTED', 'ETIMEDOUT', 'EAI_AGAIN', 'ENOTFOUND', 'ENETUNREACH', 'EHOSTUNREACH', 'EPIPE',
+    'UND_ERR_CONNECT_TIMEOUT', 'UND_ERR_HEADERS_TIMEOUT', 'UND_ERR_BODY_TIMEOUT', 'UND_ERR_SOCKET'];
+  return codes.includes(error?.code) || codes.includes(error?.cause?.code);
+}
+
 async function responseBytes(response, limit) {
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
   if (response.url && new URL(response.url).protocol !== 'https:') throw new Error('external grammar redirect requires HTTPS');
+  if (!response.ok) {
+    const error = new GrammarDownloadResponseError(response.status);
+    try { await response.body?.cancel(); }
+    catch (cause) { error.cause = cause; }
+    throw error;
+  }
   if (!response.body) {
     const bytes = Buffer.from(await response.arrayBuffer());
     if (bytes.length > limit) throw new Error('external grammar download exceeds its pinned size');
@@ -185,6 +206,20 @@ async function responseBytes(response, limit) {
     chunks.push(Buffer.from(chunk));
   }
   return Buffer.concat(chunks);
+}
+
+// Fixed attempt/backoff caps do not change request timeouts or worker limits.
+// Only transport/status failures repeat; bytes are authenticated afterwards.
+async function downloadBytesWithRetries(url, limit, options) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const response = await (options.fetchImpl ?? fetch)(url, { signal: AbortSignal.timeout(options.timeoutMs ?? 30_000) });
+      return await responseBytes(response, limit);
+    } catch (error) {
+      if (!isTransientDownloadError(error) || attempt === 2) throw error;
+      await (options.sleepImpl ?? sleep)(250 * 2 ** attempt);
+    }
+  }
 }
 
 function storeAcquired(path, bytes, context, options) {
@@ -213,13 +248,17 @@ async function acquire(path, context, options) {
       const url = new URL(download.url);
       if (url.protocol !== 'https:') throw new Error('external grammar downloads require HTTPS');
       const limit = download.transform === 'gzip' ? asset.decodedBytes : asset.bytes;
-      const response = await (options.fetchImpl ?? fetch)(url.href, { signal: AbortSignal.timeout(options.timeoutMs ?? 30_000) });
-      const raw = await responseBytes(response, limit);
+      const raw = await downloadBytesWithRetries(url.href, limit, options);
       const bytes = download.transform === 'gzip' ? gzipSync(raw, { level: 9 }) : raw;
       verify(bytes, asset, path);
       storeAcquired(path, bytes, context, options);
       return { path, reused: false };
-    } catch (error) { errors.push(`${download.url}: ${error.message}`); }
+    } catch (error) {
+      errors.push(`${download.url}: ${error.message}`);
+      if (!(error instanceof GrammarDownloadResponseError) && !isTransientDownloadError(error)) {
+        throw new Error(`cannot download authenticated external grammar asset ${path}: ${errors.join('; ')}`, { cause: error });
+      }
+    }
   }
   throw new Error(`cannot download authenticated external grammar asset ${path}: ${errors.join('; ')}`);
 }
