@@ -3618,7 +3618,7 @@ export class Executor {
     // Under keyword lexing, the calls it was made from (`null` for none),
     // where it began and whether it builds a node: the parse states of a
     // keyword matched in it (see `KeywordLexing`).
-    const entry = { evaluating: true, leftRecursive: false, involved: false, seed: [], results: null, parents: null, position, rule };
+    const entry = { evaluating: true, leftRecursive: false, involved: false, seed: [], results: null, position, rule };
     // Keyword decisions need the live call ancestry, not this memo entry's
     // result trees or left-recursive seeds. Parents reference only contexts,
     // so keyword matches cannot keep retired memo results alive.
@@ -3639,6 +3639,10 @@ export class Executor {
       entry.evaluating = false;
     }
     if (entry.involved || this.memo.size > this.memoLimit) this.memo.delete(key);
+    // Only an evaluating call needs its rule, position, seeds and lexer
+    // precedence state. Preserve its exact results and live keyword context
+    // in the memo without retaining those retired active-call fields.
+    else this.memo.set(key, { results: entry.results, keywordContext: entry.keywordContext });
     return entry.results;
   }
 

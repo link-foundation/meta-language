@@ -85,6 +85,36 @@ test('keyword context separation preserves unchanged parse budgets and rejection
   }
 });
 
+test('finished rule call storage preserves parse decisions and budgets',async()=>{
+  const baseline=await frozenKeywordParser();
+  const frozen=await import(frozenKeywordModule(controls.baseline.modules[0]));
+  const grammar=parseGrammarLinks(nativeGrammarText('native-rust'));
+  const current=createGrammarParser(grammar),previous=baseline.createGrammarParser(grammar);
+  const original=Executor.prototype.run,prior=frozen.Executor.prototype.run;
+  const actual=[],expected=[];
+  Executor.prototype.run=function(...args){
+    const result=original.apply(this,args);
+    for(const cell of this.memo.values())assert.deepEqual(Object.keys(cell).sort(),['keywordContext','results']);
+    actual.push({cells:this.budget.memory.cells,steps:this.budget.steps,memo:this.memo.size,result:structuredClone(result)});
+    return result;
+  };
+  frozen.Executor.prototype.run=function(...args){
+    const result=prior.apply(this,args);
+    expected.push({cells:this.budget.memory.cells,steps:this.budget.steps,memo:this.memo.size,result:structuredClone(result)});
+    return result;
+  };
+  try{
+    for(const source of controls.sources)for(const memoLimit of [0,20,1000000]){
+      const options={memoLimit,errorRecovery:true,recovery:'accept'};
+      assert.deepEqual(current.parseTree(source,options),previous.parseTree(source,options));
+    }
+  }finally{
+    Executor.prototype.run=original;frozen.Executor.prototype.run=prior;
+  }
+  assert.ok(actual.some(run=>run.memo>20));
+  assert.deepEqual(actual,expected,'all full run results, step counts, cell budgets and memo admission counts remain equal');
+});
+
 test('complete source diagnostics observe real native runs and restore the executor',async()=>{
   const {createCompleteRustSourceArchives,replayCompleteRustSourceArchives}=await import('../../experiments/original-link-complete-table-projection/archive-transport.mjs');
   const {LinkNetwork}=await import('../src/network.js');

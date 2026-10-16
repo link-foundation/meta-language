@@ -2118,6 +2118,13 @@ output preservation; full-source heap fit still requires CI. CI-authoring source
 archives can additionally observe each actual native executor run through scalar
 diagnostics. The observer restores the original executor even on failure and
 never substitutes a parse result or changes its budgets.
+After a JavaScript rule call finishes, its memo cell keeps only the exact result
+array and live keyword context. Rule identities, call positions, recursion seeds
+and temporary lexer state belong to the active call and leave the memo when it
+retires. This changes retained storage, not memo admission or accounting. Frozen
+tiny Rust controls compare full public outputs and per-run trees, steps, charged
+cells and retained memo counts with memo limits of zero, twenty and the existing
+default. Full-source fit and native parity still require CI evidence.
 Binary archive framing keeps each metadata length patch local to its own record.
 An increasing identity skips a search through earlier identities, while unordered
 and duplicate identities retain the existing validation and exact error offsets.
