@@ -357,6 +357,11 @@ export function readPortableSourceLintStyles(source) {
   const numberStyles = readPortableNumberSourceStyles(adapted);
   for (const action of numberStyles.actions) replace(action.from, action.to);
   assert.equal(adapted, numberStyles.source, 'Number styles replay their complete checked source actions');
+  // Inspect ownership once while emitted format arguments remain explicit.
+  // Formatting styles may capture names inside opaque format-string tokens.
+  const ownedStyles = readPortableOwnedSourceStyles(adapted);
+  for (const action of ownedStyles.actions) replace(action.from, action.to);
+  assert.equal(adapted, ownedStyles.source, 'ownership styles replay their complete declared source actions');
   const stringFunctions = new Set([...adapted.matchAll(/^pub fn (\w+)\([^)]*\)\s*->\s*String\s*\{/gmu)].map(match => match[1]));
   const allTokens = readPortableLintTokens(adapted);
   const functionNames = new Set(allTokens.tokens.flatMap((token, index) =>
@@ -404,11 +409,6 @@ export function readPortableSourceLintStyles(source) {
     if (attributes.length) styled = attributes.join('\n') + '\n' + styled;
     replace(original, styled);
   }
-  // Ownership needs complete function returns and enum payload declarations.
-  // Inspect once before const qualification or runtime-provider spelling edits.
-  const ownedStyles = readPortableOwnedSourceStyles(adapted);
-  for (const action of ownedStyles.actions) replace(action.from, action.to);
-  assert.equal(adapted, ownedStyles.source, 'ownership styles replay their complete declared source actions');
   // Runtime fragments retain their original generic bodies. Their public
   // results are useful, and decimal grouping changes only numeric spelling.
   const runtime = adapted.replace(/^( +)pub fn /gmu, (match, indent, offset) =>
