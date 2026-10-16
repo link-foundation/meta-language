@@ -21,6 +21,12 @@ const versionBoundedAssertionsSource = 'parity/sources/version-bounded-assertion
 const inferenceSource = 'parity/sources/grammar-inference-issue-224.txt';
 
 const sourceTooling = {
+  'I195-ASSERTION-VERSION-COVERAGE': [
+    'js/scripts/assertion-version-ranges.mjs', 'js/tests/assertion-version-ranges.test.js',
+  ],
+  'I195-ASSERTION-LANGUAGE-EDITION-ORDER': [
+    'js/scripts/assertion-version-ranges.mjs', 'js/tests/assertion-version-ranges.test.js',
+  ],
   'I195-ASSERTION-EXPLICIT-VERSION-RANGES': [
     'js/scripts/assertion-version-ranges.mjs', 'js/scripts/antlr-version-assertions.mjs', 'js/scripts/peggy-version-assertions.mjs',
     'js/scripts/observation-version-assertions.mjs', 'js/tests/support/issue-195-observations.js',

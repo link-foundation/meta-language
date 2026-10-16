@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { readProjectData } from '../scripts/project-data.mjs';
@@ -7,6 +8,23 @@ import { assertionVersionPolicy } from '../scripts/generate-assertion-version-po
 import { selectUnicodeIdentifierAssertion } from '../scripts/unicode-identifier-assertions.mjs';
 import { selectAntlrReferenceAssertion } from '../scripts/antlr-version-assertions.mjs';
 import { selectPeggyOptimizerAssertion } from '../scripts/peggy-version-assertions.mjs';
+import { recordIssue195Observations } from './support/issue-195-observations.js';
+
+function readVersionAssertionContract() {
+  const fixtures = [
+    ['conversation-contract:versionBoundedAssertionsRequest', 'parity/sources/version-bounded-assertions-2026-10-16.txt'],
+    ['assertion-version-ranges', 'parity/assertion-version-ranges.lino'],
+    ['unicode-identifier-properties', 'js/src/data/unicode-identifier-properties.lino'],
+  ];
+  const request = readFileSync(new URL('../../' + fixtures[0][1], import.meta.url));
+  assert.equal(createHash('sha256').update(request).digest('hex'), '1c7428d457593295d1a6bd6ccfc792e969916245d1441c4868bfa2808d027720');
+  const stored = readProjectData(new URL('../../' + fixtures[1][1], import.meta.url));
+  assert.deepEqual(stored, assertionVersionPolicy());
+  const properties = readProjectData(new URL('../../' + fixtures[2][1], import.meta.url));
+  const policy = stored.assertions.find(({ id }) => id === 'unicode-identifier-property-generation');
+  assert.equal(selectVersionedAssertion(policy, properties.unicode).expected, properties.unicode);
+  return { fixtures, policy, activeVersion: properties.unicode };
+}
 
 function boundedExpectation(id, minimum, maximum, expected, overrides = {}) {
   return { id, minimum, maximum, includeMinimum: true, includeMaximum: false,
@@ -203,4 +221,89 @@ test('Peggy optimizer assertions admit only the actual pinned inclusive singleto
   for (const version of ['5.0.9', '5.1.1', '5.2.0', '6.0.0']) {
     assert.throws(() => selectVersionedAssertion(policy, version), /uncovered active version/u);
   }
+});
+
+test('recorded version fixtures execute missing conflicting and inactive range refusals', context => {
+  const { fixtures, policy, activeVersion } = readVersionAssertionContract();
+  assert.equal(activeVersion, '17.0');
+  for (const version of ['16.9', '17.1', '18.0']) {
+    assert.throws(() => selectVersionedAssertion(policy, version), /uncovered active version/u);
+  }
+  for (const expected of [policy.expectations[0].expected, 'conflicting expectation']) {
+    const overlapping = structuredClone(policy);
+    overlapping.expectations.push({ ...overlapping.expectations[0], id: 'second interpretation', expected });
+    for (const active of [activeVersion, '18.0']) {
+      assert.throws(() => selectVersionedAssertion(overlapping, active), /overlapping expectation ranges/u);
+    }
+  }
+  const inactive = boundedExpectation('inactive alternative', '18.0', '19.0', 'independent inactive fixture');
+  const alternatives = { ...policy, expectations: [...policy.expectations, inactive] };
+  assert.equal(selectVersionedAssertion(alternatives, activeVersion).expected, activeVersion);
+  const invalidAlternatives = [
+    { ...inactive, maximum: '17.0' },
+    { ...inactive, minimum: '18' },
+    { ...inactive, expected: undefined },
+    { ...inactive, evidence: '' },
+    { ...inactive, includeMinimum: undefined },
+    { ...inactive, id: policy.expectations[0].id },
+  ];
+  for (const invalid of invalidAlternatives) {
+    assert.throws(() => selectVersionedAssertion({ ...policy, expectations: [...policy.expectations, invalid] }, activeVersion));
+  }
+  assert.throws(() => selectVersionedAssertion({ ...policy, expectations: [
+    ...alternatives.expectations, { ...inactive, id: 'overlapping inactive alternative' },
+  ] }, activeVersion), /overlapping expectation ranges/u);
+  for (const version of [undefined, null, '', '17', '17.0.0', '17.0-beta', '17.9007199254740992']) {
+    assert.throws(() => selectVersionedAssertion(policy, version), /invalid 2-coordinate release/u);
+  }
+  // The source contract, actual policy and pinned table jointly supply this
+  // behavior cell. A record is written only after every refusal above holds.
+  for (const [fixtureId, fixtureFile] of fixtures) recordIssue195Observations({
+    requirementId: 'I195-ASSERTION-VERSION-COVERAGE', runtime: 'tooling', suffix: 'behavior', fixtureId, fixtureFile,
+    assertions: ['missingActiveVersionCoverageRefused', 'overlappingAndConflictingRangesRefused', 'allDeclaredRangesValidated'],
+    testName: context.name,
+  });
+});
+
+test('recorded version fixtures distinguish declared edition order from release coordinates', context => {
+  const { fixtures, policy, activeVersion } = readVersionAssertionContract();
+  assert.deepEqual(policy.comparison, { kind: 'release', precision: 2 });
+  for (const [precision, minimum, active, maximum] of [
+    [1, '9', '10', '11'], [2, '17.2', '17.10', '17.11'], [3, '1.9.99', '1.10.0', '1.11.0'],
+  ]) {
+    const release = releaseAssertion([boundedExpectation('numeric coordinates', minimum, maximum, active)], precision);
+    assert.equal(selectVersionedAssertion(release, active).expected, active);
+    assert.throws(() => selectVersionedAssertion(release, active + '.0'), /invalid .*coordinate release/u);
+    assert.throws(() => selectVersionedAssertion({ ...release, comparison: { kind: 'release' } }, active), /explicit precision/u);
+  }
+  assert.equal(selectVersionedAssertion(policy, activeVersion).expected, activeVersion);
+  const manifest = readFileSync(new URL('../../rust/Cargo.toml', import.meta.url), 'utf8');
+  const edition = manifest.match(/^edition = "([^"]+)"$/mu)?.[1];
+  assert.equal(edition, '2024');
+  const versions = ['2015', '2018', '2021', '2024'];
+  const editions = { id: 'recorded Rust edition order', subject: 'Rust edition',
+    comparison: { kind: 'ordered', versions }, expectations: [
+      boundedExpectation('modern editions', '2021', edition, 'modern', { includeMaximum: true }),
+    ] };
+  assert.equal(selectVersionedAssertion(editions, edition).expected, 'modern');
+  for (const unknown of ['2022', '2027', '1.2024.0', undefined]) {
+    assert.throws(() => selectVersionedAssertion(editions, unknown), /unknown declared version/u);
+  }
+  // Reversing the declared order makes the same endpoints reversed. Numeric
+  // or semantic-version ordering would incorrectly continue to accept them.
+  assert.throws(() => selectVersionedAssertion({ ...editions,
+    comparison: { kind: 'ordered', versions: [...versions].reverse() } }, edition), /empty or reversed range/u);
+  const symbolic = { ...editions, comparison: { kind: 'ordered', versions: ['old', 'current', 'next'] },
+    expectations: [boundedExpectation('symbolic edition names', 'current', 'next', 'declared', { includeMaximum: true })] };
+  assert.equal(selectVersionedAssertion(symbolic, 'current').expected, 'declared');
+  assert.throws(() => selectVersionedAssertion({ ...editions,
+    comparison: { kind: 'ordered', versions: [...versions, edition] } }, edition), /unique declared version order/u);
+  const unknownBound = structuredClone(editions);
+  unknownBound.expectations.push(boundedExpectation('unknown inactive edition', 'future', 'future', false, { includeMaximum: true }));
+  assert.throws(() => selectVersionedAssertion(unknownBound, edition), /unknown declared version/u);
+  for (const [fixtureId, fixtureFile] of fixtures) recordIssue195Observations({
+    requirementId: 'I195-ASSERTION-LANGUAGE-EDITION-ORDER', runtime: 'tooling', suffix: 'behavior', fixtureId, fixtureFile,
+    assertions: ['releasePrecisionExplicit', 'languageEditionOrderExplicit', 'unknownEditionsAndInvalidCoordinatesRefused'],
+    testName: context.name,
+  });
 });

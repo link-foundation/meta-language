@@ -292,6 +292,11 @@ test('concrete version verification cells append without changing the original b
     const unchanged = rows.find(row => row.id === id);
     assert.equal(unchanged.verifications.length, 1);
     assert.deepEqual(unchanged.verifications[0].fixtureIds, fixtureIds);
-    assert.equal(unchanged.implementationEntryPoints.tooling, null);
+    // The previous null described absent execution wiring. The selector and
+    // its new fixture-specific controls now supply these exact entry points;
+    // fixture identities, assertions and verification scope stay unchanged.
+    assert.deepEqual(unchanged.implementationEntryPoints.tooling, [
+      'js/scripts/assertion-version-ranges.mjs', 'js/tests/assertion-version-ranges.test.js',
+    ]);
   }
 });
