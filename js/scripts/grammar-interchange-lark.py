@@ -29,7 +29,7 @@ def observe(grammar, start, samples):
             if position < 0:
                 position = len(source)
             output.append({"accepted": False, "offset": byte_offset(source, position),
-                           "reason": type(error).__name__})
+                           "reason": type(error).__name__, "syntaxRejected": True})
     return output
 
 

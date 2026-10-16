@@ -9,8 +9,9 @@
 // rust/src/grammar/round_trip.rs.
 import { carryRuleDocs, Grammar, parseWithGrammar } from './grammar.js';
 import { normalizedRuleDefinition } from './grammar-merge.js';
-import { readGrammarLexerEntryForm, readGrammarLexerLiteralExtension, readGrammarLexerOwnerComparison } from './translation/grammar-lexer-rules.js';
+import { readGrammarLexerOwnerComparison } from './translation/grammar-lexer-rules.js';
 import { renderGrammarLinks } from './grammar-links.js';
+import { extendGrammarLexerLiteral } from './grammar-lexer-literal-extension.js';
 
 /** The literal alternative the guard adds to the start rule by default. */
 export const GRAMMAR_ROUND_TRIP_MARKER = 'round-trip-mutation';
@@ -39,43 +40,6 @@ export function mutateGrammarStartRule(grammar, marker = GRAMMAR_ROUND_TRIP_MARK
   const declarations = (grammar.declarations.lexers ?? []).length === 0 ? grammar.declarations
     : { ...grammar.declarations, lexers: grammar.declarations.lexers.map((lexer) => extendGrammarLexerLiteral(mutated, lexer, start.name, marker)) };
   return carryRuleDocs(new Grammar(grammar.start, rules, grammar.sourceFormat, declarations), grammar);
-}
-
-// Project original owner bodies in declaration order. The portable rule owns
-// literal priority, implicit identities and all existing-entry rename decisions.
-function extendGrammarLexerLiteral(grammar, lexer, owner, value) {
-  const entries = lexer.expression.items;
-  const parserLiterals = [];
-  const visit = (expression) => {
-    if (expression.kind === 'literal' && expression.value !== '') parserLiterals.push(expression.value);
-    if (expression.item) visit(expression.item);
-    if (expression.kind !== 'charClass' && expression.kind !== 'byteClass') for (const item of expression.items ?? []) if (item?.kind) visit(item);
-  };
-  for (const entry of entries) if (readGrammarLexerEntryForm(entry.kind) === 1) {
-    const rule = grammar.rule(entry.item.name);
-    if (rule) visit(rule.expression);
-  }
-  const plan = readGrammarLexerLiteralExtension(owner, value, entries.map(({ kind }) => kind), entries.map(({ name }) => name ?? ''),
-    entries.map((entry) => entry.value ?? ''), entries.map(({ item }) => item?.kind === 'ref' ? item.name : ''),
-    entries.map(({ item }) => item?.kind ?? ''), entries.map(({ item }) => item?.kind === 'literal' ? item.value : ''), parserLiterals);
-  if (plan[0] < 0) throw new TypeError(`invalid lexical literal extension in lexer ${lexer.name}`);
-  if (plan[0] === 0) return lexer;
-  const name = plan[0] === 2 ? entries[plan[2]].name : `@literal:${plan[2]}`;
-  const added = plan[0] === 3 ? [{ kind: 'lexicalObligation', name: '', category: 'literal', source: value }]
-    : [{ kind: 'lexicalLiteral', value, name }, ...(plan[0] === 1 ? [{ kind: 'lexicalRule', name, type: name,
-      mode: 'default', channel: 'default', disposition: 'emit', item: { kind: 'literal', value }, action: [] }] : [])];
-  const renames = new Map();
-  for (let index = 3; index < plan.length; index += 2) renames.set(plan[index], `@literal:${plan[index + 1]}`);
-  const items = [];
-  for (let index = 0; index <= entries.length; index += 1) {
-    if (index === plan[1]) items.push(...added);
-    if (index < entries.length) {
-      const entry = entries[index];
-      items.push(renames.has(index) ? { ...entry, name: renames.get(index),
-        ...(readGrammarLexerEntryForm(entry.kind) === 7 ? { type: renames.get(index) } : {}) } : entry);
-    }
-  }
-  return { ...lexer, expression: { ...lexer.expression, items } };
 }
 
 /** Full Links comparison view under checked original-owner alpha-renaming. */

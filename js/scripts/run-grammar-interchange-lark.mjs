@@ -5,7 +5,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { grammarEmitter, grammarImporter } from '../src/grammar-interchange.js';
-import { parseWithGrammar } from '../src/grammar.js';
+import { isGrammarToolSyntaxRejection, nativeGrammarToolOutcome } from './grammar-tool-outcomes.mjs';
 import { readProjectData, readProjectFileBytes } from './project-data.mjs';
 import { writeGrammarReport } from './grammar-report-files.mjs';
 
@@ -27,8 +27,7 @@ function nativeTree(tree, source) {
 }
 
 function nativeOutcome(grammar, source) {
-  try { return { accepted: true, tree: nativeTree(parseWithGrammar(grammar, source), source) }; }
-  catch (error) { return { accepted: false, offset: error.offset, reason: error.reason }; }
+  return nativeGrammarToolOutcome(grammar, source, nativeTree);
 }
 
 const results = [];
@@ -60,14 +59,18 @@ for (const entry of fixture.cases) {
       const independent = target.observations[index];
       for (const [name, observed] of Object.entries({ native, replay, target: independent })) {
         if (observed?.accepted !== sample.accepted) failures.push(`${sample.source}: ${name} acceptance differs`);
+        if (!sample.accepted && !(name === 'target' ? observed?.accepted === false && observed.syntaxRejected === true
+          : observed && isGrammarToolSyntaxRejection(observed))) failures.push(`${sample.source}: ${name} did not produce a syntax rejection`);
         if (!sample.accepted && observed?.offset !== sample.offset) failures.push(`${sample.source}: ${name} diagnostic offset differs`);
         if (sample.tree && JSON.stringify(observed?.tree) !== JSON.stringify(sample.tree)) failures.push(`${sample.source}: ${name} parse structure differs`);
       }
       if (sample.accepted && (JSON.stringify(native.tree) !== JSON.stringify(independent?.tree) || JSON.stringify(native.tree) !== JSON.stringify(replay.tree))) failures.push(`${sample.source}: the native/target/replay trees differ`);
       return { source: sample.source, native, replay, target: independent };
     });
-    const mutation = { targetRejected: !target.mutation.accepted,
-      nativeReplayRejected: !nativeOutcome(changedGrammar, entry.accepts[0].source).accepted };
+    const replay = nativeOutcome(changedGrammar, entry.accepts[0].source);
+    const mutation = { target: target.mutation, replay,
+      targetRejected: target.mutation.accepted === false && target.mutation.syntaxRejected === true,
+      nativeReplayRejected: isGrammarToolSyntaxRejection(replay) };
     if (!mutation.targetRejected || !mutation.nativeReplayRejected) failures.push('target mutation did not change both executions');
     results.push({ fixture: entry.id, sourceFormat: entry.format, targetTool: 'lark', targetVersion: target.version,
       sourceSha256: digest(entry.source), targetSha256: digest(emitted.source), loweringNotes: emitted.report.lossy,
