@@ -20,6 +20,8 @@ import {
 import { columnOf, decodeAt, encodeText, quoteText, textOf, utf16View } from './text.js';
 import { acceptFixedLexicalExpression } from './lexical-cache.js';
 import { releaseLexicalCaches, retainLexicalCache } from './lexical-cache-memory.js';
+import { packLexicalCacheResults, readLexicalCacheResults, packTriviaCacheResult } from './cache-storage.js';
+import { PrefixReachCache } from './prefix-reach-cache.js';
 import { completeRuleContexts } from './precedence-contexts.js';
 import { acceptLexicalCacheContext, acceptLexicalCacheReservation, acceptPrecedenceOperandContext, acceptPrecedenceOperandHead, acceptScannerPreemptionBoundary, readScannerContinuationAction } from '../translation/frontend-rules.js';
 
@@ -2182,6 +2184,7 @@ export class Executor {
     this.memoLimit = options.memoLimit ?? DEFAULT_MEMO_LIMIT;
     this.callStack = [];
     this.triviaMemo = new Map();
+    this.separatorLeaves = new Map();
     // The starts of separators a token lexed at them took, going on past
     // the trivia, each with the node calls the token was lexed in, their
     // kinds and offsets (see `tokenBeforeExtra` and `widenTokens`).
@@ -2411,8 +2414,9 @@ export class Executor {
       this.scanContext = context;
     }
     const skipped = { end: cursor, leaves, state: current, states };
-    this.triviaMemo.set(key, skipped);
-    return skipped;
+    const stored = packTriviaCacheResult(skipped, position, this.separatorLeaves, this.memoLimit);
+    this.triviaMemo.set(key, stored);
+    return stored;
   }
 
   // The node an extra of a rule that builds one makes of its text, parsed as
@@ -2600,7 +2604,7 @@ export class Executor {
   prefixReach(expression, position, state) {
     this.prefixReaches ??= new Map();
     let reaches = this.prefixReaches.get(expression);
-    if (!reaches) this.prefixReaches.set(expression, reaches = new Map());
+    if (!reaches) this.prefixReaches.set(expression, reaches = new PrefixReachCache(this.end));
     const key = `${position}|${state.key}`;
     if (!reaches.has(key)) reaches.set(key, this.prefixReachOf(expression, position, state));
     return reaches.get(key);
@@ -2801,7 +2805,7 @@ export class Executor {
     if (!cacheable) return this.evaluateCase(expression, position, state, inToken);
     const cache = this.lexicalCache.entries.get(expression);
     const key = `${position}|${state.key}`;
-    if (cache?.has(key)) return cache.get(key);
+    if (cache?.has(key)) return readLexicalCacheResults(cache.get(key));
     const results = this.evaluateCase(expression, position, state, inToken);
     if (this.lexicalCache.size < this.memoLimit
       && retainLexicalCache(this.budget.memory, this.lexicalCache, 1 + results.length)) {
@@ -2809,7 +2813,7 @@ export class Executor {
       let current = this.lexicalCache.entries.get(expression);
       if (!current) this.lexicalCache.entries.set(expression, current = new Map());
       this.lexicalCache.size += 1;
-      current.set(key, results);
+      current.set(key, packLexicalCacheResults(results));
     }
     return results;
   }

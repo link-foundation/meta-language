@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {DecoratorSet} from '../src/decorators.js';
 import {readBinaryMetadataCandidateStyles} from './binary-metadata-candidate-styles.mjs';
 import {formatProductRuleSource} from './product-rule-style-corrections.mjs';
-import {simplifyRustBranches} from './product-rule-style-corrections.mjs';
+import {simplifyRustBranches} from './reviewed-rust-branch-styles.mjs';
 import {readCompilerFeedbackCorrections} from './compiler-style-feedback.mjs';
 import {readSourceTextRustBlock} from './source-text-byte-library-style.mjs';
 

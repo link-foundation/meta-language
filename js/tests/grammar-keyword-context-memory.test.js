@@ -7,6 +7,8 @@ import {createGrammarParser} from '../src/grammar-runtime.js';
 import {Executor,KeywordLexing} from '../src/grammar-runtime/executor.js';
 import {parseGrammarLinks} from '../src/grammar-links.js';
 import {nativeGrammarText} from '../src/native-grammar-parser.js';
+import {packLexicalCacheResults,readLexicalCacheResults,packTriviaCacheResult} from '../src/grammar-runtime/cache-storage.js';
+import {PrefixReachCache} from '../src/grammar-runtime/prefix-reach-cache.js';
 
 const controls=readProjectData(new URL('../../parity/fixtures/keyword-parse-context-controls.lino',import.meta.url));
 const pins={
@@ -281,6 +283,91 @@ test('silent token rules read children only for action scratch nodes',async()=>{
     assert.equal(actual.reads,action?expected.reads:0);
     assert.equal(expected.reads,1);
   }
+});
+
+test('compact lexical results preserve every field and conservative fallback',()=>{
+  const state={key:'control'},children=[];
+  const values=Array.from({length:40},(_,end)=>({end:end===0?-0:end,state,children,dynamic:-0,precedence:null,tail:null,ambiguous:false,cost:NaN,before:undefined,open:false}));
+  const stored=packLexicalCacheResults(values);
+  assert.ok(!Array.isArray(stored));assert.ok(stored.ends instanceof Float64Array);
+  const decoded=readLexicalCacheResults(stored);
+  assert.deepEqual(decoded,values);assert.ok(Object.is(decoded[0].end,-0));
+  for(let at=0;at<values.length;at++){
+    assert.deepEqual(Reflect.ownKeys(decoded[at]),Reflect.ownKeys(values[at]));
+    assert.equal(decoded[at].state,state);assert.equal(decoded[at].children,children);
+    assert.deepEqual(Object.getOwnPropertyDescriptors(decoded[at]),Object.getOwnPropertyDescriptors(values[at]));
+  }
+  const mixed=values.map((value,index)=>index%2?Object.fromEntries(Object.entries(value).reverse()):value);
+  const mixedStored=packLexicalCacheResults(mixed);assert.ok(!Array.isArray(mixedStored));
+  const mixedDecoded=readLexicalCacheResults(mixedStored);assert.deepEqual(mixedDecoded,mixed);
+  for(let at=0;at<mixed.length;at++)assert.deepEqual(Reflect.ownKeys(mixedDecoded[at]),Reflect.ownKeys(mixed[at]));
+  for(const mutate of[
+    array=>{array[3].state={key:'control'};},array=>{array[3].children=[];},array=>{array[3].cost=0;},
+    array=>{array[3].dynamic=0;},array=>{array[3].end=Infinity;},array=>{array[3].extra=true;},
+    array=>{array[3][Symbol('extra')]=true;},array=>{Object.defineProperty(array[3],'end',{enumerable:false});},
+    array=>{Object.setPrototypeOf(array[3],{control:true});},array=>{Object.defineProperty(array[3],'end',{get(){throw new Error('unread cache getter');}});},
+  ]){
+    const changed=values.map(value=>({...value}));mutate(changed);
+    assert.equal(packLexicalCacheResults(changed),changed,'nonuniform or unknown representations remain complete arrays');
+  }
+  const small=values.slice(0,15);assert.equal(packLexicalCacheResults(small),small);assert.equal(readLexicalCacheResults(small),small);
+});
+
+test('compact padding preserves every leaf state span and fallback boundary',()=>{
+  const state={key:'control'},pool=new Map();
+  const make=(start,length)=>({end:start+length,leaves:Array.from({length},(_,index)=>({type:'token',kind:null,start:start+index,end:start+index+1,trivia:true})),state,states:Array(length+1).fill(state)});
+  const source=make(0,64),packed=packTriviaCacheResult(source,0,pool,1000);
+  assert.notEqual(packed,source);assert.deepEqual(structuredClone(packed),source);assert.equal(pool.size,64);
+  for(let at=0;at<64;at++)assert.equal(packed.leaves[at],source.leaves[at]);
+  for(const value of packed.states)assert.equal(value,state);
+  const suffix=make(16,48),shared=packTriviaCacheResult(suffix,16,pool,1000);
+  assert.deepEqual(structuredClone(shared),suffix);assert.equal(pool.size,64);
+  for(let at=0;at<48;at++)assert.equal(shared.leaves[at],source.leaves[at+16]);
+  assert.equal(Object.getOwnPropertyDescriptor(packed,'leaves').get,Object.getOwnPropertyDescriptor(shared,'leaves').get);
+  assert.equal(Object.getOwnPropertyDescriptor(packed,'states').get,Object.getOwnPropertyDescriptor(shared,'states').get);
+  for(const limit of[0,17]){const limited=new Map(),value=packTriviaCacheResult(source,0,limited,limit);assert.equal(limited.size,limit);assert.deepEqual(structuredClone(value),source);}
+  for(const mutate of[
+    value=>{value.leaves[2].kind='comment';},value=>{value.leaves[2].projectionName='padding';},
+    value=>{value.leaves[2].end++;},value=>{value.leaves[2].start++;},value=>{value.leaves[2].trivia=false;},
+    value=>{value.states[2]={key:'control'};},value=>{value.states.pop();},
+  ]){const changed=make(0,64);mutate(changed);assert.equal(packTriviaCacheResult(changed,0,new Map(),1000),changed);}
+  const small=make(0,15);assert.equal(packTriviaCacheResult(small,0,new Map(),1000),small);
+});
+
+test('paged prefix reach storage retains every exact Map key value and update',()=>{
+  for(const maximum of[1024,Number.MAX_SAFE_INTEGER]){
+    const current=new PrefixReachCache(maximum),previous=new Map(),object={identity:true},symbol=Symbol('key');
+    const keys=[];
+    const put=(key,value)=>{assert.equal(current.set(key,value),current);previous.set(key,value);if(!keys.includes(key))keys.push(key);assert.equal(current.size,previous.size);for(const stored of keys){assert.equal(current.has(stored),previous.has(stored));assert.ok(Object.is(current.get(stored),previous.get(stored)));}};
+    for(const state of['','0||[]|{}','spaces | Unicode 😀','x'.repeat(100)])for(let position=0;position<130;position++)put(position+'|'+state,position+1);
+    for(const key of['0|','8|0||[]|{}','-0|state','01|state','-1|state','1.5|state','1e3|state','9007199254740993|state','ordinary',object,symbol,undefined,NaN]){
+      for(const value of[undefined,null,false,-0,NaN,Infinity,-1,0,7,0xffffffff,Number.MAX_SAFE_INTEGER,object])put(key,value);
+    }
+    assert.equal(current.has('absent'),false);assert.equal(current.get('absent'),undefined);
+    const pages=[...current.states.values()].flatMap(value=>[...value.values()]);
+    assert.ok(pages.some(page=>page instanceof(maximum>0xfffffffe?Float64Array:Uint32Array)),'dense pages replace populated numeric buckets');
+    assert.ok(current.other.has('ordinary'),'noncanonical keys remain exact Map entries');
+  }
+});
+
+test('indented Rust preserves frozen trees steps charged cells and memo decisions',async()=>{
+  const baseline=await frozenKeywordParser(),frozen=await import(frozenKeywordModule(controls.baseline.modules[0]));
+  const grammar=parseGrammarLinks(nativeGrammarText('native-rust')),current=createGrammarParser(grammar),previous=baseline.createGrammarParser(grammar);
+  const padding=' '.repeat(32),body='fn f(){\n'+padding+'let value=1;\n'+padding+'value+2\n}';
+  const sources=[body,body.replaceAll('\n','\r\n'),'\uFEFF'+body,'fn f(){'+padding+'/* note */'+padding+'let value=1;'+padding+'value+2}'];
+  const run=Executor.prototype.run,prior=frozen.Executor.prototype.run,actual=[],expected=[];
+  let packed=0;
+  const observe=executor=>({cells:executor.budget.memory.cells,steps:executor.budget.steps,memo:executor.memo.size,trivia:executor.triviaMemo.size,prefixEntries:[...executor.prefixReaches?.values()??[]].reduce((sum,cache)=>sum+cache.size,0)});
+  Executor.prototype.run=function(...args){const result=run.apply(this,args);actual.push(observe(this));for(const value of this.triviaMemo.values())if(Object.getOwnPropertyDescriptor(value,'leaves').get)packed++;return result;};
+  frozen.Executor.prototype.run=function(...args){const result=prior.apply(this,args);expected.push(observe(this));return result;};
+  try{
+    for(const source of sources){assert.ok(Buffer.byteLength(source)<256);for(const memoLimit of[0,20,1000000])for(const memoryLimit of[1000,2000000])for(const errorRecovery of[false,true]){
+      const options={memoLimit,memoryLimit,errorRecovery,recovery:'accept'};
+      assert.deepEqual(current.parseTree(source,options),previous.parseTree(source,options));
+    }}
+  }finally{Executor.prototype.run=run;frozen.Executor.prototype.run=prior;}
+  assert.deepEqual(actual,expected,'all steps, charged cells, rule memo admission and trivia entries remain exact');
+  assert.ok(packed>0,'actual native parsing uses compact padding storage');
 });
 
 test('complete source diagnostics observe real native runs and restore the executor',async()=>{

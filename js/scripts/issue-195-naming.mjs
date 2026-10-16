@@ -21815,7 +21815,159 @@ const IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES=[...new Set(IDENTITY_COMPILER_
  extract: text => IDENTITY_COMPILER_FEEDBACK_NAME_BINDINGS.filter(row=>row.source===source&&text.includes(row.name)).map(row=>normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))),
  recordOf: name => IDENTITY_COMPILER_FEEDBACK_NAME_BINDINGS.find(row=>row.source===source&&normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))===name).id,
 }));
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES]);
+// Synchronous concept seeding keeps a derived index only for its bulk scope.
+const CONCEPT_SEED_INDEX_NAME_BINDINGS=[
+  {
+    "id": "repository.bulk-semantic-pair-indexes",
+    "name": "BULK_SEMANTIC_PAIR_INDEXES",
+    "source": "js/src/network.js"
+  },
+  {
+    "id": "repository.insert-semantic-pair-index-entry",
+    "name": "insertSemanticPairIndexEntry",
+    "source": "js/src/network.js"
+  },
+  {
+    "id": "repository.index-semantic-pairs",
+    "name": "indexSemanticPairs",
+    "source": "js/src/network.js"
+  },
+  {
+    "id": "repository.concept-seed-index-controls",
+    "name": "controls",
+    "source": "js/tests/concept-records-seed-index.test.js"
+  },
+  {
+    "id": "repository.read-bounded-concept-seed-networks",
+    "name": "readBoundedConceptSeedNetworks",
+    "source": "js/tests/concept-records-seed-index.test.js"
+  },
+  {
+    "id": "repository.prepare-concept-seed-network",
+    "name": "prepareConceptSeedNetwork",
+    "source": "js/tests/concept-records-seed-index.test.js"
+  },
+  {
+    "id": "repository.check-bulk-concept-seeding-preservation",
+    "name": "bulk concept seeding preserves frozen graphs and ordered semantic pair reuse",
+    "source": "js/tests/concept-records-seed-index.test.js"
+  },
+  {
+    "id": "repository.check-bulk-seeding-index-release",
+    "name": "bulk seeding releases derived indexes after nested calls and failures",
+    "source": "js/tests/concept-records-seed-index.test.js"
+  }
+];
+const CONCEPT_SEED_INDEX_NAME_INVENTORIES=[...new Set(CONCEPT_SEED_INDEX_NAME_BINDINGS.map(row=>row.source))].map(source=>({
+ inventory: "bulk concept seed index controls for "+source, files: [source],
+ extract: text => CONCEPT_SEED_INDEX_NAME_BINDINGS.filter(row=>row.source===source&&text.includes(row.name)).map(row=>normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))),
+ recordOf: name => CONCEPT_SEED_INDEX_NAME_BINDINGS.find(row=>row.source===source&&normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))===name).id,
+}));
+// Exact cache storage controls and the adapter for the immutable reviewed producer.
+IDENTITY_COMPILER_FEEDBACK_NAME_BINDINGS.push({"id":"repository.simplify-rust-branches","source":"js/scripts/product-rule-style-corrections.mjs","name":"simplifyBranches"});
+const EXACT_CACHE_STORAGE_NAME_BINDINGS=[
+  {
+    "id": "repository.lexical-cache-result-fields",
+    "name": "RESULT_FIELDS",
+    "source": "js/src/grammar-runtime/cache-storage.js"
+  },
+  {
+    "id": "repository.padding-cache-record-key",
+    "name": "PADDING_RUN",
+    "source": "js/src/grammar-runtime/cache-storage.js"
+  },
+  {
+    "id": "repository.pack-lexical-cache-results",
+    "name": "packLexicalCacheResults",
+    "source": "js/src/grammar-runtime/cache-storage.js"
+  },
+  {
+    "id": "repository.read-lexical-cache-results",
+    "name": "readLexicalCacheResults",
+    "source": "js/src/grammar-runtime/cache-storage.js"
+  },
+  {
+    "id": "repository.read-padding-leaves",
+    "name": "readPaddingLeaves",
+    "source": "js/src/grammar-runtime/cache-storage.js"
+  },
+  {
+    "id": "repository.read-padding-states",
+    "name": "readPaddingStates",
+    "source": "js/src/grammar-runtime/cache-storage.js"
+  },
+  {
+    "id": "repository.pack-trivia-cache-result",
+    "name": "packTriviaCacheResult",
+    "source": "js/src/grammar-runtime/cache-storage.js"
+  },
+  {
+    "id": "repository.separator-leaf-cache",
+    "name": "separatorLeaves",
+    "source": "js/src/grammar-runtime/executor.js"
+  },
+  {
+    "id": "repository.check-compact-lexical-results",
+    "name": "compact lexical results preserve every field and conservative fallback",
+    "source": "js/tests/grammar-keyword-context-memory.test.js"
+  },
+  {
+    "id": "repository.check-compact-padding-results",
+    "name": "compact padding preserves every leaf state span and fallback boundary",
+    "source": "js/tests/grammar-keyword-context-memory.test.js"
+  },
+  {
+    "id": "repository.check-indented-rust-parser-preservation",
+    "name": "indented Rust preserves frozen trees steps charged cells and memo decisions",
+    "source": "js/tests/grammar-keyword-context-memory.test.js"
+  },
+  {
+    "id": "repository.prefix-reach-cache",
+    "name": "PrefixReachCache",
+    "source": "js/src/grammar-runtime/prefix-reach-cache.js"
+  },
+  {
+    "id": "repository.prefix-page-width",
+    "name": "PAGE_WIDTH",
+    "source": "js/src/grammar-runtime/prefix-reach-cache.js"
+  },
+  {
+    "id": "repository.sparse-prefix-entry-limit",
+    "name": "SPARSE_ENTRY_LIMIT",
+    "source": "js/src/grammar-runtime/prefix-reach-cache.js"
+  },
+  {
+    "id": "repository.locate-prefix-reach-entry",
+    "name": "locate",
+    "source": "js/src/grammar-runtime/prefix-reach-cache.js"
+  },
+  {
+    "id": "repository.check-paged-prefix-map-preservation",
+    "name": "paged prefix reach storage retains every exact Map key value and update",
+    "source": "js/tests/grammar-keyword-context-memory.test.js"
+  },
+  {
+    "id": "repository.reviewed-branch-export-controls",
+    "name": "branchControls",
+    "source": "js/tests/translation-compiler-style-ci-guard.test.js"
+  },
+  {
+    "id": "repository.check-reviewed-branch-export-preservation",
+    "name": "reviewed branch export preserves the complete frozen producer and original alias",
+    "source": "js/tests/translation-compiler-style-ci-guard.test.js"
+  },
+  {
+    "id": "repository.simplify-rust-branches",
+    "source": "js/scripts/reviewed-rust-branch-styles.mjs",
+    "name": "simplifyRustBranches"
+  }
+];
+const EXACT_CACHE_STORAGE_NAME_INVENTORIES=[...new Set(EXACT_CACHE_STORAGE_NAME_BINDINGS.map(row=>row.source))].map(source=>({
+ inventory: "exact cache storage controls for "+source, files: [source],
+ extract: text => EXACT_CACHE_STORAGE_NAME_BINDINGS.filter(row=>row.source===source&&text.includes(row.name)).map(row=>normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))),
+ recordOf: name => EXACT_CACHE_STORAGE_NAME_BINDINGS.find(row=>row.source===source&&normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {

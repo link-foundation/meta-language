@@ -11,6 +11,7 @@ import {readProjectData} from '../scripts/project-data.mjs';
 import {readGlobalConceptIdentityCompilerStyles} from '../scripts/global-concept-identity-styles.mjs';
 import {readCompilerFeedbackCorrections} from '../scripts/compiler-style-feedback.mjs';
 import {readSourceTextRustBlock} from '../scripts/source-text-byte-library-style.mjs';
+import {simplifyRustBranches} from '../scripts/reviewed-rust-branch-styles.mjs';
 
 const scripts=['generate-global-concept-rule-styles.mjs','generate-frontend-rule-styles.mjs'];
 const controls=readProjectData(new URL('../../parity/fixtures/compiler-style-closure-controls.lino',import.meta.url));
@@ -110,4 +111,22 @@ test('actual identity compiler feedback retains provenance and complete function
   const stale=structuredClone(feedback);
   for(const input of Object.values(stale.sources))if(input.relativePath===path)input.sha256='0'.repeat(64);
   assert.throws(()=>readGlobalConceptIdentityCompilerStyles(source,stale),/stale/u);
+});
+
+test('reviewed branch export preserves the complete frozen producer and original alias',async()=>{
+  const branchControls=readProjectData(new URL('../../parity/fixtures/reviewed-branch-export-controls.lino',import.meta.url));
+  const {baseline}=branchControls,address=new URL('../../'+baseline.file,import.meta.url);
+  assert.equal(baseline.revision,'8b95e57d696c755dc14705962f783d21f69e89fb');assert.equal(baseline.bytes,18016);
+  assert.equal(baseline.sha256,'1a93544e4274c20b2e8c27049dce7f0fcbe70f66eb2b433b17a9a2b0b682777e');
+  assert.equal(createHash('sha256').update(baseline.source).digest('hex'),baseline.sha256);
+  assert.equal(Buffer.byteLength(baseline.source),baseline.bytes);
+  const frozen=readFileSync(address,'utf8');
+  assert.equal(createHash('sha256').update(frozen).digest('hex'),'9728ead881e57f16401321be9eb00e25416aab74cdb4d7164485cd0a3abbc216');
+  assert.equal(frozen+'\nexport { simplifyBranches as simplifyRustBranches };\n',baseline.source,'the whole effective module retains every original byte and export');
+  const linked=baseline.source.replace(/\bfrom (['"])(\.[^'"\n]+)\1/gu,(_,quote,path)=>'from '+quote+new URL(path,address).href+quote).replaceAll('import.meta.url',JSON.stringify(address.href));
+  const original=await import('data:text/javascript;base64,'+Buffer.from(linked).toString('base64'));
+  assert.equal(simplifyRustBranches.toString(),original.simplifyRustBranches.toString());
+  for(const source of branchControls.sources)assert.equal(simplifyRustBranches(source),original.simplifyRustBranches(source));
+  const {verifyBinaryMetadataBufferNativeModel}=await import('../../experiments/binary-metadata-buffer/native-observations.mjs');
+  assert.equal(verifyBinaryMetadataBufferNativeModel().length,13,'the unchanged original oracle authenticates every source binding without planning or native execution');
 });

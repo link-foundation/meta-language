@@ -1,0 +1,1 @@
+Derive a temporary semantic-pair index during JavaScript concept-record seeding, preserving complete links, original query order and duplicate reuse. Release the index after success or failure; full shipped-record behavior and native parity remain CI checks.

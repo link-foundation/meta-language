@@ -52,6 +52,28 @@ const EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX = 'external-identifier:';
 const FORMER_EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX = 'external-id:';
 const FIELD_LABEL_DEFINITION = 'A field label names a relation between links.';
 
+// Derived only for a synchronous bulk seeding call, then discarded even when
+// it throws. The links remain authoritative, including their query order.
+const BULK_SEMANTIC_PAIR_INDEXES = new WeakMap();
+
+function insertSemanticPairIndexEntry(index, link) {
+  const references = link.references(), metadata = link.metadata();
+  if (metadata.linkType !== LinkType.Semantic || references.length !== 2) return;
+  let seconds = index.get(idKey(references[0]));
+  if (!seconds) index.set(idKey(references[0]), seconds = new Map());
+  let terms = seconds.get(idKey(references[1]));
+  if (!terms) seconds.set(idKey(references[1]), terms = new Map());
+  let languages = terms.get(metadata.term);
+  if (!languages) terms.set(metadata.term, languages = new Map());
+  if (!languages.has(metadata.language)) languages.set(metadata.language, link.id());
+}
+
+function indexSemanticPairs(network) {
+  const index = new Map();
+  for (const link of network.links()) insertSemanticPairIndexEntry(index, link);
+  return index;
+}
+
 function externalVocabularyFromTerm(term) {
   for (const prefix of [EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX, FORMER_EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX]) {
     if (term?.startsWith(prefix)) return term.slice(prefix.length);
@@ -330,9 +352,15 @@ export class LinkNetwork {
 
   /** Assigns every concept record and returns the counts of concepts and links added. */
   seedConceptRecords() {
-    let links = 0;
-    for (const record of CONCEPT_RECORDS) links += insertConceptRecord(this, record).links;
-    return { concepts: CONCEPT_RECORDS.length, links };
+    const owned = !BULK_SEMANTIC_PAIR_INDEXES.has(this);
+    if (owned) BULK_SEMANTIC_PAIR_INDEXES.set(this, indexSemanticPairs(this));
+    try {
+      let links = 0;
+      for (const record of CONCEPT_RECORDS) links += insertConceptRecord(this, record).links;
+      return { concepts: CONCEPT_RECORDS.length, links };
+    } finally {
+      if (owned) BULK_SEMANTIC_PAIR_INDEXES.delete(this);
+    }
   }
 
   /**
@@ -393,17 +421,17 @@ export class LinkNetwork {
     if (existing !== undefined) {
       return [existing, false];
     }
-    return [
-      this.insertLink(
-        [conceptLink, vocabularyLink],
-        LinkMetadata.new()
-          .withLinkType(LinkType.Semantic)
-          .withNamed(true)
-          .withTerm(externalId)
-          .withLanguage(vocabulary),
-      ),
-      true,
-    ];
+    const id = this.insertLink(
+      [conceptLink, vocabularyLink],
+      LinkMetadata.new()
+        .withLinkType(LinkType.Semantic)
+        .withNamed(true)
+        .withTerm(externalId)
+        .withLanguage(vocabulary),
+    );
+    const index = BULK_SEMANTIC_PAIR_INDEXES.get(this);
+    if (index) insertSemanticPairIndexEntry(index, this.link(id));
+    return [id, true];
   }
 
   _insertConceptSyntaxMapping(conceptLink, concept, language, syntax, updateReconstruction) {
@@ -416,7 +444,7 @@ export class LinkNetwork {
     if (existing !== undefined) {
       return existing;
     }
-    return this.insertLink(
+    const id = this.insertLink(
       [conceptLink, languageLink],
       LinkMetadata.new()
         .withLinkType(LinkType.Semantic)
@@ -424,9 +452,14 @@ export class LinkNetwork {
         .withTerm(syntax)
         .withLanguage(language),
     );
+    const index = BULK_SEMANTIC_PAIR_INDEXES.get(this);
+    if (index) insertSemanticPairIndexEntry(index, this.link(id));
+    return id;
   }
 
   _findSemanticPair(first, second, term, language) {
+    const index = BULK_SEMANTIC_PAIR_INDEXES.get(this);
+    if (index) return index.get(idKey(first))?.get(idKey(second))?.get(term)?.get(language);
     return this.links().find((link) => {
       const references = link.references();
       const metadata = link.metadata();

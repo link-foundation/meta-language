@@ -2162,6 +2162,20 @@ returned identity; rules with actions retain their complete scratch inputs and
 spans. Frozen comparisons cover all rank/conflict combinations, trivia, already
 tagged children, action acceptance/refusal and the unchanged tiny parse outcomes
 and budgets. Whole generated-source parsing still runs in CI.
+Prefix lookahead retains every logical cache entry in state-indexed sparse
+numeric pages, promoting populated pages to typed storage. Complete state keys,
+membership, updates and values remain exact; noncanonical keys and exceptional
+values keep their original Map representation. No eviction, parser budget or
+memo admission changes. Uniform lexical results share exact field templates
+and numeric end positions; unknown fields, descriptors or identities retain
+their complete original arrays. Homogeneous one-byte padding shares bounded
+leaf storage and materializes its full original spans and scanner states when
+read. Comments and heterogeneous states retain the original representation.
+Frozen tiny Rust controls compare full outputs, steps, charged cells and all
+logical cache counts under normal, rejection and recovery modes. Authored
+strings shorter than 256 bytes and allocation-site metadata establish these
+local representation checks only; complete generated source fit remains a CI
+obligation under the original limits.
 The naming gate indexes exact words and every allowed WordNet synset by phrase
 role, length and position before applying its unchanged synonym predicate.
 Candidate pairs retain their original record order and every distinction rule.
@@ -2180,12 +2194,26 @@ then derives fresh declaration styles for the changed operation. Both old
 generation checks and the new generation check remain mandatory. Tiny byte,
 refusal, precedence and string-work controls cannot establish whole-source
 resource fit; the existing CI time, heap, record and byte bounds still apply.
+JavaScript bulk concept-record seeding derives semantic-pair lookup from the
+actual links once per synchronous scope. Exact reference identities, term and
+language keys preserve the original link query order and duplicate reuse; new
+alias and syntax insertions update that derived lookup. Nested calls share the
+active index, and the owning call discards it on success or failure. It is not
+serialized or retained as another authority. Four explicitly bounded existing
+records compare complete graphs with the authenticated original implementation,
+including later graph edits and failure cleanup. The unchanged full-register
+assertions and native parity still execute in CI.
 Identity-library compiler styles likewise authenticate the complete actual CI
 input before replaying a non-overlapping machine suggestion. The existing
 reviewed branch simplifier handles the nested conditional alternative without
 changing its raw applicability or the general feedback reader's overlap
 deferral. Styles retain the complete owning function, converge and preserve all
 other declarations. Native compilation and behavior remain CI checks.
+The shared branch helper is exposed through an adapter that authenticates and
+loads the complete immutable reviewed producer with its original helper export.
+The binary oracle retains all thirteen original source bindings and hashes;
+the producer itself retains its frozen bytes. Existing concept aliases remain
+decodable, with additive bindings for the private helper and live adapter.
 
 - CI runs a fast `cargo check` of all targets and features first; the jobs that
   compile and test need it, so a compile error fails once.
