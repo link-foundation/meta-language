@@ -45,13 +45,13 @@ pub fn accept_java_script_namespace_method(kind: &str, following: &str) -> bool 
 #[must_use]
 pub fn read_java_script_collection_construction(name: &str, extra_argument: bool) -> String {
     if extra_argument {
-        String::from("")
+        String::new()
     } else if name == "Set" {
         String::from("set")
     } else if name == "Map" {
         String::from("map")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -89,12 +89,12 @@ pub fn read_java_script_value_case_form(
     } else if !negative && ((kind == "string") || (kind == "identifier")) {
         String::from("value")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
 #[must_use]
-pub fn accept_java_script_value_switch(tagged: bool, value_case: bool) -> bool {
+pub const fn accept_java_script_value_switch(tagged: bool, value_case: bool) -> bool {
     !tagged && value_case
 }
 
@@ -234,18 +234,20 @@ pub fn read_java_script_method_receiver_kind(operation: &str) -> String {
     {
         String::from("string")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
 #[must_use]
 pub fn read_java_script_array_method_surface_form(operation: &str, count: f64) -> String {
-    if operation != "slice" {
-        String::from("array")
-    } else if count == 0f64 {
-        String::from("copySlice")
+    if operation == "slice" {
+        if count == 0f64 {
+            String::from("copySlice")
+        } else {
+            String::from("method")
+        }
     } else {
-        String::from("method")
+        String::from("array")
     }
 }
 
@@ -265,43 +267,45 @@ pub fn read_java_script_method_argument_kind(
         } else if index == 1f64 {
             String::from("float")
         } else {
-            String::from("")
+            String::new()
         }
-    } else if receiver != "string" {
-        String::from("")
-    } else if (index == 0f64)
-        && ((((((((operation == "slice") || (operation == "substring"))
-            || (operation == "repeat"))
-            || (operation == "charAt"))
-            || (operation == "charCodeAt"))
-            || (operation == "codePointAt"))
-            || (operation == "padStart"))
-            || (operation == "padEnd"))
-    {
-        String::from("float")
-    } else if (index == 0f64)
-        && ((((((operation == "includes") || (operation == "startsWith"))
-            || (operation == "endsWith"))
-            || (operation == "indexOf"))
-            || (operation == "lastIndexOf"))
-            || (operation == "split"))
-    {
-        String::from("string")
-    } else if (index == 1f64)
-        && (((((((((operation == "slice") || (operation == "substring"))
-            || (operation == "includes"))
-            || (operation == "startsWith"))
-            || (operation == "endsWith"))
-            || (operation == "indexOf"))
-            || (operation == "lastIndexOf"))
-            || (operation == "charCodeAt"))
-            || (operation == "split"))
-    {
-        String::from("float")
-    } else if (index == 1f64) && ((operation == "padStart") || (operation == "padEnd")) {
-        String::from("string")
+    } else if receiver == "string" {
+        if (index == 0f64)
+            && ((((((((operation == "slice") || (operation == "substring"))
+                || (operation == "repeat"))
+                || (operation == "charAt"))
+                || (operation == "charCodeAt"))
+                || (operation == "codePointAt"))
+                || (operation == "padStart"))
+                || (operation == "padEnd"))
+        {
+            String::from("float")
+        } else if (index == 0f64)
+            && ((((((operation == "includes") || (operation == "startsWith"))
+                || (operation == "endsWith"))
+                || (operation == "indexOf"))
+                || (operation == "lastIndexOf"))
+                || (operation == "split"))
+        {
+            String::from("string")
+        } else if (index == 1f64)
+            && (((((((((operation == "slice") || (operation == "substring"))
+                || (operation == "includes"))
+                || (operation == "startsWith"))
+                || (operation == "endsWith"))
+                || (operation == "indexOf"))
+                || (operation == "lastIndexOf"))
+                || (operation == "charCodeAt"))
+                || (operation == "split"))
+        {
+            String::from("float")
+        } else if (index == 1f64) && ((operation == "padStart") || (operation == "padEnd")) {
+            String::from("string")
+        } else {
+            String::new()
+        }
     } else {
-        String::from("")
+        String::new()
     }
 }
 

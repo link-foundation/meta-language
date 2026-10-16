@@ -1,6 +1,20 @@
 // Generated from the complete checked JavaScript source and recorded dependencies.
 // Do not edit by hand.
-use super::*;
+use super::accept_record_field_name;
+use super::compare_record_field_names;
+use super::ml_array;
+use super::ml_math;
+use super::read_required_number_fact;
+use super::read_required_record_name;
+use super::read_required_text_fact;
+use super::record_type_fact_field;
+use super::record_type_fact_kind;
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlReadRecordProjectionErrorLoop2Result {
+    MlReadRecordProjectionErrorLoop2Done,
+    MlReadRecordProjectionErrorLoop2Return(String),
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -11,10 +25,9 @@ pub fn ml_read_record_projection_error_loop2(
 ) -> self::MlReadRecordProjectionErrorLoop2Result {
     loop {
         return if index < (names.len() as f64) {
-            if (match self::ml_array::optional_at(entries, self::ml_array::number_index(index)) {
-                Some(ml_present) => ml_present,
-                None => false,
-            }) {
+            if ((self::ml_array::optional_at(entries, self::ml_array::number_index(index)))
+                .unwrap_or_default())
+            {
                 if (self::accept_record_field_name(
                     &(self::read_required_record_name(names, index)),
                 )) {
@@ -64,17 +77,9 @@ pub fn ml_accept_record_field_name_loop3(
         return if index < (name.len() as f64) {
             {
                 let unit = self::ml_array::optional_at(name, self::ml_array::number_index(index));
-                if (!(match unit.clone() {
-                    Some(ml_present) => self::ml_math::is_integer(ml_present),
-                    None => false,
-                }) || ((match unit.clone() {
-                    Some(ml_present) => ml_present,
-                    None => f64::NAN,
-                }) < 0f64))
-                    || ((match unit.clone() {
-                        Some(ml_present) => ml_present,
-                        None => f64::NAN,
-                    }) > 65_535f64)
+                if (!((unit).is_some_and(self::ml_math::is_integer))
+                    || (((unit).unwrap_or(f64::NAN)) < 0f64))
+                    || (((unit).unwrap_or(f64::NAN)) > 65_535f64)
                 {
                     self::MlAcceptRecordFieldNameLoop3Result::MlAcceptRecordFieldNameLoop3Return(
                         false,
@@ -158,7 +163,9 @@ pub fn ml_read_record_field_position_loop6(
                     &(self::read_required_record_name(fields, index)),
                     name,
                 );
-                if !(comparison < 0f64) && !(comparison > 0f64) {
+                if ((comparison).partial_cmp(&0f64) != Some(std::cmp::Ordering::Less))
+                    && ((comparison).partial_cmp(&0f64) != Some(std::cmp::Ordering::Greater))
+                {
                     self::MlReadRecordFieldPositionLoop6Result::MlReadRecordFieldPositionLoop6Return(
                         index,
                     )
@@ -460,6 +467,10 @@ pub fn ml_read_record_field_insertion_order_loop14(
     loop {
         if lower < upper {
             {
+                #[expect(
+                    clippy::manual_midpoint,
+                    reason = "checked JavaScript Number addition, division and floor retain their separate rounding and evaluation order"
+                )]
                 let middle = ((lower + upper) / 2f64).floor();
                 {
                     let comparison = self::compare_record_field_names(
@@ -491,9 +502,12 @@ pub fn ml_read_record_field_insertion_order_loop14(
                         {
                             {
                                 let selected_3 =
-                                    if !((self::read_required_number_fact(first, middle)) < index)
-                                        && !((self::read_required_number_fact(first, middle))
-                                            > index)
+                                    if ((self::read_required_number_fact(first, middle))
+                                        .partial_cmp(&(index))
+                                        != Some(std::cmp::Ordering::Less))
+                                        && ((self::read_required_number_fact(first, middle))
+                                            .partial_cmp(&(index))
+                                            != Some(std::cmp::Ordering::Greater))
                                     {
                                         {
                                             {
@@ -844,7 +858,7 @@ pub fn ml_read_record_type_owner_presence_loop18(
                     if (!(self::ml_math::is_integer(variable)) || (variable < 0f64))
                         || (variable >= (bindings.len() as f64))
                     {
-                        self::MlReadRecordTypeOwnerPresenceLoop18Result::MlReadRecordTypeOwnerPresenceLoop18Done(node, kind.clone())
+                        self::MlReadRecordTypeOwnerPresenceLoop18Result::MlReadRecordTypeOwnerPresenceLoop18Done(node, kind)
                     } else {
                         {
                             let bound = self::read_required_number_fact(bindings, variable);
@@ -852,13 +866,13 @@ pub fn ml_read_record_type_owner_presence_loop18(
                                 let bound_kind = self::record_type_fact_kind(
                                     texts, starts, counts, labels, targets, bound,
                                 );
-                                if bound_kind == "" {
-                                    self::MlReadRecordTypeOwnerPresenceLoop18Result::MlReadRecordTypeOwnerPresenceLoop18Done(node, kind.clone())
+                                if (bound_kind).is_empty() {
+                                    self::MlReadRecordTypeOwnerPresenceLoop18Result::MlReadRecordTypeOwnerPresenceLoop18Done(node, kind)
                                 } else {
                                     {
                                         let node_2 = bound;
                                         {
-                                            let kind_2 = bound_kind.clone();
+                                            let kind_2 = bound_kind;
                                             {
                                                 (node, kind) = (node_2, kind_2);
                                                 continue;
@@ -873,8 +887,7 @@ pub fn ml_read_record_type_owner_presence_loop18(
             }
         } else {
             self::MlReadRecordTypeOwnerPresenceLoop18Result::MlReadRecordTypeOwnerPresenceLoop18Done(
-                node,
-                kind.clone(),
+                node, kind,
             )
         };
     }

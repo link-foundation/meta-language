@@ -1,10 +1,26 @@
 // Generated from complete callable-source-rules.js through the checked translator.
 // Do not edit by hand.
-use super::*;
+use super::MlCallableBoundLoop14Result;
+use super::MlCallableFieldLoop13Result;
+use super::MlCallableTypeParametersLoop5Result;
+use super::MlPlanCallableTypeSyntaxJoin7;
+use super::MlPlanCallableTypeSyntaxJoin9;
+use super::MlPlanCallableTypeSyntaxLoop10Result;
+use super::ml_callable_bound_loop14;
+use super::ml_callable_field_loop13;
+use super::ml_callable_parameter_names_loop15;
+use super::ml_callable_type_parameter_segments_loop4;
+use super::ml_callable_type_parameters_loop5;
+use super::ml_callable_type_trim_end_loop3;
+use super::ml_callable_type_trim_start_loop2;
+use super::ml_plan_callable_type_syntax_loop8;
+use super::ml_plan_callable_type_syntax_loop10;
+use super::ml_plan_callable_type_syntax_loop11;
+use super::ml_read_type_separator_positions_loop1;
 
 /// JavaScript's Number operations that Rust's f64 does not share.
 pub mod ml_number {
-    /// ECMAScript Number::toString: the shortest decimal that reads back as
+    /// ECMAScript `Number::toString`: the shortest decimal that reads back as
     /// the value, the even one on a tie, laid out as JavaScript prints it.
     #[must_use]
     pub fn js_number(x: f64) -> String {
@@ -36,7 +52,7 @@ pub mod ml_number {
                 }
             }
         }
-        let k = digits.len() as i32;
+        let k = i32::try_from(digits.len()).expect("binary64 significand length fits i32");
         let body = if k <= n && n <= 21 {
             format!("{digits}{}", "0".repeat((n - k) as usize))
         } else if 0 < n && n <= 21 {
@@ -65,10 +81,10 @@ pub mod ml_number {
         }
     }
 
-    /// SameValue, as Object.is and assert.strictEqual compare: NaN equals
+    /// `SameValue`, as `Object.is` and `assert.strictEqual` compare: NaN equals
     /// NaN, and 0 differs from -0.
     #[must_use]
-    pub fn same_value(a: f64, b: f64) -> bool {
+    pub const fn same_value(a: f64, b: f64) -> bool {
         if a.is_nan() || b.is_nan() {
             a.is_nan() && b.is_nan()
         } else {
@@ -117,14 +133,14 @@ pub mod ml_math {
         if x > 0.0 && x < 0.5 {
             return 0.0;
         }
-        if x < 0.0 && x >= -0.5 {
+        if (-0.5..0.0).contains(&x) {
             return -0.0;
         }
         let floor = x.floor();
         if x - floor >= 0.5 { floor + 1.0 } else { floor }
     }
 
-    /// Math.sign, which keeps -0, 0 and NaN, where f64::signum does not.
+    /// Math.sign, which keeps -0, 0 and NaN, where `f64::signum` does not.
     #[must_use]
     pub fn sign(x: f64) -> f64 {
         if x > 0.0 {
@@ -195,10 +211,9 @@ pub mod ml_array {
     /// JavaScript, aborts.
     #[must_use]
     pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {
-        match index.and_then(|index| values.get(index)) {
-            Some(value) => value.clone(),
-            None => panic!("array index out of range"),
-        }
+        index
+            .and_then(|index| values.get(index))
+            .map_or_else(|| panic!("array index out of range"), Clone::clone)
     }
 
     /// The index a Number names: a non-negative integer, -0 included.
@@ -216,7 +231,7 @@ pub mod ml_array {
         left.extend(right);
         left
     }
-    fn integer(value: f64) -> f64 {
+    const fn integer(value: f64) -> f64 {
         if value.is_nan() { 0.0 } else { value.trunc() }
     }
     fn relative(value: f64, length: usize) -> usize {
@@ -324,33 +339,45 @@ pub fn refuse_required_boolean_fact() -> bool {
 /// Execute the complete checked source algorithm.
 #[must_use]
 pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required Number fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required Number fact column position"
+        );
+
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_number_fact())
+            .unwrap_or_else(self::refuse_required_number_fact)
     }
 }
 
 /// Execute the complete checked source algorithm.
 #[must_use]
 pub fn read_required_text_fact(values: &[String], index: f64) -> String {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required text fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required text fact column position"
+        );
+
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_text_fact())
+            .unwrap_or_else(self::refuse_required_text_fact)
     }
 }
 
 /// Execute the complete checked source algorithm.
 #[must_use]
 pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required Boolean fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required Boolean fact column position"
+        );
+
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_boolean_fact())
+            .unwrap_or_else(self::refuse_required_boolean_fact)
     }
 }
 
@@ -395,7 +422,7 @@ pub fn read_union_target_refusal(target: &str) -> String {
     } else if target == "Rocq" {
         String::from("no Rocq type for union")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -421,7 +448,7 @@ pub fn read_callable_statement_role(kind: &str) -> String {
     } else if kind == "for" {
         String::from("for")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -695,12 +722,14 @@ pub fn read_callable_linked_application_error(
     parameters: f64,
     arguments_count: f64,
 ) -> String {
-    if kind != "function" {
-        String::from("a linked application does not target a function")
-    } else if parameters == arguments_count {
-        String::from("")
+    if kind == "function" {
+        if (parameters).partial_cmp(&(arguments_count)) == Some(std::cmp::Ordering::Equal) {
+            String::new()
+        } else {
+            String::from("a linked application has the wrong number of arguments")
+        }
     } else {
-        String::from("a linked application has the wrong number of arguments")
+        String::from("a linked application does not target a function")
     }
 }
 
@@ -738,7 +767,7 @@ pub fn callable_field(
 #[must_use]
 pub fn callable_text(texts: &[String], node: f64) -> String {
     if (node < 0f64) || (node >= (texts.len() as f64)) {
-        String::from("")
+        String::new()
     } else {
         self::read_required_text_fact(texts, node)
     }
@@ -761,7 +790,7 @@ pub fn callable_truthy(forms: &[String], texts: &[String], node: f64) -> bool {
             && ((self::read_required_text_fact(texts, node)) != "NaN")
     } else {
         ((self::read_required_text_fact(forms, node)) == "string")
-            && ((self::read_required_text_fact(texts, node)) != "")
+            && (!(self::read_required_text_fact(texts, node)).is_empty())
     }
 }
 

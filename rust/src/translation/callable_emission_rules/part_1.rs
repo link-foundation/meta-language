@@ -1,6 +1,14 @@
 // Generated from the complete checked JavaScript source and recorded dependencies.
 // Do not edit by hand.
-use super::*;
+use super::MlCallableEmissionFieldLoop1Result;
+use super::MlCallableEmissionHasNameLoop6Result;
+use super::MlReadCallableEagerEffectsJoin7;
+use super::MlReadCallableEagerEffectsLoop8Result;
+use super::ml_callable_emission_field_loop1;
+use super::ml_callable_emission_has_name_loop6;
+use super::ml_plan_callable_capture_bindings_loop3;
+use super::ml_read_callable_eager_effects_loop8;
+use super::ml_read_callable_effectful_declarations_loop9;
 
 /// Unbounded integers for the portable core's naturals and integers.
 pub mod ml {
@@ -96,7 +104,7 @@ pub mod ml {
         let mut remainder: Vec<u32> = Vec::new();
         for bit in (0..a.len() * 32).rev() {
             let mut carry = (a[bit / 32] >> (bit % 32)) & 1;
-            for limb in remainder.iter_mut() {
+            for limb in &mut remainder {
                 let next = *limb >> 31;
                 *limb = (*limb << 1) | carry;
                 carry = next;
@@ -146,10 +154,9 @@ pub mod ml {
         /// A decimal literal with an optional leading minus sign.
         #[must_use]
         pub fn parse(text: &str) -> Self {
-            let (negative, digits) = match text.strip_prefix('-') {
-                Some(rest) => (true, rest),
-                None => (false, text),
-            };
+            let (negative, digits) = text
+                .strip_prefix('-')
+                .map_or((false, text), |rest| (true, rest));
             let ten = Self::from_i128(10);
             let mut value = Self::zero();
             for digit in digits.chars() {
@@ -160,12 +167,12 @@ pub mod ml {
         }
 
         #[must_use]
-        pub fn is_zero(&self) -> bool {
+        pub const fn is_zero(&self) -> bool {
             self.magnitude.is_empty()
         }
 
         #[must_use]
-        pub fn is_negative(&self) -> bool {
+        pub const fn is_negative(&self) -> bool {
             self.negative
         }
 
@@ -268,7 +275,8 @@ pub mod ml {
             }
             text.push_str(&chunks.pop().unwrap_or(0).to_string());
             for chunk in chunks.iter().rev() {
-                text.push_str(&format!("{chunk:09}"));
+                std::fmt::Write::write_fmt(&mut text, format_args!("{chunk:09}"))
+                    .expect("writing to a String cannot fail");
             }
             formatter.write_str(&text)
         }
@@ -319,9 +327,7 @@ pub mod ml {
 
     #[must_use]
     pub fn to_nat_checked(value: Big, message: &str) -> Big {
-        if value.is_negative() {
-            panic!("{message}");
-        }
+        assert!(!value.is_negative(), "{message}");
         value
     }
 
@@ -351,10 +357,9 @@ pub mod ml_array {
     /// JavaScript, aborts.
     #[must_use]
     pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {
-        match index.and_then(|index| values.get(index)) {
-            Some(value) => value.clone(),
-            None => panic!("array index out of range"),
-        }
+        index
+            .and_then(|index| values.get(index))
+            .map_or_else(|| panic!("array index out of range"), Clone::clone)
     }
 
     /// The index a Number names: a non-negative integer, -0 included.
@@ -372,7 +377,7 @@ pub mod ml_array {
         left.extend(right);
         left
     }
-    fn integer(value: f64) -> f64 {
+    const fn integer(value: f64) -> f64 {
         if value.is_nan() { 0.0 } else { value.trunc() }
     }
     fn relative(value: f64, length: usize) -> usize {
@@ -480,33 +485,45 @@ pub fn refuse_required_boolean_fact() -> bool {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required Number fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required Number fact column position"
+        );
+
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_number_fact())
+            .unwrap_or_else(self::refuse_required_number_fact)
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_text_fact(values: &[String], index: f64) -> String {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required text fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required text fact column position"
+        );
+
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_text_fact())
+            .unwrap_or_else(self::refuse_required_text_fact)
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required Boolean fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required Boolean fact column position"
+        );
+
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_boolean_fact())
+            .unwrap_or_else(self::refuse_required_boolean_fact)
     }
 }
 
@@ -558,7 +575,7 @@ pub fn callable_emission_text(
     {
         let child = self::callable_emission_field(starts, counts, labels, targets, node, field);
         if child < 0f64 {
-            String::from("")
+            String::new()
         } else {
             self::read_required_text_fact(texts, child)
         }

@@ -1,6 +1,12 @@
 // Generated from the complete shared grammar-lexer-rules.js and recorded source closure.
 // Do not edit by hand.
-use super::*;
+use super::contains_grammar_lexer_text;
+use super::ml_array;
+use super::ml_string;
+use super::read_grammar_lexer_entry_form;
+use super::read_grammar_lexer_text_position;
+use super::read_required_number_fact;
+use super::read_required_text_fact;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -50,7 +56,7 @@ pub fn ml_read_grammar_lexer_literal_extension_loop13(
         if index < insertion {
             {
                 let preceding_3 = if ((self::read_grammar_lexer_entry_form(
-                    self::read_required_text_fact(kinds, index),
+                    &(self::read_required_text_fact(kinds, index)),
                 )) == 3f64)
                     && (self::read_required_text_fact(names, index)).starts_with(
                         &self::ml_string::Text::from_units(vec![
@@ -111,7 +117,7 @@ pub fn ml_read_grammar_lexer_literal_extension_loop16(
     mut count: f64,
     mut identity: f64,
     mut renames: Vec<f64>,
-    mut name: self::ml_string::Text,
+    name: &self::ml_string::Text,
     mut target: f64,
     mut found: bool,
 ) -> self::MlReadGrammarLexerLiteralExtensionLoop16Result {
@@ -119,9 +125,9 @@ pub fn ml_read_grammar_lexer_literal_extension_loop16(
         return if target < count {
             {
                 let ml_s20 = if ((self::read_grammar_lexer_entry_form(
-                    self::read_required_text_fact(kinds, target),
+                    &(self::read_required_text_fact(kinds, target)),
                 )) == 7f64)
-                    && ((self::read_required_text_fact(names, target)) == name)
+                    && ((self::read_required_text_fact(names, target)) == (*name))
                 {
                     {
                         let renames_2 = {
@@ -172,7 +178,7 @@ pub fn ml_read_grammar_lexer_literal_extension_loop12(
                 let name = self::read_required_text_fact(names, index);
                 {
                     let ml_s22 = if ((self::read_grammar_lexer_entry_form(
-                        self::read_required_text_fact(kinds, index),
+                        &(self::read_required_text_fact(kinds, index)),
                     )) == 3f64)
                         && name.starts_with(&self::ml_string::Text::from_units(vec![
                             64, 108, 105, 116, 101, 114, 97, 108, 58,
@@ -194,7 +200,7 @@ pub fn ml_read_grammar_lexer_literal_extension_loop12(
                                     {
                                         let found = false;
                                         {
-                                            let ml_s23 = self::ml_read_grammar_lexer_literal_extension_loop16(kinds, names, count, identity, renames_2, name.clone(), target, found);
+                                            let ml_s23 = self::ml_read_grammar_lexer_literal_extension_loop16(kinds, names, count, identity, renames_2, &(name), target, found);
                                             match ml_s23 {
                                                 self::MlReadGrammarLexerLiteralExtensionLoop16Result::MlReadGrammarLexerLiteralExtensionLoop16Done(renames_3, found_2) => {
                                                     if found_2 {
@@ -269,15 +275,15 @@ pub fn ml_read_grammar_lexer_literal_extension_loop11(
     loop {
         return if index < count {
             {
-                let form = self::read_grammar_lexer_entry_form(self::read_required_text_fact(
-                    kinds, index,
-                ));
+                let form = self::read_grammar_lexer_entry_form(
+                    &(self::read_required_text_fact(kinds, index)),
+                );
                 {
                     let ml_s24 = if form == 3f64 {
                         {
                             let position = self::read_grammar_lexer_text_position(
                                 parser_literals,
-                                self::read_required_text_fact(values, index),
+                                &(self::read_required_text_fact(values, index)),
                             );
                             if position < 0f64 {
                                 self::MlReadGrammarLexerLiteralExtensionJoin18::MlReadGrammarLexerLiteralExtensionJoin18Return(vec![-1f64])
@@ -341,8 +347,8 @@ pub enum MlReadGrammarLexerLiteralExtensionLoop10Result {
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
 pub fn ml_read_grammar_lexer_literal_extension_loop10(
-    mut owner: self::ml_string::Text,
-    mut value: self::ml_string::Text,
+    owner: &self::ml_string::Text,
+    value: &self::ml_string::Text,
     kinds: &[self::ml_string::Text],
     names: &[self::ml_string::Text],
     values: &[self::ml_string::Text],
@@ -357,21 +363,21 @@ pub fn ml_read_grammar_lexer_literal_extension_loop10(
     loop {
         return if index < count {
             {
-                let form = self::read_grammar_lexer_entry_form(self::read_required_text_fact(
-                    kinds, index,
-                ));
+                let form = self::read_grammar_lexer_entry_form(
+                    &(self::read_required_text_fact(kinds, index)),
+                );
                 {
                     let name = self::read_required_text_fact(names, index);
                     {
                         let matching_owner_present_3 = if (form == 1f64)
-                            && ((self::read_required_text_fact(targets, index)) == owner)
+                            && ((self::read_required_text_fact(targets, index)) == (*owner))
                         {
                             { true }
                         } else {
                             matching_owner_present
                         };
                         if (form == 3f64)
-                            && ((self::read_required_text_fact(values, index)) == value)
+                            && ((self::read_required_text_fact(values, index)) == (*value))
                         {
                             self::MlReadGrammarLexerLiteralExtensionLoop10Result::MlReadGrammarLexerLiteralExtensionLoop10Return(vec![0f64, -1f64, -1f64])
                         } else {
@@ -453,13 +459,13 @@ pub fn ml_read_grammar_lexer_owner_comparison_loop20(
     loop {
         return if index < (kinds.len() as f64) {
             {
-                let form = self::read_grammar_lexer_entry_form(self::read_required_text_fact(
-                    kinds, index,
-                ));
+                let form = self::read_grammar_lexer_entry_form(
+                    &(self::read_required_text_fact(kinds, index)),
+                );
                 {
                     let name = self::read_required_text_fact(names, index);
                     if ((form == 7f64) || (form == 8f64))
-                        && self::contains_grammar_lexer_text(originals, name.clone())
+                        && self::contains_grammar_lexer_text(originals, &(name))
                     {
                         self::MlReadGrammarLexerOwnerComparisonLoop20Result::MlReadGrammarLexerOwnerComparisonLoop20Return(vec![-1f64])
                     } else {
@@ -468,10 +474,8 @@ pub fn ml_read_grammar_lexer_owner_comparison_loop20(
                                 && (name != (self::ml_string::Text::from_units(vec![])))
                             {
                                 {
-                                    let owner = self::read_grammar_lexer_text_position(
-                                        originals,
-                                        name.clone(),
-                                    );
+                                    let owner =
+                                        self::read_grammar_lexer_text_position(originals, &(name));
                                     if owner >= 0f64 {
                                         {
                                             {
@@ -557,7 +561,7 @@ pub fn ml_read_grammar_lexer_owner_comparison_loop19(
         return if index < (kinds.len() as f64) {
             {
                 let ml_s25 = if (self::read_grammar_lexer_entry_form(
-                    self::read_required_text_fact(kinds, index),
+                    &(self::read_required_text_fact(kinds, index)),
                 )) == 1f64
                 {
                     {
@@ -566,11 +570,8 @@ pub fn ml_read_grammar_lexer_owner_comparison_loop19(
                             let target = self::read_required_text_fact(targets, index);
                             if (((original == (self::ml_string::Text::from_units(vec![])))
                                 || (target == (self::ml_string::Text::from_units(vec![]))))
-                                || self::contains_grammar_lexer_text(
-                                    &(originals),
-                                    original.clone(),
-                                ))
-                                || self::contains_grammar_lexer_text(&(publics), target.clone())
+                                || self::contains_grammar_lexer_text(&(originals), &(original)))
+                                || self::contains_grammar_lexer_text(&(publics), &(target))
                             {
                                 self::MlReadGrammarLexerOwnerComparisonJoin21::MlReadGrammarLexerOwnerComparisonJoin21Return(vec![-1f64])
                             } else {
@@ -656,7 +657,7 @@ pub fn ml_read_grammar_lexer_binding_names_loop23(
                         let emitted = self::read_required_text_fact(emitted_types, index);
                         {
                             let bindings_3 =
-                                if (self::contains_grammar_lexer_text(&(bindings), name.clone())) {
+                                if (self::contains_grammar_lexer_text(&(bindings), &(name))) {
                                     bindings
                                 } else {
                                     {
@@ -672,7 +673,7 @@ pub fn ml_read_grammar_lexer_binding_names_loop23(
                                     != (self::ml_string::Text::from_units(vec![])))
                                     && !(self::contains_grammar_lexer_text(
                                         &(bindings_3),
-                                        legacy.clone(),
+                                        &(legacy),
                                     )) {
                                     {
                                         {
@@ -692,7 +693,7 @@ pub fn ml_read_grammar_lexer_binding_names_loop23(
                                             ])))
                                             && !(self::contains_grammar_lexer_text(
                                                 &(bindings_5),
-                                                emitted.clone(),
+                                                &(emitted),
                                             ))
                                         {
                                             {
@@ -744,8 +745,8 @@ pub fn ml_read_grammar_lexer_binding_names_loop22(
             {
                 let name = self::read_required_text_fact(declared, index);
                 {
-                    let bindings_3 = if self::contains_grammar_lexer_text(references, name.clone())
-                        && !(self::contains_grammar_lexer_text(&(bindings), name.clone()))
+                    let bindings_3 = if self::contains_grammar_lexer_text(references, &(name))
+                        && !(self::contains_grammar_lexer_text(&(bindings), &(name)))
                     {
                         {
                             {
@@ -796,7 +797,7 @@ pub enum MlReadGrammarLexerCommandPlanJoin26 {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn ml_read_grammar_lexer_command_plan_loop27(
-    mut argument: self::ml_string::Text,
+    argument: &self::ml_string::Text,
     mut zero: bool,
     mut offset: f64,
 ) -> bool {
@@ -804,11 +805,11 @@ pub fn ml_read_grammar_lexer_command_plan_loop27(
         if offset < (argument.length()) {
             {
                 let zero_3 = if (argument.slice(offset, (offset + 1f64)))
-                    != (self::ml_string::Text::from_units(vec![48]))
+                    == (self::ml_string::Text::from_units(vec![48]))
                 {
-                    { false }
-                } else {
                     zero
+                } else {
+                    { false }
                 };
                 {
                     let offset_2 = offset + 1f64;

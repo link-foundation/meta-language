@@ -1,7 +1,5 @@
 // Generated from the complete checked JavaScript source and recorded dependencies.
 // Do not edit by hand.
-use super::*;
-
 /// Reads of JavaScript arrays, which the portable core never mutates.
 pub mod ml_array {
     #[must_use]
@@ -12,10 +10,9 @@ pub mod ml_array {
     /// JavaScript, aborts.
     #[must_use]
     pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {
-        match index.and_then(|index| values.get(index)) {
-            Some(value) => value.clone(),
-            None => panic!("array index out of range"),
-        }
+        index
+            .and_then(|index| values.get(index))
+            .map_or_else(|| panic!("array index out of range"), Clone::clone)
     }
 
     /// The index a Number names: a non-negative integer, -0 included.
@@ -33,7 +30,7 @@ pub mod ml_array {
         left.extend(right);
         left
     }
-    fn integer(value: f64) -> f64 {
+    const fn integer(value: f64) -> f64 {
         if value.is_nan() { 0.0 } else { value.trunc() }
     }
     fn relative(value: f64, length: usize) -> usize {
@@ -141,33 +138,45 @@ pub fn refuse_required_boolean_fact() -> bool {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required Number fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required Number fact column position"
+        );
+
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_number_fact())
+            .unwrap_or_else(self::refuse_required_number_fact)
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_text_fact(values: &[String], index: f64) -> String {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required text fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required text fact column position"
+        );
+
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_text_fact())
+            .unwrap_or_else(self::refuse_required_text_fact)
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required Boolean fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required Boolean fact column position"
+        );
+
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_boolean_fact())
+            .unwrap_or_else(self::refuse_required_boolean_fact)
     }
 }
 
@@ -175,13 +184,10 @@ pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
 #[must_use]
 pub fn join_record_items(items: &[String], separator: &str) -> String {
     {
-        let text = String::from("");
+        let text = String::new();
         {
             let index = 0f64;
-            {
-                let text_2 = self::ml_join_record_items_loop1(items, separator, text, index);
-                text_2
-            }
+            { self::ml_join_record_items_loop1(items, separator, text, index) }
         }
     }
 }
@@ -197,66 +203,34 @@ pub fn render_record_value(target: &str, labels: &[String], items: &[String]) ->
                 {
                     let entries_2 =
                         self::ml_render_record_value_loop2(labels, items, entries, index);
-                    format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (String::from("({")),
-                            (self::join_record_items(&(entries_2), ", "))
-                        )),
-                        (String::from("})"))
-                    )
+                    format!("({{{}}})", self::join_record_items(&(entries_2), ", "))
                 }
             }
         }
     } else if target == "Rust" {
         format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (String::from("(")),
-                    (self::join_record_items(items, ", "))
-                )),
-                (if (items.len() as f64) == 1f64 {
-                    String::from(",")
-                } else {
-                    String::from("")
-                })
-            )),
-            (String::from(")"))
+            "({}{})",
+            self::join_record_items(items, ", "),
+            if (items.len() as f64) == 1f64 {
+                String::from(",")
+            } else {
+                String::new()
+            }
         )
     } else if target == "Lean" {
         if (items.len() as f64) > 0f64 {
-            format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (String::from("(")),
-                    (self::join_record_items(items, ", "))
-                )),
-                (String::from(")"))
-            )
+            format!("({})", self::join_record_items(items, ", "))
         } else {
             String::from("()")
         }
     } else if target == "Rocq" {
         if (items.len() as f64) > 0f64 {
-            format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (String::from("(")),
-                    (self::join_record_items(items, ", "))
-                )),
-                (String::from(")"))
-            )
+            format!("({})", self::join_record_items(items, ", "))
         } else {
             String::from("tt")
         }
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -264,31 +238,11 @@ pub fn render_record_value(target: &str, labels: &[String], items: &[String]) ->
 #[must_use]
 pub fn render_record_field(target: &str, object: &str, field: &str, index: &str) -> String {
     if target == "JavaScript" {
-        format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!("{}{}", (String::from("(")), object.to_owned())),
-                    (String::from(")["))
-                )),
-                field.to_owned()
-            )),
-            (String::from("]"))
-        )
+        format!("({})[{}]", object.to_owned(), field.to_owned())
     } else if target == "Rust" {
-        format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!("{}{}", (String::from("(")), object.to_owned())),
-                (String::from(")."))
-            )),
-            index.to_owned()
-        )
+        format!("({}).{}", object.to_owned(), index.to_owned())
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -300,28 +254,20 @@ pub fn render_record_product_field(target: &str, object: &str, index: f64, count
             object.to_owned()
         } else {
             {
-                let suffix = String::from("");
+                let suffix = String::new();
                 {
                     let position = 0f64;
                     {
                         let suffix_2 =
                             self::ml_render_record_product_field_loop3(index, suffix, position);
                         format!(
-                            "{}{}",
-                            (format!(
-                                "{}{}",
-                                (format!(
-                                    "{}{}",
-                                    (format!("{}{}", (String::from("(")), object.to_owned())),
-                                    (String::from(")"))
-                                )),
-                                suffix_2
-                            )),
-                            (if index < (count - 1f64) {
+                            "({}){suffix_2}{}",
+                            object.to_owned(),
+                            if index < (count - 1f64) {
                                 String::from(".1")
                             } else {
-                                String::from("")
-                            })
+                                String::new()
+                            }
                         )
                     }
                 }
@@ -336,19 +282,15 @@ pub fn render_record_product_field(target: &str, object: &str, index: f64, count
                     let value_2 =
                         self::ml_render_record_product_field_loop4(index, value, position_2);
                     if index == 0f64 {
-                        value_2.clone()
+                        value_2
                     } else {
-                        format!(
-                            "{}{}",
-                            (format!("{}{}", (String::from("(snd ")), value_2)),
-                            (String::from(")"))
-                        )
+                        format!("(snd {value_2})")
                     }
                 }
             }
         }
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -357,34 +299,18 @@ pub fn render_record_product_field(target: &str, object: &str, index: f64, count
 pub fn render_record_type(target: &str, fields: &[String]) -> String {
     if target == "Lean" {
         if (fields.len() as f64) > 0f64 {
-            format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (String::from("(")),
-                    (self::join_record_items(fields, " × "))
-                )),
-                (String::from(")"))
-            )
+            format!("({})", self::join_record_items(fields, " × "))
         } else {
             String::from("Unit")
         }
     } else if target == "Rocq" {
         if (fields.len() as f64) > 0f64 {
-            format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (String::from("(")),
-                    (self::join_record_items(fields, " * "))
-                )),
-                (String::from(")%type"))
-            )
+            format!("({})%type", self::join_record_items(fields, " * "))
         } else {
             String::from("unit")
         }
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -400,19 +326,12 @@ pub fn ml_join_record_items_loop1(
         if index < (items.len() as f64) {
             {
                 let text_3 = if index > 0f64 {
-                    {
-                        let text_2 = format!("{}{}", text, separator.to_owned());
-                        text_2
-                    }
+                    { format!("{text}{}", separator.to_owned()) }
                 } else {
-                    text.clone()
+                    text
                 };
                 {
-                    let text_4 = format!(
-                        "{}{}",
-                        text_3,
-                        (self::read_required_text_fact(items, index))
-                    );
+                    let text_4 = format!("{text_3}{}", self::read_required_text_fact(items, index));
                     {
                         let index_2 = index + 1f64;
                         {
@@ -423,7 +342,7 @@ pub fn ml_join_record_items_loop1(
                 }
             }
         }
-        return { text.clone() };
+        return { text };
     }
 }
 
@@ -441,17 +360,9 @@ pub fn ml_render_record_value_loop2(
                 let entries_2 = {
                     let (ml_append_right, ml_append_left) = (
                         vec![format!(
-                            "{}{}",
-                            (format!(
-                                "{}{}",
-                                (format!(
-                                    "{}{}",
-                                    (String::from("[")),
-                                    (self::read_required_text_fact(labels, index))
-                                )),
-                                (String::from("]: "))
-                            )),
-                            (self::read_required_text_fact(items, index))
+                            "[{}]: {}",
+                            self::read_required_text_fact(labels, index),
+                            self::read_required_text_fact(items, index)
                         )],
                         entries,
                     );
@@ -480,7 +391,7 @@ pub fn ml_render_record_product_field_loop3(
     loop {
         if position < index {
             {
-                let suffix_2 = format!("{}{}", suffix, (String::from(".2")));
+                let suffix_2 = format!("{suffix}.2");
                 {
                     let position_2 = position + 1f64;
                     {
@@ -490,7 +401,7 @@ pub fn ml_render_record_product_field_loop3(
                 }
             }
         }
-        return { suffix.clone() };
+        return { suffix };
     }
 }
 
@@ -504,11 +415,7 @@ pub fn ml_render_record_product_field_loop4(
     loop {
         if position > index {
             {
-                let value_2 = format!(
-                    "{}{}",
-                    (format!("{}{}", (String::from("(fst ")), value)),
-                    (String::from(")"))
-                );
+                let value_2 = format!("(fst {value})");
                 {
                     let position_2 = position - 1f64;
                     {
@@ -518,6 +425,6 @@ pub fn ml_render_record_product_field_loop4(
                 }
             }
         }
-        return { value.clone() };
+        return { value };
     }
 }

@@ -1,6 +1,10 @@
 // Generated from the complete checked JavaScript source and recorded dependencies.
 // Do not edit by hand.
-use super::*;
+use super::ml_array;
+use super::ml_string;
+use super::read_array_binding_initializer_end;
+use super::read_required_number_fact;
+use super::read_required_text_fact;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -51,13 +55,13 @@ pub enum MlAcceptJavaScriptArrayBindingNameLoop1Result {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn ml_accept_java_script_array_binding_name_loop1(
-    mut name: self::ml_string::Text,
+    name: &self::ml_string::Text,
     reserved: &[self::ml_string::Text],
     mut index: f64,
 ) -> self::MlAcceptJavaScriptArrayBindingNameLoop1Result {
     loop {
         return if index < (reserved.len() as f64) {
-            if (self::read_required_text_fact(reserved, index)) == name {
+            if (self::read_required_text_fact(reserved, index)) == (*name) {
                 self::MlAcceptJavaScriptArrayBindingNameLoop1Result::MlAcceptJavaScriptArrayBindingNameLoop1Return(false)
             } else {
                 {
@@ -85,13 +89,13 @@ pub enum MlReadArrayBindingFactFieldLoop2Result {
 pub fn ml_read_array_binding_fact_field_loop2(
     labels: &[self::ml_string::Text],
     targets: &[f64],
-    mut field: self::ml_string::Text,
+    field: &self::ml_string::Text,
     mut at: f64,
     mut end: f64,
 ) -> self::MlReadArrayBindingFactFieldLoop2Result {
     loop {
         return if at < end {
-            if (self::read_required_text_fact(labels, at)) == field {
+            if (self::read_required_text_fact(labels, at)) == (*field) {
                 self::MlReadArrayBindingFactFieldLoop2Result::MlReadArrayBindingFactFieldLoop2Return(
                     self::read_required_number_fact(targets, at),
                 )
@@ -329,7 +333,9 @@ pub fn ml_plan_java_script_array_binding_names_loop5(
                                                                 }
                                                             }
                                                         }
-                                                    } else if (self::read_required_text_fact(kinds, index_4)) != (self::ml_string::Text::from_units(vec![105, 100, 101, 110, 116, 105, 102, 105, 101, 114])) {
+                                                    } else {
+let ml_library_inequality_3 = (self::read_required_text_fact(kinds, index_4)) != (self::ml_string::Text::from_units(vec![105, 100, 101, 110, 116, 105, 102, 105, 101, 114])) ;
+if ml_library_inequality_3 {
                                                             self::MlPlanJavaScriptArrayBindingNamesJoin7::MlPlanJavaScriptArrayBindingNamesJoin7Return(vec![-1f64])
                                                         } else {
                                                             {
@@ -339,7 +345,8 @@ pub fn ml_plan_java_script_array_binding_names_loop5(
                                                                     self::MlPlanJavaScriptArrayBindingNamesJoin7::MlPlanJavaScriptArrayBindingNamesJoin7Next(index_6, positions_3)
                                                                 }
                                                             }
-                                                        };
+                                                        }
+};
                                                     match ml_s7 {
                                                         self::MlPlanJavaScriptArrayBindingNamesJoin7::MlPlanJavaScriptArrayBindingNamesJoin7Next(index_7, positions_4) => {
                                                             if (index_7 >= (values.len() as f64)) || (index_7 >= (kinds.len() as f64)) {
@@ -366,14 +373,18 @@ pub fn ml_plan_java_script_array_binding_names_loop5(
                                                                         };
                                                                         match ml_s8 {
                                                                             self::MlPlanJavaScriptArrayBindingNamesJoin8::MlPlanJavaScriptArrayBindingNamesJoin8Next(index_9) => {
-                                                                                if (self::read_required_text_fact(kinds, index_9)) != (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116])) {
+                                                                                {
+let ml_library_inequality_2 = (self::read_required_text_fact(kinds, index_9)) != (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116])) ;
+if ml_library_inequality_2 {
                                                                                     self::MlPlanJavaScriptArrayBindingNamesLoop5Result::MlPlanJavaScriptArrayBindingNamesLoop5Return(vec![-1f64])
                                                                                 } else {
                                                                                     {
                                                                                         let next = self::read_required_text_fact(values, index_9);
                                                                                         if next == (self::ml_string::Text::from_units(vec![93])) {
                                                                                             self::MlPlanJavaScriptArrayBindingNamesLoop5Result::MlPlanJavaScriptArrayBindingNamesLoop5Return(self::ml_array::append(vec![index_9], positions_4))
-                                                                                        } else if next != (self::ml_string::Text::from_units(vec![44])) {
+                                                                                        } else {
+let ml_library_inequality_1 = next != (self::ml_string::Text::from_units(vec![44])) ;
+if ml_library_inequality_1 {
                                                                                                 self::MlPlanJavaScriptArrayBindingNamesLoop5Result::MlPlanJavaScriptArrayBindingNamesLoop5Return(vec![-1f64])
                                                                                             } else {
                                                                                                 {
@@ -384,8 +395,10 @@ pub fn ml_plan_java_script_array_binding_names_loop5(
                                                                                                     }
                                                                                                 }
                                                                                             }
+}
                                                                                     }
                                                                                 }
+}
                                                                             }
                                                                             self::MlPlanJavaScriptArrayBindingNamesJoin8::MlPlanJavaScriptArrayBindingNamesJoin8Return(ml_result8) => {
                                                                                 self::MlPlanJavaScriptArrayBindingNamesLoop5Result::MlPlanJavaScriptArrayBindingNamesLoop5Return(ml_result8)

@@ -1,6 +1,10 @@
 // Generated from the complete shared grammar-lexer-rules.js and recorded source closure.
 // Do not edit by hand.
-use super::*;
+use super::ml_array;
+use super::ml_read_grammar_lexer_lazy_normalization_loop42;
+use super::ml_string;
+use super::read_required_number_fact;
+use super::read_required_text_fact;
 
 /// Execute the checked shared source algorithm.
 #[must_use]

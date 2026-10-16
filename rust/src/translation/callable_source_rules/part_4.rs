@@ -1,226 +1,26 @@
 // Generated from complete callable-source-rules.js through the checked translator.
 // Do not edit by hand.
-use super::*;
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn plan_callable_cell_option_binding(
-    texts: &[String],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    resolved: f64,
-    value: f64,
-) -> Vec<f64> {
-    {
-        let element = self::callable_field(starts, counts, labels, targets, resolved, "element");
-        if (((self::callable_tag(texts, starts, counts, labels, targets, resolved, "kind"))
-            != "cell")
-            || ((self::callable_tag(texts, starts, counts, labels, targets, element, "kind"))
-                != "var"))
-            || ((self::callable_tag(texts, starts, counts, labels, targets, value, "kind"))
-                != "option")
-        {
-            Vec::<f64>::new()
-        } else {
-            vec![
-                self::callable_field(starts, counts, labels, targets, element, "id"),
-                value,
-            ]
-        }
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn render_callable_cell_operation(
-    format: &str,
-    operation: &str,
-    cell: &str,
-    value: &str,
-    body: &str,
-    cell_name: &str,
-    value_name: &str,
-) -> String {
-    if format == "JavaScript" {
-        if operation == "cellAllocate" {
-            format!(
-                "{}{}",
-                (format!("{}{}", (String::from("({ value: ")), value.to_owned())),
-                (String::from(" })"))
-            )
-        } else if operation == "cellRead" {
-            format!(
-                "{}{}",
-                (format!("{}{}", (String::from("(")), cell.to_owned())),
-                (String::from(").value"))
-            )
-        } else {
-            format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (format!(
-                                "{}{}",
-                                (format!("{}{}", (String::from("((")), cell.to_owned())),
-                                (String::from(").value = "))
-                            )),
-                            value.to_owned()
-                        )),
-                        (String::from(", "))
-                    )),
-                    body.to_owned()
-                )),
-                (String::from(")"))
-            )
-        }
-    } else if operation == "cellAllocate" {
-        format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (String::from("std::rc::Rc::new(std::cell::RefCell::new(")),
-                value.to_owned()
-            )),
-            (String::from("))"))
-        )
-    } else if operation == "cellRead" {
-        format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (String::from("{ let ml_cell_value = ")),
-                cell.to_owned()
-            )),
-            (String::from(".borrow().clone(); ml_cell_value }"))
-        )
-    } else {
-        format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (format!(
-                                "{}{}",
-                                (format!(
-                                    "{}{}",
-                                    (format!(
-                                        "{}{}",
-                                        (format!(
-                                            "{}{}",
-                                            (format!(
-                                                "{}{}",
-                                                (format!(
-                                                    "{}{}",
-                                                    (format!(
-                                                        "{}{}",
-                                                        (format!(
-                                                            "{}{}",
-                                                            (format!(
-                                                                "{}{}",
-                                                                (String::from("{ let ")),
-                                                                cell_name.to_owned()
-                                                            )),
-                                                            (String::from(" = "))
-                                                        )),
-                                                        cell.to_owned()
-                                                    )),
-                                                    (String::from("; let "))
-                                                )),
-                                                value_name.to_owned()
-                                            )),
-                                            (String::from(" = "))
-                                        )),
-                                        value.to_owned()
-                                    )),
-                                    (String::from("; *"))
-                                )),
-                                cell_name.to_owned()
-                            )),
-                            (String::from(".borrow_mut() = "))
-                        )),
-                        value_name.to_owned()
-                    )),
-                    (String::from("; "))
-                )),
-                body.to_owned()
-            )),
-            (String::from(" }"))
-        )
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn read_callable_reference_obligation(temporal: bool, local: bool) -> String {
-    if temporal {
-        String::from(
-            "the binding is in its temporal dead zone, where reading it throws a ReferenceError",
-        )
-    } else if local {
-        String::from("")
-    } else {
-        String::from("functions are only portable when called")
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn read_callable_reference_construct(name: &str, temporal: bool) -> String {
-    if temporal {
-        format!(
-            "{}{}",
-            (format!("{}{}", (String::from("use of ")), name.to_owned())),
-            (String::from(" before its declaration"))
-        )
-    } else {
-        format!("{}{}", (String::from("function value ")), name.to_owned())
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn read_callable_renaming_field(field: f64) -> String {
-    if field == 0f64 {
-        String::from("path")
-    } else if field == 1f64 {
-        String::from("params")
-    } else if field == 2f64 {
-        String::from("body")
-    } else if field == 3f64 {
-        String::from("cell")
-    } else if field == 4f64 {
-        String::from("value")
-    } else if field == 5f64 {
-        String::from("default")
-    } else if field == 6f64 {
-        String::from("k")
-    } else if field == 7f64 {
-        String::from("span")
-    } else {
-        String::from("")
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn read_callable_renaming_constant(constant: f64) -> String {
-    if constant == 0f64 {
-        String::from("cellRead")
-    } else {
-        String::from("")
-    }
-}
+use super::MlCallableRenamedNodeLoop61Result;
+use super::MlCallableRenamingBindingLoop59Result;
+use super::accept_callable_type_whitespace;
+use super::callable_element;
+use super::callable_field;
+use super::callable_tag;
+use super::callable_text;
+use super::callable_truthy;
+use super::callable_type_parameter_segments;
+use super::callable_type_parameters;
+use super::callable_type_trim_end;
+use super::callable_type_trim_start;
+use super::ml_array;
+use super::ml_callable_renamed_node_loop60;
+use super::ml_callable_renamed_node_loop61;
+use super::ml_callable_renamed_node_loop62;
+use super::ml_callable_renaming_binding_loop59;
+use super::ml_plan_callable_source_renaming_loop58;
+use super::read_callable_free_references;
+use super::read_required_number_fact;
+use super::read_required_text_fact;
 
 /// Execute the complete checked source algorithm.
 #[must_use]
@@ -532,7 +332,10 @@ pub fn ml_read_type_separator_positions_loop1(
                                 depth_3
                             };
                             {
-                                let positions_3 = if (depth_5 == 0f64) && (unit == separator) {
+                                let positions_3 = if (depth_5 == 0f64)
+                                    && ((unit).partial_cmp(&(separator))
+                                        == Some(std::cmp::Ordering::Equal))
+                                {
                                     {
                                         {
                                             let (ml_append_right, ml_append_left) =
@@ -890,4 +693,226 @@ pub fn ml_plan_callable_type_syntax_loop11(
 pub enum MlCallableFieldLoop13Result {
     MlCallableFieldLoop13Done,
     MlCallableFieldLoop13Return(f64),
+}
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+pub fn ml_callable_field_loop13(
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[String],
+    targets: &[f64],
+    mut node: f64,
+    field: &str,
+    mut at: f64,
+) -> self::MlCallableFieldLoop13Result {
+    loop {
+        return if at
+            < (self::read_required_number_fact(starts, node)
+                + self::read_required_number_fact(counts, node))
+        {
+            if (self::read_required_text_fact(labels, at)) == field {
+                self::MlCallableFieldLoop13Result::MlCallableFieldLoop13Return(
+                    self::read_required_number_fact(targets, at),
+                )
+            } else {
+                {
+                    let at_2 = at + 1f64;
+                    {
+                        at = at_2;
+                        continue;
+                    }
+                }
+            }
+        } else {
+            self::MlCallableFieldLoop13Result::MlCallableFieldLoop13Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlCallableBoundLoop14Result {
+    MlCallableBoundLoop14Done,
+    MlCallableBoundLoop14Return(bool),
+}
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+pub fn ml_callable_bound_loop14(
+    names: &[String],
+    name: &str,
+    mut at: f64,
+) -> self::MlCallableBoundLoop14Result {
+    loop {
+        return if at > 0f64 {
+            {
+                let at_2 = at - 1f64;
+                if (self::read_required_text_fact(names, at_2)) == name {
+                    self::MlCallableBoundLoop14Result::MlCallableBoundLoop14Return(true)
+                } else {
+                    {
+                        at = at_2;
+                        continue;
+                    }
+                }
+            }
+        } else {
+            self::MlCallableBoundLoop14Result::MlCallableBoundLoop14Done
+        };
+    }
+}
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn ml_callable_parameter_names_loop15(
+    texts: &[String],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[String],
+    targets: &[f64],
+    mut parameters: f64,
+    mut names: Vec<String>,
+    mut at: f64,
+) -> Vec<String> {
+    loop {
+        if at < (self::read_required_number_fact(counts, parameters)) {
+            {
+                let names_2 = {
+                    let (ml_append_right, ml_append_left) = (
+                        vec![self::callable_tag(
+                            texts,
+                            starts,
+                            counts,
+                            labels,
+                            targets,
+                            self::callable_element(starts, counts, targets, parameters, at),
+                            "name",
+                        )],
+                        names,
+                    );
+                    self::ml_array::append(ml_append_left, ml_append_right)
+                };
+                {
+                    let at_2 = at + 1f64;
+                    {
+                        (names, at) = (names_2, at_2);
+                        continue;
+                    }
+                }
+            }
+        }
+        return { names };
+    }
+}
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn ml_read_callable_free_references_loop16(
+    forms: &[String],
+    texts: &[String],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[String],
+    targets: &[f64],
+    bound: &[String],
+    mut checked: bool,
+    mut params: f64,
+    mut references: Vec<f64>,
+    mut at: f64,
+) -> Vec<f64> {
+    loop {
+        if (!checked && (params >= 0f64))
+            && (at < (self::read_required_number_fact(counts, params)))
+        {
+            {
+                let parameter = self::callable_element(starts, counts, targets, params, at);
+                {
+                    let references_2 = {
+                        let (ml_append_right, ml_append_left) = (
+                            self::read_callable_free_references(
+                                forms,
+                                texts,
+                                starts,
+                                counts,
+                                labels,
+                                targets,
+                                self::callable_field(
+                                    starts, counts, labels, targets, parameter, "default",
+                                ),
+                                bound,
+                                checked,
+                            ),
+                            references,
+                        );
+                        self::ml_array::append(ml_append_left, ml_append_right)
+                    };
+                    {
+                        let at_2 = at + 1f64;
+                        {
+                            (references, at) = (references_2, at_2);
+                            continue;
+                        }
+                    }
+                }
+            }
+        }
+        return { references };
+    }
+}
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn ml_read_callable_free_references_loop18(
+    forms: &[String],
+    texts: &[String],
+    starts: &[f64],
+    counts: &[f64],
+    targets: &[f64],
+    mut names: Vec<String>,
+    mut binds: f64,
+    mut index: f64,
+) -> Vec<String> {
+    loop {
+        if (binds >= 0f64) && (index < (self::read_required_number_fact(counts, binds))) {
+            {
+                let binding = self::callable_element(starts, counts, targets, binds, index);
+                {
+                    let names_3 = if self::callable_truthy(forms, texts, binding) {
+                        {
+                            {
+                                let (ml_append_right, ml_append_left) =
+                                    (vec![self::callable_text(texts, binding)], names);
+                                self::ml_array::append(ml_append_left, ml_append_right)
+                            }
+                        }
+                    } else {
+                        names
+                    };
+                    {
+                        let index_2 = index + 1f64;
+                        {
+                            (names, index) = (names_3, index_2);
+                            continue;
+                        }
+                    }
+                }
+            }
+        }
+        return { names };
+    }
 }

@@ -1,57 +1,42 @@
 // Generated from complete callable-source-rules.js through the checked translator.
 // Do not edit by hand.
-use super::*;
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn plan_callable_application_constraints(
-    texts: &[String],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    fn_: f64,
-    arguments_node: f64,
-    candidate: f64,
-) -> Vec<f64> {
-    {
-        let params = self::callable_field(starts, counts, labels, targets, fn_, "params");
-        if ((((self::callable_tag(texts, starts, counts, labels, targets, fn_, "kind"))
-            != "function")
-            || (params < 0f64))
-            || (arguments_node < 0f64))
-            || ((self::read_required_number_fact(counts, params))
-                != (self::read_required_number_fact(counts, arguments_node)))
-        {
-            vec![-1f64, fn_, candidate]
-        } else {
-            {
-                let plan = vec![self::callable_field(
-                    starts, counts, labels, targets, fn_, "ret",
-                )];
-                {
-                    let at = 0f64;
-                    {
-                        self::ml_plan_callable_application_constraints_loop36(
-                            starts,
-                            counts,
-                            targets,
-                            arguments_node,
-                            params,
-                            plan,
-                            at,
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
+use super::MlCallableAppendNameLoop42Result;
+use super::MlCallableCellObservationsLoop55Result;
+use super::MlPlanCallableClosureScopeLoop45Result;
+use super::MlPlanCallableClosureScopeLoop46Result;
+use super::MlPlanCallableClosureScopeLoop47Result;
+use super::MlPlanCallableClosureScopeLoop48Result;
+use super::MlPlanCallableClosureScopeLoop49Result;
+use super::MlPlanCallableMutableCellsLoop52Result;
+use super::MlPlanCallableStatementCapturesLoop43Result;
+use super::MlReadCallableClosureParameterErrorLoop39Result;
+use super::MlReadCallableClosureParameterErrorLoop40Result;
+use super::callable_field;
+use super::callable_tag;
+use super::callable_truthy;
+use super::ml_array;
+use super::ml_callable_append_name_loop42;
+use super::ml_callable_cell_observations_loop55;
+use super::ml_callable_cell_observations_loop56;
+use super::ml_callable_cell_observations_loop57;
+use super::ml_plan_callable_closure_scope_loop45;
+use super::ml_plan_callable_closure_scope_loop46;
+use super::ml_plan_callable_closure_scope_loop47;
+use super::ml_plan_callable_closure_scope_loop48;
+use super::ml_plan_callable_closure_scope_loop49;
+use super::ml_plan_callable_mutable_cells_loop52;
+use super::ml_plan_callable_mutable_cells_loop53;
+use super::ml_plan_callable_parameter_ownership_loop37;
+use super::ml_plan_callable_statement_captures_loop43;
+use super::ml_plan_callable_surface_parameters_loop50;
+use super::ml_read_callable_closure_parameter_error_loop39;
+use super::ml_read_callable_closure_parameter_error_loop40;
+use super::ml_read_callable_function_children_loop38;
+use super::ml_render_callable_parameters_loop51;
+use super::plan_callable_parameter_types;
+use super::read_callable_statement_uses;
+use super::read_required_number_fact;
+use super::read_required_text_fact;
 
 /// Execute the complete checked source algorithm.
 #[must_use]
@@ -104,7 +89,8 @@ pub fn accept_callable_application_inference_result(
     parameters: f64,
     arguments_count: f64,
 ) -> bool {
-    (kind == "function") && (parameters == arguments_count)
+    (kind == "function")
+        && ((parameters).partial_cmp(&(arguments_count)) == Some(std::cmp::Ordering::Equal))
 }
 
 /// Execute the complete checked source algorithm.
@@ -230,7 +216,7 @@ pub fn read_callable_closure_prefix_error(
     } else if token_value == "*" {
         String::from("generator function")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -249,7 +235,7 @@ pub fn read_callable_closure_parameter_error(names: &[String], defaults: &[bool]
                             let ml_s11 = self::ml_read_callable_closure_parameter_error_loop40(defaults, at_3);
                             match ml_s11 {
                                 self::MlReadCallableClosureParameterErrorLoop40Result::MlReadCallableClosureParameterErrorLoop40Done => {
-                                    String::from("")
+                                    String::new()
                                 }
                                 self::MlReadCallableClosureParameterErrorLoop40Result::MlReadCallableClosureParameterErrorLoop40Return(ml_result40) => {
                                     ml_result40
@@ -462,7 +448,7 @@ pub fn read_callable_surface_constructor(form: &str, known_function: bool) -> St
     } else if (form == "name") && known_function {
         String::from("functionValue")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -470,11 +456,7 @@ pub fn read_callable_surface_constructor(form: &str, known_function: bool) -> St
 #[must_use]
 pub fn render_callable_function_reference(format: &str, fn_: &str) -> String {
     if format == "Rust" {
-        format!(
-            "{}{}",
-            (format!("{}{}", (String::from("std::rc::Rc::new(")), fn_.to_owned())),
-            (String::from(")"))
-        )
+        format!("std::rc::Rc::new({})", fn_.to_owned())
     } else {
         fn_.to_owned()
     }
@@ -485,31 +467,15 @@ pub fn render_callable_function_reference(format: &str, fn_: &str) -> String {
 pub fn render_callable_application(format: &str, fn_: &str, args: &[String]) -> String {
     if (format == "Rust") || (format == "JavaScript") {
         format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!("{}{}", (String::from("(")), fn_.to_owned())),
-                    (String::from(")("))
-                )),
-                (args.join((String::from(", ")).as_str()))
-            )),
-            (String::from(")"))
+            "({})({})",
+            fn_.to_owned(),
+            args.join((String::from(", ")).as_str())
         )
     } else {
         format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!("{}{}", (String::from("(")), fn_.to_owned())),
-                    (String::from(" "))
-                )),
-                (args.join((String::from(" ")).as_str()))
-            )),
-            (String::from(")"))
+            "({} {})",
+            fn_.to_owned(),
+            args.join((String::from(" ")).as_str())
         )
     }
 }
@@ -526,95 +492,42 @@ pub fn render_callable_lambda(
 ) -> String {
     if format == "JavaScript" {
         format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (String::from("((")),
-                        (names.join((String::from(", ")).as_str()))
-                    )),
-                    (String::from(") => "))
-                )),
-                body.to_owned()
-            )),
-            (String::from(")"))
+            "(({}) => {})",
+            names.join((String::from(", ")).as_str()),
+            body.to_owned()
         )
     } else {
         {
             let parameters = self::render_callable_parameters(format, names, types);
-            if format != "Rust" {
-                format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (format!(
-                                "{}{}",
-                                (String::from("(fun ")),
-                                (parameters.join((String::from(" ")).as_str()))
-                            )),
-                            (String::from(" => "))
-                        )),
-                        body.to_owned()
-                    )),
-                    (String::from(")"))
-                )
-            } else {
+            if format == "Rust" {
                 {
                     let closure = format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (format!(
-                                "{}{}",
-                                (format!(
-                                    "{}{}",
-                                    (format!(
-                                        "{}{}",
-                                        (format!(
-                                            "{}{}",
-                                            (String::from("std::rc::Rc::new(move |")),
-                                            (parameters.join((String::from(", ")).as_str()))
-                                        )),
-                                        (String::from("| -> "))
-                                    )),
-                                    ret.to_owned()
-                                )),
-                                (String::from(" { "))
-                            )),
-                            body.to_owned()
-                        )),
-                        (String::from(" })"))
+                        "std::rc::Rc::new(move |{}| -> {} {{ {} }})",
+                        parameters.join((String::from(", ")).as_str()),
+                        ret.to_owned(),
+                        body.to_owned()
                     );
-                    if {
-                        let ml_value = copies.len() as f64;
-                        ml_value != 0f64 && !ml_value.is_nan()
-                    } {
-                        format!(
-                            "{}{}",
-                            (format!(
-                                "{}{}",
-                                (format!(
-                                    "{}{}",
-                                    (format!(
-                                        "{}{}",
-                                        (String::from("{ ")),
-                                        (copies.join((String::from(" ")).as_str()))
-                                    )),
-                                    (String::from(" "))
-                                )),
-                                closure
-                            )),
-                            (String::from(" }"))
-                        )
-                    } else {
-                        closure.clone()
+                    {
+                        let ml_library_condition_1 = {
+                            let ml_value = copies.len() as f64;
+                            ml_value != 0f64 && !ml_value.is_nan()
+                        };
+                        if ml_library_condition_1 {
+                            format!(
+                                "{{ {} {closure} }}",
+                                copies.join((String::from(" ")).as_str())
+                            )
+                        } else {
+                            closure
+                        }
                     }
                 }
+            } else {
+                format!(
+                    "(fun {} => {})",
+                    parameters.join((String::from(" ")).as_str()),
+                    body.to_owned()
+                )
             }
         }
     }
@@ -636,24 +549,19 @@ pub fn render_callable_parameters(format: &str, names: &[String], types: &[Strin
 #[must_use]
 pub fn render_callable_function_type(format: &str, parameters: &[String], ret: &str) -> String {
     format!(
-        "{}{}",
-        (format!(
-            "{}{}",
-            (String::from("(")),
-            (({
-                let (ml_append_right, ml_append_left) = (vec![ret.to_owned()], parameters.to_vec());
-                self::ml_array::append(ml_append_left, ml_append_right)
+        "({})",
+        ({
+            let (ml_append_right, ml_append_left) = (vec![ret.to_owned()], parameters.to_vec());
+            self::ml_array::append(ml_append_left, ml_append_right)
+        })
+        .join(
+            (if format == "Lean" {
+                String::from(" → ")
+            } else {
+                String::from(" -> ")
             })
-            .join(
-                (if format == "Lean" {
-                    String::from(" → ")
-                } else {
-                    String::from(" -> ")
-                })
-                .as_str()
-            ))
-        )),
-        (String::from(")"))
+            .as_str()
+        )
     )
 }
 
@@ -804,10 +712,10 @@ pub fn read_callable_cell_lowering(operation: &str, reference: bool) -> String {
         } else if operation == "declare" {
             String::from("cellAllocate")
         } else {
-            String::from("")
+            String::new()
         }
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -815,7 +723,7 @@ pub fn read_callable_cell_lowering(operation: &str, reference: bool) -> String {
 #[must_use]
 pub fn render_callable_cell_parameter_name(source: &str, reference: bool) -> String {
     if reference {
-        format!("{}{}", (String::from("ml_cell_")), source.to_owned())
+        format!("ml_cell_{}", source.to_owned())
     } else {
         source.to_owned()
     }
@@ -825,7 +733,7 @@ pub fn render_callable_cell_parameter_name(source: &str, reference: bool) -> Str
 #[must_use]
 pub fn read_callable_cell_error(kind: &str, operation: &str) -> String {
     if kind == "cell" {
-        String::from("")
+        String::new()
     } else if operation == "cellRead" {
         String::from("reading a value requires a reference cell")
     } else {
@@ -883,5 +791,141 @@ pub fn plan_callable_cell_read_inference(
         )]
     } else {
         vec![-1f64, cell]
+    }
+}
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+pub fn plan_callable_cell_option_binding(
+    texts: &[String],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[String],
+    targets: &[f64],
+    resolved: f64,
+    value: f64,
+) -> Vec<f64> {
+    {
+        let element = self::callable_field(starts, counts, labels, targets, resolved, "element");
+        if (((self::callable_tag(texts, starts, counts, labels, targets, resolved, "kind"))
+            != "cell")
+            || ((self::callable_tag(texts, starts, counts, labels, targets, element, "kind"))
+                != "var"))
+            || ((self::callable_tag(texts, starts, counts, labels, targets, value, "kind"))
+                != "option")
+        {
+            Vec::<f64>::new()
+        } else {
+            vec![
+                self::callable_field(starts, counts, labels, targets, element, "id"),
+                value,
+            ]
+        }
+    }
+}
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+pub fn render_callable_cell_operation(
+    format: &str,
+    operation: &str,
+    cell: &str,
+    value: &str,
+    body: &str,
+    cell_name: &str,
+    value_name: &str,
+) -> String {
+    if format == "JavaScript" {
+        if operation == "cellAllocate" {
+            format!("({{ value: {} }})", value.to_owned())
+        } else if operation == "cellRead" {
+            format!("({}).value", cell.to_owned())
+        } else {
+            format!(
+                "(({}).value = {}, {})",
+                cell.to_owned(),
+                value.to_owned(),
+                body.to_owned()
+            )
+        }
+    } else if operation == "cellAllocate" {
+        format!(
+            "std::rc::Rc::new(std::cell::RefCell::new({}))",
+            value.to_owned()
+        )
+    } else if operation == "cellRead" {
+        format!(
+            "{{ let ml_cell_value = {}.borrow().clone(); ml_cell_value }}",
+            cell.to_owned()
+        )
+    } else {
+        format!(
+            "{{ let {} = {}; let {} = {}; *{}.borrow_mut() = {}; {} }}",
+            cell_name.to_owned(),
+            cell.to_owned(),
+            value_name.to_owned(),
+            value.to_owned(),
+            cell_name.to_owned(),
+            value_name.to_owned(),
+            body.to_owned()
+        )
+    }
+}
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+pub fn read_callable_reference_obligation(temporal: bool, local: bool) -> String {
+    if temporal {
+        String::from(
+            "the binding is in its temporal dead zone, where reading it throws a ReferenceError",
+        )
+    } else if local {
+        String::new()
+    } else {
+        String::from("functions are only portable when called")
+    }
+}
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+pub fn read_callable_reference_construct(name: &str, temporal: bool) -> String {
+    if temporal {
+        format!("use of {} before its declaration", name.to_owned())
+    } else {
+        format!("function value {}", name.to_owned())
+    }
+}
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+pub fn read_callable_renaming_field(field: f64) -> String {
+    if field == 0f64 {
+        String::from("path")
+    } else if field == 1f64 {
+        String::from("params")
+    } else if field == 2f64 {
+        String::from("body")
+    } else if field == 3f64 {
+        String::from("cell")
+    } else if field == 4f64 {
+        String::from("value")
+    } else if field == 5f64 {
+        String::from("default")
+    } else if field == 6f64 {
+        String::from("k")
+    } else if field == 7f64 {
+        String::from("span")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+pub fn read_callable_renaming_constant(constant: f64) -> String {
+    if constant == 0f64 {
+        String::from("cellRead")
+    } else {
+        String::new()
     }
 }

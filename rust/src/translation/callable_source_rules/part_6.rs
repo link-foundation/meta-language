@@ -1,209 +1,14 @@
 // Generated from complete callable-source-rules.js through the checked translator.
 // Do not edit by hand.
-use super::*;
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn ml_callable_outer_assignments_loop32(
-    forms: &[String],
-    texts: &[String],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    mut node: f64,
-    mut result: Vec<f64>,
-    mut at: f64,
-) -> Vec<f64> {
-    loop {
-        if at
-            < (self::read_required_number_fact(starts, node)
-                + self::read_required_number_fact(counts, node))
-        {
-            {
-                let result_3 = if ((self::read_required_text_fact(labels, at)) != "span")
-                    && ((self::read_required_text_fact(labels, at)) != "type")
-                {
-                    {
-                        {
-                            let (ml_append_right, ml_append_left) = (
-                                self::callable_outer_assignments(
-                                    forms,
-                                    texts,
-                                    starts,
-                                    counts,
-                                    labels,
-                                    targets,
-                                    self::read_required_number_fact(targets, at),
-                                ),
-                                result,
-                            );
-                            self::ml_array::append(ml_append_left, ml_append_right)
-                        }
-                    }
-                } else {
-                    result
-                };
-                {
-                    let at_2 = at + 1f64;
-                    {
-                        (result, at) = (result_3, at_2);
-                        continue;
-                    }
-                }
-            }
-        }
-        return { result };
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn ml_plan_callable_parameter_types_loop33(
-    forms: &[String],
-    texts: &[String],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    mut parameters: f64,
-    expected_kind: &str,
-    mut expected_params: f64,
-    mut result: Vec<f64>,
-    mut at: f64,
-) -> Vec<f64> {
-    loop {
-        if (parameters >= 0f64) && (at < (self::read_required_number_fact(counts, parameters))) {
-            {
-                let parameter = self::callable_element(starts, counts, targets, parameters, at);
-                {
-                    let explicit =
-                        self::callable_field(starts, counts, labels, targets, parameter, "type");
-                    {
-                        let type_ = if self::callable_truthy(forms, texts, explicit) {
-                            explicit
-                        } else if expected_kind == "function" {
-                            self::callable_element(starts, counts, targets, expected_params, at)
-                        } else {
-                            -1f64
-                        };
-                        {
-                            let result_2 = {
-                                let (ml_append_right, ml_append_left) = (
-                                    vec![
-                                        parameter,
-                                        type_,
-                                        if self::callable_truthy(forms, texts, explicit) {
-                                            1f64
-                                        } else {
-                                            0f64
-                                        },
-                                    ],
-                                    result,
-                                );
-                                self::ml_array::append(ml_append_left, ml_append_right)
-                            };
-                            {
-                                let at_2 = at + 1f64;
-                                {
-                                    (result, at) = (result_2, at_2);
-                                    continue;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return { result };
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn ml_plan_callable_function_type_loop34(
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    mut parameters: f64,
-    mut plan: Vec<f64>,
-    mut at: f64,
-) -> Vec<f64> {
-    loop {
-        if (parameters >= 0f64) && (at < (self::read_required_number_fact(counts, parameters))) {
-            {
-                let parameter = self::callable_element(starts, counts, targets, parameters, at);
-                {
-                    let plan_2 = {
-                        let (ml_append_right, ml_append_left) = (
-                            vec![self::callable_field(
-                                starts, counts, labels, targets, parameter, "type",
-                            )],
-                            plan,
-                        );
-                        self::ml_array::append(ml_append_left, ml_append_right)
-                    };
-                    {
-                        let at_2 = at + 1f64;
-                        {
-                            (plan, at) = (plan_2, at_2);
-                            continue;
-                        }
-                    }
-                }
-            }
-        }
-        return { plan };
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn ml_plan_callable_type_constraints_loop35(
-    starts: &[f64],
-    counts: &[f64],
-    targets: &[f64],
-    mut left_params: f64,
-    mut right_params: f64,
-    mut pairs: Vec<f64>,
-    mut at: f64,
-) -> Vec<f64> {
-    loop {
-        if at < (self::read_required_number_fact(counts, left_params)) {
-            {
-                let pairs_2 = {
-                    let (ml_append_right, ml_append_left) = (
-                        vec![
-                            self::callable_element(starts, counts, targets, left_params, at),
-                            self::callable_element(starts, counts, targets, right_params, at),
-                        ],
-                        pairs,
-                    );
-                    self::ml_array::append(ml_append_left, ml_append_right)
-                };
-                {
-                    let at_2 = at + 1f64;
-                    {
-                        (pairs, at) = (pairs_2, at_2);
-                        continue;
-                    }
-                }
-            }
-        }
-        return { pairs };
-    }
-}
+use super::callable_append_name;
+use super::callable_bound;
+use super::callable_element;
+use super::callable_field;
+use super::callable_text;
+use super::ml_array;
+use super::read_required_boolean_fact;
+use super::read_required_number_fact;
+use super::read_required_text_fact;
 
 /// Execute the complete checked source algorithm.
 #[must_use]
@@ -832,31 +637,15 @@ pub fn ml_render_callable_parameters_loop51(
                     let (ml_append_right, ml_append_left) = (
                         vec![if format == "Rust" {
                             format!(
-                                "{}{}",
-                                (format!(
-                                    "{}{}",
-                                    (self::read_required_text_fact(names, at)),
-                                    (String::from(": "))
-                                )),
-                                (self::read_required_text_fact(types, at))
+                                "{}: {}",
+                                self::read_required_text_fact(names, at),
+                                self::read_required_text_fact(types, at)
                             )
                         } else {
                             format!(
-                                "{}{}",
-                                (format!(
-                                    "{}{}",
-                                    (format!(
-                                        "{}{}",
-                                        (format!(
-                                            "{}{}",
-                                            (String::from("(")),
-                                            (self::read_required_text_fact(names, at))
-                                        )),
-                                        (String::from(" : "))
-                                    )),
-                                    (self::read_required_text_fact(types, at))
-                                )),
-                                (String::from(")"))
+                                "({} : {})",
+                                self::read_required_text_fact(names, at),
+                                self::read_required_text_fact(types, at)
                             )
                         }],
                         parameters,
@@ -873,5 +662,195 @@ pub fn ml_render_callable_parameters_loop51(
             }
         }
         return { parameters };
+    }
+}
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+pub fn ml_plan_callable_mutable_cells_loop53(
+    texts: &[String],
+    captures: &[f64],
+    assigned: &[String],
+    mut at: f64,
+    mut cells: Vec<f64>,
+) -> Vec<f64> {
+    loop {
+        if at < (captures.len() as f64) {
+            {
+                let cells_3 = if self::callable_bound(
+                    assigned,
+                    &(self::callable_text(texts, self::read_required_number_fact(captures, at))),
+                ) {
+                    {
+                        {
+                            let (ml_append_right, ml_append_left) =
+                                (vec![self::read_required_number_fact(captures, at)], cells);
+                            self::ml_array::append(ml_append_left, ml_append_right)
+                        }
+                    }
+                } else {
+                    cells
+                };
+                {
+                    let at_2 = at + 1f64;
+                    {
+                        (at, cells) = (at_2, cells_3);
+                        continue;
+                    }
+                }
+            }
+        }
+        return { cells };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlPlanCallableMutableCellsLoop52Result {
+    MlPlanCallableMutableCellsLoop52Done(Vec<f64>, Vec<String>, f64),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlPlanCallableMutableCellsJoin54 {
+    MlPlanCallableMutableCellsJoin54Next(Vec<f64>, Vec<String>),
+}
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+pub fn ml_plan_callable_mutable_cells_loop52(
+    texts: &[String],
+    events: &[f64],
+    mut captures: Vec<f64>,
+    mut assigned: Vec<String>,
+    mut at: f64,
+) -> self::MlPlanCallableMutableCellsLoop52Result {
+    loop {
+        return if at < (events.len() as f64) {
+            {
+                let ml_s29 = if (self::read_required_number_fact(events, at)) == 0f64 {
+                    {
+                        let captures_2 = self::callable_append_name(
+                            texts,
+                            &(captures),
+                            self::read_required_number_fact(events, (at + 1f64)),
+                        );
+                        self::MlPlanCallableMutableCellsJoin54::MlPlanCallableMutableCellsJoin54Next(
+                            captures_2, assigned,
+                        )
+                    }
+                } else {
+                    {
+                        let assigned_2 = {
+                            let (ml_append_right, ml_append_left) = (
+                                vec![self::callable_text(
+                                    texts,
+                                    self::read_required_number_fact(events, (at + 1f64)),
+                                )],
+                                assigned,
+                            );
+                            self::ml_array::append(ml_append_left, ml_append_right)
+                        };
+                        self::MlPlanCallableMutableCellsJoin54::MlPlanCallableMutableCellsJoin54Next(
+                            captures, assigned_2,
+                        )
+                    }
+                };
+                match ml_s29 {
+                    self::MlPlanCallableMutableCellsJoin54::MlPlanCallableMutableCellsJoin54Next(captures_3, assigned_3) => {
+                        {
+                            let at_2 = at + 2f64;
+                            {
+                                (captures, assigned, at) = (captures_3, assigned_3, at_2);
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlPlanCallableMutableCellsLoop52Result::MlPlanCallableMutableCellsLoop52Done(
+                captures, assigned, at,
+            )
+        };
+    }
+}
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+pub fn ml_callable_cell_observations_loop56(
+    starts: &[f64],
+    counts: &[f64],
+    targets: &[f64],
+    mut events: Vec<f64>,
+    mut assigned: f64,
+    mut at: f64,
+) -> Vec<f64> {
+    loop {
+        if (assigned >= 0f64) && (at < (self::read_required_number_fact(counts, assigned))) {
+            {
+                let events_2 = {
+                    let (ml_append_right, ml_append_left) = (
+                        vec![
+                            1f64,
+                            self::callable_element(starts, counts, targets, assigned, at),
+                        ],
+                        events,
+                    );
+                    self::ml_array::append(ml_append_left, ml_append_right)
+                };
+                {
+                    let at_2 = at + 1f64;
+                    {
+                        (events, at) = (events_2, at_2);
+                        continue;
+                    }
+                }
+            }
+        }
+        return { events };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlCallableCellObservationsLoop55Result {
+    MlCallableCellObservationsLoop55Done(Vec<f64>, f64),
+}
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+pub fn ml_callable_cell_observations_loop55(
+    starts: &[f64],
+    counts: &[f64],
+    targets: &[f64],
+    mut events: Vec<f64>,
+    mut captured: f64,
+    mut at: f64,
+) -> self::MlCallableCellObservationsLoop55Result {
+    loop {
+        if (captured >= 0f64) && (at < (self::read_required_number_fact(counts, captured))) {
+            {
+                let events_2 = {
+                    let (ml_append_right, ml_append_left) = (
+                        vec![
+                            0f64,
+                            self::callable_element(starts, counts, targets, captured, at),
+                        ],
+                        events,
+                    );
+                    self::ml_array::append(ml_append_left, ml_append_right)
+                };
+                {
+                    let at_2 = at + 1f64;
+                    {
+                        (events, at) = (events_2, at_2);
+                        continue;
+                    }
+                }
+            }
+        }
+        return {
+            self::MlCallableCellObservationsLoop55Result::MlCallableCellObservationsLoop55Done(
+                events, at,
+            )
+        };
     }
 }

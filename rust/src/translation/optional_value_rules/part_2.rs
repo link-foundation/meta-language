@@ -1,278 +1,8 @@
 // Generated from the complete checked optional kernel and its recorded source dependencies.
 // Do not edit by hand.
-use super::*;
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn render_optional_primitive_truth(
-    format: &str,
-    kind: &str,
-    value: &str,
-    receiver: &str,
-    utf16: bool,
-    signed: bool,
-) -> String {
-    if format == "JavaScript" {
-        format!(
-            "{}{}",
-            (format!("{}{}", (String::from("!!(")), value.to_owned())),
-            (String::from(")"))
-        )
-    } else if kind == "bool" {
-        value.to_owned()
-    } else if format == "Rust" {
-        if kind == "float" {
-            format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (String::from("{ let ml_value = ")),
-                    value.to_owned()
-                )),
-                (String::from("; ml_value != 0f64 && !ml_value.is_nan() }"))
-            )
-        } else if (kind == "int") || (kind == "nat") {
-            format!(
-                "{}{}",
-                (format!("{}{}", (String::from("!")), receiver.to_owned())),
-                (String::from(".is_zero()"))
-            )
-        } else if kind == "fixed" {
-            format!(
-                "{}{}",
-                (format!("{}{}", (String::from("(")), receiver.to_owned())),
-                (String::from(" != 0)"))
-            )
-        } else if kind == "string" {
-            format!(
-                "{}{}",
-                (format!("{}{}", (String::from("!")), receiver.to_owned())),
-                (if utf16 {
-                    String::from(".0.is_empty()")
-                } else {
-                    String::from(".is_empty()")
-                })
-            )
-        } else {
-            format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!("{}{}", (String::from("{ let _ = ")), value.to_owned())),
-                        (String::from("; "))
-                    )),
-                    (if kind != "unit" {
-                        String::from("true")
-                    } else {
-                        String::from("false")
-                    })
-                )),
-                (String::from(" }"))
-            )
-        }
-    } else if format == "Lean" {
-        if kind == "float" {
-            format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (String::from("(let ml_value := ")),
-                    value.to_owned()
-                )),
-                (String::from("; ml_value != (0 : Float) && !ml_value.isNaN)"))
-            )
-        } else if ((kind == "int") || (kind == "nat")) || (kind == "fixed") {
-            format!(
-                "{}{}",
-                (format!("{}{}", (String::from("(")), value.to_owned())),
-                (String::from(" != 0)"))
-            )
-        } else if kind == "string" {
-            format!(
-                "{}{}",
-                (format!("{}{}", (String::from("(!")), value.to_owned())),
-                (String::from(".isEmpty)"))
-            )
-        } else {
-            format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (String::from("(let ml_ignored := ")),
-                            value.to_owned()
-                        )),
-                        (String::from("; "))
-                    )),
-                    (if kind != "unit" {
-                        String::from("true")
-                    } else {
-                        String::from("false")
-                    })
-                )),
-                (String::from(")"))
-            )
-        }
-    } else if format == "Rocq" {
-        if kind == "float" {
-            format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (String::from("(let ml_value := ")),
-                    value.to_owned()
-                )),
-                (String::from(
-                    " in andb (negb (PrimFloat.eqb ml_value 0%float)) (negb (PrimFloat.is_nan ml_value)))"
-                ))
-            )
-        } else if (kind == "int") || ((kind == "fixed") && signed) {
-            format!(
-                "{}{}",
-                (format!("{}{}", (String::from("(negb (Z.eqb ")), value.to_owned())),
-                (String::from(" 0))"))
-            )
-        } else if (kind == "nat") || (kind == "fixed") {
-            format!(
-                "{}{}",
-                (format!("{}{}", (String::from("(negb (N.eqb ")), value.to_owned())),
-                (String::from(" 0))"))
-            )
-        } else if kind == "string" {
-            format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (String::from("(negb (String.eqb ")),
-                    value.to_owned()
-                )),
-                (String::from(" EmptyString))"))
-            )
-        } else {
-            format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (String::from("(let ml_ignored := ")),
-                            value.to_owned()
-                        )),
-                        (String::from(" in "))
-                    )),
-                    (if kind != "unit" {
-                        String::from("true")
-                    } else {
-                        String::from("false")
-                    })
-                )),
-                (String::from(")"))
-            )
-        }
-    } else {
-        String::from("")
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn render_optional_equality_present(
-    format: &str,
-    kind: &str,
-    policy: &str,
-    name: &str,
-) -> String {
-    if kind != "option" {
-        name.to_owned()
-    } else if format == "Rust" {
-        if policy == "both" {
-            format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (String::from("crate::MlOptional::Value(")),
-                    name.to_owned()
-                )),
-                (String::from(")"))
-            )
-        } else {
-            format!(
-                "{}{}",
-                (format!("{}{}", (String::from("Some(")), name.to_owned())),
-                (String::from(")"))
-            )
-        }
-    } else if format == "Lean" {
-        if policy == "both" {
-            format!(
-                "{}{}",
-                (format!("{}{}", (String::from("some (some ")), name.to_owned())),
-                (String::from(")"))
-            )
-        } else {
-            format!("{}{}", (String::from("some ")), name.to_owned())
-        }
-    } else if policy == "both" {
-        format!(
-            "{}{}",
-            (format!("{}{}", (String::from("Some (Some ")), name.to_owned())),
-            (String::from(")"))
-        )
-    } else {
-        format!("{}{}", (String::from("Some ")), name.to_owned())
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_optional_equality_absence(policy: &str, index: f64) -> String {
-    if policy == "both" {
-        if index == 0f64 {
-            String::from("null")
-        } else {
-            String::from("undefined")
-        }
-    } else {
-        policy.to_owned()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn render_optional_equality_absent(format: &str, policy: &str, absence: &str) -> String {
-    if format == "Rust" {
-        if policy == "both" {
-            format!(
-                "{}{}",
-                (String::from("crate::MlOptional::")),
-                (if absence == "null" {
-                    String::from("Null")
-                } else {
-                    String::from("Undefined")
-                })
-            )
-        } else {
-            String::from("None")
-        }
-    } else if format == "Lean" {
-        if (policy == "both") && (absence == "undefined") {
-            String::from("some none")
-        } else {
-            String::from("none")
-        }
-    } else if (policy == "both") && (absence == "undefined") {
-        String::from("Some None")
-    } else {
-        String::from("None")
-    }
-}
+use super::read_optional_equality_absence;
+use super::render_optional_equality_absent;
+use super::render_optional_equality_present;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -294,21 +24,14 @@ pub fn render_optional_strict_equality(
 ) -> String {
     if format == "JavaScript" {
         format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!("{}{}", (String::from("(")), left.to_owned())),
-                    (if negate {
-                        String::from(" !== ")
-                    } else {
-                        String::from(" === ")
-                    })
-                )),
-                right.to_owned()
-            )),
-            (String::from(")"))
+            "({}{}{})",
+            left.to_owned(),
+            if negate {
+                String::from(" !== ")
+            } else {
+                String::from(" === ")
+            },
+            right.to_owned()
         )
     } else {
         {
@@ -335,7 +58,7 @@ pub fn render_optional_strict_equality(
                 );
                 {
                     let prefix = if format == "Rust" {
-                        String::from("")
+                        String::new()
                     } else {
                         String::from("| ")
                     };
@@ -347,41 +70,20 @@ pub fn render_optional_strict_equality(
                         };
                         {
                             let cases = format!(
-                                "{}{}",
-                                (format!(
-                                    "{}{}",
-                                    (format!(
-                                        "{}{}",
-                                        (format!(
-                                            "{}{}",
-                                            (format!(
-                                                "{}{}",
-                                                (format!("{}{}", prefix, (String::from("(")))),
-                                                left_present
-                                            )),
-                                            (String::from(", "))
-                                        )),
-                                        right_present
-                                    )),
-                                    (String::from(") => "))
-                                )),
+                                "{prefix}({left_present}, {right_present}) => {}",
                                 compare.to_owned()
                             );
                             {
-                                let left_count = if left_kind != "option" {
-                                    0f64
-                                } else if left_policy == "both" {
-                                    2f64
+                                let left_count = if left_kind == "option" {
+                                    if left_policy == "both" { 2f64 } else { 1f64 }
                                 } else {
-                                    1f64
+                                    0f64
                                 };
                                 {
-                                    let right_count = if right_kind != "option" {
-                                        0f64
-                                    } else if right_policy == "both" {
-                                        2f64
+                                    let right_count = if right_kind == "option" {
+                                        if right_policy == "both" { 2f64 } else { 1f64 }
                                     } else {
-                                        1f64
+                                        0f64
                                     };
                                     {
                                         let first = 0f64;
@@ -400,145 +102,49 @@ pub fn render_optional_strict_equality(
                                                 );
                                             {
                                                 let cases_3 = format!(
-                                                    "{}{}",
-                                                    cases_2,
-                                                    (format!(
-                                                        "{}{}",
-                                                        (format!("{}{}", separator, prefix)),
-                                                        (String::from("_ => false"))
-                                                    ))
+                                                    "{cases_2}{separator}{prefix}_ => false"
                                                 );
                                                 if format == "Rust" {
                                                     {
                                                         let result = format!(
-                                                            "{}{}",
-                                                            (format!(
-                                                                "{}{}",
-                                                                (format!(
-                                                                    "{}{}",
-                                                                    (format!(
-                                                                        "{}{}",
-                                                                        (format!(
-                                                                            "{}{}",
-                                                                            (format!(
-                                                                                "{}{}",
-                                                                                (String::from(
-                                                                                    "match ("
-                                                                                )),
-                                                                                left.to_owned()
-                                                                            )),
-                                                                            (String::from(", "))
-                                                                        )),
-                                                                        right.to_owned()
-                                                                    )),
-                                                                    (String::from(") { "))
-                                                                )),
-                                                                cases_3
-                                                            )),
-                                                            (String::from(" }"))
+                                                            "match ({}, {}) {{ {cases_3} }}",
+                                                            left.to_owned(),
+                                                            right.to_owned()
                                                         );
                                                         if negate {
-                                                            format!(
-                                                                "{}{}",
-                                                                (format!(
-                                                                    "{}{}",
-                                                                    (String::from("!(")),
-                                                                    result
-                                                                )),
-                                                                (String::from(")"))
-                                                            )
+                                                            format!("!({result})")
                                                         } else {
-                                                            result.clone()
+                                                            result
                                                         }
                                                     }
                                                 } else if format == "Lean" {
                                                     {
                                                         let result_2 = format!(
-                                                            "{}{}",
-                                                            (format!(
-                                                                "{}{}",
-                                                                (format!(
-                                                                    "{}{}",
-                                                                    (format!(
-                                                                        "{}{}",
-                                                                        (format!(
-                                                                            "{}{}",
-                                                                            (format!(
-                                                                                "{}{}",
-                                                                                (String::from(
-                                                                                    "(match ("
-                                                                                )),
-                                                                                left.to_owned()
-                                                                            )),
-                                                                            (String::from(", "))
-                                                                        )),
-                                                                        right.to_owned()
-                                                                    )),
-                                                                    (String::from(") with "))
-                                                                )),
-                                                                cases_3
-                                                            )),
-                                                            (String::from(")"))
+                                                            "(match ({}, {}) with {cases_3})",
+                                                            left.to_owned(),
+                                                            right.to_owned()
                                                         );
                                                         if negate {
-                                                            format!(
-                                                                "{}{}",
-                                                                (format!(
-                                                                    "{}{}",
-                                                                    (String::from("(!")),
-                                                                    result_2
-                                                                )),
-                                                                (String::from(")"))
-                                                            )
+                                                            format!("(!{result_2})")
                                                         } else {
-                                                            result_2.clone()
+                                                            result_2
                                                         }
                                                     }
                                                 } else if format == "Rocq" {
                                                     {
                                                         let result_3 = format!(
-                                                            "{}{}",
-                                                            (format!(
-                                                                "{}{}",
-                                                                (format!(
-                                                                    "{}{}",
-                                                                    (format!(
-                                                                        "{}{}",
-                                                                        (format!(
-                                                                            "{}{}",
-                                                                            (format!(
-                                                                                "{}{}",
-                                                                                (String::from(
-                                                                                    "(match ("
-                                                                                )),
-                                                                                left.to_owned()
-                                                                            )),
-                                                                            (String::from(", "))
-                                                                        )),
-                                                                        right.to_owned()
-                                                                    )),
-                                                                    (String::from(") with "))
-                                                                )),
-                                                                cases_3
-                                                            )),
-                                                            (String::from(" end)"))
+                                                            "(match ({}, {}) with {cases_3} end)",
+                                                            left.to_owned(),
+                                                            right.to_owned()
                                                         );
                                                         if negate {
-                                                            format!(
-                                                                "{}{}",
-                                                                (format!(
-                                                                    "{}{}",
-                                                                    (String::from("(negb ")),
-                                                                    result_3
-                                                                )),
-                                                                (String::from(")"))
-                                                            )
+                                                            format!("(negb {result_3})")
                                                         } else {
-                                                            result_3.clone()
+                                                            result_3
                                                         }
                                                     }
                                                 } else {
-                                                    String::from("")
+                                                    String::new()
                                                 }
                                             }
                                         }
@@ -567,61 +173,37 @@ pub fn render_optional_unwrapping(
     } else if format == "Rust" {
         if policy == "both" {
             format!(
-                "{}{}",
-                (format!("{}{}", (String::from("match ")), value.to_owned())),
-                (String::from(
-                    " { crate::MlOptional::Value(ml_present) => ml_present, _ => unreachable!(\"a proven present value\") }"
-                ))
+                "match {} {{ crate::MlOptional::Value(ml_present) => ml_present, _ => unreachable!(\"a proven present value\") }}",
+                value.to_owned()
             )
         } else {
             format!(
-                "{}{}",
-                receiver.to_owned(),
-                (String::from(".clone().expect(\"a proven present value\")"))
+                "{}.clone().expect(\"a proven present value\")",
+                receiver.to_owned()
             )
         }
     } else if format == "Lean" {
         if policy == "both" {
             format!(
-                "{}{}",
-                (format!("{}{}", (String::from("(match ")), value.to_owned())),
-                (String::from(" with | some (some ml_present) => ml_present | _ => default)"))
+                "(match {} with | some (some ml_present) => ml_present | _ => default)",
+                value.to_owned()
             )
         } else {
-            format!(
-                "{}{}",
-                (format!("{}{}", (String::from("(")), value.to_owned())),
-                (String::from(".get!)"))
-            )
+            format!("({}.get!)", value.to_owned())
         }
     } else if format == "Rocq" {
         format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (format!("{}{}", (String::from("(match ")), value.to_owned())),
-                            (String::from(" with | "))
-                        )),
-                        (if policy == "both" {
-                            String::from("Some (Some ml_present)")
-                        } else {
-                            String::from("Some ml_present")
-                        })
-                    )),
-                    (String::from(" => ml_present | _ => "))
-                )),
-                fallback.to_owned()
-            )),
-            (String::from(" end)"))
+            "(match {} with | {} => ml_present | _ => {} end)",
+            value.to_owned(),
+            if policy == "both" {
+                String::from("Some (Some ml_present)")
+            } else {
+                String::from("Some ml_present")
+            },
+            fallback.to_owned()
         )
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -634,49 +216,25 @@ pub fn render_optional_java_script_operation(
     console: bool,
 ) -> String {
     if operation == "nullishNumber" {
-        format!(
-            "{}{}",
-            (format!("{}{}", (String::from("Number(")), value.to_owned())),
-            (String::from(")"))
-        )
+        format!("Number({})", value.to_owned())
     } else if operation == "optionalIndexNumber" {
         value.to_owned()
     } else if operation == "optionalText" {
         format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (if console {
-                    String::from("ml_showOptional(")
-                } else {
-                    String::from("String(")
-                }),
-                value.to_owned()
-            )),
-            (String::from(")"))
+            "{}{})",
+            if console {
+                String::from("ml_showOptional(")
+            } else {
+                String::from("String(")
+            },
+            value.to_owned()
         )
     } else if operation == "optionalTypeOf" {
-        format!(
-            "{}{}",
-            (format!("{}{}", (String::from("(typeof ")), value.to_owned())),
-            (String::from(")"))
-        )
+        format!("(typeof {})", value.to_owned())
     } else if operation == "optionalPredicate" {
-        format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!("{}{}", (String::from("Number.")), name.to_owned())),
-                    (String::from("("))
-                )),
-                value.to_owned()
-            )),
-            (String::from(")"))
-        )
+        format!("Number.{}({})", name.to_owned(), value.to_owned())
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -708,15 +266,7 @@ pub fn render_optional_numeric_present(format: &str, kind: &str, operation: &str
 #[must_use]
 pub fn render_optional_type_query_present(format: &str, literal: &str) -> String {
     if format == "Rust" {
-        format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (String::from("{ let _ = ml_present; ")),
-                literal.to_owned()
-            )),
-            (String::from(" }"))
-        )
+        format!("{{ let _ = ml_present; {} }}", literal.to_owned())
     } else {
         literal.to_owned()
     }
@@ -742,37 +292,16 @@ pub fn render_optional_console_text(
     } else if format == "Rust" {
         if utf16 {
             format!(
-                "{}{}",
-                (format!("{}{}", (String::from("(")), present.to_owned())),
-                (String::from(").concat(&crate::ml_string::Text::from_text(\"n\"))"))
+                "({}).concat(&crate::ml_string::Text::from_text(\"n\"))",
+                present.to_owned()
             )
         } else {
-            format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (String::from("format!(\"{}n\", ")),
-                    present.to_owned()
-                )),
-                (String::from(")"))
-            )
+            format!("format!(\"{{}}n\", {})", present.to_owned())
         }
     } else if format == "Lean" {
-        format!(
-            "{}{}",
-            (format!("{}{}", (String::from("(")), present.to_owned())),
-            (String::from(" ++ \"n\")"))
-        )
+        format!("({} ++ \"n\")", present.to_owned())
     } else if format == "Rocq" {
-        format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (String::from("(String.append ")),
-                present.to_owned()
-            )),
-            (String::from(" \"n\"%string)"))
-        )
+        format!("(String.append {} \"n\"%string)", present.to_owned())
     } else {
         present.to_owned()
     }
@@ -808,20 +337,22 @@ pub fn read_optional_logical_operation(
 ) -> String {
     if (left == "bool") && (right == "bool") {
         String::from("boolean")
-    } else if language != "JavaScript" {
-        String::from("language-error")
-    } else if (left == "option") && left_element {
-        if operation == "or" {
-            String::from("unwrap-left")
+    } else if language == "JavaScript" {
+        if (left == "option") && left_element {
+            if operation == "or" {
+                String::from("unwrap-left")
+            } else {
+                String::from("wrap-right")
+            }
+        } else if (right == "option") && right_element {
+            String::from("wrap-left")
+        } else if same {
+            String::from("identity")
         } else {
-            String::from("wrap-right")
+            String::from("union-error")
         }
-    } else if (right == "option") && right_element {
-        String::from("wrap-left")
-    } else if same {
-        String::from("identity")
     } else {
-        String::from("union-error")
+        String::from("language-error")
     }
 }
 
@@ -836,7 +367,7 @@ pub fn read_optional_comparison_operation(
     primitive: bool,
 ) -> String {
     if (language != "JavaScript") || ((left != "option") && (right != "option")) {
-        String::from("")
+        String::new()
     } else if (operation == "eq") || (operation == "ne") {
         if same && !primitive {
             String::from("object-error")
@@ -868,4 +399,114 @@ pub fn require_inference_join_alias(kind: &str, alias: f64, original: f64) -> bo
 #[must_use]
 pub fn accept_optional_literal_absence(absence: &str) -> bool {
     (absence == "null") || (absence == "undefined")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn ml_render_optional_strict_equality_loop2(
+    format: &str,
+    left_policy: &str,
+    right_policy: &str,
+    prefix: &str,
+    separator: &str,
+    mut cases: String,
+    mut right_count: f64,
+    left_absence: &str,
+    mut second: f64,
+) -> String {
+    loop {
+        if second < right_count {
+            {
+                let right_absence = self::read_optional_equality_absence(right_policy, second);
+                {
+                    let same = if left_absence == right_absence {
+                        String::from("true")
+                    } else {
+                        String::from("false")
+                    };
+                    {
+                        let cases_2 = format!(
+                            "{cases}{}{}({}, {}) => {same}",
+                            separator.to_owned(),
+                            prefix.to_owned(),
+                            self::render_optional_equality_absent(
+                                format,
+                                left_policy,
+                                left_absence
+                            ),
+                            self::render_optional_equality_absent(
+                                format,
+                                right_policy,
+                                &(right_absence)
+                            )
+                        );
+                        {
+                            let second_2 = second + 1f64;
+                            {
+                                (cases, second) = (cases_2, second_2);
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return { cases };
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn ml_render_optional_strict_equality_loop1(
+    format: &str,
+    left_policy: &str,
+    right_policy: &str,
+    prefix: &str,
+    separator: &str,
+    mut cases: String,
+    mut left_count: f64,
+    mut right_count: f64,
+    mut first: f64,
+) -> String {
+    loop {
+        if first < left_count {
+            {
+                let left_absence = self::read_optional_equality_absence(left_policy, first);
+                {
+                    let second = 0f64;
+                    {
+                        let cases_2 = self::ml_render_optional_strict_equality_loop2(
+                            format,
+                            left_policy,
+                            right_policy,
+                            prefix,
+                            separator,
+                            cases,
+                            right_count,
+                            &(left_absence),
+                            second,
+                        );
+                        {
+                            let first_2 = first + 1f64;
+                            {
+                                (cases, first) = (cases_2, first_2);
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return { cases };
+    }
 }

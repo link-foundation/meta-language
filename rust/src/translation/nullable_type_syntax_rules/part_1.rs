@@ -1,7 +1,5 @@
 // Generated from the complete checked JavaScript source and recorded dependencies.
 // Do not edit by hand.
-use super::*;
-
 /// Reads of JavaScript arrays, which the portable core never mutates.
 pub mod ml_array {
     #[must_use]
@@ -12,10 +10,9 @@ pub mod ml_array {
     /// JavaScript, aborts.
     #[must_use]
     pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {
-        match index.and_then(|index| values.get(index)) {
-            Some(value) => value.clone(),
-            None => panic!("array index out of range"),
-        }
+        index
+            .and_then(|index| values.get(index))
+            .map_or_else(|| panic!("array index out of range"), Clone::clone)
     }
 
     /// The index a Number names: a non-negative integer, -0 included.
@@ -33,7 +30,7 @@ pub mod ml_array {
         left.extend(right);
         left
     }
-    fn integer(value: f64) -> f64 {
+    const fn integer(value: f64) -> f64 {
         if value.is_nan() { 0.0 } else { value.trunc() }
     }
     fn relative(value: f64, length: usize) -> usize {
@@ -141,33 +138,45 @@ pub fn refuse_required_boolean_fact() -> bool {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required Number fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required Number fact column position"
+        );
+
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_number_fact())
+            .unwrap_or_else(self::refuse_required_number_fact)
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_text_fact(values: &[String], index: f64) -> String {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required text fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required text fact column position"
+        );
+
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_text_fact())
+            .unwrap_or_else(self::refuse_required_text_fact)
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required Boolean fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required Boolean fact column position"
+        );
+
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_boolean_fact())
+            .unwrap_or_else(self::refuse_required_boolean_fact)
     }
 }
 
@@ -239,18 +248,14 @@ pub fn read_nullable_type_absence(code: f64) -> String {
     } else if code == 3f64 {
         String::from("both")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_nullable_type_target_refusal(target: &str) -> String {
-    format!(
-        "{}{}",
-        (format!("{}{}", (String::from("no ")), target.to_owned())),
-        (String::from(" type for absence"))
-    )
+    format!("no {} type for absence", target.to_owned())
 }
 
 #[derive(Clone, Debug, PartialEq)]

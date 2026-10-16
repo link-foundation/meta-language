@@ -58,127 +58,39 @@ pub fn render_optional_array_read(
     position: &str,
 ) -> String {
     if target == "JavaScript" {
-        format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!("{}{}", (String::from("(")), values)),
-                    (String::from(")["))
-                )),
-                position
-            )),
-            (String::from("]"))
-        )
+        format!("({values})[{position}]")
     } else if target == "Rust" {
         {
             let index = if kind == "float" {
-                format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (String::from("crate::ml_array::number_index(")),
-                        position
-                    )),
-                    (String::from(")"))
-                )
+                format!("crate::ml_array::number_index({position})")
             } else {
-                format!("{}{}", position, (String::from(".to_index()")))
+                format!("{position}.to_index()")
             };
-            format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (String::from("crate::ml_array::optional_at(")),
-                            values
-                        )),
-                        (String::from(", "))
-                    )),
-                    index
-                )),
-                (String::from(")"))
-            )
+            format!("crate::ml_array::optional_at({values}, {index})")
         }
     } else if target == "Lean" {
         if kind == "float" {
             format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!("{}{}", (String::from("(let ml_index := ")), position)),
-                        (String::from(
-                            "; if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then "
-                        ))
-                    )),
-                    values
-                )),
-                (String::from("[ml_index.toUInt64.toNat]? else none)"))
+                "(let ml_index := {position}; if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then {values}[ml_index.toUInt64.toNat]? else none)"
             )
         } else if kind == "nat" {
-            format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!("{}{}", (String::from("(")), values)),
-                        (String::from("["))
-                    )),
-                    position
-                )),
-                (String::from("]?)"))
-            )
+            format!("({values}[{position}]?)")
         } else {
             format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!("{}{}", (String::from("(let ml_index := ")), position)),
-                        (String::from("; if ml_index < 0 then none else "))
-                    )),
-                    values
-                )),
-                (String::from("[ml_index.toNat]?)"))
+                "(let ml_index := {position}; if ml_index < 0 then none else {values}[ml_index.toNat]?)"
             )
         }
     } else {
         {
             let index_2 = if kind == "float" {
-                format!(
-                    "{}{}",
-                    (format!("{}{}", (String::from("(ml_float_index ")), position)),
-                    (String::from(")"))
-                )
+                format!("(ml_float_index {position})")
             } else if kind == "nat" {
-                format!(
-                    "{}{}",
-                    (format!("{}{}", (String::from("(Z.of_N ")), position)),
-                    (String::from(")"))
-                )
+                format!("(Z.of_N {position})")
             } else {
                 position.to_owned()
             };
             format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!("{}{}", (String::from("(let ml_index := ")), index_2)),
-                        (String::from(" in if Z.ltb ml_index 0 then None else List.nth_error "))
-                    )),
-                    values
-                )),
-                (String::from(" (Z.to_nat ml_index))"))
+                "(let ml_index := {index_2} in if Z.ltb ml_index 0 then None else List.nth_error {values} (Z.to_nat ml_index))"
             )
         }
     }
@@ -188,30 +100,18 @@ pub fn render_optional_array_read(
 #[must_use]
 pub fn render_string_point_iteration(target: &str, utf16: bool, value: &str) -> String {
     if target == "JavaScript" {
-        format!(
-            "{}{}",
-            (format!("{}{}", (String::from("[...")), value)),
-            (String::from("]"))
-        )
+        format!("[...{value}]")
     } else if target == "Rust" {
         if utf16 {
-            format!("{}{}", value, (String::from(".code_points()")))
+            format!("{value}.code_points()")
         } else {
             format!(
-                "{}{}",
-                value,
-                (String::from(
-                    ".chars().map(|ml_character| ml_character.to_string()).collect::<Vec<String>>()"
-                ))
+                "{value}.chars().map(|ml_character| ml_character.to_string()).collect::<Vec<String>>()"
             )
         }
     } else if target == "Lean" {
         format!(
-            "{}{}",
-            (format!("{}{}", (String::from("((")), value)),
-            (String::from(
-                ".toList.map (fun ml_character => String.singleton ml_character)).toArray)"
-            ))
+            "(({value}.toList.map (fun ml_character => String.singleton ml_character)).toArray)"
         )
     } else {
         String::new()
@@ -229,49 +129,24 @@ pub fn render_collection_iteration(
     value_type: &str,
 ) -> String {
     if target == "JavaScript" {
-        format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!("{}{}", (String::from("[...(")), value)),
-                    (String::from(")."))
-                )),
-                operation
-            )),
-            (String::from("()]"))
-        )
+        format!("[...({value}).{operation}()]")
     } else if target == "Rust" {
         if operation == "entries" {
             if map {
                 value.to_owned()
             } else {
                 format!(
-                    "{}{}",
-                    value,
-                    (String::from(
-                        ".iter().map(|ml_value| (ml_value.to_owned(), ml_value.to_owned())).collect::<Vec<_>>()"
-                    ))
+                    "{value}.iter().map(|ml_value| (ml_value.to_owned(), ml_value.to_owned())).collect::<Vec<_>>()"
                 )
             }
         } else if map {
             format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        value,
-                        (String::from(".iter().map(|ml_pair| ml_pair."))
-                    )),
-                    (if operation == "keys" {
-                        String::from("0")
-                    } else {
-                        String::from("1")
-                    })
-                )),
-                (String::from(".clone()).collect::<Vec<_>>()"))
+                "{value}.iter().map(|ml_pair| ml_pair.{}.clone()).collect::<Vec<_>>()",
+                if operation == "keys" {
+                    String::from("0")
+                } else {
+                    String::from("1")
+                }
             )
         } else {
             value.to_owned()
@@ -281,29 +156,16 @@ pub fn render_collection_iteration(
             if map {
                 value.to_owned()
             } else {
-                format!(
-                    "{}{}",
-                    (format!("{}{}", (String::from("(")), value)),
-                    (String::from(".map (fun ml_value => (ml_value, ml_value)))"))
-                )
+                format!("({value}.map (fun ml_value => (ml_value, ml_value)))")
             }
         } else if map {
             format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!("{}{}", (String::from("(")), value)),
-                        (String::from(".map (fun ml_pair => ml_pair."))
-                    )),
-                    (if operation == "keys" {
-                        String::from("1")
-                    } else {
-                        String::from("2")
-                    })
-                )),
-                (String::from("))"))
+                "({value}.map (fun ml_pair => ml_pair.{}))",
+                if operation == "keys" {
+                    String::from("1")
+                } else {
+                    String::from("2")
+                }
             )
         } else {
             value.to_owned()
@@ -312,53 +174,16 @@ pub fn render_collection_iteration(
         if map {
             value.to_owned()
         } else {
-            format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (String::from("(List.map (fun ml_value => (ml_value, ml_value)) ")),
-                    value
-                )),
-                (String::from(")"))
-            )
+            format!("(List.map (fun ml_value => (ml_value, ml_value)) {value})")
         }
     } else if map {
         format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (format!(
-                                "{}{}",
-                                (format!(
-                                    "{}{}",
-                                    (format!(
-                                        "{}{}",
-                                        (String::from("(List.map (@")),
-                                        (if operation == "keys" {
-                                            String::from("fst")
-                                        } else {
-                                            String::from("snd")
-                                        })
-                                    )),
-                                    (String::from(" "))
-                                )),
-                                key_type
-                            )),
-                            (String::from(" "))
-                        )),
-                        value_type
-                    )),
-                    (String::from(") "))
-                )),
-                value
-            )),
-            (String::from(")"))
+            "(List.map (@{} {key_type} {value_type}) {value})",
+            if operation == "keys" {
+                String::from("fst")
+            } else {
+                String::from("snd")
+            }
         )
     } else {
         value.to_owned()

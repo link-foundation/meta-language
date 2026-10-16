@@ -1,12 +1,4 @@
 // Generated from the complete checked JavaScript surface reference analysis. Do not edit.
-use super::*;
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_surface_reference_refusal() -> String {
-    String::from("shared reference state needs an explicit target state model")
-}
-
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_surface_reference_emission_operation(
@@ -30,7 +22,7 @@ pub fn read_surface_reference_emission_operation(
     {
         String::from("reference allocation")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -46,7 +38,7 @@ pub fn read_surface_reference_emission_refusal(operation: &str) -> String {
             "this allocation needs the shared reference and slot runtime before target emission",
         )
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -136,14 +128,13 @@ pub fn ml_read_surface_reference_path_loop3(
             {
                 let result_3 = if offset > (crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, path)) {
                     {
-                        let result_2 = format!("{}{}", result, (String::from(".")));
-                        result_2
+                        format!("{result}.")
                     }
                 } else {
-                    result.clone()
+                    result
                 };
                 {
-                    let result_4 = format!("{}{}", result_3, (crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, ((size * 2f64) + offset)))));
+                    let result_4 = format!("{result_3}{}", crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, ((size * 2f64) + offset))));
                     {
                         let offset_2 = offset + 1f64;
                         {
@@ -154,7 +145,7 @@ pub fn ml_read_surface_reference_path_loop3(
                 }
             }
         }
-        return { result.clone() };
+        return { result };
     }
 }
 
@@ -186,7 +177,7 @@ pub fn ml_find_surface_reference_item_signature_loop4(
                 {
                     let kind = crate::translation::surface_reference_analysis_rules::read_surface_reference_kind(columns, rows, size, item);
                     {
-                        let name = format!("{}{}", (format!("{}{}", prefix.to_owned(), (String::from(".")))), (crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, item, "name"))));
+                        let name = format!("{}.{}", prefix.to_owned(), crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, item, "name")));
                         {
                             let found_3 = if (kind == "fn") && (name == path) {
                                 { item }
@@ -239,7 +230,7 @@ pub fn ml_find_surface_reference_signature_loop5(
                         ((size * 2f64) + offset),
                     );
                 {
-                    let name = format!("{}{}", (String::from("crate.")), (crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, external, "name"))));
+                    let name = format!("crate.{}", crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, external, "name")));
                     {
                         let found_3 = if name == path { { external } } else { found };
                         {

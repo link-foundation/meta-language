@@ -21,6 +21,10 @@ pub fn accept_shared_surface_reference_kind(kind: &str) -> bool {
 
 /// Read a shared raw surface metadata decision.
 #[must_use]
-pub fn select_surface_reference_semantics(required: bool, structural: bool, enabled: bool) -> bool {
+pub const fn select_surface_reference_semantics(
+    required: bool,
+    structural: bool,
+    enabled: bool,
+) -> bool {
     required || (enabled && structural)
 }

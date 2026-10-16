@@ -20,6 +20,3 @@ pub use part_1::*;
 #[path = "optional_value_rules/part_2.rs"]
 mod part_2;
 pub use part_2::*;
-#[path = "optional_value_rules/part_3.rs"]
-mod part_3;
-pub use part_3::*;

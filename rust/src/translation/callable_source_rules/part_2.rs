@@ -1,6 +1,35 @@
 // Generated from complete callable-source-rules.js through the checked translator.
 // Do not edit by hand.
-use super::*;
+use super::MlCallableStatementUsesLoop25Result;
+use super::MlReadCallableCaptureConflictsLoop27Result;
+use super::callable_bound;
+use super::callable_element;
+use super::callable_field;
+use super::callable_parameter_names;
+use super::callable_tag;
+use super::callable_text;
+use super::callable_truthy;
+use super::ml_array;
+use super::ml_callable_nested_events_loop23;
+use super::ml_callable_outer_assignments_loop32;
+use super::ml_callable_read_events_loop20;
+use super::ml_callable_statement_uses_loop24;
+use super::ml_callable_statement_uses_loop25;
+use super::ml_callable_statement_uses_loop26;
+use super::ml_number;
+use super::ml_plan_callable_application_constraints_loop36;
+use super::ml_plan_callable_function_type_loop34;
+use super::ml_plan_callable_parameter_types_loop33;
+use super::ml_plan_callable_type_constraints_loop35;
+use super::ml_read_callable_capture_conflicts_loop27;
+use super::ml_read_callable_capture_conflicts_loop28;
+use super::ml_read_callable_free_references_loop16;
+use super::ml_read_callable_free_references_loop17;
+use super::ml_read_callable_free_references_loop19;
+use super::ml_read_callable_statement_uses_loop21;
+use super::read_callable_statement_role;
+use super::read_required_number_fact;
+use super::read_required_text_fact;
 
 /// Execute the complete checked source algorithm.
 #[must_use]
@@ -709,20 +738,17 @@ pub fn read_callable_application_error(
     parameters: f64,
     arguments_count: f64,
 ) -> String {
-    if kind != "function" {
-        String::from("the called value is not a function")
-    } else if parameters != arguments_count {
-        format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (String::from("function expects ")),
-                (self::ml_number::js_number(parameters))
-            )),
-            (String::from(" arguments"))
-        )
+    if kind == "function" {
+        if parameters == arguments_count {
+            String::new()
+        } else {
+            format!(
+                "function expects {} arguments",
+                self::ml_number::js_number(parameters)
+            )
+        }
     } else {
-        String::from("")
+        String::from("the called value is not a function")
     }
 }
 
@@ -847,6 +873,57 @@ pub fn plan_callable_type_constraints(
                                 self::ml_array::append(ml_append_left, ml_append_right)
                             }
                         }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn plan_callable_application_constraints(
+    texts: &[String],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[String],
+    targets: &[f64],
+    fn_: f64,
+    arguments_node: f64,
+    candidate: f64,
+) -> Vec<f64> {
+    {
+        let params = self::callable_field(starts, counts, labels, targets, fn_, "params");
+        if ((((self::callable_tag(texts, starts, counts, labels, targets, fn_, "kind"))
+            != "function")
+            || (params < 0f64))
+            || (arguments_node < 0f64))
+            || ((self::read_required_number_fact(counts, params))
+                != (self::read_required_number_fact(counts, arguments_node)))
+        {
+            vec![-1f64, fn_, candidate]
+        } else {
+            {
+                let plan = vec![self::callable_field(
+                    starts, counts, labels, targets, fn_, "ret",
+                )];
+                {
+                    let at = 0f64;
+                    {
+                        self::ml_plan_callable_application_constraints_loop36(
+                            starts,
+                            counts,
+                            targets,
+                            arguments_node,
+                            params,
+                            plan,
+                            at,
+                        )
                     }
                 }
             }

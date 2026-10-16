@@ -28,6 +28,9 @@ pub fn accept_rust_tuple_index_spelling(text: &str) -> bool {
 
 /// Admit the corresponding immutable Rust source product.
 #[must_use]
-pub fn accept_rust_product_origin(immutable_product: bool, owned_local_product: bool) -> bool {
+pub const fn accept_rust_product_origin(
+    immutable_product: bool,
+    owned_local_product: bool,
+) -> bool {
     immutable_product || owned_local_product
 }

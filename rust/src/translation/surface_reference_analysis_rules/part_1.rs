@@ -1,6 +1,4 @@
 // Generated from the complete checked JavaScript surface reference analysis. Do not edit.
-use super::*;
-
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn refuse_required_number_fact() -> f64 {
@@ -22,48 +20,60 @@ pub fn refuse_required_boolean_fact() -> bool {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required Number fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required Number fact column position"
+        );
+
         (crate::translation::frontend_rules::ml_array::optional_at(
             values,
             crate::translation::frontend_rules::ml_array::number_index(index),
         ))
-        .unwrap_or_else(|| {
-            crate::translation::surface_reference_analysis_rules::refuse_required_number_fact()
-        })
+        .unwrap_or_else(
+            crate::translation::surface_reference_analysis_rules::refuse_required_number_fact,
+        )
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_text_fact(values: &[String], index: f64) -> String {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required text fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required text fact column position"
+        );
+
         (crate::translation::frontend_rules::ml_array::optional_at(
             values,
             crate::translation::frontend_rules::ml_array::number_index(index),
         ))
-        .unwrap_or_else(|| {
-            crate::translation::surface_reference_analysis_rules::refuse_required_text_fact()
-        })
+        .unwrap_or_else(
+            crate::translation::surface_reference_analysis_rules::refuse_required_text_fact,
+        )
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required Boolean fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required Boolean fact column position"
+        );
+
         (crate::translation::frontend_rules::ml_array::optional_at(
             values,
             crate::translation::frontend_rules::ml_array::number_index(index),
         ))
-        .unwrap_or_else(|| {
-            crate::translation::surface_reference_analysis_rules::refuse_required_boolean_fact()
-        })
+        .unwrap_or_else(
+            crate::translation::surface_reference_analysis_rules::refuse_required_boolean_fact,
+        )
     }
 }
 
@@ -230,7 +240,7 @@ pub fn read_surface_reference_field(
 #[must_use]
 pub fn read_surface_reference_text(columns: &[String], size: f64, node: f64) -> String {
     if (node < 0f64) || (node >= size) {
-        String::from("")
+        String::new()
     } else {
         crate::translation::surface_reference_analysis_rules::read_required_text_fact(
             columns,
@@ -333,10 +343,10 @@ pub fn read_surface_reference_path(
     path: f64,
 ) -> String {
     if path < 0f64 {
-        String::from("")
+        String::new()
     } else {
         {
-            let result = String::from("");
+            let result = String::new();
             {
                 let offset =
                     crate::translation::surface_reference_analysis_rules::read_required_number_fact(
@@ -345,8 +355,7 @@ pub fn read_surface_reference_path(
                 {
                     let end = offset + crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, (size + path));
                     {
-                        let result_2 = crate::translation::surface_reference_analysis_rules::ml_read_surface_reference_path_loop3(columns, rows, size, path, result, offset, end);
-                        result_2
+                        crate::translation::surface_reference_analysis_rules::ml_read_surface_reference_path_loop3(columns, rows, size, path, result, offset, end)
                     }
                 }
             }
@@ -510,13 +519,18 @@ pub fn inspect_surface_reference_expression(
                                         {
                                             let own = crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "type");
                                             {
-                                                let result_type = if (crate::translation::surface_reference_analysis_rules::read_surface_reference_type(columns, own)) != -1f64 {
-                                                            own
-                                                        } else if (operation == "plus") || (operation == "add") {
-                                                                crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(left), 0f64)
-                                                            } else {
-                                                                -1f64
-                                                            };
+                                                let result_type = {
+                                                    let ml_library_inequality_2 = (crate::translation::surface_reference_analysis_rules::read_surface_reference_type(columns, own)) != -1f64 ;
+                                                    if ml_library_inequality_2 {
+                                                        own
+                                                    } else if (operation == "plus")
+                                                        || (operation == "add")
+                                                    {
+                                                        crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(left), 0f64)
+                                                    } else {
+                                                        -1f64
+                                                    }
+                                                };
                                                 vec![
                                                     result_type,
                                                     if observed { 1f64 } else { 0f64 },
@@ -690,7 +704,9 @@ pub fn inspect_surface_reference_expression(
                                                                                 } else {
                                                                                     observed_3
                                                                                 };
-                                                                                if (crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(yes), 0f64)) != -1f64 {
+                                                                                {
+let ml_library_inequality_1 = (crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(yes), 0f64)) != -1f64 ;
+if ml_library_inequality_1 {
                                                                                     vec![crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(yes), 0f64), if observed_7 {
                                                                                         1f64
                                                                                     } else {
@@ -706,6 +722,7 @@ pub fn inspect_surface_reference_expression(
                                                                                         }]
                                                                                     }
                                                                                 }
+}
                                                                             }
                                                                         }
                                                                     } else if ((kind == "num") || (kind == "str")) || (kind == "bool") {
@@ -833,7 +850,7 @@ pub fn select_surface_reference_allocation(selected: bool, kind: &str, existing:
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn select_surface_reference_read(reference: bool) -> bool {
+pub const fn select_surface_reference_read(reference: bool) -> bool {
     reference
 }
 
@@ -843,7 +860,7 @@ pub fn read_surface_reference_result_field(kind: &str) -> String {
     if kind == "referenceRead" {
         String::from("reference")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -858,40 +875,22 @@ pub fn render_surface_reference_operation(
     if (format == "JavaScript")
         && ((operation == "referenceAllocate") || (operation == "referenceRead"))
     {
-        value.clone()
+        value
     } else if (format == "Rust") && (operation == "referenceAllocate") {
-        format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (String::from("std::rc::Rc::new(std::cell::RefCell::new(")),
-                value
-            )),
-            (String::from("))"))
-        )
+        format!("std::rc::Rc::new(std::cell::RefCell::new({value}))")
     } else if (format == "Rust") && (operation == "referenceRead") {
         format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (format!("{}{}", (String::from("{ let ")), temporary.to_owned())),
-                            (String::from(" = "))
-                        )),
-                        value
-                    )),
-                    (String::from(".borrow().clone(); "))
-                )),
-                temporary.to_owned()
-            )),
-            (String::from(" }"))
+            "{{ let {} = {value}.borrow().clone(); {} }}",
+            temporary.to_owned(),
+            temporary.to_owned()
         )
     } else {
-        String::from("")
+        String::new()
     }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_surface_reference_refusal() -> String {
+    String::from("shared reference state needs an explicit target state model")
 }

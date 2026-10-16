@@ -31,38 +31,17 @@ pub fn render_primitive_string_representation(
     } else if form == "literal" {
         if units {
             format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (String::from("crate::ml_string::Text::from_units(vec![")),
-                    value.to_owned()
-                )),
-                (String::from("])"))
+                "crate::ml_string::Text::from_units(vec![{}])",
+                value.to_owned()
             )
         } else {
-            format!(
-                "{}{}",
-                (format!("{}{}", (String::from("String::from(")), value.to_owned())),
-                (String::from(")"))
-            )
+            format!("String::from({})", value.to_owned())
         }
     } else if form == "constant" {
         if units {
-            format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (String::from("crate::ml_string::Text::from_text(")),
-                    value.to_owned()
-                )),
-                (String::from(")"))
-            )
+            format!("crate::ml_string::Text::from_text({})", value.to_owned())
         } else {
-            format!(
-                "{}{}",
-                (format!("{}{}", (String::from("String::from(")), value.to_owned())),
-                (String::from(")"))
-            )
+            format!("String::from({})", value.to_owned())
         }
     } else if form == "examples" {
         if units {
@@ -74,51 +53,23 @@ pub fn render_primitive_string_representation(
         }
     } else if form == "text" {
         if units {
-            format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (String::from("crate::ml_string::Text::from_text(&")),
-                    value.to_owned()
-                )),
-                (String::from(")"))
-            )
+            format!("crate::ml_string::Text::from_text(&{})", value.to_owned())
         } else {
             value.to_owned()
         }
     } else if form == "concat" {
         if units {
-            format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!("{}{}", value.to_owned(), (String::from(".concat(")))),
-                    other.to_owned()
-                )),
-                (String::from(")"))
-            )
+            format!("{}.concat({})", value.to_owned(), other.to_owned())
         } else {
             format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (String::from("format!(\"{}{}\", ")),
-                            value.to_owned()
-                        )),
-                        (String::from(", "))
-                    )),
-                    other.to_owned()
-                )),
-                (String::from(")"))
+                "format!(\"{{}}{{}}\", {}, {})",
+                value.to_owned(),
+                other.to_owned()
             )
         }
     } else if units {
         if form == "length" {
-            format!("{}{}", value.to_owned(), (String::from(".length()")))
+            format!("{}.length()", value.to_owned())
         } else if form == "test" {
             {
                 let method = if operation == "startsWith" {
@@ -128,38 +79,18 @@ pub fn render_primitive_string_representation(
                 } else {
                     String::from("contains")
                 };
-                format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (format!(
-                                "{}{}",
-                                (format!("{}{}", value.to_owned(), (String::from(".")))),
-                                method
-                            )),
-                            (String::from("("))
-                        )),
-                        other.to_owned()
-                    )),
-                    (String::from(")"))
-                )
+                format!("{}.{method}({})", value.to_owned(), other.to_owned())
             }
         } else if form == "map" {
             if (operation == "toLowerCase") || (operation == "toUpperCase") {
                 format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!("{}{}", value.to_owned(), (String::from(".map_case(")))),
-                        (if operation == "toUpperCase" {
-                            String::from("true")
-                        } else {
-                            String::from("false")
-                        })
-                    )),
-                    (String::from(")"))
+                    "{}.map_case({})",
+                    value.to_owned(),
+                    if operation == "toUpperCase" {
+                        String::from("true")
+                    } else {
+                        String::from("false")
+                    }
                 )
             } else {
                 {
@@ -169,55 +100,33 @@ pub fn render_primitive_string_representation(
                         {
                             let rust = operation.starts_with("rust");
                             format!(
-                                "{}{}",
-                                (format!(
-                                    "{}{}",
-                                    (format!(
-                                        "{}{}",
-                                        (format!(
-                                            "{}{}",
-                                            (format!(
-                                                "{}{}",
-                                                (format!(
-                                                    "{}{}",
-                                                    (format!(
-                                                        "{}{}",
-                                                        value.to_owned(),
-                                                        (String::from(".trim("))
-                                                    )),
-                                                    (if start {
-                                                        String::from("true")
-                                                    } else {
-                                                        String::from("false")
-                                                    })
-                                                )),
-                                                (String::from(", "))
-                                            )),
-                                            (if end {
-                                                String::from("true")
-                                            } else {
-                                                String::from("false")
-                                            })
-                                        )),
-                                        (String::from(", "))
-                                    )),
-                                    (if rust {
-                                        String::from("true")
-                                    } else {
-                                        String::from("false")
-                                    })
-                                )),
-                                (String::from(")"))
+                                "{}.trim({}, {}, {})",
+                                value.to_owned(),
+                                if start {
+                                    String::from("true")
+                                } else {
+                                    String::from("false")
+                                },
+                                if end {
+                                    String::from("true")
+                                } else {
+                                    String::from("false")
+                                },
+                                if rust {
+                                    String::from("true")
+                                } else {
+                                    String::from("false")
+                                }
                             )
                         }
                     }
                 }
             }
         } else {
-            String::from("")
+            String::new()
         }
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -240,19 +149,21 @@ pub fn read_primitive_method_minimum_arguments(receiver: &str, operation: &str) 
         && (((operation == "includes") || (operation == "indexOf")) || (operation == "lastIndexOf"))
     {
         1f64
-    } else if receiver != "string" {
-        -1f64
-    } else if (operation == "split") || (operation == "slice") {
-        0f64
-    } else if (((((operation == "indexOf") || (operation == "lastIndexOf"))
-        || (operation == "repeat"))
-        || (operation == "padStart"))
-        || (operation == "padEnd"))
-        || (operation == "codePointAt")
-    {
-        1f64
-    } else if (operation == "replace") || (operation == "replaceAll") {
-        2f64
+    } else if receiver == "string" {
+        if (operation == "split") || (operation == "slice") {
+            0f64
+        } else if (((((operation == "indexOf") || (operation == "lastIndexOf"))
+            || (operation == "repeat"))
+            || (operation == "padStart"))
+            || (operation == "padEnd"))
+            || (operation == "codePointAt")
+        {
+            1f64
+        } else if (operation == "replace") || (operation == "replaceAll") {
+            2f64
+        } else {
+            -1f64
+        }
     } else {
         -1f64
     }
@@ -260,25 +171,27 @@ pub fn read_primitive_method_minimum_arguments(receiver: &str, operation: &str) 
 
 #[must_use]
 pub fn read_primitive_method_maximum_arguments(receiver: &str, operation: &str) -> f64 {
-    if (receiver == "array") && (operation == "slice") {
-        2f64
-    } else if (receiver == "array")
-        && (((operation == "includes") || (operation == "indexOf")) || (operation == "lastIndexOf"))
+    if ((receiver == "array") && (operation == "slice"))
+        || ((receiver == "array")
+            && (((operation == "includes") || (operation == "indexOf"))
+                || (operation == "lastIndexOf")))
     {
         2f64
-    } else if receiver != "string" {
-        -1f64
-    } else if (operation == "repeat") || (operation == "codePointAt") {
-        1f64
-    } else if (((((((operation == "split") || (operation == "slice"))
-        || (operation == "indexOf"))
-        || (operation == "lastIndexOf"))
-        || (operation == "replace"))
-        || (operation == "replaceAll"))
-        || (operation == "padStart"))
-        || (operation == "padEnd")
-    {
-        2f64
+    } else if receiver == "string" {
+        if (operation == "repeat") || (operation == "codePointAt") {
+            1f64
+        } else if (((((((operation == "split") || (operation == "slice"))
+            || (operation == "indexOf"))
+            || (operation == "lastIndexOf"))
+            || (operation == "replace"))
+            || (operation == "replaceAll"))
+            || (operation == "padStart"))
+            || (operation == "padEnd")
+        {
+            2f64
+        } else {
+            -1f64
+        }
     } else {
         -1f64
     }
@@ -305,18 +218,19 @@ pub fn read_primitive_method_checked_argument_kind(
         } else {
             String::from("float")
         }
-    } else if receiver != "string" {
-        String::from("")
-    } else if (operation == "replace") || (operation == "replaceAll") {
-        String::from("string")
-    } else if (index == 0f64)
-        && (((operation == "split") || (operation == "indexOf")) || (operation == "lastIndexOf"))
-    {
-        String::from("string")
-    } else if (index == 1f64) && ((operation == "padStart") || (operation == "padEnd")) {
-        String::from("string")
+    } else if receiver == "string" {
+        if (((operation == "replace") || (operation == "replaceAll"))
+            || ((index == 0f64)
+                && (((operation == "split") || (operation == "indexOf"))
+                    || (operation == "lastIndexOf"))))
+            || ((index == 1f64) && ((operation == "padStart") || (operation == "padEnd")))
+        {
+            String::from("string")
+        } else {
+            String::from("float")
+        }
     } else {
-        String::from("float")
+        String::new()
     }
 }
 
@@ -330,12 +244,10 @@ pub fn read_primitive_method_default_form(receiver: &str, operation: &str, index
         String::from("float")
     } else if ((receiver == "string") && (operation == "split")) && (index == 0f64) {
         String::from("absent")
-    } else if ((receiver == "string") && (operation == "split")) && (index == 1f64) {
-        String::from("float")
-    } else if ((receiver == "string") || (receiver == "array")) && (operation == "slice") {
-        String::from("float")
-    } else if ((receiver == "string") && ((operation == "indexOf") || (operation == "lastIndexOf")))
-        && (index == 1f64)
+    } else if ((((receiver == "string") && (operation == "split")) && (index == 1f64))
+        || (((receiver == "string") || (receiver == "array")) && (operation == "slice")))
+        || (((receiver == "string") && ((operation == "indexOf") || (operation == "lastIndexOf")))
+            && (index == 1f64))
     {
         String::from("float")
     } else if ((receiver == "string") && ((operation == "padStart") || (operation == "padEnd")))
@@ -372,7 +284,7 @@ pub fn read_primitive_method_default_value(receiver: &str, operation: &str, inde
     {
         String::from(" ")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -384,16 +296,18 @@ pub fn read_primitive_method_checked_result_form(receiver: &str, operation: &str
         String::from("bool")
     } else if (receiver == "array") && ((operation == "indexOf") || (operation == "lastIndexOf")) {
         String::from("float")
-    } else if receiver != "string" {
-        String::from("")
-    } else if operation == "split" {
-        String::from("array-string")
-    } else if (operation == "indexOf") || (operation == "lastIndexOf") {
-        String::from("float")
-    } else if operation == "codePointAt" {
-        String::from("optional-float")
+    } else if receiver == "string" {
+        if operation == "split" {
+            String::from("array-string")
+        } else if (operation == "indexOf") || (operation == "lastIndexOf") {
+            String::from("float")
+        } else if operation == "codePointAt" {
+            String::from("optional-float")
+        } else {
+            String::from("string")
+        }
     } else {
-        String::from("string")
+        String::new()
     }
 }
 
@@ -406,7 +320,7 @@ pub fn read_primitive_method_argument_obligation(
     if (receiver != "array")
         || (((operation != "includes") && (operation != "indexOf")) && (operation != "lastIndexOf"))
     {
-        String::from("")
+        String::new()
     } else if (((((element == "array") || (element == "record")) || (element == "map"))
         || (element == "set"))
         || (element == "data"))
@@ -414,7 +328,7 @@ pub fn read_primitive_method_argument_obligation(
     {
         String::from("object identity must be represented before searching arrays of objects")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -432,32 +346,22 @@ pub fn render_primitive_array_search_comparator(
         };
         if absence == "both" {
             format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (String::from(
-                        "|a, b| match (a, b) { (crate::MlOptional::Value(a), crate::MlOptional::Value(b)) => "
-                    )),
-                    present
-                )),
-                (String::from(
+                "{}{present}{}",
+                String::from(
+                    "|a, b| match (a, b) { (crate::MlOptional::Value(a), crate::MlOptional::Value(b)) => "
+                ),
+                String::from(
                     ", (crate::MlOptional::Null, crate::MlOptional::Null) | (crate::MlOptional::Undefined, crate::MlOptional::Undefined) => true, _ => false }"
-                ))
+                )
             )
         } else if (absence == "null") || (absence == "undefined") {
             format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (String::from("|a, b| match (a, b) { (Some(a), Some(b)) => ")),
-                    present
-                )),
-                (String::from(", (None, None) => true, _ => false }"))
+                "|a, b| match (a, b) {{ (Some(a), Some(b)) => {present}, (None, None) => true, _ => false }}"
             )
         } else if (operation == "includes") && (element == "float") {
-            format!("{}{}", (String::from("|a: &f64, b: &f64| ")), present)
+            format!("|a: &f64, b: &f64| {present}")
         } else {
-            format!("{}{}", (String::from("|a, b| ")), present)
+            format!("|a, b| {present}")
         }
     }
 }
@@ -475,61 +379,20 @@ pub fn render_primitive_array_search_expression(
         let comparator =
             self::render_primitive_array_search_comparator(operation, element, absence);
         format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (format!(
-                                "{}{}",
-                                (format!(
-                                    "{}{}",
-                                    (format!(
-                                        "{}{}",
-                                        (format!(
-                                            "{}{}",
-                                            (format!(
-                                                "{}{}",
-                                                (format!(
-                                                    "{}{}",
-                                                    (format!(
-                                                        "{}{}",
-                                                        (String::from("crate::ml_array::")),
-                                                        (if operation == "includes" {
-                                                            String::from("includes")
-                                                        } else {
-                                                            String::from("index_of")
-                                                        })
-                                                    )),
-                                                    (String::from("("))
-                                                )),
-                                                object.to_owned()
-                                            )),
-                                            (String::from(", &"))
-                                        )),
-                                        search.to_owned()
-                                    )),
-                                    (String::from(", "))
-                                )),
-                                from.to_owned()
-                            )),
-                            (String::from(", "))
-                        )),
-                        (if operation == "lastIndexOf" {
-                            String::from("true")
-                        } else {
-                            String::from("false")
-                        })
-                    )),
-                    (String::from(", "))
-                )),
-                comparator
-            )),
-            (String::from(")"))
+            "crate::ml_array::{}({}, &{}, {}, {}, {comparator})",
+            if operation == "includes" {
+                String::from("includes")
+            } else {
+                String::from("index_of")
+            },
+            object.to_owned(),
+            search.to_owned(),
+            from.to_owned(),
+            if operation == "lastIndexOf" {
+                String::from("true")
+            } else {
+                String::from("false")
+            }
         )
     }
 }
@@ -541,19 +404,20 @@ pub fn read_primitive_method_rendering_refusal(
     operation: &str,
 ) -> String {
     if (target != "Lean") && (target != "Rocq") {
-        String::from("")
-    } else if receiver != "array" {
-        String::from("this target needs a UTF-16 operational string encoding for this operation")
-    } else if (((operation == "slice") || (operation == "includes")) || (operation == "indexOf"))
-        || (operation == "lastIndexOf")
-    {
-        format!(
-            "{}{}",
-            (String::from("this array operation needs an operational encoding in ")),
-            target.to_owned()
-        )
+        String::new()
+    } else if receiver == "array" {
+        if (((operation == "slice") || (operation == "includes")) || (operation == "indexOf"))
+            || (operation == "lastIndexOf")
+        {
+            format!(
+                "this array operation needs an operational encoding in {}",
+                target.to_owned()
+            )
+        } else {
+            String::new()
+        }
     } else {
-        String::from("")
+        String::from("this target needs a UTF-16 operational string encoding for this operation")
     }
 }
 
@@ -574,11 +438,7 @@ pub fn render_primitive_method_argument(
         if absent {
             String::from("None")
         } else {
-            format!(
-                "{}{}",
-                (format!("{}{}", (String::from("Some(")), text.to_owned())),
-                (String::from(")"))
-            )
+            format!("Some({})", text.to_owned())
         }
     } else {
         text.to_owned()
@@ -595,137 +455,65 @@ pub fn render_primitive_method_expression(
 ) -> String {
     if target == "JavaScript" {
         format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (format!("{}{}", (String::from("(")), object.to_owned())),
-                            (String::from(")."))
-                        )),
-                        operation.to_owned()
-                    )),
-                    (String::from("("))
-                )),
-                arguments_text.to_owned()
-            )),
-            (String::from(")"))
+            "({}).{}({})",
+            object.to_owned(),
+            operation.to_owned(),
+            arguments_text.to_owned()
         )
     } else if ((target == "Rust") && (receiver == "array")) && (operation == "slice") {
         format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (String::from("crate::ml_array::slice(")),
-                        object.to_owned()
-                    )),
-                    (String::from(", "))
-                )),
-                arguments_text.to_owned()
-            )),
-            (String::from(")"))
+            "crate::ml_array::slice({}, {})",
+            object.to_owned(),
+            arguments_text.to_owned()
         )
     } else if (target != "Rust") || (receiver != "string") {
-        String::from("")
+        String::new()
     } else if operation == "indexOf" {
         format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!("{}{}", object.to_owned(), (String::from(".index_of(")))),
-                arguments_text.to_owned()
-            )),
-            (String::from(")"))
+            "{}.index_of({})",
+            object.to_owned(),
+            arguments_text.to_owned()
         )
     } else if operation == "lastIndexOf" {
         format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!("{}{}", object.to_owned(), (String::from(".last_index_of(")))),
-                arguments_text.to_owned()
-            )),
-            (String::from(")"))
+            "{}.last_index_of({})",
+            object.to_owned(),
+            arguments_text.to_owned()
         )
     } else if operation == "codePointAt" {
         format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!("{}{}", object.to_owned(), (String::from(".code_point_at(")))),
-                arguments_text.to_owned()
-            )),
-            (String::from(")"))
+            "{}.code_point_at({})",
+            object.to_owned(),
+            arguments_text.to_owned()
         )
     } else if (operation == "replace") || (operation == "replaceAll") {
         format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!("{}{}", object.to_owned(), (String::from(".replace(")))),
-                        arguments_text.to_owned()
-                    )),
-                    (String::from(", "))
-                )),
-                (if operation == "replaceAll" {
-                    String::from("true")
-                } else {
-                    String::from("false")
-                })
-            )),
-            (String::from(")"))
+            "{}.replace({}, {})",
+            object.to_owned(),
+            arguments_text.to_owned(),
+            if operation == "replaceAll" {
+                String::from("true")
+            } else {
+                String::from("false")
+            }
         )
     } else if (operation == "padStart") || (operation == "padEnd") {
         format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!("{}{}", object.to_owned(), (String::from(".pad(")))),
-                        arguments_text.to_owned()
-                    )),
-                    (String::from(", "))
-                )),
-                (if operation == "padStart" {
-                    String::from("true")
-                } else {
-                    String::from("false")
-                })
-            )),
-            (String::from(")"))
+            "{}.pad({}, {})",
+            object.to_owned(),
+            arguments_text.to_owned(),
+            if operation == "padStart" {
+                String::from("true")
+            } else {
+                String::from("false")
+            }
         )
     } else {
         format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!("{}{}", object.to_owned(), (String::from(".")))),
-                        operation.to_owned()
-                    )),
-                    (String::from("("))
-                )),
-                arguments_text.to_owned()
-            )),
-            (String::from(")"))
+            "{}.{}({})",
+            object.to_owned(),
+            operation.to_owned(),
+            arguments_text.to_owned()
         )
     }
 }

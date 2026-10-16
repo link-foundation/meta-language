@@ -1,15 +1,40 @@
 // Generated from the complete checked optional kernel and its recorded source dependencies.
 // Do not edit by hand.
-use super::*;
+use super::ml_array;
+use super::optional_fact_element;
+use super::optional_fact_field;
+use super::optional_fact_tag;
+use super::read_required_number_fact;
+use super::refuse_required_boolean_fact;
+use super::refuse_required_text_fact;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_required_text_fact(values: &[String], index: f64) -> String {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required text fact column position"
+        );
+
+        (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
+            .unwrap_or_else(self::refuse_required_text_fact)
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required Boolean fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required Boolean fact column position"
+        );
+
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_boolean_fact())
+            .unwrap_or_else(self::refuse_required_boolean_fact)
     }
 }
 
@@ -73,9 +98,10 @@ pub fn ml_plan_optional_additional_absence_loop2(
                 let other = self::optional_fact_element(starts, counts, targets, expected, at);
                 {
                     let pairs_3 = if (other >= 0f64)
-                        && ((self::optional_fact_tag(
+                        && (!(self::optional_fact_tag(
                             texts, starts, counts, labels, targets, other, "kind",
-                        )) != "")
+                        ))
+                        .is_empty())
                     {
                         {
                             {
@@ -273,13 +299,10 @@ pub fn ml_plan_inference_term_identity_loop7(
                     texts, starts, counts, labels, targets, second, "absence",
                 );
                 {
-                    let second_absence_3 = if absence != second_absence {
-                        {
-                            let second_absence_2 = String::from("both");
-                            second_absence_2
-                        }
+                    let second_absence_3 = if absence == second_absence {
+                        second_absence
                     } else {
-                        second_absence.clone()
+                        { String::from("both") }
                     };
                     {
                         let second_2 = self::optional_fact_field(
@@ -296,7 +319,7 @@ pub fn ml_plan_inference_term_identity_loop7(
         return {
             self::MlPlanInferenceTermIdentityLoop7Result::MlPlanInferenceTermIdentityLoop7Done(
                 second,
-                second_absence.clone(),
+                second_absence,
             )
         };
     }
@@ -327,13 +350,10 @@ pub fn ml_plan_inference_term_identity_loop6(
                     texts, starts, counts, labels, targets, first, "absence",
                 );
                 {
-                    let first_absence_3 = if absence != first_absence {
-                        {
-                            let first_absence_2 = String::from("both");
-                            first_absence_2
-                        }
+                    let first_absence_3 = if absence == first_absence {
+                        first_absence
                     } else {
-                        first_absence.clone()
+                        { String::from("both") }
                     };
                     {
                         let first_2 = self::optional_fact_field(
@@ -350,7 +370,7 @@ pub fn ml_plan_inference_term_identity_loop6(
         return {
             self::MlPlanInferenceTermIdentityLoop6Result::MlPlanInferenceTermIdentityLoop6Done(
                 first,
-                first_absence.clone(),
+                first_absence,
             )
         };
     }

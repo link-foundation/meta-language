@@ -1,7 +1,5 @@
 // Generated from the complete checked optional kernel and its recorded source dependencies.
 // Do not edit by hand.
-use super::*;
-
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn require_optional_flattening(kind: &str, element: &str) -> bool {
@@ -58,7 +56,7 @@ pub fn read_optional_logical_mixing_error(
     } else if (position == "or") && coalesced {
         String::from("mixing ?? with || needs parentheses")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -68,7 +66,7 @@ pub fn read_optional_source_literal(token: &str, declared: bool) -> String {
     if (token == "null") || ((token == "undefined") && !declared) {
         token.to_owned()
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -86,6 +84,10 @@ pub fn read_optional_big_int_constraint(kind: &str, element: &str, integer: bool
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+#[expect(
+    clippy::fn_params_excessive_bools,
+    reason = "the checked source interface retains independent Boolean and text inputs in their original evaluation order"
+)]
 pub fn require_optional_result_binding(
     declared: bool,
     additional: bool,
@@ -108,7 +110,7 @@ pub fn read_optional_call_binding(
     recursive: bool,
 ) -> String {
     if (parameter != "var") || (actual != "option") {
-        String::from("")
+        String::new()
     } else if current == "option" {
         if (current_absence != actual_absence) && (current_absence != "both") {
             String::from("merge")
@@ -116,7 +118,7 @@ pub fn read_optional_call_binding(
             String::from("elements")
         }
     } else if recursive {
-        String::from("")
+        String::new()
     } else {
         String::from("bind")
     }
@@ -159,40 +161,44 @@ pub fn read_optional_coercion_operation(
     accepts_undefined: bool,
     same_element: bool,
 ) -> String {
-    if expected != "option" {
-        String::from("")
-    } else if expression == "none" {
-        if accepts_actual {
-            String::from("none")
+    if expected == "option" {
+        if expression == "none" {
+            if accepts_actual {
+                String::from("none")
+            } else {
+                String::from("absence-error")
+            }
+        } else if ((language == "JavaScript") && (actual == "unit")) && accepts_undefined {
+            if expression == "unit" {
+                String::from("unit")
+            } else {
+                String::from("discard-unit")
+            }
+        } else if same_element {
+            String::from("some")
         } else {
-            String::from("absence-error")
+            String::new()
         }
-    } else if ((language == "JavaScript") && (actual == "unit")) && accepts_undefined {
-        if expression == "unit" {
-            String::from("unit")
-        } else {
-            String::from("discard-unit")
-        }
-    } else if same_element {
-        String::from("some")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_optional_field_operation(kind: &str, element: &str, field: &str) -> String {
-    if kind != "option" {
-        String::from("field")
-    } else if (field == "length") && ((element == "string") || (element == "array")) {
-        String::from("project")
-    } else if (field == "size") && ((element == "set") || (element == "map")) {
-        String::from("project")
-    } else if element == "record" {
-        String::from("optional-field")
+    if kind == "option" {
+        if (field == "length") && ((element == "string") || (element == "array")) {
+            String::from("project")
+        } else if (field == "size") && ((element == "set") || (element == "map")) {
+            String::from("project")
+        } else if element == "record" {
+            String::from("optional-field")
+        } else {
+            String::from("unsupported")
+        }
     } else {
-        String::from("unsupported")
+        String::from("field")
     }
 }
 
@@ -213,20 +219,15 @@ pub fn render_optional_absent_value(
     } else if format == "Rust" {
         if policy == "both" {
             format!(
-                "{}{}",
-                (String::from("crate::MlOptional::")),
-                (if absence == "null" {
+                "crate::MlOptional::{}",
+                if absence == "null" {
                     String::from("Null")
                 } else {
                     String::from("Undefined")
-                })
+                }
             )
         } else {
-            format!(
-                "{}{}",
-                (format!("{}{}", (String::from("None::<")), element.to_owned())),
-                (String::from(">"))
-            )
+            format!("None::<{}>", element.to_owned())
         }
     } else if format == "Lean" {
         if (policy == "both") && (absence == "undefined") {
@@ -236,32 +237,23 @@ pub fn render_optional_absent_value(
         }
     } else if format == "Rocq" {
         if (policy == "both") && (absence == "undefined") {
-            format!(
-                "{}{}",
-                (format!("{}{}", (String::from("(Some (@None ")), element.to_owned())),
-                (String::from("))"))
-            )
+            format!("(Some (@None {}))", element.to_owned())
         } else {
             format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (String::from("(@None ")),
-                    (if policy == "both" {
-                        format!(
-                            "{}{}",
-                            (format!("{}{}", (String::from("(option ")), element.to_owned())),
-                            (String::from(")"))
-                        )
-                    } else {
-                        element.to_owned()
-                    })
-                )),
-                (String::from(")"))
+                "(@None {})",
+                if policy == "both" {
+                    format!(
+                        "{}{}",
+                        (format!("{}{}", (String::from("(option ")), element.to_owned())),
+                        (String::from(")"))
+                    )
+                } else {
+                    element.to_owned()
+                }
             )
         }
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -272,52 +264,24 @@ pub fn render_optional_present_value(format: &str, policy: &str, value: &str) ->
         value.to_owned()
     } else if format == "Rust" {
         if policy == "both" {
-            format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (String::from("crate::MlOptional::Value(")),
-                    value.to_owned()
-                )),
-                (String::from(")"))
-            )
+            format!("crate::MlOptional::Value({})", value.to_owned())
         } else {
-            format!(
-                "{}{}",
-                (format!("{}{}", (String::from("Some(")), value.to_owned())),
-                (String::from(")"))
-            )
+            format!("Some({})", value.to_owned())
         }
     } else if format == "Lean" {
         if policy == "both" {
-            format!(
-                "{}{}",
-                (format!("{}{}", (String::from("(some (some ")), value.to_owned())),
-                (String::from("))"))
-            )
+            format!("(some (some {}))", value.to_owned())
         } else {
-            format!(
-                "{}{}",
-                (format!("{}{}", (String::from("(some ")), value.to_owned())),
-                (String::from(")"))
-            )
+            format!("(some {})", value.to_owned())
         }
     } else if format == "Rocq" {
         if policy == "both" {
-            format!(
-                "{}{}",
-                (format!("{}{}", (String::from("(Some (Some ")), value.to_owned())),
-                (String::from("))"))
-            )
+            format!("(Some (Some {}))", value.to_owned())
         } else {
-            format!(
-                "{}{}",
-                (format!("{}{}", (String::from("(Some ")), value.to_owned())),
-                (String::from(")"))
-            )
+            format!("(Some {})", value.to_owned())
         }
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -335,8 +299,32 @@ pub fn render_optional_match(
     if format == "Rust" {
         if policy == "both" {
             format!(
-                "{}{}",
-                (format!(
+                "match {} {{ crate::MlOptional::Value({}) => {}, crate::MlOptional::Null => {}, crate::MlOptional::Undefined => {} }}",
+                value.to_owned(),
+                binder.to_owned(),
+                present.to_owned(),
+                null_case.to_owned(),
+                undefined_case.to_owned()
+            )
+        } else {
+            format!(
+                "match {} {{ Some({}) => {}, None => {} }}",
+                value.to_owned(),
+                binder.to_owned(),
+                present.to_owned(),
+                if policy == "null" {
+                    null_case.to_owned()
+                } else {
+                    undefined_case.to_owned()
+                }
+            )
+        }
+    } else if format == "Lean" {
+        format!(
+            "(match {} with {})",
+            value.to_owned(),
+            if policy == "both" {
+                format!(
                     "{}{}",
                     (format!(
                         "{}{}",
@@ -350,35 +338,51 @@ pub fn render_optional_match(
                                         "{}{}",
                                         (format!(
                                             "{}{}",
-                                            (format!(
-                                                "{}{}",
-                                                (format!(
-                                                    "{}{}",
-                                                    (String::from("match ")),
-                                                    value.to_owned()
-                                                )),
-                                                (String::from(" { crate::MlOptional::Value("))
-                                            )),
+                                            (String::from("| some (some ")),
                                             binder.to_owned()
                                         )),
                                         (String::from(") => "))
                                     )),
                                     present.to_owned()
                                 )),
-                                (String::from(", crate::MlOptional::Null => "))
+                                (String::from(" | none => "))
                             )),
                             null_case.to_owned()
                         )),
-                        (String::from(", crate::MlOptional::Undefined => "))
+                        (String::from(" | some none => "))
                     )),
                     undefined_case.to_owned()
-                )),
-                (String::from(" }"))
-            )
-        } else {
-            format!(
-                "{}{}",
-                (format!(
+                )
+            } else {
+                format!(
+                    "{}{}",
+                    (format!(
+                        "{}{}",
+                        (format!(
+                            "{}{}",
+                            (format!(
+                                "{}{}",
+                                (format!("{}{}", (String::from("| some ")), binder.to_owned())),
+                                (String::from(" => "))
+                            )),
+                            present.to_owned()
+                        )),
+                        (String::from(" | none => "))
+                    )),
+                    (if policy == "null" {
+                        null_case.to_owned()
+                    } else {
+                        undefined_case.to_owned()
+                    })
+                )
+            }
+        )
+    } else if format == "Rocq" {
+        format!(
+            "(match {} with {} end)",
+            value.to_owned(),
+            if policy == "both" {
+                format!(
                     "{}{}",
                     (format!(
                         "{}{}",
@@ -392,162 +396,47 @@ pub fn render_optional_match(
                                         "{}{}",
                                         (format!(
                                             "{}{}",
-                                            (String::from("match ")),
-                                            value.to_owned()
+                                            (String::from("| Some (Some ")),
+                                            binder.to_owned()
                                         )),
-                                        (String::from(" { Some("))
+                                        (String::from(") => "))
                                     )),
-                                    binder.to_owned()
+                                    present.to_owned()
                                 )),
-                                (String::from(") => "))
+                                (String::from(" | None => "))
+                            )),
+                            null_case.to_owned()
+                        )),
+                        (String::from(" | Some None => "))
+                    )),
+                    undefined_case.to_owned()
+                )
+            } else {
+                format!(
+                    "{}{}",
+                    (format!(
+                        "{}{}",
+                        (format!(
+                            "{}{}",
+                            (format!(
+                                "{}{}",
+                                (format!("{}{}", (String::from("| Some ")), binder.to_owned())),
+                                (String::from(" => "))
                             )),
                             present.to_owned()
                         )),
-                        (String::from(", None => "))
+                        (String::from(" | None => "))
                     )),
                     (if policy == "null" {
                         null_case.to_owned()
                     } else {
                         undefined_case.to_owned()
                     })
-                )),
-                (String::from(" }"))
-            )
-        }
-    } else if format == "Lean" {
-        format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!("{}{}", (String::from("(match ")), value.to_owned())),
-                    (String::from(" with "))
-                )),
-                (if policy == "both" {
-                    format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (format!(
-                                "{}{}",
-                                (format!(
-                                    "{}{}",
-                                    (format!(
-                                        "{}{}",
-                                        (format!(
-                                            "{}{}",
-                                            (format!(
-                                                "{}{}",
-                                                (String::from("| some (some ")),
-                                                binder.to_owned()
-                                            )),
-                                            (String::from(") => "))
-                                        )),
-                                        present.to_owned()
-                                    )),
-                                    (String::from(" | none => "))
-                                )),
-                                null_case.to_owned()
-                            )),
-                            (String::from(" | some none => "))
-                        )),
-                        undefined_case.to_owned()
-                    )
-                } else {
-                    format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (format!(
-                                "{}{}",
-                                (format!(
-                                    "{}{}",
-                                    (format!("{}{}", (String::from("| some ")), binder.to_owned())),
-                                    (String::from(" => "))
-                                )),
-                                present.to_owned()
-                            )),
-                            (String::from(" | none => "))
-                        )),
-                        (if policy == "null" {
-                            null_case.to_owned()
-                        } else {
-                            undefined_case.to_owned()
-                        })
-                    )
-                })
-            )),
-            (String::from(")"))
-        )
-    } else if format == "Rocq" {
-        format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!("{}{}", (String::from("(match ")), value.to_owned())),
-                    (String::from(" with "))
-                )),
-                (if policy == "both" {
-                    format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (format!(
-                                "{}{}",
-                                (format!(
-                                    "{}{}",
-                                    (format!(
-                                        "{}{}",
-                                        (format!(
-                                            "{}{}",
-                                            (format!(
-                                                "{}{}",
-                                                (String::from("| Some (Some ")),
-                                                binder.to_owned()
-                                            )),
-                                            (String::from(") => "))
-                                        )),
-                                        present.to_owned()
-                                    )),
-                                    (String::from(" | None => "))
-                                )),
-                                null_case.to_owned()
-                            )),
-                            (String::from(" | Some None => "))
-                        )),
-                        undefined_case.to_owned()
-                    )
-                } else {
-                    format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (format!(
-                                "{}{}",
-                                (format!(
-                                    "{}{}",
-                                    (format!("{}{}", (String::from("| Some ")), binder.to_owned())),
-                                    (String::from(" => "))
-                                )),
-                                present.to_owned()
-                            )),
-                            (String::from(" | None => "))
-                        )),
-                        (if policy == "null" {
-                            null_case.to_owned()
-                        } else {
-                            undefined_case.to_owned()
-                        })
-                    )
-                })
-            )),
-            (String::from(" end)"))
+                )
+            }
         )
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -561,103 +450,45 @@ pub fn render_optional_coalescing(
     fallback: &str,
 ) -> String {
     if format == "JavaScript" {
-        format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!("{}{}", (String::from("(")), value.to_owned())),
-                    (String::from(" ?? "))
-                )),
-                fallback.to_owned()
-            )),
-            (String::from(")"))
-        )
+        format!("({} ?? {})", value.to_owned(), fallback.to_owned())
     } else if format == "Rust" {
         if policy == "both" {
             format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!("{}{}", (String::from("match ")), value.to_owned())),
-                        (String::from(" { crate::MlOptional::Value(ml_value) => ml_value, _ => "))
-                    )),
-                    fallback.to_owned()
-                )),
-                (String::from(" }"))
+                "match {} {{ crate::MlOptional::Value(ml_value) => ml_value, _ => {} }}",
+                value.to_owned(),
+                fallback.to_owned()
             )
         } else {
             format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        receiver.to_owned(),
-                        (String::from(".clone().unwrap_or_else(|| "))
-                    )),
-                    fallback.to_owned()
-                )),
-                (String::from(")"))
+                "{}.clone().unwrap_or_else(|| {})",
+                receiver.to_owned(),
+                fallback.to_owned()
             )
         }
     } else if format == "Lean" {
         format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (format!("{}{}", (String::from("(match ")), value.to_owned())),
-                            (String::from(" with | "))
-                        )),
-                        (if policy == "both" {
-                            String::from("some (some ml_value)")
-                        } else {
-                            String::from("some ml_value")
-                        })
-                    )),
-                    (String::from(" => ml_value | _ => "))
-                )),
-                fallback.to_owned()
-            )),
-            (String::from(")"))
+            "(match {} with | {} => ml_value | _ => {})",
+            value.to_owned(),
+            if policy == "both" {
+                String::from("some (some ml_value)")
+            } else {
+                String::from("some ml_value")
+            },
+            fallback.to_owned()
         )
     } else if format == "Rocq" {
         format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (format!("{}{}", (String::from("(match ")), value.to_owned())),
-                            (String::from(" with | "))
-                        )),
-                        (if policy == "both" {
-                            String::from("Some (Some ml_value)")
-                        } else {
-                            String::from("Some ml_value")
-                        })
-                    )),
-                    (String::from(" => ml_value | _ => "))
-                )),
-                fallback.to_owned()
-            )),
-            (String::from(" end)"))
+            "(match {} with | {} => ml_value | _ => {} end)",
+            value.to_owned(),
+            if policy == "both" {
+                String::from("Some (Some ml_value)")
+            } else {
+                String::from("Some ml_value")
+            },
+            fallback.to_owned()
         )
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -667,13 +498,12 @@ pub fn render_optional_flatten_absence(format: &str, policy: &str, absence: &str
     if format == "Rust" {
         if policy == "both" {
             format!(
-                "{}{}",
-                (String::from("crate::MlOptional::")),
-                (if absence == "null" {
+                "crate::MlOptional::{}",
+                if absence == "null" {
                     String::from("Null")
                 } else {
                     String::from("Undefined")
-                })
+                }
             )
         } else {
             String::from("None")
@@ -691,7 +521,7 @@ pub fn render_optional_flatten_absence(format: &str, policy: &str, absence: &str
             String::from("None")
         }
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -752,126 +582,222 @@ pub fn render_optional_projection(
     field: &str,
 ) -> String {
     if format == "JavaScript" {
-        format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!("{}{}", (String::from("(")), value.to_owned())),
-                    (String::from(")?.["))
-                )),
-                field.to_owned()
-            )),
-            (String::from("]"))
-        )
+        format!("({})?.[{}]", value.to_owned(), field.to_owned())
     } else if format == "Rust" {
         if policy == "both" {
             format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (format!(
-                                "{}{}",
-                                (format!("{}{}", (String::from("match ")), value.to_owned())),
-                                (String::from(" { crate::MlOptional::Value("))
-                            )),
-                            binder.to_owned()
-                        )),
-                        (String::from(") => Some("))
-                    )),
-                    present.to_owned()
-                )),
-                (String::from("), _ => None }"))
+                "match {} {{ crate::MlOptional::Value({}) => Some({}), _ => None }}",
+                value.to_owned(),
+                binder.to_owned(),
+                present.to_owned()
             )
         } else {
             format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (format!(
-                                "{}{}",
-                                receiver.to_owned(),
-                                (String::from(".clone().map(|"))
-                            )),
-                            binder.to_owned()
-                        )),
-                        (String::from("| "))
-                    )),
-                    present.to_owned()
-                )),
-                (String::from(")"))
+                "{}.clone().map(|{}| {})",
+                receiver.to_owned(),
+                binder.to_owned(),
+                present.to_owned()
             )
         }
     } else if format == "Lean" {
         format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
+            "(match {} with | {} => some {} | _ => none)",
+            value.to_owned(),
+            if policy == "both" {
+                format!(
                     "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (format!("{}{}", (String::from("(match ")), value.to_owned())),
-                            (String::from(" with | "))
-                        )),
-                        (if policy == "both" {
-                            format!(
-                                "{}{}",
-                                (format!("{}{}", (String::from("some (some ")), binder.to_owned())),
-                                (String::from(")"))
-                            )
-                        } else {
-                            format!("{}{}", (String::from("some ")), binder.to_owned())
-                        })
-                    )),
-                    (String::from(" => some "))
-                )),
-                present.to_owned()
-            )),
-            (String::from(" | _ => none)"))
+                    (format!("{}{}", (String::from("some (some ")), binder.to_owned())),
+                    (String::from(")"))
+                )
+            } else {
+                format!("{}{}", (String::from("some ")), binder.to_owned())
+            },
+            present.to_owned()
         )
     } else if format == "Rocq" {
         format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
+            "(match {} with | {} => Some {} | _ => None end)",
+            value.to_owned(),
+            if policy == "both" {
+                format!(
                     "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (format!("{}{}", (String::from("(match ")), value.to_owned())),
-                            (String::from(" with | "))
-                        )),
-                        (if policy == "both" {
-                            format!(
-                                "{}{}",
-                                (format!("{}{}", (String::from("Some (Some ")), binder.to_owned())),
-                                (String::from(")"))
-                            )
-                        } else {
-                            format!("{}{}", (String::from("Some ")), binder.to_owned())
-                        })
-                    )),
-                    (String::from(" => Some "))
-                )),
-                present.to_owned()
-            )),
-            (String::from(" | _ => None end)"))
+                    (format!("{}{}", (String::from("Some (Some ")), binder.to_owned())),
+                    (String::from(")"))
+                )
+            } else {
+                format!("{}{}", (String::from("Some ")), binder.to_owned())
+            },
+            present.to_owned()
         )
     } else {
-        String::from("")
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_optional_primitive_truth(
+    format: &str,
+    kind: &str,
+    value: &str,
+    receiver: &str,
+    utf16: bool,
+    signed: bool,
+) -> String {
+    if format == "JavaScript" {
+        format!("!!({})", value.to_owned())
+    } else if kind == "bool" {
+        value.to_owned()
+    } else if format == "Rust" {
+        if kind == "float" {
+            format!(
+                "{{ let ml_value = {}; ml_value != 0f64 && !ml_value.is_nan() }}",
+                value.to_owned()
+            )
+        } else if (kind == "int") || (kind == "nat") {
+            format!("!{}.is_zero()", receiver.to_owned())
+        } else if kind == "fixed" {
+            format!("({} != 0)", receiver.to_owned())
+        } else if kind == "string" {
+            format!(
+                "!{}{}",
+                receiver.to_owned(),
+                if utf16 {
+                    String::from(".0.is_empty()")
+                } else {
+                    String::from(".is_empty()")
+                }
+            )
+        } else {
+            format!(
+                "{{ let _ = {}; {} }}",
+                value.to_owned(),
+                if kind != "unit" {
+                    String::from("true")
+                } else {
+                    String::from("false")
+                }
+            )
+        }
+    } else if format == "Lean" {
+        if kind == "float" {
+            format!(
+                "(let ml_value := {}; ml_value != (0 : Float) && !ml_value.isNaN)",
+                value.to_owned()
+            )
+        } else if ((kind == "int") || (kind == "nat")) || (kind == "fixed") {
+            format!("({} != 0)", value.to_owned())
+        } else if kind == "string" {
+            format!("(!{}.isEmpty)", value.to_owned())
+        } else {
+            format!(
+                "(let ml_ignored := {}; {})",
+                value.to_owned(),
+                if kind != "unit" {
+                    String::from("true")
+                } else {
+                    String::from("false")
+                }
+            )
+        }
+    } else if format == "Rocq" {
+        if kind == "float" {
+            format!(
+                "(let ml_value := {} in andb (negb (PrimFloat.eqb ml_value 0%float)) (negb (PrimFloat.is_nan ml_value)))",
+                value.to_owned()
+            )
+        } else if (kind == "int") || ((kind == "fixed") && signed) {
+            format!("(negb (Z.eqb {} 0))", value.to_owned())
+        } else if (kind == "nat") || (kind == "fixed") {
+            format!("(negb (N.eqb {} 0))", value.to_owned())
+        } else if kind == "string" {
+            format!("(negb (String.eqb {} EmptyString))", value.to_owned())
+        } else {
+            format!(
+                "(let ml_ignored := {} in {})",
+                value.to_owned(),
+                if kind != "unit" {
+                    String::from("true")
+                } else {
+                    String::from("false")
+                }
+            )
+        }
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_optional_equality_present(
+    format: &str,
+    kind: &str,
+    policy: &str,
+    name: &str,
+) -> String {
+    if kind == "option" {
+        if format == "Rust" {
+            if policy == "both" {
+                format!("crate::MlOptional::Value({})", name.to_owned())
+            } else {
+                format!("Some({})", name.to_owned())
+            }
+        } else if format == "Lean" {
+            if policy == "both" {
+                format!("some (some {})", name.to_owned())
+            } else {
+                format!("some {}", name.to_owned())
+            }
+        } else if policy == "both" {
+            format!("Some (Some {})", name.to_owned())
+        } else {
+            format!("Some {}", name.to_owned())
+        }
+    } else {
+        name.to_owned()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_optional_equality_absence(policy: &str, index: f64) -> String {
+    if policy == "both" {
+        if index == 0f64 {
+            String::from("null")
+        } else {
+            String::from("undefined")
+        }
+    } else {
+        policy.to_owned()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_optional_equality_absent(format: &str, policy: &str, absence: &str) -> String {
+    if format == "Rust" {
+        if policy == "both" {
+            format!(
+                "crate::MlOptional::{}",
+                if absence == "null" {
+                    String::from("Null")
+                } else {
+                    String::from("Undefined")
+                }
+            )
+        } else {
+            String::from("None")
+        }
+    } else if format == "Lean" {
+        if (policy == "both") && (absence == "undefined") {
+            String::from("some none")
+        } else {
+            String::from("none")
+        }
+    } else if (policy == "both") && (absence == "undefined") {
+        String::from("Some None")
+    } else {
+        String::from("None")
     }
 }

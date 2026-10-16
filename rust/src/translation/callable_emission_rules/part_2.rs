@@ -1,6 +1,14 @@
 // Generated from the complete checked JavaScript source and recorded dependencies.
 // Do not edit by hand.
-use super::*;
+use super::accept_callable_effect_field;
+use super::callable_emission_field;
+use super::callable_emission_has_name;
+use super::callable_emission_text;
+use super::ml;
+use super::ml_array;
+use super::read_callable_eager_effects;
+use super::read_required_number_fact;
+use super::read_required_text_fact;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -193,7 +201,7 @@ pub fn read_callable_output_target_refusal(target: &str, count: f64) -> String {
             "function values that print or may abort require an output-threaded function type",
         )
     } else {
-        String::from("")
+        String::new()
     }
 }
 

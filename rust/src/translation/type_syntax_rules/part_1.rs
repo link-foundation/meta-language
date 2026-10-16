@@ -1,7 +1,5 @@
 // Generated from the complete checked JavaScript source and recorded dependencies.
 // Do not edit by hand.
-use super::*;
-
 /// The Math functions that Rust's f64 methods do not share with JavaScript.
 pub mod ml_math {
     /// Math.round: the nearest integer, the one towards +Infinity on a tie,
@@ -14,14 +12,14 @@ pub mod ml_math {
         if x > 0.0 && x < 0.5 {
             return 0.0;
         }
-        if x < 0.0 && x >= -0.5 {
+        if (-0.5..0.0).contains(&x) {
             return -0.0;
         }
         let floor = x.floor();
         if x - floor >= 0.5 { floor + 1.0 } else { floor }
     }
 
-    /// Math.sign, which keeps -0, 0 and NaN, where f64::signum does not.
+    /// Math.sign, which keeps -0, 0 and NaN, where `f64::signum` does not.
     #[must_use]
     pub fn sign(x: f64) -> f64 {
         if x > 0.0 {
@@ -92,10 +90,9 @@ pub mod ml_array {
     /// JavaScript, aborts.
     #[must_use]
     pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {
-        match index.and_then(|index| values.get(index)) {
-            Some(value) => value.clone(),
-            None => panic!("array index out of range"),
-        }
+        index
+            .and_then(|index| values.get(index))
+            .map_or_else(|| panic!("array index out of range"), Clone::clone)
     }
 
     /// The index a Number names: a non-negative integer, -0 included.
@@ -113,7 +110,7 @@ pub mod ml_array {
         left.extend(right);
         left
     }
-    fn integer(value: f64) -> f64 {
+    const fn integer(value: f64) -> f64 {
         if value.is_nan() { 0.0 } else { value.trunc() }
     }
     fn relative(value: f64, length: usize) -> usize {
@@ -221,33 +218,45 @@ pub fn refuse_required_boolean_fact() -> bool {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required Number fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required Number fact column position"
+        );
+
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_number_fact())
+            .unwrap_or_else(self::refuse_required_number_fact)
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_text_fact(values: &[String], index: f64) -> String {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required text fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required text fact column position"
+        );
+
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_text_fact())
+            .unwrap_or_else(self::refuse_required_text_fact)
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required Boolean fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required Boolean fact column position"
+        );
+
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_boolean_fact())
+            .unwrap_or_else(self::refuse_required_boolean_fact)
     }
 }
 
@@ -292,7 +301,7 @@ pub fn read_union_target_refusal(target: &str) -> String {
     } else if target == "Rocq" {
         String::from("no Rocq type for union")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -334,7 +343,10 @@ pub fn ml_read_type_separator_positions_loop1(
                                 depth_3
                             };
                             {
-                                let positions_3 = if (depth_5 == 0f64) && (unit == separator) {
+                                let positions_3 = if (depth_5 == 0f64)
+                                    && ((unit).partial_cmp(&(separator))
+                                        == Some(std::cmp::Ordering::Equal))
+                                {
                                     {
                                         {
                                             let (ml_append_right, ml_append_left) =

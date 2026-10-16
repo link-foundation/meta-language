@@ -1,6 +1,39 @@
 // Generated from the complete shared grammar-lexer-rules.js and recorded source closure.
 // Do not edit by hand.
-use super::*;
+use super::MlReadGrammarLexerBindingNamesLoop22Result;
+use super::MlReadGrammarLexerCommandPlanLoop24Result;
+use super::MlReadGrammarLexerDeclarationIssueLoop28Result;
+use super::MlReadGrammarLexerDeclarationIssueLoop29Result;
+use super::MlReadGrammarLexerLiteralExtensionLoop10Result;
+use super::MlReadGrammarLexerLiteralExtensionLoop11Result;
+use super::MlReadGrammarLexerLiteralExtensionLoop12Result;
+use super::MlReadGrammarLexerLiteralExtensionLoop13Result;
+use super::MlReadGrammarLexerObligationPositionsLoop37Result;
+use super::MlReadGrammarLexerOwnerComparisonLoop19Result;
+use super::MlReadGrammarLexerOwnerComparisonLoop20Result;
+use super::ml_array;
+use super::ml_math;
+use super::ml_read_grammar_lexer_binding_names_loop22;
+use super::ml_read_grammar_lexer_binding_names_loop23;
+use super::ml_read_grammar_lexer_command_plan_loop24;
+use super::ml_read_grammar_lexer_declaration_issue_loop28;
+use super::ml_read_grammar_lexer_declaration_issue_loop29;
+use super::ml_read_grammar_lexer_lazy_normalization_loop41;
+use super::ml_read_grammar_lexer_literal_extension_loop10;
+use super::ml_read_grammar_lexer_literal_extension_loop11;
+use super::ml_read_grammar_lexer_literal_extension_loop12;
+use super::ml_read_grammar_lexer_literal_extension_loop13;
+use super::ml_read_grammar_lexer_literal_extension_loop14;
+use super::ml_read_grammar_lexer_obligation_positions_loop37;
+use super::ml_read_grammar_lexer_obligation_positions_loop38;
+use super::ml_read_grammar_lexer_owner_comparison_loop19;
+use super::ml_read_grammar_lexer_owner_comparison_loop20;
+use super::ml_string;
+use super::read_grammar_lexer_literal_rule_position;
+use super::read_grammar_lexer_text_position;
+use super::read_required_boolean_fact;
+use super::read_required_number_fact;
+use super::read_required_text_fact;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -10,8 +43,8 @@ use super::*;
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
 pub fn read_grammar_lexer_literal_extension(
-    owner: self::ml_string::Text,
-    value: self::ml_string::Text,
+    owner: &self::ml_string::Text,
+    value: &self::ml_string::Text,
     kinds: &[self::ml_string::Text],
     names: &[self::ml_string::Text],
     values: &[self::ml_string::Text],
@@ -39,8 +72,8 @@ pub fn read_grammar_lexer_literal_extension(
                             let literals = Vec::<bool>::new();
                             {
                                 let ml_s8 = self::ml_read_grammar_lexer_literal_extension_loop10(
-                                    owner.clone(),
-                                    value.clone(),
+                                    owner,
+                                    value,
                                     kinds,
                                     names,
                                     values,
@@ -54,16 +87,16 @@ pub fn read_grammar_lexer_literal_extension(
                                 );
                                 match ml_s8 {
                                     self::MlReadGrammarLexerLiteralExtensionLoop10Result::MlReadGrammarLexerLiteralExtensionLoop10Done(matching_owner_present_2, index_2, candidates_2, literals_2) => {
-                                        if !matching_owner_present_2 || (value == (self::ml_string::Text::from_units(vec![]))) {
+                                        if !matching_owner_present_2 || ((*value) == (self::ml_string::Text::from_units(vec![]))) {
                                             vec![0f64, -1f64, -1f64]
                                         } else {
                                             {
-                                                let order = self::read_grammar_lexer_text_position(parser_literals, value.clone());
+                                                let order = self::read_grammar_lexer_text_position(parser_literals, value);
                                                 if order < 0f64 {
                                                     vec![-1f64]
                                                 } else {
                                                     {
-                                                        let selected = self::read_grammar_lexer_literal_rule_position(value.clone(), self::ml_string::Text::from_units(vec![99, 111, 109, 98, 105, 110, 101, 100]), &(candidates_2), item_values, &(literals_2));
+                                                        let selected = self::read_grammar_lexer_literal_rule_position(value, &(self::ml_string::Text::from_units(vec![99, 111, 109, 98, 105, 110, 101, 100])), &(candidates_2), item_values, &(literals_2));
                                                         {
                                                             let insertion = count;
                                                             {
@@ -238,19 +271,16 @@ pub fn read_grammar_lexer_binding_names(
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_grammar_lexer_command_plan(
-    command: self::ml_string::Text,
-    name: self::ml_string::Text,
+    command: &self::ml_string::Text,
+    name: &self::ml_string::Text,
 ) -> Vec<self::ml_string::Text> {
     {
         let body = command.clone();
         {
             let body_3 = if body.starts_with(&self::ml_string::Text::from_units(vec![45, 62])) {
-                {
-                    let body_2 = body.slice(2f64, f64::INFINITY);
-                    body_2
-                }
+                { body.slice(2f64, f64::INFINITY) }
             } else {
-                body.clone()
+                body
             };
             {
                 let type_ = name.clone();
@@ -281,7 +311,7 @@ pub fn read_grammar_lexer_command_plan(
                                             );
                                         match ml_s15 {
                                             self::MlReadGrammarLexerCommandPlanLoop24Result::MlReadGrammarLexerCommandPlanLoop24Done(type_2, channel_2, disposition_2, actions_2) => {
-                                                self::ml_array::append(vec![type_2.clone(), channel_2.clone(), disposition_2.clone()], actions_2)
+                                                self::ml_array::append(vec![type_2, channel_2, disposition_2], actions_2)
                                             }
                                         }
                                     }
@@ -298,30 +328,31 @@ pub fn read_grammar_lexer_command_plan(
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn accept_grammar_lexer_mode(
-    candidate: self::ml_string::Text,
-    active: self::ml_string::Text,
+    candidate: &self::ml_string::Text,
+    active: &self::ml_string::Text,
 ) -> bool {
-    candidate == active
+    (*candidate) == (*active)
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn accept_grammar_lexer_trivia(
-    channel: self::ml_string::Text,
-    disposition: self::ml_string::Text,
+    channel: &self::ml_string::Text,
+    disposition: &self::ml_string::Text,
 ) -> bool {
-    (disposition == (self::ml_string::Text::from_units(vec![115, 107, 105, 112])))
-        || (channel != (self::ml_string::Text::from_units(vec![100, 101, 102, 97, 117, 108, 116])))
+    ((*disposition) == (self::ml_string::Text::from_units(vec![115, 107, 105, 112])))
+        || ((*channel)
+            != (self::ml_string::Text::from_units(vec![100, 101, 102, 97, 117, 108, 116])))
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_grammar_lexer_trivia_identity(
-    source: self::ml_string::Text,
-    emitted: self::ml_string::Text,
-    disposition: self::ml_string::Text,
+    source: &self::ml_string::Text,
+    emitted: &self::ml_string::Text,
+    disposition: &self::ml_string::Text,
 ) -> self::ml_string::Text {
-    if disposition == (self::ml_string::Text::from_units(vec![115, 107, 105, 112])) {
+    if (*disposition) == (self::ml_string::Text::from_units(vec![115, 107, 105, 112])) {
         source.clone()
     } else {
         emitted.clone()
@@ -331,11 +362,11 @@ pub fn read_grammar_lexer_trivia_identity(
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn accept_grammar_lexer_expected_token(
-    expected: self::ml_string::Text,
-    actual: self::ml_string::Text,
+    expected: &self::ml_string::Text,
+    actual: &self::ml_string::Text,
     wildcard: bool,
 ) -> bool {
-    wildcard || (expected == actual)
+    wildcard || ((*expected) == (*actual))
 }
 
 /// Execute the checked shared source algorithm.
@@ -538,7 +569,7 @@ pub enum MlAcceptGrammarLexerIdentifierLoop1Result {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn ml_accept_grammar_lexer_identifier_loop1(
-    mut text: self::ml_string::Text,
+    text: &self::ml_string::Text,
     mut index: f64,
 ) -> self::MlAcceptGrammarLexerIdentifierLoop1Result {
     loop {
@@ -553,12 +584,12 @@ pub fn ml_accept_grammar_lexer_identifier_loop1(
                         122, 95,
                     ]))
                     .contains(&character);
-                    if !letter
-                        && !((index > 0f64)
+                    if !((letter)
+                        || ((index > 0f64)
                             && (self::ml_string::Text::from_units(vec![
                                 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
                             ]))
-                            .contains(&character))
+                            .contains(&character)))
                     {
                         self::MlAcceptGrammarLexerIdentifierLoop1Result::MlAcceptGrammarLexerIdentifierLoop1Return(false)
                     } else {
@@ -587,7 +618,7 @@ pub enum MlAcceptGrammarLexerDecimalLoop2Result {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn ml_accept_grammar_lexer_decimal_loop2(
-    mut text: self::ml_string::Text,
+    text: &self::ml_string::Text,
     mut index: f64,
 ) -> self::MlAcceptGrammarLexerDecimalLoop2Result {
     loop {
@@ -627,12 +658,12 @@ pub enum MlContainsGrammarLexerTextLoop3Result {
 #[must_use]
 pub fn ml_contains_grammar_lexer_text_loop3(
     values: &[self::ml_string::Text],
-    mut value: self::ml_string::Text,
+    value: &self::ml_string::Text,
     mut index: f64,
 ) -> self::MlContainsGrammarLexerTextLoop3Result {
     loop {
         return if index < (values.len() as f64) {
-            if (self::read_required_text_fact(values, index)) == value {
+            if (self::read_required_text_fact(values, index)) == (*value) {
                 self::MlContainsGrammarLexerTextLoop3Result::MlContainsGrammarLexerTextLoop3Return(
                     true,
                 )
@@ -707,7 +738,8 @@ pub fn ml_read_grammar_lexer_section_rule_positions_loop6(
                 {
                     let selected_3 = if ((self::read_required_text_fact(rule_kinds, index))
                         == (self::ml_string::Text::from_units(vec![110, 111, 114, 109, 97, 108])))
-                        && ((owner_section == section)
+                        && (((owner_section).partial_cmp(&(section))
+                            == Some(std::cmp::Ordering::Equal))
                             || (((owner_section >= 0f64)
                                 && ((self::read_required_text_fact(
                                     section_kinds,
@@ -808,7 +840,7 @@ pub enum MlReadGrammarLexerLiteralRulePositionJoin8 {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn ml_read_grammar_lexer_literal_rule_position_loop7(
-    mut value: self::ml_string::Text,
+    value: &self::ml_string::Text,
     kinds: &[self::ml_string::Text],
     values: &[self::ml_string::Text],
     literals: &[bool],
@@ -822,7 +854,7 @@ pub fn ml_read_grammar_lexer_literal_rule_position_loop7(
                 let ml_s19 = if (((self::read_required_text_fact(kinds, index))
                     == (self::ml_string::Text::from_units(vec![116, 111, 107, 101, 110])))
                     && self::read_required_boolean_fact(literals, index))
-                    && ((self::read_required_text_fact(values, index)) == value)
+                    && ((self::read_required_text_fact(values, index)) == (*value))
                 {
                     {
                         let selected_2 = index;
@@ -862,12 +894,12 @@ pub enum MlReadGrammarLexerTextPositionLoop9Result {
 #[must_use]
 pub fn ml_read_grammar_lexer_text_position_loop9(
     values: &[self::ml_string::Text],
-    mut value: self::ml_string::Text,
+    value: &self::ml_string::Text,
     mut index: f64,
 ) -> self::MlReadGrammarLexerTextPositionLoop9Result {
     loop {
         return if index < (values.len() as f64) {
-            if (self::read_required_text_fact(values, index)) == value {
+            if (self::read_required_text_fact(values, index)) == (*value) {
                 self::MlReadGrammarLexerTextPositionLoop9Result::MlReadGrammarLexerTextPositionLoop9Return(index)
             } else {
                 {

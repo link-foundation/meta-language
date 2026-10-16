@@ -1,10 +1,31 @@
 // Generated from the complete checked JavaScript source and recorded dependencies.
 // Do not edit by hand.
-use super::*;
+use super::MlAcceptRecordFieldNameLoop3Result;
+use super::MlCompareRecordFieldNamesLoop4Result;
+use super::MlReadRecordFieldInsertionOrderLoop12Result;
+use super::MlReadRecordFieldPositionLoop5Result;
+use super::MlReadRecordFieldPositionLoop6Result;
+use super::MlReadRecordProjectionErrorLoop2Result;
+use super::MlReadRecordSortedFieldPositionsLoop7Result;
+use super::MlReadRecordTypeOwnerPresenceLoop17Result;
+use super::MlRecordTypeFactFieldLoop15Result;
+use super::ml_accept_record_field_name_loop3;
+use super::ml_compare_record_field_names_loop4;
+use super::ml_read_record_field_insertion_order_loop12;
+use super::ml_read_record_field_insertion_order_loop13;
+use super::ml_read_record_field_order_loop11;
+use super::ml_read_record_field_position_loop5;
+use super::ml_read_record_field_position_loop6;
+use super::ml_read_record_projection_error_loop2;
+use super::ml_read_record_sorted_field_positions_loop7;
+use super::ml_read_record_sorted_field_positions_loop8;
+use super::ml_read_record_type_owner_presence_loop17;
+use super::ml_record_type_fact_elements_loop16;
+use super::ml_record_type_fact_field_loop15;
 
 /// JavaScript's Number operations that Rust's f64 does not share.
 pub mod ml_number {
-    /// ECMAScript Number::toString: the shortest decimal that reads back as
+    /// ECMAScript `Number::toString`: the shortest decimal that reads back as
     /// the value, the even one on a tie, laid out as JavaScript prints it.
     #[must_use]
     pub fn js_number(x: f64) -> String {
@@ -36,7 +57,7 @@ pub mod ml_number {
                 }
             }
         }
-        let k = digits.len() as i32;
+        let k = i32::try_from(digits.len()).expect("binary64 significand length fits i32");
         let body = if k <= n && n <= 21 {
             format!("{digits}{}", "0".repeat((n - k) as usize))
         } else if 0 < n && n <= 21 {
@@ -65,10 +86,10 @@ pub mod ml_number {
         }
     }
 
-    /// SameValue, as Object.is and assert.strictEqual compare: NaN equals
+    /// `SameValue`, as `Object.is` and `assert.strictEqual` compare: NaN equals
     /// NaN, and 0 differs from -0.
     #[must_use]
-    pub fn same_value(a: f64, b: f64) -> bool {
+    pub const fn same_value(a: f64, b: f64) -> bool {
         if a.is_nan() || b.is_nan() {
             a.is_nan() && b.is_nan()
         } else {
@@ -117,14 +138,14 @@ pub mod ml_math {
         if x > 0.0 && x < 0.5 {
             return 0.0;
         }
-        if x < 0.0 && x >= -0.5 {
+        if (-0.5..0.0).contains(&x) {
             return -0.0;
         }
         let floor = x.floor();
         if x - floor >= 0.5 { floor + 1.0 } else { floor }
     }
 
-    /// Math.sign, which keeps -0, 0 and NaN, where f64::signum does not.
+    /// Math.sign, which keeps -0, 0 and NaN, where `f64::signum` does not.
     #[must_use]
     pub fn sign(x: f64) -> f64 {
         if x > 0.0 {
@@ -195,10 +216,9 @@ pub mod ml_array {
     /// JavaScript, aborts.
     #[must_use]
     pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {
-        match index.and_then(|index| values.get(index)) {
-            Some(value) => value.clone(),
-            None => panic!("array index out of range"),
-        }
+        index
+            .and_then(|index| values.get(index))
+            .map_or_else(|| panic!("array index out of range"), Clone::clone)
     }
 
     /// The index a Number names: a non-negative integer, -0 included.
@@ -216,7 +236,7 @@ pub mod ml_array {
         left.extend(right);
         left
     }
-    fn integer(value: f64) -> f64 {
+    const fn integer(value: f64) -> f64 {
         if value.is_nan() { 0.0 } else { value.trunc() }
     }
     fn relative(value: f64, length: usize) -> usize {
@@ -324,33 +344,45 @@ pub fn refuse_required_boolean_fact() -> bool {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required Number fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required Number fact column position"
+        );
+
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_number_fact())
+            .unwrap_or_else(self::refuse_required_number_fact)
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_text_fact(values: &[String], index: f64) -> String {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required text fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required text fact column position"
+        );
+
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_text_fact())
+            .unwrap_or_else(self::refuse_required_text_fact)
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required Boolean fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required Boolean fact column position"
+        );
+
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_boolean_fact())
+            .unwrap_or_else(self::refuse_required_boolean_fact)
     }
 }
 
@@ -363,11 +395,15 @@ pub fn refuse_required_record_name() -> Vec<f64> {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_record_name(names: &[Vec<f64>], index: f64) -> Vec<f64> {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (names.len() as f64)) {
-        panic!("{}", "invalid required record name position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (names.len() as f64))),
+            "{}",
+            "invalid required record name position"
+        );
+
         (self::ml_array::optional_at(names, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_record_name())
+            .unwrap_or_else(self::refuse_required_record_name)
     }
 }
 
@@ -400,23 +436,30 @@ pub fn read_record_projection_error(
     names: &[Vec<f64>],
     entries: &[bool],
 ) -> String {
-    if projection != (self::read_record_projection()) {
-        String::from("unknown checked record projection")
-    } else if (names.len() as f64) != (entries.len() as f64) {
-        String::from("checked record projection has inconsistent entry facts")
-    } else {
-        {
-            let index = 0f64;
-            {
-                let ml_s1 = self::ml_read_record_projection_error_loop2(names, entries, index);
-                match ml_s1 {
+    {
+        let ml_library_inequality_2 = projection != (self::read_record_projection());
+        if ml_library_inequality_2 {
+            String::from("unknown checked record projection")
+        } else {
+            let ml_library_inequality_1 = (names.len() as f64) != (entries.len() as f64);
+            if ml_library_inequality_1 {
+                String::from("checked record projection has inconsistent entry facts")
+            } else {
+                {
+                    let index = 0f64;
+                    {
+                        let ml_s1 =
+                            self::ml_read_record_projection_error_loop2(names, entries, index);
+                        match ml_s1 {
                         self::MlReadRecordProjectionErrorLoop2Result::MlReadRecordProjectionErrorLoop2Done => {
-                            String::from("")
+                            String::new()
                         }
                         self::MlReadRecordProjectionErrorLoop2Result::MlReadRecordProjectionErrorLoop2Return(ml_result2) => {
                             ml_result2
                         }
                     }
+                    }
+                }
             }
         }
     }
@@ -675,13 +718,9 @@ pub fn read_record_type_constraint_step(
 #[must_use]
 pub fn read_record_type_constraint_error(action: f64, name: &str) -> String {
     if (action == 3f64) || (action == 4f64) {
-        format!(
-            "{}{}",
-            (format!("{}{}", (String::from("record field ")), name.to_owned())),
-            (String::from(" is missing"))
-        )
+        format!("record field {} is missing", name.to_owned())
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -693,28 +732,18 @@ pub fn read_record_method_error(
     parameters: f64,
     arguments_count: f64,
 ) -> String {
-    if kind != "function" {
-        format!(
-            "{}{}",
-            (String::from("record has no method ")),
-            operation.to_owned()
-        )
-    } else if arguments_count != parameters {
-        format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!("{}{}", (String::from(".")), operation.to_owned())),
-                    (String::from("() expects "))
-                )),
-                (self::ml_number::js_number(parameters))
-            )),
-            (String::from(" arguments"))
-        )
+    if kind == "function" {
+        if arguments_count == parameters {
+            String::new()
+        } else {
+            format!(
+                ".{}() expects {} arguments",
+                operation.to_owned(),
+                self::ml_number::js_number(parameters)
+            )
+        }
     } else {
-        String::from("")
+        format!("record has no method {}", operation.to_owned())
     }
 }
 
@@ -782,7 +811,7 @@ pub fn record_type_fact_kind(
     {
         let kind = self::record_type_fact_field(starts, counts, labels, targets, owner, "kind");
         if kind < 0f64 {
-            String::from("")
+            String::new()
         } else {
             self::read_required_text_fact(texts, kind)
         }
@@ -892,10 +921,4 @@ pub fn ml_read_record_value_order_loop1(
         }
         return { order };
     }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlReadRecordProjectionErrorLoop2Result {
-    MlReadRecordProjectionErrorLoop2Done,
-    MlReadRecordProjectionErrorLoop2Return(String),
 }

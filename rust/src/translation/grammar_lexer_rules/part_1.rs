@@ -1,6 +1,20 @@
 // Generated from the complete shared grammar-lexer-rules.js and recorded source closure.
 // Do not edit by hand.
-use super::*;
+use super::MlAcceptGrammarLexerDecimalLoop2Result;
+use super::MlAcceptGrammarLexerIdentifierLoop1Result;
+use super::MlContainsGrammarLexerPositionLoop4Result;
+use super::MlContainsGrammarLexerTextLoop3Result;
+use super::MlReadGrammarLexerLiteralRulePositionLoop7Result;
+use super::MlReadGrammarLexerSectionRulePositionsLoop5Result;
+use super::MlReadGrammarLexerTextPositionLoop9Result;
+use super::ml_accept_grammar_lexer_decimal_loop2;
+use super::ml_accept_grammar_lexer_identifier_loop1;
+use super::ml_contains_grammar_lexer_position_loop4;
+use super::ml_contains_grammar_lexer_text_loop3;
+use super::ml_read_grammar_lexer_literal_rule_position_loop7;
+use super::ml_read_grammar_lexer_section_rule_positions_loop5;
+use super::ml_read_grammar_lexer_section_rule_positions_loop6;
+use super::ml_read_grammar_lexer_text_position_loop9;
 
 /// The Math functions that Rust's f64 methods do not share with JavaScript.
 pub mod ml_math {
@@ -14,14 +28,14 @@ pub mod ml_math {
         if x > 0.0 && x < 0.5 {
             return 0.0;
         }
-        if x < 0.0 && x >= -0.5 {
+        if (-0.5..0.0).contains(&x) {
             return -0.0;
         }
         let floor = x.floor();
         if x - floor >= 0.5 { floor + 1.0 } else { floor }
     }
 
-    /// Math.sign, which keeps -0, 0 and NaN, where f64::signum does not.
+    /// Math.sign, which keeps -0, 0 and NaN, where `f64::signum` does not.
     #[must_use]
     pub fn sign(x: f64) -> f64 {
         if x > 0.0 {
@@ -92,10 +106,9 @@ pub mod ml_array {
     /// JavaScript, aborts.
     #[must_use]
     pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {
-        match index.and_then(|index| values.get(index)) {
-            Some(value) => value.clone(),
-            None => panic!("array index out of range"),
-        }
+        index
+            .and_then(|index| values.get(index))
+            .map_or_else(|| panic!("array index out of range"), Clone::clone)
     }
 
     /// The index a Number names: a non-negative integer, -0 included.
@@ -113,7 +126,7 @@ pub mod ml_array {
         left.extend(right);
         left
     }
-    fn integer(value: f64) -> f64 {
+    const fn integer(value: f64) -> f64 {
         if value.is_nan() { 0.0 } else { value.trunc() }
     }
     fn relative(value: f64, length: usize) -> usize {
@@ -217,11 +230,11 @@ pub mod ml_string {
             Self(text.encode_utf16().collect())
         }
         #[must_use]
-        pub fn from_units(units: Vec<u16>) -> Self {
+        pub const fn from_units(units: Vec<u16>) -> Self {
             Self(units)
         }
         #[must_use]
-        pub fn length(&self) -> f64 {
+        pub const fn length(&self) -> f64 {
             self.0.len() as f64
         }
         #[must_use]
@@ -286,9 +299,8 @@ pub mod ml_string {
             if maximum == 0 {
                 return Vec::new();
             }
-            let separator = match separator {
-                Some(value) => value,
-                None => return vec![self.clone()],
+            let Some(separator) = separator else {
+                return vec![self.clone()];
             };
             if separator.0.is_empty() {
                 return self
@@ -322,17 +334,15 @@ pub mod ml_string {
             }
             let index = index as usize;
             let first = self.0[index];
-            if (0xd800..=0xdbff).contains(&first) {
-                if let Some(&second) = self.0.get(index + 1) {
-                    if (0xdc00..=0xdfff).contains(&second) {
-                        return Some(
-                            ((first as u32 - 0xd800) * 1024 + second as u32 - 0xdc00 + 0x10000)
-                                as f64,
-                        );
-                    }
-                }
+            if (0xd800..=0xdbff).contains(&first)
+                && let Some(&second) = self.0.get(index + 1)
+                && (0xdc00..=0xdfff).contains(&second)
+            {
+                return Some(f64::from(
+                    (u32::from(first) - 0xd800) * 1024 + u32::from(second) - 0xdc00 + 0x10000,
+                ));
             }
-            Some(first as f64)
+            Some(f64::from(first))
         }
         #[must_use]
         pub fn code_points(&self) -> Vec<Self> {
@@ -344,7 +354,7 @@ pub mod ml_string {
                     && self
                         .0
                         .get(index + 1)
-                        .map_or(false, |second| (0xdc00..=0xdfff).contains(second))
+                        .is_some_and(|second| (0xdc00..=0xdfff).contains(second))
                 {
                     2
                 } else {
@@ -358,16 +368,15 @@ pub mod ml_string {
         #[must_use]
         pub fn repeat(&self, count: f64) -> Self {
             let count = integer(count);
-            if count < 0.0 || !count.is_finite() {
-                panic!("Invalid count value: {}", count);
-            }
+            assert!(
+                count >= 0.0 && count.is_finite(),
+                "Invalid count value: {count}"
+            );
             if self.0.is_empty() {
                 return Self(Vec::new());
             }
             let size = count * self.0.len() as f64;
-            if size > 536_870_888.0 {
-                panic!("Invalid string length");
-            }
+            assert!(size <= 536_870_888.0, "Invalid string length");
             Self(self.0.repeat(count as usize))
         }
         #[must_use]
@@ -376,9 +385,7 @@ pub mod ml_string {
             if length <= self.0.len() as f64 || fill.0.is_empty() {
                 return self.clone();
             }
-            if length > 536_870_888.0 {
-                panic!("Invalid string length");
-            }
+            assert!(length <= 536_870_888.0, "Invalid string length");
             let count = length as usize - self.0.len();
             let padding: Vec<u16> = fill.0.iter().copied().cycle().take(count).collect();
             let pad = Self(padding);
@@ -413,7 +420,7 @@ pub mod ml_string {
         #[must_use]
         pub fn trim(&self, start: bool, end: bool, rust: bool) -> Self {
             let whitespace = |unit: u16| {
-                char::from_u32(unit as u32).map_or(false, |c| {
+                char::from_u32(u32::from(unit)).is_some_and(|c| {
                     if rust {
                         c.is_whitespace()
                     } else {
@@ -473,7 +480,7 @@ pub mod ml_string {
         Text(units)
     }
     #[must_use]
-    pub fn integer(value: f64) -> f64 {
+    pub const fn integer(value: f64) -> f64 {
         if value.is_nan() { 0.0 } else { value.trunc() }
     }
     #[must_use]
@@ -557,11 +564,15 @@ pub fn refuse_required_boolean_fact() -> bool {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required Number fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required Number fact column position"
+        );
+
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_number_fact())
+            .unwrap_or_else(self::refuse_required_number_fact)
     }
 }
 
@@ -571,77 +582,85 @@ pub fn read_required_text_fact(
     values: &[self::ml_string::Text],
     index: f64,
 ) -> self::ml_string::Text {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required text fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required text fact column position"
+        );
+
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_text_fact())
+            .unwrap_or_else(self::refuse_required_text_fact)
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required Boolean fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required Boolean fact column position"
+        );
+
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_boolean_fact())
+            .unwrap_or_else(self::refuse_required_boolean_fact)
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_grammar_lexer_entry_form(kind: self::ml_string::Text) -> f64 {
-    if kind
+pub fn read_grammar_lexer_entry_form(kind: &self::ml_string::Text) -> f64 {
+    if (*kind)
         == (self::ml_string::Text::from_units(vec![
             108, 101, 120, 105, 99, 97, 108, 79, 119, 110, 101, 114,
         ]))
     {
         1f64
-    } else if kind
+    } else if (*kind)
         == (self::ml_string::Text::from_units(vec![
             108, 101, 120, 105, 99, 97, 108, 66, 105, 110, 100, 105, 110, 103,
         ]))
     {
         2f64
-    } else if kind
+    } else if (*kind)
         == (self::ml_string::Text::from_units(vec![
             108, 101, 120, 105, 99, 97, 108, 76, 105, 116, 101, 114, 97, 108,
         ]))
     {
         3f64
-    } else if kind
+    } else if (*kind)
         == (self::ml_string::Text::from_units(vec![
             108, 101, 120, 105, 99, 97, 108, 77, 111, 100, 101,
         ]))
     {
         4f64
-    } else if kind
+    } else if (*kind)
         == (self::ml_string::Text::from_units(vec![
             108, 101, 120, 105, 99, 97, 108, 67, 104, 97, 110, 110, 101, 108,
         ]))
     {
         5f64
-    } else if kind
+    } else if (*kind)
         == (self::ml_string::Text::from_units(vec![
             108, 101, 120, 105, 99, 97, 108, 79, 98, 108, 105, 103, 97, 116, 105, 111, 110,
         ]))
     {
         6f64
-    } else if kind
+    } else if (*kind)
         == (self::ml_string::Text::from_units(vec![
             108, 101, 120, 105, 99, 97, 108, 82, 117, 108, 101,
         ]))
     {
         7f64
-    } else if kind
+    } else if (*kind)
         == (self::ml_string::Text::from_units(vec![
             108, 101, 120, 105, 99, 97, 108, 70, 114, 97, 103, 109, 101, 110, 116,
         ]))
     {
         8f64
-    } else if kind
+    } else if (*kind)
         == (self::ml_string::Text::from_units(vec![
             108, 101, 120, 105, 99, 97, 108, 84, 121, 112, 101,
         ]))
@@ -654,14 +673,14 @@ pub fn read_grammar_lexer_entry_form(kind: self::ml_string::Text) -> f64 {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn accept_grammar_lexer_identifier(text: self::ml_string::Text) -> bool {
+pub fn accept_grammar_lexer_identifier(text: &self::ml_string::Text) -> bool {
     if (text.length()) == 0f64 {
         false
     } else {
         {
             let index = 0f64;
             {
-                let ml_s1 = self::ml_accept_grammar_lexer_identifier_loop1(text.clone(), index);
+                let ml_s1 = self::ml_accept_grammar_lexer_identifier_loop1(text, index);
                 match ml_s1 {
                     self::MlAcceptGrammarLexerIdentifierLoop1Result::MlAcceptGrammarLexerIdentifierLoop1Done => {
                         true
@@ -677,14 +696,14 @@ pub fn accept_grammar_lexer_identifier(text: self::ml_string::Text) -> bool {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn accept_grammar_lexer_decimal(text: self::ml_string::Text) -> bool {
+pub fn accept_grammar_lexer_decimal(text: &self::ml_string::Text) -> bool {
     if (text.length()) == 0f64 {
         false
     } else {
         {
             let index = 0f64;
             {
-                let ml_s2 = self::ml_accept_grammar_lexer_decimal_loop2(text.clone(), index);
+                let ml_s2 = self::ml_accept_grammar_lexer_decimal_loop2(text, index);
                 match ml_s2 {
                     self::MlAcceptGrammarLexerDecimalLoop2Result::MlAcceptGrammarLexerDecimalLoop2Done => {
                         true
@@ -702,12 +721,12 @@ pub fn accept_grammar_lexer_decimal(text: self::ml_string::Text) -> bool {
 #[must_use]
 pub fn contains_grammar_lexer_text(
     values: &[self::ml_string::Text],
-    value: self::ml_string::Text,
+    value: &self::ml_string::Text,
 ) -> bool {
     {
         let index = 0f64;
         {
-            let ml_s3 = self::ml_contains_grammar_lexer_text_loop3(values, value.clone(), index);
+            let ml_s3 = self::ml_contains_grammar_lexer_text_loop3(values, value, index);
             match ml_s3 {
                 self::MlContainsGrammarLexerTextLoop3Result::MlContainsGrammarLexerTextLoop3Done => {
                     false
@@ -782,8 +801,8 @@ pub fn read_grammar_lexer_section_rule_positions(
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_grammar_lexer_literal_rule_position(
-    value: self::ml_string::Text,
-    section_kind: self::ml_string::Text,
+    value: &self::ml_string::Text,
+    section_kind: &self::ml_string::Text,
     kinds: &[self::ml_string::Text],
     values: &[self::ml_string::Text],
     literals: &[bool],
@@ -796,19 +815,13 @@ pub fn read_grammar_lexer_literal_rule_position(
                 let index = 0f64;
                 {
                     let ml_s6 = self::ml_read_grammar_lexer_literal_rule_position_loop7(
-                        value.clone(),
-                        kinds,
-                        values,
-                        literals,
-                        selected,
-                        count,
-                        index,
+                        value, kinds, values, literals, selected, count, index,
                     );
                     match ml_s6 {
                         self::MlReadGrammarLexerLiteralRulePositionLoop7Result::MlReadGrammarLexerLiteralRulePositionLoop7Done(selected_2, count_2) => {
                             if count_2 == 1f64 {
                                 selected_2
-                            } else if (count_2 > 1f64) || (section_kind == (self::ml_string::Text::from_units(vec![108, 101, 120, 101, 114]))) {
+                            } else if (count_2 > 1f64) || ((*section_kind) == (self::ml_string::Text::from_units(vec![108, 101, 120, 101, 114]))) {
                                     -2f64
                                 } else {
                                     -1f64
@@ -825,13 +838,12 @@ pub fn read_grammar_lexer_literal_rule_position(
 #[must_use]
 pub fn read_grammar_lexer_text_position(
     values: &[self::ml_string::Text],
-    value: self::ml_string::Text,
+    value: &self::ml_string::Text,
 ) -> f64 {
     {
         let index = 0f64;
         {
-            let ml_s7 =
-                self::ml_read_grammar_lexer_text_position_loop9(values, value.clone(), index);
+            let ml_s7 = self::ml_read_grammar_lexer_text_position_loop9(values, value, index);
             match ml_s7 {
                 self::MlReadGrammarLexerTextPositionLoop9Result::MlReadGrammarLexerTextPositionLoop9Done => {
                     -1f64

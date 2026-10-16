@@ -1,6 +1,19 @@
 // Generated from the complete shared grammar-lexer-rules.js and recorded source closure.
 // Do not edit by hand.
-use super::*;
+use super::MlReadGrammarLexerCommandPlanJoin25;
+use super::MlReadGrammarLexerCommandPlanJoin26;
+use super::MlReadGrammarLexerCommandPlanLoop24Result;
+use super::accept_grammar_lexer_decimal;
+use super::accept_grammar_lexer_identifier;
+use super::contains_grammar_lexer_position;
+use super::contains_grammar_lexer_text;
+use super::ml_array;
+use super::ml_math;
+use super::ml_read_grammar_lexer_command_plan_loop27;
+use super::ml_string;
+use super::read_grammar_lexer_entry_form;
+use super::read_required_number_fact;
+use super::read_required_text_fact;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -42,12 +55,12 @@ pub fn ml_read_grammar_lexer_command_plan_loop24(
                                                 {
                                                     let call_2 =
                                                         self::accept_grammar_lexer_identifier(
-                                                            head_2.clone(),
+                                                            &(head_2),
                                                         ) && (self::accept_grammar_lexer_identifier(
-                                                            argument_2.clone(),
+                                                            &(argument_2),
                                                         )
                                                             || self::accept_grammar_lexer_decimal(
-                                                                argument_2.clone(),
+                                                                &(argument_2),
                                                             ));
                                                     self::MlReadGrammarLexerCommandPlanJoin25::MlReadGrammarLexerCommandPlanJoin25Next(head_2.clone(), argument_2.clone(), call_2)
                                                 }
@@ -64,20 +77,20 @@ pub fn ml_read_grammar_lexer_command_plan_loop24(
                                                         let type_2 = self::ml_string::Text::from_units(vec![83, 75, 73, 80]);
                                                         {
                                                             let disposition_2 = self::ml_string::Text::from_units(vec![115, 107, 105, 112]);
-                                                            self::MlReadGrammarLexerCommandPlanJoin26::MlReadGrammarLexerCommandPlanJoin26Next(type_2, channel.clone(), disposition_2, actions)
+                                                            self::MlReadGrammarLexerCommandPlanJoin26::MlReadGrammarLexerCommandPlanJoin26Next(type_2, channel, disposition_2, actions)
                                                         }
                                                     }
                                                 } else if piece == (self::ml_string::Text::from_units(vec![112, 111, 112, 77, 111, 100, 101])) {
                                                         {
                                                             let actions_2 = { let (ml_append_right, ml_append_left) = (vec![self::ml_string::Text::from_units(vec![112, 111, 112, 77, 111, 100, 101]), self::ml_string::Text::from_units(vec![])], actions); self::ml_array::append(ml_append_left, ml_append_right) };
-                                                            self::MlReadGrammarLexerCommandPlanJoin26::MlReadGrammarLexerCommandPlanJoin26Next(type_.clone(), channel.clone(), disposition.clone(), actions_2)
+                                                            self::MlReadGrammarLexerCommandPlanJoin26::MlReadGrammarLexerCommandPlanJoin26Next(type_, channel, disposition, actions_2)
                                                         }
                                                     } else if call_3 && (head_3 == (self::ml_string::Text::from_units(vec![116, 121, 112, 101]))) {
                                                             {
                                                                 let type_3 = argument_3.clone();
                                                                 {
                                                                     let disposition_3 = self::ml_string::Text::from_units(vec![101, 109, 105, 116]);
-                                                                    self::MlReadGrammarLexerCommandPlanJoin26::MlReadGrammarLexerCommandPlanJoin26Next(type_3, channel.clone(), disposition_3, actions)
+                                                                    self::MlReadGrammarLexerCommandPlanJoin26::MlReadGrammarLexerCommandPlanJoin26Next(type_3, channel, disposition_3, actions)
                                                                 }
                                                             }
                                                         } else if call_3 && (head_3 == (self::ml_string::Text::from_units(vec![99, 104, 97, 110, 110, 101, 108]))) {
@@ -86,14 +99,14 @@ pub fn ml_read_grammar_lexer_command_plan_loop24(
                                                                     {
                                                                         let offset = 0f64;
                                                                         {
-                                                                            let zero_2 = self::ml_read_grammar_lexer_command_plan_loop27(argument_3.clone(), zero, offset);
+                                                                            let zero_2 = self::ml_read_grammar_lexer_command_plan_loop27(&(argument_3), zero, offset);
                                                                             {
                                                                                 let channel_2 = if zero_2 || (argument_3 == (self::ml_string::Text::from_units(vec![68, 69, 70, 65, 85, 76, 84, 95, 84, 79, 75, 69, 78, 95, 67, 72, 65, 78, 78, 69, 76]))) {
                                                                                     self::ml_string::Text::from_units(vec![100, 101, 102, 97, 117, 108, 116])
                                                                                 } else {
                                                                                     argument_3.clone()
                                                                                 };
-                                                                                self::MlReadGrammarLexerCommandPlanJoin26::MlReadGrammarLexerCommandPlanJoin26Next(type_.clone(), channel_2, disposition.clone(), actions)
+                                                                                self::MlReadGrammarLexerCommandPlanJoin26::MlReadGrammarLexerCommandPlanJoin26Next(type_, channel_2, disposition, actions)
                                                                             }
                                                                         }
                                                                     }
@@ -109,22 +122,25 @@ pub fn ml_read_grammar_lexer_command_plan_loop24(
                                                                         } else {
                                                                             argument_3.clone()
                                                                         }], actions); self::ml_array::append(ml_append_left, ml_append_right) };
-                                                                        self::MlReadGrammarLexerCommandPlanJoin26::MlReadGrammarLexerCommandPlanJoin26Next(type_.clone(), channel.clone(), disposition.clone(), actions_3)
+                                                                        self::MlReadGrammarLexerCommandPlanJoin26::MlReadGrammarLexerCommandPlanJoin26Next(type_, channel, disposition, actions_3)
                                                                     }
-                                                                } else if piece != (self::ml_string::Text::from_units(vec![])) {
+                                                                } else {
+let ml_library_inequality_1 = piece != (self::ml_string::Text::from_units(vec![])) ;
+if ml_library_inequality_1 {
                                                                         {
                                                                             let actions_4 = { let (ml_append_right, ml_append_left) = (vec![self::ml_string::Text::from_units(vec![117, 110, 115, 117, 112, 112, 111, 114, 116, 101, 100]), piece.clone()], actions); self::ml_array::append(ml_append_left, ml_append_right) };
-                                                                            self::MlReadGrammarLexerCommandPlanJoin26::MlReadGrammarLexerCommandPlanJoin26Next(type_.clone(), channel.clone(), disposition.clone(), actions_4)
+                                                                            self::MlReadGrammarLexerCommandPlanJoin26::MlReadGrammarLexerCommandPlanJoin26Next(type_, channel, disposition, actions_4)
                                                                         }
                                                                     } else {
-                                                                        self::MlReadGrammarLexerCommandPlanJoin26::MlReadGrammarLexerCommandPlanJoin26Next(type_.clone(), channel.clone(), disposition.clone(), actions)
-                                                                    };
+                                                                        self::MlReadGrammarLexerCommandPlanJoin26::MlReadGrammarLexerCommandPlanJoin26Next(type_, channel, disposition, actions)
+                                                                    }
+};
                                                 match ml_s27 {
                                                     self::MlReadGrammarLexerCommandPlanJoin26::MlReadGrammarLexerCommandPlanJoin26Next(type_4, channel_3, disposition_4, actions_5) => {
                                                         {
                                                             let index_2 = index + 1f64;
                                                             {
-                                                                (type_, channel, disposition, actions, index) = (type_4.clone(), channel_3.clone(), disposition_4.clone(), actions_5, index_2);
+                                                                (type_, channel, disposition, actions, index) = (type_4, channel_3, disposition_4, actions_5, index_2);
                                                                 continue;
                                                             }
                                                         }
@@ -141,9 +157,9 @@ pub fn ml_read_grammar_lexer_command_plan_loop24(
             }
         } else {
             self::MlReadGrammarLexerCommandPlanLoop24Result::MlReadGrammarLexerCommandPlanLoop24Done(
-                type_.clone(),
-                channel.clone(),
-                disposition.clone(),
+                type_,
+                channel,
+                disposition,
                 actions,
             )
         };
@@ -210,7 +226,7 @@ pub fn ml_read_grammar_lexer_declaration_issue_loop31(
                             ])))
                             && !(self::contains_grammar_lexer_text(
                                 declared_modes,
-                                self::read_required_text_fact(action_modes, action),
+                                &(self::read_required_text_fact(action_modes, action)),
                             ))
                         {
                             self::MlReadGrammarLexerDeclarationIssueJoin32::MlReadGrammarLexerDeclarationIssueJoin32Return(vec![10f64, index, action])
@@ -266,19 +282,19 @@ pub fn ml_read_grammar_lexer_declaration_issue_loop29(
         return if index < count {
             {
                 let ml_s30 = if (self::read_grammar_lexer_entry_form(
-                    self::read_required_text_fact(kinds, index),
+                    &(self::read_required_text_fact(kinds, index)),
                 )) == 7f64
                 {
                     if (self::contains_grammar_lexer_text(
                         declared_modes,
-                        self::read_required_text_fact(modes, index),
+                        &(self::read_required_text_fact(modes, index)),
                     )) {
-                        if !(self::contains_grammar_lexer_text(
+                        if !((self::contains_grammar_lexer_text(
                             declared_channels,
-                            self::read_required_text_fact(channels, index),
-                        )) && !(self::accept_grammar_lexer_decimal(
-                            self::read_required_text_fact(channels, index),
-                        )) {
+                            &(self::read_required_text_fact(channels, index)),
+                        )) || (self::accept_grammar_lexer_decimal(
+                            &(self::read_required_text_fact(channels, index)),
+                        ))) {
                             self::MlReadGrammarLexerDeclarationIssueJoin30::MlReadGrammarLexerDeclarationIssueJoin30Return(vec![8f64, index, -1f64])
                         } else {
                             {
@@ -397,9 +413,9 @@ pub fn ml_read_grammar_lexer_declaration_issue_loop28(
     loop {
         return if index < count {
             {
-                let form = self::read_grammar_lexer_entry_form(self::read_required_text_fact(
-                    kinds, index,
-                ));
+                let form = self::read_grammar_lexer_entry_form(
+                    &(self::read_required_text_fact(kinds, index)),
+                );
                 if form == 0f64 {
                     self::MlReadGrammarLexerDeclarationIssueLoop28Result::MlReadGrammarLexerDeclarationIssueLoop28Return(vec![2f64, index, -1f64])
                 } else {
@@ -409,7 +425,7 @@ pub fn ml_read_grammar_lexer_declaration_issue_loop28(
                                 != (self::ml_string::Text::from_units(vec![114, 101, 102])))
                                 || self::contains_grammar_lexer_text(
                                     &(owner_names),
-                                    self::read_required_text_fact(names, index),
+                                    &(self::read_required_text_fact(names, index)),
                                 )
                             {
                                 self::MlReadGrammarLexerDeclarationIssueJoin33::MlReadGrammarLexerDeclarationIssueJoin33Return(vec![3f64, index, -1f64])
@@ -432,7 +448,7 @@ pub fn ml_read_grammar_lexer_declaration_issue_loop28(
                             self::MlReadGrammarLexerDeclarationIssueJoin33::MlReadGrammarLexerDeclarationIssueJoin33Next(owner_names_3) => {
                                 {
                                     let ml_s33 = if form == 2f64 {
-                                        if ((self::read_required_text_fact(items, index)) != (self::ml_string::Text::from_units(vec![114, 101, 102]))) || self::contains_grammar_lexer_text(&(binding_names), self::read_required_text_fact(names, index)) {
+                                        if ((self::read_required_text_fact(items, index)) != (self::ml_string::Text::from_units(vec![114, 101, 102]))) || self::contains_grammar_lexer_text(&(binding_names), &(self::read_required_text_fact(names, index))) {
                                             self::MlReadGrammarLexerDeclarationIssueJoin34::MlReadGrammarLexerDeclarationIssueJoin34Return(vec![4f64, index, -1f64])
                                         } else {
                                             {
@@ -447,7 +463,7 @@ pub fn ml_read_grammar_lexer_declaration_issue_loop28(
                                         self::MlReadGrammarLexerDeclarationIssueJoin34::MlReadGrammarLexerDeclarationIssueJoin34Next(binding_names_3) => {
                                             {
                                                 let ml_s34 = if form == 3f64 {
-                                                    if self::contains_grammar_lexer_text(&(literal_values), self::read_required_text_fact(values, index)) {
+                                                    if self::contains_grammar_lexer_text(&(literal_values), &(self::read_required_text_fact(values, index))) {
                                                         self::MlReadGrammarLexerDeclarationIssueJoin35::MlReadGrammarLexerDeclarationIssueJoin35Return(vec![5f64, index, -1f64])
                                                     } else {
                                                         {
@@ -478,7 +494,7 @@ pub fn ml_read_grammar_lexer_declaration_issue_loop28(
                                                                 };
                                                                 {
                                                                     let ml_s35 = if (form == 7f64) || (form == 8f64) {
-                                                                        if self::contains_grammar_lexer_text(&(local_names), self::read_required_text_fact(names, index)) {
+                                                                        if self::contains_grammar_lexer_text(&(local_names), &(self::read_required_text_fact(names, index))) {
                                                                             self::MlReadGrammarLexerDeclarationIssueJoin36::MlReadGrammarLexerDeclarationIssueJoin36Return(vec![6f64, index, -1f64])
                                                                         } else {
                                                                             {
@@ -552,7 +568,7 @@ pub fn ml_read_grammar_lexer_obligation_positions_loop38(
                         && (owner >= 0f64))
                         && (owner < count))
                         && self::contains_grammar_lexer_position(reached, owner))
-                        && ((owner == root)
+                        && (((owner).partial_cmp(&(root)) == Some(std::cmp::Ordering::Equal))
                             || (((self::read_required_text_fact(categories, index))
                                 != (self::ml_string::Text::from_units(vec![
                                     97, 99, 116, 105, 111, 110,

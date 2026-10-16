@@ -1,6 +1,7 @@
 // Generated from the complete checked JavaScript source and recorded dependencies.
 // Do not edit by hand.
-use super::*;
+use super::ml_plan_array_from_callback_constraints_loop2;
+use super::ml_plan_array_from_map_callback_loop3;
 
 /// Reads of JavaScript arrays, which the portable core never mutates.
 pub mod ml_array {
@@ -12,10 +13,9 @@ pub mod ml_array {
     /// JavaScript, aborts.
     #[must_use]
     pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {
-        match index.and_then(|index| values.get(index)) {
-            Some(value) => value.clone(),
-            None => panic!("array index out of range"),
-        }
+        index
+            .and_then(|index| values.get(index))
+            .map_or_else(|| panic!("array index out of range"), Clone::clone)
     }
 
     /// The index a Number names: a non-negative integer, -0 included.
@@ -33,7 +33,7 @@ pub mod ml_array {
         left.extend(right);
         left
     }
-    fn integer(value: f64) -> f64 {
+    const fn integer(value: f64) -> f64 {
         if value.is_nan() { 0.0 } else { value.trunc() }
     }
     fn relative(value: f64, length: usize) -> usize {
@@ -141,33 +141,45 @@ pub fn refuse_required_boolean_fact() -> bool {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required Number fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required Number fact column position"
+        );
+
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_number_fact())
+            .unwrap_or_else(self::refuse_required_number_fact)
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_text_fact(values: &[String], index: f64) -> String {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required text fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required text fact column position"
+        );
+
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_text_fact())
+            .unwrap_or_else(self::refuse_required_text_fact)
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required Boolean fact column position")
-    } else {
+    {
+        assert!(
+            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
+            "{}",
+            "invalid required Boolean fact column position"
+        );
+
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_boolean_fact())
+            .unwrap_or_else(self::refuse_required_boolean_fact)
     }
 }
 
@@ -203,7 +215,7 @@ pub fn read_array_iterable_form(kind: &str, reference: bool) -> String {
     } else if kind == "map" {
         String::from("map")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -217,7 +229,7 @@ pub fn read_reference_mutation_diagnostic(field: &str) -> String {
             "this mutation requires its shared reference and slot operations to be represented",
         )
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -230,139 +242,47 @@ pub fn render_optional_array_read(
     position: &str,
 ) -> String {
     if target == "JavaScript" {
-        format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!("{}{}", (String::from("(")), values.to_owned())),
-                    (String::from(")["))
-                )),
-                position.to_owned()
-            )),
-            (String::from("]"))
-        )
+        format!("({})[{}]", values.to_owned(), position.to_owned())
     } else if target == "Rust" {
         {
             let index = if kind == "float" {
-                format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (String::from("self::ml_array::number_index(")),
-                        position.to_owned()
-                    )),
-                    (String::from(")"))
-                )
+                format!("self::ml_array::number_index({})", position.to_owned())
             } else {
-                format!("{}{}", position.to_owned(), (String::from(".to_index()")))
+                format!("{}.to_index()", position.to_owned())
             };
             format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (String::from("self::ml_array::optional_at(")),
-                            values.to_owned()
-                        )),
-                        (String::from(", "))
-                    )),
-                    index
-                )),
-                (String::from(")"))
+                "self::ml_array::optional_at({}, {index})",
+                values.to_owned()
             )
         }
     } else if target == "Lean" {
         if kind == "float" {
             format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (String::from("(let ml_index := ")),
-                            position.to_owned()
-                        )),
-                        (String::from(
-                            "; if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then "
-                        ))
-                    )),
-                    values.to_owned()
-                )),
-                (String::from("[ml_index.toUInt64.toNat]? else none)"))
+                "(let ml_index := {}; if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then {}[ml_index.toUInt64.toNat]? else none)",
+                position.to_owned(),
+                values.to_owned()
             )
         } else if kind == "nat" {
-            format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!("{}{}", (String::from("(")), values.to_owned())),
-                        (String::from("["))
-                    )),
-                    position.to_owned()
-                )),
-                (String::from("]?)"))
-            )
+            format!("({}[{}]?)", values.to_owned(), position.to_owned())
         } else {
             format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (String::from("(let ml_index := ")),
-                            position.to_owned()
-                        )),
-                        (String::from("; if ml_index < 0 then none else "))
-                    )),
-                    values.to_owned()
-                )),
-                (String::from("[ml_index.toNat]?)"))
+                "(let ml_index := {}; if ml_index < 0 then none else {}[ml_index.toNat]?)",
+                position.to_owned(),
+                values.to_owned()
             )
         }
     } else {
         {
             let index_2 = if kind == "float" {
-                format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (String::from("(ml_float_index ")),
-                        position.to_owned()
-                    )),
-                    (String::from(")"))
-                )
+                format!("(ml_float_index {})", position.to_owned())
             } else if kind == "nat" {
-                format!(
-                    "{}{}",
-                    (format!("{}{}", (String::from("(Z.of_N ")), position.to_owned())),
-                    (String::from(")"))
-                )
+                format!("(Z.of_N {})", position.to_owned())
             } else {
                 position.to_owned()
             };
             format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!("{}{}", (String::from("(let ml_index := ")), index_2)),
-                        (String::from(" in if Z.ltb ml_index 0 then None else List.nth_error "))
-                    )),
-                    values.to_owned()
-                )),
-                (String::from(" (Z.to_nat ml_index))"))
+                "(let ml_index := {index_2} in if Z.ltb ml_index 0 then None else List.nth_error {} (Z.to_nat ml_index))",
+                values.to_owned()
             )
         }
     }
@@ -372,33 +292,23 @@ pub fn render_optional_array_read(
 #[must_use]
 pub fn render_string_point_iteration(target: &str, utf16: bool, value: &str) -> String {
     if target == "JavaScript" {
-        format!(
-            "{}{}",
-            (format!("{}{}", (String::from("[...")), value.to_owned())),
-            (String::from("]"))
-        )
+        format!("[...{}]", value.to_owned())
     } else if target == "Rust" {
         if utf16 {
-            format!("{}{}", value.to_owned(), (String::from(".code_points()")))
+            format!("{}.code_points()", value.to_owned())
         } else {
             format!(
-                "{}{}",
-                value.to_owned(),
-                (String::from(
-                    ".chars().map(|ml_character| ml_character.to_string()).collect::<Vec<String>>()"
-                ))
+                "{}.chars().map(|ml_character| ml_character.to_string()).collect::<Vec<String>>()",
+                value.to_owned()
             )
         }
     } else if target == "Lean" {
         format!(
-            "{}{}",
-            (format!("{}{}", (String::from("((")), value.to_owned())),
-            (String::from(
-                ".toList.map (fun ml_character => String.singleton ml_character)).toArray)"
-            ))
+            "(({}.toList.map (fun ml_character => String.singleton ml_character)).toArray)",
+            value.to_owned()
         )
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -413,49 +323,26 @@ pub fn render_collection_iteration(
     value_type: &str,
 ) -> String {
     if target == "JavaScript" {
-        format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!("{}{}", (String::from("[...(")), value.to_owned())),
-                    (String::from(")."))
-                )),
-                operation.to_owned()
-            )),
-            (String::from("()]"))
-        )
+        format!("[...({}).{}()]", value.to_owned(), operation.to_owned())
     } else if target == "Rust" {
         if operation == "entries" {
             if map {
                 value.to_owned()
             } else {
                 format!(
-                    "{}{}",
-                    value.to_owned(),
-                    (String::from(
-                        ".iter().map(|ml_value| (ml_value.clone(), ml_value.clone())).collect::<Vec<_>>()"
-                    ))
+                    "{}.iter().map(|ml_value| (ml_value.clone(), ml_value.clone())).collect::<Vec<_>>()",
+                    value.to_owned()
                 )
             }
         } else if map {
             format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        value.to_owned(),
-                        (String::from(".iter().map(|ml_pair| ml_pair."))
-                    )),
-                    (if operation == "keys" {
-                        String::from("0")
-                    } else {
-                        String::from("1")
-                    })
-                )),
-                (String::from(".clone()).collect::<Vec<_>>()"))
+                "{}.iter().map(|ml_pair| ml_pair.{}.clone()).collect::<Vec<_>>()",
+                value.to_owned(),
+                if operation == "keys" {
+                    String::from("0")
+                } else {
+                    String::from("1")
+                }
             )
         } else {
             value.to_owned()
@@ -466,28 +353,19 @@ pub fn render_collection_iteration(
                 value.to_owned()
             } else {
                 format!(
-                    "{}{}",
-                    (format!("{}{}", (String::from("(")), value.to_owned())),
-                    (String::from(".map (fun ml_value => (ml_value, ml_value)))"))
+                    "({}.map (fun ml_value => (ml_value, ml_value)))",
+                    value.to_owned()
                 )
             }
         } else if map {
             format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!("{}{}", (String::from("(")), value.to_owned())),
-                        (String::from(".map (fun ml_pair => ml_pair."))
-                    )),
-                    (if operation == "keys" {
-                        String::from("1")
-                    } else {
-                        String::from("2")
-                    })
-                )),
-                (String::from("))"))
+                "({}.map (fun ml_pair => ml_pair.{}))",
+                value.to_owned(),
+                if operation == "keys" {
+                    String::from("1")
+                } else {
+                    String::from("2")
+                }
             )
         } else {
             value.to_owned()
@@ -497,52 +375,21 @@ pub fn render_collection_iteration(
             value.to_owned()
         } else {
             format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (String::from("(List.map (fun ml_value => (ml_value, ml_value)) ")),
-                    value.to_owned()
-                )),
-                (String::from(")"))
+                "(List.map (fun ml_value => (ml_value, ml_value)) {})",
+                value.to_owned()
             )
         }
     } else if map {
         format!(
-            "{}{}",
-            (format!(
-                "{}{}",
-                (format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (format!(
-                            "{}{}",
-                            (format!(
-                                "{}{}",
-                                (format!(
-                                    "{}{}",
-                                    (format!(
-                                        "{}{}",
-                                        (String::from("(List.map (@")),
-                                        (if operation == "keys" {
-                                            String::from("fst")
-                                        } else {
-                                            String::from("snd")
-                                        })
-                                    )),
-                                    (String::from(" "))
-                                )),
-                                key_type.to_owned()
-                            )),
-                            (String::from(" "))
-                        )),
-                        value_type.to_owned()
-                    )),
-                    (String::from(") "))
-                )),
-                value.to_owned()
-            )),
-            (String::from(")"))
+            "(List.map (@{} {} {}) {})",
+            if operation == "keys" {
+                String::from("fst")
+            } else {
+                String::from("snd")
+            },
+            key_type.to_owned(),
+            value_type.to_owned(),
+            value.to_owned()
         )
     } else {
         value.to_owned()
@@ -621,7 +468,7 @@ pub fn read_array_from_kind(
     {
         let kind = self::read_array_from_field(starts, counts, labels, targets, node, "kind");
         if kind < 0f64 {
-            String::from("")
+            String::new()
         } else {
             self::read_required_text_fact(texts, kind)
         }
@@ -634,7 +481,7 @@ pub fn read_array_from_argument_error(count: f64) -> String {
     if (count < 1f64) || (count > 2f64) {
         String::from("Array.from expects one or two arguments")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -644,7 +491,7 @@ pub fn read_array_from_receiver_error(kind: &str) -> String {
     if (self::read_array_iterable_form(kind, false)).is_empty() {
         String::from("this iterable needs an operational iterator encoding")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -733,7 +580,7 @@ pub fn read_array_from_callback_error(declared: f64, provided: f64) -> String {
     if declared > provided {
         String::from("a callback declares more parameters than its operation supplies")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
@@ -755,10 +602,8 @@ pub fn plan_array_from_callback_constraints(
     params: f64,
     ret: f64,
 ) -> Vec<f64> {
-    if (self::read_array_from_kind(texts, starts, counts, labels, targets, declared)) != "function"
+    if (self::read_array_from_kind(texts, starts, counts, labels, targets, declared)) == "function"
     {
-        vec![1f64, term, params, ret]
-    } else {
         {
             let declared_params =
                 self::read_array_from_field(starts, counts, labels, targets, declared, "params");
@@ -805,6 +650,8 @@ pub fn plan_array_from_callback_constraints(
                 }
             }
         }
+    } else {
+        vec![1f64, term, params, ret]
     }
 }
 
@@ -819,10 +666,8 @@ pub fn plan_array_from_map_callback(
     callback: f64,
     params: f64,
 ) -> Vec<f64> {
-    if (self::read_array_from_kind(texts, starts, counts, labels, targets, callback)) != "function"
+    if (self::read_array_from_kind(texts, starts, counts, labels, targets, callback)) == "function"
     {
-        vec![0f64, -1f64]
-    } else {
         {
             let declared =
                 self::read_array_from_field(starts, counts, labels, targets, callback, "params");
@@ -855,6 +700,8 @@ pub fn plan_array_from_map_callback(
                 }
             }
         }
+    } else {
+        vec![0f64, -1f64]
     }
 }
 
@@ -866,6 +713,166 @@ pub fn read_array_from_map_callback_error(status: f64, parameters_equal: bool) -
     } else if (status == 1f64) || !parameters_equal {
         String::from(".map() callback parameters differ")
     } else {
-        String::from("")
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_array_from_mapping(
+    target: &str,
+    object: &str,
+    callback: &str,
+    parameter_count: f64,
+    suffix: &str,
+) -> String {
+    if target == "JavaScript" {
+        format!("({}).map({})", object.to_owned(), callback.to_owned())
+    } else if target == "Rust" {
+        {
+            let values = format!("ml_values{}", suffix.to_owned());
+            {
+                let fn_ = format!("ml_callback{}", suffix.to_owned());
+                {
+                    let index = format!("ml_index{}", suffix.to_owned());
+                    {
+                        let value = format!("ml_value{}", suffix.to_owned());
+                        {
+                            let available = vec![
+                                value.clone(),
+                                format!("({index} as f64)"),
+                                format!("{values}.clone()"),
+                            ];
+                            {
+                                let call = format!(
+                                    "{fn_}({})",
+                                    (self::ml_array::slice(&available, 0f64, parameter_count))
+                                        .join((String::from(", ")).as_str())
+                                );
+                                {
+                                    let head = format!(
+                                        "let {values} = {}; let {fn_} = {};",
+                                        object.to_owned(),
+                                        callback.to_owned()
+                                    );
+                                    format!(
+                                        "{{ {head} {values}.iter().cloned().enumerate().map(|({index}, {value})| {call}).collect::<Vec<_>>() }}"
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } else if target == "Lean" {
+        {
+            let available_2 = vec![
+                String::from("ml_pair.1"),
+                String::from("(Float.ofNat ml_pair.2)"),
+                String::from("ml_values"),
+            ];
+            {
+                let call_2 = {
+                    let ml_library_condition_2 = {
+                        let ml_value = parameter_count;
+                        ml_value != 0f64 && !ml_value.is_nan()
+                    };
+                    if ml_library_condition_2 {
+                        format!(
+                            "(ml_callback {})",
+                            (self::ml_array::slice(&available_2, 0f64, parameter_count))
+                                .join((String::from(" ")).as_str())
+                        )
+                    } else {
+                        String::from("ml_callback")
+                    }
+                };
+                {
+                    let head_2 = format!(
+                        "(let ml_values := {}; let ml_callback := {}; ",
+                        object.to_owned(),
+                        callback.to_owned()
+                    );
+                    format!(
+                        "{head_2} (ml_values.toList.zipIdx.map (fun ml_pair => {call_2})).toArray)"
+                    )
+                }
+            }
+        }
+    } else if target == "Rocq" {
+        {
+            let available_3 = vec![
+                String::from("(fst ml_pair)"),
+                String::from("(PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (snd ml_pair))))"),
+                String::from("ml_values"),
+            ];
+            {
+                let call_3 = {
+                    let ml_library_condition_1 = {
+                        let ml_value = parameter_count;
+                        ml_value != 0f64 && !ml_value.is_nan()
+                    };
+                    if ml_library_condition_1 {
+                        format!(
+                            "(ml_callback {})",
+                            (self::ml_array::slice(&available_3, 0f64, parameter_count))
+                                .join((String::from(" ")).as_str())
+                        )
+                    } else {
+                        String::from("ml_callback")
+                    }
+                };
+                {
+                    let head_3 = format!(
+                        "(let ml_values := {} in let ml_callback := {} in ",
+                        object.to_owned(),
+                        callback.to_owned()
+                    );
+                    format!(
+                        "{head_3} List.map (fun ml_pair => {call_3}) (List.combine ml_values (List.seq 0 (List.length ml_values))))"
+                    )
+                }
+            }
+        }
+    } else {
+        String::new()
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlReadArrayFromFieldLoop1Result {
+    MlReadArrayFromFieldLoop1Done,
+    MlReadArrayFromFieldLoop1Return(f64),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn ml_read_array_from_field_loop1(
+    labels: &[String],
+    targets: &[f64],
+    field: &str,
+    mut start: f64,
+    mut count: f64,
+    mut at: f64,
+) -> self::MlReadArrayFromFieldLoop1Result {
+    loop {
+        return if at < (start + count) {
+            if (self::read_required_text_fact(labels, at)) == field {
+                self::MlReadArrayFromFieldLoop1Result::MlReadArrayFromFieldLoop1Return(
+                    self::read_required_number_fact(targets, at),
+                )
+            } else {
+                {
+                    let at_2 = at + 1f64;
+                    {
+                        at = at_2;
+                        continue;
+                    }
+                }
+            }
+        } else {
+            self::MlReadArrayFromFieldLoop1Result::MlReadArrayFromFieldLoop1Done
+        };
     }
 }
