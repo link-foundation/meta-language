@@ -5,9 +5,11 @@ import {createHash} from 'node:crypto';
 import {existsSync,lstatSync,mkdirSync,mkdtempSync,readFileSync,rmSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {dirname,join} from 'node:path';
+import {readSourceNativeCompilerArguments,retainSourceNativeProcessDiagnostics} from './source-native-process-diagnostics.mjs';
 const sha256=value=>createHash('sha256').update(value).digest('hex');
 /** Configure the existing whole-library byte-receipt/process protocol, with no process at import. */
-export function createSourceNativeObservationRunner({nativeMode,checkedPlan,textBytes,parseObservations,entryReceipt,temporaryPrefix,failureLabel}){
+export function createSourceNativeObservationRunner({nativeMode,checkedPlan,textBytes,parseObservations,entryReceipt,temporaryPrefix,failureLabel,compilerProfile='original'}){
+const compilerArguments=readSourceNativeCompilerArguments(compilerProfile);
 function prepareBundle(entry){
  const descriptor=Object.getOwnPropertyDescriptor(entry,'additionalSources');if(!descriptor)return null;
  assert.ok(Object.hasOwn(descriptor,'value')&&descriptor.enumerable,'additionalSources must be an owned data field');
@@ -55,9 +57,15 @@ function checkFiles(entry,files){
 }
 function runProcess(spawn,command,args,options,label){
  const result=spawn(command,args,{...options,shell:false,encoding:'utf8',maxBuffer:1024*1024});
- if(result.error)throw new Error(label+': '+(result.error.code==='ETIMEDOUT'?'timed out after '+options.timeout+'ms':result.error.message),{cause:result.error});
- if(result.signal)throw new Error(label+': terminated by '+result.signal);
- if(result.status!==0)throw new Error(label+': exit '+result.status+'; '+String(result.stderr??'').slice(0,4096));
+ const reason=result.error?(result.error.code==='ETIMEDOUT'?'timed out after '+options.timeout+'ms':String(result.error.message??result.error.code??'process failed').slice(0,4096))
+  :result.signal?'terminated by '+result.signal:result.status!==0?'exit '+result.status+'; '+String(result.stderr??'').slice(0,4096):null;
+ if(reason!==null||(typeof result.stderr==='string'||Buffer.isBuffer(result.stderr))&&result.stderr.length>0){
+  let diagnostics;
+  try{diagnostics=retainSourceNativeProcessDiagnostics(result,{command,args,options,label,processMode:spawn===spawnSync?'native subprocesses':'injected process contract'});}
+  catch(error){throw new Error(label+': '+reason+'; retaining process diagnostics failed: '+String(error.message).slice(0,1024),{cause:result.error??error});}
+  if(reason!==null)throw new Error(label+': '+reason+'; process diagnostics: '+diagnostics.receiptPath,{cause:result.error});
+  process.stderr.write(label+': compiler diagnostics retained: '+diagnostics.receiptPath+'\n');
+ }
  if(typeof result.stdout!=='string')throw new TypeError(label+': stdout must be actual UTF-8 text');
  return result.stdout;
 }
@@ -66,7 +74,7 @@ function runCheckedProcess(entry,files,spawn,command,args,options,label){
  checkFiles(entry,files);try{return runProcess(spawn,command,args,options,label);}finally{checkFiles(entry,files);}
 }
 /** Authorization precedes every process, including injected contract processes. */
-return function runSourceNativeObservations(plan,{environment=process.env,spawn=spawnSync,compiler='rustc',temporaryRoot=tmpdir(),compilerTimeout=30000,executionTimeout=10000}={}){
+return function runSourceNativeObservations(plan,{environment=process.env,spawn=spawnSync,compiler='rustc',temporaryRoot=tmpdir(),compilerTimeout=30000,executionTimeout=10000,diagnosticsDirectory}={}){
  if(!nativeMode(environment))throw new TypeError('native observations require the explicit CI-only switch');
  if(!checkedPlan(plan))throw new TypeError('native execution requires the exact checked in-memory observation plan');
  if(typeof spawn!=='function'||typeof compiler!=='string'||!compiler)throw new TypeError('the native runner requires an actual process function and compiler path');
@@ -86,10 +94,10 @@ return function runSourceNativeObservations(plan,{environment=process.env,spawn=
     for(const source of files.additionalSources){const path=join(directory,source.relativePath);mkdirSync(dirname(path),{recursive:true});writeFileSync(path,source.bytes,{flag:'wx'});regularPath(directory,source.relativePath);}
    }
    writeFileSync(files.source,textBytes(entry.source));writeFileSync(files.consumer,entry.consumerSource);checkFiles(entry,files);
-   const options={cwd:directory,env:environment,timeout:compilerTimeout};
-   const libraryArgs=['--edition=2024','--crate-type=rlib','--crate-name','oracle_source',files.source,'-o',files.library];
+   const options={cwd:directory,env:environment,timeout:compilerTimeout,...(diagnosticsDirectory===undefined?{}:{diagnosticsDirectory})};
+   const libraryArgs=['--edition=2024',...compilerArguments,'--crate-type=rlib','--crate-name','oracle_source',files.source,'-o',files.library];
    processCounts.libraryCompilations++;runCheckedProcess(entry,files,spawn,compiler,libraryArgs,options,entry.id+' original library compiler');checkFiles(entry,files);assert.ok(existsSync(files.library),'the compiler did not create the original library');
-   const consumerArgs=['--edition=2024',files.consumer,'--extern','oracle_source='+files.library,'-o',files.executable];
+   const consumerArgs=['--edition=2024',...compilerArguments,files.consumer,'--extern','oracle_source='+files.library,'-o',files.executable];
    processCounts.consumerCompilations++;runCheckedProcess(entry,files,spawn,compiler,consumerArgs,options,entry.id+' external consumer compiler');checkFiles(entry,files);assert.ok(existsSync(files.executable),'the compiler did not create the external consumer');
    processCounts.executions++;const stdout=runCheckedProcess(entry,files,spawn,files.executable,[],{...options,timeout:executionTimeout},entry.id+' external original function execution');checkFiles(entry,files);
    observations.push({id:entry.id,kind:entry.kind,fixtureId:entry.fixtureId,sourceBytes:entry.sourceBytes,sourceSha256:entry.sourceSha256,replaySha256:entry.replaySha256,

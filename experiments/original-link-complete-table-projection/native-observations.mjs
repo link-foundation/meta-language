@@ -12,6 +12,7 @@ import {emitRust} from '../../js/src/translation/emit-rust.js';
 import {emitJavaScript} from '../../js/src/translation/emit-javascript.js';
 import {tokenize} from '../../js/src/translation/lexer.js';
 import {createSourceNativeObservationRunner} from '../source-native-observations.mjs';
+import {SOURCE_NATIVE_RUNNER_ADDITIONS,SOURCE_NATIVE_RUNNER_VERIFIER_FILES,verifySourceNativeRunnerSourceClosure} from '../source-native-runner-source-closure.mjs';
 import {createPortableRustTextCertificate,encodePortableRustTextCertificate,evaluateRustTextCertificate} from '../rust-text-certificate/bridge.mjs';
 import {emitRustTextValueProjection,encodeRustTextValueProjection} from '../rust-text-value-projection/model.mjs';
 import {projectOriginalLinkCompleteCertificateTables} from './rules.mjs';
@@ -58,6 +59,7 @@ const digests={
  '../source-native-observations.mjs':'7375572e830c9d7a686efe84fb57111cec7861a334851ecad8b5604cf86440a8',
 };
 const checkedPlans=new WeakSet(),sha256=value=>createHash('sha256').update(value).digest('hex');
+const runnerClosureReceiptSha256='fd8a20c45dc95698beb3e5b0263c058f610cc6e5b7ece01d8a50e1d646a656b1';
 const nativeReceipt={sourceBytes:193995,sourceSha256:'761b3611c682e4bbcc85c29a1b91ed58a565d89e47a295703488c69a7b64fe6b'};
 const parameterOrder=['membershipCount','root','fieldParents','fieldLabels','fieldChildren','referenceParents','referenceChildren','scalarKinds','scalarNumbers','scalarSymbols','scalarBooleans','rawStarts','rawLengths','rawUnits','fixedStarts','fixedLengths','fixedUnits'];
 const maximumProtocolBytes=1024*1024,maximumConsumerBytes=4*1024*1024;
@@ -81,7 +83,19 @@ function replaceField(row,child){row.link.setReferences([row.parent,row.link.ref
 function actualOrdinal(result,id){const value=result.transport.fixed.role.transport.anchors.findIndex(anchor=>anchor.equals(id))+1;assert.ok(value);return value;}
 function scalarOrdinal(result,packet,parent,path){let node=parent;for(const name of path)node=fieldRelation(packet.network,node,name).child;return actualOrdinal(result,node)-1;}
 
-export function verifyOriginalLinkCompleteTableNativeModel(read=readFileSync){return Object.entries(digests).map(([file,expected])=>{const actual=sha256(read(new URL(file,import.meta.url)));assert.equal(actual,expected,'the frozen complete-table source changed: '+file);return{file,sha256:actual};});}
+export function verifyOriginalLinkCompleteTableNativeModel(read=readFileSync){return Object.entries(digests).map(([file,expected])=>{
+ const bytes=read(new URL(file,import.meta.url)),actual=sha256(bytes);
+ if(file==='../source-native-observations.mjs'){
+  const receiptBytes=read(new URL('./data/runner-source-closure.lino',import.meta.url));
+  assert.equal(sha256(receiptBytes),runnerClosureReceiptSha256,'the frozen complete-table runner source-closure receipt changed');
+  const additionalSources=Object.fromEntries(SOURCE_NATIVE_RUNNER_ADDITIONS.map(row=>[row.file,read(new URL('../../'+row.file,import.meta.url))]));
+  const verifierSources=Object.fromEntries(SOURCE_NATIVE_RUNNER_VERIFIER_FILES.map(file=>[file,read(new URL('../../'+file,import.meta.url))]));
+  const closure=verifySourceNativeRunnerSourceClosure(readStructuredDataLino(receiptBytes.toString('utf8')),bytes,digests,{producerCommit:ORIGINAL_LINK_COMPLETE_TABLE_MODEL_COMMIT,additionalSources,verifierSources});
+  assert.equal(closure.baselineSha256,expected);
+  return{file,sha256:actual,producerSha256:expected,runnerSourceClosure:closure,sourceClosureReceiptSha256:runnerClosureReceiptSha256};
+ }
+ assert.equal(actual,expected,'the frozen complete-table source changed: '+file);return{file,sha256:actual};
+});}
 export function originalLinkCompleteTableNativeMode(environment=process.env){if(environment.ORIGINAL_LINK_COMPLETE_TABLE_NATIVE!=='1')return false;if(environment.CI!=='true')throw new TypeError('ORIGINAL_LINK_COMPLETE_TABLE_NATIVE=1 requires CI=true; native compilation is forbidden locally');return true;}
 function nativeInterface(source){
  const tokens=tokenize(source,'Rust').tokens,found=[];let depth=0;

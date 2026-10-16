@@ -177,6 +177,7 @@ if (process.env.CI === 'true') {
     for (const call of fake.calls) {
       assert.equal(call.options.shell, false); assert.equal(existsSync(call.options.cwd), false);
       assert.equal(call.options.maxBuffer, 1024 * 1024); assert.equal(call.options.timeout, call.phase === 'execute' ? 10000 : 30000);
+      if(call.phase!=='execute')assert.deepEqual(call.args.slice(1,5),['--error-format=short','-Copt-level=2','-Cdebug-assertions=on','-Coverflow-checks=on']);
       assert.equal(call.options.env.CI, 'true'); assert.equal(call.options.env.ORIGINAL_LINK_RAW_NATIVE, '1'); assert.equal(Object.isFrozen(call.options.env), true);
     }
     assert.deepEqual(receipt.observations[0].inventoryCounts, entry.inventoryCounts);

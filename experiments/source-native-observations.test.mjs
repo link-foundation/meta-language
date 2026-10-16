@@ -6,6 +6,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import test from 'node:test';
 import {createSourceNativeObservationRunner} from './source-native-observations.mjs';
+import {readProjectData} from '../js/scripts/project-data.mjs';
 const sha256=value=>createHash('sha256').update(value).digest('hex');
 const textBytes=value=>{if(typeof value!=='string'||!value.isWellFormed())throw new TypeError('primitive scalar source text required');return Buffer.from(value);};
 const descriptor=(relativePath,source)=>({relativePath,source,sourceBytes:textBytes(source).length,sourceSha256:sha256(textBytes(source))});
@@ -16,12 +17,13 @@ function makePlan(change=()=>{},bundle=true){
  if(bundle)entry.additionalSources=[descriptor('library/mod.rs','include!("part_0.rs");\n'),...Array.from({length:4},(_,index)=>descriptor('library/part_'+index+'.rs','// Ω😀 '+index+'\r\npub fn part_'+index+'()->bool{true}\r\n'))];
  change(entry);return{model:'source bundle transport contracts only',modelCommit:'contract-only',modelSources:[],originalCount:1,entries:[entry]};
 }
-function harness(plan){
+function harness(plan,compilerProfile='original'){
  const checked=new WeakSet([plan]),calls=[];
  const run=createSourceNativeObservationRunner({
   nativeMode:env=>{if(env.SOURCE_BUNDLE_CONTRACT!=='1')return false;if(env.CI!=='true')throw new TypeError('contract requires CI=true');return true;},
   checkedPlan:value=>checked.has(value),textBytes,parseObservations:(output,expected)=>{assert.equal(output,'actual fake output\n');assert.deepEqual(expected,[true]);return[{value:true}];},
   entryReceipt:()=>({contract:'only fake subprocesses'}),temporaryPrefix:'source-bundle-contract-',failureLabel:'Source bundle contract failed',
+  compilerProfile,
  });
  const fake=override=>(command,args,options)=>{
   const phase=args.includes('--crate-type=rlib')?'library':args.includes('--extern')?'consumer':'execute';const call={command,args,options,phase};calls.push(call);
@@ -159,5 +161,78 @@ test('failed processes still authenticate the entire bundle and cleanup before r
   const plan=makePlan(),h=harness(plan);failure(()=>h.run(plan,{environment,spawn:h.fake(call=>{
    if(call.phase===phase){writeFileSync(join(call.options.cwd,'library/part_1.rs'),'changed during failed process');return{status:1,stdout:'',stderr:'actual process failure'};}
   })}),/additional source bytes changed/u);assert.equal(h.calls.at(-1).phase,phase);assert.equal(existsSync(h.calls[0].options.cwd),false);
+ }
+});
+
+test('selected compiler profiles retain exact commands, checked optimization and every original process bound',()=>{
+ const profiles={original:[],shortDiagnostics:['--error-format=short'],checkedOptimized:['--error-format=short','-Copt-level=2','-Cdebug-assertions=on','-Coverflow-checks=on']};
+ assert.deepEqual(readProjectData(new URL('./source-native-compiler-profiles.lino',import.meta.url)),profiles);
+ for(const[profile,args]of Object.entries(profiles)){
+  const plan=makePlan(),h=harness(plan,profile),receipt=h.run(plan,{environment,spawn:h.fake()});
+  assert.deepEqual(h.calls.map(call=>call.phase),['library','consumer','execute']);
+  const directory=h.calls[0].options.cwd;
+  assert.deepEqual(receipt.observations[0].compilerArguments,[
+   ['--edition=2024',...args,'--crate-type=rlib','--crate-name','oracle_source',join(directory,'original.rs'),'-o',join(directory,'liboracle_source.rlib')],
+   ['--edition=2024',...args,join(directory,'consumer.rs'),'--extern','oracle_source='+join(directory,'liboracle_source.rlib'),'-o',join(directory,'consumer')],
+  ]);
+  for(const call of h.calls){assert.equal(call.options.maxBuffer,1048576);assert.equal(call.options.timeout,call.phase==='execute'?10000:30000);assert.equal(call.options.shell,false);}
+  assert.deepEqual(h.calls[2].args,[]);assert.deepEqual(receipt.observations[0].observations,[{value:true}]);
+ }
+ assert.throws(()=>harness(makePlan(),'uncheckedFast'),/unknown source native compiler profile/u);
+});
+
+test('buffer errors retain actual captured stdout and stderr without emitting an observation or hiding later fixtures',()=>{
+ const root=mkdtempSync(join(tmpdir(),'source-process-diagnostic-contract-'));
+ try{
+  const plan=makePlan();plan.entries.push({...makePlan().entries[0],id:'later mechanical fixture'});const h=harness(plan);
+  const stdout='compiler output Ω\r\n',stderr='warning: actual compiler diagnostic 😀\n';let failed=false,caught;
+  try{h.run(plan,{environment,diagnosticsDirectory:root,spawn:h.fake(call=>{
+   if(!failed&&call.phase==='library'){failed=true;return{status:null,signal:'SIGTERM',stdout,stderr,error:Object.assign(new Error('spawnSync rustc ENOBUFS'),{code:'ENOBUFS'})};}
+  })});}catch(error){caught=error;}
+  assert.ok(caught instanceof AggregateError);assert.match(caught.message,/ENOBUFS/u);assert.ok(caught.message.length<8192);
+  assert.deepEqual(h.calls.map(call=>call.phase),['library','library','consumer','execute']);
+  const directories=readdirSync(root);assert.equal(directories.length,1);const directory=join(root,directories[0]);
+  assert.equal(readFileSync(join(directory,'stdout.log'),'utf8'),stdout);assert.equal(readFileSync(join(directory,'stderr.log'),'utf8'),stderr);
+  const receipt=readProjectData(join(directory,'receipt.lino'));
+  assert.equal(receipt.processMode,'injected process contract');assert.equal(receipt.error.code,'ENOBUFS');assert.equal(receipt.maximumBufferBytes,1048576);
+  assert.equal(receipt.stdout.sha256,sha256(stdout));assert.equal(receipt.stderr.sha256,sha256(stderr));assert.equal(receipt.stderr.truncated,false);
+  assert.ok(h.calls.every(call=>!existsSync(call.options.cwd)),'compiler scratch is removed while its diagnostics survive');
+ }finally{rmSync(root,{recursive:true,force:true});}
+});
+
+test('successful compiler warnings remain visible as bounded logs without changing returned observations',()=>{
+ const root=mkdtempSync(join(tmpdir(),'source-process-warning-contract-'));
+ try{
+  const plan=makePlan(),h=harness(plan,'shortDiagnostics');
+  const receipt=h.run(plan,{environment,diagnosticsDirectory:root,spawn:h.fake(call=>{
+   if(call.phase==='library'){
+    writeFileSync(call.args[call.args.indexOf('-o')+1],'fake compiler artifact, not Rust');
+    return{status:0,signal:null,stdout:'',stderr:'original.rs:1:1: warning: exact original warning\n'};
+   }
+  })});
+  assert.deepEqual(receipt.observations[0].observations,[{value:true}]);
+  const directories=readdirSync(root);assert.equal(directories.length,1);const directory=join(root,directories[0]);
+  assert.equal(readFileSync(join(directory,'stderr.log'),'utf8'),'original.rs:1:1: warning: exact original warning\n');
+  const diagnostic=readProjectData(join(directory,'receipt.lino'));assert.equal(diagnostic.status,0);assert.equal(diagnostic.error,null);
+  assert.ok(diagnostic.arguments.includes('--error-format=short'));assert.equal(diagnostic.stderr.truncated,false);
+ }finally{rmSync(root,{recursive:true,force:true});}
+});
+
+test('timeout, signal, nonzero and over-limit captured bytes remain bounded process failures',()=>{
+ for(const actual of[
+  {status:null,signal:null,error:Object.assign(new Error('actual timeout'),{code:'ETIMEDOUT'}),stdout:'partial output',stderr:'actual timeout diagnostic'},
+  {status:null,signal:'SIGTERM',stdout:'partial output',stderr:'actual signal diagnostic'},
+  {status:2,signal:null,stdout:'partial output',stderr:'actual rejection diagnostic'},
+  {status:null,signal:null,error:Object.assign(new Error('actual buffer failure'),{code:'ENOBUFS'}),stdout:'partial output',stderr:Buffer.alloc(1048592,65)},
+ ]){
+  const root=mkdtempSync(join(tmpdir(),'source-process-failure-contract-'));
+  try{
+   const plan=makePlan(),h=harness(plan);failure(()=>h.run(plan,{environment,diagnosticsDirectory:root,spawn:h.fake(call=>call.phase==='library'?actual:null)}),/timed out after 30000ms|SIGTERM|exit 2|buffer failure/u);
+   assert.equal(h.calls.length,1);const directory=join(root,readdirSync(root)[0]),receipt=readProjectData(join(directory,'receipt.lino'));
+   const captured=Buffer.from(actual.stderr),kept=readFileSync(join(directory,'stderr.log'));
+   assert.deepEqual(kept,captured.subarray(0,1048576));assert.equal(receipt.stderr.capturedBytes,captured.length);
+   assert.equal(receipt.stderr.retainedBytes,kept.length);assert.equal(receipt.stderr.truncated,captured.length>1048576);assert.equal(receipt.stderr.sha256,sha256(kept));
+   assert.equal(h.calls[0].options.maxBuffer,1048576);assert.equal(h.calls[0].options.timeout,30000);
+  }finally{rmSync(root,{recursive:true,force:true});}
  }
 });

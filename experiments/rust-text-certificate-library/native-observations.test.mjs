@@ -92,6 +92,7 @@ test('injected process contracts read every unchanged source before all three pr
   const fake = fakeProcess(({ args, options, phase }) => {
     assert.equal(options.shell, false); assert.equal(options.encoding, 'utf8'); assert.equal(options.env, environment);
     assert.equal(options.maxBuffer, 1048576); assert.equal(options.timeout, phase === 'execute' ? 10000 : 30000);
+    if (phase !== 'execute') assert.equal(args[1], '--error-format=short');
     assert.equal(readFileSync(join(options.cwd, 'original.rs'), 'utf8'), entry.source);
     assert.equal(readFileSync(join(options.cwd, 'consumer.rs'), 'utf8'), original.consumerSource);
     for (const source of entry.additionalSources) assert.deepEqual(readFileSync(join(options.cwd, source.relativePath)), Buffer.from(source.source));

@@ -116,6 +116,7 @@ function parseObservations(output, expected) {
   });
 }
 export const runRustTextCertificateLibraryNative = createSourceNativeObservationRunner({
+  compilerProfile: 'shortDiagnostics',
   nativeMode: rustTextCertificateLibraryNativeMode, checkedPlan: plan => checkedPlans.has(plan), textBytes, parseObservations,
   entryReceipt: entry => ({ functionName: entry.functionName, parameterModes: entry.parameterModes, resultMode: entry.resultMode,
     tokenCount: entry.tokenCount, tableOrder: entry.tableOrder, outputRoles: entry.outputRoles, declarations: entry.declarations,

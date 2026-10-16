@@ -7,6 +7,7 @@ import vm from 'node:vm';
 import {createSourceNativeObservationRunner} from '../source-native-observations.mjs';
 import {readStructuredDataLino} from '../../js/src/structured-data-links.js';
 import {verifyOriginalLinkRawSchemaSourceClosure} from './raw-schema-source-closure.mjs';
+import {SOURCE_NATIVE_RUNNER_ADDITIONS,SOURCE_NATIVE_RUNNER_VERIFIER_FILES,verifySourceNativeRunnerSourceClosure} from '../source-native-runner-source-closure.mjs';
 import {createCompleteRustSourceArchives, replayCompleteRustSourceArchives, readCanonicalArchiveTransportSource, requireSuccessfulSourceArchive} from './archive-transport.mjs';
 
 // Actual immutable producer and source closure; no capability declaration substitutes for execution.
@@ -63,6 +64,7 @@ const sourceDigests = {
 // All forty-seven producer bindings above remain unchanged. The receipt keeps
 // the original schema bytes while authenticating only an additive host schema.
 const schemaClosureReceiptSha256 = '4279200cc6d7f1aa36aa7090461b3d2f09d3e711c42cee6c86d29e8bf8873375';
+const runnerClosureReceiptSha256='a3518fa93fe200a1e61d4cb28b9418eb06212ddf71c197e0e03bcf8057e556d0';
 // Ordered inventory derived from the frozen fixture/corpus sources, without constructing graphs.
 const frozenFixtureIds = [
   "authentic-owned-clone",
@@ -187,6 +189,15 @@ export function verifyOriginalLinkRawNativeModel(read = readFileSync) {
   assert.match(ORIGINAL_LINK_RAW_MODEL_COMMIT ?? '', /^[0-9a-f]{40}$/u, 'raw producer commit is not frozen');
   return Object.entries(sourceDigests).map(([file, expected]) => {
     const bytes = read(new URL(file, import.meta.url)), actual = sha256(bytes);
+    if(file==='../source-native-observations.mjs'){
+      const receiptBytes=read(new URL('./data/raw-runner-source-closure.lino',import.meta.url));
+      assert.equal(sha256(receiptBytes),runnerClosureReceiptSha256,'the frozen raw runner source-closure receipt changed');
+      const additionalSources=Object.fromEntries(SOURCE_NATIVE_RUNNER_ADDITIONS.map(row=>[row.file,read(new URL('../../'+row.file,import.meta.url))]));
+      const verifierSources=Object.fromEntries(SOURCE_NATIVE_RUNNER_VERIFIER_FILES.map(file=>[file,read(new URL('../../'+file,import.meta.url))]));
+      const closure=verifySourceNativeRunnerSourceClosure(readStructuredDataLino(receiptBytes.toString('utf8')),bytes,sourceDigests,{producerCommit:ORIGINAL_LINK_RAW_MODEL_COMMIT,additionalSources,verifierSources});
+      assert.equal(closure.baselineSha256,expected);
+      return{file,sha256:actual,producerSha256:expected,runnerSourceClosure:closure,sourceClosureReceiptSha256:runnerClosureReceiptSha256};
+    }
     if (file === '../../js/src/data/typed-program-links-schema.lino') {
       const receiptBytes = read(new URL('./data/raw-schema-source-closure.lino', import.meta.url));
       assert.equal(sha256(receiptBytes), schemaClosureReceiptSha256, 'the frozen raw schema source-closure receipt changed');
@@ -416,7 +427,7 @@ function parseObservations(output, expected, carrier) {
     return {id: expected[index].id, kind: expected[index].kind, inputSha256: sha256(JSON.stringify(expected[index].inputBits)), rootBits: expected[index].inputBits.slice(0, 2), resultBits: bits, premiseIndices: expected[index].premiseIndices};
   });
 }
-const runChecked = createSourceNativeObservationRunner({nativeMode: originalLinkRawNativeMode, checkedPlan: plan => checkedPlans.has(plan), textBytes, parseObservations: (output, expected) => { const carrier = expectedCarriers.get(expected); assert.ok(carrier); return parseObservations(output, expected, carrier); }, entryReceipt: entry => ({parameterOrder: entry.parameterOrder, parameterModes: entry.parameterModes, resultMode: entry.resultMode, interfaceSha256: entry.interfaceSha256, declarationNames: entry.declarationNames, definitionCount: entry.definitionCount, preludeCount: entry.preludeCount, fixtureInventory: entry.fixtureInventory, inventoryCounts: entry.inventoryCounts, independentJavaScriptControls: entry.independentJavaScriptControls, carrierSha256: entry.carrierSha256, sizes: entry.sizes, genuineFormatPremiseCount: entry.genuineFormatPremiseCount, serializationRefusals: entry.serializationRefusals, premises: entry.premises, hostChecks: entry.hostChecks, observationScope: entry.observationScope}), temporaryPrefix: 'original-raw-native-', failureLabel: 'Complete original raw component observations failed'});
+const runChecked = createSourceNativeObservationRunner({compilerProfile:'checkedOptimized',nativeMode: originalLinkRawNativeMode, checkedPlan: plan => checkedPlans.has(plan), textBytes, parseObservations: (output, expected) => { const carrier = expectedCarriers.get(expected); assert.ok(carrier); return parseObservations(output, expected, carrier); }, entryReceipt: entry => ({parameterOrder: entry.parameterOrder, parameterModes: entry.parameterModes, resultMode: entry.resultMode, interfaceSha256: entry.interfaceSha256, declarationNames: entry.declarationNames, definitionCount: entry.definitionCount, preludeCount: entry.preludeCount, fixtureInventory: entry.fixtureInventory, inventoryCounts: entry.inventoryCounts, independentJavaScriptControls: entry.independentJavaScriptControls, carrierSha256: entry.carrierSha256, sizes: entry.sizes, genuineFormatPremiseCount: entry.genuineFormatPremiseCount, serializationRefusals: entry.serializationRefusals, premises: entry.premises, hostChecks: entry.hostChecks, observationScope: entry.observationScope}), temporaryPrefix: 'original-raw-native-', failureLabel: 'Complete original raw component observations failed'});
 const expectedCarriers = new WeakMap();
 export function runOriginalLinkRawNative(plan, options) {
   requireOriginalLinkRawPlanning(options?.environment ?? process.env);
