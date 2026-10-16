@@ -301,6 +301,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "create_global_concept_space",
         "function",
     ),
+    (
+        "createGlobalConceptSpaceParser",
+        "create_global_concept_space_parser",
+        "function",
+    ),
     ("createGrammarParser", "compile_feature_grammar", "function"),
     (
         "createProgramSnapshot",

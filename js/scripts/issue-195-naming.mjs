@@ -44573,7 +44573,763 @@ const BULK_FIFTY_BINDINGS=[
 ];
 const BULK_FIFTY_NAME_INVENTORIES=[...new Set(BULK_FIFTY_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B50 reviewed library and source oracle contracts for "+source,files:[source],extract:raw=>BULK_FIFTY_BINDINGS.filter(row=>{if(row.source!==source)return false;const text=row.archiveSource?readStructuredDataLino(raw).sources.find(entry=>entry.file===row.archiveSource)?.source:row.sourceField?readStructuredDataLino(raw)[row.sourceField]:raw;return typeof text==="string"&&text.includes(row.sourceText)&&(!row.sourceContext||text.includes(row.sourceContext));}).map(row=>row.inventoryName),recordOf:name=>BULK_FIFTY_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));
 // End B50 reviewed library and source oracle registrations.
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory).map(reconcileBulkFortySevenNativeInventory).map(reconcileBulkFiftyHistoricalInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES, ...BULK_FORTY_SEVEN_NAME_INVENTORIES, ...BULK_FORTY_EIGHT_NAME_INVENTORIES, ...BULK_FORTY_NINE_NAME_INVENTORIES, ...BULK_FIFTY_NAME_INVENTORIES]);
+// BEGIN B51 archive parser, Boolean constant tree and public declaration source names.
+const BULK_FIFTY_ONE_BINDINGS=[
+  {
+    "id": "operation.create-global-concept-space-parser",
+    "source": "js/src/global-concept-space.js",
+    "name": "createGlobalConceptSpaceParser",
+    "inventoryName": "create global concept space parser",
+    "sourceText": "export function createGlobalConceptSpaceParser(source, sourceIdentifier, options = {}) {"
+  },
+  {
+    "id": "operation.create-global-concept-space-parser",
+    "source": "js/src/index.d.ts",
+    "name": "createGlobalConceptSpaceParser",
+    "inventoryName": "create global concept space parser",
+    "sourceText": "export function createGlobalConceptSpaceParser("
+  },
+  {
+    "id": "operation.create-global-concept-space-parser",
+    "source": "rust/src/global_concept_space/parser.rs",
+    "name": "create_global_concept_space_parser",
+    "inventoryName": "create global concept space parser",
+    "sourceText": "pub fn create_global_concept_space_parser("
+  },
+  {
+    "id": "operation.require-global-concept-parser-options",
+    "source": "js/src/global-concept-space.js",
+    "name": "requireGlobalConceptParserOptions",
+    "inventoryName": "require global concept parser options",
+    "sourceText": "function requireGlobalConceptParserOptions(options) {"
+  },
+  {
+    "id": "operation.require-global-concept-parser-options",
+    "source": "rust/src/global_concept_space/parser.rs",
+    "name": "require_global_concept_parser_options",
+    "inventoryName": "require global concept parser options",
+    "sourceText": "fn require_global_concept_parser_options("
+  },
+  {
+    "id": "operation.read-validated-global-concept-archive",
+    "source": "js/src/global-concept-space.js",
+    "name": "readValidatedGlobalConceptArchive",
+    "inventoryName": "read validated global concept archive",
+    "sourceText": "function readValidatedGlobalConceptArchive(source, options) {"
+  },
+  {
+    "id": "operation.read-validated-global-concept-archive",
+    "source": "rust/src/global_concept_space/links.rs",
+    "name": "read_validated_global_concept_archive",
+    "inventoryName": "read validated global concept archive",
+    "sourceText": "pub(super) fn read_validated_global_concept_archive("
+  },
+  {
+    "id": "grammar.global-concept-space-parser",
+    "source": "js/src/index.d.ts",
+    "name": "GlobalConceptSpaceParser",
+    "inventoryName": "global concept space parser",
+    "sourceText": "export interface GlobalConceptSpaceParser {"
+  },
+  {
+    "id": "grammar.global-concept-space-parser",
+    "source": "rust/src/global_concept_space/parser.rs",
+    "name": "GlobalConceptSpaceParser",
+    "inventoryName": "global concept space parser",
+    "sourceText": "pub struct GlobalConceptSpaceParser {"
+  },
+  {
+    "id": "grammar.validated-global-concept-archive",
+    "source": "rust/src/global_concept_space/links.rs",
+    "name": "ValidatedGlobalConceptArchive",
+    "inventoryName": "validated global concept archive",
+    "sourceText": "pub(super) struct ValidatedGlobalConceptArchive {"
+  },
+  {
+    "id": "operation.parse-archived-global-concept-input",
+    "source": "js/src/global-concept-space.js",
+    "name": "parse",
+    "inventoryName": "parse archived global concept input",
+    "sourceText": "    parse(input, overrides = {}) {",
+    "sourceContext": "export function createGlobalConceptSpaceParser(source, sourceIdentifier, options = {}) {\n  requireGlobalConceptParserOptions(options);\n  const { records, ...parserOptions } = options;\n  const { space, grammars } = readValidatedGlobalConceptArchive(source, { records });\n  if (typeof sourceIdentifier !== 'string' || !containsGlobalConceptIdentity([...grammars.keys()], sourceIdentifier)) {\n    throw new GrammarRuntimeError('an archived grammar needs an exact existing source identifier', 'selection');\n  }\n  const parser = compileGrammar(grammars.get(sourceIdentifier), {\n    ...parserOptions,\n    grammarName: sourceIdentifier,\n    globalConceptSpace: space,\n    resolveGrammar: name => grammars.get(name),\n  });\n  return {\n    parse(input, overrides = {}) {"
+  },
+  {
+    "id": "operation.parse-archived-global-concept-input",
+    "source": "js/src/index.d.ts",
+    "name": "parse",
+    "inventoryName": "parse archived global concept input",
+    "sourceText": "  parse(source: string | Uint8Array, options?: GlobalConceptSpaceParserOptions): SyntaxTreeNode;",
+    "sourceContext": "export interface GlobalConceptSpaceParser {\n  parse(source: string | Uint8Array, options?: GlobalConceptSpaceParserOptions): SyntaxTreeNode;"
+  },
+  {
+    "id": "operation.parse-archived-global-concept-input",
+    "source": "rust/src/global_concept_space/parser.rs",
+    "name": "parse",
+    "inventoryName": "parse archived global concept input",
+    "sourceText": "    pub fn parse(",
+    "sourceContext": "impl GlobalConceptSpaceParser {\n    /// Parses with the archive's identity, preserving ordinary CST and budgets.\n    ///\n    /// # Errors\n    /// Returns a runtime error for protected option overrides or an invalid start.\n    pub fn parse_tree(\n        &self,\n        source: &[u8],\n        options: &FeatureParseOptions,\n    ) -> Result<ParseOutcome, GrammarRuntimeError> {\n        require_global_concept_parser_options(options)?;\n        self.parser.parse_tree(source, options)\n    }\n\n    /// Parses into the concrete tree under the archive's identity.\n    ///\n    /// # Errors\n    /// Returns `Runtime` for a protected option override or runtime failure,\n    /// and `Parse` for an ordinary input rejection.\n    pub fn parse("
+  },
+  {
+    "id": "operation.parse-archived-global-concept-input-with-outcome",
+    "source": "js/src/global-concept-space.js",
+    "name": "parseTree",
+    "inventoryName": "parse archived global concept input with outcome",
+    "sourceText": "    parseTree(input, overrides = {}) {",
+    "sourceContext": "export function createGlobalConceptSpaceParser(source, sourceIdentifier, options = {}) {\n  requireGlobalConceptParserOptions(options);\n  const { records, ...parserOptions } = options;\n  const { space, grammars } = readValidatedGlobalConceptArchive(source, { records });\n  if (typeof sourceIdentifier !== 'string' || !containsGlobalConceptIdentity([...grammars.keys()], sourceIdentifier)) {\n    throw new GrammarRuntimeError('an archived grammar needs an exact existing source identifier', 'selection');\n  }\n  const parser = compileGrammar(grammars.get(sourceIdentifier), {\n    ...parserOptions,\n    grammarName: sourceIdentifier,\n    globalConceptSpace: space,\n    resolveGrammar: name => grammars.get(name),\n  });\n  return {\n    parse(input, overrides = {}) {\n      requireGlobalConceptParserOptions(overrides);\n      return parser.parse(input, overrides);\n    },\n    parseTree(input, overrides = {}) {"
+  },
+  {
+    "id": "operation.parse-archived-global-concept-input-with-outcome",
+    "source": "js/src/index.d.ts",
+    "name": "parseTree",
+    "inventoryName": "parse archived global concept input with outcome",
+    "sourceText": "  parseTree(source: string | Uint8Array, options?: GlobalConceptSpaceParserOptions): GrammarParseOutcome;",
+    "sourceContext": "export interface GlobalConceptSpaceParser {\n  parse(source: string | Uint8Array, options?: GlobalConceptSpaceParserOptions): SyntaxTreeNode;\n  parseTree(source: string | Uint8Array, options?: GlobalConceptSpaceParserOptions): GrammarParseOutcome;"
+  },
+  {
+    "id": "operation.parse-archived-global-concept-input-with-outcome",
+    "source": "rust/src/global_concept_space/parser.rs",
+    "name": "parse_tree",
+    "inventoryName": "parse archived global concept input with outcome",
+    "sourceText": "    pub fn parse_tree(",
+    "sourceContext": "impl GlobalConceptSpaceParser {\n    /// Parses with the archive's identity, preserving ordinary CST and budgets.\n    ///\n    /// # Errors\n    /// Returns a runtime error for protected option overrides or an invalid start.\n    pub fn parse_tree("
+  },
+  {
+    "id": "operation.wrap-global-concept-archive-error",
+    "source": "rust/src/global_concept_space/parser.rs",
+    "name": "archive_error",
+    "inventoryName": "wrap global concept archive error",
+    "sourceText": "fn archive_error(message: String) -> GrammarRuntimeError {"
+  },
+  {
+    "id": "grammar.global-concept-space-parser-options",
+    "source": "js/src/index.d.ts",
+    "name": "GlobalConceptSpaceParserOptions",
+    "inventoryName": "global concept space parser options",
+    "sourceText": "export type GlobalConceptSpaceParserOptions = GrammarParserOptions & {"
+  },
+  {
+    "id": "repository.create-global-concept-archive-recursive-controls",
+    "source": "js/tests/global-concept-archive-parser.test.js",
+    "name": "archivedRecursiveFixture",
+    "inventoryName": "create global concept archive recursive controls",
+    "sourceText": "function archivedRecursiveFixture() {"
+  },
+  {
+    "id": "repository.create-global-concept-archive-recursive-controls",
+    "source": "rust/tests/unit/global_concept_archive_parser.rs",
+    "name": "archived_recursive_fixture",
+    "inventoryName": "create global concept archive recursive controls",
+    "sourceText": "fn archived_recursive_fixture() -> (String, Value, ParseOutcome, Value) {"
+  },
+  {
+    "id": "repository.create-global-concept-grammar-archive-control",
+    "source": "js/tests/global-concept-archive-parser.test.js",
+    "name": "archivedGrammar",
+    "inventoryName": "create global concept grammar archive control",
+    "sourceText": "function archivedGrammar(listing, id = 'root-source', language = id, edition = 'authored-1') {"
+  },
+  {
+    "id": "repository.collect-global-concept-archive-language-trees",
+    "source": "js/tests/global-concept-archive-parser.test.js",
+    "name": "embeddedArchiveTrees",
+    "inventoryName": "collect global concept archive language trees",
+    "sourceText": "function embeddedArchiveTrees(node, found = []) {"
+  },
+  {
+    "id": "repository.collect-global-concept-archive-language-trees",
+    "source": "rust/tests/unit/global_concept_archive_parser.rs",
+    "name": "embedded_trees",
+    "inventoryName": "collect global concept archive language trees",
+    "sourceText": "fn embedded_trees<'a>(tree: &'a SyntaxTree, found: &mut Vec<&'a SyntaxTree>) {"
+  },
+  {
+    "id": "repository.read-global-concept-archive-tree-bytes",
+    "source": "js/tests/global-concept-archive-parser.test.js",
+    "name": "archivedTreeBytes",
+    "inventoryName": "read global concept archive tree bytes",
+    "sourceText": "function archivedTreeBytes(node) {"
+  },
+  {
+    "id": "repository.read-global-concept-archive-tree-bytes",
+    "source": "rust/tests/unit/global_concept_archive_parser.rs",
+    "name": "archived_tree_bytes",
+    "inventoryName": "read global concept archive tree bytes",
+    "sourceText": "fn archived_tree_bytes(tree: &Value) -> Vec<u8> {"
+  },
+  {
+    "id": "repository.check-recursive-global-concept-archive-parsing",
+    "source": "js/tests/global-concept-archive-parser.test.js",
+    "name": "one validated archive executes the exact recursive CST after all original grammar maps are discarded",
+    "inventoryName": "check recursive global concept archive parsing",
+    "sourceText": "test('one validated archive executes the exact recursive CST after all original grammar maps are discarded', () => {"
+  },
+  {
+    "id": "repository.check-recursive-global-concept-archive-parsing",
+    "source": "rust/tests/unit/global_concept_archive_parser.rs",
+    "name": "validated_archive_replays_recursive_cst_after_original_grammars_are_discarded",
+    "inventoryName": "check recursive global concept archive parsing",
+    "sourceText": "fn validated_archive_replays_recursive_cst_after_original_grammars_are_discarded() {"
+  },
+  {
+    "id": "repository.check-exact-global-concept-archive-source-selection",
+    "source": "js/tests/global-concept-archive-parser.test.js",
+    "name": "archive source identifiers remain exact even when two sources declare the same language",
+    "inventoryName": "check exact global concept archive source selection",
+    "sourceText": "test('archive source identifiers remain exact even when two sources declare the same language', () => {"
+  },
+  {
+    "id": "repository.check-exact-global-concept-archive-source-selection",
+    "source": "rust/tests/unit/global_concept_archive_parser.rs",
+    "name": "exact_archived_source_ids_and_authority_options_remain_protected",
+    "inventoryName": "check exact global concept archive source selection",
+    "sourceText": "fn exact_archived_source_ids_and_authority_options_remain_protected() {"
+  },
+  {
+    "id": "repository.check-global-concept-archive-selection-witnesses",
+    "source": "js/tests/global-concept-archive-parser.test.js",
+    "name": "archived any and all selections retain every witness and explicit unknown failures",
+    "inventoryName": "check global concept archive selection witnesses",
+    "sourceText": "test('archived any and all selections retain every witness and explicit unknown failures', () => {"
+  },
+  {
+    "id": "repository.check-global-concept-archive-selection-witnesses",
+    "source": "rust/tests/unit/global_concept_archive_parser.rs",
+    "name": "archived_any_all_selections_keep_witnesses_and_unknown_diagnostics",
+    "inventoryName": "check global concept archive selection witnesses",
+    "sourceText": "fn archived_any_all_selections_keep_witnesses_and_unknown_diagnostics() {"
+  },
+  {
+    "id": "repository.check-global-concept-archive-validation-order",
+    "source": "js/tests/global-concept-archive-parser.test.js",
+    "name": "archive compilation runs every existing proof and final redirect validation before exposing grammars",
+    "inventoryName": "check global concept archive validation order",
+    "sourceText": "test('archive compilation runs every existing proof and final redirect validation before exposing grammars', () => {"
+  },
+  {
+    "id": "repository.check-global-concept-archive-validation-order",
+    "source": "rust/tests/unit/global_concept_archive_parser.rs",
+    "name": "archive_parser_runs_existing_proof_and_redirect_validation_before_selection",
+    "inventoryName": "check global concept archive validation order",
+    "sourceText": "fn archive_parser_runs_existing_proof_and_redirect_validation_before_selection() {"
+  },
+  {
+    "id": "repository.check-global-concept-archive-root-identity",
+    "source": "js/tests/global-concept-archive-parser.test.js",
+    "name": "archive roots preserve explicit and implicit starts and refuse counterfeit start or rule-order metadata",
+    "inventoryName": "check global concept archive root identity",
+    "sourceText": "test('archive roots preserve explicit and implicit starts and refuse counterfeit start or rule-order metadata', () => {"
+  },
+  {
+    "id": "repository.check-global-concept-archive-root-identity",
+    "source": "rust/tests/unit/global_concept_archive_parser.rs",
+    "name": "archived_roots_retain_start_and_rule_order_and_allow_ordinary_start_overrides",
+    "inventoryName": "check global concept archive root identity",
+    "sourceText": "fn archived_roots_retain_start_and_rule_order_and_allow_ordinary_start_overrides() {"
+  },
+  {
+    "id": "repository.check-global-concept-archive-recursion-budgets",
+    "source": "js/tests/global-concept-archive-parser.test.js",
+    "name": "archive recursion keeps the shared budgets and same-region cycle diagnostics",
+    "inventoryName": "check global concept archive recursion budgets",
+    "sourceText": "test('archive recursion keeps the shared budgets and same-region cycle diagnostics', () => {"
+  },
+  {
+    "id": "repository.check-global-concept-archive-recursion-budgets",
+    "source": "rust/tests/unit/global_concept_archive_parser.rs",
+    "name": "archived_recursion_preserves_shared_budgets_and_nonconsuming_cycle_diagnostics",
+    "inventoryName": "check global concept archive recursion budgets",
+    "sourceText": "fn archived_recursion_preserves_shared_budgets_and_nonconsuming_cycle_diagnostics() {"
+  },
+  {
+    "id": "repository.check-global-concept-archive-native-grammar-parity",
+    "source": "js/tests/global-concept-archive-parser.test.js",
+    "name": "one existing native JavaScript fixture executes from the archived shipped grammar with exact CST rows",
+    "inventoryName": "check global concept archive native grammar parity",
+    "sourceText": "test('one existing native JavaScript fixture executes from the archived shipped grammar with exact CST rows', () => {"
+  },
+  {
+    "id": "repository.check-global-concept-archive-native-grammar-parity",
+    "source": "rust/tests/unit/global_concept_archive_parser.rs",
+    "name": "archived_shipped_javascript_grammar_matches_existing_independent_cst_rows",
+    "inventoryName": "check global concept archive native grammar parity",
+    "sourceText": "fn archived_shipped_javascript_grammar_matches_existing_independent_cst_rows() {"
+  },
+  {
+    "id": "repository.read-global-concept-archive-selection-controls",
+    "source": "rust/tests/unit/global_concept_archive_parser.rs",
+    "name": "selection_fixture",
+    "inventoryName": "read global concept archive selection controls",
+    "sourceText": "fn selection_fixture() -> Value {"
+  },
+  {
+    "id": "repository.create-global-concept-archive-test-settings",
+    "source": "rust/tests/unit/global_concept_archive_parser.rs",
+    "name": "archive_settings",
+    "inventoryName": "create global concept archive test settings",
+    "sourceText": "fn archive_settings() -> GlobalConceptOptions {"
+  },
+  {
+    "id": "repository.create-global-concept-archive-test-source",
+    "source": "rust/tests/unit/global_concept_archive_parser.rs",
+    "name": "archived_source",
+    "inventoryName": "create global concept archive test source",
+    "sourceText": "fn archived_source(id: &str, listing: &str) -> GlobalConceptSource {"
+  },
+  {
+    "id": "repository.serialize-global-concept-archive-test-sources",
+    "source": "rust/tests/unit/global_concept_archive_parser.rs",
+    "name": "archive_sources",
+    "inventoryName": "serialize global concept archive test sources",
+    "sourceText": "fn archive_sources(sources: &[GlobalConceptSource]) -> String {"
+  },
+  {
+    "id": "repository.create-global-concept-archive-test-parser",
+    "source": "rust/tests/unit/global_concept_archive_parser.rs",
+    "name": "archive_parser",
+    "inventoryName": "create global concept archive test parser",
+    "sourceText": "fn archive_parser(archive: &str, id: &str) -> GlobalConceptSpaceParser {"
+  },
+  {
+    "id": "repository.read-global-concept-archive-tree-selection",
+    "source": "rust/tests/unit/global_concept_archive_parser.rs",
+    "name": "selection",
+    "inventoryName": "read global concept archive tree selection",
+    "sourceText": "fn selection(tree: &SyntaxTree) -> &GrammarSelection {"
+  },
+  {
+    "id": "repository.encode-global-concept-archive-tree-attributes",
+    "source": "rust/tests/unit/global_concept_archive_parser.rs",
+    "name": "attributes_data",
+    "inventoryName": "encode global concept archive tree attributes",
+    "sourceText": "fn attributes_data(attributes: Option<&SyntaxAttributes>) -> Value {"
+  },
+  {
+    "id": "repository.encode-global-concept-archive-tree-leaf",
+    "source": "rust/tests/unit/global_concept_archive_parser.rs",
+    "name": "leaf_data",
+    "inventoryName": "encode global concept archive tree leaf",
+    "sourceText": "fn leaf_data(text: &LeafText) -> Value {"
+  },
+  {
+    "id": "repository.encode-global-concept-archive-tree-data",
+    "source": "rust/tests/unit/global_concept_archive_parser.rs",
+    "name": "tree_data",
+    "inventoryName": "encode global concept archive tree data",
+    "sourceText": "fn tree_data(tree: &SyntaxTree) -> Value {"
+  },
+  {
+    "id": "translation.accept-rust-constant-branch-model",
+    "source": "js/src/translation/rust-const-branch-rules.js",
+    "name": "acceptRustConstBranchModel",
+    "inventoryName": "accept rust constant branch model",
+    "sourceText": "export function acceptRustConstBranchModel(model){return model === \"closed Boolean Rust const decision trees 1\";}"
+  },
+  {
+    "id": "translation.accept-rust-constant-branch-model",
+    "source": "rust/src/translation/rust_const_branch_rules/part_1.rs",
+    "name": "accept_rust_const_branch_model",
+    "inventoryName": "accept rust constant branch model",
+    "sourceText": "pub fn accept_rust_const_branch_model(model: &str) -> bool {"
+  },
+  {
+    "id": "translation.accept-rust-constant-branch-type",
+    "source": "js/src/translation/rust-const-branch-rules.js",
+    "name": "acceptRustConstBranchType",
+    "inventoryName": "accept rust constant branch type",
+    "sourceText": "export function acceptRustConstBranchType(kind){return kind === \"bool\";}"
+  },
+  {
+    "id": "translation.accept-rust-constant-branch-type",
+    "source": "rust/src/translation/rust_const_branch_rules/part_1.rs",
+    "name": "accept_rust_const_branch_type",
+    "inventoryName": "accept rust constant branch type",
+    "sourceText": "pub fn accept_rust_const_branch_type(kind: &str) -> bool {"
+  },
+  {
+    "id": "translation.accept-rust-constant-branch-kind",
+    "source": "js/src/translation/rust-const-branch-rules.js",
+    "name": "acceptRustConstBranchKind",
+    "inventoryName": "accept rust constant branch kind",
+    "sourceText": "export function acceptRustConstBranchKind(kind){return kind === \"lit\" || kind === \"var\" || kind === \"unary\" || kind === \"binary\" || kind === \"if\";}"
+  },
+  {
+    "id": "translation.accept-rust-constant-branch-kind",
+    "source": "rust/src/translation/rust_const_branch_rules/part_1.rs",
+    "name": "accept_rust_const_branch_kind",
+    "inventoryName": "accept rust constant branch kind",
+    "sourceText": "pub fn accept_rust_const_branch_kind(kind: &str) -> bool {"
+  },
+  {
+    "id": "translation.accept-rust-constant-branch-operation",
+    "source": "js/src/translation/rust-const-branch-rules.js",
+    "name": "acceptRustConstBranchOperation",
+    "inventoryName": "accept rust constant branch operation",
+    "sourceText": "export function acceptRustConstBranchOperation(kind,operation){return kind === \"unary\" && (operation === \"not\") || kind === \"binary\" && (operation === \"and\" || operation === \"or\");}"
+  },
+  {
+    "id": "translation.accept-rust-constant-branch-operation",
+    "source": "rust/src/translation/rust_const_branch_rules/part_1.rs",
+    "name": "accept_rust_const_branch_operation",
+    "inventoryName": "accept rust constant branch operation",
+    "sourceText": "pub fn accept_rust_const_branch_operation(kind: &str, operation: &str) -> bool {"
+  },
+  {
+    "id": "translation.accept-rust-constant-branch-conditional",
+    "source": "js/src/translation/rust-const-branch-rules.js",
+    "name": "acceptRustConstBranchConditional",
+    "inventoryName": "accept rust constant branch conditional",
+    "sourceText": "export function acceptRustConstBranchConditional(result,condition,consequent,alternative){return result === \"bool\" && condition === \"bool\" && consequent === \"bool\" && alternative === \"bool\";}"
+  },
+  {
+    "id": "translation.accept-rust-constant-branch-conditional",
+    "source": "rust/src/translation/rust_const_branch_rules/part_1.rs",
+    "name": "accept_rust_const_branch_conditional",
+    "inventoryName": "accept rust constant branch conditional",
+    "sourceText": "pub fn accept_rust_const_branch_conditional("
+  },
+  {
+    "id": "translation.rust-constant-branch-policy",
+    "source": "experiments/generate-rust-const-branch-rules.mjs",
+    "name": "rustConstBranchPolicy",
+    "inventoryName": "rust constant branch policy",
+    "sourceText": "export const rustConstBranchPolicy = {"
+  },
+  {
+    "id": "repository.generate-rust-constant-branch-rule-source",
+    "source": "experiments/generate-rust-const-branch-rules.mjs",
+    "name": "rustConstBranchRules",
+    "inventoryName": "generate rust constant branch rule source",
+    "sourceText": "export function rustConstBranchRules(policy = rustConstBranchPolicy) {"
+  },
+  {
+    "id": "repository.generate-rust-constant-branch-rules",
+    "source": "experiments/generate-rust-const-branch-rules.mjs",
+    "name": "generateRustConstBranchRules",
+    "inventoryName": "generate rust constant branch rules",
+    "sourceText": "export async function generateRustConstBranchRules({check = false, native = false} = {}) {"
+  },
+  {
+    "id": "repository.create-rust-constant-branch-inputs",
+    "source": "experiments/generate-rust-const-branch-fixture.mjs",
+    "name": "rustConstBranchInputs",
+    "inventoryName": "create rust constant branch inputs",
+    "sourceText": "export function rustConstBranchInputs(count) {"
+  },
+  {
+    "id": "repository.create-rust-constant-branch-fixture",
+    "source": "experiments/generate-rust-const-branch-fixture.mjs",
+    "name": "rustConstBranchFixture",
+    "inventoryName": "create rust constant branch fixture",
+    "sourceText": "export function rustConstBranchFixture() {"
+  },
+  {
+    "id": "translation.read-rust-constant-function-policy-for-model",
+    "source": "rust/src/translation/source_const_functions.rs",
+    "name": "policy_for_model",
+    "inventoryName": "read rust constant function policy for model",
+    "sourceText": "pub fn policy_for_model(model: &str) -> &'static Value {"
+  },
+  {
+    "id": "repository.decode-rust-constant-branch-control-program",
+    "source": "experiments/rust-const-branch-prototype.test.mjs",
+    "name": "load",
+    "inventoryName": "decode rust constant branch control program",
+    "sourceText": "const load = entry => decodeTypedProgramLinks(LinkNetwork.fromLino(entry.links),entry.root);"
+  },
+  {
+    "id": "repository.observe-rust-constant-branch-truth-rows",
+    "source": "experiments/rust-const-branch-prototype.test.mjs",
+    "name": "observeTruthRows",
+    "inventoryName": "observe rust constant branch truth rows",
+    "sourceText": "function observeTruthRows(code,entry,expected=entry.expected) {"
+  },
+  {
+    "id": "repository.observe-rust-constant-branch-foreign-value-refusals",
+    "source": "experiments/rust-const-branch-prototype.test.mjs",
+    "name": "observe",
+    "inventoryName": "observe rust constant branch foreign value refusals",
+    "sourceText": "function observe(code,entry,expected=entry.expected) {"
+  },
+  {
+    "id": "repository.create-rust-constant-branch-control-archives",
+    "source": "experiments/rust-const-branch-prototype.test.mjs",
+    "name": "archives",
+    "inventoryName": "create rust constant branch control archives",
+    "sourceText": "function archives(program) {"
+  },
+  {
+    "id": "repository.read-native-rust-constant-branch-fixture",
+    "source": "rust/tests/unit/rust_const_branch_functions.rs",
+    "name": "fixture",
+    "inventoryName": "read native rust constant branch fixture",
+    "sourceText": "fn fixture() -> &'static Value {"
+  },
+  {
+    "id": "repository.read-native-rust-constant-branch-model",
+    "source": "rust/tests/unit/rust_const_branch_functions.rs",
+    "name": "model",
+    "inventoryName": "read native rust constant branch model",
+    "sourceText": "fn model() -> &'static str {"
+  },
+  {
+    "id": "repository.read-native-rust-constant-branch-packet",
+    "source": "rust/tests/unit/rust_const_branch_functions.rs",
+    "name": "packet",
+    "inventoryName": "read native rust constant branch packet",
+    "sourceText": "fn packet(entry: &Value) -> TypedProgramLinks {"
+  },
+  {
+    "id": "repository.decode-native-rust-constant-branch-program",
+    "source": "rust/tests/unit/rust_const_branch_functions.rs",
+    "name": "program",
+    "inventoryName": "decode native rust constant branch program",
+    "sourceText": "fn program(entry: &Value) -> Program {"
+  },
+  {
+    "id": "repository.check-native-rust-constant-branch-source",
+    "source": "rust/tests/unit/rust_const_branch_functions.rs",
+    "name": "selected",
+    "inventoryName": "check native rust constant branch source",
+    "sourceText": "fn selected(source: &str) -> Program {"
+  },
+  {
+    "id": "repository.reload-native-rust-constant-branch-archives",
+    "source": "rust/tests/unit/rust_const_branch_functions.rs",
+    "name": "archives",
+    "inventoryName": "reload native rust constant branch archives",
+    "sourceText": "fn archives(packet: &TypedProgramLinks) -> [LinkNetwork; 2] {"
+  },
+  {
+    "id": "repository.observe-native-rust-constant-branch-javascript",
+    "source": "rust/tests/unit/rust_const_branch_functions.rs",
+    "name": "observe_javascript",
+    "inventoryName": "observe native rust constant branch javascript",
+    "sourceText": "fn observe_javascript(code: &str, entry: &Value, expected: &Value) {"
+  },
+  {
+    "id": "repository.emit-native-rust-constant-branch-archive-javascript",
+    "source": "rust/tests/unit/rust_const_branch_functions.rs",
+    "name": "observe_javascript_archive",
+    "inventoryName": "emit native rust constant branch archive javascript",
+    "sourceText": "fn observe_javascript_archive(packet: &TypedProgramLinks) -> String {"
+  },
+  {
+    "id": "repository.read-native-rust-constant-branch-field-relation",
+    "source": "rust/tests/unit/rust_const_branch_functions.rs",
+    "name": "relation",
+    "inventoryName": "read native rust constant branch field relation",
+    "sourceText": "fn relation(network: &LinkNetwork, parent: LinkId, label: &str) -> [LinkId; 3] {"
+  },
+  {
+    "id": "repository.replace-native-rust-constant-branch-field",
+    "source": "rust/tests/unit/rust_const_branch_functions.rs",
+    "name": "replace",
+    "inventoryName": "replace native rust constant branch field",
+    "sourceText": "fn replace(network: &mut LinkNetwork, parent: LinkId, label: &str, term: &str, value: &str) {"
+  },
+  {
+    "id": "repository.render-native-rust-constant-branch-arguments",
+    "source": "rust/tests/unit/rust_const_branch_functions.rs",
+    "name": "rust_arguments",
+    "inventoryName": "render native rust constant branch arguments",
+    "sourceText": "fn rust_arguments(row: &Value) -> String {"
+  },
+  {
+    "id": "repository.check-rust-constant-branch-legacy-boundary",
+    "source": "experiments/rust-const-branch-prototype.test.mjs",
+    "name": "the explicit Boolean tree model preserves the original predicate contract and all immutable legacy cases",
+    "inventoryName": "check rust constant branch legacy boundary",
+    "sourceText": "test('the explicit Boolean tree model preserves the original predicate contract and all immutable legacy cases',()=>{"
+  },
+  {
+    "id": "repository.check-rust-constant-branch-legacy-boundary",
+    "source": "rust/tests/unit/rust_const_branch_functions.rs",
+    "name": "all_seventeen_refusals_and_the_original_conditional_boundary_remain_exact",
+    "inventoryName": "check rust constant branch legacy boundary",
+    "sourceText": "fn all_seventeen_refusals_and_the_original_conditional_boundary_remain_exact() {"
+  },
+  {
+    "id": "repository.check-rust-constant-branch-source-free-truth-rows",
+    "source": "experiments/rust-const-branch-prototype.test.mjs",
+    "name": "actual complete qualified Boolean trees execute every truth row after source-free text and binary reload",
+    "inventoryName": "check rust constant branch source free truth rows",
+    "sourceText": "test('actual complete qualified Boolean trees execute every truth row after source-free text and binary reload',()=>{"
+  },
+  {
+    "id": "repository.check-rust-constant-branch-source-free-truth-rows",
+    "source": "rust/tests/unit/rust_const_branch_functions.rs",
+    "name": "four_actual_qualified_trees_preserve_every_truth_row_and_owned_archive_field",
+    "inventoryName": "check rust constant branch source free truth rows",
+    "sourceText": "fn four_actual_qualified_trees_preserve_every_truth_row_and_owned_archive_field() {"
+  },
+  {
+    "id": "repository.check-rust-constant-branch-result-changes",
+    "source": "experiments/rust-const-branch-prototype.test.mjs",
+    "name": "source-free condition and branch edits change the actual Boolean results while owned headers survive",
+    "inventoryName": "check rust constant branch result changes",
+    "sourceText": "test('source-free condition and branch edits change the actual Boolean results while owned headers survive',()=>{"
+  },
+  {
+    "id": "repository.check-rust-constant-branch-result-changes",
+    "source": "rust/tests/unit/rust_const_branch_functions.rs",
+    "name": "source_free_condition_and_branch_edits_change_results_without_replaying_source",
+    "inventoryName": "check rust constant branch result changes",
+    "sourceText": "fn source_free_condition_and_branch_edits_change_results_without_replaying_source() {"
+  },
+  {
+    "id": "repository.check-rust-constant-branch-closed-domain",
+    "source": "experiments/rust-const-branch-prototype.test.mjs",
+    "name": "Boolean tree interfaces, operations, owned fields and both reachable and unreachable branches fail closed",
+    "inventoryName": "check rust constant branch closed domain",
+    "sourceText": "test('Boolean tree interfaces, operations, owned fields and both reachable and unreachable branches fail closed',()=>{"
+  },
+  {
+    "id": "repository.check-rust-constant-branch-closed-domain",
+    "source": "rust/tests/unit/rust_const_branch_functions.rs",
+    "name": "raw_unknown_models_kinds_domains_and_unrepresented_branches_refuse_both_emitters",
+    "inventoryName": "check rust constant branch closed domain",
+    "sourceText": "fn raw_unknown_models_kinds_domains_and_unrepresented_branches_refuse_both_emitters() {"
+  },
+  {
+    "id": "repository.check-complete-rust-constant-branch-rule-generation",
+    "source": "experiments/rust-const-branch-prototype.test.mjs",
+    "name": "the complete Boolean branch policy and all five primitive decisions are generated without changing the old module count",
+    "inventoryName": "check complete rust constant branch rule generation",
+    "sourceText": "test('the complete Boolean branch policy and all five primitive decisions are generated without changing the old module count',()=>{"
+  },
+  {
+    "id": "repository.check-raw-rust-constant-branch-archive-refusals",
+    "source": "experiments/rust-const-branch-prototype.test.mjs",
+    "name": "raw source-free Boolean tree qualification and construct edits refuse before both target emitters",
+    "inventoryName": "check raw rust constant branch archive refusals",
+    "sourceText": "test('raw source-free Boolean tree qualification and construct edits refuse before both target emitters',()=>{"
+  },
+  {
+    "id": "repository.check-native-rust-constant-branch-whole-source-execution",
+    "source": "rust/tests/unit/rust_const_branch_functions.rs",
+    "name": "actual_original_and_whole_emitted_rust_execute_all_truth_rows_and_const_invocations",
+    "inventoryName": "check native rust constant branch whole source execution",
+    "sourceText": "fn actual_original_and_whole_emitted_rust_execute_all_truth_rows_and_const_invocations() {"
+  },
+  {
+    "id": "repository.create-public-declaration-consumers",
+    "source": "js/scripts/check-public-declaration-contracts.mjs",
+    "name": "publicDeclarationConsumers",
+    "inventoryName": "create public declaration consumers",
+    "sourceText": "export function publicDeclarationConsumers(moduleSpecifier = publicModule) {"
+  },
+  {
+    "id": "repository.create-public-declaration-consumers",
+    "source": "js/scripts/public-declaration-consumers.mjs",
+    "name": "publicDeclarationConsumers",
+    "inventoryName": "create public declaration consumers",
+    "sourceText": "export function publicDeclarationConsumers(moduleSpecifier = publicModule) {"
+  },
+  {
+    "id": "repository.select-public-declaration-diagnostics",
+    "source": "js/scripts/check-public-declaration-contracts.mjs",
+    "name": "selectPublicDeclarationDiagnostics",
+    "inventoryName": "select public declaration diagnostics",
+    "sourceText": "export function selectPublicDeclarationDiagnostics(consumer, compilerVersion, registry = readAssertionVersionPolicy()) {"
+  },
+  {
+    "id": "repository.public-constant-model-rejection-diagnostic-policy",
+    "source": "js/scripts/generate-assertion-version-policy.mjs",
+    "name": "typescript-const-model-rejection-diagnostic",
+    "inventoryName": "public constant model rejection diagnostic policy",
+    "sourceText": "      id: 'typescript-const-model-rejection-diagnostic',"
+  },
+  {
+    "id": "repository.public-constant-model-rejection-diagnostic-policy",
+    "source": "js/scripts/public-declaration-consumers.mjs",
+    "name": "typescript-const-model-rejection-diagnostic",
+    "inventoryName": "public constant model rejection diagnostic policy",
+    "sourceText": "      assertionPolicy: 'typescript-const-model-rejection-diagnostic',"
+  },
+  {
+    "id": "repository.local-constant-model-rejection-diagnostic-expectation",
+    "source": "js/scripts/generate-assertion-version-policy.mjs",
+    "name": "typescript-5-9-2-const-model-rejection",
+    "inventoryName": "local constant model rejection diagnostic expectation",
+    "sourceText": "        id: 'typescript-5-9-2-const-model-rejection',"
+  },
+  {
+    "id": "repository.compiler-version-constant-model-rejection-diagnostic-expectation",
+    "source": "js/scripts/generate-assertion-version-policy.mjs",
+    "name": "typescript-7-0-2-const-model-rejection",
+    "inventoryName": "compiler version constant model rejection diagnostic expectation",
+    "sourceText": "        id: 'typescript-7-0-2-const-model-rejection',"
+  },
+  {
+    "id": "repository.check-public-constant-model-diagnostic-version-coverage",
+    "source": "js/tests/translation-const-public-declaration-contracts.test.js",
+    "name": "the unchanged unknown const model selects exact compiler diagnostics with no uncovered fallback",
+    "inventoryName": "check public constant model diagnostic version coverage",
+    "sourceText": "test('the unchanged unknown const model selects exact compiler diagnostics with no uncovered fallback',()=>{"
+  },
+  {
+    "id": "repository.check-public-boolean-constant-tree-consumer-results",
+    "source": "js/tests/translation-const-public-declaration-contracts.test.js",
+    "name": "the public Boolean const model executes its four declared decision outcomes",
+    "inventoryName": "check public boolean constant tree consumer results",
+    "sourceText": "test('the public Boolean const model executes its four declared decision outcomes',async context=>{"
+  },
+  {
+    "id": "repository.check-public-archive-parser-option-authority",
+    "source": "js/tests/translation-const-public-declaration-contracts.test.js",
+    "name": "the archive parser public factory executes its archive and refuses all three owned options",
+    "inventoryName": "check public archive parser option authority",
+    "sourceText": "test('the archive parser public factory executes its archive and refuses all three owned options',async context=>{"
+  },
+  {
+    "id": "repository.public-boolean-constant-decision-tree-consumer",
+    "source": "js/scripts/public-declaration-consumers.mjs",
+    "name": "valid-Boolean-const-decision-tree-model",
+    "inventoryName": "public boolean constant decision tree consumer",
+    "sourceText": "      name: 'valid-Boolean-const-decision-tree-model', expectedDiagnostics: [],"
+  },
+  {
+    "id": "repository.public-global-concept-archive-parser-consumer",
+    "source": "js/scripts/public-declaration-consumers.mjs",
+    "name": "valid-global-concept-archive-parser-factory",
+    "inventoryName": "public global concept archive parser consumer",
+    "sourceText": "      name: 'valid-global-concept-archive-parser-factory', expectedDiagnostics: [],"
+  },
+  {
+    "id": "repository.public-global-concept-archive-parser-authority-rejection-consumers",
+    "source": "js/scripts/public-declaration-consumers.mjs",
+    "name": "reject-global-concept-archive-parser-owned-option-resolveGrammar",
+    "inventoryName": "public archive parser authority rejection for grammar resolution",
+    "sourceText": "      name: 'reject-global-concept-archive-parser-owned-option-' + option, expectedDiagnostics: ['TS2322'],",
+    "sourceContext": "    ...[['resolveGrammar', '()=>null'], ['grammarName', '\"replacement\"'],\n      ['globalConceptSpace', 'createGlobalConceptSpace([],{records:[]})']].map(([option, value]) => ({"
+  },
+  {
+    "id": "repository.public-global-concept-archive-parser-authority-rejection-consumers",
+    "source": "js/scripts/public-declaration-consumers.mjs",
+    "name": "reject-global-concept-archive-parser-owned-option-grammarName",
+    "inventoryName": "public archive parser authority rejection for grammar identity",
+    "sourceText": "      name: 'reject-global-concept-archive-parser-owned-option-' + option, expectedDiagnostics: ['TS2322'],",
+    "sourceContext": "    ...[['resolveGrammar', '()=>null'], ['grammarName', '\"replacement\"'],\n      ['globalConceptSpace', 'createGlobalConceptSpace([],{records:[]})']].map(([option, value]) => ({"
+  },
+  {
+    "id": "repository.public-global-concept-archive-parser-authority-rejection-consumers",
+    "source": "js/scripts/public-declaration-consumers.mjs",
+    "name": "reject-global-concept-archive-parser-owned-option-globalConceptSpace",
+    "inventoryName": "public archive parser authority rejection for global concept space",
+    "sourceText": "      name: 'reject-global-concept-archive-parser-owned-option-' + option, expectedDiagnostics: ['TS2322'],",
+    "sourceContext": "    ...[['resolveGrammar', '()=>null'], ['grammarName', '\"replacement\"'],\n      ['globalConceptSpace', 'createGlobalConceptSpace([],{records:[]})']].map(([option, value]) => ({"
+  },
+  {
+    "id": "repository.create-public-archive-parser-with-foreign-authority",
+    "source": "js/scripts/public-declaration-consumers.mjs",
+    "name": "createInvalidParser",
+    "inventoryName": "create public archive parser with foreign authority",
+    "sourceText": "export function createInvalidParser(archive:string) {"
+  }
+];
+const BULK_FIFTY_ONE_NAME_INVENTORIES=[...new Set(BULK_FIFTY_ONE_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B51 archive parser, Boolean constant tree and public declaration names for "+source,files:[source],extract:text=>BULK_FIFTY_ONE_BINDINGS.filter(row=>row.source===source&&text.split("\n").includes(row.sourceText)&&(!row.sourceContext||text.includes(row.sourceContext))).map(row=>row.inventoryName),recordOf:name=>BULK_FIFTY_ONE_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));
+// END B51 archive parser, Boolean constant tree and public declaration source names.
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory).map(reconcileBulkFortySevenNativeInventory).map(reconcileBulkFiftyHistoricalInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES, ...BULK_FORTY_SEVEN_NAME_INVENTORIES, ...BULK_FORTY_EIGHT_NAME_INVENTORIES, ...BULK_FORTY_NINE_NAME_INVENTORIES, ...BULK_FIFTY_NAME_INVENTORIES, ...BULK_FIFTY_ONE_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
