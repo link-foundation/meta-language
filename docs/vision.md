@@ -1763,6 +1763,16 @@ versions, provenance, checksums, licenses and reproducible patch instructions;
 downloads verify those checksums before use. Repository-native generated Links
 Notation grammars remain the prepared meta-language snapshot.
 
+ANTLR source metadata is generated for six pinned lexer and parser base files
+supporting the JavaScript, TypeScript and Rust grammars. Listed-source capture
+uses the authenticated, ignored temporary cache and verifies both those files
+and the primary G4 files against exact byte counts and hashes. Receipts retain
+file-qualified source identities and UTF-8 byte ranges in the unchanged joined
+G4 input. External implementation files stay in ignored temporary storage. Only
+the listed files are captured. Transitive imports, superclass and base-method
+behavior, actions and predicates remain unresolved until separately lowered
+into shared Links operations and checked.
+
 Temporary acquisition retries recognized transport failures, timeouts and HTTP
 408, 429 and 5xx responses at most three times per pinned URL, with 250 and 500
 millisecond backoffs. Each attempt keeps its finite timeout and existing worker
