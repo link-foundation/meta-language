@@ -1,5 +1,7 @@
 //! Reported Ruby assignment and regex syntax failures use one shared fixture.
-use super::issue_195_native_grammar_rows::{Rows, oracle_rows, parser, rebuilt, source};
+use super::issue_195_native_grammar_rows::{
+    Rows, oracle_rows, parser, rebuilt, rebuilt_recovery, source,
+};
 use meta_language::FeatureParseOptions;
 use serde_json::Value;
 
@@ -59,6 +61,6 @@ fn ruby_assignment_and_regex_syntax_match_exact_oracle_rows_with_default_limits(
             )
             .unwrap();
         assert_eq!(recovered.rejection.unwrap().reason, "recovered");
-        assert_eq!(rebuilt(&recovered.tree.unwrap()), source);
+        assert_eq!(rebuilt_recovery(&recovered.tree.unwrap()), source);
     }
 }

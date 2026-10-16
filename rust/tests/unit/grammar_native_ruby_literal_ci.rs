@@ -1,5 +1,7 @@
 //! Literal CI regressions and controls execute the same pinned fixture in Rust.
-use super::issue_195_native_grammar_rows::{Rows, oracle_rows, parser, rebuilt, source};
+use super::issue_195_native_grammar_rows::{
+    Rows, oracle_rows, parser, rebuilt, rebuilt_recovery, source,
+};
 use meta_language::FeatureParseOptions;
 use serde_json::Value;
 
@@ -36,7 +38,7 @@ fn ruby_literal_ci_regressions_and_controls_preserve_exact_rows_with_default_lim
                 )
                 .unwrap();
             assert_eq!(recovered.rejection.unwrap().reason, "recovered");
-            assert_eq!(rebuilt(&recovered.tree.unwrap()), source);
+            assert_eq!(rebuilt_recovery(&recovered.tree.unwrap()), source);
         } else {
             assert!(actual.ok, "{source}: {:?}", actual.rejection);
             assert!(actual.ambiguities.is_empty(), "{source}");

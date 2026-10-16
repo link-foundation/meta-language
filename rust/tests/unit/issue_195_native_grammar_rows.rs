@@ -109,7 +109,8 @@ fn kinds<'a>(fixture: &'a Value, key: &str) -> HashSet<&'a str> {
 /// whitespace, `anonymous` leaves are not rows but count in the spans when
 /// they are significant syntax rather than trivia, and
 /// `extras` nodes are rows with flag X. A rule renamed from its tree-sitter
-/// name is a row of that name (`oracleKinds`).
+/// name is a row of that name (`oracleKinds`). Recovered trees retain ERROR
+/// and visible MISSING rows with their original spans and flags.
 pub struct Rows<'a> {
     root_includes_leading_trivia: bool,
     hidden: HashSet<&'a str>,
@@ -162,6 +163,12 @@ impl<'a> Rows<'a> {
 
     fn anonymous(&self, tree: &SyntaxTree) -> bool {
         matches!(tree, SyntaxTree::Token { kind: Some(kind), .. } if self.anonymous.contains(kind.as_str()))
+    }
+
+    /// A missing hidden or anonymous token has no oracle row, as in JavaScript.
+    fn hidden_missing(&self, tree: &SyntaxTree) -> bool {
+        matches!(tree, SyntaxTree::Missing { kind: Some(kind), .. }
+            if self.hidden.contains(kind.as_str()) || self.anonymous.contains(kind.as_str()))
     }
 
     fn trivia(&self, tree: &SyntaxTree) -> bool {
@@ -225,7 +232,7 @@ impl<'a> Rows<'a> {
     }
 
     fn visit(&self, tree: &SyntaxTree, depth: usize, rows: &mut Vec<Value>) {
-        if self.invisible(tree) || self.anonymous(tree) {
+        if self.invisible(tree) || self.anonymous(tree) || self.hidden_missing(tree) {
             return;
         }
         let (start, end) = self.span(tree);
@@ -276,7 +283,23 @@ impl<'a> Rows<'a> {
                     if *trivia { "X" } else { "" }
                 ]));
             }
-            other => panic!("an accepted tree has no {other:?}"),
+            SyntaxTree::Error { .. } => {
+                rows.push(json!([depth, null, "ERROR", 1, start, end, "E"]));
+            }
+            SyntaxTree::Missing { kind, literal, .. } => {
+                let named =
+                    !*literal && !kind.as_deref().is_some_and(|kind| kind.starts_with('\''));
+                rows.push(json!([
+                    depth,
+                    null,
+                    kind.as_deref().map(|kind| self.oracle_kind(kind)),
+                    u8::from(named),
+                    start,
+                    end,
+                    "M"
+                ]));
+            }
+            other => panic!("the oracle projection does not handle {other:?}"),
         }
     }
 
@@ -362,5 +385,176 @@ pub fn oracle_agrees(language: &tree_sitter::Language, fixture: &Value) {
     });
     for case in divergences.iter().chain(cases(fixture, "rejections")) {
         assert!(oracle_rows(language, source(case)).1, "{:?}", source(case));
+    }
+}
+
+// Matches the tiny controls in js/tests/grammar-native-row-recovery.test.js.
+// These trees isolate projection and reconstruction from grammar execution.
+#[cfg(test)]
+mod recovery_projection_tests {
+    use super::{LeafText, Rows, SyntaxTree, Value, json, rebuilt, rebuilt_recovery};
+
+    fn projection() -> Value {
+        json!({
+            "hidden": ["hidden_missing"], "anonymous": ["line_break"], "extras": [],
+            "oracleKinds": {
+                "native_document": "document", "native_group": "group",
+                "native_name": "identifier", "native_identifier": "identifier"
+            }
+        })
+    }
+
+    fn token(
+        text: &str,
+        start: usize,
+        end: usize,
+        kind: Option<&str>,
+        trivia: bool,
+        field: Option<&str>,
+    ) -> SyntaxTree {
+        SyntaxTree::Token {
+            kind: kind.map(str::to_owned),
+            field: field.map(str::to_owned),
+            trivia,
+            start,
+            end,
+            attributes: None,
+            text: LeafText::Text(text.to_owned()),
+        }
+    }
+
+    fn missing(kind: Option<&str>, position: usize, literal: bool) -> SyntaxTree {
+        SyntaxTree::Missing {
+            kind: kind.map(str::to_owned),
+            start: position,
+            end: position,
+            literal,
+        }
+    }
+
+    fn node(kind: &str, start: usize, end: usize, children: Vec<SyntaxTree>) -> SyntaxTree {
+        SyntaxTree::Node {
+            kind: kind.to_owned(),
+            field: None,
+            trivia: false,
+            start,
+            end,
+            children,
+            attributes: None,
+        }
+    }
+
+    #[test]
+    fn recovery_rows_preserve_error_bytes_named_and_literal_missing_leaves_and_hidden_missing() {
+        let source = " α?β\n";
+        let tree = node(
+            "native_document",
+            0,
+            7,
+            vec![
+                token(" ", 0, 1, None, true, None),
+                node(
+                    "native_group",
+                    1,
+                    6,
+                    vec![
+                        token("α", 1, 3, Some("native_name"), false, Some("word")),
+                        SyntaxTree::Error {
+                            start: 3,
+                            end: 4,
+                            text: LeafText::Text("?".to_owned()),
+                            reason: None,
+                        },
+                        missing(Some("native_identifier"), 4, false),
+                        missing(Some(";"), 4, true),
+                        missing(Some("';"), 4, false),
+                        missing(None, 4, false),
+                        missing(Some("hidden_missing"), 4, false),
+                        missing(Some("line_break"), 4, false),
+                        token("β", 4, 6, Some("native_name"), false, None),
+                    ],
+                ),
+                token("\n", 6, 7, None, true, None),
+            ],
+        );
+        assert_eq!(
+            Value::Array(Rows::new(&projection()).rows(&tree, source)),
+            json!([
+                [0, null, "document", 1, 1, 7, ""],
+                [1, null, "group", 1, 1, 6, ""],
+                [2, "word", "identifier", 1, 1, 3, ""],
+                [2, null, "ERROR", 1, 3, 4, "E"],
+                [2, null, "identifier", 1, 4, 4, "M"],
+                [2, null, ";", 0, 4, 4, "M"],
+                [2, null, ";", 0, 4, 4, "M"],
+                [2, null, null, 1, 4, 4, "M"],
+                [2, null, "identifier", 1, 4, 6, ""]
+            ])
+        );
+        assert_eq!(rebuilt_recovery(&tree), source);
+    }
+
+    #[test]
+    fn missing_only_recovery_keeps_empty_source_and_zero_width_rows() {
+        let tree = node(
+            "native_document",
+            0,
+            0,
+            vec![
+                missing(Some("native_identifier"), 0, false),
+                missing(Some("]"), 0, true),
+                missing(Some("hidden_missing"), 0, false),
+            ],
+        );
+        assert_eq!(
+            Value::Array(Rows::new(&projection()).rows(&tree, "")),
+            json!([
+                [0, null, "document", 1, 0, 0, ""],
+                [1, null, "identifier", 1, 0, 0, "M"],
+                [1, null, "]", 0, 0, 0, "M"]
+            ])
+        );
+        assert_eq!(rebuilt_recovery(&tree), "");
+    }
+
+    #[test]
+    fn error_only_recovery_retains_nul_unicode_and_crlf_source_bytes() {
+        let source = "\0é\r\n";
+        let tree = node(
+            "native_document",
+            0,
+            5,
+            vec![SyntaxTree::Error {
+                start: 0,
+                end: 5,
+                text: LeafText::Text(source.to_owned()),
+                reason: None,
+            }],
+        );
+        assert_eq!(
+            Value::Array(Rows::new(&projection()).rows(&tree, source)),
+            json!([
+                [0, null, "document", 1, 0, 5, ""],
+                [1, null, "ERROR", 1, 0, 5, "E"]
+            ])
+        );
+        assert_eq!(rebuilt_recovery(&tree), source);
+    }
+
+    #[test]
+    #[should_panic(expected = "an accepted tree has no")]
+    fn accepted_reconstruction_remains_strict_about_error_leaves() {
+        let _ = rebuilt(&SyntaxTree::Error {
+            start: 0,
+            end: 1,
+            text: LeafText::Text("?".to_owned()),
+            reason: None,
+        });
+    }
+
+    #[test]
+    #[should_panic(expected = "an accepted tree has no")]
+    fn accepted_reconstruction_remains_strict_about_missing_leaves() {
+        let _ = rebuilt(&missing(Some("identifier"), 0, false));
     }
 }
