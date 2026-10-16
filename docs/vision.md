@@ -99,6 +99,18 @@ without the original grammar sources and yield identical decisions in both
 runtime packages. Shared identity simplifies translation by exposing a reusable
 meaning; target-specific syntax and faithful encodings remain explicit rules.
 
+Incremental import validates that historical identities and origin aliases are
+unique before reusing them. It reserves every historical identity before
+allocating new current classes. A restored origin whose old identity is still
+owned by a surviving, distinct concept receives a deterministic unused identity;
+an identifier collision cannot discharge an equivalence obligation. Surviving
+identities remain stable, and sharing still requires the current recursive
+proof after source-free Links reload. Shared JavaScript decisions generate the
+native identity selection and history admission; host sets supply cardinalities.
+The verifier and identity operations are emitted as separate closed modules,
+preserving every source declaration and the verifier's existing correction
+contexts. Their identical array runtime is shared after whole-module comparison.
+
 ### Recursive formal concept definitions
 
 Every concept has a deep recursive formal definition made of inspectable links.
@@ -2078,6 +2090,8 @@ actual source hash is a separate receipt checked before and after execution,
 outside the unchanged historical producer bindings. Tiny lifecycle and transport
 checks establish ordering and fidelity; full planner resource fit and native
 observations require CI execution within the existing limits.
+Valid generated source archives also require a parse without recovery or errors
+before either serialization begins.
 Archive creation likewise expires before reload: only complete encoded text,
 binary bytes and their exact record bound leave the original CST scope. Binary
 and text reload finish in succession without retaining their decoded networks.
@@ -2095,6 +2109,15 @@ project-owned baseline, eight bounded synthetic controls and three tiny actual
 language parses check the change. They do not establish full-source memory fit,
 native performance or the cause of an earlier timeout; the full CST inventories
 and runtime-parity checks remain required in CI.
+Keyword-state tracking likewise retains only call positions, rule identities,
+node-building roles and live parent relations. Its ancestry never references
+memo entries, parse result trees or left-recursion seeds. The existing native
+call records already have this compact shape. Frozen project-owned parser
+sources, seven tiny Rust inputs and explicit budget controls check JavaScript
+output preservation; full-source heap fit still requires CI. CI-authoring source
+archives can additionally observe each actual native executor run through scalar
+diagnostics. The observer restores the original executor even on failure and
+never substitutes a parse result or changes its budgets.
 Binary archive framing keeps each metadata length patch local to its own record.
 An increasing identity skips a search through earlier identities, while unordered
 and duplicate identities retain the existing validation and exact error offsets.

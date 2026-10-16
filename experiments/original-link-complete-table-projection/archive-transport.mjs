@@ -5,6 +5,7 @@ import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {LinkNetwork} from '../../js/src/network.js';
+import {Executor} from '../../js/src/grammar-runtime/executor.js';
 import {decodeCanonicalStatements, LinoSerializationError} from '../../js/src/lino-serialization.js';
 const {StreamParser} = await import(pathToFileURL(createRequire(new URL('../../js/package.json', import.meta.url)).resolve('links-notation')).href);
 
@@ -13,6 +14,14 @@ export function readCanonicalArchiveTransportSource() {
   const bytes = readFileSync(new URL(import.meta.url));
   return Object.freeze({file: 'experiments/original-link-complete-table-projection/archive-transport.mjs',
     sha256: createHash('sha256').update(bytes).digest('hex'), bytes: bytes.length});
+}
+
+/** Valid generated sources need their CST, including a successful parse. */
+export function requireSuccessfulSourceArchive(network) {
+  for (const link of network.links()) {
+    if (link.metadata().flags.hasRecoveryIssue()) throw new TypeError('complete generated source archive contains a recovered or failed parse');
+  }
+  return network;
 }
 
 /** Reload every canonical record while retaining only one parser record. */
@@ -32,9 +41,9 @@ export function reloadCanonicalArchive(source, {createParser = () => new StreamP
 }
 
 /** Only encoded archives escape this scope; the original CST is not retained. */
-export function createCompleteRustSourceArchives(source, {parseSource, encodeBinary, onPhase = () => {}}) {
+export function createCompleteRustSourceArchives(source, {parseSource, encodeBinary, onPhase = () => {}, onNativeRun}) {
   onPhase('parse complete Rust source');
-  const network = parseSource(source);
+  const network = observeCompleteSourceParse(source, parseSource, onNativeRun);
   const recordLimit = Math.max(1, network.len());
   onPhase('encode complete binary archive', recordLimit);
   // This authenticated, already materialized graph selects an exact record
@@ -43,6 +52,26 @@ export function createCompleteRustSourceArchives(source, {parseSource, encodeBin
   onPhase('encode complete text archive', recordLimit);
   const text = network.toLino();
   return Object.freeze({text, binary, recordLimit});
+}
+
+// CI-only observation wraps the actual default executor without replacing its
+// result or limits. Only scalar diagnostics leave the invocation.
+function observeCompleteSourceParse(source, parseSource, onNativeRun) {
+  if (onNativeRun === undefined) return parseSource(source);
+  const original = Executor.prototype.run;
+  let run = 0;
+  Executor.prototype.run = function(...args) {
+    const sequence = ++run;
+    const event = phase => ({phase, sequence, inputBytes:this.end-this.begin,
+      memoCells:this.budget.memory.cells, storedRules:this.memo.size,
+      heap:process.memoryUsage().heapUsed});
+    onNativeRun(event('begin'));
+    const result = original.apply(this,args);
+    onNativeRun({...event('end'),accepted:result.ok});
+    return result;
+  };
+  try {return parseSource(source);}
+  finally {Executor.prototype.run = original;}
 }
 
 /** Each reconstructed graph expires before the next complete replay begins. */

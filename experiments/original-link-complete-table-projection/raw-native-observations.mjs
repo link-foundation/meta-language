@@ -7,7 +7,7 @@ import vm from 'node:vm';
 import {createSourceNativeObservationRunner} from '../source-native-observations.mjs';
 import {readStructuredDataLino} from '../../js/src/structured-data-links.js';
 import {verifyOriginalLinkRawSchemaSourceClosure} from './raw-schema-source-closure.mjs';
-import {createCompleteRustSourceArchives, replayCompleteRustSourceArchives, readCanonicalArchiveTransportSource} from './archive-transport.mjs';
+import {createCompleteRustSourceArchives, replayCompleteRustSourceArchives, readCanonicalArchiveTransportSource, requireSuccessfulSourceArchive} from './archive-transport.mjs';
 
 // Actual immutable producer and source closure; no capability declaration substitutes for execution.
 export const ORIGINAL_LINK_RAW_MODEL_COMMIT = '9123dd5d19fc26c95a9d31eff47dd9655c33da53';
@@ -225,7 +225,8 @@ function createCarrier(observations) {
 const vectorBits = (carrier, index) => carrier.vectors[index].flatMap(index => carrier.blocks[index].map(index => carrier.words[index]));
 const protocol = (observations, carrier) => observations.map((row, index) => [index, row.resultBits.length, ...carrier.vectors[carrier.invocations[index].result].map(value => value.toString(16))].join(':')).join('\n') + '\n';
 function archiveCompleteRustSource(source, LinkNetwork, encodeBinary, decodeBinary) {
-  const options = {parseSource: original => {const graph = LinkNetwork.parse(original, 'Rust'); return graph;}, encodeBinary, decodeBinary,
+  const options = {parseSource: original => {const graph = LinkNetwork.parse(original, 'Rust'); requireSuccessfulSourceArchive(graph); return graph;}, encodeBinary, decodeBinary,
+    onNativeRun: event => process.stdout.write(`Raw source native run: phase=${event.phase}; run=${event.sequence}; inputBytes=${event.inputBytes}; memoCells=${event.memoCells}; storedRules=${event.storedRules}; heap=${event.heap}\n`),
     onPhase: (phase, count) => process.stdout.write(`Raw source archive: ${phase}; records=${count ?? 'unknown'}; heap=${process.memoryUsage().heapUsed}\n`)};
   const archives = createCompleteRustSourceArchives(source, options);
   const {textReplay, binaryReplay} = replayCompleteRustSourceArchives(archives, options);

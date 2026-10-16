@@ -3605,7 +3605,7 @@ export class Executor {
     const key = `${rule.index}|${position}|${state.key}|${inToken ? 1 : 0}|${this.inExtra}|${this.extraStart}${quiet}`;
     const known = this.memo.get(key);
     if (known) {
-      known.parents?.add(this.callStack[this.callStack.length - 1] ?? null);
+      known.keywordContext?.parents.add(this.callStack[this.callStack.length - 1]?.keywordContext ?? null);
       if (!known.evaluating) return known.results;
       // Left recursion: answer with the current seed and mark every call
       // between the two as depending on it, so none of them is memoized.
@@ -3619,7 +3619,10 @@ export class Executor {
     // where it began and whether it builds a node: the parse states of a
     // keyword matched in it (see `KeywordLexing`).
     const entry = { evaluating: true, leftRecursive: false, involved: false, seed: [], results: null, parents: null, position, rule };
-    if (this.keywords) Object.assign(entry, { parents: new Set([this.callStack[this.callStack.length - 1] ?? null]), builds: rule.kind === 'normal', nodeKind: rule.nodeKind, name });
+    // Keyword decisions need the live call ancestry, not this memo entry's
+    // result trees or left-recursive seeds. Parents reference only contexts,
+    // so keyword matches cannot keep retired memo results alive.
+    if (this.keywords) entry.keywordContext = { parents: new Set([this.callStack[this.callStack.length - 1]?.keywordContext ?? null]), position, builds: rule.kind === 'normal', nodeKind: rule.nodeKind, name };
     this.retain(1);
     this.memo.set(key, entry);
     this.callStack.push(entry);
@@ -4165,6 +4168,7 @@ export class KeywordLexing {
 
   /** Records a separator at `position` a token in the rule call `call` begins with, read on with up to `reach`. */
   matchJoin(position, reach, call) {
+    call = call?.keywordContext ?? call;
     const join = this.matchedJoins.get(position);
     if (!join) this.matchedJoins.set(position, { reach, calls: new Set([call]) });
     else {
@@ -4175,6 +4179,7 @@ export class KeywordLexing {
 
   /** Records an immediate token of separator text alone matched at `position` in the rule call `call`. */
   matchSeparator(position, call) {
+    call = call?.keywordContext ?? call;
     const calls = this.matchedSeparators.get(position);
     if (!calls) this.matchedSeparators.set(position, new Set([call]));
     else calls.add(call);
@@ -4182,6 +4187,7 @@ export class KeywordLexing {
 
   /** Records a keyword or `immediate` literal token matched over `span` in the rule call `call`. */
   match(span, call, immediate = false) {
+    call = call?.keywordContext ?? call;
     const matched = immediate ? this.matchedImmediate : this.matched;
     const calls = matched.get(span);
     if (!calls) matched.set(span, new Set([call]));
