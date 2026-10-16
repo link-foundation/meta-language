@@ -289,7 +289,7 @@ impl<'c> Executor<'c> {
             let kind = plan
                 .bindings
                 .iter()
-                .find(|(source, _)| &**source == identity)
+                .find(|(source, _)| **source == identity)
                 .map_or_else(|| Name::from(identity), |(_, public)| public.clone());
             leaves.push(Rc::new(Self::elected_leaf(
                 plan,
@@ -327,7 +327,6 @@ impl<'c> Executor<'c> {
                 expected.is_none(),
             ) {
                 let selected = kind
-                    .clone()
                     .or_else(|| {
                         plan.bindings
                             .iter()

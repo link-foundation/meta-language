@@ -65,7 +65,7 @@ fn left_sequences<'e>(expr: &'e Expr, found: &mut Vec<&'e [Expr]>) {
             }
         }
         Expr::LexicalScope { item, .. } | Expr::Capture { item, .. } | Expr::Alias { item, .. } => {
-            left_sequences(item, found)
+            left_sequences(item, found);
         }
         Expr::Precedence {
             associativity: Associativity::Left,

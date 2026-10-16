@@ -179,11 +179,11 @@ fn grammar_tree_equality_plan(kind: TreeType, output: bool) -> &'static GrammarT
         for kind in ["node", "token", "error", "missing", "embed"] {
             for output in [false, true] {
                 plans.push(GrammarTreeEqualityPlan {
-                    fields: read_grammar_tree_equality_fields(kind.to_owned(), output)
+                    fields: read_grammar_tree_equality_fields(kind, output)
                         .split('|')
                         .map(str::to_owned)
                         .collect(),
-                    recursion: read_grammar_tree_recursion_plan(kind.to_owned(), output),
+                    recursion: read_grammar_tree_recursion_plan(kind, output),
                 });
             }
         }

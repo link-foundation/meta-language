@@ -230,8 +230,8 @@ pub struct ParseOutcome {
 /// A source the grammar rejects.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct GrammarParseError {
-    /// The reason and position.
-    pub rejection: ParseRejection,
+    /// The reason and position, stored on the heap to keep returned errors small.
+    pub rejection: Box<ParseRejection>,
 }
 
 impl fmt::Display for GrammarParseError {
@@ -338,13 +338,14 @@ impl FeatureGrammarParser {
         let outcome = self
             .parse_tree(source, options)
             .map_err(|_| GrammarParseError {
-                rejection: ParseRejection::positioned("syntax", source, 0),
+                rejection: Box::new(ParseRejection::positioned("syntax", source, 0)),
             })?;
         match (outcome.rejection, outcome.tree) {
             (None, Some(tree)) => Ok(tree),
             (rejection, _) => Err(GrammarParseError {
-                rejection: rejection
-                    .unwrap_or_else(|| ParseRejection::positioned("syntax", source, 0)),
+                rejection: Box::new(
+                    rejection.unwrap_or_else(|| ParseRejection::positioned("syntax", source, 0)),
+                ),
             }),
         }
     }

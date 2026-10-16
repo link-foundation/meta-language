@@ -90,7 +90,9 @@ fn visit(expr: &GrammarExpr, read: &mut impl FnMut(&GrammarExpr)) {
 
 fn token_entry(rule: &GrammarRule, facts: &RuleFacts, plan: &[String]) -> GrammarExpr {
     let actions = plan[3..]
-        .chunks_exact(2)
+        .as_chunks::<2>()
+        .0
+        .iter()
         .filter(|pair| pair[0] != "unsupported")
         .map(|pair| {
             FeatureForm::new(
@@ -136,7 +138,7 @@ pub(super) fn declarations(
         .collect::<Vec<_>>();
     let rule_sections = facts
         .iter()
-        .map(|fact| fact.section.map_or(-1.0, |index| kernel::number(index)))
+        .map(|fact| fact.section.map_or(-1.0, kernel::number))
         .collect::<Vec<_>>();
     let rule_kinds = rules
         .iter()
@@ -211,10 +213,8 @@ pub(super) fn declarations(
                         literals.push(value.clone());
                     }
                 }
-                GrammarExpr::NonTerminal(value) => {
-                    if !references.contains(value) {
-                        references.push(value.clone());
-                    }
+                GrammarExpr::NonTerminal(value) if !references.contains(value) => {
+                    references.push(value.clone());
                 }
                 _ => {}
             });
@@ -293,7 +293,9 @@ pub(super) fn declarations(
             dispositions.push(plan[2].clone());
             entries.push(token_entry(rule, fact, &plan));
             for pair in plan[3..]
-                .chunks_exact(2)
+                .as_chunks::<2>()
+                .0
+                .iter()
                 .filter(|pair| pair[0] == "unsupported")
             {
                 entries.push(obligation(&rule.name, "command", &pair[1]));

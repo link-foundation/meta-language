@@ -132,6 +132,32 @@ pub(super) fn lower_expression(
         }
         index
     }
+    fn materialize(
+        index: usize,
+        projection: &Projection<'_>,
+        replacements: &HashMap<usize, usize>,
+    ) -> GrammarExpr {
+        if let Some(&delimiter) = replacements.get(&index) {
+            return GrammarExpr::zero_or_more(GrammarExpr::Sequence(vec![
+                GrammarExpr::not(projection.nodes[delimiter].clone()),
+                GrammarExpr::AnyChar,
+            ]));
+        }
+        let mut value = projection.nodes[index].clone();
+        let mut cursor = 0;
+        let mut positions = Vec::new();
+        if projection.inner[index] >= 0.0 {
+            positions.push(kernel::position(projection.inner[index]));
+        }
+        positions.extend(&projection.children[index]);
+        super::load::map_children_mut(&mut value, &mut |child| {
+            if let Some(&position) = positions.get(cursor) {
+                *child = materialize(position, projection, replacements);
+                cursor += 1;
+            }
+        });
+        value
+    }
     let mut projection = Projection {
         nodes: Vec::new(),
         inner: Vec::new(),
@@ -173,7 +199,7 @@ pub(super) fn lower_expression(
         return refuse("declaration", "invalid lexical expression graph projection");
     }
     let mut replacements = HashMap::new();
-    for pair in normalization.chunks_exact(2) {
+    for pair in normalization.as_chunks::<2>().0 {
         if pair[1] < 0.0 {
             obligations.push(LexicalObligation {
                 name: name.to_owned(),
@@ -183,32 +209,6 @@ pub(super) fn lower_expression(
         } else {
             replacements.insert(kernel::position(pair[0]), kernel::position(pair[1]));
         }
-    }
-    fn materialize(
-        index: usize,
-        projection: &Projection<'_>,
-        replacements: &HashMap<usize, usize>,
-    ) -> GrammarExpr {
-        if let Some(&delimiter) = replacements.get(&index) {
-            return GrammarExpr::zero_or_more(GrammarExpr::Sequence(vec![
-                GrammarExpr::not(projection.nodes[delimiter].clone()),
-                GrammarExpr::AnyChar,
-            ]));
-        }
-        let mut value = projection.nodes[index].clone();
-        let mut cursor = 0;
-        let mut positions = Vec::new();
-        if projection.inner[index] >= 0.0 {
-            positions.push(kernel::position(projection.inner[index]));
-        }
-        positions.extend(&projection.children[index]);
-        super::load::map_children_mut(&mut value, &mut |child| {
-            if let Some(&position) = positions.get(cursor) {
-                *child = materialize(position, projection, replacements);
-                cursor += 1;
-            }
-        });
-        value
     }
     Ok(materialize(0, &projection, &replacements))
 }

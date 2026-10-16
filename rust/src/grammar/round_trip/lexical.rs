@@ -150,7 +150,9 @@ pub(super) fn extend_literal(
         _ => return Err(failure()),
     };
     let renames = plan[3..]
-        .chunks_exact(2)
+        .as_chunks::<2>()
+        .0
+        .iter()
         .map(|pair| {
             (
                 kernel::position(pair[0]),
@@ -224,7 +226,9 @@ pub(super) fn canonical_owners(grammar: &Grammar) -> Result<Grammar, GrammarRoun
             return Err(failure());
         }
         let replacements = plan
-            .chunks_exact(2)
+            .as_chunks::<2>()
+            .0
+            .iter()
             .map(|pair| {
                 (
                     kernel::position(pair[0]),

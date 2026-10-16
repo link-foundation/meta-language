@@ -295,26 +295,6 @@ pub(super) fn project_lexical_references(
     source: &str,
     rename: &dyn Fn(&str) -> String,
 ) -> GrammarExpr {
-    let mut bindings = BTreeMap::new();
-    for lexer in &grammar.declarations().lexers {
-        if let GrammarExpr::Sequence(entries) = &lexer.expression {
-            for entry in entries {
-                if let GrammarExpr::Feature(feature) = entry
-                    && crate::grammar::feature_runtime::lexical_kernel::entry_form(feature.head())
-                        == 2
-                    && let FeatureExpr::Form(form) = &**feature
-                    && let Some(GrammarExpr::NonTerminal(public)) = form.expression("item")
-                {
-                    bindings.entry(public.clone()).or_insert_with(|| {
-                        (
-                            format!("{source}::{}", lexer.name),
-                            form.text("name").unwrap_or_default().to_owned(),
-                        )
-                    });
-                }
-            }
-        }
-    }
     fn project(
         expr: &GrammarExpr,
         bindings: &BTreeMap<String, (String, String)>,
@@ -358,11 +338,31 @@ pub(super) fn project_lexical_references(
                 }
             }
             GrammarExpr::Feature(feature) => {
-                feature.map_expressions(&mut |item| *item = project(item, bindings, rename))
+                feature.map_expressions(&mut |item| *item = project(item, bindings, rename));
             }
             _ => {}
         }
         copy
+    }
+    let mut bindings = BTreeMap::new();
+    for lexer in &grammar.declarations().lexers {
+        if let GrammarExpr::Sequence(entries) = &lexer.expression {
+            for entry in entries {
+                if let GrammarExpr::Feature(feature) = entry
+                    && crate::grammar::feature_runtime::lexical_kernel::entry_form(feature.head())
+                        == 2
+                    && let FeatureExpr::Form(form) = &**feature
+                    && let Some(GrammarExpr::NonTerminal(public)) = form.expression("item")
+                {
+                    bindings.entry(public.clone()).or_insert_with(|| {
+                        (
+                            format!("{source}::{}", lexer.name),
+                            form.text("name").unwrap_or_default().to_owned(),
+                        )
+                    });
+                }
+            }
+        }
     }
     project(expr, &bindings, rename)
 }

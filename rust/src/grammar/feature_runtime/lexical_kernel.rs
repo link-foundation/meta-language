@@ -12,29 +12,29 @@ fn texts(values: &[String]) -> Vec<rules::ml_string::Text> {
     values.iter().map(|value| text(value)).collect()
 }
 
-pub(crate) fn number(value: usize) -> f64 {
+pub fn number(value: usize) -> f64 {
     serde_json::Number::from(value)
         .as_f64()
         .expect("a host index has a JavaScript Number representation")
 }
 
-pub(crate) fn position(value: f64) -> usize {
+pub fn position(value: f64) -> usize {
     rules::ml_array::number_index(value)
         .expect("a generated position is a non-negative exact array index")
 }
 
-pub(crate) fn entry_form(kind: &str) -> usize {
+pub fn entry_form(kind: &str) -> usize {
     position(rules::read_grammar_lexer_entry_form(text(kind)))
 }
 
-pub(crate) fn command_plan(command: &str, name: &str) -> Vec<String> {
+pub fn command_plan(command: &str, name: &str) -> Vec<String> {
     rules::read_grammar_lexer_command_plan(text(command), text(name))
         .iter()
         .map(ToString::to_string)
         .collect()
 }
 
-pub(crate) fn section_positions(
+pub fn section_positions(
     section: usize,
     kinds: &[String],
     names: &[String],
@@ -52,7 +52,7 @@ pub(crate) fn section_positions(
     )
 }
 
-pub(crate) fn literal_rule(
+pub fn literal_rule(
     value: &str,
     section_kind: &str,
     kinds: &[String],
@@ -68,7 +68,7 @@ pub(crate) fn literal_rule(
     )
 }
 
-pub(crate) fn literal_extension(
+pub fn literal_extension(
     owner: &str,
     value: &str,
     columns: &[Vec<String>; 6],
@@ -87,11 +87,11 @@ pub(crate) fn literal_extension(
     )
 }
 
-pub(crate) fn owner_comparison(kinds: &[String], names: &[String], targets: &[String]) -> Vec<f64> {
+pub fn owner_comparison(kinds: &[String], names: &[String], targets: &[String]) -> Vec<f64> {
     rules::read_grammar_lexer_owner_comparison(&texts(kinds), &texts(names), &texts(targets))
 }
 
-pub(crate) fn binding_names(
+pub fn binding_names(
     declared: &[String],
     references: &[String],
     names: &[String],

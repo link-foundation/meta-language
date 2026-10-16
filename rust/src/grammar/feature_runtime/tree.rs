@@ -406,24 +406,24 @@ pub(super) fn collect_ambiguities(
             }
         }
         TreeType::Embed => {
-            if let Some(selection) = &node.selection {
-                if selection.ambiguous {
-                    found.push(Ambiguity {
-                        rule: "any-grammar".to_owned(),
-                        start: node.start,
-                        end: node.end,
-                        languages: Some(
-                            selection
-                                .candidates
-                                .iter()
-                                .filter(|candidate| candidate["relation"] == "accepted")
-                                .filter_map(|candidate| {
-                                    candidate["language"].as_str().map(str::to_owned)
-                                })
-                                .collect(),
-                        ),
-                    });
-                }
+            if let Some(selection) = &node.selection
+                && selection.ambiguous
+            {
+                found.push(Ambiguity {
+                    rule: "any-grammar".to_owned(),
+                    start: node.start,
+                    end: node.end,
+                    languages: Some(
+                        selection
+                            .candidates
+                            .iter()
+                            .filter(|candidate| candidate["relation"] == "accepted")
+                            .filter_map(|candidate| {
+                                candidate["language"].as_str().map(str::to_owned)
+                            })
+                            .collect(),
+                    ),
+                });
             }
             if let Some(root) = &node.root {
                 collect_ambiguities(root, compiled, node.program, found);

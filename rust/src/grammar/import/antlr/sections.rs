@@ -63,9 +63,7 @@ impl Parser {
                             .iter()
                             .any(|(key, _)| key != "caseInsensitive" && key != "tokenVocab")
                         {
-                            self.sections[section]
-                                .unsupported_options
-                                .push(options.clone());
+                            self.sections[section].unsupported_options.push(options);
                         }
                     }
                 } else if let Some(section) = self.section {

@@ -134,7 +134,7 @@ pub(super) fn selection_rejection(
     Some(rejection)
 }
 
-impl<'c> Executor<'c> {
+impl Executor<'_> {
     pub(super) fn report_selection_diagnostic(&self, diagnostic: Value) -> Run<()> {
         let duplicate = self
             .shared
@@ -242,7 +242,7 @@ impl<'c> Executor<'c> {
             actual_context["matching"] = json!(matching);
         }
         if actual_context["settling"].is_null() {
-            actual_context["settling"] = steps.clone();
+            actual_context["settling"] = steps;
         }
         let mut source_context = source.map_or(Value::Null, |source| source["context"].clone());
         if !source_context.is_null() {
@@ -334,7 +334,7 @@ impl<'c> Executor<'c> {
             for (language, mapping) in &descriptor.candidates {
                 self.step()?;
                 self.retain(1)?;
-                if !accept_grammar_selection_mapping(mapping.to_string()) {
+                if !accept_grammar_selection_mapping(mapping) {
                     self.report_selection_diagnostic(json!({"reason":"unsupportedEmbeddingMapping","language":&**language,"start":start,"end":region.end,"mapping":&**mapping}))?;
                     candidates.push(json!({"language":&**language,"relation":"unknown","reason":"unsupportedEmbeddingMapping","mapping":&**mapping}));
                     continue;
@@ -387,12 +387,11 @@ impl<'c> Executor<'c> {
             }
             let accepted_count = f64::from(u32::try_from(accepted.len()).unwrap_or(u32::MAX));
             let total = f64::from(u32::try_from(descriptor.candidates.len()).unwrap_or(u32::MAX));
-            if !accept_grammar_selection_count(descriptor.mode.to_string(), accepted_count, total) {
+            if !accept_grammar_selection_count(&descriptor.mode, accepted_count, total) {
                 continue;
             }
             let primary = accepted.remove(0);
-            let ambiguous =
-                report_grammar_selection_ambiguity(descriptor.mode.to_string(), accepted_count);
+            let ambiguous = report_grammar_selection_ambiguity(&descriptor.mode, accepted_count);
             let mut child = Tree::new(TreeType::Embed, None, start, region.end);
             child.language = Some(primary.language);
             child.root = Some(primary.root);
