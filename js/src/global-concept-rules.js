@@ -48,3 +48,33 @@ export function verifyGlobalConceptCorrespondence(shapes, meanings, offsets, edg
   }
   return true;
 }
+
+/** @param {string[]} identities @param {string} candidate @returns {boolean} */
+export function containsGlobalConceptIdentity(identities, candidate) {
+  for (let index = 0; index < identities.length; index += 1) {
+    if (identities[index] === candidate) return true;
+  }
+  return false;
+}
+
+/** Host sets supply cardinalities; names and the admission decision stay shared.
+ * @param {string[]} identities @param {string[]} aliases
+ * @param {number} uniqueIdentities @param {number} uniqueAliases @returns {boolean}
+ */
+export function acceptGlobalConceptHistory(identities, aliases, uniqueIdentities, uniqueAliases) {
+  return identities.length === uniqueIdentities && aliases.length === uniqueAliases
+    && !containsGlobalConceptIdentity(identities, '') && !containsGlobalConceptIdentity(aliases, '');
+}
+
+/** Reserve historical identities before allocating any new current class.
+ * @param {string} preferred @param {string} fallback
+ * @param {string[]} reserved @param {string[]} assigned @returns {string}
+ */
+export function selectGlobalConceptIdentity(preferred, fallback, reserved, assigned) {
+  if (preferred !== '') return containsGlobalConceptIdentity(assigned, preferred) ? '' : preferred;
+  let candidate = fallback;
+  while (containsGlobalConceptIdentity(reserved, candidate) || containsGlobalConceptIdentity(assigned, candidate)) {
+    candidate = `${candidate}.new`;
+  }
+  return candidate;
+}

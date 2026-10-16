@@ -8,7 +8,7 @@ import { Grammar } from './grammar.js';
 import { DEFAULT_SETTLING, grammarDeclarations } from './grammar-feature-forms.js';
 import { parseGrammarLinks, percentDecodeLinksText, percentEncodeLinksText, renderDeclarationLinks, renderLinksExpression, renderRuleFieldLinks } from './grammar-links.js';
 import { compareText } from './grammar-merge-normalize.js';
-import { verifyGlobalConceptCorrespondence } from './global-concept-rules.js';
+import { verifyGlobalConceptCorrespondence, acceptGlobalConceptHistory, selectGlobalConceptIdentity } from './global-concept-rules.js';
 import { LANGUAGE_CATALOG, languageEntry } from './language-catalog.js';
 import { LinkNetwork } from './network.js';
 import { LinkId } from './primitives.js';
@@ -194,6 +194,14 @@ export function createGlobalConceptSpace(sources, options = {}) {
     classes.get(identity).push(index);
   });
   const previous = options.previous?.concepts ?? [];
+  if (!Array.isArray(previous)) throw new TypeError('invalid global concept history');
+  const reserved = previous.map((concept) => typeof concept?.id === 'string' ? concept.id : '');
+  const previousAliases = previous.flatMap((concept) => {
+    if (!Array.isArray(concept?.origins)) throw new TypeError('invalid global concept history');
+    return concept.origins.map((origin) => typeof origin?.alias === 'string' ? origin.alias : '');
+  });
+  if (!acceptGlobalConceptHistory(reserved, previousAliases, new Set(reserved).size, new Set(previousAliases).size)) throw new TypeError('invalid global concept history');
+  const assigned = [];
   const concepts = [];
   const mappings = {};
   const redirects = {};
@@ -204,7 +212,9 @@ export function createGlobalConceptSpace(sources, options = {}) {
       const surviving = concept.origins.map(({ alias }) => alias).filter((alias) => aliases.has(alias)).sort(compareText);
       return surviving.length > 0 && present.has(surviving[0]);
     }).map(({ id }) => id).sort(compareText);
-    const id = established[0] ?? `global-concept.${digest(canonical(origins[0]))}`;
+    const id = selectGlobalConceptIdentity(established[0] ?? '', `global-concept.${digest(canonical(origins[0]))}`, reserved, assigned);
+    if (id === '') throw new TypeError('duplicate global concept identity');
+    assigned.push(id);
     for (const old of established.slice(1)) redirects[old] = id;
     const proofIndices = proofs.flatMap((proof, index) => proof.correspondence.some(([first, second]) => present.has(first) && present.has(second)) ? [index] : []);
     // All source definitions remain available even when the concept is shared.

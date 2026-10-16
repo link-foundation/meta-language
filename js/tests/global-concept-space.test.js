@@ -8,11 +8,12 @@ import { Parser } from 'links-notation';
 import { deserializeGrammar, Grammar } from '../src/grammar.js';
 import { parseGrammarLinks } from '../src/grammar-links.js';
 import { GLOBAL_CONCEPT_PROOF_METHOD, createGlobalConceptSpace, globalConceptSpaceToLinks, readGlobalConceptSpaceLinks, translateGlobalConstruct } from '../src/global-concept-space.js';
-import { verifyGlobalConceptCorrespondence } from '../src/global-concept-rules.js';
+import { verifyGlobalConceptCorrespondence, acceptGlobalConceptHistory, selectGlobalConceptIdentity } from '../src/global-concept-rules.js';
 import { encodeFormalConceptDefinition } from '../src/formal-concept-definition.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const fixture = readProjectData(new URL('../../parity/fixtures/global-concept-space.json', import.meta.url));
+const identityFixture = readProjectData(new URL('../../parity/fixtures/global-concept-identities.lino', import.meta.url));
 const sources = () => fixture.sources.map(({ grammar, ...source }) => ({ ...source, grammar: deserializeGrammar(grammar) }));
 const options = (extra = {}) => ({ records: fixture.records, equivalences: fixture.equivalences, formalDefinitions: fixture.formalDefinitions, ...extra });
 const build = (input = sources(), extra = {}) => createGlobalConceptSpace(input, options(extra));
@@ -141,6 +142,56 @@ test('global identities are reproducible, incremental and stable under reorderin
   assert.notEqual(split.mappings['second:letter'], initial.mappings['first:atom']);
   assert.equal(new Set(split.concepts.map(({ id }) => id)).size, split.concepts.length);
   observe('I195-GLOBAL-CONCEPT-SPACE', ['stableIdentities'], 'global identities are reproducible, incremental and stable under reordering');
+});
+
+test('restored changed origins cannot reuse another current concept identity', () => {
+  const control = identityFixture.restoration;
+  const input = sources(), initial = build(input);
+  const remaining = build(input.filter((_, index) => index !== control.removedSource), { previous: initial });
+  const changed = rewritten(input[control.removedSource], (rule) => rule.name === control.changedRule ? { ...rule, expression: { kind: 'literal', value: control.changedLiteral } } : rule);
+  const restored = build([changed, input[1]], { previous: remaining });
+  assert.equal(restored.concepts.length, control.concepts);
+  assert.equal(new Set(restored.concepts.map(({ id }) => id)).size, control.uniqueIdentities);
+  assert.equal(restored.proofs.length, control.proofs);
+  assert.equal(restored.failures.length, control.failures);
+  for (const [origin, id] of Object.entries(remaining.mappings)) assert.equal(restored.mappings[origin], id);
+  assert.notEqual(restored.mappings['first:atom'], restored.mappings['second:letter']);
+  assert.notEqual(restored.mappings['first:root'], restored.mappings['second:page']);
+  assert.deepEqual(build([input[1], changed], { previous: remaining }), restored);
+  assert.deepEqual(build([changed, input[1]], { previous: restored }), restored);
+  const links = globalConceptSpaceToLinks(restored);
+  assert.deepEqual(readGlobalConceptSpaceLinks(links, { records: fixture.records }), restored);
+  const merged = build(input, { previous: restored });
+  assert.equal(merged.mappings['first:atom'], merged.mappings['second:letter']);
+  assert.equal(new Set(merged.concepts.map(({ id }) => id)).size, merged.concepts.length);
+});
+
+test('counterfeit duplicate historical identities or origins cannot prove shared meaning', () => {
+  for (const previous of [
+    { concepts: [{ id: 'same', origins: [{ alias: 'first:atom' }] }, { id: 'same', origins: [{ alias: 'second:letter' }] }] },
+    { concepts: [{ id: 'first', origins: [{ alias: 'first:atom' }] }, { id: 'second', origins: [{ alias: 'first:atom' }] }] },
+    { concepts: [{ id: '', origins: [{ alias: 'first:atom' }] }] },
+    { concepts: [{ id: 'first', origins: [{ alias: '' }] }] },
+    { concepts: [{ id: 'first', origins: null }] },
+    { concepts: {} },
+  ]) assert.throws(() => build(sources(), { previous }), /invalid global concept history/);
+});
+
+test('shared identity selection reserves all historical and current candidates with stable results', () => {
+  for (const entry of identityFixture.histories) assert.equal(acceptGlobalConceptHistory(entry.identities, entry.aliases, entry.uniqueIdentities, entry.uniqueAliases), entry.expected);
+  for (const entry of identityFixture.selections) assert.equal(selectGlobalConceptIdentity(entry.preferred, entry.fallback, entry.reserved, entry.assigned), entry.expected);
+});
+
+test('generated identity loop styles retain owned string values', async () => {
+  const {DecoratorSet} = await import('../src/decorators.js');
+  const styles = DecoratorSet.fromLino(readFileSync(new URL('../../parity/self-translation/global-concept-identity-decorators.lino', import.meta.url), 'utf8'));
+  const loop = styles.decorators.flatMap(row => row.actions).find(action => action.from?.startsWith('pub fn ml_contains_global_concept_identity_loop'));
+  assert.ok(loop);
+  assert.match(loop.from, /mut candidate: String/u);
+  assert.match(loop.to, /mut candidate: String/u);
+  assert.match(loop.to, /candidate\.clone\(\)/u, 'each comparison consumes a fresh owned String while the next iteration retains its invariant');
+  assert.match(loop.to, /continue;/u);
+  assert.match(loop.to, /identities: &\[String\]/u, 'the same complete declaration borrows its immutable history');
 });
 
 test('the global links representation retains definitions, source aliases and proof edges', () => {

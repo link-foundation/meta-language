@@ -14,6 +14,109 @@ fn fixture() -> Value {
     .unwrap()
 }
 
+fn identity_controls() -> Value {
+    super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/global-concept-identities.lino"
+    ))
+    .unwrap()
+}
+
+#[test]
+fn restored_changed_origins_retain_distinct_current_identities() {
+    let data = fixture();
+    let controls = identity_controls();
+    let control = &controls["restoration"];
+    let input = sources(&data);
+    let mut options = settings(&data);
+    let initial = create_global_concept_space(&input, &options).unwrap();
+    options.previous = Some(initial);
+    let remaining = create_global_concept_space(&input[1..], &options).unwrap();
+    let mut changed = input[0].clone();
+    let mut rule = changed
+        .grammar
+        .rule(control["changedRule"].as_str().unwrap())
+        .unwrap()
+        .clone();
+    rule.expr = meta_language::grammar::GrammarExpr::Terminal(
+        control["changedLiteral"].as_str().unwrap().to_owned(),
+    );
+    changed.grammar.add_rule(rule);
+    let restored_sources = [changed, input[1].clone()];
+    options.previous = Some(remaining.clone());
+    let restored = create_global_concept_space(&restored_sources, &options).unwrap();
+    let concepts = restored["concepts"].as_array().unwrap();
+    assert_eq!(json!(concepts.len()), control["concepts"]);
+    assert_eq!(
+        json!(
+            concepts
+                .iter()
+                .map(|entry| entry["id"].as_str().unwrap())
+                .collect::<std::collections::BTreeSet<_>>()
+                .len()
+        ),
+        control["uniqueIdentities"]
+    );
+    assert_eq!(
+        json!(restored["proofs"].as_array().unwrap().len()),
+        control["proofs"]
+    );
+    assert_eq!(
+        json!(restored["failures"].as_array().unwrap().len()),
+        control["failures"]
+    );
+    for (origin, identity) in remaining["mappings"].as_object().unwrap() {
+        assert_eq!(&restored["mappings"][origin], identity);
+    }
+    assert_ne!(
+        restored["mappings"]["first:atom"],
+        restored["mappings"]["second:letter"]
+    );
+    assert_ne!(
+        restored["mappings"]["first:root"],
+        restored["mappings"]["second:page"]
+    );
+    let mut reordered = restored_sources.clone();
+    reordered.reverse();
+    assert_eq!(
+        create_global_concept_space(&reordered, &options).unwrap(),
+        restored
+    );
+    options.previous = Some(restored.clone());
+    assert_eq!(
+        create_global_concept_space(&restored_sources, &options).unwrap(),
+        restored
+    );
+    let links = global_concept_space_to_links(&restored).unwrap();
+    assert_eq!(
+        read_global_concept_space_links(&links, &options).unwrap(),
+        restored
+    );
+    let merged = create_global_concept_space(&input, &options).unwrap();
+    assert_eq!(
+        merged["mappings"]["first:atom"],
+        merged["mappings"]["second:letter"]
+    );
+}
+
+#[test]
+fn shared_history_controls_refuse_duplicate_or_empty_identities_and_origins() {
+    let data = fixture();
+    for control in identity_controls()["histories"].as_array().unwrap() {
+        let concepts: Vec<_> = control["identities"]
+            .as_array().unwrap().iter().enumerate()
+            .map(|(index, identity)| json!({"id":identity,"origins":[{"alias":control["aliases"][index]}]}))
+            .collect();
+        let mut options = settings(&data);
+        options.previous = Some(json!({"concepts":concepts}));
+        let result = create_global_concept_space(&sources(&data), &options);
+        let expected = control["expected"].as_bool().unwrap();
+        assert_eq!(result.is_ok(), expected);
+        if !expected {
+            assert_eq!(result.unwrap_err(), "invalid global concept history");
+        }
+    }
+}
+
 fn sources(data: &Value) -> Vec<GlobalConceptSource> {
     data["sources"]
         .as_array()

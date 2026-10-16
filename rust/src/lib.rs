@@ -17,6 +17,7 @@ mod formal_concept_definition;
 mod formal_function_links;
 mod formal_function_rules;
 mod foundation_models;
+mod global_concept_identity_rules;
 mod global_concept_rules;
 mod global_concept_space;
 pub mod grammar;

@@ -7,6 +7,9 @@ use std::fmt::Write as _;
 use serde_json::{Map, Value, json};
 use sha2::{Digest, Sha256};
 
+use crate::global_concept_identity_rules::{
+    accept_global_concept_history, select_global_concept_identity,
+};
 use crate::global_concept_rules::verify_global_concept_correspondence;
 
 use crate::formal_concept_definition::read_formal_concept_definition;
@@ -603,9 +606,42 @@ fn create_global_concept_space_in(
     let previous = options
         .previous
         .as_ref()
-        .and_then(|previous| previous["concepts"].as_array())
-        .map(Vec::as_slice)
+        .and_then(|previous| previous.get("concepts"))
+        .filter(|concepts| !concepts.is_null())
+        .map(array)
+        .transpose()
+        .map_err(|_| "invalid global concept history".to_owned())?
         .unwrap_or_default();
+    let reserved = previous
+        .iter()
+        .map(|concept| string(&concept["id"]).map(str::to_owned))
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|_| "invalid global concept history".to_owned())?;
+    let mut previous_aliases = Vec::new();
+    for concept in previous {
+        for origin in
+            array(&concept["origins"]).map_err(|_| "invalid global concept history".to_owned())?
+        {
+            previous_aliases.push(
+                string(&origin["alias"])
+                    .map_err(|_| "invalid global concept history".to_owned())?
+                    .to_owned(),
+            );
+        }
+    }
+    let unique_identities = reserved.iter().collect::<BTreeSet<_>>().len();
+    let unique_aliases = previous_aliases.iter().collect::<BTreeSet<_>>().len();
+    if !accept_global_concept_history(
+        &reserved,
+        &previous_aliases,
+        serde_json::Number::from(unique_identities)
+            .as_f64()
+            .unwrap(),
+        serde_json::Number::from(unique_aliases).as_f64().unwrap(),
+    ) {
+        return Err("invalid global concept history".to_owned());
+    }
+    let mut assigned = Vec::new();
     let mut concepts = Vec::new();
     let mut mappings = Map::new();
     let mut redirects = Map::new();
@@ -636,7 +672,7 @@ fn create_global_concept_space_in(
             }
         }
         established.sort_unstable();
-        let id = established.first().cloned().unwrap_or_else(|| {
+        let fallback = {
             let digest = Sha256::digest(canonical(&origins[0]).as_bytes())
                 .iter()
                 .fold(String::new(), |mut text, byte| {
@@ -644,7 +680,17 @@ fn create_global_concept_space_in(
                     text
                 });
             format!("global-concept.{digest}")
-        });
+        };
+        let id = select_global_concept_identity(
+            established.first().cloned().unwrap_or_default(),
+            fallback,
+            &reserved,
+            &assigned,
+        );
+        if id.is_empty() {
+            return Err("duplicate global concept identity".to_owned());
+        }
+        assigned.push(id.clone());
         for old in established.iter().skip(1) {
             redirects.insert(old.clone(), json!(id));
         }
