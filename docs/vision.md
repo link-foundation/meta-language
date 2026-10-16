@@ -1342,6 +1342,14 @@ editable links. A registered grammar, partial syntax subset, successful CST
 parse or carried source alone does not establish complete executable semantic
 translation. All earlier catalog and translation obligations remain required.
 
+The bulk pipeline schedules these four languages first using the shared Links
+Notation policy in `parity/grammar-work-priorities.lino`. Work still covers
+every selected catalog occurrence under the same worker count and limits, and
+results retain their original catalog positions. Earlier scheduling provides
+earlier feedback; it does not establish complete grammar support.
+CI publishes the textual matrix summary as a separate small artifact alongside
+the complete generated grammar archive, allowing bounded feedback inspection.
+
 ## Grammar import, conversion and reverse conversion
 
 Both runtime packages provide public APIs and command-line tools to import,
@@ -2360,6 +2368,14 @@ decodable, with additive bindings for the private helper and live adapter.
   signature so identical expressions in owned and borrowed contexts cannot
   receive each other's corrections. Reviewed collision repairs retain their
   provenance separately from authentic machine-applicable diagnostics.
+  Binary record generation replays its complete reviewed Clippy feedback from
+  immutable Links data bound to the exact original functions and CI log. It
+  removes only reported redundant clones and applies checked local binding
+  renames through generation decorators, preserving the frozen producer and
+  all checked declarations. The replay rejects stale or ambiguous contexts,
+  overlapping edits, missing diagnostic corrections and identifier capture.
+  Rendered review never acquires invented machine applicability or substitutes
+  for native compilation and execution in CI.
 - Full acceptance and native evidence stages execute in CI. Local validation
   remains limited to targeted JavaScript checks and changed-file formatting
   allowed by `AGENTS.md`. CI bounds compiler jobs and test threads with

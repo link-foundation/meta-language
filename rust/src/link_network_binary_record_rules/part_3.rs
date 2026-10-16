@@ -170,13 +170,13 @@ pub fn ml_transcode_link_network_binary_loop7(
                                                                                                                                                     {
                                                                                                                                                         let cursor_9 = cursor_8 + 1f64;
                                                                                                                                                         {
-                                                                                                                                                            let output_14 = output_13.concat(&super::render_link_network_binary_field(span, binary));
+                                                                                                                                                            let span_output = output_13.concat(&super::render_link_network_binary_field(span, binary));
                                                                                                                                                             {
                                                                                                                                                                 let ml_s22 = if span == 1f64 {
                                                                                                                                                                     {
                                                                                                                                                                         let field_2 = 0f64;
                                                                                                                                                                         {
-                                                                                                                                                                            let ml_s23 = super::ml_transcode_link_network_binary_loop26(input, binary, output_14.clone(), cursor_9, field_2);
+                                                                                                                                                                            let ml_s23 = super::ml_transcode_link_network_binary_loop26(input, binary, span_output.clone(), cursor_9, field_2);
                                                                                                                                                                             match ml_s23 {
                                                                                                                                                                                 super::MlTranscodeLinkNetworkBinaryLoop26Result::MlTranscodeLinkNetworkBinaryLoop26Done(output_15, cursor_10) => {
                                                                                                                                                                                     super::MlTranscodeLinkNetworkBinaryJoin24::MlTranscodeLinkNetworkBinaryJoin24Next(output_15.clone(), cursor_10)
@@ -188,7 +188,7 @@ pub fn ml_transcode_link_network_binary_loop7(
                                                                                                                                                                         }
                                                                                                                                                                     }
                                                                                                                                                                 } else {
-                                                                                                                                                                    super::MlTranscodeLinkNetworkBinaryJoin24::MlTranscodeLinkNetworkBinaryJoin24Next(output_14.clone(), cursor_9)
+                                                                                                                                                                    super::MlTranscodeLinkNetworkBinaryJoin24::MlTranscodeLinkNetworkBinaryJoin24Next(span_output.clone(), cursor_9)
                                                                                                                                                                 };
                                                                                                                                                                 match ml_s22 {
                                                                                                                                                                     super::MlTranscodeLinkNetworkBinaryJoin24::MlTranscodeLinkNetworkBinaryJoin24Next(output_16, cursor_11) => {
@@ -196,7 +196,7 @@ pub fn ml_transcode_link_network_binary_loop7(
                                                                                                                                                                             super::MlTranscodeLinkNetworkBinaryLoop7Result::MlTranscodeLinkNetworkBinaryLoop7Return(((super::ml_string::Text::from_units(vec![45, 49, 57, 44])).concat(&super::ml_string::Text::from_text(&super::ml_number::js_number(cursor_11)))).concat(&super::ml_string::Text::from_units(vec![44])))
                                                                                                                                                                         } else {
                                                                                                                                                                             {
-                                                                                                                                                                                let output_18 = if binary {
+                                                                                                                                                                                let record_output = if binary {
                                                                                                                                                                                     output_16.clone()
                                                                                                                                                                                 } else {
                                                                                                                                                                                     {
@@ -208,8 +208,8 @@ pub fn ml_transcode_link_network_binary_loop7(
                                                                                                                                                                                                 {
                                                                                                                                                                                                     let encoded_length_2 = super::ml_transcode_link_network_binary_loop25(length_2, encoded_length.clone(), index_4);
                                                                                                                                                                                                     {
-                                                                                                                                                                                                        let output_17 = ((output_16.slice(0f64, length_slot)).concat(&encoded_length_2)).concat(&output_16.slice((length_slot + 16f64), f64::INFINITY));
-                                                                                                                                                                                                        output_17.clone()
+                                                                                                                                                                                                        let length_output = ((output_16.slice(0f64, length_slot)).concat(&encoded_length_2)).concat(&output_16.slice((length_slot + 16f64), f64::INFINITY));
+                                                                                                                                                                                                        length_output.clone()
                                                                                                                                                                                                     }
                                                                                                                                                                                                 }
                                                                                                                                                                                             }
@@ -217,8 +217,8 @@ pub fn ml_transcode_link_network_binary_loop7(
                                                                                                                                                                                     }
                                                                                                                                                                                 };
                                                                                                                                                                                 {
-                                                                                                                                                                                    let output_19 = record_prefix.concat(&output_18);
-                                                                                                                                                                                    if (output_19.length()) > (byte_limit * if binary {
+                                                                                                                                                                                    let prefix_output = record_prefix.concat(&record_output);
+                                                                                                                                                                                    if (prefix_output.length()) > (byte_limit * if binary {
                                                                                                                                                                                         20f64
                                                                                                                                                                                     } else {
                                                                                                                                                                                         2f64
@@ -228,7 +228,7 @@ pub fn ml_transcode_link_network_binary_loop7(
                                                                                                                                                                                         {
                                                                                                                                                                                             let record_2 = record + 1f64;
                                                                                                                                                                                             {
-                                                                                                                                                                                                (output, cursor, identities, greatest_identity, record) = (output_19.clone(), cursor_11, identities_2.clone(), greatest_identity_3, record_2);
+                                                                                                                                                                                                (output, cursor, identities, greatest_identity, record) = (prefix_output.clone(), cursor_11, identities_2.clone(), greatest_identity_3, record_2);
                                                                                                                                                                                                 continue;
                                                                                                                                                                                             }
                                                                                                                                                                                         }
@@ -238,7 +238,7 @@ pub fn ml_transcode_link_network_binary_loop7(
                                                                                                                                                                         }
                                                                                                                                                                     }
                                                                                                                                                                     super::MlTranscodeLinkNetworkBinaryJoin24::MlTranscodeLinkNetworkBinaryJoin24Return(ml_result25) => {
-                                                                                                                                                                        super::MlTranscodeLinkNetworkBinaryLoop7Result::MlTranscodeLinkNetworkBinaryLoop7Return(ml_result25.clone())
+                                                                                                                                                                        super::MlTranscodeLinkNetworkBinaryLoop7Result::MlTranscodeLinkNetworkBinaryLoop7Return(ml_result25)
                                                                                                                                                                     }
                                                                                                                                                                 }
                                                                                                                                                             }
@@ -248,14 +248,14 @@ pub fn ml_transcode_link_network_binary_loop7(
                                                                                                                                             }
                                                                                                                                         }
                                                                                                                                         super::MlTranscodeLinkNetworkBinaryLoop23Result::MlTranscodeLinkNetworkBinaryLoop23Return(ml_result27) => {
-                                                                                                                                            super::MlTranscodeLinkNetworkBinaryLoop7Result::MlTranscodeLinkNetworkBinaryLoop7Return(ml_result27.clone())
+                                                                                                                                            super::MlTranscodeLinkNetworkBinaryLoop7Result::MlTranscodeLinkNetworkBinaryLoop7Return(ml_result27)
                                                                                                                                         }
                                                                                                                                     }
                                                                                                                                 }
                                                                                                                             }
                                                                                                                         }
                                                                                                                         super::MlTranscodeLinkNetworkBinaryLoop22Result::MlTranscodeLinkNetworkBinaryLoop22Return(ml_result29) => {
-                                                                                                                            super::MlTranscodeLinkNetworkBinaryLoop7Result::MlTranscodeLinkNetworkBinaryLoop7Return(ml_result29.clone())
+                                                                                                                            super::MlTranscodeLinkNetworkBinaryLoop7Result::MlTranscodeLinkNetworkBinaryLoop7Return(ml_result29)
                                                                                                                         }
                                                                                                                     }
                                                                                                                 }
@@ -263,7 +263,7 @@ pub fn ml_transcode_link_network_binary_loop7(
                                                                                                         }
                                                                                                     }
                                                                                                     super::MlTranscodeLinkNetworkBinaryJoin21::MlTranscodeLinkNetworkBinaryJoin21Return(ml_result29_2) => {
-                                                                                                        super::MlTranscodeLinkNetworkBinaryLoop7Result::MlTranscodeLinkNetworkBinaryLoop7Return(ml_result29_2.clone())
+                                                                                                        super::MlTranscodeLinkNetworkBinaryLoop7Result::MlTranscodeLinkNetworkBinaryLoop7Return(ml_result29_2)
                                                                                                     }
                                                                                                 }
                                                                                             }
@@ -273,7 +273,7 @@ pub fn ml_transcode_link_network_binary_loop7(
                                                                             }
                                                                         }
                                                                         super::MlTranscodeLinkNetworkBinaryLoop20Result::MlTranscodeLinkNetworkBinaryLoop20Return(ml_result30) => {
-                                                                            super::MlTranscodeLinkNetworkBinaryLoop7Result::MlTranscodeLinkNetworkBinaryLoop7Return(ml_result30.clone())
+                                                                            super::MlTranscodeLinkNetworkBinaryLoop7Result::MlTranscodeLinkNetworkBinaryLoop7Return(ml_result30)
                                                                         }
                                                                     }
                                                                 }
@@ -287,7 +287,7 @@ pub fn ml_transcode_link_network_binary_loop7(
                                 }
                             }
                             super::MlTranscodeLinkNetworkBinaryJoin17::MlTranscodeLinkNetworkBinaryJoin17Return(ml_result31) => {
-                                super::MlTranscodeLinkNetworkBinaryLoop7Result::MlTranscodeLinkNetworkBinaryLoop7Return(ml_result31.clone())
+                                super::MlTranscodeLinkNetworkBinaryLoop7Result::MlTranscodeLinkNetworkBinaryLoop7Return(ml_result31)
                             }
                         }
                     }
@@ -295,9 +295,9 @@ pub fn ml_transcode_link_network_binary_loop7(
             }
         } else {
             super::MlTranscodeLinkNetworkBinaryLoop7Result::MlTranscodeLinkNetworkBinaryLoop7Done(
-                output.clone(),
+                output,
                 cursor,
-                identities.clone(),
+                identities,
                 greatest_identity,
             )
         };

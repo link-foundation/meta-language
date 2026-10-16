@@ -31,6 +31,7 @@ import { readExternalGrammarAsset } from './external-grammar-cache.mjs';
 import { readProjectData } from './project-data.mjs';
 import { readGrammarLicense } from './grammar-files.mjs';
 import { readGrammarReport, writeGrammarReport } from './grammar-report-files.mjs';
+import { planGrammarWorkOrder } from './grammar-work-order.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const script = fileURLToPath(import.meta.url);
@@ -510,6 +511,7 @@ export async function runBulkPipeline({ outDir, only = null, jobs = 2, timeout =
   const languages = bulkLanguages().filter(({ name }) => !only || only.includes(name));
   if (only) for (const name of only) if (!languages.some((entry) => entry.name === name)) throw new Error(`${name} is not an inventory language with a grammar`);
   const rows = new Array(languages.length);
+  const executionOrder = planGrammarWorkOrder(languages);
   let formalDefinitionsFile;
   if (formalDefinitions !== undefined) {
     mkdirSync(outDir, { recursive: true });
@@ -518,8 +520,8 @@ export async function runBulkPipeline({ outDir, only = null, jobs = 2, timeout =
   }
   let next = 0;
   const worker = async () => {
-    while (next < languages.length) {
-      const index = next++;
+    while (next < executionOrder.length) {
+      const index = executionOrder[next++];
       const row = await runWorker(languages[index], { timeout, memory, formalDefinitionsFile });
       row.missing = missingFeatures(row);
       rows[index] = row;

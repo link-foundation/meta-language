@@ -31,7 +31,7 @@ use crate::{LinkNetwork, ParseConfiguration};
 
 mod binding;
 mod emission;
-pub(crate) mod representation;
+pub mod representation;
 mod representation_rules;
 use emission::emit_item;
 use representation::Context;

@@ -238,6 +238,13 @@ jobs:
           name: grammar-bulk-matrix
           path: grammar-bulk/
 
+      - name: Upload the compact grammar summary
+        if: ${{ !cancelled() && hashFiles('grammar-bulk/grammar-bulk-matrix.md') != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: grammar-bulk-summary
+          path: grammar-bulk/grammar-bulk-matrix.md
+
       - name: Remove the temporary external grammar inputs
         if: ${{ !cancelled() }}
         working-directory: ${{ github.workspace }}

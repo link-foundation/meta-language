@@ -87,7 +87,7 @@ pub fn ml_transcode_link_network_binary_loop9(
                                             }
                                         }
                                         super::MlTranscodeLinkNetworkBinaryLoop11Result::MlTranscodeLinkNetworkBinaryLoop11Return(ml_result11) => {
-                                            super::MlTranscodeLinkNetworkBinaryLoop9Result::MlTranscodeLinkNetworkBinaryLoop9Return(ml_result11.clone())
+                                            super::MlTranscodeLinkNetworkBinaryLoop9Result::MlTranscodeLinkNetworkBinaryLoop9Return(ml_result11)
                                         }
                                     }
                                 }
@@ -98,8 +98,7 @@ pub fn ml_transcode_link_network_binary_loop9(
             }
         } else {
             super::MlTranscodeLinkNetworkBinaryLoop9Result::MlTranscodeLinkNetworkBinaryLoop9Done(
-                output.clone(),
-                cursor,
+                output, cursor,
             )
         };
     }

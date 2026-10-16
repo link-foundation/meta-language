@@ -1,0 +1,1 @@
+The bulk grammar pipeline starts JavaScript, Markdown, Rust and TypeScript work first through a Links Notation priority policy. Every original catalog occurrence, report position, worker limit and grammar check remains required; scheduling priority does not claim complete grammar support.

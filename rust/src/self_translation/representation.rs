@@ -29,7 +29,7 @@ fn policy() -> &'static Value {
     })
 }
 
-pub(crate) fn string_prelude() -> String {
+pub fn string_prelude() -> String {
     policy()["prelude"]
         .as_str()
         .expect("the generated representation asset has exact prelude text")

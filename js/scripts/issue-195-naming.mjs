@@ -22269,7 +22269,88 @@ const UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES=[...new Set(UNARY_OPERAND_
  extract: text => UNARY_OPERAND_AND_LEAN_RELEASE_NAME_BINDINGS.filter(row=>row.source===source&&text.includes(row.name)).map(row=>normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))),
  recordOf: name => UNARY_OPERAND_AND_LEAN_RELEASE_NAME_BINDINGS.find(row=>row.source===source&&normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))===name).id,
 }));
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES]);
+// Data driven grammar execution priorities preserve every catalog occurrence.
+const GRAMMAR_WORK_PRIORITY_NAME_BINDINGS=[
+  {
+    "id": "repository.read-grammar-work-priorities",
+    "source": "js/scripts/grammar-work-order.mjs",
+    "name": "readGrammarWorkPriorities"
+  },
+  {
+    "id": "repository.plan-grammar-work-order",
+    "source": "js/scripts/grammar-work-order.mjs",
+    "name": "planGrammarWorkOrder"
+  },
+  {
+    "id": "repository.grammar-work-priority-sequence",
+    "source": "parity/grammar-work-priorities.lino",
+    "name": "priorityLanguages"
+  },
+  {
+    "id": "repository.check-grammar-priority-source",
+    "source": "js/tests/grammar-work-order.test.js",
+    "name": "grammar work priorities retain the exact user source and four initial languages"
+  },
+  {
+    "id": "repository.check-grammar-work-permutation",
+    "source": "js/tests/grammar-work-order.test.js",
+    "name": "priority work order preserves every catalog occurrence and the original report positions"
+  },
+  {
+    "id": "repository.check-grammar-priority-refusal",
+    "source": "js/tests/grammar-work-order.test.js",
+    "name": "grammar work order refuses invalid priority policies without changing the input inventory"
+  }
+];
+const GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES=[...new Set(GRAMMAR_WORK_PRIORITY_NAME_BINDINGS.map(row=>row.source))].map(source=>({
+ inventory: "grammar work priority controls for "+source, files: [source],
+ extract: text => GRAMMAR_WORK_PRIORITY_NAME_BINDINGS.filter(row=>row.source===source&&text.includes(row.name)).map(row=>normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))),
+ recordOf: name => GRAMMAR_WORK_PRIORITY_NAME_BINDINGS.find(row=>row.source===source&&normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))===name).id,
+}));
+// Exact reviewed compiler contexts preserve the checked binary record algorithm.
+const BINARY_RECORD_COMPILER_NAME_BINDINGS=[
+  {
+    "id": "repository.read-binary-record-compiler-styles",
+    "source": "js/scripts/binary-record-compiler-styles.mjs",
+    "name": "readBinaryRecordCompilerStyles"
+  },
+  {
+    "id": "repository.read-binary-record-compiler-styles",
+    "source": "js/scripts/generate-link-network-binary-record-rules.mjs",
+    "name": "readBinaryRecordCompilerStyles"
+  },
+  {
+    "id": "repository.binary-record-compiler-review",
+    "source": "js/scripts/binary-record-compiler-styles.mjs",
+    "name": "binary-record-compiler-review"
+  },
+  {
+    "id": "repository.check-binary-compiler-review-capture",
+    "source": "js/tests/translation-binary-record-compiler-styles.test.js",
+    "name": "binary compiler review retains all authentic diagnostic categories and exact function contexts"
+  },
+  {
+    "id": "repository.check-binary-style-token-preservation",
+    "source": "js/tests/translation-binary-record-compiler-styles.test.js",
+    "name": "binary style review preserves every token except exact clone removals and bound name spelling"
+  },
+  {
+    "id": "repository.check-binary-style-context-refusal",
+    "source": "js/tests/translation-binary-record-compiler-styles.test.js",
+    "name": "binary compiler review rejects stale ambiguous overlap and missing correction contexts"
+  },
+  {
+    "id": "repository.check-binary-review-provenance",
+    "source": "js/tests/translation-binary-record-compiler-styles.test.js",
+    "name": "binary compiler review preserves explicit provenance and every diagnostic category"
+  }
+];
+const BINARY_RECORD_COMPILER_NAME_INVENTORIES=[...new Set(BINARY_RECORD_COMPILER_NAME_BINDINGS.map(row=>row.source))].map(source=>({
+ inventory: "binary record compiler review controls for "+source, files: [source],
+ extract: text => BINARY_RECORD_COMPILER_NAME_BINDINGS.filter(row=>row.source===source&&text.includes(row.name)).map(row=>normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))),
+ recordOf: name => BINARY_RECORD_COMPILER_NAME_BINDINGS.find(row=>row.source===source&&normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {

@@ -38,6 +38,10 @@ const adapter = readBinaryLibraryAdapter({raw, names, items}, true);
 const base = styleBinaryItems(items, new DecoratorSet([adapter]));
 const {readBinaryMetadataCandidateStyles} = await import('./binary-metadata-candidate-styles.mjs');
 const derived = readBinaryMetadataCandidateStyles({items, base, previousItems, previousStyled, adapter, format});
+const compilerReviewFile = new URL('../../parity/self-translation/binary-record-ci-style-review-116854044616.lino', import.meta.url);
+const compilerReview = readProjectData(compilerReviewFile);
+const {readBinaryRecordCompilerStyles} = await import('./binary-record-compiler-styles.mjs');
+derived.decorators.push(readBinaryRecordCompilerStyles(styleBinaryItems(items, new DecoratorSet(derived.decorators)), compilerReview));
 const expectedStyles = new DecoratorSet(derived.decorators).toLino();
 if (process.argv.includes('--check')) assert.equal(readFileSync(styles, 'utf8'), expectedStyles, 'record-local binary styles are fresh');
 else writeFileSync(styles, expectedStyles);
@@ -49,6 +53,9 @@ globalThis[Symbol.for('meta-language binary record generation')] = {
   historicalReplacementContexts: historical.decorators.filter(row => row.when.some(([field, value]) => field === 'scope' && value === 'formatted-item'))
     .reduce((count, row) => count + row.actions.filter(action => action.op === 'replace').length, 0),
   outputSources: styled,
+  compilerReview: {sourceSha256:createHash('sha256').update(readFileSync(compilerReviewFile)).digest('hex'),
+    styleBuilderSha256:createHash('sha256').update(readFileSync(new URL('./binary-record-compiler-styles.mjs', import.meta.url))).digest('hex'),
+    logSha256:compilerReview.capture.logSha256, reviewedCloneCorrections:38, reviewedBindingRenames:5},
 };`;
 
 const replacements=[
