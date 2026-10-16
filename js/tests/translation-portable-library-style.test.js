@@ -179,3 +179,123 @@ test('actual UTF16 text columns borrow vectors while preserving isolated surroga
   assert.equal(context.isolated().charCodeAt(0), 0xd83d);
   assert.deepEqual(values, ['\ud800', '𝄞', 'plain']);
 });
+
+test('actual scalar UTF16 text loans preserve owned results, comparisons and borrowed calls', () => {
+  const source = '/** @param {string} text @returns {string} */ function retained(text){return text;}'
+    + '/** @param {string} text @returns {string} */ function selected(text){return retained(text);}'
+    + '/** @param {string} left @param {string} right @returns {boolean} */ function compared(left,right){return left===right;}'
+    + '/** @param {string} text @returns {string} */ function leading(text){return text.slice(0,1);}'
+    + '/** @param {string} text @returns {string} */ function spelling(text){return "text.clone() String::from(\\\"\\\")";}';
+  const checked = checkProgram(parseJavaScript(source, {referenceSemantics: false}));
+  const raw = emitRust(checked, {arrayConsumption: true}).definitions.join('\n\n').replaceAll('crate::ml_string::Text', 'self::ml_string::Text');
+  const loaned = readPortableSourceParameterStyles(raw).source;
+  assert.ok(loaned.includes('text: &self::ml_string::Text'));
+  assert.ok(readSourceTextRustBlock(loaned, 'fn', 'retained').includes('text.clone()'), 'an owned result still copies the borrowed Text value');
+  const selected = readSourceTextRustBlock(loaned, 'fn', 'selected');
+  assert.ok(selected.includes('crate::retained(text)'));
+  assert.equal(selected.includes('text.clone()'), false, 'a borrowed callee does not receive an owned copy');
+  const compared = readSourceTextRustBlock(loaned, 'fn', 'compared');
+  assert.ok(compared.includes('(*left)'));
+  assert.ok(compared.includes('(*right)'));
+  assert.equal(loaned.includes('text.to_vec()'), false, 'scalar Text never uses the vector copy operation');
+  const format = spawnSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], {input: loaned, encoding: 'utf8'});
+  assert.equal(format.status, 0, format.stderr);
+  const context = {};
+  runInNewContext(emitJavaScript(checked).text, context, {timeout: 1000});
+  assert.equal(context.selected('\ud800'), '\ud800');
+  assert.equal(context.leading('😀'), '\ud83d');
+  assert.equal(context.compared('\ud800', '\ud800'), true);
+  assert.equal(context.compared('\ud800', '\ufffd'), false);
+  assert.equal(context.spelling('ignored'), 'text.clone() String::from("")');
+  const borrowed = readPortableSourceParameterStyles('pub fn prefixed(text: self::ml_string::Text, prefix: self::ml_string::Text) -> bool { text.starts_with(&(prefix)) }\n'
+    + 'pub fn sliced(text: self::ml_string::Text) -> bool { text.starts_with(&(text.slice(0f64, 1f64))) }').source;
+  assert.ok(borrowed.includes('text.starts_with((prefix))'));
+  assert.ok(borrowed.includes('text.starts_with(&(text.slice(0f64, 1f64)))'), 'a compound owned result retains its actual loan');
+  const called = readPortableSourceParameterStyles('pub fn consume(text: self::ml_string::Text) -> bool { text.length() > 0f64 }\n'
+    + 'pub fn forwarding(text: self::ml_string::Text) -> bool { self::consume((text)) == true }',
+  {ownedParameters: {consume: ['text']}}).source;
+  assert.ok(called.includes('self::consume((text.clone())) == true'), 'call parentheses cannot turn an owned argument into a moved dereference');
+  assert.equal(called.includes('(*text)'), false);
+});
+
+test('complete sibling placement imports only actual sibling declarations', () => {
+  const source = 'pub const fn first() -> bool {\n    true\n}\n'
+    + 'pub const fn second() -> bool {\n    self::first()\n}\n'
+    + 'pub fn third() -> bool {\n    let first = "second first";\n    // self::first() is a comment\n    first.is_empty()\n}\n';
+  const parts = partitionPortableRustLibrary(source, {directory: 'explicit_siblings', maximumLines: 6});
+  assert.equal(parts.length, 4);
+  assert.ok(parts[2].source.includes('use super::first;'));
+  assert.equal(parts[1].source.includes('use super::'), false);
+  assert.equal(parts[3].source.includes('use super::'), false, 'local bindings, strings and comments do not import sibling items');
+  for (const part of parts) assert.equal(part.source.includes('use super::*;'), false);
+  assert.equal(parts[2].source.match(/self::first\(\)/gu)?.length, 1, 'the emitted reference remains unchanged');
+});
+
+test('complete mechanical library expressions preserve opaque macros and lazy refusal paths', () => {
+  const source = 'pub fn refuse() -> f64 { panic!("missing") }\n'
+    + 'pub fn select(value: Option<f64>, invalid: bool) -> f64 {\n'
+    + '    if invalid { panic!("{}", "invalid") } else { value.unwrap_or_else(|| self::refuse()) }\n}\n'
+    + 'pub fn identity(value: Option<bool>) -> bool { match value { Some(present) => present, None => false } }\n'
+    + 'pub fn empty() -> String { String::from("") }\n'
+    + 'pub fn formatted() -> String { format!("{}{}", String::from("prefix"), format!("{}", String::from("suffix"))) }\n'
+    + 'pub fn opaque() -> String {\n'
+    + '    // String::from("") || self::refuse()\n'
+    + '    demo! { String::from("") }\n'
+    + '    String::from("String::from(\\\"\\\") || self::refuse()")\n}\n';
+  const styled = readPortableSourceLintStyles(source).source;
+  const selected = readSourceTextRustBlock(styled, 'fn', 'select');
+  assert.ok(selected.includes('assert!(!(invalid), "{}", "invalid")'));
+  assert.ok(selected.includes('.unwrap_or_else(self::refuse)'));
+  assert.equal(selected.includes('else {'), false);
+  assert.ok(readSourceTextRustBlock(styled, 'fn', 'identity').includes('.unwrap_or_default()'));
+  assert.ok(readSourceTextRustBlock(styled, 'fn', 'empty').includes('String::new()'));
+  assert.ok(readSourceTextRustBlock(styled, 'fn', 'formatted').includes('String::from("prefixsuffix")'));
+  const opaque = readSourceTextRustBlock(styled, 'fn', 'opaque');
+  assert.ok(opaque.includes('demo! { String::from("") }'));
+  assert.ok(opaque.includes('// String::from("") || self::refuse()'));
+  assert.ok(opaque.includes('String::from("String::from(\\\"\\\") || self::refuse()")'));
+  const unsupported = 'pub fn binding(value: Option<f64>) -> f64 { if let None = value { panic!("missing") } else { 1.0 } }\n'
+    + 'pub fn attributed() -> bool { #[example(if true { panic!("x") } else { String::from("") })] true }\n'
+    + 'pub fn macro_body() -> bool { demo! { if true { panic!("x") } else { String::from("") } } true }';
+  const guarded = readPortableSourceLintStyles(unsupported).source;
+  assert.ok(guarded.includes('if let None = value'));
+  assert.ok(guarded.includes('#[example(if true { panic!("x") } else { String::from("") })]'));
+  assert.ok(guarded.includes('demo! { if true { panic!("x") } else { String::from("") } }'));
+});
+
+test('known String emptiness and numeric Option copies retain unknown ownership and comments', () => {
+  const source = 'pub mod ml_math { pub fn is_integer(value: f64) -> bool { value.trunc() == value } }\n'
+    + 'pub fn text() -> String { String::from("value") }\n'
+    + 'pub fn empty(value: &str) -> bool { let found = self::text(); (value == "") || (found != "") }\n'
+    + 'pub fn bound() -> String { { let text = String::from("kept"); text } }\n'
+    + 'pub fn numeric(values: &[f64]) -> bool { let unit = self::ml_array::optional_at(values, Some(0)); '
+    + '(match unit.clone() { Some(value) => self::ml_math::is_integer(value), None => false }) '
+    + '&& ((match unit.clone() { Some(value) => value, None => f64::NAN }) > 0f64) }\n'
+    + 'pub fn owned(values: &[String]) -> (Option<String>, Option<String>) { let unit = self::ml_array::optional_at(values, Some(0)); (unit.clone(), unit.clone()) }\n'
+    + 'pub fn unknown(value: Unknown) -> bool { value == "" }\n'
+    + 'pub fn commented() -> String { let text = String::from(/*keep*/ ""); /*still here*/ text }\n'
+    + '#[must_use]\n#[expect(clippy::cast_possible_truncation, reason = "existing scoped source attribution")]\n'
+    + 'pub fn grouped(value: f64) -> f64 { value }\n'
+    + 'pub mod nested { #[must_use] #[inline] pub fn value(value: f64) -> f64 { value } }\n';
+  const styled = readPortableSourceLintStyles(source).source;
+  const empty = readSourceTextRustBlock(styled, 'fn', 'empty');
+  assert.ok(empty.includes('(value).is_empty()'));
+  assert.ok(empty.includes('!(found).is_empty()'));
+  const bound = readSourceTextRustBlock(styled, 'fn', 'bound');
+  assert.equal(bound.includes('let text'), false);
+  assert.ok(bound.includes('String::from("kept")'));
+  const numeric = readSourceTextRustBlock(styled, 'fn', 'numeric');
+  assert.equal(numeric.includes('unit.clone()'), false);
+  assert.ok(numeric.includes('.is_some_and(self::ml_math::is_integer)'));
+  assert.ok(numeric.includes('.unwrap_or(f64::NAN)'));
+  const owned = readSourceTextRustBlock(styled, 'fn', 'owned');
+  assert.equal(owned.match(/unit\.clone\(\)/gu)?.length, 2, 'owned Option strings preserve both required copies');
+  assert.ok(readSourceTextRustBlock(styled, 'fn', 'unknown').includes('value == ""'));
+  const commented = readSourceTextRustBlock(styled, 'fn', 'commented');
+  assert.ok(commented.includes('String::from(/*keep*/ "")'));
+  assert.ok(commented.includes('/*still here*/'));
+  const grouped = styled.slice(styled.indexOf('#[expect(clippy::cast_possible_truncation'), styled.indexOf('pub fn grouped'));
+  assert.equal(grouped.includes('#[must_use]'), false, 'an intervening scoped expectation does not duplicate its attached must_use attribute');
+  assert.ok(styled.includes('#[must_use]\n#[expect(clippy::cast_possible_truncation'));
+  assert.ok(styled.includes('#[must_use] #[inline] pub fn value'), 'nested runtime prefixes keep their complete existing attribute group');
+});

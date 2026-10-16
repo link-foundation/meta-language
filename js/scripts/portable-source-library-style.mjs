@@ -40,7 +40,8 @@ export function readPortableSourceParameterStyles(source, {publicNames = [], own
         depth += 1;
       }
       const textLeaf = /^(?:[A-Za-z_][A-Za-z_0-9]*::)*ml_string::Text$/u.test(element);
-      param.borrow = (param.type === 'String' || depth > 0 && (['String', 'f64', 'bool'].includes(element) || textLeaf))
+      param.text = depth === 0 && textLeaf;
+      param.borrow = (param.type === 'String' || param.text || depth > 0 && (['String', 'f64', 'bool'].includes(element) || textLeaf))
         && !assigned.has(param.name)
         && !(Object.hasOwn(ownedParameters, name) && ownedParameters[name].includes(param.name));
     }
@@ -51,7 +52,7 @@ export function readPortableSourceParameterStyles(source, {publicNames = [], own
   for (const [name, declaration] of declarations) {
     let block = declaration.block;
     for (const param of declaration.params) if (param.borrow) {
-      const type = param.type === 'String' ? '&str' : '&[' + param.type.slice(4, -1) + ']';
+      const type = param.type === 'String' ? '&str' : param.text ? '&' + param.type : '&[' + param.type.slice(4, -1) + ']';
       block = block.replace(new RegExp('(?:mut )?' + param.name + ': ' + param.type.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'u'), param.name + ': ' + type);
     }
     // Edit actual parameter occurrences only. A target-source string or a
@@ -72,14 +73,37 @@ export function readPortableSourceParameterStyles(source, {publicNames = [], own
       const token = before[index];
       const parameter = declaration.params.find(value => value.borrow && value.name === token.value);
       if (token.kind !== 'identifier' || !parameter || before[index - 1]?.value === '.') continue;
+      const copy = parameter.type === 'String' ? '.to_owned()' : parameter.text ? '.clone()' : '.to_vec()';
+      let left = index, right = index;
+      while (before[left - 1]?.value === '(' && parentheses.get(left - 1) === right + 1) {
+        const previous = before[left - 2];
+        if (previous?.kind === 'macro' || previous?.kind === 'identifier'
+          && !['if', 'while', 'return', 'match', 'break'].includes(previous.value)
+          || [')', ']', '?'].includes(previous?.value)) break;
+        left -= 1; right += 1;
+      }
+      // Text has value equality/ordering with Text, not with &Text. Comparing
+      // borrowed parameters dereferences their actual value; comparison still
+      // borrows its operands and never moves a Text out of the parameter.
+      if (parameter.text && (['==', '!=', '<', '<=', '>', '>='].includes(before[left - 1]?.value)
+        || ['==', '!=', '<', '<=', '>', '>='].includes(before[right + 1]?.value))) {
+        copies.push([token.start, token.end, '(*' + token.value + ')']);
+        continue;
+      }
       if (before[index + 1]?.value === '.' && before[index + 2]?.value === 'clone'
         && before[index + 3]?.value === '(' && before[index + 4]?.value === ')') {
         if (parameter.type !== 'String' && before[index - 1]?.value === '&') {
           copies.push([before[index - 1].start, before[index + 4].end, token.value]);
         } else {
-          copies.push([token.start, before[index + 4].end, token.value + (parameter.type === 'String' ? '.to_owned()' : '.to_vec()')]);
+          copies.push([token.start, before[index + 4].end, token.value + copy]);
         }
         index += 4;
+      } else if (parameter.text && before[left - 1]?.kind === 'punct' && before[left - 1].value === '&'
+        && [',', ')', ']', '}', ';'].includes(before[right + 1]?.value)) {
+        // A parenthesized leaf remains that same borrowed Text. Keep its
+        // grouping and remove only the redundant outer loan, never a loan of
+        // a compound operand such as &(text.slice(...)).
+        copies.push([before[left - 1].start, before[left - 1].end, '']);
       } else if (before[index - 1]?.value === '&' && [',', ')'].includes(before[index + 1]?.value)) {
         copies.push([before[index - 1].start, before[index - 1].end, '']);
       } else if (index > bodyStart && ['return', '=', ',', '(', '[', '{', '=>'].includes(before[index - 1]?.value)
@@ -89,12 +113,8 @@ export function readPortableSourceParameterStyles(source, {publicNames = [], own
         // is borrowed, retain that original owned value with one copy here.
         // Actual borrowed callees remove these leaf copies below, and an
         // explicit reference (including parenthesized ones) stays borrowed.
-        let left = index, right = index;
-        while (before[left - 1]?.value === '(' && parentheses.get(left - 1) === right + 1) {
-          left -= 1; right += 1;
-        }
         if (before[left - 1]?.value !== '&') {
-          copies.push([token.start, token.end, token.value + (parameter.type === 'String' ? '.to_owned()' : '.to_vec()')]);
+          copies.push([token.start, token.end, token.value + copy]);
         }
       }
     }
@@ -129,7 +149,7 @@ export function readPortableSourceParameterStyles(source, {publicNames = [], own
           || /^String::from\("[^"\\]*"\)$/u.test(grouped);
         const borrowed = (leaf ? grouped : text).replace(/^(\w+)\.(?:to_vec|to_owned|clone)\(\)$/u, '$1');
         const parameter = declaration.params.find(value => value.name === borrowed);
-        const literal = /^String::from\(("[^"\\]*")\)$/u.exec(borrowed);
+        const literal = target.params[position].type === 'String' && /^String::from\(("[^"\\]*")\)$/u.exec(borrowed);
         if (literal) edits.push([tokens[from].start, tokens[end - 1].end, literal[1]]);
         else {
           // Leaf-copy replacements cannot overlap nested argument calls. Loan
@@ -180,7 +200,7 @@ export function partitionPortableRustLibrary(source, {notice = '', directory, ma
   }
   const starts = [];
   for (let index = 0; index < lines.length; index += 1) {
-    if (!/^pub (?:fn|enum|struct|mod) /u.test(lines[index])) continue;
+    if (!/^pub (?:(?:const )?fn|enum|struct|mod) /u.test(lines[index])) continue;
     let start = index;
     while (start > (starts.at(-1) ?? 0)) {
       if (attributeLines.has(start - 1)) start = attributeLines.get(start - 1);
@@ -202,7 +222,29 @@ export function partitionPortableRustLibrary(source, {notice = '', directory, ma
   }
   const root = notice + prefix + '\n' + parts.map((_, index) => `#[path = "${directory}/part_${index + 1}.rs"]\nmod part_${index + 1};\npub use part_${index + 1}::*;\n`).join('');
   assert.ok(root.split('\n').length < 1000, 'the portable library root retains its bounded size');
-  return [{path: null, source: root}, ...parts.map((part, index) => ({
-    path: `${directory}/part_${index + 1}.rs`, source: notice + 'use super::*;\n\n' + part + '\n',
-  }))];
+  const declarations = new Set([...source.matchAll(/^pub (?:(?:const )?fn|enum|struct|mod) ([A-Za-z_][A-Za-z_0-9]*)/gmu)].map(match => match[1]));
+  return [{path: null, source: root}, ...parts.map((part, index) => {
+    const local = new Set([...part.matchAll(/^pub (?:(?:const )?fn|enum|struct|mod) ([A-Za-z_][A-Za-z_0-9]*)/gmu)].map(match => match[1]));
+    const partTokens = tokenize(part, 'Rust').tokens;
+    const needed = new Set();
+    for (let at = 0; at < partTokens.length; at += 1) {
+      const token = partTokens[at];
+      if (token.kind !== 'identifier' || !declarations.has(token.value) || local.has(token.value)) continue;
+      // Relocated emitted references use self::Name; ordinary unqualified
+      // references need the same sibling import. A different path or field
+      // with a coincidentally equal name does not import a declaration.
+      const previous = partTokens[at - 1]?.value;
+      if (previous === '.' || previous === '::' && partTokens[at - 2]?.value !== 'self') continue;
+      if (previous !== '::' && !['(', '::'].includes(partTokens[at + 1]?.value)
+        && ![':', '->', '<'].includes(previous)) continue;
+      needed.add(token.value);
+    }
+    const names = [...needed].sort();
+    // One explicit import per sibling is stable under rustfmt regardless of
+    // identifier length and retains self:: lookup through the module scope.
+    const imports = names.map(name => `use super::${name};\n`).join('');
+    const text = notice + imports + (imports ? '\n' : '') + part + '\n';
+    assert.ok(text.split('\n').length < 1000, 'explicit sibling imports retain a bounded child module');
+    return {path: `${directory}/part_${index + 1}.rs`, source: text};
+  })];
 }
