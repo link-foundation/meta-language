@@ -9,11 +9,14 @@ import {decorateEmitted} from '../src/grammar-emitters/common.js';
 import {checkProgram} from '../src/translation/check.js';
 import {emitRust} from '../src/translation/emit-rust.js';
 import {parseJavaScript} from '../src/translation/javascript.js';
-import {readGlobalConceptIdentityStyles} from './global-concept-identity-styles.mjs';
+import {readGlobalConceptIdentityStyles,readGlobalConceptIdentityCompilerStyles} from './global-concept-identity-styles.mjs';
+import {readProjectData} from './project-data.mjs';
 
 const sourcePath=new URL('../src/global-concept-rules.js',import.meta.url);
 const decoratorsPath=new URL('../../parity/self-translation/global-concept-rules-decorators.lino',import.meta.url);
 const identityStylesPath=new URL('../../parity/self-translation/global-concept-identity-decorators.lino',import.meta.url);
+const identityFeedbackPath=new URL('../../parity/self-translation/global-concept-identity-compiler-feedback.lino',import.meta.url);
+const identityCompilerStylesPath=new URL('../../parity/self-translation/global-concept-identity-compiler-decorators.lino',import.meta.url);
 const decorators=DecoratorSet.fromLino(readFileSync(decoratorsPath,'utf8'));
 const source=readFileSync(sourcePath,'utf8'),boundary='/** @param {string[]} identities';
 assert.equal(source.split(boundary).length,2,'the closed identity operation group has one boundary');
@@ -50,7 +53,14 @@ for(const family of families){
     else writeFileSync(identityStylesPath,linked);
     final=format(DecoratorSet.fromLino(linked).decorate('emitter',{format:'Rust',scope:'formatted-module',source:final}).source);
   }
-  const text='// Generated from js/src/global-concept-rules.js by\n// js/scripts/generate-global-concept-rules.mjs. Do not edit by hand.\n'+final;
+  let text='// Generated from js/src/global-concept-rules.js by\n// js/scripts/generate-global-concept-rules.mjs. Do not edit by hand.\n'+final;
+  if(family.program===identity){
+    const styles=readGlobalConceptIdentityCompilerStyles(text,readProjectData(identityFeedbackPath));
+    const linked=styles.toLino();
+    if(process.argv.includes('--check'))assert.equal(readFileSync(identityCompilerStylesPath,'utf8'),linked,'identity compiler styles retain exact CI feedback');
+    else writeFileSync(identityCompilerStylesPath,linked);
+    text=format(styles.decorate('emitter',{format:'Rust',scope:'formatted-module',source:text}).source);
+  }
   const output=new URL('../../rust/src/'+family.file,import.meta.url);
   if(process.argv.includes('--check'))assert.equal(readFileSync(output,'utf8'),text,'generated global concept rules are fresh: '+family.file);
   else writeFileSync(output,text);

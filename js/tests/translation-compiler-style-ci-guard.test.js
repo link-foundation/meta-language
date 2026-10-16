@@ -8,6 +8,9 @@ import test from 'node:test';
 import {fileURLToPath} from 'node:url';
 import {runInNewContext} from 'node:vm';
 import {readProjectData} from '../scripts/project-data.mjs';
+import {readGlobalConceptIdentityCompilerStyles} from '../scripts/global-concept-identity-styles.mjs';
+import {readCompilerFeedbackCorrections} from '../scripts/compiler-style-feedback.mjs';
+import {readSourceTextRustBlock} from '../scripts/source-text-byte-library-style.mjs';
 
 const scripts=['generate-global-concept-rule-styles.mjs','generate-frontend-rule-styles.mjs'];
 const controls=readProjectData(new URL('../../parity/fixtures/compiler-style-closure-controls.lino',import.meta.url));
@@ -72,4 +75,39 @@ test('offline compiler feedback arguments remain available without native execut
     assert.doesNotMatch(result.stderr,/native compiler style execution runs only in GitHub CI|spawn.*clippy-driver/u);
     assert.deepEqual(readdirSync(temporary),[]);
   }
+});
+
+test('actual identity compiler feedback retains provenance and complete function contexts',()=>{
+  const address=new URL('../../parity/self-translation/global-concept-identity-compiler-feedback.lino',import.meta.url);
+  const bytes=readFileSync(address);
+  assert.equal(bytes.length,117526);
+  assert.equal(createHash('sha256').update(bytes).digest('hex'),'b8e34972d1938338a4505fabeb773199618e53586f1603d120591ce67da8b859');
+  const feedback=readProjectData(address),original=structuredClone(feedback);
+  assert.equal(feedback.runId,'38840126150');
+  assert.equal(feedback.head,'bf64ad74d9530d3f2a2689402976ef30f1486873');
+  assert.equal(feedback.compiler,'clippy-driver');
+  const path='rust/src/global_concept_identity_rules.rs';
+  const source=Object.values(feedback.sources).find(input=>input.relativePath===path).text;
+  const transaction=readCompilerFeedbackCorrections({feedback,allowedPaths:[path]});
+  assert.equal(transaction.spans,1);assert.equal(transaction.deferred,1);
+  assert.equal(transaction.actions.length,1,'the general reader still defers overlapping suggestions');
+  const styles=readGlobalConceptIdentityCompilerStyles(source,feedback);
+  const result=styles.decorate('emitter',{format:'Rust',scope:'formatted-module',source}).source;
+  assert.deepEqual(feedback,original,'raw diagnostics, applicability, paths, hashes and input snapshots stay exact');
+  assert.equal(styles.decorators[0].actions.length,1);
+  const action=styles.decorators[0].actions[0];
+  assert.equal(action.from,readSourceTextRustBlock(source,'fn','select_global_concept_identity'));
+  assert.equal(result,source.replace(action.from,action.to),'all source outside the complete owning function stays exact');
+  assert.equal(result,readFileSync(new URL('../../rust/src/global_concept_identity_rules.rs',import.meta.url),'utf8'));
+  assert.ok(action.to.includes('if preferred.is_empty() {'));
+  assert.ok(action.to.includes('} else if crate::global_concept_identity_rules::contains_global_concept_identity('));
+  assert.ok(action.to.includes('reserved, assigned, candidate,'));
+  assert.ok(!action.to.includes('candidate.clone()'));
+  assert.ok(action.to.includes('preferred.clone()'),'the distinct preferred identity use remains owned');
+  assert.deepEqual([...result.matchAll(/^pub fn (\w+)\(/gmu)].map(match=>match[1]),[...source.matchAll(/^pub fn (\w+)\(/gmu)].map(match=>match[1]));
+  assert.equal(styles.decorate('emitter',{format:'Rust',scope:'formatted-module',source:result}).source,result);
+  assert.throws(()=>readGlobalConceptIdentityCompilerStyles(source+'// changed\n',feedback),/complete fresh generated module/u);
+  const stale=structuredClone(feedback);
+  for(const input of Object.values(stale.sources))if(input.relativePath===path)input.sha256='0'.repeat(64);
+  assert.throws(()=>readGlobalConceptIdentityCompilerStyles(source,stale),/stale/u);
 });

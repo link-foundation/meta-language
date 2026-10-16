@@ -69,26 +69,22 @@ pub fn select_global_concept_identity(
     reserved: &[String],
     assigned: &[String],
 ) -> String {
-    if !preferred.is_empty() {
-        if crate::global_concept_identity_rules::contains_global_concept_identity(
-            assigned,
-            preferred.clone(),
-        ) {
-            String::new()
-        } else {
-            preferred
-        }
-    } else {
+    if preferred.is_empty() {
         {
             let candidate = fallback;
             {
                 crate::global_concept_identity_rules::ml_select_global_concept_identity_loop2(
-                    reserved,
-                    assigned,
-                    candidate.clone(),
+                    reserved, assigned, candidate,
                 )
             }
         }
+    } else if crate::global_concept_identity_rules::contains_global_concept_identity(
+        assigned,
+        preferred.clone(),
+    ) {
+        String::new()
+    } else {
+        preferred
     }
 }
 

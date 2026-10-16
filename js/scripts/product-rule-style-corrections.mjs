@@ -297,3 +297,5 @@ export function readProductRuleStyleCorrections(source, family, arrayProvider) {
   if (family === 'source') actions.push({ op: 'replace', field: 'source', from: '/// Math.sign, which keeps -0, 0 and NaN, where f64::signum does not.', to: '/// Math.sign, which keeps -0, 0 and NaN, where `f64::signum` does not.' });
   return actions;
 }
+
+export { simplifyBranches as simplifyRustBranches };

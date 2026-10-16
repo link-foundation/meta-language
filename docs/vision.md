@@ -2180,6 +2180,12 @@ then derives fresh declaration styles for the changed operation. Both old
 generation checks and the new generation check remain mandatory. Tiny byte,
 refusal, precedence and string-work controls cannot establish whole-source
 resource fit; the existing CI time, heap, record and byte bounds still apply.
+Identity-library compiler styles likewise authenticate the complete actual CI
+input before replaying a non-overlapping machine suggestion. The existing
+reviewed branch simplifier handles the nested conditional alternative without
+changing its raw applicability or the general feedback reader's overlap
+deferral. Styles retain the complete owning function, converge and preserve all
+other declarations. Native compilation and behavior remain CI checks.
 
 - CI runs a fast `cargo check` of all targets and features first; the jobs that
   compile and test need it, so a compile error fails once.

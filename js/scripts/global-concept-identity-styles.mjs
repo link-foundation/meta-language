@@ -4,6 +4,8 @@ import {readFileSync} from 'node:fs';
 import {DecoratorSet} from '../src/decorators.js';
 import {readBinaryMetadataCandidateStyles} from './binary-metadata-candidate-styles.mjs';
 import {formatProductRuleSource} from './product-rule-style-corrections.mjs';
+import {simplifyRustBranches} from './product-rule-style-corrections.mjs';
+import {readCompilerFeedbackCorrections} from './compiler-style-feedback.mjs';
 import {readSourceTextRustBlock} from './source-text-byte-library-style.mjs';
 
 export function readGlobalConceptIdentityStyles(source) {
@@ -43,5 +45,31 @@ export function readGlobalConceptIdentityStyles(source) {
       .replace('return { candidate.clone() };','return candidate;')
       .replace('} else {\n            preferred.clone()\n','} else {\n            preferred\n').trimEnd()}))];
   return new DecoratorSet([{id:'global-concept-identity-library-style',level:'emitter',order:10000,
+    when:[['format','Rust'],['scope','formatted-module']],actions}]);
+}
+
+// Replay the real non-overlapping compiler transaction, then use the existing
+// reviewed branch styles for the deferred nested alternative. Its applicability
+// metadata remains unchanged; the general feedback reader still defers overlap.
+export function readGlobalConceptIdentityCompilerStyles(source,feedback) {
+  const path='rust/src/global_concept_identity_rules.rs';
+  const inputs=Object.values(feedback.sources).filter(input=>input.relativePath===path);
+  assert.equal(inputs.length,1,'identity feedback retains one exact complete source');
+  assert.equal(source,inputs[0].text,'identity feedback matches the complete fresh generated module');
+  const corrections=readCompilerFeedbackCorrections({feedback,allowedPaths:[path]});
+  assert.ok(corrections.actions.length>0,'actual compiler feedback supplies its machine transaction');
+  const machine=new DecoratorSet([{id:'identity-machine-feedback',level:'emitter',order:0,
+    when:[['format','Rust'],['scope','formatted-module']],actions:corrections.actions}]);
+  const corrected=machine.decorate('emitter',{format:'Rust',scope:'formatted-module',source}).source;
+  const names=[...source.matchAll(/^pub fn (\w+)\(/gmu)].map(match=>match[1]);
+  const actions=[];
+  for(const name of names){
+    const from=readSourceTextRustBlock(source,'fn',name);
+    const actual=readSourceTextRustBlock(corrected,'fn',name);
+    const to=formatProductRuleSource(simplifyRustBranches(actual)).trimEnd();
+    if(from!==to)actions.push({op:'replace',field:'source',from,to});
+  }
+  assert.ok(actions.length>0,'compiler and reviewed branch corrections change an entire owning function');
+  return new DecoratorSet([{id:'global-concept-identity-compiler-style',level:'emitter',order:20000,
     when:[['format','Rust'],['scope','formatted-module']],actions}]);
 }
