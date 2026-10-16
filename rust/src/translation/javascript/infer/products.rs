@@ -159,7 +159,7 @@ impl Inference {
             (SNode::Record { entries, .. }, _) => {
                 self.record_expr(node, entries, env, Some(&expected))?
             }
-            (SNode::Lambda { .. }, _) | (SNode::CellWrite { .. }, _) => {
+            (SNode::Lambda { .. } | SNode::CellWrite { .. }, _) => {
                 self.callable_expr(node, env, Some(&expected))?
             }
             (SNode::Array { items, .. }, Term::Tuple(elements))
