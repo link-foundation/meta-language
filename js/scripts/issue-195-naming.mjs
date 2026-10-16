@@ -45843,7 +45843,124 @@ const BULK_FIFTY_FIVE_STYLE_WITNESS_INVENTORIES=[...new Set(BULK_FIFTY_FIVE_STYL
 // BEGIN B55 current constant archive-error declaration witness.
 const BULK_FIFTY_FIVE_CONST_ARCHIVE_ERROR_NAME_INVENTORIES=[{inventory:"B51 archive parser, Boolean constant tree and public declaration names for rust/src/global_concept_space/parser.rs",files:["rust/src/global_concept_space/parser.rs"],extract:text=>text.split("\n").includes("const fn archive_error(message: String) -> GrammarRuntimeError {")?["wrap global concept archive error"]:[],recordOf:()=>"operation.wrap-global-concept-archive-error"}];
 // END B55 current constant archive-error declaration witness.
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory).map(reconcileBulkFortySevenNativeInventory).map(reconcileBulkFiftyHistoricalInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES, ...BULK_FORTY_SEVEN_NAME_INVENTORIES, ...BULK_FORTY_EIGHT_NAME_INVENTORIES, ...BULK_FORTY_NINE_NAME_INVENTORIES, ...BULK_FIFTY_NAME_INVENTORIES, ...BULK_FIFTY_ONE_NAME_INVENTORIES, ...VERSION_RANGE_EVIDENCE_NAME_INVENTORIES, ...FORMAT_RETRY_SOURCE_NAME_INVENTORIES, ...DISCOVERY_CERTIFICATE_NAME_INVENTORIES, ...SELECTED_NATIVE_GRAMMAR_PROJECTION_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_WITNESS_INVENTORIES, ...BULK_FIFTY_FIVE_CONST_ARCHIVE_ERROR_NAME_INVENTORIES]);
+// BEGIN B56 auxiliary grammar source acquisition names.
+const AUXILIARY_GRAMMAR_SOURCE_NAME_BINDINGS=[
+  {
+    "id": "grammar.auxiliary-grammar-source-revision",
+    "source": "js/scripts/author-antlr-auxiliary-sources.mjs",
+    "name": "ANTLR_AUXILIARY_SOURCE_REVISION",
+    "inventoryName": "auxiliary grammar source revision",
+    "sourceText": "export const ANTLR_AUXILIARY_SOURCE_REVISION = '7df52be94698550d219d299d04105c6bafadd9c3';"
+  },
+  {
+    "id": "repository.prepare-auxiliary-grammar-source-metadata",
+    "source": "js/scripts/author-antlr-auxiliary-sources.mjs",
+    "name": "authorAntlrAuxiliarySourceMetadata",
+    "inventoryName": "prepare auxiliary grammar source metadata",
+    "sourceText": "export function authorAntlrAuxiliarySourceMetadata(registry, manifest) {"
+  },
+  {
+    "id": "repository.hash-auxiliary-grammar-source-content",
+    "source": "js/scripts/antlr-auxiliary-sources.mjs",
+    "name": "digest",
+    "inventoryName": "hash auxiliary grammar source content",
+    "sourceText": "const digest = bytes => createHash('sha256').update(bytes).digest('hex');"
+  },
+  {
+    "id": "repository.hash-auxiliary-grammar-source-content",
+    "source": "js/tests/grammar-antlr-auxiliary-sources.test.js",
+    "name": "hash",
+    "inventoryName": "hash auxiliary grammar source content",
+    "sourceText": "const hash = bytes => createHash('sha256').update(bytes).digest('hex');"
+  },
+  {
+    "id": "repository.accept-auxiliary-grammar-relative-source-path",
+    "source": "js/scripts/antlr-auxiliary-sources.mjs",
+    "name": "safePath",
+    "inventoryName": "accept auxiliary grammar relative source path",
+    "sourceText": "const safePath = value => typeof value === 'string' && value.length > 0 && !value.includes('\\\\')"
+  },
+  {
+    "id": "repository.read-auxiliary-grammar-source-records",
+    "source": "js/scripts/antlr-auxiliary-sources.mjs",
+    "name": "sourceRecords",
+    "inventoryName": "read auxiliary grammar source records",
+    "sourceText": "function sourceRecords(language, files, registry) {"
+  },
+  {
+    "id": "repository.verify-auxiliary-grammar-source-bytes",
+    "source": "js/scripts/antlr-auxiliary-sources.mjs",
+    "name": "verifySource",
+    "inventoryName": "verify auxiliary grammar source bytes",
+    "sourceText": "function verifySource(bytes, record, path) {"
+  },
+  {
+    "id": "repository.read-authenticated-grammar-source-input-ranges",
+    "source": "js/scripts/antlr-auxiliary-sources.mjs",
+    "name": "readAntlrGrammarSourceInputs",
+    "inventoryName": "read authenticated grammar source input ranges",
+    "sourceText": "function readAntlrGrammarSourceInputs(language, files, texts, registry, records) {"
+  },
+  {
+    "id": "repository.capture-authenticated-auxiliary-grammar-sources",
+    "source": "js/scripts/antlr-auxiliary-sources.mjs",
+    "name": "captureAntlrAuxiliarySources",
+    "inventoryName": "capture authenticated auxiliary grammar sources",
+    "sourceText": "export function captureAntlrAuxiliarySources(language, files, texts, registry, readAsset = readExternalGrammarAsset) {"
+  },
+  {
+    "id": "repository.acquire-authenticated-auxiliary-grammar-sources",
+    "source": "js/scripts/antlr-auxiliary-sources.mjs",
+    "name": "acquireAntlrAuxiliarySources",
+    "inventoryName": "acquire authenticated auxiliary grammar sources",
+    "sourceText": "export async function acquireAntlrAuxiliarySources(language, files, texts, registry, options = {}) {"
+  },
+  {
+    "id": "repository.read-auxiliary-grammar-source-fixture",
+    "source": "js/tests/grammar-antlr-auxiliary-sources.test.js",
+    "name": "fixture",
+    "inventoryName": "read auxiliary grammar source fixture",
+    "sourceText": "function fixture() {"
+  },
+  {
+    "id": "repository.check-auxiliary-grammar-acquisition-metadata-preservation",
+    "source": "js/tests/grammar-antlr-auxiliary-sources.test.js",
+    "name": "ANTLR auxiliary metadata author preserves every existing registry and manifest entry",
+    "inventoryName": "check auxiliary grammar acquisition metadata preservation",
+    "sourceText": "test('ANTLR auxiliary metadata author preserves every existing registry and manifest entry', () => {"
+  },
+  {
+    "id": "repository.check-auxiliary-grammar-source-capture-boundaries",
+    "source": "js/tests/grammar-antlr-auxiliary-sources.test.js",
+    "name": "authenticated auxiliary capture retains byte positions, source-qualified owners and all semantic refusals",
+    "inventoryName": "check auxiliary grammar source capture boundaries",
+    "sourceText": "test('authenticated auxiliary capture retains byte positions, source-qualified owners and all semantic refusals', async () => {"
+  },
+  {
+    "id": "repository.check-auxiliary-grammar-source-authentication-refusals",
+    "source": "js/tests/grammar-antlr-auxiliary-sources.test.js",
+    "name": "auxiliary capture refuses wrong sources, hash or blob pins, missing files, changed owners and excessive bounds",
+    "inventoryName": "check auxiliary grammar source authentication refusals",
+    "sourceText": "test('auxiliary capture refuses wrong sources, hash or blob pins, missing files, changed owners and excessive bounds', () => {"
+  },
+  {
+    "id": "repository.check-unresolved-auxiliary-grammar-dependency-boundaries",
+    "source": "js/tests/grammar-antlr-auxiliary-sources.test.js",
+    "name": "captured auxiliary imports retain unresolved dependency and base behavior obligations",
+    "inventoryName": "check unresolved auxiliary grammar dependency boundaries",
+    "sourceText": "test('captured auxiliary imports retain unresolved dependency and base behavior obligations', () => {"
+  },
+  {
+    "id": "repository.check-serial-auxiliary-grammar-source-acquisition",
+    "source": "js/tests/grammar-antlr-auxiliary-sources.test.js",
+    "name": "auxiliary acquisition selects two assets serially and authenticates cached and downloaded bytes",
+    "inventoryName": "check serial auxiliary grammar source acquisition",
+    "sourceText": "test('auxiliary acquisition selects two assets serially and authenticates cached and downloaded bytes', async () => {"
+  }
+];
+const AUXILIARY_GRAMMAR_SOURCE_NAME_INVENTORIES=[...new Set(AUXILIARY_GRAMMAR_SOURCE_NAME_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B56 auxiliary grammar source acquisition and metadata names for "+source,files:[source],extract:text=>AUXILIARY_GRAMMAR_SOURCE_NAME_BINDINGS.filter(row=>row.source===source&&text.split("\n").includes(row.sourceText)).map(row=>row.inventoryName),recordOf:name=>AUXILIARY_GRAMMAR_SOURCE_NAME_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));
+// END B56 auxiliary grammar source acquisition names.
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory).map(reconcileBulkFortySevenNativeInventory).map(reconcileBulkFiftyHistoricalInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES, ...BULK_FORTY_SEVEN_NAME_INVENTORIES, ...BULK_FORTY_EIGHT_NAME_INVENTORIES, ...BULK_FORTY_NINE_NAME_INVENTORIES, ...BULK_FIFTY_NAME_INVENTORIES, ...BULK_FIFTY_ONE_NAME_INVENTORIES, ...VERSION_RANGE_EVIDENCE_NAME_INVENTORIES, ...FORMAT_RETRY_SOURCE_NAME_INVENTORIES, ...DISCOVERY_CERTIFICATE_NAME_INVENTORIES, ...SELECTED_NATIVE_GRAMMAR_PROJECTION_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_WITNESS_INVENTORIES, ...BULK_FIFTY_FIVE_CONST_ARCHIVE_ERROR_NAME_INVENTORIES, ...AUXILIARY_GRAMMAR_SOURCE_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
