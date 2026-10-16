@@ -21,6 +21,9 @@ const versionBoundedAssertionsSource = 'parity/sources/version-bounded-assertion
 const inferenceSource = 'parity/sources/grammar-inference-issue-224.txt';
 
 const sourceTooling = {
+  'I195-CONVERSATION-VERBATIM-REGISTER': [
+    'js/scripts/issue-195-sources.mjs', 'js/tests/issue-195-sources.test.js',
+  ],
   'I195-ASSERTION-VERSION-COVERAGE': [
     'js/scripts/assertion-version-ranges.mjs', 'js/tests/assertion-version-ranges.test.js',
   ],

@@ -2306,6 +2306,8 @@ grammar projections and corpus definitions stay outside that worker's setup.
 Inventory fields, source names, missing-projection refusals and independent
 oracle comparisons retain their existing meaning. Bounded selected-grammar
 controls check fidelity; the complete workload and its timing remain CI checks.
+CI progress separates worker execution, report preparation, global construction
+and both archive serializations using actual elapsed times.
 
 Use one shared repository checkout for ordinary development, review and bounded
 JavaScript checks, with explicit ownership of edited paths. Do not create a
