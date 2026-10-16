@@ -129,6 +129,15 @@ runtimes. Format spellings alone do not prevent proven equivalent concepts from
 sharing; correspondence checks their actual operational context. Historical
 archives retain the format facts they actually contain.
 
+Discovery reload rechecks every current certificate exactly. A wholly historical
+certificate may omit source-format facts only when its implicit matching default
+still agrees with the current source grammar, or matching was explicitly
+declared. Revalidation projects only those absent provenance fields for this
+comparison, checks all other definitions and proofs, and returns the full
+current space. Mixed provenance and changed present facts refuse; implicit PEG
+cannot use the historical generalized-default profile. Original discovery
+archives remain byte-exact compatibility fixtures.
+
 ### Recursive formal concept definitions
 
 Every concept has a deep recursive formal definition made of inspectable links.

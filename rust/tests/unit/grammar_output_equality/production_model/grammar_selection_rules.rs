@@ -85,6 +85,16 @@ pub fn read_grammar_selection_equality_fields(alternative: bool) -> String {
     }
 }
 
+/// Execute the complete checked source algorithm.
+#[must_use]
+pub fn read_grammar_source_default_matching(source_format: &str) -> String {
+    if source_format == "peg" {
+        String::from("peg")
+    } else {
+        String::from("generalized")
+    }
+}
+
 // Bind every copied declaration without relaxing native lints.
 const _: fn() = || {
     let _ = self::accept_grammar_selection_mode;
@@ -94,4 +104,5 @@ const _: fn() = || {
     let _ = self::read_grammar_tree_equality_fields;
     let _ = self::read_grammar_tree_recursion_plan;
     let _ = self::read_grammar_selection_equality_fields;
+    let _ = self::read_grammar_source_default_matching;
 };

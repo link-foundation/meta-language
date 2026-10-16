@@ -16,10 +16,11 @@ if (process.argv.includes('--update-styles')) {
   const replace = (from, to) => {
     if (styled.includes(from)) { actions.push({ op: 'replace', field: 'source', from, to }); styled = styled.split(from).join(to); }
   };
-  for (const parameter of ['term', 'arity']) replace(`${parameter}: String`, `${parameter}: &str`);
+  for (const parameter of ['term', 'arity', 'default_matching']) replace(`${parameter}: String`, `${parameter}: &str`);
   for (const match of [...styled.matchAll(/\([a-z_]+ == "[^"\n]*"\)/gu)]) replace(match[0], match[0].slice(1, -1));
   for (const expression of [
     '(arity == "4" && has_definition)', '(arity == "3" && has_definition)',
+    '(explicit_matching || default_matching == "generalized")',
   ]) replace(expression, expression.replace(/[()]/gu, ''));
   for (;;) {
     const match = /\} else \{\n\s+if /u.exec(styled);
@@ -36,7 +37,7 @@ if (process.argv.includes('--update-styles')) {
     if (depth) throw new Error('a translated discovered concept decision has an unclosed branch');
     replace(styled.slice(match.index, cursor), `} else ${styled.slice(opening + 1, cursor - 1).trim()}`);
   }
-  for (const name of ['accept_discovered_concept_shape']) {
+  for (const name of ['accept_discovered_concept_shape', 'accept_legacy_discovered_concept_format']) {
     replace(`pub fn ${name}`, `/// Read a shared discovered concept graph decision.\n#[must_use]\npub fn ${name}`);
   }
   writeFileSync(styleFile, new DecoratorSet([{ id: 'discovered-concept-library-style', level: 'emitter', order: 0,

@@ -18,3 +18,12 @@ pub fn accept_discovered_concept_shape(term: &str, arity: &str, has_definition: 
         false
     }
 }
+
+/// Read a shared discovered concept graph decision.
+#[must_use]
+pub fn accept_legacy_discovered_concept_format(
+    explicit_matching: bool,
+    default_matching: &str,
+) -> bool {
+    explicit_matching || default_matching == "generalized"
+}
