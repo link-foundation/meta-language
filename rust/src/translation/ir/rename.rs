@@ -51,7 +51,9 @@ pub fn rename_expr(expr: &Expr, env: &Env, scope: &mut Scope<'_>) -> Expr {
             let mut inner = env.clone();
             let mut child = scope.child();
             let params = plan
-                .chunks_exact(3)
+                .as_chunks::<3>()
+                .0
+                .iter()
                 .map(|owner| {
                     let index = owner[1]
                         .to_string()

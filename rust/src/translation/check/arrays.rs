@@ -299,7 +299,7 @@ impl Checker {
         path: &[String],
     ) -> Result<Expr> {
         let object = self.expr(object, env, path, None, false)?;
-        let object = self.reference_value(object);
+        let object = Self::reference_value(object);
         let Type::Tuple { elements } = &object.ty else {
             return Err(type_error("tuple projection requires a tuple value", span));
         };
@@ -349,7 +349,7 @@ impl Checker {
             .and_then(super::super::surface::SurfaceRawMetadata::as_boolean)
             == Some(true);
         let array = self.expr(object, env, path, None, false)?;
-        let array = self.reference_value(array);
+        let array = Self::reference_value(array);
         if let Type::Tuple { elements } = &array.ty
             && let super::SNode::Num {
                 value, negative, ..
@@ -482,7 +482,7 @@ impl Checker {
     }
 
     /// Array sizes and UTF-16 string lengths; `None` for other fields.
-    pub(super) fn length_field(&self, array: Expr) -> Option<Expr> {
+    pub(super) fn length_field(array: Expr) -> Option<Expr> {
         if array.ty.element().is_some() || array.ty == Type::String {
             return Some(Expr::new(
                 Node::Length {

@@ -176,7 +176,7 @@ impl Checker {
                         SNode::Binary {
                             op: BinaryOp::Eq,
                             left: Box::new(SExpr::name(&column.name)),
-                            right: Box::new(pivot_value.clone()),
+                            right: pivot_value.clone(),
                             rounding: None,
                         },
                         None,
@@ -506,7 +506,7 @@ impl Checker {
             _ => String::new(),
         };
         Ok(NPat::Lit {
-            value,
+            value: Box::new(value),
             key: format!("{}:{text}", ty.key()),
         })
     }

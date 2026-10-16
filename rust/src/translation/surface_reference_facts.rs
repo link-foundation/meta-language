@@ -3,7 +3,7 @@
 use serde_json::Value;
 
 /// Packed primitive columns; the JavaScript transport defines their order.
-pub(crate) struct SurfaceReferenceFacts<'a> {
+pub struct SurfaceReferenceFacts<'a> {
     pub columns: Vec<String>,
     pub rows: Vec<f64>,
     pub size: f64,
@@ -32,7 +32,7 @@ fn number(value: usize) -> f64 {
 }
 
 /// Serialize only field labels, primitive spellings and ordered graph edges.
-pub(crate) fn create_surface_reference_facts(value: &Value) -> SurfaceReferenceFacts<'_> {
+pub fn create_surface_reference_facts(value: &Value) -> SurfaceReferenceFacts<'_> {
     #[derive(Default)]
     struct Columns<'a> {
         forms: Vec<String>,

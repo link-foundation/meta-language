@@ -60,13 +60,13 @@ impl RocqEmitter<'_> {
             )),
             Node::CollectionItems { object, op } => {
                 let map = matches!(object.ty, super::Type::Map { .. });
-                let (key, item) = if op != "entries" {
+                let (key, item) = if op == "entries" {
+                    (String::new(), String::new())
+                } else {
                     match &object.ty {
                         super::Type::Map { key, value, .. } => (self.ty(key)?, self.ty(value)?),
                         _ => (String::new(), String::new()),
                     }
-                } else {
-                    (String::new(), String::new())
                 };
                 let value = self.expr(object)?;
                 Ok(

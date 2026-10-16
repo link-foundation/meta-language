@@ -30,7 +30,7 @@ pub(super) fn project_function_result_types(
     let mut fields = Map::new();
     fields.insert(
         "ret".to_owned(),
-        project(retained.unwrap_or(&value["ret"]))?,
+        project(retained.unwrap_or_else(|| &value["ret"]))?,
     );
     if retained.is_some() {
         let result = read_program_declaration_type_projection_field("fn", "result");

@@ -5,6 +5,13 @@ use serde_json::Value;
 use super::{ConstructorPrototypeDefinition, SRecordEntry, Type};
 use crate::translation::record_value_rules::read_record_projection_error;
 
+type RecordProjectionFields = (
+    Vec<SRecordEntry>,
+    Option<Value>,
+    Option<Type>,
+    Option<ConstructorPrototypeDefinition>,
+);
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct RecordFields {
@@ -33,15 +40,7 @@ fn read_present_record_projection<'de, D: Deserializer<'de>>(
 // unmarked records retain the existing public SRecordEntry defaults and shape.
 pub(super) fn read_record_projection<'de, D: Deserializer<'de>>(
     deserializer: D,
-) -> Result<
-    (
-        Vec<SRecordEntry>,
-        Option<Value>,
-        Option<Type>,
-        Option<ConstructorPrototypeDefinition>,
-    ),
-    D::Error,
-> {
+) -> Result<RecordProjectionFields, D::Error> {
     let value = Value::deserialize(deserializer)?;
     if let Some(projection) = value.get("recordProjection") {
         let entries = value

@@ -291,7 +291,7 @@ impl Checker {
     }
 
     pub(super) fn optional_comparison(
-        &mut self,
+        &self,
         op: BinaryOp,
         left: Expr,
         right: Expr,
@@ -390,8 +390,6 @@ impl Checker {
 }
 
 pub(super) fn annotation_compatible(actual: &Type, declared: &Type) -> bool {
-    let root = serde_json::json!([actual, declared]);
-    let facts = crate::translation::surface_reference_facts::create_surface_reference_facts(&root);
     fn visit(
         facts: &crate::translation::surface_reference_facts::SurfaceReferenceFacts<'_>,
         actual: f64,
@@ -409,9 +407,13 @@ pub(super) fn annotation_compatible(actual: &Type, declared: &Type) -> bool {
             );
         !plan.is_empty()
             && plan[1..]
-                .chunks_exact(2)
+                .as_chunks::<2>()
+                .0
+                .iter()
                 .all(|pair| visit(facts, pair[0], pair[1]))
     }
+    let root = serde_json::json!([actual, declared]);
+    let facts = crate::translation::surface_reference_facts::create_surface_reference_facts(&root);
     let root: usize = facts
         .root
         .to_string()

@@ -62,7 +62,7 @@ fn callable_type(parameters: &[impl serde::Serialize], ret: &Type) -> Type {
 
 impl Checker {
     pub(super) fn callable_reference(
-        &mut self,
+        &self,
         node: &SExpr,
         segments: &[String],
         path: &[String],
@@ -209,8 +209,7 @@ impl Checker {
         if !error.is_empty() {
             return Err(type_error(error, span));
         }
-        let function = self
-            .record_field(object, operation, span)?
+        let function = Self::record_field(object, operation, span)?
             .expect("a successful generated method plan selects an actual record field");
         let args = args
             .iter()
@@ -254,7 +253,7 @@ impl Checker {
                 );
                 let mut inner = env.clone();
                 let mut parameters = Vec::new();
-                for (parameter, selection) in params.iter().zip(plan.chunks_exact(3)) {
+                for (parameter, selection) in params.iter().zip(plan.as_chunks::<3>().0) {
                     let selected: Option<Type> = facts
                         .value(selection[1])
                         .filter(|value| !value.is_null())

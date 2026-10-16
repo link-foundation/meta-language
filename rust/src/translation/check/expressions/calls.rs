@@ -30,7 +30,7 @@ impl Checker {
         if crate::translation::callable_source_rules::require_callable_computed_application(
             head.node.kind(),
             path_length,
-            &local_kind,
+            local_kind,
         ) {
             let function = self.expr(head, env, path, None, false)?;
             return self.checked_callable_application(function, args, env, path, span);

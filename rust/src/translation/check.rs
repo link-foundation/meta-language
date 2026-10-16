@@ -332,7 +332,7 @@ enum NPat {
     Bind(String),
     Nat { succ: bool, args: Vec<Self> },
     Data { ctor: String, args: Vec<Self> },
-    Lit { value: SExpr, key: String },
+    Lit { value: Box<SExpr>, key: String },
 }
 
 impl NPat {
@@ -357,17 +357,13 @@ impl NPat {
 
     /// A natural literal pattern's value.
     fn nat_value(&self) -> Option<Decimal> {
-        match self {
-            Self::Lit {
-                value:
-                    SExpr {
-                        node: SNode::Num { value, .. },
-                        ..
-                    },
-                ..
-            } => Decimal::parse(value),
-            _ => None,
-        }
+        let Self::Lit { value, .. } = self else {
+            return None;
+        };
+        let SNode::Num { value, .. } = &value.node else {
+            return None;
+        };
+        Decimal::parse(value)
     }
 
     fn lit_key(&self) -> Option<&str> {

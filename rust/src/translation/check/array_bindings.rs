@@ -16,7 +16,7 @@ impl Checker {
         match &node.node {
             SNode::ArrayBindingRest { object, start, .. } => {
                 let object = self.expr(object, env, path, None, false)?;
-                let object = self.reference_value(object);
+                let object = Self::reference_value(object);
                 if self.language != Language::JavaScript
                     || !rules::accept_java_script_array_rest_receiver(Text::from_text(
                         object.ty.kind(),

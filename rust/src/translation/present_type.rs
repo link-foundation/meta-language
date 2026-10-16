@@ -3,7 +3,7 @@ use serde::{Deserialize, Deserializer};
 
 use super::types::Type;
 
-pub(crate) fn read_present_type<'de, D: Deserializer<'de>>(
+pub fn read_present_type<'de, D: Deserializer<'de>>(
     deserializer: D,
 ) -> Result<Option<Type>, D::Error> {
     Type::deserialize(deserializer).map(Some)

@@ -11,7 +11,9 @@ pub(super) fn parameter_ordinals(value: &Value) -> Vec<usize> {
         &facts.targets,
         facts.root,
     )
-    .chunks_exact(3)
+    .as_chunks::<3>()
+    .0
+    .iter()
     .map(|owner| {
         owner[1]
             .to_string()

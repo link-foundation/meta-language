@@ -6,6 +6,13 @@ use super::{SExpr, SNode, STagTest, Span, SurfaceRawMetadata, raw_metadata};
 use crate::translation::array_binding_rules::{self as rules, ml_string::Text};
 use crate::translation::diagnostics::{Result as TranslationResult, type_error};
 
+#[derive(Default)]
+enum TagTestPresence {
+    #[default]
+    Missing,
+    Present(Option<Box<STagTest>>),
+}
+
 #[derive(Deserialize)]
 pub(super) struct SurfaceExpression {
     #[serde(flatten)]
@@ -20,7 +27,7 @@ pub(super) struct SurfaceExpression {
     #[serde(default, deserialize_with = "present_block")]
     block: Option<bool>,
     #[serde(rename = "tagTest", default, deserialize_with = "present_tag_test")]
-    tag_test: Option<Option<Box<STagTest>>>,
+    tag_test: TagTestPresence,
 }
 
 fn present_block<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Option<bool>, D::Error> {
@@ -29,8 +36,8 @@ fn present_block<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Option<bo
 
 fn present_tag_test<'de, D: Deserializer<'de>>(
     deserializer: D,
-) -> Result<Option<Option<Box<STagTest>>>, D::Error> {
-    Option::<Box<STagTest>>::deserialize(deserializer).map(Some)
+) -> Result<TagTestPresence, D::Error> {
+    Option::<Box<STagTest>>::deserialize(deserializer).map(TagTestPresence::Present)
 }
 
 impl TryFrom<SurfaceExpression> for SExpr {
@@ -40,7 +47,7 @@ impl TryFrom<SurfaceExpression> for SExpr {
         if matches!(
             raw.node,
             SNode::ArrayBindingRest { .. } | SNode::ArrayBindingDefault { .. }
-        ) && (raw.block.is_some() || raw.tag_test.is_some())
+        ) && (raw.block.is_some() || matches!(raw.tag_test, TagTestPresence::Present(_)))
         {
             return Err("array binding contains an unrepresented field".to_owned());
         }
@@ -49,20 +56,22 @@ impl TryFrom<SurfaceExpression> for SExpr {
             span: raw.span,
             parenthesized: raw.parenthesized,
             block: raw.block.unwrap_or(false),
-            tag_test: raw.tag_test.flatten(),
+            tag_test: match raw.tag_test {
+                TagTestPresence::Missing => None,
+                TagTestPresence::Present(value) => value,
+            },
         })
     }
 }
 
-pub(crate) fn validate(node: &SExpr) -> TranslationResult<()> {
-    let extra = match &node.node {
-        SNode::ArrayBindingRest { extra, .. } | SNode::ArrayBindingDefault { extra, .. } => extra,
-        _ => {
-            return Err(type_error(
-                "array binding needs its actual owned constructor",
-                node.span,
-            ));
-        }
+pub fn validate(node: &SExpr) -> TranslationResult<()> {
+    let (SNode::ArrayBindingRest { extra, .. } | SNode::ArrayBindingDefault { extra, .. }) =
+        &node.node
+    else {
+        return Err(type_error(
+            "array binding needs its actual owned constructor",
+            node.span,
+        ));
     };
     for field in extra.keys() {
         if !rules::accept_java_script_array_binding_field(
@@ -114,7 +123,7 @@ pub(crate) fn validate(node: &SExpr) -> TranslationResult<()> {
     Ok(())
 }
 
-pub(crate) fn offset(start: &serde_json::Value, span: Option<Span>) -> TranslationResult<SExpr> {
+pub fn offset(start: &serde_json::Value, span: Option<Span>) -> TranslationResult<SExpr> {
     let failure = || {
         type_error(
             "array rest start needs its actual nonnegative safe integer literal",

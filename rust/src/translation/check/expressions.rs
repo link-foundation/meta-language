@@ -87,7 +87,7 @@ impl Checker {
         Ok(result)
     }
 
-    pub(super) fn reference_value(&self, value: Expr) -> Expr {
+    pub(super) fn reference_value(value: Expr) -> Expr {
         if crate::translation::surface_reference_analysis_rules::select_surface_reference_read(
             value.ty.is_reference(),
         ) {

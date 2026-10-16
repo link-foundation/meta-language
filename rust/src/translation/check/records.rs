@@ -184,7 +184,6 @@ impl Checker {
     /// Consume a checked receiver once; field positions come from the same
     /// UTF16-name planner as literal layout and JavaScript checking.
     pub(super) fn record_field(
-        &self,
         object: Expr,
         field: &str,
         span: Option<Span>,
@@ -219,12 +218,12 @@ impl Checker {
         span: Option<Span>,
     ) -> Result<Expr> {
         let value = self.expr(object, env, path, None, false)?;
-        let value = self.reference_value(value);
-        if let Some(record) = self.record_field(value.clone(), field, span)? {
+        let value = Self::reference_value(value);
+        if let Some(record) = Self::record_field(value.clone(), field, span)? {
             return Ok(record);
         }
         if field == "length"
-            && let Some(length) = self.length_field(value)
+            && let Some(length) = Self::length_field(value)
         {
             return Ok(length);
         }

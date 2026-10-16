@@ -6,7 +6,7 @@ use super::{Expr, Node, Prelude, Result, RustEmitter};
 // its normal pipeline before a runtime string reaches either host adapter.
 pub(super) const ARRAY_PRELUDE: &str = include_str!("../runtime/array-legacy.txt");
 
-pub(super) fn read_array_prelude(standard: bool) -> &'static str {
+pub(super) const fn read_array_prelude(standard: bool) -> &'static str {
     if standard {
         include_str!("../runtime/array-standard.txt")
     } else {

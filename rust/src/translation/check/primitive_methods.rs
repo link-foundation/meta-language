@@ -18,7 +18,7 @@ impl Checker {
         match rules::read_primitive_copy_slice_form(value.ty.kind()).as_str() {
             "identity" => Ok(value),
             "method" => {
-                let value = self.reference_value(value);
+                let value = Self::reference_value(value);
                 self.checked_record_method_application(value, "slice", &[], env, path, span)
             }
             _ => Err(unsupported(
@@ -39,7 +39,7 @@ impl Checker {
         span: Option<Span>,
     ) -> Result<Expr> {
         let object = self.expr(object, env, path, None, false)?;
-        let object = self.reference_value(object);
+        let object = Self::reference_value(object);
         self.primitive_method_on_checked_receiver(object, operation, args, env, path, span)
     }
 

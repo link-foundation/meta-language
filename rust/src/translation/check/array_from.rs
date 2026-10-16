@@ -183,7 +183,9 @@ impl Checker {
             child("params"),
         );
         let equal = plan[2..]
-            .chunks_exact(2)
+            .as_chunks::<2>()
+            .0
+            .iter()
             .all(|pair| selected_type(&facts, pair[0]).same(&selected_type(&facts, pair[1])));
         let error = rules::read_array_from_map_callback_error(plan[0], equal);
         if !error.is_empty() {

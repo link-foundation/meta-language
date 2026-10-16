@@ -94,33 +94,28 @@ impl LeanEmitter<'_> {
                 &self.expr(right, depth)?,
             )),
             Node::OptionalField { object, .. } | Node::OptionalProject { object, .. } => {
-                let (binder, present) = match &expr.node {
-                    Node::OptionalField { index, .. } => {
-                        let Type::Record { fields, .. } = element(&object.ty) else {
-                            unreachable!(
-                                "a selected optional field retains its actual record layout"
-                            );
-                        };
-                        (
+                let (binder, present) = if let Node::OptionalField { index, .. } = &expr.node {
+                    let Type::Record { fields, .. } = element(&object.ty) else {
+                        unreachable!("a selected optional field retains its actual record layout");
+                    };
+                    (
+                        "ml_record",
+                        crate::translation::record_emission_rules::render_record_product_field(
+                            "Lean",
                             "ml_record",
-                            crate::translation::record_emission_rules::render_record_product_field(
-                                "Lean",
-                                "ml_record",
-                                number(*index),
-                                number(fields.len()),
-                            ),
-                        )
-                    }
-                    _ => {
-                        let source = Expr::var("ml_value", element(&object.ty).clone());
-                        let length = Expr::new(
-                            Node::Length {
-                                array: Box::new(source),
-                            },
-                            Type::Float,
-                        );
-                        ("ml_value", self.expr(&length, depth)?)
-                    }
+                            number(*index),
+                            number(fields.len()),
+                        ),
+                    )
+                } else {
+                    let source = Expr::var("ml_value", element(&object.ty).clone());
+                    let length = Expr::new(
+                        Node::Length {
+                            array: Box::new(source),
+                        },
+                        Type::Float,
+                    );
+                    ("ml_value", self.expr(&length, depth)?)
                 };
                 Ok(rules::render_optional_projection(
                     "Lean",

@@ -125,20 +125,17 @@ impl RustEmitter<'_> {
                 if policy(&object.ty) == "both" {
                     self.preludes.insert(Prelude::Optional);
                 }
-                let (binder, present) = match &expr.node {
-                    Node::OptionalField { index, .. } => {
-                        ("ml_record", format!("ml_record.{index}"))
-                    }
-                    _ => {
-                        let source = Expr::var("ml_value", element(&object.ty).clone());
-                        let length = Expr::new(
-                            Node::Length {
-                                array: Box::new(source),
-                            },
-                            Type::Float,
-                        );
-                        ("ml_value", self.expr(&length)?)
-                    }
+                let (binder, present) = if let Node::OptionalField { index, .. } = &expr.node {
+                    ("ml_record", format!("ml_record.{index}"))
+                } else {
+                    let source = Expr::var("ml_value", element(&object.ty).clone());
+                    let length = Expr::new(
+                        Node::Length {
+                            array: Box::new(source),
+                        },
+                        Type::Float,
+                    );
+                    ("ml_value", self.expr(&length)?)
                 };
                 let value = if policy(&object.ty) == "both" {
                     self.expr(object)?
