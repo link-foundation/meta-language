@@ -36,7 +36,7 @@ fn require_global_concept_parser_options(
     Ok(())
 }
 
-fn archive_error(message: String) -> GrammarRuntimeError {
+const fn archive_error(message: String) -> GrammarRuntimeError {
     GrammarRuntimeError {
         reason: "globalConceptSpace",
         message,
@@ -44,6 +44,7 @@ fn archive_error(message: String) -> GrammarRuntimeError {
 }
 
 /// Validates a complete archive and compiles one exact archived source identity.
+///
 /// All imports and embeddings resolve from reconstructed archived grammars.
 /// `settings.records` configures archive validation; parser limits and decorators
 /// come from `options`. A supplied grammar name or concept space is refused.

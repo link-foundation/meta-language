@@ -58,10 +58,13 @@ pub(super) fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr,
                     }
                     *ret = Some(inferred_ret.as_ref().clone());
                 }
-                (SNode::ForOfIterable { ty: retained, .. }, _)
-                | (SNode::ArrayFrom { ty: retained, .. }, _)
-                | (SNode::Record { ty: retained, .. }, _)
-                | (SNode::CellAllocate { ty: retained, .. }, _) => *retained = Some(ty.clone()),
+                (
+                    SNode::ForOfIterable { ty: retained, .. }
+                    | SNode::ArrayFrom { ty: retained, .. }
+                    | SNode::Record { ty: retained, .. }
+                    | SNode::CellAllocate { ty: retained, .. },
+                    _,
+                ) => *retained = Some(ty.clone()),
                 _ => {}
             }
         }
