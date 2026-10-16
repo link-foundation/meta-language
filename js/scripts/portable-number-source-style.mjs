@@ -98,6 +98,22 @@ export function readPortableNumberSourceStyles(source) {
     while (tokens[start]?.value === '(' && pairs.get(start) === end - 1) { start += 1; end -= 1; }
     return [start, end];
   };
+  const groupTokens = (start, end) => {
+    const result = [];
+    for (let at = start; at < end; at += 1) {
+      const token = tokens[at];
+      if (token.kind === 'punct' && token.value === '(') {
+        const close = pairs.get(at);
+        let inner = at, last = close;
+        // Only a complete nested group can lose a redundant outer pair. The
+        // groups separating addition, division and the method receiver remain.
+        while (tokens[inner + 1]?.value === '(' && pairs.get(inner + 1) === last - 1) { inner += 1; last -= 1; }
+        result.push('(', ...groupTokens(inner + 1, last), ')');
+        at = close;
+      } else result.push(token.kind === 'number' ? token.raw.replaceAll('_', '') : token.value);
+    }
+    return result;
+  };
   for (const fn of functions) {
     // Nested functions have their own lexical types and are processed separately.
     const nested = functions.filter(other => fn.body < other.at && other.end < fn.end);
@@ -207,7 +223,7 @@ export function readPortableNumberSourceStyles(source) {
         const before = source.slice(tokens[fn.body].end, tokens[local.at].start);
         if (before.trimEnd().endsWith(')]') && /#\[expect\(clippy::manual_midpoint,[^\]]*\)\]\s*$/u.test(before)) continue;
         assert.ok(fn.params.some(param => param.name === 'lower' && param.type === 'f64') && fn.params.some(param => param.name === 'upper' && param.type === 'f64'), 'the midpoint owns its Number bounds');
-        assert.equal(tokens.slice(local.equal + 1, local.end).map(token => token.kind === 'number' ? token.raw.replaceAll('_', '') : token.value).join(''), '((lower+upper)/2f64).floor()', 'the source midpoint retains add, divide and floor in their original order');
+        assert.equal(groupTokens(local.equal + 1, local.end).join(''), '((lower+upper)/2f64).floor()', 'the source midpoint retains add, divide and floor in their original order');
         edits.push([tokens[local.at].start, tokens[local.at].start, '#[expect(clippy::manual_midpoint, reason = "checked JavaScript Number addition, division and floor retain their separate rounding and evaluation order")]\n']);
         assert.ok(statement.endsWith(';'));
       }

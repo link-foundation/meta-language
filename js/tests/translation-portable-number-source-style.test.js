@@ -109,8 +109,16 @@ pub fn other(a: bool, b: bool, c: bool, d: bool) -> bool { a && b && c && d }`;
   assert.ok(result.source.includes('let middle = ((lower + upper) / 2f64).floor();'));
   assert.equal(readSourceTextRustBlock(result.source, 'fn', 'other'), readSourceTextRustBlock(source, 'fn', 'other'));
   replay(source, result);
+  const raw = source.replace('((lower + upper) / 2f64).floor()', '(((lower + upper) / 2f64)).floor()');
+  const rawResult = readPortableNumberSourceStyles(raw);
+  assert.ok(rawResult.source.includes('let middle = (((lower + upper) / 2f64)).floor();'),
+    'the actual raw emitter group is recognized without changing a single arithmetic or grouping token');
+  assert.equal((rawResult.source.match(/clippy::manual_midpoint/gu) ?? []).length, 1);
+  replay(raw, rawResult);
   for (const changed of [source.replace('/ 2f64', '/ 3f64'), source.replace('(lower + upper)', '(upper + lower)'),
-    source.replace('lower: f64', 'lower: f32'), source.replace('additional: bool', 'additional: i32')]) {
+    source.replace('lower: f64', 'lower: f32'), source.replace('additional: bool', 'additional: i32'),
+    raw.replace('(((lower + upper) / 2f64))', '(lower + (upper / 2f64))'),
+    raw.replace('(((lower + upper) / 2f64))', '((lower / 2f64) + (upper / 2f64))')]) {
     assert.throws(() => readPortableNumberSourceStyles(changed), /midpoint|Number bounds|independent ordered source input/u);
   }
   assert.equal(((Number.MAX_VALUE + Number.MAX_VALUE) / 2), Infinity,
