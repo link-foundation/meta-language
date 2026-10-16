@@ -240,6 +240,20 @@ jobs:
           path: grammar-bulk/markdown-native-source-capture.lino
           if-no-files-found: error
 
+      - name: Compare the pinned inline scanner source with shared Links operations
+        if: ${{ !cancelled() }}
+        run: >-
+          node experiments/markdown-inline-source-oracle/check.mjs
+          --cargo-cache --out grammar-bulk/markdown-inline-source-oracle.lino
+
+      - name: Upload the independent inline scanner comparisons
+        if: ${{ !cancelled() && hashFiles('grammar-bulk/markdown-inline-source-oracle.lino') != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: markdown-inline-source-oracle-${{ github.sha }}
+          path: grammar-bulk/markdown-inline-source-oracle.lino
+          if-no-files-found: error
+
       - name: Run the bulk grammar pipeline
         if: ${{ !cancelled() }}
         run: node js/scripts/run-grammar-bulk-pipeline.mjs --out-dir grammar-bulk --jobs 4 --timeout 240

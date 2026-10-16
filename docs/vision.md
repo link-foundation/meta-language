@@ -789,7 +789,9 @@ mutable interfaces, unsupported compilation attributes and contradictory
 source-free facets. A linked emitter decoration retains the checked `const fn`
 qualification. Three immutable complete styled generated predicates exercise
 actual definition replay, source-free body edits and executable JavaScript
-observations. This source qualification does not establish general compile-time
+observations. Conditional const bodies remain outside this bounded proof, even
+when a native compiler accepts their primitive Boolean operations.
+This source qualification does not establish general compile-time
 invocation, evaluation or diagnostics, public visibility or ABI equivalence;
 the paired native adapter retains the same owned facets, with native compilation
 and executable cross-runtime parity checked in CI.
@@ -1384,6 +1386,16 @@ temporary; Links receipts retain provenance. A source profile or capture cannot
 establish executable scanner behavior. Source-free range and reinsertion rules
 preserve byte ownership and original fields; native discontiguous parsing and
 component projection must also work before composed CST support is claimed.
+
+The inline delimiter candidate generates all fifteen source token identities
+as shared Links operations. Its raw probes supply the complete simultaneous
+source-symbol context explicitly, preserve the four serialized state bytes and
+distinguish the inspected cursor from the marked token end. CI compares those
+operations against the authenticated original C scanner, including wrapping
+delimiter counts, continuation state and source punctuation rules. These finite
+callback comparisons do not establish parser eligibility, Rust execution or
+complete Markdown CST support. Keep native promotion blocked until the parser
+supplies faithful context and the block scanner and composition also work.
 
 ## Grammar import, conversion and reverse conversion
 
