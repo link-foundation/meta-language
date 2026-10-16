@@ -18,7 +18,9 @@ use crate::grammar::{Grammar, GrammarSourceName};
 use crate::link_network::LinkNetwork;
 
 mod links;
+mod parser;
 pub use links::{global_concept_space_to_links, read_global_concept_space_links};
+pub use parser::{GlobalConceptSpaceParser, create_global_concept_space_parser};
 
 /// The closed recursive proof required before sharing a concept identity.
 pub const GLOBAL_CONCEPT_PROOF_METHOD: &str = "recursive-structural-bijection";

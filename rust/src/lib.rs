@@ -138,8 +138,8 @@ pub use foundation_models::{
 pub use global_concept_rules::verify_global_concept_correspondence;
 pub use global_concept_space::{
     GLOBAL_CONCEPT_PROOF_METHOD, GlobalConceptOptions, GlobalConceptSource,
-    create_global_concept_space, global_concept_space_to_links, read_global_concept_space_links,
-    translate_global_construct,
+    GlobalConceptSpaceParser, create_global_concept_space, create_global_concept_space_parser,
+    global_concept_space_to_links, read_global_concept_space_links, translate_global_construct,
 };
 pub use grammar::feature_runtime::{
     Ambiguity, FeatureGrammarParser, FeatureParseOptions, GrammarParseError, GrammarResolver,

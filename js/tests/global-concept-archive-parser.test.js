@@ -149,6 +149,10 @@ test('archive roots preserve explicit and implicit starts and refuse counterfeit
     assert.equal(result.ok, true);
     assert.equal(result.tree.root.kind, root);
   }
+  const parser = createGlobalConceptSpaceParser(archive, 'explicit', { records: [] });
+  for (const method of ['parseTree', 'parse']) assert.throws(
+    () => parser[method]('π', { startRule: 'absent' }),
+    error => error.reason === 'reference' && error.message === 'undefined start rule absent');
   const start = archive.replace('(start defined chosen)', '(start defined absent)');
   assert.notEqual(start, archive);
   assert.throws(() => createGlobalConceptSpaceParser(start, 'explicit', { records: [] }), /start or rule order/u);

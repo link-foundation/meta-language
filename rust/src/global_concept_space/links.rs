@@ -234,6 +234,18 @@ pub fn read_global_concept_space_links(
     source: &str,
     options: &GlobalConceptOptions,
 ) -> Result<Value, String> {
+    read_validated_global_concept_archive(source, options).map(|archive| archive.space)
+}
+
+pub(super) struct ValidatedGlobalConceptArchive {
+    pub(super) space: Value,
+    pub(super) imported: Vec<Value>,
+}
+
+pub(super) fn read_validated_global_concept_archive(
+    source: &str,
+    options: &GlobalConceptOptions,
+) -> Result<ValidatedGlobalConceptArchive, String> {
     let statements = parse_lino_to_links_with_config(source, &ParserConfig::without_comments())
         .map_err(|error| error.to_string())?;
     if statements.is_empty() {
@@ -682,5 +694,5 @@ pub fn read_global_concept_space_links(
             return Err("invalid global concept identity redirect".to_owned());
         }
     }
-    Ok(space)
+    Ok(ValidatedGlobalConceptArchive { space, imported })
 }

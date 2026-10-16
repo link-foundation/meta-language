@@ -24,6 +24,7 @@ mod formal_function_links;
 mod foundation_models;
 mod four_language_conformance;
 mod generative_support;
+mod global_concept_archive_parser;
 mod global_concept_space;
 mod grammar_aliased_extras;
 mod grammar_docs;
