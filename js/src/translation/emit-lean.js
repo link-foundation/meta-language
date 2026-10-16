@@ -10,6 +10,7 @@ import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExp
 import { unsupported } from './diagnostics.js';
 import { renderOptionalAbsentValue, renderOptionalCoalescing, renderOptionalConsoleText, renderOptionalFlattening, renderOptionalMatch, renderOptionalNumericPresent, renderOptionalPresentValue, renderOptionalPrimitiveTruth, renderOptionalProjection, renderOptionalStrictEquality, renderOptionalTypeQueryPresent, renderOptionalUnwrapping, requireOptionalNumericPredicate } from './optional-value-rules.js';
 import { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';
+import { renderArrayFromMapping } from './array-from-rules.js';
 import { readPrimitiveMethodRenderingRefusal } from './primitive-method-rules.js';
 import { renderRecordProductField, renderRecordType, renderRecordValue } from './record-emission-rules.js';
 import { readUnionTargetRefusal } from './type-syntax-rules.js';
@@ -600,12 +601,12 @@ class LeanEmitter {
     if (e.op === 'reduce' && e.args.length === 1) throw unsupported('array reduce without an initial value', 'the empty-array TypeError needs an operational abort encoding in Lean', e.span);
     if (!['map', 'filter', 'find', 'findIndex', 'some', 'every', 'flatMap', 'reduce'].includes(e.op)) throw unsupported(`.${e.op}()`, readPrimitiveMethodRenderingRefusal('Lean', 'array', e.op) || 'this array operation needs an operational encoding in Lean', e.span);
     const callback = e.args[0];
+    if (e.op === 'map') return renderArrayFromMapping('Lean', object, this.expr(callback, depth), callback.type.params.length, '');
     const args = e.op === 'reduce' ? ['ml_accumulator', 'ml_pair.1', '(Float.ofNat ml_pair.2)', 'ml_values'] : ['ml_pair.1', '(Float.ofNat ml_pair.2)', 'ml_values'];
     const call = callback.type.params.length ? `(ml_callback ${args.slice(0, callback.type.params.length).join(' ')})` : 'ml_callback';
     const head = `(let ml_values := ${object}; let ml_callback := ${this.expr(callback, depth)}; `;
     const pairs = 'ml_values.toList.zipIdx';
     const lambda = `(fun ml_pair => ${call})`;
-    if (e.op === 'map') return `${head} (${pairs}.map ${lambda}).toArray)`;
     if (e.op === 'flatMap') return `${head} (${pairs}.flatMap (fun ml_pair => ${call}.toList)).toArray)`;
     if (e.op === 'some' || e.op === 'every') return `${head} ${pairs}.${e.op === 'some' ? 'any' : 'all'} ${lambda})`;
     if (e.op === 'filter') return `${head} ((${pairs}.filter ${lambda}).map (fun ml_pair => ml_pair.1)).toArray)`;

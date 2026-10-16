@@ -11,6 +11,7 @@ import { renderStringMapExpression, renderStringTestExpression } from './fronten
 import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
 import { renderSurfaceReferenceOperation } from './surface-reference-analysis-rules.js';
 import { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';
+import { renderArrayFromMapping } from './array-from-rules.js';
 import { renderPrimitiveMethodArgument, renderPrimitiveMethodExpression } from './primitive-method-rules.js';
 import { renderRecordField, renderRecordValue } from './record-emission-rules.js';
 import { readOptionalJavaScriptTextPrelude, renderOptionalAbsentValue, renderOptionalCoalescing, renderOptionalFlattening, renderOptionalJavaScriptOperation, renderOptionalPresentValue, renderOptionalPrimitiveTruth, renderOptionalProjection, renderOptionalStrictEquality, renderOptionalUnwrapping } from './optional-value-rules.js';
@@ -443,6 +444,7 @@ class JavaScriptEmitter {
       case 'lambda':
         return renderCallableLambda('JavaScript', e.params.map(param => param.name), [], '', this.expr(e.body), []);
       case 'method':
+        if (e.op === 'map' && e.args.length === 1 && e.args[0] !== null) return renderArrayFromMapping('JavaScript', this.expr(e.object), this.expr(e.args[0]), 0, '');
         return renderPrimitiveMethodExpression('JavaScript', e.object.type.kind, e.op, this.expr(e.object),
           e.args.map((arg, index) => renderPrimitiveMethodArgument('JavaScript', e.object.type.kind, e.op, index, arg === null, arg === null ? '' : this.expr(arg))).join(', '));
       case 'record':

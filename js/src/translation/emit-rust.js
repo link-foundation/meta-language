@@ -13,6 +13,7 @@ import { renderStringLengthExpression, renderStringMapExpression, renderStringTe
 
 import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
 import { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';
+import { renderArrayFromMapping } from './array-from-rules.js';
 import { renderPrimitiveMethodArgument, renderPrimitiveMethodExpression, requirePrimitiveMethodUtf16, renderPrimitiveArraySearchExpression, renderPrimitiveStringRepresentation } from './primitive-method-rules.js';
 import { readSurfaceReferenceEmissionOperation, readSurfaceReferenceEmissionRefusal, renderSurfaceReferenceOperation } from './surface-reference-analysis-rules.js';
 import { renderRecordField, renderRecordValue } from './record-emission-rules.js';
@@ -1146,13 +1147,13 @@ class RustEmitter {
       const index = `ml_index${suffix}`;
       const value = `ml_value${suffix}`;
       const fn = e.args[0];
+      if (e.op === 'map') return renderArrayFromMapping('Rust', this.expr(e.object), this.expr(fn), fn.type.params.length, String(suffix));
       const available = e.op === 'reduce' ? [`ml_accumulator${suffix}`, value, `(${index} as f64)`, `${values}.clone()`] : [value, `(${index} as f64)`, `${values}.clone()`];
       const call = `${callback}(${available.slice(0, fn.type.params.length).join(', ')})`;
       const head = `let ${values} = ${this.expr(e.object)}; let ${callback} = ${this.expr(fn)};`;
       const iterator = `${values}.iter().cloned().enumerate()`;
       if (e.op === 'some' || e.op === 'every') return `{ ${head} ${iterator}.${e.op === 'some' ? 'any' : 'all'}(|(${index}, ${value})| ${call}) }`;
       if (e.op === 'findIndex') return `{ ${head} ${iterator}.position(|(${index}, ${value})| ${call}).map_or(-1f64, |ml_position| ml_position as f64) }`;
-      if (e.op === 'map') return `{ ${head} ${iterator}.map(|(${index}, ${value})| ${call}).collect::<Vec<_>>() }`;
       if (e.op === 'flatMap') return `{ ${head} ${iterator}.flat_map(|(${index}, ${value})| ${call}).collect::<Vec<_>>() }`;
       if (e.op === 'filter' || e.op === 'find') {
         const predicateArgs = available.slice(0, fn.type.params.length).map((argument, index) => index === 0 ? `${value}.clone()` : argument);

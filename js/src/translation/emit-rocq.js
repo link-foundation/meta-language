@@ -10,6 +10,7 @@ import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExp
 import { unsupported } from './diagnostics.js';
 import { renderOptionalAbsentValue, renderOptionalCoalescing, renderOptionalConsoleText, renderOptionalFlattening, renderOptionalMatch, renderOptionalNumericPresent, renderOptionalPresentValue, renderOptionalPrimitiveTruth, renderOptionalProjection, renderOptionalStrictEquality, renderOptionalTypeQueryPresent, renderOptionalUnwrapping, requireOptionalNumericPredicate } from './optional-value-rules.js';
 import { renderCollectionIteration, renderOptionalArrayRead } from './array-value-rules.js';
+import { renderArrayFromMapping } from './array-from-rules.js';
 import { readPrimitiveMethodRenderingRefusal } from './primitive-method-rules.js';
 import { renderRecordProductField, renderRecordType, renderRecordValue } from './record-emission-rules.js';
 import { readUnionTargetRefusal } from './type-syntax-rules.js';
@@ -852,10 +853,11 @@ class RocqEmitter {
     const args = e.op === 'reduce' ? ['ml_accumulator', '(fst ml_pair)', number, 'ml_values'] : ['(fst ml_pair)', number, 'ml_values'];
     const call = callback.type.params.length ? `(ml_callback ${args.slice(0, callback.type.params.length).join(' ')})` : 'ml_callback';
     if (callback.type.params.length > (e.op === 'reduce' ? 2 : 1)) this.floats();
+    if (e.op === 'map') return renderArrayFromMapping('Rocq', this.expr(e.object), this.expr(callback), callback.type.params.length, '');
     const head = `(let ml_values := ${this.expr(e.object)} in let ml_callback := ${this.expr(callback)} in `;
     const pairs = '(List.combine ml_values (List.seq 0 (List.length ml_values)))';
     const lambda = `(fun ml_pair => ${call})`;
-    if (e.op === 'map' || e.op === 'flatMap') return `${head} List.${e.op === 'map' ? 'map' : 'flat_map'} ${lambda} ${pairs})`;
+    if (e.op === 'flatMap') return `${head} List.flat_map ${lambda} ${pairs})`;
     if (e.op === 'some' || e.op === 'every') return `${head} List.${e.op === 'some' ? 'existsb' : 'forallb'} ${lambda} ${pairs})`;
     if (e.op === 'filter') return `${head} List.map (@fst ${this.type(e.object.type.element)} nat) (List.filter ${lambda} ${pairs}))`;
     if (e.op === 'find') return `${head} option_map (@fst ${this.type(e.object.type.element)} nat) (List.find ${lambda} ${pairs}))`;

@@ -5,6 +5,27 @@ use std::collections::HashSet;
 use super::{Expr, LeanEmitter, Node, Result, Type};
 
 impl LeanEmitter<'_> {
+    pub(super) fn array_map_expression(
+        &mut self,
+        object: &Expr,
+        callback: &Expr,
+        depth: usize,
+    ) -> Result<String> {
+        let object = self.expr(object, depth)?;
+        let Type::Function { params, .. } = &callback.ty else {
+            unreachable!("the map checker retained its actual function type");
+        };
+        let count = serde_json::Number::from(params.len())
+            .as_f64()
+            .expect("a checked parameter count has a Number representation");
+        let callback = self.expr(callback, depth)?;
+        Ok(
+            crate::translation::array_from_rules::render_array_from_mapping(
+                "Lean", &object, &callback, count, "",
+            ),
+        )
+    }
+
     /// An array literal, an append, an element read or a length.
     pub(super) fn array_expr(&mut self, e: &Expr, depth: usize) -> Result<String> {
         Ok(match &e.node {

@@ -58,14 +58,41 @@ fn array_construction_matches_javascript_and_preserves_order_nesting_and_effects
 }
 
 #[test]
+fn indexed_slices_and_string_copies_retain_actual_javascript_observations() {
+    for (source, expected) in [
+        ("function copy() { return [1].slice(0).length; }", "1\n"),
+        ("function copy() { return [1].slice(-1, 2).length; }", "1\n"),
+        ("function copy() { return 'a'.slice(); }", "a\n"),
+    ] {
+        let translated = translate_program(source, "JavaScript", "Rust").unwrap();
+        assert_eq!(translated.diagnostic(), None, "{source}");
+        let runnable = format!("{source}\nconsole.log(copy());");
+        let checked = check_program(&parse_javascript(&runnable).unwrap()).unwrap();
+        let emitted = emit_javascript(&checked).unwrap();
+        for executed in [runnable.as_str(), emitted.text.as_str()] {
+            let output = Command::new("node")
+                .args(["--input-type=module", "-e", executed])
+                .output()
+                .unwrap();
+            assert!(
+                output.status.success(),
+                "{source}: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            assert_eq!(
+                String::from_utf8(output.stdout).unwrap(),
+                expected,
+                "{source}"
+            );
+        }
+    }
+}
+
+#[test]
 fn array_construction_rejects_unrepresented_bounds_iterators_and_mapping() {
     for source in [
-        "function copy() { return [1].slice(0).length; }",
-        "function copy() { return [1].slice(-1, 2).length; }",
-        "function copy() { return 'a'.slice(); }",
         "function copy() { return Array.from().length; }",
         "function copy() { return Array.from([1], 2).length; }",
-        "function copy() { return Array.from('café😀').length; }",
         "function copy() { return Array.from(2).length; }",
         "function copy() { return Array.of(1, 'a').length; }",
     ] {

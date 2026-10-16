@@ -341,6 +341,9 @@ impl JavaScriptParser {
         }
         let mut args = self.arguments(&name)?;
         let called = self.to_here(&token);
+        if name == "Array.from" {
+            return Ok(node(SNode::ArrayFrom { args, ty: None }, called));
+        }
         let array_form = crate::translation::frontend_rules::read_array_method_form(&name);
         if array_form == "copy-from" || array_form == "construct" {
             return Self::array_method_expression(&array_form, args, None, called);

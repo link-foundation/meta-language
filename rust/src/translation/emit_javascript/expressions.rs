@@ -154,6 +154,21 @@ impl JavaScriptEmitter<'_> {
                 indent(&self.statements(e)?.join("\n"), 1)
             )),
             Node::Method { object, op, args } => {
+                if op == "map"
+                    && let [Some(callback)] = args.as_slice()
+                {
+                    let object = self.expr(object)?;
+                    let callback = self.expr(callback)?;
+                    return Ok(
+                        crate::translation::array_from_rules::render_array_from_mapping(
+                            "JavaScript",
+                            &object,
+                            &callback,
+                            0.0,
+                            "",
+                        ),
+                    );
+                }
                 let object = self.expr(object)?;
                 let mut values = Vec::with_capacity(args.len());
                 for (index, argument) in args.iter().enumerate() {

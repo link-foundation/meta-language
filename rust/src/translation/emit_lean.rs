@@ -670,7 +670,14 @@ impl LeanEmitter<'_> {
                 )
             }
             Node::Match { scrutinee, cases } => self.match_expr(scrutinee, cases, depth)?,
-            Node::Method { object, op, .. } => {
+            Node::Method { object, op, args } => {
+                if matches!(object.ty, Type::Array { .. }) && op == "map" {
+                    let callback = args
+                        .first()
+                        .and_then(Option::as_ref)
+                        .expect("the checked map has its actual callback");
+                    return self.array_map_expression(object, callback, depth);
+                }
                 return Err(unsupported(
                     &format!(".{op}()"),
                     &super::primitive_method_rules::read_primitive_method_rendering_refusal(

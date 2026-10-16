@@ -179,7 +179,23 @@ impl RocqEmitter<'_> {
                 Ok(format!("(let {name} := {value} in {})", self.expr(body)?))
             }
             Node::Match { scrutinee, cases } => self.match_expr(scrutinee, cases),
-            Node::Method { object, op, .. } => Err(crate::translation::diagnostics::unsupported(&format!(".{op}()"), &crate::translation::primitive_method_rules::read_primitive_method_rendering_refusal("Rocq", object.ty.kind(), op), e.span)),
+            Node::Method { object, op, args } => {
+                if matches!(object.ty, Type::Array { .. }) && op == "map" {
+                    let callback = args.first().and_then(Option::as_ref).expect("the checked map has its actual callback");
+                    let Type::Function { params, .. } = &callback.ty else {
+                        unreachable!("the map checker retained its actual function type");
+                    };
+                    if params.len() > 1 { self.floats(); }
+                    let count = serde_json::Number::from(params.len()).as_f64().expect("a checked parameter count has a Number representation");
+                    let object = self.expr(object)?;
+                    let callback = self.expr(callback)?;
+                    Ok(crate::translation::array_from_rules::render_array_from_mapping(
+                        "Rocq", &object, &callback, count, "",
+                    ))
+                } else {
+                    Err(crate::translation::diagnostics::unsupported(&format!(".{op}()"), &crate::translation::primitive_method_rules::read_primitive_method_rendering_refusal("Rocq", object.ty.kind(), op), e.span))
+                }
+            }
             Node::StringMap { op, .. } => Err(crate::translation::diagnostics::unsupported(
                 &format!(".{op}()"),
                 &crate::translation::frontend_rules::read_string_map_refusal("Rocq", op),

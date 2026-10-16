@@ -36,6 +36,31 @@ impl RustEmitter<'_> {
             unreachable!("primitive method dispatch")
         };
         let receiver = object.ty.kind();
+        if receiver == "array" && op == "map" {
+            let callback = args
+                .first()
+                .and_then(Option::as_ref)
+                .expect("the checked map has its actual callback");
+            let Type::Function { params, .. } = &callback.ty else {
+                unreachable!("the map checker retained its actual function type");
+            };
+            self.temporaries += 1;
+            let suffix = self.temporaries.to_string();
+            let parameter_count = serde_json::Number::from(params.len())
+                .as_f64()
+                .expect("a checked parameter count has a Number representation");
+            let object = self.expr(object)?;
+            let callback = self.expr(callback)?;
+            return Ok(
+                crate::translation::array_from_rules::render_array_from_mapping(
+                    "Rust",
+                    &object,
+                    &callback,
+                    parameter_count,
+                    &suffix,
+                ),
+            );
+        }
         if receiver == "string" {
             let object_text = self.receiver(object)?;
             let mut values = Vec::with_capacity(args.len());
