@@ -232,7 +232,13 @@ test('the merge forwards explicit operational premises and retains unknown conce
   const options = { conceptRecords: fixture.records, globalEquivalences: fixture.equivalences };
   const grounded = mergeGrammars(list, { ...options, formalDefinitions: fixture.formalDefinitions });
   assert.equal(grounded.status, 'complete');
-  assert.deepEqual(grounded.globalConceptSpace, fixture.expectedSpace);
+  const expected = structuredClone(fixture.expectedSpace);
+  for (const source of expected.sources) {
+    const original = fixture.sources.find(entry => entry.id === source.id);
+    assert.ok(original);
+    if (original.grammar.sourceFormat != null) source.sourceFormat = original.grammar.sourceFormat;
+  }
+  assert.deepEqual(grounded.globalConceptSpace, expected);
   const unknown = mergeGrammars(list, options);
   assert.equal(unknown.status, 'incomplete');
   assert.equal(unknown.globalConceptSpace.proofs.length, 0);

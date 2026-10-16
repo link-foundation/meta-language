@@ -44,9 +44,18 @@ test('closed global correspondence retains lexical competition, channel, modes a
 });
 
 test('lexical context reload preserves complete linked declarations and original global fixtures', () => {
-  // The preexisting fixture is checked unchanged, including its exact context
-  // schema. The new optional declaration must not add empty fields to it.
-  assert.deepEqual(createGlobalConceptSpace(inputs(), options), fixture.expectedSpace);
+  // New spaces retain only the source formats recorded by the original inputs;
+  // genuinely format-absent legacy archives retain their exact space and bytes.
+  const expected = structuredClone(fixture.expectedSpace);
+  for (const source of expected.sources) {
+    const original = fixture.sources.find(entry => entry.id === source.id);
+    assert.ok(original);
+    if (original.grammar.sourceFormat != null) source.sourceFormat = original.grammar.sourceFormat;
+  }
+  assert.deepEqual(createGlobalConceptSpace(inputs(), options), expected);
+  const legacy = readGlobalConceptSpaceLinks(fixture.expectedLinks, { records: fixture.records });
+  assert.deepEqual(legacy, fixture.expectedSpace);
+  assert.equal(globalConceptSpaceToLinks(legacy), fixture.expectedLinks);
   const space = createGlobalConceptSpace(scoped(), options);
   const serialized = globalConceptSpaceToLinks(space);
   assert.match(serialized, /lexicalRule/u);

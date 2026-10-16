@@ -244,7 +244,13 @@ test('the pipeline retains all serialized source origins and forwards only expli
   const list = fixture.sources.map(({ grammar, ...source }) => ({ ...source, grammarLinks: renderGrammarLinks(deserializeGrammar(grammar)) }));
   const options = { records: fixture.records, equivalences: fixture.equivalences };
   const grounded = createPipelineGlobalConceptSpace(list, { ...options, formalDefinitions: fixture.formalDefinitions });
-  assert.deepEqual(grounded, fixture.expectedSpace);
+  const expected = structuredClone(fixture.expectedSpace);
+  for (const source of expected.sources) {
+    const original = fixture.sources.find(entry => entry.id === source.id);
+    assert.ok(original);
+    if (original.grammar.sourceFormat != null) source.sourceFormat = original.grammar.sourceFormat;
+  }
+  assert.deepEqual(grounded, expected);
   const unknown = createPipelineGlobalConceptSpace(list, options);
   assert.equal(unknown.proofs.length, 0);
   assert.deepEqual(unknown.formalDefinitions, {});
