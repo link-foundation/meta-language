@@ -437,7 +437,20 @@ fn the_merge_forwards_formal_operational_premises_and_retains_unknown_origins() 
     };
     let grounded = merge_grammars(&list, &options).expect("the formally grounded merge runs");
     assert_eq!(grounded.status(), "complete");
-    assert_eq!(grounded.global_concept_space, fixture["expectedSpace"]);
+    let mut expected = fixture["expectedSpace"].clone();
+    for source in expected["sources"]
+        .as_array_mut()
+        .expect("archived sources")
+    {
+        let original = list
+            .iter()
+            .find(|original| source["id"] == original.id)
+            .expect("original input source");
+        if let Some(format) = original.grammar.source_format() {
+            source["sourceFormat"] = serde_json::json!(format.as_str());
+        }
+    }
+    assert_eq!(grounded.global_concept_space, expected);
     options.formal_definitions = None;
     let unknown = merge_grammars(&list, &options).expect("unknown concepts remain copied");
     assert_eq!(unknown.status(), "incomplete");

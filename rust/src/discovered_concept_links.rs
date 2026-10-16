@@ -7,13 +7,16 @@ use std::sync::Arc;
 
 use serde_json::{Map, Value, json};
 
-use crate::discovered_concept_rules::accept_discovered_concept_shape;
+use crate::discovered_concept_rules::{
+    accept_discovered_concept_shape, accept_legacy_discovered_concept_format,
+};
 use crate::formal_concept_definition::{FormalConceptArchive, read_formal_concept_definition};
 use crate::global_concept_space::{
     GlobalConceptOptions, GlobalConceptSource, create_global_concept_space,
 };
 use crate::grammar::{GrammarKind, GrammarSourceName, serialize_grammar};
 use crate::structured_data_links::{decode_structured_data_links, encode_structured_data_links};
+use crate::translation::grammar_selection_rules::read_grammar_source_default_matching;
 use crate::{Link, LinkFlags, LinkId, LinkMetadata, LinkNetwork, LinkType};
 
 const LANGUAGE: &str = "meta-language discovered concepts";
@@ -94,6 +97,50 @@ fn bare_space(space: &Value) -> Result<Value, String> {
         .clone();
     result.remove("formalDefinitions");
     Ok(Value::Object(result))
+}
+
+fn accept_discovered_concept_certificate(
+    space: &Value,
+    certificate: &Value,
+    sources: &[GlobalConceptSource],
+) -> Result<bool, String> {
+    let mut current = bare_space(space)?;
+    if current == *certificate {
+        return Ok(true);
+    }
+    let Some(origins) = certificate["sources"].as_array() else {
+        return Ok(false);
+    };
+    if origins
+        .iter()
+        .any(|source| !source.is_object() || source.get("sourceFormat").is_some())
+    {
+        return Ok(false);
+    }
+    if sources.iter().any(|source| {
+        let format = source
+            .grammar
+            .source_format()
+            .map_or("", |format| format.as_str());
+        !accept_legacy_discovered_concept_format(
+            source.grammar.declarations().matching.is_some(),
+            &read_grammar_source_default_matching(format),
+        )
+    }) {
+        return Ok(false);
+    }
+    // Project only the newly exposed format field for wholly legacy inputs;
+    // all identities, contexts, recursive definitions and proof fields stay exact.
+    for source in current["sources"]
+        .as_array_mut()
+        .ok_or_else(|| fail("invalid global space"))?
+    {
+        source
+            .as_object_mut()
+            .ok_or_else(|| fail("invalid global space"))?
+            .remove("sourceFormat");
+    }
+    Ok(current == *certificate)
 }
 
 fn validate_network(network: &LinkNetwork) -> Result<(), String> {
@@ -650,7 +697,7 @@ pub fn read_discovered_concept_links(
             .collect::<Result<Vec<_>, String>>()?,
     };
     let space = create_global_concept_space(&sources, &settings)?;
-    if bare_space(&space)? != value["space"] {
+    if !accept_discovered_concept_certificate(&space, &value["space"], &sources)? {
         return Err(fail("stale or counterfeit global concept certificate"));
     }
     let mut identities = BTreeMap::new();
