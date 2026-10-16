@@ -45,6 +45,15 @@ test('family branch syntax preserves exact bodies and every Boolean branch obser
   }
   assert.equal(mergeFamilyLibraryIdenticalBranches(after), after);
   assert.equal(flattenFamilyLibraryElseIf(after), after);
+  const indented = 'pub fn decide(first:bool,second:bool,third:bool)->bool{if first{\n        third\n    }else if second{\n\tthird\n}else{!third}}';
+  const merged = mergeFamilyLibraryIdenticalBranches(indented);
+  assert.notEqual(merged, indented, 'indentation alone cannot distinguish identical complete branch tokens');
+  assert.equal((merged.match(/\bif\b/gu) ?? []).length, 1);
+  const aligned = readDecision(merged);
+  for (const first of [false, true]) for (const second of [false, true]) for (const third of [false, true]) {
+    assert.equal(aligned(first, second, third), original(first, second, third));
+  }
+  assert.equal(mergeFamilyLibraryIdenticalBranches(merged), merged);
 });
 
 test('family identical-body merge keeps callback evaluation and opaque syntax intact', () => {
@@ -72,10 +81,22 @@ test('family identical-body merge keeps callback evaluation and opaque syntax in
     'pub fn decide(first:bool,second:bool)->bool{if first{/*first*/true}else if second{/*second*/true}else{false}}',
     'pub fn decide(first:bool,second:bool)->bool{if first{/*same*/true}else if second{/*same*/true}else{false}}',
     'pub fn decide(first:bool,second:bool)->bool{if first{true}/*keep*/else if second{true}else{false}}',
+    'pub fn decide(first:bool,second:bool)->bool{if first{true}else if second{/*only second*/true}else{false}}',
+    'pub fn decide(first:bool,second:bool)->String{if first{String::from("same")}else if second{String::from(r"same")}else{String::new()}}',
+    'pub fn location(first:bool,second:bool)->u32{if first{\nline!()\n}else if second{\n\nline!()\n}else{0}}',
+    'pub fn location(first:bool,second:bool)->u32{if first{column!()}else if second{   column!()}else{0}}',
+    'pub fn custom(first:bool,second:bool)->bool{if first{\nuser_macro!()\n}else if second{\n\nuser_macro!()\n}else{false}}',
+    'pub fn nested(first:bool,second:bool)->Vec<u32>{if first{vec![line!()]}else if second{ vec![line!()] }else{Vec::new()}}',
+    'pub fn qualified(first:bool,second:bool)->Vec<u32>{if first{custom::vec![1]}else if second{ custom::vec![1] }else{Vec::new()}}',
   ]) {
     assert.equal(flattenFamilyLibraryElseIf(source), source);
     assert.equal(mergeFamilyLibraryIdenticalBranches(source), source);
   }
+  const vectors = 'pub fn vectors(first:bool,second:bool)->Vec<f64>{if first{vec![-1f64]}else if second{\n    vec![-1f64]\n}else{Vec::new()}}';
+  assert.notEqual(mergeFamilyLibraryIdenticalBranches(vectors), vectors, 'the standard vec body retains every primitive element');
+  const hidden = 'macro_rules! vec{($($tokens:tt)*)=>{Vec::new()};}\n' + vectors;
+  assert.equal(mergeFamilyLibraryIdenticalBranches(hidden), hidden, 'a local vec macro definition cannot supply standard macro provenance');
+  assert.equal(mergeFamilyLibraryIdenticalBranches(vectors, {context: hidden}), vectors, 'a sliced function retains its actual enclosing macro scope proof');
 });
 
 test('family const qualification requires only actual Boolean parameters and primitive syntax', () => {
@@ -190,6 +211,29 @@ test('family whole inequality inversion preserves unordered Numbers and both ori
   }
   const opaque = 'pub fn decide(first:Custom)->bool{if unrepresented!(first)!=first{true}else{false}}';
   assert.equal(bindFamilyLibraryInequalityConditions(opaque), opaque);
+  const format = 'pub fn decide(kind:&str)->String{format!("condition:{}",if kind!="unit"{/*present*/String::from("true")}else{/*absent*/String::from("false")})}';
+  const formatted = invertFamilyLibraryInequalityBranches(format);
+  assert.notEqual(formatted, format, 'standard format arguments retain actual Rust conditional expressions');
+  assert.match(formatted, /kind=="unit"/u);
+  for (const original of ['"condition:{}"', '/*present*/', '/*absent*/']) assert.equal(formatted.split(original).length, 2);
+  const readOriginal = readDecision(format), readFormatted = readDecision(formatted);
+  for (const kind of ['unit', 'bool', 'string', '']) assert.equal(readFormatted(kind), readOriginal(kind));
+  const matched = 'pub enum State{Next}pub fn decide(kind:&str,state:State)->String{match state{State::Next=>format!("{}",if kind!="unit"{String::from("true")}else{String::from("false")})}}';
+  assert.equal(invertFamilyLibraryInequalityBranches(matched), matched, 'an unrelated match keeps the original conservative type and shadowing boundary');
+  const matchBound = bindFamilyLibraryInequalityConditions(matched);
+  assert.notEqual(matchBound, matched, 'binding the actual ne result needs no equality or pattern ownership assumption');
+  assert.equal(matchBound.split('kind!="unit"').length, 2);
+  assert.match(matchBound, /if ml_library_inequality_1/u);
+  assert.equal(bindFamilyLibraryInequalityConditions(matchBound), matchBound);
+  for (const source of [
+    'pub fn decide(kind:&str)->String{custom::format!("{}",if kind!="unit"{String::new()}else{String::from("x")})}',
+    'pub fn decide(kind:&str)->String{macro_rules! format{($($tokens:tt)*)=>{String::new()};}format!("{}",if kind!="unit"{String::new()}else{String::from("x")})}',
+    'pub fn decide(kind:&str)->String{format!("{}",unknown!(if kind!="unit"{String::new()}else{String::from("x")}))}',
+    'pub mod std{}pub fn decide(kind:&str)->String{std::format!("{}",if kind!="unit"{String::new()}else{String::from("x")})}',
+  ]) {
+    assert.equal(invertFamilyLibraryInequalityBranches(source), source);
+    assert.equal(bindFamilyLibraryInequalityConditions(source), source);
+  }
 });
 
 test('family whole unary conjunction style retains short circuit order and unordered comparisons', () => {
@@ -226,6 +270,26 @@ test('family whole unary conjunction style retains short circuit order and unord
   const projected = simplifyFamilyLibraryNegatedConjunctions(vector);
   assert.notEqual(projected, vector);
   assert.equal(projected.split('Text::from_units(vec![48,49])').length, 2);
+  const inverted = invertFamilyLibraryInequalityBranches(after);
+  assert.notEqual(inverted, after, 'the complete logical operand proves primitive bool without assuming custom Not behavior');
+  assert.doesNotMatch(inverted, /if\s*!\(/u);
+  for (const first of [false, true]) for (const second of [false, true]) {
+    const original = read(before), transformed = read(inverted);
+    assert.equal(transformed.decide(first, second), original.decide(first, second));
+    assert.deepEqual(transformed.events, original.events);
+  }
+  const unordered = 'pub fn decide(first:f64,second:f64)->bool{if !((first<second)||(first>second)){true}else{false}}';
+  const readUnordered = readDecision(unordered), readInverted = readDecision(invertFamilyLibraryInequalityBranches(unordered));
+  for (const first of [NaN, -Infinity, -0, 0, 1, Infinity]) for (const second of [NaN, -Infinity, -0, 0, 1, Infinity]) {
+    assert.equal(readInverted(first, second), readUnordered(first, second));
+  }
+  for (const source of [
+    'pub fn decide(first:Custom)->bool{if !first{true}else{false}}',
+    'pub fn decide(first:Custom,second:Custom)->bool{if !(first&second){true}else{false}}',
+    'pub fn decide(first:Custom,second:Custom)->bool{if !(first|second){true}else{false}}',
+    'pub fn decide(first:bool,second:bool)->bool{if !first||second{true}else{false}}',
+  ]) assert.equal(invertFamilyLibraryInequalityBranches(source), source);
+  assert.equal(invertFamilyLibraryInequalityBranches(inverted), inverted);
 });
 
 test('family numeric truthiness lifts the complete checked condition once with a fresh scoped binding', () => {

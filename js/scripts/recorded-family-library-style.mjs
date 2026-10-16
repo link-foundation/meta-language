@@ -34,9 +34,9 @@ export function applyRecordedFamilyLibraryStyles(document, source, {
   corrected = liftFamilyLibraryTruthinessConditions(corrected);
   corrected = flattenFamilyLibraryElseIf(corrected);
   corrected = mergeFamilyLibraryIdenticalBranches(corrected);
+  corrected = simplifyFamilyLibraryNegatedConjunctions(corrected);
   corrected = invertFamilyLibraryInequalityBranches(corrected);
   corrected = bindFamilyLibraryInequalityConditions(corrected);
-  corrected = simplifyFamilyLibraryNegatedConjunctions(corrected);
   // These families retain their original module attributes. Apply mechanical
   // function styles without adding the older common Number-model allowances.
   const header = /^#!\[allow\([\s\S]*?\)\]/mu.exec(corrected);

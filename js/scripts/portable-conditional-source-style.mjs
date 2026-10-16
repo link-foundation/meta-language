@@ -16,16 +16,54 @@ function readFamilyLibraryTokens(source) {
     }
   }
   assert.equal(stack.length, 0, 'a library style retains its closing delimiters');
-  const opaque = new Set();
+  const opaque = new Set(), frames = [];
   for (let index = 0; index < tokens.length; index += 1) {
     const macro = tokens[index].kind === 'macro';
     const attribute = tokens[index].value === '#';
     const namedMacro = macro && tokens[index].value === 'macro_rules' && tokens[index + 1]?.kind === 'identifier';
     const open = index + (namedMacro || attribute && tokens[index + 1]?.value === '!' ? 2 : 1);
     if (!(macro || attribute) || !matching.has(open)) continue;
+    frames.push({index, open, close: matching.get(open), macro: macro ? tokens[index].value : undefined});
     for (let inner = open; inner <= matching.get(open); inner += 1) opaque.add(inner);
   }
-  return {tokens, matching, opaque};
+  return {tokens, matching, opaque, frames};
+}
+
+function acceptFamilyLibraryStandardMacros(complete) {
+  const knownMacros = new Set(['format', 'vec', 'panic', 'assert', 'matches']);
+  if (complete.tokens.some((token, index) => token.kind === 'identifier' && ['use', 'extern', 'macro'].includes(token.value)
+    || token.kind === 'identifier' && ['mod', 'struct', 'enum', 'type', 'trait'].includes(token.value)
+      && complete.tokens[index + 1]?.value === 'std'
+    || token.kind === 'macro' && !knownMacros.has(token.value))) return false;
+  if (complete.frames.some(frame => frame.macro === undefined
+    && !['allow', 'expect', 'must_use', 'derive'].includes(complete.tokens[frame.open + 1]?.value))) return false;
+  if (complete.frames.some(frame => frame.macro === undefined && complete.tokens[frame.open + 1]?.value === 'derive'
+    && complete.tokens.slice(frame.open + 2, frame.close).some(token => token.kind === 'identifier'
+      && !['Clone', 'Copy', 'Debug', 'Default', 'PartialEq', 'Eq', 'PartialOrd', 'Ord'].includes(token.value)))) return false;
+  return true;
+}
+
+// Standard format arguments are actual Rust expressions, while the literal,
+// nested unknown macros and every other macro payload remain opaque data.
+function readFamilyLibraryConditionTokens(source, context = source) {
+  const parsed = readFamilyLibraryTokens(source);
+  const complete = source === context ? parsed : readFamilyLibraryTokens(context);
+  if (!acceptFamilyLibraryStandardMacros(complete)) return parsed;
+  const {tokens, frames} = parsed, argumentsFrom = new Map();
+  for (const frame of frames) {
+    if (frame.macro !== 'format' || tokens[frame.open + 1]?.kind !== 'string'
+      || tokens[frame.open + 2]?.value !== ',') continue;
+    if (tokens[frame.index - 1]?.value === '::' && !(tokens[frame.index - 2]?.value === 'std'
+      && tokens[frame.index - 3]?.value !== '::')) continue;
+    argumentsFrom.set(frame, frame.open + 3);
+  }
+  if (!argumentsFrom.size) return parsed;
+  const opaque = new Set();
+  for (const frame of frames) for (let index = frame.open; index <= frame.close; index += 1) {
+    const from = argumentsFrom.get(frame);
+    if (from === undefined || index < from || index === frame.close) opaque.add(index);
+  }
+  return {...parsed, opaque};
 }
 
 function readFamilyLibraryIf(tokens, matching, start) {
@@ -237,23 +275,50 @@ function readFamilyLibraryInequalityCondition(tokens, matching, opaque, index) {
   return {node, start, end, operation: operations[0]};
 }
 
-/** Swap only a source-proved primitive !=, retaining both original arms. */
+function readFamilyLibraryBooleanNegationCondition(tokens, matching, opaque, index) {
+  if (opaque.has(index) || tokens[index]?.kind !== 'identifier' || tokens[index].value !== 'if') return null;
+  const node = readFamilyLibraryIf(tokens, matching, index);
+  if (!node || tokens[node.close + 1]?.value !== 'else') return null;
+  let start = index + 1, end = node.open - 1;
+  while (tokens[start]?.value === '(' && matching.get(start) === end) { start += 1; end -= 1; }
+  if (tokens[start]?.kind !== 'punct' || tokens[start].value !== '!') return null;
+  const operation = start;
+  const condition = tokens.slice(start, end + 1);
+  if (condition.some(token => token.kind === 'macro' && token.value !== 'vec'
+    || token.kind !== 'string' && ['let', 'unsafe', '{', '}', '?', "'"].includes(token.value))) return null;
+  if (!acceptRustWholeConditionNegation(condition.map(token => token.raw).join(' '))) return null;
+  start += 1;
+  while (tokens[start]?.value === '(' && matching.get(start) === end) { start += 1; end -= 1; }
+  let logical = false;
+  for (let at = start; at <= end; at += 1) {
+    if (matching.get(at) > at) { at = matching.get(at); continue; }
+    if (['&&', '||'].includes(tokens[at].value)) logical = true;
+    else if (tokens[at].kind === 'punct' && !['!', '.', '::'].includes(tokens[at].value)) return null;
+  }
+  // Rust's short-circuit operators have primitive bool result and cannot be
+  // overloaded. Plain custom Not, bitwise operators and comparisons supply
+  // no additional ownership or operation assumption here.
+  return logical ? {node, operation} : null;
+}
+
+/** Swap proved primitive inequality or whole Boolean negation and both arms. */
 export function invertFamilyLibraryInequalityBranches(source, {context = source} = {}) {
   for (let pass = 0; pass < 100; pass += 1) {
-    const {tokens, matching, opaque} = readFamilyLibraryTokens(source);
+    const {tokens, matching, opaque} = readFamilyLibraryConditionTokens(source, context);
     const equivalent = readFamilyLibraryEqualityProof(source, tokens, matching, context);
     let replacement;
     for (let index = 0; index < tokens.length; index += 1) {
-      const candidate = readFamilyLibraryInequalityCondition(tokens, matching, opaque, index);
+      const negation = readFamilyLibraryBooleanNegationCondition(tokens, matching, opaque, index);
+      const candidate = negation ?? readFamilyLibraryInequalityCondition(tokens, matching, opaque, index);
       if (!candidate) continue;
       const {node, start, end} = candidate;
       // Generic PartialEq implementations may override ne independently of eq.
       // The checked primitive functions have no type-parameter declaration.
       let owner = index;
       while (owner >= 0 && !(tokens[owner].kind === 'identifier' && tokens[owner].value === 'fn')) owner -= 1;
-      if (owner < 0 || !equivalent(start, candidate.operation, end + 1, owner)) continue;
+      if (!negation && (owner < 0 || !equivalent(start, candidate.operation, end + 1, owner))) continue;
       const operation = tokens[candidate.operation];
-      const condition = source.slice(tokens[index].end, operation.start) + '==' + source.slice(operation.end, tokens[node.open].start);
+      const condition = source.slice(tokens[index].end, operation.start) + (negation ? '' : '==') + source.slice(operation.end, tokens[node.open].start);
       const originalThen = source.slice(tokens[node.open].start, tokens[node.close].end);
       const separator = source.slice(tokens[node.close].end, tokens[node.close + 1].end);
       const alternate = source.slice(tokens[node.close + 1].end, tokens[node.end].end);
@@ -269,9 +334,9 @@ export function invertFamilyLibraryInequalityBranches(source, {context = source}
 }
 
 /** Bind an unproved comparison once; its actual ne operation never changes. */
-export function bindFamilyLibraryInequalityConditions(source) {
+export function bindFamilyLibraryInequalityConditions(source, {context = source} = {}) {
   for (let pass = 0; pass < 100; pass += 1) {
-    const {tokens, matching, opaque} = readFamilyLibraryTokens(source);
+    const {tokens, matching, opaque} = readFamilyLibraryConditionTokens(source, context);
     const used = new Set(tokens.filter(token => token.kind === 'identifier').map(token => token.value));
     let replacement;
     for (let index = tokens.length - 1; index >= 0; index -= 1) {
@@ -379,7 +444,8 @@ export function flattenFamilyLibraryElseIf(source) {
 }
 
 /** Merge exact sibling bodies; || retains the original conditional order. */
-export function mergeFamilyLibraryIdenticalBranches(source) {
+export function mergeFamilyLibraryIdenticalBranches(source, {context = source} = {}) {
+  const standardMacros = acceptFamilyLibraryStandardMacros(readFamilyLibraryTokens(context));
   for (let pass = 0; pass < 100; pass += 1) {
     const {tokens, matching, opaque} = readFamilyLibraryTokens(source);
     let replacement;
@@ -389,23 +455,36 @@ export function mergeFamilyLibraryIdenticalBranches(source) {
       if (!first || tokens[first.close + 1]?.value !== 'else') continue;
       const second = readFamilyLibraryIf(tokens, matching, first.close + 2);
       if (!second) continue;
-      const firstBody = source.slice(tokens[first.open].end, tokens[first.close].start);
-      const secondBody = source.slice(tokens[second.open].end, tokens[second.close].start);
-      if (firstBody !== secondBody) continue;
+      const firstBody = tokens.slice(first.open + 1, first.close);
+      const secondBody = tokens.slice(second.open + 1, second.close);
+      if (firstBody.length !== secondBody.length || firstBody.some((token, index) => token.kind !== secondBody[index].kind
+        || source.slice(token.start, token.end) !== source.slice(secondBody[index].start, secondBody[index].end))) continue;
       const gap = source.slice(tokens[first.close].end, tokens[first.close + 1].start)
         + source.slice(tokens[first.close + 1].end, tokens[second.start].start);
       if (gap.trim()) continue;
       // Merging must not discard either occurrence of an original comment.
-      let prior = tokens[first.open].end, commented = false;
-      for (let at = first.open + 1; at <= first.close; at += 1) {
-        if (source.slice(prior, tokens[at].start).trim()) commented = true;
-        prior = tokens[at].end;
+      let commented = false;
+      for (const body of [first, second]) {
+        let prior = tokens[body.open].end;
+        for (let at = body.open + 1; at <= body.close; at += 1) {
+          if (source.slice(prior, tokens[at].start).trim()) commented = true;
+          prior = tokens[at].end;
+        }
       }
       if (commented) continue;
       // A condition-local binding cannot be read by a merged sibling body.
       const firstCondition = tokens.slice(index + 1, first.open);
       const secondCondition = tokens.slice(second.start + 1, second.open);
-      if ([...firstCondition, ...secondCondition].some(token => ['let', '{', '}'].includes(token.value))) continue;
+      if ([...firstCondition, ...secondCondition].some(token => token.kind !== 'string' && ['let', '{', '}'].includes(token.value))) continue;
+      // A copied macro may observe its original span or expand with distinct
+      // hygiene. Only an authenticated standard vec invocation is reusable;
+      // nested unknown macros and qualified custom vec names remain refused.
+      if (tokens.slice(index + 1, second.close).some((token, offset) => {
+        if (token.kind !== 'macro') return false;
+        const at = index + 1 + offset;
+        return !standardMacros || token.value !== 'vec' || tokens[at - 1]?.value === '::'
+          && !(tokens[at - 2]?.value === 'std' && tokens[at - 3]?.value !== '::');
+      })) continue;
       const left = source.slice(tokens[index].end, tokens[first.open].start);
       const right = source.slice(tokens[second.start].end, tokens[second.open].start);
       replacement = {start: tokens[index].start, end: tokens[second.open].end,
