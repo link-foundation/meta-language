@@ -93,7 +93,11 @@ test('the entire JavaScript frontend decision module remains checked scalar self
   const raw = header + '\n\n' + emitted.definitions.join('\n\n').replace(/^pub fn /gmu, '#[must_use]\npub fn ');
   const styles = DecoratorSet.fromLino(readFileSync(new URL('../../parity/self-translation/javascript-surface-rules-decorators.lino', import.meta.url), 'utf8'));
   const styled = styles.decorate('emitter', { format: 'Rust', source: raw }).source;
-  assert.deepEqual([...styled.matchAll(/^pub fn ([A-Za-z_][A-Za-z_0-9]*)\b/gmu)].map(match => match[1]),
-    [...raw.matchAll(/^pub fn ([A-Za-z_][A-Za-z_0-9]*)\b/gmu)].map(match => match[1]));
+  // Recorded Boolean source styles may qualify a function const while keeping
+  // its declaration, source behavior and position in the complete module.
+  const expectedNames = [...raw.matchAll(/^pub (?:const )?fn ([A-Za-z_][A-Za-z_0-9]*)\b/gmu)].map(match => match[1]);
+  assert.equal(expectedNames.length, surface.items.length);
+  assert.deepEqual([...styled.matchAll(/^pub (?:const )?fn ([A-Za-z_][A-Za-z_0-9]*)\b/gmu)].map(match => match[1]), expectedNames);
+  assert.match(styled, /^pub const fn accept_java_script_value_switch\(/mu);
   assert.match(styled, /pub fn read_java_script_method_receiver_kind\(operation: &str\)/u);
 });
