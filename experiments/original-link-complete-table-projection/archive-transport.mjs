@@ -41,9 +41,9 @@ export function reloadCanonicalArchive(source, {createParser = () => new StreamP
 }
 
 /** Only encoded archives escape this scope; the original CST is not retained. */
-export function createCompleteRustSourceArchives(source, {parseSource, encodeBinary, onPhase = () => {}, onNativeRun}) {
+export function createCompleteRustSourceArchives(source, {parseSource, encodeBinary, onPhase = () => {}, onNativeRun, nativeRunCellInterval = 65536}) {
   onPhase('parse complete Rust source');
-  const network = observeCompleteSourceParse(source, parseSource, onNativeRun);
+  const network = observeCompleteSourceParse(source, parseSource, onNativeRun, nativeRunCellInterval);
   const recordLimit = Math.max(1, network.len());
   onPhase('encode complete binary archive', recordLimit);
   // This authenticated, already materialized graph selects an exact record
@@ -56,22 +56,37 @@ export function createCompleteRustSourceArchives(source, {parseSource, encodeBin
 
 // CI-only observation wraps the actual default executor without replacing its
 // result or limits. Only scalar diagnostics leave the invocation.
-function observeCompleteSourceParse(source, parseSource, onNativeRun) {
+function observeCompleteSourceParse(source, parseSource, onNativeRun, nativeRunCellInterval) {
   if (onNativeRun === undefined) return parseSource(source);
+  if (!Number.isSafeInteger(nativeRunCellInterval) || nativeRunCellInterval < 1) throw new TypeError('native source diagnostics need a positive integer cell interval');
   const original = Executor.prototype.run;
+  const originalRetain = Executor.prototype.retain;
+  const contexts = [];
   let run = 0;
+  Executor.prototype.retain = function(...args) {
+    const result = originalRetain.apply(this,args);
+    const current = contexts.at(-1);
+    if (current?.executor === this && this.budget.memory.cells >= current.next) {
+      current.next = this.budget.memory.cells + nativeRunCellInterval;
+      onNativeRun(current.event('progress'));
+    }
+    return result;
+  };
   Executor.prototype.run = function(...args) {
     const sequence = ++run;
     const event = phase => ({phase, sequence, inputBytes:this.end-this.begin,
       memoCells:this.budget.memory.cells, storedRules:this.memo.size,
       heap:process.memoryUsage().heapUsed});
-    onNativeRun(event('begin'));
-    const result = original.apply(this,args);
-    onNativeRun({...event('end'),accepted:result.ok});
-    return result;
+    contexts.push({executor:this,next:this.budget.memory.cells+nativeRunCellInterval,event});
+    try {
+      onNativeRun(event('begin'));
+      const result = original.apply(this,args);
+      onNativeRun({...event('end'),accepted:result.ok});
+      return result;
+    } finally {contexts.pop();}
   };
   try {return parseSource(source);}
-  finally {Executor.prototype.run = original;}
+  finally {Executor.prototype.run = original;Executor.prototype.retain = originalRetain;}
 }
 
 /** Each reconstructed graph expires before the next complete replay begins. */

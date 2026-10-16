@@ -140,3 +140,26 @@ test('valid generated source archives refuse failed or recovered parse graphs',a
     assert.throws(()=>requireSuccessfulSourceArchive(recovered),/recovered or failed parse/);
   }
 });
+
+test('native source progress diagnostics preserve archives and restore both executor methods',async()=>{
+  const {createCompleteRustSourceArchives}=await import('../../experiments/original-link-complete-table-projection/archive-transport.mjs');
+  const {LinkNetwork}=await import('../src/network.js');
+  const {encodeLinkNetworkBinary}=await import('../src/link-network-binary.js');
+  const original=Executor.prototype.run,originalRetain=Executor.prototype.retain;
+  const source='fn f(){}',events=[];
+  const options={parseSource:source=>LinkNetwork.parse(source,'Rust'),encodeBinary:encodeLinkNetworkBinary};
+  const baseline=createCompleteRustSourceArchives(source,options);
+  const observed=createCompleteRustSourceArchives(source,{...options,nativeRunCellInterval:16,onNativeRun:event=>events.push(event)});
+  assert.deepEqual(observed,baseline,'all canonical text, binary bytes and record limits remain identical');
+  assert.equal(Executor.prototype.run,original);assert.equal(Executor.prototype.retain,originalRetain);
+  assert.equal(events[0].phase,'begin');assert.equal(events.at(-1).phase,'end');
+  assert.ok(events.some(event=>event.phase==='progress'));
+  for(const event of events){
+    for(const value of Object.values(event))assert.ok(['string','number','boolean'].includes(typeof value));
+    assert.ok(Number.isSafeInteger(event.memoCells));assert.ok(Number.isSafeInteger(event.storedRules));
+  }
+  for(const value of [0,-1,1.5,NaN,Infinity])assert.throws(()=>createCompleteRustSourceArchives(source,{...options,nativeRunCellInterval:value,onNativeRun:()=>{}}),/positive integer cell interval/);
+  assert.throws(()=>createCompleteRustSourceArchives(source,{...options,nativeRunCellInterval:16,onNativeRun:event=>{if(event.phase==='progress')throw new Error('progress observer control');}}),/progress observer control/);
+  assert.equal(Executor.prototype.run,original);assert.equal(Executor.prototype.retain,originalRetain);
+  assert.deepEqual(createCompleteRustSourceArchives(source,options),baseline);
+});

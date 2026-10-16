@@ -2118,6 +2118,10 @@ output preservation; full-source heap fit still requires CI. CI-authoring source
 archives can additionally observe each actual native executor run through scalar
 diagnostics. The observer restores the original executor even on failure and
 never substitutes a parse result or changes its budgets.
+Progress diagnostics also report actual charged cells, stored rules and heap
+use at bounded cell intervals, so an abort before a run returns still leaves
+its preceding measurements. Both executor methods are restored on observer
+failure; enabling diagnostics preserves the exact encoded archives.
 After a JavaScript rule call finishes, its memo cell keeps only the exact result
 array and live keyword context. Rule identities, call positions, recursion seeds
 and temporary lexer state belong to the active call and leave the memo when it
