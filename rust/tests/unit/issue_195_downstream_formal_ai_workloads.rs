@@ -794,6 +794,11 @@ fn the_ci_workload_report_holds_every_assertion_for_the_patched_crate() {
     let report = read_json(&path);
     assert_eq!(report["requirementId"], REQUIREMENT_ID);
     assert_eq!(report["fixture"], FIXTURE);
+    assert_eq!(
+        report["crate"]["counts"]["skipped"].as_u64(),
+        Some(0),
+        "every inventoried workload, including ignored round trips, must execute"
+    );
     let validation = validate(&report, &fixture(), Runtime::Rust);
     assert!(
         validation.problems.values().all(Vec::is_empty),

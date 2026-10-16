@@ -247,6 +247,7 @@ use meta_language::read_source_text_units as _;
 use meta_language::read_structured_data_lino as _;
 use meta_language::read_structured_data_records as _;
 use meta_language::read_translation_provenance as _;
+use meta_language::read_typed_program_binding_identities as _;
 use meta_language::reconstruct_grammar as _;
 use meta_language::rename_grammar_rule as _;
 use meta_language::render_declaration_links as _;

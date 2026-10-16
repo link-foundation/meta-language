@@ -173,6 +173,9 @@ function testProblems(runtime, part, fixture) {
   for (const entry of tests.filter(({ outcome }) => outcome === 'failed')) {
     problems.push(`the ${runtime} workload ${entry.file} › ${entry.name} failed`);
   }
+  for (const entry of tests.filter(({ outcome }) => outcome === 'skipped')) {
+    problems.push(`the ${runtime} workload ${entry.file} › ${entry.name} was skipped`);
+  }
   for (const file of workloadFiles(fixture, runtime)) {
     if (!tests.some((entry) => entry.file === file && entry.outcome === 'passed')) {
       problems.push(`no ${runtime} test of ${file} passed`);

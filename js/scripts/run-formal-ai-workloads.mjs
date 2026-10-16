@@ -400,7 +400,9 @@ async function rustWorkloads(formalAiDirectory, inputsPath, outputs) {
   const metaLanguage = metaLanguagePackages[0] ?? {};
   const selfAstCensus = await refreshSelfAstCensus(formalAiDirectory, directory, configuration, environment);
   const workloads = fixture.workloads.filter(({ kind, file }) => kind === 'test' && file.startsWith('rust/'));
-  const filters = [...new Set([...workloads.map(({ filter }) => filter), 'issue_195_probe_'])];
+  // The pinned workload includes an ignored exhaustive round trip. It remains
+  // part of the requested inventory and must execute with the other tests.
+  const filters = ['--include-ignored', ...new Set([...workloads.map(({ filter }) => filter), 'issue_195_probe_'])];
   // formal-ai's own test groups, filtered to the inventoried modules, and the probe, in one patched build.
   const testRun = await run('rust-workloads', 'cargo', [
     ...configuration, 'test', '--no-fail-fast',

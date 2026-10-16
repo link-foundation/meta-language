@@ -339,3 +339,28 @@ test('the workload runner logs each Rust test with the lowest free memory while 
   assert.match(lines[0], /^\[rust-workloads\] test a::first: ok after \d+ s, lowest free memory 3\.0 GiB$/u);
   assert.match(lines[1], /^\[rust-workloads\] test a::second: FAILED after \d+ s, lowest free memory 6\.0 GiB$/u);
 });
+
+test('an ignored workload cannot supply installed artifact acceptance evidence',()=>{
+  // Run 38862173174, job 116854149833, head 61d3a766760306f3c0c2a93ef2d79450b465f242:
+  // 133 of 134 Rust workloads passed; this exhaustive round trip was ignored.
+  // Retained job log SHA-256: 167a73feb906fc8a0e921d049eccfccc7e5d8957e0761067a9866ca056464fc2.
+  for(const runtime of ['javascript','rust']){
+    const report=passingReport(),part=report[runtime==='javascript'?'npm':'crate'];
+    const file=runtime==='rust'?'rust/tests/unit/issue_558_source_links.rs':workloadFiles(fixture,runtime)[0];
+    assert.ok(workloadFiles(fixture,runtime).includes(file));
+    part.tests.push({file,name:'issue_558_source_links::exhaustive_whole_repo_round_trip_is_lossless',outcome:'skipped'});
+    part.counts=countOutcomes(part.tests);assert.equal(part.exit,0);
+    const result=validateFormalAiWorkloadReport(report,fixture,runtime);
+    assert.deepEqual(failing(result),['workloadsRunOnInstalledArtifacts']);
+    assert.ok(result.problems.workloadsRunOnInstalledArtifacts.some(problem=>problem.includes('exhaustive_whole_repo_round_trip_is_lossless was skipped')));
+  }
+});
+
+test('the workload runner includes ignored tests while retaining every original filter',()=>{
+  const runner=readFileSync(new URL('../scripts/run-formal-ai-workloads.mjs',import.meta.url),'utf8');
+  const declaration=/  const filters = ([^\n]+);/u.exec(runner)?.[1];assert.ok(declaration);
+  const filters=new Function('workloads',`return ${declaration};`)(fixture.workloads.filter(({kind,file})=>kind==='test'&&file.startsWith('rust/')));
+  assert.equal(filters.filter(value=>value==='--include-ignored').length,1);
+  assert.deepEqual(filters.filter(value=>value!=='--include-ignored'),[...new Set([...fixture.workloads.filter(({kind,file})=>kind==='test'&&file.startsWith('rust/')).map(({filter})=>filter),'issue_195_probe_'])]);
+  assert.ok(filters.every(value=>value==='--include-ignored'||!value.startsWith('--')));
+});

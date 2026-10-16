@@ -1654,6 +1654,11 @@ requirements and actual usage to meta-language capabilities and tests. Their
 workloads (parse → common links → semantic transformation or translation →
 emission) are verified with clean installed artifacts, not demonstration strings.
 This includes shared concept reuse and preserved language-specific distinctions.
+Every inventoried formal-ai workload must execute, including upstream tests
+marked ignored, under the original pinned module filters. Skipped workloads
+cannot provide installed-artifact acceptance evidence. Both runtime report
+checks require zero skipped workloads; full downstream corpus execution remains
+in CI under the existing resource limits.
 Meta-language supplies reusable language infrastructure. It does not take over
 RML's foundation or proof authority.
 

@@ -624,6 +624,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "read_translation_provenance",
         "function",
     ),
+    (
+        "readTypedProgramBindingIdentities",
+        "read_typed_program_binding_identities",
+        "function",
+    ),
     ("reconstructGrammar", "reconstruct_grammar", "function"),
     ("rejectPredicateHost", "RejectPredicateHost", "type"),
     ("renameGrammarRule", "rename_grammar_rule", "function"),

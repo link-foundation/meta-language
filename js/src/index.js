@@ -49,7 +49,7 @@ export { eraseTypeScript } from './typescript-erasure.js';
 export function projectTypeScriptTyping(source) {
   return projectTypeScriptTypingDetails(source).code;
 }
-export { createTypedProgramLinks, encodeTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks } from './typed-program-links.js';
+export { createTypedProgramLinks, encodeTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks, readTypedProgramBindingIdentities } from './typed-program-links.js';
 export { encodeFormalFunctionDefinition } from './formal-function-links.js';
 export { encodeSharedNumericFunctionDefinition } from './shared-numeric-function-links.js';
 export * from './semantics.js';
