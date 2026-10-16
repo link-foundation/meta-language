@@ -14,6 +14,8 @@ import {decodeRustTextCertificateFacet} from '../rust-text-certificate-adapter/r
 import {originalLinkIdentityPolicy as policy,originalLinkIdentityRulesSource,exactOriginalLinkIdentity,originalLinkIdentityWords,originalLinkIdentityIndex} from './policy.mjs';
 import {acceptOriginalLinkIdentityWord,readOriginalLinkIdentityOrdinals as read} from './rules.mjs';
 import {generateOriginalLinkIdentity} from './generate.mjs';
+import {originalLinkIdentityAssertionProfiles as assertionProfiles} from './assertion-profiles.mjs';
+import {generateOriginalLinkIdentityAssertionProfiles} from './generate-assertion-profiles.mjs';
 
 const words=values=>({high:values.map(value=>originalLinkIdentityWords(value)[0]),low:values.map(value=>originalLinkIdentityWords(value)[1])});
 const run=(index,queries,operation=read)=>{const wanted=words(queries);return Array.from(operation(index.high,index.low,wanted.high,wanted.low));};
@@ -104,8 +106,8 @@ test('historical public collisions remain inspectable while live constructors, t
   // Keep both the original reference refusal and the recorded CI owned-read
   // diagnostic. Explicit reference selection retains the actual heap operation.
   const profile=options.referenceSemantics===true?'reference':options.referenceSemantics===false?'owned':'automatic';
-  const expected=policy.feasibility.growthProfiles.find(row=>row.profile===profile).expected;
-  const current=control===policy.feasibility.growth?policy.feasibility[expected]:control;
+  const expected=assertionProfiles.feasibility.growthProfiles.find(row=>row.profile===profile).expected;
+  const current=control===policy.feasibility.growth?assertionProfiles.feasibility[expected]:control;
   assert.throws(()=>checkProgram(parseJavaScript(control.source,options)),error=>error.kind===current.kind&&error.reason===current.reason&&error.span.start===current.span.start&&error.span.end===current.span.end);
  }
  const history=policy.feasibility.historicalPublicLinkId,context={};
@@ -136,4 +138,23 @@ test('links policy and all eleven complete native declarations regenerate from t
  assert.ok(generated.declarations.some(value=>value.includes('pub fn read_original_link_identity_ordinals(')));
  assert.ok(generated.declarations.some(value=>value.includes('pub fn find_original_link_identity_ordinal(')));
  assert.equal(generated.declarations.some(value=>value.includes('fn main(')),false);
+});
+
+test('additive assertion profiles preserve the exact original policy and every published growth control',()=>{
+ const generated=generateOriginalLinkIdentityAssertionProfiles(true);
+ const stored=readProjectData(new URL('./data/assertion-profiles.lino',import.meta.url));
+ assert.deepEqual(stored,generated);
+ assert.equal(generated.originalPolicy,policy);
+ assert.deepEqual(stored.originalPolicy,policy);
+ assert.equal(Object.hasOwn(policy.feasibility,'currentGrowth'),false);
+ assert.equal(Object.hasOwn(policy.feasibility,'growthProfiles'),false);
+ assert.equal(generated.feasibility.growth,policy.feasibility.growth);
+ assert.equal(generated.feasibility.arrayFrom,policy.feasibility.arrayFrom);
+ assert.equal(generated.publishedGrowthMetadata.commit,'dfe0da8d8d836ec2dbae9d29d6e054b079bdf30e');
+ assert.equal(generated.publishedGrowthMetadata.sourceSha256,'7ba1588e8e978ccb5e2b97f6b6f06b7e71b5d003701b80d9b08752dc25288c03');
+ assert.equal(generated.publishedGrowthMetadata.growthMetadataSha256,'3bd7cc0d2b5e1335afc7809d6704b3cff91edc0a00d10c9045a0e9650df3525a');
+ assert.deepEqual(generated.feasibility.growthProfiles.map(row=>[row.profile,row.expected]),[['automatic','currentGrowth'],['owned','currentGrowth'],['reference','growth']]);
+ assert.deepEqual(generated.feasibility.currentGrowth.span,{start:165,end:177});
+ assert.equal(generated.feasibility.currentGrowth.kind,'type');
+ assert.equal(generated.feasibility.currentGrowth.reason,'expected float but found option:undefined:float');
 });
