@@ -5,8 +5,8 @@ use meta_language::structured_data_links::{
     decode_structured_data_links, encode_structured_data_links,
 };
 use meta_language::{
-    FeatureParseOptions, GlobalConceptOptions, GlobalConceptSource, GrammarKind, GrammarSourceName,
-    LeafText, LinkId, LinkNetwork, SyntaxTree, create_discovered_concept_links,
+    FeatureParseOptions, GlobalConceptOptions, GlobalConceptSource, GrammarFormat, GrammarKind,
+    GrammarSourceName, LeafText, LinkId, LinkNetwork, SyntaxTree, create_discovered_concept_links,
     parse_grammar_links, parse_with_grammar, percent_encode_links_text,
     read_discovered_concept_links, read_formal_concept_definition, read_structured_data_lino,
 };
@@ -482,10 +482,10 @@ fn retained_legacy_and_current_discovery_archives_revalidate_the_same_meaning_an
         loaded.formal_definitions.keys().collect::<Vec<_>>(),
         current_loaded.formal_definitions.keys().collect::<Vec<_>>()
     );
-    for (alias, definition) in &loaded.formal_definitions {
+    for (alias, definition) in loaded.space["formalDefinitions"].as_object().unwrap() {
         assert_eq!(
-            read_formal_concept_definition(&definition.to_json()).unwrap(),
-            read_formal_concept_definition(&current_loaded.formal_definitions[alias].to_json())
+            read_formal_concept_definition(definition).unwrap(),
+            read_formal_concept_definition(&current_loaded.space["formalDefinitions"][alias])
                 .unwrap()
         );
     }
@@ -496,7 +496,7 @@ fn retained_legacy_and_current_discovery_archives_revalidate_the_same_meaning_an
             .find(|source| source.id == *id)
             .unwrap();
         assert_eq!(
-            json!(source.grammar.source_format().map(|format| format.as_str())),
+            json!(source.grammar.source_format().map(GrammarFormat::as_str)),
             legacy["sources"][index]["grammar"]["sourceFormat"]
         );
         let tree = parse_with_grammar(
@@ -564,7 +564,7 @@ fn discovery_certificates_refuse_mixed_format_provenance_and_all_other_forgeries
                 2 | 8 => value["space"]["sources"][0]["context"]["matching"] = json!("peg"),
                 3 | 9 => {
                     value["space"]["proofs"][0]["correspondence"][0][1] =
-                        value["space"]["proofs"][0]["correspondence"][0][0].clone()
+                        value["space"]["proofs"][0]["correspondence"][0][0].clone();
                 }
                 4 => value["space"]["sources"][0]["id"] = json!("counterfeit source"),
                 5 => value["space"]["sources"][0]["sourceFormat"] = json!("bnf"),

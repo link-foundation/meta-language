@@ -14,7 +14,7 @@ use crate::formal_concept_definition::{FormalConceptArchive, read_formal_concept
 use crate::global_concept_space::{
     GlobalConceptOptions, GlobalConceptSource, create_global_concept_space,
 };
-use crate::grammar::{GrammarKind, GrammarSourceName, serialize_grammar};
+use crate::grammar::{GrammarFormat, GrammarKind, GrammarSourceName, serialize_grammar};
 use crate::structured_data_links::{decode_structured_data_links, encode_structured_data_links};
 use crate::translation::grammar_selection_rules::read_grammar_source_default_matching;
 use crate::{Link, LinkFlags, LinkId, LinkMetadata, LinkNetwork, LinkType};
@@ -121,7 +121,7 @@ fn accept_discovered_concept_certificate(
         let format = source
             .grammar
             .source_format()
-            .map_or("", |format| format.as_str());
+            .map_or("", GrammarFormat::as_str);
         !accept_legacy_discovered_concept_format(
             source.grammar.declarations().matching.is_some(),
             &read_grammar_source_default_matching(format),
