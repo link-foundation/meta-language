@@ -7,9 +7,11 @@ import {readSourceTextRustBlock, simplifySourceTextRustParentheses} from './sour
 import {simplifyPortableProductLibraryStyles, simplifyRustOptionIdentityMatches} from './reviewed-rust-branch-styles.mjs';
 import {flattenRustSourceHeaderStyleFormat, stripRustSourceHeaderStyleParentheses} from './rust-source-header-library-style.mjs';
 import {flattenFamilyLibraryElseIf, mergeFamilyLibraryIdenticalBranches, qualifyFamilyLibraryBooleanFunctions,
-  invertFamilyLibraryInequalityBranches, simplifyFamilyLibraryNegatedConjunctions, liftFamilyLibraryTruthinessConditions} from './portable-conditional-source-style.mjs';
+  invertFamilyLibraryInequalityBranches, bindFamilyLibraryInequalityConditions,
+  simplifyFamilyLibraryNegatedConjunctions, liftFamilyLibraryTruthinessConditions} from './portable-conditional-source-style.mjs';
 import {readPortableRuntimeSourceStyles} from './portable-runtime-source-style.mjs';
 import {readPortableNumberSourceStyles} from './portable-number-source-style.mjs';
+import {readPortableOwnedSourceStyles} from './portable-owned-source-style.mjs';
 
 function readPortableLintTokens(source) {
   const {tokens, comments} = tokenize(source, 'Rust'), matching = new Map(), stack = [];
@@ -380,7 +382,8 @@ export function readPortableSourceLintStyles(source) {
     styled = liftFamilyLibraryTruthinessConditions(styled);
     styled = flattenFamilyLibraryElseIf(styled);
     styled = mergeFamilyLibraryIdenticalBranches(styled);
-    styled = invertFamilyLibraryInequalityBranches(styled);
+    styled = invertFamilyLibraryInequalityBranches(styled, {context: adapted});
+    styled = bindFamilyLibraryInequalityConditions(styled);
     styled = simplifyFamilyLibraryNegatedConjunctions(styled);
     const codeStarts = new Set(readPortableLintTokens(styled).tokens.map(token => token.start));
     styled = styled.replace(/\(([A-Za-z_][A-Za-z_0-9]*)\s*>=\s*(-?[0-9]+(?:\.[0-9]+)?f64)\)\s*&&\s*\(\1\s*(<=|<)\s*(-?[0-9]+(?:\.[0-9]+)?f64)\)/gu,
@@ -401,6 +404,11 @@ export function readPortableSourceLintStyles(source) {
     if (attributes.length) styled = attributes.join('\n') + '\n' + styled;
     replace(original, styled);
   }
+  // Ownership needs complete function returns and enum payload declarations.
+  // Inspect once before const qualification or runtime-provider spelling edits.
+  const ownedStyles = readPortableOwnedSourceStyles(adapted);
+  for (const action of ownedStyles.actions) replace(action.from, action.to);
+  assert.equal(adapted, ownedStyles.source, 'ownership styles replay their complete declared source actions');
   // Runtime fragments retain their original generic bodies. Their public
   // results are useful, and decimal grouping changes only numeric spelling.
   const runtime = adapted.replace(/^( +)pub fn /gmu, (match, indent, offset) =>
