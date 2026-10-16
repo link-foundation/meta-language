@@ -17,6 +17,7 @@
 // adds no error of its own: the blocking failure's one error names it.
 
 import { mergeJavaScriptSuitePartitions } from './issue-195-javascript-suite-partitions.mjs';
+import { mergeRustSuitePartitions } from './issue-195-rust-suite-partitions.mjs';
 
 export const RUNTIMES = Object.freeze(['javascript', 'rust']);
 export const NATIVE_TARGETS = Object.freeze(['JavaScript', 'Rust', 'Lean', 'Rocq']);
@@ -136,8 +137,9 @@ export function bundleRecords(...records) {
  * produced it, and one error per stage that failed or did not report; a stage
  * skipped because the stage it runs after failed joins that stage's error.
  */
-export function mergeStageRecords({ checkpoint, commit, records, javascriptTestGroups }) {
+export function mergeStageRecords({ checkpoint, commit, records, javascriptTestGroups, verifyRustPhysicalUnion }) {
   records = mergeJavaScriptSuitePartitions({ checkpoint, commit, records, testGroups: javascriptTestGroups });
+  records = mergeRustSuitePartitions({ checkpoint, commit, records, verifyPhysicalUnion: verifyRustPhysicalUnion });
   const groups = new Map();
   const stageErrors = [];
   const fail = (stage, error) => stageErrors.push({ stage, error });

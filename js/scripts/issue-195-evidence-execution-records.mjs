@@ -3,13 +3,14 @@ import path from 'node:path';
 import { readStructuredDataRecords } from '../src/structured-data-records.js';
 import { stageFiles } from './issue-195-evidence-stages.mjs';
 import { isJavaScriptSuitePartitionName } from './issue-195-javascript-suite-partitions.mjs';
+import { isRustSuitePartitionName } from './issue-195-rust-suite-partitions.mjs';
 
 /** Read all reported stage scopes while retaining the original duplicate gate. */
 export async function readEvidenceStageExecutionRecords({ records, stageNames, knownTestIds, resultsDirectory, stageErrors }) {
   const known = new Set(knownTestIds);
   const seen = new Set();
   const accepted = [];
-  const recordedStages = [...records.keys()].filter(name => stageNames.includes(name) || isJavaScriptSuitePartitionName(name));
+  const recordedStages = [...records.keys()].filter(name => stageNames.includes(name) || isJavaScriptSuitePartitionName(name) || isRustSuitePartitionName(name));
   for (const name of recordedStages) {
     let contents;
     try {

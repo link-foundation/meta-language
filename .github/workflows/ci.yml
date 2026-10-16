@@ -1281,14 +1281,23 @@ jobs:
         run: node scripts/clean-caches.mjs --event ci-teardown
 
   rust-suite:
-    name: Evidence Stage (rust-suite)
+    name: Evidence Stage (rust-suite - ${{ matrix.physical_shard }}/8)
     needs: [candidates, consumers, rml-workloads, formal-ai-workloads, javascript-suite-independent, javascript-suite]
     if: ${{ !cancelled() && github.event_name != 'release' && needs.candidates.result == 'success' && needs.javascript-suite.result == 'success' && needs.javascript-suite-independent.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        physical_shard: [1, 2, 3, 4, 5, 6, 7, 8]
     concurrency:
-      group: issue-195-stage-${{ github.ref }}-rust-suite
+      group: issue-195-stage-${{ github.ref }}-rust-suite-${{ matrix.physical_shard }}
       cancel-in-progress: true
+    env:
+      META_LANGUAGE_SHARD_PROFILE: evidence
+      META_LANGUAGE_SHARD_PLATFORM: ubuntu-latest
+      META_LANGUAGE_SHARD_SUITE: all
+      META_LANGUAGE_SHARD_INDEX: ${{ matrix.physical_shard }}
     steps:
       - uses: actions/checkout@v7
 
@@ -1369,7 +1378,11 @@ jobs:
           pattern: self-translation-report-${{ github.sha }}-*
           path: issue-195-artifacts/self-translation-report
 
+      - name: Configure the complete native evidence partition
+        run: node js/scripts/rust-test-shards.mjs --configure
+
       - name: Produce the stage evidence
+        id: rust-suite-evidence
         env:
           ISSUE_195_SELF_TRANSLATION_REPORT_DIRECTORY: ${{ github.workspace }}/issue-195-artifacts/self-translation-report
           ISSUE_195_RML_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/rml-workloads/report.lino
@@ -1384,8 +1397,24 @@ jobs:
           --commit "$GITHUB_SHA"
           --results-dir issue-195-results
           --stage "$STAGE"
+          --rust-shard "${{ matrix.physical_shard }}/8"
           --candidates .issue-195-work/candidates
           --platform-reports issue-195-artifacts/platform-reports
+
+      - name: Seal the native evidence inventory and outcomes
+        if: ${{ !cancelled() }}
+        env:
+          META_LANGUAGE_SHARD_RESULT: ${{ steps.rust-suite-evidence.outcome }}
+        run: node js/scripts/rust-test-shards.mjs --finish
+
+      - name: Upload the authenticated native evidence partition
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: rust-physical-evidence-ubuntu-latest-all-${{ matrix.physical_shard }}-${{ github.sha }}
+          path: issue-195-artifacts/rust-physical-shards/
+          if-no-files-found: error
+          retention-days: 30
 
       # The record, execution records, logs and artifacts are uploaded even when
       # the stage fails: the aggregate reports the failure as one gate error.
@@ -1393,7 +1422,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
-          name: issue-195-stage-rust-suite-${{ github.sha }}
+          name: issue-195-stage-rust-suite-${{ matrix.physical_shard }}-of-8-${{ github.sha }}
           path: |
             issue-195-results/work/stage-*
             issue-195-results/work/native/
@@ -1621,7 +1650,7 @@ jobs:
 
       - name: Identify admitted Rust physical profiles
         id: rust-physical-admission
-        if: ${{ !cancelled() && needs.rust.result != 'skipped' }}
+        if: ${{ !cancelled() && (needs.rust.result != 'skipped' || needs.rust-suite.result != 'skipped') }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -1636,15 +1665,17 @@ jobs:
           path: issue-195-artifacts/rust-physical-partitions
 
       - name: Require the complete authenticated Rust test union
-        if: ${{ !cancelled() && needs.rust.result != 'skipped' }}
+        if: ${{ !cancelled() && (needs.rust.result != 'skipped' || needs.rust-suite.result != 'skipped') }}
         env:
           RUST_WORKFLOW_RESULT: ${{ needs.rust.result }}
+          RUST_EVIDENCE_RESULT: ${{ needs.rust-suite.result }}
           META_LANGUAGE_SHARD_EXPECTED_PROFILES: ${{ steps.rust-physical-admission.outputs.profiles }}
         run: |
           if [ -n "$META_LANGUAGE_SHARD_EXPECTED_PROFILES" ]; then
             node js/scripts/rust-test-shards.mjs --verify issue-195-artifacts/rust-physical-partitions
           fi
-          test "$RUST_WORKFLOW_RESULT" = success
+          if [ "$RUST_WORKFLOW_RESULT" != skipped ]; then test "$RUST_WORKFLOW_RESULT" = success; fi
+          if [ "$RUST_EVIDENCE_RESULT" != skipped ]; then test "$RUST_EVIDENCE_RESULT" = success; fi
 
       - name: Validate atomic manifest and protected scope baseline
         env:

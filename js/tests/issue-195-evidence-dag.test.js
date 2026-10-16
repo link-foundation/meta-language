@@ -90,9 +90,14 @@ function assertEvidenceDagConservation(text) {
   }
   assert.deepEqual(needs(rust), ['candidates', 'consumers', 'rml-workloads', 'formal-ai-workloads', 'javascript-suite-independent', 'javascript-suite']);
   assert.equal(condition(rust), "${{ !cancelled() && github.event_name != 'release' && needs.candidates.result == 'success' && needs.javascript-suite.result == 'success' && needs.javascript-suite-independent.result == 'success' }}");
-  assert.deepEqual(needs(aggregate), ['js', 'self-translation-report-validation', 'candidates', 'consumers', 'rml-workloads',
+  const originalAggregateNeeds = ['js', 'self-translation-report-validation', 'candidates', 'consumers', 'rml-workloads',
     'formal-ai-workloads', 'javascript-suite-independent', 'runtime-parity', 'native-javascript', 'native-rust',
-    'native-translations', 'javascript-suite', 'rust-suite', 'delivery']);
+    'native-translations', 'javascript-suite', 'rust-suite', 'delivery'];
+  // 1c7a4ac7 adds the native workflow producer so the aggregate can authenticate
+  // its complete physical test union. Retain every original edge and its order,
+  // and require exactly that one added edge before all the original tail edges.
+  assert.deepEqual(needs(aggregate).filter(name => name !== 'rust'), originalAggregateNeeds);
+  assert.deepEqual(needs(aggregate), [originalAggregateNeeds[0], 'rust', ...originalAggregateNeeds.slice(1)]);
   assert.equal(condition(aggregate), '${{ always() }}');
   const download = aggregate.steps.find(step => /pattern: issue-195-stage-/u.test(step.text));
   assert.match(download.text, /pattern: issue-195-stage-\*-\$\{\{ github.sha \}\}/u);

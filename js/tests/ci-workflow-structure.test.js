@@ -94,7 +94,17 @@ test('Rust jobs preserve all prior deadlines and the exact published matrix exce
 test('the cancellation investigation joins tooling without changing any prior file assignment', () => {
   const addition = '|ci-cancellation-investigation$', source = TEST_GROUPS.tooling.source;
   assert.equal(source.split(addition).length, 2);
-  const originalTooling = new RegExp(source.replace(addition, ''), TEST_GROUPS.tooling.flags);
+  // The version selector and Rust evidence union add exactly two tooling files.
+  // Remove only their literal alternatives when checking the unchanged earlier
+  // classifier hash; every historical assignment is still compared below.
+  const laterAdditions = ['assertion-version-ranges', 'issue-195-rust-suite-partitions'];
+  let retainedSource = source;
+  for (const stem of laterAdditions) {
+    const token = `|${stem}$`;
+    assert.equal(retainedSource.split(token).length, 2, `${stem} has exactly one literal tooling alternative`);
+    retainedSource = retainedSource.replace(token, '');
+  }
+  const originalTooling = new RegExp(retainedSource.replace(addition, ''), TEST_GROUPS.tooling.flags);
   assert.equal(createHash('sha256').update(originalTooling.source).digest('hex'),
     '52cabb3ce07eb317d238c08c1314cc9b620255b12295b0b32731d468bd304b69');
   const files = testFiles(), partition = partitionTests(files);
@@ -104,10 +114,14 @@ test('the cancellation investigation joins tooling without changing any prior fi
     const before = Object.entries(TEST_GROUPS).filter(([name, pattern]) =>
       (name === 'tooling' ? originalTooling : pattern).test(file.replace(/\.test\.js$/u, ''))).map(([name]) => name);
     const after = Object.entries(partition.groups).filter(([, members]) => members.includes(file)).map(([name]) => name);
-    assert.deepEqual(after, file === 'ci-cancellation-investigation.test.js' ? ['tooling'] : before, file);
+    assert.deepEqual(after, ['ci-cancellation-investigation', ...laterAdditions].some(stem => file === `${stem}.test.js`) ? ['tooling'] : before, file);
   }
   assert.deepEqual(partitionTests(['ci-cancellation-investigation-extra.test.js', 'ci-cancellation-investigationx.test.js']).unassigned,
     ['ci-cancellation-investigation-extra.test.js', 'ci-cancellation-investigationx.test.js']);
+  for (const stem of laterAdditions) {
+    const neighbors = [`${stem}-extra.test.js`, `${stem}x.test.js`];
+    assert.deepEqual(partitionTests(neighbors).unassigned, neighbors, `${stem} admits only its exact file`);
+  }
 });
 
 function selectNativeTestInputs(paths, { base = 'base', valid = true } = {}) {

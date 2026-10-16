@@ -207,11 +207,11 @@ test('the evidence commands run with bounded build parallelism unless the caller
 
 test('the acceptance Rust command reuses only the checked fresh-merge test optimization', async () => {
   const runner = read('js/scripts/run-issue-195-evidence.mjs');
-  const definition = runner.match(/^async function runRustSuite\(failures\) \{[\s\S]*?^\}/mu)?.[0];
+  const definition = runner.match(/^async function runRustSuite\(failures, selection = null\) \{[\s\S]*?^\}/mu)?.[0];
   assert.ok(definition, 'the actual Rust-suite producer is inspected without running the evidence pipeline');
   const calls = [];
   const run = vm.runInNewContext(`(${definition})`, {
-    path, root,
+    path, root, rustSuiteCommandArguments: (await import('../scripts/issue-195-rust-suite-partitions.mjs')).rustSuiteCommandArguments,
     runCommand: async (...args) => { calls.push(args); return { ok: true }; },
     bundle: record => record,
   });

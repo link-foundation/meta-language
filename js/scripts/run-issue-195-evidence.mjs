@@ -45,6 +45,7 @@ import { structuredDataRecordToLino } from '../src/structured-data-records.js';
 import { createEvidenceCommandLogForwarder, readEvidenceCommandFailureTail } from './issue-195-evidence-command-logs.mjs';
 import { readEvidenceStageExecutionRecords } from './issue-195-evidence-execution-records.mjs';
 import { javascriptSuiteCommandArguments, javascriptSuiteGroupEntries, javascriptSuiteSelection } from './issue-195-javascript-suite-partitions.mjs';
+import { assertRustSuitePartitionEnvironment, rustSuiteCommandArguments, rustSuiteSelection } from './issue-195-rust-suite-partitions.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const commit = option('--commit', process.env.GITHUB_SHA ?? git(['rev-parse', 'HEAD']));
@@ -90,7 +91,10 @@ const aggregateOnly = process.argv.includes('--aggregate');
 const stages = evidenceStages(checkpoint);
 const baseStage = stageName ? evidenceStage(checkpoint, stageName) : null;
 const javascriptPartition = javascriptSuiteSelection(process.argv.slice(2), stageName, aggregateOnly);
-const selectedStage = javascriptPartition ? { ...baseStage, name: javascriptPartition.name, javascriptPartition } : baseStage;
+const rustPartition = rustSuiteSelection(process.argv.slice(2), stageName, aggregateOnly);
+if (rustPartition) assertRustSuitePartitionEnvironment(rustPartition, process.env);
+const selectedStage = javascriptPartition ? { ...baseStage, name: javascriptPartition.name, javascriptPartition }
+  : rustPartition ? { ...baseStage, name: rustPartition.name, rustPartition } : baseStage;
 if (selectedStage && aggregateOnly) throw new Error('--stage and --aggregate cannot be combined');
 
 await prepareDirectories();
@@ -156,6 +160,7 @@ async function runStage(stage) {
     commit,
     checkpoint,
     ...(stage.javascriptPartition ? { javascriptPartition: stage.javascriptPartition } : {}),
+    ...(stage.rustPartition ? { rustPartition: stage.rustPartition } : {}),
     toolchainVersions,
     groups: Object.fromEntries(groups),
     error,
@@ -174,7 +179,7 @@ async function produceStage(stage, failures) {
   if (stage.name === 'javascript-suite' || stage.javascriptPartition) {
     return new Map([['suite:javascript', await runJavaScriptSuite(failures, stage.javascriptPartition)]]);
   }
-  if (stage.name === 'rust-suite') return new Map([['suite:rust', await runRustSuite(failures)]]);
+  if (stage.name === 'rust-suite' || stage.rustPartition) return new Map([['suite:rust', await runRustSuite(failures, stage.rustPartition)]]);
   if (stage.name === 'runtime-parity') {
     const runtimeParity = await runCommand('runtime-parity', 'node', [
       path.join(root, 'js/scripts/check-issue-195-runtime-parity.mjs'),
@@ -216,14 +221,9 @@ async function runJavaScriptSuite(failures, selection) {
  * Runs the Rust tests with the default features: the execution records come
  * from the test binaries, and no recording test needs another feature.
  */
-async function runRustSuite(failures) {
-  const record = await runCommand('suite-rust', 'cargo', [
-    'test', '--no-fail-fast', '--locked', '--manifest-path', path.join(root, 'rust/Cargo.toml'), '--tests',
-    '--config', 'profile.test.package.meta-language.opt-level=3',
-    '--config', 'profile.test.package.meta-language.debug-assertions=true',
-    '--config', 'profile.test.package.meta-language.overflow-checks=true',
-    '--', '--nocapture',
-  ], { allowFailure: true, forwardOutput: true });
+async function runRustSuite(failures, selection = null) {
+  const record = await runCommand(selection ? `suite-${selection.name}` : 'suite-rust', 'cargo', rustSuiteCommandArguments(root),
+    { allowFailure: true, forwardOutput: true });
   if (!record.ok) failures.push(`Rust tests failed; see ${record.artifacts[0]}`);
   return bundle(record);
 }

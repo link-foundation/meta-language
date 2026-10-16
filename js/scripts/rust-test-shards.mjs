@@ -19,6 +19,11 @@ export function readPhysicalShardPolicy() {return read(policyPath);}
 
 export function physicalShardCount(policy, profile, suite) {
   if (profile === 'fresh-merge') return policy.freshMergeShards;
+  if (profile === 'evidence') {
+    requireValue(suite === 'all' && Number.isSafeInteger(policy.evidence?.shards) && policy.evidence.shards > 0
+      && policy.evidence.unit === 'top-level native test module' && Array.isArray(policy.evidence.sharedScopes), 'invalid complete evidence suite policy');
+    return policy.evidence.shards;
+  }
   requireValue(['test', 'coverage'].includes(profile), 'unknown execution profile');
   const row = policy.suites.find(row => row.name === suite);
   requireValue(row, 'unknown logical suite');
@@ -37,9 +42,20 @@ export function readHarnessInventory(output) {
 
 // Identity hashing spreads independently expensive tests across cells without
 // dropping new names or binding scheduling to host-specific binary hashes.
-export function selectPhysicalTests(inventory, shard, count) {
+export function selectPhysicalTests(inventory, shard, count, observationScopes = null) {
   requireValue(Number.isSafeInteger(shard) && Number.isSafeInteger(count) && shard >= 1 && shard <= count, 'invalid physical shard');
-  return inventory.filter(row => Number.parseInt(digest(row.name).slice(0, 8), 16) % count === shard - 1);
+  if (observationScopes !== null) {
+    requireValue(Array.isArray(observationScopes) && observationScopes.every(group => Array.isArray(group)
+      && group.length >= 2 && group.every(name => typeof name === 'string' && /^[A-Za-z_][A-Za-z_0-9]*$/u.test(name))), 'invalid shared observation scopes');
+    const names = observationScopes.flat();
+    requireValue(new Set(names).size === names.length, 'overlapping shared observation scopes');
+  }
+  return inventory.filter(row => {
+    const module = row.name.split('::')[0];
+    const group = observationScopes?.find(group => group.includes(module));
+    const identity = observationScopes === null ? row.name : group ? JSON.stringify([...group].sort()) : module;
+    return Number.parseInt(digest(identity).slice(0, 8), 16) % count === shard - 1;
+  });
 }
 
 export function exactHarnessArguments(original, selected) {
@@ -69,6 +85,7 @@ export function matchesLogicalFilters(name, arguments_) {
   const positive = [], skipped = [];
   for (let index = 0; index < arguments_.length; index++) {
     if (arguments_[index] === '--skip') skipped.push(arguments_[++index]);
+    else if (arguments_[index] === '--nocapture') continue;
     else {requireValue(!arguments_[index].startsWith('-'), 'unsupported logical filter option');positive.push(arguments_[index]);}
   }
   return (!positive.length || positive.some(filter => name.includes(filter))) && !skipped.some(filter => name.includes(filter));
@@ -77,7 +94,8 @@ export function matchesLogicalFilters(name, arguments_) {
 export function verifyHarnessExecution(receipt) {
   requireValue(receipt.allInventoryDigest === digest(JSON.stringify(receipt.allInventory)), 'changed unfiltered inventory');
   requireValue(JSON.stringify(receipt.allInventory.filter(row => matchesLogicalFilters(row.name, receipt.arguments))) === JSON.stringify(receipt.inventory), 'logical inventory differs from the complete native inventory');
-  const selected = selectPhysicalTests(receipt.inventory, receipt.shard, receipt.count);
+  const selected = selectPhysicalTests(receipt.inventory, receipt.shard, receipt.count,
+    receipt.identity.profile === 'evidence' ? readPhysicalShardPolicy().evidence.sharedScopes : null);
   requireValue(JSON.stringify(selected) === JSON.stringify(receipt.selected), 'changed selected inventory');
   requireValue(receipt.inventoryDigest === digest(JSON.stringify(receipt.inventory)), 'changed complete inventory');
   const observed = receipt.outcomes.map(row => row.name).sort();
@@ -94,7 +112,8 @@ export async function executePhysicalHarness({binary, arguments: original, ident
   requireValue(allListed.exitCode === 0 && allListed.signal === null, 'complete native inventory failed');
   const allInventory = readHarnessInventory(allListed.stdout);
   requireValue(!inventory.some(row => row.name === '__meta_language_empty_physical_partition__'), 'reserved partition identity');
-  const selected = selectPhysicalTests(inventory, shard, count);
+  const selected = selectPhysicalTests(inventory, shard, count,
+    identity.profile === 'evidence' ? readPhysicalShardPolicy().evidence.sharedScopes : null);
   // Empty harnesses remain actual executions, with an explicitly empty cell.
   const actual = await invoke(binary, exactHarnessArguments(original, selected), false);
   return {schemaVersion: 1, identity, binary: path.basename(binary), arguments: original,
@@ -244,15 +263,17 @@ function finish() {
 }
 
 export function readShardAdmission(jobs, policy) {
-  const definitions = [['test', /^Rust \/ Test \(/u], ['coverage', /^Rust \/ Code Coverage \(/u], ['fresh-merge', /^Rust \/ Fresh Merge Simulation(?: \([1-9][0-9]*\))?$/u]];
+  const definitions = [['test', /^Rust \/ Test \(/u], ['coverage', /^Rust \/ Code Coverage \(/u], ['fresh-merge', /^Rust \/ Fresh Merge Simulation(?: \([1-9][0-9]*\))?$/u],
+    ['evidence', /^Evidence Stage \(rust-suite(?: - [1-9][0-9]*\/[1-9][0-9]*)?\)$/u]];
   const profiles = [];
   for (const [profile, pattern] of definitions) {
     const active = jobs.filter(job => pattern.test(job.name) && job.conclusion !== 'skipped');
     if (!active.length) continue;
-    const expected = profile === 'fresh-merge' ? policy.freshMergeShards
+    const expected = profile === 'evidence' ? physicalShardCount(policy, profile, 'all') : profile === 'fresh-merge' ? policy.freshMergeShards
       : policy.suites.reduce((sum, row) => sum + row.shards, 0) * (profile === 'test' ? policy.platforms.length : 1);
     requireValue(active.length === expected, 'missing or duplicate scheduled physical jobs');
-    const expectedNames = profile === 'fresh-merge' ? Array(policy.freshMergeShards).fill('Rust / Fresh Merge Simulation')
+    const expectedNames = profile === 'evidence' ? Array.from({length: expected}, (_, index) => `Evidence Stage (rust-suite - ${index + 1}/${expected})`)
+      : profile === 'fresh-merge' ? Array(policy.freshMergeShards).fill('Rust / Fresh Merge Simulation')
       : (profile === 'test' ? policy.platforms : [null]).flatMap(platform => policy.suites.flatMap(row =>
         Array(row.shards).fill(profile === 'test' ? `Rust / Test (${platform}, ${row.name})` : `Rust / Code Coverage (${row.name})`)));
     let actualNames = active.map(job => job.name);
@@ -269,11 +290,14 @@ export function readShardAdmission(jobs, policy) {
 }
 
 export function verifyPhysicalShardUnion(groups, policy, {commit, run, attempt, profiles = ['test', 'coverage', 'fresh-merge']}) {
+  requireValue(Array.isArray(profiles) && profiles.every(profile => ['test', 'coverage', 'fresh-merge', 'evidence'].includes(profile))
+    && new Set(profiles).size === profiles.length, 'unknown or duplicate admitted execution profiles');
   const expected = [];
   for (const profile of ['test', 'coverage'].filter(profile => profiles.includes(profile))) for (const platform of profile === 'test' ? policy.platforms : ['ubuntu-latest']) {
     for (const row of policy.suites) for (let shard = 1; shard <= row.shards; shard++) expected.push([profile, platform, row.name, shard]);
   }
   if (profiles.includes('fresh-merge')) for (let shard = 1; shard <= policy.freshMergeShards; shard++) expected.push(['fresh-merge', 'ubuntu-latest', 'all', shard]);
+  if (profiles.includes('evidence')) for (let shard = 1; shard <= physicalShardCount(policy, 'evidence', 'all'); shard++) expected.push(['evidence', 'ubuntu-latest', 'all', shard]);
   const keys = new Set();
   const inventories = new Map();
   const completeInventories = new Map();
@@ -303,7 +327,7 @@ export function verifyPhysicalShardUnion(groups, policy, {commit, run, attempt, 
       // A tested CLI rejection may intentionally return nonzero. Its owning
       // libtest assertion and the cell seal establish whether that was expected.
       if (receipt.auxiliary) {requireValue(Number.isInteger(receipt.exitCode) || typeof receipt.signal === 'string', 'missing auxiliary native result');continue;}
-      const filters = identity.profile === 'fresh-merge' ? [] : policy.suites.find(row => row.name === identity.suite).filters;
+      const filters = identity.profile === 'fresh-merge' ? [] : identity.profile === 'evidence' ? ['--nocapture'] : policy.suites.find(row => row.name === identity.suite).filters;
       requireValue(JSON.stringify(receipt.arguments) === JSON.stringify(filters), 'changed original logical filters');
       verifyHarnessExecution(receipt);
       binaries.push(receipt.binary.replace(/-[0-9a-f]+(?:\.exe)?$/u, ''));
@@ -335,7 +359,7 @@ export function verifyPhysicalShardUnion(groups, policy, {commit, run, attempt, 
   return {cells: keys.size, inventories: inventories.size};
 }
 
-export function verifyPhysicalShardDirectory(directory, expected) {
+export function readPhysicalShardGroups(directory) {
   const groups = [];
   function visit(directory) {
     const files = readdirSync(directory, {withFileTypes: true});
@@ -382,7 +406,11 @@ export function verifyPhysicalShardDirectory(directory, expected) {
     }
   }
   visit(directory);
-  return verifyPhysicalShardUnion(groups, readPhysicalShardPolicy(), expected);
+  return groups;
+}
+
+export function verifyPhysicalShardDirectory(directory, expected) {
+  return verifyPhysicalShardUnion(readPhysicalShardGroups(directory), readPhysicalShardPolicy(), expected);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === script) {
