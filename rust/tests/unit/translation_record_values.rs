@@ -6,10 +6,12 @@ use std::fs;
 use std::path::Path;
 use std::process::Command;
 
+use meta_language::translation::emit_lean::emit_lean;
+use meta_language::translation::emit_rocq::emit_rocq;
 use meta_language::translation::ir::{Decl, Expr, LitValue, Node, Program};
 use meta_language::translation::types::Type;
 use meta_language::{
-    BinaryLinksOptions, LinkNetwork, TypedProgramLinks, create_typed_program_links,
+    BinaryLinksOptions, LinkId, LinkNetwork, TypedProgramLinks, create_typed_program_links,
     decode_link_network_binary, decode_typed_program_links, emit_typed_program_links,
     encode_link_network_binary, encode_typed_program_links,
 };
@@ -19,6 +21,27 @@ use super::issue_195_translation_pairs::{TemporaryDirectory, run};
 
 const TARGETS: [&str; 4] = ["JavaScript", "Rust", "Lean", "Rocq"];
 const DECLARED: &str = "/** @param {{z:bigint,a:bigint}} value @returns {bigint} */function select(value){return value.z;}function choose(){return select({a:2n,z:3n});}console.log(\"%s\",String(choose()));";
+
+fn portable_emission(network: &LinkNetwork, root: LinkId, target: &str) -> Result<String, String> {
+    match target {
+        "JavaScript" | "Rust" => emit_typed_program_links(network, root, target)
+            .map(|emitted| emitted.code)
+            .map_err(|failure| failure.to_string()),
+        "Lean" | "Rocq" => {
+            let program =
+                decode_typed_program_links(network, root).map_err(|failure| failure.to_string())?;
+            let emitted = if target == "Lean" {
+                emit_lean(&program)
+            } else {
+                emit_rocq(&program)
+            };
+            emitted
+                .map(|emitted| emitted.text)
+                .map_err(|failure| failure.to_string())
+        }
+        _ => unreachable!("the test names every existing standard target explicitly"),
+    }
+}
 
 fn archives(packet: &TypedProgramLinks) -> [LinkNetwork; 2] {
     [
@@ -131,14 +154,14 @@ fn complete_record_programs_keep_overwrites_spreads_and_every_target_byte_in_bot
             let program = decode_typed_program_links(&network, packet.root).unwrap();
             assert!(program.declaration("build").is_some());
             for target in TARGETS {
-                let emitted = emit_typed_program_links(&network, packet.root, target).unwrap();
+                let emitted = portable_emission(&network, packet.root, target).unwrap();
                 assert_eq!(
-                    emitted.code,
+                    emitted,
                     original["codes"][target]["code"].as_str().unwrap(),
                     "{target}"
                 );
                 if target == "JavaScript" {
-                    observe_javascript(&emitted.code, expected);
+                    observe_javascript(&emitted, expected);
                 }
             }
         }
@@ -190,13 +213,10 @@ fn declared_record_fields_retain_parameter_and_let_bindings_after_source_free_va
                 function(&program, "select").params[0].ty
             );
             for target in TARGETS {
-                let emitted = emit_typed_program_links(&restored, edited.root, target).unwrap();
-                assert_eq!(
-                    emitted.code,
-                    expected["codes"][target]["code"].as_str().unwrap()
-                );
+                let emitted = portable_emission(&restored, edited.root, target).unwrap();
+                assert_eq!(emitted, expected["codes"][target]["code"].as_str().unwrap());
                 if target == "JavaScript" {
-                    observe_javascript(&emitted.code, "7\n");
+                    observe_javascript(&emitted, "7\n");
                 }
             }
         }
@@ -247,9 +267,7 @@ fn ordered_union_headers_keep_exact_target_refusal_before_the_independent_frozen
                 message
             );
             assert_eq!(
-                emit_typed_program_links(&network, packet.root, target)
-                    .unwrap_err()
-                    .message,
+                portable_emission(&network, packet.root, target).unwrap_err(),
                 message
             );
         }
@@ -261,9 +279,8 @@ fn ordered_union_headers_keep_exact_target_refusal_before_the_independent_frozen
     .unwrap();
     for target in ["Rust", "Lean", "Rocq"] {
         assert!(
-            emit_typed_program_links(&ordinary.network, ordinary.root, target)
+            portable_emission(&ordinary.network, ordinary.root, target)
                 .unwrap_err()
-                .message
                 .contains("explicit data object freeze")
         );
     }
@@ -360,10 +377,10 @@ fn source_free_record_descriptor_calls_preserve_actual_targets_and_threaded_outp
             serde_json::json!({"lines":["1","2","2"],"error":""})
         );
         for target in TARGETS {
-            let emitted = emit_typed_program_links(&network, edited.root, target).unwrap();
-            assert!(!emitted.code.is_empty());
+            let emitted = portable_emission(&network, edited.root, target).unwrap();
+            assert!(!emitted.is_empty());
             if target == "JavaScript" {
-                observe_javascript(&emitted.code, "1\n2\n2\n");
+                observe_javascript(&emitted, "1\n2\n2\n");
             }
         }
     }
