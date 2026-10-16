@@ -9,10 +9,58 @@ import {join,posix,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {writeProjectData} from './project-data.mjs';
 import {readMarkdownNativeSourceProfile} from './markdown-native-source-profile.mjs';
+import {tokenize} from '../src/translation/lexer.js';
 
 const MAXIMUM_ARCHIVE_BYTES=64*1024*1024;
 const MAXIMUM_MEMBER_BYTES=16*1024*1024;
 const digest=value=>createHash('sha256').update(value).digest('hex');
+
+// Capture every packaged local binding member instead of pretending to resolve
+// Rust modules. Only actual literal include candidates add outside members.
+function captureMarkdownCompositionSources(policy,paths,prefix,member){
+  const present=new Set(paths),captured=new Map(),dependencies=[],missing=[],unresolved=[];
+  const pending=paths.filter(path=>path.startsWith(prefix+policy.directory)&&!path.endsWith('/'))
+    .map(path=>({path:path.slice(prefix.length),rust:path.endsWith('.rs')}));
+  const inspected=new Set(),macros=new Set(policy.includeMacros);
+  for(const path of policy.requestedMembers)if(!present.has(prefix+path))missing.push({path,reason:'requested composition source is absent from the authenticated archive'});
+  for(let position=0;position<pending.length;position+=1){
+    const next=pending[position],source=member(next.path,'composition-source');
+    captured.set(next.path,source.record);
+    if(!next.rust||inspected.has(next.path))continue;
+    inspected.add(next.path);
+    let tokens;
+    try{({tokens}=tokenize(new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(source.content),'Rust'));}
+    catch(error){
+      unresolved.push({source:next.path,reason:'composition source tokenization refused',diagnostic:String(error.reason??error.message??error)});
+      continue;
+    }
+    for(let index=0;index<tokens.length;index+=1){
+      const token=tokens[index];
+      if(!macros.has(token.value))continue;
+      // The Rust lexer consumes an adjacent ! in its actual macro token;
+      // whitespace-separated ! remains a separate punctuation token.
+      const openingIndex=token.kind==='macro'?index+1:token.kind==='identifier'&&tokens[index+1]?.value==='!'?index+2:-1;
+      if(openingIndex<0)continue;
+      const opening=tokens[openingIndex]?.value,closing={'(':')','[':']','{':'}'}[opening];
+      const argument=tokens[openingIndex+1],end=tokens[openingIndex+2]?.value===','?tokens[openingIndex+3]:tokens[openingIndex+2];
+      const owner={source:next.path,macro:token.value,span:{start:token.start,end:token.end}};
+      if(!closing||argument?.kind!=='string'||end?.value!==closing){
+        unresolved.push({...owner,reason:'include candidate needs one actual literal string argument'});continue;
+      }
+      const target=posix.normalize(posix.join(posix.dirname(next.path),argument.value));
+      if(!argument.value||argument.value.includes('\\')||posix.isAbsolute(argument.value)||target==='..'||target.startsWith('../')){
+        unresolved.push({...owner,argument:argument.value,reason:'include candidate is outside the authenticated archive path domain'});continue;
+      }
+      dependencies.push({...owner,path:target});
+      if(!present.has(prefix+target)||target.endsWith('/')){
+        missing.push({...owner,path:target,reason:'literal include member is absent from the authenticated archive'});continue;
+      }
+      pending.push({path:target,rust:token.value==='include'});
+    }
+  }
+  return{requestedMembers:policy.requestedMembers,members:[...captured.values()],includeCandidates:dependencies,
+    missingMembers:missing,unresolvedIncludes:unresolved,boundary:policy.boundary};
+}
 
 /** Locate the archive acquired by the existing locked Cargo fetch, without downloading. */
 export function findMarkdownNativeSourceArchive(cargoHome=process.env.CARGO_HOME??join(homedir(),'.cargo'),profile=readMarkdownNativeSourceProfile()){
@@ -76,9 +124,10 @@ export function captureMarkdownNativeSources(archive,profile=readMarkdownNativeS
       ruleNames:Object.keys(parsed.rules),externalTokens:(parsed.externals??[]).map(value=>value.name??value.value),
       corpusMembers:corpus,corpusIncludedInArchive:corpus.length>0});
   }
+  const compositionSources=captureMarkdownCompositionSources(profile.compositionSources,paths,prefix,member);
   for(const path of['Cargo.toml','.cargo_vcs_info.json'])if(present.has(prefix+path))member(path,'package-provenance');
   return{schemaVersion:1,kind:'authenticated-source-capture',behavioralEvidence:false,
-    archive:{...profile.archive,bytes:bytes.length},components,members:[...members.values()],
+    archive:{...profile.archive,bytes:bytes.length},components,compositionSources,members:[...members.values()],
     unresolvedObligations:['native scanner transitions require source audit and shared Links generation','block and inline composition remains required','missing archive corpora require a separately pinned upstream corpus capture','source capture does not prove parsing or translation']};
 }
 

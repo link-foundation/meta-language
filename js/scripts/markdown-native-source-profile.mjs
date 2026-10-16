@@ -31,6 +31,9 @@ export function readMarkdownNativeSourceProfile(){
     archive:{crate:'tree-sitter-md-025',version,sha256:checksum,memberPrefix:`tree-sitter-md-025-${version}/`,
       url:`https://static.crates.io/crates/tree-sitter-md-025/tree-sitter-md-025-${version}.crate`,license:'MIT',repository:'https://github.com/subsriram/tree-sitter-markdown'},
     components,
+    compositionSources:{directory:'bindings/rust/',requestedMembers:['bindings/rust/parser.rs','bindings/rust/lib.rs'],
+      includeMacros:['include','include_str','include_bytes'],
+      boundary:'Authenticated local binding member inventory and literal include candidates are a conservative source superset, not resolved module semantics, conditional compilation, macro expansion or behavioral evidence.'},
     scannerFamilies:[
       {family:'container-layout',sourceTokens:['_indented_chunk_start','_block_close','block_continuation','_close_block','_no_indented_chunk','_blank_line_start','_block_quote_start','_line_ending','_soft_line_ending','_error','_trigger_error','_eof'],
         sourceAudit:['ordered container state','lazy continuation','tab-expanded indentation','queued zero-width closure','line-ending extents','valid-symbol and error-sentinel guards']},
@@ -53,7 +56,7 @@ export function readMarkdownNativeSourceProfile(){
       spanUnit:'absolute-utf8-bytes',resourceBudgets:'shared and unchanged',sourceOwnership:'each source byte rendered exactly once',
       unknownComponents:'diagnostic',nonconsumingCycles:'diagnostic',globalConceptSpace:'shared; source-qualified meanings remain distinct without checked correspondence',
       implementationGaps:['native discontiguous range view','excluded-node reinsertion','composition-aware native tree projection','source-free linked component and policy archive']},
-    captureRequirements:['authenticate complete crate archive before reading members','record actual grammar and scanner bytes and hashes','record scanner include closure and corpus member metadata','store receipts as Links data only','keep upstream files temporary and ignored','independent block and inline oracle cases before default promotion'],
+    captureRequirements:['authenticate complete crate archive before reading members','record actual grammar and scanner bytes and hashes','record scanner include closure and corpus member metadata','record composition binding members, literal include candidates and exact missing or unresolved sources','store receipts as Links data only','keep upstream files temporary and ignored','independent block and inline oracle cases before default promotion'],
   };
 }
 

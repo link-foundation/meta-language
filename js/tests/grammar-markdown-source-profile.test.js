@@ -45,6 +45,88 @@ test('Markdown source plan retains both real pins, every block scanner token and
   assert.equal(profile.composition.spanUnit,'absolute-utf8-bytes');
   assert.equal(profile.composition.resourceBudgets,'shared and unchanged');
   assert.equal(profile.composition.implementationGaps.length,4);
+  assert.deepEqual(profile.compositionSources.requestedMembers,['bindings/rust/parser.rs','bindings/rust/lib.rs']);
+  assert.deepEqual(profile.compositionSources.includeMacros,['include','include_str','include_bytes']);
+});
+
+test('composition capture authenticates a local member superset and transitive literal include candidates without resolving modules',()=>{
+  const profile=readMarkdownNativeSourceProfile(),files={
+    'fixture/bindings/rust/parser.rs':'// include_str!("comment-only.txt");\nconst NOTE: &str = "include!(\\\"string-only.rs\\\")";\ninclude!("parts/body.rs");\ninclude_str!("../../queries/inline.scm");\ninclude_bytes!("bytes.bin");\ninclude!(concat!("dynamic", ".rs"));\ninclude_str!("../../../outside.txt");\n',
+    'fixture/bindings/rust/lib.rs':'mod parser;\nmod extra;\n',
+    'fixture/bindings/rust/extra.rs':'mod nested;\n',
+    'fixture/bindings/rust/extra/nested.rs':'// Captured as local member inventory, not module resolution.\n',
+    'fixture/bindings/rust/parts/body.rs':'include!("leaf.rs");\n',
+    'fixture/bindings/rust/parts/leaf.rs':'include!("body.rs");\n',
+    'fixture/bindings/rust/bytes.bin':'include!("not-rust.rs");\n',
+    'fixture/queries/inline.scm':'(inline) @capture\n',
+  };
+  profile.archive={crate:'synthetic-composition',version:'1',memberPrefix:'fixture/',license:'MIT',repository:'synthetic-test-input'};
+  for(const component of profile.components){
+    files[`fixture/${component.grammarMember}`]=JSON.stringify({rules:{document:{type:'STRING',value:'x'}}});
+    files[`fixture/${component.scannerMember}`]='/* synthetic scanner */\n';
+    const parser=`/* synthetic parser ${component.id} */\n`;
+    files[`fixture/${component.directory}/src/parser.c`]=parser;component.parserSha256=digest(parser);
+  }
+  const archive=createSourceArchive(files);profile.archive.sha256=digest(archive);
+  const directory=mkdtempSync(join(tmpdir(),'meta-language-markdown-composition-control-')),file=join(directory,'synthetic.crate');
+  writeFileSync(file,archive);
+  try{
+    const receipt=captureMarkdownNativeSources(file,profile),composition=receipt.compositionSources;
+    assert.equal(receipt.behavioralEvidence,false);
+    assert.deepEqual(composition.requestedMembers,['bindings/rust/parser.rs','bindings/rust/lib.rs']);
+    assert.deepEqual(composition.missingMembers,[]);
+    assert.equal(composition.members.length,8,'all seven local members and the outside literal include are captured once');
+    assert.deepEqual(composition.includeCandidates.map(({source,macro,path})=>[source,macro,path]),[
+      ['bindings/rust/parser.rs','include','bindings/rust/parts/body.rs'],
+      ['bindings/rust/parser.rs','include_str','queries/inline.scm'],
+      ['bindings/rust/parser.rs','include_bytes','bindings/rust/bytes.bin'],
+      ['bindings/rust/parts/body.rs','include','bindings/rust/parts/leaf.rs'],
+      ['bindings/rust/parts/leaf.rs','include','bindings/rust/parts/body.rs'],
+    ]);
+    assert.deepEqual(composition.unresolvedIncludes.map(({macro,reason})=>[macro,reason]),[
+      ['include','include candidate needs one actual literal string argument'],
+      ['include_str','include candidate is outside the authenticated archive path domain'],
+    ]);
+    for(const member of composition.members){
+      assert.equal(member.sha256,digest(files['fixture/'+member.path]));
+      assert.equal(member.bytes,Buffer.byteLength(files['fixture/'+member.path]));
+      assert.equal(Object.hasOwn(member,'content'),false);
+    }
+    assert.match(composition.boundary,/not resolved module semantics/u);
+    const changed=createSourceArchive({...files,'fixture/queries/inline.scm':'(changed) @capture\n'});
+    writeFileSync(file,changed);
+    assert.throws(()=>captureMarkdownNativeSources(file,profile),/archive checksum mismatch/u);
+    const refreshed=captureMarkdownNativeSources(file,{...profile,archive:{...profile.archive,sha256:digest(changed)}});
+    assert.equal(refreshed.compositionSources.members.find(({path})=>path==='queries/inline.scm').sha256,digest('(changed) @capture\n'));
+    assert.notEqual(refreshed.compositionSources.members.find(({path})=>path==='queries/inline.scm').sha256,composition.members.find(({path})=>path==='queries/inline.scm').sha256);
+  }finally{rmSync(directory,{recursive:true,force:true});}
+});
+
+test('composition capture records actual requested and literal-member absences without manufacturing hashes',()=>{
+  const profile=readMarkdownNativeSourceProfile(),files={
+    'fixture/bindings/rust/lib.rs':'include_str!("missing.txt");\n',
+  };
+  profile.archive={crate:'synthetic-composition-absence',version:'1',memberPrefix:'fixture/',license:'MIT',repository:'synthetic-test-input'};
+  for(const component of profile.components){
+    files[`fixture/${component.grammarMember}`]=JSON.stringify({rules:{document:{type:'STRING',value:'x'}}});
+    files[`fixture/${component.scannerMember}`]='/* synthetic scanner */\n';
+    const parser=`/* synthetic parser ${component.id} */\n`;
+    files[`fixture/${component.directory}/src/parser.c`]=parser;component.parserSha256=digest(parser);
+  }
+  const archive=createSourceArchive(files);profile.archive.sha256=digest(archive);
+  const directory=mkdtempSync(join(tmpdir(),'meta-language-markdown-composition-absence-')),file=join(directory,'synthetic.crate');
+  writeFileSync(file,archive);
+  try{
+    const receipt=captureMarkdownNativeSources(file,profile),composition=receipt.compositionSources;
+    assert.deepEqual(composition.members.map(({path})=>path),['bindings/rust/lib.rs']);
+    assert.deepEqual(composition.missingMembers.map(({path,reason})=>[path,reason]),[
+      ['bindings/rust/parser.rs','requested composition source is absent from the authenticated archive'],
+      ['bindings/rust/missing.txt','literal include member is absent from the authenticated archive'],
+    ]);
+    assert.ok(composition.missingMembers.every(row=>!Object.hasOwn(row,'sha256')&&!Object.hasOwn(row,'bytes')));
+    assert.deepEqual(composition.unresolvedIncludes,[]);
+    assert.equal(receipt.behavioralEvidence,false);
+  }finally{rmSync(directory,{recursive:true,force:true});}
 });
 
 test('source capture authenticates synthetic archive members, include closure and corpus metadata without storing grammar payloads',()=>{
