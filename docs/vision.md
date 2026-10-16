@@ -2122,6 +2122,8 @@ Progress diagnostics also report actual charged cells, stored rules and heap
 use at bounded cell intervals, so an abort before a run returns still leaves
 its preceding measurements. Both executor methods are restored on observer
 failure; enabling diagnostics preserves the exact encoded archives.
+Those scalar measurements also retain the farthest examined source offset,
+current call position and nesting depth, without a heap dump or retained tree.
 After a JavaScript rule call finishes, its memo cell keeps only the exact result
 array and live keyword context. Rule identities, call positions, recursion seeds
 and temporary lexer state belong to the active call; the retired memo drops its

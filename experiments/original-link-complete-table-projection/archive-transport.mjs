@@ -76,7 +76,8 @@ function observeCompleteSourceParse(source, parseSource, onNativeRun, nativeRunC
     const sequence = ++run;
     const event = phase => ({phase, sequence, inputBytes:this.end-this.begin,
       memoCells:this.budget.memory.cells, storedRules:this.memo.size,
-      heap:process.memoryUsage().heapUsed});
+      heap:process.memoryUsage().heapUsed, farthest:this.farthest,
+      callPosition:this.callStack.at(-1)?.position??this.begin, depth:this.depth});
     contexts.push({executor:this,next:this.budget.memory.cells+nativeRunCellInterval,event});
     try {
       onNativeRun(event('begin'));

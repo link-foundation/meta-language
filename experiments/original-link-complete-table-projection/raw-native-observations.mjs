@@ -226,7 +226,7 @@ const vectorBits = (carrier, index) => carrier.vectors[index].flatMap(index => c
 const protocol = (observations, carrier) => observations.map((row, index) => [index, row.resultBits.length, ...carrier.vectors[carrier.invocations[index].result].map(value => value.toString(16))].join(':')).join('\n') + '\n';
 function archiveCompleteRustSource(source, LinkNetwork, encodeBinary, decodeBinary) {
   const options = {parseSource: original => {const graph = LinkNetwork.parse(original, 'Rust'); requireSuccessfulSourceArchive(graph); return graph;}, encodeBinary, decodeBinary,
-    onNativeRun: event => process.stdout.write(`Raw source native run: phase=${event.phase}; run=${event.sequence}; inputBytes=${event.inputBytes}; memoCells=${event.memoCells}; storedRules=${event.storedRules}; heap=${event.heap}\n`),
+    onNativeRun: event => process.stdout.write(`Raw source native run: phase=${event.phase}; run=${event.sequence}; inputBytes=${event.inputBytes}; memoCells=${event.memoCells}; storedRules=${event.storedRules}; heap=${event.heap}; farthest=${event.farthest}; callPosition=${event.callPosition}; depth=${event.depth}\n`),
     onPhase: (phase, count) => process.stdout.write(`Raw source archive: ${phase}; records=${count ?? 'unknown'}; heap=${process.memoryUsage().heapUsed}\n`)};
   const archives = createCompleteRustSourceArchives(source, options);
   const {textReplay, binaryReplay} = replayCompleteRustSourceArchives(archives, options);

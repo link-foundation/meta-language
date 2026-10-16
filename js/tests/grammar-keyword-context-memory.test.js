@@ -223,6 +223,8 @@ test('native source progress diagnostics preserve archives and restore both exec
   for(const event of events){
     for(const value of Object.values(event))assert.ok(['string','number','boolean'].includes(typeof value));
     assert.ok(Number.isSafeInteger(event.memoCells));assert.ok(Number.isSafeInteger(event.storedRules));
+    for(const position of[event.farthest,event.callPosition])assert.ok(Number.isSafeInteger(position)&&position>=0&&position<=event.inputBytes);
+    assert.ok(Number.isSafeInteger(event.depth)&&event.depth>=0);
   }
   for(const value of [0,-1,1.5,NaN,Infinity])assert.throws(()=>createCompleteRustSourceArchives(source,{...options,nativeRunCellInterval:value,onNativeRun:()=>{}}),/positive integer cell interval/);
   assert.throws(()=>createCompleteRustSourceArchives(source,{...options,nativeRunCellInterval:16,onNativeRun:event=>{if(event.phase==='progress')throw new Error('progress observer control');}}),/progress observer control/);
