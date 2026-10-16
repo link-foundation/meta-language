@@ -1673,7 +1673,7 @@ export interface GlobalConceptProof {
 export interface GlobalConceptSpace {
   schemaVersion: 1;
   sources: Array<{ id: string; language: string; edition: string; start: string | null;
-    ruleOrder: string[]; context: GrammarDeclarations }>;
+    ruleOrder: string[]; context: GrammarDeclarations; sourceFormat?: string }>;
   concepts: Array<{ id: string; origins: GlobalConceptOrigin[]; definition: Omit<GrammarRuleValue, 'name'>;
     definitions: Array<{ origin: string; definition: Omit<GrammarRuleValue, 'name'> }>; proofs: number[] }>;
   mappings: Record<string, string>;

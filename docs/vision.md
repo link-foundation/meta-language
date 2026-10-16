@@ -121,6 +121,14 @@ concrete tree and embedded provenance. Existing any/all selection, cycle
 diagnostics and shared parser budgets remain in force. The `records` option
 configures archive validation only.
 
+Archives retain the original grammar format and raw declaration presence.
+The effective matching context includes the format's default: implicit PEG
+repetition remains possessive after reload, while an explicit generalized
+override retains its behavior. Shared decisions determine this default in both
+runtimes. Format spellings alone do not prevent proven equivalent concepts from
+sharing; correspondence checks their actual operational context. Historical
+archives retain the format facts they actually contain.
+
 ### Recursive formal concept definitions
 
 Every concept has a deep recursive formal definition made of inspectable links.
@@ -1418,6 +1426,15 @@ callback comparisons do not establish parser eligibility, Rust execution or
 complete Markdown CST support. Keep native promotion blocked until the parser
 supplies faithful context and the block scanner and composition also work.
 
+Simultaneous scanner eligibility belongs to one explicit parser continuation,
+including its caller returns, input range, scanner state and recovery phase.
+Close that continuation to its token boundaries before constructing an immutable
+validity vector. Keep diagnostic expectation sets in their existing role; their
+accumulated requests do not establish this frontier. Retain an emitted symbol
+independently of the initiating request, with its token extent, inspected cursor
+and resulting state. Native promotion requires correspondence with the source
+parser's actual eligibility contexts and independent complete CST comparisons.
+
 ## Grammar import, conversion and reverse conversion
 
 Both runtime packages provide public APIs and command-line tools to import,
@@ -1736,6 +1753,12 @@ holding those inputs is ignored by Git. Tracked metadata retains immutable
 versions, provenance, checksums, licenses and reproducible patch instructions;
 downloads verify those checksums before use. Repository-native generated Links
 Notation grammars remain the prepared meta-language snapshot.
+
+Temporary acquisition retries recognized transport failures, timeouts and HTTP
+408, 429 and 5xx responses at most three times per pinned URL, with 250 and 500
+millisecond backoffs. Each attempt keeps its finite timeout and existing worker
+limit. Checksum, size, HTTPS and storage failures remain fatal; partial response
+bytes never become an authenticated cache or materialized asset.
 
 CI provisions required inputs before checks and artifact construction. Temporary
 compiled fallback assets can still accompany an installed artifact while the

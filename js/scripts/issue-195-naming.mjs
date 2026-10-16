@@ -1097,6 +1097,7 @@ const BASE_NAME_INVENTORIES = Object.freeze([
       'global-concept': 'grammar.global-concept',
       'concept-origin': 'grammar.global-concept-origin',
       'grammar-origin': 'grammar.global-grammar-origin',
+      'grammar-source-format': 'grammar.declare-source-format',
       'grammar-context': 'grammar.global-grammar-context',
       'concept-definition': 'grammar.global-concept-definition',
       'concept-proof': 'grammar.global-concept-proof',
@@ -45354,7 +45355,231 @@ const VERSION_RANGE_EVIDENCE_BINDINGS=[
   }
 ];
 const VERSION_RANGE_EVIDENCE_NAME_INVENTORIES=[{inventory:"B53 version range execution evidence source names",files:["js/tests/assertion-version-ranges.test.js"],extract:text=>VERSION_RANGE_EVIDENCE_BINDINGS.filter(row=>text.split("\n").includes(row.sourceText)).map(row=>row.inventoryName),recordOf:name=>VERSION_RANGE_EVIDENCE_BINDINGS.find(row=>row.inventoryName===name).id}];
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory).map(reconcileBulkFortySevenNativeInventory).map(reconcileBulkFiftyHistoricalInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES, ...BULK_FORTY_SEVEN_NAME_INVENTORIES, ...BULK_FORTY_EIGHT_NAME_INVENTORIES, ...BULK_FORTY_NINE_NAME_INVENTORIES, ...BULK_FIFTY_NAME_INVENTORIES, ...BULK_FIFTY_ONE_NAME_INVENTORIES, ...VERSION_RANGE_EVIDENCE_NAME_INVENTORIES]);
+// BEGIN B53 grammar source format and repeated download source names.
+const FORMAT_RETRY_SOURCE_BINDINGS=[
+  {
+    "id": "repository.grammar-download-response-error",
+    "source": "js/scripts/external-grammar-cache.mjs",
+    "name": "GrammarDownloadResponseError",
+    "inventoryName": "grammar download response error",
+    "sourceText": "class GrammarDownloadResponseError extends Error {"
+  },
+  {
+    "id": "repository.create-grammar-download-response-error",
+    "source": "js/scripts/external-grammar-cache.mjs",
+    "name": "constructor",
+    "inventoryName": "create grammar download response error",
+    "sourceText": "  constructor(status) {",
+    "sourceContext": "class GrammarDownloadResponseError extends Error {\n  constructor(status) {"
+  },
+  {
+    "id": "repository.accept-temporary-grammar-download-failure",
+    "source": "js/scripts/external-grammar-cache.mjs",
+    "name": "isTransientDownloadError",
+    "inventoryName": "accept temporary grammar download failure",
+    "sourceText": "function isTransientDownloadError(error) {"
+  },
+  {
+    "id": "repository.download-grammar-bytes-with-bounded-attempts",
+    "source": "js/scripts/external-grammar-cache.mjs",
+    "name": "downloadBytesWithRetries",
+    "inventoryName": "download grammar bytes with bounded attempts",
+    "sourceText": "async function downloadBytesWithRetries(url, limit, options) {"
+  },
+  {
+    "id": "repository.check-temporary-grammar-response-recovery",
+    "source": "js/tests/external-grammar-cache.test.js",
+    "name": "transient HTTP downloads recover with capped attempts, backoffs and fresh timeout signals",
+    "inventoryName": "check temporary grammar response recovery",
+    "sourceText": "test('transient HTTP downloads recover with capped attempts, backoffs and fresh timeout signals', async context => {"
+  },
+  {
+    "id": "repository.check-grammar-transport-failure-recovery",
+    "source": "js/tests/external-grammar-cache.test.js",
+    "name": "transport and timeout download failures retry without publishing incomplete assets",
+    "inventoryName": "check grammar transport failure recovery",
+    "sourceText": "test('transport and timeout download failures retry without publishing incomplete assets', async context => {"
+  },
+  {
+    "id": "repository.check-interrupted-grammar-response-recovery",
+    "source": "js/tests/external-grammar-cache.test.js",
+    "name": "interrupted response bodies restart from authenticated complete bytes",
+    "inventoryName": "check interrupted grammar response recovery",
+    "sourceText": "test('interrupted response bodies restart from authenticated complete bytes', async context => {"
+  },
+  {
+    "id": "repository.check-persistent-grammar-download-failure-bounds",
+    "source": "js/tests/external-grammar-cache.test.js",
+    "name": "persistent transient failures exhaust each pinned mirror with bounded requests and no publication",
+    "inventoryName": "check persistent grammar download failure bounds",
+    "sourceText": "test('persistent transient failures exhaust each pinned mirror with bounded requests and no publication', async context => {"
+  },
+  {
+    "id": "repository.check-permanent-grammar-response-mirror-fallback",
+    "source": "js/tests/external-grammar-cache.test.js",
+    "name": "permanent HTTP failures are not retried and retain authenticated mirror fallback",
+    "inventoryName": "check permanent grammar response mirror fallback",
+    "sourceText": "test('permanent HTTP failures are not retried and retain authenticated mirror fallback', async context => {"
+  },
+  {
+    "id": "repository.check-grammar-download-integrity-and-security-refusals",
+    "source": "js/tests/external-grammar-cache.test.js",
+    "name": "integrity and HTTPS failures are fatal without retries or concealment by another mirror",
+    "inventoryName": "check grammar download integrity and security refusals",
+    "sourceText": "test('integrity and HTTPS failures are fatal without retries or concealment by another mirror', async context => {"
+  },
+  {
+    "id": "repository.check-unclassified-grammar-download-error-refusals",
+    "source": "js/tests/external-grammar-cache.test.js",
+    "name": "TLS, unsafe redirect and unclassified programming errors do not enter transport retries",
+    "inventoryName": "check unclassified grammar download error refusals",
+    "sourceText": "test('TLS, unsafe redirect and unclassified programming errors do not enter transport retries', async context => {"
+  },
+  {
+    "id": "repository.check-grammar-download-worker-concurrency-bounds",
+    "source": "js/tests/external-grammar-cache.test.js",
+    "name": "download retry attempts remain inside the unchanged finite worker concurrency",
+    "inventoryName": "check grammar download worker concurrency bounds",
+    "sourceText": "test('download retry attempts remain inside the unchanged finite worker concurrency', async context => {"
+  },
+  {
+    "id": "translation.read-grammar-source-default-matching",
+    "source": "js/src/translation/grammar-selection-rules.js",
+    "name": "readGrammarSourceDefaultMatching",
+    "inventoryName": "read grammar source default matching",
+    "sourceText": "export function readGrammarSourceDefaultMatching(sourceFormat) {"
+  },
+  {
+    "id": "translation.read-grammar-source-default-matching",
+    "source": "rust/src/translation/grammar_selection_rules.rs",
+    "name": "read_grammar_source_default_matching",
+    "inventoryName": "read grammar source default matching",
+    "sourceText": "pub fn read_grammar_source_default_matching(source_format: &str) -> String {"
+  },
+  {
+    "id": "translation.read-grammar-source-default-matching",
+    "source": "parity/self-translation/grammar-selection-rules-native.lino",
+    "name": "read_grammar_source_default_matching",
+    "inventoryName": "read grammar source default matching",
+    "sourceText": "pub fn read_grammar_source_default_matching(source_format: String) -> String {",
+    "sourceField": "emittedSource"
+  },
+  {
+    "id": "repository.append-source-format-provenance-to-control-expectations",
+    "source": "js/tests/global-concept-space.test.js",
+    "name": "withSourceFormatProvenance",
+    "inventoryName": "append source format provenance to control expectations",
+    "sourceText": "function withSourceFormatProvenance(expected, input) {"
+  },
+  {
+    "id": "repository.append-source-format-provenance-to-control-expectations",
+    "source": "rust/tests/unit/global_concept_space.rs",
+    "name": "with_source_format_provenance",
+    "inventoryName": "append source format provenance to control expectations",
+    "sourceText": "fn with_source_format_provenance(expected: &Value, input: &[GlobalConceptSource]) -> Value {"
+  },
+  {
+    "id": "repository.append-source-format-statements-to-control-archives",
+    "source": "js/tests/global-concept-space.test.js",
+    "name": "withSourceFormatStatements",
+    "inventoryName": "append source format statements to control archives",
+    "sourceText": "function withSourceFormatStatements(links, input) {"
+  },
+  {
+    "id": "repository.append-source-format-statements-to-control-archives",
+    "source": "rust/tests/unit/global_concept_space.rs",
+    "name": "with_source_format_statements",
+    "inventoryName": "append source format statements to control archives",
+    "sourceText": "fn with_source_format_statements(links: &str, input: &[GlobalConceptSource]) -> String {"
+  },
+  {
+    "id": "repository.check-archived-grammar-format-matching-defaults",
+    "source": "js/tests/global-concept-archive-parser.test.js",
+    "name": "archived raw PEG formats preserve possessive repetition and explicit generalized overrides",
+    "inventoryName": "check archived grammar format matching defaults",
+    "sourceText": "test('archived raw PEG formats preserve possessive repetition and explicit generalized overrides', () => {"
+  },
+  {
+    "id": "repository.check-archived-grammar-format-matching-defaults",
+    "source": "rust/tests/unit/global_concept_archive_parser.rs",
+    "name": "archived_source_formats_retain_peg_repetition_and_declared_matching_overrides",
+    "inventoryName": "check archived grammar format matching defaults",
+    "sourceText": "fn archived_source_formats_retain_peg_repetition_and_declared_matching_overrides() {"
+  },
+  {
+    "id": "repository.check-archived-grammar-format-matching-witnesses",
+    "source": "js/tests/global-concept-archive-parser.test.js",
+    "name": "archive format defaults and declared matching cannot bypass current concept witnesses",
+    "inventoryName": "check archived grammar format matching witnesses",
+    "sourceText": "test('archive format defaults and declared matching cannot bypass current concept witnesses', () => {"
+  },
+  {
+    "id": "repository.check-archived-grammar-format-matching-witnesses",
+    "source": "rust/tests/unit/global_concept_archive_parser.rs",
+    "name": "archived_format_and_matching_tampering_cannot_bypass_current_proof_witnesses",
+    "inventoryName": "check archived grammar format matching witnesses",
+    "sourceText": "fn archived_format_and_matching_tampering_cannot_bypass_current_proof_witnesses() {"
+  },
+  {
+    "id": "grammar.require-global-grammar-source-format",
+    "source": "rust/src/global_concept_space.rs",
+    "name": "require_global_grammar_source_format",
+    "inventoryName": "require global grammar source format",
+    "sourceText": "fn require_global_grammar_source_format(value: Option<&Value>) -> Result<(), String> {"
+  },
+  {
+    "id": "repository.create-archive-source-text-value-meaning",
+    "source": "rust/tests/unit/global_concept_archive_parser.rs",
+    "name": "source_text_meaning",
+    "inventoryName": "create archive source text value meaning",
+    "sourceText": "fn source_text_meaning() -> Value {"
+  },
+  {
+    "id": "grammar.declare-source-format",
+    "source": "js/src/global-concept-space.js",
+    "name": "grammar-source-format",
+    "inventoryName": "declare source format",
+    "sourceText": "    if (source.sourceFormat != null) lines.push(`(grammar-source-format ${word(source.id)} ${word(source.sourceFormat)})`);"
+  },
+  {
+    "id": "grammar.declare-source-format",
+    "source": "rust/src/global_concept_space/links.rs",
+    "name": "grammar-source-format",
+    "inventoryName": "declare source format",
+    "sourceText": "                \"(grammar-source-format {id} {})\","
+  },
+  {
+    "id": "grammar.value.format",
+    "source": "js/src/global-concept-space.js",
+    "name": "sourceFormat",
+    "inventoryName": "format",
+    "sourceText": "  return { schemaVersion: 1, sources: ordered.map(({ id, language, edition, grammar }) => ({ id, language, edition: edition ?? '', start: grammar.start, ruleOrder: grammar.ruleNames(), context: copy(grammarDeclarations(grammar)), ...(grammar.sourceFormat == null ? {} : { sourceFormat: grammar.sourceFormat }) })), concepts, mappings, proofs, failures, ambiguities, redirects, formalDefinitions: formal };"
+  },
+  {
+    "id": "grammar.value.format",
+    "source": "js/src/index.d.ts",
+    "name": "sourceFormat",
+    "inventoryName": "archived grammar source format value",
+    "sourceText": "    ruleOrder: string[]; context: GrammarDeclarations; sourceFormat?: string }>;"
+  },
+  {
+    "id": "grammar.value.format",
+    "source": "rust/src/global_concept_space.rs",
+    "name": "sourceFormat",
+    "inventoryName": "format",
+    "sourceText": "            origin[\"sourceFormat\"] = format.clone();"
+  },
+  {
+    "id": "grammar.value.format",
+    "source": "rust/src/global_concept_space/links.rs",
+    "name": "sourceFormat",
+    "inventoryName": "format",
+    "sourceText": "                space[\"sources\"][index][\"sourceFormat\"] = json!(link_word(&args[1])?);"
+  }
+];
+const FORMAT_RETRY_SOURCE_NAME_INVENTORIES=[...new Set(FORMAT_RETRY_SOURCE_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B53 grammar source format and repeated download names for "+source,files:[source],extract:raw=>FORMAT_RETRY_SOURCE_BINDINGS.filter(row=>{if(row.source!==source)return false;const text=row.sourceField?readStructuredDataLino(raw)[row.sourceField]:raw;return typeof text==="string"&&text.split("\n").includes(row.sourceText)&&(!row.sourceContext||text.includes(row.sourceContext));}).map(row=>row.inventoryName),recordOf:name=>FORMAT_RETRY_SOURCE_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));
+// END B53 grammar source format and repeated download source names.
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory).map(reconcileBulkFortySevenNativeInventory).map(reconcileBulkFiftyHistoricalInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES, ...BULK_FORTY_SEVEN_NAME_INVENTORIES, ...BULK_FORTY_EIGHT_NAME_INVENTORIES, ...BULK_FORTY_NINE_NAME_INVENTORIES, ...BULK_FIFTY_NAME_INVENTORIES, ...BULK_FIFTY_ONE_NAME_INVENTORIES, ...VERSION_RANGE_EVIDENCE_NAME_INVENTORIES, ...FORMAT_RETRY_SOURCE_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {

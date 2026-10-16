@@ -82,3 +82,13 @@ pub fn read_grammar_selection_equality_fields(alternative: bool) -> String {
         String::from("mode|mapping|start|end|candidates|provenance|ambiguous")
     }
 }
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+pub fn read_grammar_source_default_matching(source_format: &str) -> String {
+    if source_format == "peg" {
+        String::from("peg")
+    } else {
+        String::from("generalized")
+    }
+}
