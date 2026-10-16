@@ -44,10 +44,26 @@ test('terminal function returns inside loops keep tuple order while loop backedg
   assert.equal(copies(review(earlier)), 0, 'an earlier argument does not keep the later transfer live');
   const recreated = 'pub fn recreated(flag: bool) -> String { loop { let fresh = String::new(); if flag { self::consume(fresh.clone()); continue; } return fresh.clone(); } }';
   assert.equal(copies(review(recreated)), 0, 'a unique let definition creates new storage on the next iteration');
+  const assigned = 'pub fn assigned(mut value: String, flag: bool) -> String { loop { if flag { return value; } let selected = if value.is_empty() { String::new() } else { value.clone() }; value = selected; continue; } }';
+  assert.equal(copies(review(assigned)), 0, 'a completed bare assignment kills the old loop state before the backedge');
+  const tuple = 'pub fn assigned_tuple(mut index: f64, mut value: String, flag: bool) -> String { loop { if flag { return value; } let selected = if value.is_empty() { String::new() } else { value.clone() }; let next = index + 1f64; (index, value) = (next, selected); continue; } }';
+  assert.equal(copies(review(tuple)), 0, 'a completed tuple assignment kills only its actual target bindings');
+  const ordered = 'pub fn ordered(mut first: String, mut second: String) -> String { (first, second) = (first.clone(), first.clone()); second }';
+  assert.ok(review(ordered).includes('(first, second) = (first.clone(), first);'), 'all tuple RHS reads precede every target kill');
+  const laterStore = 'pub fn later_store(mut value: String) -> String { value = self::consume(value.clone(), value.len()); value }';
+  assert.equal(review(laterStore), laterStore, 'a later RHS argument keeps the earlier clone before a bare store');
+  const earlierStore = 'pub fn earlier_store(mut value: String) -> String { value = self::consume(value.len(), value.clone()); value }';
+  assert.equal(copies(review(earlierStore)), 0, 'a last RHS argument can transfer before the completed bare store');
   for (const source of [
     'pub fn carried(value: String) -> String { loop { self::observe(value.clone()); continue; } }',
     'pub fn broken(value: String, flag: bool) -> String { loop { if flag { self::observe(value.clone()); break; } } value }',
     'pub fn condition(value: String, flag: bool) -> String { while flag { self::observe(value.clone()); } value }',
+    'pub fn continued_rhs(mut value: String, flag: bool) -> String { loop { value = if flag { self::observe(value.clone()); continue; } else { String::new() }; } }',
+    'pub fn compound_store(mut value: String) -> String { loop { value += self::read(value.clone()); continue; } }',
+    'pub fn indexed_store(mut values: Vec<String>, value: String) -> String { loop { values[0] = value.clone(); continue; } }',
+    'pub fn dereferenced_store(target: &mut String, value: String) -> String { loop { *target = value.clone(); continue; } }',
+    'pub fn repeated_targets(mut value: String) -> String { loop { (value, value) = (value.clone(), value.clone()); continue; } }',
+    'pub fn expression_store(mut value: String, flag: bool) -> String { loop { let selected = value.clone(); (if flag {} else {}, value = selected); continue; } }',
   ]) assert.equal(review(source), source);
 });
 
@@ -65,9 +81,27 @@ test('actual declared enum field types prove owned pattern slots without crossin
     + 'pub fn selected(value: String) -> self::State { self::State::Next(value) }\n'
     + 'pub fn repeated(mut value: String, flag: bool) -> String { loop { let state = if flag { self::State::Next(String::new()) } else { self::selected(value.clone()) }; match state { self::State::Next(next) => { if flag { return next.clone(); } value = next.clone(); continue; } } } }';
   const moved = review(loop);
-  assert.equal(copies(moved), 1, 'only the conservative parameter copy remains; each selected field dies before its next definition');
-  assert.ok(moved.includes('value.clone()'));
+  assert.equal(copies(moved), 0, 'each selected field and the completed reassignment kill the previous loop storage');
+  assert.equal(moved.includes('value.clone()'), false);
   assert.equal(moved.includes('next.clone()'), false);
+  const returned = 'pub enum State { Next(String) }\n'
+    + 'pub fn returned(value: String, flag: bool) -> String { let state = if flag { let inspected = value.len(); self::observe(inspected); return value.clone(); } else { self::State::Next(value.clone()) }; match state { self::State::Next(next) => next.clone() } }';
+  assert.equal(copies(review(returned)), 0, 'an actual return arm cannot supply the owned initializer result');
+  const continued = 'pub enum State { Next(String) }\n'
+    + 'pub fn continued(mut value: String, flag: bool) -> String { loop { let state = if flag { value = String::new(); continue; } else { self::State::Next(value.clone()) }; match state { self::State::Next(next) => return next.clone() } } }';
+  assert.equal(copies(review(continued)), 0, 'an actual continue arm cannot supply the owned initializer result');
+  const matched = 'pub enum Choice { First(String), Second(String) }\npub enum State { Next(String) }\n'
+    + 'pub fn matched(choice: self::Choice) -> String { let state = match choice { self::Choice::First(first) => { self::State::Next(first.clone()) } self::Choice::Second(second) => { self::State::Next(second.clone()) } }; match state { self::State::Next(next) => next.clone() } }';
+  assert.equal(copies(review(matched)), 0, 'all actual match result arms prove the same owned enum result');
+  const borrowedResult = 'pub enum State { Next(String) }\n'
+    + 'pub fn borrowed_result(value: &self::State, flag: bool) -> String { let state = if flag { return String::new(); } else { value }; match state { self::State::Next(next) => next.clone() } }';
+  assert.equal(review(borrowedResult), borrowedResult, 'a divergent alternative never turns a borrowed surviving result into an owner');
+  const conditionalReturn = 'pub enum State { Next(String) }\n'
+    + 'pub fn conditional_return(value: &self::State, flag: bool, condition: bool) -> String { let state = if flag { if condition { return String::new(); } value } else { value }; match state { self::State::Next(next) => next.clone() } }';
+  assert.equal(review(conditionalReturn), conditionalReturn, 'a conditional return with a fallthrough path proves no divergent branch');
+  const brokenResult = 'pub enum State { Next(String) }\n'
+    + 'pub fn broken_result(value: String) -> String { let state = loop { break self::State::Next(value); }; match state { self::State::Next(next) => next.clone() } }';
+  assert.equal(review(brokenResult), brokenResult, 'a value-carrying break remains outside the bounded control proof');
   const shadow = 'pub fn shadow(value: String, borrowed: &String) -> String { match borrowed { value => value.clone() } }';
   assert.equal(review(shadow), shadow, 'an unrepresented pattern cannot borrow an outer binding type');
 });

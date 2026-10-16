@@ -154,7 +154,7 @@ function readDeclarations(source) {
 // Read only complete generated control constructs. The graph overapproximates
 // short-circuit expressions, so an extra possible use retains a copy.
 function readFlow(fn) {
-  const {tokens, matching, body, end} = fn, patterns = [];
+  const {tokens, matching, body, end} = fn, patterns = [], matches = new Map(), controlEnds = new Map();
   const word = (at, text) => tokens[at]?.kind === 'identifier' && tokens[at].value === text;
   const fail = () => { throw new Error('unsupported owned source flow'); };
   const findBody = (start, finish) => {
@@ -220,8 +220,10 @@ function readFlow(fn) {
         }
         if (!arms.length) fail();
         unit = {kind: 'match', start: at, open, close, arms, next: close + 1};
+        matches.set(at, unit);
       } else if (matching.get(at) > at) unit = {kind: 'group', start: at, end: matching.get(at), next: matching.get(at) + 1};
       else unit = {kind: 'token', start: at, next: at + 1};
+      if (['if', 'match', 'loop', 'while'].includes(unit.kind)) controlEnds.set(unit.next, unit.start);
       units.push(unit); at = unit.next;
     }
     return units;
@@ -264,7 +266,7 @@ function readFlow(fn) {
     return [unit.start];
   };
   buildRange(body + 1, end, [], undefined);
-  return {edges, patterns, readIf};
+  return {edges, patterns, matches, controlEnds, readIf};
 }
 
 function acceptFunction(fn) {
@@ -291,8 +293,8 @@ function acceptFunction(fn) {
 function readBindingTypes(fn, flow, declarations) {
   const {block, tokens, matching, parameterOpen, parameterClose, body, end} = fn;
   const bindings = new Map(), counts = new Map(), initializers = [], patterns = [];
-  const definitions = new Map(), declarationTokens = new Set();
-  const refused = () => ({bindings: new Map(), definitions: new Map(), declarationTokens: new Set()});
+  const definitions = new Map(), declarationTokens = new Set(), writeTokens = new Set();
+  const refused = () => ({bindings: new Map(), definitions: new Map(), declarationTokens: new Set(), writeTokens: new Set()});
   const add = (name, type, position) => {
     counts.set(name, (counts.get(name) ?? 0) + 1);
     if (type) bindings.set(name, type);
@@ -356,11 +358,25 @@ function readBindingTypes(fn, flow, declarations) {
     }
     patterns.push({...pattern, path, slots, verified: false});
   }
+  const divergent = Symbol('a branch cannot finish its initializer');
+  const commonType = types => {
+    const returning = types.filter(type => type !== divergent);
+    if (!returning.length) return divergent;
+    return returning[0] && returning.every(type => type === returning[0]) ? returning[0] : undefined;
+  };
   const infer = (from, to) => {
     while (tokens[from]?.value === '(' && matching.get(from) === to - 1) { from += 1; to -= 1; }
+    if (tokens[from]?.kind === 'identifier' && tokens[from].value === 'return') return divergent;
+    if (tokens[from]?.kind === 'identifier' && tokens[from].value === 'continue'
+      && (to === from + 1 || to === from + 2 && tokens[from + 1].value === ';')) return divergent;
     if (tokens[from]?.value === '{' && matching.get(from) === to - 1) {
       let tail = from + 1;
       for (let at = tail; at < to - 1; at += 1) {
+        // Only an actual statement start can prove this block cannot finish.
+        // A return hidden in a short-circuit operand supplies no such proof.
+        if (at === tail && tokens[at].kind === 'identifier' && tokens[at].value === 'return') return divergent;
+        if (at === tail && tokens[at].kind === 'identifier' && tokens[at].value === 'continue'
+          && (at + 1 === to - 1 || tokens[at + 1]?.value === ';')) return divergent;
         if (matching.get(at) > at) at = matching.get(at);
         else if (tokens[at].value === ';') tail = at + 1;
       }
@@ -371,7 +387,12 @@ function readBindingTypes(fn, flow, declarations) {
       if (node.next !== to || !node.alternate) return undefined;
       const first = infer(node.open, node.close + 1);
       const second = infer(node.alternate.start, node.alternate.next ?? node.alternate.end + 1);
-      return first && first === second ? first : undefined;
+      return commonType([first, second]);
+    }
+    if (tokens[from]?.kind === 'identifier' && tokens[from].value === 'match') {
+      const node = flow.matches.get(from);
+      if (!node || node.next !== to) return undefined;
+      return commonType(node.arms.map(arm => infer(arm.from, arm.to)));
     }
     const expression = normalizeType(text(from, to));
     if (to === from + 1 && counts.get(tokens[from]?.value) === 1) return bindings.get(tokens[from].value);
@@ -413,7 +434,7 @@ function readBindingTypes(fn, flow, declarations) {
     let changed = false;
     for (const initializer of initializers) if (counts.get(initializer.name) === 1 && !bindings.has(initializer.name)) {
       const type = infer(initializer.from, initializer.to);
-      if (type) { bindings.set(initializer.name, type); changed = true; }
+      if (typeof type === 'string' && type) { bindings.set(initializer.name, type); changed = true; }
     }
     for (const pattern of patterns) if (!pattern.verified) {
       const actual = infer(pattern.owner + 1, pattern.open);
@@ -426,8 +447,47 @@ function readBindingTypes(fn, flow, declarations) {
   }
   if (patterns.some(pattern => !pattern.verified)) return refused();
   for (const [name, type] of bindings) if (counts.get(name) !== 1 || !ownedType(type, Boolean(declarations.textMethods))) bindings.delete(name);
+  const startsStatement = start => {
+    for (let at = start; at > body;) {
+      if (['{', ';'].includes(tokens[at - 1]?.value)) return true;
+      const previous = flow.controlEnds.get(at);
+      if (previous === undefined || previous >= at) return false;
+      at = previous;
+    }
+    return false;
+  };
+  for (let equal = body + 1; equal < end; equal += 1) {
+    if (tokens[equal].kind !== 'punct' || tokens[equal].value !== '=') continue;
+    let start = equal - 1, targets;
+    if (tokens[start]?.kind === 'identifier') targets = [start];
+    else if (tokens[start]?.value === ')' && matching.get(start) < start) {
+      const close = start; start = matching.get(start);
+      const fields = splitTypes(tokens, matching, start + 1, close);
+      if (!fields.length || fields.some(([from, to]) => to !== from + 1 || tokens[from].kind !== 'identifier')) continue;
+      targets = fields.map(([from]) => from);
+    } else continue;
+    // Only complete bare-place statements have side-effect-free left sides.
+    // Fields, dereferences, indexing, declarations and compound stores retain
+    // their original reads and cannot provide an ownership kill.
+    if (!startsStatement(start)
+      || new Set(targets.map(at => tokens[at].value)).size !== targets.length
+      || targets.some(at => counts.get(tokens[at].value) !== 1)) continue;
+    let finish = equal + 1;
+    while (finish < end && tokens[finish].value !== ';') {
+      if (matching.get(finish) > finish) finish = matching.get(finish) + 1;
+      else if ([')', ']', '}'].includes(tokens[finish].value)) break;
+      else finish += 1;
+    }
+    if (tokens[finish]?.value !== ';') continue;
+    for (const at of targets) if (bindings.has(tokens[at].value)) {
+      writeTokens.add(at);
+      // Every RHS operand, including all tuple elements, is evaluated before
+      // any old target value dies. A continue or return bypasses this node.
+      define(finish, tokens[at].value);
+    }
+  }
   for (const names of definitions.values()) for (const name of names) if (!bindings.has(name)) names.delete(name);
-  return {bindings, definitions, declarationTokens};
+  return {bindings, definitions, declarationTokens, writeTokens};
 }
 
 function acceptUnborrowedBinding(fn, name, type, declarations) {
@@ -460,7 +520,7 @@ export function readPortableOwnedSourceStyles(source) {
       if (error.message === 'unsupported owned source flow') continue;
       throw error;
     }
-    const {bindings, definitions, declarationTokens} = readBindingTypes(fn, flow, declarations), edits = [], safe = new Map();
+    const {bindings, definitions, declarationTokens, writeTokens} = readBindingTypes(fn, flow, declarations), edits = [], safe = new Map();
     const {tokens, comments} = fn;
     for (let at = fn.body + 1; at + 4 < fn.end; at += 1) {
       const token = tokens[at];
@@ -478,7 +538,8 @@ export function readPortableOwnedSourceStyles(source) {
         if (seen.has(next)) continue;
         seen.add(next);
         if (definitions.get(next)?.has(token.value)) continue;
-        if (!declarationTokens.has(next) && tokens[next].kind === 'identifier' && tokens[next].value === token.value) live = true;
+        if (!declarationTokens.has(next) && !writeTokens.has(next)
+          && tokens[next].kind === 'identifier' && tokens[next].value === token.value) live = true;
         else pending.push(...(flow.edges.get(next) ?? []));
       }
       if (!live) edits.push([tokens[at + 1].start, tokens[at + 4].end]);
