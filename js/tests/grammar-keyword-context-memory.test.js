@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {createGrammarParser} from '../src/grammar-runtime.js';
@@ -152,6 +153,32 @@ test('small keyword parent collections preserve the entire frozen call graph',as
   assert.ok(actual.every(row=>row.arrays>row.sets));
   assert.ok(expected.every(row=>row.arrays===0));
   assert.ok(actual.some(row=>row.nodes.some(node=>node.parents.length>8)),'actual parsing reaches promotion to a set');
+});
+
+test('rule call key construction preserves every frozen key byte',async()=>{
+  await frozenKeywordParser();
+  const declaration=source=>{
+    const lines=source.split('\n'),start=lines.findIndex(line=>line.trim().startsWith('const key')&&line.includes('rule.index'));
+    const end=lines.findIndex((line,index)=>index>start&&line.includes('const known = this.memo.get(key)'));
+    assert.ok(start>=0&&end>start);return new Function('rule','position','state','inToken','quiet',lines.slice(start,end).join('\n')+'\nreturn key;');
+  };
+  const current=declaration(readFileSync(new URL('../src/grammar-runtime/executor.js',import.meta.url),'utf8'));
+  const previous=declaration(controls.baseline.modules[0].source);
+  for(const index of[0,97])for(const position of[0,1048576])for(const key of['','0||[]|{}','😀|quiet','x'.repeat(64),'😀'.repeat(33),'x'.repeat(1000)])for(const inToken of[false,true])for(const inExtra of[false,true,'nesting'])for(const extraStart of[-1,0,65535])for(const quiet of['','|quiet','|chained']){
+    const context={inExtra,extraStart},args=[{index},position,{key},inToken,quiet];
+    assert.equal(current.apply(context,args),previous.apply(context,args));
+  }
+  for(const value of[undefined,null,NaN,Infinity,-0]){
+    const context={inExtra:value,extraStart:value},args=[{index:value},value,{key:value},false,''];
+    assert.equal(current.apply(context,args),previous.apply(context,args));
+  }
+  for(const operation of[current,previous])assert.throws(()=>operation.call({inExtra:false,extraStart:-1},{index:Symbol('key')},0,{key:''},false,''),TypeError);
+  const trace=operation=>{
+    const events=[],value=name=>({toString(){events.push(name);return name;}});
+    const key=operation.call({get inExtra(){events.push('extra');return value('extra value');},get extraStart(){events.push('start');return value('start value');}},{get index(){events.push('rule');return value('rule value');}},value('position'),{get key(){events.push('state');return value('state value');}},false,value('quiet'));
+    return {key,events};
+  };
+  assert.deepEqual(trace(current),trace(previous),'field reads and string coercions retain their original order');
 });
 
 test('complete source diagnostics observe real native runs and restore the executor',async()=>{

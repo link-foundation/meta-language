@@ -2136,6 +2136,12 @@ parents and promote to a set when another distinct parent arrives. Identity,
 insertion order, duplicate suppression and live shared or cyclic ancestry stay
 the same. The actual tiny Rust parses retain the complete frozen call graphs;
 they exercise both representations without replacing parse results or budgets.
+Memo keys likewise flatten short state keys without retaining concatenation
+chains. State keys longer than sixty-four UTF-16 code units keep their shared
+string storage. Both forms preserve the original separators, field-read order,
+coercions and exact key contents, checked against the authenticated original
+expression and full tiny parser outcomes. Isolated bounded key-map measurements
+describe only that representation; whole-parser resource fit remains a CI check.
 Binary archive framing keeps each metadata length patch local to its own record.
 An increasing identity skips a search through earlier identities, while unordered
 and duplicate identities retain the existing validation and exact error offsets.
