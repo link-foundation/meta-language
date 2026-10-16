@@ -190803,7 +190803,7 @@
 (190803: 11 190802 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (190804: (meta: (t: semantic) (n: 1) (term: string%20value) (def: declare%20source%20format) (lang: meta-language%20structured%20data)))
 (190805: 14 190804 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(190806: 17 60632 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
+(190806: 17 5085 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (190807: (meta: (t: semantic) (n: 1) (term: string%20value) (def: Relate%20one%20exact%20archived%20grammar%20source%20identifier%20to%20its%20retained%20grammar%20notation%20format.%20This%20archive%20statement%20records%20source%20provenance%3B%20effective%20matching%20and%20declared%20matching%20remain%20separate%20semantic%20context.) (lang: meta-language%20structured%20data)))
 (190808: 20 190807 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (190809: 190443 (meta: (t: semantic) (n: 1) (term: array%20value) (lang: meta-language%20structured%20data)))
