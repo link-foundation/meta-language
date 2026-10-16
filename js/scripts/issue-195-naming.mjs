@@ -753,7 +753,7 @@ const BASE_NAME_INVENTORIES = Object.freeze([
   },
   {
     inventory: 'typed empty optional construct',
-    files: ['rust/src/translation/ir.rs', 'rust/src/translation/surface.rs'],
+    files: ['rust/src/translation/ir/nodes.rs', 'rust/src/translation/surface/nodes.rs'],
     extract: (text) => captures(text, /^    (None) \{/gmu).map(() => 'none'),
     recordOf: () => 'translation.optional-empty-expression',
   },
@@ -20445,7 +20445,7 @@ const NATIVE_REPAIR_NAME_BINDINGS=[
   {
     "inventory": "persistent output comparison controls",
     "files": {
-      "rust/src/grammar/feature_runtime/walk/tests.rs": [
+      "rust/tests/unit/grammar_output_equality/walk_cases.rs": [
         {
           "name": "token",
           "id": "repository.create-lazy-comparison-token"
@@ -22424,7 +22424,14444 @@ const COMPLETE_WORKLOAD_NAME_INVENTORIES=[{
  extract: text => COMPLETE_WORKLOAD_NAME_BINDINGS.filter(row=>text.includes(row.name)).map(row=>normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))),
  recordOf: name => COMPLETE_WORKLOAD_NAME_BINDINGS.find(row=>normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))===name).id,
 }];
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES]);
+// B45 exact source repairs and isolated native test controls.
+const BULK_FORTY_FIVE_NAME_BINDINGS=[
+  {
+    "id": "repository.simplify-rust-branches",
+    "source": "js/scripts/reviewed-rust-branch-styles.mjs",
+    "name": "simplifyRustBranches",
+    "inventoryName": "simplify-rust-branches"
+  },
+  {
+    "id": "repository.bind-product-source-condition-blocks",
+    "source": "js/scripts/reviewed-rust-branch-styles.mjs",
+    "name": "bindConditionBlocks",
+    "inventoryName": "bind-condition-blocks"
+  },
+  {
+    "id": "repository.append-assertion-policy-instruction-sources",
+    "source": "js/scripts/issue-195-sources.mjs",
+    "name": "appendAssertionPolicyInstructionSources",
+    "inventoryName": "append-assertion-policy-instruction-sources"
+  },
+  {
+    "id": "repository.assertion-policy-instruction-source-declarations",
+    "source": "js/scripts/issue-195-sources.mjs",
+    "name": "ASSERTION_POLICY_INSTRUCTION_SOURCES",
+    "inventoryName": "assertion-policy-instruction-sources"
+  },
+  {
+    "id": "repository.assertion-policy-conversation-obligations",
+    "source": "js/scripts/issue-195-conversation-requirements.mjs",
+    "name": "ASSERTION_POLICY_CONVERSATION_REQUIREMENTS",
+    "inventoryName": "assertion-policy-conversation-requirements"
+  },
+  {
+    "id": "repository.check-reviewed-capture-source-conservation",
+    "source": "js/tests/issue-195-sources.test.js",
+    "name": "reviewed assertion policy captures append exact source bytes without changing any original source",
+    "inventoryName": "reviewed-assertion-policy-captures-append-exact-source-bytes-without-changing-any-original-source"
+  },
+  {
+    "id": "repository.check-direct-capture-time-repeated-application-stability",
+    "source": "js/tests/issue-195-sources.test.js",
+    "name": "repeat source updates preserve the first capture time and each exact direct instruction entry",
+    "inventoryName": "repeat-source-updates-preserve-the-first-capture-time-and-each-exact-direct-instruction-entry"
+  },
+  {
+    "id": "repository.check-direct-capture-revision-refusal",
+    "source": "js/tests/issue-195-sources.test.js",
+    "name": "source updates refuse changed capture bytes and conflicting capture identities without rewriting the register",
+    "inventoryName": "source-updates-refuse-changed-capture-bytes-and-conflicting-capture-identities-without-rewriting-the-register"
+  },
+  {
+    "id": "repository.read-binary-record-block-return-styles",
+    "source": "js/scripts/binary-record-block-return-styles.mjs",
+    "name": "readBinaryRecordBlockReturnStyles",
+    "inventoryName": "read-binary-record-block-return-styles"
+  },
+  {
+    "id": "repository.read-binary-record-block-return-styles",
+    "source": "js/scripts/generate-link-network-binary-record-rules.mjs",
+    "name": "readBinaryRecordBlockReturnStyles",
+    "inventoryName": "read-binary-record-block-return-styles"
+  },
+  {
+    "id": "repository.binary-record-block-return-compiler-review",
+    "source": "js/scripts/binary-record-block-return-styles.mjs",
+    "name": "binary-record-block-return-compiler-review",
+    "inventoryName": "binary-record-block-return-compiler-review"
+  },
+  {
+    "id": "repository.check-binary-block-return-review",
+    "source": "js/tests/translation-binary-record-block-return-styles.test.js",
+    "name": "binary block return review retains all actual lint and source placement findings",
+    "inventoryName": "binary-block-return-review-retains-all-actual-lint-and-source-placement-findings"
+  },
+  {
+    "id": "repository.check-binary-block-return-expression-preservation",
+    "source": "js/tests/translation-binary-record-block-return-styles.test.js",
+    "name": "binary block return corrections preserve every returned expression and other token",
+    "inventoryName": "binary-block-return-corrections-preserve-every-returned-expression-and-other-token"
+  },
+  {
+    "id": "repository.check-binary-block-return-context-refusals",
+    "source": "js/tests/translation-binary-record-block-return-styles.test.js",
+    "name": "binary block return review refuses stale overlap altered expressions and missing findings",
+    "inventoryName": "binary-block-return-review-refuses-stale-overlap-altered-expressions-and-missing-findings"
+  },
+  {
+    "id": "repository.read-owned-rust-source-items",
+    "source": "js/scripts/generate-private-output-test-model.mjs",
+    "name": "readRustSourceItems",
+    "inventoryName": "read-rust-source-items"
+  },
+  {
+    "id": "repository.build-private-output-test-model",
+    "source": "js/scripts/generate-private-output-test-model.mjs",
+    "name": "buildPrivateOutputTestModel",
+    "inventoryName": "build-private-output-test-model"
+  },
+  {
+    "id": "repository.check-private-output-original-bodies",
+    "source": "js/tests/grammar-private-output-test-model.test.js",
+    "name": "private native model retains complete original test bodies and production output comparison",
+    "inventoryName": "private-native-model-retains-complete-original-test-bodies-and-production-output-comparison"
+  },
+  {
+    "id": "repository.check-private-output-source-provenance",
+    "source": "js/tests/grammar-private-output-test-model.test.js",
+    "name": "private native model retains every selected declaration field and source provenance",
+    "inventoryName": "private-native-model-retains-every-selected-declaration-field-and-source-provenance"
+  },
+  {
+    "id": "repository.check-private-output-selection-refusals",
+    "source": "js/tests/grammar-private-output-test-model.test.js",
+    "name": "private native model refuses malformed concrete syntax and missing declaration selectors",
+    "inventoryName": "private-native-model-refuses-malformed-concrete-syntax-and-missing-declaration-selectors"
+  },
+  {
+    "id": "repository.check-private-output-source-receipt",
+    "source": "js/tests/grammar-private-output-test-model.test.js",
+    "name": "private native model matches its checked source and full concrete syntax receipt",
+    "inventoryName": "private-native-model-matches-its-checked-source-and-full-concrete-syntax-receipt"
+  },
+  {
+    "id": "translation.accept-scalar-loop-expression-type-annotation",
+    "source": "js/src/translation/scalar-loop-rules.js",
+    "name": "acceptScalarLoopExpressionTypeAnnotation",
+    "inventoryName": "accept-scalar-loop-expression-type-annotation"
+  },
+  {
+    "id": "translation.accept-scalar-loop-expression-type-annotation",
+    "source": "rust/src/translation/scalar_loop_rules.rs",
+    "name": "accept_scalar_loop_expression_type_annotation",
+    "inventoryName": "accept-scalar-loop-expression-type-annotation"
+  },
+  {
+    "id": "repository.scalar-loop-annotation-null-value",
+    "source": "js/src/translation/scalar-loop-rules.js",
+    "name": "nullValue",
+    "inventoryName": "null-value"
+  },
+  {
+    "id": "repository.scalar-loop-annotation-null-value",
+    "source": "rust/src/translation/scalar_loop_rules.rs",
+    "name": "null_value",
+    "inventoryName": "null-value"
+  },
+  {
+    "id": "repository.check-scalar-loop-annotation-admission",
+    "source": "js/tests/translation-rust-scalar-loops.test.js",
+    "name": "shared scalar loop annotation admission distinguishes inference from malformed present types",
+    "inventoryName": "shared-scalar-loop-annotation-admission-distinguishes-inference-from-malformed-present-types"
+  },
+  {
+    "id": "repository.check-javascript-scalar-annotation-replay",
+    "source": "js/tests/translation-rust-scalar-loops.test.js",
+    "name": "actual scalar loop snapshots retain null, omitted and typed annotations through checking and source-free replay",
+    "inventoryName": "actual-scalar-loop-snapshots-retain-null-absent-and-typed-annotations-through-checking-and-source-free-replay"
+  },
+  {
+    "id": "repository.check-javascript-scalar-annotation-refusals",
+    "source": "js/tests/translation-rust-scalar-loops.test.js",
+    "name": "scalar loop snapshot proofs reject malformed annotations and retain scalar kind checks",
+    "inventoryName": "scalar-loop-snapshot-proofs-reject-malformed-annotations-and-retain-scalar-kind-checks"
+  },
+  {
+    "id": "repository.check-native-scalar-annotation-replay",
+    "source": "rust/tests/unit/translation_rust_scalar_loops.rs",
+    "name": "scalar_loop_snapshot_annotations_preserve_inference_and_source_free_replay",
+    "inventoryName": "scalar-loop-snapshot-annotations-preserve-inference-and-source-free-replay"
+  },
+  {
+    "id": "repository.check-native-scalar-annotation-refusals",
+    "source": "rust/tests/unit/translation_rust_scalar_loops.rs",
+    "name": "scalar_loop_snapshot_annotations_refuse_malformed_and_non_scalar_types",
+    "inventoryName": "scalar-loop-snapshot-annotations-refuse-malformed-and-non-scalar-types"
+  },
+  {
+    "id": "translation.accept-java-script-array-tuple-context",
+    "source": "js/src/translation/product-source-rules.js",
+    "name": "acceptJavaScriptArrayTupleContext",
+    "inventoryName": "accept-java-script-array-tuple-context"
+  },
+  {
+    "id": "translation.accept-java-script-array-tuple-context",
+    "source": "rust/src/translation/javascript/product_source_rules.rs",
+    "name": "accept_java_script_array_tuple_context",
+    "inventoryName": "accept-java-script-array-tuple-context"
+  },
+  {
+    "id": "repository.check-legacy-array-call-context",
+    "source": "js/tests/translation-javascript-expected-array-types.test.js",
+    "name": "legacy positional array calls use their declared types without an immutable product proof",
+    "inventoryName": "legacy-positional-array-calls-use-the-declared-types-without-an-immutable-product-proof"
+  },
+  {
+    "id": "repository.check-legacy-reference-array-context",
+    "source": "js/tests/translation-javascript-expected-array-types.test.js",
+    "name": "legacy reference-bearing positional arrays retain contextual return types",
+    "inventoryName": "legacy-reference-bearing-positional-arrays-retain-contextual-return-types"
+  },
+  {
+    "id": "repository.check-contextual-array-refusals",
+    "source": "js/tests/translation-javascript-expected-array-types.test.js",
+    "name": "contextual array types preserve arity and spread refusals and cannot prove immutable ownership",
+    "inventoryName": "contextual-array-types-preserve-arity-and-spread-refusals-and-can-not-prove-immutable-ownership"
+  },
+  {
+    "id": "repository.read-typed-header-control-field-label",
+    "source": "js/tests/translation-typed-field-lookup.test.js",
+    "name": "fieldLabel",
+    "inventoryName": "field-label"
+  },
+  {
+    "id": "repository.read-typed-header-control-field-key",
+    "source": "js/tests/translation-typed-field-lookup.test.js",
+    "name": "fieldKey",
+    "inventoryName": "field-key"
+  },
+  {
+    "id": "repository.read-typed-header-control-declaration",
+    "source": "js/tests/translation-typed-field-lookup.test.js",
+    "name": "declaration",
+    "inventoryName": "declaration"
+  },
+  {
+    "id": "repository.check-typed-header-key-and-label-domains",
+    "source": "js/tests/translation-typed-field-lookup.test.js",
+    "name": "logical parameter keys and literal parameter labels retain distinct actual header containers",
+    "inventoryName": "logical-parameter-keys-and-literal-parameter-labels-retain-distinct-actual-header-containers"
+  },
+  {
+    "id": "repository.check-namespace-body-container-paths",
+    "source": "js/tests/translation-typed-field-lookup.test.js",
+    "name": "all preserved namespace container paths begin at the actual program body below the envelope",
+    "inventoryName": "all-preserved-namespace-container-paths-begin-at-the-actual-program-body-below-the-envelope"
+  },
+  {
+    "id": "repository.read-native-header-control-field-key-pair",
+    "source": "rust/tests/unit/translation_rust_borrowed_call_interface.rs",
+    "name": "field_key",
+    "inventoryName": "field-key"
+  },
+  {
+    "id": "repository.read-native-header-control-field-key-pair",
+    "source": "rust/tests/unit/translation_rust_source_header_emission.rs",
+    "name": "field_key",
+    "inventoryName": "field-key"
+  },
+  {
+    "id": "repository.read-native-header-control-field-label-pair",
+    "source": "rust/tests/unit/translation_rust_borrowed_call_interface.rs",
+    "name": "field_label",
+    "inventoryName": "field-label"
+  },
+  {
+    "id": "repository.read-native-header-control-field-label-pair",
+    "source": "rust/tests/unit/translation_rust_source_header_emission.rs",
+    "name": "field_label",
+    "inventoryName": "field-label"
+  },
+  {
+    "id": "translation.read-rust-borrowed-call-target-diagnostic",
+    "source": "js/src/translation/rust-borrowed-call-interface-rules.js",
+    "name": "readRustBorrowedCallTargetDiagnostic",
+    "inventoryName": "read-rust-borrowed-call-target-diagnostic"
+  },
+  {
+    "id": "translation.read-rust-borrowed-call-target-diagnostic",
+    "source": "rust/src/translation/borrowed_call_interface_rules.rs",
+    "name": "read_rust_borrowed_call_target_diagnostic",
+    "inventoryName": "read-rust-borrowed-call-target-diagnostic"
+  },
+  {
+    "id": "repository.borrowed-call-target-diagnostic-order",
+    "source": "js/src/translation/data/rust-borrowed-call-interface.lino",
+    "name": "targetDiagnostics",
+    "inventoryName": "target-diagnostics"
+  },
+  {
+    "id": "repository.borrowed-call-target-diagnostic-order",
+    "source": "rust/src/data/rust-borrowed-call-interface.lino",
+    "name": "targetDiagnostics",
+    "inventoryName": "target-diagnostics"
+  },
+  {
+    "id": "repository.check-borrowed-call-diagnostic-priority",
+    "source": "js/tests/translation-rust-borrowed-call-target-diagnostics.test.js",
+    "name": "the shared selected-call diagnostic gives actual argument mismatches priority over a nonleaf target",
+    "inventoryName": "the-shared-selected-call-diagnostic-gives-actual-argument-mismatches-priority-over-a-non-leaf-target"
+  },
+  {
+    "id": "repository.check-source-free-borrowed-call-diagnostics",
+    "source": "js/tests/translation-rust-borrowed-call-target-diagnostics.test.js",
+    "name": "actual source-free declaration retargets retain the existing JavaScript diagnostic precedence",
+    "inventoryName": "actual-source-free-declaration-target-edits-retain-the-existing-java-script-diagnostic-precedence"
+  },
+  {
+    "id": "repository.check-complete-borrowed-call-diagnostic-order",
+    "source": "js/tests/translation-rust-borrowed-call-target-diagnostics.test.js",
+    "name": "both complete caller orders report argument mismatch before nonleaf targets while malformed containers stay structural",
+    "inventoryName": "both-complete-caller-orders-report-argument-mismatch-before-non-leaf-targets-while-malformed-containers-stay-structural"
+  },
+  {
+    "id": "repository.read-borrowed-call-control-field",
+    "source": "js/tests/translation-rust-borrowed-call-target-diagnostics.test.js",
+    "name": "field",
+    "inventoryName": "field"
+  },
+  {
+    "id": "repository.refine-native-borrowed-call-failure",
+    "source": "rust/src/typed_program_links/borrowed_call_diagnostics.rs",
+    "name": "refine_failure",
+    "inventoryName": "refine-failure"
+  },
+  {
+    "id": "repository.decode-native-borrowed-call-diagnostic-context",
+    "source": "rust/src/typed_program_links/borrowed_call_diagnostics.rs",
+    "name": "decode",
+    "inventoryName": "decode"
+  },
+  {
+    "id": "repository.check-native-complete-call-diagnostic-order",
+    "source": "rust/tests/unit/translation_rust_borrowed_call_interface.rs",
+    "name": "complete_program_argument_refusals_precede_nonleaf_targets_in_both_orders",
+    "inventoryName": "complete-program-argument-refusals-precede-non-leaf-targets-in-both-orders"
+  },
+  {
+    "id": "repository.check-native-header-label-collision",
+    "source": "rust/tests/unit/translation_rust_source_header_emission.rs",
+    "name": "actual_parameter_labels_do_not_alias_source_signature_parameter_keys",
+    "inventoryName": "actual-parameter-labels-do-not-alias-source-signature-parameter-keys"
+  },
+  {
+    "id": "repository.accept-surface-raw-metadata-field",
+    "source": "js/src/translation/surface-raw-metadata-rules.js",
+    "name": "acceptSurfaceRawMetadataField",
+    "inventoryName": "accept-surface-raw-metadata-field"
+  },
+  {
+    "id": "repository.accept-surface-raw-metadata-field",
+    "source": "rust/src/translation/surface_raw_metadata_rules.rs",
+    "name": "accept_surface_raw_metadata_field",
+    "inventoryName": "accept-surface-raw-metadata-field"
+  },
+  {
+    "id": "repository.accept-surface-raw-metadata-form",
+    "source": "js/src/translation/surface-raw-metadata-rules.js",
+    "name": "acceptSurfaceRawMetadataForm",
+    "inventoryName": "accept-surface-raw-metadata-form"
+  },
+  {
+    "id": "repository.accept-surface-raw-metadata-form",
+    "source": "rust/src/translation/surface_raw_metadata_rules.rs",
+    "name": "accept_surface_raw_metadata_form",
+    "inventoryName": "accept-surface-raw-metadata-form"
+  },
+  {
+    "id": "repository.accept-shared-surface-reference-kind",
+    "source": "js/src/translation/surface-raw-metadata-rules.js",
+    "name": "acceptSharedSurfaceReferenceKind",
+    "inventoryName": "accept-shared-surface-reference-kind"
+  },
+  {
+    "id": "repository.accept-shared-surface-reference-kind",
+    "source": "rust/src/translation/surface_raw_metadata_rules.rs",
+    "name": "accept_shared_surface_reference_kind",
+    "inventoryName": "accept-shared-surface-reference-kind"
+  },
+  {
+    "id": "repository.select-surface-reference-semantics",
+    "source": "js/src/translation/surface-raw-metadata-rules.js",
+    "name": "selectSurfaceReferenceSemantics",
+    "inventoryName": "select-surface-reference-semantics"
+  },
+  {
+    "id": "repository.select-surface-reference-semantics",
+    "source": "rust/src/translation/surface_raw_metadata_rules.rs",
+    "name": "select_surface_reference_semantics",
+    "inventoryName": "select-surface-reference-semantics"
+  },
+  {
+    "id": "repository.check-grouped-expression-marker-presence",
+    "source": "js/tests/translation-surface-raw-metadata.test.js",
+    "name": "actual grouped source keeps its marker while the ungrouped expression omits it",
+    "inventoryName": "actual-grouped-source-keeps-its-marker-while-the-without-group-expression-omits-it"
+  },
+  {
+    "id": "repository.check-raw-null-boolean-presence",
+    "source": "js/tests/translation-surface-raw-metadata.test.js",
+    "name": "raw nullable Boolean fields retain presence while the checker retains its selected program form",
+    "inventoryName": "raw-null-capable-boolean-fields-retain-presence-while-the-checker-retains-its-selected-program-form"
+  },
+  {
+    "id": "repository.check-structural-reference-selection",
+    "source": "js/tests/translation-surface-raw-metadata.test.js",
+    "name": "shared representation selection marks all four structural kinds and their nested types",
+    "inventoryName": "shared-representation-selection-marks-all-four-structural-kinds-and-the-nested-types"
+  },
+  {
+    "id": "repository.check-raw-metadata-wire-policy",
+    "source": "js/tests/translation-surface-raw-metadata.test.js",
+    "name": "the shared wire policy distinguishes the two contexts and rejects unrelated value forms",
+    "inventoryName": "the-shared-wire-policy-distinguishes-the-two-contexts-and-rejects-unrelated-value-forms"
+  },
+  {
+    "id": "repository.read-source-native-compiler-arguments",
+    "source": "experiments/source-native-process-diagnostics.mjs",
+    "name": "readSourceNativeCompilerArguments",
+    "inventoryName": "read-source-native-compiler-arguments"
+  },
+  {
+    "id": "repository.retain-source-native-process-diagnostics",
+    "source": "experiments/source-native-process-diagnostics.mjs",
+    "name": "retainSourceNativeProcessDiagnostics",
+    "inventoryName": "retain-source-native-process-diagnostics"
+  },
+  {
+    "id": "repository.mirror-source-native-process-diagnostics",
+    "source": "experiments/source-native-process-diagnostics.mjs",
+    "name": "mirrorSourceNativeProcessDiagnostics",
+    "inventoryName": "mirror-source-native-process-diagnostics"
+  },
+  {
+    "id": "repository.check-native-diagnostic-mirror-boundaries",
+    "source": "experiments/source-native-process-diagnostics.test.mjs",
+    "name": "native diagnostic mirroring keeps exact bounded buffers and authentic stream delimiters without creating observations",
+    "inventoryName": "native-diagnostic-mirroring-keeps-exact-bounded-buffers-and-authentic-stream-separators-without-creating-observations"
+  },
+  {
+    "id": "repository.check-native-diagnostic-mirror-mode-refusals",
+    "source": "experiments/source-native-process-diagnostics.test.mjs",
+    "name": "injected and unknown process modes cannot mirror synthetic bytes as native diagnostics",
+    "inventoryName": "injected-and-unknown-process-modes-can-not-mirror-synthetic-bytes-as-native-diagnostics"
+  },
+  {
+    "id": "repository.check-source-native-compiler-profiles",
+    "source": "experiments/source-native-observations.test.mjs",
+    "name": "selected compiler profiles retain exact commands, checked optimization and every original process bound",
+    "inventoryName": "selected-compiler-profiles-retain-exact-commands-checked-optimization-and-every-original-process-bound"
+  },
+  {
+    "id": "repository.check-partial-native-process-diagnostics",
+    "source": "experiments/source-native-observations.test.mjs",
+    "name": "buffer errors retain actual captured stdout and stderr without emitting an observation or hiding later fixtures",
+    "inventoryName": "buffer-errors-retain-actual-captured-standard-output-and-standard-error-without-emission-an-observation-or-hiding-later-fixtures"
+  },
+  {
+    "id": "repository.check-native-compiler-warning-visibility",
+    "source": "experiments/source-native-observations.test.mjs",
+    "name": "successful compiler warnings remain visible as bounded logs without changing returned observations",
+    "inventoryName": "successful-compiler-warnings-remain-visible-as-bounded-logs-without-changing-returned-observations"
+  },
+  {
+    "id": "repository.check-bounded-native-process-failures",
+    "source": "experiments/source-native-observations.test.mjs",
+    "name": "timeout, signal, nonzero and over-limit captured bytes remain bounded process failures",
+    "inventoryName": "time-limit-signal-non-zero-and-over-limit-captured-bytes-remain-bounded-process-failures"
+  },
+  {
+    "id": "repository.read-binary-block-review-sources",
+    "source": "js/tests/translation-binary-record-block-return-styles.test.js",
+    "name": "sources",
+    "inventoryName": "sources"
+  },
+  {
+    "id": "repository.read-owned-rust-item-text",
+    "source": "js/scripts/generate-private-output-test-model.mjs",
+    "name": "text",
+    "inventoryName": "text"
+  },
+  {
+    "id": "repository.read-owned-rust-item-field",
+    "source": "js/scripts/generate-private-output-test-model.mjs",
+    "name": "field",
+    "inventoryName": "field"
+  },
+  {
+    "id": "repository.read-private-output-source",
+    "source": "js/scripts/generate-private-output-test-model.mjs",
+    "name": "source",
+    "inventoryName": "source"
+  },
+  {
+    "id": "repository.select-private-output-declaration",
+    "source": "js/scripts/generate-private-output-test-model.mjs",
+    "name": "select",
+    "inventoryName": "select"
+  },
+  {
+    "id": "repository.bind-private-output-declarations",
+    "source": "js/scripts/generate-private-output-test-model.mjs",
+    "name": "bind",
+    "inventoryName": "bind"
+  },
+  {
+    "id": "repository.read-private-output-declaration-name",
+    "source": "js/scripts/generate-private-output-test-model.mjs",
+    "name": "name",
+    "inventoryName": "name"
+  },
+  {
+    "id": "repository.read-private-output-descendant-items",
+    "source": "js/scripts/generate-private-output-test-model.mjs",
+    "name": "descend",
+    "inventoryName": "descend"
+  },
+  {
+    "id": "repository.collect-private-output-test-functions",
+    "source": "js/tests/grammar-private-output-test-model.test.js",
+    "name": "walk",
+    "inventoryName": "walk"
+  },
+  {
+    "id": "repository.read-private-output-control-text",
+    "source": "js/tests/grammar-private-output-test-model.test.js",
+    "name": "text",
+    "inventoryName": "text"
+  },
+  {
+    "id": "repository.read-private-output-control-function-name",
+    "source": "js/tests/grammar-private-output-test-model.test.js",
+    "name": "functionName",
+    "inventoryName": "function-name"
+  },
+  {
+    "id": "repository.retain-native-process-stream",
+    "source": "experiments/source-native-process-diagnostics.mjs",
+    "name": "retain",
+    "inventoryName": "retain"
+  },
+  {
+    "id": "repository.present-surface-raw-metadata-value",
+    "source": "rust/src/translation/surface/raw_metadata.rs",
+    "name": "SurfaceRawMetadata",
+    "inventoryName": "surface-raw-metadata"
+  },
+  {
+    "id": "repository.raw-expression-grouping-field",
+    "source": "rust/src/translation/surface.rs",
+    "name": "parenthesized",
+    "inventoryName": "parenthesized"
+  },
+  {
+    "id": "repository.raw-expression-grouping-field",
+    "source": "js/src/translation/data/surface-raw-metadata.lino",
+    "name": "parenthesized",
+    "inventoryName": "parenthesized"
+  },
+  {
+    "id": "repository.raw-expression-grouping-field",
+    "source": "rust/src/data/surface-raw-metadata.lino",
+    "name": "parenthesized",
+    "inventoryName": "parenthesized"
+  },
+  {
+    "id": "repository.raw-program-reference-semantics-field",
+    "source": "rust/src/translation/surface.rs",
+    "name": "reference_semantics",
+    "inventoryName": "reference-semantics"
+  },
+  {
+    "id": "repository.raw-program-reference-semantics-field",
+    "source": "js/src/translation/data/surface-raw-metadata.lino",
+    "name": "referenceSemantics",
+    "inventoryName": "reference-semantics"
+  },
+  {
+    "id": "repository.raw-program-reference-semantics-field",
+    "source": "rust/src/data/surface-raw-metadata.lino",
+    "name": "referenceSemantics",
+    "inventoryName": "reference-semantics"
+  },
+  {
+    "id": "repository.checked-program-reference-semantics-field",
+    "source": "rust/src/translation/ir.rs",
+    "name": "reference_semantics",
+    "inventoryName": "reference-semantics"
+  },
+  {
+    "id": "repository.create-null-surface-raw-metadata",
+    "source": "rust/src/translation/surface/raw_metadata.rs",
+    "name": "null",
+    "inventoryName": "null"
+  },
+  {
+    "id": "repository.read-surface-raw-metadata-boolean",
+    "source": "rust/src/translation/surface/raw_metadata.rs",
+    "name": "as_boolean",
+    "inventoryName": "as-boolean"
+  },
+  {
+    "id": "repository.create-boolean-surface-raw-metadata",
+    "source": "rust/src/translation/surface/raw_metadata.rs",
+    "name": "from",
+    "inventoryName": "from"
+  },
+  {
+    "id": "repository.decode-present-surface-raw-metadata",
+    "source": "rust/src/translation/surface/raw_metadata.rs",
+    "name": "deserialize",
+    "inventoryName": "decode"
+  },
+  {
+    "id": "repository.read-present-surface-raw-metadata",
+    "source": "rust/src/translation/surface/raw_metadata.rs",
+    "name": "read_present_surface_raw_metadata",
+    "inventoryName": "read-present-surface-raw-metadata"
+  },
+  {
+    "id": "repository.check-native-raw-metadata-presence",
+    "source": "rust/tests/unit/translation_surface_raw_metadata.rs",
+    "name": "omitted_null_false_and_true_raw_metadata_keep_their_exact_shapes",
+    "inventoryName": "absent-null-false-and-true-raw-metadata-keep-the-exact-shapes"
+  },
+  {
+    "id": "repository.check-native-raw-metadata-refusals",
+    "source": "rust/tests/unit/translation_surface_raw_metadata.rs",
+    "name": "invalid_present_metadata_and_duplicate_known_fields_still_refuse",
+    "inventoryName": "invalid-present-metadata-and-duplicate-known-fields-still-refuse"
+  },
+  {
+    "id": "repository.check-native-raw-grouping-and-replay",
+    "source": "rust/tests/unit/translation_surface_raw_metadata.rs",
+    "name": "actual_grouping_is_marked_and_selected_scalar_programs_survive_source_free_replay",
+    "inventoryName": "actual-grouping-is-marked-and-selected-scalar-programs-survive-source-free-replay"
+  },
+  {
+    "id": "repository.check-native-structural-reference-shapes",
+    "source": "rust/tests/unit/translation_surface_raw_metadata.rs",
+    "name": "existing_structural_reference_flags_retain_all_four_recursive_type_shapes",
+    "inventoryName": "existing-structural-reference-flags-retain-all-four-recursive-type-shapes"
+  },
+  {
+    "id": "repository.read-source-native-historical-bindings",
+    "source": "experiments/source-native-runner-source-closure.mjs",
+    "name": "readSourceNativeHistoricalBindings",
+    "inventoryName": "read-source-native-historical-bindings"
+  },
+  {
+    "id": "repository.replay-source-native-runner-corrections",
+    "source": "experiments/source-native-runner-source-closure.mjs",
+    "name": "replaySourceNativeRunnerCorrections",
+    "inventoryName": "replay-source-native-runner-corrections"
+  },
+  {
+    "id": "repository.verify-source-native-runner-source-closure",
+    "source": "experiments/source-native-runner-source-closure.mjs",
+    "name": "verifySourceNativeRunnerSourceClosure",
+    "inventoryName": "verify-source-native-runner-source-closure"
+  },
+  {
+    "id": "repository.source-native-runner-source-path",
+    "source": "experiments/source-native-runner-source-closure.mjs",
+    "name": "SOURCE_NATIVE_RUNNER_FILE",
+    "inventoryName": "source-native-runner-file"
+  },
+  {
+    "id": "repository.source-native-runner-baseline-digest",
+    "source": "experiments/source-native-runner-source-closure.mjs",
+    "name": "SOURCE_NATIVE_RUNNER_BASELINE",
+    "inventoryName": "source-native-runner-baseline"
+  },
+  {
+    "id": "repository.source-native-runner-reviewed-corrections",
+    "source": "experiments/source-native-runner-source-closure.mjs",
+    "name": "SOURCE_NATIVE_RUNNER_CORRECTIONS",
+    "inventoryName": "source-native-runner-corrections"
+  },
+  {
+    "id": "repository.source-native-runner-reviewed-additions",
+    "source": "experiments/source-native-runner-source-closure.mjs",
+    "name": "SOURCE_NATIVE_RUNNER_ADDITIONS",
+    "inventoryName": "source-native-runner-additions"
+  },
+  {
+    "id": "repository.source-native-runner-verifier-paths",
+    "source": "experiments/source-native-runner-source-closure.mjs",
+    "name": "SOURCE_NATIVE_RUNNER_VERIFIER_FILES",
+    "inventoryName": "source-native-runner-verifier-files"
+  },
+  {
+    "id": "repository.source-native-runner-historical-bindings",
+    "source": "experiments/source-native-runner-source-closure.mjs",
+    "name": "SOURCE_NATIVE_RUNNER_HISTORICAL_BINDINGS",
+    "inventoryName": "source-native-runner-historical-bindings"
+  },
+  {
+    "id": "repository.write-source-native-runner-closures",
+    "source": "experiments/write-source-native-runner-closures.mjs",
+    "name": "writeSourceNativeRunnerClosures",
+    "inventoryName": "write-source-native-runner-closures"
+  },
+  {
+    "id": "repository.create-runner-source-closure-control",
+    "source": "experiments/source-native-runner-source-closure.test.mjs",
+    "name": "fixture",
+    "inventoryName": "fixture"
+  },
+  {
+    "id": "repository.verify-runner-source-closure-control",
+    "source": "experiments/source-native-runner-source-closure.test.mjs",
+    "name": "verify",
+    "inventoryName": "verify"
+  },
+  {
+    "id": "repository.check-runner-complete-source-closure",
+    "source": "experiments/source-native-runner-source-closure.test.mjs",
+    "name": "runner source closure conserves both complete historical producer tables and only the four reviewed source contexts",
+    "inventoryName": "runner-source-closure-conserves-both-complete-historical-producer-tables-and-only-the-four-reviewed-source-contexts"
+  },
+  {
+    "id": "repository.check-runner-success-contract-preservation",
+    "source": "experiments/source-native-runner-source-closure.test.mjs",
+    "name": "coherent new runner hashes cannot excuse changed limits, authorization, source checks or success conditions",
+    "inventoryName": "coherent-new-runner-hashes-can-not-excuse-changed-limits-authorization-source-checks-or-success-conditions"
+  },
+  {
+    "id": "repository.check-runner-source-closure-forgeries",
+    "source": "experiments/source-native-runner-source-closure.test.mjs",
+    "name": "runner closure receipts cannot relabel old bindings, omit corrections or forge source and dependency pins",
+    "inventoryName": "runner-closure-receipts-can-not-change-label-old-bindings-omit-corrections-or-forge-source-and-dependency-pins"
+  },
+  {
+    "id": "repository.check-runner-diagnostic-source-closure",
+    "source": "experiments/source-native-runner-source-closure.test.mjs",
+    "name": "coherent helper and compiler policy hashes cannot introduce warning suppression or unreviewed diagnostic behavior",
+    "inventoryName": "coherent-helper-and-compiler-policy-hashes-can-not-introduce-warning-suppression-or-without-review-diagnostic-behavior"
+  },
+  {
+    "id": "repository.check-runner-historical-binding-authenticity",
+    "source": "experiments/source-native-runner-source-closure.test.mjs",
+    "name": "coherently edited caller and receipt tables cannot rewrite, remove or reorder any original producer binding",
+    "inventoryName": "coherently-edited-caller-and-receipt-tables-can-not-rewrite-remove-or-reorder-any-original-producer-binding"
+  },
+  {
+    "id": "translation.accept-rust-product-origin",
+    "source": "js/src/translation/rust-product-rules.js",
+    "name": "acceptRustProductOrigin",
+    "inventoryName": "accept-rust-product-origin"
+  },
+  {
+    "id": "translation.accept-rust-product-origin",
+    "source": "rust/src/translation/rust/product_rules.rs",
+    "name": "accept_rust_product_origin",
+    "inventoryName": "accept-rust-product-origin"
+  },
+  {
+    "id": "repository.check-distinct-owned-product-origins",
+    "source": "js/tests/translation-rust-products.test.js",
+    "name": "shared product admission keeps selected owned origins distinct from immutable Copy evidence",
+    "inventoryName": "shared-product-admission-keeps-selected-owned-origins-distinct-from-immutable-copy-evidence"
+  },
+  {
+    "id": "repository.check-owned-tuple-header-field-owners",
+    "source": "js/tests/translation-rust-products.test.js",
+    "name": "selected owned tuple headers retain actual field owners before target-specific diagnostics",
+    "inventoryName": "selected-owned-tuple-headers-retain-actual-field-owners-before-target-specific-diagnostics"
+  },
+  {
+    "id": "repository.check-native-owned-tuple-header-origins",
+    "source": "rust/tests/unit/translation_rust_owned_tuple_calls.rs",
+    "name": "owned_tuple_headers_preserve_actual_field_owners_and_default_copy_refusals",
+    "inventoryName": "owned-tuple-headers-preserve-actual-field-owners-and-default-copy-refusals"
+  },
+  {
+    "id": "repository.accept-javascript-function-start",
+    "source": "js/src/translation/javascript-surface-rules.js",
+    "name": "acceptJavaScriptFunctionStart",
+    "inventoryName": "accept-java-script-function-start"
+  },
+  {
+    "id": "repository.accept-javascript-function-start",
+    "source": "rust/src/translation/javascript/surface_rules.rs",
+    "name": "accept_java_script_function_start",
+    "inventoryName": "accept-java-script-function-start"
+  },
+  {
+    "id": "repository.accept-javascript-namespace-method",
+    "source": "js/src/translation/javascript-surface-rules.js",
+    "name": "acceptJavaScriptNamespaceMethod",
+    "inventoryName": "accept-java-script-namespace-method"
+  },
+  {
+    "id": "repository.accept-javascript-namespace-method",
+    "source": "rust/src/translation/javascript/surface_rules.rs",
+    "name": "accept_java_script_namespace_method",
+    "inventoryName": "accept-java-script-namespace-method"
+  },
+  {
+    "id": "repository.read-javascript-collection-construction",
+    "source": "js/src/translation/javascript-surface-rules.js",
+    "name": "readJavaScriptCollectionConstruction",
+    "inventoryName": "read-java-script-collection-construction"
+  },
+  {
+    "id": "repository.read-javascript-collection-construction",
+    "source": "rust/src/translation/javascript/surface_rules.rs",
+    "name": "read_java_script_collection_construction",
+    "inventoryName": "read-java-script-collection-construction"
+  },
+  {
+    "id": "repository.read-javascript-construction-obligation",
+    "source": "js/src/translation/javascript-surface-rules.js",
+    "name": "readJavaScriptConstructionObligation",
+    "inventoryName": "read-java-script-construction-obligation"
+  },
+  {
+    "id": "repository.read-javascript-construction-obligation",
+    "source": "rust/src/translation/javascript/surface_rules.rs",
+    "name": "read_java_script_construction_obligation",
+    "inventoryName": "read-java-script-construction-obligation"
+  },
+  {
+    "id": "repository.read-javascript-documentation-type-form",
+    "source": "js/src/translation/javascript-surface-rules.js",
+    "name": "readJavaScriptDocumentationTypeForm",
+    "inventoryName": "read-java-script-documentation-type-form"
+  },
+  {
+    "id": "repository.read-javascript-documentation-type-form",
+    "source": "rust/src/translation/javascript/surface_rules.rs",
+    "name": "read_java_script_documentation_type_form",
+    "inventoryName": "read-java-script-documentation-type-form"
+  },
+  {
+    "id": "repository.read-javascript-value-case-form",
+    "source": "js/src/translation/javascript-surface-rules.js",
+    "name": "readJavaScriptValueCaseForm",
+    "inventoryName": "read-java-script-value-case-form"
+  },
+  {
+    "id": "repository.read-javascript-value-case-form",
+    "source": "rust/src/translation/javascript/surface_rules.rs",
+    "name": "read_java_script_value_case_form",
+    "inventoryName": "read-java-script-value-case-form"
+  },
+  {
+    "id": "repository.accept-javascript-value-switch",
+    "source": "js/src/translation/javascript-surface-rules.js",
+    "name": "acceptJavaScriptValueSwitch",
+    "inventoryName": "accept-java-script-value-switch"
+  },
+  {
+    "id": "repository.accept-javascript-value-switch",
+    "source": "rust/src/translation/javascript/surface_rules.rs",
+    "name": "accept_java_script_value_switch",
+    "inventoryName": "accept-java-script-value-switch"
+  },
+  {
+    "id": "repository.read-javascript-value-switch-instruction",
+    "source": "js/src/translation/javascript-surface-rules.js",
+    "name": "readJavaScriptValueSwitchInstruction",
+    "inventoryName": "read-java-script-value-switch-instruction"
+  },
+  {
+    "id": "repository.read-javascript-value-switch-instruction",
+    "source": "rust/src/translation/javascript/surface_rules.rs",
+    "name": "read_java_script_value_switch_instruction",
+    "inventoryName": "read-java-script-value-switch-instruction"
+  },
+  {
+    "id": "repository.read-javascript-value-switch-position",
+    "source": "js/src/translation/javascript-surface-rules.js",
+    "name": "readJavaScriptValueSwitchPosition",
+    "inventoryName": "read-java-script-value-switch-position"
+  },
+  {
+    "id": "repository.read-javascript-value-switch-position",
+    "source": "rust/src/translation/javascript/surface_rules.rs",
+    "name": "read_java_script_value_switch_position",
+    "inventoryName": "read-java-script-value-switch-position"
+  },
+  {
+    "id": "repository.read-javascript-object-statement-form",
+    "source": "js/src/translation/javascript-surface-rules.js",
+    "name": "readJavaScriptObjectStatementForm",
+    "inventoryName": "read-java-script-object-statement-form"
+  },
+  {
+    "id": "repository.read-javascript-object-statement-form",
+    "source": "rust/src/translation/javascript/surface_rules.rs",
+    "name": "read_java_script_object_statement_form",
+    "inventoryName": "read-java-script-object-statement-form"
+  },
+  {
+    "id": "repository.read-javascript-object-property-form",
+    "source": "js/src/translation/javascript-surface-rules.js",
+    "name": "readJavaScriptObjectPropertyForm",
+    "inventoryName": "read-java-script-object-property-form"
+  },
+  {
+    "id": "repository.read-javascript-object-property-form",
+    "source": "rust/src/translation/javascript/surface_rules.rs",
+    "name": "read_java_script_object_property_form",
+    "inventoryName": "read-java-script-object-property-form"
+  },
+  {
+    "id": "repository.read-javascript-object-value-form",
+    "source": "js/src/translation/javascript-surface-rules.js",
+    "name": "readJavaScriptObjectValueForm",
+    "inventoryName": "read-java-script-object-value-form"
+  },
+  {
+    "id": "repository.read-javascript-object-value-form",
+    "source": "rust/src/translation/javascript/surface_rules.rs",
+    "name": "read_java_script_object_value_form",
+    "inventoryName": "read-java-script-object-value-form"
+  },
+  {
+    "id": "repository.read-javascript-method-receiver-kind",
+    "source": "js/src/translation/javascript-surface-rules.js",
+    "name": "readJavaScriptMethodReceiverKind",
+    "inventoryName": "read-java-script-method-receiver-kind"
+  },
+  {
+    "id": "repository.read-javascript-method-receiver-kind",
+    "source": "rust/src/translation/javascript/surface_rules.rs",
+    "name": "read_java_script_method_receiver_kind",
+    "inventoryName": "read-java-script-method-receiver-kind"
+  },
+  {
+    "id": "repository.read-javascript-array-method-surface-form",
+    "source": "js/src/translation/javascript-surface-rules.js",
+    "name": "readJavaScriptArrayMethodSurfaceForm",
+    "inventoryName": "read-java-script-array-method-surface-form"
+  },
+  {
+    "id": "repository.read-javascript-array-method-surface-form",
+    "source": "rust/src/translation/javascript/surface_rules.rs",
+    "name": "read_java_script_array_method_surface_form",
+    "inventoryName": "read-java-script-array-method-surface-form"
+  },
+  {
+    "id": "repository.read-javascript-method-argument-kind",
+    "source": "js/src/translation/javascript-surface-rules.js",
+    "name": "readJavaScriptMethodArgumentKind",
+    "inventoryName": "read-java-script-method-argument-kind"
+  },
+  {
+    "id": "repository.read-javascript-method-argument-kind",
+    "source": "rust/src/translation/javascript/surface_rules.rs",
+    "name": "read_java_script_method_argument_kind",
+    "inventoryName": "read-java-script-method-argument-kind"
+  },
+  {
+    "id": "repository.read-javascript-string-method-result-form",
+    "source": "js/src/translation/javascript-surface-rules.js",
+    "name": "readJavaScriptStringMethodResultForm",
+    "inventoryName": "read-java-script-string-method-result-form"
+  },
+  {
+    "id": "repository.read-javascript-string-method-result-form",
+    "source": "rust/src/translation/javascript/surface_rules.rs",
+    "name": "read_java_script_string_method_result_form",
+    "inventoryName": "read-java-script-string-method-result-form"
+  },
+  {
+    "id": "repository.check-javascript-construction-stage-diagnostics",
+    "source": "js/tests/translation-javascript-surface-diagnostics.test.js",
+    "name": "actual constructor and closure parameter failures retain the original source and stage diagnostics",
+    "inventoryName": "actual-constructor-and-closure-parameter-failures-retain-the-original-source-and-stage-diagnostics"
+  },
+  {
+    "id": "repository.check-javascript-construction-parse-boundaries",
+    "source": "js/tests/translation-javascript-surface-diagnostics.test.js",
+    "name": "constructor argument syntax and grouped values keep their independent parsing boundaries",
+    "inventoryName": "constructor-argument-syntax-and-grouped-values-keep-the-independent-parsing-boundaries"
+  },
+  {
+    "id": "repository.check-unused-documentation-type-aliases",
+    "source": "js/tests/translation-javascript-surface-diagnostics.test.js",
+    "name": "unused documentation aliases preserve all four original malformed or scalar source fixtures",
+    "inventoryName": "unused-documentation-aliases-preserve-all-four-original-malformed-or-scalar-source-fixtures"
+  },
+  {
+    "id": "repository.check-referenced-documentation-type-aliases",
+    "source": "js/tests/translation-javascript-surface-diagnostics.test.js",
+    "name": "referenced documentation aliases resolve through scalar array and tuple type readers",
+    "inventoryName": "referenced-documentation-aliases-resolve-through-scalar-array-and-tuple-type-readers"
+  },
+  {
+    "id": "repository.check-documentation-type-alias-refusals",
+    "source": "js/tests/translation-javascript-surface-diagnostics.test.js",
+    "name": "referenced invalid recursive and duplicate documentation aliases retain exact refusals",
+    "inventoryName": "referenced-invalid-recursive-and-duplicate-documentation-aliases-retain-exact-refusals"
+  },
+  {
+    "id": "repository.record-value-switch-stage-control",
+    "source": "js/tests/translation-javascript-value-switch.test.js",
+    "name": "record",
+    "inventoryName": "record"
+  },
+  {
+    "id": "repository.observe-isolated-value-switch-control",
+    "source": "js/tests/translation-javascript-value-switch.test.js",
+    "name": "observe",
+    "inventoryName": "observe"
+  },
+  {
+    "id": "repository.check-value-switch-source-observations",
+    "source": "js/tests/translation-javascript-value-switch.test.js",
+    "name": "equivalent",
+    "inventoryName": "equivalent"
+  },
+  {
+    "id": "repository.check-original-value-switch-stages",
+    "source": "js/tests/translation-javascript-value-switch.test.js",
+    "name": "all four original value switch programs retain every recorded pipeline stage",
+    "inventoryName": "all-four-original-value-switch-programs-retain-every-recorded-pipeline-stage"
+  },
+  {
+    "id": "repository.check-shared-value-switch-cursor",
+    "source": "js/tests/translation-javascript-value-switch.test.js",
+    "name": "the shared instruction cursor orders fallback tests bodies and reverse branch construction",
+    "inventoryName": "the-shared-instruction-cursor-orders-fallback-tests-bodies-and-reverse-branch-construction"
+  },
+  {
+    "id": "repository.check-pure-value-switch-evaluation-order",
+    "source": "js/tests/translation-javascript-value-switch.test.js",
+    "name": "pure value switches evaluate the discriminant once and dynamic tests only until the first match",
+    "inventoryName": "pure-value-switches-evaluate-the-selection-value-once-and-dynamic-tests-only-up-to-the-first-match"
+  },
+  {
+    "id": "repository.check-imperative-value-switch-state",
+    "source": "js/tests/translation-javascript-value-switch.test.js",
+    "name": "imperative value switches preserve grouped tests default placement and continuation state",
+    "inventoryName": "imperative-value-switches-preserve-grouped-tests-default-placement-and-continuation-state"
+  },
+  {
+    "id": "repository.check-value-switch-equality-and-refusals",
+    "source": "js/tests/translation-javascript-value-switch.test.js",
+    "name": "Number and string cases preserve strict equality and independent syntax refusals",
+    "inventoryName": "number-and-string-cases-preserve-strict-equality-and-independent-syntax-refusals"
+  },
+  {
+    "id": "repository.check-original-object-stage-refusals",
+    "source": "js/tests/translation-javascript-object-routing.test.js",
+    "name": "all original frontend diagnostics and the empty namespace refusal retain their exact sources and errors",
+    "inventoryName": "all-original-source-reader-diagnostics-and-the-empty-namespace-refusal-retain-the-exact-sources-and-errors"
+  },
+  {
+    "id": "repository.check-object-declaration-form-selection",
+    "source": "js/tests/translation-javascript-object-routing.test.js",
+    "name": "actual object declarations distinguish empty values identifier methods and string named methods",
+    "inventoryName": "actual-object-declarations-distinguish-empty-values-identifier-methods-and-string-named-methods"
+  },
+  {
+    "id": "repository.check-record-entry-and-tagged-constructor-boundaries",
+    "source": "js/tests/translation-javascript-object-routing.test.js",
+    "name": "ordinary record entries retain duplicate evaluations while tagged constructors retain their own checks",
+    "inventoryName": "ordinary-record-entries-retain-duplicate-evaluations-while-tagged-constructors-retain-the-own-checks"
+  },
+  {
+    "id": "repository.check-object-declaration-order-boundary",
+    "source": "js/tests/translation-javascript-object-routing.test.js",
+    "name": "object declaration order is checked before a later literal selects its namespace or value representation",
+    "inventoryName": "object-declaration-order-is-checked-before-a-later-literal-selects-its-namespace-or-value-representation"
+  },
+  {
+    "id": "repository.observe-javascript-method-control",
+    "source": "js/tests/translation-javascript-method-inference.test.js",
+    "name": "observe",
+    "inventoryName": "observe"
+  },
+  {
+    "id": "repository.check-original-large-integer-method-bound-refusal",
+    "source": "js/tests/translation-javascript-method-inference.test.js",
+    "name": "the original BigInt slice bound fails through normal method argument inference",
+    "inventoryName": "the-original-large-integer-slice-bound-fails-through-normal-method-argument-inference"
+  },
+  {
+    "id": "repository.check-actual-slice-method-operands",
+    "source": "js/tests/translation-javascript-method-inference.test.js",
+    "name": "valid string and array slice operands retain checked results and actual JavaScript observations",
+    "inventoryName": "valid-string-and-array-slice-operands-retain-checked-results-and-actual-java-script-observations"
+  },
+  {
+    "id": "repository.check-bound-slice-parameter-types",
+    "source": "js/tests/translation-javascript-method-inference.test.js",
+    "name": "bound parameter types drive slice refusals independently of literal spelling",
+    "inventoryName": "bound-parameter-types-drive-slice-refusals-independently-of-literal-spelling"
+  },
+  {
+    "id": "repository.check-slice-arity-and-traversal",
+    "source": "js/tests/translation-javascript-method-inference.test.js",
+    "name": "string and array slice keep their existing argument traversal and arity boundaries",
+    "inventoryName": "string-and-array-slice-keep-the-existing-argument-traversal-and-arity-boundaries"
+  },
+  {
+    "id": "repository.check-entire-javascript-source-reader-rule-module",
+    "source": "js/tests/translation-javascript-method-inference.test.js",
+    "name": "the entire JavaScript frontend decision module remains checked scalar self translation",
+    "inventoryName": "the-entire-java-script-source-reader-decision-module-remains-checked-scalar-self-translation"
+  },
+  {
+    "id": "repository.read-native-value-switch-instruction",
+    "source": "rust/src/translation/javascript/lowering.rs",
+    "name": "read_value_switch_instruction",
+    "inventoryName": "read-value-switch-instruction"
+  },
+  {
+    "id": "repository.read-native-value-switch-position",
+    "source": "rust/src/translation/javascript/lowering.rs",
+    "name": "read_value_switch_position",
+    "inventoryName": "read-value-switch-position"
+  },
+  {
+    "id": "repository.read-native-value-case-expression",
+    "source": "rust/src/translation/javascript/lowering.rs",
+    "name": "read_value_case_expression",
+    "inventoryName": "read-value-case-expression"
+  },
+  {
+    "id": "repository.lower-native-pure-value-switch",
+    "source": "rust/src/translation/javascript/lowering.rs",
+    "name": "lower_value_switch",
+    "inventoryName": "lower-value-switch"
+  },
+  {
+    "id": "repository.lower-native-imperative-value-switch",
+    "source": "rust/src/translation/javascript/imperative.rs",
+    "name": "lower_value_switch",
+    "inventoryName": "lower-value-switch"
+  },
+  {
+    "id": "repository.observe-native-value-switch-javascript",
+    "source": "rust/tests/unit/translation_javascript_value_switch.rs",
+    "name": "observe",
+    "inventoryName": "observe"
+  },
+  {
+    "id": "repository.check-native-value-switch-evaluation-order",
+    "source": "rust/tests/unit/translation_javascript_value_switch.rs",
+    "name": "native_value_switches_preserve_actual_evaluation_order_and_continuations",
+    "inventoryName": "native-value-switches-preserve-actual-evaluation-order-and-continuations"
+  },
+  {
+    "id": "repository.check-native-value-switch-generation-counter",
+    "source": "rust/tests/unit/translation_javascript_value_switch.rs",
+    "name": "pure_switch_names_share_the_actual_module_generation_counter",
+    "inventoryName": "pure-switch-names-share-the-actual-module-generation-counter"
+  },
+  {
+    "id": "repository.check-native-value-case-refusal-boundaries",
+    "source": "rust/tests/unit/translation_javascript_value_switch.rs",
+    "name": "value_case_syntax_and_incompatible_types_keep_their_distinct_boundaries",
+    "inventoryName": "value-case-syntax-and-incompatible-types-keep-the-distinct-boundaries"
+  },
+  {
+    "id": "repository.check-native-lazy-documentation-aliases",
+    "source": "rust/tests/unit/translation_javascript_value_switch.rs",
+    "name": "lazy_documentation_aliases_resolve_real_types_and_preserve_reference_errors",
+    "inventoryName": "lazy-documentation-aliases-resolve-real-types-and-preserve-reference-errors"
+  },
+  {
+    "id": "repository.recognize-hidden-missing-native-row",
+    "source": "rust/tests/unit/issue_195_native_grammar_rows.rs",
+    "name": "hidden_missing",
+    "inventoryName": "hidden-missing"
+  },
+  {
+    "id": "repository.create-native-recovery-projection-control",
+    "source": "rust/tests/unit/issue_195_native_grammar_rows.rs",
+    "name": "projection",
+    "inventoryName": "projection"
+  },
+  {
+    "id": "repository.create-native-recovery-token-control",
+    "source": "rust/tests/unit/issue_195_native_grammar_rows.rs",
+    "name": "token",
+    "inventoryName": "token"
+  },
+  {
+    "id": "repository.create-native-recovery-missing-control",
+    "source": "rust/tests/unit/issue_195_native_grammar_rows.rs",
+    "name": "missing",
+    "inventoryName": "missing"
+  },
+  {
+    "id": "repository.create-native-recovery-node-control",
+    "source": "rust/tests/unit/issue_195_native_grammar_rows.rs",
+    "name": "node",
+    "inventoryName": "node"
+  },
+  {
+    "id": "repository.check-native-recovery-row-projection",
+    "source": "rust/tests/unit/issue_195_native_grammar_rows.rs",
+    "name": "recovery_rows_preserve_error_bytes_named_and_literal_missing_leaves_and_hidden_missing",
+    "inventoryName": "recovery-rows-preserve-error-bytes-named-and-literal-missing-leaves-and-hidden-missing"
+  },
+  {
+    "id": "repository.check-native-missing-only-recovery",
+    "source": "rust/tests/unit/issue_195_native_grammar_rows.rs",
+    "name": "missing_only_recovery_keeps_empty_source_and_zero_width_rows",
+    "inventoryName": "missing-only-recovery-keeps-empty-source-and-zero-width-rows"
+  },
+  {
+    "id": "repository.check-native-error-only-recovery",
+    "source": "rust/tests/unit/issue_195_native_grammar_rows.rs",
+    "name": "error_only_recovery_retains_nul_unicode_and_crlf_source_bytes",
+    "inventoryName": "error-only-recovery-retains-null-character-unicode-and-carriage-return-line-feed-source-bytes"
+  },
+  {
+    "id": "repository.check-accepted-error-leaf-refusal",
+    "source": "rust/tests/unit/issue_195_native_grammar_rows.rs",
+    "name": "accepted_reconstruction_remains_strict_about_error_leaves",
+    "inventoryName": "accepted-reconstruction-remains-strict-about-error-leaves"
+  },
+  {
+    "id": "repository.check-accepted-missing-leaf-refusal",
+    "source": "rust/tests/unit/issue_195_native_grammar_rows.rs",
+    "name": "accepted_reconstruction_remains_strict_about_missing_leaves",
+    "inventoryName": "accepted-reconstruction-remains-strict-about-missing-leaves"
+  },
+  {
+    "id": "repository.javascript-recovery-projection-control",
+    "source": "js/tests/grammar-native-row-recovery.test.js",
+    "name": "projection",
+    "inventoryName": "projection"
+  },
+  {
+    "id": "repository.create-javascript-recovery-token-control",
+    "source": "js/tests/grammar-native-row-recovery.test.js",
+    "name": "token",
+    "inventoryName": "token"
+  },
+  {
+    "id": "repository.create-javascript-recovery-missing-control",
+    "source": "js/tests/grammar-native-row-recovery.test.js",
+    "name": "missing",
+    "inventoryName": "missing"
+  },
+  {
+    "id": "repository.create-javascript-recovery-node-control",
+    "source": "js/tests/grammar-native-row-recovery.test.js",
+    "name": "node",
+    "inventoryName": "node"
+  },
+  {
+    "id": "repository.reconstruct-javascript-recovery-control-source",
+    "source": "js/tests/grammar-native-row-recovery.test.js",
+    "name": "rebuild",
+    "inventoryName": "rebuild"
+  },
+  {
+    "id": "repository.check-javascript-recovery-row-projection",
+    "source": "js/tests/grammar-native-row-recovery.test.js",
+    "name": "native recovery rows preserve error bytes, named and literal missing leaves, and hidden missing projections",
+    "inventoryName": "native-recovery-rows-preserve-error-bytes-named-and-literal-missing-leaves-and-hidden-missing-projections"
+  },
+  {
+    "id": "repository.check-javascript-missing-only-recovery",
+    "source": "js/tests/grammar-native-row-recovery.test.js",
+    "name": "native missing-only recovery keeps empty source and zero-width rows",
+    "inventoryName": "native-missing-only-recovery-keeps-empty-source-and-zero-width-rows"
+  },
+  {
+    "id": "repository.check-javascript-error-only-recovery",
+    "source": "js/tests/grammar-native-row-recovery.test.js",
+    "name": "native error-only recovery retains NUL, Unicode and CRLF source bytes",
+    "inventoryName": "native-error-only-recovery-retains-null-character-unicode-and-carriage-return-line-feed-source-bytes"
+  },
+  {
+    "id": "repository.read-physical-rust-test-policy",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "readPhysicalShardPolicy",
+    "inventoryName": "read-physical-shard-policy"
+  },
+  {
+    "id": "repository.read-physical-rust-test-partition-count",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "physicalShardCount",
+    "inventoryName": "physical-shard-count"
+  },
+  {
+    "id": "repository.read-complete-native-test-inventory",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "readHarnessInventory",
+    "inventoryName": "read-harness-inventory"
+  },
+  {
+    "id": "repository.select-physical-native-test-identities",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "selectPhysicalTests",
+    "inventoryName": "select-physical-tests"
+  },
+  {
+    "id": "repository.create-exact-native-test-arguments",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "exactHarnessArguments",
+    "inventoryName": "exact-harness-arguments"
+  },
+  {
+    "id": "repository.read-complete-native-test-outcomes",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "readHarnessOutcomes",
+    "inventoryName": "read-harness-outcomes"
+  },
+  {
+    "id": "repository.match-original-logical-native-test-filters",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "matchesLogicalFilters",
+    "inventoryName": "matches-logical-filters"
+  },
+  {
+    "id": "repository.verify-physical-native-test-execution",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "verifyHarnessExecution",
+    "inventoryName": "verify-harness-execution"
+  },
+  {
+    "id": "repository.execute-physical-native-test-harness",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "executePhysicalHarness",
+    "inventoryName": "execute-physical-harness"
+  },
+  {
+    "id": "repository.read-physical-native-run-identity",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "shardIdentity",
+    "inventoryName": "shard-identity"
+  },
+  {
+    "id": "repository.recognize-root-native-test-harness",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "isRootHarness",
+    "inventoryName": "is-root-harness"
+  },
+  {
+    "id": "repository.render-cargo-native-runner-configuration",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "renderCargoRunnerConfiguration",
+    "inventoryName": "render-cargo-runner-configuration"
+  },
+  {
+    "id": "repository.read-complete-physical-native-job-admission",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "readShardAdmission",
+    "inventoryName": "read-shard-admission"
+  },
+  {
+    "id": "repository.verify-complete-physical-native-test-union",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "verifyPhysicalShardUnion",
+    "inventoryName": "verify-physical-shard-union"
+  },
+  {
+    "id": "repository.verify-retained-physical-native-test-directory",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "verifyPhysicalShardDirectory",
+    "inventoryName": "verify-physical-shard-directory"
+  },
+  {
+    "id": "repository.require-physical-native-execution-condition",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "requireValue",
+    "inventoryName": "require-value"
+  },
+  {
+    "id": "repository.encode-physical-native-test-receipt",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "encoded",
+    "inventoryName": "encoded"
+  },
+  {
+    "id": "repository.read-physical-native-test-receipt",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "read",
+    "inventoryName": "read"
+  },
+  {
+    "id": "repository.read-native-execution-identity-text",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "nativeText",
+    "inventoryName": "native-text"
+  },
+  {
+    "id": "repository.read-physical-native-execution-context",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "context",
+    "inventoryName": "context"
+  },
+  {
+    "id": "repository.write-physical-native-test-receipt",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "writeReceipt",
+    "inventoryName": "write-receipt"
+  },
+  {
+    "id": "repository.invoke-retained-native-test-process",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "invokeNative",
+    "inventoryName": "invoke-native"
+  },
+  {
+    "id": "repository.run-selected-native-harness-context",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "runHarness",
+    "inventoryName": "run-harness"
+  },
+  {
+    "id": "repository.configure-physical-native-test-runner",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "configure",
+    "inventoryName": "configure"
+  },
+  {
+    "id": "repository.seal-physical-native-test-receipts",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "finish",
+    "inventoryName": "finish"
+  },
+  {
+    "id": "repository.read-peer-physical-native-harness-keys",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "keysOf",
+    "inventoryName": "keys-of"
+  },
+  {
+    "id": "repository.visit-sealed-physical-native-test-directories",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "visit",
+    "inventoryName": "visit"
+  },
+  {
+    "id": "repository.create-native-test-listing-control",
+    "source": "js/tests/issue-195-evidence-rust-shards.test.js",
+    "name": "listing",
+    "inventoryName": "listing"
+  },
+  {
+    "id": "repository.create-injected-physical-native-process",
+    "source": "js/tests/issue-195-evidence-rust-shards.test.js",
+    "name": "fakeNative",
+    "inventoryName": "fake-native"
+  },
+  {
+    "id": "repository.create-complete-physical-native-control-union",
+    "source": "js/tests/issue-195-evidence-rust-shards.test.js",
+    "name": "groups",
+    "inventoryName": "groups"
+  },
+  {
+    "id": "repository.check-original-native-logical-filter-partitions",
+    "source": "js/tests/issue-195-evidence-rust-shards.test.js",
+    "name": "the physical policy retains all five original disjoint filters and unchanged small suites",
+    "inventoryName": "the-physical-policy-retains-all-five-original-disjoint-filters-and-unchanged-small-suites"
+  },
+  {
+    "id": "repository.check-actual-native-inventory-selection",
+    "source": "js/tests/issue-195-evidence-rust-shards.test.js",
+    "name": "actual native inventories supply exact execution filters and preserve native failures and full diagnostics",
+    "inventoryName": "actual-native-inventories-supply-exact-execution-filters-and-preserve-native-failures-and-full-diagnostics"
+  },
+  {
+    "id": "repository.check-empty-native-partition-boundaries",
+    "source": "js/tests/issue-195-evidence-rust-shards.test.js",
+    "name": "empty selections execute zero tests and exact names cannot admit longer neighboring names",
+    "inventoryName": "empty-selections-execute-zero-tests-and-exact-names-can-not-admit-longer-neighboring-names"
+  },
+  {
+    "id": "repository.check-complete-physical-native-union",
+    "source": "js/tests/issue-195-evidence-rust-shards.test.js",
+    "name": "the full physical union authenticates every platform, source identity, test outcome and native inventory",
+    "inventoryName": "the-full-physical-union-authenticates-every-platform-source-identity-test-outcome-and-native-inventory"
+  },
+  {
+    "id": "repository.check-root-native-harness-path-recognition",
+    "source": "js/tests/issue-195-evidence-rust-shards.test.js",
+    "name": "Cargo runner recognition includes Windows and instrumented host test paths while preserving CLI consumers",
+    "inventoryName": "cargo-runner-recognition-includes-windows-and-instrumented-host-test-paths-while-preserving-command-line-interface-consumers"
+  },
+  {
+    "id": "repository.check-cargo-native-runner-token-configuration",
+    "source": "js/tests/issue-195-evidence-rust-shards.test.js",
+    "name": "Cargo environment configuration keeps literal argument tokens and Windows paths without JSON or shell quoting",
+    "inventoryName": "cargo-environment-configuration-keeps-literal-argument-tokens-and-windows-paths-without-javascript-object-notation-or-shell-quoting"
+  },
+  {
+    "id": "repository.check-retained-native-transport-tampering",
+    "source": "js/tests/issue-195-evidence-rust-shards.test.js",
+    "name": "retained complete stdout, listings, configuration and receipt seals reject filesystem tampering",
+    "inventoryName": "retained-complete-standard-output-listings-configuration-and-receipt-seals-reject-file-system-tampering"
+  },
+  {
+    "id": "repository.check-exact-native-attempt-admission",
+    "source": "js/tests/issue-195-evidence-rust-shards.test.js",
+    "name": "exact-attempt admission requires every physical job and retains legitimate original conditional scopes",
+    "inventoryName": "exact-attempt-admission-requires-every-physical-job-and-retains-legitimate-original-conditional-scopes"
+  },
+  {
+    "id": "repository.check-original-native-oracle-and-deadline-owners",
+    "source": "js/tests/issue-195-evidence-rust-shards.test.js",
+    "name": "supplemental physical cells preserve original native oracle, doctest and example owners and all deadlines",
+    "inventoryName": "supplemental-physical-cells-preserve-original-native-oracle-documentation-test-and-example-owners-and-all-deadlines"
+  },
+  {
+    "id": "repository.read-experimental-grammar-first-prefixes",
+    "source": "experiments/grammar-proven-failure-cache.mjs",
+    "name": "readGrammarFirstPrefixes",
+    "inventoryName": "read-grammar-first-prefixes"
+  },
+  {
+    "id": "repository.instrument-excluded-prefix-grammar-failures",
+    "source": "experiments/grammar-proven-failure-cache.mjs",
+    "name": "instrumentProvenGrammarFailures",
+    "inventoryName": "instrument-proven-grammar-failures"
+  },
+  {
+    "id": "repository.create-null-capable-empty-prefix-summary",
+    "source": "experiments/grammar-proven-failure-cache.mjs",
+    "name": "empty",
+    "inventoryName": "empty"
+  },
+  {
+    "id": "repository.create-unresolved-prefix-summary",
+    "source": "experiments/grammar-proven-failure-cache.mjs",
+    "name": "unknown",
+    "inventoryName": "unknown"
+  },
+  {
+    "id": "repository.read-experimental-prefix-terminal-key",
+    "source": "experiments/grammar-proven-failure-cache.mjs",
+    "name": "key",
+    "inventoryName": "key"
+  },
+  {
+    "id": "repository.combine-experimental-prefix-summaries",
+    "source": "experiments/grammar-proven-failure-cache.mjs",
+    "name": "union",
+    "inventoryName": "union"
+  },
+  {
+    "id": "repository.read-experimental-grammar-prefix-node",
+    "source": "experiments/grammar-proven-failure-cache.mjs",
+    "name": "read",
+    "inventoryName": "read"
+  },
+  {
+    "id": "repository.match-experimental-grammar-prefix",
+    "source": "experiments/grammar-proven-failure-cache.mjs",
+    "name": "matches",
+    "inventoryName": "matches"
+  },
+  {
+    "id": "repository.restore-experimental-grammar-executor",
+    "source": "experiments/grammar-proven-failure-cache.mjs",
+    "name": "restore",
+    "inventoryName": "restore"
+  },
+  {
+    "id": "repository.create-recursive-prefix-control-grammar",
+    "source": "js/tests/grammar-proven-failure-cache.test.js",
+    "name": "recursiveGrammar",
+    "inventoryName": "recursive-grammar"
+  },
+  {
+    "id": "repository.read-prefix-control-terminal-values",
+    "source": "js/tests/grammar-proven-failure-cache.test.js",
+    "name": "firstValues",
+    "inventoryName": "first-values"
+  },
+  {
+    "id": "repository.reconstruct-prefix-control-source",
+    "source": "js/tests/grammar-proven-failure-cache.test.js",
+    "name": "reconstruct",
+    "inventoryName": "reconstruct"
+  },
+  {
+    "id": "repository.check-recursive-prefix-summary-controls",
+    "source": "js/tests/grammar-proven-failure-cache.test.js",
+    "name": "experimental FIRST certificates retain recursive unions, nullability and decoded Unicode prefixes",
+    "inventoryName": "experimental-first-certificates-retain-recursive-unions-empty-source-admission-and-decoded-unicode-prefixes"
+  },
+  {
+    "id": "repository.check-contextual-prefix-certificate-refusals",
+    "source": "js/tests/grammar-proven-failure-cache.test.js",
+    "name": "experimental certificates refuse scanners, lookahead, actions, immediate tokens and unknown literal settings",
+    "inventoryName": "experimental-certificates-refuse-scanners-lookahead-actions-immediate-tokens-and-unknown-literal-settings"
+  },
+  {
+    "id": "repository.check-experimental-failed-answer-conservation",
+    "source": "js/tests/grammar-proven-failure-cache.test.js",
+    "name": "experimental failed-answer retention preserves full authored outcomes, recovery and unchanged rejection limits",
+    "inventoryName": "experimental-failed-answer-retention-preserves-full-authored-outcomes-recovery-and-unchanged-rejection-limits"
+  },
+  {
+    "id": "repository.check-experimental-context-and-recovery-refusals",
+    "source": "js/tests/grammar-proven-failure-cache.test.js",
+    "name": "experimental retention refuses contextual grammars, catchall trivia and every recovery round",
+    "inventoryName": "experimental-retention-refuses-contextual-grammars-catchall-trivia-and-every-recovery-round"
+  },
+  {
+    "id": "repository.check-experimental-executor-restoration",
+    "source": "js/tests/grammar-proven-failure-cache.test.js",
+    "name": "experimental instrumentation restores each executor memo method when a run throws",
+    "inventoryName": "experimental-instrumentation-restores-each-executor-answer-cache-method-if-a-run-throws"
+  },
+  {
+    "id": "repository.accept-surface-reference-closure-token",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "acceptSurfaceReferenceClosureToken",
+    "inventoryName": "accept-surface-reference-closure-token"
+  },
+  {
+    "id": "repository.accept-surface-reference-closure-token",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "accept_surface_reference_closure_token",
+    "inventoryName": "accept-surface-reference-closure-token"
+  },
+  {
+    "id": "repository.accept-surface-reference-mutating-method",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "acceptSurfaceReferenceMutatingMethod",
+    "inventoryName": "accept-surface-reference-mutating-method"
+  },
+  {
+    "id": "repository.accept-surface-reference-mutating-method",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "accept_surface_reference_mutating_method",
+    "inventoryName": "accept-surface-reference-mutating-method"
+  },
+  {
+    "id": "repository.require-surface-reference-token",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "requireSurfaceReferenceToken",
+    "inventoryName": "require-surface-reference-token"
+  },
+  {
+    "id": "repository.require-surface-reference-token",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "require_surface_reference_token",
+    "inventoryName": "require-surface-reference-token"
+  },
+  {
+    "id": "repository.read-surface-reference-fact-field",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "readSurfaceReferenceField",
+    "inventoryName": "read-surface-reference-field"
+  },
+  {
+    "id": "repository.read-surface-reference-fact-field",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "read_surface_reference_field",
+    "inventoryName": "read-surface-reference-field"
+  },
+  {
+    "id": "repository.read-surface-reference-fact-text",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "readSurfaceReferenceText",
+    "inventoryName": "read-surface-reference-text"
+  },
+  {
+    "id": "repository.read-surface-reference-fact-text",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "read_surface_reference_text",
+    "inventoryName": "read-surface-reference-text"
+  },
+  {
+    "id": "repository.accept-surface-reference-fact-truth",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "acceptSurfaceReferenceTruthyValue",
+    "inventoryName": "accept-surface-reference-truth-value"
+  },
+  {
+    "id": "repository.accept-surface-reference-fact-truth",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "accept_surface_reference_truthy_value",
+    "inventoryName": "accept-surface-reference-truth-value"
+  },
+  {
+    "id": "repository.read-surface-reference-fact-type",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "readSurfaceReferenceType",
+    "inventoryName": "read-surface-reference-type"
+  },
+  {
+    "id": "repository.read-surface-reference-fact-type",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "read_surface_reference_type",
+    "inventoryName": "read-surface-reference-type"
+  },
+  {
+    "id": "repository.read-surface-reference-fact-kind",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "readSurfaceReferenceKind",
+    "inventoryName": "read-surface-reference-kind"
+  },
+  {
+    "id": "repository.read-surface-reference-fact-kind",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "read_surface_reference_kind",
+    "inventoryName": "read-surface-reference-kind"
+  },
+  {
+    "id": "repository.accept-surface-reference-fact-structure",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "acceptSurfaceReferenceStructure",
+    "inventoryName": "accept-surface-reference-structure"
+  },
+  {
+    "id": "repository.accept-surface-reference-fact-structure",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "accept_surface_reference_structure",
+    "inventoryName": "accept-surface-reference-structure"
+  },
+  {
+    "id": "repository.read-surface-reference-fact-path",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "readSurfaceReferencePath",
+    "inventoryName": "read-surface-reference-path"
+  },
+  {
+    "id": "repository.read-surface-reference-fact-path",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "read_surface_reference_path",
+    "inventoryName": "read-surface-reference-path"
+  },
+  {
+    "id": "repository.find-surface-reference-item-signature",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "findSurfaceReferenceItemSignature",
+    "inventoryName": "find-surface-reference-item-signature"
+  },
+  {
+    "id": "repository.find-surface-reference-item-signature",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "find_surface_reference_item_signature",
+    "inventoryName": "find-surface-reference-item-signature"
+  },
+  {
+    "id": "repository.find-surface-reference-signature",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "findSurfaceReferenceSignature",
+    "inventoryName": "find-surface-reference-signature"
+  },
+  {
+    "id": "repository.find-surface-reference-signature",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "find_surface_reference_signature",
+    "inventoryName": "find-surface-reference-signature"
+  },
+  {
+    "id": "repository.read-surface-reference-lexical-type",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "readSurfaceReferenceScope",
+    "inventoryName": "read-surface-reference-scope"
+  },
+  {
+    "id": "repository.read-surface-reference-lexical-type",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "read_surface_reference_scope",
+    "inventoryName": "read-surface-reference-scope"
+  },
+  {
+    "id": "repository.inspect-surface-reference-expression-facts",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "inspectSurfaceReferenceExpression",
+    "inventoryName": "inspect-surface-reference-expression"
+  },
+  {
+    "id": "repository.inspect-surface-reference-expression-facts",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "inspect_surface_reference_expression",
+    "inventoryName": "inspect-surface-reference-expression"
+  },
+  {
+    "id": "repository.inspect-surface-reference-item-facts",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "inspectSurfaceReferenceItems",
+    "inventoryName": "inspect-surface-reference-items"
+  },
+  {
+    "id": "repository.inspect-surface-reference-item-facts",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "inspect_surface_reference_items",
+    "inventoryName": "inspect-surface-reference-items"
+  },
+  {
+    "id": "repository.detect-surface-structural-identity-facts",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "hasSurfaceStructuralIdentity",
+    "inventoryName": "has-surface-structural-identity"
+  },
+  {
+    "id": "repository.detect-surface-structural-identity-facts",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "has_surface_structural_identity",
+    "inventoryName": "has-surface-structural-identity"
+  },
+  {
+    "id": "repository.create-surface-reference-facts",
+    "source": "js/src/translation/surface-reference-facts.js",
+    "name": "createSurfaceReferenceFacts",
+    "inventoryName": "create-surface-reference-facts"
+  },
+  {
+    "id": "repository.insert-surface-reference-fact",
+    "source": "js/src/translation/surface-reference-facts.js",
+    "name": "insert",
+    "inventoryName": "insert"
+  },
+  {
+    "id": "repository.surface-reference-fact-form-array",
+    "source": "js/src/translation/surface-reference-facts.js",
+    "name": "forms",
+    "inventoryName": "forms"
+  },
+  {
+    "id": "repository.surface-reference-fact-text-array",
+    "source": "js/src/translation/surface-reference-facts.js",
+    "name": "texts",
+    "inventoryName": "texts"
+  },
+  {
+    "id": "repository.surface-reference-fact-child-start-array",
+    "source": "js/src/translation/surface-reference-facts.js",
+    "name": "starts",
+    "inventoryName": "starts"
+  },
+  {
+    "id": "repository.surface-reference-fact-child-count-array",
+    "source": "js/src/translation/surface-reference-facts.js",
+    "name": "counts",
+    "inventoryName": "counts"
+  },
+  {
+    "id": "repository.surface-reference-fact-field-label-array",
+    "source": "js/src/translation/surface-reference-facts.js",
+    "name": "labels",
+    "inventoryName": "labels"
+  },
+  {
+    "id": "repository.surface-reference-fact-child-target-array",
+    "source": "js/src/translation/surface-reference-facts.js",
+    "name": "targets",
+    "inventoryName": "targets"
+  },
+  {
+    "id": "repository.surface-reference-fact-root-identity",
+    "source": "js/src/translation/surface-reference-facts.js",
+    "name": "root",
+    "inventoryName": "root"
+  },
+  {
+    "id": "repository.surface-reference-retained-values",
+    "source": "js/src/translation/surface-reference-facts.js",
+    "name": "values",
+    "inventoryName": "values"
+  },
+  {
+    "id": "repository.surface-reference-retained-value-selection",
+    "source": "js/src/translation/surface-reference-facts.js",
+    "name": "retainValues",
+    "inventoryName": "retain-values"
+  },
+  {
+    "id": "repository.create-packed-surface-reference-columns",
+    "source": "js/src/translation/surface-reference-facts.js",
+    "name": "createSurfaceReferenceColumns",
+    "inventoryName": "create-surface-reference-columns"
+  },
+  {
+    "id": "repository.packed-surface-reference-text-columns",
+    "source": "js/src/translation/surface-reference-facts.js",
+    "name": "columns",
+    "inventoryName": "columns"
+  },
+  {
+    "id": "repository.packed-surface-reference-text-columns",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "columns",
+    "inventoryName": "columns"
+  },
+  {
+    "id": "repository.packed-surface-reference-numeric-columns",
+    "source": "js/src/translation/surface-reference-facts.js",
+    "name": "rows",
+    "inventoryName": "rows"
+  },
+  {
+    "id": "repository.packed-surface-reference-numeric-columns",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "rows",
+    "inventoryName": "rows"
+  },
+  {
+    "id": "repository.packed-surface-reference-node-count",
+    "source": "js/src/translation/surface-reference-facts.js",
+    "name": "size",
+    "inventoryName": "size"
+  },
+  {
+    "id": "repository.packed-surface-reference-node-count",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "size",
+    "inventoryName": "size"
+  },
+  {
+    "id": "translation.select-surface-reference-allocation",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "selectSurfaceReferenceAllocation",
+    "inventoryName": "select-surface-reference-allocation"
+  },
+  {
+    "id": "translation.select-surface-reference-allocation",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "select_surface_reference_allocation",
+    "inventoryName": "select-surface-reference-allocation"
+  },
+  {
+    "id": "translation.select-surface-reference-read",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "selectSurfaceReferenceRead",
+    "inventoryName": "select-surface-reference-read"
+  },
+  {
+    "id": "translation.select-surface-reference-read",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "select_surface_reference_read",
+    "inventoryName": "select-surface-reference-read"
+  },
+  {
+    "id": "translation.read-surface-reference-result-field",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "readSurfaceReferenceResultField",
+    "inventoryName": "read-surface-reference-result-field"
+  },
+  {
+    "id": "translation.read-surface-reference-result-field",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "read_surface_reference_result_field",
+    "inventoryName": "read-surface-reference-result-field"
+  },
+  {
+    "id": "translation.render-surface-reference-operation",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "renderSurfaceReferenceOperation",
+    "inventoryName": "render-surface-reference-operation"
+  },
+  {
+    "id": "translation.render-surface-reference-operation",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "render_surface_reference_operation",
+    "inventoryName": "render-surface-reference-operation"
+  },
+  {
+    "id": "translation.read-surface-reference-refusal",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "readSurfaceReferenceRefusal",
+    "inventoryName": "read-surface-reference-refusal"
+  },
+  {
+    "id": "translation.read-surface-reference-refusal",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "read_surface_reference_refusal",
+    "inventoryName": "read-surface-reference-refusal"
+  },
+  {
+    "id": "repository.check-reference-allocation-and-read-repeated-check",
+    "source": "js/tests/translation-surface-reference-analysis.test.js",
+    "name": "selected allocation and member reads survive complete checked surface rechecking",
+    "inventoryName": "selected-allocation-and-member-reads-survive-complete-checked-surface-repeated-check"
+  },
+  {
+    "id": "repository.check-whole-reference-rule-translation",
+    "source": "js/tests/translation-surface-reference-analysis.test.js",
+    "name": "the entire reference rule module checks and emits every declaration with executable original-oracle controls",
+    "inventoryName": "the-entire-reference-rule-module-checks-and-emits-every-declaration-with-executable-original-oracle-controls"
+  },
+  {
+    "id": "repository.read-reference-rule-native-symbol",
+    "source": "js/scripts/generate-surface-reference-analysis-rules.mjs",
+    "name": "snake",
+    "inventoryName": "snake"
+  },
+  {
+    "id": "repository.replace-exact-reference-library-context",
+    "source": "js/scripts/generate-surface-reference-analysis-rules.mjs",
+    "name": "replace",
+    "inventoryName": "replace"
+  },
+  {
+    "id": "repository.native-surface-reference-facts",
+    "source": "rust/src/translation/surface_reference_facts.rs",
+    "name": "SurfaceReferenceFacts",
+    "inventoryName": "surface-reference-facts"
+  },
+  {
+    "id": "repository.native-surface-reference-fact-builder",
+    "source": "rust/src/translation/surface_reference_facts.rs",
+    "name": "Columns",
+    "inventoryName": "columns"
+  },
+  {
+    "id": "repository.read-native-surface-position-number",
+    "source": "rust/src/translation/surface_reference_facts.rs",
+    "name": "number",
+    "inventoryName": "number"
+  },
+  {
+    "id": "repository.create-native-surface-reference-facts",
+    "source": "rust/src/translation/surface_reference_facts.rs",
+    "name": "create_surface_reference_facts",
+    "inventoryName": "create-surface-reference-facts"
+  },
+  {
+    "id": "repository.insert-native-surface-reference-fact",
+    "source": "rust/src/translation/surface_reference_facts.rs",
+    "name": "insert",
+    "inventoryName": "insert"
+  },
+  {
+    "id": "repository.read-native-reference-mutating-methods",
+    "source": "rust/src/translation/javascript/reference_analysis.rs",
+    "name": "mutating_methods",
+    "inventoryName": "mutating-methods"
+  },
+  {
+    "id": "repository.read-native-reference-token-kind",
+    "source": "rust/src/translation/javascript/reference_analysis.rs",
+    "name": "kind",
+    "inventoryName": "kind"
+  },
+  {
+    "id": "repository.read-native-reference-token-text",
+    "source": "rust/src/translation/javascript/reference_analysis.rs",
+    "name": "text",
+    "inventoryName": "text"
+  },
+  {
+    "id": "repository.detect-native-source-reference-selection",
+    "source": "rust/src/translation/javascript/reference_analysis.rs",
+    "name": "requires_reference_semantics",
+    "inventoryName": "requires-reference-semantics"
+  },
+  {
+    "id": "repository.detect-native-surface-structural-identity",
+    "source": "rust/src/translation/javascript/reference_analysis.rs",
+    "name": "has_structural_identity",
+    "inventoryName": "has-structural-identity"
+  },
+  {
+    "id": "repository.select-native-structural-reference-semantics",
+    "source": "rust/src/translation/javascript/reference_analysis.rs",
+    "name": "select_structural_reference_semantics",
+    "inventoryName": "select-structural-reference-semantics"
+  },
+  {
+    "id": "repository.mark-native-serialized-reference-types",
+    "source": "rust/src/translation/javascript/reference_analysis.rs",
+    "name": "mark_value",
+    "inventoryName": "mark-value"
+  },
+  {
+    "id": "repository.mark-native-reference-type-metadata",
+    "source": "rust/src/translation/javascript/reference_analysis.rs",
+    "name": "mark_types",
+    "inventoryName": "mark-types"
+  },
+  {
+    "id": "repository.read-native-reference-expression-positions",
+    "source": "rust/src/translation/javascript/reference_analysis.rs",
+    "name": "expression_positions",
+    "inventoryName": "expression-positions"
+  },
+  {
+    "id": "repository.collect-native-reference-expression-positions",
+    "source": "rust/src/translation/javascript/reference_analysis.rs",
+    "name": "expression",
+    "inventoryName": "expression"
+  },
+  {
+    "id": "repository.collect-native-reference-item-expressions",
+    "source": "rust/src/translation/javascript/reference_analysis.rs",
+    "name": "items",
+    "inventoryName": "items"
+  },
+  {
+    "id": "repository.mark-native-shared-reference-types",
+    "source": "rust/src/translation/javascript/reference_analysis.rs",
+    "name": "mark_shared_reference_types",
+    "inventoryName": "mark-shared-reference-types"
+  },
+  {
+    "id": "repository.copy-type-with-reference-selection",
+    "source": "rust/src/translation/types.rs",
+    "name": "with_reference",
+    "inventoryName": "with-reference"
+  },
+  {
+    "id": "repository.check-native-nested-reference-type-selection",
+    "source": "rust/tests/unit/translation_surface_reference_analysis.rs",
+    "name": "actual_source_selection_recursively_marks_nested_structural_types",
+    "inventoryName": "actual-source-selection-recursive-marks-nested-structural-types"
+  },
+  {
+    "id": "repository.check-native-late-reference-selection-boundary",
+    "source": "rust/tests/unit/translation_surface_reference_analysis.rs",
+    "name": "late_structural_equality_selection_keeps_original_type_population_timing_and_refusal",
+    "inventoryName": "late-structural-equality-selection-keeps-original-type-population-timing-and-refusal"
+  },
+  {
+    "id": "repository.check-native-reference-source-free-repeated-check",
+    "source": "rust/tests/unit/translation_surface_reference_analysis.rs",
+    "name": "source_selected_allocation_and_member_reads_survive_source_free_checked_replay",
+    "inventoryName": "source-selected-allocation-and-member-reads-survive-source-free-checked-replay"
+  },
+  {
+    "id": "repository.check-native-reference-token-and-render-decisions",
+    "source": "rust/tests/unit/translation_surface_reference_analysis.rs",
+    "name": "generated_token_and_render_decisions_retain_existing_source_boundaries",
+    "inventoryName": "generated-token-and-render-decisions-retain-existing-source-boundaries"
+  },
+  {
+    "id": "repository.read-surface-reference-mutating-methods",
+    "source": "js/src/translation/reference-analysis.js",
+    "name": "readSurfaceReferenceMutatingMethods",
+    "inventoryName": "read-surface-reference-mutating-methods"
+  },
+  {
+    "id": "repository.authenticated-surface-reference-analysis-oracle",
+    "source": "js/tests/translation-surface-reference-analysis.test.js",
+    "name": "original",
+    "inventoryName": "original"
+  },
+  {
+    "id": "repository.create-surface-reference-name-control",
+    "source": "js/tests/translation-surface-reference-analysis.test.js",
+    "name": "name",
+    "inventoryName": "name"
+  },
+  {
+    "id": "repository.create-surface-reference-equality-control",
+    "source": "js/tests/translation-surface-reference-analysis.test.js",
+    "name": "equality",
+    "inventoryName": "equality"
+  },
+  {
+    "id": "repository.create-surface-reference-parameter-control",
+    "source": "js/tests/translation-surface-reference-analysis.test.js",
+    "name": "parameter",
+    "inventoryName": "parameter"
+  },
+  {
+    "id": "repository.create-surface-reference-program-control",
+    "source": "js/tests/translation-surface-reference-analysis.test.js",
+    "name": "program",
+    "inventoryName": "program"
+  },
+  {
+    "id": "repository.check-surface-reference-token-window-conservation",
+    "source": "js/tests/translation-surface-reference-analysis.test.js",
+    "name": "token-window analysis agrees with the authenticated original on source syntax and every linked method alias",
+    "inventoryName": "token-window-analysis-agrees-with-the-authenticated-original-on-source-syntax-and-every-linked-method-alias"
+  },
+  {
+    "id": "repository.check-surface-reference-recursive-type-flow",
+    "source": "js/tests/translation-surface-reference-analysis.test.js",
+    "name": "flat recursive scope and type flow preserve original structural identity decisions",
+    "inventoryName": "flat-recursive-scope-and-type-flow-preserve-original-structural-identity-decisions"
+  },
+  {
+    "id": "repository.check-surface-reference-signature-and-binding-order",
+    "source": "js/tests/translation-surface-reference-analysis.test.js",
+    "name": "module signatures external overrides and main binding order keep their original priority",
+    "inventoryName": "module-signatures-external-overrides-and-main-binding-order-keep-the-original-priority"
+  },
+  {
+    "id": "repository.check-surface-reference-source-reader-selection",
+    "source": "js/tests/translation-surface-reference-analysis.test.js",
+    "name": "bounded actual frontend surfaces retain original selection after parsing",
+    "inventoryName": "bounded-actual-source-reader-surfaces-retain-original-selection-after-parsing"
+  },
+  {
+    "id": "repository.check-surface-reference-source-free-observations",
+    "source": "js/tests/translation-surface-reference-analysis.test.js",
+    "name": "actual checked nested references retain allocation read and source-free JavaScript observations",
+    "inventoryName": "actual-checked-nested-references-retain-allocation-read-and-source-free-java-script-observations"
+  },
+  {
+    "id": "translation.read-required-number-fact",
+    "source": "js/src/translation/fact-column-rules.js",
+    "name": "readRequiredNumberFact",
+    "inventoryName": "read-required-number-fact"
+  },
+  {
+    "id": "translation.read-required-number-fact",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "read_required_number_fact",
+    "inventoryName": "read-required-number-fact"
+  },
+  {
+    "id": "translation.read-required-number-fact",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "read_required_number_fact",
+    "inventoryName": "read-required-number-fact"
+  },
+  {
+    "id": "translation.read-required-number-fact",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "read_required_number_fact",
+    "inventoryName": "read-required-number-fact"
+  },
+  {
+    "id": "translation.read-required-number-fact",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_required_number_fact",
+    "inventoryName": "read-required-number-fact"
+  },
+  {
+    "id": "translation.read-required-number-fact",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "read_required_number_fact",
+    "inventoryName": "read-required-number-fact"
+  },
+  {
+    "id": "translation.read-required-number-fact",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "read_required_number_fact",
+    "inventoryName": "read-required-number-fact"
+  },
+  {
+    "id": "translation.read-required-number-fact",
+    "source": "rust/src/translation/record_type_syntax_rules/part_1.rs",
+    "name": "read_required_number_fact",
+    "inventoryName": "read-required-number-fact"
+  },
+  {
+    "id": "translation.read-required-number-fact",
+    "source": "rust/src/translation/nullable_type_syntax_rules/part_1.rs",
+    "name": "read_required_number_fact",
+    "inventoryName": "read-required-number-fact"
+  },
+  {
+    "id": "translation.read-required-number-fact",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "read_required_number_fact",
+    "inventoryName": "read-required-number-fact"
+  },
+  {
+    "id": "translation.read-required-number-fact",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "read_required_number_fact",
+    "inventoryName": "read-required-number-fact"
+  },
+  {
+    "id": "translation.read-required-number-fact",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "read_required_number_fact",
+    "inventoryName": "read-required-number-fact"
+  },
+  {
+    "id": "translation.read-required-text-fact",
+    "source": "js/src/translation/fact-column-rules.js",
+    "name": "readRequiredTextFact",
+    "inventoryName": "read-required-text-fact"
+  },
+  {
+    "id": "translation.read-required-text-fact",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "read_required_text_fact",
+    "inventoryName": "read-required-text-fact"
+  },
+  {
+    "id": "translation.read-required-text-fact",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "read_required_text_fact",
+    "inventoryName": "read-required-text-fact"
+  },
+  {
+    "id": "translation.read-required-text-fact",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "read_required_text_fact",
+    "inventoryName": "read-required-text-fact"
+  },
+  {
+    "id": "translation.read-required-text-fact",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_required_text_fact",
+    "inventoryName": "read-required-text-fact"
+  },
+  {
+    "id": "translation.read-required-text-fact",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "read_required_text_fact",
+    "inventoryName": "read-required-text-fact"
+  },
+  {
+    "id": "translation.read-required-text-fact",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "read_required_text_fact",
+    "inventoryName": "read-required-text-fact"
+  },
+  {
+    "id": "translation.read-required-text-fact",
+    "source": "rust/src/translation/record_type_syntax_rules/part_1.rs",
+    "name": "read_required_text_fact",
+    "inventoryName": "read-required-text-fact"
+  },
+  {
+    "id": "translation.read-required-text-fact",
+    "source": "rust/src/translation/nullable_type_syntax_rules/part_1.rs",
+    "name": "read_required_text_fact",
+    "inventoryName": "read-required-text-fact"
+  },
+  {
+    "id": "translation.read-required-text-fact",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "read_required_text_fact",
+    "inventoryName": "read-required-text-fact"
+  },
+  {
+    "id": "translation.read-required-text-fact",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "read_required_text_fact",
+    "inventoryName": "read-required-text-fact"
+  },
+  {
+    "id": "translation.read-required-text-fact",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "read_required_text_fact",
+    "inventoryName": "read-required-text-fact"
+  },
+  {
+    "id": "translation.read-required-boolean-fact",
+    "source": "js/src/translation/fact-column-rules.js",
+    "name": "readRequiredBooleanFact",
+    "inventoryName": "read-required-boolean-fact"
+  },
+  {
+    "id": "translation.read-required-boolean-fact",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "read_required_boolean_fact",
+    "inventoryName": "read-required-boolean-fact"
+  },
+  {
+    "id": "translation.read-required-boolean-fact",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "read_required_boolean_fact",
+    "inventoryName": "read-required-boolean-fact"
+  },
+  {
+    "id": "translation.read-required-boolean-fact",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "read_required_boolean_fact",
+    "inventoryName": "read-required-boolean-fact"
+  },
+  {
+    "id": "translation.read-required-boolean-fact",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_required_boolean_fact",
+    "inventoryName": "read-required-boolean-fact"
+  },
+  {
+    "id": "translation.read-required-boolean-fact",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "read_required_boolean_fact",
+    "inventoryName": "read-required-boolean-fact"
+  },
+  {
+    "id": "translation.read-required-boolean-fact",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "read_required_boolean_fact",
+    "inventoryName": "read-required-boolean-fact"
+  },
+  {
+    "id": "translation.read-required-boolean-fact",
+    "source": "rust/src/translation/record_type_syntax_rules/part_1.rs",
+    "name": "read_required_boolean_fact",
+    "inventoryName": "read-required-boolean-fact"
+  },
+  {
+    "id": "translation.read-required-boolean-fact",
+    "source": "rust/src/translation/nullable_type_syntax_rules/part_1.rs",
+    "name": "read_required_boolean_fact",
+    "inventoryName": "read-required-boolean-fact"
+  },
+  {
+    "id": "translation.read-required-boolean-fact",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "read_required_boolean_fact",
+    "inventoryName": "read-required-boolean-fact"
+  },
+  {
+    "id": "translation.read-required-boolean-fact",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "read_required_boolean_fact",
+    "inventoryName": "read-required-boolean-fact"
+  },
+  {
+    "id": "translation.read-required-boolean-fact",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "read_required_boolean_fact",
+    "inventoryName": "read-required-boolean-fact"
+  },
+  {
+    "id": "translation.refuse-required-number-fact",
+    "source": "js/src/translation/fact-column-rules.js",
+    "name": "refuseRequiredNumberFact",
+    "inventoryName": "refuse-required-number-fact"
+  },
+  {
+    "id": "translation.refuse-required-number-fact",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "refuse_required_number_fact",
+    "inventoryName": "refuse-required-number-fact"
+  },
+  {
+    "id": "translation.refuse-required-number-fact",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "refuse_required_number_fact",
+    "inventoryName": "refuse-required-number-fact"
+  },
+  {
+    "id": "translation.refuse-required-number-fact",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "refuse_required_number_fact",
+    "inventoryName": "refuse-required-number-fact"
+  },
+  {
+    "id": "translation.refuse-required-number-fact",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "refuse_required_number_fact",
+    "inventoryName": "refuse-required-number-fact"
+  },
+  {
+    "id": "translation.refuse-required-number-fact",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "refuse_required_number_fact",
+    "inventoryName": "refuse-required-number-fact"
+  },
+  {
+    "id": "translation.refuse-required-number-fact",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "refuse_required_number_fact",
+    "inventoryName": "refuse-required-number-fact"
+  },
+  {
+    "id": "translation.refuse-required-number-fact",
+    "source": "rust/src/translation/record_type_syntax_rules/part_1.rs",
+    "name": "refuse_required_number_fact",
+    "inventoryName": "refuse-required-number-fact"
+  },
+  {
+    "id": "translation.refuse-required-number-fact",
+    "source": "rust/src/translation/nullable_type_syntax_rules/part_1.rs",
+    "name": "refuse_required_number_fact",
+    "inventoryName": "refuse-required-number-fact"
+  },
+  {
+    "id": "translation.refuse-required-number-fact",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "refuse_required_number_fact",
+    "inventoryName": "refuse-required-number-fact"
+  },
+  {
+    "id": "translation.refuse-required-number-fact",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "refuse_required_number_fact",
+    "inventoryName": "refuse-required-number-fact"
+  },
+  {
+    "id": "translation.refuse-required-number-fact",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "refuse_required_number_fact",
+    "inventoryName": "refuse-required-number-fact"
+  },
+  {
+    "id": "translation.refuse-required-text-fact",
+    "source": "js/src/translation/fact-column-rules.js",
+    "name": "refuseRequiredTextFact",
+    "inventoryName": "refuse-required-text-fact"
+  },
+  {
+    "id": "translation.refuse-required-text-fact",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "refuse_required_text_fact",
+    "inventoryName": "refuse-required-text-fact"
+  },
+  {
+    "id": "translation.refuse-required-text-fact",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "refuse_required_text_fact",
+    "inventoryName": "refuse-required-text-fact"
+  },
+  {
+    "id": "translation.refuse-required-text-fact",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "refuse_required_text_fact",
+    "inventoryName": "refuse-required-text-fact"
+  },
+  {
+    "id": "translation.refuse-required-text-fact",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "refuse_required_text_fact",
+    "inventoryName": "refuse-required-text-fact"
+  },
+  {
+    "id": "translation.refuse-required-text-fact",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "refuse_required_text_fact",
+    "inventoryName": "refuse-required-text-fact"
+  },
+  {
+    "id": "translation.refuse-required-text-fact",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "refuse_required_text_fact",
+    "inventoryName": "refuse-required-text-fact"
+  },
+  {
+    "id": "translation.refuse-required-text-fact",
+    "source": "rust/src/translation/record_type_syntax_rules/part_1.rs",
+    "name": "refuse_required_text_fact",
+    "inventoryName": "refuse-required-text-fact"
+  },
+  {
+    "id": "translation.refuse-required-text-fact",
+    "source": "rust/src/translation/nullable_type_syntax_rules/part_1.rs",
+    "name": "refuse_required_text_fact",
+    "inventoryName": "refuse-required-text-fact"
+  },
+  {
+    "id": "translation.refuse-required-text-fact",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "refuse_required_text_fact",
+    "inventoryName": "refuse-required-text-fact"
+  },
+  {
+    "id": "translation.refuse-required-text-fact",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "refuse_required_text_fact",
+    "inventoryName": "refuse-required-text-fact"
+  },
+  {
+    "id": "translation.refuse-required-text-fact",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "refuse_required_text_fact",
+    "inventoryName": "refuse-required-text-fact"
+  },
+  {
+    "id": "translation.refuse-required-boolean-fact",
+    "source": "js/src/translation/fact-column-rules.js",
+    "name": "refuseRequiredBooleanFact",
+    "inventoryName": "refuse-required-boolean-fact"
+  },
+  {
+    "id": "translation.refuse-required-boolean-fact",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "refuse_required_boolean_fact",
+    "inventoryName": "refuse-required-boolean-fact"
+  },
+  {
+    "id": "translation.refuse-required-boolean-fact",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_1.rs",
+    "name": "refuse_required_boolean_fact",
+    "inventoryName": "refuse-required-boolean-fact"
+  },
+  {
+    "id": "translation.refuse-required-boolean-fact",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "refuse_required_boolean_fact",
+    "inventoryName": "refuse-required-boolean-fact"
+  },
+  {
+    "id": "translation.refuse-required-boolean-fact",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "refuse_required_boolean_fact",
+    "inventoryName": "refuse-required-boolean-fact"
+  },
+  {
+    "id": "translation.refuse-required-boolean-fact",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "refuse_required_boolean_fact",
+    "inventoryName": "refuse-required-boolean-fact"
+  },
+  {
+    "id": "translation.refuse-required-boolean-fact",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "refuse_required_boolean_fact",
+    "inventoryName": "refuse-required-boolean-fact"
+  },
+  {
+    "id": "translation.refuse-required-boolean-fact",
+    "source": "rust/src/translation/record_type_syntax_rules/part_1.rs",
+    "name": "refuse_required_boolean_fact",
+    "inventoryName": "refuse-required-boolean-fact"
+  },
+  {
+    "id": "translation.refuse-required-boolean-fact",
+    "source": "rust/src/translation/nullable_type_syntax_rules/part_1.rs",
+    "name": "refuse_required_boolean_fact",
+    "inventoryName": "refuse-required-boolean-fact"
+  },
+  {
+    "id": "translation.refuse-required-boolean-fact",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "refuse_required_boolean_fact",
+    "inventoryName": "refuse-required-boolean-fact"
+  },
+  {
+    "id": "translation.refuse-required-boolean-fact",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "refuse_required_boolean_fact",
+    "inventoryName": "refuse-required-boolean-fact"
+  },
+  {
+    "id": "translation.refuse-required-boolean-fact",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "refuse_required_boolean_fact",
+    "inventoryName": "refuse-required-boolean-fact"
+  },
+  {
+    "id": "repository.check-required-fact-column-values",
+    "source": "js/tests/translation-fact-column-rules.test.js",
+    "name": "required fact columns preserve every present primitive value and its selected position",
+    "inventoryName": "required-fact-columns-preserve-every-present-primitive-value-and-its-selected-position"
+  },
+  {
+    "id": "repository.check-required-fact-column-refusals",
+    "source": "js/tests/translation-fact-column-rules.test.js",
+    "name": "required fact columns refuse actual missing or invalid positions without substituting values",
+    "inventoryName": "required-fact-columns-refuse-actual-missing-or-invalid-positions-without-substituting-values"
+  },
+  {
+    "id": "repository.check-required-fact-column-self-translation",
+    "source": "js/tests/translation-fact-column-rules.test.js",
+    "name": "the complete required-column source self-translates with real optional reads and abort branches",
+    "inventoryName": "the-complete-required-column-source-self-translates-with-real-optional-reads-and-abort-branches"
+  },
+  {
+    "id": "translation.select-optional-array-read",
+    "source": "js/src/translation/array-value-rules.js",
+    "name": "selectOptionalArrayRead",
+    "inventoryName": "select-optional-array-read"
+  },
+  {
+    "id": "translation.select-optional-array-read",
+    "source": "rust/src/translation/array_value_rules.rs",
+    "name": "select_optional_array_read",
+    "inventoryName": "select-optional-array-read"
+  },
+  {
+    "id": "translation.select-optional-array-index-number",
+    "source": "js/src/translation/array-value-rules.js",
+    "name": "selectOptionalArrayIndexNumber",
+    "inventoryName": "select-optional-array-index-number"
+  },
+  {
+    "id": "translation.select-optional-array-index-number",
+    "source": "rust/src/translation/array_value_rules.rs",
+    "name": "select_optional_array_index_number",
+    "inventoryName": "select-optional-array-index-number"
+  },
+  {
+    "id": "translation.read-array-iteration-source-form",
+    "source": "js/src/translation/array-value-rules.js",
+    "name": "readArrayIterableForm",
+    "inventoryName": "read-array-iteration-source-form"
+  },
+  {
+    "id": "translation.read-array-iteration-source-form",
+    "source": "rust/src/translation/array_value_rules.rs",
+    "name": "read_array_iterable_form",
+    "inventoryName": "read-array-iteration-source-form"
+  },
+  {
+    "id": "translation.read-reference-mutation-diagnostic",
+    "source": "js/src/translation/array-value-rules.js",
+    "name": "readReferenceMutationDiagnostic",
+    "inventoryName": "read-reference-mutation-diagnostic"
+  },
+  {
+    "id": "translation.read-reference-mutation-diagnostic",
+    "source": "rust/src/translation/array_value_rules.rs",
+    "name": "read_reference_mutation_diagnostic",
+    "inventoryName": "read-reference-mutation-diagnostic"
+  },
+  {
+    "id": "translation.render-optional-array-read",
+    "source": "js/src/translation/array-value-rules.js",
+    "name": "renderOptionalArrayRead",
+    "inventoryName": "render-optional-array-read"
+  },
+  {
+    "id": "translation.render-optional-array-read",
+    "source": "rust/src/translation/array_value_rules.rs",
+    "name": "render_optional_array_read",
+    "inventoryName": "render-optional-array-read"
+  },
+  {
+    "id": "repository.check-array-read-absence-admission",
+    "source": "js/tests/translation-array-value-rules.test.js",
+    "name": "array absence admission preserves JavaScript defaults and explicit proved iterable reads",
+    "inventoryName": "array-absence-admission-preserves-java-script-defaults-and-explicit-proved-iteration-source-reads"
+  },
+  {
+    "id": "repository.check-array-read-target-rendering",
+    "source": "js/tests/translation-array-value-rules.test.js",
+    "name": "shared array read rendering retains each existing target expression",
+    "inventoryName": "shared-array-read-rendering-retains-each-existing-target-expression"
+  },
+  {
+    "id": "repository.check-array-read-source-translation",
+    "source": "js/tests/translation-array-value-rules.test.js",
+    "name": "complete array decision source self-translates while ordinary absent reads remain observable",
+    "inventoryName": "complete-array-decision-source-self-translates-while-ordinary-absent-reads-remain-observable"
+  },
+  {
+    "id": "repository.check-array-iteration-source-reference-refusals",
+    "source": "js/tests/translation-array-value-rules.test.js",
+    "name": "iterable kind admission preserves mutable collection refusal and shared mutation diagnostics",
+    "inventoryName": "iteration-source-kind-admission-preserves-mutable-collection-refusal-and-shared-mutation-diagnostics"
+  },
+  {
+    "id": "repository.raw-index-optional-field",
+    "source": "rust/src/translation/surface/nodes.rs",
+    "name": "optional",
+    "inventoryName": "optional"
+  },
+  {
+    "id": "repository.raw-index-proven-bounds-field",
+    "source": "rust/src/translation/surface/nodes.rs",
+    "name": "proven_in_bounds",
+    "inventoryName": "proven-in-bounds"
+  },
+  {
+    "id": "repository.check-raw-index-presence-facets",
+    "source": "js/tests/translation-surface-raw-metadata.test.js",
+    "name": "raw index presence facets retain omitted null false and true values",
+    "inventoryName": "raw-index-presence-facets-retain-absent-null-false-and-true-values"
+  },
+  {
+    "id": "translation.plan-optional-annotation-constraints",
+    "source": "js/src/translation/optional-inference-rules.js",
+    "name": "planOptionalAnnotationConstraints",
+    "inventoryName": "plan-optional-annotation-constraints"
+  },
+  {
+    "id": "translation.plan-optional-annotation-constraints",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "plan_optional_annotation_constraints",
+    "inventoryName": "plan-optional-annotation-constraints"
+  },
+  {
+    "id": "translation.plan-inference-term-identity",
+    "source": "js/src/translation/optional-inference-rules.js",
+    "name": "planInferenceTermIdentity",
+    "inventoryName": "plan-inference-term-identity"
+  },
+  {
+    "id": "translation.plan-inference-term-identity",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "plan_inference_term_identity",
+    "inventoryName": "plan-inference-term-identity"
+  },
+  {
+    "id": "repository.read-optional-constraint-fact-field",
+    "source": "js/src/translation/optional-inference-rules.js",
+    "name": "optionalFactField",
+    "inventoryName": "optional-fact-field"
+  },
+  {
+    "id": "repository.read-optional-constraint-fact-field",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "optional_fact_field",
+    "inventoryName": "optional-fact-field"
+  },
+  {
+    "id": "repository.read-optional-constraint-fact-text",
+    "source": "js/src/translation/optional-inference-rules.js",
+    "name": "optionalFactText",
+    "inventoryName": "optional-fact-text"
+  },
+  {
+    "id": "repository.read-optional-constraint-fact-text",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "optional_fact_text",
+    "inventoryName": "optional-fact-text"
+  },
+  {
+    "id": "repository.read-optional-constraint-fact-tag",
+    "source": "js/src/translation/optional-inference-rules.js",
+    "name": "optionalFactTag",
+    "inventoryName": "optional-fact-tag"
+  },
+  {
+    "id": "repository.read-optional-constraint-fact-tag",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "optional_fact_tag",
+    "inventoryName": "optional-fact-tag"
+  },
+  {
+    "id": "repository.read-optional-constraint-fact-element",
+    "source": "js/src/translation/optional-inference-rules.js",
+    "name": "optionalFactElement",
+    "inventoryName": "optional-fact-element"
+  },
+  {
+    "id": "repository.read-optional-constraint-fact-element",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "optional_fact_element",
+    "inventoryName": "optional-fact-element"
+  },
+  {
+    "id": "translation.plan-optional-type-constraints",
+    "source": "js/src/translation/optional-inference-rules.js",
+    "name": "planOptionalTypeConstraints",
+    "inventoryName": "plan-optional-type-constraints"
+  },
+  {
+    "id": "translation.plan-optional-type-constraints",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "plan_optional_type_constraints",
+    "inventoryName": "plan-optional-type-constraints"
+  },
+  {
+    "id": "translation.plan-optional-coalescing-constraints",
+    "source": "js/src/translation/optional-inference-rules.js",
+    "name": "planOptionalCoalescingConstraints",
+    "inventoryName": "plan-optional-coalescing-constraints"
+  },
+  {
+    "id": "translation.plan-optional-coalescing-constraints",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "plan_optional_coalescing_constraints",
+    "inventoryName": "plan-optional-coalescing-constraints"
+  },
+  {
+    "id": "translation.plan-optional-field-inference",
+    "source": "js/src/translation/optional-inference-rules.js",
+    "name": "planOptionalFieldInference",
+    "inventoryName": "plan-optional-field-inference"
+  },
+  {
+    "id": "translation.plan-optional-field-inference",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "plan_optional_field_inference",
+    "inventoryName": "plan-optional-field-inference"
+  },
+  {
+    "id": "translation.plan-optional-join-constraints",
+    "source": "js/src/translation/optional-inference-rules.js",
+    "name": "planOptionalJoinConstraints",
+    "inventoryName": "plan-optional-join-constraints"
+  },
+  {
+    "id": "translation.plan-optional-join-constraints",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "plan_optional_join_constraints",
+    "inventoryName": "plan-optional-join-constraints"
+  },
+  {
+    "id": "translation.plan-optional-additional-absence",
+    "source": "js/src/translation/optional-inference-rules.js",
+    "name": "planOptionalAdditionalAbsence",
+    "inventoryName": "plan-optional-additional-absence"
+  },
+  {
+    "id": "translation.plan-optional-additional-absence",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "plan_optional_additional_absence",
+    "inventoryName": "plan-optional-additional-absence"
+  },
+  {
+    "id": "repository.accept-optional-annotation-types",
+    "source": "js/src/translation/optional-inference.js",
+    "name": "acceptOptionalAnnotationTypes",
+    "inventoryName": "accept-optional-annotation-types"
+  },
+  {
+    "id": "repository.read-inference-term-identity",
+    "source": "js/src/translation/optional-inference.js",
+    "name": "readInferenceTermIdentity",
+    "inventoryName": "read-inference-term-identity"
+  },
+  {
+    "id": "repository.create-optional-constraint-facts",
+    "source": "js/src/translation/optional-inference.js",
+    "name": "optionalFacts",
+    "inventoryName": "optional-facts"
+  },
+  {
+    "id": "repository.read-optional-constraint-root-child",
+    "source": "js/src/translation/optional-inference.js",
+    "name": "optionalChild",
+    "inventoryName": "optional-child"
+  },
+  {
+    "id": "repository.read-optional-constraint-fact-arrays",
+    "source": "js/src/translation/optional-inference.js",
+    "name": "optionalArrays",
+    "inventoryName": "optional-arrays"
+  },
+  {
+    "id": "repository.read-optional-type-constraints",
+    "source": "js/src/translation/optional-inference.js",
+    "name": "readOptionalTypeConstraints",
+    "inventoryName": "read-optional-type-constraints"
+  },
+  {
+    "id": "repository.read-optional-coalescing-constraints",
+    "source": "js/src/translation/optional-inference.js",
+    "name": "readOptionalCoalescingConstraints",
+    "inventoryName": "read-optional-coalescing-constraints"
+  },
+  {
+    "id": "repository.read-optional-field-inference",
+    "source": "js/src/translation/optional-inference.js",
+    "name": "readOptionalFieldInference",
+    "inventoryName": "read-optional-field-inference"
+  },
+  {
+    "id": "repository.read-optional-join-constraints",
+    "source": "js/src/translation/optional-inference.js",
+    "name": "readOptionalJoinConstraints",
+    "inventoryName": "read-optional-join-constraints"
+  },
+  {
+    "id": "repository.read-optional-additional-absence",
+    "source": "js/src/translation/optional-inference.js",
+    "name": "readOptionalAdditionalAbsence",
+    "inventoryName": "read-optional-additional-absence"
+  },
+  {
+    "id": "translation.accept-optional-primitive-kind",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "acceptOptionalPrimitiveKind",
+    "inventoryName": "accept-optional-primitive-kind"
+  },
+  {
+    "id": "translation.accept-optional-primitive-kind",
+    "source": "rust/src/translation/optional_value_rules/part_2.rs",
+    "name": "accept_optional_primitive_kind",
+    "inventoryName": "accept-optional-primitive-kind"
+  },
+  {
+    "id": "translation.read-optional-logical-operation",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "readOptionalLogicalOperation",
+    "inventoryName": "read-optional-logical-operation"
+  },
+  {
+    "id": "translation.read-optional-logical-operation",
+    "source": "rust/src/translation/optional_value_rules/part_2.rs",
+    "name": "read_optional_logical_operation",
+    "inventoryName": "read-optional-logical-operation"
+  },
+  {
+    "id": "translation.read-optional-comparison-operation",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "readOptionalComparisonOperation",
+    "inventoryName": "read-optional-comparison-operation"
+  },
+  {
+    "id": "translation.read-optional-comparison-operation",
+    "source": "rust/src/translation/optional_value_rules/part_2.rs",
+    "name": "read_optional_comparison_operation",
+    "inventoryName": "read-optional-comparison-operation"
+  },
+  {
+    "id": "translation.read-optional-output-absences",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "readOptionalOutputAbsences",
+    "inventoryName": "read-optional-output-absences"
+  },
+  {
+    "id": "translation.read-optional-output-absences",
+    "source": "rust/src/translation/optional_value_rules/part_2.rs",
+    "name": "read_optional_output_absences",
+    "inventoryName": "read-optional-output-absences"
+  },
+  {
+    "id": "translation.require-inference-join-alias",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "requireInferenceJoinAlias",
+    "inventoryName": "require-inference-join-alias"
+  },
+  {
+    "id": "translation.require-inference-join-alias",
+    "source": "rust/src/translation/optional_value_rules/part_2.rs",
+    "name": "require_inference_join_alias",
+    "inventoryName": "require-inference-join-alias"
+  },
+  {
+    "id": "translation.accept-optional-literal-absence",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "acceptOptionalLiteralAbsence",
+    "inventoryName": "accept-optional-literal-absence"
+  },
+  {
+    "id": "translation.accept-optional-literal-absence",
+    "source": "rust/src/translation/optional_value_rules/part_2.rs",
+    "name": "accept_optional_literal_absence",
+    "inventoryName": "accept-optional-literal-absence"
+  },
+  {
+    "id": "translation.require-optional-flattening",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "requireOptionalFlattening",
+    "inventoryName": "require-optional-flattening"
+  },
+  {
+    "id": "translation.require-optional-flattening",
+    "source": "rust/src/translation/optional_value_rules/part_1.rs",
+    "name": "require_optional_flattening",
+    "inventoryName": "require-optional-flattening"
+  },
+  {
+    "id": "translation.require-optional-coalescing",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "requireOptionalCoalescing",
+    "inventoryName": "require-optional-coalescing"
+  },
+  {
+    "id": "translation.require-optional-coalescing",
+    "source": "rust/src/translation/optional_value_rules/part_1.rs",
+    "name": "require_optional_coalescing",
+    "inventoryName": "require-optional-coalescing"
+  },
+  {
+    "id": "translation.read-optional-number-operation",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "readOptionalNumberOperation",
+    "inventoryName": "read-optional-number-operation"
+  },
+  {
+    "id": "translation.read-optional-number-operation",
+    "source": "rust/src/translation/optional_value_rules/part_1.rs",
+    "name": "read_optional_number_operation",
+    "inventoryName": "read-optional-number-operation"
+  },
+  {
+    "id": "translation.read-optional-boolean-operation",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "readOptionalBooleanOperation",
+    "inventoryName": "read-optional-boolean-operation"
+  },
+  {
+    "id": "translation.read-optional-boolean-operation",
+    "source": "rust/src/translation/optional_value_rules/part_1.rs",
+    "name": "read_optional_boolean_operation",
+    "inventoryName": "read-optional-boolean-operation"
+  },
+  {
+    "id": "translation.read-optional-logical-mixing-error",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "readOptionalLogicalMixingError",
+    "inventoryName": "read-optional-logical-mixing-error"
+  },
+  {
+    "id": "translation.read-optional-logical-mixing-error",
+    "source": "rust/src/translation/optional_value_rules/part_1.rs",
+    "name": "read_optional_logical_mixing_error",
+    "inventoryName": "read-optional-logical-mixing-error"
+  },
+  {
+    "id": "translation.read-optional-source-literal",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "readOptionalSourceLiteral",
+    "inventoryName": "read-optional-source-literal"
+  },
+  {
+    "id": "translation.read-optional-source-literal",
+    "source": "rust/src/translation/optional_value_rules/part_1.rs",
+    "name": "read_optional_source_literal",
+    "inventoryName": "read-optional-source-literal"
+  },
+  {
+    "id": "translation.read-optional-large-integer-constraint",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "readOptionalBigIntConstraint",
+    "inventoryName": "read-optional-large-integer-constraint"
+  },
+  {
+    "id": "translation.read-optional-large-integer-constraint",
+    "source": "rust/src/translation/optional_value_rules/part_1.rs",
+    "name": "read_optional_big_int_constraint",
+    "inventoryName": "read-optional-large-integer-constraint"
+  },
+  {
+    "id": "translation.require-optional-result-binding",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "requireOptionalResultBinding",
+    "inventoryName": "require-optional-result-binding"
+  },
+  {
+    "id": "translation.require-optional-result-binding",
+    "source": "rust/src/translation/optional_value_rules/part_1.rs",
+    "name": "require_optional_result_binding",
+    "inventoryName": "require-optional-result-binding"
+  },
+  {
+    "id": "translation.read-optional-call-binding",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "readOptionalCallBinding",
+    "inventoryName": "read-optional-call-binding"
+  },
+  {
+    "id": "translation.read-optional-call-binding",
+    "source": "rust/src/translation/optional_value_rules/part_1.rs",
+    "name": "read_optional_call_binding",
+    "inventoryName": "read-optional-call-binding"
+  },
+  {
+    "id": "translation.read-optional-join-binding",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "readOptionalJoinBinding",
+    "inventoryName": "read-optional-join-binding"
+  },
+  {
+    "id": "translation.read-optional-join-binding",
+    "source": "rust/src/translation/optional_value_rules/part_1.rs",
+    "name": "read_optional_join_binding",
+    "inventoryName": "read-optional-join-binding"
+  },
+  {
+    "id": "translation.read-optional-numeric-term",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "readOptionalNumericTerm",
+    "inventoryName": "read-optional-numeric-term"
+  },
+  {
+    "id": "translation.read-optional-numeric-term",
+    "source": "rust/src/translation/optional_value_rules/part_1.rs",
+    "name": "read_optional_numeric_term",
+    "inventoryName": "read-optional-numeric-term"
+  },
+  {
+    "id": "translation.read-optional-coercion-operation",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "readOptionalCoercionOperation",
+    "inventoryName": "read-optional-coercion-operation"
+  },
+  {
+    "id": "translation.read-optional-coercion-operation",
+    "source": "rust/src/translation/optional_value_rules/part_1.rs",
+    "name": "read_optional_coercion_operation",
+    "inventoryName": "read-optional-coercion-operation"
+  },
+  {
+    "id": "translation.read-optional-field-operation",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "readOptionalFieldOperation",
+    "inventoryName": "read-optional-field-operation"
+  },
+  {
+    "id": "translation.read-optional-field-operation",
+    "source": "rust/src/translation/optional_value_rules/part_1.rs",
+    "name": "read_optional_field_operation",
+    "inventoryName": "read-optional-field-operation"
+  },
+  {
+    "id": "translation.render-optional-absent-value",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "renderOptionalAbsentValue",
+    "inventoryName": "render-optional-absent-value"
+  },
+  {
+    "id": "translation.render-optional-absent-value",
+    "source": "rust/src/translation/optional_value_rules/part_1.rs",
+    "name": "render_optional_absent_value",
+    "inventoryName": "render-optional-absent-value"
+  },
+  {
+    "id": "translation.render-optional-present-value",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "renderOptionalPresentValue",
+    "inventoryName": "render-optional-present-value"
+  },
+  {
+    "id": "translation.render-optional-present-value",
+    "source": "rust/src/translation/optional_value_rules/part_1.rs",
+    "name": "render_optional_present_value",
+    "inventoryName": "render-optional-present-value"
+  },
+  {
+    "id": "translation.render-optional-match",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "renderOptionalMatch",
+    "inventoryName": "render-optional-match"
+  },
+  {
+    "id": "translation.render-optional-match",
+    "source": "rust/src/translation/optional_value_rules/part_1.rs",
+    "name": "render_optional_match",
+    "inventoryName": "render-optional-match"
+  },
+  {
+    "id": "translation.render-optional-coalescing",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "renderOptionalCoalescing",
+    "inventoryName": "render-optional-coalescing"
+  },
+  {
+    "id": "translation.render-optional-coalescing",
+    "source": "rust/src/translation/optional_value_rules/part_1.rs",
+    "name": "render_optional_coalescing",
+    "inventoryName": "render-optional-coalescing"
+  },
+  {
+    "id": "repository.render-optional-flatten-absence",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "renderOptionalFlattenAbsence",
+    "inventoryName": "render-optional-flatten-absence"
+  },
+  {
+    "id": "repository.render-optional-flatten-absence",
+    "source": "rust/src/translation/optional_value_rules/part_1.rs",
+    "name": "render_optional_flatten_absence",
+    "inventoryName": "render-optional-flatten-absence"
+  },
+  {
+    "id": "translation.render-optional-flattening",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "renderOptionalFlattening",
+    "inventoryName": "render-optional-flattening"
+  },
+  {
+    "id": "translation.render-optional-flattening",
+    "source": "rust/src/translation/optional_value_rules/part_1.rs",
+    "name": "render_optional_flattening",
+    "inventoryName": "render-optional-flattening"
+  },
+  {
+    "id": "translation.render-optional-projection",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "renderOptionalProjection",
+    "inventoryName": "render-optional-projection"
+  },
+  {
+    "id": "translation.render-optional-projection",
+    "source": "rust/src/translation/optional_value_rules/part_1.rs",
+    "name": "render_optional_projection",
+    "inventoryName": "render-optional-projection"
+  },
+  {
+    "id": "translation.render-optional-primitive-truth",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "renderOptionalPrimitiveTruth",
+    "inventoryName": "render-optional-primitive-truth"
+  },
+  {
+    "id": "translation.render-optional-primitive-truth",
+    "source": "rust/src/translation/optional_value_rules/part_2.rs",
+    "name": "render_optional_primitive_truth",
+    "inventoryName": "render-optional-primitive-truth"
+  },
+  {
+    "id": "repository.render-optional-equality-present-pattern",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "renderOptionalEqualityPresent",
+    "inventoryName": "render-optional-equality-present"
+  },
+  {
+    "id": "repository.render-optional-equality-present-pattern",
+    "source": "rust/src/translation/optional_value_rules/part_2.rs",
+    "name": "render_optional_equality_present",
+    "inventoryName": "render-optional-equality-present"
+  },
+  {
+    "id": "repository.read-optional-equality-absence",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "readOptionalEqualityAbsence",
+    "inventoryName": "read-optional-equality-absence"
+  },
+  {
+    "id": "repository.read-optional-equality-absence",
+    "source": "rust/src/translation/optional_value_rules/part_2.rs",
+    "name": "read_optional_equality_absence",
+    "inventoryName": "read-optional-equality-absence"
+  },
+  {
+    "id": "repository.render-optional-equality-absent-pattern",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "renderOptionalEqualityAbsent",
+    "inventoryName": "render-optional-equality-absent"
+  },
+  {
+    "id": "repository.render-optional-equality-absent-pattern",
+    "source": "rust/src/translation/optional_value_rules/part_2.rs",
+    "name": "render_optional_equality_absent",
+    "inventoryName": "render-optional-equality-absent"
+  },
+  {
+    "id": "translation.render-optional-strict-equality",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "renderOptionalStrictEquality",
+    "inventoryName": "render-optional-strict-equality"
+  },
+  {
+    "id": "translation.render-optional-strict-equality",
+    "source": "rust/src/translation/optional_value_rules/part_2.rs",
+    "name": "render_optional_strict_equality",
+    "inventoryName": "render-optional-strict-equality"
+  },
+  {
+    "id": "translation.render-optional-unwrap",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "renderOptionalUnwrapping",
+    "inventoryName": "render-optional-unwrap"
+  },
+  {
+    "id": "translation.render-optional-unwrap",
+    "source": "rust/src/translation/optional_value_rules/part_2.rs",
+    "name": "render_optional_unwrapping",
+    "inventoryName": "render-optional-unwrap"
+  },
+  {
+    "id": "translation.render-optional-java-script-operation",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "renderOptionalJavaScriptOperation",
+    "inventoryName": "render-optional-java-script-operation"
+  },
+  {
+    "id": "translation.render-optional-java-script-operation",
+    "source": "rust/src/translation/optional_value_rules/part_2.rs",
+    "name": "render_optional_java_script_operation",
+    "inventoryName": "render-optional-java-script-operation"
+  },
+  {
+    "id": "translation.render-optional-numeric-present",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "renderOptionalNumericPresent",
+    "inventoryName": "render-optional-numeric-present"
+  },
+  {
+    "id": "translation.render-optional-numeric-present",
+    "source": "rust/src/translation/optional_value_rules/part_2.rs",
+    "name": "render_optional_numeric_present",
+    "inventoryName": "render-optional-numeric-present"
+  },
+  {
+    "id": "translation.render-optional-type-query-present",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "renderOptionalTypeQueryPresent",
+    "inventoryName": "render-optional-type-query-present"
+  },
+  {
+    "id": "translation.render-optional-type-query-present",
+    "source": "rust/src/translation/optional_value_rules/part_2.rs",
+    "name": "render_optional_type_query_present",
+    "inventoryName": "render-optional-type-query-present"
+  },
+  {
+    "id": "translation.require-optional-numeric-predicate",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "requireOptionalNumericPredicate",
+    "inventoryName": "require-optional-numeric-predicate"
+  },
+  {
+    "id": "translation.require-optional-numeric-predicate",
+    "source": "rust/src/translation/optional_value_rules/part_2.rs",
+    "name": "require_optional_numeric_predicate",
+    "inventoryName": "require-optional-numeric-predicate"
+  },
+  {
+    "id": "translation.render-optional-console-text",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "renderOptionalConsoleText",
+    "inventoryName": "render-optional-console-text"
+  },
+  {
+    "id": "translation.render-optional-console-text",
+    "source": "rust/src/translation/optional_value_rules/part_2.rs",
+    "name": "render_optional_console_text",
+    "inventoryName": "render-optional-console-text"
+  },
+  {
+    "id": "translation.read-optional-java-script-text-prelude",
+    "source": "js/src/translation/optional-value-rules.js",
+    "name": "readOptionalJavaScriptTextPrelude",
+    "inventoryName": "read-optional-java-script-text-prelude"
+  },
+  {
+    "id": "translation.read-optional-java-script-text-prelude",
+    "source": "rust/src/translation/optional_value_rules/part_2.rs",
+    "name": "read_optional_java_script_text_prelude",
+    "inventoryName": "read-optional-java-script-text-prelude"
+  },
+  {
+    "id": "repository.read-complete-optional-rule-sources",
+    "source": "js/scripts/generate-optional-rules.mjs",
+    "name": "readOptionalRuleSources",
+    "inventoryName": "read-optional-rule-sources"
+  },
+  {
+    "id": "repository.generate-complete-optional-rules",
+    "source": "js/scripts/generate-optional-rules.mjs",
+    "name": "generateOptionalRules",
+    "inventoryName": "generate-optional-rules"
+  },
+  {
+    "id": "repository.observe-optional-inference-control",
+    "source": "js/tests/translation-optional-inference.test.js",
+    "name": "observations",
+    "inventoryName": "observations"
+  },
+  {
+    "id": "repository.check-shared-optional-constraint-identities",
+    "source": "js/tests/translation-optional-inference.test.js",
+    "name": "optional and callable constraints share actual child identities and preserve pair order",
+    "inventoryName": "optional-and-callable-constraints-share-actual-child-identities-and-preserve-pair-order"
+  },
+  {
+    "id": "repository.check-optional-coalescing-unresolved-identity",
+    "source": "js/tests/translation-optional-inference.test.js",
+    "name": "coalescing defers unresolved terms and forces the original variable without flattening its fallback",
+    "inventoryName": "coalescing-defers-unresolved-terms-and-forces-the-original-variable-without-flattening-its-fallback"
+  },
+  {
+    "id": "repository.check-optional-field-fresh-type-boundary",
+    "source": "js/tests/translation-optional-inference.test.js",
+    "name": "optional fields preserve the original receiver and allocate a fresh element only for an unresolved receiver",
+    "inventoryName": "optional-fields-preserve-the-original-receiver-and-allocate-a-fresh-element-only-for-an-unresolved-receiver"
+  },
+  {
+    "id": "repository.check-optional-join-fixed-points",
+    "source": "js/tests/translation-optional-inference.test.js",
+    "name": "absent branch joins reuse exact fixed point identities and keep nested options until normalization",
+    "inventoryName": "absent-branch-joins-reuse-exact-fixed-point-identities-and-keep-nested-options-up-to-normalization"
+  },
+  {
+    "id": "repository.check-actual-null-capable-type-flow",
+    "source": "js/tests/translation-optional-inference.test.js",
+    "name": "actual nullable inference preserves falsy values field shapes and recursive return joins",
+    "inventoryName": "actual-null-capable-inference-preserves-false-valued-values-field-shapes-and-recursive-return-joins"
+  },
+  {
+    "id": "repository.check-optional-inference-refusals",
+    "source": "js/tests/translation-optional-inference.test.js",
+    "name": "optional inference keeps incompatible values and recursive types as checked failures",
+    "inventoryName": "optional-inference-keeps-incompatible-values-and-recursive-types-as-checked-failures"
+  },
+  {
+    "id": "repository.check-nested-absence-annotation-boundaries",
+    "source": "js/tests/translation-optional-inference.test.js",
+    "name": "nested absence widening retains declared annotations and inspects function results without changing parameters",
+    "inventoryName": "nested-absence-widening-retains-declared-annotations-and-inspects-function-results-without-changing-parameters"
+  },
+  {
+    "id": "repository.check-complete-optional-planner-targets",
+    "source": "js/tests/translation-optional-inference.test.js",
+    "name": "the complete optional planning module is checked before all four target emissions",
+    "inventoryName": "the-complete-optional-planning-module-is-checked-before-all-four-target-emissions"
+  },
+  {
+    "id": "repository.check-shared-logical-inference-identity",
+    "source": "js/tests/translation-optional-inference.test.js",
+    "name": "shared inference identity matches complete logical type keys without collapsing unresolved variables",
+    "inventoryName": "shared-inference-identity-matches-complete-logical-type-keys-without-collapsing-unresolved-variables"
+  },
+  {
+    "id": "repository.check-optional-coercion-effects",
+    "source": "js/tests/translation-optional-values.test.js",
+    "name": "optional coercion plans retain distinct absence checks present wrapping and discarded unit effects",
+    "inventoryName": "optional-coercion-plans-retain-distinct-absence-checks-present-wrapping-and-discarded-unit-effects"
+  },
+  {
+    "id": "repository.check-optional-target-absence-and-laziness",
+    "source": "js/tests/translation-optional-values.test.js",
+    "name": "optional rendering preserves both absence tags lazy fallbacks and nested flattening in every target",
+    "inventoryName": "optional-rendering-preserves-both-absence-tags-lazy-fallbacks-and-nested-flattening-in-every-target"
+  },
+  {
+    "id": "repository.check-complete-optional-value-kernel",
+    "source": "js/tests/translation-optional-values.test.js",
+    "name": "the actual complete optional value kernel checks emits to four targets and executes its generated JavaScript",
+    "inventoryName": "the-actual-complete-optional-value-kernel-checks-emits-to-four-targets-and-executes-its-generated-java-script"
+  },
+  {
+    "id": "repository.check-optional-binding-refusal-and-recursion",
+    "source": "js/tests/translation-optional-values.test.js",
+    "name": "shared optional inference bindings preserve refusal identity and recursive alias decisions",
+    "inventoryName": "shared-optional-inference-bindings-preserve-refusal-identity-and-recursive-alias-decisions"
+  },
+  {
+    "id": "repository.check-optional-fallback-output-and-abort-order",
+    "source": "js/tests/translation-optional-values.test.js",
+    "name": "nullable coalescing threads fallback output and aborts only after an absent left value",
+    "inventoryName": "null-capable-coalescing-threads-fallback-output-and-aborts-only-after-an-absent-left-value"
+  },
+  {
+    "id": "repository.check-concrete-absence-tags-and-both-type-policy",
+    "source": "js/tests/translation-optional-values.test.js",
+    "name": "concrete absent tags reject ambiguous both through checking and source-free Links while the both type policy remains valid",
+    "inventoryName": "concrete-absent-tags-reject-ambiguous-both-through-checking-and-source-free-links-while-the-both-type-policy-remains-valid"
+  },
+  {
+    "id": "repository.observe-output-threaded-optional-control",
+    "source": "js/tests/translation-optional-values.test.js",
+    "name": "observeThreadedOptionalProgram",
+    "inventoryName": "observe-threaded-optional-program"
+  },
+  {
+    "id": "repository.observe-output-threaded-optional-control",
+    "source": "js/tests/helpers/translation-output-observer.js",
+    "name": "observeThreadedOptionalProgram",
+    "inventoryName": "observe-threaded-optional-program"
+  },
+  {
+    "id": "translation.read-record-value-order",
+    "source": "js/src/translation/record-value-rules.js",
+    "name": "readRecordValueOrder",
+    "inventoryName": "read-record-value-order"
+  },
+  {
+    "id": "translation.read-record-value-order",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_value_order",
+    "inventoryName": "read-record-value-order"
+  },
+  {
+    "id": "translation.accept-record-field-name",
+    "source": "js/src/translation/record-value-rules.js",
+    "name": "acceptRecordFieldName",
+    "inventoryName": "accept-record-field-name"
+  },
+  {
+    "id": "translation.accept-record-field-name",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "accept_record_field_name",
+    "inventoryName": "accept-record-field-name"
+  },
+  {
+    "id": "translation.compare-record-field-names",
+    "source": "js/src/translation/record-value-rules.js",
+    "name": "compareRecordFieldNames",
+    "inventoryName": "compare-record-field-names"
+  },
+  {
+    "id": "translation.compare-record-field-names",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "compare_record_field_names",
+    "inventoryName": "compare-record-field-names"
+  },
+  {
+    "id": "translation.read-record-field-position",
+    "source": "js/src/translation/record-value-rules.js",
+    "name": "readRecordFieldPosition",
+    "inventoryName": "read-record-field-position"
+  },
+  {
+    "id": "translation.read-record-field-position",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_field_position",
+    "inventoryName": "read-record-field-position"
+  },
+  {
+    "id": "repository.read-record-sorted-field-positions",
+    "source": "js/src/translation/record-value-rules.js",
+    "name": "readRecordSortedFieldPositions",
+    "inventoryName": "read-record-sorted-field-positions"
+  },
+  {
+    "id": "repository.read-record-sorted-field-positions",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_sorted_field_positions",
+    "inventoryName": "read-record-sorted-field-positions"
+  },
+  {
+    "id": "translation.read-record-field-order",
+    "source": "js/src/translation/record-value-rules.js",
+    "name": "readRecordFieldOrder",
+    "inventoryName": "read-record-field-order"
+  },
+  {
+    "id": "translation.read-record-field-order",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_field_order",
+    "inventoryName": "read-record-field-order"
+  },
+  {
+    "id": "translation.read-record-field-insertion-order",
+    "source": "js/src/translation/record-value-rules.js",
+    "name": "readRecordFieldInsertionOrder",
+    "inventoryName": "read-record-field-insertion-order"
+  },
+  {
+    "id": "translation.read-record-field-insertion-order",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_field_insertion_order",
+    "inventoryName": "read-record-field-insertion-order"
+  },
+  {
+    "id": "translation.read-record-spread-role",
+    "source": "js/src/translation/record-value-rules.js",
+    "name": "readRecordSpreadRole",
+    "inventoryName": "read-record-spread-role"
+  },
+  {
+    "id": "translation.read-record-spread-role",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_spread_role",
+    "inventoryName": "read-record-spread-role"
+  },
+  {
+    "id": "translation.read-record-type-constraint-step",
+    "source": "js/src/translation/record-value-rules.js",
+    "name": "readRecordTypeConstraintStep",
+    "inventoryName": "read-record-type-constraint-step"
+  },
+  {
+    "id": "translation.read-record-type-constraint-step",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_type_constraint_step",
+    "inventoryName": "read-record-type-constraint-step"
+  },
+  {
+    "id": "translation.read-record-type-constraint-error",
+    "source": "js/src/translation/record-value-rules.js",
+    "name": "readRecordTypeConstraintError",
+    "inventoryName": "read-record-type-constraint-error"
+  },
+  {
+    "id": "translation.read-record-type-constraint-error",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_type_constraint_error",
+    "inventoryName": "read-record-type-constraint-error"
+  },
+  {
+    "id": "repository.read-authenticated-original-record-method",
+    "source": "js/scripts/generate-record-value-rules.mjs",
+    "name": "originalMethod",
+    "inventoryName": "original-method"
+  },
+  {
+    "id": "repository.read-record-value-rules-policy",
+    "source": "js/scripts/generate-record-value-rules.mjs",
+    "name": "recordValueRulesPolicy",
+    "inventoryName": "record-value-rules-policy"
+  },
+  {
+    "id": "repository.generate-record-value-rules",
+    "source": "js/scripts/generate-record-value-rules.mjs",
+    "name": "generateRecordValueRules",
+    "inventoryName": "generate-record-value-rules"
+  },
+  {
+    "id": "repository.read-record-control-name-units",
+    "source": "js/tests/translation-record-value-planning.test.js",
+    "name": "units",
+    "inventoryName": "units"
+  },
+  {
+    "id": "repository.observe-record-control-source",
+    "source": "js/tests/translation-record-value-planning.test.js",
+    "name": "observe",
+    "inventoryName": "observe"
+  },
+  {
+    "id": "repository.check-record-field-order-and-bindings",
+    "source": "js/tests/translation-record-value-planning.test.js",
+    "name": "record plans retain last occurrences in actual UTF16 name order and visit every source binding",
+    "inventoryName": "record-plans-retain-last-occurrences-in-actual-unicode-transformation-format-sixteen-bit-name-order-and-visit-every-source-binding"
+  },
+  {
+    "id": "repository.check-record-planner-source-authentication",
+    "source": "js/tests/translation-record-value-planning.test.js",
+    "name": "both packages retain the complete shared planner and authenticated original checker method",
+    "inventoryName": "both-packages-retain-the-complete-shared-planner-and-authenticated-original-checker-method"
+  },
+  {
+    "id": "repository.check-record-checker-binding-equivalence",
+    "source": "js/tests/translation-record-value-planning.test.js",
+    "name": "the original complete record method and planned method retain every checked value binding and expected type",
+    "inventoryName": "the-original-complete-record-method-and-planned-method-retain-every-checked-value-binding-and-expected-type"
+  },
+  {
+    "id": "repository.check-record-source-free-edit-observations",
+    "source": "js/tests/translation-record-value-planning.test.js",
+    "name": "complete real record programs keep overwritten and spread evaluation through text binary and source-free edits",
+    "inventoryName": "complete-real-record-programs-keep-replaced-and-spread-evaluation-through-text-binary-and-source-free-edits"
+  },
+  {
+    "id": "repository.read-assertion-version-order",
+    "source": "js/scripts/assertion-version-ranges.mjs",
+    "name": "assertionVersionOrder",
+    "inventoryName": "assertion-version-order"
+  },
+  {
+    "id": "repository.render-assertion-version-range",
+    "source": "js/scripts/assertion-version-ranges.mjs",
+    "name": "assertionVersionRange",
+    "inventoryName": "assertion-version-range"
+  },
+  {
+    "id": "repository.select-version-dependent-assertion",
+    "source": "js/scripts/assertion-version-ranges.mjs",
+    "name": "selectVersionedAssertion",
+    "inventoryName": "select-version-dependent-assertion"
+  },
+  {
+    "id": "repository.read-assertion-version-policy",
+    "source": "js/scripts/generate-assertion-version-policy.mjs",
+    "name": "assertionVersionPolicy",
+    "inventoryName": "assertion-version-policy"
+  },
+  {
+    "id": "repository.select-unicode-identifier-assertion",
+    "source": "js/scripts/unicode-identifier-assertions.mjs",
+    "name": "selectUnicodeIdentifierAssertion",
+    "inventoryName": "select-unicode-identifier-assertion"
+  },
+  {
+    "id": "repository.create-bounded-assertion-control",
+    "source": "js/tests/assertion-version-ranges.test.js",
+    "name": "boundedExpectation",
+    "inventoryName": "bounded-expectation"
+  },
+  {
+    "id": "repository.create-release-assertion-control",
+    "source": "js/tests/assertion-version-ranges.test.js",
+    "name": "releaseAssertion",
+    "inventoryName": "release-assertion"
+  },
+  {
+    "id": "repository.check-assertion-version-endpoints",
+    "source": "js/tests/assertion-version-ranges.test.js",
+    "name": "version assertions preserve explicit inclusive and exclusive endpoints",
+    "inventoryName": "version-assertions-preserve-explicit-inclusive-and-exclusive-endpoints"
+  },
+  {
+    "id": "repository.check-adjacent-release-expectations",
+    "source": "js/tests/assertion-version-ranges.test.js",
+    "name": "active dependency releases select adjacent expectations without priority or gaps",
+    "inventoryName": "active-dependency-releases-select-adjacent-expectations-without-priority-or-gaps"
+  },
+  {
+    "id": "repository.check-release-coordinate-ordering",
+    "source": "js/tests/assertion-version-ranges.test.js",
+    "name": "numeric coordinate comparison retains existing release ordering without decimal coercion",
+    "inventoryName": "numeric-coordinate-comparison-retains-existing-release-ordering-without-decimal-coercion"
+  },
+  {
+    "id": "repository.check-inactive-conflicting-assertion-ranges",
+    "source": "js/tests/assertion-version-ranges.test.js",
+    "name": "conflicting and duplicate overlapping ranges fail even when currently inactive",
+    "inventoryName": "conflicting-and-duplicate-overlapping-ranges-fail-even-if-currently-inactive"
+  },
+  {
+    "id": "repository.check-missing-version-coverage-refusals",
+    "source": "js/tests/assertion-version-ranges.test.js",
+    "name": "missing versions and malformed policies cannot become skipped or passing assertions",
+    "inventoryName": "missing-versions-and-malformed-policies-can-not-become-skip-or-passing-assertions"
+  },
+  {
+    "id": "repository.check-declared-language-edition-order",
+    "source": "js/tests/assertion-version-ranges.test.js",
+    "name": "language editions use a declared order and the active Rust manifest edition",
+    "inventoryName": "language-editions-use-a-declared-order-and-the-active-rust-manifest-edition"
+  },
+  {
+    "id": "repository.check-fixed-unicode-assertion-range",
+    "source": "js/tests/assertion-version-ranges.test.js",
+    "name": "the actual pinned Unicode table selects its explicitly bounded unchanged expectation",
+    "inventoryName": "the-actual-fixed-unicode-table-selects-its-explicitly-bounded-unchanged-expectation"
+  },
+  {
+    "id": "repository.check-active-node-unicode-coverage",
+    "source": "js/tests/assertion-version-ranges.test.js",
+    "name": "the active Node Unicode version either selects the real expectation or reports unsupported coverage",
+    "inventoryName": "the-active-node-unicode-version-either-selects-the-real-expectation-or-reports-unsupported-coverage"
+  },
+  {
+    "id": "translation.read-callable-statement-role",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "readCallableStatementRole",
+    "inventoryName": "read-callable-statement-role"
+  },
+  {
+    "id": "translation.read-callable-statement-role",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "read_callable_statement_role",
+    "inventoryName": "read-callable-statement-role"
+  },
+  {
+    "id": "translation.read-callable-free-references",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "readCallableFreeReferences",
+    "inventoryName": "read-callable-free-references"
+  },
+  {
+    "id": "translation.read-callable-free-references",
+    "source": "rust/src/translation/callable_source_rules/part_2.rs",
+    "name": "read_callable_free_references",
+    "inventoryName": "read-callable-free-references"
+  },
+  {
+    "id": "translation.read-callable-statement-name-events",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "readCallableStatementUses",
+    "inventoryName": "read-callable-statement-uses"
+  },
+  {
+    "id": "translation.read-callable-statement-name-events",
+    "source": "rust/src/translation/callable_source_rules/part_2.rs",
+    "name": "read_callable_statement_uses",
+    "inventoryName": "read-callable-statement-uses"
+  },
+  {
+    "id": "translation.read-callable-capture-conflicts",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "readCallableCaptureConflicts",
+    "inventoryName": "read-callable-capture-conflicts"
+  },
+  {
+    "id": "translation.read-callable-capture-conflicts",
+    "source": "rust/src/translation/callable_source_rules/part_2.rs",
+    "name": "read_callable_capture_conflicts",
+    "inventoryName": "read-callable-capture-conflicts"
+  },
+  {
+    "id": "translation.accept-callable-function-reference",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "acceptCallableFunctionReference",
+    "inventoryName": "accept-callable-function-reference"
+  },
+  {
+    "id": "translation.accept-callable-function-reference",
+    "source": "rust/src/translation/callable_source_rules/part_2.rs",
+    "name": "accept_callable_function_reference",
+    "inventoryName": "accept-callable-function-reference"
+  },
+  {
+    "id": "translation.require-callable-computed-application",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "requireCallableComputedApplication",
+    "inventoryName": "require-callable-computed-application"
+  },
+  {
+    "id": "translation.require-callable-computed-application",
+    "source": "rust/src/translation/callable_source_rules/part_2.rs",
+    "name": "require_callable_computed_application",
+    "inventoryName": "require-callable-computed-application"
+  },
+  {
+    "id": "translation.read-callable-application-error",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "readCallableApplicationError",
+    "inventoryName": "read-callable-application-error"
+  },
+  {
+    "id": "translation.read-callable-application-error",
+    "source": "rust/src/translation/callable_source_rules/part_2.rs",
+    "name": "read_callable_application_error",
+    "inventoryName": "read-callable-application-error"
+  },
+  {
+    "id": "translation.plan-callable-parameter-types",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "planCallableParameterTypes",
+    "inventoryName": "plan-callable-parameter-types"
+  },
+  {
+    "id": "translation.plan-callable-parameter-types",
+    "source": "rust/src/translation/callable_source_rules/part_2.rs",
+    "name": "plan_callable_parameter_types",
+    "inventoryName": "plan-callable-parameter-types"
+  },
+  {
+    "id": "translation.plan-callable-function-type",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "planCallableFunctionType",
+    "inventoryName": "plan-callable-function-type"
+  },
+  {
+    "id": "translation.plan-callable-function-type",
+    "source": "rust/src/translation/callable_source_rules/part_2.rs",
+    "name": "plan_callable_function_type",
+    "inventoryName": "plan-callable-function-type"
+  },
+  {
+    "id": "translation.plan-callable-type-constraints",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "planCallableTypeConstraints",
+    "inventoryName": "plan-callable-type-constraints"
+  },
+  {
+    "id": "translation.plan-callable-type-constraints",
+    "source": "rust/src/translation/callable_source_rules/part_2.rs",
+    "name": "plan_callable_type_constraints",
+    "inventoryName": "plan-callable-type-constraints"
+  },
+  {
+    "id": "translation.plan-callable-application-constraints",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "planCallableApplicationConstraints",
+    "inventoryName": "plan-callable-application-constraints"
+  },
+  {
+    "id": "translation.plan-callable-application-constraints",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "plan_callable_application_constraints",
+    "inventoryName": "plan-callable-application-constraints"
+  },
+  {
+    "id": "translation.require-callable-structural-inference",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "requireCallableStructuralInference",
+    "inventoryName": "require-callable-structural-inference"
+  },
+  {
+    "id": "translation.require-callable-structural-inference",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "require_callable_structural_inference",
+    "inventoryName": "require-callable-structural-inference"
+  },
+  {
+    "id": "translation.require-callable-named-inference",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "requireCallableNamedInference",
+    "inventoryName": "require-callable-named-inference"
+  },
+  {
+    "id": "translation.require-callable-named-inference",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "require_callable_named_inference",
+    "inventoryName": "require-callable-named-inference"
+  },
+  {
+    "id": "translation.accept-callable-application-inference-result",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "acceptCallableApplicationInferenceResult",
+    "inventoryName": "accept-callable-application-inference-result"
+  },
+  {
+    "id": "translation.accept-callable-application-inference-result",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "accept_callable_application_inference_result",
+    "inventoryName": "accept-callable-application-inference-result"
+  },
+  {
+    "id": "translation.plan-callable-parameter-ownership",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "planCallableParameterOwnership",
+    "inventoryName": "plan-callable-parameter-ownership"
+  },
+  {
+    "id": "translation.plan-callable-parameter-ownership",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "plan_callable_parameter_ownership",
+    "inventoryName": "plan-callable-parameter-ownership"
+  },
+  {
+    "id": "translation.read-callable-function-children",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "readCallableFunctionChildren",
+    "inventoryName": "read-callable-function-children"
+  },
+  {
+    "id": "translation.read-callable-function-children",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "read_callable_function_children",
+    "inventoryName": "read-callable-function-children"
+  },
+  {
+    "id": "translation.plan-callable-lambda-inference",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "planCallableLambdaInference",
+    "inventoryName": "plan-callable-lambda-inference"
+  },
+  {
+    "id": "translation.plan-callable-lambda-inference",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "plan_callable_lambda_inference",
+    "inventoryName": "plan-callable-lambda-inference"
+  },
+  {
+    "id": "translation.read-callable-closure-prefix-error",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "readCallableClosurePrefixError",
+    "inventoryName": "read-callable-closure-prefix-error"
+  },
+  {
+    "id": "translation.read-callable-closure-prefix-error",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "read_callable_closure_prefix_error",
+    "inventoryName": "read-callable-closure-prefix-error"
+  },
+  {
+    "id": "translation.read-callable-closure-parameter-error",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "readCallableClosureParameterError",
+    "inventoryName": "read-callable-closure-parameter-error"
+  },
+  {
+    "id": "translation.read-callable-closure-parameter-error",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "read_callable_closure_parameter_error",
+    "inventoryName": "read-callable-closure-parameter-error"
+  },
+  {
+    "id": "translation.plan-callable-statement-captures",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "planCallableStatementCaptures",
+    "inventoryName": "plan-callable-statement-captures"
+  },
+  {
+    "id": "translation.plan-callable-statement-captures",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "plan_callable_statement_captures",
+    "inventoryName": "plan-callable-statement-captures"
+  },
+  {
+    "id": "translation.plan-callable-closure-scope",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "planCallableClosureScope",
+    "inventoryName": "plan-callable-closure-scope"
+  },
+  {
+    "id": "translation.plan-callable-closure-scope",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "plan_callable_closure_scope",
+    "inventoryName": "plan-callable-closure-scope"
+  },
+  {
+    "id": "translation.plan-callable-surface-parameters",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "planCallableSurfaceParameters",
+    "inventoryName": "plan-callable-surface-parameters"
+  },
+  {
+    "id": "translation.plan-callable-surface-parameters",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "plan_callable_surface_parameters",
+    "inventoryName": "plan-callable-surface-parameters"
+  },
+  {
+    "id": "translation.require-callable-assigned-capture-field",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "requireCallableAssignedCaptureField",
+    "inventoryName": "require-callable-assigned-capture-field"
+  },
+  {
+    "id": "translation.require-callable-assigned-capture-field",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "require_callable_assigned_capture_field",
+    "inventoryName": "require-callable-assigned-capture-field"
+  },
+  {
+    "id": "translation.read-callable-surface-constructor",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "readCallableSurfaceConstructor",
+    "inventoryName": "read-callable-surface-constructor"
+  },
+  {
+    "id": "translation.read-callable-surface-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "read_callable_surface_constructor",
+    "inventoryName": "read-callable-surface-constructor"
+  },
+  {
+    "id": "translation.render-callable-function-reference",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "renderCallableFunctionReference",
+    "inventoryName": "render-callable-function-reference"
+  },
+  {
+    "id": "translation.render-callable-function-reference",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "render_callable_function_reference",
+    "inventoryName": "render-callable-function-reference"
+  },
+  {
+    "id": "translation.render-callable-application",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "renderCallableApplication",
+    "inventoryName": "render-callable-application"
+  },
+  {
+    "id": "translation.render-callable-application",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "render_callable_application",
+    "inventoryName": "render-callable-application"
+  },
+  {
+    "id": "translation.render-callable-lambda",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "renderCallableLambda",
+    "inventoryName": "render-callable-lambda"
+  },
+  {
+    "id": "translation.render-callable-lambda",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "render_callable_lambda",
+    "inventoryName": "render-callable-lambda"
+  },
+  {
+    "id": "translation.render-callable-function-type",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "renderCallableFunctionType",
+    "inventoryName": "render-callable-function-type"
+  },
+  {
+    "id": "translation.render-callable-function-type",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "render_callable_function_type",
+    "inventoryName": "render-callable-function-type"
+  },
+  {
+    "id": "translation.plan-callable-mutable-cells",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "planCallableMutableCells",
+    "inventoryName": "plan-callable-mutable-cells"
+  },
+  {
+    "id": "translation.plan-callable-mutable-cells",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "plan_callable_mutable_cells",
+    "inventoryName": "plan-callable-mutable-cells"
+  },
+  {
+    "id": "translation.read-callable-cell-lowering",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "readCallableCellLowering",
+    "inventoryName": "read-callable-cell-lowering"
+  },
+  {
+    "id": "translation.read-callable-cell-lowering",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "read_callable_cell_lowering",
+    "inventoryName": "read-callable-cell-lowering"
+  },
+  {
+    "id": "translation.render-callable-cell-parameter-name",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "renderCallableCellParameterName",
+    "inventoryName": "render-callable-cell-parameter-name"
+  },
+  {
+    "id": "translation.render-callable-cell-parameter-name",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "render_callable_cell_parameter_name",
+    "inventoryName": "render-callable-cell-parameter-name"
+  },
+  {
+    "id": "translation.read-callable-cell-error",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "readCallableCellError",
+    "inventoryName": "read-callable-cell-error"
+  },
+  {
+    "id": "translation.read-callable-cell-error",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "read_callable_cell_error",
+    "inventoryName": "read-callable-cell-error"
+  },
+  {
+    "id": "translation.plan-callable-cell-element",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "planCallableCellElement",
+    "inventoryName": "plan-callable-cell-element"
+  },
+  {
+    "id": "translation.plan-callable-cell-element",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "plan_callable_cell_element",
+    "inventoryName": "plan-callable-cell-element"
+  },
+  {
+    "id": "translation.plan-callable-cell-read-inference",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "planCallableCellReadInference",
+    "inventoryName": "plan-callable-cell-read-inference"
+  },
+  {
+    "id": "translation.plan-callable-cell-read-inference",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "plan_callable_cell_read_inference",
+    "inventoryName": "plan-callable-cell-read-inference"
+  },
+  {
+    "id": "translation.plan-callable-cell-option-binding",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "planCallableCellOptionBinding",
+    "inventoryName": "plan-callable-cell-option-binding"
+  },
+  {
+    "id": "translation.plan-callable-cell-option-binding",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "plan_callable_cell_option_binding",
+    "inventoryName": "plan-callable-cell-option-binding"
+  },
+  {
+    "id": "translation.render-callable-cell-operation",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "renderCallableCellOperation",
+    "inventoryName": "render-callable-cell-operation"
+  },
+  {
+    "id": "translation.render-callable-cell-operation",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "render_callable_cell_operation",
+    "inventoryName": "render-callable-cell-operation"
+  },
+  {
+    "id": "translation.read-callable-reference-obligation",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "readCallableReferenceObligation",
+    "inventoryName": "read-callable-reference-obligation"
+  },
+  {
+    "id": "translation.read-callable-reference-obligation",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "read_callable_reference_obligation",
+    "inventoryName": "read-callable-reference-obligation"
+  },
+  {
+    "id": "translation.read-callable-reference-construct",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "readCallableReferenceConstruct",
+    "inventoryName": "read-callable-reference-construct"
+  },
+  {
+    "id": "translation.read-callable-reference-construct",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "read_callable_reference_construct",
+    "inventoryName": "read-callable-reference-construct"
+  },
+  {
+    "id": "repository.read-callable-fact-field",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "callableField",
+    "inventoryName": "callable-field"
+  },
+  {
+    "id": "repository.read-callable-fact-field",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "callable_field",
+    "inventoryName": "callable-field"
+  },
+  {
+    "id": "repository.read-callable-fact-text",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "callableText",
+    "inventoryName": "callable-text"
+  },
+  {
+    "id": "repository.read-callable-fact-text",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "callable_text",
+    "inventoryName": "callable-text"
+  },
+  {
+    "id": "repository.read-callable-fact-truth",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "callableTruthy",
+    "inventoryName": "callable-truth"
+  },
+  {
+    "id": "repository.read-callable-fact-truth",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "callable_truthy",
+    "inventoryName": "callable-truth"
+  },
+  {
+    "id": "repository.recognize-bound-callable-name",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "callableBound",
+    "inventoryName": "callable-bound"
+  },
+  {
+    "id": "repository.recognize-bound-callable-name",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "callable_bound",
+    "inventoryName": "callable-bound"
+  },
+  {
+    "id": "repository.read-callable-fact-element",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "callableElement",
+    "inventoryName": "callable-element"
+  },
+  {
+    "id": "repository.read-callable-fact-element",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "callable_element",
+    "inventoryName": "callable-element"
+  },
+  {
+    "id": "repository.read-callable-fact-tag",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "callableTag",
+    "inventoryName": "callable-tag"
+  },
+  {
+    "id": "repository.read-callable-fact-tag",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "callable_tag",
+    "inventoryName": "callable-tag"
+  },
+  {
+    "id": "repository.read-callable-parameter-names",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "callableParameterNames",
+    "inventoryName": "callable-parameter-names"
+  },
+  {
+    "id": "repository.read-callable-parameter-names",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "callable_parameter_names",
+    "inventoryName": "callable-parameter-names"
+  },
+  {
+    "id": "repository.create-callable-read-events",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "callableReadEvents",
+    "inventoryName": "callable-read-events"
+  },
+  {
+    "id": "repository.create-callable-read-events",
+    "source": "rust/src/translation/callable_source_rules/part_2.rs",
+    "name": "callable_read_events",
+    "inventoryName": "callable-read-events"
+  },
+  {
+    "id": "repository.filter-nested-callable-events",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "callableNestedEvents",
+    "inventoryName": "callable-nested-events"
+  },
+  {
+    "id": "repository.filter-nested-callable-events",
+    "source": "rust/src/translation/callable_source_rules/part_2.rs",
+    "name": "callable_nested_events",
+    "inventoryName": "callable-nested-events"
+  },
+  {
+    "id": "repository.read-one-callable-statement-use",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "callableStatementUses",
+    "inventoryName": "callable-statement-uses"
+  },
+  {
+    "id": "repository.read-one-callable-statement-use",
+    "source": "rust/src/translation/callable_source_rules/part_2.rs",
+    "name": "callable_statement_uses",
+    "inventoryName": "callable-statement-uses"
+  },
+  {
+    "id": "repository.read-callable-outer-assignments",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "callableOuterAssignments",
+    "inventoryName": "callable-outer-assignments"
+  },
+  {
+    "id": "repository.read-callable-outer-assignments",
+    "source": "rust/src/translation/callable_source_rules/part_2.rs",
+    "name": "callable_outer_assignments",
+    "inventoryName": "callable-outer-assignments"
+  },
+  {
+    "id": "repository.append-distinct-callable-name",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "callableAppendName",
+    "inventoryName": "callable-append-name"
+  },
+  {
+    "id": "repository.append-distinct-callable-name",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "callable_append_name",
+    "inventoryName": "callable-append-name"
+  },
+  {
+    "id": "repository.render-callable-parameter-annotations",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "renderCallableParameters",
+    "inventoryName": "render-callable-parameters"
+  },
+  {
+    "id": "repository.render-callable-parameter-annotations",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "render_callable_parameters",
+    "inventoryName": "render-callable-parameters"
+  },
+  {
+    "id": "repository.read-callable-cell-observations",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "callableCellObservations",
+    "inventoryName": "callable-cell-observations"
+  },
+  {
+    "id": "repository.read-callable-cell-observations",
+    "source": "rust/src/translation/callable_source_rules/part_3.rs",
+    "name": "callable_cell_observations",
+    "inventoryName": "callable-cell-observations"
+  },
+  {
+    "id": "repository.create-callable-retained-facts",
+    "source": "js/src/translation/callable-source.js",
+    "name": "factsFor",
+    "inventoryName": "facts-for"
+  },
+  {
+    "id": "repository.read-callable-host-child",
+    "source": "js/src/translation/callable-source.js",
+    "name": "child",
+    "inventoryName": "child"
+  },
+  {
+    "id": "repository.read-callable-host-fact-arrays",
+    "source": "js/src/translation/callable-source.js",
+    "name": "arrays",
+    "inventoryName": "arrays"
+  },
+  {
+    "id": "repository.materialize-callable-statement-name-sets",
+    "source": "js/src/translation/callable-source.js",
+    "name": "readCallableStatementUsage",
+    "inventoryName": "read-callable-statement-usage"
+  },
+  {
+    "id": "repository.read-callable-closure-conflicts",
+    "source": "js/src/translation/callable-source.js",
+    "name": "readCallableClosureConflicts",
+    "inventoryName": "read-callable-closure-conflicts"
+  },
+  {
+    "id": "repository.read-callable-captured-bindings",
+    "source": "js/src/translation/callable-source.js",
+    "name": "readCallableCapturedBindings",
+    "inventoryName": "read-callable-captured-bindings"
+  },
+  {
+    "id": "repository.read-callable-parameter-types",
+    "source": "js/src/translation/callable-source.js",
+    "name": "readCallableParameterTypes",
+    "inventoryName": "read-callable-parameter-types"
+  },
+  {
+    "id": "repository.construct-callable-function-type",
+    "source": "js/src/translation/callable-source.js",
+    "name": "constructCallableFunctionType",
+    "inventoryName": "construct-callable-function-type"
+  },
+  {
+    "id": "repository.read-callable-function-constraints",
+    "source": "js/src/translation/callable-source.js",
+    "name": "readCallableFunctionConstraints",
+    "inventoryName": "read-callable-function-constraints"
+  },
+  {
+    "id": "repository.read-callable-application-constraints",
+    "source": "js/src/translation/callable-source.js",
+    "name": "readCallableApplicationConstraints",
+    "inventoryName": "read-callable-application-constraints"
+  },
+  {
+    "id": "repository.read-callable-lambda-inference",
+    "source": "js/src/translation/callable-source.js",
+    "name": "readCallableLambdaInference",
+    "inventoryName": "read-callable-lambda-inference"
+  },
+  {
+    "id": "repository.read-callable-owned-parameters",
+    "source": "js/src/translation/callable-source.js",
+    "name": "readCallableOwnedParameters",
+    "inventoryName": "read-callable-owned-parameters"
+  },
+  {
+    "id": "repository.read-callable-type-children",
+    "source": "js/src/translation/callable-source.js",
+    "name": "readCallableTypeChildren",
+    "inventoryName": "read-callable-type-children"
+  },
+  {
+    "id": "repository.read-callable-closure-scope",
+    "source": "js/src/translation/callable-source.js",
+    "name": "readCallableClosureScope",
+    "inventoryName": "read-callable-closure-scope"
+  },
+  {
+    "id": "repository.construct-callable-surface-parameters",
+    "source": "js/src/translation/callable-source.js",
+    "name": "constructCallableSurfaceParameters",
+    "inventoryName": "construct-callable-surface-parameters"
+  },
+  {
+    "id": "repository.read-callable-statement-captures",
+    "source": "js/src/translation/callable-source.js",
+    "name": "readCallableStatementCaptures",
+    "inventoryName": "read-callable-statement-captures"
+  },
+  {
+    "id": "repository.read-callable-mutable-cell-names",
+    "source": "js/src/translation/callable-source.js",
+    "name": "readCallableMutableCellNames",
+    "inventoryName": "read-callable-mutable-cell-names"
+  },
+  {
+    "id": "repository.read-callable-cell-element",
+    "source": "js/src/translation/callable-source.js",
+    "name": "readCallableCellElement",
+    "inventoryName": "read-callable-cell-element"
+  },
+  {
+    "id": "repository.read-callable-cell-read-inference",
+    "source": "js/src/translation/callable-source.js",
+    "name": "readCallableCellReadInference",
+    "inventoryName": "read-callable-cell-read-inference"
+  },
+  {
+    "id": "repository.read-callable-cell-option-binding",
+    "source": "js/src/translation/callable-source.js",
+    "name": "readCallableCellOptionBinding",
+    "inventoryName": "read-callable-cell-option-binding"
+  },
+  {
+    "id": "repository.callable-source-policy",
+    "source": "js/src/translation/callable-source-policy.js",
+    "name": "CALLABLE_SOURCE_POLICY",
+    "inventoryName": "callable-source-policy"
+  },
+  {
+    "id": "repository.read-closed-callable-source-module",
+    "source": "js/scripts/callable-source-module.mjs",
+    "name": "readCallableSourceModule",
+    "inventoryName": "read-callable-source-module"
+  },
+  {
+    "id": "repository.quote-callable-policy-source-spelling",
+    "source": "js/scripts/generate-callable-source-rules.mjs",
+    "name": "quote",
+    "inventoryName": "quote"
+  },
+  {
+    "id": "repository.observe-callable-control-output",
+    "source": "js/tests/translation-callable-source-rules.test.js",
+    "name": "output",
+    "inventoryName": "output"
+  },
+  {
+    "id": "repository.reload-callable-control-archive",
+    "source": "js/tests/translation-callable-source-rules.test.js",
+    "name": "reload",
+    "inventoryName": "reload"
+  },
+  {
+    "id": "repository.read-callable-control-field",
+    "source": "js/tests/translation-callable-source-rules.test.js",
+    "name": "field",
+    "inventoryName": "field"
+  },
+  {
+    "id": "repository.read-callable-control-constructs",
+    "source": "js/tests/translation-callable-source-rules.test.js",
+    "name": "constructs",
+    "inventoryName": "constructs"
+  },
+  {
+    "id": "repository.redirect-callable-control-relation",
+    "source": "js/tests/translation-callable-source-rules.test.js",
+    "name": "redirect",
+    "inventoryName": "redirect"
+  },
+  {
+    "id": "repository.record-callable-control-stage",
+    "source": "js/tests/translation-callable-source-rules.test.js",
+    "name": "record",
+    "inventoryName": "record"
+  },
+  {
+    "id": "repository.callable-original-stage-fixtures",
+    "source": "js/tests/translation-callable-source-rules.test.js",
+    "name": "fixtureNames",
+    "inventoryName": "fixture-names"
+  },
+  {
+    "id": "repository.check-callable-original-stage-conservation",
+    "source": "js/tests/translation-callable-source-rules.test.js",
+    "name": "callable source preserves every original stage: ",
+    "inventoryName": "callable-source-preserves-every-original-stage:-"
+  },
+  {
+    "id": "repository.check-callable-default-fact-layout",
+    "source": "js/tests/translation-callable-source-rules.test.js",
+    "name": "callable fact transport retains actual aliases without changing its default shape",
+    "inventoryName": "callable-fact-transport-retains-actual-aliases-without-changing-its-default-shape"
+  },
+  {
+    "id": "repository.check-callable-statement-scope-events",
+    "source": "js/tests/translation-callable-source-rules.test.js",
+    "name": "callable statement capture plans preserve existing branch loop and shadowing semantics",
+    "inventoryName": "callable-statement-capture-plans-preserve-existing-branch-loop-and-shadowing-semantics"
+  },
+  {
+    "id": "repository.check-callable-closure-conflict-owners",
+    "source": "js/tests/translation-callable-source-rules.test.js",
+    "name": "callable capture conflicts preserve actual closure identities and nested scope boundaries",
+    "inventoryName": "callable-capture-conflicts-preserve-actual-closure-identities-and-nested-scope-boundaries"
+  },
+  {
+    "id": "repository.check-callable-parameter-type-owners",
+    "source": "js/tests/translation-callable-source-rules.test.js",
+    "name": "callable type plans retain original parameter owners annotations and constraint identities",
+    "inventoryName": "callable-type-plans-retain-original-parameter-owners-annotations-and-constraint-identities"
+  },
+  {
+    "id": "repository.check-callable-closure-scope-token-owners",
+    "source": "js/tests/translation-callable-source-rules.test.js",
+    "name": "callable closure scope plans preserve lexical order temporal shadowing and exact token spans",
+    "inventoryName": "callable-closure-scope-plans-preserve-lexical-order-temporal-shadowing-and-exact-token-spans"
+  },
+  {
+    "id": "repository.check-callable-checked-binder-boundaries",
+    "source": "js/tests/translation-callable-source-rules.test.js",
+    "name": "callable checked capture plans respect let initializers nested lambdas and match binders",
+    "inventoryName": "callable-checked-capture-plans-respect-let-initial-values-nested-lambdas-and-match-binders"
+  },
+  {
+    "id": "repository.check-callable-source-free-renames",
+    "source": "js/tests/translation-callable-source-rules.test.js",
+    "name": "callable source free parameter renames keep captured and shadowed bindings distinct in both formats",
+    "inventoryName": "callable-source-free-parameter-renames-keep-captured-and-shadowed-bindings-distinct-in-both-formats"
+  },
+  {
+    "id": "repository.check-callable-source-free-owner-forgeries",
+    "source": "js/tests/translation-callable-source-rules.test.js",
+    "name": "callable source free argument edits and reused parameter descriptors cannot bypass checking",
+    "inventoryName": "callable-source-free-argument-edits-and-reused-parameter-descriptors-can-not-bypass-checking"
+  },
+  {
+    "id": "repository.check-callable-shared-projection-repeated-check",
+    "source": "js/tests/translation-callable-source-rules.test.js",
+    "name": "callable shared projection plans recheck actual lambdas applications and function references",
+    "inventoryName": "callable-shared-projection-plans-recheck-actual-lambdas-applications-and-function-references"
+  },
+  {
+    "id": "repository.check-complete-callable-kernel-translation",
+    "source": "js/tests/translation-callable-source-rules.test.js",
+    "name": "the complete callable kernel translates through checked links without semantic body replacements",
+    "inventoryName": "the-complete-callable-kernel-translates-through-checked-links-without-semantic-body-replacements"
+  },
+  {
+    "id": "repository.check-callable-mutable-cell-identities",
+    "source": "js/tests/translation-callable-source-rules.test.js",
+    "name": "callable cell plans retain shared and independent mutable identities through source free formats",
+    "inventoryName": "callable-cell-plans-retain-shared-and-independent-mutable-identities-through-source-free-formats"
+  },
+  {
+    "id": "repository.check-callable-required-fact-refusals",
+    "source": "js/tests/translation-callable-source-rules.test.js",
+    "name": "callable required fact columns reject malformed parallel data instead of inventing primitive values",
+    "inventoryName": "callable-required-fact-columns-reject-malformed-parallel-data-instead-of-inventing-primitive-values"
+  },
+  {
+    "id": "repository.evaluate-threaded-output-control-node",
+    "source": "js/tests/helpers/translation-output-observer.js",
+    "name": "evaluate",
+    "inventoryName": "evaluate"
+  },
+  {
+    "id": "repository.observe-native-threaded-record-control",
+    "source": "rust/tests/unit/translation_record_values.rs",
+    "name": "observe_threaded",
+    "inventoryName": "observe-threaded"
+  },
+  {
+    "id": "repository.insert-native-inference-parameter-array",
+    "source": "rust/src/translation/javascript/infer/term_facts.rs",
+    "name": "TermFacts::parameter_array",
+    "inventoryName": "term-facts-parameter-array"
+  },
+  {
+    "id": "repository.native-owned-array-reader-summary",
+    "source": "rust/src/translation/javascript/owned_array_append.rs",
+    "name": "Readers",
+    "inventoryName": "readers"
+  },
+  {
+    "id": "repository.native-owned-array-allocation-scope",
+    "source": "rust/src/translation/javascript/owned_array_append.rs",
+    "name": "Scope",
+    "inventoryName": "scope"
+  },
+  {
+    "id": "repository.native-owned-array-reader-use",
+    "source": "rust/src/translation/javascript/owned_array_append.rs",
+    "name": "Use",
+    "inventoryName": "use"
+  },
+  {
+    "id": "repository.native-owned-array-escape-occurrence",
+    "source": "rust/src/translation/javascript/owned_array_append.rs",
+    "name": "Escape",
+    "inventoryName": "escape-type"
+  },
+  {
+    "id": "repository.native-owned-array-allocation-occurrence",
+    "source": "rust/src/translation/javascript/owned_array_append.rs",
+    "name": "Allocation",
+    "inventoryName": "allocation"
+  },
+  {
+    "id": "repository.native-owned-array-append-occurrence",
+    "source": "rust/src/translation/javascript/owned_array_append.rs",
+    "name": "Append",
+    "inventoryName": "append"
+  },
+  {
+    "id": "repository.native-owned-array-source-occurrences",
+    "source": "rust/src/translation/javascript/owned_array_append.rs",
+    "name": "Occurrences",
+    "inventoryName": "occurrences"
+  },
+  {
+    "id": "repository.read-native-owned-array-original-statement-uses",
+    "source": "rust/src/translation/javascript/owned_array_append.rs",
+    "name": "source_names",
+    "inventoryName": "source-names"
+  },
+  {
+    "id": "repository.read-native-owned-array-source-text",
+    "source": "rust/src/translation/javascript/owned_array_append.rs",
+    "name": "text",
+    "inventoryName": "text"
+  },
+  {
+    "id": "repository.read-native-owned-array-reader-name-uses",
+    "source": "rust/src/translation/javascript/owned_array_append.rs",
+    "name": "names",
+    "inventoryName": "names"
+  },
+  {
+    "id": "repository.read-native-owned-array-reader-parameters",
+    "source": "rust/src/translation/javascript/owned_array_append.rs",
+    "name": "read_owned_array_reader_parameters",
+    "inventoryName": "read-owned-array-reader-parameters"
+  },
+  {
+    "id": "repository.advance-native-owned-array-occurrence-position",
+    "source": "rust/src/translation/javascript/owned_array_append.rs",
+    "name": "advance",
+    "inventoryName": "advance"
+  },
+  {
+    "id": "repository.record-native-owned-array-escape",
+    "source": "rust/src/translation/javascript/owned_array_append.rs",
+    "name": "escape",
+    "inventoryName": "escape-operation"
+  },
+  {
+    "id": "repository.read-native-owned-array-source-occurrences",
+    "source": "rust/src/translation/javascript/owned_array_append.rs",
+    "name": "read",
+    "inventoryName": "read"
+  },
+  {
+    "id": "repository.read-native-owned-array-statement-occurrences",
+    "source": "rust/src/translation/javascript/owned_array_append.rs",
+    "name": "list",
+    "inventoryName": "list"
+  },
+  {
+    "id": "repository.read-native-owned-array-append-shape",
+    "source": "rust/src/translation/javascript/owned_array_append.rs",
+    "name": "append_shape",
+    "inventoryName": "append-shape"
+  },
+  {
+    "id": "repository.lower-native-proven-owned-array-appends",
+    "source": "rust/src/translation/javascript/owned_array_append.rs",
+    "name": "lower_owned_array_appends",
+    "inventoryName": "lower-owned-array-appends"
+  },
+  {
+    "id": "repository.replace-native-owned-array-append-statements",
+    "source": "rust/src/translation/javascript/owned_array_append.rs",
+    "name": "replace",
+    "inventoryName": "replace"
+  },
+  {
+    "id": "repository.native-owned-array-final-use-facts",
+    "source": "rust/src/translation/emit_rust/array_moves.rs",
+    "name": "Facts",
+    "inventoryName": "facts"
+  },
+  {
+    "id": "repository.read-native-owned-array-fact-position",
+    "source": "rust/src/translation/emit_rust/array_moves.rs",
+    "name": "fact",
+    "inventoryName": "fact"
+  },
+  {
+    "id": "repository.read-native-owned-array-binding-identity",
+    "source": "rust/src/translation/emit_rust/array_moves.rs",
+    "name": "name",
+    "inventoryName": "name"
+  },
+  {
+    "id": "repository.record-native-owned-array-binding-event",
+    "source": "rust/src/translation/emit_rust/array_moves.rs",
+    "name": "event",
+    "inventoryName": "event"
+  },
+  {
+    "id": "repository.build-native-owned-array-evaluation-sequence",
+    "source": "rust/src/translation/emit_rust/array_moves.rs",
+    "name": "sequence",
+    "inventoryName": "sequence"
+  },
+  {
+    "id": "repository.build-native-owned-array-control-flow",
+    "source": "rust/src/translation/emit_rust/array_moves.rs",
+    "name": "build",
+    "inventoryName": "build"
+  },
+  {
+    "id": "repository.collect-native-owned-array-capture-names",
+    "source": "rust/src/translation/emit_rust/array_moves.rs",
+    "name": "collect_names",
+    "inventoryName": "collect-names"
+  },
+  {
+    "id": "repository.read-native-owned-array-final-uses",
+    "source": "rust/src/translation/emit_rust/array_moves.rs",
+    "name": "final_uses",
+    "inventoryName": "final-uses"
+  },
+  {
+    "id": "repository.create-source-array-item-without-spread",
+    "source": "rust/src/translation/surface/array_item.rs",
+    "name": "without_spread",
+    "inventoryName": "without-spread"
+  },
+  {
+    "id": "repository.observe-native-owned-array-java-script",
+    "source": "rust/tests/unit/translation_owned_array_append.rs",
+    "name": "observe",
+    "inventoryName": "observe"
+  },
+  {
+    "id": "repository.check-native-owned-array-archive-replay",
+    "source": "rust/tests/unit/translation_owned_array_append.rs",
+    "name": "replay",
+    "inventoryName": "replay"
+  },
+  {
+    "id": "repository.check-native-owned-array-source-refusal",
+    "source": "rust/tests/unit/translation_owned_array_append.rs",
+    "name": "refuses",
+    "inventoryName": "refuses"
+  },
+  {
+    "id": "repository.check-native-fresh-variadic-array-replay",
+    "source": "rust/tests/unit/translation_owned_array_append.rs",
+    "name": "fresh_variadic_constructions_replay_as_ordinary_immutable_values",
+    "inventoryName": "fresh-variadic-constructions-replay-as-ordinary-immutable-values"
+  },
+  {
+    "id": "repository.check-native-owned-array-unsafe-boundaries",
+    "source": "rust/tests/unit/translation_owned_array_append.rs",
+    "name": "original_alias_capture_recursive_and_loop_carried_escapes_stay_refused",
+    "inventoryName": "original-alias-capture-recursive-and-loop-retained-escapes-stay-refused"
+  },
+  {
+    "id": "repository.check-native-owned-array-global-reader-identity",
+    "source": "rust/tests/unit/translation_owned_array_append.rs",
+    "name": "inspected_readers_retain_actual_global_identity_across_namespaces_and_shadows",
+    "inventoryName": "inspected-readers-retain-actual-global-identity-across-namespace-groups-and-shadows"
+  },
+  {
+    "id": "repository.check-native-array-final-binding-storage-transfer",
+    "source": "rust/tests/unit/translation_owned_array_moves.rs",
+    "name": "generated_array_loops_consume_actual_final_bindings_without_repeated_vector_copies",
+    "inventoryName": "generated-array-loops-consume-actual-final-bindings-without-repeated-vector-copies"
+  },
+  {
+    "id": "repository.compare-original-raw-schema-extension",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-extension-closure.mjs",
+    "name": "compareOriginalLinkRawSchemaExtension",
+    "inventoryName": "compare-original-link-raw-schema-extension"
+  },
+  {
+    "id": "repository.verify-original-raw-schema-extension-closure",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-extension-closure.mjs",
+    "name": "verifyOriginalLinkRawSchemaExtensionClosure",
+    "inventoryName": "verify-original-link-raw-schema-extension-closure"
+  },
+  {
+    "id": "repository.verify-original-raw-schema-second-extension-closure",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-second-extension-closure.mjs",
+    "name": "verifyOriginalLinkRawSchemaSecondExtensionClosure",
+    "inventoryName": "verify-original-link-raw-schema-second-extension-closure"
+  },
+  {
+    "id": "repository.original-raw-schema-first-extension-plan",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-extension-policy.mjs",
+    "name": "ORIGINAL_LINK_RAW_SCHEMA_EXTENSIONS",
+    "inventoryName": "original-link-raw-schema-extensions"
+  },
+  {
+    "id": "repository.original-raw-schema-first-extension-scope",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-extension-policy.mjs",
+    "name": "ORIGINAL_LINK_RAW_SCHEMA_EXTENSION_SCOPE",
+    "inventoryName": "original-link-raw-schema-extension-scope"
+  },
+  {
+    "id": "repository.original-raw-schema-predecessor-receipt",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-extension-closure.mjs",
+    "name": "ORIGINAL_LINK_RAW_SCHEMA_PREDECESSOR_RECEIPT",
+    "inventoryName": "original-link-raw-schema-predecessor-receipt"
+  },
+  {
+    "id": "repository.original-raw-schema-second-extension-plan",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-second-extension-policy.mjs",
+    "name": "ORIGINAL_LINK_RAW_SCHEMA_SECOND_EXTENSIONS",
+    "inventoryName": "original-link-raw-schema-second-extensions"
+  },
+  {
+    "id": "repository.original-raw-schema-second-extension-scope",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-second-extension-policy.mjs",
+    "name": "ORIGINAL_LINK_RAW_SCHEMA_SECOND_EXTENSION_SCOPE",
+    "inventoryName": "original-link-raw-schema-second-extension-scope"
+  },
+  {
+    "id": "repository.original-raw-schema-first-extension-receipt",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-second-extension-closure.mjs",
+    "name": "ORIGINAL_LINK_RAW_SCHEMA_FIRST_EXTENSION_RECEIPT",
+    "inventoryName": "original-link-raw-schema-first-extension-receipt"
+  },
+  {
+    "id": "repository.create-first-schema-extension-control",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-extension-closure.test.mjs",
+    "name": "fixture",
+    "inventoryName": "fixture"
+  },
+  {
+    "id": "repository.create-second-schema-extension-control",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-second-extension-closure.test.mjs",
+    "name": "fixture",
+    "inventoryName": "fixture"
+  },
+  {
+    "id": "repository.check-first-schema-predecessor-authentication",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-extension-closure.test.mjs",
+    "name": "the schema extension authenticates the unchanged complete predecessor receipt and original producer inputs",
+    "inventoryName": "the-schema-extension-authenticates-the-unchanged-complete-predecessor-receipt-and-original-producer-inputs"
+  },
+  {
+    "id": "repository.check-first-schema-extension-boundary",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-extension-closure.test.mjs",
+    "name": "coherent extension hashes cannot redefine remove reorder or add undeclared old schema data",
+    "inventoryName": "coherent-extension-hashes-can-not-redefine-remove-reorder-or-add-undeclared-old-schema-data"
+  },
+  {
+    "id": "repository.check-first-schema-receipt-forgeries",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-extension-closure.test.mjs",
+    "name": "extension receipts cannot forge predecessor bytes counts source bindings or the declared append plan",
+    "inventoryName": "extension-receipts-can-not-forge-predecessor-bytes-counts-source-bindings-or-the-declared-append-plan"
+  },
+  {
+    "id": "repository.check-schema-alias-and-identity-boundaries",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-extension-closure.test.mjs",
+    "name": "schema append comparison preserves old aliases and distinguishes new identity mergers",
+    "inventoryName": "schema-append-comparison-preserves-old-aliases-and-distinguishes-new-identity-mergers"
+  },
+  {
+    "id": "repository.check-second-schema-predecessor-authentication",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-second-extension-closure.test.mjs",
+    "name": "stage two authenticates both immutable predecessor receipts and every original producer input",
+    "inventoryName": "stage-two-authenticates-both-immutable-predecessor-receipts-and-every-original-producer-input"
+  },
+  {
+    "id": "repository.check-second-schema-extension-boundary",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-second-extension-closure.test.mjs",
+    "name": "coherent second-stage hashes cannot modify old plans roles key order or new declared decisions",
+    "inventoryName": "coherent-second-stage-hashes-can-not-modify-old-plans-roles-key-order-or-new-declared-decisions"
+  },
+  {
+    "id": "repository.check-second-schema-receipt-forgeries",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-second-extension-closure.test.mjs",
+    "name": "stage-two receipts cannot relabel predecessor sources receipts bindings or scope",
+    "inventoryName": "stage-two-receipts-can-not-change-label-predecessor-sources-receipts-bindings-or-scope"
+  },
+  {
+    "id": "repository.check-source-free-method-optional-slot",
+    "source": "js/tests/translation-schema-second-projections.test.js",
+    "name": "source-free method projection retains the actual omitted separator slot and whole-program behavior",
+    "inventoryName": "source-free-method-projection-retains-the-actual-absent-separator-slot-and-whole-program-behavior"
+  },
+  {
+    "id": "repository.check-proven-index-projection-boundary",
+    "source": "js/tests/translation-schema-second-projections.test.js",
+    "name": "the added proven-index projection retains its proof while the old plan stays unqualified",
+    "inventoryName": "the-added-proven-index-projection-retains-its-proof-while-the-old-plan-stays-unqualified"
+  },
+  {
+    "id": "repository.check-default-reference-selection-after-proven-append-removal",
+    "source": "js/tests/translation-surface-reference-analysis.test.js",
+    "name": "default reference selection excludes only actual eliminated private append operations",
+    "inventoryName": "default-reference-selection-excludes-only-actual-eliminated-private-append-operations"
+  },
+  {
+    "id": "repository.source-reference-selection-override",
+    "source": "js/src/translation/javascript.js",
+    "name": "referenceSemanticsOverride",
+    "inventoryName": "reference-semantics-override"
+  },
+  {
+    "id": "repository.source-required-cell-reference-selection",
+    "source": "js/src/translation/javascript.js",
+    "name": "referenceSemanticsForced",
+    "inventoryName": "reference-semantics-forced"
+  },
+  {
+    "id": "repository.source-required-cell-reference-selection",
+    "source": "rust/src/translation/javascript.rs",
+    "name": "reference_semantics_forced",
+    "inventoryName": "reference-semantics-forced"
+  },
+  {
+    "id": "repository.source-eliminated-owned-array-operation-intervals",
+    "source": "js/src/translation/javascript.js",
+    "name": "eliminatedOwnedArrayAppendOperations",
+    "inventoryName": "eliminated-owned-array-append-operations"
+  },
+  {
+    "id": "repository.source-eliminated-owned-array-operation-intervals",
+    "source": "rust/src/translation/javascript.rs",
+    "name": "eliminated_owned_array_append_operations",
+    "inventoryName": "eliminated-owned-array-append-operations"
+  },
+  {
+    "id": "repository.read-native-callable-type-source-position",
+    "source": "rust/src/translation/javascript/declarations/jsdoc/callables.rs",
+    "name": "position",
+    "inventoryName": "position"
+  },
+  {
+    "id": "repository.read-native-callable-type-source-slice",
+    "source": "rust/src/translation/javascript/declarations/jsdoc/callables.rs",
+    "name": "source_slice",
+    "inventoryName": "source-slice"
+  },
+  {
+    "id": "repository.read-native-callable-documentation-type",
+    "source": "rust/src/translation/javascript/declarations/jsdoc/callables.rs",
+    "name": "read_callable_type",
+    "inventoryName": "read-callable-type"
+  },
+  {
+    "id": "repository.native-callable-output-analysis",
+    "source": "rust/src/translation/output/callables.rs",
+    "name": "CallableOutputAnalysis",
+    "inventoryName": "callable-output-analysis"
+  },
+  {
+    "id": "repository.read-native-callable-output-plan-position",
+    "source": "rust/src/translation/output/callables.rs",
+    "name": "position",
+    "inventoryName": "position"
+  },
+  {
+    "id": "repository.read-native-callable-output-analysis",
+    "source": "rust/src/translation/output/callables.rs",
+    "name": "analyze",
+    "inventoryName": "analyze"
+  },
+  {
+    "id": "repository.thread-native-output-for-target",
+    "source": "rust/src/translation/output.rs",
+    "name": "thread_output_for_target",
+    "inventoryName": "thread-output-for-target"
+  },
+  {
+    "id": "repository.render-native-lean-callable-expression",
+    "source": "rust/src/translation/emit_lean/callables.rs",
+    "name": "callable_expression",
+    "inventoryName": "callable-expression"
+  },
+  {
+    "id": "repository.read-native-callable-standard-target-emission",
+    "source": "rust/tests/unit/translation_javascript_callables.rs",
+    "name": "portable_emission",
+    "inventoryName": "portable-emission"
+  },
+  {
+    "id": "repository.observe-native-callable-generated-rust",
+    "source": "rust/tests/unit/translation_javascript_callables.rs",
+    "name": "observe_rust",
+    "inventoryName": "observe-rust"
+  },
+  {
+    "id": "repository.check-native-callable-documentation-source-free-targets",
+    "source": "rust/tests/unit/translation_javascript_callables.rs",
+    "name": "native_callable_jsdoc_forms_recheck_and_emit_every_existing_standard_target",
+    "inventoryName": "native-callable-java-script-documentation-forms-recheck-and-emit-every-existing-standard-target"
+  },
+  {
+    "id": "repository.check-native-callable-invocation-output-target-boundary",
+    "source": "rust/tests/unit/translation_javascript_callables.rs",
+    "name": "native_callable_output_runs_at_invocation_in_javascript_and_rust_and_refuses_pure_targets",
+    "inventoryName": "native-callable-output-runs-at-invocation-in-javascript-and-rust-and-refuses-pure-targets"
+  },
+  {
+    "id": "repository.check-native-callable-invocation-abort-archive-retention",
+    "source": "rust/tests/unit/translation_javascript_callables.rs",
+    "name": "native_callable_abort_waits_for_invocation_and_preserves_both_format_artifacts",
+    "inventoryName": "native-callable-abort-waits-for-invocation-and-preserves-both-format-artifacts"
+  },
+  {
+    "id": "repository.lightweight-markup-language-native-source-profile-path",
+    "source": "js/scripts/markdown-native-source-profile.mjs",
+    "name": "MARKDOWN_SOURCE_PROFILE",
+    "inventoryName": "lightweight-markup-language-source-profile"
+  },
+  {
+    "id": "repository.read-lightweight-markup-language-native-source-profile",
+    "source": "js/scripts/markdown-native-source-profile.mjs",
+    "name": "readMarkdownNativeSourceProfile",
+    "inventoryName": "read-lightweight-markup-language-native-source-profile"
+  },
+  {
+    "id": "repository.read-lightweight-markup-language-inline-source-ranges",
+    "source": "js/scripts/markdown-native-source-profile.mjs",
+    "name": "readMarkdownInlineRanges",
+    "inventoryName": "read-lightweight-markup-language-inline-ranges"
+  },
+  {
+    "id": "repository.project-lightweight-markup-language-inline-children",
+    "source": "js/scripts/markdown-native-source-profile.mjs",
+    "name": "projectMarkdownInlineChildren",
+    "inventoryName": "project-lightweight-markup-language-inline-children"
+  },
+  {
+    "id": "repository.recognize-lightweight-markup-language-source-containment",
+    "source": "js/scripts/markdown-native-source-profile.mjs",
+    "name": "contains",
+    "inventoryName": "contains"
+  },
+  {
+    "id": "repository.distribute-lightweight-markup-language-excluded-children",
+    "source": "js/scripts/markdown-native-source-profile.mjs",
+    "name": "distribute",
+    "inventoryName": "distribute"
+  },
+  {
+    "id": "repository.find-lightweight-markup-language-native-source-archive",
+    "source": "js/scripts/capture-markdown-native-sources.mjs",
+    "name": "findMarkdownNativeSourceArchive",
+    "inventoryName": "find-lightweight-markup-language-native-source-archive"
+  },
+  {
+    "id": "repository.capture-lightweight-markup-language-native-sources",
+    "source": "js/scripts/capture-markdown-native-sources.mjs",
+    "name": "captureMarkdownNativeSources",
+    "inventoryName": "capture-lightweight-markup-language-native-sources"
+  },
+  {
+    "id": "repository.read-authenticated-lightweight-markup-language-archive-member",
+    "source": "js/scripts/capture-markdown-native-sources.mjs",
+    "name": "member",
+    "inventoryName": "member"
+  },
+  {
+    "id": "repository.create-lightweight-markup-language-source-archive-control",
+    "source": "js/tests/grammar-markdown-source-profile.test.js",
+    "name": "createSourceArchive",
+    "inventoryName": "create-source-archive"
+  },
+  {
+    "id": "repository.check-lightweight-markup-language-complete-source-plan",
+    "source": "js/tests/grammar-markdown-source-profile.test.js",
+    "name": "Markdown source plan retains both real pins, every block scanner token and explicit composition gaps",
+    "inventoryName": "lightweight-markup-language-source-plan-retains-both-real-pins-every-block-scanner-token-and-explicit-composition-gaps"
+  },
+  {
+    "id": "repository.check-lightweight-markup-language-authenticated-archive-capture",
+    "source": "js/tests/grammar-markdown-source-profile.test.js",
+    "name": "source capture authenticates synthetic archive members, include closure and corpus metadata without storing grammar payloads",
+    "inventoryName": "source-capture-authenticates-synthetic-archive-members-include-closure-and-corpus-metadata-without-storing-grammar-payloads"
+  },
+  {
+    "id": "repository.check-lightweight-markup-language-ci-source-capture-placement",
+    "source": "js/tests/grammar-markdown-source-profile.test.js",
+    "name": "CI captures source receipts after the existing locked acquisition without replacing the whole grammar run",
+    "inventoryName": "ci-captures-source-receipts-after-the-existing-locked-acquisition-without-replacing-the-whole-grammar-run"
+  },
+  {
+    "id": "repository.check-lightweight-markup-language-linked-range-ownership",
+    "source": "js/tests/grammar-markdown-source-profile.test.js",
+    "name": "linked Markdown composition policy preserves excluded ranges, raw child indices and UTF-8 source ownership",
+    "inventoryName": "linked-lightweight-markup-language-composition-policy-preserves-excluded-ranges-raw-child-positions-and-unicode-transformation-format-eight-bit-source-ownership"
+  },
+  {
+    "id": "repository.check-lightweight-markup-language-linked-child-projection",
+    "source": "js/tests/grammar-markdown-source-profile.test.js",
+    "name": "linked Markdown projection preserves fields, deepest owners, stable ties and zero-width boundaries",
+    "inventoryName": "linked-lightweight-markup-language-projection-preserves-fields-deepest-owners-stable-ties-and-zero-width-boundaries"
+  },
+  {
+    "id": "repository.check-complete-bulk-component-occurrences",
+    "source": "js/tests/grammar-bulk-components.test.js",
+    "name": "bulk audits preserve every Markdown, TSX and repeated catalog grammar occurrence without merging component roots",
+    "inventoryName": "bulk-audits-preserve-every-lightweight-markup-language-type-script-extensible-markup-language-and-repeated-catalog-grammar-occurrence-without-merging-component-roots"
+  },
+  {
+    "id": "repository.check-not-started-component-time-limit-boundary",
+    "source": "js/tests/grammar-bulk-components.test.js",
+    "name": "unfinished component audits remain visible without attributing a timeout to an unstarted component",
+    "inventoryName": "unfinished-component-audits-remain-visible-without-attributing-a-time-limit-to-an-not-started-component"
+  },
+  {
+    "id": "repository.load-block-component-audit-control",
+    "source": "js/tests/grammar-bulk-components.test.js",
+    "name": "loadTreeSitterSource",
+    "inventoryName": "load-tree-sitter-source"
+  },
+  {
+    "id": "repository.load-version-dependent-grammar-audit-controls",
+    "source": "js/tests/grammar-bulk-components.test.js",
+    "name": "loadGrammarsV4",
+    "inventoryName": "load-grammars-version-four"
+  },
+  {
+    "id": "repository.load-additional-component-audit-controls",
+    "source": "js/tests/grammar-bulk-components.test.js",
+    "name": "loadAdditionalSources",
+    "inventoryName": "load-additional-sources"
+  },
+  {
+    "id": "translation.accept-grammar-selection-mode",
+    "source": "js/src/translation/grammar-selection-rules.js",
+    "name": "acceptGrammarSelectionMode",
+    "inventoryName": "accept-grammar-selection-mode"
+  },
+  {
+    "id": "translation.accept-grammar-selection-mode",
+    "source": "rust/src/translation/grammar_selection_rules.rs",
+    "name": "accept_grammar_selection_mode",
+    "inventoryName": "accept-grammar-selection-mode"
+  },
+  {
+    "id": "translation.accept-grammar-selection-mapping",
+    "source": "js/src/translation/grammar-selection-rules.js",
+    "name": "acceptGrammarSelectionMapping",
+    "inventoryName": "accept-grammar-selection-mapping"
+  },
+  {
+    "id": "translation.accept-grammar-selection-mapping",
+    "source": "rust/src/translation/grammar_selection_rules.rs",
+    "name": "accept_grammar_selection_mapping",
+    "inventoryName": "accept-grammar-selection-mapping"
+  },
+  {
+    "id": "translation.accept-grammar-selection-count",
+    "source": "js/src/translation/grammar-selection-rules.js",
+    "name": "acceptGrammarSelectionCount",
+    "inventoryName": "accept-grammar-selection-count"
+  },
+  {
+    "id": "translation.accept-grammar-selection-count",
+    "source": "rust/src/translation/grammar_selection_rules.rs",
+    "name": "accept_grammar_selection_count",
+    "inventoryName": "accept-grammar-selection-count"
+  },
+  {
+    "id": "translation.report-grammar-selection-ambiguity",
+    "source": "js/src/translation/grammar-selection-rules.js",
+    "name": "reportGrammarSelectionAmbiguity",
+    "inventoryName": "report-grammar-selection-ambiguity"
+  },
+  {
+    "id": "translation.report-grammar-selection-ambiguity",
+    "source": "rust/src/translation/grammar_selection_rules.rs",
+    "name": "report_grammar_selection_ambiguity",
+    "inventoryName": "report-grammar-selection-ambiguity"
+  },
+  {
+    "id": "repository.check-grammar-selection-candidates",
+    "source": "js/src/grammar-runtime/grammar-selection.js",
+    "name": "checkGrammarSelection",
+    "inventoryName": "check-grammar-selection"
+  },
+  {
+    "id": "repository.retain-grammar-selection-diagnostic",
+    "source": "js/src/grammar-runtime/grammar-selection.js",
+    "name": "reportSelectionDiagnostic",
+    "inventoryName": "report-selection-diagnostic"
+  },
+  {
+    "id": "repository.run-shared-budget-embedded-grammar",
+    "source": "js/src/grammar-runtime/grammar-selection.js",
+    "name": "runEmbeddedGrammar",
+    "inventoryName": "run-embedded-grammar"
+  },
+  {
+    "id": "repository.encode-selection-definition-comparison",
+    "source": "js/src/grammar-runtime/grammar-selection.js",
+    "name": "canonicalSelectionDefinition",
+    "inventoryName": "canonical-selection-definition"
+  },
+  {
+    "id": "repository.read-grammar-selection-provenance",
+    "source": "js/src/grammar-runtime/grammar-selection.js",
+    "name": "readSelectionProvenance",
+    "inventoryName": "read-selection-provenance"
+  },
+  {
+    "id": "repository.evaluate-explicit-grammar-selection",
+    "source": "js/src/grammar-runtime/grammar-selection.js",
+    "name": "evaluateGrammarSelection",
+    "inventoryName": "evaluate-grammar-selection"
+  },
+  {
+    "id": "repository.copy-public-grammar-selection",
+    "source": "js/src/grammar-runtime/grammar-selection.js",
+    "name": "publicGrammarSelection",
+    "inventoryName": "public-grammar-selection"
+  },
+  {
+    "id": "repository.grammar-selection-feature-forms",
+    "source": "js/src/grammar-selection-forms.js",
+    "name": "GRAMMAR_SELECTION_FORMS",
+    "inventoryName": "grammar-selection-forms"
+  },
+  {
+    "id": "repository.read-grammar-selection-rules-policy",
+    "source": "js/scripts/generate-grammar-selection-rules.mjs",
+    "name": "grammarSelectionRulesPolicy",
+    "inventoryName": "grammar-selection-rules-policy"
+  },
+  {
+    "id": "repository.render-grammar-selection-native-forms",
+    "source": "js/scripts/generate-grammar-selection-rules.mjs",
+    "name": "renderGrammarSelectionNativeForms",
+    "inventoryName": "render-grammar-selection-native-forms"
+  },
+  {
+    "id": "repository.generate-grammar-selection-rules",
+    "source": "js/scripts/generate-grammar-selection-rules.mjs",
+    "name": "generateGrammarSelectionRules",
+    "inventoryName": "generate-grammar-selection-rules"
+  },
+  {
+    "id": "repository.create-grammar-selection-literal",
+    "source": "js/tests/grammar-recursive-selection.test.js",
+    "name": "literal",
+    "inventoryName": "literal"
+  },
+  {
+    "id": "repository.create-grammar-selection-candidate",
+    "source": "js/tests/grammar-recursive-selection.test.js",
+    "name": "candidate",
+    "inventoryName": "candidate"
+  },
+  {
+    "id": "repository.create-grammar-selection-control",
+    "source": "js/tests/grammar-recursive-selection.test.js",
+    "name": "select",
+    "inventoryName": "select"
+  },
+  {
+    "id": "repository.create-authored-selection-grammar",
+    "source": "js/tests/grammar-recursive-selection.test.js",
+    "name": "authoredGrammar",
+    "inventoryName": "authored-grammar"
+  },
+  {
+    "id": "repository.create-authored-recursive-grammar-chain",
+    "source": "js/tests/grammar-recursive-selection.test.js",
+    "name": "authoredChain",
+    "inventoryName": "authored-chain"
+  },
+  {
+    "id": "repository.read-selection-embedded-trees",
+    "source": "js/tests/grammar-recursive-selection.test.js",
+    "name": "embeddedTrees",
+    "inventoryName": "embedded-trees"
+  },
+  {
+    "id": "repository.reconstruct-selection-control-bytes",
+    "source": "js/tests/grammar-recursive-selection.test.js",
+    "name": "reconstructBytes",
+    "inventoryName": "reconstruct-bytes"
+  },
+  {
+    "id": "repository.check-selection-control-leaves",
+    "source": "js/tests/grammar-recursive-selection.test.js",
+    "name": "assertExactLeaves",
+    "inventoryName": "assert-exact-leaves"
+  },
+  {
+    "id": "repository.check-recursive-selection-source-qualified-identities",
+    "source": "js/tests/grammar-recursive-selection.test.js",
+    "name": "linked grammar selection retains a repeated-language CST chain and proven source-qualified identities",
+    "inventoryName": "linked-grammar-selection-retains-a-repeated-language-concrete-syntax-tree-chain-and-proven-source-qualified-identities"
+  },
+  {
+    "id": "repository.check-any-and-all-selection-witnesses",
+    "source": "js/tests/grammar-recursive-selection.test.js",
+    "name": "any preserves every accepted grammar witness and reports language ambiguity; all explicitly requires every candidate",
+    "inventoryName": "any-preserves-every-accepted-grammar-witness-and-reports-language-ambiguity-all-explicitly-requires-every-candidate"
+  },
+  {
+    "id": "repository.check-unknown-selection-diagnostics",
+    "source": "js/tests/grammar-recursive-selection.test.js",
+    "name": "unknown grammar and unsupported escape mapping retain explicit diagnostics and accepted CST witnesses",
+    "inventoryName": "unknown-grammar-and-unsupported-escape-mapping-retain-explicit-diagnostics-and-accepted-concrete-syntax-tree-witnesses"
+  },
+  {
+    "id": "repository.check-selection-without-consumption-cycle-boundary",
+    "source": "js/tests/grammar-recursive-selection.test.js",
+    "name": "same-region recursive selection diagnoses cycles while consuming recursion remains lossless",
+    "inventoryName": "same-region-recursive-selection-diagnoses-cycles-while-consuming-recursion-remains-lossless"
+  },
+  {
+    "id": "repository.check-selection-shared-resource-budgets",
+    "source": "js/tests/grammar-recursive-selection.test.js",
+    "name": "all recursive selections spend the same step and memory budgets and preserve unchanged limit diagnostics",
+    "inventoryName": "all-recursive-selections-spend-the-same-step-and-memory-budgets-and-preserve-unchanged-limit-diagnostics"
+  },
+  {
+    "id": "repository.check-selection-global-definition-forgeries",
+    "source": "js/tests/grammar-recursive-selection.test.js",
+    "name": "global provenance refuses changed grammar definitions instead of borrowing a known concept identity",
+    "inventoryName": "global-provenance-refuses-changed-grammar-definitions-instead-of-borrowing-a-known-concept-identity"
+  },
+  {
+    "id": "repository.check-selection-mode-and-mapping-refusals",
+    "source": "js/tests/grammar-recursive-selection.test.js",
+    "name": "portable selection decisions reject unknown modes, zero witnesses and unimplemented mappings",
+    "inventoryName": "portable-selection-decisions-reject-unknown-modes-zero-witnesses-and-without-implementation-mappings"
+  },
+  {
+    "id": "translation.accept-grammar-lexical-analyser-mode",
+    "source": "js/src/translation/grammar-lexer-rules.js",
+    "name": "acceptGrammarLexerMode",
+    "inventoryName": "accept-grammar-lexical-analyser-mode"
+  },
+  {
+    "id": "translation.accept-grammar-lexical-analyser-mode",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "accept_grammar_lexer_mode",
+    "inventoryName": "accept-grammar-lexical-analyser-mode"
+  },
+  {
+    "id": "translation.accept-grammar-lexical-analyser-trivia",
+    "source": "js/src/translation/grammar-lexer-rules.js",
+    "name": "acceptGrammarLexerTrivia",
+    "inventoryName": "accept-grammar-lexical-analyser-trivia"
+  },
+  {
+    "id": "translation.accept-grammar-lexical-analyser-trivia",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "accept_grammar_lexer_trivia",
+    "inventoryName": "accept-grammar-lexical-analyser-trivia"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-trivia-identity",
+    "source": "js/src/translation/grammar-lexer-rules.js",
+    "name": "readGrammarLexerTriviaIdentity",
+    "inventoryName": "read-grammar-lexical-analyser-trivia-identity"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-trivia-identity",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "read_grammar_lexer_trivia_identity",
+    "inventoryName": "read-grammar-lexical-analyser-trivia-identity"
+  },
+  {
+    "id": "translation.accept-grammar-lexical-analyser-expected-token",
+    "source": "js/src/translation/grammar-lexer-rules.js",
+    "name": "acceptGrammarLexerExpectedToken",
+    "inventoryName": "accept-grammar-lexical-analyser-expected-token"
+  },
+  {
+    "id": "translation.accept-grammar-lexical-analyser-expected-token",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "accept_grammar_lexer_expected_token",
+    "inventoryName": "accept-grammar-lexical-analyser-expected-token"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-entry-form",
+    "source": "js/src/translation/grammar-lexer-rules.js",
+    "name": "readGrammarLexerEntryForm",
+    "inventoryName": "read-grammar-lexical-analyser-entry-form"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-entry-form",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "read_grammar_lexer_entry_form",
+    "inventoryName": "read-grammar-lexical-analyser-entry-form"
+  },
+  {
+    "id": "translation.accept-grammar-lexical-analyser-identifier",
+    "source": "js/src/translation/grammar-lexer-rules.js",
+    "name": "acceptGrammarLexerIdentifier",
+    "inventoryName": "accept-grammar-lexical-analyser-identifier"
+  },
+  {
+    "id": "translation.accept-grammar-lexical-analyser-identifier",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "accept_grammar_lexer_identifier",
+    "inventoryName": "accept-grammar-lexical-analyser-identifier"
+  },
+  {
+    "id": "translation.accept-grammar-lexical-analyser-decimal",
+    "source": "js/src/translation/grammar-lexer-rules.js",
+    "name": "acceptGrammarLexerDecimal",
+    "inventoryName": "accept-grammar-lexical-analyser-decimal"
+  },
+  {
+    "id": "translation.accept-grammar-lexical-analyser-decimal",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "accept_grammar_lexer_decimal",
+    "inventoryName": "accept-grammar-lexical-analyser-decimal"
+  },
+  {
+    "id": "translation.contain-grammar-lexical-analyser-text",
+    "source": "js/src/translation/grammar-lexer-rules.js",
+    "name": "containsGrammarLexerText",
+    "inventoryName": "contains-grammar-lexical-analyser-text"
+  },
+  {
+    "id": "translation.contain-grammar-lexical-analyser-text",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "contains_grammar_lexer_text",
+    "inventoryName": "contains-grammar-lexical-analyser-text"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-command-plan",
+    "source": "js/src/translation/grammar-lexer-rules.js",
+    "name": "readGrammarLexerCommandPlan",
+    "inventoryName": "read-grammar-lexical-analyser-command-plan"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-command-plan",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "read_grammar_lexer_command_plan",
+    "inventoryName": "read-grammar-lexical-analyser-command-plan"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-declaration-issue",
+    "source": "js/src/translation/grammar-lexer-rules.js",
+    "name": "readGrammarLexerDeclarationIssue",
+    "inventoryName": "read-grammar-lexical-analyser-declaration-issue"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-declaration-issue",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "read_grammar_lexer_declaration_issue",
+    "inventoryName": "read-grammar-lexical-analyser-declaration-issue"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-obligation-positions",
+    "source": "js/src/translation/grammar-lexer-rules.js",
+    "name": "readGrammarLexerObligationPositions",
+    "inventoryName": "read-grammar-lexical-analyser-obligation-positions"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-obligation-positions",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "read_grammar_lexer_obligation_positions",
+    "inventoryName": "read-grammar-lexical-analyser-obligation-positions"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-lazy-normalization",
+    "source": "js/src/translation/grammar-lexer-rules.js",
+    "name": "readGrammarLexerLazyNormalization",
+    "inventoryName": "read-grammar-lexical-analyser-lazy-normalization"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-lazy-normalization",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "read_grammar_lexer_lazy_normalization",
+    "inventoryName": "read-grammar-lexical-analyser-lazy-normalization"
+  },
+  {
+    "id": "repository.source-local-lexical-disposition",
+    "source": "js/src/grammar-lexer-forms.js",
+    "name": "disposition",
+    "inventoryName": "disposition"
+  },
+  {
+    "id": "repository.check-another-tool-for-language-recognition-command-order-and-skip",
+    "source": "js/tests/grammar-antlr-lexer-election.test.js",
+    "name": "ANTLR warning-bearing skip, type and channel combinations preserve actual command ordering",
+    "inventoryName": "another-tool-for-language-recognition-warning-bearing-skip-type-and-channel-combinations-preserve-actual-command-ordering"
+  },
+  {
+    "id": "repository.check-another-tool-for-language-recognition-channel-zero-and-original-attributes",
+    "source": "js/tests/grammar-antlr-lexer-election.test.js",
+    "name": "ANTLR decimal channel zero normalizes operationally while original source attributes remain intact",
+    "inventoryName": "another-tool-for-language-recognition-decimal-channel-zero-normalizes-operationally-while-original-source-attributes-remain-intact"
+  },
+  {
+    "id": "repository.check-independent-lexical-selection-axes",
+    "source": "js/tests/grammar-lexer-rules.test.js",
+    "name": "portable lexer mode, channel, disposition and expected type decisions are independent",
+    "inventoryName": "portable-lexical-analyser-mode-channel-disposition-and-expected-type-decisions-are-independent"
+  },
+  {
+    "id": "translation.read-lexical-winner-index",
+    "source": "js/src/translation/frontend-rules.js",
+    "name": "readLexicalWinnerIndex",
+    "inventoryName": "read-lexical-winner-index"
+  },
+  {
+    "id": "translation.read-lexical-winner-index",
+    "source": "rust/src/translation/frontend_rules/strings.rs",
+    "name": "read_lexical_winner_index",
+    "inventoryName": "read-lexical-winner-index"
+  },
+  {
+    "id": "translation.scan-source-lexical-winner-candidates",
+    "source": "rust/src/translation/frontend_rules/continuations_2.rs",
+    "name": "ml_read_lexical_winner_index_loop29",
+    "inventoryName": "meta-language-read-lexical-winner-index-loop-two-nine"
+  },
+  {
+    "id": "repository.read-source-local-lexical-analyser-scope",
+    "source": "js/src/grammar-runtime/lexer-election.js",
+    "name": "lexerScopeOf",
+    "inventoryName": "lexical-analyser-scope-of"
+  },
+  {
+    "id": "repository.map-public-lexical-analyser-bindings",
+    "source": "js/src/grammar-runtime/lexer-election.js",
+    "name": "mapLexerDeclaration",
+    "inventoryName": "map-lexical-analyser-declaration"
+  },
+  {
+    "id": "repository.lower-source-local-lexical-analyser-expression",
+    "source": "js/src/grammar-runtime/lexer-election.js",
+    "name": "lowerLexerExpression",
+    "inventoryName": "lower-lexical-analyser-expression"
+  },
+  {
+    "id": "repository.capture-source-local-lexical-analyser-expression",
+    "source": "js/src/grammar-runtime/lexer-election.js",
+    "name": "capture",
+    "inventoryName": "capture"
+  },
+  {
+    "id": "repository.materialize-source-local-lexical-analyser-expression",
+    "source": "js/src/grammar-runtime/lexer-election.js",
+    "name": "materialize",
+    "inventoryName": "materialize"
+  },
+  {
+    "id": "repository.read-source-local-lexical-analyser-declaration",
+    "source": "js/src/grammar-runtime/lexer-election.js",
+    "name": "readLexerDeclaration",
+    "inventoryName": "read-lexical-analyser-declaration"
+  },
+  {
+    "id": "repository.read-source-local-lexical-analyser-obligations",
+    "source": "js/src/grammar-runtime/lexer-election.js",
+    "name": "lexerObligationsFor",
+    "inventoryName": "lexical-analyser-obligations-for"
+  },
+  {
+    "id": "repository.visit-original-another-tool-for-language-recognition-lexical-analyser-expression",
+    "source": "js/src/grammar-importers/antlr-lexer-plan.js",
+    "name": "visit",
+    "inventoryName": "visit"
+  },
+  {
+    "id": "repository.read-another-tool-for-language-recognition-lexical-analyser-command-adapter",
+    "source": "js/src/grammar-importers/antlr-lexer-plan.js",
+    "name": "commandPlan",
+    "inventoryName": "command-plan"
+  },
+  {
+    "id": "repository.create-another-tool-for-language-recognition-source-lexical-analyser-declarations",
+    "source": "js/src/grammar-importers/antlr-lexer-plan.js",
+    "name": "antlrLexerDeclarations",
+    "inventoryName": "another-tool-for-language-recognition-lexical-analyser-declarations"
+  },
+  {
+    "id": "repository.read-runtime-elected-lexical-winner",
+    "source": "js/src/grammar-runtime/executor.js",
+    "name": "electedWinner",
+    "inventoryName": "elected-winner"
+  },
+  {
+    "id": "repository.create-runtime-elected-lexical-leaf",
+    "source": "js/src/grammar-runtime/executor.js",
+    "name": "electedLeaf",
+    "inventoryName": "elected-leaf"
+  },
+  {
+    "id": "repository.read-runtime-elected-trivia",
+    "source": "js/src/grammar-runtime/executor.js",
+    "name": "skipElectedTrivia",
+    "inventoryName": "skip-elected-trivia"
+  },
+  {
+    "id": "repository.match-runtime-elected-terminal",
+    "source": "js/src/grammar-runtime/executor.js",
+    "name": "electedTerminal",
+    "inventoryName": "elected-terminal"
+  },
+  {
+    "id": "repository.grammar-lexical-analyser-feature-forms",
+    "source": "js/src/grammar-lexer-forms.js",
+    "name": "GRAMMAR_LEXER_FORMS",
+    "inventoryName": "grammar-lexical-analyser-forms"
+  },
+  {
+    "id": "repository.source-local-lexical-scope",
+    "source": "js/src/grammar-lexer-forms.js",
+    "name": "lexicalScope",
+    "inventoryName": "lexical-scope"
+  },
+  {
+    "id": "repository.source-local-lexical-token",
+    "source": "js/src/grammar-lexer-forms.js",
+    "name": "lexicalToken",
+    "inventoryName": "lexical-token"
+  },
+  {
+    "id": "repository.source-local-parser-production-owner",
+    "source": "js/src/grammar-lexer-forms.js",
+    "name": "lexicalOwner",
+    "inventoryName": "lexical-owner"
+  },
+  {
+    "id": "repository.source-local-lexical-binding",
+    "source": "js/src/grammar-lexer-forms.js",
+    "name": "lexicalBinding",
+    "inventoryName": "lexical-binding"
+  },
+  {
+    "id": "repository.source-local-implicit-literal-binding",
+    "source": "js/src/grammar-lexer-forms.js",
+    "name": "lexicalLiteral",
+    "inventoryName": "lexical-literal"
+  },
+  {
+    "id": "repository.source-local-lexical-rule",
+    "source": "js/src/grammar-lexer-forms.js",
+    "name": "lexicalRule",
+    "inventoryName": "lexical-rule"
+  },
+  {
+    "id": "repository.source-local-lexical-fragment",
+    "source": "js/src/grammar-lexer-forms.js",
+    "name": "lexicalFragment",
+    "inventoryName": "lexical-fragment"
+  },
+  {
+    "id": "repository.source-local-lexical-obligation",
+    "source": "js/src/grammar-lexer-forms.js",
+    "name": "lexicalObligation",
+    "inventoryName": "lexical-obligation"
+  },
+  {
+    "id": "repository.source-local-lexical-channel",
+    "source": "js/src/grammar-lexer-forms.js",
+    "name": "lexicalChannel",
+    "inventoryName": "lexical-channel"
+  },
+  {
+    "id": "repository.source-local-lexical-mode",
+    "source": "js/src/grammar-lexer-forms.js",
+    "name": "lexicalMode",
+    "inventoryName": "lexical-mode"
+  },
+  {
+    "id": "repository.source-local-lexical-token-type",
+    "source": "js/src/grammar-lexer-forms.js",
+    "name": "lexicalType",
+    "inventoryName": "lexical-type"
+  },
+  {
+    "id": "repository.read-grammar-lexical-analyser-rules-policy",
+    "source": "js/scripts/generate-grammar-lexer-rules.mjs",
+    "name": "grammarLexerRulesPolicy",
+    "inventoryName": "grammar-lexical-analyser-rules-policy"
+  },
+  {
+    "id": "repository.render-grammar-lexical-analyser-native-forms",
+    "source": "js/scripts/generate-grammar-lexer-rules.mjs",
+    "name": "renderGrammarLexerNativeForms",
+    "inventoryName": "render-grammar-lexical-analyser-native-forms"
+  },
+  {
+    "id": "repository.generate-grammar-lexical-analyser-rules",
+    "source": "js/scripts/generate-grammar-lexer-rules.mjs",
+    "name": "generateGrammarLexerRules",
+    "inventoryName": "generate-grammar-lexical-analyser-rules"
+  },
+  {
+    "id": "repository.create-another-tool-for-language-recognition-election-control-parser",
+    "source": "js/tests/grammar-antlr-lexer-election.test.js",
+    "name": "parser",
+    "inventoryName": "parser"
+  },
+  {
+    "id": "repository.read-another-tool-for-language-recognition-election-control-leaves",
+    "source": "js/tests/grammar-antlr-lexer-election.test.js",
+    "name": "leaves",
+    "inventoryName": "leaves"
+  },
+  {
+    "id": "repository.create-another-tool-for-language-recognition-election-token-control",
+    "source": "js/tests/grammar-antlr-lexer-election.test.js",
+    "name": "token",
+    "inventoryName": "token"
+  },
+  {
+    "id": "repository.native-lexical-source-obligation",
+    "source": "rust/src/grammar/feature_runtime/lexical_plan.rs",
+    "name": "LexicalObligation",
+    "inventoryName": "lexical-obligation"
+  },
+  {
+    "id": "repository.native-lexical-source-rule",
+    "source": "rust/src/grammar/feature_runtime/lexical_plan.rs",
+    "name": "LexicalRule",
+    "inventoryName": "lexical-rule"
+  },
+  {
+    "id": "repository.native-source-lexical-plan",
+    "source": "rust/src/grammar/feature_runtime/lexical_plan.rs",
+    "name": "LexicalPlan",
+    "inventoryName": "lexical-plan"
+  },
+  {
+    "id": "repository.native-source-lexical-compilation-input",
+    "source": "rust/src/grammar/feature_runtime/lexical_plan.rs",
+    "name": "LexicalSource",
+    "inventoryName": "lexical-source"
+  },
+  {
+    "id": "repository.native-lexical-expression-projection",
+    "source": "rust/src/grammar/feature_runtime/lexical_plan.rs",
+    "name": "Projection",
+    "inventoryName": "projection"
+  },
+  {
+    "id": "repository.native-source-lexical-winner",
+    "source": "rust/src/grammar/feature_runtime/lexical_election.rs",
+    "name": "LexicalWinner",
+    "inventoryName": "lexical-winner"
+  },
+  {
+    "id": "repository.native-lexical-command-machine",
+    "source": "rust/src/grammar/feature_runtime/lexical_election.rs",
+    "name": "CommandMachine",
+    "inventoryName": "command-machine"
+  },
+  {
+    "id": "repository.native-imported-lexical-section",
+    "source": "rust/src/grammar/import/antlr/lexical.rs",
+    "name": "Section",
+    "inventoryName": "section"
+  },
+  {
+    "id": "repository.native-imported-lexical-obligation",
+    "source": "rust/src/grammar/import/antlr/lexical.rs",
+    "name": "Obligation",
+    "inventoryName": "obligation-type"
+  },
+  {
+    "id": "repository.native-imported-lexical-rule-facts",
+    "source": "rust/src/grammar/import/antlr/lexical.rs",
+    "name": "RuleFacts",
+    "inventoryName": "rule-facts"
+  },
+  {
+    "id": "repository.read-native-lexical-feature-form",
+    "source": "rust/src/grammar/feature_runtime/lexical_plan.rs",
+    "name": "form",
+    "inventoryName": "form"
+  },
+  {
+    "id": "repository.read-native-lexical-expression-kind",
+    "source": "rust/src/grammar/feature_runtime/lexical_plan.rs",
+    "name": "kind",
+    "inventoryName": "kind"
+  },
+  {
+    "id": "repository.read-native-lexical-inner-expression",
+    "source": "rust/src/grammar/feature_runtime/lexical_plan.rs",
+    "name": "inner",
+    "inventoryName": "inner"
+  },
+  {
+    "id": "repository.read-native-lexical-child-expressions",
+    "source": "rust/src/grammar/feature_runtime/lexical_plan.rs",
+    "name": "children",
+    "inventoryName": "children"
+  },
+  {
+    "id": "repository.lower-native-source-lexical-expression",
+    "source": "rust/src/grammar/feature_runtime/lexical_plan.rs",
+    "name": "lower_expression",
+    "inventoryName": "lower-expression"
+  },
+  {
+    "id": "repository.capture-native-lexical-expression-graph",
+    "source": "rust/src/grammar/feature_runtime/lexical_plan.rs",
+    "name": "capture",
+    "inventoryName": "capture"
+  },
+  {
+    "id": "repository.materialize-native-lexical-normalization",
+    "source": "rust/src/grammar/feature_runtime/lexical_plan.rs",
+    "name": "materialize",
+    "inventoryName": "materialize"
+  },
+  {
+    "id": "repository.read-native-source-lexical-plan",
+    "source": "rust/src/grammar/feature_runtime/lexical_plan.rs",
+    "name": "read_source",
+    "inventoryName": "read-source"
+  },
+  {
+    "id": "repository.read-native-selected-lexical-obligations",
+    "source": "rust/src/grammar/feature_runtime/lexical_plan.rs",
+    "name": "selected_obligations",
+    "inventoryName": "selected-obligations"
+  },
+  {
+    "id": "repository.read-native-lexical-action-statements",
+    "source": "rust/src/grammar/feature_runtime/lexical_plan.rs",
+    "name": "action",
+    "inventoryName": "action"
+  },
+  {
+    "id": "repository.read-native-lexical-transport-number",
+    "source": "rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "name": "number",
+    "inventoryName": "number"
+  },
+  {
+    "id": "repository.read-native-lexical-transport-position",
+    "source": "rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "name": "position",
+    "inventoryName": "position"
+  },
+  {
+    "id": "repository.create-native-lexical-kernel-text",
+    "source": "rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "name": "text",
+    "inventoryName": "text"
+  },
+  {
+    "id": "repository.create-native-lexical-kernel-text-list",
+    "source": "rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "name": "texts",
+    "inventoryName": "texts"
+  },
+  {
+    "id": "repository.read-native-shared-lexical-entry-form",
+    "source": "rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "name": "entry_form",
+    "inventoryName": "entry-form"
+  },
+  {
+    "id": "repository.read-native-shared-lexical-command-plan",
+    "source": "rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "name": "command_plan",
+    "inventoryName": "command-plan"
+  },
+  {
+    "id": "repository.read-native-shared-lexical-section-positions",
+    "source": "rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "name": "section_positions",
+    "inventoryName": "section-positions"
+  },
+  {
+    "id": "repository.read-native-shared-lexical-literal-rule",
+    "source": "rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "name": "literal_rule",
+    "inventoryName": "literal-rule"
+  },
+  {
+    "id": "repository.read-native-shared-lexical-binding-names",
+    "source": "rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "name": "binding_names",
+    "inventoryName": "binding-names"
+  },
+  {
+    "id": "repository.read-native-shared-lexical-declaration-issue",
+    "source": "rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "name": "declaration_issue",
+    "inventoryName": "declaration-issue"
+  },
+  {
+    "id": "repository.read-native-shared-lexical-normalization",
+    "source": "rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "name": "normalization",
+    "inventoryName": "normalization"
+  },
+  {
+    "id": "repository.read-native-shared-lexical-obligations",
+    "source": "rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "name": "obligations",
+    "inventoryName": "obligations"
+  },
+  {
+    "id": "repository.read-native-shared-lexical-mode",
+    "source": "rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "name": "active_mode",
+    "inventoryName": "active-mode"
+  },
+  {
+    "id": "repository.read-native-shared-lexical-trivia",
+    "source": "rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "name": "trivia",
+    "inventoryName": "trivia"
+  },
+  {
+    "id": "repository.read-native-shared-lexical-trivia-identity",
+    "source": "rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "name": "trivia_identity",
+    "inventoryName": "trivia-identity"
+  },
+  {
+    "id": "repository.read-native-shared-lexical-expected-token",
+    "source": "rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "name": "expected_token",
+    "inventoryName": "expected-token"
+  },
+  {
+    "id": "repository.read-native-shared-lexical-winner",
+    "source": "rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "name": "winner",
+    "inventoryName": "winner"
+  },
+  {
+    "id": "repository.configure-native-source-lexical-analyser-compiler",
+    "source": "rust/src/grammar/feature_runtime/load_lexers.rs",
+    "name": "configure_compiler",
+    "inventoryName": "configure-compiler"
+  },
+  {
+    "id": "repository.read-native-source-lexical-analyser-name",
+    "source": "rust/src/grammar/feature_runtime/load_lexers.rs",
+    "name": "is_elected",
+    "inventoryName": "is-elected"
+  },
+  {
+    "id": "repository.read-native-default-source-lexical-analyser",
+    "source": "rust/src/grammar/feature_runtime/load_lexers.rs",
+    "name": "default_lexer",
+    "inventoryName": "default-lexical-analyser"
+  },
+  {
+    "id": "repository.read-native-source-lexical-analysers",
+    "source": "rust/src/grammar/feature_runtime/load_lexers.rs",
+    "name": "read_lexers",
+    "inventoryName": "read-lexical-analysers"
+  },
+  {
+    "id": "repository.load-native-source-lexical-analysers",
+    "source": "rust/src/grammar/feature_runtime/load_lexers.rs",
+    "name": "load_lexers",
+    "inventoryName": "load-lexical-analysers"
+  },
+  {
+    "id": "repository.read-native-lexical-command-state",
+    "source": "rust/src/grammar/feature_runtime/lexical_election.rs",
+    "name": "state",
+    "inventoryName": "state"
+  },
+  {
+    "id": "repository.charge-native-lexical-command-step",
+    "source": "rust/src/grammar/feature_runtime/lexical_election.rs",
+    "name": "step",
+    "inventoryName": "step"
+  },
+  {
+    "id": "repository.read-native-lexical-command-column",
+    "source": "rust/src/grammar/feature_runtime/lexical_election.rs",
+    "name": "column",
+    "inventoryName": "column"
+  },
+  {
+    "id": "repository.read-native-lexical-command-end",
+    "source": "rust/src/grammar/feature_runtime/lexical_election.rs",
+    "name": "at_end",
+    "inventoryName": "at-end"
+  },
+  {
+    "id": "repository.evaluate-native-source-lexical-scope",
+    "source": "rust/src/grammar/feature_runtime/lexical_election.rs",
+    "name": "evaluate_lexical_scope",
+    "inventoryName": "evaluate-lexical-scope"
+  },
+  {
+    "id": "repository.evaluate-native-source-lexical-token",
+    "source": "rust/src/grammar/feature_runtime/lexical_election.rs",
+    "name": "evaluate_lexical_token",
+    "inventoryName": "evaluate-lexical-token"
+  },
+  {
+    "id": "repository.report-native-source-lexical-error",
+    "source": "rust/src/grammar/feature_runtime/lexical_election.rs",
+    "name": "lexical_error",
+    "inventoryName": "lexical-error"
+  },
+  {
+    "id": "repository.read-native-elected-lexical-winner",
+    "source": "rust/src/grammar/feature_runtime/lexical_election.rs",
+    "name": "elected_winner",
+    "inventoryName": "elected-winner"
+  },
+  {
+    "id": "repository.create-native-elected-lexical-leaf",
+    "source": "rust/src/grammar/feature_runtime/lexical_election.rs",
+    "name": "elected_leaf",
+    "inventoryName": "elected-leaf"
+  },
+  {
+    "id": "repository.skip-native-elected-lexical-trivia",
+    "source": "rust/src/grammar/feature_runtime/lexical_election.rs",
+    "name": "skip_elected_trivia",
+    "inventoryName": "skip-elected-trivia"
+  },
+  {
+    "id": "repository.evaluate-native-elected-terminal",
+    "source": "rust/src/grammar/feature_runtime/lexical_election.rs",
+    "name": "elected_terminal",
+    "inventoryName": "elected-terminal"
+  },
+  {
+    "id": "repository.evaluate-native-lexical-terminal",
+    "source": "rust/src/grammar/feature_runtime/lexical_election.rs",
+    "name": "lexical_terminal",
+    "inventoryName": "lexical-terminal"
+  },
+  {
+    "id": "repository.create-native-imported-lexical-form",
+    "source": "rust/src/grammar/import/antlr/lexical.rs",
+    "name": "form",
+    "inventoryName": "form"
+  },
+  {
+    "id": "repository.create-native-imported-lexical-name",
+    "source": "rust/src/grammar/import/antlr/lexical.rs",
+    "name": "name",
+    "inventoryName": "name"
+  },
+  {
+    "id": "repository.create-native-imported-lexical-text",
+    "source": "rust/src/grammar/import/antlr/lexical.rs",
+    "name": "text",
+    "inventoryName": "text"
+  },
+  {
+    "id": "repository.create-native-imported-lexical-reference",
+    "source": "rust/src/grammar/import/antlr/lexical.rs",
+    "name": "reference",
+    "inventoryName": "reference"
+  },
+  {
+    "id": "repository.create-native-imported-lexical-obligation",
+    "source": "rust/src/grammar/import/antlr/lexical.rs",
+    "name": "obligation",
+    "inventoryName": "obligation-operation"
+  },
+  {
+    "id": "repository.visit-native-imported-lexical-expressions",
+    "source": "rust/src/grammar/import/antlr/lexical.rs",
+    "name": "visit",
+    "inventoryName": "visit"
+  },
+  {
+    "id": "repository.create-native-imported-lexical-token-entry",
+    "source": "rust/src/grammar/import/antlr/lexical.rs",
+    "name": "token_entry",
+    "inventoryName": "token-entry"
+  },
+  {
+    "id": "repository.create-native-imported-lexical-declarations",
+    "source": "rust/src/grammar/import/antlr/lexical.rs",
+    "name": "declarations",
+    "inventoryName": "declarations"
+  },
+  {
+    "id": "repository.complete-native-imported-lexical-bindings",
+    "source": "rust/src/grammar/import/antlr/lexical.rs",
+    "name": "complete_bindings",
+    "inventoryName": "complete-bindings"
+  },
+  {
+    "id": "repository.load-native-embedded-grammar-sources",
+    "source": "rust/src/grammar/feature_runtime/load_selection.rs",
+    "name": "load_embedded_grammar_sources",
+    "inventoryName": "load-embedded-grammar-sources"
+  },
+  {
+    "id": "repository.check-native-lexical-channel-after-election",
+    "source": "rust/tests/unit/grammar_lexer_transport.rs",
+    "name": "lexical_election_retains_custom_channel_tokens_after_full_length_and_source_order",
+    "inventoryName": "lexical-election-retains-custom-channel-tokens-after-full-length-and-source-order"
+  },
+  {
+    "id": "repository.check-native-lexical-modes-commands-and-aliases",
+    "source": "rust/tests/unit/grammar_lexer_transport.rs",
+    "name": "lexical_election_preserves_modes_ordered_commands_and_superseded_aliases",
+    "inventoryName": "lexical-election-preserves-modes-ordered-commands-and-superseded-aliases"
+  },
+  {
+    "id": "repository.check-native-unresolved-winner-recovery-boundary",
+    "source": "rust/tests/unit/grammar_lexer_transport.rs",
+    "name": "lexical_election_keeps_unresolved_winners_distinct_from_syntax_recovery",
+    "inventoryName": "lexical-election-keeps-unresolved-winners-distinct-from-syntax-recovery"
+  },
+  {
+    "id": "repository.check-native-default-lexical-analyser-owner-and-empty-family",
+    "source": "rust/tests/unit/grammar_lexer_transport.rs",
+    "name": "lexical_default_owners_and_empty_families_preserve_obligations_and_eof",
+    "inventoryName": "lexical-default-owners-and-empty-families-preserve-obligations-and-end-of-file"
+  },
+  {
+    "id": "repository.check-native-unsupported-source-option-context",
+    "source": "rust/tests/unit/grammar_lexer_transport.rs",
+    "name": "lexical_unsupported_options_retain_original_bytes_and_refuse_unknown_context",
+    "inventoryName": "lexical-unsupported-options-retain-original-bytes-and-refuse-unknown-context"
+  },
+  {
+    "id": "repository.unsupported-source-grammar-option-blocks",
+    "source": "js/src/grammar-importers/antlr.js",
+    "name": "unsupportedOptions",
+    "inventoryName": "unsupported-options"
+  },
+  {
+    "id": "repository.unsupported-source-grammar-option-blocks",
+    "source": "rust/src/grammar/import/antlr/lexical.rs",
+    "name": "unsupported_options",
+    "inventoryName": "unsupported-options"
+  },
+  {
+    "id": "repository.check-unsupported-source-option-context",
+    "source": "js/tests/grammar-antlr-lexer-election.test.js",
+    "name": "ANTLR unsupported grammar options retain their original bytes as executable context obligations",
+    "inventoryName": "another-tool-for-language-recognition-unsupported-grammar-options-retain-the-original-bytes-as-executable-context-obligations"
+  },
+  {
+    "id": "repository.create-native-imported-lexical-analyser-control",
+    "source": "rust/tests/unit/grammar_lexer_transport.rs",
+    "name": "imported",
+    "inventoryName": "imported"
+  },
+  {
+    "id": "repository.read-native-control-lexical-leaves",
+    "source": "rust/tests/unit/grammar_lexer_transport.rs",
+    "name": "lexical_leaves",
+    "inventoryName": "lexical-leaves"
+  },
+  {
+    "id": "repository.read-native-control-lexical-source",
+    "source": "rust/tests/unit/grammar_lexer_transport.rs",
+    "name": "source_text",
+    "inventoryName": "source-text"
+  },
+  {
+    "id": "repository.check-default-parser-owner-source-obligations",
+    "source": "js/tests/grammar-antlr-lexer-election.test.js",
+    "name": "ANTLR default parser owners retain unresolved obligations without changing imported bodies",
+    "inventoryName": "another-tool-for-language-recognition-default-parser-owners-retain-unresolved-obligations-without-changing-imported-bodies"
+  },
+  {
+    "id": "repository.check-empty-lexical-analyser-family-source-boundary",
+    "source": "js/tests/grammar-antlr-lexer-election.test.js",
+    "name": "ANTLR empty lexical families retain EOF acceptance and reject unrecognized source bytes",
+    "inventoryName": "another-tool-for-language-recognition-empty-lexical-families-retain-end-of-file-acceptance-and-reject-unrecognized-source-bytes"
+  },
+  {
+    "id": "repository.check-another-tool-for-language-recognition-match-order-before-channel",
+    "source": "js/tests/grammar-antlr-lexer-election.test.js",
+    "name": "ANTLR lexical election uses full match length and original order before channel filtering",
+    "inventoryName": "another-tool-for-language-recognition-lexical-election-uses-full-match-length-and-original-order-before-channel-filtering"
+  },
+  {
+    "id": "repository.check-another-tool-for-language-recognition-custom-channel-token-retention",
+    "source": "js/tests/grammar-antlr-lexer-election.test.js",
+    "name": "ANTLR a catchall on a custom channel remains a retained token rather than a name-based error",
+    "inventoryName": "another-tool-for-language-recognition-a-catchall-on-a-custom-channel-remains-a-retained-token-rather-in-comparison-to-a-name-based-error"
+  },
+  {
+    "id": "repository.check-another-tool-for-language-recognition-parser-independent-election",
+    "source": "js/tests/grammar-antlr-lexer-election.test.js",
+    "name": "ANTLR lexical priority is independent of which parser branch could succeed",
+    "inventoryName": "another-tool-for-language-recognition-lexical-priority-is-independent-of-the-parser-branch-can-succeed"
+  },
+  {
+    "id": "repository.check-another-tool-for-language-recognition-implicit-literals-and-fragments",
+    "source": "js/tests/grammar-antlr-lexer-election.test.js",
+    "name": "ANTLR implicit literal tokens precede explicit rules and fragments never enter election",
+    "inventoryName": "another-tool-for-language-recognition-implicit-literal-tokens-precede-explicit-rules-and-fragments-never-enter-election"
+  },
+  {
+    "id": "repository.check-another-tool-for-language-recognition-winning-mode-command-identity",
+    "source": "js/tests/grammar-antlr-lexer-election.test.js",
+    "name": "ANTLR winning mode commands apply once and retyped tokens keep source rule identity",
+    "inventoryName": "another-tool-for-language-recognition-winning-mode-commands-apply-once-and-type-changed-tokens-keep-source-rule-identity"
+  },
+  {
+    "id": "repository.check-another-tool-for-language-recognition-losing-command-isolation",
+    "source": "js/tests/grammar-antlr-lexer-election.test.js",
+    "name": "ANTLR losing commands cannot change the winning lexer mode",
+    "inventoryName": "another-tool-for-language-recognition-losing-commands-can-not-change-the-winning-lexical-analyser-mode"
+  },
+  {
+    "id": "repository.check-another-tool-for-language-recognition-literal-lazy-separator",
+    "source": "js/tests/grammar-antlr-lexer-election.test.js",
+    "name": "ANTLR literal-delimited nongreedy comments stop at their first delimiter",
+    "inventoryName": "another-tool-for-language-recognition-literal-delimited-non-greedy-comments-stop-at-the-first-separator"
+  },
+  {
+    "id": "repository.check-another-tool-for-language-recognition-unresolved-executable-obligations",
+    "source": "js/tests/grammar-antlr-lexer-election.test.js",
+    "name": "ANTLR unresolved viable predicates and winning actions are explicit failures",
+    "inventoryName": "another-tool-for-language-recognition-unresolved-viable-predicates-and-winning-actions-are-explicit-failures"
+  },
+  {
+    "id": "repository.check-another-tool-for-language-recognition-recovery-token-boundaries",
+    "source": "js/tests/grammar-antlr-lexer-election.test.js",
+    "name": "ANTLR parser recovery retains errors without retrying inside a longer token",
+    "inventoryName": "another-tool-for-language-recognition-parser-recovery-retains-errors-without-retrying-inside-a-longer-token"
+  },
+  {
+    "id": "repository.check-another-tool-for-language-recognition-coding-and-decoding-operation-and-public-rename-closure",
+    "source": "js/tests/grammar-antlr-lexer-election.test.js",
+    "name": "ANTLR lexer declarations survive both codecs and public renaming without rewriting local closure",
+    "inventoryName": "another-tool-for-language-recognition-lexical-analyser-declarations-survive-both-coding-and-decoding-operations-and-public-renaming-without-rewriting-local-closure"
+  },
+  {
+    "id": "repository.check-another-tool-for-language-recognition-source-local-merge-boundary",
+    "source": "js/tests/grammar-antlr-lexer-election.test.js",
+    "name": "ANTLR source-local election remains separate from native alternatives after merge",
+    "inventoryName": "another-tool-for-language-recognition-source-local-election-remains-separate-from-native-alternatives-after-merge"
+  },
+  {
+    "id": "repository.check-another-tool-for-language-recognition-reconciled-original-owners",
+    "source": "js/tests/grammar-antlr-lexer-election.test.js",
+    "name": "ANTLR reconciled parser rules preserve each original owner and unresolved action",
+    "inventoryName": "another-tool-for-language-recognition-reconciled-parser-rules-preserve-each-original-owner-and-unresolved-action"
+  },
+  {
+    "id": "repository.check-eligible-longest-lexical-winner",
+    "source": "js/tests/grammar-antlr-lexer-election.test.js",
+    "name": "shared lexical winner decision never promotes ineligible candidates or parser viability",
+    "inventoryName": "shared-lexical-winner-decision-never-promotes-ineligible-candidates-or-parser-viability"
+  },
+  {
+    "id": "repository.read-lexical-analyser-declaration-control-issue",
+    "source": "js/tests/grammar-lexer-rules.test.js",
+    "name": "issue",
+    "inventoryName": "issue"
+  },
+  {
+    "id": "repository.check-portable-lexical-command-plans",
+    "source": "js/tests/grammar-lexer-rules.test.js",
+    "name": "portable lexer command plans preserve ordering, aliases and unsupported source",
+    "inventoryName": "portable-lexical-analyser-command-plans-preserve-ordering-aliases-and-unsupported-source"
+  },
+  {
+    "id": "repository.check-portable-lexical-declaration-validation",
+    "source": "js/tests/grammar-lexer-rules.test.js",
+    "name": "portable lexer declaration validation owns duplicates, later declarations and mode actions",
+    "inventoryName": "portable-lexical-analyser-declaration-validation-owns-duplicates-later-declarations-and-mode-actions"
+  },
+  {
+    "id": "repository.check-lexical-unused-types-and-comments",
+    "source": "js/tests/grammar-lexer-rules.test.js",
+    "name": "lexer source declarations retain unused token types and filter channel comments",
+    "inventoryName": "lexical-analyser-source-declarations-retain-unused-token-types-and-filter-channel-comments"
+  },
+  {
+    "id": "repository.check-lexical-obligation-graph-closure",
+    "source": "js/tests/grammar-lexer-rules.test.js",
+    "name": "portable lexical obligation closure keeps cycles, sharing and root action ownership",
+    "inventoryName": "portable-lexical-obligation-closure-keeps-cycles-sharing-and-root-action-ownership"
+  },
+  {
+    "id": "repository.check-lazy-lexical-normalization-boundary",
+    "source": "js/tests/grammar-lexer-rules.test.js",
+    "name": "portable lazy normalization admits exact final delimiters and retains other obligations",
+    "inventoryName": "portable-lazy-normalization-admits-exact-final-separators-and-retains-other-obligations"
+  },
+  {
+    "id": "repository.check-lexical-schema-complete-source-transport",
+    "source": "js/tests/grammar-lexer-rules.test.js",
+    "name": "lexical schema source transports every field without hand-authored native form semantics",
+    "inventoryName": "lexical-schema-source-transports-every-field-without-hand-authored-native-form-semantics"
+  },
+  {
+    "id": "repository.check-complete-lexical-rule-source-translation",
+    "source": "js/tests/grammar-lexer-rules.test.js",
+    "name": "complete portable lexical rules translate from the actual shared JavaScript module",
+    "inventoryName": "complete-portable-lexical-rules-translate-from-the-actual-shared-java-script-module"
+  },
+  {
+    "id": "repository.read-original-lexical-context-controls",
+    "source": "js/tests/grammar-lexer-proof-context.test.js",
+    "name": "inputs",
+    "inventoryName": "inputs"
+  },
+  {
+    "id": "repository.create-lexical-context-control-plan",
+    "source": "js/tests/grammar-lexer-proof-context.test.js",
+    "name": "sourcePlan",
+    "inventoryName": "source-plan"
+  },
+  {
+    "id": "repository.create-source-qualified-lexical-controls",
+    "source": "js/tests/grammar-lexer-proof-context.test.js",
+    "name": "scoped",
+    "inventoryName": "scoped"
+  },
+  {
+    "id": "repository.check-lexical-correspondence-context",
+    "source": "js/tests/grammar-lexer-proof-context.test.js",
+    "name": "closed global correspondence retains lexical competition, channel, modes and unresolved action context",
+    "inventoryName": "closed-global-correspondence-retains-lexical-competition-channel-modes-and-unresolved-action-context"
+  },
+  {
+    "id": "repository.check-lexical-context-source-free-reload",
+    "source": "js/tests/grammar-lexer-proof-context.test.js",
+    "name": "lexical context reload preserves complete linked declarations and original global fixtures",
+    "inventoryName": "lexical-context-reload-preserves-complete-linked-declarations-and-original-global-fixtures"
+  },
+  {
+    "id": "repository.check-lexical-wrapper-and-terminal-validation",
+    "source": "js/tests/grammar-lexer-validation.test.js",
+    "name": "grammar validation treats lexical scope as a wrapper and elected tokens as consuming terminals",
+    "inventoryName": "grammar-validation-treats-lexical-scope-as-a-wrapper-and-elected-tokens-as-consuming-terminals"
+  },
+  {
+    "id": "translation.read-callable-renaming-field",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "readCallableRenamingField",
+    "inventoryName": "read-callable-renaming-field"
+  },
+  {
+    "id": "translation.read-callable-renaming-field",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "read_callable_renaming_field",
+    "inventoryName": "read-callable-renaming-field"
+  },
+  {
+    "id": "translation.read-callable-renaming-constant",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "readCallableRenamingConstant",
+    "inventoryName": "read-callable-renaming-constant"
+  },
+  {
+    "id": "translation.read-callable-renaming-constant",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "read_callable_renaming_constant",
+    "inventoryName": "read-callable-renaming-constant"
+  },
+  {
+    "id": "translation.plan-callable-source-renaming",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "planCallableSourceRenaming",
+    "inventoryName": "plan-callable-source-renaming"
+  },
+  {
+    "id": "translation.plan-callable-source-renaming",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "plan_callable_source_renaming",
+    "inventoryName": "plan-callable-source-renaming"
+  },
+  {
+    "id": "repository.read-callable-renaming-binding",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "callableRenamingBinding",
+    "inventoryName": "callable-renaming-binding"
+  },
+  {
+    "id": "repository.read-callable-renaming-binding",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "callable_renaming_binding",
+    "inventoryName": "callable-renaming-binding"
+  },
+  {
+    "id": "repository.plan-one-callable-renamed-node",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "callableRenamedNode",
+    "inventoryName": "callable-renamed-node"
+  },
+  {
+    "id": "repository.plan-one-callable-renamed-node",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "callable_renamed_node",
+    "inventoryName": "callable-renamed-node"
+  },
+  {
+    "id": "repository.rename-callable-source-expression",
+    "source": "js/src/translation/callable-source.js",
+    "name": "renameCallableSourceExpression",
+    "inventoryName": "rename-callable-source-expression"
+  },
+  {
+    "id": "repository.materialize-callable-source-plan",
+    "source": "js/src/translation/callable-source.js",
+    "name": "materialize",
+    "inventoryName": "materialize"
+  },
+  {
+    "id": "repository.check-callable-reconstruction-identity-boundaries",
+    "source": "js/tests/translation-callable-source-rules.test.js",
+    "name": "callable reconstruction plans preserve lexical shadowing raw cell carriers and metadata identities",
+    "inventoryName": "callable-reconstruction-plans-preserve-lexical-shadowing-raw-cell-carriers-and-metadata-identities"
+  },
+  {
+    "id": "translation.render-string-point-iteration",
+    "source": "js/src/translation/array-value-rules.js",
+    "name": "renderStringPointIteration",
+    "inventoryName": "render-string-point-iteration"
+  },
+  {
+    "id": "translation.render-string-point-iteration",
+    "source": "rust/src/translation/array_value_rules.rs",
+    "name": "render_string_point_iteration",
+    "inventoryName": "render-string-point-iteration"
+  },
+  {
+    "id": "translation.render-collection-iteration",
+    "source": "js/src/translation/array-value-rules.js",
+    "name": "renderCollectionIteration",
+    "inventoryName": "render-collection-iteration"
+  },
+  {
+    "id": "translation.render-collection-iteration",
+    "source": "rust/src/translation/array_value_rules.rs",
+    "name": "render_collection_iteration",
+    "inventoryName": "render-collection-iteration"
+  },
+  {
+    "id": "repository.check-iteration-source-rendering-order-and-evaluation",
+    "source": "js/tests/translation-array-value-rules.test.js",
+    "name": "shared iterable rendering preserves code points, entry order and one receiver evaluation",
+    "inventoryName": "shared-iteration-source-rendering-preserves-code-points-entry-order-and-one-receiver-evaluation"
+  },
+  {
+    "id": "translation.render-primitive-string-representation",
+    "source": "js/src/translation/primitive-method-rules.js",
+    "name": "renderPrimitiveStringRepresentation",
+    "inventoryName": "render-primitive-string-representation"
+  },
+  {
+    "id": "translation.render-primitive-string-representation",
+    "source": "rust/src/translation/primitive_method_rules.rs",
+    "name": "render_primitive_string_representation",
+    "inventoryName": "render-primitive-string-representation"
+  },
+  {
+    "id": "translation.read-primitive-copy-slice-form",
+    "source": "js/src/translation/primitive-method-rules.js",
+    "name": "readPrimitiveCopySliceForm",
+    "inventoryName": "read-primitive-copy-slice-form"
+  },
+  {
+    "id": "translation.read-primitive-copy-slice-form",
+    "source": "rust/src/translation/primitive_method_rules.rs",
+    "name": "read_primitive_copy_slice_form",
+    "inventoryName": "read-primitive-copy-slice-form"
+  },
+  {
+    "id": "translation.read-primitive-method-minimum-arguments",
+    "source": "js/src/translation/primitive-method-rules.js",
+    "name": "readPrimitiveMethodMinimumArguments",
+    "inventoryName": "read-primitive-method-minimum-arguments"
+  },
+  {
+    "id": "translation.read-primitive-method-minimum-arguments",
+    "source": "rust/src/translation/primitive_method_rules.rs",
+    "name": "read_primitive_method_minimum_arguments",
+    "inventoryName": "read-primitive-method-minimum-arguments"
+  },
+  {
+    "id": "translation.read-primitive-method-maximum-arguments",
+    "source": "js/src/translation/primitive-method-rules.js",
+    "name": "readPrimitiveMethodMaximumArguments",
+    "inventoryName": "read-primitive-method-maximum-arguments"
+  },
+  {
+    "id": "translation.read-primitive-method-maximum-arguments",
+    "source": "rust/src/translation/primitive_method_rules.rs",
+    "name": "read_primitive_method_maximum_arguments",
+    "inventoryName": "read-primitive-method-maximum-arguments"
+  },
+  {
+    "id": "translation.read-primitive-method-argument-count",
+    "source": "js/src/translation/primitive-method-rules.js",
+    "name": "readPrimitiveMethodArgumentCount",
+    "inventoryName": "read-primitive-method-argument-count"
+  },
+  {
+    "id": "translation.read-primitive-method-argument-count",
+    "source": "rust/src/translation/primitive_method_rules.rs",
+    "name": "read_primitive_method_argument_count",
+    "inventoryName": "read-primitive-method-argument-count"
+  },
+  {
+    "id": "translation.read-primitive-method-checked-argument-kind",
+    "source": "js/src/translation/primitive-method-rules.js",
+    "name": "readPrimitiveMethodCheckedArgumentKind",
+    "inventoryName": "read-primitive-method-checked-argument-kind"
+  },
+  {
+    "id": "translation.read-primitive-method-checked-argument-kind",
+    "source": "rust/src/translation/primitive_method_rules.rs",
+    "name": "read_primitive_method_checked_argument_kind",
+    "inventoryName": "read-primitive-method-checked-argument-kind"
+  },
+  {
+    "id": "translation.read-primitive-method-default-form",
+    "source": "js/src/translation/primitive-method-rules.js",
+    "name": "readPrimitiveMethodDefaultForm",
+    "inventoryName": "read-primitive-method-default-form"
+  },
+  {
+    "id": "translation.read-primitive-method-default-form",
+    "source": "rust/src/translation/primitive_method_rules.rs",
+    "name": "read_primitive_method_default_form",
+    "inventoryName": "read-primitive-method-default-form"
+  },
+  {
+    "id": "translation.read-primitive-method-default-value",
+    "source": "js/src/translation/primitive-method-rules.js",
+    "name": "readPrimitiveMethodDefaultValue",
+    "inventoryName": "read-primitive-method-default-value"
+  },
+  {
+    "id": "translation.read-primitive-method-default-value",
+    "source": "rust/src/translation/primitive_method_rules.rs",
+    "name": "read_primitive_method_default_value",
+    "inventoryName": "read-primitive-method-default-value"
+  },
+  {
+    "id": "translation.read-primitive-method-checked-result-form",
+    "source": "js/src/translation/primitive-method-rules.js",
+    "name": "readPrimitiveMethodCheckedResultForm",
+    "inventoryName": "read-primitive-method-checked-result-form"
+  },
+  {
+    "id": "translation.read-primitive-method-checked-result-form",
+    "source": "rust/src/translation/primitive_method_rules.rs",
+    "name": "read_primitive_method_checked_result_form",
+    "inventoryName": "read-primitive-method-checked-result-form"
+  },
+  {
+    "id": "translation.read-primitive-method-argument-obligation",
+    "source": "js/src/translation/primitive-method-rules.js",
+    "name": "readPrimitiveMethodArgumentObligation",
+    "inventoryName": "read-primitive-method-argument-obligation"
+  },
+  {
+    "id": "translation.read-primitive-method-argument-obligation",
+    "source": "rust/src/translation/primitive_method_rules.rs",
+    "name": "read_primitive_method_argument_obligation",
+    "inventoryName": "read-primitive-method-argument-obligation"
+  },
+  {
+    "id": "translation.render-primitive-array-search-comparison-operation",
+    "source": "js/src/translation/primitive-method-rules.js",
+    "name": "renderPrimitiveArraySearchComparator",
+    "inventoryName": "render-primitive-array-search-comparison-operation"
+  },
+  {
+    "id": "translation.render-primitive-array-search-comparison-operation",
+    "source": "rust/src/translation/primitive_method_rules.rs",
+    "name": "render_primitive_array_search_comparator",
+    "inventoryName": "render-primitive-array-search-comparison-operation"
+  },
+  {
+    "id": "translation.render-primitive-array-search-expression",
+    "source": "js/src/translation/primitive-method-rules.js",
+    "name": "renderPrimitiveArraySearchExpression",
+    "inventoryName": "render-primitive-array-search-expression"
+  },
+  {
+    "id": "translation.render-primitive-array-search-expression",
+    "source": "rust/src/translation/primitive_method_rules.rs",
+    "name": "render_primitive_array_search_expression",
+    "inventoryName": "render-primitive-array-search-expression"
+  },
+  {
+    "id": "translation.read-primitive-method-rendering-refusal",
+    "source": "js/src/translation/primitive-method-rules.js",
+    "name": "readPrimitiveMethodRenderingRefusal",
+    "inventoryName": "read-primitive-method-rendering-refusal"
+  },
+  {
+    "id": "translation.read-primitive-method-rendering-refusal",
+    "source": "rust/src/translation/primitive_method_rules.rs",
+    "name": "read_primitive_method_rendering_refusal",
+    "inventoryName": "read-primitive-method-rendering-refusal"
+  },
+  {
+    "id": "translation.render-primitive-method-argument",
+    "source": "js/src/translation/primitive-method-rules.js",
+    "name": "renderPrimitiveMethodArgument",
+    "inventoryName": "render-primitive-method-argument"
+  },
+  {
+    "id": "translation.render-primitive-method-argument",
+    "source": "rust/src/translation/primitive_method_rules.rs",
+    "name": "render_primitive_method_argument",
+    "inventoryName": "render-primitive-method-argument"
+  },
+  {
+    "id": "translation.render-primitive-method-expression",
+    "source": "js/src/translation/primitive-method-rules.js",
+    "name": "renderPrimitiveMethodExpression",
+    "inventoryName": "render-primitive-method-expression"
+  },
+  {
+    "id": "translation.render-primitive-method-expression",
+    "source": "rust/src/translation/primitive_method_rules.rs",
+    "name": "render_primitive_method_expression",
+    "inventoryName": "render-primitive-method-expression"
+  },
+  {
+    "id": "translation.require-primitive-method-unicode-sixteen-bit",
+    "source": "js/src/translation/primitive-method-rules.js",
+    "name": "requirePrimitiveMethodUtf16",
+    "inventoryName": "require-primitive-method-unicode-transformation-format-sixteen-bit"
+  },
+  {
+    "id": "translation.require-primitive-method-unicode-sixteen-bit",
+    "source": "rust/src/translation/primitive_method_rules.rs",
+    "name": "require_primitive_method_utf16",
+    "inventoryName": "require-primitive-method-unicode-transformation-format-sixteen-bit"
+  },
+  {
+    "id": "repository.observe-primitive-method-control",
+    "source": "js/tests/translation-primitive-method-rules.test.js",
+    "name": "observe",
+    "inventoryName": "observe"
+  },
+  {
+    "id": "repository.observe-array-membership-control",
+    "source": "js/tests/translation-array-includes.test.js",
+    "name": "observe",
+    "inventoryName": "observe"
+  },
+  {
+    "id": "repository.check-primitive-method-defaults-and-order",
+    "source": "js/tests/translation-primitive-method-rules.test.js",
+    "name": "primitive methods retain default slots, UTF-16 results and actual evaluation order",
+    "inventoryName": "primitive-methods-retain-default-slots-unicode-transformation-format-sixteen-bit-results-and-actual-evaluation-order"
+  },
+  {
+    "id": "repository.check-primitive-split-absent-slot",
+    "source": "js/tests/translation-primitive-method-rules.test.js",
+    "name": "projected absent split separator remains an ordered null host slot",
+    "inventoryName": "projected-absent-split-separator-remains-an-ordered-null-host-slot"
+  },
+  {
+    "id": "repository.check-whole-primitive-method-module-translation",
+    "source": "js/tests/translation-primitive-method-rules.test.js",
+    "name": "the complete primitive method checking and rendering module self translates without runtime preludes",
+    "inventoryName": "the-complete-primitive-method-checking-and-rendering-module-self-translates-without-runtime-preludes"
+  },
+  {
+    "id": "repository.check-array-membership-primitive-equality",
+    "source": "js/tests/translation-array-includes.test.js",
+    "name": "array membership uses actual receiver and element types with SameValueZero observations",
+    "inventoryName": "array-membership-uses-actual-receiver-and-element-types-with-same-value-zero-observations"
+  },
+  {
+    "id": "repository.check-original-string-membership-shape",
+    "source": "js/tests/translation-array-includes.test.js",
+    "name": "string membership keeps its raw StringTest shape and unconstrained string default",
+    "inventoryName": "string-membership-keeps-its-raw-string-test-shape-and-unconstrained-string-default"
+  },
+  {
+    "id": "repository.check-array-membership-type-and-identity-refusals",
+    "source": "js/tests/translation-array-includes.test.js",
+    "name": "array membership refuses incompatible element and structured identity searches through ordinary checks",
+    "inventoryName": "array-membership-refuses-incompatible-element-and-structured-identity-searches-through-ordinary-checks"
+  },
+  {
+    "id": "repository.read-sealed-physical-native-test-groups",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "readPhysicalShardGroups",
+    "inventoryName": "read-physical-shard-groups"
+  },
+  {
+    "id": "repository.read-rust-suite-physical-partition",
+    "source": "js/scripts/issue-195-rust-suite-partitions.mjs",
+    "name": "rustSuitePartition",
+    "inventoryName": "rust-suite-partition"
+  },
+  {
+    "id": "repository.read-rust-suite-partition-selection",
+    "source": "js/scripts/issue-195-rust-suite-partitions.mjs",
+    "name": "rustSuiteSelection",
+    "inventoryName": "rust-suite-selection"
+  },
+  {
+    "id": "repository.check-rust-suite-partition-environment",
+    "source": "js/scripts/issue-195-rust-suite-partitions.mjs",
+    "name": "assertRustSuitePartitionEnvironment",
+    "inventoryName": "assert-rust-suite-partition-environment"
+  },
+  {
+    "id": "repository.read-original-rust-suite-command-arguments",
+    "source": "js/scripts/issue-195-rust-suite-partitions.mjs",
+    "name": "rustSuiteCommandArguments",
+    "inventoryName": "rust-suite-command-arguments"
+  },
+  {
+    "id": "repository.render-original-rust-suite-command",
+    "source": "js/scripts/issue-195-rust-suite-partitions.mjs",
+    "name": "rustSuiteCommandText",
+    "inventoryName": "rust-suite-command-text"
+  },
+  {
+    "id": "repository.recognize-rust-suite-partition-name",
+    "source": "js/scripts/issue-195-rust-suite-partitions.mjs",
+    "name": "isRustSuitePartitionName",
+    "inventoryName": "is-rust-suite-partition-name"
+  },
+  {
+    "id": "repository.verify-rust-suite-physical-union",
+    "source": "js/scripts/issue-195-rust-suite-partitions.mjs",
+    "name": "verifyRustSuitePartitionUnion",
+    "inventoryName": "verify-rust-suite-partition-union"
+  },
+  {
+    "id": "repository.merge-rust-suite-partition-evidence",
+    "source": "js/scripts/issue-195-rust-suite-partitions.mjs",
+    "name": "mergeRustSuitePartitions",
+    "inventoryName": "merge-rust-suite-partitions"
+  },
+  {
+    "id": "repository.read-rust-evidence-partition-policy",
+    "source": "js/scripts/generate-rust-evidence-partition-policy.mjs",
+    "name": "rustEvidencePartitionPolicy",
+    "inventoryName": "rust-evidence-partition-policy"
+  },
+  {
+    "id": "repository.create-rust-evidence-partition-controls",
+    "source": "js/tests/issue-195-rust-suite-partitions.test.js",
+    "name": "selections",
+    "inventoryName": "selections"
+  },
+  {
+    "id": "repository.create-injected-native-evidence-process",
+    "source": "js/tests/issue-195-rust-suite-partitions.test.js",
+    "name": "fakeEvidenceNative",
+    "inventoryName": "fake-evidence-native"
+  },
+  {
+    "id": "repository.create-native-evidence-group-controls",
+    "source": "js/tests/issue-195-rust-suite-partitions.test.js",
+    "name": "nativeEvidenceGroups",
+    "inventoryName": "native-evidence-groups"
+  },
+  {
+    "id": "repository.create-rust-evidence-stage-record-controls",
+    "source": "js/tests/issue-195-rust-suite-partitions.test.js",
+    "name": "partitionRecords",
+    "inventoryName": "partition-records"
+  },
+  {
+    "id": "repository.check-native-evidence-observation-owner-groups",
+    "source": "js/tests/issue-195-rust-suite-partitions.test.js",
+    "name": "Rust evidence partition policy preserves every existing native scope and co-locates observation owners",
+    "inventoryName": "rust-evidence-partition-policy-preserves-every-existing-native-scope-and-groups-observation-owners"
+  },
+  {
+    "id": "repository.check-native-evidence-cli-runner-agreement",
+    "source": "js/tests/issue-195-rust-suite-partitions.test.js",
+    "name": "Rust evidence CLI scope and configured Cargo runner must agree exactly",
+    "inventoryName": "rust-evidence-command-line-interface-scope-and-configured-cargo-runner-must-agree-exactly"
+  },
+  {
+    "id": "repository.check-native-evidence-inventory-execution",
+    "source": "js/tests/issue-195-rust-suite-partitions.test.js",
+    "name": "actual native inventories execute every evidence test once with unchanged diagnostic controls",
+    "inventoryName": "actual-native-inventories-execute-every-evidence-test-once-with-unchanged-diagnostic-controls"
+  },
+  {
+    "id": "repository.check-native-evidence-complete-union-refusals",
+    "source": "js/tests/issue-195-rust-suite-partitions.test.js",
+    "name": "complete Rust evidence rejects missing, duplicated, changed or foreign native executions",
+    "inventoryName": "complete-rust-evidence-rejects-missing-duplicated-changed-or-foreign-native-executions"
+  },
+  {
+    "id": "repository.check-original-logical-native-stage-reconstruction",
+    "source": "js/tests/issue-195-rust-suite-partitions.test.js",
+    "name": "complete physical Rust records reconstruct only the original logical suite after native union verification",
+    "inventoryName": "complete-physical-rust-records-reconstruct-only-the-original-logical-suite-after-native-union-verification"
+  },
+  {
+    "id": "repository.check-counterfeit-native-stage-refusals",
+    "source": "js/tests/issue-195-rust-suite-partitions.test.js",
+    "name": "missing or counterfeit Rust stage scopes cannot declare successful suite evidence",
+    "inventoryName": "missing-or-counterfeit-rust-stage-scopes-can-not-declare-successful-suite-evidence"
+  },
+  {
+    "id": "repository.check-native-partition-observation-disjoint-property",
+    "source": "js/tests/issue-195-rust-suite-partitions.test.js",
+    "name": "Rust partition observation files remain disjoint and the original duplicate gate stays active",
+    "inventoryName": "rust-partition-observation-files-remain-disjoint-and-the-original-duplicate-gate-stays-active"
+  },
+  {
+    "id": "repository.check-native-evidence-admitted-workflow-identities",
+    "source": "js/tests/issue-195-rust-suite-partitions.test.js",
+    "name": "Rust evidence scheduling retains shared source requirement scopes and exact admitted job identities",
+    "inventoryName": "rust-evidence-scheduling-retains-shared-source-requirement-scopes-and-exact-admitted-job-identities"
+  },
+  {
+    "id": "repository.check-native-evidence-original-tools-and-budget",
+    "source": "js/tests/issue-195-rust-suite-partitions.test.js",
+    "name": "the Rust evidence workflow preserves its tools, producer gates and original sixty-minute budget",
+    "inventoryName": "the-rust-evidence-workflow-preserves-its-tools-producer-gates-and-original-sixty-minute-budget"
+  },
+  {
+    "id": "repository.native-inference-term-facts",
+    "source": "rust/src/translation/javascript/infer/term_facts.rs",
+    "name": "TermFacts",
+    "inventoryName": "term-facts"
+  },
+  {
+    "id": "repository.read-native-inference-position-number",
+    "source": "rust/src/translation/javascript/infer/term_facts.rs",
+    "name": "number",
+    "inventoryName": "number"
+  },
+  {
+    "id": "repository.read-native-inference-identity-position",
+    "source": "rust/src/translation/javascript/infer/term_facts.rs",
+    "name": "position",
+    "inventoryName": "position"
+  },
+  {
+    "id": "repository.create-native-inference-term-facts",
+    "source": "rust/src/translation/javascript/infer/term_facts.rs",
+    "name": "TermFacts::new",
+    "inventoryName": "term-facts-new"
+  },
+  {
+    "id": "repository.create-native-resolved-inference-term-facts",
+    "source": "rust/src/translation/javascript/infer/term_facts.rs",
+    "name": "TermFacts::resolved",
+    "inventoryName": "term-facts-resolved"
+  },
+  {
+    "id": "repository.read-native-inference-input-position",
+    "source": "rust/src/translation/javascript/infer/term_facts.rs",
+    "name": "TermFacts::position",
+    "inventoryName": "term-facts-position"
+  },
+  {
+    "id": "repository.read-retained-native-inference-term",
+    "source": "rust/src/translation/javascript/infer/term_facts.rs",
+    "name": "TermFacts::term",
+    "inventoryName": "term-facts-term"
+  },
+  {
+    "id": "repository.read-native-inference-fact-value",
+    "source": "rust/src/translation/javascript/infer/term_facts.rs",
+    "name": "TermFacts::value",
+    "inventoryName": "term-facts-value"
+  },
+  {
+    "id": "repository.read-native-inference-numeric-payloads",
+    "source": "rust/src/translation/javascript/infer/term_facts.rs",
+    "name": "TermFacts::numbers",
+    "inventoryName": "term-facts-numbers"
+  },
+  {
+    "id": "repository.insert-native-inference-source-value",
+    "source": "rust/src/translation/javascript/infer/term_facts.rs",
+    "name": "TermFacts::json",
+    "inventoryName": "term-facts-javascript-object-notation"
+  },
+  {
+    "id": "repository.insert-native-inference-term-array",
+    "source": "rust/src/translation/javascript/infer/term_facts.rs",
+    "name": "TermFacts::array",
+    "inventoryName": "term-facts-array"
+  },
+  {
+    "id": "repository.materialize-native-inference-source-value",
+    "source": "rust/src/translation/javascript/infer/term_facts.rs",
+    "name": "TermFacts::materialize",
+    "inventoryName": "term-facts-materialize"
+  },
+  {
+    "id": "repository.insert-native-inference-fact-node",
+    "source": "rust/src/translation/javascript/infer/term_facts.rs",
+    "name": "TermFacts::node",
+    "inventoryName": "term-facts-node"
+  },
+  {
+    "id": "repository.insert-native-inference-fact-edges",
+    "source": "rust/src/translation/javascript/infer/term_facts.rs",
+    "name": "TermFacts::edges",
+    "inventoryName": "term-facts-edges"
+  },
+  {
+    "id": "repository.insert-native-inference-scalar-fact",
+    "source": "rust/src/translation/javascript/infer/term_facts.rs",
+    "name": "TermFacts::scalar",
+    "inventoryName": "term-facts-scalar"
+  },
+  {
+    "id": "repository.insert-native-inference-value-tree",
+    "source": "rust/src/translation/javascript/infer/term_facts.rs",
+    "name": "TermFacts::value_tree",
+    "inventoryName": "term-facts-value-tree"
+  },
+  {
+    "id": "repository.insert-native-inference-kind-fact",
+    "source": "rust/src/translation/javascript/infer/term_facts.rs",
+    "name": "TermFacts::kind",
+    "inventoryName": "term-facts-kind"
+  },
+  {
+    "id": "repository.insert-native-inference-term-sequence",
+    "source": "rust/src/translation/javascript/infer/term_facts.rs",
+    "name": "TermFacts::sequence",
+    "inventoryName": "term-facts-sequence"
+  },
+  {
+    "id": "repository.insert-native-resolved-term-sequence",
+    "source": "rust/src/translation/javascript/infer/term_facts.rs",
+    "name": "TermFacts::sequence_resolved",
+    "inventoryName": "term-facts-sequence-resolved"
+  },
+  {
+    "id": "repository.insert-retained-native-inference-term",
+    "source": "rust/src/translation/javascript/infer/term_facts.rs",
+    "name": "TermFacts::insert",
+    "inventoryName": "term-facts-insert"
+  },
+  {
+    "id": "repository.insert-native-resolved-inference-term",
+    "source": "rust/src/translation/javascript/infer/term_facts.rs",
+    "name": "TermFacts::insert_resolved",
+    "inventoryName": "term-facts-insert-resolved"
+  },
+  {
+    "id": "repository.check-native-selected-source-iteration-source",
+    "source": "rust/src/translation/check/arrays.rs",
+    "name": "for_of_iterable",
+    "inventoryName": "for-of-iteration-source"
+  },
+  {
+    "id": "repository.check-native-array-index-number",
+    "source": "rust/src/translation/check/arrays.rs",
+    "name": "array_index_number",
+    "inventoryName": "array-index-number"
+  },
+  {
+    "id": "repository.check-native-array-index-result",
+    "source": "rust/src/translation/check/arrays.rs",
+    "name": "array_index_result",
+    "inventoryName": "array-index-result"
+  },
+  {
+    "id": "repository.solve-native-iteration-source-constraints",
+    "source": "rust/src/translation/javascript/infer/products.rs",
+    "name": "solve_iterables",
+    "inventoryName": "solve-iteration-sources"
+  },
+  {
+    "id": "repository.read-native-array-operational-prelude",
+    "source": "rust/src/translation/emit_rust/arrays.rs",
+    "name": "read_array_prelude",
+    "inventoryName": "read-array-prelude"
+  },
+  {
+    "id": "repository.native-array-index-inference-constraint",
+    "source": "rust/src/translation/javascript/infer.rs",
+    "name": "IndexOf",
+    "inventoryName": "index-of"
+  },
+  {
+    "id": "repository.native-iteration-source-inference-constraint",
+    "source": "rust/src/translation/javascript/infer.rs",
+    "name": "IterableOf",
+    "inventoryName": "iteration-source-of"
+  },
+  {
+    "id": "repository.check-native-retained-array-semantic-translation",
+    "source": "rust/tests/unit/translation_arrays.rs",
+    "name": "arrays_the_program_reads_are_a_semantic_translation_in_every_target_with_observable_absence",
+    "inventoryName": "arrays-the-program-reads-are-a-semantic-translation-in-every-target-with-observable-absence"
+  },
+  {
+    "id": "repository.check-native-optional-array-bounds-representation",
+    "source": "rust/tests/unit/translation_arrays.rs",
+    "name": "an_array_is_a_vec_an_array_and_a_list_read_through_an_optional_bounds_checked_helper",
+    "inventoryName": "an-array-is-a-vector-an-array-and-a-list-read-through-an-optional-bounds-checked-helper"
+  },
+  {
+    "id": "repository.check-native-supplementary-string-length",
+    "source": "rust/tests/unit/translation_arrays.rs",
+    "name": "utf16_string_length_retains_supplementary_characters_in_each_target",
+    "inventoryName": "unicode-transformation-format-sixteen-bit-string-length-retains-supplementary-characters-in-each-target"
+  },
+  {
+    "id": "repository.check-native-observable-array-absence",
+    "source": "rust/tests/unit/translation_arrays.rs",
+    "name": "out_of_bounds_array_reads_retain_absence_instead_of_an_in_bounds_assumption",
+    "inventoryName": "out-of-bounds-array-reads-retain-absence-instead-of-an-in-bounds-assumption"
+  },
+  {
+    "id": "repository.check-native-iteration-source-wrapper-and-read-proof",
+    "source": "rust/tests/unit/translation_arrays.rs",
+    "name": "source_iteration_retains_its_actual_iterable_wrapper_and_generated_read_proof",
+    "inventoryName": "source-iteration-retains-its-actual-iteration-source-wrapper-and-generated-read-proof"
+  },
+  {
+    "id": "repository.check-native-string-point-and-unit-distinction",
+    "source": "rust/tests/unit/translation_arrays.rs",
+    "name": "string_iteration_uses_code_points_while_length_uses_utf16_units",
+    "inventoryName": "string-iteration-uses-code-points-while-length-uses-unicode-transformation-format-sixteen-bit-units"
+  },
+  {
+    "id": "repository.count-native-iteration-source-control-constructs",
+    "source": "rust/tests/unit/translation_arrays.rs",
+    "name": "count",
+    "inventoryName": "count"
+  },
+  {
+    "id": "repository.check-native-array-rule-source-generation",
+    "source": "js/tests/translation-array-value-generation.test.js",
+    "name": "native array value decisions and linked policies are generated from the whole JavaScript source",
+    "inventoryName": "native-array-value-decisions-and-linked-policies-are-generated-from-the-whole-java-script-source"
+  },
+  {
+    "id": "repository.read-complete-surface-reference-source-module",
+    "source": "js/scripts/surface-reference-source-module.mjs",
+    "name": "readSurfaceReferenceSourceModule",
+    "inventoryName": "read-surface-reference-source-module"
+  },
+  {
+    "id": "repository.read-complete-grammar-lexical-analyser-source-module",
+    "source": "js/scripts/generate-grammar-lexer-rules.mjs",
+    "name": "readGrammarLexerSourceModule",
+    "inventoryName": "read-grammar-lexical-analyser-source-module"
+  },
+  {
+    "id": "translation.read-program-declaration-type-projection-field",
+    "source": "js/src/typed-program-link-rules.js",
+    "name": "readProgramDeclarationTypeProjectionField",
+    "inventoryName": "read-program-declaration-type-projection-field"
+  },
+  {
+    "id": "translation.read-program-declaration-type-projection-field",
+    "source": "rust/src/translation/typed_program_link_rules.rs",
+    "name": "read_program_declaration_type_projection_field",
+    "inventoryName": "read-program-declaration-type-projection-field"
+  },
+  {
+    "id": "translation.read-java-script-includes-receiver-form",
+    "source": "js/src/translation/javascript-surface-rules.js",
+    "name": "readJavaScriptIncludesReceiverForm",
+    "inventoryName": "read-java-script-includes-receiver-form"
+  },
+  {
+    "id": "translation.read-java-script-includes-receiver-form",
+    "source": "rust/src/translation/javascript/surface_rules.rs",
+    "name": "read_java_script_includes_receiver_form",
+    "inventoryName": "read-java-script-includes-receiver-form"
+  },
+  {
+    "id": "repository.read-native-retained-surface-fact-value",
+    "source": "rust/src/translation/surface_reference_facts.rs",
+    "name": "value",
+    "inventoryName": "value"
+  },
+  {
+    "id": "repository.check-reference-template-and-empty-token-selection",
+    "source": "js/tests/translation-surface-reference-analysis.test.js",
+    "name": "actual template tokens and empty EOF operator text retain original reference selection",
+    "inventoryName": "actual-template-tokens-and-empty-end-of-file-operator-text-retain-original-reference-selection"
+  },
+  {
+    "id": "repository.native-source-lexical-analyser-declaration",
+    "source": "rust/src/grammar/feature.rs",
+    "name": "GrammarLexer",
+    "inventoryName": "grammar-lexical-analyser"
+  },
+  {
+    "id": "repository.check-native-lexical-declaration-transport",
+    "source": "rust/tests/unit/grammar_lexer_transport.rs",
+    "name": "lexical_declarations_preserve_all_fields_through_native_links_and_serialization",
+    "inventoryName": "lexical-declarations-preserve-all-fields-through-native-links-and-serialization"
+  },
+  {
+    "id": "repository.check-native-lexical-binding-source-namespace",
+    "source": "rust/tests/unit/grammar_lexer_transport.rs",
+    "name": "lexical_public_binding_renames_preserve_the_original_source_matcher_namespace",
+    "inventoryName": "lexical-public-binding-renames-preserve-the-original-source-matcher-namespace"
+  },
+  {
+    "id": "repository.check-native-closed-lexical-global-context",
+    "source": "rust/tests/unit/global_concept_space.rs",
+    "name": "closed_global_context_retains_lexical_competition_modes_channels_actions_and_owners",
+    "inventoryName": "closed-global-context-retains-lexical-competition-modes-channels-actions-and-owners"
+  },
+  {
+    "id": "translation.refuse-required-record-name",
+    "source": "js/src/translation/record-value-rules.js",
+    "name": "refuseRequiredRecordName",
+    "inventoryName": "refuse-required-record-name"
+  },
+  {
+    "id": "translation.refuse-required-record-name",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "refuse_required_record_name",
+    "inventoryName": "refuse-required-record-name"
+  },
+  {
+    "id": "translation.read-required-record-name",
+    "source": "js/src/translation/record-value-rules.js",
+    "name": "readRequiredRecordName",
+    "inventoryName": "read-required-record-name"
+  },
+  {
+    "id": "translation.read-required-record-name",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_required_record_name",
+    "inventoryName": "read-required-record-name"
+  },
+  {
+    "id": "translation.read-record-method-error",
+    "source": "js/src/translation/record-value-rules.js",
+    "name": "readRecordMethodError",
+    "inventoryName": "read-record-method-error"
+  },
+  {
+    "id": "translation.read-record-method-error",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_method_error",
+    "inventoryName": "read-record-method-error"
+  },
+  {
+    "id": "repository.read-complete-record-value-source-module",
+    "source": "js/scripts/generate-record-value-rules.mjs",
+    "name": "readRecordValueSourceModule",
+    "inventoryName": "read-record-value-source-module"
+  },
+  {
+    "id": "repository.read-authenticated-original-record-inference",
+    "source": "js/scripts/generate-record-value-rules.mjs",
+    "name": "originalInference",
+    "inventoryName": "original-inference"
+  },
+  {
+    "id": "repository.read-complete-record-control-method",
+    "source": "js/tests/translation-record-value-planning.test.js",
+    "name": "readSourceMethod",
+    "inventoryName": "read-source-method"
+  },
+  {
+    "id": "repository.check-record-method-diagnostic-order",
+    "source": "js/tests/translation-record-value-planning.test.js",
+    "name": "record methods keep missing nonfunction and arity errors before argument checking",
+    "inventoryName": "record-methods-keep-missing-non-function-and-arity-errors-before-argument-checking"
+  },
+  {
+    "id": "repository.check-record-inference-order-and-spread",
+    "source": "js/tests/translation-record-value-planning.test.js",
+    "name": "record inference preserves complete original child checks insertion order and unresolved spread identity",
+    "inventoryName": "record-inference-preserves-complete-original-child-checks-insertion-order-and-unresolved-spread-identity"
+  },
+  {
+    "id": "repository.check-record-constraint-mutation-order",
+    "source": "js/tests/translation-record-value-planning.test.js",
+    "name": "record constraint steps preserve the actual original recursive solver mutation and failure order",
+    "inventoryName": "record-constraint-steps-preserve-the-actual-original-recursive-solver-mutation-and-failure-order"
+  },
+  {
+    "id": "repository.check-complete-record-planner-translation",
+    "source": "js/tests/translation-record-value-planning.test.js",
+    "name": "the entire actual record planning module survives checked Links replay and automatic Rust emission",
+    "inventoryName": "the-entire-actual-record-planning-module-survives-checked-links-replay-and-automatic-rust-emission"
+  },
+  {
+    "id": "translation.join-record-rendered-items",
+    "source": "js/src/translation/record-emission-rules.js",
+    "name": "joinRecordItems",
+    "inventoryName": "join-record-items"
+  },
+  {
+    "id": "translation.join-record-rendered-items",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "join_record_items",
+    "inventoryName": "join-record-items"
+  },
+  {
+    "id": "translation.render-record-value",
+    "source": "js/src/translation/record-emission-rules.js",
+    "name": "renderRecordValue",
+    "inventoryName": "render-record-value"
+  },
+  {
+    "id": "translation.render-record-value",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "render_record_value",
+    "inventoryName": "render-record-value"
+  },
+  {
+    "id": "translation.render-record-field",
+    "source": "js/src/translation/record-emission-rules.js",
+    "name": "renderRecordField",
+    "inventoryName": "render-record-field"
+  },
+  {
+    "id": "translation.render-record-field",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "render_record_field",
+    "inventoryName": "render-record-field"
+  },
+  {
+    "id": "translation.render-record-product-field",
+    "source": "js/src/translation/record-emission-rules.js",
+    "name": "renderRecordProductField",
+    "inventoryName": "render-record-product-field"
+  },
+  {
+    "id": "translation.render-record-product-field",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "render_record_product_field",
+    "inventoryName": "render-record-product-field"
+  },
+  {
+    "id": "translation.render-record-type",
+    "source": "js/src/translation/record-emission-rules.js",
+    "name": "renderRecordType",
+    "inventoryName": "render-record-type"
+  },
+  {
+    "id": "translation.render-record-type",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "render_record_type",
+    "inventoryName": "render-record-type"
+  },
+  {
+    "id": "repository.read-complete-record-emission-source-module",
+    "source": "js/scripts/generate-record-emission-rules.mjs",
+    "name": "readRecordEmissionSourceModule",
+    "inventoryName": "read-record-emission-source-module"
+  },
+  {
+    "id": "repository.read-record-emission-rules-policy",
+    "source": "js/scripts/generate-record-emission-rules.mjs",
+    "name": "recordEmissionRulesPolicy",
+    "inventoryName": "record-emission-rules-policy"
+  },
+  {
+    "id": "repository.generate-record-emission-rules",
+    "source": "js/scripts/generate-record-emission-rules.mjs",
+    "name": "generateRecordEmissionRules",
+    "inventoryName": "generate-record-emission-rules"
+  },
+  {
+    "id": "repository.visit-record-control-values",
+    "source": "js/tests/translation-record-emission.test.js",
+    "name": "visit",
+    "inventoryName": "visit"
+  },
+  {
+    "id": "repository.check-complete-record-rendering-operation-translation",
+    "source": "js/tests/translation-record-emission.test.js",
+    "name": "the complete five-function renderer and six required-column definitions translate through checked Links",
+    "inventoryName": "the-complete-five-function-rendering-operation-and-six-required-column-definitions-translate-through-checked-links"
+  },
+  {
+    "id": "repository.check-empty-singleton-and-ordered-record-syntax",
+    "source": "js/tests/translation-record-emission.test.js",
+    "name": "record syntax preserves empty singleton and ordered values in every existing target representation",
+    "inventoryName": "record-syntax-preserves-empty-singleton-and-ordered-values-in-every-existing-target-representation"
+  },
+  {
+    "id": "repository.check-record-product-projection-labels",
+    "source": "js/tests/translation-record-emission.test.js",
+    "name": "record field projections retain exact product association and source property labels",
+    "inventoryName": "record-field-projections-retain-exact-product-association-and-source-property-labels"
+  },
+  {
+    "id": "repository.check-record-source-free-target-output",
+    "source": "js/tests/translation-record-emission.test.js",
+    "name": "record emitters retain complete source-free target output through text binary and value edits",
+    "inventoryName": "record-emitters-retain-complete-source-free-target-output-through-text-binary-and-value-edits"
+  },
+  {
+    "id": "repository.check-paired-complete-record-emission-source",
+    "source": "js/tests/translation-record-emission.test.js",
+    "name": "both packages share the entire actual record emission source",
+    "inventoryName": "both-packages-share-the-entire-actual-record-emission-source"
+  },
+  {
+    "id": "translation.read-type-separator-positions",
+    "source": "js/src/translation/type-syntax-rules.js",
+    "name": "readTypeSeparatorPositions",
+    "inventoryName": "read-type-separator-positions"
+  },
+  {
+    "id": "translation.read-type-separator-positions",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "read_type_separator_positions",
+    "inventoryName": "read-type-separator-positions"
+  },
+  {
+    "id": "translation.read-type-separator-positions",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "read_type_separator_positions",
+    "inventoryName": "read-type-separator-positions"
+  },
+  {
+    "id": "translation.accept-union-type-field",
+    "source": "js/src/translation/type-syntax-rules.js",
+    "name": "acceptUnionTypeField",
+    "inventoryName": "accept-union-type-field"
+  },
+  {
+    "id": "translation.accept-union-type-field",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "accept_union_type_field",
+    "inventoryName": "accept-union-type-field"
+  },
+  {
+    "id": "translation.accept-union-type-field",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "accept_union_type_field",
+    "inventoryName": "accept-union-type-field"
+  },
+  {
+    "id": "translation.accept-union-type-count",
+    "source": "js/src/translation/type-syntax-rules.js",
+    "name": "acceptUnionTypeCount",
+    "inventoryName": "accept-union-type-count"
+  },
+  {
+    "id": "translation.accept-union-type-count",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "accept_union_type_count",
+    "inventoryName": "accept-union-type-count"
+  },
+  {
+    "id": "translation.accept-union-type-count",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "accept_union_type_count",
+    "inventoryName": "accept-union-type-count"
+  },
+  {
+    "id": "translation.read-union-target-refusal",
+    "source": "js/src/translation/type-syntax-rules.js",
+    "name": "readUnionTargetRefusal",
+    "inventoryName": "read-union-target-refusal"
+  },
+  {
+    "id": "translation.read-union-target-refusal",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "read_union_target_refusal",
+    "inventoryName": "read-union-target-refusal"
+  },
+  {
+    "id": "translation.read-union-target-refusal",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "read_union_target_refusal",
+    "inventoryName": "read-union-target-refusal"
+  },
+  {
+    "id": "repository.read-authenticated-original-type-separator",
+    "source": "js/scripts/generate-type-syntax-rules.mjs",
+    "name": "originalSeparator",
+    "inventoryName": "original-separator"
+  },
+  {
+    "id": "repository.read-type-syntax-rules-policy",
+    "source": "js/scripts/generate-type-syntax-rules.mjs",
+    "name": "typeSyntaxRulesPolicy",
+    "inventoryName": "type-syntax-rules-policy"
+  },
+  {
+    "id": "repository.generate-type-syntax-rules",
+    "source": "js/scripts/generate-type-syntax-rules.mjs",
+    "name": "generateTypeSyntaxRules",
+    "inventoryName": "generate-type-syntax-rules"
+  },
+  {
+    "id": "repository.read-union-control-text-units",
+    "source": "js/tests/translation-union-types.test.js",
+    "name": "units",
+    "inventoryName": "units"
+  },
+  {
+    "id": "repository.observe-union-control-source",
+    "source": "js/tests/translation-union-types.test.js",
+    "name": "observe",
+    "inventoryName": "observe"
+  },
+  {
+    "id": "repository.check-original-type-separator-correspondence",
+    "source": "js/tests/translation-union-types.test.js",
+    "name": "portable separators preserve actual nesting arrow and UTF16 positions against the entire original scanner",
+    "inventoryName": "portable-separators-preserve-actual-nesting-arrow-and-unicode-transformation-format-sixteen-bit-positions-in-comparison-with-the-entire-original-scanner"
+  },
+  {
+    "id": "repository.check-ordered-union-type-identity",
+    "source": "js/tests/translation-union-types.test.js",
+    "name": "union identities preserve every ordered alternative rather than collapsing distinct union records",
+    "inventoryName": "union-identities-preserve-every-ordered-alternative-rather-in-comparison-to-collapsing-distinct-union-records"
+  },
+  {
+    "id": "repository.check-source-free-union-alternatives",
+    "source": "js/tests/translation-union-types.test.js",
+    "name": "unused union parameters retain source-free ordered type alternatives and exact unsupported target boundaries",
+    "inventoryName": "unused-union-parameters-retain-source-free-ordered-type-alternatives-and-exact-unsupported-target-boundaries"
+  },
+  {
+    "id": "repository.check-union-layout-and-call-refusals",
+    "source": "js/tests/translation-union-types.test.js",
+    "name": "linked union alternatives reject malformed layouts without granting a union argument coercion",
+    "inventoryName": "linked-union-alternatives-reject-malformed-layouts-without-granting-a-union-argument-coercion"
+  },
+  {
+    "id": "repository.qualify-actual-grammar-root",
+    "source": "js/src/grammar-runtime/grammar-selection.js",
+    "name": "qualifyGrammarRoot",
+    "inventoryName": "qualify-grammar-root"
+  },
+  {
+    "id": "repository.create-registered-selection-literal",
+    "source": "js/tests/support/grammar-selection-cases.js",
+    "name": "grammarSelectionLiteral",
+    "inventoryName": "grammar-selection-literal"
+  },
+  {
+    "id": "repository.create-registered-selection-candidate",
+    "source": "js/tests/support/grammar-selection-cases.js",
+    "name": "grammarSelectionCandidate",
+    "inventoryName": "grammar-selection-candidate"
+  },
+  {
+    "id": "repository.create-registered-selection-expression",
+    "source": "js/tests/support/grammar-selection-cases.js",
+    "name": "grammarSelectionExpression",
+    "inventoryName": "grammar-selection-expression"
+  },
+  {
+    "id": "repository.create-registered-selection-listing",
+    "source": "js/tests/support/grammar-selection-cases.js",
+    "name": "authoredGrammarSelectionListing",
+    "inventoryName": "authored-grammar-selection-listing"
+  },
+  {
+    "id": "repository.create-shared-grammar-selection-fixture",
+    "source": "js/tests/support/grammar-selection-cases.js",
+    "name": "grammarSelectionFixture",
+    "inventoryName": "grammar-selection-fixture"
+  },
+  {
+    "id": "repository.generate-grammar-selection-fixtures",
+    "source": "js/scripts/generate-grammar-selection-fixtures.mjs",
+    "name": "generateGrammarSelectionFixtures",
+    "inventoryName": "generate-grammar-selection-fixtures"
+  },
+  {
+    "id": "repository.native-grammar-selection-alternative",
+    "source": "rust/src/grammar/feature_runtime/grammar_selection.rs",
+    "name": "GrammarSelectionAlternative",
+    "inventoryName": "grammar-selection-alternative"
+  },
+  {
+    "id": "repository.native-public-grammar-selection",
+    "source": "rust/src/grammar/feature_runtime/grammar_selection.rs",
+    "name": "GrammarSelection",
+    "inventoryName": "grammar-selection"
+  },
+  {
+    "id": "repository.native-accepted-grammar-selection",
+    "source": "rust/src/grammar/feature_runtime/grammar_selection.rs",
+    "name": "AcceptedSelection",
+    "inventoryName": "accepted-selection"
+  },
+  {
+    "id": "repository.native-internal-grammar-selection",
+    "source": "rust/src/grammar/feature_runtime/grammar_selection.rs",
+    "name": "SelectionMetadata",
+    "inventoryName": "selection-metadata"
+  },
+  {
+    "id": "repository.native-grammar-selection-descriptor",
+    "source": "rust/src/grammar/feature_runtime/program.rs",
+    "name": "SelectionDescriptor",
+    "inventoryName": "selection-descriptor"
+  },
+  {
+    "id": "repository.copy-native-selection-source-definition",
+    "source": "rust/src/grammar/feature_runtime/grammar_selection.rs",
+    "name": "selection_source_definition",
+    "inventoryName": "selection-source-definition"
+  },
+  {
+    "id": "repository.copy-native-public-selection",
+    "source": "rust/src/grammar/feature_runtime/grammar_selection.rs",
+    "name": "public_selection",
+    "inventoryName": "public-selection"
+  },
+  {
+    "id": "repository.read-native-selection-rejection",
+    "source": "rust/src/grammar/feature_runtime/grammar_selection.rs",
+    "name": "selection_rejection",
+    "inventoryName": "selection-rejection"
+  },
+  {
+    "id": "repository.report-native-selection-diagnostic",
+    "source": "rust/src/grammar/feature_runtime/grammar_selection.rs",
+    "name": "report_selection_diagnostic",
+    "inventoryName": "report-selection-diagnostic"
+  },
+  {
+    "id": "repository.run-native-embedded-selection-grammar",
+    "source": "rust/src/grammar/feature_runtime/grammar_selection.rs",
+    "name": "run_embedded_grammar",
+    "inventoryName": "run-embedded-grammar"
+  },
+  {
+    "id": "repository.charge-native-selection-value",
+    "source": "rust/src/grammar/feature_runtime/grammar_selection.rs",
+    "name": "charge_selection_value",
+    "inventoryName": "charge-selection-value"
+  },
+  {
+    "id": "repository.read-native-selection-provenance",
+    "source": "rust/src/grammar/feature_runtime/grammar_selection.rs",
+    "name": "read_selection_provenance",
+    "inventoryName": "read-selection-provenance"
+  },
+  {
+    "id": "repository.evaluate-native-grammar-selection",
+    "source": "rust/src/grammar/feature_runtime/grammar_selection.rs",
+    "name": "evaluate_grammar_selection",
+    "inventoryName": "evaluate-grammar-selection"
+  },
+  {
+    "id": "repository.qualify-native-grammar-root",
+    "source": "rust/src/grammar/feature_runtime/grammar_selection.rs",
+    "name": "qualify_grammar_root",
+    "inventoryName": "qualify-grammar-root"
+  },
+  {
+    "id": "repository.read-native-selection-fixture",
+    "source": "rust/tests/unit/grammar_recursive_selection.rs",
+    "name": "selection_fixture",
+    "inventoryName": "selection-fixture"
+  },
+  {
+    "id": "repository.read-native-control-selection-grammars",
+    "source": "rust/tests/unit/grammar_recursive_selection.rs",
+    "name": "selected_grammars",
+    "inventoryName": "selected-grammars"
+  },
+  {
+    "id": "repository.read-native-control-embedded-trees",
+    "source": "rust/tests/unit/grammar_recursive_selection.rs",
+    "name": "embedded_trees",
+    "inventoryName": "embedded-trees"
+  },
+  {
+    "id": "repository.reconstruct-native-selection-control-source",
+    "source": "rust/tests/unit/grammar_recursive_selection.rs",
+    "name": "rebuilt_selection_source",
+    "inventoryName": "reconstructed-selection-source"
+  },
+  {
+    "id": "repository.check-native-qualified-recursive-grammar-origins",
+    "source": "rust/tests/unit/grammar_recursive_selection.rs",
+    "name": "qualified_root_and_repeated_language_keep_actual_global_origins_and_all_source_bytes",
+    "inventoryName": "qualified-root-and-repeated-language-keep-actual-global-origins-and-all-source-bytes"
+  },
+  {
+    "id": "repository.check-native-any-and-all-selection-witnesses",
+    "source": "rust/tests/unit/grammar_recursive_selection.rs",
+    "name": "any_retains_alternative_concrete_trees_and_all_requires_every_explicit_candidate",
+    "inventoryName": "any-retains-alternative-concrete-trees-and-all-requires-every-explicit-candidate"
+  },
+  {
+    "id": "repository.check-native-unknown-selection-boundaries",
+    "source": "rust/tests/unit/grammar_recursive_selection.rs",
+    "name": "unknown_grammars_and_unimplemented_escape_mappings_remain_explicit_rejections",
+    "inventoryName": "unknown-grammars-and-without-implementation-escape-mappings-remain-explicit-rejections"
+  },
+  {
+    "id": "repository.check-native-selection-cycle-bounds",
+    "source": "rust/tests/unit/grammar_recursive_selection.rs",
+    "name": "nonconsuming_cycles_diagnose_the_exact_bounds_and_shrinking_recursion_remains_lossless",
+    "inventoryName": "without-consumption-cycles-diagnose-the-exact-bounds-and-shrinking-recursion-remains-lossless"
+  },
+  {
+    "id": "repository.native-source-record-entry",
+    "source": "rust/src/translation/surface/record_entry.rs",
+    "name": "SRecordEntry",
+    "inventoryName": "source-record-entry"
+  },
+  {
+    "id": "repository.native-checked-record-entry",
+    "source": "rust/src/translation/ir/record_entry.rs",
+    "name": "RecordEntry",
+    "inventoryName": "record-entry"
+  },
+  {
+    "id": "repository.native-checked-reference-result-type-wire",
+    "source": "rust/src/translation/ir/reference_type.rs",
+    "name": "ReferenceResultType",
+    "inventoryName": "reference-result-type"
+  },
+  {
+    "id": "repository.read-native-present-type",
+    "source": "rust/src/translation/present_type.rs",
+    "name": "read_present_type",
+    "inventoryName": "read-present-type"
+  },
+  {
+    "id": "repository.read-native-record-position-number",
+    "source": "rust/src/translation/check/records.rs",
+    "name": "number",
+    "inventoryName": "number"
+  },
+  {
+    "id": "repository.read-native-record-field-name-units",
+    "source": "rust/src/translation/check/records.rs",
+    "name": "names",
+    "inventoryName": "names"
+  },
+  {
+    "id": "repository.read-native-record-plan-position",
+    "source": "rust/src/translation/check/records.rs",
+    "name": "position",
+    "inventoryName": "position"
+  },
+  {
+    "id": "repository.check-native-record-literal",
+    "source": "rust/src/translation/check/records.rs",
+    "name": "record_literal",
+    "inventoryName": "record-literal"
+  },
+  {
+    "id": "repository.check-native-record-field",
+    "source": "rust/src/translation/check/records.rs",
+    "name": "record_field",
+    "inventoryName": "record-field"
+  },
+  {
+    "id": "repository.check-native-source-record-field",
+    "source": "rust/src/translation/check/records.rs",
+    "name": "record_source_field",
+    "inventoryName": "record-source-field"
+  },
+  {
+    "id": "repository.render-native-java-script-record-value",
+    "source": "rust/src/translation/emit_javascript/records.rs",
+    "name": "record_value",
+    "inventoryName": "record-value"
+  },
+  {
+    "id": "repository.render-native-java-script-record-field",
+    "source": "rust/src/translation/emit_javascript/records.rs",
+    "name": "record_field",
+    "inventoryName": "record-field"
+  },
+  {
+    "id": "repository.render-native-rust-record-value",
+    "source": "rust/src/translation/emit_rust/records.rs",
+    "name": "record_value",
+    "inventoryName": "record-value"
+  },
+  {
+    "id": "repository.render-native-rust-record-field",
+    "source": "rust/src/translation/emit_rust/records.rs",
+    "name": "record_field",
+    "inventoryName": "record-field"
+  },
+  {
+    "id": "repository.render-native-lean-record-value",
+    "source": "rust/src/translation/emit_lean/records.rs",
+    "name": "record_value",
+    "inventoryName": "record-value"
+  },
+  {
+    "id": "repository.render-native-lean-record-field",
+    "source": "rust/src/translation/emit_lean/records.rs",
+    "name": "record_field",
+    "inventoryName": "record-field"
+  },
+  {
+    "id": "repository.render-native-proof-assistant-record-value",
+    "source": "rust/src/translation/emit_rocq/records.rs",
+    "name": "record_value",
+    "inventoryName": "record-value"
+  },
+  {
+    "id": "repository.render-native-proof-assistant-record-field",
+    "source": "rust/src/translation/emit_rocq/records.rs",
+    "name": "record_field",
+    "inventoryName": "record-field"
+  },
+  {
+    "id": "repository.read-native-lean-record-position-number",
+    "source": "rust/src/translation/emit_lean/records.rs",
+    "name": "number",
+    "inventoryName": "number"
+  },
+  {
+    "id": "repository.read-native-proof-assistant-record-position-number",
+    "source": "rust/src/translation/emit_rocq/records.rs",
+    "name": "number",
+    "inventoryName": "number"
+  },
+  {
+    "id": "repository.project-native-function-result-types",
+    "source": "rust/src/typed_program_links/checked/declarations.rs",
+    "name": "project_function_result_types",
+    "inventoryName": "project-function-result-types"
+  },
+  {
+    "id": "repository.project-native-retained-result-type",
+    "source": "rust/src/typed_program_links/checked/declarations.rs",
+    "name": "project",
+    "inventoryName": "project"
+  },
+  {
+    "id": "repository.native-projected-function-result-types",
+    "source": "rust/src/typed_program_links/checked/declarations.rs",
+    "name": "ProjectedFunctionResultTypes",
+    "inventoryName": "projected-function-result-types"
+  },
+  {
+    "id": "repository.check-native-absent-method-separator-projection",
+    "source": "rust/tests/unit/translation_schema_second_projections.rs",
+    "name": "source_free_method_projection_retains_the_actual_omitted_separator_slot",
+    "inventoryName": "source-free-method-projection-retains-the-actual-absent-separator-slot"
+  },
+  {
+    "id": "repository.check-native-result-annotation-and-expansion",
+    "source": "rust/tests/unit/translation_schema_second_projections.rs",
+    "name": "optional_result_replay_retains_the_source_annotation_and_expanded_result",
+    "inventoryName": "optional-result-replay-retains-the-source-annotation-and-expanded-result"
+  },
+  {
+    "id": "repository.read-native-optional-plan-endpoint",
+    "source": "rust/src/translation/javascript/infer/optional_values.rs",
+    "name": "endpoint",
+    "inventoryName": "endpoint"
+  },
+  {
+    "id": "repository.create-native-optional-term",
+    "source": "rust/src/translation/javascript/infer/optional_values.rs",
+    "name": "optional",
+    "inventoryName": "optional"
+  },
+  {
+    "id": "repository.read-native-optional-term-kind",
+    "source": "rust/src/translation/javascript/infer/optional_values.rs",
+    "name": "kind",
+    "inventoryName": "kind"
+  },
+  {
+    "id": "repository.check-native-logical-term-identity",
+    "source": "rust/src/translation/javascript/infer/optional_values.rs",
+    "name": "same_term",
+    "inventoryName": "same-term"
+  },
+  {
+    "id": "repository.unify-native-optional-term-owners",
+    "source": "rust/src/translation/javascript/infer/optional_values.rs",
+    "name": "unify_optional",
+    "inventoryName": "unify-optional"
+  },
+  {
+    "id": "repository.infer-native-optional-expression",
+    "source": "rust/src/translation/javascript/infer/optional_values.rs",
+    "name": "optional_expr",
+    "inventoryName": "optional-expression"
+  },
+  {
+    "id": "repository.apply-native-coalescing-step",
+    "source": "rust/src/translation/javascript/infer/optional_values.rs",
+    "name": "coalescing_step",
+    "inventoryName": "coalescing-step"
+  },
+  {
+    "id": "repository.read-native-additional-absence",
+    "source": "rust/src/translation/javascript/infer/optional_values.rs",
+    "name": "additional_absence",
+    "inventoryName": "additional-absence"
+  },
+  {
+    "id": "repository.create-native-delayed-type-join",
+    "source": "rust/src/translation/javascript/infer/optional_values.rs",
+    "name": "join",
+    "inventoryName": "join"
+  },
+  {
+    "id": "repository.apply-native-type-join-step",
+    "source": "rust/src/translation/javascript/infer/optional_values.rs",
+    "name": "join_step",
+    "inventoryName": "join-step"
+  },
+  {
+    "id": "repository.solve-native-optional-constraints",
+    "source": "rust/src/translation/javascript/infer/optional_values.rs",
+    "name": "solve_optional",
+    "inventoryName": "solve-optional"
+  },
+  {
+    "id": "repository.solve-native-join-and-result-constraints",
+    "source": "rust/src/translation/javascript/infer/optional_values.rs",
+    "name": "solve_joins_and_results",
+    "inventoryName": "solve-joins-and-results"
+  },
+  {
+    "id": "repository.read-native-numeric-inference-value",
+    "source": "rust/src/translation/javascript/infer/optional_values.rs",
+    "name": "numeric_value",
+    "inventoryName": "numeric-value"
+  },
+  {
+    "id": "repository.check-native-optional-logical-values",
+    "source": "rust/src/translation/check/optional_values.rs",
+    "name": "logical_values",
+    "inventoryName": "logical-values"
+  },
+  {
+    "id": "repository.check-native-optional-comparison",
+    "source": "rust/src/translation/check/optional_values.rs",
+    "name": "optional_comparison",
+    "inventoryName": "optional-comparison"
+  },
+  {
+    "id": "repository.check-native-optional-annotation-compatibility",
+    "source": "rust/src/translation/check/optional_values.rs",
+    "name": "annotation_compatible",
+    "inventoryName": "annotation-compatible"
+  },
+  {
+    "id": "repository.visit-native-optional-annotation-plan",
+    "source": "rust/src/translation/check/optional_values.rs",
+    "name": "visit",
+    "inventoryName": "visit"
+  },
+  {
+    "id": "repository.flatten-native-checked-option",
+    "source": "rust/src/translation/check/optional_values.rs",
+    "name": "flatten_option",
+    "inventoryName": "flatten-option"
+  },
+  {
+    "id": "repository.check-native-optional-expression",
+    "source": "rust/src/translation/check/optional_values.rs",
+    "name": "optional_expr",
+    "inventoryName": "optional-expression"
+  },
+  {
+    "id": "repository.check-native-optional-number-value",
+    "source": "rust/src/translation/check/optional_values.rs",
+    "name": "number_value",
+    "inventoryName": "number-value"
+  },
+  {
+    "id": "repository.check-native-optional-boolean-value",
+    "source": "rust/src/translation/check/optional_values.rs",
+    "name": "boolean_value",
+    "inventoryName": "boolean-value"
+  },
+  {
+    "id": "repository.read-native-java-script-optional-policy",
+    "source": "rust/src/translation/emit_javascript/optional_values.rs",
+    "name": "policy",
+    "inventoryName": "policy"
+  },
+  {
+    "id": "repository.render-native-java-script-optional-expression",
+    "source": "rust/src/translation/emit_javascript/optional_values.rs",
+    "name": "optional_expr",
+    "inventoryName": "optional-expression"
+  },
+  {
+    "id": "repository.read-native-rust-optional-policy",
+    "source": "rust/src/translation/emit_rust/optional_values.rs",
+    "name": "policy",
+    "inventoryName": "policy"
+  },
+  {
+    "id": "repository.render-native-rust-optional-expression",
+    "source": "rust/src/translation/emit_rust/optional_values.rs",
+    "name": "optional_expr",
+    "inventoryName": "optional-expression"
+  },
+  {
+    "id": "repository.read-native-rust-optional-element-type",
+    "source": "rust/src/translation/emit_rust/optional_values.rs",
+    "name": "element",
+    "inventoryName": "element"
+  },
+  {
+    "id": "repository.render-native-rust-optional-match",
+    "source": "rust/src/translation/emit_rust/optional_values.rs",
+    "name": "optional_match",
+    "inventoryName": "optional-match"
+  },
+  {
+    "id": "repository.render-native-rust-optional-truth",
+    "source": "rust/src/translation/emit_rust/optional_values.rs",
+    "name": "optional_truth",
+    "inventoryName": "optional-truth"
+  },
+  {
+    "id": "repository.render-native-rust-optional-text-literal",
+    "source": "rust/src/translation/emit_rust/optional_values.rs",
+    "name": "optional_text_literal",
+    "inventoryName": "optional-text-literal"
+  },
+  {
+    "id": "repository.read-native-lean-optional-policy",
+    "source": "rust/src/translation/emit_lean/optional_values.rs",
+    "name": "policy",
+    "inventoryName": "policy"
+  },
+  {
+    "id": "repository.render-native-lean-optional-expression",
+    "source": "rust/src/translation/emit_lean/optional_values.rs",
+    "name": "optional_expr",
+    "inventoryName": "optional-expression"
+  },
+  {
+    "id": "repository.read-native-lean-optional-element-type",
+    "source": "rust/src/translation/emit_lean/optional_values.rs",
+    "name": "element",
+    "inventoryName": "element"
+  },
+  {
+    "id": "repository.render-native-lean-optional-match",
+    "source": "rust/src/translation/emit_lean/optional_values.rs",
+    "name": "optional_match",
+    "inventoryName": "optional-match"
+  },
+  {
+    "id": "repository.render-native-lean-optional-truth",
+    "source": "rust/src/translation/emit_lean/optional_values.rs",
+    "name": "optional_truth",
+    "inventoryName": "optional-truth"
+  },
+  {
+    "id": "repository.render-native-lean-optional-text-literal",
+    "source": "rust/src/translation/emit_lean/optional_values.rs",
+    "name": "text_literal",
+    "inventoryName": "text-literal"
+  },
+  {
+    "id": "repository.read-native-lean-optional-position-number",
+    "source": "rust/src/translation/emit_lean/optional_values.rs",
+    "name": "number",
+    "inventoryName": "number"
+  },
+  {
+    "id": "repository.read-native-proof-assistant-optional-policy",
+    "source": "rust/src/translation/emit_rocq/optional_values.rs",
+    "name": "policy",
+    "inventoryName": "policy"
+  },
+  {
+    "id": "repository.render-native-proof-assistant-optional-expression",
+    "source": "rust/src/translation/emit_rocq/optional_values.rs",
+    "name": "optional_expr",
+    "inventoryName": "optional-expression"
+  },
+  {
+    "id": "repository.read-native-proof-assistant-optional-element-type",
+    "source": "rust/src/translation/emit_rocq/optional_values.rs",
+    "name": "element",
+    "inventoryName": "element"
+  },
+  {
+    "id": "repository.render-native-proof-assistant-optional-match",
+    "source": "rust/src/translation/emit_rocq/optional_values.rs",
+    "name": "optional_match",
+    "inventoryName": "optional-match"
+  },
+  {
+    "id": "repository.render-native-proof-assistant-optional-truth",
+    "source": "rust/src/translation/emit_rocq/optional_values.rs",
+    "name": "optional_truth",
+    "inventoryName": "optional-truth"
+  },
+  {
+    "id": "repository.render-native-proof-assistant-optional-text-literal",
+    "source": "rust/src/translation/emit_rocq/optional_values.rs",
+    "name": "optional_text_literal",
+    "inventoryName": "optional-text-literal"
+  },
+  {
+    "id": "repository.read-native-proof-assistant-optional-position-number",
+    "source": "rust/src/translation/emit_rocq/optional_values.rs",
+    "name": "number",
+    "inventoryName": "number"
+  },
+  {
+    "id": "repository.read-portable-source-parameter-styles",
+    "source": "js/scripts/portable-source-library-style.mjs",
+    "name": "readPortableSourceParameterStyles",
+    "inventoryName": "read-portable-source-parameter-styles"
+  },
+  {
+    "id": "repository.partition-portable-rust-library",
+    "source": "js/scripts/portable-source-library-style.mjs",
+    "name": "partitionPortableRustLibrary",
+    "inventoryName": "partition-portable-rust-library"
+  },
+  {
+    "id": "repository.read-portable-library-source-line",
+    "source": "js/scripts/portable-source-library-style.mjs",
+    "name": "lineAt",
+    "inventoryName": "line-at"
+  },
+  {
+    "id": "repository.check-balanced-multiple-line-library-attributes",
+    "source": "js/tests/translation-portable-library-style.test.js",
+    "name": "actual multi-line lint attributes remain attached to complete partitioned declarations",
+    "inventoryName": "actual-multiple-line-lint-attributes-remain-attached-to-complete-partitioned-declarations"
+  },
+  {
+    "id": "repository.check-portable-nested-row-library-placement",
+    "source": "js/tests/translation-portable-library-style.test.js",
+    "name": "actual nested primitive rows retain copies and target text through borrowed library placement",
+    "inventoryName": "actual-nested-primitive-rows-retain-copies-and-target-text-through-borrowed-library-placement"
+  },
+  {
+    "id": "repository.check-portable-loop-state-ownership",
+    "source": "js/tests/translation-portable-library-style.test.js",
+    "name": "actual lowered loop tuple assignments keep changing strings and nested rows owned",
+    "inventoryName": "actual-lowered-loop-tuple-assignments-keep-changing-strings-and-nested-rows-owned"
+  },
+  {
+    "id": "repository.check-portable-number-model-and-argument-state",
+    "source": "js/tests/translation-portable-library-style.test.js",
+    "name": "whole required-column emission retains IEEE values and explicit argument state under recorded lint styles",
+    "inventoryName": "whole-required-column-emission-retains-institute-of-electrical-and-electronics-engineers-values-and-explicit-argument-state-under-recorded-lint-styles"
+  },
+  {
+    "id": "repository.check-portable-final-array-transfer-ownership",
+    "source": "js/tests/translation-portable-library-style.test.js",
+    "name": "actual final array transfers preserve owned results while every required column stays borrowed",
+    "inventoryName": "actual-final-array-transfers-preserve-owned-results-while-every-required-column-stays-borrowed"
+  },
+  {
+    "id": "repository.check-portable-unicode-transformation-format-sixteen-bit-text-column-loans",
+    "source": "js/tests/translation-portable-library-style.test.js",
+    "name": "actual UTF16 text columns borrow vectors while preserving isolated surrogate values",
+    "inventoryName": "actual-unicode-transformation-format-sixteen-bit-text-columns-borrow-vectors-while-preserving-isolated-surrogate-values"
+  },
+  {
+    "id": "repository.read-portable-library-lint-tokens",
+    "source": "js/scripts/portable-source-lint-style.mjs",
+    "name": "readPortableLintTokens",
+    "inventoryName": "read-portable-lint-tokens"
+  },
+  {
+    "id": "repository.remove-portable-owned-temporary-copies",
+    "source": "js/scripts/portable-source-lint-style.mjs",
+    "name": "removePortableTemporaryCopies",
+    "inventoryName": "remove-portable-temporary-copies"
+  },
+  {
+    "id": "repository.simplify-portable-string-format-styles",
+    "source": "js/scripts/portable-source-lint-style.mjs",
+    "name": "simplifyPortableStringFormats",
+    "inventoryName": "simplify-portable-string-formats"
+  },
+  {
+    "id": "repository.read-portable-source-lint-styles",
+    "source": "js/scripts/portable-source-lint-style.mjs",
+    "name": "readPortableSourceLintStyles",
+    "inventoryName": "read-portable-source-lint-styles"
+  },
+  {
+    "id": "repository.replace-portable-library-lint-context",
+    "source": "js/scripts/portable-source-lint-style.mjs",
+    "name": "replace",
+    "inventoryName": "replace"
+  },
+  {
+    "id": "repository.check-null-capable-number-membership",
+    "source": "js/tests/translation-array-includes.test.js",
+    "name": "nullable numeric membership preserves NaN equality and distinct null and undefined cases",
+    "inventoryName": "null-capable-numeric-membership-preserves-na-n-equality-and-distinct-null-and-undefined-cases"
+  },
+  {
+    "id": "repository.observe-native-primitive-control-java-script",
+    "source": "rust/tests/unit/translation_primitive_methods.rs",
+    "name": "javascript",
+    "inventoryName": "javascript"
+  },
+  {
+    "id": "repository.observe-native-primitive-control-rust",
+    "source": "rust/tests/unit/translation_primitive_methods.rs",
+    "name": "rust",
+    "inventoryName": "rust"
+  },
+  {
+    "id": "repository.check-native-primitive-method-operational-behavior",
+    "source": "rust/tests/unit/translation_primitive_methods.rs",
+    "name": "primitive_methods_run_with_utf16_defaults_slice_and_same_value_zero",
+    "inventoryName": "primitive-methods-run-with-unicode-transformation-format-sixteen-bit-defaults-slice-and-same-value-zero"
+  },
+  {
+    "id": "repository.check-native-null-capable-membership",
+    "source": "rust/tests/unit/translation_primitive_methods.rs",
+    "name": "nullable_membership_retains_nan_and_separate_absences",
+    "inventoryName": "null-capable-membership-retains-nan-and-separate-absences"
+  },
+  {
+    "id": "repository.check-native-method-argument-source-span",
+    "source": "rust/tests/unit/translation_primitive_methods.rs",
+    "name": "slice_argument_errors_keep_the_actual_method_span",
+    "inventoryName": "slice-argument-errors-keep-the-actual-method-span"
+  },
+  {
+    "id": "repository.check-native-method-self-translation-source-restoration",
+    "source": "rust/tests/unit/translation_primitive_methods.rs",
+    "name": "utf16_method_self_translation_matches_javascript_and_restores_the_actual_source",
+    "inventoryName": "unicode-transformation-format-sixteen-bit-method-self-translation-matches-javascript-and-restores-the-actual-source"
+  },
+  {
+    "id": "repository.check-native-copy-slice",
+    "source": "rust/src/translation/check/primitive_methods.rs",
+    "name": "copy_slice",
+    "inventoryName": "copy-slice"
+  },
+  {
+    "id": "repository.check-native-primitive-method",
+    "source": "rust/src/translation/check/primitive_methods.rs",
+    "name": "primitive_method",
+    "inventoryName": "primitive-method"
+  },
+  {
+    "id": "repository.read-native-program-method-text-representation",
+    "source": "rust/src/translation/emit_rust/primitive_methods.rs",
+    "name": "program_requires_method_units",
+    "inventoryName": "program-requires-method-units"
+  },
+  {
+    "id": "repository.visit-native-method-representation-values",
+    "source": "rust/src/translation/emit_rust/primitive_methods.rs",
+    "name": "walk",
+    "inventoryName": "walk"
+  },
+  {
+    "id": "repository.render-native-rust-primitive-method",
+    "source": "rust/src/translation/emit_rust/primitive_methods.rs",
+    "name": "primitive_method",
+    "inventoryName": "primitive-method"
+  },
+  {
+    "id": "repository.read-native-callable-position-number",
+    "source": "rust/src/translation/javascript/callables.rs",
+    "name": "number",
+    "inventoryName": "number"
+  },
+  {
+    "id": "repository.read-native-callable-plan-position",
+    "source": "rust/src/translation/javascript/callables.rs",
+    "name": "position",
+    "inventoryName": "position"
+  },
+  {
+    "id": "repository.read-native-callable-fact-field",
+    "source": "rust/src/translation/javascript/callables.rs",
+    "name": "field",
+    "inventoryName": "field"
+  },
+  {
+    "id": "repository.read-native-callable-plan-strings",
+    "source": "rust/src/translation/javascript/callables.rs",
+    "name": "strings",
+    "inventoryName": "strings"
+  },
+  {
+    "id": "repository.copy-native-callable-statement-list",
+    "source": "rust/src/translation/javascript/callables.rs",
+    "name": "statements_value",
+    "inventoryName": "statements-value"
+  },
+  {
+    "id": "repository.copy-native-single-callable-statement",
+    "source": "rust/src/translation/javascript/callables.rs",
+    "name": "statement_value",
+    "inventoryName": "statement-value"
+  },
+  {
+    "id": "repository.read-native-callable-statement-usage",
+    "source": "rust/src/translation/javascript/callables.rs",
+    "name": "statement_usage",
+    "inventoryName": "statement-usage"
+  },
+  {
+    "id": "repository.read-native-callable-mutable-cells",
+    "source": "rust/src/translation/javascript/callables.rs",
+    "name": "mutable_cells",
+    "inventoryName": "mutable-cells"
+  },
+  {
+    "id": "repository.check-native-callable-closure-captures",
+    "source": "rust/src/translation/javascript/callables.rs",
+    "name": "validate_closure_captures",
+    "inventoryName": "validate-closure-captures"
+  },
+  {
+    "id": "repository.read-native-source-closure",
+    "source": "rust/src/translation/javascript/callables.rs",
+    "name": "read_closure",
+    "inventoryName": "read-closure"
+  },
+  {
+    "id": "repository.rename-native-callable-source-expression",
+    "source": "rust/src/translation/javascript/callables.rs",
+    "name": "rename_expression",
+    "inventoryName": "rename-expression"
+  },
+  {
+    "id": "repository.materialize-native-callable-source-plan",
+    "source": "rust/src/translation/javascript/callables.rs",
+    "name": "materialize",
+    "inventoryName": "materialize"
+  },
+  {
+    "id": "repository.read-native-structural-callable-inference",
+    "source": "rust/src/translation/javascript/infer/callables.rs",
+    "name": "has_structural_inference",
+    "inventoryName": "has-structural-inference"
+  },
+  {
+    "id": "repository.read-native-callable-plan-endpoint",
+    "source": "rust/src/translation/javascript/infer/callables.rs",
+    "name": "endpoint",
+    "inventoryName": "endpoint"
+  },
+  {
+    "id": "repository.unify-native-callable-terms",
+    "source": "rust/src/translation/javascript/infer/callables.rs",
+    "name": "unify_callable",
+    "inventoryName": "unify-callable"
+  },
+  {
+    "id": "repository.read-native-callable-cell-element",
+    "source": "rust/src/translation/javascript/infer/callables.rs",
+    "name": "cell_element_plan",
+    "inventoryName": "cell-element-plan"
+  },
+  {
+    "id": "repository.unify-native-callable-cell-elements",
+    "source": "rust/src/translation/javascript/infer/callables.rs",
+    "name": "unify_cells",
+    "inventoryName": "unify-cells"
+  },
+  {
+    "id": "repository.read-native-callable-recursive-occurrence",
+    "source": "rust/src/translation/javascript/infer/callables.rs",
+    "name": "callable_contains",
+    "inventoryName": "callable-contains"
+  },
+  {
+    "id": "repository.infer-native-callable-application",
+    "source": "rust/src/translation/javascript/infer/callables.rs",
+    "name": "callable_application",
+    "inventoryName": "callable-application"
+  },
+  {
+    "id": "repository.infer-native-callable-expression",
+    "source": "rust/src/translation/javascript/infer/callables.rs",
+    "name": "callable_expr",
+    "inventoryName": "callable-expression"
+  },
+  {
+    "id": "repository.read-native-callable-selected-type",
+    "source": "rust/src/translation/javascript/infer/callables.rs",
+    "name": "callable_selected_type",
+    "inventoryName": "callable-selected-type"
+  },
+  {
+    "id": "repository.infer-native-callable-cell-read",
+    "source": "rust/src/translation/javascript/infer/callables.rs",
+    "name": "callable_read_cell_from_facts",
+    "inventoryName": "callable-read-cell-from-facts"
+  },
+  {
+    "id": "repository.read-native-callable-check-position-number",
+    "source": "rust/src/translation/check/callables.rs",
+    "name": "number",
+    "inventoryName": "number"
+  },
+  {
+    "id": "repository.read-native-callable-check-plan-index",
+    "source": "rust/src/translation/check/callables.rs",
+    "name": "index",
+    "inventoryName": "index"
+  },
+  {
+    "id": "repository.read-native-checked-callable-fact-field",
+    "source": "rust/src/translation/check/callables.rs",
+    "name": "field",
+    "inventoryName": "field"
+  },
+  {
+    "id": "repository.check-native-callable-function-reference",
+    "source": "rust/src/translation/check/callables.rs",
+    "name": "callable_reference",
+    "inventoryName": "callable-reference"
+  },
+  {
+    "id": "repository.check-native-callable-application",
+    "source": "rust/src/translation/check/callables.rs",
+    "name": "checked_callable_application",
+    "inventoryName": "checked-callable-application"
+  },
+  {
+    "id": "repository.check-native-callable-application-places",
+    "source": "rust/src/translation/check/callables.rs",
+    "name": "checked_callable_application_at",
+    "inventoryName": "checked-callable-application-at"
+  },
+  {
+    "id": "repository.check-native-record-method-application",
+    "source": "rust/src/translation/check/callables.rs",
+    "name": "checked_record_method_application",
+    "inventoryName": "checked-record-method-application"
+  },
+  {
+    "id": "repository.check-native-callable-expression",
+    "source": "rust/src/translation/check/callables.rs",
+    "name": "callable_expression",
+    "inventoryName": "callable-expression"
+  },
+  {
+    "id": "repository.render-native-rust-callable-lambda",
+    "source": "rust/src/translation/emit_rust/callables.rs",
+    "name": "callable_lambda",
+    "inventoryName": "callable-lambda"
+  },
+  {
+    "id": "repository.read-native-callable-parameter-ordinals",
+    "source": "rust/src/typed_program_links/callables.rs",
+    "name": "parameter_ordinals",
+    "inventoryName": "parameter-ordinals"
+  },
+  {
+    "id": "repository.report-native-self-translation-code-difference",
+    "source": "rust/tests/unit/self_translation.rs",
+    "name": "report_code_difference",
+    "inventoryName": "report-code-difference"
+  },
+  {
+    "id": "repository.native-checked-lambda-parameter",
+    "source": "rust/src/translation/ir/declarations.rs",
+    "name": "LambdaParam",
+    "inventoryName": "lambda-parameter"
+  },
+  {
+    "id": "repository.observe-native-callable-control-source",
+    "source": "rust/tests/unit/translation_javascript_callables.rs",
+    "name": "observe",
+    "inventoryName": "observe"
+  },
+  {
+    "id": "repository.reload-native-callable-control-archives",
+    "source": "rust/tests/unit/translation_javascript_callables.rs",
+    "name": "reload",
+    "inventoryName": "reload"
+  },
+  {
+    "id": "repository.read-native-callable-control-label",
+    "source": "rust/tests/unit/translation_javascript_callables.rs",
+    "name": "label",
+    "inventoryName": "label"
+  },
+  {
+    "id": "repository.read-native-callable-control-relation",
+    "source": "rust/tests/unit/translation_javascript_callables.rs",
+    "name": "relation",
+    "inventoryName": "relation"
+  },
+  {
+    "id": "repository.read-native-callable-control-field",
+    "source": "rust/tests/unit/translation_javascript_callables.rs",
+    "name": "field",
+    "inventoryName": "field"
+  },
+  {
+    "id": "repository.read-native-callable-control-constructs",
+    "source": "rust/tests/unit/translation_javascript_callables.rs",
+    "name": "constructs",
+    "inventoryName": "constructs"
+  },
+  {
+    "id": "repository.edit-native-callable-control-references",
+    "source": "rust/tests/unit/translation_javascript_callables.rs",
+    "name": "edit_references",
+    "inventoryName": "edit-references"
+  },
+  {
+    "id": "repository.edit-native-callable-control-definition",
+    "source": "rust/tests/unit/translation_javascript_callables.rs",
+    "name": "edit_definition",
+    "inventoryName": "edit-definition"
+  },
+  {
+    "id": "repository.check-native-callable-shared-cell-replay",
+    "source": "rust/tests/unit/translation_javascript_callables.rs",
+    "name": "native_callable_sources_execute_from_both_formats_with_shared_and_independent_cells",
+    "inventoryName": "native-callable-sources-execute-from-both-formats-with-shared-and-independent-cells"
+  },
+  {
+    "id": "repository.check-native-callable-parameter-edit-ownership",
+    "source": "rust/tests/unit/translation_javascript_callables.rs",
+    "name": "native_callable_parameter_edits_preserve_identity_and_reject_cross_scope_captures",
+    "inventoryName": "native-callable-parameter-edits-preserve-identity-and-reject-cross-scope-captures"
+  },
+  {
+    "id": "repository.check-native-callable-arity-and-reused-descriptors",
+    "source": "rust/tests/unit/translation_javascript_callables.rs",
+    "name": "native_callable_arity_and_multiple_parameter_owners_remain_checked_after_reload",
+    "inventoryName": "native-callable-arity-and-multiple-parameter-owners-remain-checked-after-reload"
+  },
+  {
+    "id": "translation.read-grammar-tree-equality-fields",
+    "source": "js/src/translation/grammar-selection-rules.js",
+    "name": "readGrammarTreeEqualityFields",
+    "inventoryName": "read-grammar-tree-equality-fields"
+  },
+  {
+    "id": "translation.read-grammar-tree-equality-fields",
+    "source": "rust/src/translation/grammar_selection_rules.rs",
+    "name": "read_grammar_tree_equality_fields",
+    "inventoryName": "read-grammar-tree-equality-fields"
+  },
+  {
+    "id": "translation.read-grammar-tree-recursion-plan",
+    "source": "js/src/translation/grammar-selection-rules.js",
+    "name": "readGrammarTreeRecursionPlan",
+    "inventoryName": "read-grammar-tree-recursion-plan"
+  },
+  {
+    "id": "translation.read-grammar-tree-recursion-plan",
+    "source": "rust/src/translation/grammar_selection_rules.rs",
+    "name": "read_grammar_tree_recursion_plan",
+    "inventoryName": "read-grammar-tree-recursion-plan"
+  },
+  {
+    "id": "translation.read-grammar-selection-equality-fields",
+    "source": "js/src/translation/grammar-selection-rules.js",
+    "name": "readGrammarSelectionEqualityFields",
+    "inventoryName": "read-grammar-selection-equality-fields"
+  },
+  {
+    "id": "translation.read-grammar-selection-equality-fields",
+    "source": "rust/src/translation/grammar_selection_rules.rs",
+    "name": "read_grammar_selection_equality_fields",
+    "inventoryName": "read-grammar-selection-equality-fields"
+  },
+  {
+    "id": "repository.read-grammar-tree-equality-plan",
+    "source": "js/src/grammar-runtime/tree-equality.js",
+    "name": "grammarTreeEqualityPlan",
+    "inventoryName": "grammar-tree-equality-plan"
+  },
+  {
+    "id": "repository.compare-grammar-linked-metadata",
+    "source": "js/src/grammar-runtime/tree-equality.js",
+    "name": "sameGrammarMetadata",
+    "inventoryName": "same-grammar-metadata"
+  },
+  {
+    "id": "repository.compare-grammar-tree-header",
+    "source": "js/src/grammar-runtime/tree-equality.js",
+    "name": "sameGrammarHeader",
+    "inventoryName": "same-grammar-header"
+  },
+  {
+    "id": "repository.compare-grammar-selection-metadata",
+    "source": "js/src/grammar-runtime/tree-equality.js",
+    "name": "sameGrammarSelectionMetadata",
+    "inventoryName": "same-grammar-selection-metadata"
+  },
+  {
+    "id": "repository.compare-complete-grammar-embedded-tree",
+    "source": "js/src/grammar-runtime/tree-equality.js",
+    "name": "sameGrammarEmbedding",
+    "inventoryName": "same-grammar-embedded-tree"
+  },
+  {
+    "id": "repository.compare-grammar-tree-with-plan",
+    "source": "js/src/grammar-runtime/tree-equality.js",
+    "name": "sameGrammarTreeWith",
+    "inventoryName": "same-grammar-tree-with"
+  },
+  {
+    "id": "repository.compare-complete-grammar-output",
+    "source": "js/src/grammar-runtime/tree-equality.js",
+    "name": "sameGrammarOutput",
+    "inventoryName": "same-grammar-output"
+  },
+  {
+    "id": "repository.compare-structural-grammar-tree",
+    "source": "js/src/grammar-runtime/tree-equality.js",
+    "name": "sameGrammarTree",
+    "inventoryName": "same-grammar-tree"
+  },
+  {
+    "id": "repository.create-grammar-selection-equality-tree",
+    "source": "js/tests/grammar-selection-equality.test.js",
+    "name": "grammarSelectionEqualityTree",
+    "inventoryName": "grammar-selection-equality-tree"
+  },
+  {
+    "id": "repository.check-complete-embedded-tree-and-witness-equality",
+    "source": "js/tests/grammar-selection-equality.test.js",
+    "name": "full embedded CSTs and every parallel witness remain distinct under both comparisons",
+    "inventoryName": "full-embedded-cs-ts-and-every-parallel-witness-remain-distinct-under-both-comparisons"
+  },
+  {
+    "id": "repository.check-linked-metadata-presence-and-order",
+    "source": "js/tests/grammar-selection-equality.test.js",
+    "name": "metadata preserves absent keys, nulls, array lengths and object order while attributes keep their existing rule",
+    "inventoryName": "metadata-preserves-absent-keys-nulls-array-lengths-and-object-order-while-attributes-keep-the-existing-rule"
+  },
+  {
+    "id": "repository.check-outer-trivia-and-embedded-concrete-boundary",
+    "source": "js/tests/grammar-selection-equality.test.js",
+    "name": "structural whitespace ownership stays unchanged outside embedded concrete roots",
+    "inventoryName": "structural-whitespace-ownership-stays-unchanged-outside-embedded-concrete-roots"
+  },
+  {
+    "id": "repository.check-all-selection-alternative-witnesses",
+    "source": "js/tests/grammar-selection-equality.test.js",
+    "name": "actual grammar alternatives with equal primary embeddings retain their different all-policy witnesses",
+    "inventoryName": "actual-grammar-alternatives-with-equal-primary-embedded-trees-retain-the-different-all-policy-witnesses"
+  },
+  {
+    "id": "repository.check-shared-tree-and-selection-field-plans",
+    "source": "js/tests/grammar-selection-equality.test.js",
+    "name": "portable equality decisions declare concrete recursion and every selection header field",
+    "inventoryName": "portable-equality-decisions-declare-concrete-recursion-and-every-selection-header-field"
+  },
+  {
+    "id": "repository.native-grammar-tree-equality-plan",
+    "source": "rust/src/grammar/feature_runtime/walk.rs",
+    "name": "GrammarTreeEqualityPlan",
+    "inventoryName": "grammar-tree-equality-plan-type"
+  },
+  {
+    "id": "repository.read-native-grammar-tree-equality-plan",
+    "source": "rust/src/grammar/feature_runtime/walk.rs",
+    "name": "grammar_tree_equality_plan",
+    "inventoryName": "grammar-tree-equality-plan-operation"
+  },
+  {
+    "id": "repository.read-native-grammar-selection-equality-fields",
+    "source": "rust/src/grammar/feature_runtime/walk.rs",
+    "name": "grammar_selection_equality_fields",
+    "inventoryName": "grammar-selection-equality-fields"
+  },
+  {
+    "id": "repository.compare-native-linked-tree-metadata",
+    "source": "rust/src/grammar/feature_runtime/walk.rs",
+    "name": "same_tree_metadata",
+    "inventoryName": "same-tree-metadata"
+  },
+  {
+    "id": "repository.compare-native-tree-header",
+    "source": "rust/src/grammar/feature_runtime/walk.rs",
+    "name": "same_tree_header",
+    "inventoryName": "same-tree-header"
+  },
+  {
+    "id": "repository.compare-native-concrete-output-with-cache",
+    "source": "rust/src/grammar/feature_runtime/walk.rs",
+    "name": "same_output_with",
+    "inventoryName": "same-output-with"
+  },
+  {
+    "id": "repository.compare-native-complete-output-tree",
+    "source": "rust/src/grammar/feature_runtime/walk.rs",
+    "name": "same_output_tree",
+    "inventoryName": "same-output-tree"
+  },
+  {
+    "id": "repository.compare-native-complete-embedded-tree",
+    "source": "rust/src/grammar/feature_runtime/walk.rs",
+    "name": "same_embedding",
+    "inventoryName": "same-embedded-tree"
+  },
+  {
+    "id": "repository.compare-native-primary-selection",
+    "source": "rust/src/grammar/feature_runtime/walk.rs",
+    "name": "same_selection",
+    "inventoryName": "same-selection"
+  },
+  {
+    "id": "repository.compare-native-selection-alternative",
+    "source": "rust/src/grammar/feature_runtime/walk.rs",
+    "name": "same_selection_alternative",
+    "inventoryName": "same-selection-alternative"
+  },
+  {
+    "id": "repository.create-native-selection-equality-root",
+    "source": "rust/tests/unit/grammar_output_equality/walk_selection_cases.rs",
+    "name": "selection_equality_root",
+    "inventoryName": "selection-equality-root"
+  },
+  {
+    "id": "repository.create-native-selection-equality-embedded-tree",
+    "source": "rust/tests/unit/grammar_output_equality/walk_selection_cases.rs",
+    "name": "selection_equality_embedding",
+    "inventoryName": "selection-equality-embedded-tree"
+  },
+  {
+    "id": "repository.check-native-selection-control-difference",
+    "source": "rust/tests/unit/grammar_output_equality/walk_selection_cases.rs",
+    "name": "assert_selection_difference",
+    "inventoryName": "assert-selection-difference"
+  },
+  {
+    "id": "repository.check-native-complete-embedded-tree-witness-equality",
+    "source": "rust/tests/unit/grammar_output_equality/walk_selection_cases.rs",
+    "name": "embeddings_compare_full_nested_roots_and_every_selection_witness",
+    "inventoryName": "embedded-trees-compare-full-nested-roots-and-every-selection-witness"
+  },
+  {
+    "id": "repository.check-native-lexical-metadata-presence-and-order",
+    "source": "rust/tests/unit/grammar_output_equality/walk_selection_cases.rs",
+    "name": "lexical_unknown_keys_null_presence_and_linked_metadata_order_remain_observable",
+    "inventoryName": "lexical-unknown-keys-null-presence-and-linked-metadata-order-remain-observable"
+  },
+  {
+    "id": "repository.check-native-outer-and-embedded-trivia-boundary",
+    "source": "rust/tests/unit/grammar_output_equality/walk_selection_cases.rs",
+    "name": "structural_node_trivia_stays_flexible_but_embedded_trivia_is_concrete",
+    "inventoryName": "structural-node-trivia-stays-flexible-but-embedded-trivia-is-concrete"
+  },
+  {
+    "id": "repository.java-script-grammar-selection-candidate-shape",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarSelectionCandidate",
+    "inventoryName": "grammar-selection-candidate"
+  },
+  {
+    "id": "repository.java-script-grammar-selection-provenance-shape",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarSelectionProvenance",
+    "inventoryName": "grammar-selection-provenance"
+  },
+  {
+    "id": "repository.java-script-grammar-selection-alternative-shape",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarSelectionAlternative",
+    "inventoryName": "grammar-selection-alternative"
+  },
+  {
+    "id": "repository.java-script-grammar-selection-shape",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarSelection",
+    "inventoryName": "grammar-selection"
+  },
+  {
+    "id": "repository.native-optional-inference-term",
+    "source": "rust/src/translation/javascript/infer.rs",
+    "name": "Term::Option",
+    "inventoryName": "term-option"
+  },
+  {
+    "id": "repository.native-ordered-union-inference-term",
+    "source": "rust/src/translation/javascript/infer.rs",
+    "name": "Term::Union",
+    "inventoryName": "term-union"
+  },
+  {
+    "id": "repository.native-map-inference-term",
+    "source": "rust/src/translation/javascript/infer.rs",
+    "name": "Term::Map",
+    "inventoryName": "term-map"
+  },
+  {
+    "id": "repository.native-set-inference-term",
+    "source": "rust/src/translation/javascript/infer.rs",
+    "name": "Term::Set",
+    "inventoryName": "term-set"
+  },
+  {
+    "id": "repository.native-record-inference-term",
+    "source": "rust/src/translation/javascript/infer.rs",
+    "name": "Term::Record",
+    "inventoryName": "term-record"
+  },
+  {
+    "id": "repository.native-callable-function-inference-term",
+    "source": "rust/src/translation/javascript/infer.rs",
+    "name": "Term::Function",
+    "inventoryName": "term-function"
+  },
+  {
+    "id": "repository.native-scalar-cell-inference-term",
+    "source": "rust/src/translation/javascript/infer.rs",
+    "name": "Term::Cell",
+    "inventoryName": "term-cell"
+  },
+  {
+    "id": "repository.native-inference-record-owner",
+    "source": "rust/src/translation/javascript/infer.rs",
+    "name": "RecordTerm",
+    "inventoryName": "record-term"
+  },
+  {
+    "id": "repository.native-function-result-constraint",
+    "source": "rust/src/translation/javascript/infer.rs",
+    "name": "FunctionResult",
+    "inventoryName": "function-result"
+  },
+  {
+    "id": "repository.native-call-argument-constraint",
+    "source": "rust/src/translation/javascript/infer.rs",
+    "name": "CallArguments",
+    "inventoryName": "call-arguments"
+  },
+  {
+    "id": "repository.native-optional-fallback-constraint",
+    "source": "rust/src/translation/javascript/infer.rs",
+    "name": "Coalescing",
+    "inventoryName": "coalescing"
+  },
+  {
+    "id": "repository.native-branch-type-join-constraint",
+    "source": "rust/src/translation/javascript/infer.rs",
+    "name": "Join",
+    "inventoryName": "join"
+  },
+  {
+    "id": "repository.native-arithmetic-inference-constraint",
+    "source": "rust/src/translation/javascript/infer.rs",
+    "name": "Arithmetic",
+    "inventoryName": "arithmetic"
+  },
+  {
+    "id": "repository.thread-native-output-evaluation",
+    "source": "rust/src/translation/output/evaluation.rs",
+    "name": "io",
+    "inventoryName": "input-output"
+  },
+  {
+    "id": "repository.bulk-translation-rule-check-registry",
+    "source": "js/scripts/check-bulk-translation-rules.mjs",
+    "name": "BULK_TRANSLATION_RULE_CHECKS",
+    "inventoryName": "bulk-translation-rule-checks"
+  },
+  {
+    "id": "repository.invoke-translation-rule-check",
+    "source": "js/scripts/check-bulk-translation-rules.mjs",
+    "name": "invokeTranslationRuleCheck",
+    "inventoryName": "invoke-translation-rule-check"
+  },
+  {
+    "id": "repository.run-bulk-translation-rule-checks",
+    "source": "js/scripts/check-bulk-translation-rules.mjs",
+    "name": "runBulkTranslationRuleChecks",
+    "inventoryName": "run-bulk-translation-rule-checks"
+  },
+  {
+    "id": "repository.invoke-translation-freshness-control",
+    "source": "js/tests/issue-195-evidence-translation-freshness.test.js",
+    "name": "invoke",
+    "inventoryName": "invoke"
+  },
+  {
+    "id": "repository.run-translation-freshness-child-control",
+    "source": "js/tests/issue-195-evidence-translation-freshness.test.js",
+    "name": "run",
+    "inventoryName": "run"
+  },
+  {
+    "id": "repository.check-complete-bulk-translation-freshness-inventory",
+    "source": "js/tests/issue-195-evidence-translation-freshness.test.js",
+    "name": "bulk translation freshness includes every new native family without repeating existing generation gates",
+    "inventoryName": "bulk-translation-freshness-includes-every-new-native-family-without-repeating-existing-generation-gates"
+  },
+  {
+    "id": "repository.check-serial-freshness-failure-reporting",
+    "source": "js/tests/issue-195-evidence-translation-freshness.test.js",
+    "name": "bulk translation freshness runs serially and reports every spawn and native-output failure",
+    "inventoryName": "bulk-translation-freshness-runs-serially-and-reports-every-spawn-and-native-output-failure"
+  },
+  {
+    "id": "repository.check-genuine-fixture-freshness-refusals",
+    "source": "js/tests/issue-195-evidence-translation-freshness.test.js",
+    "name": "the actual unchanged fixture generator rejects missing and stale outputs without compiling Rust",
+    "inventoryName": "the-actual-unchanged-fixture-generator-rejects-missing-and-stale-outputs-without-compiling-rust"
+  },
+  {
+    "id": "repository.check-freshness-after-native-lint-failures",
+    "source": "js/tests/issue-195-evidence-translation-freshness.test.js",
+    "name": "Rust lint runs complete source freshness after tools and existing checks even when a prior check fails",
+    "inventoryName": "rust-lint-runs-complete-source-freshness-after-tools-and-existing-checks-even-if-a-prior-check-fails"
+  },
+  {
+    "id": "repository.check-freshness-cli-complete-scope",
+    "source": "js/tests/issue-195-evidence-translation-freshness.test.js",
+    "name": "the complete freshness CLI refuses selection and update arguments before running any family",
+    "inventoryName": "the-complete-freshness-command-line-interface-refuses-selection-and-update-arguments-before-running-any-family"
+  },
+  {
+    "id": "translation.accept-callable-type-whitespace",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "acceptCallableTypeWhitespace",
+    "inventoryName": "accept-callable-type-whitespace"
+  },
+  {
+    "id": "translation.accept-callable-type-whitespace",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "accept_callable_type_whitespace",
+    "inventoryName": "accept-callable-type-whitespace"
+  },
+  {
+    "id": "repository.read-callable-type-trimmed-start",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "callableTypeTrimStart",
+    "inventoryName": "callable-type-trim-start"
+  },
+  {
+    "id": "repository.read-callable-type-trimmed-start",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "callable_type_trim_start",
+    "inventoryName": "callable-type-trim-start"
+  },
+  {
+    "id": "repository.read-callable-type-trimmed-end",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "callableTypeTrimEnd",
+    "inventoryName": "callable-type-trim-end"
+  },
+  {
+    "id": "repository.read-callable-type-trimmed-end",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "callable_type_trim_end",
+    "inventoryName": "callable-type-trim-end"
+  },
+  {
+    "id": "repository.plan-callable-type-parameter-segments",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "callableTypeParameterSegments",
+    "inventoryName": "callable-type-parameter-segments"
+  },
+  {
+    "id": "repository.plan-callable-type-parameter-segments",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "callable_type_parameter_segments",
+    "inventoryName": "callable-type-parameter-segments"
+  },
+  {
+    "id": "repository.plan-callable-type-parameters",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "callableTypeParameters",
+    "inventoryName": "callable-type-parameters"
+  },
+  {
+    "id": "repository.plan-callable-type-parameters",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "callable_type_parameters",
+    "inventoryName": "callable-type-parameters"
+  },
+  {
+    "id": "translation.plan-callable-type-syntax",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "planCallableTypeSyntax",
+    "inventoryName": "plan-callable-type-syntax"
+  },
+  {
+    "id": "translation.plan-callable-type-syntax",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "plan_callable_type_syntax",
+    "inventoryName": "plan-callable-type-syntax"
+  },
+  {
+    "id": "translation.read-callable-linked-application-error",
+    "source": "js/src/translation/callable-source-rules.js",
+    "name": "readCallableLinkedApplicationError",
+    "inventoryName": "read-callable-linked-application-error"
+  },
+  {
+    "id": "translation.read-callable-linked-application-error",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "read_callable_linked_application_error",
+    "inventoryName": "read-callable-linked-application-error"
+  },
+  {
+    "id": "repository.read-complete-type-syntax-source-module",
+    "source": "js/scripts/generate-type-syntax-rules.mjs",
+    "name": "readTypeSyntaxSourceModule",
+    "inventoryName": "read-type-syntax-source-module"
+  },
+  {
+    "id": "repository.check-original-callable-type-syntax-slices",
+    "source": "js/tests/translation-callable-source-rules.test.js",
+    "name": "callable type syntax plans preserve the complete original function forms and exact child slices",
+    "inventoryName": "callable-type-syntax-plans-preserve-the-complete-original-function-forms-and-exact-child-slices"
+  },
+  {
+    "id": "repository.check-genuine-documentation-callable-types",
+    "source": "js/tests/translation-callable-source-rules.test.js",
+    "name": "callable JSDoc function types drive genuine checked callbacks and all four target renderers",
+    "inventoryName": "callable-java-script-documentation-function-types-drive-genuine-checked-callbacks-and-all-four-target-rendering-operations"
+  },
+  {
+    "id": "repository.read-original-callable-type-separator-control",
+    "source": "js/tests/fixtures/callable-type-original.js",
+    "name": "splitType",
+    "inventoryName": "split-type"
+  },
+  {
+    "id": "repository.read-original-callable-composite-type-control",
+    "source": "js/tests/fixtures/callable-type-original.js",
+    "name": "readCompositeType",
+    "inventoryName": "read-composite-type"
+  },
+  {
+    "id": "repository.render-native-java-script-expression",
+    "source": "rust/src/translation/emit_javascript/expressions.rs",
+    "name": "expr",
+    "inventoryName": "expression"
+  },
+  {
+    "id": "repository.render-native-java-script-expression-list",
+    "source": "rust/src/translation/emit_javascript/expressions.rs",
+    "name": "exprs",
+    "inventoryName": "expressions"
+  },
+  {
+    "id": "translation.read-surface-reference-emission-operation",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "readSurfaceReferenceEmissionOperation",
+    "inventoryName": "read-surface-reference-emission-operation"
+  },
+  {
+    "id": "translation.read-surface-reference-emission-operation",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "read_surface_reference_emission_operation",
+    "inventoryName": "read-surface-reference-emission-operation"
+  },
+  {
+    "id": "translation.read-surface-reference-emission-refusal",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "readSurfaceReferenceEmissionRefusal",
+    "inventoryName": "read-surface-reference-emission-refusal"
+  },
+  {
+    "id": "translation.read-surface-reference-emission-refusal",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "read_surface_reference_emission_refusal",
+    "inventoryName": "read-surface-reference-emission-refusal"
+  },
+  {
+    "id": "repository.check-forged-reference-emission-boundaries",
+    "source": "js/tests/translation-surface-reference-analysis.test.js",
+    "name": "forged checked receiver and allocation flags retain the exact prior Rust emission refusals",
+    "inventoryName": "forged-checked-receiver-and-allocation-flags-retain-the-exact-prior-rust-emission-refusals"
+  },
+  {
+    "id": "repository.simplify-portable-product-library-styles",
+    "source": "js/scripts/reviewed-rust-branch-styles.mjs",
+    "name": "simplifyPortableProductLibraryStyles",
+    "inventoryName": "simplify-portable-product-library-styles"
+  },
+  {
+    "id": "repository.check-native-default-reference-selection-after-proven-append-removal",
+    "source": "rust/tests/unit/translation_surface_reference_analysis.rs",
+    "name": "default_selection_excludes_only_actual_eliminated_private_append_operations",
+    "inventoryName": "default-selection-excludes-only-actual-eliminated-private-append-operations"
+  },
+  {
+    "id": "repository.read-current-native-java-script-module-source",
+    "source": "rust/src/translation/javascript/declarations/file.rs",
+    "name": "file",
+    "inventoryName": "file"
+  },
+  {
+    "id": "repository.native-source-expression-traversal-module",
+    "source": "rust/src/translation/javascript/lowering.rs",
+    "name": "traversal",
+    "inventoryName": "traversal"
+  },
+  {
+    "id": "repository.native-source-value-expression-module",
+    "source": "rust/src/translation/javascript/expressions.rs",
+    "name": "values",
+    "inventoryName": "values"
+  },
+  {
+    "id": "repository.native-source-imperative-loop-module",
+    "source": "rust/src/translation/javascript/imperative.rs",
+    "name": "loops",
+    "inventoryName": "loops"
+  },
+  {
+    "id": "repository.java-script-surface-library-style",
+    "source": "js/scripts/generate-javascript-surface-rules.mjs",
+    "name": "javascript-surface-library-style",
+    "inventoryName": "javascript-surface-library-style"
+  },
+  {
+    "id": "repository.primitive-method-local-source-relocation",
+    "source": "js/scripts/generate-primitive-method-rules.mjs",
+    "name": "primitive-method-relocation",
+    "inventoryName": "primitive-method-relocation"
+  },
+  {
+    "id": "repository.primitive-method-library-style",
+    "source": "js/scripts/generate-primitive-method-rules.mjs",
+    "name": "primitive-method-library-style",
+    "inventoryName": "primitive-method-library-style"
+  },
+  {
+    "id": "repository.callable-source-local-relocation",
+    "source": "js/scripts/generate-callable-source-rules.mjs",
+    "name": "callable-source-relocation",
+    "inventoryName": "callable-source-relocation"
+  },
+  {
+    "id": "repository.callable-source-library-style",
+    "source": "js/scripts/generate-callable-source-rules.mjs",
+    "name": "callable-source-library-style",
+    "inventoryName": "callable-source-library-style"
+  },
+  {
+    "id": "repository.surface-reference-analysis-library-style",
+    "source": "js/scripts/generate-surface-reference-analysis-rules.mjs",
+    "name": "surface-reference-analysis-library-style",
+    "inventoryName": "surface-reference-analysis-library-style"
+  },
+  {
+    "id": "repository.copy-native-callable-case-test",
+    "source": "rust/src/translation/javascript/callables.rs",
+    "name": "case_value",
+    "inventoryName": "case-value"
+  },
+  {
+    "id": "repository.create-native-callable-term",
+    "source": "rust/src/translation/javascript/infer/callables.rs",
+    "name": "callable_term",
+    "inventoryName": "callable-term"
+  },
+  {
+    "id": "repository.create-native-checked-callable-type",
+    "source": "rust/src/translation/check/callables.rs",
+    "name": "callable_type",
+    "inventoryName": "callable-type"
+  },
+  {
+    "id": "repository.verify-original-raw-second-schema-source",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-second-extension-closure.mjs",
+    "name": "verifySecondSchemaSource",
+    "inventoryName": "verify-second-schema-source"
+  },
+  {
+    "id": "repository.verify-original-raw-second-schema-draft-predecessor",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-second-extension-closure.mjs",
+    "name": "verifyOriginalLinkRawSchemaSecondDraftPredecessor",
+    "inventoryName": "verify-original-link-raw-schema-second-draft-predecessor"
+  },
+  {
+    "id": "repository.read-callable-emission-fact-field",
+    "source": "js/src/translation/callable-emission-rules.js",
+    "name": "callableEmissionField",
+    "inventoryName": "callable-emission-field"
+  },
+  {
+    "id": "repository.read-callable-emission-fact-field",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "callable_emission_field",
+    "inventoryName": "callable-emission-field"
+  },
+  {
+    "id": "repository.read-callable-emission-fact-text",
+    "source": "js/src/translation/callable-emission-rules.js",
+    "name": "callableEmissionText",
+    "inventoryName": "callable-emission-text"
+  },
+  {
+    "id": "repository.read-callable-emission-fact-text",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "callable_emission_text",
+    "inventoryName": "callable-emission-text"
+  },
+  {
+    "id": "translation.plan-callable-capture-bindings",
+    "source": "js/src/translation/callable-emission-rules.js",
+    "name": "planCallableCaptureBindings",
+    "inventoryName": "plan-callable-capture-bindings"
+  },
+  {
+    "id": "translation.plan-callable-capture-bindings",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "plan_callable_capture_bindings",
+    "inventoryName": "plan-callable-capture-bindings"
+  },
+  {
+    "id": "translation.accept-callable-creation-effect-traversal",
+    "source": "js/src/translation/callable-emission-rules.js",
+    "name": "acceptCallableCreationEffectTraversal",
+    "inventoryName": "accept-callable-creation-effect-traversal"
+  },
+  {
+    "id": "translation.accept-callable-creation-effect-traversal",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "accept_callable_creation_effect_traversal",
+    "inventoryName": "accept-callable-creation-effect-traversal"
+  },
+  {
+    "id": "translation.require-callable-output-effect",
+    "source": "js/src/translation/callable-emission-rules.js",
+    "name": "requireCallableOutputEffect",
+    "inventoryName": "require-callable-output-effect"
+  },
+  {
+    "id": "translation.require-callable-output-effect",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "require_callable_output_effect",
+    "inventoryName": "require-callable-output-effect"
+  },
+  {
+    "id": "repository.accept-callable-effect-traversal-field",
+    "source": "js/src/translation/callable-emission-rules.js",
+    "name": "acceptCallableEffectField",
+    "inventoryName": "accept-callable-effect-field"
+  },
+  {
+    "id": "repository.accept-callable-effect-traversal-field",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "accept_callable_effect_field",
+    "inventoryName": "accept-callable-effect-field"
+  },
+  {
+    "id": "repository.read-callable-emission-name-membership",
+    "source": "js/src/translation/callable-emission-rules.js",
+    "name": "callableEmissionHasName",
+    "inventoryName": "callable-emission-has-name"
+  },
+  {
+    "id": "repository.read-callable-emission-name-membership",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "callable_emission_has_name",
+    "inventoryName": "callable-emission-has-name"
+  },
+  {
+    "id": "translation.read-callable-eager-effects",
+    "source": "js/src/translation/callable-emission-rules.js",
+    "name": "readCallableEagerEffects",
+    "inventoryName": "read-callable-eager-effects"
+  },
+  {
+    "id": "translation.read-callable-eager-effects",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "read_callable_eager_effects",
+    "inventoryName": "read-callable-eager-effects"
+  },
+  {
+    "id": "translation.read-callable-effect-bearing-declarations",
+    "source": "js/src/translation/callable-emission-rules.js",
+    "name": "readCallableEffectfulDeclarations",
+    "inventoryName": "read-callable-effect-bearing-declarations"
+  },
+  {
+    "id": "translation.read-callable-effect-bearing-declarations",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "read_callable_effectful_declarations",
+    "inventoryName": "read-callable-effect-bearing-declarations"
+  },
+  {
+    "id": "repository.read-callable-emission-obligations",
+    "source": "js/src/translation/callable-emission-rules.js",
+    "name": "callableEmissionObligations",
+    "inventoryName": "callable-emission-obligations"
+  },
+  {
+    "id": "repository.read-callable-emission-obligations",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "callable_emission_obligations",
+    "inventoryName": "callable-emission-obligations"
+  },
+  {
+    "id": "translation.plan-callable-output-obligations",
+    "source": "js/src/translation/callable-emission-rules.js",
+    "name": "planCallableOutputObligations",
+    "inventoryName": "plan-callable-output-obligations"
+  },
+  {
+    "id": "translation.plan-callable-output-obligations",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "plan_callable_output_obligations",
+    "inventoryName": "plan-callable-output-obligations"
+  },
+  {
+    "id": "translation.read-callable-output-target-refusal",
+    "source": "js/src/translation/callable-emission-rules.js",
+    "name": "readCallableOutputTargetRefusal",
+    "inventoryName": "read-callable-output-target-refusal"
+  },
+  {
+    "id": "translation.read-callable-output-target-refusal",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "read_callable_output_target_refusal",
+    "inventoryName": "read-callable-output-target-refusal"
+  },
+  {
+    "id": "repository.read-retained-callable-output-analysis",
+    "source": "js/src/translation/callable-emission.js",
+    "name": "readCallableOutputAnalysis",
+    "inventoryName": "read-callable-output-analysis"
+  },
+  {
+    "id": "repository.read-complete-callable-emission-source-module",
+    "source": "js/scripts/generate-callable-emission-rules.mjs",
+    "name": "readCallableEmissionSourceModule",
+    "inventoryName": "read-callable-emission-source-module"
+  },
+  {
+    "id": "repository.read-callable-emission-rules-policy",
+    "source": "js/scripts/generate-callable-emission-rules.mjs",
+    "name": "callableEmissionRulesPolicy",
+    "inventoryName": "callable-emission-rules-policy"
+  },
+  {
+    "id": "repository.generate-callable-emission-rules",
+    "source": "js/scripts/generate-callable-emission-rules.mjs",
+    "name": "generateCallableEmissionRules",
+    "inventoryName": "generate-callable-emission-rules"
+  },
+  {
+    "id": "repository.observe-callable-effect-control-source",
+    "source": "js/tests/translation-callable-emission-rules.test.js",
+    "name": "observe",
+    "inventoryName": "observe"
+  },
+  {
+    "id": "repository.reload-callable-effect-control-archive",
+    "source": "js/tests/translation-callable-emission-rules.test.js",
+    "name": "reload",
+    "inventoryName": "reload"
+  },
+  {
+    "id": "repository.check-callable-formal-target-refusal",
+    "source": "js/tests/translation-callable-emission-rules.test.js",
+    "name": "rejectFormal",
+    "inventoryName": "reject-formal"
+  },
+  {
+    "id": "repository.check-callable-capture-binding-order",
+    "source": "js/tests/translation-callable-emission-rules.test.js",
+    "name": "callable capture plans preserve original Map insertion order and last actual type identities",
+    "inventoryName": "callable-capture-plans-preserve-original-map-insertion-order-and-last-actual-type-identities"
+  },
+  {
+    "id": "repository.check-callable-latent-output-identities",
+    "source": "js/tests/translation-callable-emission-rules.test.js",
+    "name": "callable effect plans keep creation pure and retain actual Lambda FunctionRef and Apply obligations",
+    "inventoryName": "callable-effect-plans-keep-creation-pure-and-retain-actual-lambda-function-reference-and-apply-obligations"
+  },
+  {
+    "id": "repository.check-callable-source-free-creation-invocation-traces",
+    "source": "js/tests/translation-callable-emission-rules.test.js",
+    "name": "effectful callable sources keep creation and invocation traces through both source free formats",
+    "inventoryName": "effect-bearing-callable-sources-keep-creation-and-invocation-traces-through-both-source-free-formats"
+  },
+  {
+    "id": "repository.check-callable-invocation-abort-and-target-obligation",
+    "source": "js/tests/translation-callable-emission-rules.test.js",
+    "name": "callable aborts happen only at invocation and keep the formal target obligation explicit",
+    "inventoryName": "callable-aborts-happen-only-at-invocation-and-keep-the-formal-target-obligation-explicit"
+  },
+  {
+    "id": "repository.check-complete-callable-emission-source-translation",
+    "source": "js/tests/translation-callable-emission-rules.test.js",
+    "name": "the complete callable emission source translates without host callbacks or native semantic replacements",
+    "inventoryName": "the-complete-callable-emission-source-translates-without-host-callbacks-or-native-semantic-replacements"
+  },
+  {
+    "id": "repository.observe-callable-documentation-console-output",
+    "source": "js/tests/translation-callable-source-rules.test.js",
+    "name": "consoleOutput",
+    "inventoryName": "console-output"
+  },
+  {
+    "id": "repository.read-grammar-lexical-analyser-position-membership",
+    "source": "js/src/translation/grammar-lexer-rules.js",
+    "name": "containsGrammarLexerPosition",
+    "inventoryName": "contains-grammar-lexical-analyser-position"
+  },
+  {
+    "id": "repository.read-grammar-lexical-analyser-position-membership",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "contains_grammar_lexer_position",
+    "inventoryName": "contains-grammar-lexical-analyser-position"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-section-rule-positions",
+    "source": "js/src/translation/grammar-lexer-rules.js",
+    "name": "readGrammarLexerSectionRulePositions",
+    "inventoryName": "read-grammar-lexical-analyser-section-rule-positions"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-section-rule-positions",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "read_grammar_lexer_section_rule_positions",
+    "inventoryName": "read-grammar-lexical-analyser-section-rule-positions"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-literal-rule-position",
+    "source": "js/src/translation/grammar-lexer-rules.js",
+    "name": "readGrammarLexerLiteralRulePosition",
+    "inventoryName": "read-grammar-lexical-analyser-literal-rule-position"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-literal-rule-position",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "read_grammar_lexer_literal_rule_position",
+    "inventoryName": "read-grammar-lexical-analyser-literal-rule-position"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-binding-names",
+    "source": "js/src/translation/grammar-lexer-rules.js",
+    "name": "readGrammarLexerBindingNames",
+    "inventoryName": "read-grammar-lexical-analyser-binding-names"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-binding-names",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "read_grammar_lexer_binding_names",
+    "inventoryName": "read-grammar-lexical-analyser-binding-names"
+  },
+  {
+    "id": "repository.complete-another-tool-for-language-recognition-lexical-analyser-bindings",
+    "source": "js/src/grammar-importers/antlr-lexer-plan.js",
+    "name": "completeAntlrLexerBindings",
+    "inventoryName": "complete-another-tool-for-language-recognition-lexical-analyser-bindings"
+  },
+  {
+    "id": "repository.check-original-source-lexical-analyser-ownership-and-bindings",
+    "source": "js/tests/grammar-lexer-rules.test.js",
+    "name": "portable lexer source plans preserve original section ownership and token bindings",
+    "inventoryName": "portable-lexical-analyser-source-plans-preserve-original-section-ownership-and-token-bindings"
+  },
+  {
+    "id": "repository.check-final-token-command-alias-retention",
+    "source": "js/tests/grammar-antlr-lexer-election.test.js",
+    "name": "ANTLR final type commands add bindings while superseded historical aliases remain inspectable",
+    "inventoryName": "another-tool-for-language-recognition-final-type-commands-add-bindings-while-superseded-historical-aliases-remain-visible"
+  },
+  {
+    "id": "translation.read-record-field-inference-step",
+    "source": "js/src/translation/record-value-rules.js",
+    "name": "readRecordFieldInferenceStep",
+    "inventoryName": "read-record-field-inference-step"
+  },
+  {
+    "id": "translation.read-record-field-inference-step",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_field_inference_step",
+    "inventoryName": "read-record-field-inference-step"
+  },
+  {
+    "id": "repository.read-record-type-fact-field",
+    "source": "js/src/translation/record-value-rules.js",
+    "name": "recordTypeFactField",
+    "inventoryName": "record-type-fact-field"
+  },
+  {
+    "id": "repository.read-record-type-fact-field",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "record_type_fact_field",
+    "inventoryName": "record-type-fact-field"
+  },
+  {
+    "id": "repository.read-record-type-fact-kind",
+    "source": "js/src/translation/record-value-rules.js",
+    "name": "recordTypeFactKind",
+    "inventoryName": "record-type-fact-kind"
+  },
+  {
+    "id": "repository.read-record-type-fact-kind",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "record_type_fact_kind",
+    "inventoryName": "record-type-fact-kind"
+  },
+  {
+    "id": "repository.read-record-type-fact-elements",
+    "source": "js/src/translation/record-value-rules.js",
+    "name": "recordTypeFactElements",
+    "inventoryName": "record-type-fact-elements"
+  },
+  {
+    "id": "repository.read-record-type-fact-elements",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "record_type_fact_elements",
+    "inventoryName": "record-type-fact-elements"
+  },
+  {
+    "id": "translation.read-record-type-owner-presence",
+    "source": "js/src/translation/record-value-rules.js",
+    "name": "readRecordTypeOwnerPresence",
+    "inventoryName": "read-record-type-owner-presence"
+  },
+  {
+    "id": "translation.read-record-type-owner-presence",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_type_owner_presence",
+    "inventoryName": "read-record-type-owner-presence"
+  },
+  {
+    "id": "translation.accept-owned-array-append-shape",
+    "source": "js/src/translation/owned-array-append-rules.js",
+    "name": "acceptOwnedArrayAppendShape",
+    "inventoryName": "accept-owned-array-append-shape"
+  },
+  {
+    "id": "translation.accept-owned-array-append-shape",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "accept_owned_array_append_shape",
+    "inventoryName": "accept-owned-array-append-shape"
+  },
+  {
+    "id": "translation.accept-owned-array-read",
+    "source": "js/src/translation/owned-array-append-rules.js",
+    "name": "acceptOwnedArrayRead",
+    "inventoryName": "accept-owned-array-read"
+  },
+  {
+    "id": "translation.accept-owned-array-read",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "accept_owned_array_read",
+    "inventoryName": "accept-owned-array-read"
+  },
+  {
+    "id": "translation.accept-owned-array-reader-result",
+    "source": "js/src/translation/owned-array-append-rules.js",
+    "name": "acceptOwnedArrayReaderResult",
+    "inventoryName": "accept-owned-array-reader-result"
+  },
+  {
+    "id": "translation.accept-owned-array-reader-result",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "accept_owned_array_reader_result",
+    "inventoryName": "accept-owned-array-reader-result"
+  },
+  {
+    "id": "translation.accept-owned-array-append-uses",
+    "source": "js/src/translation/owned-array-append-rules.js",
+    "name": "acceptOwnedArrayAppendUses",
+    "inventoryName": "accept-owned-array-append-uses"
+  },
+  {
+    "id": "translation.accept-owned-array-append-uses",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "accept_owned_array_append_uses",
+    "inventoryName": "accept-owned-array-append-uses"
+  },
+  {
+    "id": "translation.accept-owned-array-final-use",
+    "source": "js/src/translation/owned-array-append-rules.js",
+    "name": "acceptOwnedArrayFinalUse",
+    "inventoryName": "accept-owned-array-final-use"
+  },
+  {
+    "id": "translation.accept-owned-array-final-use",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "accept_owned_array_final_use",
+    "inventoryName": "accept-owned-array-final-use"
+  },
+  {
+    "id": "repository.read-owned-array-reader-parameters",
+    "source": "js/src/translation/owned-array-append.js",
+    "name": "readOwnedArrayReaderParameters",
+    "inventoryName": "read-owned-array-reader-parameters"
+  },
+  {
+    "id": "repository.visit-owned-array-reader-occurrences",
+    "source": "js/src/translation/owned-array-append.js",
+    "name": "visit",
+    "inventoryName": "visit"
+  },
+  {
+    "id": "repository.lower-proven-owned-array-appends",
+    "source": "js/src/translation/owned-array-append.js",
+    "name": "lowerOwnedArrayAppends",
+    "inventoryName": "lower-owned-array-appends"
+  },
+  {
+    "id": "repository.read-owned-array-append-proofs",
+    "source": "js/src/translation/owned-array-append.js",
+    "name": "readOwnedArrayAppendProofs",
+    "inventoryName": "read-owned-array-append-proofs"
+  },
+  {
+    "id": "repository.advance-owned-array-occurrence-position",
+    "source": "js/src/translation/owned-array-append.js",
+    "name": "advance",
+    "inventoryName": "advance"
+  },
+  {
+    "id": "repository.record-owned-array-escape-occurrence",
+    "source": "js/src/translation/owned-array-append.js",
+    "name": "escape",
+    "inventoryName": "escape"
+  },
+  {
+    "id": "repository.read-owned-array-source-occurrences",
+    "source": "js/src/translation/owned-array-append.js",
+    "name": "read",
+    "inventoryName": "read"
+  },
+  {
+    "id": "repository.read-owned-array-statement-occurrences",
+    "source": "js/src/translation/owned-array-append.js",
+    "name": "list",
+    "inventoryName": "list"
+  },
+  {
+    "id": "repository.read-owned-array-final-uses",
+    "source": "js/src/translation/owned-array-moves.js",
+    "name": "readOwnedArrayFinalUses",
+    "inventoryName": "read-owned-array-final-uses"
+  },
+  {
+    "id": "repository.read-owned-array-move-binding-identity",
+    "source": "js/src/translation/owned-array-moves.js",
+    "name": "name",
+    "inventoryName": "name"
+  },
+  {
+    "id": "repository.record-owned-array-move-event",
+    "source": "js/src/translation/owned-array-moves.js",
+    "name": "event",
+    "inventoryName": "event"
+  },
+  {
+    "id": "repository.read-owned-array-move-children",
+    "source": "js/src/translation/owned-array-moves.js",
+    "name": "children",
+    "inventoryName": "children"
+  },
+  {
+    "id": "repository.build-owned-array-move-sequence",
+    "source": "js/src/translation/owned-array-moves.js",
+    "name": "sequence",
+    "inventoryName": "sequence"
+  },
+  {
+    "id": "repository.build-owned-array-move-control-flow",
+    "source": "js/src/translation/owned-array-moves.js",
+    "name": "build",
+    "inventoryName": "build"
+  },
+  {
+    "id": "repository.visit-owned-array-move-captures",
+    "source": "js/src/translation/owned-array-moves.js",
+    "name": "visit",
+    "inventoryName": "visit"
+  },
+  {
+    "id": "repository.read-complete-owned-array-append-source-module",
+    "source": "js/scripts/generate-owned-array-append-rules.mjs",
+    "name": "readOwnedArrayAppendSourceModule",
+    "inventoryName": "read-owned-array-append-source-module"
+  },
+  {
+    "id": "repository.generate-owned-array-append-rules",
+    "source": "js/scripts/generate-owned-array-append-rules.mjs",
+    "name": "generateOwnedArrayAppendRules",
+    "inventoryName": "generate-owned-array-append-rules"
+  },
+  {
+    "id": "repository.check-owned-array-control-source",
+    "source": "js/tests/translation-owned-array-append.test.js",
+    "name": "check",
+    "inventoryName": "check"
+  },
+  {
+    "id": "repository.observe-owned-array-control-source",
+    "source": "js/tests/translation-owned-array-append.test.js",
+    "name": "run",
+    "inventoryName": "run"
+  },
+  {
+    "id": "repository.create-owned-array-control-variable",
+    "source": "js/tests/translation-owned-array-append.test.js",
+    "name": "variable",
+    "inventoryName": "variable"
+  },
+  {
+    "id": "repository.check-fresh-local-append-source-free-replay",
+    "source": "js/tests/translation-owned-array-append.test.js",
+    "name": "fresh local pushes become pure checked array values and survive source-free Links recheck",
+    "inventoryName": "fresh-local-pushes-become-pure-checked-array-values-and-survive-source-free-links-recheck"
+  },
+  {
+    "id": "repository.check-owned-array-alias-capture-refusals",
+    "source": "js/tests/translation-owned-array-append.test.js",
+    "name": "construction refuses preexisting aliases, unknown calls, captures and loop-carried escapes",
+    "inventoryName": "construction-refuses-preexisting-aliases-unknown-calls-captures-and-loop-retained-escapes"
+  },
+  {
+    "id": "repository.check-owned-array-actual-reader-identity",
+    "source": "js/tests/translation-owned-array-append.test.js",
+    "name": "a reader is admitted from its actual scalar declaration and shadowed readers remain unsafe",
+    "inventoryName": "a-reader-is-admitted-from-its-actual-scalar-declaration-and-shadowed-readers-remain-unsafe"
+  },
+  {
+    "id": "repository.check-owned-array-loop-allocation-relation",
+    "source": "js/tests/translation-owned-array-append.test.js",
+    "name": "the exact loop allocation relation distinguishes a final handoff from a carried alias",
+    "inventoryName": "the-exact-loop-allocation-relation-distinguishes-a-final-handoff-from-a-retained-alias"
+  },
+  {
+    "id": "repository.check-owned-array-continuation-consumption",
+    "source": "js/tests/translation-owned-array-append.test.js",
+    "name": "final consumption follows actual continuation edges, including branches, joins and cycles",
+    "inventoryName": "final-consumption-follows-actual-continuation-edges-including-branches-joins-and-cycles"
+  },
+  {
+    "id": "repository.check-complete-owned-array-source-translation",
+    "source": "js/tests/translation-owned-array-append.test.js",
+    "name": "the complete five-decision source translates together with its actual required-column closure",
+    "inventoryName": "the-complete-five-decision-source-translates-together-with-its-actual-required-column-closure"
+  },
+  {
+    "id": "repository.read-retained-record-type-owner-presence",
+    "source": "js/src/translation/record-type-facts.js",
+    "name": "containsRecordTypeOwner",
+    "inventoryName": "contains-record-type-owner"
+  },
+  {
+    "id": "repository.read-authenticated-original-record-owner-methods",
+    "source": "js/scripts/generate-record-value-rules.mjs",
+    "name": "originalOwnerMethods",
+    "inventoryName": "original-owner-methods"
+  },
+  {
+    "id": "repository.create-record-owner-control-arguments",
+    "source": "js/tests/translation-record-value-planning.test.js",
+    "name": "recordOwnerArguments",
+    "inventoryName": "record-owner-arguments"
+  },
+  {
+    "id": "repository.check-record-owner-cycle-identity",
+    "source": "js/tests/translation-record-value-planning.test.js",
+    "name": "record field cycle admission retains original object identity variable aliases and every structural type child",
+    "inventoryName": "record-field-cycle-admission-retains-original-object-identity-variable-aliases-and-every-structural-type-child"
+  },
+  {
+    "id": "repository.check-record-field-inference-mutation-order",
+    "source": "js/tests/translation-record-value-planning.test.js",
+    "name": "record field inference retains existing open mutation actual child identity and closed missing-field precedence",
+    "inventoryName": "record-field-inference-retains-existing-open-mutation-actual-child-identity-and-closed-missing-field-precedence"
+  },
+  {
+    "id": "repository.write-complete-record-rule-library",
+    "source": "js/scripts/record-rule-library.mjs",
+    "name": "writeRecordRuleLibrary",
+    "inventoryName": "write-record-rule-library"
+  },
+  {
+    "id": "translation.accept-record-type-boundary",
+    "source": "js/src/translation/record-type-syntax-rules.js",
+    "name": "acceptRecordTypeBoundary",
+    "inventoryName": "accept-record-type-boundary"
+  },
+  {
+    "id": "translation.accept-record-type-boundary",
+    "source": "rust/src/translation/record_type_syntax_rules/part_1.rs",
+    "name": "accept_record_type_boundary",
+    "inventoryName": "accept-record-type-boundary"
+  },
+  {
+    "id": "translation.read-record-type-field-colon",
+    "source": "js/src/translation/record-type-syntax-rules.js",
+    "name": "readRecordTypeFieldColon",
+    "inventoryName": "read-record-type-field-colon"
+  },
+  {
+    "id": "translation.read-record-type-field-colon",
+    "source": "rust/src/translation/record_type_syntax_rules/part_1.rs",
+    "name": "read_record_type_field_colon",
+    "inventoryName": "read-record-type-field-colon"
+  },
+  {
+    "id": "translation.accept-record-type-optional-name",
+    "source": "js/src/translation/record-type-syntax-rules.js",
+    "name": "acceptRecordTypeOptionalName",
+    "inventoryName": "accept-record-type-optional-name"
+  },
+  {
+    "id": "translation.accept-record-type-optional-name",
+    "source": "rust/src/translation/record_type_syntax_rules/part_1.rs",
+    "name": "accept_record_type_optional_name",
+    "inventoryName": "accept-record-type-optional-name"
+  },
+  {
+    "id": "repository.read-complete-record-type-syntax-source-module",
+    "source": "js/scripts/generate-record-type-syntax-rules.mjs",
+    "name": "readRecordTypeSyntaxSourceModule",
+    "inventoryName": "read-record-type-syntax-source-module"
+  },
+  {
+    "id": "repository.read-authenticated-original-record-type-reader",
+    "source": "js/scripts/generate-record-type-syntax-rules.mjs",
+    "name": "originalCompositeType",
+    "inventoryName": "original-composite-type"
+  },
+  {
+    "id": "repository.read-record-type-syntax-rules-policy",
+    "source": "js/scripts/generate-record-type-syntax-rules.mjs",
+    "name": "recordTypeSyntaxRulesPolicy",
+    "inventoryName": "record-type-syntax-rules-policy"
+  },
+  {
+    "id": "repository.generate-record-type-syntax-rules",
+    "source": "js/scripts/generate-record-type-syntax-rules.mjs",
+    "name": "generateRecordTypeSyntaxRules",
+    "inventoryName": "generate-record-type-syntax-rules"
+  },
+  {
+    "id": "repository.read-record-type-control-source-units",
+    "source": "js/tests/translation-record-type-syntax.test.js",
+    "name": "units",
+    "inventoryName": "units"
+  },
+  {
+    "id": "repository.observe-record-type-control-source",
+    "source": "js/tests/translation-record-type-syntax.test.js",
+    "name": "observe",
+    "inventoryName": "observe"
+  },
+  {
+    "id": "repository.visit-record-type-control-literals",
+    "source": "js/tests/translation-record-type-syntax.test.js",
+    "name": "walk",
+    "inventoryName": "walk"
+  },
+  {
+    "id": "repository.check-original-record-type-reader-correspondence",
+    "source": "js/tests/translation-record-type-syntax.test.js",
+    "name": "record type field projection preserves the complete original composite reader and exact child parse order",
+    "inventoryName": "record-type-field-projection-preserves-the-complete-original-composite-reader-and-exact-child-parse-order"
+  },
+  {
+    "id": "repository.check-complete-record-type-syntax-translation",
+    "source": "js/tests/translation-record-type-syntax.test.js",
+    "name": "all three actual record type decisions and six required-column definitions translate through checked Links",
+    "inventoryName": "all-three-actual-record-type-decisions-and-six-required-column-definitions-translate-through-checked-links"
+  },
+  {
+    "id": "repository.check-record-type-source-free-value-edits",
+    "source": "js/tests/translation-record-type-syntax.test.js",
+    "name": "declared record parameters retain canonical field identities and source-free executable value edits in all targets",
+    "inventoryName": "declared-record-parameters-retain-canonical-field-identities-and-source-free-executable-value-edits-in-all-targets"
+  },
+  {
+    "id": "translation.read-null-capable-type-syntax",
+    "source": "js/src/translation/nullable-type-syntax-rules.js",
+    "name": "readNullableTypeSyntax",
+    "inventoryName": "read-null-capable-type-syntax"
+  },
+  {
+    "id": "translation.read-null-capable-type-syntax",
+    "source": "rust/src/translation/nullable_type_syntax_rules/part_1.rs",
+    "name": "read_nullable_type_syntax",
+    "inventoryName": "read-null-capable-type-syntax"
+  },
+  {
+    "id": "translation.read-null-capable-type-absence",
+    "source": "js/src/translation/nullable-type-syntax-rules.js",
+    "name": "readNullableTypeAbsence",
+    "inventoryName": "read-null-capable-type-absence"
+  },
+  {
+    "id": "translation.read-null-capable-type-absence",
+    "source": "rust/src/translation/nullable_type_syntax_rules/part_1.rs",
+    "name": "read_nullable_type_absence",
+    "inventoryName": "read-null-capable-type-absence"
+  },
+  {
+    "id": "translation.read-null-capable-type-target-refusal",
+    "source": "js/src/translation/nullable-type-syntax-rules.js",
+    "name": "readNullableTypeTargetRefusal",
+    "inventoryName": "read-null-capable-type-target-refusal"
+  },
+  {
+    "id": "translation.read-null-capable-type-target-refusal",
+    "source": "rust/src/translation/nullable_type_syntax_rules/part_1.rs",
+    "name": "read_nullable_type_target_refusal",
+    "inventoryName": "read-null-capable-type-target-refusal"
+  },
+  {
+    "id": "repository.read-complete-null-capable-type-syntax-source-module",
+    "source": "js/scripts/generate-nullable-type-syntax-rules.mjs",
+    "name": "readNullableTypeSyntaxSourceModule",
+    "inventoryName": "read-null-capable-type-syntax-source-module"
+  },
+  {
+    "id": "repository.read-authenticated-original-null-capable-type-reader",
+    "source": "js/scripts/generate-nullable-type-syntax-rules.mjs",
+    "name": "originalCompositeType",
+    "inventoryName": "original-composite-type"
+  },
+  {
+    "id": "repository.read-null-capable-type-syntax-rules-policy",
+    "source": "js/scripts/generate-nullable-type-syntax-rules.mjs",
+    "name": "nullableTypeSyntaxRulesPolicy",
+    "inventoryName": "null-capable-type-syntax-rules-policy"
+  },
+  {
+    "id": "repository.generate-null-capable-type-syntax-rules",
+    "source": "js/scripts/generate-nullable-type-syntax-rules.mjs",
+    "name": "generateNullableTypeSyntaxRules",
+    "inventoryName": "generate-null-capable-type-syntax-rules"
+  },
+  {
+    "id": "repository.observe-null-capable-type-control-source",
+    "source": "js/tests/translation-nullable-type-syntax.test.js",
+    "name": "observe",
+    "inventoryName": "observe"
+  },
+  {
+    "id": "repository.check-original-null-capable-type-reader-correspondence",
+    "source": "js/tests/translation-nullable-type-syntax.test.js",
+    "name": "nullable source syntax preserves the entire original reader including duplicate missing-token and parse-order behavior",
+    "inventoryName": "null-capable-source-syntax-preserves-the-entire-original-reader-including-duplicate-missing-token-and-parse-order-behavior"
+  },
+  {
+    "id": "repository.check-complete-null-capable-type-syntax-translation",
+    "source": "js/tests/translation-nullable-type-syntax.test.js",
+    "name": "all three nullable source decisions and six actual dependency functions survive whole checked source translation",
+    "inventoryName": "all-three-null-capable-source-decisions-and-six-actual-dependency-functions-survive-whole-checked-source-translation"
+  },
+  {
+    "id": "repository.check-null-capable-header-source-free-absence",
+    "source": "js/tests/translation-nullable-type-syntax.test.js",
+    "name": "actual nullable JSDoc headers retain their absence tags through source-free text and binary graphs",
+    "inventoryName": "actual-null-capable-java-script-documentation-headers-retain-the-absence-tags-through-source-free-text-and-binary-graphs"
+  },
+  {
+    "id": "repository.read-native-type-source-slice",
+    "source": "rust/src/translation/javascript/declarations/jsdoc/syntax.rs",
+    "name": "source_slice",
+    "inventoryName": "source-slice"
+  },
+  {
+    "id": "repository.split-native-source-type-parts",
+    "source": "rust/src/translation/javascript/declarations/jsdoc/syntax.rs",
+    "name": "split_type",
+    "inventoryName": "split-type"
+  },
+  {
+    "id": "repository.split-native-source-type-unit",
+    "source": "rust/src/translation/javascript/declarations/jsdoc/syntax.rs",
+    "name": "split_type_unit",
+    "inventoryName": "split-type-unit"
+  },
+  {
+    "id": "repository.read-native-source-record-type",
+    "source": "rust/src/translation/javascript/declarations/jsdoc/records.rs",
+    "name": "read_record_type",
+    "inventoryName": "read-record-type"
+  },
+  {
+    "id": "repository.native-source-absence-type",
+    "source": "rust/src/translation/types.rs",
+    "name": "Type::Absence",
+    "inventoryName": "type-absence"
+  },
+  {
+    "id": "repository.read-native-source-grammar-section-header",
+    "source": "rust/src/grammar/import/antlr/sections.rs",
+    "name": "parse_header",
+    "inventoryName": "parse-header"
+  },
+  {
+    "id": "repository.read-native-source-grammar-directive-metadata",
+    "source": "rust/src/grammar/import/antlr/sections.rs",
+    "name": "parse_skipped_directive",
+    "inventoryName": "parse-skip-directive"
+  },
+  {
+    "id": "repository.native-record-spread-entry",
+    "source": "rust/src/translation/javascript/infer/records.rs",
+    "name": "RecordSpreadEntry",
+    "inventoryName": "record-spread-entry"
+  },
+  {
+    "id": "repository.native-record-spread-constraint",
+    "source": "rust/src/translation/javascript/infer/records.rs",
+    "name": "RecordSpread",
+    "inventoryName": "record-spread"
+  },
+  {
+    "id": "repository.read-native-inferred-record-name-units",
+    "source": "rust/src/translation/javascript/infer/records.rs",
+    "name": "names",
+    "inventoryName": "names"
+  },
+  {
+    "id": "repository.read-native-inferred-record-plan-position",
+    "source": "rust/src/translation/javascript/infer/records.rs",
+    "name": "position",
+    "inventoryName": "position"
+  },
+  {
+    "id": "repository.read-native-inferred-record-spread-role",
+    "source": "rust/src/translation/javascript/infer/records.rs",
+    "name": "spread_role",
+    "inventoryName": "spread-role"
+  },
+  {
+    "id": "repository.read-native-record-insertion-fields",
+    "source": "rust/src/translation/javascript/infer/records.rs",
+    "name": "insertion_fields",
+    "inventoryName": "insertion-fields"
+  },
+  {
+    "id": "repository.add-native-inferred-record-field",
+    "source": "rust/src/translation/javascript/infer/records.rs",
+    "name": "add_record_field",
+    "inventoryName": "add-record-field"
+  },
+  {
+    "id": "repository.unify-native-inferred-records",
+    "source": "rust/src/translation/javascript/infer/records.rs",
+    "name": "unify_records",
+    "inventoryName": "unify-records"
+  },
+  {
+    "id": "repository.apply-native-record-field-constraint",
+    "source": "rust/src/translation/javascript/infer/records.rs",
+    "name": "record_field_constraint",
+    "inventoryName": "record-field-constraint"
+  },
+  {
+    "id": "repository.infer-native-record-expression",
+    "source": "rust/src/translation/javascript/infer/records.rs",
+    "name": "record_expr",
+    "inventoryName": "record-expression"
+  },
+  {
+    "id": "repository.solve-native-record-spread-constraints",
+    "source": "rust/src/translation/javascript/infer/records.rs",
+    "name": "solve_record_spreads",
+    "inventoryName": "solve-record-spreads"
+  },
+  {
+    "id": "repository.infer-native-numeric-source-operation",
+    "source": "rust/src/translation/javascript/infer/numbers.rs",
+    "name": "binary",
+    "inventoryName": "binary"
+  },
+  {
+    "id": "repository.solve-native-arithmetic-constraints",
+    "source": "rust/src/translation/javascript/infer/numbers.rs",
+    "name": "solve_arithmetic",
+    "inventoryName": "solve-arithmetic"
+  },
+  {
+    "id": "repository.apply-native-arithmetic-constraint",
+    "source": "rust/src/translation/javascript/infer/numbers.rs",
+    "name": "arithmetic_step",
+    "inventoryName": "arithmetic-step"
+  },
+  {
+    "id": "repository.fill-native-source-method-results",
+    "source": "rust/src/translation/javascript/infer/methods.rs",
+    "name": "fill_methods",
+    "inventoryName": "fill-methods"
+  },
+  {
+    "id": "repository.visit-native-method-inference-values",
+    "source": "rust/src/translation/javascript/infer/methods.rs",
+    "name": "walk",
+    "inventoryName": "walk"
+  },
+  {
+    "id": "repository.visit-native-method-inference-items",
+    "source": "rust/src/translation/javascript/infer/methods.rs",
+    "name": "items",
+    "inventoryName": "items"
+  },
+  {
+    "id": "repository.read-native-method-result-property",
+    "source": "rust/src/translation/javascript/infer/methods.rs",
+    "name": "prop",
+    "inventoryName": "prop"
+  },
+  {
+    "id": "repository.infer-native-includes-source-method",
+    "source": "rust/src/translation/javascript/infer/methods.rs",
+    "name": "includes",
+    "inventoryName": "includes"
+  },
+  {
+    "id": "repository.solve-native-membership-constraints",
+    "source": "rust/src/translation/javascript/infer/methods.rs",
+    "name": "solve_includes",
+    "inventoryName": "solve-includes"
+  },
+  {
+    "id": "repository.infer-native-source-method",
+    "source": "rust/src/translation/javascript/infer/methods.rs",
+    "name": "method",
+    "inventoryName": "method"
+  },
+  {
+    "id": "repository.solve-native-method-constraints",
+    "source": "rust/src/translation/javascript/infer/methods.rs",
+    "name": "solve_methods",
+    "inventoryName": "solve-methods"
+  },
+  {
+    "id": "repository.apply-native-method-inference-constraint",
+    "source": "rust/src/translation/javascript/infer/methods.rs",
+    "name": "method_step",
+    "inventoryName": "method-step"
+  },
+  {
+    "id": "repository.infer-native-source-pattern",
+    "source": "rust/src/translation/javascript/infer/patterns.rs",
+    "name": "pattern",
+    "inventoryName": "pattern"
+  },
+  {
+    "id": "repository.read-native-declared-inference-term",
+    "source": "rust/src/translation/javascript/infer/term_types.rs",
+    "name": "declared",
+    "inventoryName": "declared"
+  },
+  {
+    "id": "repository.read-native-inferred-surface-type",
+    "source": "rust/src/translation/javascript/infer/term_types.rs",
+    "name": "surface",
+    "inventoryName": "surface"
+  },
+  {
+    "id": "repository.infer-native-source-function-types",
+    "source": "rust/src/translation/javascript/infer/solver.rs",
+    "name": "run",
+    "inventoryName": "run"
+  },
+  {
+    "id": "repository.solve-native-source-type-constraints",
+    "source": "rust/src/translation/javascript/infer/solver.rs",
+    "name": "solve",
+    "inventoryName": "solve"
+  },
+  {
+    "id": "repository.render-native-lean-source-type",
+    "source": "rust/src/translation/emit_lean/types.rs",
+    "name": "ty",
+    "inventoryName": "type"
+  },
+  {
+    "id": "repository.observe-native-optional-control-java-script",
+    "source": "rust/tests/unit/translation_optional_values.rs",
+    "name": "observe",
+    "inventoryName": "observe"
+  },
+  {
+    "id": "repository.check-native-optional-runtime-control",
+    "source": "rust/tests/unit/translation_optional_values.rs",
+    "name": "check_runtime",
+    "inventoryName": "check-runtime"
+  },
+  {
+    "id": "repository.check-native-null-or-undefined-fallback-effects",
+    "source": "rust/tests/unit/translation_optional_values.rs",
+    "name": "nullish_fallbacks_keep_falsy_values_and_only_run_absent_branch_effects",
+    "inventoryName": "null-or-undefined-fallbacks-keep-false-valued-values-and-only-run-absent-branch-effects"
+  },
+  {
+    "id": "repository.check-native-optional-field-primitive-behavior",
+    "source": "rust/tests/unit/translation_optional_values.rs",
+    "name": "optional_fields_numeric_coercions_truth_and_type_queries_follow_actual_javascript",
+    "inventoryName": "optional-fields-numeric-coercions-truth-and-type-queries-follow-actual-javascript"
+  },
+  {
+    "id": "repository.check-native-forged-reference-emission-refusals",
+    "source": "rust/tests/unit/translation_surface_reference_analysis.rs",
+    "name": "forged_checked_receiver_and_allocation_flags_retain_exact_rust_emission_refusals",
+    "inventoryName": "forged-checked-receiver-and-allocation-flags-retain-exact-rust-emission-refusals"
+  },
+  {
+    "id": "repository.read-record-output-control-expressions",
+    "source": "js/tests/translation-record-output.test.js",
+    "name": "expressions",
+    "inventoryName": "expressions"
+  },
+  {
+    "id": "repository.move-record-control-calls-into-actual-entries",
+    "source": "js/tests/translation-record-output.test.js",
+    "name": "moveCallsIntoActualEntries",
+    "inventoryName": "move-calls-into-actual-entries"
+  },
+  {
+    "id": "repository.check-record-output-descriptor-role",
+    "source": "js/tests/translation-record-output.test.js",
+    "name": "record output threading uses the existing shared descriptor operand rule without changing its field labels",
+    "inventoryName": "record-output-threading-uses-the-existing-shared-descriptor-operand-rule-without-changing-its-field-labels"
+  },
+  {
+    "id": "repository.check-source-free-record-call-order",
+    "source": "js/tests/translation-record-output.test.js",
+    "name": "source-free record entry rewires retain actual calls and evaluate each descriptor value once in its new order",
+    "inventoryName": "source-free-record-entry-rewires-retain-actual-calls-and-evaluate-each-descriptor-value-once-in-its-new-order"
+  },
+  {
+    "id": "repository.check-source-free-record-call-target-validation",
+    "source": "js/tests/translation-record-output.test.js",
+    "name": "source-free descriptor values keep mandatory actual call-target validation",
+    "inventoryName": "source-free-descriptor-values-keep-mandatory-actual-call-target-validation"
+  },
+  {
+    "id": "repository.read-native-record-control-archives",
+    "source": "rust/tests/unit/translation_record_values.rs",
+    "name": "archives",
+    "inventoryName": "archives"
+  },
+  {
+    "id": "repository.read-native-record-control-java-script-contract",
+    "source": "rust/tests/unit/translation_record_values.rs",
+    "name": "javascript_contract",
+    "inventoryName": "javascript-contract"
+  },
+  {
+    "id": "repository.observe-native-record-control-java-script",
+    "source": "rust/tests/unit/translation_record_values.rs",
+    "name": "observe_javascript",
+    "inventoryName": "observe-javascript"
+  },
+  {
+    "id": "repository.read-native-record-control-function",
+    "source": "rust/tests/unit/translation_record_values.rs",
+    "name": "function",
+    "inventoryName": "function"
+  },
+  {
+    "id": "repository.replace-native-record-control-integer",
+    "source": "rust/tests/unit/translation_record_values.rs",
+    "name": "replace_three",
+    "inventoryName": "replace-three"
+  },
+  {
+    "id": "repository.move-native-record-control-calls",
+    "source": "rust/tests/unit/translation_record_values.rs",
+    "name": "move_record_calls",
+    "inventoryName": "move-record-calls"
+  },
+  {
+    "id": "repository.check-native-complete-record-overwrite-spread-replay",
+    "source": "rust/tests/unit/translation_record_values.rs",
+    "name": "complete_record_programs_keep_overwrites_spreads_and_every_target_byte_in_both_archives",
+    "inventoryName": "complete-record-programs-keep-overwrites-spreads-and-every-target-byte-in-both-archives"
+  },
+  {
+    "id": "repository.check-native-record-field-source-free-edits",
+    "source": "rust/tests/unit/translation_record_values.rs",
+    "name": "declared_record_fields_retain_parameter_and_let_bindings_after_source_free_value_edit",
+    "inventoryName": "declared-record-fields-retain-parameter-and-let-bindings-after-source-free-value-edit"
+  },
+  {
+    "id": "repository.check-native-complete-record-target-execution",
+    "source": "rust/tests/unit/translation_record_values.rs",
+    "name": "complete_emitted_rust_for_a_declared_record_executes_its_actual_main",
+    "inventoryName": "complete-generated-rust-for-a-declared-record-executes-its-actual-main"
+  },
+  {
+    "id": "repository.check-native-union-header-refusal-order",
+    "source": "rust/tests/unit/translation_record_values.rs",
+    "name": "ordered_union_headers_keep_exact_target_refusal_before_the_independent_frozen_body",
+    "inventoryName": "ordered-union-headers-keep-exact-target-refusal-before-the-independent-frozen-body"
+  },
+  {
+    "id": "repository.check-native-null-capable-source-type-folds",
+    "source": "rust/tests/unit/translation_record_values.rs",
+    "name": "nullable_source_type_folds_preserve_duplicate_missing_tokens_and_archive_absence",
+    "inventoryName": "null-capable-source-type-folds-preserve-duplicate-missing-tokens-and-archive-absence"
+  },
+  {
+    "id": "repository.check-native-source-free-record-descriptor-call-order",
+    "source": "rust/tests/unit/translation_record_values.rs",
+    "name": "source_free_record_descriptor_calls_preserve_actual_targets_and_threaded_output_order",
+    "inventoryName": "source-free-record-descriptor-calls-preserve-actual-targets-and-threaded-output-order"
+  },
+  {
+    "id": "repository.optional-inference-library-style",
+    "source": "parity/self-translation/optional-inference-rules-decorators.lino",
+    "name": "optional_inference_rules-library-style",
+    "inventoryName": "optional-inference-rules-library-style"
+  },
+  {
+    "id": "repository.optional-value-library-style",
+    "source": "parity/self-translation/optional-value-rules-decorators.lino",
+    "name": "optional_value_rules-library-style",
+    "inventoryName": "optional-value-rules-library-style"
+  },
+  {
+    "id": "repository.record-value-library-style",
+    "source": "parity/self-translation/record-value-rules-decorators.lino",
+    "name": "record_value_rules-library-style",
+    "inventoryName": "record-value-rules-library-style"
+  },
+  {
+    "id": "repository.record-emission-library-style",
+    "source": "parity/self-translation/record-emission-rules-decorators.lino",
+    "name": "record_emission_rules-library-style",
+    "inventoryName": "record-emission-rules-library-style"
+  },
+  {
+    "id": "repository.record-type-syntax-library-style",
+    "source": "parity/self-translation/record-type-syntax-rules-decorators.lino",
+    "name": "record_type_syntax_rules-library-style",
+    "inventoryName": "record-type-syntax-rules-library-style"
+  },
+  {
+    "id": "repository.null-capable-type-syntax-library-style",
+    "source": "parity/self-translation/nullable-type-syntax-rules-decorators.lino",
+    "name": "nullable_type_syntax_rules-library-style",
+    "inventoryName": "null-capable-type-syntax-rules-library-style"
+  },
+  {
+    "id": "repository.type-syntax-library-style",
+    "source": "parity/self-translation/type-syntax-rules-decorators.lino",
+    "name": "type_syntax_rules-library-style",
+    "inventoryName": "type-syntax-rules-library-style"
+  },
+  {
+    "id": "repository.surface-raw-metadata-library-style",
+    "source": "parity/self-translation/surface-raw-metadata-rules-decorators.lino",
+    "name": "surface-raw-metadata-library-style",
+    "inventoryName": "surface-raw-metadata-library-style"
+  },
+  {
+    "id": "repository.callable-emission-library-style",
+    "source": "parity/self-translation/callable-emission-rules-decorators.lino",
+    "name": "callable_emission_rules-library-style",
+    "inventoryName": "callable-emission-rules-library-style"
+  },
+  {
+    "id": "repository.owned-array-append-library-style",
+    "source": "parity/self-translation/owned-array-append-rules-decorators.lino",
+    "name": "owned_array_append_rules-library-style",
+    "inventoryName": "owned-array-append-rules-library-style"
+  },
+  {
+    "id": "repository.array-final-binding-consumption-mode",
+    "source": "js/src/translation/emit-rust.js",
+    "name": "arrayConsumption",
+    "inventoryName": "array-consumption"
+  },
+  {
+    "id": "repository.array-final-binding-consumption-mode",
+    "source": "rust/src/translation/emit_rust.rs",
+    "name": "array_consumption",
+    "inventoryName": "array-consumption"
+  },
+  {
+    "id": "repository.shared-product-source-parameter-loans",
+    "source": "js/scripts/generate-product-source-rules.mjs",
+    "name": "shared-product-source-parameter-loans",
+    "inventoryName": "shared-product-source-parameter-loans"
+  },
+  {
+    "id": "repository.checked-array-final-consuming-occurrences",
+    "source": "js/src/translation/emit-rust.js",
+    "name": "arrayFinalUses",
+    "inventoryName": "array-final-uses"
+  },
+  {
+    "id": "repository.checked-array-final-consuming-occurrences",
+    "source": "rust/src/translation/emit_rust.rs",
+    "name": "array_final_uses",
+    "inventoryName": "array-final-uses"
+  },
+  {
+    "id": "translation.emit-rust-with-array-consumption",
+    "source": "rust/src/translation/emit_rust.rs",
+    "name": "emit_rust_with_array_consumption",
+    "inventoryName": "emit-rust-with-array-consumption"
+  },
+  {
+    "id": "repository.check-explicit-array-consumption-profile-conservation",
+    "source": "js/tests/translation-owned-array-append.test.js",
+    "name": "explicit array consumption preserves the historical copy profile and source-free alias values",
+    "inventoryName": "explicit-array-consumption-preserves-the-historical-copy-profile-and-source-free-alias-values"
+  },
+  {
+    "id": "repository.check-native-copy-and-consumed-array-alias-observations",
+    "source": "rust/tests/unit/translation_owned_array_moves.rs",
+    "name": "copied_and_consumed_array_profiles_preserve_actual_alias_observations",
+    "inventoryName": "copy-and-consumed-array-profiles-preserve-actual-alias-observations"
+  },
+  {
+    "id": "repository.project-original-source-lexical-references",
+    "source": "js/src/grammar-rename.js",
+    "name": "projectLexicalReferences",
+    "inventoryName": "project-lexical-references"
+  },
+  {
+    "id": "repository.project-original-source-lexical-references",
+    "source": "rust/src/grammar/merge/rename.rs",
+    "name": "project_lexical_references",
+    "inventoryName": "project-lexical-references"
+  },
+  {
+    "id": "repository.project-native-original-lexical-reference-tree",
+    "source": "rust/src/grammar/merge/rename.rs",
+    "name": "project",
+    "inventoryName": "project"
+  },
+  {
+    "id": "repository.check-canonical-token-sharing-original-expectation",
+    "source": "js/tests/grammar-antlr-lexer-election.test.js",
+    "name": "ANTLR canonical token sharing retains the original parser token expectation",
+    "inventoryName": "another-tool-for-language-recognition-canonical-token-sharing-retains-the-original-parser-token-expectation"
+  },
+  {
+    "id": "repository.check-native-canonical-token-sharing-original-expectation",
+    "source": "rust/tests/unit/grammar_lexer_transport.rs",
+    "name": "lexical_canonical_token_sharing_retains_original_parser_expectations",
+    "inventoryName": "lexical-canonical-token-sharing-retains-original-parser-expectations"
+  },
+  {
+    "id": "repository.check-original-array-membership-semantics",
+    "source": "js/tests/translation-strings.test.js",
+    "name": "the original array membership input has array semantics",
+    "inventoryName": "the-original-array-membership-input-has-array-semantics"
+  },
+  {
+    "id": "repository.check-complete-type-syntax-source-translation",
+    "source": "js/tests/translation-union-types.test.js",
+    "name": "all four actual type syntax functions and six required-column helpers survive automatic checked translation",
+    "inventoryName": "all-four-actual-type-syntax-functions-and-six-required-column-helpers-survive-automatic-checked-translation"
+  },
+  {
+    "id": "repository.check-union-source-header-refusal-precedence",
+    "source": "js/tests/translation-union-types.test.js",
+    "name": "union header refusal retains its actual ordering before an independently unsupported frozen body",
+    "inventoryName": "union-header-refusal-retains-its-actual-ordering-before-an-independently-unsupported-frozen-body"
+  },
+  {
+    "id": "repository.check-complete-lexical-source-closure",
+    "source": "js/tests/grammar-lexer-rules.test.js",
+    "name": "portable lexical source closure records actual fact accessors and refuses unregistered imports",
+    "inventoryName": "portable-lexical-source-closure-records-actual-fact-access-operations-and-refuses-unregistered-imports"
+  },
+  {
+    "id": "repository.check-optional-source-result-annotation-expansion",
+    "source": "js/tests/translation-schema-second-projections.test.js",
+    "name": "optional result rechecking retains the concrete source annotation and expanded semantic result",
+    "inventoryName": "optional-result-repeated-check-retains-the-concrete-source-annotation-and-expanded-semantic-result"
+  },
+  {
+    "id": "translation.read-program-expression-entry-operand-field",
+    "source": "js/src/typed-program-link-rules.js",
+    "name": "readProgramExpressionEntryOperandField",
+    "inventoryName": "read-program-expression-entry-operand-field"
+  },
+  {
+    "id": "translation.read-program-expression-entry-operand-field",
+    "source": "rust/src/translation/typed_program_link_rules.rs",
+    "name": "read_program_expression_entry_operand_field",
+    "inventoryName": "read-program-expression-entry-operand-field"
+  },
+  {
+    "id": "repository.simplify-reviewed-rust-source-returns",
+    "source": "js/scripts/product-rule-style-corrections.mjs",
+    "name": "simplifyReturns",
+    "inventoryName": "simplify-returns"
+  },
+  {
+    "id": "repository.simplify-reviewed-rust-source-returns",
+    "source": "js/scripts/reviewed-rust-branch-styles.mjs",
+    "name": "simplifyReturns",
+    "inventoryName": "simplify-returns"
+  },
+  {
+    "id": "repository.record-native-scanner-expectation-request",
+    "source": "rust/src/grammar/feature_runtime/expectation_requests.rs",
+    "name": "request_item",
+    "inventoryName": "request-item"
+  },
+  {
+    "id": "translation.callable-source-native-part-one",
+    "source": "rust/src/translation/callable_source_rules.rs",
+    "name": "part_1",
+    "inventoryName": "part-one"
+  },
+  {
+    "id": "translation.callable-source-native-part-two",
+    "source": "rust/src/translation/callable_source_rules.rs",
+    "name": "part_2",
+    "inventoryName": "part-two"
+  },
+  {
+    "id": "translation.callable-source-native-part-three",
+    "source": "rust/src/translation/callable_source_rules.rs",
+    "name": "part_3",
+    "inventoryName": "part-three"
+  },
+  {
+    "id": "translation.callable-source-native-part-four",
+    "source": "rust/src/translation/callable_source_rules.rs",
+    "name": "part_4",
+    "inventoryName": "part-four"
+  },
+  {
+    "id": "translation.callable-source-native-part-five",
+    "source": "rust/src/translation/callable_source_rules.rs",
+    "name": "part_5",
+    "inventoryName": "part-five"
+  },
+  {
+    "id": "translation.callable-source-native-part-six",
+    "source": "rust/src/translation/callable_source_rules.rs",
+    "name": "part_6",
+    "inventoryName": "part-six"
+  },
+  {
+    "id": "translation.callable-source-native-part-seven",
+    "source": "rust/src/translation/callable_source_rules.rs",
+    "name": "part_7",
+    "inventoryName": "part-seven"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-number",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_number",
+    "inventoryName": "meta-language-number"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-number-java-script-number",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_number::js_number",
+    "inventoryName": "meta-language-number-java-script-number"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-number-java-script-console",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_number::js_console",
+    "inventoryName": "meta-language-number-java-script-console"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-number-same-value",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_number::same_value",
+    "inventoryName": "meta-language-number-same-value"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-number-increment",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_number::increment",
+    "inventoryName": "meta-language-number-increment"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-number-decimal",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_number::decimal",
+    "inventoryName": "meta-language-number-decimal"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-mathematics",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_math",
+    "inventoryName": "meta-language-mathematics"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-round",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_math::round",
+    "inventoryName": "meta-language-mathematics-round"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-sign",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_math::sign",
+    "inventoryName": "meta-language-mathematics-sign"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-maximum",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_math::max",
+    "inventoryName": "meta-language-mathematics-maximum"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-minimum",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_math::min",
+    "inventoryName": "meta-language-mathematics-minimum"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-maximum-of",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_math::max_of",
+    "inventoryName": "meta-language-mathematics-maximum-of"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-minimum-of",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_math::min_of",
+    "inventoryName": "meta-language-mathematics-minimum-of"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-is-integer",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_math::is_integer",
+    "inventoryName": "meta-language-mathematics-is-integer"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-is-safe-integer",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_math::is_safe_integer",
+    "inventoryName": "meta-language-mathematics-is-safe-integer"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-array",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_array",
+    "inventoryName": "meta-language-array"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-optional-at",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_array::optional_at",
+    "inventoryName": "meta-language-array-optional-at"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-at",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_array::at",
+    "inventoryName": "meta-language-array-at"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-number-index",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_array::number_index",
+    "inventoryName": "meta-language-array-number-index"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-append",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_array::append",
+    "inventoryName": "meta-language-array-append"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-integer",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_array::integer",
+    "inventoryName": "meta-language-array-integer"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-relative",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_array::relative",
+    "inventoryName": "meta-language-array-relative"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-slice",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_array::slice",
+    "inventoryName": "meta-language-array-slice"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-index-of",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_array::index_of",
+    "inventoryName": "meta-language-array-index-of"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-includes",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_array::includes",
+    "inventoryName": "meta-language-array-includes"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-set",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_array::set",
+    "inventoryName": "meta-language-array-set"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-map",
+    "source": "rust/src/translation/callable_source_rules/part_1.rs",
+    "name": "ml_array::map",
+    "inventoryName": "meta-language-array-map"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-read-type-separator-positions-loop-one",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "ml_read_type_separator_positions_loop1",
+    "inventoryName": "meta-language-read-type-separator-positions-loop-one"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-callable-type-trim-start-loop-two",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "ml_callable_type_trim_start_loop2",
+    "inventoryName": "meta-language-callable-type-trim-start-loop-two"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-callable-type-trim-end-loop-three",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "ml_callable_type_trim_end_loop3",
+    "inventoryName": "meta-language-callable-type-trim-end-loop-three"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-callable-type-parameter-segments-loop-four",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "ml_callable_type_parameter_segments_loop4",
+    "inventoryName": "meta-language-callable-type-parameter-segments-loop-four"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-callable-type-parameters-loop-five-result",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "MlCallableTypeParametersLoop5Result",
+    "inventoryName": "meta-language-callable-type-parameters-loop-five-result"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-callable-type-parameters-loop-five-result-meta-language-callable-type-parameters-loop-five-done-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "MlCallableTypeParametersLoop5Result::MlCallableTypeParametersLoop5Done",
+    "inventoryName": "meta-language-callable-type-parameters-loop-five-result-meta-language-callable-type-parameters-loop-five-done"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-callable-type-parameters-join-six",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "MlCallableTypeParametersJoin6",
+    "inventoryName": "meta-language-callable-type-parameters-join-six"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-callable-type-parameters-join-six-meta-language-callable-type-parameters-join-six-next-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "MlCallableTypeParametersJoin6::MlCallableTypeParametersJoin6Next",
+    "inventoryName": "meta-language-callable-type-parameters-join-six-meta-language-callable-type-parameters-join-six-next"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-callable-type-parameters-loop-five",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "ml_callable_type_parameters_loop5",
+    "inventoryName": "meta-language-callable-type-parameters-loop-five"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-plan-callable-type-syntax-loop-eight",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "ml_plan_callable_type_syntax_loop8",
+    "inventoryName": "meta-language-plan-callable-type-syntax-loop-eight"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-type-syntax-join-nine",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "MlPlanCallableTypeSyntaxJoin9",
+    "inventoryName": "meta-language-plan-callable-type-syntax-join-nine"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-type-syntax-join-nine-meta-language-plan-callable-type-syntax-join-nine-next-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "MlPlanCallableTypeSyntaxJoin9::MlPlanCallableTypeSyntaxJoin9Next",
+    "inventoryName": "meta-language-plan-callable-type-syntax-join-nine-meta-language-plan-callable-type-syntax-join-nine-next"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-type-syntax-join-nine-meta-language-plan-callable-type-syntax-join-nine-return-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "MlPlanCallableTypeSyntaxJoin9::MlPlanCallableTypeSyntaxJoin9Return",
+    "inventoryName": "meta-language-plan-callable-type-syntax-join-nine-meta-language-plan-callable-type-syntax-join-nine-return"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-type-syntax-loop-ten-result",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "MlPlanCallableTypeSyntaxLoop10Result",
+    "inventoryName": "meta-language-plan-callable-type-syntax-loop-one-zero-result"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-type-syntax-loop-ten-result-meta-language-plan-callable-type-syntax-loop-ten-done-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "MlPlanCallableTypeSyntaxLoop10Result::MlPlanCallableTypeSyntaxLoop10Done",
+    "inventoryName": "meta-language-plan-callable-type-syntax-loop-one-zero-result-meta-language-plan-callable-type-syntax-loop-one-zero-done"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-type-syntax-loop-ten-result-meta-language-plan-callable-type-syntax-loop-ten-return-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "MlPlanCallableTypeSyntaxLoop10Result::MlPlanCallableTypeSyntaxLoop10Return",
+    "inventoryName": "meta-language-plan-callable-type-syntax-loop-one-zero-result-meta-language-plan-callable-type-syntax-loop-one-zero-return"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-plan-callable-type-syntax-loop-ten",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "ml_plan_callable_type_syntax_loop10",
+    "inventoryName": "meta-language-plan-callable-type-syntax-loop-one-zero"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-type-syntax-join-seven",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "MlPlanCallableTypeSyntaxJoin7",
+    "inventoryName": "meta-language-plan-callable-type-syntax-join-seven"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-type-syntax-join-seven-meta-language-plan-callable-type-syntax-join-seven-next-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "MlPlanCallableTypeSyntaxJoin7::MlPlanCallableTypeSyntaxJoin7Next",
+    "inventoryName": "meta-language-plan-callable-type-syntax-join-seven-meta-language-plan-callable-type-syntax-join-seven-next"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-type-syntax-join-seven-meta-language-plan-callable-type-syntax-join-seven-return-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "MlPlanCallableTypeSyntaxJoin7::MlPlanCallableTypeSyntaxJoin7Return",
+    "inventoryName": "meta-language-plan-callable-type-syntax-join-seven-meta-language-plan-callable-type-syntax-join-seven-return"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-type-syntax-join-twelve",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "MlPlanCallableTypeSyntaxJoin12",
+    "inventoryName": "meta-language-plan-callable-type-syntax-join-one-two"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-type-syntax-join-twelve-meta-language-plan-callable-type-syntax-join-twelve-next-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "MlPlanCallableTypeSyntaxJoin12::MlPlanCallableTypeSyntaxJoin12Next",
+    "inventoryName": "meta-language-plan-callable-type-syntax-join-one-two-meta-language-plan-callable-type-syntax-join-one-two-next"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-plan-callable-type-syntax-loop-eleven",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "ml_plan_callable_type_syntax_loop11",
+    "inventoryName": "meta-language-plan-callable-type-syntax-loop-one-one"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-callable-field-loop-thirteen-result",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "MlCallableFieldLoop13Result",
+    "inventoryName": "meta-language-callable-field-loop-one-three-result"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-callable-field-loop-thirteen-result-meta-language-callable-field-loop-thirteen-done-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "MlCallableFieldLoop13Result::MlCallableFieldLoop13Done",
+    "inventoryName": "meta-language-callable-field-loop-one-three-result-meta-language-callable-field-loop-one-three-done"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-callable-field-loop-thirteen-result-meta-language-callable-field-loop-thirteen-return-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_4.rs",
+    "name": "MlCallableFieldLoop13Result::MlCallableFieldLoop13Return",
+    "inventoryName": "meta-language-callable-field-loop-one-three-result-meta-language-callable-field-loop-one-three-return"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-callable-field-loop-thirteen",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "ml_callable_field_loop13",
+    "inventoryName": "meta-language-callable-field-loop-one-three"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-callable-bound-loop-fourteen-result",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "MlCallableBoundLoop14Result",
+    "inventoryName": "meta-language-callable-bound-loop-one-four-result"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-callable-bound-loop-fourteen-result-meta-language-callable-bound-loop-fourteen-done-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "MlCallableBoundLoop14Result::MlCallableBoundLoop14Done",
+    "inventoryName": "meta-language-callable-bound-loop-one-four-result-meta-language-callable-bound-loop-one-four-done"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-callable-bound-loop-fourteen-result-meta-language-callable-bound-loop-fourteen-return-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "MlCallableBoundLoop14Result::MlCallableBoundLoop14Return",
+    "inventoryName": "meta-language-callable-bound-loop-one-four-result-meta-language-callable-bound-loop-one-four-return"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-callable-bound-loop-fourteen",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "ml_callable_bound_loop14",
+    "inventoryName": "meta-language-callable-bound-loop-one-four"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-callable-parameter-names-loop-fifteen",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "ml_callable_parameter_names_loop15",
+    "inventoryName": "meta-language-callable-parameter-names-loop-one-five"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-read-callable-free-references-loop-sixteen",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "ml_read_callable_free_references_loop16",
+    "inventoryName": "meta-language-read-callable-free-references-loop-one-six"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-read-callable-free-references-loop-eighteen",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "ml_read_callable_free_references_loop18",
+    "inventoryName": "meta-language-read-callable-free-references-loop-one-eight"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-read-callable-free-references-loop-seventeen",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "ml_read_callable_free_references_loop17",
+    "inventoryName": "meta-language-read-callable-free-references-loop-one-seven"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-read-callable-free-references-loop-nineteen",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "ml_read_callable_free_references_loop19",
+    "inventoryName": "meta-language-read-callable-free-references-loop-one-nine"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-callable-read-events-loop-twenty",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "ml_callable_read_events_loop20",
+    "inventoryName": "meta-language-callable-read-events-loop-two-zero"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-read-callable-statement-uses-loop-twenty-two",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "ml_read_callable_statement_uses_loop22",
+    "inventoryName": "meta-language-read-callable-statement-uses-loop-two-two"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-read-callable-statement-uses-loop-twenty-one",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "ml_read_callable_statement_uses_loop21",
+    "inventoryName": "meta-language-read-callable-statement-uses-loop-two-one"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-callable-nested-events-loop-twenty-three",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "ml_callable_nested_events_loop23",
+    "inventoryName": "meta-language-callable-nested-events-loop-two-three"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-callable-statement-uses-loop-twenty-four",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "ml_callable_statement_uses_loop24",
+    "inventoryName": "meta-language-callable-statement-uses-loop-two-four"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-callable-statement-uses-loop-twenty-six",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "ml_callable_statement_uses_loop26",
+    "inventoryName": "meta-language-callable-statement-uses-loop-two-six"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-callable-statement-uses-loop-twenty-five-result",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "MlCallableStatementUsesLoop25Result",
+    "inventoryName": "meta-language-callable-statement-uses-loop-two-five-result"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-callable-statement-uses-loop-twenty-five-result-meta-language-callable-statement-uses-loop-twenty-five-done-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "MlCallableStatementUsesLoop25Result::MlCallableStatementUsesLoop25Done",
+    "inventoryName": "meta-language-callable-statement-uses-loop-two-five-result-meta-language-callable-statement-uses-loop-two-five-done"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-callable-statement-uses-loop-twenty-five",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "ml_callable_statement_uses_loop25",
+    "inventoryName": "meta-language-callable-statement-uses-loop-two-five"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-read-callable-capture-conflicts-join-thirty",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "MlReadCallableCaptureConflictsJoin30",
+    "inventoryName": "meta-language-read-callable-capture-conflicts-join-three-zero"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-read-callable-capture-conflicts-join-thirty-meta-language-read-callable-capture-conflicts-join-thirty-next-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "MlReadCallableCaptureConflictsJoin30::MlReadCallableCaptureConflictsJoin30Next",
+    "inventoryName": "meta-language-read-callable-capture-conflicts-join-three-zero-meta-language-read-callable-capture-conflicts-join-three-zero-next"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-read-callable-capture-conflicts-loop-twenty-nine",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "ml_read_callable_capture_conflicts_loop29",
+    "inventoryName": "meta-language-read-callable-capture-conflicts-loop-two-nine"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-read-callable-capture-conflicts-loop-twenty-eight",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "ml_read_callable_capture_conflicts_loop28",
+    "inventoryName": "meta-language-read-callable-capture-conflicts-loop-two-eight"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-read-callable-capture-conflicts-loop-twenty-seven-result",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "MlReadCallableCaptureConflictsLoop27Result",
+    "inventoryName": "meta-language-read-callable-capture-conflicts-loop-two-seven-result"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-read-callable-capture-conflicts-loop-twenty-seven-result-meta-language-read-callable-capture-conflicts-loop-twenty-seven-done-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "MlReadCallableCaptureConflictsLoop27Result::MlReadCallableCaptureConflictsLoop27Done",
+    "inventoryName": "meta-language-read-callable-capture-conflicts-loop-two-seven-result-meta-language-read-callable-capture-conflicts-loop-two-seven-done"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-read-callable-capture-conflicts-join-thirty-one",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "MlReadCallableCaptureConflictsJoin31",
+    "inventoryName": "meta-language-read-callable-capture-conflicts-join-three-one"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-read-callable-capture-conflicts-join-thirty-one-meta-language-read-callable-capture-conflicts-join-thirty-one-next-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "MlReadCallableCaptureConflictsJoin31::MlReadCallableCaptureConflictsJoin31Next",
+    "inventoryName": "meta-language-read-callable-capture-conflicts-join-three-one-meta-language-read-callable-capture-conflicts-join-three-one-next"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-read-callable-capture-conflicts-loop-twenty-seven",
+    "source": "rust/src/translation/callable_source_rules/part_5.rs",
+    "name": "ml_read_callable_capture_conflicts_loop27",
+    "inventoryName": "meta-language-read-callable-capture-conflicts-loop-two-seven"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-callable-outer-assignments-loop-thirty-two",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "ml_callable_outer_assignments_loop32",
+    "inventoryName": "meta-language-callable-outer-assignments-loop-three-two"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-plan-callable-parameter-types-loop-thirty-three",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "ml_plan_callable_parameter_types_loop33",
+    "inventoryName": "meta-language-plan-callable-parameter-types-loop-three-three"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-plan-callable-function-type-loop-thirty-four",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "ml_plan_callable_function_type_loop34",
+    "inventoryName": "meta-language-plan-callable-function-type-loop-three-four"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-plan-callable-type-constraints-loop-thirty-five",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "ml_plan_callable_type_constraints_loop35",
+    "inventoryName": "meta-language-plan-callable-type-constraints-loop-three-five"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-plan-callable-application-constraints-loop-thirty-six",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "ml_plan_callable_application_constraints_loop36",
+    "inventoryName": "meta-language-plan-callable-application-constraints-loop-three-six"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-plan-callable-parameter-ownership-loop-thirty-seven",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "ml_plan_callable_parameter_ownership_loop37",
+    "inventoryName": "meta-language-plan-callable-parameter-ownership-loop-three-seven"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-read-callable-function-children-loop-thirty-eight",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "ml_read_callable_function_children_loop38",
+    "inventoryName": "meta-language-read-callable-function-children-loop-three-eight"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-read-callable-closure-parameter-error-loop-forty-result",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "MlReadCallableClosureParameterErrorLoop40Result",
+    "inventoryName": "meta-language-read-callable-closure-parameter-error-loop-four-zero-result"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-read-callable-closure-parameter-error-loop-forty-result-meta-language-read-callable-closure-parameter-error-loop-forty-done-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "MlReadCallableClosureParameterErrorLoop40Result::MlReadCallableClosureParameterErrorLoop40Done",
+    "inventoryName": "meta-language-read-callable-closure-parameter-error-loop-four-zero-result-meta-language-read-callable-closure-parameter-error-loop-four-zero-done"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-read-callable-closure-parameter-error-loop-forty-result-meta-language-read-callable-closure-parameter-error-loop-forty-return-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "MlReadCallableClosureParameterErrorLoop40Result::MlReadCallableClosureParameterErrorLoop40Return",
+    "inventoryName": "meta-language-read-callable-closure-parameter-error-loop-four-zero-result-meta-language-read-callable-closure-parameter-error-loop-four-zero-return"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-read-callable-closure-parameter-error-loop-forty",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "ml_read_callable_closure_parameter_error_loop40",
+    "inventoryName": "meta-language-read-callable-closure-parameter-error-loop-four-zero"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-read-callable-closure-parameter-error-loop-thirty-nine-result",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "MlReadCallableClosureParameterErrorLoop39Result",
+    "inventoryName": "meta-language-read-callable-closure-parameter-error-loop-three-nine-result"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-read-callable-closure-parameter-error-loop-thirty-nine-result-meta-language-read-callable-closure-parameter-error-loop-thirty-nine-done-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "MlReadCallableClosureParameterErrorLoop39Result::MlReadCallableClosureParameterErrorLoop39Done",
+    "inventoryName": "meta-language-read-callable-closure-parameter-error-loop-three-nine-result-meta-language-read-callable-closure-parameter-error-loop-three-nine-done"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-read-callable-closure-parameter-error-loop-thirty-nine-result-meta-language-read-callable-closure-parameter-error-loop-thirty-nine-return-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "MlReadCallableClosureParameterErrorLoop39Result::MlReadCallableClosureParameterErrorLoop39Return",
+    "inventoryName": "meta-language-read-callable-closure-parameter-error-loop-three-nine-result-meta-language-read-callable-closure-parameter-error-loop-three-nine-return"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-read-callable-closure-parameter-error-loop-forty-one-result",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "MlReadCallableClosureParameterErrorLoop41Result",
+    "inventoryName": "meta-language-read-callable-closure-parameter-error-loop-four-one-result"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-read-callable-closure-parameter-error-loop-forty-one-result-meta-language-read-callable-closure-parameter-error-loop-forty-one-done-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "MlReadCallableClosureParameterErrorLoop41Result::MlReadCallableClosureParameterErrorLoop41Done",
+    "inventoryName": "meta-language-read-callable-closure-parameter-error-loop-four-one-result-meta-language-read-callable-closure-parameter-error-loop-four-one-done"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-read-callable-closure-parameter-error-loop-forty-one-result-meta-language-read-callable-closure-parameter-error-loop-forty-one-return-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "MlReadCallableClosureParameterErrorLoop41Result::MlReadCallableClosureParameterErrorLoop41Return",
+    "inventoryName": "meta-language-read-callable-closure-parameter-error-loop-four-one-result-meta-language-read-callable-closure-parameter-error-loop-four-one-return"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-read-callable-closure-parameter-error-loop-forty-one",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "ml_read_callable_closure_parameter_error_loop41",
+    "inventoryName": "meta-language-read-callable-closure-parameter-error-loop-four-one"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-read-callable-closure-parameter-error-loop-thirty-nine",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "ml_read_callable_closure_parameter_error_loop39",
+    "inventoryName": "meta-language-read-callable-closure-parameter-error-loop-three-nine"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-callable-append-name-loop-forty-two-result",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "MlCallableAppendNameLoop42Result",
+    "inventoryName": "meta-language-callable-append-name-loop-four-two-result"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-callable-append-name-loop-forty-two-result-meta-language-callable-append-name-loop-forty-two-done-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "MlCallableAppendNameLoop42Result::MlCallableAppendNameLoop42Done",
+    "inventoryName": "meta-language-callable-append-name-loop-four-two-result-meta-language-callable-append-name-loop-four-two-done"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-callable-append-name-loop-forty-two-result-meta-language-callable-append-name-loop-forty-two-return-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "MlCallableAppendNameLoop42Result::MlCallableAppendNameLoop42Return",
+    "inventoryName": "meta-language-callable-append-name-loop-four-two-result-meta-language-callable-append-name-loop-four-two-return"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-callable-append-name-loop-forty-two",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "ml_callable_append_name_loop42",
+    "inventoryName": "meta-language-callable-append-name-loop-four-two"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-statement-captures-loop-forty-three-result",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "MlPlanCallableStatementCapturesLoop43Result",
+    "inventoryName": "meta-language-plan-callable-statement-captures-loop-four-three-result"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-statement-captures-loop-forty-three-result-meta-language-plan-callable-statement-captures-loop-forty-three-done-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "MlPlanCallableStatementCapturesLoop43Result::MlPlanCallableStatementCapturesLoop43Done",
+    "inventoryName": "meta-language-plan-callable-statement-captures-loop-four-three-result-meta-language-plan-callable-statement-captures-loop-four-three-done"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-statement-captures-join-forty-four",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "MlPlanCallableStatementCapturesJoin44",
+    "inventoryName": "meta-language-plan-callable-statement-captures-join-four-four"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-statement-captures-join-forty-four-meta-language-plan-callable-statement-captures-join-forty-four-next-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "MlPlanCallableStatementCapturesJoin44::MlPlanCallableStatementCapturesJoin44Next",
+    "inventoryName": "meta-language-plan-callable-statement-captures-join-four-four-meta-language-plan-callable-statement-captures-join-four-four-next"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-plan-callable-statement-captures-loop-forty-three",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "ml_plan_callable_statement_captures_loop43",
+    "inventoryName": "meta-language-plan-callable-statement-captures-loop-four-three"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-closure-scope-loop-forty-nine-result",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "MlPlanCallableClosureScopeLoop49Result",
+    "inventoryName": "meta-language-plan-callable-closure-scope-loop-four-nine-result"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-closure-scope-loop-forty-nine-result-meta-language-plan-callable-closure-scope-loop-forty-nine-done-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "MlPlanCallableClosureScopeLoop49Result::MlPlanCallableClosureScopeLoop49Done",
+    "inventoryName": "meta-language-plan-callable-closure-scope-loop-four-nine-result-meta-language-plan-callable-closure-scope-loop-four-nine-done"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-plan-callable-closure-scope-loop-forty-nine",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "ml_plan_callable_closure_scope_loop49",
+    "inventoryName": "meta-language-plan-callable-closure-scope-loop-four-nine"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-closure-scope-loop-forty-eight-result",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "MlPlanCallableClosureScopeLoop48Result",
+    "inventoryName": "meta-language-plan-callable-closure-scope-loop-four-eight-result"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-closure-scope-loop-forty-eight-result-meta-language-plan-callable-closure-scope-loop-forty-eight-done-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "MlPlanCallableClosureScopeLoop48Result::MlPlanCallableClosureScopeLoop48Done",
+    "inventoryName": "meta-language-plan-callable-closure-scope-loop-four-eight-result-meta-language-plan-callable-closure-scope-loop-four-eight-done"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-plan-callable-closure-scope-loop-forty-eight",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "ml_plan_callable_closure_scope_loop48",
+    "inventoryName": "meta-language-plan-callable-closure-scope-loop-four-eight"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-closure-scope-loop-forty-seven-result",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "MlPlanCallableClosureScopeLoop47Result",
+    "inventoryName": "meta-language-plan-callable-closure-scope-loop-four-seven-result"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-closure-scope-loop-forty-seven-result-meta-language-plan-callable-closure-scope-loop-forty-seven-done-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "MlPlanCallableClosureScopeLoop47Result::MlPlanCallableClosureScopeLoop47Done",
+    "inventoryName": "meta-language-plan-callable-closure-scope-loop-four-seven-result-meta-language-plan-callable-closure-scope-loop-four-seven-done"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-plan-callable-closure-scope-loop-forty-seven",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "ml_plan_callable_closure_scope_loop47",
+    "inventoryName": "meta-language-plan-callable-closure-scope-loop-four-seven"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-closure-scope-loop-forty-six-result",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "MlPlanCallableClosureScopeLoop46Result",
+    "inventoryName": "meta-language-plan-callable-closure-scope-loop-four-six-result"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-closure-scope-loop-forty-six-result-meta-language-plan-callable-closure-scope-loop-forty-six-done-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "MlPlanCallableClosureScopeLoop46Result::MlPlanCallableClosureScopeLoop46Done",
+    "inventoryName": "meta-language-plan-callable-closure-scope-loop-four-six-result-meta-language-plan-callable-closure-scope-loop-four-six-done"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-plan-callable-closure-scope-loop-forty-six",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "ml_plan_callable_closure_scope_loop46",
+    "inventoryName": "meta-language-plan-callable-closure-scope-loop-four-six"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-closure-scope-loop-forty-five-result",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "MlPlanCallableClosureScopeLoop45Result",
+    "inventoryName": "meta-language-plan-callable-closure-scope-loop-four-five-result"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-closure-scope-loop-forty-five-result-meta-language-plan-callable-closure-scope-loop-forty-five-done-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "MlPlanCallableClosureScopeLoop45Result::MlPlanCallableClosureScopeLoop45Done",
+    "inventoryName": "meta-language-plan-callable-closure-scope-loop-four-five-result-meta-language-plan-callable-closure-scope-loop-four-five-done"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-plan-callable-closure-scope-loop-forty-five",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "ml_plan_callable_closure_scope_loop45",
+    "inventoryName": "meta-language-plan-callable-closure-scope-loop-four-five"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-plan-callable-surface-parameters-loop-fifty",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "ml_plan_callable_surface_parameters_loop50",
+    "inventoryName": "meta-language-plan-callable-surface-parameters-loop-five-zero"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-render-callable-parameters-loop-fifty-one",
+    "source": "rust/src/translation/callable_source_rules/part_6.rs",
+    "name": "ml_render_callable_parameters_loop51",
+    "inventoryName": "meta-language-render-callable-parameters-loop-five-one"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-plan-callable-mutable-cells-loop-fifty-three",
+    "source": "rust/src/translation/callable_source_rules/part_7.rs",
+    "name": "ml_plan_callable_mutable_cells_loop53",
+    "inventoryName": "meta-language-plan-callable-mutable-cells-loop-five-three"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-mutable-cells-loop-fifty-two-result",
+    "source": "rust/src/translation/callable_source_rules/part_7.rs",
+    "name": "MlPlanCallableMutableCellsLoop52Result",
+    "inventoryName": "meta-language-plan-callable-mutable-cells-loop-five-two-result"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-mutable-cells-loop-fifty-two-result-meta-language-plan-callable-mutable-cells-loop-fifty-two-done-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_7.rs",
+    "name": "MlPlanCallableMutableCellsLoop52Result::MlPlanCallableMutableCellsLoop52Done",
+    "inventoryName": "meta-language-plan-callable-mutable-cells-loop-five-two-result-meta-language-plan-callable-mutable-cells-loop-five-two-done"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-mutable-cells-join-fifty-four",
+    "source": "rust/src/translation/callable_source_rules/part_7.rs",
+    "name": "MlPlanCallableMutableCellsJoin54",
+    "inventoryName": "meta-language-plan-callable-mutable-cells-join-five-four"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-plan-callable-mutable-cells-join-fifty-four-meta-language-plan-callable-mutable-cells-join-fifty-four-next-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_7.rs",
+    "name": "MlPlanCallableMutableCellsJoin54::MlPlanCallableMutableCellsJoin54Next",
+    "inventoryName": "meta-language-plan-callable-mutable-cells-join-five-four-meta-language-plan-callable-mutable-cells-join-five-four-next"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-plan-callable-mutable-cells-loop-fifty-two",
+    "source": "rust/src/translation/callable_source_rules/part_7.rs",
+    "name": "ml_plan_callable_mutable_cells_loop52",
+    "inventoryName": "meta-language-plan-callable-mutable-cells-loop-five-two"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-callable-cell-observations-loop-fifty-six",
+    "source": "rust/src/translation/callable_source_rules/part_7.rs",
+    "name": "ml_callable_cell_observations_loop56",
+    "inventoryName": "meta-language-callable-cell-observations-loop-five-six"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-callable-cell-observations-loop-fifty-five-result",
+    "source": "rust/src/translation/callable_source_rules/part_7.rs",
+    "name": "MlCallableCellObservationsLoop55Result",
+    "inventoryName": "meta-language-callable-cell-observations-loop-five-five-result"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-callable-cell-observations-loop-fifty-five-result-meta-language-callable-cell-observations-loop-fifty-five-done-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_7.rs",
+    "name": "MlCallableCellObservationsLoop55Result::MlCallableCellObservationsLoop55Done",
+    "inventoryName": "meta-language-callable-cell-observations-loop-five-five-result-meta-language-callable-cell-observations-loop-five-five-done"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-callable-cell-observations-loop-fifty-five",
+    "source": "rust/src/translation/callable_source_rules/part_7.rs",
+    "name": "ml_callable_cell_observations_loop55",
+    "inventoryName": "meta-language-callable-cell-observations-loop-five-five"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-callable-cell-observations-loop-fifty-seven",
+    "source": "rust/src/translation/callable_source_rules/part_7.rs",
+    "name": "ml_callable_cell_observations_loop57",
+    "inventoryName": "meta-language-callable-cell-observations-loop-five-seven"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-plan-callable-source-renaming-loop-fifty-eight",
+    "source": "rust/src/translation/callable_source_rules/part_7.rs",
+    "name": "ml_plan_callable_source_renaming_loop58",
+    "inventoryName": "meta-language-plan-callable-source-renaming-loop-five-eight"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-callable-renaming-binding-loop-fifty-nine-result",
+    "source": "rust/src/translation/callable_source_rules/part_7.rs",
+    "name": "MlCallableRenamingBindingLoop59Result",
+    "inventoryName": "meta-language-callable-renaming-binding-loop-five-nine-result"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-callable-renaming-binding-loop-fifty-nine-result-meta-language-callable-renaming-binding-loop-fifty-nine-done-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_7.rs",
+    "name": "MlCallableRenamingBindingLoop59Result::MlCallableRenamingBindingLoop59Done",
+    "inventoryName": "meta-language-callable-renaming-binding-loop-five-nine-result-meta-language-callable-renaming-binding-loop-five-nine-done"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-callable-renaming-binding-loop-fifty-nine-result-meta-language-callable-renaming-binding-loop-fifty-nine-return-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_7.rs",
+    "name": "MlCallableRenamingBindingLoop59Result::MlCallableRenamingBindingLoop59Return",
+    "inventoryName": "meta-language-callable-renaming-binding-loop-five-nine-result-meta-language-callable-renaming-binding-loop-five-nine-return"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-callable-renaming-binding-loop-fifty-nine",
+    "source": "rust/src/translation/callable_source_rules/part_7.rs",
+    "name": "ml_callable_renaming_binding_loop59",
+    "inventoryName": "meta-language-callable-renaming-binding-loop-five-nine"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-callable-renamed-node-loop-sixty",
+    "source": "rust/src/translation/callable_source_rules/part_7.rs",
+    "name": "ml_callable_renamed_node_loop60",
+    "inventoryName": "meta-language-callable-renamed-node-loop-six-zero"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-callable-renamed-node-loop-sixty-one-result",
+    "source": "rust/src/translation/callable_source_rules/part_7.rs",
+    "name": "MlCallableRenamedNodeLoop61Result",
+    "inventoryName": "meta-language-callable-renamed-node-loop-six-one-result"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-callable-renamed-node-loop-sixty-one-result-meta-language-callable-renamed-node-loop-sixty-one-done-constructor",
+    "source": "rust/src/translation/callable_source_rules/part_7.rs",
+    "name": "MlCallableRenamedNodeLoop61Result::MlCallableRenamedNodeLoop61Done",
+    "inventoryName": "meta-language-callable-renamed-node-loop-six-one-result-meta-language-callable-renamed-node-loop-six-one-done"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-callable-renamed-node-loop-sixty-one",
+    "source": "rust/src/translation/callable_source_rules/part_7.rs",
+    "name": "ml_callable_renamed_node_loop61",
+    "inventoryName": "meta-language-callable-renamed-node-loop-six-one"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-callable-renamed-node-loop-sixty-two",
+    "source": "rust/src/translation/callable_source_rules/part_7.rs",
+    "name": "ml_callable_renamed_node_loop62",
+    "inventoryName": "meta-language-callable-renamed-node-loop-six-two"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-part-one",
+    "source": "rust/src/translation/surface_reference_analysis_rules.rs",
+    "name": "part_1",
+    "inventoryName": "part-one"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-part-two",
+    "source": "rust/src/translation/surface_reference_analysis_rules.rs",
+    "name": "part_2",
+    "inventoryName": "part-two"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-accept-surface-reference-mutating-method-loop-one-result",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlAcceptSurfaceReferenceMutatingMethodLoop1Result",
+    "inventoryName": "meta-language-accept-surface-reference-mutating-method-loop-one-result"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-accept-surface-reference-mutating-method-loop-one-result-meta-language-accept-surface-reference-mutating-method-loop-one-done-constructor",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlAcceptSurfaceReferenceMutatingMethodLoop1Result::MlAcceptSurfaceReferenceMutatingMethodLoop1Done",
+    "inventoryName": "meta-language-accept-surface-reference-mutating-method-loop-one-result-meta-language-accept-surface-reference-mutating-method-loop-one-done"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-accept-surface-reference-mutating-method-loop-one-result-meta-language-accept-surface-reference-mutating-method-loop-one-return-constructor",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlAcceptSurfaceReferenceMutatingMethodLoop1Result::MlAcceptSurfaceReferenceMutatingMethodLoop1Return",
+    "inventoryName": "meta-language-accept-surface-reference-mutating-method-loop-one-result-meta-language-accept-surface-reference-mutating-method-loop-one-return"
+  },
+  {
+    "id": "translation.execute-surface-reference-analysis-native-meta-language-accept-surface-reference-mutating-method-loop-one",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "ml_accept_surface_reference_mutating_method_loop1",
+    "inventoryName": "meta-language-accept-surface-reference-mutating-method-loop-one"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-read-surface-reference-field-loop-two-result",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlReadSurfaceReferenceFieldLoop2Result",
+    "inventoryName": "meta-language-read-surface-reference-field-loop-two-result"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-read-surface-reference-field-loop-two-result-meta-language-read-surface-reference-field-loop-two-done-constructor",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlReadSurfaceReferenceFieldLoop2Result::MlReadSurfaceReferenceFieldLoop2Done",
+    "inventoryName": "meta-language-read-surface-reference-field-loop-two-result-meta-language-read-surface-reference-field-loop-two-done"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-read-surface-reference-field-loop-two-result-meta-language-read-surface-reference-field-loop-two-return-constructor",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlReadSurfaceReferenceFieldLoop2Result::MlReadSurfaceReferenceFieldLoop2Return",
+    "inventoryName": "meta-language-read-surface-reference-field-loop-two-result-meta-language-read-surface-reference-field-loop-two-return"
+  },
+  {
+    "id": "translation.execute-surface-reference-analysis-native-meta-language-read-surface-reference-field-loop-two",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "ml_read_surface_reference_field_loop2",
+    "inventoryName": "meta-language-read-surface-reference-field-loop-two"
+  },
+  {
+    "id": "translation.execute-surface-reference-analysis-native-meta-language-read-surface-reference-path-loop-three",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "ml_read_surface_reference_path_loop3",
+    "inventoryName": "meta-language-read-surface-reference-path-loop-three"
+  },
+  {
+    "id": "translation.execute-surface-reference-analysis-native-meta-language-find-surface-reference-item-signature-loop-four",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "ml_find_surface_reference_item_signature_loop4",
+    "inventoryName": "meta-language-find-surface-reference-item-signature-loop-four"
+  },
+  {
+    "id": "translation.execute-surface-reference-analysis-native-meta-language-find-surface-reference-signature-loop-five",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "ml_find_surface_reference_signature_loop5",
+    "inventoryName": "meta-language-find-surface-reference-signature-loop-five"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-read-surface-reference-scope-loop-six-result",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlReadSurfaceReferenceScopeLoop6Result",
+    "inventoryName": "meta-language-read-surface-reference-scope-loop-six-result"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-read-surface-reference-scope-loop-six-result-meta-language-read-surface-reference-scope-loop-six-done-constructor",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlReadSurfaceReferenceScopeLoop6Result::MlReadSurfaceReferenceScopeLoop6Done",
+    "inventoryName": "meta-language-read-surface-reference-scope-loop-six-result-meta-language-read-surface-reference-scope-loop-six-done"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-read-surface-reference-scope-loop-six-result-meta-language-read-surface-reference-scope-loop-six-return-constructor",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlReadSurfaceReferenceScopeLoop6Result::MlReadSurfaceReferenceScopeLoop6Return",
+    "inventoryName": "meta-language-read-surface-reference-scope-loop-six-result-meta-language-read-surface-reference-scope-loop-six-return"
+  },
+  {
+    "id": "translation.execute-surface-reference-analysis-native-meta-language-read-surface-reference-scope-loop-six",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "ml_read_surface_reference_scope_loop6",
+    "inventoryName": "meta-language-read-surface-reference-scope-loop-six"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-inspect-surface-reference-expression-join-seven",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlInspectSurfaceReferenceExpressionJoin7",
+    "inventoryName": "meta-language-inspect-surface-reference-expression-join-seven"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-inspect-surface-reference-expression-join-seven-meta-language-inspect-surface-reference-expression-join-seven-next-constructor",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlInspectSurfaceReferenceExpressionJoin7::MlInspectSurfaceReferenceExpressionJoin7Next",
+    "inventoryName": "meta-language-inspect-surface-reference-expression-join-seven-meta-language-inspect-surface-reference-expression-join-seven-next"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-inspect-surface-reference-expression-loop-eight-result",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlInspectSurfaceReferenceExpressionLoop8Result",
+    "inventoryName": "meta-language-inspect-surface-reference-expression-loop-eight-result"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-inspect-surface-reference-expression-loop-eight-result-meta-language-inspect-surface-reference-expression-loop-eight-done-constructor",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlInspectSurfaceReferenceExpressionLoop8Result::MlInspectSurfaceReferenceExpressionLoop8Done",
+    "inventoryName": "meta-language-inspect-surface-reference-expression-loop-eight-result-meta-language-inspect-surface-reference-expression-loop-eight-done"
+  },
+  {
+    "id": "translation.execute-surface-reference-analysis-native-meta-language-inspect-surface-reference-expression-loop-eight",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "ml_inspect_surface_reference_expression_loop8",
+    "inventoryName": "meta-language-inspect-surface-reference-expression-loop-eight"
+  },
+  {
+    "id": "translation.execute-surface-reference-analysis-native-meta-language-inspect-surface-reference-expression-loop-nine",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "ml_inspect_surface_reference_expression_loop9",
+    "inventoryName": "meta-language-inspect-surface-reference-expression-loop-nine"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-inspect-surface-reference-expression-join-eleven",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlInspectSurfaceReferenceExpressionJoin11",
+    "inventoryName": "meta-language-inspect-surface-reference-expression-join-one-one"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-inspect-surface-reference-expression-join-eleven-meta-language-inspect-surface-reference-expression-join-eleven-next-constructor",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlInspectSurfaceReferenceExpressionJoin11::MlInspectSurfaceReferenceExpressionJoin11Next",
+    "inventoryName": "meta-language-inspect-surface-reference-expression-join-one-one-meta-language-inspect-surface-reference-expression-join-one-one-next"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-inspect-surface-reference-expression-join-eleven-meta-language-inspect-surface-reference-expression-join-eleven-return-constructor",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlInspectSurfaceReferenceExpressionJoin11::MlInspectSurfaceReferenceExpressionJoin11Return",
+    "inventoryName": "meta-language-inspect-surface-reference-expression-join-one-one-meta-language-inspect-surface-reference-expression-join-one-one-return"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-inspect-surface-reference-expression-loop-twelve-result",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlInspectSurfaceReferenceExpressionLoop12Result",
+    "inventoryName": "meta-language-inspect-surface-reference-expression-loop-one-two-result"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-inspect-surface-reference-expression-loop-twelve-result-meta-language-inspect-surface-reference-expression-loop-twelve-done-constructor",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlInspectSurfaceReferenceExpressionLoop12Result::MlInspectSurfaceReferenceExpressionLoop12Done",
+    "inventoryName": "meta-language-inspect-surface-reference-expression-loop-one-two-result-meta-language-inspect-surface-reference-expression-loop-one-two-done"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-inspect-surface-reference-expression-loop-twelve-result-meta-language-inspect-surface-reference-expression-loop-twelve-return-constructor",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlInspectSurfaceReferenceExpressionLoop12Result::MlInspectSurfaceReferenceExpressionLoop12Return",
+    "inventoryName": "meta-language-inspect-surface-reference-expression-loop-one-two-result-meta-language-inspect-surface-reference-expression-loop-one-two-return"
+  },
+  {
+    "id": "translation.execute-surface-reference-analysis-native-meta-language-inspect-surface-reference-expression-loop-twelve",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "ml_inspect_surface_reference_expression_loop12",
+    "inventoryName": "meta-language-inspect-surface-reference-expression-loop-one-two"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-inspect-surface-reference-expression-join-ten",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlInspectSurfaceReferenceExpressionJoin10",
+    "inventoryName": "meta-language-inspect-surface-reference-expression-join-one-zero"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-inspect-surface-reference-expression-join-ten-meta-language-inspect-surface-reference-expression-join-ten-next-constructor",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlInspectSurfaceReferenceExpressionJoin10::MlInspectSurfaceReferenceExpressionJoin10Next",
+    "inventoryName": "meta-language-inspect-surface-reference-expression-join-one-zero-meta-language-inspect-surface-reference-expression-join-one-zero-next"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-inspect-surface-reference-expression-join-ten-meta-language-inspect-surface-reference-expression-join-ten-return-constructor",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlInspectSurfaceReferenceExpressionJoin10::MlInspectSurfaceReferenceExpressionJoin10Return",
+    "inventoryName": "meta-language-inspect-surface-reference-expression-join-one-zero-meta-language-inspect-surface-reference-expression-join-one-zero-return"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-inspect-surface-reference-items-join-fourteen",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlInspectSurfaceReferenceItemsJoin14",
+    "inventoryName": "meta-language-inspect-surface-reference-items-join-one-four"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-inspect-surface-reference-items-join-fourteen-meta-language-inspect-surface-reference-items-join-fourteen-next-constructor",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlInspectSurfaceReferenceItemsJoin14::MlInspectSurfaceReferenceItemsJoin14Next",
+    "inventoryName": "meta-language-inspect-surface-reference-items-join-one-four-meta-language-inspect-surface-reference-items-join-one-four-next"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-inspect-surface-reference-items-loop-fifteen-result",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlInspectSurfaceReferenceItemsLoop15Result",
+    "inventoryName": "meta-language-inspect-surface-reference-items-loop-one-five-result"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-inspect-surface-reference-items-loop-fifteen-result-meta-language-inspect-surface-reference-items-loop-fifteen-done-constructor",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlInspectSurfaceReferenceItemsLoop15Result::MlInspectSurfaceReferenceItemsLoop15Done",
+    "inventoryName": "meta-language-inspect-surface-reference-items-loop-one-five-result-meta-language-inspect-surface-reference-items-loop-one-five-done"
+  },
+  {
+    "id": "translation.execute-surface-reference-analysis-native-meta-language-inspect-surface-reference-items-loop-fifteen",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "ml_inspect_surface_reference_items_loop15",
+    "inventoryName": "meta-language-inspect-surface-reference-items-loop-one-five"
+  },
+  {
+    "id": "translation.execute-surface-reference-analysis-native-meta-language-inspect-surface-reference-items-loop-thirteen",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "ml_inspect_surface_reference_items_loop13",
+    "inventoryName": "meta-language-inspect-surface-reference-items-loop-one-three"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-has-surface-structural-identity-join-seventeen",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlHasSurfaceStructuralIdentityJoin17",
+    "inventoryName": "meta-language-has-surface-structural-identity-join-one-seven"
+  },
+  {
+    "id": "translation.surface-reference-analysis-native-meta-language-has-surface-structural-identity-join-seventeen-meta-language-has-surface-structural-identity-join-seventeen-next-constructor",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "MlHasSurfaceStructuralIdentityJoin17::MlHasSurfaceStructuralIdentityJoin17Next",
+    "inventoryName": "meta-language-has-surface-structural-identity-join-one-seven-meta-language-has-surface-structural-identity-join-one-seven-next"
+  },
+  {
+    "id": "translation.execute-surface-reference-analysis-native-meta-language-has-surface-structural-identity-loop-sixteen",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "ml_has_surface_structural_identity_loop16",
+    "inventoryName": "meta-language-has-surface-structural-identity-loop-one-six"
+  },
+  {
+    "id": "translation.optional-inference-native-part-one",
+    "source": "rust/src/translation/optional_inference_rules.rs",
+    "name": "part_1",
+    "inventoryName": "part-one"
+  },
+  {
+    "id": "translation.optional-inference-native-part-two",
+    "source": "rust/src/translation/optional_inference_rules.rs",
+    "name": "part_2",
+    "inventoryName": "part-two"
+  },
+  {
+    "id": "translation.optional-inference-native-meta-language-array",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "ml_array",
+    "inventoryName": "meta-language-array"
+  },
+  {
+    "id": "translation.execute-optional-inference-native-meta-language-array-optional-at",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "ml_array::optional_at",
+    "inventoryName": "meta-language-array-optional-at"
+  },
+  {
+    "id": "translation.execute-optional-inference-native-meta-language-array-at",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "ml_array::at",
+    "inventoryName": "meta-language-array-at"
+  },
+  {
+    "id": "translation.execute-optional-inference-native-meta-language-array-number-index",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "ml_array::number_index",
+    "inventoryName": "meta-language-array-number-index"
+  },
+  {
+    "id": "translation.execute-optional-inference-native-meta-language-array-append",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "ml_array::append",
+    "inventoryName": "meta-language-array-append"
+  },
+  {
+    "id": "translation.execute-optional-inference-native-meta-language-array-integer",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "ml_array::integer",
+    "inventoryName": "meta-language-array-integer"
+  },
+  {
+    "id": "translation.execute-optional-inference-native-meta-language-array-relative",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "ml_array::relative",
+    "inventoryName": "meta-language-array-relative"
+  },
+  {
+    "id": "translation.execute-optional-inference-native-meta-language-array-slice",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "ml_array::slice",
+    "inventoryName": "meta-language-array-slice"
+  },
+  {
+    "id": "translation.execute-optional-inference-native-meta-language-array-index-of",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "ml_array::index_of",
+    "inventoryName": "meta-language-array-index-of"
+  },
+  {
+    "id": "translation.execute-optional-inference-native-meta-language-array-includes",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "ml_array::includes",
+    "inventoryName": "meta-language-array-includes"
+  },
+  {
+    "id": "translation.execute-optional-inference-native-meta-language-array-set",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "ml_array::set",
+    "inventoryName": "meta-language-array-set"
+  },
+  {
+    "id": "translation.execute-optional-inference-native-meta-language-array-map",
+    "source": "rust/src/translation/optional_inference_rules/part_1.rs",
+    "name": "ml_array::map",
+    "inventoryName": "meta-language-array-map"
+  },
+  {
+    "id": "translation.optional-inference-native-meta-language-optional-fact-field-loop-one-result",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "MlOptionalFactFieldLoop1Result",
+    "inventoryName": "meta-language-optional-fact-field-loop-one-result"
+  },
+  {
+    "id": "translation.optional-inference-native-meta-language-optional-fact-field-loop-one-result-meta-language-optional-fact-field-loop-one-done-constructor",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "MlOptionalFactFieldLoop1Result::MlOptionalFactFieldLoop1Done",
+    "inventoryName": "meta-language-optional-fact-field-loop-one-result-meta-language-optional-fact-field-loop-one-done"
+  },
+  {
+    "id": "translation.optional-inference-native-meta-language-optional-fact-field-loop-one-result-meta-language-optional-fact-field-loop-one-return-constructor",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "MlOptionalFactFieldLoop1Result::MlOptionalFactFieldLoop1Return",
+    "inventoryName": "meta-language-optional-fact-field-loop-one-result-meta-language-optional-fact-field-loop-one-return"
+  },
+  {
+    "id": "translation.execute-optional-inference-native-meta-language-optional-fact-field-loop-one",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "ml_optional_fact_field_loop1",
+    "inventoryName": "meta-language-optional-fact-field-loop-one"
+  },
+  {
+    "id": "translation.execute-optional-inference-native-meta-language-plan-optional-additional-absence-loop-two",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "ml_plan_optional_additional_absence_loop2",
+    "inventoryName": "meta-language-plan-optional-additional-absence-loop-two"
+  },
+  {
+    "id": "translation.optional-inference-native-meta-language-plan-optional-additional-absence-join-five",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "MlPlanOptionalAdditionalAbsenceJoin5",
+    "inventoryName": "meta-language-plan-optional-additional-absence-join-five"
+  },
+  {
+    "id": "translation.optional-inference-native-meta-language-plan-optional-additional-absence-join-five-meta-language-plan-optional-additional-absence-join-five-next-constructor",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "MlPlanOptionalAdditionalAbsenceJoin5::MlPlanOptionalAdditionalAbsenceJoin5Next",
+    "inventoryName": "meta-language-plan-optional-additional-absence-join-five-meta-language-plan-optional-additional-absence-join-five-next"
+  },
+  {
+    "id": "translation.execute-optional-inference-native-meta-language-plan-optional-additional-absence-loop-four",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "ml_plan_optional_additional_absence_loop4",
+    "inventoryName": "meta-language-plan-optional-additional-absence-loop-four"
+  },
+  {
+    "id": "translation.execute-optional-inference-native-meta-language-plan-optional-additional-absence-loop-three",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "ml_plan_optional_additional_absence_loop3",
+    "inventoryName": "meta-language-plan-optional-additional-absence-loop-three"
+  },
+  {
+    "id": "translation.optional-inference-native-meta-language-plan-inference-term-identity-loop-seven-result",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "MlPlanInferenceTermIdentityLoop7Result",
+    "inventoryName": "meta-language-plan-inference-term-identity-loop-seven-result"
+  },
+  {
+    "id": "translation.optional-inference-native-meta-language-plan-inference-term-identity-loop-seven-result-meta-language-plan-inference-term-identity-loop-seven-done-constructor",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "MlPlanInferenceTermIdentityLoop7Result::MlPlanInferenceTermIdentityLoop7Done",
+    "inventoryName": "meta-language-plan-inference-term-identity-loop-seven-result-meta-language-plan-inference-term-identity-loop-seven-done"
+  },
+  {
+    "id": "translation.execute-optional-inference-native-meta-language-plan-inference-term-identity-loop-seven",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "ml_plan_inference_term_identity_loop7",
+    "inventoryName": "meta-language-plan-inference-term-identity-loop-seven"
+  },
+  {
+    "id": "translation.optional-inference-native-meta-language-plan-inference-term-identity-loop-six-result",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "MlPlanInferenceTermIdentityLoop6Result",
+    "inventoryName": "meta-language-plan-inference-term-identity-loop-six-result"
+  },
+  {
+    "id": "translation.optional-inference-native-meta-language-plan-inference-term-identity-loop-six-result-meta-language-plan-inference-term-identity-loop-six-done-constructor",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "MlPlanInferenceTermIdentityLoop6Result::MlPlanInferenceTermIdentityLoop6Done",
+    "inventoryName": "meta-language-plan-inference-term-identity-loop-six-result-meta-language-plan-inference-term-identity-loop-six-done"
+  },
+  {
+    "id": "translation.execute-optional-inference-native-meta-language-plan-inference-term-identity-loop-six",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "ml_plan_inference_term_identity_loop6",
+    "inventoryName": "meta-language-plan-inference-term-identity-loop-six"
+  },
+  {
+    "id": "translation.optional-inference-native-meta-language-plan-inference-term-identity-join-nine",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "MlPlanInferenceTermIdentityJoin9",
+    "inventoryName": "meta-language-plan-inference-term-identity-join-nine"
+  },
+  {
+    "id": "translation.optional-inference-native-meta-language-plan-inference-term-identity-join-nine-meta-language-plan-inference-term-identity-join-nine-next-constructor",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "MlPlanInferenceTermIdentityJoin9::MlPlanInferenceTermIdentityJoin9Next",
+    "inventoryName": "meta-language-plan-inference-term-identity-join-nine-meta-language-plan-inference-term-identity-join-nine-next"
+  },
+  {
+    "id": "translation.optional-inference-native-meta-language-plan-inference-term-identity-join-nine-meta-language-plan-inference-term-identity-join-nine-return-constructor",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "MlPlanInferenceTermIdentityJoin9::MlPlanInferenceTermIdentityJoin9Return",
+    "inventoryName": "meta-language-plan-inference-term-identity-join-nine-meta-language-plan-inference-term-identity-join-nine-return"
+  },
+  {
+    "id": "translation.optional-inference-native-meta-language-plan-inference-term-identity-loop-ten-result",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "MlPlanInferenceTermIdentityLoop10Result",
+    "inventoryName": "meta-language-plan-inference-term-identity-loop-one-zero-result"
+  },
+  {
+    "id": "translation.optional-inference-native-meta-language-plan-inference-term-identity-loop-ten-result-meta-language-plan-inference-term-identity-loop-ten-done-constructor",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "MlPlanInferenceTermIdentityLoop10Result::MlPlanInferenceTermIdentityLoop10Done",
+    "inventoryName": "meta-language-plan-inference-term-identity-loop-one-zero-result-meta-language-plan-inference-term-identity-loop-one-zero-done"
+  },
+  {
+    "id": "translation.optional-inference-native-meta-language-plan-inference-term-identity-loop-ten-result-meta-language-plan-inference-term-identity-loop-ten-return-constructor",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "MlPlanInferenceTermIdentityLoop10Result::MlPlanInferenceTermIdentityLoop10Return",
+    "inventoryName": "meta-language-plan-inference-term-identity-loop-one-zero-result-meta-language-plan-inference-term-identity-loop-one-zero-return"
+  },
+  {
+    "id": "translation.execute-optional-inference-native-meta-language-plan-inference-term-identity-loop-eleven",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "ml_plan_inference_term_identity_loop11",
+    "inventoryName": "meta-language-plan-inference-term-identity-loop-one-one"
+  },
+  {
+    "id": "translation.optional-inference-native-meta-language-plan-inference-term-identity-join-thirteen",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "MlPlanInferenceTermIdentityJoin13",
+    "inventoryName": "meta-language-plan-inference-term-identity-join-one-three"
+  },
+  {
+    "id": "translation.optional-inference-native-meta-language-plan-inference-term-identity-join-thirteen-meta-language-plan-inference-term-identity-join-thirteen-next-constructor",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "MlPlanInferenceTermIdentityJoin13::MlPlanInferenceTermIdentityJoin13Next",
+    "inventoryName": "meta-language-plan-inference-term-identity-join-one-three-meta-language-plan-inference-term-identity-join-one-three-next"
+  },
+  {
+    "id": "translation.execute-optional-inference-native-meta-language-plan-inference-term-identity-loop-twelve",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "ml_plan_inference_term_identity_loop12",
+    "inventoryName": "meta-language-plan-inference-term-identity-loop-one-two"
+  },
+  {
+    "id": "translation.execute-optional-inference-native-meta-language-plan-inference-term-identity-loop-ten",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "ml_plan_inference_term_identity_loop10",
+    "inventoryName": "meta-language-plan-inference-term-identity-loop-one-zero"
+  },
+  {
+    "id": "translation.optional-inference-native-meta-language-plan-inference-term-identity-join-eight",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "MlPlanInferenceTermIdentityJoin8",
+    "inventoryName": "meta-language-plan-inference-term-identity-join-eight"
+  },
+  {
+    "id": "translation.optional-inference-native-meta-language-plan-inference-term-identity-join-eight-meta-language-plan-inference-term-identity-join-eight-next-constructor",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "MlPlanInferenceTermIdentityJoin8::MlPlanInferenceTermIdentityJoin8Next",
+    "inventoryName": "meta-language-plan-inference-term-identity-join-eight-meta-language-plan-inference-term-identity-join-eight-next"
+  },
+  {
+    "id": "translation.optional-inference-native-meta-language-plan-inference-term-identity-join-eight-meta-language-plan-inference-term-identity-join-eight-return-constructor",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "MlPlanInferenceTermIdentityJoin8::MlPlanInferenceTermIdentityJoin8Return",
+    "inventoryName": "meta-language-plan-inference-term-identity-join-eight-meta-language-plan-inference-term-identity-join-eight-return"
+  },
+  {
+    "id": "translation.execute-optional-inference-native-meta-language-plan-inference-term-identity-loop-fourteen",
+    "source": "rust/src/translation/optional_inference_rules/part_2.rs",
+    "name": "ml_plan_inference_term_identity_loop14",
+    "inventoryName": "meta-language-plan-inference-term-identity-loop-one-four"
+  },
+  {
+    "id": "translation.optional-value-native-part-one",
+    "source": "rust/src/translation/optional_value_rules.rs",
+    "name": "part_1",
+    "inventoryName": "part-one"
+  },
+  {
+    "id": "translation.optional-value-native-part-two",
+    "source": "rust/src/translation/optional_value_rules.rs",
+    "name": "part_2",
+    "inventoryName": "part-two"
+  },
+  {
+    "id": "translation.optional-value-native-part-three",
+    "source": "rust/src/translation/optional_value_rules.rs",
+    "name": "part_3",
+    "inventoryName": "part-three"
+  },
+  {
+    "id": "translation.execute-optional-value-native-meta-language-render-optional-strict-equality-loop-two",
+    "source": "rust/src/translation/optional_value_rules/part_3.rs",
+    "name": "ml_render_optional_strict_equality_loop2",
+    "inventoryName": "meta-language-render-optional-strict-equality-loop-two"
+  },
+  {
+    "id": "translation.execute-optional-value-native-meta-language-render-optional-strict-equality-loop-one",
+    "source": "rust/src/translation/optional_value_rules/part_3.rs",
+    "name": "ml_render_optional_strict_equality_loop1",
+    "inventoryName": "meta-language-render-optional-strict-equality-loop-one"
+  },
+  {
+    "id": "translation.record-value-native-part-one",
+    "source": "rust/src/translation/record_value_rules.rs",
+    "name": "part_1",
+    "inventoryName": "part-one"
+  },
+  {
+    "id": "translation.record-value-native-part-two",
+    "source": "rust/src/translation/record_value_rules.rs",
+    "name": "part_2",
+    "inventoryName": "part-two"
+  },
+  {
+    "id": "translation.record-value-native-part-three",
+    "source": "rust/src/translation/record_value_rules.rs",
+    "name": "part_3",
+    "inventoryName": "part-three"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-number",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_number",
+    "inventoryName": "meta-language-number"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-number-java-script-number",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_number::js_number",
+    "inventoryName": "meta-language-number-java-script-number"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-number-java-script-console",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_number::js_console",
+    "inventoryName": "meta-language-number-java-script-console"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-number-same-value",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_number::same_value",
+    "inventoryName": "meta-language-number-same-value"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-number-increment",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_number::increment",
+    "inventoryName": "meta-language-number-increment"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-number-decimal",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_number::decimal",
+    "inventoryName": "meta-language-number-decimal"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-mathematics",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math",
+    "inventoryName": "meta-language-mathematics"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-mathematics-round",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math::round",
+    "inventoryName": "meta-language-mathematics-round"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-mathematics-sign",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math::sign",
+    "inventoryName": "meta-language-mathematics-sign"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-mathematics-maximum",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math::max",
+    "inventoryName": "meta-language-mathematics-maximum"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-mathematics-minimum",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math::min",
+    "inventoryName": "meta-language-mathematics-minimum"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-mathematics-maximum-of",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math::max_of",
+    "inventoryName": "meta-language-mathematics-maximum-of"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-mathematics-minimum-of",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math::min_of",
+    "inventoryName": "meta-language-mathematics-minimum-of"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-mathematics-is-integer",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math::is_integer",
+    "inventoryName": "meta-language-mathematics-is-integer"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-mathematics-is-safe-integer",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math::is_safe_integer",
+    "inventoryName": "meta-language-mathematics-is-safe-integer"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-array",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array",
+    "inventoryName": "meta-language-array"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-optional-at",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::optional_at",
+    "inventoryName": "meta-language-array-optional-at"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-at",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::at",
+    "inventoryName": "meta-language-array-at"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-number-index",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::number_index",
+    "inventoryName": "meta-language-array-number-index"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-append",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::append",
+    "inventoryName": "meta-language-array-append"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-integer",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::integer",
+    "inventoryName": "meta-language-array-integer"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-relative",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::relative",
+    "inventoryName": "meta-language-array-relative"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-slice",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::slice",
+    "inventoryName": "meta-language-array-slice"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-index-of",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::index_of",
+    "inventoryName": "meta-language-array-index-of"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-includes",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::includes",
+    "inventoryName": "meta-language-array-includes"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-set",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::set",
+    "inventoryName": "meta-language-array-set"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-map",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::map",
+    "inventoryName": "meta-language-array-map"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-value-order-loop-one",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_read_record_value_order_loop1",
+    "inventoryName": "meta-language-read-record-value-order-loop-one"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-accept-record-field-name-loop-two-result",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "MlAcceptRecordFieldNameLoop2Result",
+    "inventoryName": "meta-language-accept-record-field-name-loop-two-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-accept-record-field-name-loop-two-result-meta-language-accept-record-field-name-loop-two-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "MlAcceptRecordFieldNameLoop2Result::MlAcceptRecordFieldNameLoop2Done",
+    "inventoryName": "meta-language-accept-record-field-name-loop-two-result-meta-language-accept-record-field-name-loop-two-done"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-accept-record-field-name-loop-two-result-meta-language-accept-record-field-name-loop-two-return-constructor",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "MlAcceptRecordFieldNameLoop2Result::MlAcceptRecordFieldNameLoop2Return",
+    "inventoryName": "meta-language-accept-record-field-name-loop-two-result-meta-language-accept-record-field-name-loop-two-return"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-accept-record-field-name-loop-two",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_accept_record_field_name_loop2",
+    "inventoryName": "meta-language-accept-record-field-name-loop-two"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-compare-record-field-names-loop-three-result",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlCompareRecordFieldNamesLoop3Result",
+    "inventoryName": "meta-language-compare-record-field-names-loop-three-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-compare-record-field-names-loop-three-result-meta-language-compare-record-field-names-loop-three-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlCompareRecordFieldNamesLoop3Result::MlCompareRecordFieldNamesLoop3Done",
+    "inventoryName": "meta-language-compare-record-field-names-loop-three-result-meta-language-compare-record-field-names-loop-three-done"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-compare-record-field-names-loop-three-result-meta-language-compare-record-field-names-loop-three-return-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlCompareRecordFieldNamesLoop3Result::MlCompareRecordFieldNamesLoop3Return",
+    "inventoryName": "meta-language-compare-record-field-names-loop-three-result-meta-language-compare-record-field-names-loop-three-return"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-compare-record-field-names-loop-three",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_compare_record_field_names_loop3",
+    "inventoryName": "meta-language-compare-record-field-names-loop-three"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-field-position-loop-five-result",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordFieldPositionLoop5Result",
+    "inventoryName": "meta-language-read-record-field-position-loop-five-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-field-position-loop-five-result-meta-language-read-record-field-position-loop-five-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordFieldPositionLoop5Result::MlReadRecordFieldPositionLoop5Done",
+    "inventoryName": "meta-language-read-record-field-position-loop-five-result-meta-language-read-record-field-position-loop-five-done"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-field-position-loop-five-result-meta-language-read-record-field-position-loop-five-return-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordFieldPositionLoop5Result::MlReadRecordFieldPositionLoop5Return",
+    "inventoryName": "meta-language-read-record-field-position-loop-five-result-meta-language-read-record-field-position-loop-five-return"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-field-position-loop-five",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_field_position_loop5",
+    "inventoryName": "meta-language-read-record-field-position-loop-five"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-field-position-loop-four-result",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordFieldPositionLoop4Result",
+    "inventoryName": "meta-language-read-record-field-position-loop-four-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-field-position-loop-four-result-meta-language-read-record-field-position-loop-four-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordFieldPositionLoop4Result::MlReadRecordFieldPositionLoop4Done",
+    "inventoryName": "meta-language-read-record-field-position-loop-four-result-meta-language-read-record-field-position-loop-four-done"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-field-position-loop-four-result-meta-language-read-record-field-position-loop-four-return-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordFieldPositionLoop4Result::MlReadRecordFieldPositionLoop4Return",
+    "inventoryName": "meta-language-read-record-field-position-loop-four-result-meta-language-read-record-field-position-loop-four-return"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-field-position-loop-four",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_field_position_loop4",
+    "inventoryName": "meta-language-read-record-field-position-loop-four"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-sorted-field-positions-loop-nine",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_sorted_field_positions_loop9",
+    "inventoryName": "meta-language-read-record-sorted-field-positions-loop-nine"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-sorted-field-positions-loop-eight",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_sorted_field_positions_loop8",
+    "inventoryName": "meta-language-read-record-sorted-field-positions-loop-eight"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-sorted-field-positions-loop-seven",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_sorted_field_positions_loop7",
+    "inventoryName": "meta-language-read-record-sorted-field-positions-loop-seven"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-sorted-field-positions-loop-six-result",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordSortedFieldPositionsLoop6Result",
+    "inventoryName": "meta-language-read-record-sorted-field-positions-loop-six-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-sorted-field-positions-loop-six-result-meta-language-read-record-sorted-field-positions-loop-six-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordSortedFieldPositionsLoop6Result::MlReadRecordSortedFieldPositionsLoop6Done",
+    "inventoryName": "meta-language-read-record-sorted-field-positions-loop-six-result-meta-language-read-record-sorted-field-positions-loop-six-done"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-sorted-field-positions-loop-six-result-meta-language-read-record-sorted-field-positions-loop-six-return-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordSortedFieldPositionsLoop6Result::MlReadRecordSortedFieldPositionsLoop6Return",
+    "inventoryName": "meta-language-read-record-sorted-field-positions-loop-six-result-meta-language-read-record-sorted-field-positions-loop-six-return"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-sorted-field-positions-loop-six",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_sorted_field_positions_loop6",
+    "inventoryName": "meta-language-read-record-sorted-field-positions-loop-six"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-field-order-loop-ten",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_field_order_loop10",
+    "inventoryName": "meta-language-read-record-field-order-loop-one-zero"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-field-insertion-order-loop-thirteen",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_field_insertion_order_loop13",
+    "inventoryName": "meta-language-read-record-field-insertion-order-loop-one-three"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-field-insertion-order-loop-twelve",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_field_insertion_order_loop12",
+    "inventoryName": "meta-language-read-record-field-insertion-order-loop-one-two"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-field-insertion-order-loop-eleven-result",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordFieldInsertionOrderLoop11Result",
+    "inventoryName": "meta-language-read-record-field-insertion-order-loop-one-one-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-field-insertion-order-loop-eleven-result-meta-language-read-record-field-insertion-order-loop-eleven-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordFieldInsertionOrderLoop11Result::MlReadRecordFieldInsertionOrderLoop11Done",
+    "inventoryName": "meta-language-read-record-field-insertion-order-loop-one-one-result-meta-language-read-record-field-insertion-order-loop-one-one-done"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-field-insertion-order-loop-eleven",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_field_insertion_order_loop11",
+    "inventoryName": "meta-language-read-record-field-insertion-order-loop-one-one"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-record-type-fact-field-loop-fourteen-result",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlRecordTypeFactFieldLoop14Result",
+    "inventoryName": "meta-language-record-type-fact-field-loop-one-four-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-record-type-fact-field-loop-fourteen-result-meta-language-record-type-fact-field-loop-fourteen-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlRecordTypeFactFieldLoop14Result::MlRecordTypeFactFieldLoop14Done",
+    "inventoryName": "meta-language-record-type-fact-field-loop-one-four-result-meta-language-record-type-fact-field-loop-one-four-done"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-record-type-fact-field-loop-fourteen-result-meta-language-record-type-fact-field-loop-fourteen-return-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlRecordTypeFactFieldLoop14Result::MlRecordTypeFactFieldLoop14Return",
+    "inventoryName": "meta-language-record-type-fact-field-loop-one-four-result-meta-language-record-type-fact-field-loop-one-four-return"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-record-type-fact-field-loop-fourteen",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_record_type_fact_field_loop14",
+    "inventoryName": "meta-language-record-type-fact-field-loop-one-four"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-record-type-fact-elements-loop-fifteen",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_record_type_fact_elements_loop15",
+    "inventoryName": "meta-language-record-type-fact-elements-loop-one-five"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-type-owner-presence-loop-sixteen-result",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordTypeOwnerPresenceLoop16Result",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-one-six-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-type-owner-presence-loop-sixteen-result-meta-language-read-record-type-owner-presence-loop-sixteen-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordTypeOwnerPresenceLoop16Result::MlReadRecordTypeOwnerPresenceLoop16Done",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-one-six-result-meta-language-read-record-type-owner-presence-loop-one-six-done"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-type-owner-presence-loop-sixteen-result-meta-language-read-record-type-owner-presence-loop-sixteen-return-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordTypeOwnerPresenceLoop16Result::MlReadRecordTypeOwnerPresenceLoop16Return",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-one-six-result-meta-language-read-record-type-owner-presence-loop-one-six-return"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-type-owner-presence-loop-eighteen",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_type_owner_presence_loop18",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-one-eight"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-type-owner-presence-loop-nineteen",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_type_owner_presence_loop19",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-one-nine"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-type-owner-presence-loop-twenty",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_type_owner_presence_loop20",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-two-zero"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-type-owner-presence-loop-seventeen-result",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordTypeOwnerPresenceLoop17Result",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-one-seven-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-type-owner-presence-loop-seventeen-result-meta-language-read-record-type-owner-presence-loop-seventeen-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordTypeOwnerPresenceLoop17Result::MlReadRecordTypeOwnerPresenceLoop17Done",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-one-seven-result-meta-language-read-record-type-owner-presence-loop-one-seven-done"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-type-owner-presence-loop-seventeen",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_type_owner_presence_loop17",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-one-seven"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-type-owner-presence-loop-sixteen",
+    "source": "rust/src/translation/record_value_rules/part_3.rs",
+    "name": "ml_read_record_type_owner_presence_loop16",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-one-six"
+  },
+  {
+    "id": "translation.record-emission-native-part-one",
+    "source": "rust/src/translation/record_emission_rules.rs",
+    "name": "part_1",
+    "inventoryName": "part-one"
+  },
+  {
+    "id": "translation.record-emission-native-meta-language-array",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "ml_array",
+    "inventoryName": "meta-language-array"
+  },
+  {
+    "id": "translation.execute-record-emission-native-meta-language-array-optional-at",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "ml_array::optional_at",
+    "inventoryName": "meta-language-array-optional-at"
+  },
+  {
+    "id": "translation.execute-record-emission-native-meta-language-array-at",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "ml_array::at",
+    "inventoryName": "meta-language-array-at"
+  },
+  {
+    "id": "translation.execute-record-emission-native-meta-language-array-number-index",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "ml_array::number_index",
+    "inventoryName": "meta-language-array-number-index"
+  },
+  {
+    "id": "translation.execute-record-emission-native-meta-language-array-append",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "ml_array::append",
+    "inventoryName": "meta-language-array-append"
+  },
+  {
+    "id": "translation.execute-record-emission-native-meta-language-array-integer",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "ml_array::integer",
+    "inventoryName": "meta-language-array-integer"
+  },
+  {
+    "id": "translation.execute-record-emission-native-meta-language-array-relative",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "ml_array::relative",
+    "inventoryName": "meta-language-array-relative"
+  },
+  {
+    "id": "translation.execute-record-emission-native-meta-language-array-slice",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "ml_array::slice",
+    "inventoryName": "meta-language-array-slice"
+  },
+  {
+    "id": "translation.execute-record-emission-native-meta-language-array-index-of",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "ml_array::index_of",
+    "inventoryName": "meta-language-array-index-of"
+  },
+  {
+    "id": "translation.execute-record-emission-native-meta-language-array-includes",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "ml_array::includes",
+    "inventoryName": "meta-language-array-includes"
+  },
+  {
+    "id": "translation.execute-record-emission-native-meta-language-array-set",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "ml_array::set",
+    "inventoryName": "meta-language-array-set"
+  },
+  {
+    "id": "translation.execute-record-emission-native-meta-language-array-map",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "ml_array::map",
+    "inventoryName": "meta-language-array-map"
+  },
+  {
+    "id": "translation.execute-record-emission-native-meta-language-join-record-items-loop-one",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "ml_join_record_items_loop1",
+    "inventoryName": "meta-language-join-record-items-loop-one"
+  },
+  {
+    "id": "translation.execute-record-emission-native-meta-language-render-record-value-loop-two",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "ml_render_record_value_loop2",
+    "inventoryName": "meta-language-render-record-value-loop-two"
+  },
+  {
+    "id": "translation.execute-record-emission-native-meta-language-render-record-product-field-loop-three",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "ml_render_record_product_field_loop3",
+    "inventoryName": "meta-language-render-record-product-field-loop-three"
+  },
+  {
+    "id": "translation.execute-record-emission-native-meta-language-render-record-product-field-loop-four",
+    "source": "rust/src/translation/record_emission_rules/part_1.rs",
+    "name": "ml_render_record_product_field_loop4",
+    "inventoryName": "meta-language-render-record-product-field-loop-four"
+  },
+  {
+    "id": "translation.type-syntax-native-part-one",
+    "source": "rust/src/translation/type_syntax_rules.rs",
+    "name": "part_1",
+    "inventoryName": "part-one"
+  },
+  {
+    "id": "translation.type-syntax-native-meta-language-mathematics",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "ml_math",
+    "inventoryName": "meta-language-mathematics"
+  },
+  {
+    "id": "translation.execute-type-syntax-native-meta-language-mathematics-round",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "ml_math::round",
+    "inventoryName": "meta-language-mathematics-round"
+  },
+  {
+    "id": "translation.execute-type-syntax-native-meta-language-mathematics-sign",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "ml_math::sign",
+    "inventoryName": "meta-language-mathematics-sign"
+  },
+  {
+    "id": "translation.execute-type-syntax-native-meta-language-mathematics-maximum",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "ml_math::max",
+    "inventoryName": "meta-language-mathematics-maximum"
+  },
+  {
+    "id": "translation.execute-type-syntax-native-meta-language-mathematics-minimum",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "ml_math::min",
+    "inventoryName": "meta-language-mathematics-minimum"
+  },
+  {
+    "id": "translation.execute-type-syntax-native-meta-language-mathematics-maximum-of",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "ml_math::max_of",
+    "inventoryName": "meta-language-mathematics-maximum-of"
+  },
+  {
+    "id": "translation.execute-type-syntax-native-meta-language-mathematics-minimum-of",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "ml_math::min_of",
+    "inventoryName": "meta-language-mathematics-minimum-of"
+  },
+  {
+    "id": "translation.execute-type-syntax-native-meta-language-mathematics-is-integer",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "ml_math::is_integer",
+    "inventoryName": "meta-language-mathematics-is-integer"
+  },
+  {
+    "id": "translation.execute-type-syntax-native-meta-language-mathematics-is-safe-integer",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "ml_math::is_safe_integer",
+    "inventoryName": "meta-language-mathematics-is-safe-integer"
+  },
+  {
+    "id": "translation.type-syntax-native-meta-language-array",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "ml_array",
+    "inventoryName": "meta-language-array"
+  },
+  {
+    "id": "translation.execute-type-syntax-native-meta-language-array-optional-at",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "ml_array::optional_at",
+    "inventoryName": "meta-language-array-optional-at"
+  },
+  {
+    "id": "translation.execute-type-syntax-native-meta-language-array-at",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "ml_array::at",
+    "inventoryName": "meta-language-array-at"
+  },
+  {
+    "id": "translation.execute-type-syntax-native-meta-language-array-number-index",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "ml_array::number_index",
+    "inventoryName": "meta-language-array-number-index"
+  },
+  {
+    "id": "translation.execute-type-syntax-native-meta-language-array-append",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "ml_array::append",
+    "inventoryName": "meta-language-array-append"
+  },
+  {
+    "id": "translation.execute-type-syntax-native-meta-language-array-integer",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "ml_array::integer",
+    "inventoryName": "meta-language-array-integer"
+  },
+  {
+    "id": "translation.execute-type-syntax-native-meta-language-array-relative",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "ml_array::relative",
+    "inventoryName": "meta-language-array-relative"
+  },
+  {
+    "id": "translation.execute-type-syntax-native-meta-language-array-slice",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "ml_array::slice",
+    "inventoryName": "meta-language-array-slice"
+  },
+  {
+    "id": "translation.execute-type-syntax-native-meta-language-array-index-of",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "ml_array::index_of",
+    "inventoryName": "meta-language-array-index-of"
+  },
+  {
+    "id": "translation.execute-type-syntax-native-meta-language-array-includes",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "ml_array::includes",
+    "inventoryName": "meta-language-array-includes"
+  },
+  {
+    "id": "translation.execute-type-syntax-native-meta-language-array-set",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "ml_array::set",
+    "inventoryName": "meta-language-array-set"
+  },
+  {
+    "id": "translation.execute-type-syntax-native-meta-language-array-map",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "ml_array::map",
+    "inventoryName": "meta-language-array-map"
+  },
+  {
+    "id": "translation.execute-type-syntax-native-meta-language-read-type-separator-positions-loop-one",
+    "source": "rust/src/translation/type_syntax_rules/part_1.rs",
+    "name": "ml_read_type_separator_positions_loop1",
+    "inventoryName": "meta-language-read-type-separator-positions-loop-one"
+  },
+  {
+    "id": "translation.record-type-syntax-native-part-one",
+    "source": "rust/src/translation/record_type_syntax_rules.rs",
+    "name": "part_1",
+    "inventoryName": "part-one"
+  },
+  {
+    "id": "translation.record-type-syntax-native-meta-language-array",
+    "source": "rust/src/translation/record_type_syntax_rules/part_1.rs",
+    "name": "ml_array",
+    "inventoryName": "meta-language-array"
+  },
+  {
+    "id": "translation.execute-record-type-syntax-native-meta-language-array-optional-at",
+    "source": "rust/src/translation/record_type_syntax_rules/part_1.rs",
+    "name": "ml_array::optional_at",
+    "inventoryName": "meta-language-array-optional-at"
+  },
+  {
+    "id": "translation.execute-record-type-syntax-native-meta-language-array-at",
+    "source": "rust/src/translation/record_type_syntax_rules/part_1.rs",
+    "name": "ml_array::at",
+    "inventoryName": "meta-language-array-at"
+  },
+  {
+    "id": "translation.execute-record-type-syntax-native-meta-language-array-number-index",
+    "source": "rust/src/translation/record_type_syntax_rules/part_1.rs",
+    "name": "ml_array::number_index",
+    "inventoryName": "meta-language-array-number-index"
+  },
+  {
+    "id": "translation.execute-record-type-syntax-native-meta-language-array-append",
+    "source": "rust/src/translation/record_type_syntax_rules/part_1.rs",
+    "name": "ml_array::append",
+    "inventoryName": "meta-language-array-append"
+  },
+  {
+    "id": "translation.execute-record-type-syntax-native-meta-language-array-integer",
+    "source": "rust/src/translation/record_type_syntax_rules/part_1.rs",
+    "name": "ml_array::integer",
+    "inventoryName": "meta-language-array-integer"
+  },
+  {
+    "id": "translation.execute-record-type-syntax-native-meta-language-array-relative",
+    "source": "rust/src/translation/record_type_syntax_rules/part_1.rs",
+    "name": "ml_array::relative",
+    "inventoryName": "meta-language-array-relative"
+  },
+  {
+    "id": "translation.execute-record-type-syntax-native-meta-language-array-slice",
+    "source": "rust/src/translation/record_type_syntax_rules/part_1.rs",
+    "name": "ml_array::slice",
+    "inventoryName": "meta-language-array-slice"
+  },
+  {
+    "id": "translation.execute-record-type-syntax-native-meta-language-array-index-of",
+    "source": "rust/src/translation/record_type_syntax_rules/part_1.rs",
+    "name": "ml_array::index_of",
+    "inventoryName": "meta-language-array-index-of"
+  },
+  {
+    "id": "translation.execute-record-type-syntax-native-meta-language-array-includes",
+    "source": "rust/src/translation/record_type_syntax_rules/part_1.rs",
+    "name": "ml_array::includes",
+    "inventoryName": "meta-language-array-includes"
+  },
+  {
+    "id": "translation.execute-record-type-syntax-native-meta-language-array-set",
+    "source": "rust/src/translation/record_type_syntax_rules/part_1.rs",
+    "name": "ml_array::set",
+    "inventoryName": "meta-language-array-set"
+  },
+  {
+    "id": "translation.execute-record-type-syntax-native-meta-language-array-map",
+    "source": "rust/src/translation/record_type_syntax_rules/part_1.rs",
+    "name": "ml_array::map",
+    "inventoryName": "meta-language-array-map"
+  },
+  {
+    "id": "translation.record-type-syntax-native-meta-language-read-record-type-field-colon-loop-one-result",
+    "source": "rust/src/translation/record_type_syntax_rules/part_1.rs",
+    "name": "MlReadRecordTypeFieldColonLoop1Result",
+    "inventoryName": "meta-language-read-record-type-field-colon-loop-one-result"
+  },
+  {
+    "id": "translation.record-type-syntax-native-meta-language-read-record-type-field-colon-loop-one-result-meta-language-read-record-type-field-colon-loop-one-done-constructor",
+    "source": "rust/src/translation/record_type_syntax_rules/part_1.rs",
+    "name": "MlReadRecordTypeFieldColonLoop1Result::MlReadRecordTypeFieldColonLoop1Done",
+    "inventoryName": "meta-language-read-record-type-field-colon-loop-one-result-meta-language-read-record-type-field-colon-loop-one-done"
+  },
+  {
+    "id": "translation.record-type-syntax-native-meta-language-read-record-type-field-colon-loop-one-result-meta-language-read-record-type-field-colon-loop-one-return-constructor",
+    "source": "rust/src/translation/record_type_syntax_rules/part_1.rs",
+    "name": "MlReadRecordTypeFieldColonLoop1Result::MlReadRecordTypeFieldColonLoop1Return",
+    "inventoryName": "meta-language-read-record-type-field-colon-loop-one-result-meta-language-read-record-type-field-colon-loop-one-return"
+  },
+  {
+    "id": "translation.execute-record-type-syntax-native-meta-language-read-record-type-field-colon-loop-one",
+    "source": "rust/src/translation/record_type_syntax_rules/part_1.rs",
+    "name": "ml_read_record_type_field_colon_loop1",
+    "inventoryName": "meta-language-read-record-type-field-colon-loop-one"
+  },
+  {
+    "id": "translation.null-capable-type-syntax-native-part-one",
+    "source": "rust/src/translation/nullable_type_syntax_rules.rs",
+    "name": "part_1",
+    "inventoryName": "part-one"
+  },
+  {
+    "id": "translation.null-capable-type-syntax-native-meta-language-array",
+    "source": "rust/src/translation/nullable_type_syntax_rules/part_1.rs",
+    "name": "ml_array",
+    "inventoryName": "meta-language-array"
+  },
+  {
+    "id": "translation.execute-null-capable-type-syntax-native-meta-language-array-optional-at",
+    "source": "rust/src/translation/nullable_type_syntax_rules/part_1.rs",
+    "name": "ml_array::optional_at",
+    "inventoryName": "meta-language-array-optional-at"
+  },
+  {
+    "id": "translation.execute-null-capable-type-syntax-native-meta-language-array-at",
+    "source": "rust/src/translation/nullable_type_syntax_rules/part_1.rs",
+    "name": "ml_array::at",
+    "inventoryName": "meta-language-array-at"
+  },
+  {
+    "id": "translation.execute-null-capable-type-syntax-native-meta-language-array-number-index",
+    "source": "rust/src/translation/nullable_type_syntax_rules/part_1.rs",
+    "name": "ml_array::number_index",
+    "inventoryName": "meta-language-array-number-index"
+  },
+  {
+    "id": "translation.execute-null-capable-type-syntax-native-meta-language-array-append",
+    "source": "rust/src/translation/nullable_type_syntax_rules/part_1.rs",
+    "name": "ml_array::append",
+    "inventoryName": "meta-language-array-append"
+  },
+  {
+    "id": "translation.execute-null-capable-type-syntax-native-meta-language-array-integer",
+    "source": "rust/src/translation/nullable_type_syntax_rules/part_1.rs",
+    "name": "ml_array::integer",
+    "inventoryName": "meta-language-array-integer"
+  },
+  {
+    "id": "translation.execute-null-capable-type-syntax-native-meta-language-array-relative",
+    "source": "rust/src/translation/nullable_type_syntax_rules/part_1.rs",
+    "name": "ml_array::relative",
+    "inventoryName": "meta-language-array-relative"
+  },
+  {
+    "id": "translation.execute-null-capable-type-syntax-native-meta-language-array-slice",
+    "source": "rust/src/translation/nullable_type_syntax_rules/part_1.rs",
+    "name": "ml_array::slice",
+    "inventoryName": "meta-language-array-slice"
+  },
+  {
+    "id": "translation.execute-null-capable-type-syntax-native-meta-language-array-index-of",
+    "source": "rust/src/translation/nullable_type_syntax_rules/part_1.rs",
+    "name": "ml_array::index_of",
+    "inventoryName": "meta-language-array-index-of"
+  },
+  {
+    "id": "translation.execute-null-capable-type-syntax-native-meta-language-array-includes",
+    "source": "rust/src/translation/nullable_type_syntax_rules/part_1.rs",
+    "name": "ml_array::includes",
+    "inventoryName": "meta-language-array-includes"
+  },
+  {
+    "id": "translation.execute-null-capable-type-syntax-native-meta-language-array-set",
+    "source": "rust/src/translation/nullable_type_syntax_rules/part_1.rs",
+    "name": "ml_array::set",
+    "inventoryName": "meta-language-array-set"
+  },
+  {
+    "id": "translation.execute-null-capable-type-syntax-native-meta-language-array-map",
+    "source": "rust/src/translation/nullable_type_syntax_rules/part_1.rs",
+    "name": "ml_array::map",
+    "inventoryName": "meta-language-array-map"
+  },
+  {
+    "id": "translation.null-capable-type-syntax-native-meta-language-read-null-capable-type-syntax-loop-one-result",
+    "source": "rust/src/translation/nullable_type_syntax_rules/part_1.rs",
+    "name": "MlReadNullableTypeSyntaxLoop1Result",
+    "inventoryName": "meta-language-read-null-capable-type-syntax-loop-one-result"
+  },
+  {
+    "id": "translation.null-capable-type-syntax-native-meta-language-read-null-capable-type-syntax-loop-one-result-meta-language-read-null-capable-type-syntax-loop-one-done-constructor",
+    "source": "rust/src/translation/nullable_type_syntax_rules/part_1.rs",
+    "name": "MlReadNullableTypeSyntaxLoop1Result::MlReadNullableTypeSyntaxLoop1Done",
+    "inventoryName": "meta-language-read-null-capable-type-syntax-loop-one-result-meta-language-read-null-capable-type-syntax-loop-one-done"
+  },
+  {
+    "id": "translation.execute-null-capable-type-syntax-native-meta-language-read-null-capable-type-syntax-loop-one",
+    "source": "rust/src/translation/nullable_type_syntax_rules/part_1.rs",
+    "name": "ml_read_nullable_type_syntax_loop1",
+    "inventoryName": "meta-language-read-null-capable-type-syntax-loop-one"
+  },
+  {
+    "id": "translation.callable-emission-native-part-one",
+    "source": "rust/src/translation/callable_emission_rules.rs",
+    "name": "part_1",
+    "inventoryName": "part-one"
+  },
+  {
+    "id": "translation.callable-emission-native-part-two",
+    "source": "rust/src/translation/callable_emission_rules.rs",
+    "name": "part_2",
+    "inventoryName": "part-two"
+  },
+  {
+    "id": "translation.callable-emission-native-meta-language",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml",
+    "inventoryName": "meta-language"
+  },
+  {
+    "id": "translation.callable-emission-native-meta-language-large-integer",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::Big",
+    "inventoryName": "meta-language-big"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-trim",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::trim",
+    "inventoryName": "meta-language-trim"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-compare-magnitude",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::compare_magnitude",
+    "inventoryName": "meta-language-compare-magnitude"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-add-magnitude",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::add_magnitude",
+    "inventoryName": "meta-language-add-magnitude"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-subtract-magnitude",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::sub_magnitude",
+    "inventoryName": "meta-language-subtract-magnitude"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-multiply-magnitude",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::mul_magnitude",
+    "inventoryName": "meta-language-multiply-magnitude"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-division-and-remainder-magnitude",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::divmod_magnitude",
+    "inventoryName": "meta-language-division-and-remainder-magnitude"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-from-parts",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::from_parts",
+    "inventoryName": "meta-language-from-parts"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-zero",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::zero",
+    "inventoryName": "meta-language-zero"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-from-signed-integer-one-hundred-twenty-eight-bit",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::from_i128",
+    "inventoryName": "meta-language-from-signed-integer-one-hundred-twenty-eight-bit"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-from-unsigned-integer-one-hundred-twenty-eight-bit",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::from_u128",
+    "inventoryName": "meta-language-from-unsigned-integer-one-hundred-twenty-eight-bit"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-parse",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::parse",
+    "inventoryName": "meta-language-parse"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-is-zero",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::is_zero",
+    "inventoryName": "meta-language-is-zero"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-is-negative",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::is_negative",
+    "inventoryName": "meta-language-is-negative"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-to-index",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::to_index",
+    "inventoryName": "meta-language-to-index"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-negate",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::neg",
+    "inventoryName": "meta-language-negate"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-add",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::add",
+    "inventoryName": "meta-language-add"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-subtract",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::sub",
+    "inventoryName": "meta-language-subtract"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-multiply",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::mul",
+    "inventoryName": "meta-language-multiply"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-division-and-remainder-truncate",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::divmod_trunc",
+    "inventoryName": "meta-language-division-and-remainder-truncate"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-compare",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::cmp",
+    "inventoryName": "meta-language-compare"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-partial-compare",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::partial_cmp",
+    "inventoryName": "meta-language-partial-compare"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-format",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::fmt",
+    "inventoryName": "meta-language-format"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-natural-number-subtract",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::nat_sub",
+    "inventoryName": "meta-language-natural-number-subtract"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-predecessor",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::pred",
+    "inventoryName": "meta-language-predecessor"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-divide",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::divide",
+    "inventoryName": "meta-language-divide"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-to-natural-number-checked",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::to_nat_checked",
+    "inventoryName": "meta-language-to-natural-number-checked"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-clamp-natural-number",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::clamp_nat",
+    "inventoryName": "meta-language-clamp-natural-number"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-range",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml::range",
+    "inventoryName": "meta-language-range"
+  },
+  {
+    "id": "translation.callable-emission-native-meta-language-array",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml_array",
+    "inventoryName": "meta-language-array"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-array-optional-at",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml_array::optional_at",
+    "inventoryName": "meta-language-array-optional-at"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-array-at",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml_array::at",
+    "inventoryName": "meta-language-array-at"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-array-number-index",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml_array::number_index",
+    "inventoryName": "meta-language-array-number-index"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-array-append",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml_array::append",
+    "inventoryName": "meta-language-array-append"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-array-integer",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml_array::integer",
+    "inventoryName": "meta-language-array-integer"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-array-relative",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml_array::relative",
+    "inventoryName": "meta-language-array-relative"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-array-slice",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml_array::slice",
+    "inventoryName": "meta-language-array-slice"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-array-index-of",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml_array::index_of",
+    "inventoryName": "meta-language-array-index-of"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-array-includes",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml_array::includes",
+    "inventoryName": "meta-language-array-includes"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-array-set",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml_array::set",
+    "inventoryName": "meta-language-array-set"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-array-map",
+    "source": "rust/src/translation/callable_emission_rules/part_1.rs",
+    "name": "ml_array::map",
+    "inventoryName": "meta-language-array-map"
+  },
+  {
+    "id": "translation.callable-emission-native-meta-language-callable-emission-field-loop-one-result",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "MlCallableEmissionFieldLoop1Result",
+    "inventoryName": "meta-language-callable-emission-field-loop-one-result"
+  },
+  {
+    "id": "translation.callable-emission-native-meta-language-callable-emission-field-loop-one-result-meta-language-callable-emission-field-loop-one-done-constructor",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "MlCallableEmissionFieldLoop1Result::MlCallableEmissionFieldLoop1Done",
+    "inventoryName": "meta-language-callable-emission-field-loop-one-result-meta-language-callable-emission-field-loop-one-done"
+  },
+  {
+    "id": "translation.callable-emission-native-meta-language-callable-emission-field-loop-one-result-meta-language-callable-emission-field-loop-one-return-constructor",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "MlCallableEmissionFieldLoop1Result::MlCallableEmissionFieldLoop1Return",
+    "inventoryName": "meta-language-callable-emission-field-loop-one-result-meta-language-callable-emission-field-loop-one-return"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-callable-emission-field-loop-one",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "ml_callable_emission_field_loop1",
+    "inventoryName": "meta-language-callable-emission-field-loop-one"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-plan-callable-capture-bindings-loop-four",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "ml_plan_callable_capture_bindings_loop4",
+    "inventoryName": "meta-language-plan-callable-capture-bindings-loop-four"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-plan-callable-capture-bindings-loop-three",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "ml_plan_callable_capture_bindings_loop3",
+    "inventoryName": "meta-language-plan-callable-capture-bindings-loop-three"
+  },
+  {
+    "id": "translation.callable-emission-native-meta-language-callable-emission-has-name-loop-six-result",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "MlCallableEmissionHasNameLoop6Result",
+    "inventoryName": "meta-language-callable-emission-has-name-loop-six-result"
+  },
+  {
+    "id": "translation.callable-emission-native-meta-language-callable-emission-has-name-loop-six-result-meta-language-callable-emission-has-name-loop-six-done-constructor",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "MlCallableEmissionHasNameLoop6Result::MlCallableEmissionHasNameLoop6Done",
+    "inventoryName": "meta-language-callable-emission-has-name-loop-six-result-meta-language-callable-emission-has-name-loop-six-done"
+  },
+  {
+    "id": "translation.callable-emission-native-meta-language-callable-emission-has-name-loop-six-result-meta-language-callable-emission-has-name-loop-six-return-constructor",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "MlCallableEmissionHasNameLoop6Result::MlCallableEmissionHasNameLoop6Return",
+    "inventoryName": "meta-language-callable-emission-has-name-loop-six-result-meta-language-callable-emission-has-name-loop-six-return"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-callable-emission-has-name-loop-six",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "ml_callable_emission_has_name_loop6",
+    "inventoryName": "meta-language-callable-emission-has-name-loop-six"
+  },
+  {
+    "id": "translation.callable-emission-native-meta-language-read-callable-eager-effects-loop-eight-result",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "MlReadCallableEagerEffectsLoop8Result",
+    "inventoryName": "meta-language-read-callable-eager-effects-loop-eight-result"
+  },
+  {
+    "id": "translation.callable-emission-native-meta-language-read-callable-eager-effects-loop-eight-result-meta-language-read-callable-eager-effects-loop-eight-done-constructor",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "MlReadCallableEagerEffectsLoop8Result::MlReadCallableEagerEffectsLoop8Done",
+    "inventoryName": "meta-language-read-callable-eager-effects-loop-eight-result-meta-language-read-callable-eager-effects-loop-eight-done"
+  },
+  {
+    "id": "translation.callable-emission-native-meta-language-read-callable-eager-effects-loop-eight-result-meta-language-read-callable-eager-effects-loop-eight-return-constructor",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "MlReadCallableEagerEffectsLoop8Result::MlReadCallableEagerEffectsLoop8Return",
+    "inventoryName": "meta-language-read-callable-eager-effects-loop-eight-result-meta-language-read-callable-eager-effects-loop-eight-return"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-read-callable-eager-effects-loop-eight",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "ml_read_callable_eager_effects_loop8",
+    "inventoryName": "meta-language-read-callable-eager-effects-loop-eight"
+  },
+  {
+    "id": "translation.callable-emission-native-meta-language-read-callable-eager-effects-join-seven",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "MlReadCallableEagerEffectsJoin7",
+    "inventoryName": "meta-language-read-callable-eager-effects-join-seven"
+  },
+  {
+    "id": "translation.callable-emission-native-meta-language-read-callable-eager-effects-join-seven-meta-language-read-callable-eager-effects-join-seven-next-constructor",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "MlReadCallableEagerEffectsJoin7::MlReadCallableEagerEffectsJoin7Next",
+    "inventoryName": "meta-language-read-callable-eager-effects-join-seven-meta-language-read-callable-eager-effects-join-seven-next"
+  },
+  {
+    "id": "translation.callable-emission-native-meta-language-read-callable-eager-effects-join-seven-meta-language-read-callable-eager-effects-join-seven-return-constructor",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "MlReadCallableEagerEffectsJoin7::MlReadCallableEagerEffectsJoin7Return",
+    "inventoryName": "meta-language-read-callable-eager-effects-join-seven-meta-language-read-callable-eager-effects-join-seven-return"
+  },
+  {
+    "id": "translation.callable-emission-native-meta-language-read-callable-effect-bearing-declarations-loop-ten-result",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "MlReadCallableEffectfulDeclarationsLoop10Result",
+    "inventoryName": "meta-language-read-callable-effect-bearing-declarations-loop-one-zero-result"
+  },
+  {
+    "id": "translation.callable-emission-native-meta-language-read-callable-effect-bearing-declarations-loop-ten-result-meta-language-read-callable-effect-bearing-declarations-loop-ten-done-constructor",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "MlReadCallableEffectfulDeclarationsLoop10Result::MlReadCallableEffectfulDeclarationsLoop10Done",
+    "inventoryName": "meta-language-read-callable-effect-bearing-declarations-loop-one-zero-result-meta-language-read-callable-effect-bearing-declarations-loop-one-zero-done"
+  },
+  {
+    "id": "translation.callable-emission-native-meta-language-read-callable-effect-bearing-declarations-join-eleven",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "MlReadCallableEffectfulDeclarationsJoin11",
+    "inventoryName": "meta-language-read-callable-effect-bearing-declarations-join-one-one"
+  },
+  {
+    "id": "translation.callable-emission-native-meta-language-read-callable-effect-bearing-declarations-join-eleven-meta-language-read-callable-effect-bearing-declarations-join-eleven-next-constructor",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "MlReadCallableEffectfulDeclarationsJoin11::MlReadCallableEffectfulDeclarationsJoin11Next",
+    "inventoryName": "meta-language-read-callable-effect-bearing-declarations-join-one-one-meta-language-read-callable-effect-bearing-declarations-join-one-one-next"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-read-callable-effect-bearing-declarations-loop-ten",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "ml_read_callable_effectful_declarations_loop10",
+    "inventoryName": "meta-language-read-callable-effect-bearing-declarations-loop-one-zero"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-read-callable-effect-bearing-declarations-loop-nine",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "ml_read_callable_effectful_declarations_loop9",
+    "inventoryName": "meta-language-read-callable-effect-bearing-declarations-loop-nine"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-callable-emission-obligations-loop-twelve",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "ml_callable_emission_obligations_loop12",
+    "inventoryName": "meta-language-callable-emission-obligations-loop-one-two"
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-plan-callable-output-obligations-loop-fourteen",
+    "source": "rust/src/translation/callable_emission_rules/part_2.rs",
+    "name": "ml_plan_callable_output_obligations_loop14",
+    "inventoryName": "meta-language-plan-callable-output-obligations-loop-one-four"
+  },
+  {
+    "id": "translation.owned-array-append-native-part-one",
+    "source": "rust/src/translation/owned_array_append_rules.rs",
+    "name": "part_1",
+    "inventoryName": "part-one"
+  },
+  {
+    "id": "translation.owned-array-append-native-meta-language-array",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "ml_array",
+    "inventoryName": "meta-language-array"
+  },
+  {
+    "id": "translation.execute-owned-array-append-native-meta-language-array-optional-at",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "ml_array::optional_at",
+    "inventoryName": "meta-language-array-optional-at"
+  },
+  {
+    "id": "translation.execute-owned-array-append-native-meta-language-array-at",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "ml_array::at",
+    "inventoryName": "meta-language-array-at"
+  },
+  {
+    "id": "translation.execute-owned-array-append-native-meta-language-array-number-index",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "ml_array::number_index",
+    "inventoryName": "meta-language-array-number-index"
+  },
+  {
+    "id": "translation.execute-owned-array-append-native-meta-language-array-append",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "ml_array::append",
+    "inventoryName": "meta-language-array-append"
+  },
+  {
+    "id": "translation.execute-owned-array-append-native-meta-language-array-integer",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "ml_array::integer",
+    "inventoryName": "meta-language-array-integer"
+  },
+  {
+    "id": "translation.execute-owned-array-append-native-meta-language-array-relative",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "ml_array::relative",
+    "inventoryName": "meta-language-array-relative"
+  },
+  {
+    "id": "translation.execute-owned-array-append-native-meta-language-array-slice",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "ml_array::slice",
+    "inventoryName": "meta-language-array-slice"
+  },
+  {
+    "id": "translation.execute-owned-array-append-native-meta-language-array-index-of",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "ml_array::index_of",
+    "inventoryName": "meta-language-array-index-of"
+  },
+  {
+    "id": "translation.execute-owned-array-append-native-meta-language-array-includes",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "ml_array::includes",
+    "inventoryName": "meta-language-array-includes"
+  },
+  {
+    "id": "translation.execute-owned-array-append-native-meta-language-array-set",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "ml_array::set",
+    "inventoryName": "meta-language-array-set"
+  },
+  {
+    "id": "translation.execute-owned-array-append-native-meta-language-array-map",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "ml_array::map",
+    "inventoryName": "meta-language-array-map"
+  },
+  {
+    "id": "translation.owned-array-append-native-meta-language-accept-owned-array-append-uses-loop-one-result",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "MlAcceptOwnedArrayAppendUsesLoop1Result",
+    "inventoryName": "meta-language-accept-owned-array-append-uses-loop-one-result"
+  },
+  {
+    "id": "translation.owned-array-append-native-meta-language-accept-owned-array-append-uses-loop-one-result-meta-language-accept-owned-array-append-uses-loop-one-done-constructor",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "MlAcceptOwnedArrayAppendUsesLoop1Result::MlAcceptOwnedArrayAppendUsesLoop1Done",
+    "inventoryName": "meta-language-accept-owned-array-append-uses-loop-one-result-meta-language-accept-owned-array-append-uses-loop-one-done"
+  },
+  {
+    "id": "translation.owned-array-append-native-meta-language-accept-owned-array-append-uses-loop-one-result-meta-language-accept-owned-array-append-uses-loop-one-return-constructor",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "MlAcceptOwnedArrayAppendUsesLoop1Result::MlAcceptOwnedArrayAppendUsesLoop1Return",
+    "inventoryName": "meta-language-accept-owned-array-append-uses-loop-one-result-meta-language-accept-owned-array-append-uses-loop-one-return"
+  },
+  {
+    "id": "translation.owned-array-append-native-meta-language-accept-owned-array-append-uses-loop-two-result",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "MlAcceptOwnedArrayAppendUsesLoop2Result",
+    "inventoryName": "meta-language-accept-owned-array-append-uses-loop-two-result"
+  },
+  {
+    "id": "translation.owned-array-append-native-meta-language-accept-owned-array-append-uses-loop-two-result-meta-language-accept-owned-array-append-uses-loop-two-done-constructor",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "MlAcceptOwnedArrayAppendUsesLoop2Result::MlAcceptOwnedArrayAppendUsesLoop2Done",
+    "inventoryName": "meta-language-accept-owned-array-append-uses-loop-two-result-meta-language-accept-owned-array-append-uses-loop-two-done"
+  },
+  {
+    "id": "translation.owned-array-append-native-meta-language-accept-owned-array-append-uses-loop-two-result-meta-language-accept-owned-array-append-uses-loop-two-return-constructor",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "MlAcceptOwnedArrayAppendUsesLoop2Result::MlAcceptOwnedArrayAppendUsesLoop2Return",
+    "inventoryName": "meta-language-accept-owned-array-append-uses-loop-two-result-meta-language-accept-owned-array-append-uses-loop-two-return"
+  },
+  {
+    "id": "translation.execute-owned-array-append-native-meta-language-accept-owned-array-append-uses-loop-three",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "ml_accept_owned_array_append_uses_loop3",
+    "inventoryName": "meta-language-accept-owned-array-append-uses-loop-three"
+  },
+  {
+    "id": "translation.execute-owned-array-append-native-meta-language-accept-owned-array-append-uses-loop-four",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "ml_accept_owned_array_append_uses_loop4",
+    "inventoryName": "meta-language-accept-owned-array-append-uses-loop-four"
+  },
+  {
+    "id": "translation.execute-owned-array-append-native-meta-language-accept-owned-array-append-uses-loop-two",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "ml_accept_owned_array_append_uses_loop2",
+    "inventoryName": "meta-language-accept-owned-array-append-uses-loop-two"
+  },
+  {
+    "id": "translation.execute-owned-array-append-native-meta-language-accept-owned-array-append-uses-loop-one",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "ml_accept_owned_array_append_uses_loop1",
+    "inventoryName": "meta-language-accept-owned-array-append-uses-loop-one"
+  },
+  {
+    "id": "translation.execute-owned-array-append-native-meta-language-accept-owned-array-final-use-loop-five",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "ml_accept_owned_array_final_use_loop5",
+    "inventoryName": "meta-language-accept-owned-array-final-use-loop-five"
+  },
+  {
+    "id": "translation.owned-array-append-native-meta-language-accept-owned-array-final-use-loop-six-result",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "MlAcceptOwnedArrayFinalUseLoop6Result",
+    "inventoryName": "meta-language-accept-owned-array-final-use-loop-six-result"
+  },
+  {
+    "id": "translation.owned-array-append-native-meta-language-accept-owned-array-final-use-loop-six-result-meta-language-accept-owned-array-final-use-loop-six-done-constructor",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "MlAcceptOwnedArrayFinalUseLoop6Result::MlAcceptOwnedArrayFinalUseLoop6Done",
+    "inventoryName": "meta-language-accept-owned-array-final-use-loop-six-result-meta-language-accept-owned-array-final-use-loop-six-done"
+  },
+  {
+    "id": "translation.owned-array-append-native-meta-language-accept-owned-array-final-use-loop-six-result-meta-language-accept-owned-array-final-use-loop-six-return-constructor",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "MlAcceptOwnedArrayFinalUseLoop6Result::MlAcceptOwnedArrayFinalUseLoop6Return",
+    "inventoryName": "meta-language-accept-owned-array-final-use-loop-six-result-meta-language-accept-owned-array-final-use-loop-six-return"
+  },
+  {
+    "id": "translation.execute-owned-array-append-native-meta-language-accept-owned-array-final-use-loop-seven",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "ml_accept_owned_array_final_use_loop7",
+    "inventoryName": "meta-language-accept-owned-array-final-use-loop-seven"
+  },
+  {
+    "id": "translation.execute-owned-array-append-native-meta-language-accept-owned-array-final-use-loop-six",
+    "source": "rust/src/translation/owned_array_append_rules/part_1.rs",
+    "name": "ml_accept_owned_array_final_use_loop6",
+    "inventoryName": "meta-language-accept-owned-array-final-use-loop-six"
+  },
+  {
+    "id": "translation.execute-grammar-selection-native-meta-language-main",
+    "source": "rust/src/translation/grammar_selection_rules.rs",
+    "name": "ml_main",
+    "inventoryName": "meta-language-main"
+  },
+  {
+    "id": "translation.execute-grammar-selection-native-main",
+    "source": "rust/src/translation/grammar_selection_rules.rs",
+    "name": "main",
+    "inventoryName": "main"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-part-one",
+    "source": "rust/src/translation/grammar_lexer_rules.rs",
+    "name": "part_1",
+    "inventoryName": "part-one"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-part-two",
+    "source": "rust/src/translation/grammar_lexer_rules.rs",
+    "name": "part_2",
+    "inventoryName": "part-two"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-part-three",
+    "source": "rust/src/translation/grammar_lexer_rules.rs",
+    "name": "part_3",
+    "inventoryName": "part-three"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-part-four",
+    "source": "rust/src/translation/grammar_lexer_rules.rs",
+    "name": "part_4",
+    "inventoryName": "part-four"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-mathematics",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math",
+    "inventoryName": "meta-language-mathematics"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-mathematics-round",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math::round",
+    "inventoryName": "meta-language-mathematics-round"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-mathematics-sign",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math::sign",
+    "inventoryName": "meta-language-mathematics-sign"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-mathematics-maximum",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math::max",
+    "inventoryName": "meta-language-mathematics-maximum"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-mathematics-minimum",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math::min",
+    "inventoryName": "meta-language-mathematics-minimum"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-mathematics-maximum-of",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math::max_of",
+    "inventoryName": "meta-language-mathematics-maximum-of"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-mathematics-minimum-of",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math::min_of",
+    "inventoryName": "meta-language-mathematics-minimum-of"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-mathematics-is-integer",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math::is_integer",
+    "inventoryName": "meta-language-mathematics-is-integer"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-mathematics-is-safe-integer",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math::is_safe_integer",
+    "inventoryName": "meta-language-mathematics-is-safe-integer"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-array",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array",
+    "inventoryName": "meta-language-array"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-optional-at",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::optional_at",
+    "inventoryName": "meta-language-array-optional-at"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-at",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::at",
+    "inventoryName": "meta-language-array-at"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-number-index",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::number_index",
+    "inventoryName": "meta-language-array-number-index"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-append",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::append",
+    "inventoryName": "meta-language-array-append"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-integer",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::integer",
+    "inventoryName": "meta-language-array-integer"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-relative",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::relative",
+    "inventoryName": "meta-language-array-relative"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-slice",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::slice",
+    "inventoryName": "meta-language-array-slice"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-index-of",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::index_of",
+    "inventoryName": "meta-language-array-index-of"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-includes",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::includes",
+    "inventoryName": "meta-language-array-includes"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-set",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::set",
+    "inventoryName": "meta-language-array-set"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-map",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::map",
+    "inventoryName": "meta-language-array-map"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-string",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string",
+    "inventoryName": "meta-language-string"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-string-text",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::Text",
+    "inventoryName": "meta-language-string-text"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-format",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::fmt",
+    "inventoryName": "meta-language-string-format"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-from-text",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::from_text",
+    "inventoryName": "meta-language-string-from-text"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-from-units",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::from_units",
+    "inventoryName": "meta-language-string-from-units"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-length",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::length",
+    "inventoryName": "meta-language-string-length"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-concatenate",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::concat",
+    "inventoryName": "meta-language-string-concatenate"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-starts-with",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::starts_with",
+    "inventoryName": "meta-language-string-starts-with"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-ends-with",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::ends_with",
+    "inventoryName": "meta-language-string-ends-with"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-contains",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::contains",
+    "inventoryName": "meta-language-string-contains"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-slice",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::slice",
+    "inventoryName": "meta-language-string-slice"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-index-of",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::index_of",
+    "inventoryName": "meta-language-string-index-of"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-last-index-of",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::last_index_of",
+    "inventoryName": "meta-language-string-last-index-of"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-split",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::split",
+    "inventoryName": "meta-language-string-split"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-code-point-at",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::code_point_at",
+    "inventoryName": "meta-language-string-code-point-at"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-code-points",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::code_points",
+    "inventoryName": "meta-language-string-code-points"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-repeat",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::repeat",
+    "inventoryName": "meta-language-string-repeat"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-pad",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::pad",
+    "inventoryName": "meta-language-string-pad"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-replace",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::replace",
+    "inventoryName": "meta-language-string-replace"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-trim",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::trim",
+    "inventoryName": "meta-language-string-trim"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-map-case",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::map_case",
+    "inventoryName": "meta-language-string-map-case"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-join",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::join",
+    "inventoryName": "meta-language-string-join"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-integer",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::integer",
+    "inventoryName": "meta-language-string-integer"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-absolute",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::absolute",
+    "inventoryName": "meta-language-string-absolute"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-relative",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::relative",
+    "inventoryName": "meta-language-string-relative"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-unsigned-integer-thirty-two-bit",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::uint32",
+    "inventoryName": "meta-language-string-unsigned-integer-thirty-two-bit"
+  },
+  {
+    "id": "translation.append-grammar-lexical-analyser-native-replacement-template-expansion",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::substitute",
+    "inventoryName": "meta-language-string-substitute"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-identifier-loop-one-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlAcceptGrammarLexerIdentifierLoop1Result",
+    "inventoryName": "meta-language-accept-grammar-lexical-analyser-identifier-loop-one-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-identifier-loop-one-result-meta-language-accept-grammar-lexical-analyser-identifier-loop-one-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlAcceptGrammarLexerIdentifierLoop1Result::MlAcceptGrammarLexerIdentifierLoop1Done",
+    "inventoryName": "meta-language-accept-grammar-lexical-analyser-identifier-loop-one-result-meta-language-accept-grammar-lexical-analyser-identifier-loop-one-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-identifier-loop-one-result-meta-language-accept-grammar-lexical-analyser-identifier-loop-one-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlAcceptGrammarLexerIdentifierLoop1Result::MlAcceptGrammarLexerIdentifierLoop1Return",
+    "inventoryName": "meta-language-accept-grammar-lexical-analyser-identifier-loop-one-result-meta-language-accept-grammar-lexical-analyser-identifier-loop-one-return"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-identifier-loop-one",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "ml_accept_grammar_lexer_identifier_loop1",
+    "inventoryName": "meta-language-accept-grammar-lexical-analyser-identifier-loop-one"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-decimal-loop-two-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlAcceptGrammarLexerDecimalLoop2Result",
+    "inventoryName": "meta-language-accept-grammar-lexical-analyser-decimal-loop-two-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-decimal-loop-two-result-meta-language-accept-grammar-lexical-analyser-decimal-loop-two-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlAcceptGrammarLexerDecimalLoop2Result::MlAcceptGrammarLexerDecimalLoop2Done",
+    "inventoryName": "meta-language-accept-grammar-lexical-analyser-decimal-loop-two-result-meta-language-accept-grammar-lexical-analyser-decimal-loop-two-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-decimal-loop-two-result-meta-language-accept-grammar-lexical-analyser-decimal-loop-two-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlAcceptGrammarLexerDecimalLoop2Result::MlAcceptGrammarLexerDecimalLoop2Return",
+    "inventoryName": "meta-language-accept-grammar-lexical-analyser-decimal-loop-two-result-meta-language-accept-grammar-lexical-analyser-decimal-loop-two-return"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-decimal-loop-two",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "ml_accept_grammar_lexer_decimal_loop2",
+    "inventoryName": "meta-language-accept-grammar-lexical-analyser-decimal-loop-two"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-text-loop-three-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlContainsGrammarLexerTextLoop3Result",
+    "inventoryName": "meta-language-contains-grammar-lexical-analyser-text-loop-three-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-text-loop-three-result-meta-language-contains-grammar-lexical-analyser-text-loop-three-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlContainsGrammarLexerTextLoop3Result::MlContainsGrammarLexerTextLoop3Done",
+    "inventoryName": "meta-language-contains-grammar-lexical-analyser-text-loop-three-result-meta-language-contains-grammar-lexical-analyser-text-loop-three-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-text-loop-three-result-meta-language-contains-grammar-lexical-analyser-text-loop-three-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlContainsGrammarLexerTextLoop3Result::MlContainsGrammarLexerTextLoop3Return",
+    "inventoryName": "meta-language-contains-grammar-lexical-analyser-text-loop-three-result-meta-language-contains-grammar-lexical-analyser-text-loop-three-return"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-text-loop-three",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "ml_contains_grammar_lexer_text_loop3",
+    "inventoryName": "meta-language-contains-grammar-lexical-analyser-text-loop-three"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-position-loop-four-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlContainsGrammarLexerPositionLoop4Result",
+    "inventoryName": "meta-language-contains-grammar-lexical-analyser-position-loop-four-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-position-loop-four-result-meta-language-contains-grammar-lexical-analyser-position-loop-four-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlContainsGrammarLexerPositionLoop4Result::MlContainsGrammarLexerPositionLoop4Done",
+    "inventoryName": "meta-language-contains-grammar-lexical-analyser-position-loop-four-result-meta-language-contains-grammar-lexical-analyser-position-loop-four-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-position-loop-four-result-meta-language-contains-grammar-lexical-analyser-position-loop-four-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlContainsGrammarLexerPositionLoop4Result::MlContainsGrammarLexerPositionLoop4Return",
+    "inventoryName": "meta-language-contains-grammar-lexical-analyser-position-loop-four-result-meta-language-contains-grammar-lexical-analyser-position-loop-four-return"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-position-loop-four",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "ml_contains_grammar_lexer_position_loop4",
+    "inventoryName": "meta-language-contains-grammar-lexical-analyser-position-loop-four"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-six",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "ml_read_grammar_lexer_section_rule_positions_loop6",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-six"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerSectionRulePositionsLoop5Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five-result-meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerSectionRulePositionsLoop5Result::MlReadGrammarLexerSectionRulePositionsLoop5Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five-result-meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five-done"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "ml_read_grammar_lexer_section_rule_positions_loop5",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerLiteralRulePositionLoop7Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven-result-meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerLiteralRulePositionLoop7Result::MlReadGrammarLexerLiteralRulePositionLoop7Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven-result-meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-literal-rule-position-join-eight",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerLiteralRulePositionJoin8",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-rule-position-join-eight"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-literal-rule-position-join-eight-meta-language-read-grammar-lexical-analyser-literal-rule-position-join-eight-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerLiteralRulePositionJoin8::MlReadGrammarLexerLiteralRulePositionJoin8Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-rule-position-join-eight-meta-language-read-grammar-lexical-analyser-literal-rule-position-join-eight-next"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "ml_read_grammar_lexer_literal_rule_position_loop7",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-binding-names-loop-ten",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "ml_read_grammar_lexer_binding_names_loop10",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-binding-names-loop-one-zero"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-binding-names-loop-nine-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerBindingNamesLoop9Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-binding-names-loop-nine-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-binding-names-loop-nine-result-meta-language-read-grammar-lexical-analyser-binding-names-loop-nine-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerBindingNamesLoop9Result::MlReadGrammarLexerBindingNamesLoop9Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-binding-names-loop-nine-result-meta-language-read-grammar-lexical-analyser-binding-names-loop-nine-done"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-binding-names-loop-nine",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "ml_read_grammar_lexer_binding_names_loop9",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-binding-names-loop-nine"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-loop-eleven-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerCommandPlanLoop11Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-command-plan-loop-one-one-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-loop-eleven-result-meta-language-read-grammar-lexical-analyser-command-plan-loop-eleven-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerCommandPlanLoop11Result::MlReadGrammarLexerCommandPlanLoop11Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-command-plan-loop-one-one-result-meta-language-read-grammar-lexical-analyser-command-plan-loop-one-one-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-join-thirteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerCommandPlanJoin13",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-command-plan-join-one-three"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-join-thirteen-meta-language-read-grammar-lexical-analyser-command-plan-join-thirteen-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerCommandPlanJoin13::MlReadGrammarLexerCommandPlanJoin13Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-command-plan-join-one-three-meta-language-read-grammar-lexical-analyser-command-plan-join-one-three-next"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-loop-fourteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "ml_read_grammar_lexer_command_plan_loop14",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-command-plan-loop-one-four"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-join-twelve",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerCommandPlanJoin12",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-command-plan-join-one-two"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-join-twelve-meta-language-read-grammar-lexical-analyser-command-plan-join-twelve-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerCommandPlanJoin12::MlReadGrammarLexerCommandPlanJoin12Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-command-plan-join-one-two-meta-language-read-grammar-lexical-analyser-command-plan-join-one-two-next"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-loop-eleven",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_command_plan_loop11",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-command-plan-loop-one-one"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-sixteen-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop16Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-one-six-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-sixteen-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-sixteen-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop16Result::MlReadGrammarLexerDeclarationIssueLoop16Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-one-six-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-one-six-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-sixteen-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-sixteen-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop16Result::MlReadGrammarLexerDeclarationIssueLoop16Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-one-six-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-one-six-return"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-seventeen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin17",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-one-seven"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-seventeen-meta-language-read-grammar-lexical-analyser-declaration-issue-join-seventeen-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin17::MlReadGrammarLexerDeclarationIssueJoin17Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-one-seven-meta-language-read-grammar-lexical-analyser-declaration-issue-join-one-seven-next"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-seventeen-meta-language-read-grammar-lexical-analyser-declaration-issue-join-seventeen-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin17::MlReadGrammarLexerDeclarationIssueJoin17Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-one-seven-meta-language-read-grammar-lexical-analyser-declaration-issue-join-one-seven-return"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-eighteen-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop18Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-one-eight-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-eighteen-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-eighteen-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop18Result::MlReadGrammarLexerDeclarationIssueLoop18Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-one-eight-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-one-eight-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-eighteen-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-eighteen-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop18Result::MlReadGrammarLexerDeclarationIssueLoop18Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-one-eight-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-one-eight-return"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-nineteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin19",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-one-nine"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-nineteen-meta-language-read-grammar-lexical-analyser-declaration-issue-join-nineteen-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin19::MlReadGrammarLexerDeclarationIssueJoin19Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-one-nine-meta-language-read-grammar-lexical-analyser-declaration-issue-join-one-nine-next"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-nineteen-meta-language-read-grammar-lexical-analyser-declaration-issue-join-nineteen-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin19::MlReadGrammarLexerDeclarationIssueJoin19Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-one-nine-meta-language-read-grammar-lexical-analyser-declaration-issue-join-one-nine-return"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-eighteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_declaration_issue_loop18",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-one-eight"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-sixteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_declaration_issue_loop16",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-one-six"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-fifteen-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop15Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-one-five-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-fifteen-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-fifteen-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop15Result::MlReadGrammarLexerDeclarationIssueLoop15Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-one-five-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-one-five-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-fifteen-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-fifteen-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop15Result::MlReadGrammarLexerDeclarationIssueLoop15Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-one-five-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-one-five-return"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-three",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin23",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-two-three"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-three-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-three-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin23::MlReadGrammarLexerDeclarationIssueJoin23Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-two-three-meta-language-read-grammar-lexical-analyser-declaration-issue-join-two-three-next"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-three-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-three-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin23::MlReadGrammarLexerDeclarationIssueJoin23Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-two-three-meta-language-read-grammar-lexical-analyser-declaration-issue-join-two-three-return"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-two",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin22",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-two-two"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-two-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-two-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin22::MlReadGrammarLexerDeclarationIssueJoin22Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-two-two-meta-language-read-grammar-lexical-analyser-declaration-issue-join-two-two-next"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-two-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-two-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin22::MlReadGrammarLexerDeclarationIssueJoin22Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-two-two-meta-language-read-grammar-lexical-analyser-declaration-issue-join-two-two-return"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-one",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin21",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-two-one"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-one-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-one-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin21::MlReadGrammarLexerDeclarationIssueJoin21Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-two-one-meta-language-read-grammar-lexical-analyser-declaration-issue-join-two-one-next"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-one-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-one-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin21::MlReadGrammarLexerDeclarationIssueJoin21Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-two-one-meta-language-read-grammar-lexical-analyser-declaration-issue-join-two-one-return"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin20",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-two-zero"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin20::MlReadGrammarLexerDeclarationIssueJoin20Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-two-zero-meta-language-read-grammar-lexical-analyser-declaration-issue-join-two-zero-next"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin20::MlReadGrammarLexerDeclarationIssueJoin20Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-two-zero-meta-language-read-grammar-lexical-analyser-declaration-issue-join-two-zero-return"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-fifteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_declaration_issue_loop15",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-one-five"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-five",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_obligation_positions_loop25",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-loop-two-five"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-four-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerObligationPositionsLoop24Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-loop-two-four-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-four-result-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-four-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerObligationPositionsLoop24Result::MlReadGrammarLexerObligationPositionsLoop24Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-loop-two-four-result-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-two-four-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-four-result-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-four-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerObligationPositionsLoop24Result::MlReadGrammarLexerObligationPositionsLoop24Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-loop-two-four-result-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-two-four-return"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-join-twenty-six",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerObligationPositionsJoin26",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-join-two-six"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-join-twenty-six-meta-language-read-grammar-lexical-analyser-obligation-positions-join-twenty-six-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerObligationPositionsJoin26::MlReadGrammarLexerObligationPositionsJoin26Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-join-two-six-meta-language-read-grammar-lexical-analyser-obligation-positions-join-two-six-next"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-seven-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerObligationPositionsLoop27Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-loop-two-seven-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-seven-result-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-seven-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerObligationPositionsLoop27Result::MlReadGrammarLexerObligationPositionsLoop27Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-loop-two-seven-result-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-two-seven-done"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-seven",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_obligation_positions_loop27",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-loop-two-seven"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-four",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_obligation_positions_loop24",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-loop-two-four"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-lazy-normalization-loop-thirty",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_lazy_normalization_loop30",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-lazy-normalization-loop-three-zero"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-lazy-normalization-loop-twenty-nine",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_lazy_normalization_loop29",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-lazy-normalization-loop-two-nine"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-lazy-normalization-loop-twenty-eight",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_lazy_normalization_loop28",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-lazy-normalization-loop-two-eight"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/scripts/binary-record-block-return-styles.mjs",
+    "name": "digest",
+    "inventoryName": "digest"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/scripts/generate-private-output-test-model.mjs",
+    "name": "digest",
+    "inventoryName": "digest"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "experiments/source-native-runner-source-closure.mjs",
+    "name": "sha256",
+    "inventoryName": "secure-hash-algorithm-two-hundred-fifty-six"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "experiments/source-native-runner-source-closure.test.mjs",
+    "name": "sha256",
+    "inventoryName": "secure-hash-algorithm-two-hundred-fifty-six"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/scripts/rust-test-shards.mjs",
+    "name": "digest",
+    "inventoryName": "digest"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/tests/issue-195-evidence-rust-shards.test.js",
+    "name": "sha",
+    "inventoryName": "secure-hash-algorithm"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "experiments/source-native-process-diagnostics.test.mjs",
+    "name": "sha256",
+    "inventoryName": "secure-hash-algorithm-two-hundred-fifty-six"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "experiments/write-source-native-runner-closures.mjs",
+    "name": "sha256",
+    "inventoryName": "secure-hash-algorithm-two-hundred-fifty-six"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/scripts/generate-optional-rules.mjs",
+    "name": "hashOptionalSource",
+    "inventoryName": "hash-optional-source"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/scripts/generate-record-value-rules.mjs",
+    "name": "hash",
+    "inventoryName": "hash"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/tests/translation-record-value-planning.test.js",
+    "name": "hash",
+    "inventoryName": "hash"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-extension-closure.mjs",
+    "name": "sha256",
+    "inventoryName": "secure-hash-algorithm-two-hundred-fifty-six"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-extension-closure.test.mjs",
+    "name": "sha256",
+    "inventoryName": "secure-hash-algorithm-two-hundred-fifty-six"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-second-extension-closure.mjs",
+    "name": "sha256",
+    "inventoryName": "secure-hash-algorithm-two-hundred-fifty-six"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-second-extension-closure.test.mjs",
+    "name": "sha256",
+    "inventoryName": "secure-hash-algorithm-two-hundred-fifty-six"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/scripts/extend-typed-program-schema.mjs",
+    "name": "sha256",
+    "inventoryName": "secure-hash-algorithm-two-hundred-fifty-six"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/scripts/extend-typed-program-schema-second-stage.mjs",
+    "name": "sha256",
+    "inventoryName": "secure-hash-algorithm-two-hundred-fifty-six"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/scripts/capture-markdown-native-sources.mjs",
+    "name": "digest",
+    "inventoryName": "digest"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/tests/grammar-markdown-source-profile.test.js",
+    "name": "digest",
+    "inventoryName": "digest"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/scripts/generate-grammar-lexer-rules.mjs",
+    "name": "hash",
+    "inventoryName": "hash"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/scripts/generate-grammar-selection-rules.mjs",
+    "name": "digest",
+    "inventoryName": "digest"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/scripts/generate-record-emission-rules.mjs",
+    "name": "hash",
+    "inventoryName": "hash"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/scripts/generate-type-syntax-rules.mjs",
+    "name": "hash",
+    "inventoryName": "hash"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/scripts/generate-record-type-syntax-rules.mjs",
+    "name": "hash",
+    "inventoryName": "hash"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/scripts/generate-nullable-type-syntax-rules.mjs",
+    "name": "hash",
+    "inventoryName": "hash"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/scripts/generate-callable-emission-rules.mjs",
+    "name": "hash",
+    "inventoryName": "hash"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/scripts/generate-owned-array-append-rules.mjs",
+    "name": "hash",
+    "inventoryName": "hash"
+  }
+];
+const expandBulkFortyFiveEnglish=function expandBulkFortyFiveEnglish(name){
+ const words={idempotence:'repeated-application-stability',frontend:'source-reader',rechecking:'repeated-check',unwrapping:'unwrap',versioned:'version-dependent',pinned:'fixed',emitted:'generated',markdown:'lightweight-markup-language',unstarted:'not-started',timeout:'time-limit',nonconsuming:'without-consumption',lexer:'lexical-analyser',lexers:'lexical-analysers',delimiter:'separator',delimiters:'separators',codec:'coding-and-decoding-operation',codecs:'coding-and-decoding-operations',comparator:'comparison-operation',disjointness:'disjoint-property',renderer:'rendering-operation',renderers:'rendering-operations',rocq:'proof-assistant',omitted:'absent',deferred:'delayed',multiline:'multiple-line',multi:'multiple',utf16:'unicode-transformation-format-sixteen-bit',utf8:'unicode-transformation-format-eight-bit',embedding:'embedded-tree',embeddings:'embedded-trees',effectful:'effect-bearing',nullish:'null-or-undefined',copied:'copy',mul:'multiply',divmod:'division-and-remainder',i128:'signed-integer-one-hundred-twenty-eight-bit',u128:'unsigned-integer-one-hundred-twenty-eight-bit',neg:'negate',trunc:'truncate',nat:'natural-number',pred:'predecessor',sub:'subtract',expr:'expression',exprs:'expressions',ref:'reference',ungrouped:'without-group',emitting:'emission',deserialize:'decode',relabel:'change-label',unreviewed:'without-review',discriminant:'selection-value',until:'up-to',when:'if',recursively:'recursive',overwritten:'replaced',nonfunction:'non-function',skipped:'skip',initializers:'initial-values',carried:'retained',namespaces:'namespace-groups',jsdoc:'java-script-documentation',indices:'positions',v4:'version-four',unimplemented:'without-implementation',than:'in-comparison-to',which:'the',could:'can',retyped:'type-changed',inspectable:'visible',accessors:'access-operations',iterables:'iteration-sources',against:'in-comparison-with',rebuilt:'reconstructed'};
+ return name.replace(/[a-z][a-z0-9]*/gu,word=>Object.hasOwn(words,word)?words[word]:word);
+};
+const normalizeBulkFortyFiveNameBase=function normalizeBulkFortyFiveNameBase(name){return name.replaceAll('::','-').replace(/([A-Z])([A-Z][a-z])/gu,'$1-$2').replace(/([a-z0-9])([A-Z])/gu,'$1-$2').replaceAll(',','').replaceAll('_','-').replaceAll(' ','-').toLowerCase().replace(/^s-record-entry$/u,'source-record-entry').replace(/\bcannot\b/gu,'can-not').replace(/\bper\b/gu,'for-each').replace(/\btheir\b/gu,'the').replace(/\bnullable\b/gu,'null-capable').replace(/\bnonleaf\b/gu,'non-leaf').replace(/\bstdout\b/gu,'standard-output').replace(/\bstderr\b/gu,'standard-error').replace(/\bnonzero\b/gu,'non-zero').replace(/\bsha256\b/gu,'secure-hash-algorithm-two-hundred-fifty-six').replace(/^sha$/u,'secure-hash-algorithm').replace(/\bnul\b/gu,'null-character').replace(/\bcrlf\b/gu,'carriage-return-line-feed').replace(/\bcli\b/gu,'command-line-interface').replace(/\bjson\b/gu,'javascript-object-notation').replace(/\bdoctest\b/gu,'documentation-test').replace(/\bfilesystem\b/gu,'file-system').replace(/\btruthy\b/gu,'truth').replace(/\bnullability\b/gu,'empty-source-admission').replace(/\bretargets\b/gu,'target-edits').replace(/\bantlr\b/gu,'another-tool-for-language-recognition').replace(/\bcst\b/gu,'concrete-syntax-tree').replace(/\btsx\b/gu,'type-script-extensible-markup-language').replace(/\butf-?16\b/gu,'unicode-transformation-format-sixteen-bit').replace(/\butf-?8\b/gu,'unicode-transformation-format-eight-bit').replace(/\bbig-int\b/gu,'large-integer').replace(/\bfalsy\b/gu,'false-valued').replace(/\bnongreedy\b/gu,'non-greedy').replace(/\bmemo\b/gu,'answer-cache').replace(/\bvec\b/gu,'vector').replace(/\bco-locates\b/gu,'groups');};
+const normalizeBulkFortyFiveName=function normalizedSourceName(name){return expandBulkFortyFiveEnglish(normalizeBulkFortyFiveNameBase(name).replace(/\bty\b/gu,'type').replace(/\bmath\b/gu,'mathematics').replace(/\bfmt\b/gu,'format').replace(/\bmax\b/gu,'maximum').replace(/\bmin\b/gu,'minimum').replace(/\bconcat\b/gu,'concatenate').replace(/\buint32\b/gu,'unsigned-integer-thirty-two-bit').replace(/\bieee\b/gu,'institute-of-electrical-and-electronics-engineers').replace(/\bparam\b/gu,'parameter').replace(/\bparams\b/gu,'parameters').replace(/\bio\b/gu,'input-output').replace(/\biterable\b/gu,'iteration-source').replace(/\beof\b/gu,'end-of-file').replace(/\bdoc\b/gu,'documentation').replace(/\bml\b/gu,'meta-language').replace(/\bjs\b/gu,'java-script').replace(/\bchar\b/gu,'character').replace(/\bcmp\b/gu,'compare').replace(/\b(loop|join|part)-?(\d+)\b/gu,(_match,kind,digits)=>kind+'-'+digits.split('').map(digit=>['zero','one','two','three','four','five','six','seven','eight','nine'][Number(digit)]).join('-'))).replace(/[;!?]/gu,'');};
+const hasBulkFortyFiveSourceAlias=function actualSourceAlias(text,source,name){
+ if(source.endsWith('-decorators.lino'))return /^[A-Za-z_0-9.-]+$/u.test(name)&&new RegExp('^\\(decorator '+name.replaceAll('.','\\.')+'(?:\\s|\\))','mu').test(text);
+ if(!name.includes('::'))return text.includes(name);
+ if(source==='rust/src/translation/javascript/infer/term_facts.rs'&&/^TermFacts::[A-Za-z_]+$/u.test(name)){
+  const methods=text.match(/^impl TermFacts \{[^]*?^\}/mu)?.[0];if(!methods)return false;
+  return new RegExp('^\\s*(?:pub\\(super\\) )?fn '+name.slice('TermFacts::'.length)+'\\(','mu').test(methods);
+ }
+ const parts=name.split('::');if(!parts.every(part=>/^[A-Za-z_][A-Za-z_0-9]*$/u.test(part)))return false;
+ let scope=text,kind='mod';
+ for(let index=0;index<parts.length-1;index++){
+  const pattern=new RegExp('^(\\s*)(?:pub(?:\\([^)]*\\))?\\s+)?(mod|enum|struct) '+parts[index]+'\\b[^\\{]*\\{[^]*?^\\1\\}','mu'),block=scope.match(pattern);
+  if(!block)return false;scope=block[0];kind=block[2];
+ }
+ const member=parts.at(-1);
+ return kind==='enum'?new RegExp('^\\s*'+member+'(?:\\s*[,({=]|\\s*$)','mu').test(scope):new RegExp('^\\s*(?:pub(?:\\([^)]*\\))?\\s+)?(?:(?:const\\s+)?fn|struct|enum|mod) '+member+'\\b','mu').test(scope);
+};
+const BULK_FORTY_FIVE_NAME_INVENTORIES=[...new Set(BULK_FORTY_FIVE_NAME_BINDINGS.map(row=>row.source))].map(source=>({
+ inventory: "B45 exact source controls for "+source, files: [source],
+ extract: text => BULK_FORTY_FIVE_NAME_BINDINGS.filter(row=>row.source===source&&hasBulkFortyFiveSourceAlias(text,source,row.name)).map(row=>row.inventoryName),
+ recordOf: name => BULK_FORTY_FIVE_NAME_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id,
+}));
+// End B45 exact source repair registrations.
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
