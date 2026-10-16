@@ -560,6 +560,8 @@ export async function runBulkPipeline({ outDir, only = null, jobs = 2, timeout =
   if (formalDefinitions !== undefined && (formalDefinitions === null || typeof formalDefinitions !== 'object' || Array.isArray(formalDefinitions))) {
     throw new TypeError('formal definitions must map qualified origins or concept identities to explicit Links archives');
   }
+  let phaseStarted = performance.now();
+  process.stderr.write('Bulk grammar phase: language workers started\n');
   const languages = bulkLanguages().filter(({ name }) => !only || only.includes(name));
   if (only) for (const name of only) if (!languages.some((entry) => entry.name === name)) throw new Error(`${name} is not an inventory language with a grammar`);
   const rows = new Array(languages.length);
@@ -581,6 +583,9 @@ export async function runBulkPipeline({ outDir, only = null, jobs = 2, timeout =
     }
   };
   await Promise.all(Array.from({ length: Math.max(1, jobs) }, worker));
+  process.stderr.write(`Bulk grammar phase: language workers finished in ${elapsed(phaseStarted)} ms\n`);
+  phaseStarted = performance.now();
+  process.stderr.write('Bulk grammar phase: report preparation started\n');
   const v4 = readJson(GRAMMARS_V4_SOURCES);
   const mapped = languages.filter(({ name }) => v4.languages[name]).length;
   const matrix = { grammarsV4Revision: v4.revision, summary: summarize(rows, mapped), grammarsV4Notes: v4.notes, languages: rows };
@@ -603,12 +608,24 @@ export async function runBulkPipeline({ outDir, only = null, jobs = 2, timeout =
   }
   writeGrammarReport(join(outDir, 'grammar-bulk-matrix.lino'), matrix);
   writeFileSync(join(outDir, 'grammar-bulk-matrix.md'), renderMatrix(matrix));
+  process.stderr.write(`Bulk grammar phase: report preparation finished in ${elapsed(phaseStarted)} ms\n`);
   // Retain every completed language and its diagnostics before the aggregate
   // proof construction. A failed aggregate must not erase the original work.
+  phaseStarted = performance.now();
+  process.stderr.write('Bulk grammar phase: global concept construction started\n');
   process.stderr.write(`Building the global concept space from ${importedSources.length} imported sources\n`);
   const conceptSpace = createPipelineGlobalConceptSpace(importedSources, { formalDefinitions });
+  process.stderr.write(`Bulk grammar phase: global concept construction finished in ${elapsed(phaseStarted)} ms\n`);
+  phaseStarted = performance.now();
+  process.stderr.write('Bulk grammar phase: structured-data serialization started\n');
   writeGrammarReport(join(outDir, 'global-concept-space-data.lino'), conceptSpace);
+  process.stderr.write(`Bulk grammar phase: structured-data serialization finished in ${elapsed(phaseStarted)} ms\n`);
+  phaseStarted = performance.now();
+  process.stderr.write('Bulk grammar phase: semantic Links serialization started\n');
   writeFileSync(join(outDir, 'global-concept-space.lino'), globalConceptSpaceToLinks(conceptSpace));
+  process.stderr.write(`Bulk grammar phase: semantic Links serialization finished in ${elapsed(phaseStarted)} ms\n`);
+  phaseStarted = performance.now();
+  process.stderr.write('Bulk grammar phase: final report preparation started\n');
   matrix.globalConceptSpace = {
     copiedOrigins: Object.keys(conceptSpace.mappings).length,
     concepts: conceptSpace.concepts.length,
@@ -618,6 +635,7 @@ export async function runBulkPipeline({ outDir, only = null, jobs = 2, timeout =
     ambiguities: conceptSpace.ambiguities,
   };
   writeGrammarReport(join(outDir, 'grammar-bulk-matrix.lino'), matrix);
+  process.stderr.write(`Bulk grammar phase: final report preparation finished in ${elapsed(phaseStarted)} ms\n`);
   return matrix;
 }
 
