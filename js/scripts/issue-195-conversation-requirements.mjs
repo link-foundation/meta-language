@@ -331,4 +331,141 @@ export const CRITICAL_CONVERSATION_REQUIREMENTS = Object.freeze([
     ['I195-WORKFLOW-AUTOMATED-TRANSLATION', 'JavaScript-first automated translation and referenced best practices',
       'Bulk work develops JavaScript behavior first, ports through automated translation where supported and applies the relevant pinned practices from Router PR761, formal-ai PR1188 and Relative Meta Logic PR184. Unsupported translation constructs remain implementation gaps rather than hand-written substitutes or success declarations.', ['javascriptFirstBulkDevelopment', 'automatedTranslationUsed', 'referencedPracticesAudited', 'unsupportedTranslationGapsRetained']],
   ], true),
+  ...rows("recursiveConcreteSyntaxRequest", "parity/sources/recursive-concrete-syntax-and-any-grammar-2026-10-16.txt", "concrete-and-abstract-syntax-trees", "recursive-concrete-syntax", [
+  [
+    "I195-CST-DEFAULT-EVERY-LANGUAGE",
+    "full concrete syntax as the default grammar output for every supported language",
+    "Every supported language grammar generates the complete lossless concrete syntax tree by default, including tokens, trivia, fields, hierarchy, order, spans, recovery information and embedded boundaries. A token list, retained source envelope or abstract projection cannot substitute for that default.",
+    [
+      "everySupportedLanguageDefaultsToCompleteConcreteSyntax",
+      "allConcreteStructureAndSourceBytesPreserved"
+    ]
+  ],
+  [
+    "I195-CST-EXPLICIT-AST-SELECTION",
+    "optional abstract syntax with concrete syntax remaining the default",
+    "Both runtime packages expose an explicit optional switch or projection from concrete to abstract syntax for supported languages. Abstract output retains inspectable provenance to the complete concrete tree, and omitting the option always selects concrete syntax.",
+    [
+      "abstractSyntaxRequiresExplicitSelection",
+      "concreteSyntaxRemainsDefault",
+      "abstractProjectionRetainsConcreteProvenance"
+    ]
+  ],
+  [
+    "I195-CST-EMBEDDED-GLOBAL-CONCEPT-SPACE",
+    "one global concept space across all recursively embedded grammars",
+    "All host and embedded grammars use the same global concept space at every nesting level. Repeated or same-language embeddings preserve stable concept identities, source-qualified grammar references and the existing requirement that deduplication requires a proved one-to-one correspondence.",
+    [
+      "hostAndEmbeddedGrammarsShareGlobalConceptSpace",
+      "recursiveConceptIdentityAndProvenancePreserved",
+      "unprovedMeaningsRemainDistinct"
+    ]
+  ],
+  [
+    "I195-CST-ANY-GRAMMAR-RECURSIVE-RULE",
+    "generic any grammar or all grammar selection rule",
+    "Provide an inspectable linked any-grammar or all-grammar rule that can select and invoke supported grammar definitions recursively through the common algorithms. Selection, embedded boundaries, ambiguities and failures remain explicit; adding a supported grammar does not require special cases for every possible host and child language pair.",
+    [
+      "genericGrammarSelectionRepresentedAsLinks",
+      "supportedGrammarsRecursivelyInvoked",
+      "selectionAmbiguityAndFailuresExplicit"
+    ]
+  ],
+  [
+    "I195-CST-DEEPLY-RECURSIVE-MIXED-LANGUAGES",
+    "deep same-language and mixed-language recursive concrete parsing",
+    "Both packages support deeply recursive parsing, including Markdown within Markdown and Markdown containing JavaScript containing JSON whose content contains Markdown and Python, as well as mixed logs and documents. Recursion follows linked embedding definitions and can return to an earlier language; it is not restricted to one nesting level or to Markdown and HTML hosts. Non-consuming cycles and resource exhaustion report diagnostics rather than silently omitting nested trees.",
+    [
+      "sameLanguageRecursionSupported",
+      "markdownJavaScriptJsonMarkdownPythonNestingSupported",
+      "mixedLogsAndDocumentsSupported",
+      "cyclesAndResourceLimitsReportedWithoutSilentTruncation"
+    ]
+  ],
+  [
+    "I195-CST-RECURSIVE-BOUNDARIES-LOSSLESS",
+    "lossless recursive boundaries and nested translation provenance",
+    "Deeply embedded concrete trees preserve their full enclosing hierarchy, exact original source bytes, delimiters, escapes, trivia and mappings to host spans. Serialization, reload and translation retain those boundaries and provenance so nested edits and translations do not discard or reinterpret surrounding content.",
+    [
+      "completeEmbeddedHierarchyAndBoundariesPreserved",
+      "nestedEscapesAndHostSpansRemainExact",
+      "nestedSerializationReloadAndTranslationPreserveSource"
+    ]
+  ]
+]),
+  ...rows("ownLanguageGrammarPriorityRequest", "parity/sources/own-language-complete-grammar-priority-2026-10-16.txt", "language-catalog-and-default-parsing", "own-language-grammar-priority", [
+  [
+    "I195-GRAMMAR-PRIORITY-JAVASCRIPT-COMPLETE",
+    "complete JavaScript grammar as an initial delivery priority",
+    "Prioritize a complete JavaScript grammar that produces full lossless concrete syntax by default and supports the language constructs used by this project and its own real source files, with independent accepted and rejected observations. Grammar registration, a partial syntax subset or opaque carried source does not establish complete grammar support; all inherited catalog obligations remain.",
+    [
+      "javascriptGrammarPrioritized",
+      "javascriptCompleteConcreteSyntaxValidated",
+      "javascriptOwnSourceFilesExercised"
+    ]
+  ],
+  [
+    "I195-GRAMMAR-PRIORITY-MARKDOWN-COMPLETE",
+    "complete Markdown grammar as an initial delivery priority",
+    "Prioritize a complete Markdown grammar that produces full lossless concrete syntax by default and supports the language constructs used by this project and its own real source files, with independent accepted and rejected observations. Grammar registration, a partial syntax subset or opaque carried source does not establish complete grammar support; all inherited catalog obligations remain.",
+    [
+      "markdownGrammarPrioritized",
+      "markdownCompleteConcreteSyntaxValidated",
+      "markdownOwnSourceFilesExercised"
+    ]
+  ],
+  [
+    "I195-GRAMMAR-PRIORITY-RUST-COMPLETE",
+    "complete Rust grammar as an initial delivery priority",
+    "Prioritize a complete Rust grammar that produces full lossless concrete syntax by default and supports the language constructs used by this project and its own real source files, with independent accepted and rejected observations. Grammar registration, a partial syntax subset or opaque carried source does not establish complete grammar support; all inherited catalog obligations remain.",
+    [
+      "rustGrammarPrioritized",
+      "rustCompleteConcreteSyntaxValidated",
+      "rustOwnSourceFilesExercised"
+    ]
+  ],
+  [
+    "I195-GRAMMAR-PRIORITY-TYPESCRIPT-COMPLETE",
+    "complete TypeScript grammar as an initial delivery priority",
+    "Prioritize a complete TypeScript grammar that produces full lossless concrete syntax by default and supports the language constructs used by this project and its own real source files, with independent accepted and rejected observations. Grammar registration, a partial syntax subset or opaque carried source does not establish complete grammar support; all inherited catalog obligations remain.",
+    [
+      "typescriptGrammarPrioritized",
+      "typescriptCompleteConcreteSyntaxValidated",
+      "typescriptOwnSourceFilesExercised"
+    ]
+  ],
+  [
+    "I195-GRAMMAR-PRIORITY-OWN-SOURCE-TRANSLATION",
+    "complete project language grammars for translation of our own code",
+    "Deliver full grammars first for JavaScript, Markdown, Rust, TypeScript and the other languages used by these projects to enable the best available reusable tools and automated translation of their own code through the common editable links representation. This priority preserves the full scope for other languages and does not equate a concrete parse or carried original with executable semantic translation.",
+    [
+      "ownProjectLanguagesReceiveInitialGrammarPriority",
+      "ownCodeUsesCommonEditableTranslationRepresentation",
+      "otherLanguageAndSemanticObligationsRetained"
+    ]
+  ]
+]),
+  ...rows("routerPracticeRecordingRequest", "parity/sources/router-practice-reuse-and-current-recording-2026-10-16.txt", "javascript-first-and-self-translation", "conversation-practice-reuse", [
+  [
+    "I195-PRACTICE-ROUTER-761-REUSE",
+    "review and reuse applicable best practices from Router pull request 761",
+    "Review Router PR761 at a recorded revision and reuse as many applicable ideas as possible for complete original-source inventories, checked semantic links, serialization and reparsing before emission, deterministic regeneration, independent body and proof review, explicit unsupported gaps, same-commit JavaScript-first CI and bounded resources. Record applicability and actual validation; do not blindly import project-specific formats, versions or workflow policies that conflict with this project.",
+    [
+      "routerPracticeRevisionAndSourcesRecorded",
+      "applicablePracticesReusedWithTraceability",
+      "unsupportedAndUnverifiedWorkRemainsExplicit",
+      "incompatibleProjectPoliciesNotBlindlyCopied"
+    ]
+  ],
+  [
+    "I195-CONVERSATION-CURRENT-VISION-REQUIREMENTS",
+    "complete recording of current requests in the authoritative vision and atomic requirements",
+    "Every requirement-bearing request in the conversation through this instruction is preserved verbatim with its capture provenance and hash, reflected in docs/vision.md and mapped to critical atomic ledger obligations. This includes default full concrete syntax, optional abstract syntax, recursive any-grammar embedding in the global concept space, initial complete JavaScript Markdown Rust and TypeScript grammars, and Router best-practice reuse. All earlier obligations and source bytes remain intact.",
+    [
+      "allCurrentMessagesCapturedVerbatimAndHashed",
+      "currentRequestsReflectedInVisionAndAtomicLedger",
+      "earlierSourcesRequirementsAndScopesPreserved"
+    ]
+  ]
+], true),
 ]);

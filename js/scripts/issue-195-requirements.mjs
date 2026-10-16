@@ -91,6 +91,12 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'parity/sources/meta-language-local-resource-scope-2026-10-16.txt',
   ciCancellationInvestigationRequest:
     'parity/sources/ci-cancellation-investigation-2026-10-16.txt',
+  recursiveConcreteSyntaxRequest:
+    'parity/sources/recursive-concrete-syntax-and-any-grammar-2026-10-16.txt',
+  ownLanguageGrammarPriorityRequest:
+    'parity/sources/own-language-complete-grammar-priority-2026-10-16.txt',
+  routerPracticeRecordingRequest:
+    'parity/sources/router-practice-reuse-and-current-recording-2026-10-16.txt',
   grammarInferenceIssue:
     'https://github.com/link-foundation/meta-language/issues/224',
 });

@@ -1298,6 +1298,25 @@ syntax. Trees can be:
 - generated back to source;
 - reparsed.
 
+Concrete syntax is the default for every supported language and every nested
+region. Abstract syntax is an explicitly selected projection or mode with
+provenance to the complete concrete tree; omitting that selection always keeps
+the full concrete representation.
+
+An inspectable linked `any-grammar` or `all-grammar` selection rule invokes
+supported grammar definitions recursively through the same algorithms and
+global concept space. Embedding is defined by grammar data and explicit
+language-selection policies, including their boundaries and ambiguity
+diagnostics, rather than host-specific code for every language pair. The model
+must support Markdown within Markdown and deeper chains such as Markdown →
+JavaScript → JSON → Markdown → Python, with returns to an earlier language and
+applications to mixed logs and documents. Every level retains its full tree,
+source-qualified grammar and concept identities, delimiters, escape mappings,
+trivia, host spans and translation provenance. Serialization and reload preserve
+the same hierarchy. Non-consuming cycles and resource limits report diagnostics
+instead of silently truncating embedded trees. Existing Markdown and HTML
+region discovery alone does not establish this generic recursive behavior.
+
 ## Language catalog and default parsing
 
 A versioned catalog lists the popular languages with their versions or editions,
@@ -1313,6 +1332,15 @@ sources with pinned revisions, licenses, provenance and independent test corpora
 Every catalog language parses by default, through its alias and extension
 dispatch and its embedded-language paths. Merely listing a language, keeping its
 text or requiring caller registration is not default support.
+
+Complete JavaScript, Markdown, Rust and TypeScript grammars are the initial
+delivery priority, followed by the other languages used by these projects.
+They produce full concrete syntax by default and are exercised on the projects'
+own source files with independent accepted and rejected observations. This
+supports reusable tools and automated translation of our own code through
+editable links. A registered grammar, partial syntax subset, successful CST
+parse or carried source alone does not establish complete executable semantic
+translation. All earlier catalog and translation obligations remain required.
 
 ## Grammar import, conversion and reverse conversion
 
@@ -1798,6 +1826,29 @@ Cleaning regenerable caches is separate from removing obsolete production
 architecture.
 
 ## JavaScript first and self-translation
+
+The review of [Router PR #761](https://github.com/link-assistant/router/pull/761)
+at revision `e2ceac6071d90514fb1a37b3fe5964433d61c402` records its source
+hashes and applicability decisions in
+[`parity/sources/router-pr-761-practice-review.lino`](../parity/sources/router-pr-761-practice-review.lino).
+Reuse its complete original-source inventories; separate counts for original,
+generated, checked and refused items; semantic checking and links serialization
+with reparsing before emission; deterministic generation and read-only freshness
+checks; independent source, body, proof and runtime evidence; unchanged-commit
+JavaScript gates before Rust; retained failure feedback; and bounded resource
+diagnostics. Whole-language and whole-project coverage keep their complete
+denominators. A carried source, finite subset, valid inventory or restored byte
+sequence does not prove executable semantic translation. Shared concepts retain
+their foundation and source obligations when reused across grammars.
+
+Apply these ideas through this project's associative Links stack, registered
+language versions and existing CI contract. Router's JSON formats, engine
+matrix, compiler pins and cancellation policy are project-specific choices,
+not automatic replacements. The existing formal-ai PR #1188 and Relative Meta
+Logic PR #184 obligations also remain. Every current conversation request must
+remain captured verbatim with provenance and a content hash, reflected in this
+vision and mapped to critical atomic requirements; these records are not
+behavioral completion evidence.
 
 Every feature is developed and debugged in JavaScript first, where builds and
 test runs are cheap. Only a feature that is complete and green in JavaScript is
