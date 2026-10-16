@@ -31,16 +31,15 @@ fn restored_changed_origins_retain_distinct_current_identities() {
     let initial = create_global_concept_space(&input, &options).unwrap();
     options.previous = Some(initial);
     let remaining = create_global_concept_space(&input[1..], &options).unwrap();
-    let mut changed = input[0].clone();
-    let mut rule = changed
-        .grammar
-        .rule(control["changedRule"].as_str().unwrap())
+    let mut changed_data = data["sources"][0].clone();
+    let rule = changed_data["grammar"]["rules"]
+        .as_array_mut()
         .unwrap()
-        .clone();
-    rule.expr = meta_language::grammar::GrammarExpr::Terminal(
-        control["changedLiteral"].as_str().unwrap().to_owned(),
-    );
-    changed.grammar.add_rule(rule);
+        .iter_mut()
+        .find(|rule| rule["name"] == control["changedRule"])
+        .unwrap();
+    rule["expression"] = json!({"kind":"literal","value":control["changedLiteral"]});
+    let changed = GlobalConceptSource::from_json(&changed_data).unwrap();
     let restored_sources = [changed, input[1].clone()];
     options.previous = Some(remaining.clone());
     let restored = create_global_concept_space(&restored_sources, &options).unwrap();
