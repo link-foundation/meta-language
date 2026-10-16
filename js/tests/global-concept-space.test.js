@@ -1,6 +1,8 @@
 import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
@@ -108,6 +110,92 @@ test('operational matching, scanner, binding and action context constrain corres
     assert.notEqual(space.mappings['first:root'], space.mappings['second:page']);
   }
   observe('I195-GLOBAL-CONCEPT-EQUIVALENCE', ['matchingOperationalContext'], 'operational matching, scanner, binding and action context constrain correspondence');
+});
+
+test('shared grammar contexts preserve historical graph decisions while reducing stored shape bytes', async () => {
+  const sourceURL = new URL('../src/global-concept-space.js', import.meta.url);
+  const baseline = execFileSync('git', ['show', '9659a5d7:js/src/global-concept-space.js'], {
+    cwd: new URL('../../', import.meta.url), encoding: 'utf8', maxBuffer: 128 * 1024,
+  });
+  assert.equal(createHash('sha256').update(baseline).digest('hex'),
+    '5f67b2c303c55612279a4d48e51809f5f1a195b606d1df4f7c280cb6544af37e');
+  const loadModule = source => {
+    // Execute each complete implementation with the same actual dependencies;
+    // only expose its private graph builders for this bounded comparison.
+    const executable = source.replace(/\bfrom (['"])([^'"\n]+)\1/gu, (_match, _quote, specifier) => {
+      const address = specifier.startsWith('.') ? new URL(specifier, sourceURL).href : import.meta.resolve(specifier);
+      return `from ${JSON.stringify(address)}`;
+    });
+    return import(`data:text/javascript;base64,${Buffer.from(`${executable}\nexport {prepare,graphOf};\n`).toString('base64')}`);
+  };
+  const [historical, current] = await Promise.all([loadModule(baseline), loadModule(readFileSync(sourceURL, 'utf8'))]);
+  const originalRecords = JSON.stringify(fixture.records);
+  const originalDefinitions = JSON.stringify(fixture.formalDefinitions);
+  assert.deepEqual(historical.createGlobalConceptSpace(sources(), options()), fixture.expectedSpace);
+  assert.deepEqual(current.createGlobalConceptSpace(sources(), options()), fixture.expectedSpace);
+
+  const authoredSources = changed => sources().map((source, sourceIndex) => {
+    const leaf = sourceIndex === 0 ? 'atom' : 'letter';
+    const root = source.grammar.start;
+    const reference = name => ({ kind: 'ref', name });
+    const lexicalRules = Array.from({ length: 128 }, (_, index) => {
+      const literal = String(index).padStart(4, '0') + 'x'.repeat(252);
+      return { kind: 'lexicalRule', name: `CONTEXT_${index}`, type: `CONTEXT_${index}`,
+        mode: 'default', channel: 'default', disposition: 'emit', action: [],
+        item: { kind: 'literal', value: changed && sourceIndex === 1 && index === 0 ? `y${literal.slice(1)}` : literal } };
+    });
+    assert.ok(lexicalRules.every(rule => rule.item.value.length === 256));
+    const syntaxRules = Array.from({ length: 96 }, (_, index) => [
+      `context_syntax_${String(index).padStart(3, '0')}`,
+      { kind: 'normal', expression: index % 3 === 0 ? { kind: 'literal', value: `syntax${index}` }
+        : index % 3 === 1 ? reference(leaf) : { kind: 'seq', items: [reference(leaf), reference(root)] } },
+    ]);
+    return { ...source, grammar: new Grammar(source.grammar.start, [...source.grammar.rules, ...syntaxRules],
+      source.grammar.sourceFormat, { ...source.grammar.declarations, lexers: [{ name: 'bounded source lexer',
+        expression: { kind: 'seq', items: [...lexicalRules,
+          { kind: 'lexicalBinding', name: 'CONTEXT_0', item: reference(leaf) },
+          { kind: 'lexicalBinding', name: 'CONTEXT_1', item: reference(root) },
+        ] } }] }) };
+  });
+  for (const changed of [false, true]) {
+    const input = authoredSources(changed);
+    const before = input.map(({ grammar }) => JSON.stringify({ rules: [...grammar.rules], declarations: grammar.declarations }));
+    const previous = historical.prepare(input, fixture.records, fixture.formalDefinitions);
+    const prepared = current.prepare(input, fixture.records, fixture.formalDefinitions);
+    const oldGraph = historical.graphOf(previous.nodes, previous.aliases);
+    const graph = current.graphOf(prepared.nodes, prepared.aliases);
+    assert.equal(graph.shapes.length, 2 * (96 + fixture.sources[0].grammar.rules.length));
+    assert.deepEqual(graph.edges, oldGraph.edges);
+    assert.deepEqual(graph.offsets, oldGraph.offsets);
+    assert.deepEqual(graph.meanings, oldGraph.meanings);
+    assert.equal(graph.shapes.length, oldGraph.shapes.length);
+    for (let first = 0; first < graph.shapes.length; first += 1) {
+      for (let second = 0; second < graph.shapes.length; second += 1) {
+        assert.equal(graph.shapes[first] === graph.shapes[second], oldGraph.shapes[first] === oldGraph.shapes[second],
+          `shape equivalence ${first}/${second}, changed lexer ${changed}`);
+      }
+      const node = prepared.nodes[first];
+      const leaf = node.source.id === input[0].id ? 'atom' : 'letter';
+      assert.deepEqual(graph.edges.slice(graph.offsets[first + 1] - 2, graph.offsets[first + 1]), [
+        prepared.aliases.get(`${node.source.id}:${leaf}`), prepared.aliases.get(`${node.source.id}:${node.source.grammar.start}`),
+      ], 'context reference slots follow each production without changing their ordered targets');
+    }
+    const historicalSpace = historical.createGlobalConceptSpace(input, options());
+    const space = current.createGlobalConceptSpace(input, options());
+    assert.deepEqual(space, historicalSpace);
+    assert.deepEqual(space.proofs, historicalSpace.proofs);
+    for (const [first, second] of fixture.equivalences) {
+      if (changed) assert.notEqual(space.mappings[first], space.mappings[second], 'a changed lexer literal remains a distinct operational context');
+      else assert.equal(space.mappings[first], space.mappings[second], 'an equal complete lexer context preserves the existing correspondence');
+    }
+    assert.equal(space.failures.length, changed ? fixture.equivalences.length : 0);
+    const oldShapeBytes = Buffer.byteLength(JSON.stringify(oldGraph.shapes));
+    const shapeBytes = Buffer.byteLength(JSON.stringify(graph.shapes));
+    assert.ok(oldShapeBytes > shapeBytes * 8, `stored shape serialization shrinks by more than eightfold: ${oldShapeBytes} versus ${shapeBytes}`);
+    assert.deepEqual(input.map(({ grammar }) => JSON.stringify({ rules: [...grammar.rules], declarations: grammar.declarations })), before);
+  }
+  assert.equal(JSON.stringify(fixture.records), originalRecords);
+  assert.equal(JSON.stringify(fixture.formalDefinitions), originalDefinitions);
 });
 
 test('proofs cannot collapse a many-to-one recursive rule correspondence', () => {
