@@ -154,6 +154,7 @@ impl Inference {
             progress |= self.solve_optional()?;
             progress |= self.solve_iterables()?;
             progress |= self.solve_product_indices()?;
+            progress |= self.solve_array_binding_defaults()?;
             progress |= self.solve_arithmetic(false)?;
             progress |= self.solve_joins_and_results()?;
             progress |= self.solve_record_spreads()?;
@@ -218,6 +219,12 @@ impl Inference {
         if let Some(constraint) = self.record_spreads.first() {
             return Err(super::type_error(
                 "an object spread needs a known record shape; declare its fields with JSDoc",
+                constraint.place,
+            ));
+        }
+        if let Some(constraint) = self.array_binding_defaults.first() {
+            return Err(super::type_error(
+                "array binding default needs a known array element type",
                 constraint.place,
             ));
         }

@@ -17,7 +17,7 @@ import { readCallableReferenceConstruct, readCallableReferenceObligation, readCa
 import { imperative, lowerImperative, lowerTopLevel, statementUses } from './javascript-lower.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
 import { BOOL, FLOAT, INT, NAT, STRING, array } from './types.js';
-import { bindArrayElements, isLiteralBinding, readArrayBinding, readClosure, readCompositeType, validateClosureCaptures } from './javascript-bindings.js';
+import { arrayBindingNames, bindArrayElements, isLiteralBinding, readArrayBinding, readArrayBindingInitializer, readClosure, readCompositeType, validateClosureCaptures } from './javascript-bindings.js';
 import { hasStructuralIdentity, requiresReferenceSemantics } from './reference-analysis.js';
 import { acceptSurfaceRawMetadataField, selectSurfaceReferenceSemantics } from './surface-raw-metadata-rules.js';
 import { readOptionalLogicalMixingError, readOptionalSourceLiteral } from './optional-value-rules.js';
@@ -699,6 +699,9 @@ class JavaScriptParser {
       else if (['}', ')', ']'].includes(token.value) && token.kind === 'punct') depth -= 1;
       else if (depth === 0 && token.kind === 'identifier' && (token.value === 'const' || token.value === 'let')) {
         if (c.peek().kind === 'identifier') names.add(c.peek().value);
+        else if (c.is('[')) {
+          for (const binding of arrayBindingNames(this, c.index)) names.add(binding.value);
+        }
         else if (c.is('{')) {
           for (let offset = 1; !c.is('}', offset) && !c.isKind('eof', offset); offset += 1) {
             if (c.peek(offset).kind === 'identifier' && (c.is(',', offset + 1) || c.is('}', offset + 1))) names.add(c.peek(offset).value);
@@ -811,7 +814,7 @@ class JavaScriptParser {
     if (c.is('[')) {
       const bindings = readArrayBinding(this);
       c.expect('=', 'array binding');
-      const value = this.expr();
+      const value = readArrayBindingInitializer(this, bindings, () => this.expr());
       c.eat(';');
       const where = span(start, c.peek());
       const name = `ml_binding${++this.generatedCount}`;
@@ -1057,7 +1060,7 @@ class JavaScriptParser {
     const name = bindings ? null : c.identifier('for…of');
     if (name) reserved(name);
     c.expect('of', 'for…of');
-    const value = this.expr();
+    const value = bindings ? readArrayBindingInitializer(this, bindings, () => this.expr()) : this.expr();
     const iterable = { k: 'forOfIterable', object: value, span: value.span };
     c.expect(')', 'for');
     this.generatedCount += 1;

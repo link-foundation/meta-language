@@ -7,6 +7,8 @@ import { acceptRecordTypeBoundary, acceptRecordTypeOptionalName, readRecordTypeF
 import { readNullableTypeAbsence, readNullableTypeSyntax } from './nullable-type-syntax-rules.js';
 import { constructCallableSurfaceParameters, readCallableClosureConflicts, readCallableClosureScope, readCallableStatementCaptures } from './callable-source.js';
 import { planCallableTypeSyntax, readCallableClosureParameterError, readCallableClosurePrefixError, readCallableSurfaceConstructor, requireCallableAssignedCaptureField } from './callable-source-rules.js';
+import { acceptJavaScriptArrayBindingName, planJavaScriptArrayBindingNames, readJavaScriptArrayBindingValueForm, readJavaScriptArrayRestBindingError } from './array-binding-rules.js';
+import { JAVASCRIPT_ARRAY_BINDING_POLICY } from './array-binding-policy.js';
 
 export function readClosure(parser, method = false) {
   const c = parser.cursor;
@@ -51,37 +53,89 @@ export function validateClosureCaptures(statements, references = false) {
   }
 }
 
-export function readArrayBinding(parser, path = []) {
+// Declaration discovery and parsing use the same actual token positions. A
+// malformed plan stays with the ordinary parser for its precise syntax error.
+export function arrayBindingNames(parser, start) {
+  const tokens = parser.cursor.tokens;
+  const plan = planJavaScriptArrayBindingNames(tokens.map(token => token.kind), tokens.map(token => token.value), start);
+  return plan[0] < 0 ? [] : plan.slice(1).map(position => tokens[position]);
+}
+
+export function readArrayBindingInitializer(parser, bindings, read) {
+  const outer = parser.scope;
+  parser.scope = {
+    locals: new Set(outer.locals), mutable: new Set(outer.mutable),
+    tdz: new Set([...outer.tdz, ...bindings.map(binding => binding.name)]),
+  };
+  try { return read(); } finally { parser.scope = outer; }
+}
+
+export function readArrayBinding(parser, path = [], state = null) {
   const c = parser.cursor;
-  c.expect('[', 'array binding');
-  const bindings = [];
-  let index = 0;
-  while (!c.is(']')) {
-    if (c.eat(',')) { index += 1; continue; }
-    if (c.is('...')) throw unsupported('array rest binding', 'rest binding needs an array suffix operation', c.peek());
-    if (c.is('[')) {
-      bindings.push(...readArrayBinding(parser, [...path, index]));
-      index += 1;
-      if (!c.eat(',')) break;
-      continue;
+  const outer = parser.scope;
+  const root = state === null;
+  if (root) {
+    const names = new Set();
+    for (const token of arrayBindingNames(parser, c.index)) {
+      if (!acceptJavaScriptArrayBindingName(token.kind, token.value, names.has(token.value), JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings)) {
+        throw unsupported('array binding name', 'every binding needs a distinct admitted lexical identifier', token);
+      }
+      names.add(token.value);
     }
-    const token = c.identifier('array binding');
-    if (token.value.startsWith('ml_')) throw unsupported('reserved identifier', `${token.value} uses the translator's reserved ml_ prefix`, token);
-    if (c.is('=')) throw unsupported('array binding default', 'a missing element needs an undefined-aware default', token);
-    bindings.push({ name: token.value, index, ...(path.length ? { path: [...path, index] } : {}), span: { start: token.start, end: token.end } });
-    index += 1;
-    if (!c.eat(',')) break;
+    state = { seen: new Set() };
+    parser.scope = { locals: new Set(outer.locals), mutable: new Set(outer.mutable), tdz: new Set([...outer.tdz, ...names]) };
   }
-  c.expect(']', 'array binding');
-  return bindings;
+  try {
+    c.expect('[', 'array binding');
+    const bindings = [];
+    let index = 0;
+    while (!c.is(']')) {
+      if (c.eat(',')) { index += 1; continue; }
+      const rest = Boolean(c.eat('...'));
+      if (rest && path.length) throw unsupported('nested array rest binding', 'a nested rest binding needs its product iterator proof', c.peek());
+      if (c.is('[')) {
+        if (rest) throw unsupported('array rest pattern', 'the selected rest binding needs a lexical name', c.peek());
+        bindings.push(...readArrayBinding(parser, [...path, index], state));
+        index += 1;
+        if (!c.eat(',')) break;
+        continue;
+      }
+      const token = c.identifier('array binding');
+      if (!acceptJavaScriptArrayBindingName(token.kind, token.value, state.seen.has(token.value), JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings)) {
+        throw unsupported('array binding name', 'every binding needs a distinct admitted lexical identifier', token);
+      }
+      state.seen.add(token.value);
+      let defaultValue;
+      if (rest) {
+        const reason = readJavaScriptArrayRestBindingError(c.peek().value);
+        if (reason) throw unsupported('array rest binding', reason, c.peek());
+      } else if (c.eat('=')) {
+        if (path.length) throw unsupported('nested array binding default', 'a nested default needs its product iterator proof', token);
+        defaultValue = parser.expr();
+      }
+      bindings.push({ name: token.value, index, ...(path.length ? { path: [...path, index] } : {}),
+        ...(rest ? { rest: true } : {}), ...(defaultValue ? { defaultValue } : {}), span: { start: token.start, end: token.end } });
+      parser.declareLocal(token.value);
+      index += 1;
+      if (rest) break;
+      if (!c.eat(',')) break;
+    }
+    c.expect(']', 'array binding');
+    return bindings;
+  } finally {
+    if (root) parser.scope = outer;
+  }
 }
 
 export function bindArrayElements(bindings, object, binding, where) {
-  return bindings.map((entry) => ({
-    s: binding, name: entry.name,
-    value: (entry.path ?? [entry.index]).reduce((value, index) => ({ k: 'index', object: value, index: { k: 'num', value: String(index), span: entry.span }, ...(entry.path && { productBinding: true }), span: entry.span }), object),
-    span: where,
-  }));
+  return bindings.map(entry => {
+    const form = readJavaScriptArrayBindingValueForm(entry.rest === true, Object.hasOwn(entry, 'defaultValue'));
+    const value = (entry.path ?? [entry.index]).reduce((value, index) => ({ k: 'index', object: value,
+      index: { k: 'num', value: String(index), span: entry.span }, ...(entry.path && { productBinding: true }), span: entry.span }), object);
+    return { s: binding, name: entry.name, span: where,
+      value: form === 'suffix' ? { k: 'arrayBindingRest', object, start: { k: 'num', value: String(entry.index), span: entry.span }, span: entry.span }
+        : form === 'default' ? { k: 'arrayBindingDefault', value, fallback: entry.defaultValue, span: entry.span } : value };
+  });
 }
 
 // Split type syntax at its outer level, retaining commas and bars inside

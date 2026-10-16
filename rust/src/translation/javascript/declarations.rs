@@ -775,19 +775,8 @@ impl JavaScriptParser {
                         offset += 1;
                     }
                 } else if c.is("[") {
-                    let mut offset = 1;
-                    let mut nesting = 1;
-                    while nesting > 0 && !c.is_kind_at(TokenKind::Eof, offset) {
-                        if c.is_at("[", offset) {
-                            nesting += 1;
-                        }
-                        if c.is_at("]", offset) {
-                            nesting -= 1;
-                        }
-                        if c.peek_at(offset).kind == TokenKind::Identifier {
-                            names.insert(c.peek_at(offset).value.clone());
-                        }
-                        offset += 1;
+                    for token in self.array_binding_names(c.index) {
+                        names.insert(token.value);
                     }
                 }
             }

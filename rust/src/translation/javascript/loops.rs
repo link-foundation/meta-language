@@ -285,10 +285,25 @@ impl JavaScriptParser {
     /// the element at the index. The array is evaluated once, before the loop.
     fn for_of(&mut self, start: &Token) -> Result<Stmt> {
         let mutable = self.cursor.advance().value == "let";
-        let name = self.cursor.identifier(Some("for…of"))?;
-        reserved(&name)?;
-        self.cursor.advance();
-        let value = self.expr()?;
+        let bindings = if self.cursor.is("[") {
+            Some(self.read_array_binding()?)
+        } else {
+            None
+        };
+        let name = if bindings.is_none() {
+            Some(self.cursor.identifier(Some("for…of"))?)
+        } else {
+            None
+        };
+        if let Some(name) = &name {
+            reserved(name)?;
+        }
+        self.cursor.expect("of", Some("for…of"))?;
+        let value = if let Some(bindings) = &bindings {
+            self.array_binding_initializer(bindings)?
+        } else {
+            self.expr()?
+        };
         let iterable_span = value.span;
         let iterable = SExpr::new(
             SNode::ForOfIterable {
@@ -302,7 +317,13 @@ impl JavaScriptParser {
         let values = format!("ml_values{}", self.generated_count);
         let index = format!("ml_index{}", self.generated_count);
         let outer = self.scope.clone();
-        self.declare_local(&name.value, mutable);
+        if let Some(bindings) = &bindings {
+            for binding in bindings {
+                self.declare_local(&binding.name, mutable);
+            }
+        } else if let Some(name) = &name {
+            self.declare_local(&name.value, mutable);
+        }
         let body = self.loop_body();
         self.scope = outer;
         let body = body?;
@@ -353,19 +374,43 @@ impl JavaScriptParser {
             },
             place,
         );
-        let bind = if mutable {
-            Stmt::Let {
-                name: name.value,
+        let mut declarations = if let Some(bindings) = bindings {
+            let element_name = format!("ml_element{}", self.generated_count);
+            let mut declarations = vec![Stmt::Const {
+                name: element_name.clone(),
                 value: element,
                 span: place,
-            }
+            }];
+            declarations.extend(self.bind_array_elements(
+                bindings,
+                &read(&element_name),
+                mutable,
+                place,
+            ));
+            declarations
         } else {
-            Stmt::Const {
-                name: name.value,
-                value: element,
-                span: place,
-            }
+            let name = name
+                .expect("the ordinary for-of form has an actual lexical binder")
+                .value;
+            vec![if mutable {
+                Stmt::Let {
+                    name,
+                    value: element,
+                    span: place,
+                }
+            } else {
+                Stmt::Const {
+                    name,
+                    value: element,
+                    span: place,
+                }
+            }]
         };
+        declarations.push(Stmt::Block {
+            body,
+            inline: false,
+            span: place,
+        });
         Ok(Stmt::Block {
             body: vec![
                 Stmt::Const {
@@ -385,14 +430,7 @@ impl JavaScriptParser {
                         value: binary(BinaryOp::Add, read(&index), number("1")),
                         span: place,
                     }],
-                    body: vec![
-                        bind,
-                        Stmt::Block {
-                            body,
-                            inline: false,
-                            span: place,
-                        },
-                    ],
+                    body: declarations,
                     span: place,
                 },
             ],

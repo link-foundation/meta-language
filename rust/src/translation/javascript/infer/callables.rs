@@ -8,6 +8,13 @@ pub(super) fn has_structural_inference(value: &serde_json::Value) -> bool {
     match value {
         serde_json::Value::Array(values) => values.iter().any(has_structural_inference),
         serde_json::Value::Object(fields) => {
+            if fields
+                .get("k")
+                .and_then(serde_json::Value::as_str)
+                .is_some_and(|kind| kind == "arrayBindingRest" || kind == "arrayBindingDefault")
+            {
+                return true;
+            }
             let text = |field: &str| {
                 fields
                     .get(field)
