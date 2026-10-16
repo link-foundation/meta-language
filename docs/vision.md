@@ -2154,6 +2154,14 @@ Lazy child owners share one accessor that reads the receiver's own chain, rather
 than retaining a new closure for every joined result or copied node. Chains,
 shared child arrays, independent flattening and property descriptors remain
 exact against the frozen parser; full-source resource fit still requires CI.
+Silent rules without actions also avoid constructing a scratch node that would
+force their child arrays. A silent reduction walks lazy parts from the end and
+stops after finding two meaningful children, which prove that no lone-child tag
+applies. Zero or one meaningful child retains every original tagging rule and
+returned identity; rules with actions retain their complete scratch inputs and
+spans. Frozen comparisons cover all rank/conflict combinations, trivia, already
+tagged children, action acceptance/refusal and the unchanged tiny parse outcomes
+and budgets. Whole generated-source parsing still runs in CI.
 The naming gate indexes exact words and every allowed WordNet synset by phrase
 role, length and position before applying its unchanged synonym predicate.
 Candidate pairs retain their original record order and every distinction rule.

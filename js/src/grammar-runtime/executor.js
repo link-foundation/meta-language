@@ -1380,9 +1380,23 @@ function endingReduction(a, b, stack, orders) {
 // (`forked`), the rule as one it was reduced to there (`forkedTo`, see
 // `forkedOrder`); any other result as it is.
 function reducedAlone(result, name, ranked, forked = false) {
-  const meaningful = result.children.filter((child) => !isTrivia(child));
-  if (meaningful.length !== 1) return result;
-  const only = meaningful[0];
+  // Only a lone meaningful item needs a tag. Visit lazy parts from the end
+  // and stop at the second item, without materializing every joined prefix.
+  const pending = [partOf(result)];
+  let only = null;
+  while (pending.length > 0) {
+    const part = pending.pop();
+    if (Array.isArray(part)) {
+      for (let index = part.length - 1; index >= 0; index -= 1) {
+        const child = part[index];
+        if (isTrivia(child)) continue;
+        if (only) return result;
+        only = child;
+      }
+    } else if (part.flat) pending.push(part.flat);
+    else pending.push(part.left, part.right);
+  }
+  if (!only) return result;
   const changes = {};
   if (only.type === 'token' && !only.alone) changes.alone = true;
   if (ranked && !only.reducedTo?.includes(name)) changes.reducedTo = [...(only.reducedTo ?? []), name];
@@ -3786,8 +3800,11 @@ export class Executor {
     const expected = rule.kind === 'silent' && this.program.conflicts.has(rule.nodeKind);
     for (const result of results) {
       if (rule.kind === 'silent' || inToken) {
-        const scratch = { type: 'node', kind: rule.nodeKind, start: position, end: result.end, children: result.children };
-        let acted = this.runAction(rule, result, scratch, position);
+        let acted = result;
+        if (rule.action) {
+          const scratch = { type: 'node', kind: rule.nodeKind, start: position, end: result.end, children: result.children };
+          acted = this.runAction(rule, result, scratch, position);
+        }
         if (!acted) continue;
         // An item a silent rule reduces alone records it, for the conflict
         // with a shift where the item is not reduced (see `preferredTokens`

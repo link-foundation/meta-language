@@ -216,6 +216,73 @@ test('lazy child owners share one accessor while chains and frozen output identi
   assert.equal(new Set(expected.descriptors.map(row=>row.get)).size,3,'the authenticated original allocated a getter for every owner');
 });
 
+test('silent reductions preserve every frozen tag without flattening plural child chains',async()=>{
+  await frozenKeywordParser();
+  const readOperations=source=>{
+    const chainStart=source.indexOf("const CHAIN = Symbol('children chain');");
+    const chainEnd=source.indexOf('function joinResults(',chainStart);
+    const start=source.indexOf('function reducedAlone('),end=source.indexOf('// Which of two results an LR parser keeps',start);
+    assert.ok(chainStart>=0&&chainEnd>chainStart&&start>=0&&end>start);
+    return new Function('isTrivia',source.slice(chainStart,chainEnd)+'\n'+source.slice(start,end)+'\nreturn {CHAIN,shareChildren,reducedAlone};')(child=>child.trivia===true);
+  };
+  const original=readOperations(controls.baseline.modules[0].source);
+  const current=readOperations(readFileSync(new URL('../src/grammar-runtime/executor.js',import.meta.url),'utf8'));
+  const cases=[[],[{type:'token',trivia:true}],[{type:'token'}],[{type:'node'}],
+    [{type:'token',alone:true,reducedTo:['control'],forkedTo:['control']}],
+    [{type:'token',trivia:true},{type:'node'},{type:'token',trivia:true}],
+    [{type:'token'},{type:'token',trivia:true},{type:'node'}],
+    Array.from({length:32},(_,index)=>({type:index%2?'token':'node',trivia:index%3===0})),
+  ];
+  for(const children of cases)for(const ranked of[false,true])for(const forked of[false,true]){
+    const reduce=operations=>{
+      const items=structuredClone(children).map((child,index)=>({...child,kind:'child',start:index,end:index+1}));
+      let part=[];
+      const chains=[];
+      for(const child of items){part={left:part,right:[child],length:chains.length+1,flat:null};chains.push(part);}
+      const source=Array.isArray(part)?{children:part}:{[operations.CHAIN]:part};
+      const owner=operations.shareChildren({end:items.length,state:{key:''},dynamic:0,cost:0,precedence:null,tail:null,ambiguous:false},source);
+      const result=operations.reducedAlone(owner,'control',ranked,forked);
+      const flattened=chains.filter(chain=>chain.flat!==null).length;
+      const same=result===owner;
+      const value=structuredClone(result);
+      if(same)for(let at=0;at<items.length;at++)assert.equal(result.children[at],items[at]);
+      return {value,same,flattened};
+    };
+    const expected=reduce(original),actual=reduce(current);
+    assert.deepEqual(actual.value,expected.value);assert.equal(actual.same,expected.same);
+    if(children.filter(child=>child.trivia!==true).length>1){
+      assert.equal(actual.flattened,0,'plural chains remain entirely lazy');
+      assert.ok(expected.flattened>0,'the authenticated original flattened the chain');
+    }
+  }
+});
+
+test('silent token rules read children only for action scratch nodes',async()=>{
+  await frozenKeywordParser();
+  const frozen=await import(frozenKeywordModule(controls.baseline.modules[0]));
+  for(const action of[undefined,{kind:'control'}])for(const refused of[false,true]){
+    const run=prototype=>{
+      let reads=0,actions=0;
+      const children=[{type:'token',kind:'child'}];
+      const result={end:1,ambiguous:false,tail:null,get children(){reads++;return children;}};
+      const rule={kind:'silent',nodeKind:'control',expression:{kind:'empty'},action};
+      const executor={program:{conflicts:new Set()},evaluate:()=>[result],runAction:(_rule,value,scratch)=>{
+        if(!action)return value;
+        actions++;assert.equal(scratch.children,children);assert.equal(scratch.start,0);assert.equal(scratch.end,1);
+        return refused?null:value;
+      }};
+      const built=prototype.ruleBody.call(executor,rule,0,{key:''},true);
+      assert.deepEqual(built,action&&refused?[]:[result]);
+      if(built.length)assert.equal(built[0],result);
+      return {reads,actions};
+    };
+    const expected=run(frozen.Executor.prototype),actual=run(Executor.prototype);
+    assert.equal(actual.actions,expected.actions);
+    assert.equal(actual.reads,action?expected.reads:0);
+    assert.equal(expected.reads,1);
+  }
+});
+
 test('complete source diagnostics observe real native runs and restore the executor',async()=>{
   const {createCompleteRustSourceArchives,replayCompleteRustSourceArchives}=await import('../../experiments/original-link-complete-table-projection/archive-transport.mjs');
   const {LinkNetwork}=await import('../src/network.js');
