@@ -23,6 +23,7 @@ function reportLimits(options) {
 function inspect(value, limits) {
   const active = new WeakSet();
   const memo = new WeakMap();
+  const path = [];
   function visit(item, depth = 1) {
     if (depth > limits.depthLimit) fail('depth resource limit exceeded');
     if (item === null || typeof item === 'boolean') return { nodes: 1, bytes: 5, height: 0 };
@@ -35,7 +36,7 @@ function inspect(value, limits) {
       if (depth + height > limits.depthLimit) fail('depth resource limit exceeded');
       return { nodes: height === 0 ? 1 : 1 + item.length, bytes: encoder.encode(item).length, height };
     }
-    if (!item || typeof item !== 'object') fail('unsupported host value');
+    if (!item || typeof item !== 'object') fail(`unsupported host value (${typeof item}) at $${path.map(name => `[${JSON.stringify(name)}]`).join('')}`);
     if (active.has(item)) fail('structural cycle');
     if (memo.has(item)) {
       const cost = memo.get(item);
@@ -54,7 +55,10 @@ function inspect(value, limits) {
     active.add(item);
     const cost = { nodes: 1, bytes: 0, height: 0 };
     for (const name of array ? Array.from({ length: item.length }, (_, index) => String(index)) : Object.keys(item)) {
-      const child = visit(item[name], depth + (array ? 1 : 2));
+      path.push(array ? Number(name) : name);
+      let child;
+      try { child = visit(item[name], depth + (array ? 1 : 2)); }
+      finally { path.pop(); }
       const key = array ? { nodes: 0, bytes: 0, height: 0 } : visit(name, depth + 2);
       cost.nodes = Math.min(Number.MAX_SAFE_INTEGER, cost.nodes + child.nodes + key.nodes + (array ? 0 : 1));
       cost.bytes = Math.min(Number.MAX_SAFE_INTEGER, cost.bytes + child.bytes + key.bytes);

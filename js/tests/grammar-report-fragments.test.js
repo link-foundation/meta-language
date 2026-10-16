@@ -110,3 +110,22 @@ test('report factorization retains cycle, depth, scalar and cap refusals', () =>
   assert.throws(() => writeGrammarReport(join(root, 'depth.lino'), { a: { b: {} } }, { limits: { depthLimit: 4 } }), /depth resource limit/);
   assert.throws(() => writeGrammarReport(join(root, 'number.lino'), { value: NaN }), /finite binary64/);
 }));
+
+test('unsupported observation values retain their exact field path without replacing existing report evidence', () => directory(root => {
+  const file = join(root, 'observations.lino');
+  const original = { schemaVersion: 1, results: [] };
+  writeGrammarReport(file, original);
+  const before = readFileSync(file, 'utf8');
+  for (const [kind, value] of [
+    ['undefined', undefined], ['function', () => {}], ['symbol', Symbol('unsupported observation')], ['bigint', 1n],
+  ]) {
+    const report = { results: [{ observations: [{ native: { accepted: false, offset: value } }] }] };
+    assert.throws(() => writeGrammarReport(file, report), error => error instanceof TypeError
+      && error.message === `grammar report: unsupported host value (${kind}) at $["results"][0]["observations"][0]["native"]["offset"]`);
+    assert.equal(Object.hasOwn(report.results[0].observations[0].native, 'offset'), true);
+    assert.equal(report.results[0].observations[0].native.offset, value);
+    assert.equal(readFileSync(file, 'utf8'), before);
+    assert.deepEqual(readdirSync(root), ['observations.lino']);
+    assert.deepEqual(readGrammarReport(file), original);
+  }
+}));
