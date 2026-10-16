@@ -21,6 +21,12 @@ const versionBoundedAssertionsSource = 'parity/sources/version-bounded-assertion
 const inferenceSource = 'parity/sources/grammar-inference-issue-224.txt';
 
 const sourceTooling = {
+  'I195-ASSERTION-EXPLICIT-VERSION-RANGES': [
+    'js/scripts/assertion-version-ranges.mjs', 'js/scripts/antlr-version-assertions.mjs', 'js/scripts/peggy-version-assertions.mjs',
+    'js/scripts/observation-version-assertions.mjs', 'js/tests/support/issue-195-observations.js',
+    'js/tests/assertion-version-ranges.test.js', 'js/tests/issue-195-evidence-version-context.test.js',
+    'js/tests/grammar-antlr-lexer-election.test.js', 'js/tests/grammar-antlr.test.js', 'js/tests/grammar-interchange-tools.test.js',
+  ],
   'I195-WORKFLOW-CANCELLED-CI-INVESTIGATION': [
     'js/scripts/ci-cancellation-investigation.mjs', 'js/tests/ci-cancellation-investigation.test.js',
   ],
@@ -42,6 +48,36 @@ const sourceToolingFixtures = {
   'I195-WORKFLOW-CANCELLED-CI-INVESTIGATION': [
     { id: 'ci-cancellation-investigation', path: 'parity/fixtures/ci-cancellation-investigation.lino' },
   ],
+};
+
+// Each concrete version assertion has its own fixture. Appending its cell
+// preserves the original conversation behavior cell and all its obligations.
+const sourceToolingVerificationCells = {
+  'I195-ASSERTION-EXPLICIT-VERSION-RANGES': [{
+    runtime: 'tooling', suffix: 'antlr-command-order',
+    fixtures: [{
+      id: 'assertion-version-antlr-command-order-source',
+      path: 'js/tests/grammar-antlr-lexer-election.test.js',
+      selector: 'ANTLR warning-bearing skip, type and channel combinations preserve actual command ordering',
+    }],
+    assertions: ['antlrCommandOrderHasApplicableVersionContext'],
+  }, {
+    runtime: 'tooling', suffix: 'antlr-inherited-options',
+    fixtures: [{
+      id: 'assertion-version-antlr-inherited-options-source',
+      path: 'js/tests/grammar-antlr.test.js',
+      selector: 'caseInsensitive options match either case, and rule preludes join the doc',
+    }],
+    assertions: ['antlrInheritedOptionsHaveApplicableVersionContext'],
+  }, {
+    runtime: 'tooling', suffix: 'peggy-character-set-shape',
+    fixtures: [{
+      id: 'assertion-version-peggy-character-set-shape-source',
+      path: 'js/tests/grammar-interchange-tools.test.js',
+      selector: 'independent optimized Peggy character sets retain exact source lexer bindings and byte diagnostics; independent optimized character set replay refuses extra members and incompatible source contexts',
+    }],
+    assertions: ['peggyOptimizedCharacterSetsHaveApplicableVersionContext', 'peggyCharacterSetRefusalsHaveApplicableVersionContext'],
+  }],
 };
 
 // Entry points identify executable implementations. Their presence is not an
@@ -116,6 +152,7 @@ function rows(sourceKey, fixture, specification, area, declarations, tooling = f
       ],
     } : {}),
     ...(sourceToolingFixtures[id] ? { additionalFixtures: sourceToolingFixtures[id] } : {}),
+    ...(sourceToolingVerificationCells[id] ? { additionalVerifications: sourceToolingVerificationCells[id] } : {}),
   }));
 }
 

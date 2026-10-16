@@ -8,6 +8,8 @@ import { GrammarBuilder as G, deserializeGrammar, serializeGrammar } from '../sr
 import { importAntlr } from '../src/grammar-importers/antlr.js';
 import { GrammarImportError } from '../src/grammar-importers/common.js';
 import { renderGrammarRule } from './support/render-grammar-expression.js';
+import { selectAntlrReferenceAssertion } from '../scripts/antlr-version-assertions.mjs';
+import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const fixture = (file) => readFileSync(
   new URL(`../../rust/tests/fixtures/grammar/antlr/${file}`, import.meta.url),
@@ -235,7 +237,8 @@ test('left-recursive alternatives climb by precedence, with surrogate sets and n
   }
 });
 
-test('caseInsensitive options match either case, and rule preludes join the doc', async () => {
+test('caseInsensitive options match either case, and rule preludes join the doc', async (context) => {
+  const versionApplicability = [selectAntlrReferenceAssertion()];
   const source = fixture('case-insensitive.g4');
   const grammar = importAntlr(source);
   assert.deepEqual(grammar.rule('ECHO').expression, G.literalInsensitive('echo'));
@@ -265,6 +268,11 @@ test('caseInsensitive options match either case, and rule preludes join the doc'
   ]) {
     assert.throws(() => importAntlr(source), (error) => error.message === message, source);
   }
+  recordIssue195Observations({
+    requirementId: 'I195-ASSERTION-EXPLICIT-VERSION-RANGES', suffix: 'antlr-inherited-options', runtime: 'tooling',
+    fixtureId: 'assertion-version-antlr-inherited-options-source', fixtureFile: 'js/tests/grammar-antlr.test.js',
+    assertions: ['antlrInheritedOptionsHaveApplicableVersionContext'], testName: context.name, versionApplicability,
+  });
 });
 
 test('a -> type(NAME) command lets a rule match where NAME does, in both runtimes', async () => {

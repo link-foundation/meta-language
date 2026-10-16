@@ -2009,6 +2009,19 @@ export function buildVisionRequirements(fixtureCatalog, { requirement, verificat
       fixtureIds.push(fixture.id);
     }
     const requiredRuntimes = RUNTIMES.filter((runtime) => runtime in row);
+    const additionalVerifications = (row.additionalVerifications ?? []).map((cell) => {
+      if (!requiredRuntimes.includes(cell.runtime)) throw new Error(`additional verification runtime is not required: ${row.id}`);
+      const extraFixtureIds = cell.fixtures.map((fixture) => {
+        if (Object.hasOwn(fixtureCatalog, fixture.id)) throw new Error(`duplicate additional verification fixture: ${fixture.id}`);
+        fixtureCatalog[fixture.id] = pinnedFixture(fixture.path, fixture.selector);
+        return fixture.id;
+      });
+      return verification({
+        requirementId: row.id, runtime: cell.runtime, suffix: cell.suffix,
+        fixtureIds: extraFixtureIds, assertions: cell.assertions,
+        checkpoint: row.checkpoint ?? 'pre-merge',
+      });
+    });
     return requirement({
       id: row.id,
       source: sourceByRequirement[row.id] ?? source,
@@ -2022,7 +2035,7 @@ export function buildVisionRequirements(fixtureCatalog, { requirement, verificat
       expectedBehavior: row.expectedBehavior,
       requiredRuntimes,
       implementationEntryPoints: Object.fromEntries(requiredRuntimes.map((runtime) => [runtime, row[runtime]])),
-      verifications: requiredRuntimes.map((runtime) =>
+      verifications: [...requiredRuntimes.map((runtime) =>
         verification({
           requirementId: row.id,
           runtime,
@@ -2030,7 +2043,7 @@ export function buildVisionRequirements(fixtureCatalog, { requirement, verificat
           fixtureIds,
           assertions: row.assertions,
           checkpoint: row.checkpoint ?? 'pre-merge',
-        })),
+        })), ...additionalVerifications],
     });
   });
 }

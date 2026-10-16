@@ -7,6 +7,8 @@ import { parseNativeGrammar, renderNativeGrammar } from '../src/grammar-intercha
 import { renameGrammarRule } from '../src/grammar-rename.js';
 import { mergeGrammars } from '../src/grammar-merge.js';
 import { readLexicalWinnerIndex } from '../src/translation/frontend-rules.js';
+import { selectAntlrReferenceAssertion } from '../scripts/antlr-version-assertions.mjs';
+import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const parser = (source) => compileGrammar(importAntlr(source));
 const leaves = (node) => node.type === 'token' ? [node] : (node.children ?? []).flatMap(leaves);
@@ -80,7 +82,8 @@ test('ANTLR losing commands cannot change the winning lexer mode', () => {
   assert.equal(parser(source).parseTree('xy').ok, false);
 });
 
-test('ANTLR warning-bearing skip, type and channel combinations preserve actual command ordering', () => {
+test('ANTLR warning-bearing skip, type and channel combinations preserve actual command ordering', (context) => {
+  const versionApplicability = [selectAntlrReferenceAssertion()];
   const source = `grammar Election; tokens { WORD } start: WORD EOF;
     RAW: 'a' -> skip, type(WORD);
     DROP: 'x' -> channel(HIDDEN), skip, channel(DEFAULT_TOKEN_CHANNEL);
@@ -96,6 +99,11 @@ test('ANTLR warning-bearing skip, type and channel combinations preserve actual 
   ]);
   assert.equal(compiled.parseTree('x').ok, false);
   assert.equal(parser(`grammar Election; tokens { WORD } start: WORD EOF; RAW: 'a' -> type(WORD), skip;`).parseTree('a').ok, false);
+  recordIssue195Observations({
+    requirementId: 'I195-ASSERTION-EXPLICIT-VERSION-RANGES', suffix: 'antlr-command-order', runtime: 'tooling',
+    fixtureId: 'assertion-version-antlr-command-order-source', fixtureFile: 'js/tests/grammar-antlr-lexer-election.test.js',
+    assertions: ['antlrCommandOrderHasApplicableVersionContext'], testName: context.name, versionApplicability,
+  });
 });
 
 test('ANTLR final type commands add bindings while superseded historical aliases remain inspectable', () => {

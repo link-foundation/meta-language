@@ -9,6 +9,7 @@ import { createHash } from 'node:crypto';
 import { appendFileSync } from 'node:fs';
 import { readProjectFileBytes } from '../../scripts/project-data.mjs';
 import { structuredDataRecordToLino } from '../../src/structured-data-records.js';
+import { createObservationVersionValidator } from '../../scripts/observation-version-assertions.mjs';
 
 const repositoryRoot = new URL('../../../', import.meta.url);
 
@@ -21,6 +22,7 @@ export const ISSUE_195_FIXTURE_FILES = Object.freeze({
 
 const digests = new Map();
 const recorded = new Set();
+let validateVersionContext;
 
 // Mirrors `slug` in js/scripts/issue-195-requirements.mjs.
 export function issue195Slug(value) {
@@ -48,6 +50,7 @@ export function issue195FixtureDigest(fixtureFile) {
 // compared.
 export function recordIssue195Observations({
   requirementId, suffix, fixtureId, fixtureFile, assertions, testName, runtime = 'javascript',
+  versionApplicability,
 }) {
   const path = process.env.ISSUE_195_OBSERVATION_FILE;
   if (!path) return;
@@ -55,14 +58,19 @@ export function recordIssue195Observations({
   const fixtureDigest = issue195FixtureDigest(fixtureFile);
   const lines = [];
   for (const assertionId of assertions) {
-    const key = `${testId}\u0000${assertionId}\u0000${fixtureId}`;
-    if (recorded.has(key)) continue;
-    recorded.add(key);
-    lines.push(structuredDataRecordToLino({
+    const observation = {
       testId, assertionId, fixtureId, fixtureDigest,
       runtime, commit: process.env.ISSUE_195_COMMIT,
       outcome: 'passed', testName,
-    }));
+      ...(versionApplicability === undefined ? {} : { versionApplicability }),
+    };
+    validateVersionContext ??= createObservationVersionValidator();
+    const selectedContext = validateVersionContext(observation, { fixtureFile });
+    if (selectedContext !== undefined) observation.versionApplicability = selectedContext;
+    const key = `${testId}\u0000${assertionId}\u0000${fixtureId}`;
+    if (recorded.has(key)) continue;
+    recorded.add(key);
+    lines.push(structuredDataRecordToLino(observation));
   }
   // One append per call, so records of concurrently running suites never
   // interleave within a line.

@@ -11,6 +11,7 @@ import {
 } from './issue-195-requirements.mjs';
 import { buildLanguageCatalog } from './build-language-catalog.mjs';
 import { CHECKPOINTS, stageGateError } from './issue-195-evidence-stages.mjs';
+import { createObservationVersionValidator } from './observation-version-assertions.mjs';
 
 export {
   ASSERTION_PROFILES,
@@ -266,9 +267,12 @@ function resultIndex(resultDocuments) {
 export function evaluateIssue195Acceptance(
   manifest,
   resultDocuments,
-  { checkpoint = 'all', commit = 'WORKTREE' } = {},
+  { checkpoint = 'all', commit = 'WORKTREE', versionPolicyRoot } = {},
 ) {
   const { byTestId, errors } = resultIndex(resultDocuments);
+  let validateVersionContext;
+  try { validateVersionContext = createObservationVersionValidator({ root: versionPolicyRoot }); }
+  catch (error) { errors.push(`observation version policy cannot be validated: ${error.message}`); }
   const knownTestIds = new Set(
     manifest.atomicRequirements.flatMap((entry) => entry.verifications.map((cell) => cell.testId)),
   );
@@ -344,6 +348,10 @@ export function evaluateIssue195Acceptance(
             if (record.fixtureDigest !== manifest.fixtureCatalog[record.fixtureId]?.sha256) {
               reasons.push(`execution record fixture digest mismatch for ${record.fixtureId}`);
             }
+            try {
+              if (!validateVersionContext) throw new Error('the declared version policy is unavailable');
+              validateVersionContext(record, { fixtureFile: manifest.fixtureCatalog[record.fixtureId]?.path });
+            } catch (error) { reasons.push(`execution record version applicability: ${error.message}`); }
             if (record.outcome === 'passed') executed.add(key);
           }
         }

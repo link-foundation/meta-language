@@ -5,6 +5,8 @@ import { readProjectData } from '../scripts/project-data.mjs';
 import { selectVersionedAssertion } from '../scripts/assertion-version-ranges.mjs';
 import { assertionVersionPolicy } from '../scripts/generate-assertion-version-policy.mjs';
 import { selectUnicodeIdentifierAssertion } from '../scripts/unicode-identifier-assertions.mjs';
+import { selectAntlrReferenceAssertion } from '../scripts/antlr-version-assertions.mjs';
+import { selectPeggyOptimizerAssertion } from '../scripts/peggy-version-assertions.mjs';
 
 function boundedExpectation(id, minimum, maximum, expected, overrides = {}) {
   return { id, minimum, maximum, includeMinimum: true, includeMaximum: false,
@@ -147,5 +149,58 @@ test('the active Node Unicode version either selects the real expectation or rep
       assert.match(error.message, /uncovered active version/u);
       return true;
     });
+  }
+});
+
+test('ANTLR reference assertions admit only the independently pinned inclusive singleton release', () => {
+  const stored = readProjectData(new URL('../../parity/assertion-version-ranges.lino', import.meta.url));
+  const policy = stored.assertions.find(({ id }) => id === 'antlr-lexer-reference-semantics');
+  assert.deepEqual(policy.comparison, { kind: 'release', precision: 3 });
+  assert.equal(policy.expectations.length, 1);
+  const expected = policy.expectations[0];
+  assert.deepEqual([expected.minimum, expected.maximum, expected.includeMinimum, expected.includeMaximum],
+    ['4.13.2', '4.13.2', true, true]);
+  const selected = selectAntlrReferenceAssertion();
+  assert.equal(selected.activeVersion, '4.13.2');
+  assert.equal(selected.sourceVersion, expected.expected);
+  assert.equal(selected.expectation, expected.id);
+  assert.deepEqual(selected.sourceReferences, expected.sourceReferences);
+  for (const version of ['4.13.1', '4.13.3', '4.14.0', '5.0.0']) {
+    assert.throws(() => selectVersionedAssertion(policy, version), /uncovered active version/u);
+  }
+  const overlapping = structuredClone(policy);
+  overlapping.expectations.push({ ...expected, id: 'unproven second expectation' });
+  assert.throws(() => selectVersionedAssertion(overlapping, selected.activeVersion), /overlapping expectation ranges/u);
+});
+
+test('the original Unicode policy remains unchanged when concrete ANTLR observation bindings append', () => {
+  const policy = assertionVersionPolicy();
+  assert.deepEqual(policy.assertions[0], {
+    id: 'unicode-identifier-property-generation', subject: 'Unicode',
+    comparison: { kind: 'release', precision: 2 },
+    expectations: [{
+      id: 'unicode-17-identifier-properties', minimum: '17.0', maximum: '17.1',
+      includeMinimum: true, includeMaximum: false, expected: '17.0',
+      evidence: 'bbb13433fbdd3db3df8a5831eed8b9a6e5b83be1:js/scripts/build-unicode-identifier-properties.mjs requires process.versions.unicode === 17.0; original source sha256 58bb5fe590aed45a4b6d5e68e34e1120d8d7b7fcb7b74907e09f9d3ebde56d78; existing js/src/data/unicode-identifier-properties.lino records Unicode 17.0',
+    }],
+  });
+  assert.deepEqual(policy.observationBindings.slice(0, 2).map(({ fixtureId }) => fixtureId), [
+    'assertion-version-antlr-command-order-source', 'assertion-version-antlr-inherited-options-source',
+  ]);
+});
+
+test('Peggy optimizer assertions admit only the actual pinned inclusive singleton release', () => {
+  const policy = assertionVersionPolicy().assertions.find(({ id }) => id === 'peggy-optimized-character-set-shape');
+  assert.deepEqual(policy.comparison, { kind: 'release', precision: 3 });
+  assert.equal(policy.expectations.length, 1);
+  const expected = policy.expectations[0];
+  assert.deepEqual([expected.minimum, expected.maximum, expected.includeMinimum, expected.includeMaximum],
+    ['5.1.0', '5.1.0', true, true]);
+  const selected = selectPeggyOptimizerAssertion();
+  assert.equal(selected.activeVersion, '5.1.0');
+  assert.equal(selected.sourceVersion, expected.expected);
+  assert.equal(selected.expectation, expected.id);
+  for (const version of ['5.0.9', '5.1.1', '5.2.0', '6.0.0']) {
+    assert.throws(() => selectVersionedAssertion(policy, version), /uncovered active version/u);
   }
 });
