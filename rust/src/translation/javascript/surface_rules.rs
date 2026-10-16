@@ -86,10 +86,10 @@ pub fn read_java_script_value_case_form(
         && ((value == "true") || (value == "false"))
     {
         String::from("boolLit")
-    } else if negative && ((kind == "string") || (kind == "identifier")) {
-        String::from("")
-    } else {
+    } else if !negative && ((kind == "string") || (kind == "identifier")) {
         String::from("value")
+    } else {
+        String::from("")
     }
 }
 
@@ -108,7 +108,9 @@ pub fn read_java_script_value_switch_instruction(
         String::from("capture")
     } else if step == 1f64 {
         String::from("fallback")
-    } else if imperative && (step == 2f64) {
+    } else if !imperative && (step == 2f64) {
+        String::from("reachability")
+    } else {
         {
             let start = if imperative { 2f64 } else { 3f64 };
             if step >= (start + (count * 3f64)) {
@@ -126,8 +128,6 @@ pub fn read_java_script_value_switch_instruction(
                 }
             }
         }
-    } else {
-        String::from("reachability")
     }
 }
 

@@ -1,4 +1,4 @@
-// Expose the unchanged reviewed algorithm without editing a frozen producer.
+// Preserve the frozen export and guard its portable-library derivative.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
@@ -14,9 +14,55 @@ const reviewed=await import('data:text/javascript;base64,'+Buffer.from(linked).t
 
 export const simplifyRustBranches=reviewed.simplifyRustBranches;
 
-/** Compose the unchanged reviewed styles without editing their producer. */
+/** Recognize a complete leading negation in generated Boolean decisions. */
+export function acceptRustWholeConditionNegation(condition) {
+  const tokens=tokenize(condition,'Rust').tokens.filter(token=>token.kind!=='eof');
+  if(tokens[0]?.kind!=='punct'||tokens[0].value!=='!')return false;
+  const matching=new Map(),stack=[];
+  for(let index=0;index<tokens.length;index++){
+    if(tokens[index].kind!=='punct')continue;
+    const value=tokens[index].value;
+    if(['(','[','{'].includes(value))stack.push(index);
+    else if([')',']','}'].includes(value)){
+      const open=stack.pop();
+      if(open===undefined||tokens[open].value!==({')':'(',']':'[','}':'{'})[value])return false;
+      matching.set(open,index);
+    }
+  }
+  if(stack.length!==0)return false;
+  let index=1;
+  while(tokens[index]?.kind==='punct'&&tokens[index].value==='!')index++;
+  if(tokens[index]?.kind==='identifier')index++;
+  else if(tokens[index]?.kind==='punct'&&tokens[index].value==='('){
+    if(matching.get(index)===index+1)return false;
+    index=matching.get(index)+1;
+  }else return false;
+  while(index<tokens.length){
+    const token=tokens[index];
+    if(token.kind!=='punct')return false;
+    if(['(','['].includes(token.value))index=matching.get(index)+1;
+    else if(token.value==='.'||token.value==='::'){
+      const member=tokens[index+1];
+      if(member?.kind!=='identifier'&&!(token.value==='.'&&member?.kind==='number'&&/^\d+$/u.test(member.raw)))return false;
+      index+=2;
+    }else if(token.value==='?')index++;
+    else return false;
+  }
+  return true;
+}
+
+const originalNegationGuard="if (condition.startsWith('!')) {";
+assert.equal(source.split(originalNegationGuard).length,2,'the guarded derivative changes exactly one frozen negation guard');
+const guardedSource=source.replace(originalNegationGuard,"if (condition.startsWith('!') && acceptRustWholeConditionNegation(condition)) {")
+  +'\n'+acceptRustWholeConditionNegation.toString()
+  +'\nexport { simplifyBranches as simplifyRustBranches };\n';
+const guardedLinked=guardedSource.replace(/\bfrom (['"])(\.[^'"\n]+)\1/gu,(_,quote,path)=>'from '+quote+new URL(path,address).href+quote)
+  .replaceAll('import.meta.url',JSON.stringify(address.href));
+const guarded=await import('data:text/javascript;base64,'+Buffer.from(guardedLinked).toString('base64'));
+
+/** Compose a guarded branch derivative with the other unchanged reviewed styles. */
 export function simplifyPortableProductLibraryStyles(source) {
-  return reviewed.bindConditionBlocks(reviewed.simplifyReturns(reviewed.simplifyRustBranches(source)));
+  return reviewed.bindConditionBlocks(reviewed.simplifyReturns(guarded.simplifyRustBranches(source)));
 }
 
 /** Keep an Option's selected value and its original pure missing-value policy. */

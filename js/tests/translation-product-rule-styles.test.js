@@ -10,6 +10,7 @@ import { emitJavaScript } from '../src/translation/emit-javascript.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { decorateEmitted } from '../src/grammar-emitters/common.js';
 import { formatProductRuleSource, readProductRuleStyleCorrections, readProductSourceConditionStyleCorrections } from '../scripts/product-rule-style-corrections.mjs';
+import { acceptRustWholeConditionNegation, simplifyPortableProductLibraryStyles } from '../scripts/reviewed-rust-branch-styles.mjs';
 
 const provider = readFileSync(new URL('../../rust/src/translation/frontend_rules.rs', import.meta.url), 'utf8');
 const styleId = 'reviewed-product-native-lints-285c8b13';
@@ -132,4 +133,60 @@ test('CI18 callback condition bindings preserve branch scope, evaluation order a
   const {styles}=source('source'),record=styles.decorators.find(decorator=>decorator.id==='reviewed-product-source-condition-lints-26667280');
   assert.equal(record.actions.length,1);assert.deepEqual(record.when,[['format','Rust'],['scope','formatted-product-source-conditions']]);
   assert.match(record.actions[0].from,/^pub fn solve_product_source_facts\(/u);assert.doesNotMatch(record.actions[0].to,/if \(\{/u);
+});
+
+test('portable branch styles invert only a whole unary condition and preserve all Boolean valuations', () => {
+  const samples=[
+    ['!first || second',(first,second)=>!first||second,false],
+    ['!first && second',(first,second)=>!first&&second,false],
+    ['!first == second',(first,second)=>(!first)===second,false],
+    ['!(first || second)',(first,second)=>!(first||second),true],
+    ['!(first && second)',(first,second)=>!(first&&second),true],
+    ['!first',(first)=>!first,true],
+  ];
+  const read=source=>{
+    const context={};
+    vm.runInNewContext(emitJavaScript(checkProgram(parseRust(source+' fn main(){}'))).text,context,{timeout:1000});
+    return context.choose;
+  };
+  for(const [condition,expected,inverted]of samples){
+    const before=`pub fn choose(first:bool,second:bool)->bool{if ${condition}{false}else{true}}`;
+    const after=simplifyPortableProductLibraryStyles(before);
+    assert.equal(acceptRustWholeConditionNegation(condition),inverted,condition);
+    if(inverted)assert.notEqual(after,before,condition);
+    else assert.equal(after,before,condition);
+    const original=read(before),transformed=read(after);
+    for(const first of[false,true])for(const second of[false,true]){
+      assert.equal(original(first,second),!expected(first,second),condition);
+      assert.equal(transformed(first,second),!expected(first,second),condition);
+    }
+    assert.equal(simplifyPortableProductLibraryStyles(after),after,'the guarded style reaches a fixed point');
+  }
+});
+
+test('whole-negation classification keeps grouped postfix operands and ignores opaque comments and literals', () => {
+  for(const condition of[
+    '!owner.is_empty()',
+    '!(owner).is_empty()',
+    '!owners[read_index()].is_empty()',
+    '!crate::owner::accept(value)',
+    '!predicate("a || b", r#"!a && b"#)',
+    '! /* || */ (first || second)',
+    '!!first',
+    '!(first || second).then_some(value).is_some()',
+  ])assert.equal(acceptRustWholeConditionNegation(condition),true,condition);
+  for(const condition of[
+    '!first || second',
+    '!first && second',
+    '!first == second',
+    '!first as bool',
+    '!owner.is_empty() /* opaque || */ || second',
+    '!predicate("||") && second',
+    '!first + second',
+    '!first, second',
+    '!first = second',
+    '!()',
+    '!(first',
+    '!first)',
+  ])assert.equal(acceptRustWholeConditionNegation(condition),false,condition);
 });

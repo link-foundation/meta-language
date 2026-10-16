@@ -157,9 +157,7 @@ pub fn read_callable_free_references(
                             references_5
                         };
                         {
-                            let references_9 = if checked && (kind == "name") {
-                                references_7
-                            } else {
+                            let references_9 = if !checked && (kind == "name") {
                                 {
                                     let path = self::callable_field(
                                         starts, counts, labels, targets, node, "path",
@@ -184,6 +182,8 @@ pub fn read_callable_free_references(
                                         references_7
                                     }
                                 }
+                            } else {
+                                references_7
                             };
                             {
                                 let at_3 = self::read_required_number_fact(starts, node);

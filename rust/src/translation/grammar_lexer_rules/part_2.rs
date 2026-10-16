@@ -54,7 +54,9 @@ pub fn read_grammar_lexer_literal_extension(
                                 );
                                 match ml_s8 {
                                     self::MlReadGrammarLexerLiteralExtensionLoop10Result::MlReadGrammarLexerLiteralExtensionLoop10Done(matching_owner_present_2, index_2, candidates_2, literals_2) => {
-                                        if matching_owner_present_2 || (value == (self::ml_string::Text::from_units(vec![]))) {
+                                        if !matching_owner_present_2 || (value == (self::ml_string::Text::from_units(vec![]))) {
+                                            vec![0f64, -1f64, -1f64]
+                                        } else {
                                             {
                                                 let order = self::read_grammar_lexer_text_position(parser_literals, value.clone());
                                                 if order < 0f64 {
@@ -128,8 +130,6 @@ pub fn read_grammar_lexer_literal_extension(
                                                     }
                                                 }
                                             }
-                                        } else {
-                                            vec![0f64, -1f64, -1f64]
                                         }
                                     }
                                     self::MlReadGrammarLexerLiteralExtensionLoop10Result::MlReadGrammarLexerLiteralExtensionLoop10Return(ml_result18) => {
@@ -553,13 +553,15 @@ pub fn ml_accept_grammar_lexer_identifier_loop1(
                         122, 95,
                     ]))
                     .contains(&character);
-                    if letter
+                    if !letter
                         && !((index > 0f64)
                             && (self::ml_string::Text::from_units(vec![
                                 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
                             ]))
                             .contains(&character))
                     {
+                        self::MlAcceptGrammarLexerIdentifierLoop1Result::MlAcceptGrammarLexerIdentifierLoop1Return(false)
+                    } else {
                         {
                             let index_2 = index + 1f64;
                             {
@@ -567,9 +569,6 @@ pub fn ml_accept_grammar_lexer_identifier_loop1(
                                 continue;
                             }
                         }
-                    }
-                    {
-                        self::MlAcceptGrammarLexerIdentifierLoop1Result::MlAcceptGrammarLexerIdentifierLoop1Return(false)
                     }
                 }
             }

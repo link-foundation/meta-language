@@ -737,44 +737,42 @@ pub fn render_optional_console_text(
     console: bool,
     utf16: bool,
 ) -> String {
-    if bigint || !console {
-        if format == "Rust" {
-            if utf16 {
-                format!(
-                    "{}{}",
-                    (format!("{}{}", (String::from("(")), present.to_owned())),
-                    (String::from(").concat(&crate::ml_string::Text::from_text(\"n\"))"))
-                )
-            } else {
-                format!(
-                    "{}{}",
-                    (format!(
-                        "{}{}",
-                        (String::from("format!(\"{}n\", ")),
-                        present.to_owned()
-                    )),
-                    (String::from(")"))
-                )
-            }
-        } else if format == "Lean" {
+    if !bigint || !console {
+        present.to_owned()
+    } else if format == "Rust" {
+        if utf16 {
             format!(
                 "{}{}",
                 (format!("{}{}", (String::from("(")), present.to_owned())),
-                (String::from(" ++ \"n\")"))
+                (String::from(").concat(&crate::ml_string::Text::from_text(\"n\"))"))
             )
-        } else if format == "Rocq" {
+        } else {
             format!(
                 "{}{}",
                 (format!(
                     "{}{}",
-                    (String::from("(String.append ")),
+                    (String::from("format!(\"{}n\", ")),
                     present.to_owned()
                 )),
-                (String::from(" \"n\"%string)"))
+                (String::from(")"))
             )
-        } else {
-            present.to_owned()
         }
+    } else if format == "Lean" {
+        format!(
+            "{}{}",
+            (format!("{}{}", (String::from("(")), present.to_owned())),
+            (String::from(" ++ \"n\")"))
+        )
+    } else if format == "Rocq" {
+        format!(
+            "{}{}",
+            (format!(
+                "{}{}",
+                (String::from("(String.append ")),
+                present.to_owned()
+            )),
+            (String::from(" \"n\"%string)"))
+        )
     } else {
         present.to_owned()
     }

@@ -4,17 +4,6 @@ use super::*;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_required_text_fact(values: &[String], index: f64) -> String {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        panic!("{}", "invalid required text fact column position")
-    } else {
-        (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(|| self::refuse_required_text_fact())
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
 pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
     if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
         panic!("{}", "invalid required Boolean fact column position")

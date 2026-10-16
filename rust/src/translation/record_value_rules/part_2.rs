@@ -158,7 +158,11 @@ pub fn ml_read_record_field_position_loop6(
                     &(self::read_required_record_name(fields, index)),
                     name,
                 );
-                if (comparison < 0f64) && !(comparison > 0f64) {
+                if !(comparison < 0f64) && !(comparison > 0f64) {
+                    self::MlReadRecordFieldPositionLoop6Result::MlReadRecordFieldPositionLoop6Return(
+                        index,
+                    )
+                } else {
                     {
                         let index_2 = index + 1f64;
                         {
@@ -166,11 +170,6 @@ pub fn ml_read_record_field_position_loop6(
                             continue;
                         }
                     }
-                }
-                {
-                    self::MlReadRecordFieldPositionLoop6Result::MlReadRecordFieldPositionLoop6Return(
-                        index,
-                    )
                 }
             }
         } else {
@@ -492,12 +491,10 @@ pub fn ml_read_record_field_insertion_order_loop14(
                         {
                             {
                                 let selected_3 =
-                                    if ((self::read_required_number_fact(first, middle)) < index)
+                                    if !((self::read_required_number_fact(first, middle)) < index)
                                         && !((self::read_required_number_fact(first, middle))
                                             > index)
                                     {
-                                        selected
-                                    } else {
                                         {
                                             {
                                                 let (ml_append_right, ml_append_left) = (
@@ -512,6 +509,8 @@ pub fn ml_read_record_field_insertion_order_loop14(
                                                 )
                                             }
                                         }
+                                    } else {
+                                        selected
                                     };
                                 {
                                     let lower_3 = upper;

@@ -374,7 +374,9 @@ pub fn read_required_record_name(names: &[Vec<f64>], index: f64) -> Vec<f64> {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_record_value_order(count: f64, reverse: bool) -> Vec<f64> {
-    if (self::ml_math::is_safe_integer(count)) || (count < 0f64) {
+    if !(self::ml_math::is_safe_integer(count)) || (count < 0f64) {
+        vec![-1f64]
+    } else {
         {
             let order = Vec::<f64>::new();
             {
@@ -382,8 +384,6 @@ pub fn read_record_value_order(count: f64, reverse: bool) -> Vec<f64> {
                 { self::ml_read_record_value_order_loop1(count, reverse, order, index) }
             }
         }
-    } else {
-        vec![-1f64]
     }
 }
 

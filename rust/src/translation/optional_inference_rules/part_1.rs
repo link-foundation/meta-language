@@ -218,48 +218,43 @@ pub fn plan_optional_type_constraints(
             let right_optional =
                 (self::optional_fact_tag(texts, starts, counts, labels, targets, right, "kind"))
                     == "option";
-            if left_optional && !right_optional {
-                if left_optional {
+            if !left_optional && !right_optional {
+                Vec::<f64>::new()
+            } else if left_optional {
+                {
+                    let first =
+                        self::optional_fact_field(starts, counts, labels, targets, left, "element");
                     {
-                        let first = self::optional_fact_field(
-                            starts, counts, labels, targets, left, "element",
-                        );
-                        {
-                            let second = if right_optional {
-                                self::optional_fact_field(
-                                    starts, counts, labels, targets, right, "element",
-                                )
+                        let second = if right_optional {
+                            self::optional_fact_field(
+                                starts, counts, labels, targets, right, "element",
+                            )
+                        } else {
+                            right
+                        };
+                        vec![
+                            first,
+                            second,
+                            if left_optional && right_optional {
+                                left
                             } else {
+                                -1f64
+                            },
+                            if left_optional && right_optional {
                                 right
-                            };
-                            vec![
-                                first,
-                                second,
-                                if left_optional && right_optional {
-                                    left
-                                } else {
-                                    -1f64
-                                },
-                                if left_optional && right_optional {
-                                    right
-                                } else {
-                                    -1f64
-                                },
-                            ]
-                        }
+                            } else {
+                                -1f64
+                            },
+                        ]
                     }
-                } else {
-                    vec![
-                        self::optional_fact_field(
-                            starts, counts, labels, targets, right, "element",
-                        ),
-                        left,
-                        -1f64,
-                        -1f64,
-                    ]
                 }
             } else {
-                Vec::<f64>::new()
+                vec![
+                    self::optional_fact_field(starts, counts, labels, targets, right, "element"),
+                    left,
+                    -1f64,
+                    -1f64,
+                ]
             }
         }
     }
@@ -889,5 +884,16 @@ pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
     } else {
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
             .unwrap_or_else(|| self::refuse_required_number_fact())
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_required_text_fact(values: &[String], index: f64) -> String {
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        panic!("{}", "invalid required text fact column position")
+    } else {
+        (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
+            .unwrap_or_else(|| self::refuse_required_text_fact())
     }
 }
