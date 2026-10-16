@@ -632,6 +632,41 @@ jobs:
         working-directory: js
         run: node ../experiments/original-link-complete-table-projection/generate-raw-schema-source-closure.mjs --check
 
+      - name: Check generated original-link network projection rules
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        working-directory: js
+        run: node scripts/generate-network-projection-rules.mjs --check
+
+      - name: Check generated JavaScript array binding rules
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        working-directory: js
+        run: node scripts/generate-array-binding-rules.mjs --check
+
+      - name: Check generated Array.from rules
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        working-directory: js
+        run: node scripts/generate-array-from-rules.mjs --native --check
+
+      - name: Check generated numeric operand projection rules
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        working-directory: js
+        run: node scripts/generate-program-number-projection-rules.mjs --native --check
+
+      - name: Check generated partial callable context rules
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        working-directory: js
+        run: node scripts/generate-partial-callable-rules.mjs --native --check
+
+      - name: Check retained Array.from source oracles
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        working-directory: js
+        run: node scripts/convert-array-from-original-oracles.mjs --check
+
+      - name: Check explicit assertion version ranges
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        working-directory: js
+        run: node scripts/generate-assertion-version-policy.mjs --check
+
       - name: Check the generated Rust source indirection rules against JavaScript
         if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-indirection-rules.mjs --check

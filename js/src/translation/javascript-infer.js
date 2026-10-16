@@ -7,6 +7,9 @@
 // type error: the function would need a declared type for each use.
 
 import { typeError } from './diagnostics.js';
+import { readArrayFromCallbackConstraints, readArrayFromInferenceInputs, readArrayFromIterableType } from './array-from.js';
+import { readJavaScriptArrayDefaultConstraints } from './array-binding-inference.js';
+import { checkJavaScriptArrayBindingWrapper } from './array-binding-validation.js';
 import { readInferenceTermIdentity, readOptionalAdditionalAbsence, readOptionalCoalescingConstraints, readOptionalFieldInference, readOptionalJoinConstraints, readOptionalTypeConstraints } from './optional-inference.js';
 import { mergeOptionalAbsence } from './structured-type-rules.js';
 import { readOptionalBigIntConstraint, readOptionalCallBinding, readOptionalJoinBinding, readOptionalNumericTerm, requireInferenceJoinAlias, requireOptionalResultBinding } from './optional-value-rules.js';
@@ -50,6 +53,7 @@ function collectFunctions(items, path, into) {
 function hasStructuralInference(node) {
   if (!node || typeof node !== 'object') return false;
   if (Array.isArray(node)) return node.some(hasStructuralInference);
+  if (node.k === 'arrayBindingRest' || node.k === 'arrayBindingDefault') return true;
   if (requireCallableStructuralInference(node.k ?? '', node.kind ?? '', node.op ?? '')) return true;
   return Object.entries(node).some(([key, value]) => key !== 'span' && hasStructuralInference(value));
 }
@@ -76,6 +80,7 @@ class Inference {
     this.methods = [];
     this.includes = [];
     this.coalesces = [];
+    this.arrayBindingDefaults = [];
     this.recordSpreads = [];
     this.collections = new Map();
     this.iterables = [];
@@ -366,9 +371,7 @@ class Inference {
       }
       for (const constraint of [...this.iterables]) {
         const object = this.resolve(constraint.object);
-        const element = object.kind === 'string' ? STRING
-          : object.kind === 'array' || object.kind === 'set' ? object.element
-          : object.kind === 'map' ? { kind: 'tuple', elements: [object.key, object.value] } : null;
+        const element = readArrayFromIterableType(object)?.element;
         if (!element) continue;
         if (constraint.mapper) this.callback(constraint.mapper, [element, FLOAT], constraint.result.element, constraint.where);
         else this.unify(constraint.result.element, element, constraint.where);
@@ -389,6 +392,14 @@ class Inference {
           this.unify(constraint.result, object.elements[at], constraint.where);
         }
         this.indices.splice(this.indices.indexOf(constraint), 1);
+        progress = true;
+      }
+      for (const constraint of [...this.arrayBindingDefaults]) {
+        const plan = readJavaScriptArrayDefaultConstraints(this.resolve(constraint.value), constraint.fallback, constraint.result);
+        if (!plan) continue;
+        if (plan.refused) throw typeError('array binding default needs an undefined-only element read', constraint.where);
+        for (const [left, right] of plan.pairs) this.unify(left, right, constraint.where);
+        this.arrayBindingDefaults.splice(this.arrayBindingDefaults.indexOf(constraint), 1);
         progress = true;
       }
       for (const constraint of [...this.arithmetic]) {
@@ -500,6 +511,7 @@ class Inference {
       }
     }
     if (this.recordSpreads.length) throw typeError('an object spread needs a known record shape; declare its fields with JSDoc', this.recordSpreads[0].where);
+    if (this.arrayBindingDefaults.length) throw typeError('array binding default needs a known array element type', this.arrayBindingDefaults[0].where);
   }
 
   plusStep({ left, right, result, where }, force) {
@@ -729,6 +741,21 @@ class Inference {
         this.fields.push({ object: element, field: node.field, result: field, where: node.span });
         return { kind: 'option', element: field, absence: 'undefined' };
       }
+      case 'arrayBindingRest': {
+        checkJavaScriptArrayBindingWrapper(node);
+        const object = this.expr(node.object, env);
+        const result = { kind: 'array', element: this.fresh() };
+        this.unify(object, result, node.span);
+        return result;
+      }
+      case 'arrayBindingDefault': {
+        checkJavaScriptArrayBindingWrapper(node);
+        const value = this.expr(node.value, env);
+        const fallback = this.expr(node.fallback, env, expected);
+        const result = this.fresh();
+        this.arrayBindingDefaults.push({ value, fallback, result, where: node.span });
+        return result;
+      }
       case 'coalesce': {
         const left = this.expr(node.left, env);
         const right = this.expr(node.right, env, expected);
@@ -866,8 +893,9 @@ class Inference {
       }
       case 'arrayFrom': {
         const args = node.args.map((arg) => this.expr(arg, env));
-        const result = { kind: 'array', element: expected?.kind === 'array' ? expected.element : this.fresh() };
-        if (args[0]) this.iterables.push({ object: args[0], mapper: args[1], result, where: node.span });
+        const inputs = readArrayFromInferenceInputs(args, expected);
+        const result = { kind: 'array', element: inputs.selected ? inputs.element : this.fresh() };
+        if (inputs.object) this.iterables.push({ object: inputs.object, mapper: inputs.mapper, result, where: node.span });
         this.collections.set(node, result);
         return result;
       }
@@ -1142,11 +1170,9 @@ class Inference {
   callback(term, params, ret, where) {
     if (!term) return;
     const declared = this.resolve(term);
-    if (declared.kind === 'function') {
-      if (declared.params.length > params.length) throw typeError('a callback declares more parameters than its operation supplies', where);
-      declared.params.forEach((param, index) => this.unify(param, params[index], where));
-      this.unify(declared.ret, ret, where);
-    } else this.unify(term, { kind: 'function', params, ret }, where);
+    const constraints = readArrayFromCallbackConstraints(term, declared, params, ret);
+    if (constraints.error) throw typeError(constraints.error, where);
+    for (const pair of constraints.pairs) this.unify(...pair, where);
   }
 
   prop(prop, env) {

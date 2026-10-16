@@ -143,6 +143,10 @@ fn copy_tuple(ty: &Type) -> bool {
 
 pub(super) fn children(node: &SExpr) -> Vec<&SExpr> {
     let mut values: Vec<&SExpr> = match &node.node {
+        SNode::ArrayBindingRest { object, .. } => vec![object],
+        SNode::ArrayBindingDefault {
+            value, fallback, ..
+        } => vec![value, fallback],
         SNode::Method { object, args, .. } => std::iter::once(object.as_ref())
             .chain(args.iter().flatten())
             .collect(),
@@ -230,6 +234,7 @@ pub(super) fn children(node: &SExpr) -> Vec<&SExpr> {
             }
             values
         }
+        SNode::ArrayFrom { args, .. } => args.iter().collect(),
         SNode::List { items } | SNode::Tuple { items, .. } => items.iter().collect(),
         SNode::Array { items, .. } | SNode::Math { args: items, .. } => {
             items.iter().map(|item| &item.value).collect()
@@ -784,6 +789,13 @@ fn apply_projections(program: &mut SProgram, admitted: &HashMap<*const SExpr, us
             };
         }
         match &mut node.node {
+            SNode::ArrayBindingRest { object, .. } => walk(object, admitted),
+            SNode::ArrayBindingDefault {
+                value, fallback, ..
+            } => {
+                walk(value, admitted);
+                walk(fallback, admitted);
+            }
             SNode::Record {
                 entries,
                 prototype_definition,
@@ -913,6 +925,11 @@ fn apply_projections(program: &mut SProgram, admitted: &HashMap<*const SExpr, us
                 }
                 if let Some(definition) = prototype_definition {
                     walk(&mut definition.value, admitted);
+                }
+            }
+            SNode::ArrayFrom { args, .. } => {
+                for argument in args {
+                    walk(argument, admitted);
                 }
             }
             SNode::List { items } | SNode::Tuple { items, .. } => {

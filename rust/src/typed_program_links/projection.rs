@@ -1,12 +1,31 @@
 //! Host JSON boundary adapter for the shared mechanical projection instructions.
 use super::{Result, error, typed_program_links_schema};
 use crate::translation::ir::{Decl, Expr, Program};
+use crate::translation::record_value_rules::{
+    read_record_projection, read_record_projection_error,
+};
 use crate::translation::surface::SExpr;
-use crate::translation::typed_program_link_rules::read_program_expression_projection;
+use crate::translation::typed_program_link_rules::{
+    accept_program_expression_field, read_program_expression_projection,
+};
 use crate::translation::types::Type;
 use serde_json::{Map, Value, json};
 
+#[path = "number_projection.rs"]
+mod number_projection;
+
 fn expression(value: &Value, program: &Program) -> Result<Value> {
+    if value["k"].as_str() == Some("record")
+        && value.as_object().is_some_and(|fields| {
+            fields
+                .keys()
+                .any(|field| !accept_program_expression_field("record", field))
+        })
+    {
+        return Err(error(
+            "a linked record expression has an unrecognized projection field",
+        ));
+    }
     let plans = &typed_program_links_schema()["expressionProjections"];
     let mut key = value["k"].as_str().unwrap_or_default().to_owned();
     if let Some(alternatives) = typed_program_links_schema()["expressionProjectionAlternatives"]
@@ -88,7 +107,14 @@ fn expression(value: &Value, program: &Program) -> Result<Value> {
                 }
                 child.clone()
             }
-            "expression" => expression(child, program)?,
+            "expression" => expression(
+                number_projection::read_linked_program_number_operand(
+                    value,
+                    source.unwrap_or_default(),
+                    child,
+                )?,
+                program,
+            )?,
             "expressions" => Value::Array(
                 child
                     .as_array()
@@ -112,7 +138,10 @@ fn expression(value: &Value, program: &Program) -> Result<Value> {
                     .collect::<Result<_>>()?,
             ),
             "name-path" => json!([child]),
-            "declaration-path" => json!(project_declaration_path(child.as_str().unwrap_or_default(), program)?),
+            "declaration-path" => json!(project_declaration_path(
+                child.as_str().unwrap_or_default(),
+                program
+            )?),
             "return-type" => child["ret"].clone(),
             "function-path" => {
                 let path = if let Some(Decl::Fn(function)) =
@@ -160,12 +189,43 @@ fn expression(value: &Value, program: &Program) -> Result<Value> {
                         .collect::<Result<_>>()?,
                 )
             }
-            "record-entries" => Value::Array(
-                child.as_array().ok_or_else(|| error("projection record entries are not an array"))?
-                    .iter().map(|entry| -> Result<Value> {
-                        Ok(json!({"name":entry["name"],"spread":false,"value":expression(&entry["value"], program)?}))
-                    }).collect::<Result<_>>()?,
-            ),
+            "record-entries" => {
+                let entries = child.as_array().ok_or_else(|| {
+                    error("checked record projection needs an ordered field array")
+                })?;
+                let field_names = entries
+                    .iter()
+                    .map(|entry| {
+                        entry["name"]
+                            .as_str()
+                            .unwrap_or_default()
+                            .encode_utf16()
+                            .map(f64::from)
+                            .collect()
+                    })
+                    .collect::<Vec<Vec<f64>>>();
+                let admitted = entries
+                    .iter()
+                    .map(|entry| {
+                        entry.as_object().is_some_and(|fields| {
+                            fields.get("name").is_some_and(Value::is_string)
+                                && fields.get("value").is_some_and(Value::is_object)
+                                && fields
+                                    .keys()
+                                    .all(|field| field == "name" || field == "value")
+                        })
+                    })
+                    .collect::<Vec<_>>();
+                let projection = read_record_projection();
+                let refusal = read_record_projection_error(&projection, &field_names, &admitted);
+                if !refusal.is_empty() {
+                    return Err(error(refusal));
+                }
+                result.insert("recordProjection".to_owned(), Value::String(projection));
+                Value::Array(entries.iter().map(|entry| -> Result<Value> {
+                    Ok(json!({"name":entry["name"],"spread":false,"value":expression(&entry["value"], program)?}))
+                }).collect::<Result<_>>()?)
+            }
             "spread-pair" => Value::Array(
                 [child, &value[rule[3].as_str().unwrap()]]
                     .into_iter()

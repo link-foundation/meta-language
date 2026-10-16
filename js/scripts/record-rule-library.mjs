@@ -15,12 +15,13 @@ export function writeRecordRuleLibrary(emitted, name, { check = false } = {}) {
   const declarations = new Set([...raw.matchAll(/^pub (?:fn|enum|struct|mod) ([A-Za-z_][A-Za-z_0-9]*)\b/gmu)].map(match => match[1]));
   const relocation = [...declarations].filter(declaration => raw.includes('crate::' + declaration))
     .map(declaration => ({ op: 'replace', field: 'source', from: 'crate::' + declaration, to: 'self::' + declaration }));
-  const relocated = new DecoratorSet([{ id: name + '-library-owner', level: 'emitter', order: 0, when: [['format', 'Rust']], actions: relocation }])
+  const relocated = new DecoratorSet(relocation.length ? [{ id: name + '-library-owner', level: 'emitter', order: 0, when: [['format', 'Rust']], actions: relocation }] : [])
     .decorate('emitter', { format: 'Rust', source: raw }).source;
   const publicNames = [...relocated.matchAll(/^pub fn (\w+)\(/gmu)].map(match => match[1]);
   const loans = readPortableSourceParameterStyles(relocated, { publicNames });
   const reviewed = readPortableSourceLintStyles(loans.source);
-  const styles = new DecoratorSet([{ id: name + '-library-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions: [...relocation, ...loans.actions, ...reviewed.actions] }]);
+  const actions = [...relocation, ...loans.actions, ...reviewed.actions];
+  const styles = new DecoratorSet(actions.length ? [{ id: name + '-library-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }] : []);
   const styleFile = new URL('../../parity/self-translation/' + name.replaceAll('_', '-') + '-decorators.lino', import.meta.url);
   if (check) assert.equal(readFileSync(styleFile, 'utf8'), styles.toLino(), 'record family library styles retain every actual declaration');
   else writeFileSync(styleFile, styles.toLino());

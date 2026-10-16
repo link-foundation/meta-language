@@ -117,43 +117,14 @@ fn infer_javascript_types_with_observations(
 }
 
 impl Inference {
-    /// Connect actual iterator element owners to the source-generated iterable form.
+    /// Connect actual iterator owners to the complete generated iterable plan.
     pub(super) fn solve_iterables(&mut self) -> Result<bool> {
         let mut progress = false;
         let mut waiting = Vec::new();
         for constraint in std::mem::take(&mut self.iterables) {
             let object = self.resolve(&constraint.object);
-            let kind = match &object {
-                Term::Array(_) => "array",
-                Term::Set { .. } => "set",
-                Term::Map { .. } => "map",
-                Term::Known(ty) => ty.kind(),
-                _ => "",
-            };
-            let form = crate::translation::array_value_rules::read_array_iterable_form(kind, false);
-            let element = match (form.as_str(), &object) {
-                ("array", Term::Array(element)) => Some(element.as_ref().clone()),
-                ("string", _) => Some(Term::Known(super::STRING)),
-                ("set", Term::Set { element, .. }) => Some(element.as_ref().clone()),
-                ("map", Term::Map { key, value, .. }) => Some(Term::Tuple(vec![
-                    key.as_ref().clone(),
-                    value.as_ref().clone(),
-                ])),
-                ("set", Term::Known(Type::Set { element, .. })) => {
-                    Some(self.declared(Some(element)))
-                }
-                ("map", Term::Known(Type::Map { key, value, .. })) => Some(Term::Tuple(vec![
-                    self.declared(Some(key)),
-                    self.declared(Some(value)),
-                ])),
-                _ => None,
-            };
-            if let Some(element) = element {
-                self.unify(
-                    &constraint.result,
-                    &Term::Array(Box::new(element)),
-                    constraint.place,
-                )?;
+            if let Some(element) = self.array_from_iterable_element(&object) {
+                self.solve_array_from_iterable(&constraint, element)?;
                 progress = true;
             } else {
                 waiting.push(constraint);
@@ -179,6 +150,12 @@ impl Inference {
             return self.expr(node, env);
         };
         let term = match (&node.node, &expected) {
+            (SNode::ArrayBindingDefault { .. }, _) => {
+                self.array_binding_expr(node, env, Some(&expected))?
+            }
+            (SNode::ArrayFrom { args, .. }, _) => {
+                self.array_from(node, args, env, Some(&expected))?
+            }
             (SNode::Record { entries, .. }, _) => {
                 self.record_expr(node, entries, env, Some(&expected))?
             }

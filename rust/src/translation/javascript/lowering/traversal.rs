@@ -8,6 +8,13 @@ use super::{SExpr, SNode};
 pub(in crate::translation::javascript) fn children(expr: &SExpr) -> Vec<&SExpr> {
     let mut out: Vec<&SExpr> = Vec::new();
     match &expr.node {
+        SNode::ArrayBindingRest { object, .. } => out.push(object),
+        SNode::ArrayBindingDefault {
+            value, fallback, ..
+        } => {
+            out.push(value);
+            out.push(fallback);
+        }
         SNode::Record {
             entries,
             prototype_definition,
@@ -43,6 +50,7 @@ pub(in crate::translation::javascript) fn children(expr: &SExpr) -> Vec<&SExpr> 
             out.push(object);
             out.extend(args.iter().flatten());
         }
+        SNode::ArrayFrom { args, .. } => out.extend(args),
         SNode::CopySlice { object } => out.push(object),
         SNode::App { func, args } => {
             out.push(func);
@@ -129,6 +137,13 @@ pub(in crate::translation::javascript) fn children(expr: &SExpr) -> Vec<&SExpr> 
 pub(in crate::translation::javascript) fn children_mut(expr: &mut SExpr) -> Vec<&mut SExpr> {
     let mut out: Vec<&mut SExpr> = Vec::new();
     match &mut expr.node {
+        SNode::ArrayBindingRest { object, .. } => out.push(object),
+        SNode::ArrayBindingDefault {
+            value, fallback, ..
+        } => {
+            out.push(value);
+            out.push(fallback);
+        }
         SNode::Record {
             entries,
             prototype_definition,
@@ -164,6 +179,7 @@ pub(in crate::translation::javascript) fn children_mut(expr: &mut SExpr) -> Vec<
             out.push(object);
             out.extend(args.iter_mut().flatten());
         }
+        SNode::ArrayFrom { args, .. } => out.extend(args),
         SNode::CopySlice { object } => out.push(object),
         SNode::App { func, args } => {
             out.push(func);

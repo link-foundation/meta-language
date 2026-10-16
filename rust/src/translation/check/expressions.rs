@@ -1,6 +1,7 @@
 //! Expression checking: operators, arithmetic, applications and constructors.
 
 use super::arrays::{array_text, immutable_product_value};
+use super::expectation::ExpectedType;
 use super::{
     BOOL, BinaryOp, Checker, Decimal, Env, Expr, FLOAT, INT, Language, LitValue, Node, Result,
     Rounding, SExpr, SNode, STRING, Semantics, Span, Type, UNIT, UnaryOp, arithmetic_semantics,
@@ -23,6 +24,47 @@ impl Checker {
         env: &Env,
         path: &[String],
         expected: Option<&Type>,
+        allow_literal: bool,
+    ) -> Result<Expr> {
+        self.expr_with_context(
+            node,
+            env,
+            path,
+            ExpectedType::Concrete(expected),
+            allow_literal,
+        )
+    }
+
+    pub(super) fn expr_with_callable_expectation(
+        &mut self,
+        node: &SExpr,
+        env: &Env,
+        path: &[String],
+        params: &[Type],
+        ret: Option<&Type>,
+    ) -> Result<Expr> {
+        if let Some(ret) = ret {
+            let expected = Type::Function {
+                params: params.to_vec(),
+                ret: Box::new(ret.clone()),
+            };
+            return self.expr(node, env, path, Some(&expected), false);
+        }
+        self.expr_with_context(
+            node,
+            env,
+            path,
+            ExpectedType::Callable { params, ret },
+            false,
+        )
+    }
+
+    pub(super) fn expr_with_context(
+        &mut self,
+        node: &SExpr,
+        env: &Env,
+        path: &[String],
+        expected: ExpectedType<'_>,
         allow_literal: bool,
     ) -> Result<Expr> {
         let mut result = self.expr_inner(node, env, path, expected, allow_literal)?;
@@ -67,11 +109,15 @@ impl Checker {
         node: &SExpr,
         env: &Env,
         path: &[String],
-        expected: Option<&Type>,
+        context: ExpectedType<'_>,
         allow_literal: bool,
     ) -> Result<Expr> {
         let span = node.span;
+        let expected = context.concrete();
         match &node.node {
+            SNode::ArrayBindingRest { .. } | SNode::ArrayBindingDefault { .. } => {
+                self.array_binding(node, env, path)
+            }
             SNode::Num {
                 value,
                 ty,
@@ -167,7 +213,7 @@ impl Checker {
                 if let Some(name) = env.local(node) {
                     return Ok(Expr::var(name, env.vars[name].clone()));
                 }
-                if let Some(reference) = self.callable_reference(node, segments, path, expected)? {
+                if let Some(reference) = self.callable_reference(node, segments, path, context)? {
                     return Ok(reference);
                 }
                 self.application(node, &[], env, path, expected, span)
@@ -176,7 +222,7 @@ impl Checker {
             | SNode::Lambda { .. }
             | SNode::CellAllocate { .. }
             | SNode::CellRead { .. }
-            | SNode::CellWrite { .. } => self.callable_expression(node, env, path, expected),
+            | SNode::CellWrite { .. } => self.callable_expression(node, env, path, context),
             SNode::DotCtor { .. } => self.application(node, &[], env, path, expected, span),
             SNode::App { func, args } => self.application(func, args, env, path, expected, span),
             SNode::Field { field, object } => {
@@ -288,14 +334,20 @@ impl Checker {
             } => {
                 let checked = self.expr(cond, env, path, None, false)?;
                 let cond = self.boolean_value(checked, span)?;
-                let mut then_expr = self.expr(then, env, path, expected, allow_literal)?;
+                let mut then_expr =
+                    self.expr_with_context(then, env, path, context, allow_literal)?;
                 let else_expected = if then_expr.ty.is_literal() {
                     expected.cloned()
                 } else {
                     Some(then_expr.ty.clone())
                 };
+                let else_context = if then_expr.ty.is_literal() {
+                    context
+                } else {
+                    ExpectedType::Concrete(else_expected.as_ref())
+                };
                 let mut else_expr =
-                    self.expr(otherwise, env, path, else_expected.as_ref(), allow_literal)?;
+                    self.expr_with_context(otherwise, env, path, else_context, allow_literal)?;
                 if then_expr.ty.is_literal() && !else_expr.ty.is_literal() {
                     then_expr = self.expr(then, env, path, Some(&else_expr.ty), false)?;
                 }
@@ -336,7 +388,7 @@ impl Checker {
                 {
                     inner.immutable_products.insert(name.clone(), true);
                 }
-                let body = self.expr(body, &inner, path, expected, allow_literal)?;
+                let body = self.expr_with_context(body, &inner, path, context, allow_literal)?;
                 let ty = body.ty.clone();
                 Ok(Expr::new(
                     Node::Let {
@@ -349,10 +401,10 @@ impl Checker {
             }
             SNode::Match { scrutinees, rows } => {
                 let compiled = self.compile_match(scrutinees, rows, span, env, path)?;
-                self.expr(&compiled, env, path, expected, allow_literal)
+                self.expr_with_context(&compiled, env, path, context, allow_literal)
             }
             SNode::Match1 { scrutinee, cases } => {
-                self.match_cases(scrutinee, cases, span, env, path, expected)
+                self.match_cases(scrutinee, cases, span, env, path, context)
             }
             SNode::StringMap { .. } => self.string_map(node, env, path),
             SNode::CopySlice { object } => self.copy_slice(object, env, path, span),
@@ -447,7 +499,7 @@ impl Checker {
             }
             SNode::Print { expr, style, body } => {
                 let text = self.show(expr, env, path, *style)?;
-                let body = self.expr(body, env, path, expected, allow_literal)?;
+                let body = self.expr_with_context(body, env, path, context, allow_literal)?;
                 let ty = body.ty.clone();
                 Ok(Expr::new(
                     Node::Print {
@@ -463,6 +515,7 @@ impl Checker {
             }
             SNode::Record {
                 entries,
+                record_projection,
                 prototype_definition,
                 ..
             } => {
@@ -473,7 +526,14 @@ impl Checker {
                         Some(definition.span),
                     ));
                 }
-                self.record_literal(entries, env, path, expected, span)
+                self.record_literal(
+                    entries,
+                    record_projection.as_ref(),
+                    env,
+                    path,
+                    expected,
+                    span,
+                )
             }
             SNode::Tuple {
                 items,
@@ -504,6 +564,7 @@ impl Checker {
             }
             SNode::Index { .. } => self.index(node, env, path, expected),
             SNode::ForOfIterable { object, .. } => self.for_of_iterable(object, span, env, path),
+            SNode::ArrayFrom { args, .. } => self.array_from(args, env, path, expected, span),
             SNode::StringPoints { object } => {
                 let value = self.expr(object, env, path, Some(&STRING), false)?;
                 let object = self.coerce(value, &STRING, span)?;

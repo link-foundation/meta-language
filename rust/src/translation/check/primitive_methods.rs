@@ -40,9 +40,24 @@ impl Checker {
     ) -> Result<Expr> {
         let object = self.expr(object, env, path, None, false)?;
         let object = self.reference_value(object);
+        self.primitive_method_on_checked_receiver(object, operation, args, env, path, span)
+    }
+
+    pub(super) fn primitive_method_on_checked_receiver(
+        &mut self,
+        object: Expr,
+        operation: &str,
+        args: &[Option<SExpr>],
+        env: &Env,
+        path: &[String],
+        span: Option<Span>,
+    ) -> Result<Expr> {
         if matches!(object.ty, Type::Record { .. }) {
             return self
                 .checked_record_method_application(object, operation, args, env, path, span);
+        }
+        if matches!(object.ty, Type::Array { .. }) && operation == "map" {
+            return self.array_map_on_checked_receiver(object, args, env, path, span);
         }
         let receiver = object.ty.kind();
         let minimum = rules::read_primitive_method_minimum_arguments(receiver, operation);

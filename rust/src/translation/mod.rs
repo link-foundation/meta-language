@@ -12,6 +12,8 @@
 use serde::{Deserialize, Serialize};
 
 pub mod aborts;
+pub(crate) mod array_binding_rules;
+pub(crate) mod array_from_rules;
 pub(crate) mod array_value_rules;
 pub(crate) mod borrowed_call_interface;
 pub(crate) mod borrowed_call_interface_rules;
@@ -35,16 +37,19 @@ pub mod js_number;
 pub mod lean;
 pub mod lean_root_names;
 pub mod lexer;
+pub(crate) mod network_projection_rules;
 pub(crate) mod nullable_type_syntax_rules;
 pub(crate) mod optional_inference_rules;
 pub(crate) mod optional_value_rules;
 pub mod output;
 pub(crate) mod owned_array_append_rules;
 pub(crate) mod owned_local_state;
+pub(crate) mod partial_callable_rules;
 pub(crate) mod present_type;
 mod primitive_method_rules;
 pub mod primitive_value_rules;
 pub mod product_emission_rules;
+pub(crate) mod program_number_projection_rules;
 pub mod proof;
 pub(crate) mod record_emission_rules;
 pub(crate) mod record_type_syntax_rules;

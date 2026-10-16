@@ -10,6 +10,8 @@
 //!
 //! Mirrors `js/src/translation/javascript-infer.js`.
 
+mod array_bindings;
+mod array_from;
 mod arrays;
 mod callables;
 mod methods;
@@ -207,6 +209,7 @@ struct IndexOf {
 
 struct IterableOf {
     object: Term,
+    mapper: Option<Term>,
     result: Term,
     place: Option<Span>,
 }
@@ -219,6 +222,7 @@ struct Inference {
     bigints: HashSet<usize>,
     plus: Vec<Plus>,
     coalesces: Vec<Coalescing>,
+    array_binding_defaults: Vec<array_bindings::DefaultBinding>,
     joins: Vec<Join>,
     results: Vec<FunctionResult>,
     calls: Vec<CallArguments>,
@@ -266,6 +270,7 @@ impl Inference {
             bigints: HashSet::new(),
             plus: Vec::new(),
             coalesces: Vec::new(),
+            array_binding_defaults: Vec::new(),
             joins: Vec::new(),
             results: Vec::new(),
             calls: Vec::new(),
@@ -595,6 +600,9 @@ impl Inference {
                 Some(ty) => self.declared(Some(ty)),
                 None => self.fresh(true),
             }),
+            SNode::ArrayBindingRest { .. } | SNode::ArrayBindingDefault { .. } => {
+                self.array_binding_expr(expr, env, None)
+            }
             SNode::Bool { .. } => Ok(Term::Known(BOOL)),
             SNode::Str { .. } => Ok(Term::Known(STRING)),
             SNode::Unit => Ok(Term::Known(UNIT)),
@@ -692,6 +700,7 @@ impl Inference {
                 Ok(Term::Known(STRING))
             }
             SNode::CopySlice { object } => self.expr(object, env),
+            SNode::ArrayFrom { args, .. } => self.array_from(expr, args, env, None),
             SNode::Method { object, op, args } => self.method(object, op, args, env, expr.span),
             SNode::StringTest { op, object, search } if op == "includes" => {
                 self.includes(expr, object, search, env)
@@ -788,6 +797,7 @@ impl Inference {
                 let result = Term::Array(Box::new(self.fresh(false)));
                 self.iterables.push(IterableOf {
                     object,
+                    mapper: None,
                     result: result.clone(),
                     place: expr.span,
                 });

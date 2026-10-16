@@ -11,6 +11,11 @@ import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 
 import { typeError, unsupported } from './diagnostics.js';
 import { readArrayIterableForm, readReferenceMutationDiagnostic, selectOptionalArrayIndexNumber, selectOptionalArrayRead } from './array-value-rules.js';
+import { readArrayFromArgumentError, readArrayFromMapCallbackError, readArrayFromReceiverError } from './array-from-rules.js';
+import { readArrayFromExpectedElement, readArrayFromIterableType, readArrayFromMapCallback } from './array-from.js';
+import { acceptJavaScriptArrayRestReceiver, readJavaScriptArrayDefaultOperation } from './array-binding-rules.js';
+import { checkJavaScriptArrayBindingWrapper } from './array-binding-validation.js';
+import { requirePartialCallableResultInference } from './partial-callable-rules.js';
 import { constructCallableFunctionType, readCallableCellElement, readCallableParameterTypes } from './callable-source.js';
 import { acceptCallableFunctionReference, readCallableApplicationError, readCallableCellError, requireCallableComputedApplication } from './callable-source-rules.js';
 import { checkRustSourceSignature } from './rust-source-signatures.js';
@@ -26,7 +31,7 @@ import { acceptTupleIndex, readNumberDisplayRefusal, readScalarCellOperation, re
 import { checkRustScalarLoopProof } from './rust-scalar-loops.js';
 import { acceptOptionalAbsence, mergeOptionalAbsence } from './structured-type-rules.js';
 import { acceptOptionalLiteralAbsence, acceptOptionalPrimitiveKind, readOptionalLogicalOperation, readOptionalComparisonOperation, readOptionalBooleanOperation, readOptionalCoercionOperation, readOptionalFieldOperation, readOptionalNumberOperation, requireOptionalCoalescing, requireOptionalFlattening } from './optional-value-rules.js';
-import { readRecordValueOrder, readRecordFieldPosition, readRecordFieldOrder, readRecordMethodError } from './record-value-rules.js';
+import { readRecordValueOrder, readRecordProjectionError, readRecordFieldPosition, readRecordFieldOrder, readRecordMethodError } from './record-value-rules.js';
 import { readPrimitiveCopySliceForm, readPrimitiveMethodMinimumArguments, readPrimitiveMethodMaximumArguments,
   readPrimitiveMethodArgumentCount, readPrimitiveMethodCheckedArgumentKind, readPrimitiveMethodDefaultForm,
   readPrimitiveMethodDefaultValue, readPrimitiveMethodCheckedResultForm, readPrimitiveMethodArgumentObligation } from './primitive-method-rules.js';
@@ -463,6 +468,25 @@ class Checker {
 
   exprInner(node, env, path, expected, allowLiteral) {
     switch (node.k) {
+      case 'arrayBindingRest': {
+        checkJavaScriptArrayBindingWrapper(node);
+        const object = this.referenceValue(this.expr(node.object, env, path, undefined));
+        if (this.language !== 'JavaScript' || !acceptJavaScriptArrayRestReceiver(object.type.kind)) throw unsupported('array rest binding', 'the selected rest binding needs an actual homogeneous array receiver', node.span);
+        // Pattern positions are JavaScript Numbers, independently of the
+        // portable core's default type for an unannotated integer literal.
+        const position = Number(node.start.value) * (node.start.negative ? -1 : 1);
+        const start = { ...node.start, value: Object.is(position, -0) ? '-0' : String(position), negative: false, type: FLOAT };
+        return this.primitiveMethod({ k: 'method', op: 'slice', args: [start], span: node.span }, object, env, path);
+      }
+      case 'arrayBindingDefault': {
+        checkJavaScriptArrayBindingWrapper(node);
+        const left = this.expr(node.value, env, path, undefined);
+        const operation = readJavaScriptArrayDefaultOperation(this.language, left.type.kind, left.type.absence ?? '', left.type.element?.kind ?? '', true);
+        if (operation !== 'coalesce') throw unsupported('array binding default', 'the selected default needs an undefined-only primitive element read', node.span);
+        const right = this.expr(node.fallback, env, path, left.type.element);
+        if (readJavaScriptArrayDefaultOperation(this.language, left.type.kind, left.type.absence, left.type.element.kind, sameType(left.type.element, right.type)) !== 'coalesce') throw typeError('array binding default and present element need exactly the same type', node.span);
+        return { k: 'coalesce', left, right, type: left.type.element };
+      }
       case 'num': {
         // A JavaScript Number literal: its canonical text, `String(value)`, with the sign applied.
         if (node.type && isFloat(node.type)) return literal(FLOAT, node.negative ? negateNumber(node.value) : node.value);
@@ -604,16 +628,17 @@ class Checker {
         return { k: 'map', entries, type: { kind: 'map', key, value } };
       }
       case 'arrayFrom': {
-        if (node.args.length < 1 || node.args.length > 2) throw typeError('Array.from expects one or two arguments', node.span);
+        const argumentError = readArrayFromArgumentError(node.args.length);
+        if (argumentError) throw typeError(argumentError, node.span);
         const object = this.expr(node.args[0], env, path, undefined);
+        const selection = readArrayFromIterableType(object.type);
+        if (!selection) throw unsupported('Array.from', readArrayFromReceiverError(object.type.kind), node.span);
         let result;
-        if (object.type.kind === 'array') result = object;
-        else if (object.type.kind === 'string') result = { k: 'stringPoints', object, type: array(STRING) };
-        else if (object.type.kind === 'set') result = { k: 'collectionItems', object, op: 'values', type: array(object.type.element) };
-        else if (object.type.kind === 'map') result = { k: 'collectionItems', object, op: 'entries', type: array({ kind: 'tuple', elements: [object.type.key, object.type.value] }) };
-        else throw unsupported('Array.from', 'this iterable needs an operational iterator encoding', node.span);
+        if (selection.form === 0) result = object;
+        else if (selection.form === 1) result = { k: 'stringPoints', object, type: array(selection.element) };
+        else result = { k: 'collectionItems', object, op: selection.form === 2 ? 'values' : 'entries', type: array(selection.element) };
         if (!node.args[1]) return result;
-        const callback = this.expr(node.args[1], env, path, { kind: 'function', params: [result.type.element, FLOAT], ret: expected?.kind === 'array' ? expected.element : undefined });
+        const callback = this.expr(node.args[1], env, path, { kind: 'function', params: [result.type.element, FLOAT], ret: readArrayFromExpectedElement(expected).element });
         return { k: 'method', object: result, op: 'map', args: [callback], type: array(callback.type.ret) };
       }
       case 'forOfIterable': {
@@ -816,6 +841,24 @@ class Checker {
     const bindings = [];
     const units = name => Array.from({ length: name.length }, (_, index) => name.charCodeAt(index));
     const expectedNames = expected?.kind === 'record' ? expected.fields.map(field => units(field.name)) : [];
+    if (Object.hasOwn(node, 'recordProjection')) {
+      if (!Array.isArray(node.entries)) throw typeError('checked record projection needs an ordered field array', node.span);
+      const names = node.entries.map(entry => typeof entry?.name === 'string' ? units(entry.name) : []);
+      const admitted = node.entries.map(entry => entry !== null && typeof entry === 'object' && !Array.isArray(entry)
+        && Object.hasOwn(entry, 'name') && typeof entry.name === 'string'
+        && Object.hasOwn(entry, 'spread') && entry.spread === false && Object.hasOwn(entry, 'value')
+        && entry.value !== null && typeof entry.value === 'object' && !Array.isArray(entry.value)
+        && Object.keys(entry).every(field => field === 'name' || field === 'spread' || field === 'value'));
+      const error = readRecordProjectionError(node.recordProjection, names, admitted);
+      if (error) throw typeError(error, node.span);
+      for (const entry of node.entries) {
+        const position = readRecordFieldPosition(expectedNames, units(entry.name));
+        const want = position < 0 ? undefined : expected.fields[position].type;
+        const value = this.expr(entry.value, env, path, want);
+        entries.push({ name: entry.name, value });
+      }
+      return { k: 'record', entries, type: { kind: 'record', fields: entries.map(entry => ({ name: entry.name, type: entry.value.type })) } };
+    }
     const evaluationOrder = readRecordValueOrder(node.entries.length, false);
     if (evaluationOrder[0] < 0) throw typeError('record entries need an exact ordered input length', node.span);
     for (const index of evaluationOrder) {
@@ -916,6 +959,15 @@ class Checker {
         if (ret && !sameType(value.type.ret, ret)) throw typeError(`.${node.op}() callback result must be ${typeKey(ret)}`, node.span);
         return value;
       };
+      if (node.op === 'map') {
+        count(1);
+        const params = [element, FLOAT, object.type];
+        const fn = this.expr(args[0], env, path, { kind: 'function', params, ret: undefined });
+        const selection = readArrayFromMapCallback(fn.type, params);
+        const error = readArrayFromMapCallbackError(selection.status, selection.pairs.every(([left, right]) => sameType(left, right)));
+        if (error) throw typeError(error, node.span);
+        return { k: 'method', object, op: node.op, args: [fn], type: array(selection.ret), span: node.span };
+      }
       if (['map', 'filter', 'find', 'findIndex', 'some', 'every', 'flatMap', 'forEach'].includes(node.op)) {
         count(1);
         const predicate = ['filter', 'find', 'findIndex', 'some', 'every'].includes(node.op);
@@ -1493,7 +1545,11 @@ class Checker {
     const scrutinee = this.expr(node.scrutinee, env, path, undefined);
     const type = scrutinee.type;
     const cases = [];
-    let resultType = expected;
+    // An Array.from/map callback supplies contextual parameters before its
+    // return is known. Coercing branches to that incomplete object used to
+    // reject valid callbacks or carry a missing return into checked IR.
+    const partialCallable = requirePartialCallableResultInference(expected?.kind ?? '', expected?.ret !== undefined);
+    let resultType = partialCallable ? undefined : expected;
     const pending = [];
     for (const kase of node.cases) {
       const inner = new Map(env);
@@ -1504,7 +1560,7 @@ class Checker {
       pending.push({ pattern, body: kase.body, env: inner, span: kase.span });
     }
     for (const kase of pending) {
-      const body = this.expr(kase.body, kase.env, path, resultType, true);
+      const body = this.expr(kase.body, kase.env, path, partialCallable ? expected : resultType, true);
       if (body.type.kind !== 'literal' && !resultType) resultType = body.type;
       cases.push({ pattern: kase.pattern, body, surface: kase.body, env: kase.env });
     }

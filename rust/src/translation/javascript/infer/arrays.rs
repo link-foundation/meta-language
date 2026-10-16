@@ -59,6 +59,7 @@ pub(super) fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr,
                     *ret = Some(inferred_ret.as_ref().clone());
                 }
                 (SNode::ForOfIterable { ty: retained, .. }, _) => *retained = Some(ty.clone()),
+                (SNode::ArrayFrom { ty: retained, .. }, _) => *retained = Some(ty.clone()),
                 (SNode::Record { ty: retained, .. }, _) => *retained = Some(ty.clone()),
                 (SNode::CellAllocate { ty: retained, .. }, _) => *retained = Some(ty.clone()),
                 _ => {}
@@ -73,6 +74,13 @@ pub(super) fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr,
             walk(&mut test.object, arrays);
         }
         match &mut node.node {
+            SNode::ArrayBindingRest { object, .. } => walk(object, arrays),
+            SNode::ArrayBindingDefault {
+                value, fallback, ..
+            } => {
+                walk(value, arrays);
+                walk(fallback, arrays);
+            }
             SNode::Record {
                 entries,
                 prototype_definition,
@@ -89,6 +97,11 @@ pub(super) fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr,
                 walk(object, arrays);
                 for arg in args.iter_mut().flatten() {
                     walk(arg, arrays);
+                }
+            }
+            SNode::ArrayFrom { args, .. } => {
+                for argument in args {
+                    walk(argument, arrays);
                 }
             }
             SNode::CopySlice { object } => walk(object, arrays),

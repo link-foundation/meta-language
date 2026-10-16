@@ -141,6 +141,12 @@ including the same type inside an owned proof. Its supported widths still come
 from the shared typed schema. Native decoding normalizes only that declared
 role before reading its integer field; primitive floating values and all other
 scalar roles keep their existing interpretations.
+Partial callback contexts retain the supplied parameter types and keep an absent
+return type absent while the body checks. A checked function always has a concrete
+return type, including callbacks returned through conditional, binding, effect
+and match expressions. Matching branches derive their concrete result from an
+actual checked branch before coercion; contextual parameters cannot substitute
+for the callback's declared arity or actual result.
 Direct native programs can retain dynamic proof widths as floating Number
 values. Their selected validation uses a bounded private comparison view with
 the same fixed-width record adapter as Links decoding; the original proof
@@ -1775,6 +1781,14 @@ the selected range and version with observations. Preserve historical ranges
 when behavior changes. Uncovered versions or conflicting applicable expectations
 report a coverage error; they cannot silently skip a required cell. Language
 editions and dependency version schemes retain their own comparison rules.
+
+The assertion policy is Links data. Its current tooling bindings cover Unicode
+identifier generation, the declared ANTLR reference semantics and Peggy's actual
+optimizer version. Observation validation derives the required binding from the
+declared assertion and fixture identities, authenticates its source and policy
+hashes, and checks the selected range independently of the incoming test name.
+Missing or forged version context is an error. These bounded bindings do not
+establish version coverage for assertions that have not yet been registered.
 
 - Native merged grammars run against pinned **independent** ANTLR, tree-sitter
   and official parser, compiler and prover corpora, and against real projects,

@@ -46,6 +46,18 @@ pub enum SNode {
         left: Box<SExpr>,
         right: Box<SExpr>,
     },
+    ArrayBindingRest {
+        object: Box<SExpr>,
+        start: serde_json::Value,
+        #[serde(flatten)]
+        extra: std::collections::BTreeMap<String, serde_json::Value>,
+    },
+    ArrayBindingDefault {
+        value: Box<SExpr>,
+        fallback: Box<SExpr>,
+        #[serde(flatten)]
+        extra: std::collections::BTreeMap<String, serde_json::Value>,
+    },
     OptionalField {
         object: Box<SExpr>,
         field: String,
@@ -91,8 +103,11 @@ pub enum SNode {
         object: Box<SExpr>,
         field: String,
     },
+    #[serde(deserialize_with = "super::record_projection::read_record_projection")]
     Record {
         entries: Vec<SRecordEntry>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        record_projection: Option<serde_json::Value>,
         #[serde(rename = "type", default, skip_serializing_if = "Option::is_none")]
         ty: Option<Type>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -238,6 +253,11 @@ pub enum SNode {
         #[serde(rename = "type", default, skip_serializing_if = "Option::is_none")]
         ty: Option<Type>,
     },
+    ArrayFrom {
+        args: Vec<SExpr>,
+        #[serde(rename = "type", default, skip_serializing_if = "Option::is_none")]
+        ty: Option<Type>,
+    },
     StringPoints {
         object: Box<SExpr>,
     },
@@ -291,6 +311,8 @@ impl SNode {
             Self::Some { .. } => "some",
             Self::FlattenOption { .. } => "flattenOption",
             Self::Coalesce { .. } => "coalesce",
+            Self::ArrayBindingRest { .. } => "arrayBindingRest",
+            Self::ArrayBindingDefault { .. } => "arrayBindingDefault",
             Self::OptionalField { .. } => "optionalField",
             Self::Name { .. } => "name",
             Self::FunctionValue { .. } => "functionValue",
@@ -324,6 +346,7 @@ impl SNode {
             Self::TupleIndex { .. } => "tupleIndex",
             Self::Index { .. } => "index",
             Self::ForOfIterable { .. } => "forOfIterable",
+            Self::ArrayFrom { .. } => "arrayFrom",
             Self::StringPoints { .. } => "stringPoints",
             Self::ReferenceWrite { .. } => "referenceWrite",
             Self::Length { .. } => "length",

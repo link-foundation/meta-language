@@ -18,8 +18,10 @@ mod raw_metadata;
 pub use raw_metadata::SurfaceRawMetadata;
 mod nodes;
 pub use nodes::SNode;
+pub(crate) mod array_bindings;
 mod record_entry;
 pub use record_entry::SRecordEntry;
+mod record_projection;
 
 #[allow(clippy::trivially_copy_pass_by_ref)] // serde passes fields by reference
 const fn is_false(value: &bool) -> bool {
@@ -43,6 +45,7 @@ fn numeral<'de, D: Deserializer<'de>>(deserializer: D) -> Result<String, D::Erro
 
 /// A surface expression.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "array_bindings::SurfaceExpression")]
 pub struct SExpr {
     #[serde(flatten)]
     pub node: SNode,

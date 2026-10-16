@@ -28,6 +28,7 @@ use super::surface::{
 use super::types::{BOOL, FLOAT, INT, NAT, STRING, Type, array};
 use super::{Language, Span};
 
+mod array_bindings;
 mod array_methods;
 mod callables;
 mod console;
