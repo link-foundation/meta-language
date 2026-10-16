@@ -24,6 +24,30 @@ export function readRecordValueOrder(count, reverse) {
   return order;
 }
 
+/** The marker selects a checked projection, never a substitute for checking
+ * its actual ordered fields and their child expressions.
+ * @returns {string} */
+export function readRecordProjection() {
+  return 'checked ordered record values';
+}
+
+/** Canonical checked fields are already evaluated in their retained binding
+ * scopes. They have no spreads, replacements or field-order normalization.
+ * @param {string} projection @param {number[][]} names
+ * @param {boolean[]} entries @returns {string} */
+export function readRecordProjectionError(projection, names, entries) {
+  if (projection !== readRecordProjection()) return 'unknown checked record projection';
+  if (names.length !== entries.length) return 'checked record projection has inconsistent entry facts';
+  for (let index = 0; index < names.length; index += 1) {
+    if (!entries[index]) return 'checked record projection has a malformed field entry';
+    if (!acceptRecordFieldName(readRequiredRecordName(names, index))) return 'checked record projection has an invalid UTF16 field name';
+    if (index > 0 && compareRecordFieldNames(readRequiredRecordName(names, index - 1), readRequiredRecordName(names, index)) >= 0) {
+      return 'checked record projection needs unique fields in UTF16 order';
+    }
+  }
+  return '';
+}
+
 /** @param {number[]} name @returns {boolean} */
 export function acceptRecordFieldName(name) {
   for (let index = 0; index < name.length; index += 1) {

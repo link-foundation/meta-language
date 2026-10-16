@@ -30,6 +30,7 @@ impl Checker {
     pub(super) fn record_literal(
         &mut self,
         entries: &[SRecordEntry],
+        projection: Option<&serde_json::Value>,
         env: &Env,
         path: &[String],
         expected: Option<&Type>,
@@ -42,6 +43,64 @@ impl Checker {
         let expected_names = names(expected_fields);
         let mut values = Vec::new();
         let mut bindings = Vec::new();
+        if let Some(projection) = projection {
+            let field_names = entries
+                .iter()
+                .map(|entry| {
+                    entry
+                        .name
+                        .as_deref()
+                        .unwrap_or_default()
+                        .encode_utf16()
+                        .map(f64::from)
+                        .collect()
+                })
+                .collect::<Vec<Vec<f64>>>();
+            // JSON descriptor admission precedes serde in the linked projection
+            // adapter. The typed surface still supplies actual name/spread facts.
+            let admitted = entries
+                .iter()
+                .map(|entry| entry.name.is_some() && !entry.spread)
+                .collect::<Vec<_>>();
+            let refusal = rules::read_record_projection_error(
+                projection.as_str().unwrap_or_default(),
+                &field_names,
+                &admitted,
+            );
+            if !refusal.is_empty() {
+                return Err(type_error(refusal, span));
+            }
+            for entry in entries {
+                let name = entry
+                    .name
+                    .as_ref()
+                    .expect("shared checked record entry admission");
+                let wanted = rules::read_record_field_position(
+                    &expected_names,
+                    &name.encode_utf16().map(f64::from).collect::<Vec<_>>(),
+                );
+                let expected = number_index(wanted)
+                    .and_then(|index| expected_fields.get(index))
+                    .map(|field| &field.ty);
+                let value = self.expr(&entry.value, env, path, expected, false)?;
+                values.push(RecordEntry {
+                    name: name.clone(),
+                    value,
+                });
+            }
+            let ty = Type::Record {
+                fields: values
+                    .iter()
+                    .map(|entry| TypeField {
+                        name: entry.name.clone(),
+                        ty: entry.value.ty.clone(),
+                    })
+                    .collect(),
+                open: false,
+                reference: false,
+            };
+            return Ok(Expr::new(Node::Record { entries: values }, ty));
+        }
         for selected in rules::read_record_value_order(number(entries.len()), false) {
             let entry = &entries[position(selected, entries.len(), span)?];
             if entry.spread {

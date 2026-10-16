@@ -389,16 +389,51 @@ pub fn read_record_value_order(count: f64, reverse: bool) -> Vec<f64> {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_record_projection() -> String {
+    String::from("checked ordered record values")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_record_projection_error(
+    projection: &str,
+    names: &[Vec<f64>],
+    entries: &[bool],
+) -> String {
+    if projection != (self::read_record_projection()) {
+        String::from("unknown checked record projection")
+    } else if (names.len() as f64) != (entries.len() as f64) {
+        String::from("checked record projection has inconsistent entry facts")
+    } else {
+        {
+            let index = 0f64;
+            {
+                let ml_s1 = self::ml_read_record_projection_error_loop2(names, entries, index);
+                match ml_s1 {
+                        self::MlReadRecordProjectionErrorLoop2Result::MlReadRecordProjectionErrorLoop2Done => {
+                            String::from("")
+                        }
+                        self::MlReadRecordProjectionErrorLoop2Result::MlReadRecordProjectionErrorLoop2Return(ml_result2) => {
+                            ml_result2
+                        }
+                    }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn accept_record_field_name(name: &[f64]) -> bool {
     {
         let index = 0f64;
         {
-            let ml_s1 = self::ml_accept_record_field_name_loop2(name, index);
-            match ml_s1 {
-                self::MlAcceptRecordFieldNameLoop2Result::MlAcceptRecordFieldNameLoop2Done => true,
-                self::MlAcceptRecordFieldNameLoop2Result::MlAcceptRecordFieldNameLoop2Return(
-                    ml_result2,
-                ) => ml_result2,
+            let ml_s2 = self::ml_accept_record_field_name_loop3(name, index);
+            match ml_s2 {
+                self::MlAcceptRecordFieldNameLoop3Result::MlAcceptRecordFieldNameLoop3Done => true,
+                self::MlAcceptRecordFieldNameLoop3Result::MlAcceptRecordFieldNameLoop3Return(
+                    ml_result3,
+                ) => ml_result3,
             }
         }
     }
@@ -416,9 +451,9 @@ pub fn compare_record_field_names(left: &[f64], right: &[f64]) -> f64 {
         {
             let index = 0f64;
             {
-                let ml_s2 = self::ml_compare_record_field_names_loop3(left, right, end, index);
-                match ml_s2 {
-                    self::MlCompareRecordFieldNamesLoop3Result::MlCompareRecordFieldNamesLoop3Done => {
+                let ml_s3 = self::ml_compare_record_field_names_loop4(left, right, end, index);
+                match ml_s3 {
+                    self::MlCompareRecordFieldNamesLoop4Result::MlCompareRecordFieldNamesLoop4Done => {
                         if (left.len() as f64) < (right.len() as f64) {
                             -1f64
                         } else if (left.len() as f64) > (right.len() as f64) {
@@ -427,8 +462,8 @@ pub fn compare_record_field_names(left: &[f64], right: &[f64]) -> f64 {
                                 0f64
                             }
                     }
-                    self::MlCompareRecordFieldNamesLoop3Result::MlCompareRecordFieldNamesLoop3Return(ml_result3) => {
-                        ml_result3
+                    self::MlCompareRecordFieldNamesLoop4Result::MlCompareRecordFieldNamesLoop4Return(ml_result4) => {
+                        ml_result4
                     }
                 }
             }
@@ -443,26 +478,26 @@ pub fn read_record_field_position(fields: &[Vec<f64>], name: &[f64]) -> f64 {
         {
             let index = 0f64;
             {
-                let ml_s3 = self::ml_read_record_field_position_loop4(fields, index);
-                match ml_s3 {
-                    self::MlReadRecordFieldPositionLoop4Result::MlReadRecordFieldPositionLoop4Done => {
+                let ml_s4 = self::ml_read_record_field_position_loop5(fields, index);
+                match ml_s4 {
+                    self::MlReadRecordFieldPositionLoop5Result::MlReadRecordFieldPositionLoop5Done => {
                         {
                             let index_2 = 0f64;
                             {
-                                let ml_s4 = self::ml_read_record_field_position_loop5(fields, name, index_2);
-                                match ml_s4 {
-                                    self::MlReadRecordFieldPositionLoop5Result::MlReadRecordFieldPositionLoop5Done => {
+                                let ml_s5 = self::ml_read_record_field_position_loop6(fields, name, index_2);
+                                match ml_s5 {
+                                    self::MlReadRecordFieldPositionLoop6Result::MlReadRecordFieldPositionLoop6Done => {
                                         -1f64
                                     }
-                                    self::MlReadRecordFieldPositionLoop5Result::MlReadRecordFieldPositionLoop5Return(ml_result5) => {
-                                        ml_result5
+                                    self::MlReadRecordFieldPositionLoop6Result::MlReadRecordFieldPositionLoop6Return(ml_result6) => {
+                                        ml_result6
                                     }
                                 }
                             }
                         }
                     }
-                    self::MlReadRecordFieldPositionLoop4Result::MlReadRecordFieldPositionLoop4Return(ml_result5_2) => {
-                        ml_result5_2
+                    self::MlReadRecordFieldPositionLoop5Result::MlReadRecordFieldPositionLoop5Return(ml_result6_2) => {
+                        ml_result6_2
                     }
                 }
             }
@@ -478,21 +513,21 @@ pub fn read_record_sorted_field_positions(fields: &[Vec<f64>]) -> Vec<f64> {
     {
         let index = 0f64;
         {
-            let ml_s5 = self::ml_read_record_sorted_field_positions_loop6(fields, index);
-            match ml_s5 {
-                self::MlReadRecordSortedFieldPositionsLoop6Result::MlReadRecordSortedFieldPositionsLoop6Done => {
+            let ml_s6 = self::ml_read_record_sorted_field_positions_loop7(fields, index);
+            match ml_s6 {
+                self::MlReadRecordSortedFieldPositionsLoop7Result::MlReadRecordSortedFieldPositionsLoop7Done => {
                     {
                         let sorted = self::read_record_value_order((fields.len() as f64), false);
                         {
                             let width = 1f64;
                             {
-                                self::ml_read_record_sorted_field_positions_loop7(fields, sorted, width)
+                                self::ml_read_record_sorted_field_positions_loop8(fields, sorted, width)
                             }
                         }
                     }
                 }
-                self::MlReadRecordSortedFieldPositionsLoop6Result::MlReadRecordSortedFieldPositionsLoop6Return(ml_result9) => {
-                    ml_result9
+                self::MlReadRecordSortedFieldPositionsLoop7Result::MlReadRecordSortedFieldPositionsLoop7Return(ml_result10) => {
+                    ml_result10
                 }
             }
         }
@@ -513,7 +548,7 @@ pub fn read_record_field_order(fields: &[Vec<f64>]) -> Vec<f64> {
                 let selected = Vec::<f64>::new();
                 {
                     let index = 0f64;
-                    { self::ml_read_record_field_order_loop10(fields, &(sorted), selected, index) }
+                    { self::ml_read_record_field_order_loop11(fields, &(sorted), selected, index) }
                 }
             }
         }
@@ -539,7 +574,7 @@ pub fn read_record_field_insertion_order(fields: &[Vec<f64>]) -> Vec<f64> {
                         {
                             let index = 0f64;
                             {
-                                let ml_s6 = self::ml_read_record_field_insertion_order_loop11(
+                                let ml_s7 = self::ml_read_record_field_insertion_order_loop12(
                                     fields,
                                     &(sorted),
                                     first,
@@ -547,14 +582,14 @@ pub fn read_record_field_insertion_order(fields: &[Vec<f64>]) -> Vec<f64> {
                                     start,
                                     index,
                                 );
-                                match ml_s6 {
-                                    self::MlReadRecordFieldInsertionOrderLoop11Result::MlReadRecordFieldInsertionOrderLoop11Done(first_2, last_2) => {
+                                match ml_s7 {
+                                    self::MlReadRecordFieldInsertionOrderLoop12Result::MlReadRecordFieldInsertionOrderLoop12Done(first_2, last_2) => {
                                         {
                                             let selected = Vec::<f64>::new();
                                             {
                                                 let index_2 = 0f64;
                                                 {
-                                                    self::ml_read_record_field_insertion_order_loop12(fields, &(first_2), &(last_2), selected, index_2)
+                                                    self::ml_read_record_field_insertion_order_loop13(fields, &(first_2), &(last_2), selected, index_2)
                                                 }
                                             }
                                         }
@@ -716,15 +751,15 @@ pub fn record_type_fact_field(
                 {
                     let edge = start;
                     {
-                        let ml_s7 = self::ml_record_type_fact_field_loop14(
+                        let ml_s8 = self::ml_record_type_fact_field_loop15(
                             labels, targets, name, end, edge,
                         );
-                        match ml_s7 {
-                            self::MlRecordTypeFactFieldLoop14Result::MlRecordTypeFactFieldLoop14Done => {
+                        match ml_s8 {
+                            self::MlRecordTypeFactFieldLoop15Result::MlRecordTypeFactFieldLoop15Done => {
                                 -1f64
                             }
-                            self::MlRecordTypeFactFieldLoop14Result::MlRecordTypeFactFieldLoop14Return(ml_result14) => {
-                                ml_result14
+                            self::MlRecordTypeFactFieldLoop15Result::MlRecordTypeFactFieldLoop15Return(ml_result15) => {
+                                ml_result15
                             }
                         }
                     }
@@ -773,7 +808,7 @@ pub fn record_type_fact_elements(
                     let end = start + self::read_required_number_fact(counts, owner);
                     {
                         let edge = start;
-                        { self::ml_record_type_fact_elements_loop15(targets, values, end, edge) }
+                        { self::ml_record_type_fact_elements_loop16(targets, values, end, edge) }
                     }
                 }
             }
@@ -806,16 +841,16 @@ pub fn read_record_type_owner_presence(
             {
                 let position = 0f64;
                 {
-                    let ml_s8 = self::ml_read_record_type_owner_presence_loop16(
+                    let ml_s9 = self::ml_read_record_type_owner_presence_loop17(
                         texts, numbers, starts, counts, labels, targets, bindings, owner, pending,
                         seen, position,
                     );
-                    match ml_s8 {
-                        self::MlReadRecordTypeOwnerPresenceLoop16Result::MlReadRecordTypeOwnerPresenceLoop16Done => {
+                    match ml_s9 {
+                        self::MlReadRecordTypeOwnerPresenceLoop17Result::MlReadRecordTypeOwnerPresenceLoop17Done => {
                             false
                         }
-                        self::MlReadRecordTypeOwnerPresenceLoop16Result::MlReadRecordTypeOwnerPresenceLoop16Return(ml_result16) => {
-                            ml_result16
+                        self::MlReadRecordTypeOwnerPresenceLoop17Result::MlReadRecordTypeOwnerPresenceLoop17Return(ml_result17) => {
+                            ml_result17
                         }
                     }
                 }
@@ -860,7 +895,7 @@ pub fn ml_read_record_value_order_loop1(
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlAcceptRecordFieldNameLoop2Result {
-    MlAcceptRecordFieldNameLoop2Done,
-    MlAcceptRecordFieldNameLoop2Return(bool),
+pub enum MlReadRecordProjectionErrorLoop2Result {
+    MlReadRecordProjectionErrorLoop2Done,
+    MlReadRecordProjectionErrorLoop2Return(String),
 }

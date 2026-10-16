@@ -6,7 +6,7 @@ import { format } from 'node:util';
 import vm from 'node:vm';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { recordValueRulesPolicy, readRecordValueSourceModule } from '../scripts/generate-record-value-rules.mjs';
-import { acceptRecordFieldName, compareRecordFieldNames, readRecordValueOrder, readRecordFieldPosition, readRecordFieldOrder, readRecordFieldInsertionOrder, readRecordSpreadRole, readRecordTypeConstraintError, readRecordTypeConstraintStep, readRecordMethodError, readRecordFieldInferenceStep } from '../src/translation/record-value-rules.js';
+import { acceptRecordFieldName, compareRecordFieldNames, readRecordValueOrder, readRecordProjection, readRecordProjectionError, readRecordFieldPosition, readRecordFieldOrder, readRecordFieldInsertionOrder, readRecordSpreadRole, readRecordTypeConstraintError, readRecordTypeConstraintStep, readRecordMethodError, readRecordFieldInferenceStep } from '../src/translation/record-value-rules.js';
 import { typeError } from '../src/translation/diagnostics.js';
 import { containsRecordTypeOwner } from '../src/translation/record-type-facts.js';
 import { readCallableTypeChildren } from '../src/translation/callable-source.js';
@@ -280,7 +280,7 @@ test('record constraint steps preserve the actual original recursive solver muta
 
 test('the entire actual record planning module survives checked Links replay and automatic Rust emission', () => {
   const source = readRecordValueSourceModule();
-  const names = ['readRecordValueOrder', 'acceptRecordFieldName', 'compareRecordFieldNames', 'readRecordFieldPosition', 'readRecordFieldOrder', 'readRecordFieldInsertionOrder', 'readRecordSpreadRole', 'readRecordTypeConstraintStep', 'readRecordTypeConstraintError', 'readRecordMethodError', 'readRecordFieldInferenceStep', 'readRecordTypeOwnerPresence'];
+  const names = ['readRecordValueOrder', 'readRecordProjection', 'readRecordProjectionError', 'acceptRecordFieldName', 'compareRecordFieldNames', 'readRecordFieldPosition', 'readRecordFieldOrder', 'readRecordFieldInsertionOrder', 'readRecordSpreadRole', 'readRecordTypeConstraintStep', 'readRecordTypeConstraintError', 'readRecordMethodError', 'readRecordFieldInferenceStep', 'readRecordTypeOwnerPresence'];
   const privateNames = ['readRecordSortedFieldPositions', 'readRequiredRecordName', 'refuseRequiredRecordName', 'recordTypeFactField', 'recordTypeFactKind', 'recordTypeFactElements'];
   const dependencyNames = ['readRequiredNumberFact', 'readRequiredTextFact', 'readRequiredBooleanFact', 'refuseRequiredNumberFact', 'refuseRequiredTextFact', 'refuseRequiredBooleanFact'];
   const surface = parseJavaScript(source, { referenceSemantics: false });
@@ -298,6 +298,21 @@ test('the entire actual record planning module survives checked Links replay and
     const api = vm.runInNewContext(code + '\n({' + [...names, 'readRequiredRecordName'].join(',') + '});', {}, { timeout: 1000 });
     const copy = value => JSON.parse(JSON.stringify(value));
     assert.deepEqual(copy(api.readRecordValueOrder(3, false)), [0, 1, 2]);
+    assert.equal(api.readRecordProjection(), 'checked ordered record values');
+    for (const [projection, names, entries, expected] of [
+      ['checked ordered record values', [], [], ''],
+      ['checked ordered record values', [[97], [98]], [true, true], ''],
+      ['unchecked', [], [], 'unknown checked record projection'],
+      ['checked ordered record values', [[97]], [], 'checked record projection has inconsistent entry facts'],
+      ['checked ordered record values', [[97]], [false], 'checked record projection has a malformed field entry'],
+      ['checked ordered record values', [[65536]], [true], 'checked record projection has an invalid UTF16 field name'],
+      ['checked ordered record values', [[98], [97]], [true, true], 'checked record projection needs unique fields in UTF16 order'],
+      ['checked ordered record values', [[97], [97]], [true, true], 'checked record projection needs unique fields in UTF16 order'],
+    ]) {
+      assert.equal(readRecordProjectionError(projection, names, entries), expected);
+      assert.equal(api.readRecordProjectionError(projection, names, entries), expected);
+    }
+    assert.equal(readRecordProjection(), api.readRecordProjection());
     assert.equal(api.acceptRecordFieldName([0, 65535]), true);
     assert.equal(api.compareRecordFieldNames([97], [98]), -1);
     assert.equal(api.readRecordFieldPosition([[97], [98]], [98]), 1);

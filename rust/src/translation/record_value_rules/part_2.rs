@@ -4,10 +4,62 @@ use super::*;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_accept_record_field_name_loop2(
+pub fn ml_read_record_projection_error_loop2(
+    names: &[Vec<f64>],
+    entries: &[bool],
+    mut index: f64,
+) -> self::MlReadRecordProjectionErrorLoop2Result {
+    loop {
+        return if index < (names.len() as f64) {
+            if (match self::ml_array::optional_at(entries, self::ml_array::number_index(index)) {
+                Some(ml_present) => ml_present,
+                None => false,
+            }) {
+                if (self::accept_record_field_name(
+                    &(self::read_required_record_name(names, index)),
+                )) {
+                    if (index > 0f64)
+                        && ((self::compare_record_field_names(
+                            &(self::read_required_record_name(names, (index - 1f64))),
+                            &(self::read_required_record_name(names, index)),
+                        )) >= 0f64)
+                    {
+                        self::MlReadRecordProjectionErrorLoop2Result::MlReadRecordProjectionErrorLoop2Return(String::from("checked record projection needs unique fields in UTF16 order"))
+                    } else {
+                        {
+                            let index_2 = index + 1f64;
+                            {
+                                index = index_2;
+                                continue;
+                            }
+                        }
+                    }
+                } else {
+                    self::MlReadRecordProjectionErrorLoop2Result::MlReadRecordProjectionErrorLoop2Return(String::from("checked record projection has an invalid UTF16 field name"))
+                }
+            } else {
+                self::MlReadRecordProjectionErrorLoop2Result::MlReadRecordProjectionErrorLoop2Return(
+                    String::from("checked record projection has a malformed field entry"),
+                )
+            }
+        } else {
+            self::MlReadRecordProjectionErrorLoop2Result::MlReadRecordProjectionErrorLoop2Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlAcceptRecordFieldNameLoop3Result {
+    MlAcceptRecordFieldNameLoop3Done,
+    MlAcceptRecordFieldNameLoop3Return(bool),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn ml_accept_record_field_name_loop3(
     name: &[f64],
     mut index: f64,
-) -> self::MlAcceptRecordFieldNameLoop2Result {
+) -> self::MlAcceptRecordFieldNameLoop3Result {
     loop {
         return if index < (name.len() as f64) {
             {
@@ -24,7 +76,7 @@ pub fn ml_accept_record_field_name_loop2(
                         None => f64::NAN,
                     }) > 65_535f64)
                 {
-                    self::MlAcceptRecordFieldNameLoop2Result::MlAcceptRecordFieldNameLoop2Return(
+                    self::MlAcceptRecordFieldNameLoop3Result::MlAcceptRecordFieldNameLoop3Return(
                         false,
                     )
                 } else {
@@ -38,37 +90,37 @@ pub fn ml_accept_record_field_name_loop2(
                 }
             }
         } else {
-            self::MlAcceptRecordFieldNameLoop2Result::MlAcceptRecordFieldNameLoop2Done
+            self::MlAcceptRecordFieldNameLoop3Result::MlAcceptRecordFieldNameLoop3Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlCompareRecordFieldNamesLoop3Result {
-    MlCompareRecordFieldNamesLoop3Done,
-    MlCompareRecordFieldNamesLoop3Return(f64),
+pub enum MlCompareRecordFieldNamesLoop4Result {
+    MlCompareRecordFieldNamesLoop4Done,
+    MlCompareRecordFieldNamesLoop4Return(f64),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_compare_record_field_names_loop3(
+pub fn ml_compare_record_field_names_loop4(
     left: &[f64],
     right: &[f64],
     mut end: f64,
     mut index: f64,
-) -> self::MlCompareRecordFieldNamesLoop3Result {
+) -> self::MlCompareRecordFieldNamesLoop4Result {
     loop {
         return if index < end {
             if (self::read_required_number_fact(left, index))
                 < (self::read_required_number_fact(right, index))
             {
-                self::MlCompareRecordFieldNamesLoop3Result::MlCompareRecordFieldNamesLoop3Return(
+                self::MlCompareRecordFieldNamesLoop4Result::MlCompareRecordFieldNamesLoop4Return(
                     -1f64,
                 )
             } else if (self::read_required_number_fact(left, index))
                 > (self::read_required_number_fact(right, index))
             {
-                self::MlCompareRecordFieldNamesLoop3Result::MlCompareRecordFieldNamesLoop3Return(
+                self::MlCompareRecordFieldNamesLoop4Result::MlCompareRecordFieldNamesLoop4Return(
                     1f64,
                 )
             } else {
@@ -81,24 +133,24 @@ pub fn ml_compare_record_field_names_loop3(
                 }
             }
         } else {
-            self::MlCompareRecordFieldNamesLoop3Result::MlCompareRecordFieldNamesLoop3Done
+            self::MlCompareRecordFieldNamesLoop4Result::MlCompareRecordFieldNamesLoop4Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlReadRecordFieldPositionLoop5Result {
-    MlReadRecordFieldPositionLoop5Done,
-    MlReadRecordFieldPositionLoop5Return(f64),
+pub enum MlReadRecordFieldPositionLoop6Result {
+    MlReadRecordFieldPositionLoop6Done,
+    MlReadRecordFieldPositionLoop6Return(f64),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_record_field_position_loop5(
+pub fn ml_read_record_field_position_loop6(
     fields: &[Vec<f64>],
     name: &[f64],
     mut index: f64,
-) -> self::MlReadRecordFieldPositionLoop5Result {
+) -> self::MlReadRecordFieldPositionLoop6Result {
     loop {
         return if index < (fields.len() as f64) {
             {
@@ -116,29 +168,29 @@ pub fn ml_read_record_field_position_loop5(
                     }
                 }
                 {
-                    self::MlReadRecordFieldPositionLoop5Result::MlReadRecordFieldPositionLoop5Return(
+                    self::MlReadRecordFieldPositionLoop6Result::MlReadRecordFieldPositionLoop6Return(
                         index,
                     )
                 }
             }
         } else {
-            self::MlReadRecordFieldPositionLoop5Result::MlReadRecordFieldPositionLoop5Done
+            self::MlReadRecordFieldPositionLoop6Result::MlReadRecordFieldPositionLoop6Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlReadRecordFieldPositionLoop4Result {
-    MlReadRecordFieldPositionLoop4Done,
-    MlReadRecordFieldPositionLoop4Return(f64),
+pub enum MlReadRecordFieldPositionLoop5Result {
+    MlReadRecordFieldPositionLoop5Done,
+    MlReadRecordFieldPositionLoop5Return(f64),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_record_field_position_loop4(
+pub fn ml_read_record_field_position_loop5(
     fields: &[Vec<f64>],
     mut index: f64,
-) -> self::MlReadRecordFieldPositionLoop4Result {
+) -> self::MlReadRecordFieldPositionLoop5Result {
     loop {
         return if index < (fields.len() as f64) {
             if (self::accept_record_field_name(&(self::read_required_record_name(fields, index)))) {
@@ -151,19 +203,19 @@ pub fn ml_read_record_field_position_loop4(
                 }
             }
             {
-                self::MlReadRecordFieldPositionLoop4Result::MlReadRecordFieldPositionLoop4Return(
+                self::MlReadRecordFieldPositionLoop5Result::MlReadRecordFieldPositionLoop5Return(
                     -1f64,
                 )
             }
         } else {
-            self::MlReadRecordFieldPositionLoop4Result::MlReadRecordFieldPositionLoop4Done
+            self::MlReadRecordFieldPositionLoop5Result::MlReadRecordFieldPositionLoop5Done
         };
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_record_sorted_field_positions_loop9(
+pub fn ml_read_record_sorted_field_positions_loop10(
     fields: &[Vec<f64>],
     sorted: &[f64],
     mut merged: Vec<f64>,
@@ -225,7 +277,7 @@ pub fn ml_read_record_sorted_field_positions_loop9(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_record_sorted_field_positions_loop8(
+pub fn ml_read_record_sorted_field_positions_loop9(
     fields: &[Vec<f64>],
     sorted: &[f64],
     mut width: f64,
@@ -251,7 +303,7 @@ pub fn ml_read_record_sorted_field_positions_loop8(
                         {
                             let right = middle;
                             {
-                                let merged_2 = self::ml_read_record_sorted_field_positions_loop9(
+                                let merged_2 = self::ml_read_record_sorted_field_positions_loop10(
                                     fields, sorted, merged, middle, end, left, right,
                                 );
                                 {
@@ -273,7 +325,7 @@ pub fn ml_read_record_sorted_field_positions_loop8(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_record_sorted_field_positions_loop7(
+pub fn ml_read_record_sorted_field_positions_loop8(
     fields: &[Vec<f64>],
     mut sorted: Vec<f64>,
     mut width: f64,
@@ -285,7 +337,7 @@ pub fn ml_read_record_sorted_field_positions_loop7(
                 {
                     let start = 0f64;
                     {
-                        let merged_2 = self::ml_read_record_sorted_field_positions_loop8(
+                        let merged_2 = self::ml_read_record_sorted_field_positions_loop9(
                             fields,
                             &(sorted),
                             width,
@@ -311,17 +363,17 @@ pub fn ml_read_record_sorted_field_positions_loop7(
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlReadRecordSortedFieldPositionsLoop6Result {
-    MlReadRecordSortedFieldPositionsLoop6Done,
-    MlReadRecordSortedFieldPositionsLoop6Return(Vec<f64>),
+pub enum MlReadRecordSortedFieldPositionsLoop7Result {
+    MlReadRecordSortedFieldPositionsLoop7Done,
+    MlReadRecordSortedFieldPositionsLoop7Return(Vec<f64>),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_record_sorted_field_positions_loop6(
+pub fn ml_read_record_sorted_field_positions_loop7(
     fields: &[Vec<f64>],
     mut index: f64,
-) -> self::MlReadRecordSortedFieldPositionsLoop6Result {
+) -> self::MlReadRecordSortedFieldPositionsLoop7Result {
     loop {
         return if index < (fields.len() as f64) {
             if (self::accept_record_field_name(&(self::read_required_record_name(fields, index)))) {
@@ -334,17 +386,17 @@ pub fn ml_read_record_sorted_field_positions_loop6(
                 }
             }
             {
-                self::MlReadRecordSortedFieldPositionsLoop6Result::MlReadRecordSortedFieldPositionsLoop6Return(vec![-1f64])
+                self::MlReadRecordSortedFieldPositionsLoop7Result::MlReadRecordSortedFieldPositionsLoop7Return(vec![-1f64])
             }
         } else {
-            self::MlReadRecordSortedFieldPositionsLoop6Result::MlReadRecordSortedFieldPositionsLoop6Done
+            self::MlReadRecordSortedFieldPositionsLoop7Result::MlReadRecordSortedFieldPositionsLoop7Done
         };
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_record_field_order_loop10(
+pub fn ml_read_record_field_order_loop11(
     fields: &[Vec<f64>],
     sorted: &[f64],
     mut selected: Vec<f64>,
@@ -397,7 +449,7 @@ pub fn ml_read_record_field_order_loop10(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_record_field_insertion_order_loop13(
+pub fn ml_read_record_field_insertion_order_loop14(
     fields: &[Vec<f64>],
     first: &[f64],
     last: &[f64],
@@ -480,7 +532,7 @@ pub fn ml_read_record_field_insertion_order_loop13(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_record_field_insertion_order_loop12(
+pub fn ml_read_record_field_insertion_order_loop13(
     fields: &[Vec<f64>],
     first: &[f64],
     last: &[f64],
@@ -494,7 +546,7 @@ pub fn ml_read_record_field_insertion_order_loop12(
                 {
                     let upper = last.len() as f64;
                     {
-                        let selected_2 = self::ml_read_record_field_insertion_order_loop13(
+                        let selected_2 = self::ml_read_record_field_insertion_order_loop14(
                             fields, first, last, selected, index, lower, upper,
                         );
                         {
@@ -513,20 +565,20 @@ pub fn ml_read_record_field_insertion_order_loop12(
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlReadRecordFieldInsertionOrderLoop11Result {
-    MlReadRecordFieldInsertionOrderLoop11Done(Vec<f64>, Vec<f64>),
+pub enum MlReadRecordFieldInsertionOrderLoop12Result {
+    MlReadRecordFieldInsertionOrderLoop12Done(Vec<f64>, Vec<f64>),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_record_field_insertion_order_loop11(
+pub fn ml_read_record_field_insertion_order_loop12(
     fields: &[Vec<f64>],
     sorted: &[f64],
     mut first: Vec<f64>,
     mut last: Vec<f64>,
     mut start: f64,
     mut index: f64,
-) -> self::MlReadRecordFieldInsertionOrderLoop11Result {
+) -> self::MlReadRecordFieldInsertionOrderLoop12Result {
     loop {
         if index < (sorted.len() as f64) {
             if ((index + 1f64) >= (sorted.len() as f64))
@@ -578,30 +630,30 @@ pub fn ml_read_record_field_insertion_order_loop11(
             }
         }
         return {
-            self::MlReadRecordFieldInsertionOrderLoop11Result::MlReadRecordFieldInsertionOrderLoop11Done(first, last)
+            self::MlReadRecordFieldInsertionOrderLoop12Result::MlReadRecordFieldInsertionOrderLoop12Done(first, last)
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlRecordTypeFactFieldLoop14Result {
-    MlRecordTypeFactFieldLoop14Done,
-    MlRecordTypeFactFieldLoop14Return(f64),
+pub enum MlRecordTypeFactFieldLoop15Result {
+    MlRecordTypeFactFieldLoop15Done,
+    MlRecordTypeFactFieldLoop15Return(f64),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_record_type_fact_field_loop14(
+pub fn ml_record_type_fact_field_loop15(
     labels: &[String],
     targets: &[f64],
     name: &str,
     mut end: f64,
     mut edge: f64,
-) -> self::MlRecordTypeFactFieldLoop14Result {
+) -> self::MlRecordTypeFactFieldLoop15Result {
     loop {
         return if edge < end {
             if (self::read_required_text_fact(labels, edge)) == name {
-                self::MlRecordTypeFactFieldLoop14Result::MlRecordTypeFactFieldLoop14Return(
+                self::MlRecordTypeFactFieldLoop15Result::MlRecordTypeFactFieldLoop15Return(
                     self::read_required_number_fact(targets, edge),
                 )
             } else {
@@ -614,14 +666,14 @@ pub fn ml_record_type_fact_field_loop14(
                 }
             }
         } else {
-            self::MlRecordTypeFactFieldLoop14Result::MlRecordTypeFactFieldLoop14Done
+            self::MlRecordTypeFactFieldLoop15Result::MlRecordTypeFactFieldLoop15Done
         };
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_record_type_fact_elements_loop15(
+pub fn ml_record_type_fact_elements_loop16(
     targets: &[f64],
     mut values: Vec<f64>,
     mut end: f64,
@@ -649,14 +701,14 @@ pub fn ml_record_type_fact_elements_loop15(
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlReadRecordTypeOwnerPresenceLoop16Result {
-    MlReadRecordTypeOwnerPresenceLoop16Done,
-    MlReadRecordTypeOwnerPresenceLoop16Return(bool),
+pub enum MlReadRecordTypeOwnerPresenceLoop17Result {
+    MlReadRecordTypeOwnerPresenceLoop17Done,
+    MlReadRecordTypeOwnerPresenceLoop17Return(bool),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_record_type_owner_presence_loop18(
+pub fn ml_read_record_type_owner_presence_loop19(
     seen: &[f64],
     mut node: f64,
     mut visited: bool,
@@ -692,7 +744,7 @@ pub fn ml_read_record_type_owner_presence_loop18(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_record_type_owner_presence_loop19(
+pub fn ml_read_record_type_owner_presence_loop20(
     mut pending: Vec<f64>,
     children: &[f64],
     mut index: f64,
@@ -722,7 +774,7 @@ pub fn ml_read_record_type_owner_presence_loop19(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_record_type_owner_presence_loop20(
+pub fn ml_read_record_type_owner_presence_loop21(
     starts: &[f64],
     counts: &[f64],
     labels: &[String],
@@ -762,8 +814,8 @@ pub fn ml_read_record_type_owner_presence_loop20(
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlReadRecordTypeOwnerPresenceLoop17Result {
-    MlReadRecordTypeOwnerPresenceLoop17Done(f64, String),
+pub enum MlReadRecordTypeOwnerPresenceLoop18Result {
+    MlReadRecordTypeOwnerPresenceLoop18Done(f64, String),
 }
 
 /// Execute the checked shared source algorithm.
@@ -773,7 +825,7 @@ pub enum MlReadRecordTypeOwnerPresenceLoop17Result {
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-pub fn ml_read_record_type_owner_presence_loop17(
+pub fn ml_read_record_type_owner_presence_loop18(
     texts: &[String],
     numbers: &[f64],
     starts: &[f64],
@@ -783,7 +835,7 @@ pub fn ml_read_record_type_owner_presence_loop17(
     bindings: &[f64],
     mut node: f64,
     mut kind: String,
-) -> self::MlReadRecordTypeOwnerPresenceLoop17Result {
+) -> self::MlReadRecordTypeOwnerPresenceLoop18Result {
     loop {
         return if kind == "var" {
             {
@@ -793,7 +845,7 @@ pub fn ml_read_record_type_owner_presence_loop17(
                     if (!(self::ml_math::is_integer(variable)) || (variable < 0f64))
                         || (variable >= (bindings.len() as f64))
                     {
-                        self::MlReadRecordTypeOwnerPresenceLoop17Result::MlReadRecordTypeOwnerPresenceLoop17Done(node, kind.clone())
+                        self::MlReadRecordTypeOwnerPresenceLoop18Result::MlReadRecordTypeOwnerPresenceLoop18Done(node, kind.clone())
                     } else {
                         {
                             let bound = self::read_required_number_fact(bindings, variable);
@@ -802,7 +854,7 @@ pub fn ml_read_record_type_owner_presence_loop17(
                                     texts, starts, counts, labels, targets, bound,
                                 );
                                 if bound_kind == "" {
-                                    self::MlReadRecordTypeOwnerPresenceLoop17Result::MlReadRecordTypeOwnerPresenceLoop17Done(node, kind.clone())
+                                    self::MlReadRecordTypeOwnerPresenceLoop18Result::MlReadRecordTypeOwnerPresenceLoop18Done(node, kind.clone())
                                 } else {
                                     {
                                         let node_2 = bound;
@@ -821,7 +873,7 @@ pub fn ml_read_record_type_owner_presence_loop17(
                 }
             }
         } else {
-            self::MlReadRecordTypeOwnerPresenceLoop17Result::MlReadRecordTypeOwnerPresenceLoop17Done(
+            self::MlReadRecordTypeOwnerPresenceLoop18Result::MlReadRecordTypeOwnerPresenceLoop18Done(
                 node,
                 kind.clone(),
             )

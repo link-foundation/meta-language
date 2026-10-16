@@ -153,6 +153,7 @@ impl JavaScriptParser {
             return Ok(node(
                 SNode::Record {
                     entries,
+                    record_projection: None,
                     ty: None,
                     prototype_definition,
                 },
