@@ -15,6 +15,9 @@ const associativeDataSource = capture('associative-data-storage');
 const agentReductionSource = capture('gradual-agent-reduction');
 const localResourceScopeSource = 'parity/sources/meta-language-local-resource-scope-2026-10-16.txt';
 const ciCancellationInvestigationSource = 'parity/sources/ci-cancellation-investigation-2026-10-16.txt';
+const modernJavaScriptParitySource = 'parity/sources/modern-javascript-parity-expectations-2026-10-16.txt';
+const compactContributorInstructionsSource = 'parity/sources/compact-contributor-instructions-and-assertion-corrections-2026-10-16.txt';
+const versionBoundedAssertionsSource = 'parity/sources/version-bounded-assertions-2026-10-16.txt';
 const inferenceSource = 'parity/sources/grammar-inference-issue-224.txt';
 
 const sourceTooling = {
@@ -30,6 +33,12 @@ const sourceTooling = {
 };
 
 const sourceToolingFixtures = {
+  ...Object.fromEntries([
+    'I195-ASSERTION-EXPLICIT-VERSION-RANGES', 'I195-ASSERTION-VERSION-COVERAGE', 'I195-ASSERTION-LANGUAGE-EDITION-ORDER',
+  ].map(id => [id, [
+    { id: 'assertion-version-ranges', path: 'parity/assertion-version-ranges.lino' },
+    { id: 'unicode-identifier-properties', path: 'js/src/data/unicode-identifier-properties.lino' },
+  ]])),
   'I195-WORKFLOW-CANCELLED-CI-INVESTIGATION': [
     { id: 'ci-cancellation-investigation', path: 'parity/fixtures/ci-cancellation-investigation.lino' },
   ],
@@ -109,6 +118,36 @@ function rows(sourceKey, fixture, specification, area, declarations, tooling = f
     ...(sourceToolingFixtures[id] ? { additionalFixtures: sourceToolingFixtures[id] } : {}),
   }));
 }
+
+const ASSERTION_POLICY_CONVERSATION_REQUIREMENTS = Object.freeze([
+  ...rows('modernJavaScriptParityRequest', modernJavaScriptParitySource, 'critical-conversation-requirements', 'modern-javascript-parity', [
+    ['I195-PARITY-MODERN-JAVASCRIPT-ARRAY-BEHAVIOR', 'modern JavaScript string length and observable out of bounds array behavior',
+      'For the retained conflicting array and string inputs, use the newer JavaScript behavior in both runtime packages: actual UTF-16 code unit string lengths and observable out of bounds array reads remain part of the selected semantics. Preserve every original source input, including the complete ARRAYS corpus and the original string length source, and add genuine cross-runtime controls for supplementary Unicode and out of bounds reads rather than preserving obsolete contradictory native expectations.',
+      ['originalArrayAndStringInputsRetained', 'utf16StringLengthParityExecuted', 'observableOutOfBoundsParityExecuted']],
+    ['I195-PARITY-OBSOLETE-NATIVE-EXPECTATIONS', 'evidence based correction of obsolete native array expectations',
+      'Correct the obsolete Rust expectations identified in the captured question and answer to the newer JavaScript behavior while retaining all original test inputs and intended coverage. Record the actual contradictory before and after expectations and the active language or dependency context; genuine unsupported mutations and unrelated refusal boundaries remain required. Updating a wrong expectation is not permission to drop a fixture, hide a failed observation or claim unexecuted native parity.',
+      ['obsoleteExpectationConflictRecorded', 'correctedExpectationsFollowModernJavaScript', 'originalCoverageAndGenuineRefusalsRetained']],
+  ]),
+  ...rows('compactContributorInstructionsRequest', compactContributorInstructionsSource, 'critical-conversation-requirements', 'contributor-instructions', [
+    ['I195-CONTRIBUTOR-INSTRUCTIONS-CONCISE', 'minimal contributor instruction wording with unchanged obligations',
+      'Reduce AGENTS.md and CLAUDE.md to the minimum practical wording while retaining the same substantive contributor obligations and the authoritative vision reference. Shared instructions may be referenced to avoid duplication; brevity does not remove implementation, evidence, resource, JavaScript-first, native CI or review obligations.',
+      ['contributorInstructionsReducedWithoutLostObligations', 'sharedInstructionsRemainAuthoritative']],
+    ['I195-ASSERTION-EVIDENCE-BASED-CORRECTION', 'demonstrably wrong assertions remain correctable without losing coverage',
+      'Allow demonstrably wrong assertions and obsolete expected values to be corrected using recorded source, language or dependency evidence while preserving the original test inputs, genuine requirements, intended coverage and honest failure reporting. Record the reason and replacement expectation, update affected tests consistently and execute the corrected applicable assertions; a correction cannot excuse a real defect, weaken an acceptance obligation or stand in for execution evidence.',
+      ['wrongAssertionCorrectionSupportedByEvidence', 'originalInputsAndCoverageRetained', 'correctedApplicableAssertionsExecuted']],
+  ], true),
+  ...rows('versionBoundedAssertionsRequest', versionBoundedAssertionsSource, 'critical-conversation-requirements', 'assertion-version-ranges', [
+    ['I195-ASSERTION-EXPLICIT-VERSION-RANGES', 'explicit applicable version ranges for version dependent assertions',
+      'Every assertion whose expected behavior depends on a language or dependency version declares its version subject, explicit minimum and maximum bounds, endpoint inclusion and evidence for the expectation. Select and execute the expectation applicable to the actual active version instead of treating one historical result as valid for all versions; retain the original inputs and the recorded historical expectation.',
+      ['versionDependentExpectationsHaveExplicitBounds', 'activeVersionSelectsApplicableExpectation', 'historicalInputsAndExpectationsRetained']],
+    ['I195-ASSERTION-VERSION-COVERAGE', 'missing and conflicting active version expectation coverage refuses',
+      'Require exactly one applicable expectation for an active version and validate every declared range, including inactive alternatives. Missing coverage, overlapping or conflicting ranges, malformed versions and ambiguous expectation identities fail explicitly rather than skipping the assertion or choosing an arbitrary alternative.',
+      ['missingActiveVersionCoverageRefused', 'overlappingAndConflictingRangesRefused', 'allDeclaredRangesValidated']],
+    ['I195-ASSERTION-LANGUAGE-EDITION-ORDER', 'declared language edition order distinct from release coordinates',
+      'Compare dependency release coordinates with their explicit precision, and compare language editions using their declared order rather than assuming edition names obey semantic version ordering. Unknown active editions and invalid release coordinates refuse before expectation selection.',
+      ['releasePrecisionExplicit', 'languageEditionOrderExplicit', 'unknownEditionsAndInvalidCoordinatesRefused']],
+  ], true),
+]);
 
 export const CRITICAL_CONVERSATION_REQUIREMENTS = Object.freeze([
   ...rows('ciCancellationInvestigationRequest', ciCancellationInvestigationSource, 'critical-conversation-requirements', 'workflow-contract', [
@@ -468,4 +507,5 @@ export const CRITICAL_CONVERSATION_REQUIREMENTS = Object.freeze([
     ]
   ]
 ], true),
+  ...ASSERTION_POLICY_CONVERSATION_REQUIREMENTS,
 ]);

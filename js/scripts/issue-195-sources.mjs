@@ -23,6 +23,63 @@ export const TRACKED_ISSUES = Object.freeze([195, 199, 224]);
 export const TRACKED_PULL_REQUESTS = Object.freeze([196, 201]);
 const REPOSITORY_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
+// Actual direct conversation captures. Appending these declarations never
+// rewrites an earlier live source, capture, timestamp or ledger mapping.
+export const ASSERTION_POLICY_INSTRUCTION_SOURCES = Object.freeze([
+  {
+    id: 'modern-javascript-parity-expectations-2026-10-16',
+    key: 'modernJavaScriptParityRequest',
+    title: 'Use newer JavaScript behavior and correct obsolete native expectations',
+    role: 'Explicit user resolution of the retained Rust versus JavaScript string length and array bounds expectation conflict, with the exact question and reply.',
+    ledgerCoverage: ['I195-PARITY-MODERN-JAVASCRIPT-ARRAY-BEHAVIOR', 'I195-PARITY-OBSOLETE-NATIVE-EXPECTATIONS'],
+  },
+  {
+    id: 'compact-contributor-instructions-and-assertion-corrections-2026-10-16',
+    key: 'compactContributorInstructionsRequest',
+    title: 'Minimize contributor instructions and permit evidence based assertion corrections',
+    role: 'Direct user request to shorten AGENTS.md and CLAUDE.md without losing obligations and to allow genuinely wrong assertions to be fixed.',
+    ledgerCoverage: ['I195-CONTRIBUTOR-INSTRUCTIONS-CONCISE', 'I195-ASSERTION-EVIDENCE-BASED-CORRECTION'],
+  },
+  {
+    id: 'version-bounded-assertions-2026-10-16',
+    key: 'versionBoundedAssertionsRequest',
+    title: 'Bound version dependent assertions to the actual active language or dependency version',
+    role: 'Direct user requirement for explicit applicable version ranges on assertions that depend on language or dependency versions.',
+    ledgerCoverage: ['I195-ASSERTION-EXPLICIT-VERSION-RANGES', 'I195-ASSERTION-VERSION-COVERAGE', 'I195-ASSERTION-LANGUAGE-EDITION-ORDER'],
+  },
+].map(source => Object.freeze({ ...source, ledgerCoverage: Object.freeze(source.ledgerCoverage) })));
+
+/** Prepare append-only registrations from the actual captured UTF-8 bytes. */
+export async function appendAssertionPolicyInstructionSources(register, { root = REPOSITORY_ROOT, capturedAt = new Date().toISOString(), read = readFile } = {}) {
+  if (!Array.isArray(register?.requirementSources)) throw new TypeError('a requirement source register is required');
+  if (typeof capturedAt !== 'string' || !Number.isFinite(Date.parse(capturedAt))) {
+    throw new TypeError('an actual capture time is required; the conversation exposes no source timestamp');
+  }
+  const requirementSources = [...register.requirementSources];
+  for (const declaration of ASSERTION_POLICY_INSTRUCTION_SOURCES) {
+    const url = `parity/sources/${declaration.id}.txt`;
+    const body = await read(path.join(root, url), 'utf8');
+    const captured = { ...declaration, kind: 'direct-instruction', url, author: 'user',
+      createdAt: capturedAt, updatedAt: capturedAt,
+      revisionOrigin: 'capture time; the conversation does not expose a source timestamp',
+      bytes: byteLength(body), sha256: contentHash(body) };
+    const matches = registeredEntries(register).filter(entry => entry.id === declaration.id || entry.url === url || entry.key === declaration.key);
+    if (matches.length) {
+      if (matches.length !== 1 || matches[0].classification !== 'requirement') throw new Error(`conflicting captured source ${declaration.key}`);
+      const current = matches[0];
+      for (const field of ['id', 'key', 'kind', 'url', 'title', 'role', 'revisionOrigin', 'bytes', 'sha256']) {
+        if (current[field] !== captured[field]) throw new Error(`captured source ${declaration.key} changed ${field}`);
+      }
+      if (JSON.stringify(current.ledgerCoverage) !== JSON.stringify(captured.ledgerCoverage)) {
+        throw new Error(`captured source ${declaration.key} changed its original ledger coverage`);
+      }
+      continue;
+    }
+    requirementSources.push(captured);
+  }
+  return { ...register, requirementSources };
+}
+
 // Openings of the comments that the solver automation posts (session logs,
 // restart, usage-limit and resume notices and readiness markers); they carry
 // no requirements.

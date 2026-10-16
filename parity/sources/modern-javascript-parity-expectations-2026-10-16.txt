@@ -1,0 +1,3 @@
+<send_user_message_question_reply>
+[{"answer":"Use the newer JavaScript behavior and update obsolete expectations","question":"The retained Rust array tests require string-length translation to fail and array reads to assume valid bounds; newer JavaScript tests require UTF-16 string lengths and observable out-of-bounds behavior. These conflict for the same inputs. AGENTS.md forbids removing assertions, so I need your direction: should I update the obsolete Rust expectations to the newer JavaScript behavior while retaining all test inputs and adding parity checks?","questionItemId":"[\"request_user_input_async\",\"call_9b035e6f8985403a9cdd61aff00fbb3a\",0]"}]
+</send_user_message_question_reply>

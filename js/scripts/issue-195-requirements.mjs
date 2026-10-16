@@ -97,6 +97,12 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'parity/sources/own-language-complete-grammar-priority-2026-10-16.txt',
   routerPracticeRecordingRequest:
     'parity/sources/router-practice-reuse-and-current-recording-2026-10-16.txt',
+  modernJavaScriptParityRequest:
+    'parity/sources/modern-javascript-parity-expectations-2026-10-16.txt',
+  compactContributorInstructionsRequest:
+    'parity/sources/compact-contributor-instructions-and-assertion-corrections-2026-10-16.txt',
+  versionBoundedAssertionsRequest:
+    'parity/sources/version-bounded-assertions-2026-10-16.txt',
   grammarInferenceIssue:
     'https://github.com/link-foundation/meta-language/issues/224',
 });

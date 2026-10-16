@@ -10,6 +10,8 @@ import { test } from 'node:test';
 
 import { ISSUE_195_SOURCES } from '../scripts/issue-195-requirements.mjs';
 import {
+  ASSERTION_POLICY_INSTRUCTION_SOURCES,
+  appendAssertionPolicyInstructionSources,
   compareWithLiveDiscussion,
   contentHash,
   fetchLiveDiscussion,
@@ -241,4 +243,62 @@ test('captured conversation instructions detect changed or missing committed byt
   } finally {
     await rm(temporaryRoot, { recursive: true, force: true });
   }
+});
+
+test('reviewed assertion policy captures append exact source bytes without changing any original source', async () => {
+  const discussion = syntheticDiscussion();
+  const before = structuredClone(discussion.register);
+  const updated = await appendAssertionPolicyInstructionSources(discussion.register, { capturedAt: '2026-10-16T00:00:00.000Z' });
+  assert.deepEqual(discussion.register, before, 'the input register is not mutated');
+  assert.deepEqual(updated.requirementSources.slice(0, before.requirementSources.length), before.requirementSources);
+  assert.deepEqual(updated.statusReports, before.statusReports);
+  const additions = updated.requirementSources.slice(before.requirementSources.length);
+  assert.equal(additions.length, ASSERTION_POLICY_INSTRUCTION_SOURCES.length);
+  for (const [index, entry] of additions.entries()) {
+    const declaration = ASSERTION_POLICY_INSTRUCTION_SOURCES[index];
+    const body = readFileSync(repositoryFile(entry.url), 'utf8');
+    assert.equal(entry.id, declaration.id);
+    assert.equal(entry.key, declaration.key);
+    assert.equal(entry.sha256, contentHash(body));
+    assert.equal(entry.bytes, Buffer.byteLength(body, 'utf8'));
+    assert.equal(entry.revisionOrigin, 'capture time; the conversation does not expose a source timestamp');
+    assert.deepEqual(entry.ledgerCoverage, declaration.ledgerCoverage);
+  }
+  const rows = before.requirementSources.map((entry, index) => ({ id: `I195-ORIGINAL-${index}`, source: entry.url }));
+  rows.push(...additions.flatMap(entry => entry.ledgerCoverage.map(id => ({ id, source: entry.url }))));
+  const sources = Object.fromEntries(updated.requirementSources.map(({ key, url }) => [key, url]));
+  assert.deepEqual(validateSourceRegister(updated, { atomicRequirements: rows }, sources), []);
+  assert.deepEqual(await validateDirectInstructions(updated), []);
+});
+
+test('repeat source updates preserve the first capture time and each exact direct instruction entry', async () => {
+  const discussion = syntheticDiscussion();
+  const first = await appendAssertionPolicyInstructionSources(discussion.register, { capturedAt: '2026-10-16T00:00:00.000Z' });
+  const before = structuredClone(first);
+  const repeated = await appendAssertionPolicyInstructionSources(first, { capturedAt: '2026-10-17T12:34:56.000Z' });
+  assert.deepEqual(first, before, 'a repeat update does not mutate its register');
+  assert.deepEqual(repeated, first, 'neither old sources nor capture timestamps refresh');
+  const refreshed = refreshRegister(repeated, discussion);
+  assert.deepEqual(refreshed.requirementSources.filter(entry => entry.kind === 'direct-instruction'),
+    first.requirementSources.filter(entry => entry.kind === 'direct-instruction'), 'live revision refresh preserves direct capture metadata');
+});
+
+test('source updates refuse changed capture bytes and conflicting capture identities without rewriting the register', async () => {
+  const first = await appendAssertionPolicyInstructionSources(syntheticDiscussion().register, { capturedAt: '2026-10-16T00:00:00.000Z' });
+  const before = structuredClone(first);
+  await assert.rejects(appendAssertionPolicyInstructionSources(first, {
+    capturedAt: '2026-10-17T00:00:00.000Z',
+    read: async file => {
+      const body = readFileSync(file, 'utf8');
+      const changed = (body[0] === 'X' ? 'Y' : 'X') + body.slice(1);
+      assert.equal(Buffer.byteLength(changed, 'utf8'), Buffer.byteLength(body, 'utf8'));
+      return changed;
+    },
+  }), /changed sha256/u);
+  assert.deepEqual(first, before, 'refusing a changed capture preserves every old registration');
+  const conflicting = structuredClone(first);
+  conflicting.statusReports.push({ ...conflicting.requirementSources.at(-1) });
+  const conflictingBefore = structuredClone(conflicting);
+  await assert.rejects(appendAssertionPolicyInstructionSources(conflicting), /conflicting captured source/u);
+  assert.deepEqual(conflicting, conflictingBefore);
 });
