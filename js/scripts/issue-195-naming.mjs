@@ -36861,7 +36861,2732 @@ const BULK_FORTY_FIVE_NAME_INVENTORIES=[...new Set(BULK_FORTY_FIVE_NAME_BINDINGS
  recordOf: name => BULK_FORTY_FIVE_NAME_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id,
 }));
 // End B45 exact source repair registrations.
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES]);
+// B46 checked lexical repairs and exact fixture source controls.
+const BULK_FORTY_SIX_BINDINGS=[
+  {
+    "id": "translation.grammar-lexical-analyser-native-part-one",
+    "source": "rust/src/translation/grammar_lexer_rules.rs",
+    "name": "part_1",
+    "inventoryName": "part-one"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-part-two",
+    "source": "rust/src/translation/grammar_lexer_rules.rs",
+    "name": "part_2",
+    "inventoryName": "part-two"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-part-three",
+    "source": "rust/src/translation/grammar_lexer_rules.rs",
+    "name": "part_3",
+    "inventoryName": "part-three"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-part-four",
+    "source": "rust/src/translation/grammar_lexer_rules.rs",
+    "name": "part_4",
+    "inventoryName": "part-four"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-mathematics",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math",
+    "inventoryName": "meta-language-mathematics"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-mathematics-round",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math::round",
+    "inventoryName": "meta-language-mathematics-round"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-mathematics-sign",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math::sign",
+    "inventoryName": "meta-language-mathematics-sign"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-mathematics-maximum",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math::max",
+    "inventoryName": "meta-language-mathematics-maximum"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-mathematics-minimum",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math::min",
+    "inventoryName": "meta-language-mathematics-minimum"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-mathematics-maximum-of",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math::max_of",
+    "inventoryName": "meta-language-mathematics-maximum-of"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-mathematics-minimum-of",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math::min_of",
+    "inventoryName": "meta-language-mathematics-minimum-of"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-mathematics-is-integer",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math::is_integer",
+    "inventoryName": "meta-language-mathematics-is-integer"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-mathematics-is-safe-integer",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math::is_safe_integer",
+    "inventoryName": "meta-language-mathematics-is-safe-integer"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-array",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array",
+    "inventoryName": "meta-language-array"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-optional-at",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::optional_at",
+    "inventoryName": "meta-language-array-optional-at"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-at",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::at",
+    "inventoryName": "meta-language-array-at"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-number-index",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::number_index",
+    "inventoryName": "meta-language-array-number-index"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-append",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::append",
+    "inventoryName": "meta-language-array-append"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-integer",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::integer",
+    "inventoryName": "meta-language-array-integer"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-relative",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::relative",
+    "inventoryName": "meta-language-array-relative"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-slice",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::slice",
+    "inventoryName": "meta-language-array-slice"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-index-of",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::index_of",
+    "inventoryName": "meta-language-array-index-of"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-includes",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::includes",
+    "inventoryName": "meta-language-array-includes"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-set",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::set",
+    "inventoryName": "meta-language-array-set"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-map",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::map",
+    "inventoryName": "meta-language-array-map"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-string",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string",
+    "inventoryName": "meta-language-string"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-string-text",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::Text",
+    "inventoryName": "meta-language-string-text"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-format",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::fmt",
+    "inventoryName": "meta-language-string-format"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-from-text",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::from_text",
+    "inventoryName": "meta-language-string-from-text"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-from-units",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::from_units",
+    "inventoryName": "meta-language-string-from-units"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-length",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::length",
+    "inventoryName": "meta-language-string-length"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-concatenate",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::concat",
+    "inventoryName": "meta-language-string-concatenate"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-starts-with",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::starts_with",
+    "inventoryName": "meta-language-string-starts-with"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-ends-with",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::ends_with",
+    "inventoryName": "meta-language-string-ends-with"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-contains",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::contains",
+    "inventoryName": "meta-language-string-contains"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-slice",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::slice",
+    "inventoryName": "meta-language-string-slice"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-index-of",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::index_of",
+    "inventoryName": "meta-language-string-index-of"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-last-index-of",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::last_index_of",
+    "inventoryName": "meta-language-string-last-index-of"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-split",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::split",
+    "inventoryName": "meta-language-string-split"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-code-point-at",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::code_point_at",
+    "inventoryName": "meta-language-string-code-point-at"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-code-points",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::code_points",
+    "inventoryName": "meta-language-string-code-points"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-repeat",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::repeat",
+    "inventoryName": "meta-language-string-repeat"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-pad",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::pad",
+    "inventoryName": "meta-language-string-pad"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-replace",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::replace",
+    "inventoryName": "meta-language-string-replace"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-trim",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::trim",
+    "inventoryName": "meta-language-string-trim"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-map-case",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::map_case",
+    "inventoryName": "meta-language-string-map-case"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-join",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::join",
+    "inventoryName": "meta-language-string-join"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-integer",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::integer",
+    "inventoryName": "meta-language-string-integer"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-absolute",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::absolute",
+    "inventoryName": "meta-language-string-absolute"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-relative",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::relative",
+    "inventoryName": "meta-language-string-relative"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-unsigned-integer-thirty-two-bit",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::uint32",
+    "inventoryName": "meta-language-string-unsigned-integer-thirty-two-bit"
+  },
+  {
+    "id": "translation.append-grammar-lexical-analyser-native-replacement-template-expansion",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::substitute",
+    "inventoryName": "meta-language-string-substitute"
+  },
+  {
+    "id": "translation.refuse-required-number-fact",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "refuse_required_number_fact",
+    "inventoryName": "refuse-required-number-fact"
+  },
+  {
+    "id": "translation.refuse-required-text-fact",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "refuse_required_text_fact",
+    "inventoryName": "refuse-required-text-fact"
+  },
+  {
+    "id": "translation.refuse-required-boolean-fact",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "refuse_required_boolean_fact",
+    "inventoryName": "refuse-required-boolean-fact"
+  },
+  {
+    "id": "translation.read-required-number-fact",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "read_required_number_fact",
+    "inventoryName": "read-required-number-fact"
+  },
+  {
+    "id": "translation.read-required-text-fact",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "read_required_text_fact",
+    "inventoryName": "read-required-text-fact"
+  },
+  {
+    "id": "translation.read-required-boolean-fact",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "read_required_boolean_fact",
+    "inventoryName": "read-required-boolean-fact"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-entry-form",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "read_grammar_lexer_entry_form",
+    "inventoryName": "read-grammar-lexical-analyser-entry-form"
+  },
+  {
+    "id": "translation.accept-grammar-lexical-analyser-identifier",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "accept_grammar_lexer_identifier",
+    "inventoryName": "accept-grammar-lexical-analyser-identifier"
+  },
+  {
+    "id": "translation.accept-grammar-lexical-analyser-decimal",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "accept_grammar_lexer_decimal",
+    "inventoryName": "accept-grammar-lexical-analyser-decimal"
+  },
+  {
+    "id": "translation.contain-grammar-lexical-analyser-text",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "contains_grammar_lexer_text",
+    "inventoryName": "contains-grammar-lexical-analyser-text"
+  },
+  {
+    "id": "repository.read-grammar-lexical-analyser-position-membership",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "contains_grammar_lexer_position",
+    "inventoryName": "contains-grammar-lexical-analyser-position"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-section-rule-positions",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "read_grammar_lexer_section_rule_positions",
+    "inventoryName": "read-grammar-lexical-analyser-section-rule-positions"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-literal-rule-position",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "read_grammar_lexer_literal_rule_position",
+    "inventoryName": "read-grammar-lexical-analyser-literal-rule-position"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-binding-names",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "read_grammar_lexer_binding_names",
+    "inventoryName": "read-grammar-lexical-analyser-binding-names"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-command-plan",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "read_grammar_lexer_command_plan",
+    "inventoryName": "read-grammar-lexical-analyser-command-plan"
+  },
+  {
+    "id": "translation.accept-grammar-lexical-analyser-mode",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "accept_grammar_lexer_mode",
+    "inventoryName": "accept-grammar-lexical-analyser-mode"
+  },
+  {
+    "id": "translation.accept-grammar-lexical-analyser-trivia",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "accept_grammar_lexer_trivia",
+    "inventoryName": "accept-grammar-lexical-analyser-trivia"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-trivia-identity",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "read_grammar_lexer_trivia_identity",
+    "inventoryName": "read-grammar-lexical-analyser-trivia-identity"
+  },
+  {
+    "id": "translation.accept-grammar-lexical-analyser-expected-token",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "accept_grammar_lexer_expected_token",
+    "inventoryName": "accept-grammar-lexical-analyser-expected-token"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-declaration-issue",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "read_grammar_lexer_declaration_issue",
+    "inventoryName": "read-grammar-lexical-analyser-declaration-issue"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-obligation-positions",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "read_grammar_lexer_obligation_positions",
+    "inventoryName": "read-grammar-lexical-analyser-obligation-positions"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-lazy-normalization",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "read_grammar_lexer_lazy_normalization",
+    "inventoryName": "read-grammar-lexical-analyser-lazy-normalization"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-identifier-loop-one-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlAcceptGrammarLexerIdentifierLoop1Result",
+    "inventoryName": "meta-language-accept-grammar-lexical-analyser-identifier-loop-one-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-identifier-loop-one-result-meta-language-accept-grammar-lexical-analyser-identifier-loop-one-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlAcceptGrammarLexerIdentifierLoop1Result::MlAcceptGrammarLexerIdentifierLoop1Done",
+    "inventoryName": "meta-language-accept-grammar-lexical-analyser-identifier-loop-one-result-meta-language-accept-grammar-lexical-analyser-identifier-loop-one-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-identifier-loop-one-result-meta-language-accept-grammar-lexical-analyser-identifier-loop-one-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlAcceptGrammarLexerIdentifierLoop1Result::MlAcceptGrammarLexerIdentifierLoop1Return",
+    "inventoryName": "meta-language-accept-grammar-lexical-analyser-identifier-loop-one-result-meta-language-accept-grammar-lexical-analyser-identifier-loop-one-return"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-identifier-loop-one",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "ml_accept_grammar_lexer_identifier_loop1",
+    "inventoryName": "meta-language-accept-grammar-lexical-analyser-identifier-loop-one"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-decimal-loop-two-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlAcceptGrammarLexerDecimalLoop2Result",
+    "inventoryName": "meta-language-accept-grammar-lexical-analyser-decimal-loop-two-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-decimal-loop-two-result-meta-language-accept-grammar-lexical-analyser-decimal-loop-two-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlAcceptGrammarLexerDecimalLoop2Result::MlAcceptGrammarLexerDecimalLoop2Done",
+    "inventoryName": "meta-language-accept-grammar-lexical-analyser-decimal-loop-two-result-meta-language-accept-grammar-lexical-analyser-decimal-loop-two-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-decimal-loop-two-result-meta-language-accept-grammar-lexical-analyser-decimal-loop-two-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlAcceptGrammarLexerDecimalLoop2Result::MlAcceptGrammarLexerDecimalLoop2Return",
+    "inventoryName": "meta-language-accept-grammar-lexical-analyser-decimal-loop-two-result-meta-language-accept-grammar-lexical-analyser-decimal-loop-two-return"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-decimal-loop-two",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "ml_accept_grammar_lexer_decimal_loop2",
+    "inventoryName": "meta-language-accept-grammar-lexical-analyser-decimal-loop-two"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-text-loop-three-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlContainsGrammarLexerTextLoop3Result",
+    "inventoryName": "meta-language-contains-grammar-lexical-analyser-text-loop-three-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-text-loop-three-result-meta-language-contains-grammar-lexical-analyser-text-loop-three-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlContainsGrammarLexerTextLoop3Result::MlContainsGrammarLexerTextLoop3Done",
+    "inventoryName": "meta-language-contains-grammar-lexical-analyser-text-loop-three-result-meta-language-contains-grammar-lexical-analyser-text-loop-three-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-text-loop-three-result-meta-language-contains-grammar-lexical-analyser-text-loop-three-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlContainsGrammarLexerTextLoop3Result::MlContainsGrammarLexerTextLoop3Return",
+    "inventoryName": "meta-language-contains-grammar-lexical-analyser-text-loop-three-result-meta-language-contains-grammar-lexical-analyser-text-loop-three-return"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-text-loop-three",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "ml_contains_grammar_lexer_text_loop3",
+    "inventoryName": "meta-language-contains-grammar-lexical-analyser-text-loop-three"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-position-loop-four-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlContainsGrammarLexerPositionLoop4Result",
+    "inventoryName": "meta-language-contains-grammar-lexical-analyser-position-loop-four-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-position-loop-four-result-meta-language-contains-grammar-lexical-analyser-position-loop-four-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlContainsGrammarLexerPositionLoop4Result::MlContainsGrammarLexerPositionLoop4Done",
+    "inventoryName": "meta-language-contains-grammar-lexical-analyser-position-loop-four-result-meta-language-contains-grammar-lexical-analyser-position-loop-four-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-position-loop-four-result-meta-language-contains-grammar-lexical-analyser-position-loop-four-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlContainsGrammarLexerPositionLoop4Result::MlContainsGrammarLexerPositionLoop4Return",
+    "inventoryName": "meta-language-contains-grammar-lexical-analyser-position-loop-four-result-meta-language-contains-grammar-lexical-analyser-position-loop-four-return"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-position-loop-four",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "ml_contains_grammar_lexer_position_loop4",
+    "inventoryName": "meta-language-contains-grammar-lexical-analyser-position-loop-four"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-six",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "ml_read_grammar_lexer_section_rule_positions_loop6",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-six"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "ml_read_grammar_lexer_section_rule_positions_loop5",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerSectionRulePositionsLoop5Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five-result-meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerSectionRulePositionsLoop5Result::MlReadGrammarLexerSectionRulePositionsLoop5Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five-result-meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerLiteralRulePositionLoop7Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven-result-meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerLiteralRulePositionLoop7Result::MlReadGrammarLexerLiteralRulePositionLoop7Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven-result-meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-literal-rule-position-join-eight",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerLiteralRulePositionJoin8",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-rule-position-join-eight"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-literal-rule-position-join-eight-meta-language-read-grammar-lexical-analyser-literal-rule-position-join-eight-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerLiteralRulePositionJoin8::MlReadGrammarLexerLiteralRulePositionJoin8Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-rule-position-join-eight-meta-language-read-grammar-lexical-analyser-literal-rule-position-join-eight-next"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "ml_read_grammar_lexer_literal_rule_position_loop7",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-binding-names-loop-ten",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_binding_names_loop23",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-binding-names-loop-two-three"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-binding-names-loop-nine",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_binding_names_loop22",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-binding-names-loop-two-two"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-binding-names-loop-nine-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerBindingNamesLoop22Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-binding-names-loop-two-two-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-binding-names-loop-nine-result-meta-language-read-grammar-lexical-analyser-binding-names-loop-nine-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerBindingNamesLoop22Result::MlReadGrammarLexerBindingNamesLoop22Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-binding-names-loop-two-two-result-meta-language-read-grammar-lexical-analyser-binding-names-loop-two-two-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-loop-eleven-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerCommandPlanLoop24Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-command-plan-loop-two-four-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-loop-eleven-result-meta-language-read-grammar-lexical-analyser-command-plan-loop-eleven-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerCommandPlanLoop24Result::MlReadGrammarLexerCommandPlanLoop24Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-command-plan-loop-two-four-result-meta-language-read-grammar-lexical-analyser-command-plan-loop-two-four-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-join-thirteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerCommandPlanJoin26",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-command-plan-join-two-six"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-join-thirteen-meta-language-read-grammar-lexical-analyser-command-plan-join-thirteen-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerCommandPlanJoin26::MlReadGrammarLexerCommandPlanJoin26Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-command-plan-join-two-six-meta-language-read-grammar-lexical-analyser-command-plan-join-two-six-next"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-join-twelve",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerCommandPlanJoin25",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-command-plan-join-two-five"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-join-twelve-meta-language-read-grammar-lexical-analyser-command-plan-join-twelve-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerCommandPlanJoin25::MlReadGrammarLexerCommandPlanJoin25Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-command-plan-join-two-five-meta-language-read-grammar-lexical-analyser-command-plan-join-two-five-next"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-loop-fourteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_command_plan_loop27",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-command-plan-loop-two-seven"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-loop-eleven",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_command_plan_loop24",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-command-plan-loop-two-four"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-sixteen-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop29Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-two-nine-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-sixteen-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-sixteen-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop29Result::MlReadGrammarLexerDeclarationIssueLoop29Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-two-nine-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-two-nine-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-sixteen-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-sixteen-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop29Result::MlReadGrammarLexerDeclarationIssueLoop29Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-two-nine-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-two-nine-return"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-eighteen-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop31Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-three-one-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-eighteen-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-eighteen-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop31Result::MlReadGrammarLexerDeclarationIssueLoop31Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-three-one-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-three-one-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-eighteen-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-eighteen-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop31Result::MlReadGrammarLexerDeclarationIssueLoop31Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-three-one-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-three-one-return"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-fifteen-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop28Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-two-eight-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-fifteen-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-fifteen-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop28Result::MlReadGrammarLexerDeclarationIssueLoop28Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-two-eight-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-two-eight-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-fifteen-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-fifteen-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop28Result::MlReadGrammarLexerDeclarationIssueLoop28Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-two-eight-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-two-eight-return"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-seventeen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin30",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-zero"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-seventeen-meta-language-read-grammar-lexical-analyser-declaration-issue-join-seventeen-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin30::MlReadGrammarLexerDeclarationIssueJoin30Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-zero-meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-zero-next"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-seventeen-meta-language-read-grammar-lexical-analyser-declaration-issue-join-seventeen-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin30::MlReadGrammarLexerDeclarationIssueJoin30Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-zero-meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-zero-return"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-nineteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin32",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-two"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-nineteen-meta-language-read-grammar-lexical-analyser-declaration-issue-join-nineteen-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin32::MlReadGrammarLexerDeclarationIssueJoin32Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-two-meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-two-next"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-nineteen-meta-language-read-grammar-lexical-analyser-declaration-issue-join-nineteen-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin32::MlReadGrammarLexerDeclarationIssueJoin32Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-two-meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-two-return"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-three",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin36",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-six"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-three-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-three-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin36::MlReadGrammarLexerDeclarationIssueJoin36Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-six-meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-six-next"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-three-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-three-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin36::MlReadGrammarLexerDeclarationIssueJoin36Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-six-meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-six-return"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-two",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin35",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-five"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-two-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-two-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin35::MlReadGrammarLexerDeclarationIssueJoin35Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-five-meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-five-next"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-two-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-two-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin35::MlReadGrammarLexerDeclarationIssueJoin35Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-five-meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-five-return"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-one",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin34",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-four"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-one-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-one-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin34::MlReadGrammarLexerDeclarationIssueJoin34Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-four-meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-four-next"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-one-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-one-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin34::MlReadGrammarLexerDeclarationIssueJoin34Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-four-meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-four-return"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin33",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-three"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin33::MlReadGrammarLexerDeclarationIssueJoin33Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-three-meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-three-next"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin33::MlReadGrammarLexerDeclarationIssueJoin33Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-three-meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-three-return"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-eighteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_declaration_issue_loop31",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-three-one"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-sixteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_declaration_issue_loop29",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-two-nine"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-fifteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_declaration_issue_loop28",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-two-eight"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-five",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_obligation_positions_loop38",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-loop-three-eight"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-seven",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_obligation_positions_loop40",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-loop-four-zero"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-four",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_obligation_positions_loop37",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-loop-three-seven"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-four-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerObligationPositionsLoop37Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-loop-three-seven-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-four-result-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-four-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerObligationPositionsLoop37Result::MlReadGrammarLexerObligationPositionsLoop37Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-loop-three-seven-result-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-three-seven-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-four-result-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-four-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerObligationPositionsLoop37Result::MlReadGrammarLexerObligationPositionsLoop37Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-loop-three-seven-result-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-three-seven-return"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-seven-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerObligationPositionsLoop40Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-loop-four-zero-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-seven-result-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-seven-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerObligationPositionsLoop40Result::MlReadGrammarLexerObligationPositionsLoop40Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-loop-four-zero-result-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-four-zero-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-join-twenty-six",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerObligationPositionsJoin39",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-join-three-nine"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-join-twenty-six-meta-language-read-grammar-lexical-analyser-obligation-positions-join-twenty-six-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerObligationPositionsJoin39::MlReadGrammarLexerObligationPositionsJoin39Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-join-three-nine-meta-language-read-grammar-lexical-analyser-obligation-positions-join-three-nine-next"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-lazy-normalization-loop-thirty",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_lazy_normalization_loop43",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-lazy-normalization-loop-four-three"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-lazy-normalization-loop-twenty-nine",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_lazy_normalization_loop42",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-lazy-normalization-loop-four-two"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-lazy-normalization-loop-twenty-eight",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "ml_read_grammar_lexer_lazy_normalization_loop41",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-lazy-normalization-loop-four-one"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-text-position",
+    "source": "js/src/translation/grammar-lexer-rules.js",
+    "name": "readGrammarLexerTextPosition",
+    "inventoryName": "read-grammar-lexical-analyser-text-position"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-text-position",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "read_grammar_lexer_text_position",
+    "inventoryName": "read-grammar-lexical-analyser-text-position"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-literal-extension",
+    "source": "js/src/translation/grammar-lexer-rules.js",
+    "name": "readGrammarLexerLiteralExtension",
+    "inventoryName": "read-grammar-lexical-analyser-literal-extension"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-literal-extension",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "read_grammar_lexer_literal_extension",
+    "inventoryName": "read-grammar-lexical-analyser-literal-extension"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-owner-comparison",
+    "source": "js/src/translation/grammar-lexer-rules.js",
+    "name": "readGrammarLexerOwnerComparison",
+    "inventoryName": "read-grammar-lexical-analyser-owner-comparison"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-owner-comparison",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "read_grammar_lexer_owner_comparison",
+    "inventoryName": "read-grammar-lexical-analyser-owner-comparison"
+  },
+  {
+    "id": "repository.render-grammar-lexical-owner-comparison",
+    "source": "js/src/grammar-round-trip.js",
+    "name": "renderGrammarLexicalOwnerComparison",
+    "inventoryName": "render-grammar-lexical-owner-comparison"
+  },
+  {
+    "id": "repository.render-grammar-lexical-owner-comparison",
+    "source": "rust/src/grammar/round_trip.rs",
+    "name": "render_grammar_lexical_owner_comparison",
+    "inventoryName": "render-grammar-lexical-owner-comparison"
+  },
+  {
+    "id": "repository.render-grammar-lexical-owner-comparison",
+    "source": "rust/src/grammar/mod.rs",
+    "name": "render_grammar_lexical_owner_comparison",
+    "inventoryName": "render-grammar-lexical-owner-comparison"
+  },
+  {
+    "id": "repository.render-grammar-lexical-owner-comparison",
+    "source": "rust/src/lib.rs",
+    "name": "render_grammar_lexical_owner_comparison",
+    "inventoryName": "render-grammar-lexical-owner-comparison"
+  },
+  {
+    "id": "repository.extend-grammar-lexical-analyser-literal",
+    "source": "js/src/grammar-round-trip.js",
+    "name": "extendGrammarLexerLiteral",
+    "inventoryName": "extend-grammar-lexical-analyser-literal"
+  },
+  {
+    "id": "repository.read-native-round-trip-lexical-form",
+    "source": "rust/src/grammar/round_trip/lexical.rs",
+    "name": "as_form",
+    "inventoryName": "as-form"
+  },
+  {
+    "id": "repository.collect-native-round-trip-parser-literals",
+    "source": "rust/src/grammar/round_trip/lexical.rs",
+    "name": "literal_values",
+    "inventoryName": "literal-values"
+  },
+  {
+    "id": "repository.construct-native-round-trip-lexical-form",
+    "source": "rust/src/grammar/round_trip/lexical.rs",
+    "name": "form",
+    "inventoryName": "form"
+  },
+  {
+    "id": "repository.construct-native-round-trip-name-field",
+    "source": "rust/src/grammar/round_trip/lexical.rs",
+    "name": "named",
+    "inventoryName": "named"
+  },
+  {
+    "id": "repository.extend-native-round-trip-lexical-literal",
+    "source": "rust/src/grammar/round_trip/lexical.rs",
+    "name": "extend_literal",
+    "inventoryName": "extend-literal"
+  },
+  {
+    "id": "repository.project-native-round-trip-owner-comparison",
+    "source": "rust/src/grammar/round_trip/lexical.rs",
+    "name": "canonical_owners",
+    "inventoryName": "canonical-owners"
+  },
+  {
+    "id": "repository.transport-native-lexical-literal-extension",
+    "source": "rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "name": "literal_extension",
+    "inventoryName": "literal-extension"
+  },
+  {
+    "id": "repository.transport-native-lexical-owner-comparison",
+    "source": "rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "name": "owner_comparison",
+    "inventoryName": "owner-comparison"
+  },
+  {
+    "id": "repository.grammar-round-trip-lexical-declaration-error",
+    "source": "rust/src/grammar/round_trip.rs",
+    "name": "GrammarRoundTripError::LexicalDeclaration",
+    "inventoryName": "grammar-round-trip-error-lexical-declaration"
+  },
+  {
+    "id": "repository.source-rule-native-style-identity",
+    "source": "js/scripts/frontend-rule-style-corrections.mjs",
+    "name": "frontendRuleNativeStyleId",
+    "inventoryName": "source-reader-rule-native-style-identity"
+  },
+  {
+    "id": "repository.read-source-rule-native-style-corrections",
+    "source": "js/scripts/frontend-rule-style-corrections.mjs",
+    "name": "readFrontendRuleStyleCorrections",
+    "inventoryName": "read-source-reader-rule-style-corrections"
+  },
+  {
+    "id": "repository.simplify-rust-option-identity-matches",
+    "source": "js/scripts/reviewed-rust-branch-styles.mjs",
+    "name": "simplifyRustOptionIdentityMatches",
+    "inventoryName": "simplify-rust-option-identity-matches"
+  },
+  {
+    "id": "repository.omit-reverse-fixture-lexical-declaration-lines",
+    "source": "js/scripts/antlr-reverse-fixture-lexers.mjs",
+    "name": "withoutLexerDeclarations",
+    "inventoryName": "without-lexical-analyser-declarations"
+  },
+  {
+    "id": "repository.derive-another-tool-for-language-recognition-reverse-fixture-links",
+    "source": "js/scripts/antlr-reverse-fixture-lexers.mjs",
+    "name": "deriveAntlrReverseFixtureLinks",
+    "inventoryName": "derive-another-tool-for-language-recognition-reverse-fixture-links"
+  },
+  {
+    "id": "repository.normalize-migration-lexical-fixture-declarations",
+    "source": "js/scripts/antlr-reverse-fixture-lexers.mjs",
+    "name": "normalizeMigrationAntlrLexerDeclarations",
+    "inventoryName": "normalize-migration-another-tool-for-language-recognition-lexical-analyser-declarations"
+  },
+  {
+    "id": "repository.refresh-another-tool-for-language-recognition-reverse-fixture-lexical-declarations",
+    "source": "js/scripts/antlr-reverse-fixture-lexers.mjs",
+    "name": "refreshAntlrReverseFixtureLexers",
+    "inventoryName": "refresh-another-tool-for-language-recognition-reverse-fixture-lexical-analysers"
+  },
+  {
+    "id": "repository.read-reverse-fixture-selected-field-path",
+    "source": "js/scripts/antlr-reverse-fixture-lexers.mjs",
+    "name": "read",
+    "inventoryName": "read"
+  },
+  {
+    "id": "repository.reverse-fixture-derived-links-field-paths",
+    "source": "js/scripts/antlr-reverse-fixture-lexers.mjs",
+    "name": "fields",
+    "inventoryName": "fields"
+  },
+  {
+    "id": "repository.generate-another-tool-for-language-recognition-reverse-fixture",
+    "source": "js/scripts/generate-antlr-reverse-fixture.mjs",
+    "name": "generateAntlrReverseFixture",
+    "inventoryName": "generate-another-tool-for-language-recognition-reverse-fixture"
+  },
+  {
+    "id": "repository.reviewed-overlay-provider-policy",
+    "source": "experiments/rust-text-certificate-adapter/reviewed-providers.mjs",
+    "name": "reviewedOverlayProviderPolicy",
+    "inventoryName": "reviewed-overlay-provider-policy"
+  },
+  {
+    "id": "repository.read-reviewed-overlay-provider-sources",
+    "source": "experiments/rust-text-certificate-adapter/reviewed-providers.mjs",
+    "name": "readReviewedOverlayProviderSources",
+    "inventoryName": "read-reviewed-overlay-provider-sources"
+  },
+  {
+    "id": "repository.write-reviewed-overlay-provider-policy",
+    "source": "experiments/rust-text-certificate-adapter/reviewed-providers.mjs",
+    "name": "writeReviewedOverlayProviderPolicy",
+    "inventoryName": "write-reviewed-overlay-provider-policy"
+  },
+  {
+    "id": "repository.construct-authored-lexical-refresh-fixture",
+    "source": "js/tests/grammar-antlr-fixture-lexical-refresh.test.js",
+    "name": "historicalFixture",
+    "inventoryName": "historical-fixture"
+  },
+  {
+    "id": "repository.check-derived-lexical-fixture-refresh",
+    "source": "js/tests/grammar-antlr-fixture-lexical-refresh.test.js",
+    "name": "ANTLR fixture refresh authenticates only added derived lexer declaration lines",
+    "inventoryName": "another-tool-for-language-recognition-fixture-refresh-authenticates-only-added-derived-lexical-analyser-declaration-lines"
+  },
+  {
+    "id": "repository.check-lexical-fixture-refresh-refusals",
+    "source": "js/tests/grammar-antlr-fixture-lexical-refresh.test.js",
+    "name": "ANTLR fixture refresh refuses removed clauses, forged lexer lines and any protected source or sample edit",
+    "inventoryName": "another-tool-for-language-recognition-fixture-refresh-refuses-removed-clauses-forged-lexical-analyser-lines-and-any-protected-source-or-sample-edit"
+  },
+  {
+    "id": "repository.check-lexical-mutation-token-priority",
+    "source": "js/tests/grammar-round-trip-lexical-mutation.test.js",
+    "name": "ANTLR round-trip mutation inserts its literal before explicit rules and renumbers later implicit tokens",
+    "inventoryName": "another-tool-for-language-recognition-round-trip-mutation-inserts-its-literal-before-explicit-rules-and-changes-number-order-later-implicit-tokens"
+  },
+  {
+    "id": "repository.check-lexical-mutation-existing-identities",
+    "source": "js/tests/grammar-round-trip-lexical-mutation.test.js",
+    "name": "ANTLR round-trip mutation reuses existing explicit or implicit identities without duplicating tokens",
+    "inventoryName": "another-tool-for-language-recognition-round-trip-mutation-reuses-existing-explicit-or-implicit-identities-without-duplicating-tokens"
+  },
+  {
+    "id": "repository.check-lexical-mutation-ambiguous-aliases",
+    "source": "js/tests/grammar-round-trip-lexical-mutation.test.js",
+    "name": "ANTLR ambiguous marker aliases remain unresolved and native grammar declarations stay intact",
+    "inventoryName": "another-tool-for-language-recognition-ambiguous-marker-aliases-remain-unresolved-and-native-grammar-declarations-stay-intact"
+  },
+  {
+    "id": "repository.check-lexical-owner-comparison-correspondence",
+    "source": "js/tests/grammar-round-trip-lexical-mutation.test.js",
+    "name": "ANTLR owner comparison proves a public-binding bijection while preserving actual original aliases",
+    "inventoryName": "another-tool-for-language-recognition-owner-comparison-proves-a-public-binding-one-to-one-correspondence-while-preserving-actual-original-aliases"
+  },
+  {
+    "id": "repository.check-portable-lexical-literal-extension",
+    "source": "js/tests/grammar-lexer-rules.test.js",
+    "name": "portable lexer literal extension retains priority, original indices and later implicit identities",
+    "inventoryName": "portable-lexical-analyser-literal-extension-retains-priority-original-positions-and-later-implicit-identities"
+  },
+  {
+    "id": "repository.check-portable-lexical-owner-comparison",
+    "source": "js/tests/grammar-lexer-rules.test.js",
+    "name": "portable lexer owner comparison requires bijective actual references and preserves lexical rule identities",
+    "inventoryName": "portable-lexical-analyser-owner-comparison-requires-one-to-one-actual-references-and-preserves-lexical-rule-identities"
+  },
+  {
+    "id": "repository.check-complete-source-rule-native-styles",
+    "source": "js/tests/translation-frontend-rule-styles.test.js",
+    "name": "reviewed frontend styles repair all fifteen CI diagnostics in their three complete source owners",
+    "inventoryName": "reviewed-source-reader-styles-repair-all-fifteen-continuous-integration-diagnostics-in-the-three-complete-source-owners"
+  },
+  {
+    "id": "repository.check-option-identity-style-boundaries",
+    "source": "js/tests/translation-frontend-rule-styles.test.js",
+    "name": "Option identity styles preserve pure defaults and leave effects, nonidentity arms and target text intact",
+    "inventoryName": "option-identity-styles-preserve-pure-defaults-and-leave-effects-non-identity-arms-and-target-text-intact"
+  },
+  {
+    "id": "repository.check-source-lexical-winner-number-boundaries",
+    "source": "js/tests/translation-frontend-rule-styles.test.js",
+    "name": "frontend lexical election retains declaration order, bounded columns, sparse flags and unordered Number behavior",
+    "inventoryName": "source-reader-lexical-election-retains-declaration-order-bounded-columns-sparse-flags-and-unordered-number-behavior"
+  },
+  {
+    "id": "repository.check-reviewed-overlay-provider-revisions",
+    "source": "experiments/rust-text-certificate-adapter/overlay-builder.test.mjs",
+    "name": "reviewed provider revisions preserve historical receipts and refuse every unreviewed byte change",
+    "inventoryName": "reviewed-provider-revisions-preserve-historical-receipts-and-refuse-every-without-review-byte-change"
+  },
+  {
+    "id": "repository.check-shared-grammar-context-storage-conservation",
+    "source": "js/tests/global-concept-space.test.js",
+    "name": "shared grammar contexts preserve historical graph decisions while reducing stored shape bytes",
+    "inventoryName": "shared-grammar-contexts-preserve-historical-graph-decisions-while-reducing-stored-shape-bytes"
+  },
+  {
+    "id": "repository.check-native-lexical-mutation-token-priority",
+    "source": "rust/tests/unit/grammar_round_trip_lexical_mutation.rs",
+    "name": "lexical_round_trip_mutation_retains_source_order_and_renumbers_later_implicit_tokens",
+    "inventoryName": "lexical-round-trip-mutation-retains-source-order-and-changes-number-order-later-implicit-tokens"
+  },
+  {
+    "id": "repository.check-native-lexical-mutation-existing-identities",
+    "source": "rust/tests/unit/grammar_round_trip_lexical_mutation.rs",
+    "name": "lexical_round_trip_mutation_reuses_existing_tokens_and_preserves_unknown_aliases",
+    "inventoryName": "lexical-round-trip-mutation-reuses-existing-tokens-and-preserves-unknown-aliases"
+  },
+  {
+    "id": "repository.check-native-lexical-owner-comparison",
+    "source": "rust/tests/unit/grammar_round_trip_lexical_mutation.rs",
+    "name": "lexical_owner_comparison_checks_actual_bijections_and_keeps_every_other_clause",
+    "inventoryName": "lexical-owner-comparison-checks-actual-one-to-one-correspondence-and-keeps-every-other-clause"
+  },
+  {
+    "id": "repository.check-explicit-collector-selection-and-current-production-append",
+    "source": "experiments/fresh-number-array-collectors/model.test.mjs",
+    "name": "the experimental model remains explicit while original fresh collectors also use production append proofs",
+    "inventoryName": "the-experimental-model-remains-explicit-while-original-fresh-collectors-also-use-production-append-proofs"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-part-five",
+    "source": "rust/src/translation/grammar_lexer_rules.rs",
+    "name": "part_5",
+    "inventoryName": "part-five"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-text-position-loop-nine-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerTextPositionLoop9Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-text-position-loop-nine-result"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-text-position-loop-nine-result-meta-language-read-grammar-lexical-analyser-text-position-loop-nine-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerTextPositionLoop9Result::MlReadGrammarLexerTextPositionLoop9Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-text-position-loop-nine-result-meta-language-read-grammar-lexical-analyser-text-position-loop-nine-done"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-text-position-loop-nine-result-meta-language-read-grammar-lexical-analyser-text-position-loop-nine-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerTextPositionLoop9Result::MlReadGrammarLexerTextPositionLoop9Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-text-position-loop-nine-result-meta-language-read-grammar-lexical-analyser-text-position-loop-nine-return"
+  },
+  {
+    "id": "translation.execute-lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-text-position-loop-nine",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "ml_read_grammar_lexer_text_position_loop9",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-text-position-loop-nine"
+  },
+  {
+    "id": "translation.execute-lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-fourteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_literal_extension_loop14",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-four"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-thirteen-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionLoop13Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-three-result"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-thirteen-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-thirteen-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionLoop13Result::MlReadGrammarLexerLiteralExtensionLoop13Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-three-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-three-done"
+  },
+  {
+    "id": "translation.execute-lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-thirteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_literal_extension_loop13",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-three"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-twelve-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionLoop12Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-two-result"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-twelve-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-twelve-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionLoop12Result::MlReadGrammarLexerLiteralExtensionLoop12Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-two-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-two-done"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-twelve-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-twelve-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionLoop12Result::MlReadGrammarLexerLiteralExtensionLoop12Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-two-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-two-return"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-join-fifteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionJoin15",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-join-one-five"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-join-fifteen-meta-language-read-grammar-lexical-analyser-literal-extension-join-fifteen-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionJoin15::MlReadGrammarLexerLiteralExtensionJoin15Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-join-one-five-meta-language-read-grammar-lexical-analyser-literal-extension-join-one-five-next"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-join-fifteen-meta-language-read-grammar-lexical-analyser-literal-extension-join-fifteen-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionJoin15::MlReadGrammarLexerLiteralExtensionJoin15Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-join-one-five-meta-language-read-grammar-lexical-analyser-literal-extension-join-one-five-return"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-sixteen-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionLoop16Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-six-result"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-sixteen-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-sixteen-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionLoop16Result::MlReadGrammarLexerLiteralExtensionLoop16Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-six-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-six-done"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-join-seventeen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionJoin17",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-join-one-seven"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-join-seventeen-meta-language-read-grammar-lexical-analyser-literal-extension-join-seventeen-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionJoin17::MlReadGrammarLexerLiteralExtensionJoin17Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-join-one-seven-meta-language-read-grammar-lexical-analyser-literal-extension-join-one-seven-next"
+  },
+  {
+    "id": "translation.execute-lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-sixteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_literal_extension_loop16",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-six"
+  },
+  {
+    "id": "translation.execute-lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-twelve",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_literal_extension_loop12",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-two"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-eleven-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionLoop11Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-one-result"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-eleven-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-eleven-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionLoop11Result::MlReadGrammarLexerLiteralExtensionLoop11Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-one-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-one-done"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-eleven-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-eleven-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionLoop11Result::MlReadGrammarLexerLiteralExtensionLoop11Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-one-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-one-return"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-join-eighteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionJoin18",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-join-one-eight"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-join-eighteen-meta-language-read-grammar-lexical-analyser-literal-extension-join-eighteen-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionJoin18::MlReadGrammarLexerLiteralExtensionJoin18Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-join-one-eight-meta-language-read-grammar-lexical-analyser-literal-extension-join-one-eight-next"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-join-eighteen-meta-language-read-grammar-lexical-analyser-literal-extension-join-eighteen-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionJoin18::MlReadGrammarLexerLiteralExtensionJoin18Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-join-one-eight-meta-language-read-grammar-lexical-analyser-literal-extension-join-one-eight-return"
+  },
+  {
+    "id": "translation.execute-lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-eleven",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_literal_extension_loop11",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-one"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-ten-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionLoop10Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-zero-result"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-ten-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-ten-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionLoop10Result::MlReadGrammarLexerLiteralExtensionLoop10Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-zero-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-zero-done"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-ten-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-ten-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionLoop10Result::MlReadGrammarLexerLiteralExtensionLoop10Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-zero-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-zero-return"
+  },
+  {
+    "id": "translation.execute-lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-ten",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_literal_extension_loop10",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-zero"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-twenty-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerOwnerComparisonLoop20Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-owner-comparison-loop-two-zero-result"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-twenty-result-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-twenty-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerOwnerComparisonLoop20Result::MlReadGrammarLexerOwnerComparisonLoop20Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-owner-comparison-loop-two-zero-result-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-two-zero-done"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-twenty-result-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-twenty-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerOwnerComparisonLoop20Result::MlReadGrammarLexerOwnerComparisonLoop20Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-owner-comparison-loop-two-zero-result-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-two-zero-return"
+  },
+  {
+    "id": "translation.execute-lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-twenty",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_owner_comparison_loop20",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-owner-comparison-loop-two-zero"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-nineteen-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerOwnerComparisonLoop19Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-owner-comparison-loop-one-nine-result"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-nineteen-result-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-nineteen-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerOwnerComparisonLoop19Result::MlReadGrammarLexerOwnerComparisonLoop19Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-owner-comparison-loop-one-nine-result-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-one-nine-done"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-nineteen-result-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-nineteen-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerOwnerComparisonLoop19Result::MlReadGrammarLexerOwnerComparisonLoop19Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-owner-comparison-loop-one-nine-result-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-one-nine-return"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-owner-comparison-join-twenty-one",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerOwnerComparisonJoin21",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-owner-comparison-join-two-one"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-owner-comparison-join-twenty-one-meta-language-read-grammar-lexical-analyser-owner-comparison-join-twenty-one-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerOwnerComparisonJoin21::MlReadGrammarLexerOwnerComparisonJoin21Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-owner-comparison-join-two-one-meta-language-read-grammar-lexical-analyser-owner-comparison-join-two-one-next"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-owner-comparison-join-twenty-one-meta-language-read-grammar-lexical-analyser-owner-comparison-join-twenty-one-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerOwnerComparisonJoin21::MlReadGrammarLexerOwnerComparisonJoin21Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-owner-comparison-join-two-one-meta-language-read-grammar-lexical-analyser-owner-comparison-join-two-one-return"
+  },
+  {
+    "id": "translation.execute-lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-nineteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_owner_comparison_loop19",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-owner-comparison-loop-one-nine"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/scripts/generate-antlr-reverse-fixture.mjs",
+    "name": "digest",
+    "inventoryName": "digest"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "experiments/rust-text-certificate-adapter/reviewed-providers.mjs",
+    "name": "hash",
+    "inventoryName": "hash"
+  }
+];
+const BULK_FORTY_SIX_LEXICAL_FILES=["rust/src/translation/grammar_lexer_rules.rs","rust/src/translation/grammar_lexer_rules/part_1.rs","rust/src/translation/grammar_lexer_rules/part_2.rs","rust/src/translation/grammar_lexer_rules/part_3.rs","rust/src/translation/grammar_lexer_rules/part_4.rs"];
+const BULK_FORTY_SIX_LEXICAL_BINDINGS=[
+  {
+    "id": "translation.grammar-lexical-analyser-native-part-one",
+    "source": "rust/src/translation/grammar_lexer_rules.rs",
+    "name": "part_1",
+    "inventoryName": "part-one"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-part-two",
+    "source": "rust/src/translation/grammar_lexer_rules.rs",
+    "name": "part_2",
+    "inventoryName": "part-two"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-part-three",
+    "source": "rust/src/translation/grammar_lexer_rules.rs",
+    "name": "part_3",
+    "inventoryName": "part-three"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-part-four",
+    "source": "rust/src/translation/grammar_lexer_rules.rs",
+    "name": "part_4",
+    "inventoryName": "part-four"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-mathematics",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math",
+    "inventoryName": "meta-language-mathematics"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-mathematics-round",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math::round",
+    "inventoryName": "meta-language-mathematics-round"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-mathematics-sign",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math::sign",
+    "inventoryName": "meta-language-mathematics-sign"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-mathematics-maximum",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math::max",
+    "inventoryName": "meta-language-mathematics-maximum"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-mathematics-minimum",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math::min",
+    "inventoryName": "meta-language-mathematics-minimum"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-mathematics-maximum-of",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math::max_of",
+    "inventoryName": "meta-language-mathematics-maximum-of"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-mathematics-minimum-of",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math::min_of",
+    "inventoryName": "meta-language-mathematics-minimum-of"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-mathematics-is-integer",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math::is_integer",
+    "inventoryName": "meta-language-mathematics-is-integer"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-mathematics-is-safe-integer",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_math::is_safe_integer",
+    "inventoryName": "meta-language-mathematics-is-safe-integer"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-array",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array",
+    "inventoryName": "meta-language-array"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-optional-at",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::optional_at",
+    "inventoryName": "meta-language-array-optional-at"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-at",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::at",
+    "inventoryName": "meta-language-array-at"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-number-index",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::number_index",
+    "inventoryName": "meta-language-array-number-index"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-append",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::append",
+    "inventoryName": "meta-language-array-append"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-integer",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::integer",
+    "inventoryName": "meta-language-array-integer"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-relative",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::relative",
+    "inventoryName": "meta-language-array-relative"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-slice",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::slice",
+    "inventoryName": "meta-language-array-slice"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-index-of",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::index_of",
+    "inventoryName": "meta-language-array-index-of"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-includes",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::includes",
+    "inventoryName": "meta-language-array-includes"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-set",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::set",
+    "inventoryName": "meta-language-array-set"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-array-map",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_array::map",
+    "inventoryName": "meta-language-array-map"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-string",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string",
+    "inventoryName": "meta-language-string"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-string-text",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::Text",
+    "inventoryName": "meta-language-string-text"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-format",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::fmt",
+    "inventoryName": "meta-language-string-format"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-from-text",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::from_text",
+    "inventoryName": "meta-language-string-from-text"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-from-units",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::from_units",
+    "inventoryName": "meta-language-string-from-units"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-length",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::length",
+    "inventoryName": "meta-language-string-length"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-concatenate",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::concat",
+    "inventoryName": "meta-language-string-concatenate"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-starts-with",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::starts_with",
+    "inventoryName": "meta-language-string-starts-with"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-ends-with",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::ends_with",
+    "inventoryName": "meta-language-string-ends-with"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-contains",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::contains",
+    "inventoryName": "meta-language-string-contains"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-slice",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::slice",
+    "inventoryName": "meta-language-string-slice"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-index-of",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::index_of",
+    "inventoryName": "meta-language-string-index-of"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-last-index-of",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::last_index_of",
+    "inventoryName": "meta-language-string-last-index-of"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-split",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::split",
+    "inventoryName": "meta-language-string-split"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-code-point-at",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::code_point_at",
+    "inventoryName": "meta-language-string-code-point-at"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-code-points",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::code_points",
+    "inventoryName": "meta-language-string-code-points"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-repeat",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::repeat",
+    "inventoryName": "meta-language-string-repeat"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-pad",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::pad",
+    "inventoryName": "meta-language-string-pad"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-replace",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::replace",
+    "inventoryName": "meta-language-string-replace"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-trim",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::trim",
+    "inventoryName": "meta-language-string-trim"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-map-case",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::map_case",
+    "inventoryName": "meta-language-string-map-case"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-join",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::join",
+    "inventoryName": "meta-language-string-join"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-integer",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::integer",
+    "inventoryName": "meta-language-string-integer"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-absolute",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::absolute",
+    "inventoryName": "meta-language-string-absolute"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-relative",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::relative",
+    "inventoryName": "meta-language-string-relative"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-string-unsigned-integer-thirty-two-bit",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::uint32",
+    "inventoryName": "meta-language-string-unsigned-integer-thirty-two-bit"
+  },
+  {
+    "id": "translation.append-grammar-lexical-analyser-native-replacement-template-expansion",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "ml_string::substitute",
+    "inventoryName": "meta-language-string-substitute"
+  },
+  {
+    "id": "translation.refuse-required-number-fact",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "refuse_required_number_fact",
+    "inventoryName": "refuse-required-number-fact"
+  },
+  {
+    "id": "translation.refuse-required-text-fact",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "refuse_required_text_fact",
+    "inventoryName": "refuse-required-text-fact"
+  },
+  {
+    "id": "translation.refuse-required-boolean-fact",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "refuse_required_boolean_fact",
+    "inventoryName": "refuse-required-boolean-fact"
+  },
+  {
+    "id": "translation.read-required-number-fact",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "read_required_number_fact",
+    "inventoryName": "read-required-number-fact"
+  },
+  {
+    "id": "translation.read-required-text-fact",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "read_required_text_fact",
+    "inventoryName": "read-required-text-fact"
+  },
+  {
+    "id": "translation.read-required-boolean-fact",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "read_required_boolean_fact",
+    "inventoryName": "read-required-boolean-fact"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-entry-form",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "read_grammar_lexer_entry_form",
+    "inventoryName": "read-grammar-lexical-analyser-entry-form"
+  },
+  {
+    "id": "translation.accept-grammar-lexical-analyser-identifier",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "accept_grammar_lexer_identifier",
+    "inventoryName": "accept-grammar-lexical-analyser-identifier"
+  },
+  {
+    "id": "translation.accept-grammar-lexical-analyser-decimal",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "accept_grammar_lexer_decimal",
+    "inventoryName": "accept-grammar-lexical-analyser-decimal"
+  },
+  {
+    "id": "translation.contain-grammar-lexical-analyser-text",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "contains_grammar_lexer_text",
+    "inventoryName": "contains-grammar-lexical-analyser-text"
+  },
+  {
+    "id": "repository.read-grammar-lexical-analyser-position-membership",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "contains_grammar_lexer_position",
+    "inventoryName": "contains-grammar-lexical-analyser-position"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-section-rule-positions",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "read_grammar_lexer_section_rule_positions",
+    "inventoryName": "read-grammar-lexical-analyser-section-rule-positions"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-literal-rule-position",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "read_grammar_lexer_literal_rule_position",
+    "inventoryName": "read-grammar-lexical-analyser-literal-rule-position"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-binding-names",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "read_grammar_lexer_binding_names",
+    "inventoryName": "read-grammar-lexical-analyser-binding-names"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-command-plan",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "read_grammar_lexer_command_plan",
+    "inventoryName": "read-grammar-lexical-analyser-command-plan"
+  },
+  {
+    "id": "translation.accept-grammar-lexical-analyser-mode",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "accept_grammar_lexer_mode",
+    "inventoryName": "accept-grammar-lexical-analyser-mode"
+  },
+  {
+    "id": "translation.accept-grammar-lexical-analyser-trivia",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "accept_grammar_lexer_trivia",
+    "inventoryName": "accept-grammar-lexical-analyser-trivia"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-trivia-identity",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "read_grammar_lexer_trivia_identity",
+    "inventoryName": "read-grammar-lexical-analyser-trivia-identity"
+  },
+  {
+    "id": "translation.accept-grammar-lexical-analyser-expected-token",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "accept_grammar_lexer_expected_token",
+    "inventoryName": "accept-grammar-lexical-analyser-expected-token"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-declaration-issue",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "read_grammar_lexer_declaration_issue",
+    "inventoryName": "read-grammar-lexical-analyser-declaration-issue"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-obligation-positions",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "read_grammar_lexer_obligation_positions",
+    "inventoryName": "read-grammar-lexical-analyser-obligation-positions"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-lazy-normalization",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "read_grammar_lexer_lazy_normalization",
+    "inventoryName": "read-grammar-lexical-analyser-lazy-normalization"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-identifier-loop-one-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlAcceptGrammarLexerIdentifierLoop1Result",
+    "inventoryName": "meta-language-accept-grammar-lexical-analyser-identifier-loop-one-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-identifier-loop-one-result-meta-language-accept-grammar-lexical-analyser-identifier-loop-one-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlAcceptGrammarLexerIdentifierLoop1Result::MlAcceptGrammarLexerIdentifierLoop1Done",
+    "inventoryName": "meta-language-accept-grammar-lexical-analyser-identifier-loop-one-result-meta-language-accept-grammar-lexical-analyser-identifier-loop-one-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-identifier-loop-one-result-meta-language-accept-grammar-lexical-analyser-identifier-loop-one-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlAcceptGrammarLexerIdentifierLoop1Result::MlAcceptGrammarLexerIdentifierLoop1Return",
+    "inventoryName": "meta-language-accept-grammar-lexical-analyser-identifier-loop-one-result-meta-language-accept-grammar-lexical-analyser-identifier-loop-one-return"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-identifier-loop-one",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "ml_accept_grammar_lexer_identifier_loop1",
+    "inventoryName": "meta-language-accept-grammar-lexical-analyser-identifier-loop-one"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-decimal-loop-two-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlAcceptGrammarLexerDecimalLoop2Result",
+    "inventoryName": "meta-language-accept-grammar-lexical-analyser-decimal-loop-two-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-decimal-loop-two-result-meta-language-accept-grammar-lexical-analyser-decimal-loop-two-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlAcceptGrammarLexerDecimalLoop2Result::MlAcceptGrammarLexerDecimalLoop2Done",
+    "inventoryName": "meta-language-accept-grammar-lexical-analyser-decimal-loop-two-result-meta-language-accept-grammar-lexical-analyser-decimal-loop-two-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-decimal-loop-two-result-meta-language-accept-grammar-lexical-analyser-decimal-loop-two-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlAcceptGrammarLexerDecimalLoop2Result::MlAcceptGrammarLexerDecimalLoop2Return",
+    "inventoryName": "meta-language-accept-grammar-lexical-analyser-decimal-loop-two-result-meta-language-accept-grammar-lexical-analyser-decimal-loop-two-return"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-decimal-loop-two",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "ml_accept_grammar_lexer_decimal_loop2",
+    "inventoryName": "meta-language-accept-grammar-lexical-analyser-decimal-loop-two"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-text-loop-three-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlContainsGrammarLexerTextLoop3Result",
+    "inventoryName": "meta-language-contains-grammar-lexical-analyser-text-loop-three-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-text-loop-three-result-meta-language-contains-grammar-lexical-analyser-text-loop-three-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlContainsGrammarLexerTextLoop3Result::MlContainsGrammarLexerTextLoop3Done",
+    "inventoryName": "meta-language-contains-grammar-lexical-analyser-text-loop-three-result-meta-language-contains-grammar-lexical-analyser-text-loop-three-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-text-loop-three-result-meta-language-contains-grammar-lexical-analyser-text-loop-three-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlContainsGrammarLexerTextLoop3Result::MlContainsGrammarLexerTextLoop3Return",
+    "inventoryName": "meta-language-contains-grammar-lexical-analyser-text-loop-three-result-meta-language-contains-grammar-lexical-analyser-text-loop-three-return"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-text-loop-three",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "ml_contains_grammar_lexer_text_loop3",
+    "inventoryName": "meta-language-contains-grammar-lexical-analyser-text-loop-three"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-position-loop-four-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlContainsGrammarLexerPositionLoop4Result",
+    "inventoryName": "meta-language-contains-grammar-lexical-analyser-position-loop-four-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-position-loop-four-result-meta-language-contains-grammar-lexical-analyser-position-loop-four-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlContainsGrammarLexerPositionLoop4Result::MlContainsGrammarLexerPositionLoop4Done",
+    "inventoryName": "meta-language-contains-grammar-lexical-analyser-position-loop-four-result-meta-language-contains-grammar-lexical-analyser-position-loop-four-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-position-loop-four-result-meta-language-contains-grammar-lexical-analyser-position-loop-four-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlContainsGrammarLexerPositionLoop4Result::MlContainsGrammarLexerPositionLoop4Return",
+    "inventoryName": "meta-language-contains-grammar-lexical-analyser-position-loop-four-result-meta-language-contains-grammar-lexical-analyser-position-loop-four-return"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-position-loop-four",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "ml_contains_grammar_lexer_position_loop4",
+    "inventoryName": "meta-language-contains-grammar-lexical-analyser-position-loop-four"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-six",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "ml_read_grammar_lexer_section_rule_positions_loop6",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-six"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "ml_read_grammar_lexer_section_rule_positions_loop5",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerSectionRulePositionsLoop5Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five-result-meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerSectionRulePositionsLoop5Result::MlReadGrammarLexerSectionRulePositionsLoop5Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five-result-meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerLiteralRulePositionLoop7Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven-result-meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerLiteralRulePositionLoop7Result::MlReadGrammarLexerLiteralRulePositionLoop7Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven-result-meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-literal-rule-position-join-eight",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerLiteralRulePositionJoin8",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-rule-position-join-eight"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-literal-rule-position-join-eight-meta-language-read-grammar-lexical-analyser-literal-rule-position-join-eight-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerLiteralRulePositionJoin8::MlReadGrammarLexerLiteralRulePositionJoin8Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-rule-position-join-eight-meta-language-read-grammar-lexical-analyser-literal-rule-position-join-eight-next"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "ml_read_grammar_lexer_literal_rule_position_loop7",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-binding-names-loop-ten",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_binding_names_loop23",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-binding-names-loop-two-three"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-binding-names-loop-nine",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_binding_names_loop22",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-binding-names-loop-two-two"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-binding-names-loop-nine-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerBindingNamesLoop22Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-binding-names-loop-two-two-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-binding-names-loop-nine-result-meta-language-read-grammar-lexical-analyser-binding-names-loop-nine-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerBindingNamesLoop22Result::MlReadGrammarLexerBindingNamesLoop22Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-binding-names-loop-two-two-result-meta-language-read-grammar-lexical-analyser-binding-names-loop-two-two-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-loop-eleven-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerCommandPlanLoop24Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-command-plan-loop-two-four-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-loop-eleven-result-meta-language-read-grammar-lexical-analyser-command-plan-loop-eleven-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerCommandPlanLoop24Result::MlReadGrammarLexerCommandPlanLoop24Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-command-plan-loop-two-four-result-meta-language-read-grammar-lexical-analyser-command-plan-loop-two-four-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-join-thirteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerCommandPlanJoin26",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-command-plan-join-two-six"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-join-thirteen-meta-language-read-grammar-lexical-analyser-command-plan-join-thirteen-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerCommandPlanJoin26::MlReadGrammarLexerCommandPlanJoin26Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-command-plan-join-two-six-meta-language-read-grammar-lexical-analyser-command-plan-join-two-six-next"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-join-twelve",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerCommandPlanJoin25",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-command-plan-join-two-five"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-join-twelve-meta-language-read-grammar-lexical-analyser-command-plan-join-twelve-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerCommandPlanJoin25::MlReadGrammarLexerCommandPlanJoin25Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-command-plan-join-two-five-meta-language-read-grammar-lexical-analyser-command-plan-join-two-five-next"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-loop-fourteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_command_plan_loop27",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-command-plan-loop-two-seven"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-loop-eleven",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_command_plan_loop24",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-command-plan-loop-two-four"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-sixteen-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop29Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-two-nine-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-sixteen-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-sixteen-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop29Result::MlReadGrammarLexerDeclarationIssueLoop29Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-two-nine-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-two-nine-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-sixteen-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-sixteen-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop29Result::MlReadGrammarLexerDeclarationIssueLoop29Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-two-nine-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-two-nine-return"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-eighteen-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop31Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-three-one-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-eighteen-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-eighteen-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop31Result::MlReadGrammarLexerDeclarationIssueLoop31Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-three-one-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-three-one-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-eighteen-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-eighteen-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop31Result::MlReadGrammarLexerDeclarationIssueLoop31Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-three-one-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-three-one-return"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-fifteen-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop28Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-two-eight-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-fifteen-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-fifteen-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop28Result::MlReadGrammarLexerDeclarationIssueLoop28Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-two-eight-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-two-eight-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-fifteen-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-fifteen-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop28Result::MlReadGrammarLexerDeclarationIssueLoop28Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-two-eight-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-two-eight-return"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-seventeen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin30",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-zero"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-seventeen-meta-language-read-grammar-lexical-analyser-declaration-issue-join-seventeen-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin30::MlReadGrammarLexerDeclarationIssueJoin30Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-zero-meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-zero-next"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-seventeen-meta-language-read-grammar-lexical-analyser-declaration-issue-join-seventeen-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin30::MlReadGrammarLexerDeclarationIssueJoin30Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-zero-meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-zero-return"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-nineteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin32",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-two"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-nineteen-meta-language-read-grammar-lexical-analyser-declaration-issue-join-nineteen-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin32::MlReadGrammarLexerDeclarationIssueJoin32Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-two-meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-two-next"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-nineteen-meta-language-read-grammar-lexical-analyser-declaration-issue-join-nineteen-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin32::MlReadGrammarLexerDeclarationIssueJoin32Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-two-meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-two-return"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-three",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin36",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-six"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-three-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-three-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin36::MlReadGrammarLexerDeclarationIssueJoin36Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-six-meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-six-next"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-three-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-three-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin36::MlReadGrammarLexerDeclarationIssueJoin36Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-six-meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-six-return"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-two",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin35",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-five"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-two-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-two-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin35::MlReadGrammarLexerDeclarationIssueJoin35Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-five-meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-five-next"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-two-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-two-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin35::MlReadGrammarLexerDeclarationIssueJoin35Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-five-meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-five-return"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-one",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin34",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-four"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-one-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-one-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin34::MlReadGrammarLexerDeclarationIssueJoin34Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-four-meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-four-next"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-one-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-one-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin34::MlReadGrammarLexerDeclarationIssueJoin34Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-four-meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-four-return"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin33",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-three"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin33::MlReadGrammarLexerDeclarationIssueJoin33Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-three-meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-three-next"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin33::MlReadGrammarLexerDeclarationIssueJoin33Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-three-meta-language-read-grammar-lexical-analyser-declaration-issue-join-three-three-return"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-eighteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_declaration_issue_loop31",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-three-one"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-sixteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_declaration_issue_loop29",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-two-nine"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-fifteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_declaration_issue_loop28",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-declaration-issue-loop-two-eight"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-five",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_obligation_positions_loop38",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-loop-three-eight"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-seven",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_obligation_positions_loop40",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-loop-four-zero"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-four",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_obligation_positions_loop37",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-loop-three-seven"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-four-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerObligationPositionsLoop37Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-loop-three-seven-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-four-result-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-four-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerObligationPositionsLoop37Result::MlReadGrammarLexerObligationPositionsLoop37Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-loop-three-seven-result-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-three-seven-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-four-result-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-four-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerObligationPositionsLoop37Result::MlReadGrammarLexerObligationPositionsLoop37Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-loop-three-seven-result-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-three-seven-return"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-seven-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerObligationPositionsLoop40Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-loop-four-zero-result"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-seven-result-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-seven-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerObligationPositionsLoop40Result::MlReadGrammarLexerObligationPositionsLoop40Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-loop-four-zero-result-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-four-zero-done"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-join-twenty-six",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerObligationPositionsJoin39",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-join-three-nine"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-join-twenty-six-meta-language-read-grammar-lexical-analyser-obligation-positions-join-twenty-six-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerObligationPositionsJoin39::MlReadGrammarLexerObligationPositionsJoin39Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-obligation-positions-join-three-nine-meta-language-read-grammar-lexical-analyser-obligation-positions-join-three-nine-next"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-lazy-normalization-loop-thirty",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_lazy_normalization_loop43",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-lazy-normalization-loop-four-three"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-lazy-normalization-loop-twenty-nine",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_lazy_normalization_loop42",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-lazy-normalization-loop-four-two"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-lazy-normalization-loop-twenty-eight",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "ml_read_grammar_lexer_lazy_normalization_loop41",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-lazy-normalization-loop-four-one"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-text-position",
+    "source": "rust/src/translation/grammar_lexer_rules/part_1.rs",
+    "name": "read_grammar_lexer_text_position",
+    "inventoryName": "read-grammar-lexical-analyser-text-position"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-literal-extension",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "read_grammar_lexer_literal_extension",
+    "inventoryName": "read-grammar-lexical-analyser-literal-extension"
+  },
+  {
+    "id": "translation.read-grammar-lexical-analyser-owner-comparison",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "read_grammar_lexer_owner_comparison",
+    "inventoryName": "read-grammar-lexical-analyser-owner-comparison"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-part-five",
+    "source": "rust/src/translation/grammar_lexer_rules.rs",
+    "name": "part_5",
+    "inventoryName": "part-five"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-text-position-loop-nine-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerTextPositionLoop9Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-text-position-loop-nine-result"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-text-position-loop-nine-result-meta-language-read-grammar-lexical-analyser-text-position-loop-nine-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerTextPositionLoop9Result::MlReadGrammarLexerTextPositionLoop9Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-text-position-loop-nine-result-meta-language-read-grammar-lexical-analyser-text-position-loop-nine-done"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-text-position-loop-nine-result-meta-language-read-grammar-lexical-analyser-text-position-loop-nine-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "MlReadGrammarLexerTextPositionLoop9Result::MlReadGrammarLexerTextPositionLoop9Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-text-position-loop-nine-result-meta-language-read-grammar-lexical-analyser-text-position-loop-nine-return"
+  },
+  {
+    "id": "translation.execute-lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-text-position-loop-nine",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "ml_read_grammar_lexer_text_position_loop9",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-text-position-loop-nine"
+  },
+  {
+    "id": "translation.execute-lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-fourteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_literal_extension_loop14",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-four"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-thirteen-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionLoop13Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-three-result"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-thirteen-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-thirteen-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionLoop13Result::MlReadGrammarLexerLiteralExtensionLoop13Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-three-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-three-done"
+  },
+  {
+    "id": "translation.execute-lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-thirteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_literal_extension_loop13",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-three"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-twelve-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionLoop12Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-two-result"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-twelve-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-twelve-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionLoop12Result::MlReadGrammarLexerLiteralExtensionLoop12Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-two-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-two-done"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-twelve-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-twelve-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionLoop12Result::MlReadGrammarLexerLiteralExtensionLoop12Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-two-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-two-return"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-join-fifteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionJoin15",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-join-one-five"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-join-fifteen-meta-language-read-grammar-lexical-analyser-literal-extension-join-fifteen-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionJoin15::MlReadGrammarLexerLiteralExtensionJoin15Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-join-one-five-meta-language-read-grammar-lexical-analyser-literal-extension-join-one-five-next"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-join-fifteen-meta-language-read-grammar-lexical-analyser-literal-extension-join-fifteen-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionJoin15::MlReadGrammarLexerLiteralExtensionJoin15Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-join-one-five-meta-language-read-grammar-lexical-analyser-literal-extension-join-one-five-return"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-sixteen-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionLoop16Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-six-result"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-sixteen-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-sixteen-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionLoop16Result::MlReadGrammarLexerLiteralExtensionLoop16Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-six-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-six-done"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-join-seventeen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionJoin17",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-join-one-seven"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-join-seventeen-meta-language-read-grammar-lexical-analyser-literal-extension-join-seventeen-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionJoin17::MlReadGrammarLexerLiteralExtensionJoin17Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-join-one-seven-meta-language-read-grammar-lexical-analyser-literal-extension-join-one-seven-next"
+  },
+  {
+    "id": "translation.execute-lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-sixteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_literal_extension_loop16",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-six"
+  },
+  {
+    "id": "translation.execute-lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-twelve",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_literal_extension_loop12",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-two"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-eleven-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionLoop11Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-one-result"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-eleven-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-eleven-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionLoop11Result::MlReadGrammarLexerLiteralExtensionLoop11Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-one-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-one-done"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-eleven-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-eleven-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionLoop11Result::MlReadGrammarLexerLiteralExtensionLoop11Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-one-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-one-return"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-join-eighteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionJoin18",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-join-one-eight"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-join-eighteen-meta-language-read-grammar-lexical-analyser-literal-extension-join-eighteen-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionJoin18::MlReadGrammarLexerLiteralExtensionJoin18Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-join-one-eight-meta-language-read-grammar-lexical-analyser-literal-extension-join-one-eight-next"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-join-eighteen-meta-language-read-grammar-lexical-analyser-literal-extension-join-eighteen-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionJoin18::MlReadGrammarLexerLiteralExtensionJoin18Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-join-one-eight-meta-language-read-grammar-lexical-analyser-literal-extension-join-one-eight-return"
+  },
+  {
+    "id": "translation.execute-lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-eleven",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_literal_extension_loop11",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-one"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-ten-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionLoop10Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-zero-result"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-ten-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-ten-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionLoop10Result::MlReadGrammarLexerLiteralExtensionLoop10Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-zero-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-zero-done"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-ten-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-ten-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralExtensionLoop10Result::MlReadGrammarLexerLiteralExtensionLoop10Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-zero-result-meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-zero-return"
+  },
+  {
+    "id": "translation.execute-lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-literal-extension-loop-ten",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_literal_extension_loop10",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-literal-extension-loop-one-zero"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-twenty-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerOwnerComparisonLoop20Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-owner-comparison-loop-two-zero-result"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-twenty-result-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-twenty-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerOwnerComparisonLoop20Result::MlReadGrammarLexerOwnerComparisonLoop20Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-owner-comparison-loop-two-zero-result-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-two-zero-done"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-twenty-result-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-twenty-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerOwnerComparisonLoop20Result::MlReadGrammarLexerOwnerComparisonLoop20Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-owner-comparison-loop-two-zero-result-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-two-zero-return"
+  },
+  {
+    "id": "translation.execute-lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-twenty",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_owner_comparison_loop20",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-owner-comparison-loop-two-zero"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-nineteen-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerOwnerComparisonLoop19Result",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-owner-comparison-loop-one-nine-result"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-nineteen-result-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-nineteen-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerOwnerComparisonLoop19Result::MlReadGrammarLexerOwnerComparisonLoop19Done",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-owner-comparison-loop-one-nine-result-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-one-nine-done"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-nineteen-result-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-nineteen-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerOwnerComparisonLoop19Result::MlReadGrammarLexerOwnerComparisonLoop19Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-owner-comparison-loop-one-nine-result-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-one-nine-return"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-owner-comparison-join-twenty-one",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerOwnerComparisonJoin21",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-owner-comparison-join-two-one"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-owner-comparison-join-twenty-one-meta-language-read-grammar-lexical-analyser-owner-comparison-join-twenty-one-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerOwnerComparisonJoin21::MlReadGrammarLexerOwnerComparisonJoin21Next",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-owner-comparison-join-two-one-meta-language-read-grammar-lexical-analyser-owner-comparison-join-two-one-next"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-owner-comparison-join-twenty-one-meta-language-read-grammar-lexical-analyser-owner-comparison-join-twenty-one-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerOwnerComparisonJoin21::MlReadGrammarLexerOwnerComparisonJoin21Return",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-owner-comparison-join-two-one-meta-language-read-grammar-lexical-analyser-owner-comparison-join-two-one-return"
+  },
+  {
+    "id": "translation.execute-lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-nineteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_owner_comparison_loop19",
+    "inventoryName": "meta-language-read-grammar-lexical-analyser-owner-comparison-loop-one-nine"
+  }
+];
+const hasBulkFortySixSourceAlias=function actualSourceAlias(text,source,name){
+ if(source.endsWith('-decorators.lino'))return /^[A-Za-z_0-9.-]+$/u.test(name)&&new RegExp('^\\(decorator '+name.replaceAll('.','\\.')+'(?:\\s|\\))','mu').test(text);
+ if(!name.includes('::'))return text.includes(name);
+ if(source==='rust/src/translation/javascript/infer/term_facts.rs'&&/^TermFacts::[A-Za-z_]+$/u.test(name)){
+  const methods=text.match(/^impl TermFacts \{[^]*?^\}/mu)?.[0];if(!methods)return false;
+  return new RegExp('^\\s*(?:pub\\(super\\) )?fn '+name.slice('TermFacts::'.length)+'\\(','mu').test(methods);
+ }
+ const parts=name.split('::');if(!parts.every(part=>/^[A-Za-z_][A-Za-z_0-9]*$/u.test(part)))return false;
+ let scope=text,kind='mod';
+ for(let index=0;index<parts.length-1;index++){
+  const pattern=new RegExp('^(\\s*)(?:pub(?:\\([^)]*\\))?\\s+)?(mod|enum|struct) '+parts[index]+'\\b[^\\{]*\\{[^]*?^\\1\\}','mu'),block=scope.match(pattern);
+  if(!block)return false;scope=block[0];kind=block[2];
+ }
+ const member=parts.at(-1);
+ return kind==='enum'?new RegExp('^\\s*'+member+'(?:\\s*[,({=]|\\s*$)','mu').test(scope):new RegExp('^\\s*(?:pub(?:\\([^)]*\\))?\\s+)?(?:(?:const\\s+)?fn|struct|enum|mod) '+member+'\\b','mu').test(scope);
+};
+const BULK_FORTY_SIX_NAME_INVENTORIES=[...new Set(BULK_FORTY_SIX_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B46 checked source controls for "+source,files:[source],extract:text=>BULK_FORTY_SIX_BINDINGS.filter(row=>row.source===source&&hasBulkFortySixSourceAlias(text,source,row.name)).map(row=>row.inventoryName),recordOf:name=>BULK_FORTY_SIX_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));
+const reconcileBulkFortySixLexicalInventory=inventory=>{const source=inventory.files.length===1?inventory.files[0]:null;if(!source||!BULK_FORTY_SIX_LEXICAL_FILES.includes(source)||inventory.inventory!=="B45 exact source controls for "+source)return inventory;const rows=BULK_FORTY_SIX_LEXICAL_BINDINGS.filter(row=>row.source===source);return {...inventory,extract:text=>rows.filter(row=>hasBulkFortySixSourceAlias(text,source,row.name)).map(row=>row.inventoryName),recordOf:name=>rows.find(row=>row.inventoryName===name).id};};
+// End B46 checked source registrations.
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
