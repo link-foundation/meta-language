@@ -8,13 +8,6 @@ use super::{SExpr, SNode};
 pub(in crate::translation::javascript) fn children(expr: &SExpr) -> Vec<&SExpr> {
     let mut out: Vec<&SExpr> = Vec::new();
     match &expr.node {
-        SNode::ArrayBindingRest { object, .. } => out.push(object),
-        SNode::ArrayBindingDefault {
-            value, fallback, ..
-        } => {
-            out.push(value);
-            out.push(fallback);
-        }
         SNode::Record {
             entries,
             prototype_definition,
@@ -25,13 +18,6 @@ pub(in crate::translation::javascript) fn children(expr: &SExpr) -> Vec<&SExpr> 
                 out.push(&definition.value);
             }
         }
-        SNode::Some { value, .. }
-        | SNode::FlattenOption { value }
-        | SNode::OptionalField { object: value, .. } => out.push(value),
-        SNode::Coalesce { left, right } => {
-            out.push(left);
-            out.push(right);
-        }
         SNode::Lambda { params, body, .. } => {
             out.extend(
                 params
@@ -40,7 +26,6 @@ pub(in crate::translation::javascript) fn children(expr: &SExpr) -> Vec<&SExpr> 
             );
             out.push(body);
         }
-        SNode::CellAllocate { value, .. } | SNode::CellRead { cell: value } => out.push(value),
         SNode::CellWrite { cell, value, body } => {
             out.push(cell);
             out.push(value);
@@ -51,12 +36,23 @@ pub(in crate::translation::javascript) fn children(expr: &SExpr) -> Vec<&SExpr> 
             out.extend(args.iter().flatten());
         }
         SNode::ArrayFrom { args, .. } => out.extend(args),
-        SNode::CopySlice { object } => out.push(object),
         SNode::App { func, args } => {
             out.push(func);
             out.extend(args);
         }
-        SNode::Field { object, .. }
+        SNode::ArrayBindingRest { object, .. }
+        | SNode::CopySlice { object }
+        | SNode::Some { value: object, .. }
+        | SNode::FlattenOption { value: object }
+        | SNode::OptionalField { object, .. }
+        | SNode::CellAllocate { value: object, .. }
+        | SNode::CellRead { cell: object }
+        | SNode::TypeOf { arg: object }
+        | SNode::Unary { arg: object, .. }
+        | SNode::StringMap { object, .. }
+        | SNode::ToString { arg: object }
+        | SNode::Show { arg: object, .. }
+        | SNode::Field { object, .. }
         | SNode::Length { object, .. }
         | SNode::ForOfIterable { object, .. }
         | SNode::StringPoints { object } => out.push(object),
@@ -70,21 +66,26 @@ pub(in crate::translation::javascript) fn children(expr: &SExpr) -> Vec<&SExpr> 
             out.extend(index.iter().map(Box::as_ref));
             out.extend(value.iter().map(Box::as_ref));
         }
-        SNode::Index { object, index, .. } => {
-            out.push(object);
-            out.push(index);
-        }
         SNode::Array { items, .. } | SNode::Math { args: items, .. } => {
             out.extend(items.iter().map(|item| &item.value));
         }
-        SNode::TypeOf { arg }
-        | SNode::Unary { arg, .. }
-        | SNode::StringMap { object: arg, .. }
-        | SNode::ToString { arg }
-        | SNode::Show { arg, .. } => {
-            out.push(arg);
+        SNode::ArrayBindingDefault {
+            value: left,
+            fallback: right,
+            ..
         }
-        SNode::StringTest {
+        | SNode::Coalesce { left, right }
+        | SNode::Index {
+            object: left,
+            index: right,
+            ..
+        }
+        | SNode::Let {
+            value: left,
+            body: right,
+            ..
+        }
+        | SNode::StringTest {
             object: left,
             search: right,
             ..
@@ -101,10 +102,6 @@ pub(in crate::translation::javascript) fn children(expr: &SExpr) -> Vec<&SExpr> 
             out.push(cond);
             out.push(then);
             out.push(otherwise);
-        }
-        SNode::Let { value, body, .. } => {
-            out.push(value);
-            out.push(body);
         }
         SNode::Match { scrutinees, rows } => {
             out.extend(scrutinees);
@@ -137,13 +134,6 @@ pub(in crate::translation::javascript) fn children(expr: &SExpr) -> Vec<&SExpr> 
 pub(in crate::translation::javascript) fn children_mut(expr: &mut SExpr) -> Vec<&mut SExpr> {
     let mut out: Vec<&mut SExpr> = Vec::new();
     match &mut expr.node {
-        SNode::ArrayBindingRest { object, .. } => out.push(object),
-        SNode::ArrayBindingDefault {
-            value, fallback, ..
-        } => {
-            out.push(value);
-            out.push(fallback);
-        }
         SNode::Record {
             entries,
             prototype_definition,
@@ -154,13 +144,6 @@ pub(in crate::translation::javascript) fn children_mut(expr: &mut SExpr) -> Vec<
                 out.push(&mut definition.value);
             }
         }
-        SNode::Some { value, .. }
-        | SNode::FlattenOption { value }
-        | SNode::OptionalField { object: value, .. } => out.push(value),
-        SNode::Coalesce { left, right } => {
-            out.push(left);
-            out.push(right);
-        }
         SNode::Lambda { params, body, .. } => {
             out.extend(
                 params
@@ -169,7 +152,6 @@ pub(in crate::translation::javascript) fn children_mut(expr: &mut SExpr) -> Vec<
             );
             out.push(body);
         }
-        SNode::CellAllocate { value, .. } | SNode::CellRead { cell: value } => out.push(value),
         SNode::CellWrite { cell, value, body } => {
             out.push(cell);
             out.push(value);
@@ -180,12 +162,23 @@ pub(in crate::translation::javascript) fn children_mut(expr: &mut SExpr) -> Vec<
             out.extend(args.iter_mut().flatten());
         }
         SNode::ArrayFrom { args, .. } => out.extend(args),
-        SNode::CopySlice { object } => out.push(object),
         SNode::App { func, args } => {
             out.push(func);
             out.extend(args);
         }
-        SNode::Field { object, .. }
+        SNode::ArrayBindingRest { object, .. }
+        | SNode::CopySlice { object }
+        | SNode::Some { value: object, .. }
+        | SNode::FlattenOption { value: object }
+        | SNode::OptionalField { object, .. }
+        | SNode::CellAllocate { value: object, .. }
+        | SNode::CellRead { cell: object }
+        | SNode::TypeOf { arg: object }
+        | SNode::Unary { arg: object, .. }
+        | SNode::StringMap { object, .. }
+        | SNode::ToString { arg: object }
+        | SNode::Show { arg: object, .. }
+        | SNode::Field { object, .. }
         | SNode::Length { object, .. }
         | SNode::ForOfIterable { object, .. }
         | SNode::StringPoints { object } => out.push(object),
@@ -199,21 +192,26 @@ pub(in crate::translation::javascript) fn children_mut(expr: &mut SExpr) -> Vec<
             out.extend(index.iter_mut().map(Box::as_mut));
             out.extend(value.iter_mut().map(Box::as_mut));
         }
-        SNode::Index { object, index, .. } => {
-            out.push(object);
-            out.push(index);
-        }
         SNode::Array { items, .. } | SNode::Math { args: items, .. } => {
             out.extend(items.iter_mut().map(|item| &mut item.value));
         }
-        SNode::TypeOf { arg }
-        | SNode::Unary { arg, .. }
-        | SNode::StringMap { object: arg, .. }
-        | SNode::ToString { arg }
-        | SNode::Show { arg, .. } => {
-            out.push(arg);
+        SNode::ArrayBindingDefault {
+            value: left,
+            fallback: right,
+            ..
         }
-        SNode::StringTest {
+        | SNode::Coalesce { left, right }
+        | SNode::Index {
+            object: left,
+            index: right,
+            ..
+        }
+        | SNode::Let {
+            value: left,
+            body: right,
+            ..
+        }
+        | SNode::StringTest {
             object: left,
             search: right,
             ..
@@ -230,10 +228,6 @@ pub(in crate::translation::javascript) fn children_mut(expr: &mut SExpr) -> Vec<
             out.push(cond);
             out.push(then);
             out.push(otherwise);
-        }
-        SNode::Let { value, body, .. } => {
-            out.push(value);
-            out.push(body);
         }
         SNode::Match { scrutinees, rows } => {
             out.extend(scrutinees);

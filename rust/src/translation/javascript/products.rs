@@ -143,7 +143,6 @@ fn copy_tuple(ty: &Type) -> bool {
 
 pub(super) fn children(node: &SExpr) -> Vec<&SExpr> {
     let mut values: Vec<&SExpr> = match &node.node {
-        SNode::ArrayBindingRest { object, .. } => vec![object],
         SNode::ArrayBindingDefault {
             value, fallback, ..
         } => vec![value, fallback],
@@ -161,7 +160,6 @@ pub(super) fn children(node: &SExpr) -> Vec<&SExpr> {
             }
             values
         }
-        SNode::CopySlice { object } => vec![object],
         SNode::App { func, args } => {
             let mut values = vec![func.as_ref()];
             values.extend(args);
@@ -173,7 +171,9 @@ pub(super) fn children(node: &SExpr) -> Vec<&SExpr> {
             .chain(std::iter::once(body.as_ref()))
             .collect(),
         SNode::CellWrite { cell, value, body } => vec![cell, value, body],
-        SNode::Field { object, .. }
+        SNode::ArrayBindingRest { object, .. }
+        | SNode::CopySlice { object }
+        | SNode::Field { object, .. }
         | SNode::Some { value: object, .. }
         | SNode::FlattenOption { value: object }
         | SNode::OptionalField { object, .. }
@@ -789,7 +789,6 @@ fn apply_projections(program: &mut SProgram, admitted: &HashMap<*const SExpr, us
             };
         }
         match &mut node.node {
-            SNode::ArrayBindingRest { object, .. } => walk(object, admitted),
             SNode::ArrayBindingDefault {
                 value, fallback, ..
             } => {
@@ -827,14 +826,15 @@ fn apply_projections(program: &mut SProgram, admitted: &HashMap<*const SExpr, us
                     walk(arg, admitted);
                 }
             }
-            SNode::CopySlice { object } => walk(object, admitted),
             SNode::App { func, args } => {
                 walk(func, admitted);
                 for arg in args {
                     walk(arg, admitted);
                 }
             }
-            SNode::Field { object, .. }
+            SNode::ArrayBindingRest { object, .. }
+            | SNode::CopySlice { object }
+            | SNode::Field { object, .. }
             | SNode::Some { value: object, .. }
             | SNode::FlattenOption { value: object }
             | SNode::OptionalField { object, .. }

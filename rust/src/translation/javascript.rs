@@ -355,6 +355,11 @@ struct ReadonlyConstants {
     initializer: bool,
 }
 
+struct ReferenceSemantics {
+    enabled: bool,
+    forced: bool,
+}
+
 struct JavaScriptParser {
     source: Source,
     cursor: TokenCursor,
@@ -376,8 +381,7 @@ struct JavaScriptParser {
     /// Whether a top-level statement is being read, where `return` is a syntax error.
     top_level: bool,
     readonly_constants: ReadonlyConstants,
-    reference_semantics: bool,
-    reference_semantics_forced: bool,
+    reference_state: ReferenceSemantics,
     eliminated_owned_array_append_operations: Vec<Span>,
     scalar_loop_model: String,
     /// Functions and data types that loops and joins of statements lower to, and their count.
@@ -419,8 +423,10 @@ impl JavaScriptParser {
             jumps: Jumps::default(),
             top_level: false,
             readonly_constants: ReadonlyConstants::default(),
-            reference_semantics,
-            reference_semantics_forced: false,
+            reference_state: ReferenceSemantics {
+                enabled: reference_semantics,
+                forced: false,
+            },
             eliminated_owned_array_append_operations: Vec::new(),
             scalar_loop_model: String::new(),
             generated: Vec::new(),

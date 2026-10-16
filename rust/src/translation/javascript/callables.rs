@@ -1,8 +1,8 @@
 //! Mechanical source facts and typed constructors for generated callable plans.
 
 use super::{
-    JavaScriptParser, Jumps, Result, SExpr, SNode, SParam, Scope, Span, Stmt, TokenKind,
-    imperative, node, type_error, unsupported,
+    JavaScriptParser, Result, SExpr, SNode, SParam, Scope, Span, Stmt, TokenKind, imperative, node,
+    type_error, unsupported,
 };
 use crate::translation::callable_source_rules as rules;
 use crate::translation::surface_reference_facts::{
@@ -130,7 +130,7 @@ pub(super) fn statement_usage(statements: &[Stmt], bound: &[String]) -> super::f
         bound,
     );
     let mut result = super::flow::Uses::default();
-    for event in plan.chunks_exact(2) {
+    for event in plan.as_chunks::<2>().0 {
         let name = facts
             .value(event[1])
             .and_then(Value::as_str)
@@ -176,7 +176,7 @@ pub(super) fn validate_closure_captures(statements: &[Stmt], references: bool) -
         &facts.targets,
         facts.root,
     );
-    for conflict in plan.chunks_exact(2) {
+    for conflict in plan.as_chunks::<2>().0 {
         let capture = facts
             .value(conflict[1])
             .and_then(Value::as_str)
@@ -298,7 +298,9 @@ impl JavaScriptParser {
             tokens_node,
         );
         let params = parameter_plan
-            .chunks_exact(3)
+            .as_chunks::<3>()
+            .0
+            .iter()
             .map(|entry| SParam {
                 name: facts
                     .value(entry[0])
@@ -324,7 +326,7 @@ impl JavaScriptParser {
             })
             .collect::<Vec<_>>();
         let outer = std::mem::replace(&mut self.scope, scope);
-        let outer_jumps = std::mem::replace(&mut self.jumps, Jumps::default());
+        let outer_jumps = std::mem::take(&mut self.jumps);
         let outer_top = std::mem::replace(&mut self.top_level, false);
         let outer_async = std::mem::replace(&mut self.in_async, false);
         let result = (|| {
@@ -351,9 +353,9 @@ impl JavaScriptParser {
                 &(outer.locals.iter().cloned().collect::<Vec<_>>()),
             );
             let count = position(plan[0]);
-            let assigned = strings(&facts, &plan[1..1 + count]);
+            let assigned = strings(&facts, &plan[1..=count]);
             let captures = strings(&facts, &plan[1 + count..]);
-            if !assigned.is_empty() && !self.reference_semantics {
+            if !assigned.is_empty() && !self.reference_state.enabled {
                 return Err(unsupported(
                     "mutable closure capture",
                     "captured assignments require a shared cell across calls",
@@ -398,19 +400,7 @@ impl JavaScriptParser {
 }
 
 /// Interpret the generic reconstruction instructions over retained source nodes.
-pub(super) fn rename_expression(expression: &SExpr, scope: Value) -> Result<SExpr> {
-    let value = json!({"node":expression,"scope":scope});
-    let facts = create_surface_reference_facts(&value);
-    let plan = rules::plan_callable_source_renaming(
-        &facts.forms,
-        &facts.texts,
-        &facts.starts,
-        &facts.counts,
-        &facts.labels,
-        &facts.targets,
-        field(&facts, facts.root, "node"),
-        field(&facts, facts.root, "scope"),
-    );
+pub(super) fn rename_expression(expression: &SExpr, scope: &Value) -> Result<SExpr> {
     fn materialize(plan: &[f64], at: &mut usize, facts: &SurfaceReferenceFacts<'_>) -> Value {
         let operation = position(plan[*at]);
         *at += 1;
@@ -463,6 +453,18 @@ pub(super) fn rename_expression(expression: &SExpr, scope: Value) -> Result<SExp
             _ => unreachable!("the generated reconstruction plan has a known instruction"),
         }
     }
+    let value = json!({"node":expression,"scope":scope});
+    let facts = create_surface_reference_facts(&value);
+    let plan = rules::plan_callable_source_renaming(
+        &facts.forms,
+        &facts.texts,
+        &facts.starts,
+        &facts.counts,
+        &facts.labels,
+        &facts.targets,
+        field(&facts, facts.root, "node"),
+        field(&facts, facts.root, "scope"),
+    );
     let mut at = 0;
     let value = materialize(&plan, &mut at, &facts);
     assert_eq!(

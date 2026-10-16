@@ -58,10 +58,10 @@ pub(super) fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr,
                     }
                     *ret = Some(inferred_ret.as_ref().clone());
                 }
-                (SNode::ForOfIterable { ty: retained, .. }, _) => *retained = Some(ty.clone()),
-                (SNode::ArrayFrom { ty: retained, .. }, _) => *retained = Some(ty.clone()),
-                (SNode::Record { ty: retained, .. }, _) => *retained = Some(ty.clone()),
-                (SNode::CellAllocate { ty: retained, .. }, _) => *retained = Some(ty.clone()),
+                (SNode::ForOfIterable { ty: retained, .. }, _)
+                | (SNode::ArrayFrom { ty: retained, .. }, _)
+                | (SNode::Record { ty: retained, .. }, _)
+                | (SNode::CellAllocate { ty: retained, .. }, _) => *retained = Some(ty.clone()),
                 _ => {}
             }
         }
@@ -74,7 +74,6 @@ pub(super) fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr,
             walk(&mut test.object, arrays);
         }
         match &mut node.node {
-            SNode::ArrayBindingRest { object, .. } => walk(object, arrays),
             SNode::ArrayBindingDefault {
                 value, fallback, ..
             } => {
@@ -104,7 +103,6 @@ pub(super) fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr,
                     walk(argument, arrays);
                 }
             }
-            SNode::CopySlice { object } => walk(object, arrays),
             SNode::App { func, args } => {
                 walk(func, arrays);
                 for arg in args {
@@ -124,7 +122,9 @@ pub(super) fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr,
                 walk(value, arrays);
                 walk(body, arrays);
             }
-            SNode::Field { object, .. }
+            SNode::ArrayBindingRest { object, .. }
+            | SNode::CopySlice { object }
+            | SNode::Field { object, .. }
             | SNode::CellAllocate { value: object, .. }
             | SNode::CellRead { cell: object }
             | SNode::TypeOf { arg: object }

@@ -4,6 +4,7 @@ use super::{
     Coalescing, Env, FLOAT, FieldOf, HashSet, Inference, Join, Rc, RefCell, Result, SExpr, SNode,
     Span, Term,
 };
+use crate::translation::frontend_rules::ml_array::number_index;
 use crate::translation::optional_inference_rules as plans;
 use crate::translation::optional_value_rules as values;
 use crate::translation::structured_type_rules::merge_optional_absence;
@@ -21,7 +22,7 @@ pub(super) fn optional(element: Term, absence: &str) -> Term {
     }
 }
 
-fn kind(term: &Term) -> &str {
+const fn kind(term: &Term) -> &str {
     match term {
         Term::Var(_) => "var",
         Term::Known(ty) => ty.kind(),
@@ -53,7 +54,9 @@ impl Inference {
         );
         !plan.is_empty()
             && plan[1..]
-                .chunks_exact(2)
+                .as_chunks::<2>()
+                .0
+                .iter()
                 .all(|pair| self.same_term(&endpoint(&facts, pair[0]), &endpoint(&facts, pair[1])))
     }
 
@@ -89,7 +92,7 @@ impl Inference {
             if *first.borrow() != merged || *second.borrow() != merged {
                 self.unification_changes += 1;
             }
-            *first.borrow_mut() = merged.clone();
+            first.borrow_mut().clone_from(&merged);
             *second.borrow_mut() = merged;
         }
         Ok(())
@@ -176,7 +179,7 @@ impl Inference {
             return Ok(false);
         }
         let right = endpoint(&facts, plan[2]);
-        let right = if plan[0] == 1.0 {
+        let right = if number_index(plan[0]) == Some(1) {
             optional(right, "both")
         } else {
             right
@@ -196,8 +199,8 @@ impl Inference {
             facts.position(0),
             facts.position(1),
         );
-        plan[0] == 1.0
-            || plan[1..].chunks_exact(2).any(|pair| {
+        number_index(plan[0]) == Some(1)
+            || plan[1..].as_chunks::<2>().0.iter().any(|pair| {
                 self.additional_absence(&endpoint(&facts, pair[0]), &endpoint(&facts, pair[1]))
             })
     }
@@ -242,7 +245,7 @@ impl Inference {
             )?;
         }
         let selected = endpoint(&facts, plan[1]);
-        let value = if plan[0] == 2.0 {
+        let value = if number_index(plan[0]) == Some(2) {
             optional(selected, "undefined")
         } else {
             self.resolve(&selected)
@@ -374,7 +377,7 @@ impl Inference {
                             false,
                         ) == "merge"
                         {
-                            *first_absence.borrow_mut() = "both".to_owned();
+                            "both".clone_into(&mut first_absence.borrow_mut());
                             progress = true;
                         }
                     }

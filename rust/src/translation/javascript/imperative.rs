@@ -63,7 +63,7 @@ fn visible(scope: &[Var]) -> Vec<Var> {
 /// A copy of a source expression that reads the variables it names in scope.
 fn renamed(expr: &SExpr, scope: &[Var]) -> Result<SExpr> {
     let scope = serde_json::Value::Array(scope.iter().map(|entry| serde_json::json!({"source":entry.source,"ir":entry.ir,"reference":entry.reference})).collect());
-    super::callables::rename_expression(expr, scope)
+    super::callables::rename_expression(expr, &scope)
 }
 
 fn named(name: &str, place: Span) -> SExpr {
@@ -127,8 +127,8 @@ pub(super) fn lower_imperative_with_captures(
     let mut cells = super::callables::mutable_cells(statements);
     cells.extend(external_cells.iter().cloned());
     if !cells.is_empty() {
-        parser.reference_semantics = true;
-        parser.reference_semantics_forced = true;
+        parser.reference_state.enabled = true;
+        parser.reference_state.forced = true;
     }
     let mut lowering = Lowering {
         function: name.to_owned(),
@@ -688,7 +688,7 @@ impl Lowering {
                         }
                         "body" => {
                             branch =
-                                Some(self.seq(&Rc::new(bodies[index].clone()), 0, inner, scope)?)
+                                Some(self.seq(&Rc::new(bodies[index].clone()), 0, inner, scope)?);
                         }
                         _ => {
                             otherwise =

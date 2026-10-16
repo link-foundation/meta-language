@@ -283,7 +283,7 @@ fn source_names(
                 }
             }
             Stmt::Return { expr, .. } | Stmt::Expr { expr, .. } | Stmt::Print { expr, .. } => {
-                expression(expr, locals, record)
+                expression(expr, locals, record);
             }
             Stmt::Break { .. } | Stmt::Continue { .. } | Stmt::Throw { .. } | Stmt::Empty => {}
         }
@@ -503,7 +503,7 @@ impl Occurrences {
                     }
                 }
                 Stmt::Expr { expr, .. } | Stmt::Print { expr, .. } => {
-                    self.read(expr, scope, loops, readers)
+                    self.read(expr, scope, loops, readers);
                 }
                 Stmt::Empty => {}
             }
@@ -605,7 +605,7 @@ fn replace(statements: &mut [Stmt], selected: &HashMap<*const Stmt, String>) {
         }
         match statement {
             Stmt::Block { body, .. } | Stmt::While { body, .. } | Stmt::DoWhile { body, .. } => {
-                replace(body, selected)
+                replace(body, selected);
             }
             Stmt::If {
                 then, otherwise, ..

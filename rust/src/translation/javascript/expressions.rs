@@ -8,6 +8,7 @@ use super::{
 };
 
 mod values;
+use crate::translation::surface::SurfaceRawMetadata;
 
 impl JavaScriptParser {
     /// Expressions, by JavaScript precedence.
@@ -55,7 +56,7 @@ impl JavaScriptParser {
                 let parenthesized = left
                     .parenthesized
                     .as_ref()
-                    .and_then(|value| value.as_boolean())
+                    .and_then(SurfaceRawMetadata::as_boolean)
                     .unwrap_or(false);
                 let error =
                     crate::translation::optional_value_rules::read_optional_logical_mixing_error(
@@ -76,7 +77,7 @@ impl JavaScriptParser {
                 let parenthesized = right
                     .parenthesized
                     .as_ref()
-                    .and_then(|value| value.as_boolean())
+                    .and_then(SurfaceRawMetadata::as_boolean)
                     .unwrap_or(false);
                 let error =
                     crate::translation::optional_value_rules::read_optional_logical_mixing_error(

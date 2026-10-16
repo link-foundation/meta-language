@@ -433,9 +433,11 @@ impl Inference {
                 self.unification_changes += 1;
                 Ok(())
             }
-            (Term::Array(x), Term::Array(y)) => self.unify(x, y, place),
+            (Term::Array(x), Term::Array(y))
+            | (Term::Set { element: x, .. }, Term::Set { element: y, .. }) => {
+                self.unify(x, y, place)
+            }
             (Term::Record(left), Term::Record(right)) => self.unify_records(left, right, place),
-            (Term::Set { element: x, .. }, Term::Set { element: y, .. }) => self.unify(x, y, place),
             (
                 Term::Map {
                     key: a, value: b, ..

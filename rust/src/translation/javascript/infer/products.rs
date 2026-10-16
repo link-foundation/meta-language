@@ -271,19 +271,19 @@ impl Inference {
                         .as_ref()
                         .is_some_and(|next| self.contains(next, variable, seen))
             }
-            Term::Array(element) => self.contains(element, variable, seen),
+            Term::Array(element)
+            | Term::Cell(element)
+            | Term::Option { element, .. }
+            | Term::Set { element, .. } => self.contains(element, variable, seen),
             Term::Record(owner) => owner
                 .borrow()
                 .fields
                 .iter()
                 .any(|(_, term)| self.contains(term, variable, seen)),
-            Term::Cell(element) => self.contains(element, variable, seen),
             Term::Function { .. } => self.callable_contains(term, variable, seen),
-            Term::Option { element, .. } => self.contains(element, variable, seen),
             Term::Map { key, value, .. } => {
                 self.contains(key, variable, seen) || self.contains(value, variable, seen)
             }
-            Term::Set { element, .. } => self.contains(element, variable, seen),
             Term::Tuple(elements) | Term::Union(elements) => elements
                 .iter()
                 .any(|element| self.contains(element, variable, seen)),

@@ -1,5 +1,10 @@
 //! Complete existing methods, mechanically relocated without behavior changes.
-use super::*;
+use super::{
+    Alternative, Ctx, Fall, Give, HashSet, Jump, Lowering, ROOT, Rc, Result, SCtor, SData, SExpr,
+    SFn, SItem, SNode, SParam, Site, Stmt, TranslationError, Uses, Var, ctor_row, flat, infinite,
+    internal, let_node, list_exits, loop_parts, named, node, renamed, statement_uses, untyped,
+    visible,
+};
 
 impl Lowering {
     /// A loop is a tail-recursive function of the variables it uses. It

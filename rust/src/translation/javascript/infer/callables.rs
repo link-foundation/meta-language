@@ -82,7 +82,7 @@ impl Inference {
                 place,
             ));
         }
-        for pair in plan.chunks_exact(2) {
+        for pair in plan.as_chunks::<2>().0 {
             self.unify(
                 &endpoint(&facts, pair[0]),
                 &endpoint(&facts, pair[1]),
@@ -199,7 +199,7 @@ impl Inference {
             arguments,
             facts.position(1),
         );
-        for pair in plan[1..].chunks_exact(2) {
+        for pair in plan[1..].as_chunks::<2>().0 {
             self.unify(
                 &endpoint(&facts, pair[0]),
                 &endpoint(&facts, pair[1]),
@@ -237,7 +237,7 @@ impl Inference {
                 );
                 let mut scope = env.clone();
                 let mut parameters = Vec::new();
-                for (parameter, selection) in params.iter().zip(plan[2..].chunks_exact(3)) {
+                for (parameter, selection) in params.iter().zip(plan[2..].as_chunks::<3>().0) {
                     let term = self.callable_selected_type(
                         &facts,
                         selection[1],
@@ -287,7 +287,7 @@ impl Inference {
                 let cell = self.expr(cell, env)?;
                 let resolved = self.resolve(&cell);
                 let facts = TermFacts::new(&[Some(cell), Some(resolved)]);
-                self.callable_read_cell_from_facts(facts, node.span)
+                self.callable_read_cell_from_facts(&facts, node.span)
             }
             SNode::CellWrite { cell, value, body } => {
                 let value = self.expr(value, env)?;
@@ -341,7 +341,7 @@ impl Inference {
 
     fn callable_read_cell_from_facts(
         &mut self,
-        facts: TermFacts,
+        facts: &TermFacts,
         place: Option<Span>,
     ) -> Result<Term> {
         let plan = rules::plan_callable_cell_read_inference(
@@ -358,7 +358,7 @@ impl Inference {
         }
         let element = self.fresh(false);
         self.unify(
-            &endpoint(&facts, plan[1]),
+            &endpoint(facts, plan[1]),
             &Term::Cell(Box::new(element.clone())),
             place,
         )?;

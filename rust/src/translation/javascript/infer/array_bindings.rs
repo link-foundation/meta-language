@@ -83,7 +83,7 @@ impl Inference {
                     constraint.place,
                 ));
             }
-            for pair in plan.chunks_exact(2) {
+            for pair in plan.as_chunks::<2>().0 {
                 let left = facts
                     .term(pair[0])
                     .expect("an actual planned type endpoint");

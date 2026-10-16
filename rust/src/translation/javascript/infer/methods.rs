@@ -97,7 +97,7 @@ pub(super) fn fill_methods(
                 prop(right, owners, observed);
             }
             SPropNode::Not { arg } | SPropNode::Forall { body: arg, .. } => {
-                prop(arg, owners, observed)
+                prop(arg, owners, observed);
             }
             SPropNode::Bool { expr } => walk(expr, owners, observed),
         }

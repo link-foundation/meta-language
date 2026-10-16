@@ -5,12 +5,14 @@ use super::{
     Type,
 };
 
+type InferredSignature = (Vec<Type>, Type, Option<Type>);
+
 impl Inference {
     pub(super) fn run(
         &mut self,
         functions: &[(Vec<String>, &SFn)],
         program: &SProgram,
-    ) -> Result<Vec<(Vec<Type>, Type, Option<Type>)>> {
+    ) -> Result<Vec<InferredSignature>> {
         // The other items of the module keep the types their own translation checked.
         for external in &program.externals {
             let (params, ret) = external.signature();

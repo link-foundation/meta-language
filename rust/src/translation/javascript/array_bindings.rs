@@ -1,4 +1,5 @@
 //! Token and scope transport for the complete generated array binding plans.
+use std::collections::BTreeMap;
 use std::sync::OnceLock;
 
 use super::{
@@ -31,7 +32,7 @@ fn reserved_names() -> &'static [Text] {
     })
 }
 
-fn kind(token: &Token) -> &'static str {
+const fn kind(token: &Token) -> &'static str {
     match token.kind {
         TokenKind::Punct => "punct",
         TokenKind::Identifier => "identifier",
@@ -218,10 +219,10 @@ impl JavaScriptParser {
                 "suffix" => node(SNode::ArrayBindingRest {
                     object: Box::new(object.clone()),
                     start: serde_json::json!({"k":"num","value":binding.path[0].to_string(),"span":binding.span}),
-                    extra: Default::default(),
+                    extra: BTreeMap::default(),
                 }, binding.span),
                 "default" => node(SNode::ArrayBindingDefault {
-                    value: Box::new(value), fallback: Box::new(binding.default_value.expect("the shared form selected a present default")), extra: Default::default(),
+                    value: Box::new(value), fallback: Box::new(binding.default_value.expect("the shared form selected a present default")), extra: BTreeMap::default(),
                 }, binding.span),
                 _ => value,
             };

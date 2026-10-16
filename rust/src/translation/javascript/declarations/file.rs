@@ -1,6 +1,10 @@
 //! Complete file assembly at the original JavaScript parser boundary.
 
-use super::*;
+use super::{
+    HashSet, JavaScriptParser, Language, Result, SItem, SMain, SProgram, ScanEnd, Scope, Span,
+    TokenCursor, TokenKind, describe, has_javascript_products, infer_javascript_product_types,
+    infer_javascript_types, span, unsupported, validate_javascript_products,
+};
 
 impl JavaScriptParser {
     pub(in super::super) fn file(mut self) -> Result<SProgram> {
@@ -153,14 +157,14 @@ impl JavaScriptParser {
         }
         items.append(&mut self.generated);
         if !self.eliminated_owned_array_append_operations.is_empty() {
-            self.reference_semantics = self.reference_semantics_forced
+            self.reference_state.enabled = self.reference_state.forced
                 || super::super::reference_analysis::requires_reference_semantics(
                     &self.cursor.tokens,
                     &self.eliminated_owned_array_append_operations,
                 );
         }
         let program = SProgram {
-            reference_semantics: self.reference_semantics.then(|| true.into()),
+            reference_semantics: self.reference_state.enabled.then(|| true.into()),
             language: Language::JavaScript,
             items,
             main: Some(SMain {

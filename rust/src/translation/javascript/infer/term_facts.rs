@@ -111,7 +111,7 @@ impl TermFacts {
         number(identity)
     }
 
-    /// Rebuild only a selected source-data subtree; retained terms use term().
+    /// Rebuild only a selected source-data subtree; retained terms use `term()`.
     pub(super) fn materialize(&self, identity: f64) -> Option<Value> {
         let identity = position(identity)?;
         let start = position(*self.starts.get(identity)?)?;

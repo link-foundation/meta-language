@@ -1,5 +1,9 @@
 //! Complete existing methods, mechanically relocated without behavior changes.
-use super::*;
+use super::{
+    BinaryOp, External, FLOAT, GLOBALS, JavaScriptParser, Language, ROOT, Result, SArrayItem,
+    SExpr, SNode, ShowStyle, Token, TokenCursor, TokenKind, node, number_literal, span, tokenize,
+    unsupported,
+};
 
 impl JavaScriptParser {
     pub(in super::super) fn primary(&mut self) -> Result<SExpr> {

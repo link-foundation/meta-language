@@ -581,11 +581,11 @@ impl JavaScriptParser {
         self.jumps = outer_jumps;
         self.top_level = outer_top_level;
         let mut statements = statements?;
-        super::callables::validate_closure_captures(&statements, self.reference_semantics)?;
+        super::callables::validate_closure_captures(&statements, self.reference_state.enabled)?;
         // A forced reference context keeps the actual heap operations.
         if !crate::translation::surface_raw_metadata_rules::select_surface_reference_semantics(
             false,
-            self.reference_semantics_forced,
+            self.reference_state.forced,
             true,
         ) {
             self.eliminated_owned_array_append_operations.extend(

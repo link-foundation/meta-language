@@ -129,7 +129,7 @@ impl Inference {
                 place,
             );
         }
-        for pair in plan[1..].chunks_exact(2) {
+        for pair in plan[1..].as_chunks::<2>().0 {
             self.unify(
                 &endpoint(&facts, pair[0]),
                 &endpoint(&facts, pair[1]),

@@ -40,8 +40,8 @@ fn spread_role(term: &Term) -> String {
     rules::read_record_spread_role(kind)
 }
 
-fn insertion_fields(fields: Vec<(String, Term)>) -> Vec<(String, Term)> {
-    rules::read_record_field_insertion_order(&names(&fields))
+fn insertion_fields(fields: &[(String, Term)]) -> Vec<(String, Term)> {
+    rules::read_record_field_insertion_order(&names(fields))
         .into_iter()
         .map(|index| fields[position(index, fields.len())].clone())
         .collect()
@@ -247,7 +247,7 @@ impl Inference {
             }
         }
         let owner = Rc::new(RefCell::new(RecordTerm {
-            fields: insertion_fields(fields),
+            fields: insertion_fields(&fields),
             open,
         }));
         let term = Term::Record(owner.clone());
@@ -299,7 +299,7 @@ impl Inference {
                 }
             }
             let shape = Rc::new(RefCell::new(RecordTerm {
-                fields: insertion_fields(fields),
+                fields: insertion_fields(&fields),
                 open: false,
             }));
             self.unify(
