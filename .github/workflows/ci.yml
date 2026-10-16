@@ -856,6 +856,10 @@ jobs:
           tar --extract --gzip --file "$archive" --directory "$RUNNER_TEMP"
           "${RUNNER_TEMP}/elan-init" -y --no-modify-path --default-toolchain leanprover/lean4:v4.34.1
           echo "${ELAN_HOME}/bin" >> "$GITHUB_PATH"
+          echo "ELAN_HOME=${ELAN_HOME}" >> "$GITHUB_ENV"
+          if ! "${ELAN_HOME}/bin/lean" --version; then
+            node scripts/install-ci-lean.mjs
+          fi
           "${ELAN_HOME}/bin/lean" --version
 
       - name: Setup OCaml
@@ -1012,6 +1016,10 @@ jobs:
           tar --extract --gzip --file "$archive" --directory "$RUNNER_TEMP"
           "${RUNNER_TEMP}/elan-init" -y --no-modify-path --default-toolchain leanprover/lean4:v4.34.1
           echo "${ELAN_HOME}/bin" >> "$GITHUB_PATH"
+          echo "ELAN_HOME=${ELAN_HOME}" >> "$GITHUB_ENV"
+          if ! "${ELAN_HOME}/bin/lean" --version; then
+            node scripts/install-ci-lean.mjs
+          fi
           "${ELAN_HOME}/bin/lean" --version
 
       - name: Setup OCaml
@@ -1144,6 +1152,10 @@ jobs:
           tar --extract --gzip --file "$archive" --directory "$RUNNER_TEMP"
           "${RUNNER_TEMP}/elan-init" -y --no-modify-path --default-toolchain leanprover/lean4:v4.34.1
           echo "${ELAN_HOME}/bin" >> "$GITHUB_PATH"
+          echo "ELAN_HOME=${ELAN_HOME}" >> "$GITHUB_ENV"
+          if ! "${ELAN_HOME}/bin/lean" --version; then
+            node scripts/install-ci-lean.mjs
+          fi
           "${ELAN_HOME}/bin/lean" --version
 
       - name: Setup OCaml
@@ -1283,6 +1295,10 @@ jobs:
           tar --extract --gzip --file "$archive" --directory "$RUNNER_TEMP"
           "${RUNNER_TEMP}/elan-init" -y --no-modify-path --default-toolchain leanprover/lean4:v4.34.1
           echo "${ELAN_HOME}/bin" >> "$GITHUB_PATH"
+          echo "ELAN_HOME=${ELAN_HOME}" >> "$GITHUB_ENV"
+          if ! "${ELAN_HOME}/bin/lean" --version; then
+            node scripts/install-ci-lean.mjs
+          fi
           "${ELAN_HOME}/bin/lean" --version
 
       - name: Setup OCaml

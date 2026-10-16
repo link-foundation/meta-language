@@ -12,7 +12,7 @@
 // - warm: kept while the aggregate cache stays within the disk budget, then
 //   removed in ascending `priority` until it does;
 // - full: removed only by `--mode full` or a low-disk preflight.
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import path from 'node:path';
 
 /** JSON coordination marker read by older active cleanup processes too. */
@@ -121,6 +121,12 @@ export function rustTargetDirectories(context) {
   const found = new Map();
   const add = (directory, explicit) => {
     const resolved = path.resolve(directory);
+    if(context.projectOwnedOnly){
+      let owned;
+      try{owned=realpathSync(resolved);}catch{return;}
+      const relative=path.relative(context.root,owned);
+      if(relative===''||relative==='..'||relative.startsWith('..'+path.sep)||path.isAbsolute(relative))return;
+    }
     if (!found.has(resolved) && isCargoTargetDirectory(resolved)) found.set(resolved, { directory: resolved, explicit });
   };
   for (const relative of ['rust/target', 'target', 'rust/web/target']) add(path.join(context.root, relative), false);

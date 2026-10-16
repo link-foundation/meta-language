@@ -650,11 +650,15 @@ class Inference {
       }
       case 'referenceWrite': {
         const object = this.expr(node.object, env);
-        const value = this.expr(node.value, env);
+        // Unary updates have no right-hand expression. Infer the selected
+        // numeric slot without inventing a value or reading a missing node.
+        const updating = node.op === '++' || node.op === '--';
+        const value = updating ? this.fresh() : this.expr(node.value, env);
         if (node.index) {
           this.expr(node.index, env);
           this.unify(object, { kind: 'array', element: value }, node.span);
         } else this.fields.push({ object, field: node.field, result: value, where: node.span });
+        if (updating) this.arithmetic.push({ left: value, result: value, where: node.span });
         return value;
       }
       case 'name': {

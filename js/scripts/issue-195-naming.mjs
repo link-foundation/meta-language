@@ -22153,7 +22153,123 @@ const RECURSIVE_SEED_CACHE_NAME_INVENTORIES=[...new Set(RECURSIVE_SEED_CACHE_NAM
  extract: text => RECURSIVE_SEED_CACHE_NAME_BINDINGS.filter(row=>row.source===source&&text.includes(row.name)).map(row=>normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))),
  recordOf: name => RECURSIVE_SEED_CACHE_NAME_BINDINGS.find(row=>row.source===source&&normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))===name).id,
 }));
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES]);
+// Project scoped cleanup guards preserve every original compatibility check.
+const PROJECT_OWNED_CLEANUP_NAME_BINDINGS=[
+  {
+    "id": "repository.project-owned-cleanup-scope",
+    "source": "scripts/clean-caches.mjs",
+    "name": "--project-owned-only"
+  },
+  {
+    "id": "repository.project-owned-cleanup-scope",
+    "source": "scripts/lib/cache-cleanup.mjs",
+    "name": "projectOwnedOnly"
+  },
+  {
+    "id": "repository.project-owned-cleanup-scope",
+    "source": "scripts/lib/cache-cleanup.mjs",
+    "name": "project-owned-only"
+  },
+  {
+    "id": "repository.project-owned-cleanup-scope",
+    "source": "scripts/lib/cache-classes.mjs",
+    "name": "projectOwnedOnly"
+  },
+  {
+    "id": "repository.create-project-scope-fixture",
+    "source": "js/tests/cache-project-scope.test.js",
+    "name": "createProjectScopeFixture"
+  },
+  {
+    "id": "repository.check-project-scope-target-discovery",
+    "source": "js/tests/cache-project-scope.test.js",
+    "name": "project scope excludes inherited and explicit foreign targets before discovery and budget pruning"
+  },
+  {
+    "id": "repository.check-project-scope-command-wrapper",
+    "source": "js/tests/cache-project-scope.test.js",
+    "name": "project scope reaches the cleanup command and failure wrapper without widening target ownership"
+  },
+  {
+    "id": "repository.check-project-scope-evidence-preservation",
+    "source": "js/tests/cache-project-scope.test.js",
+    "name": "project scope preserves dirty source evidence live scratch and foreign markers while clearing owned stopped scratch"
+  },
+  {
+    "id": "repository.check-project-scope-link-escape",
+    "source": "js/tests/cache-project-scope.test.js",
+    "name": "project scope excludes target symbolic link escapes before candidate discovery"
+  }
+];
+const PROJECT_OWNED_CLEANUP_NAME_INVENTORIES=[...new Set(PROJECT_OWNED_CLEANUP_NAME_BINDINGS.map(row=>row.source))].map(source=>({
+ inventory: "project owned cleanup controls for "+source, files: [source],
+ extract: text => PROJECT_OWNED_CLEANUP_NAME_BINDINGS.filter(row=>row.source===source&&text.includes(row.name)).map(row=>normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))),
+ recordOf: name => PROJECT_OWNED_CLEANUP_NAME_BINDINGS.find(row=>row.source===source&&normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))===name).id,
+}));
+// Unary operand diagnostics and checksum pinned CI distribution controls.
+const UNARY_OPERAND_AND_LEAN_RELEASE_NAME_BINDINGS=[
+{
+  "id": "repository.check-lean-home-propagation",
+  "source": "js/tests/issue-195-evidence-lean-download.test.js",
+  "name": "every Lean setup preserves the same version and forwards its selected home to later evidence steps"
+},
+  {
+    "id": "repository.check-unary-reference-slot-inference",
+    "source": "js/tests/translation-reference-unary-updates.test.js",
+    "name": "unary reference updates infer numeric slots without a missing right operand"
+  },
+  {
+    "id": "repository.check-unary-reference-source-preservation",
+    "source": "js/tests/translation-reference-unary-updates.test.js",
+    "name": "unsupported unary reference updates preserve source bytes and checked sibling signatures"
+  },
+  {
+    "id": "repository.check-captured-recursive-report-inference",
+    "source": "js/tests/translation-reference-unary-updates.test.js",
+    "name": "the captured recursive cache module reaches explicit report obligations without an internal inference exception"
+  },
+  {
+    "id": "repository.create-lean-download-fixture",
+    "source": "js/tests/issue-195-evidence-lean-download.test.js",
+    "name": "createLeanDownloadFixture"
+  },
+  {
+    "id": "repository.check-lean-fallback-runner-scope",
+    "source": "js/tests/issue-195-evidence-lean-download.test.js",
+    "name": "the Lean fallback refuses local and unsupported runners before creating or downloading files"
+  },
+  {
+    "id": "repository.check-fixed-lean-release-selection",
+    "source": "js/tests/issue-195-evidence-lean-download.test.js",
+    "name": "the Lean fallback authenticates the exact release before extraction linking and version selection"
+  },
+  {
+    "id": "repository.check-lean-download-failure-retention",
+    "source": "js/tests/issue-195-evidence-lean-download.test.js",
+    "name": "download checksum and version failures stop Lean selection and clear only the owned temporary directory"
+  },
+  {
+    "id": "repository.install-fixed-lean-release",
+    "source": "scripts/install-ci-lean.mjs",
+    "name": "installFixedLean"
+  },
+  {
+    "id": "repository.fixed-lean-release-identity",
+    "source": "scripts/install-ci-lean.mjs",
+    "name": "LEAN_RELEASE_VERSION"
+  },
+  {
+    "id": "repository.fixed-lean-release-identity",
+    "source": "scripts/install-ci-lean.mjs",
+    "name": "LEAN_RELEASE_SHA256"
+  }
+];
+const UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES=[...new Set(UNARY_OPERAND_AND_LEAN_RELEASE_NAME_BINDINGS.map(row=>row.source))].map(source=>({
+ inventory: "unary operand and pinned release controls for "+source, files: [source],
+ extract: text => UNARY_OPERAND_AND_LEAN_RELEASE_NAME_BINDINGS.filter(row=>row.source===source&&text.includes(row.name)).map(row=>normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))),
+ recordOf: name => UNARY_OPERAND_AND_LEAN_RELEASE_NAME_BINDINGS.find(row=>row.source===source&&normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {

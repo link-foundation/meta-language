@@ -50,6 +50,10 @@ for task isolation and prompt release of clean task-owned worktrees. Cache
 cleanup does not remove sibling worktrees. Clean only meta-language-owned
 storage and preserve uncommitted work, verification evidence, active tasks and
 unrelated data. Rust compilation runs exclusively in CI/CD.
+Pass `--project-owned-only` to task-scoped cleanup and wrapped local checks.
+This restricts Cargo target discovery to the selected project, cleans stopped
+temporary scratch only when its ownership marker matches, disables container
+cleanup and low-disk escalation, and records the scope in the cleanup receipt.
 
 ## Code Standards
 

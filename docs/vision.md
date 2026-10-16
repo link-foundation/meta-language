@@ -1850,6 +1850,22 @@ restoration provenance before replay; source restoration alone cannot prove
 semantic preservation. Native execution of the translated Rust remains a CI
 verification boundary.
 
+Unary field and index updates retain their operand-free update representation.
+Type inference constrains the selected numeric slot for prefix and postfix
+increment and decrement without reading a nonexistent right operand. The
+checker still reports an explicit reference-mutation obligation until the
+linked slot operations are implemented. Signature discovery and importing
+report contexts retain that obligation and the complete carried source rather
+than failing with an internal exception; this does not establish native
+execution of unsupported mutation.
+
+CI keeps its pinned Lean version when the upstream release index is
+unavailable. A Linux x64 GitHub Actions fallback downloads the same official
+release from GitHub, checks its published SHA-256 before extraction, and checks
+the binary version before selecting it. Download, checksum and version failures
+remain fatal, and the fallback refuses local execution. The selected Elan home
+persists into later evidence steps so its shims resolve the same toolchain.
+
 Self-translation representation selection uses shared linked decisions and an
 automatically generated native implementation. Its selected UTF-16 prelude is
 extracted from the existing JavaScript emitter without rewriting that runtime.
@@ -2081,6 +2097,15 @@ within the selected project scope, disable automatic low-disk escalation and
 container cleanup with `--no-preflight --no-docker`, and retain the cleanup
 receipt. Deliberately selected external caches still require that ownership
 check before use.
+Task-scoped cleanup and wrapped local checks also pass `--project-owned-only`.
+This policy excludes explicit and inherited Cargo target paths outside the
+selected project before discovery or byte accounting. Its filesystem scope
+still admits the project's ignored caches and stopped temporary scratch with
+an exact matching ownership marker, while retaining the existing source,
+evidence, active-task and other-worktree checks. It disables container cleanup
+and automatic low-disk escalation and records `project-owned-only` in the receipt.
+The original custom-target interface remains available for separately verified
+ownership decisions; its existing compatibility and safety assertions remain.
 
 The complete-table and raw-graph native oracles prepare and authenticate their
 whole generated sources, then finish the full Rust CST text and binary replays

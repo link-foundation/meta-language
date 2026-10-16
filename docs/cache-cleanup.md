@@ -46,6 +46,7 @@ coordination protocol, so older processes can still recognize active owners.
 | `--budget-mb N` | aggregate cache budget, default `$META_LANGUAGE_CACHE_BUDGET_MB` or 4096 |
 | `--min-free-mb N` | low-disk preflight floor, default `$META_LANGUAGE_MIN_FREE_MB` or 2048 |
 | `--no-preflight` | never escalate to a full clean |
+| `--project-owned-only` | limit filesystem cleanup to the selected project and its owned temporary scratch; exclude external Cargo targets before discovery, disable containers and low-disk escalation, and record the scope in the receipt |
 | `--event NAME` | the event that triggered the run, recorded in the report |
 | `--target-dir DIR` | an extra Cargo target directory (repeatable); `CARGO_TARGET_DIR` and `CARGO_BUILD_TARGET_DIR` are added automatically |
 | `--results-dir DIR` | an extra evidence directory whose `work/` holds scratch (repeatable) |

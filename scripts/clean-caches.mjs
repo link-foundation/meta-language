@@ -25,6 +25,8 @@ const USAGE = `usage: node scripts/clean-caches.mjs [options]
   --min-free-mb N       low-disk preflight floor; below it the run is full
                         (default $META_LANGUAGE_MIN_FREE_MB or 2048)
   --no-preflight        never escalate to a full clean on low disk
+  --project-owned-only  worktree and owned scratch only; no external targets,
+                        containers or low-disk escalation
   --event NAME          event that triggered the run (default manual)
   --target-dir DIR      extra Cargo target directory (repeatable)
   --results-dir DIR     evidence directory whose work/ is scratch (repeatable)
@@ -55,6 +57,7 @@ export function parseArguments(argv) {
       case '--budget-mb': options.budgetMb = Number(value(index, flag)); index += 1; break;
       case '--min-free-mb': options.minFreeMb = Number(value(index, flag)); index += 1; break;
       case '--no-preflight': options.preflight = false; break;
+      case '--project-owned-only': options.projectOwnedOnly = true; break;
       case '--preflight': options.preflight = true; break;
       case '--event': options.event = value(index, flag); index += 1; break;
       case '--target-dir': options.targetDirectories.push(value(index, flag)); index += 1; break;

@@ -120,3 +120,6 @@ suites:
   storage owned by this meta-language task. A Cargo cache marker alone does
   not establish project ownership. Use `--no-preflight --no-docker` for manual
   local cleanup and retain its receipt; see the same resource policy above.
+  Also pass `--project-owned-only` to task-scoped cleanup and wrapped checks.
+  It excludes external Cargo targets before discovery, disables container
+  cleanup and low-disk escalation, and records the selected scope in the receipt.

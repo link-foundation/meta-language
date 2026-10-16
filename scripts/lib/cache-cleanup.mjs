@@ -534,7 +534,8 @@ function buildContext(repository, options) {
   const targetDirectories = [
     ...options.targetDirectories,
     ...['CARGO_TARGET_DIR', 'CARGO_BUILD_TARGET_DIR'].map((name) => options.env[name]).filter(Boolean),
-  ].map((directory) => (path.isAbsolute(directory) ? real(directory) : resolveUserPath(directory)));
+  ].map((directory) => (path.isAbsolute(directory) ? real(directory) : resolveUserPath(directory)))
+    .filter((directory) => !options.projectOwnedOnly || strictlyInside(directory, root));
   const protectedPaths = [
     ...PROTECTED_DIRECTORIES.map((directory) => path.join(root, directory)),
     ...resultsDirectories,
@@ -546,6 +547,7 @@ function buildContext(repository, options) {
     ignored: listIgnored(root),
     worktrees: otherWorktrees(root),
     targetDirectories,
+    projectOwnedOnly: options.projectOwnedOnly,
     evidenceDirectories: resultsDirectories.map((directory) => path.relative(root, directory)),
     resultsDirectories,
     scratchExceptions: resultsDirectories.map((directory) => path.join(directory, 'work')),
@@ -610,7 +612,7 @@ function refusal(candidate, context, ignored) {
     if (inside(target, path.join(context.root, '.git'))) return 'inside the git directory';
     if (hasTrackedUnder(context, relative)) return 'holds tracked files';
     if (!ignored.has(relative)) return 'not ignored by git';
-  } else if (!(candidate.externalRoot && inside(target, candidate.externalRoot) && isCargoTargetDirectory(candidate.externalRoot))) {
+  } else if (context.projectOwnedOnly || !(candidate.externalRoot && inside(target, candidate.externalRoot) && isCargoTargetDirectory(candidate.externalRoot))) {
     return 'outside the repository';
   }
   for (const protectedPath of context.protectedPaths) {
@@ -696,14 +698,15 @@ function normalizeOptions(options) {
     mode,
     budgetBytes: Math.round(budgetMb * MB),
     minFreeBytes: Math.round(minFreeMb * MB),
-    preflight: options.preflight ?? true,
+    preflight: options.projectOwnedOnly ? false : options.preflight ?? true,
+    projectOwnedOnly: Boolean(options.projectOwnedOnly),
     dryRun: Boolean(options.dryRun),
     classes,
     targetDirectories: (options.targetDirectories ?? []).map((value) => assertNoTraversal(value, '--target-dir')),
     resultsDirectories: (options.resultsDirectories ?? []).map((value) => assertNoTraversal(value, '--results-dir')),
     protect: (options.protect ?? []).map((value) => assertNoTraversal(value, '--protect')),
     tmpRoot: options.tmpRoot,
-    docker: options.docker ?? true,
+    docker: options.projectOwnedOnly ? false : options.docker ?? true,
   };
 }
 
@@ -722,6 +725,7 @@ export function runCleanup(rawOptions = {}) {
   const started = Date.now();
   const options = normalizeOptions(rawOptions);
   const base = { schemaVersion: 1, event: options.event, mode: options.mode, dryRun: options.dryRun, startedAt: new Date(started).toISOString() };
+  if(options.projectOwnedOnly)base.scope='project-owned-only';
   const repository = resolveRepository(options.cwd);
   if (!repository) return { ...base, status: 'skipped', reason: 'not inside a git worktree, or git is not installed' };
   const lock = acquireCleanupLock(repository.stateDir);
