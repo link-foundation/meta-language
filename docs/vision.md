@@ -111,6 +111,16 @@ The verifier and identity operations are emitted as separate closed modules,
 preserving every source declaration and the verifier's existing correction
 contexts. Their identical array runtime is shared after whole-module comparison.
 
+The archive-backed parser factory, `createGlobalConceptSpaceParser`, validates
+the complete linked archive, including its proofs and final redirects, before
+compiling an exact archived source identifier. It reconstructs every grammar
+and resolves recursive imports and embeddings solely from that archive. The
+factory owns the source selection, concept space and resolver; factory and
+per-parse options cannot replace them. Default output retains the qualified
+concrete tree and embedded provenance. Existing any/all selection, cycle
+diagnostics and shared parser budgets remain in force. The `records` option
+configures archive validation only.
+
 ### Recursive formal concept definitions
 
 Every concept has a deep recursive formal definition made of inspectable links.
@@ -2589,6 +2599,15 @@ gaps against the target above:
   current native text importer and allocator still increment identifiers without
   a checked transition at `u64::MAX`. Synthetic word-vector checks establish
   neither an actual maximum-identifier graph import nor allocator safety.
+
+Archive-backed parser checks execute recursive grammars after discarding the
+original grammar maps, and compare one shipped JavaScript grammar against its
+existing concrete-tree fixture. The ordinary unqualified fixture passes with
+default budgets; its qualified 143-rule archive uses an explicit finite
+2,000,000-step budget for full provenance validation. This does not establish
+unchanged default-budget acceptance for every qualified grammar. Bounded local
+JavaScript checks do not prove native execution, full grammar coverage or
+completion of the remaining requirements; native parity remains a CI check.
 
 Self-translation preserves carriage-return sources through a serialized source
 envelope guarded by the original byte length and digest and the complete emitted
