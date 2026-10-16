@@ -32,6 +32,7 @@ import { readProjectData } from './project-data.mjs';
 import { readGrammarLicense } from './grammar-files.mjs';
 import { readGrammarReport, writeGrammarReport } from './grammar-report-files.mjs';
 import { planGrammarWorkOrder } from './grammar-work-order.mjs';
+import { describeGrammarRejection } from './grammar-rejection-description.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const script = fileURLToPath(import.meta.url);
@@ -162,9 +163,7 @@ export function createPipelineGlobalConceptSpace(sources, options = {}) {
 
 // A rejection as `syntax at 3:1, expected "\n" or "\r"`.
 function rejectionText(rejection) {
-  if (!rejection?.reason) return message(rejection?.message ?? JSON.stringify(rejection));
-  const expected = rejection.expected?.length ? `, expected ${rejection.expected.join(' or ')}` : '';
-  return message(`${rejection.reason} at ${rejection.line}:${rejection.column}${expected}`);
+  return describeGrammarRejection(rejection);
 }
 
 // Compiles `grammar` and parses `source`, filling `row`.

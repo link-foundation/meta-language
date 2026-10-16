@@ -1349,6 +1349,9 @@ results retain their original catalog positions. Earlier scheduling provides
 earlier feedback; it does not establish complete grammar support.
 CI publishes the textual matrix summary as a separate small artifact alongside
 the complete generated grammar archive, allowing bounded feedback inspection.
+Resource rejection descriptions retain their actual budget values and include
+source coordinates only when the parser supplies them. Diagnostic rendering
+does not change parser limits or establish grammar support.
 
 ## Grammar import, conversion and reverse conversion
 
