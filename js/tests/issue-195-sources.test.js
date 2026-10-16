@@ -224,6 +224,38 @@ test('follow-up comment permalinks are validated without assuming pull request 1
 });
 
 test('captured conversation instructions detect changed or missing committed bytes', async () => {
+  const contractFile = ISSUE_195_SOURCES.recordConversationRequest;
+  const contractBytes = readFileSync(repositoryFile(contractFile));
+  assert.equal(contractBytes.toString('utf8'), 'Make sure it is recorded.');
+  const contractFixture = manifest.fixtureCatalog['conversation-contract:recordConversationRequest'];
+  assert.equal(contractFixture.path, contractFile);
+  assert.equal(contentHash(contractBytes), contractFixture.sha256);
+  const before = structuredClone(register);
+  const knownCaptures = Object.entries(ISSUE_195_SOURCES).filter(([, url]) => url.startsWith('parity/sources/') && url.endsWith('.txt'));
+  assert.ok(knownCaptures.length > 0);
+  assert.deepEqual(validateSourceRegister(register, manifest, ISSUE_195_SOURCES), []);
+  for (const [key, url] of knownCaptures) {
+    const entries = register.requirementSources.filter(entry => entry.key === key || entry.url === url);
+    assert.equal(entries.length, 1, `${key} has exactly one registered capture`);
+    const [entry] = entries;
+    assert.equal(entry.key, key);
+    assert.equal(entry.url, url);
+    assert.equal(entry.kind, 'direct-instruction');
+    assert.equal(entry.revisionOrigin, 'capture time; the conversation does not expose a source timestamp');
+    assert.ok(Number.isFinite(Date.parse(entry.createdAt)) && Number.isFinite(Date.parse(entry.updatedAt)));
+    const bytes = readFileSync(repositoryFile(url));
+    assert.equal(bytes.length, entry.bytes, `${key} preserves its captured byte count`);
+    assert.equal(contentHash(bytes), entry.sha256, `${key} preserves its authoritative captured hash`);
+    for (const prefix of entry.ledgerCoverage) {
+      const rows = manifest.atomicRequirements.filter(row => row.id.startsWith(prefix));
+      assert.ok(rows.length > 0, `${key} maps ${prefix} to actual atomic obligations`);
+      for (const row of rows) {
+        assert.ok(row.source === url || row.traceability.sources.includes(key), `${key} covers ${row.id}`);
+        assert.equal(row.critical, true, row.id);
+        assert.equal(row.fullScopeReleaseBlocker, true, row.id);
+      }
+    }
+  }
   const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), 'meta-language-source-register-'));
   const instruction = register.requirementSources.find(({ kind }) => kind === 'direct-instruction');
   assert.ok(instruction);
@@ -240,9 +272,32 @@ test('captured conversation instructions detect changed or missing committed byt
     assert.match((await validateDirectInstructions(register, temporaryRoot))[0], /content hash or byte count/u);
     await rm(path.join(temporaryRoot, instruction.url));
     assert.match((await validateDirectInstructions(register, temporaryRoot))[0], /no longer exists/u);
+    const missing = structuredClone(register);
+    missing.requirementSources = missing.requirementSources.filter(entry => entry.url !== instruction.url);
+    assert.ok(validateSourceRegister(missing, manifest, ISSUE_195_SOURCES).some(error => error.includes(instruction.key)),
+      'removing a known capture registration cannot shrink the declared source inventory');
+    const unmapped = structuredClone(register);
+    unmapped.requirementSources.find(entry => entry.url === instruction.url).ledgerCoverage = ['I195-UNMAPPED-CONVERSATION-CAPTURE'];
+    assert.ok(validateSourceRegister(unmapped, manifest, ISSUE_195_SOURCES).some(error => error.includes('I195-UNMAPPED-CONVERSATION-CAPTURE')),
+      'a capture must retain a mapping to actual atomic obligations');
+    const repeated = await appendAssertionPolicyInstructionSources(register, { capturedAt: '2026-10-17T00:00:00.000Z' });
+    assert.deepEqual(repeated, register, 'an update retains every current source, its first capture time and its mapping');
+    await assert.rejects(appendAssertionPolicyInstructionSources(register, {
+      capturedAt: '2026-10-17T00:00:00.000Z',
+      read: async file => `${readFileSync(file, 'utf8')}Changed obligation.`,
+    }), /changed bytes/u, 'an update cannot bless changed bytes of an existing capture');
+    assert.deepEqual(register, before, 'positive checks and refused edits never mutate the authoritative register');
   } finally {
     await rm(temporaryRoot, { recursive: true, force: true });
   }
+  // This is the finite declared capture inventory. It cannot detect a message
+  // outside the registered source contract or establish language behavior.
+  recordIssue195Observations({
+    requirementId: 'I195-CONVERSATION-VERBATIM-REGISTER', suffix: 'behavior', runtime: 'tooling',
+    fixtureId: 'conversation-contract:recordConversationRequest', fixtureFile: contractFile,
+    assertions: ['conversationMessagesCapturedVerbatim', 'captureHashesVerified', 'allConversationObligationsMapped'],
+    testName: 'captured conversation instructions detect changed or missing committed bytes',
+  });
 });
 
 test('reviewed assertion policy captures append exact source bytes without changing any original source', async () => {
