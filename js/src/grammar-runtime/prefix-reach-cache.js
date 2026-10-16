@@ -10,10 +10,13 @@ export class PrefixReachCache {
     this.other=new Map();
     this.size=0;
     this.wide=maximumPosition>0xfffffffe;
+    this.recentKey=null;
+    this.recentLocation=null;
   }
 
   locate(key,create=false) {
     if(typeof key!=='string')return null;
+    if(key===this.recentKey&&(this.recentLocation!==null||!create))return this.recentLocation;
     const split=key.indexOf('|');
     if(split<1)return null;
     const text=key.slice(0,split),position=Number(text);
@@ -21,10 +24,11 @@ export class PrefixReachCache {
     const state=key.slice(split+1),block=Math.floor(position/PAGE_WIDTH),offset=position%PAGE_WIDTH;
     let pages=this.states.get(state);
     if(!pages&&create)this.states.set(state,pages=new Map());
-    if(!pages)return null;
-    let page=pages.get(block);
+    let page=pages?.get(block);
     if(!page&&create)pages.set(block,page=new Map());
-    return page?{pages,page,block,offset}:null;
+    const found=page?{pages,page,block,offset}:null;
+    this.recentKey=key;this.recentLocation=found;
+    return found;
   }
 
   has(key) {
@@ -58,6 +62,7 @@ export class PrefixReachCache {
           const dense=this.wide?new Float64Array(PAGE_WIDTH):new Uint32Array(PAGE_WIDTH);
           for(const[offset,stored]of found.page)dense[offset]=stored+1;
           found.pages.set(found.block,dense);
+          found.page=dense;
         }
       }else found.page[found.offset]=value+1;
     }

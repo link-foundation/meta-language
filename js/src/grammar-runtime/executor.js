@@ -22,7 +22,9 @@ import { acceptFixedLexicalExpression } from './lexical-cache.js';
 import { releaseLexicalCaches, retainLexicalCache } from './lexical-cache-memory.js';
 import { packLexicalCacheResults, readLexicalCacheResults, packTriviaCacheResult } from './cache-storage.js';
 import { PrefixReachCache } from './prefix-reach-cache.js';
-import { retireCompletedRuleMemoPrefix } from './rule-memo-window.js';
+import { RULE_MEMO_PAGE_WIDTH, retireCompletedRuleMemoPrefix } from './rule-memo-window.js';
+import { readRecursiveMemoSeed, rememberRecursiveMemoDependency, acceptRecursiveMemoEntry, reuseRecursiveMemoEntry, advanceRecursiveMemoSeed, finishRecursiveMemoSeed, storeRecursiveMemoEntry } from './recursive-seed-memo.js';
+import { readTriviaPrefixPolicy, acceptTriviaExtraPrefix } from './trivia-prefix-cache.js';
 import { completeRuleContexts } from './precedence-contexts.js';
 import { acceptLexicalCacheContext, acceptLexicalCacheReservation, acceptPrecedenceOperandContext, acceptPrecedenceOperandHead, acceptScannerPreemptionBoundary, readScannerContinuationAction } from '../translation/frontend-rules.js';
 
@@ -2183,6 +2185,8 @@ export class Executor {
     this.depth = 0;
     this.memo = new Map();
     this.retiredRuleMemoEntries = 0;
+    this.recursiveMemoEnabled = end - begin >= RULE_MEMO_PAGE_WIDTH;
+    this.triviaPrefixPolicy = this.recursiveMemoEnabled ? readTriviaPrefixPolicy(program) : null;
     this.memoLimit = options.memoLimit ?? DEFAULT_MEMO_LIMIT;
     this.callStack = [];
     this.triviaMemo = new Map();
@@ -2361,6 +2365,7 @@ export class Executor {
       for (const item of trivia) {
         if (item.modes && !item.modes.includes(mode)) continue;
         if (item.kind !== null && (this.inExtra === true || (atExtra && cursor === position))) continue;
+        if (!acceptTriviaExtraPrefix(this.triviaPrefixPolicy,item.kind,this.bytes[cursor])) continue;
         if (cursor === position && outrank > 0 && this.priorityOf(item.expression) < outrank) continue;
         if (cursor === position && lexed && item.kind === null) continue;
         // A composite extra is syntax: its internal separators remain trivia.
@@ -3632,7 +3637,9 @@ export class Executor {
     const key = keyParts[2].length <= 64 ? keyParts.join('|')
       : `${keyParts[0]}|${keyParts[1]}|${keyParts[2]}|${keyParts[3]}|${keyParts[4]}|${keyParts[5]}`;
     const known = this.memo.get(key);
-    if (known) {
+    const reusableKnown=!known?.recursiveMemoDependencies||known.evaluating||reuseRecursiveMemoEntry(known,this.callStack);
+    if(!reusableKnown)this.memo.delete(key);
+    if (known && reusableKnown) {
       if (known.keywordContext) {
         const parent = this.callStack[this.callStack.length - 1]?.keywordContext ?? null;
         const parents = known.keywordContext.parents;
@@ -3645,10 +3652,13 @@ export class Executor {
       }
       if (!known.evaluating) return known.results;
       // Left recursion: answer with the current seed and mark every call
-      // between the two as depending on it, so none of them is memoized.
+      // between the two as depending on it. Large parses can reuse a completed
+      // dependent call only while all of its exact seed revisions still match.
       known.leftRecursive = true;
+      const recursiveSeed=this.recursiveMemoEnabled?readRecursiveMemoSeed(known,this.callStack.indexOf(known)):null;
       for (let index = this.callStack.length - 1; index >= 0 && this.callStack[index] !== known; index -= 1) {
         this.callStack[index].involved = true;
+        if(recursiveSeed)rememberRecursiveMemoDependency(this.callStack[index],recursiveSeed);
       }
       return known.seed;
     }
@@ -3671,15 +3681,18 @@ export class Executor {
       this.retain(results.length);
       entry.results = results;
     } finally {
+      finishRecursiveMemoSeed(entry,this.memo,this.callStack);
       this.depth -= 1;
       this.callStack.pop();
       entry.evaluating = false;
     }
     if (!entry.involved && this.memo.size > this.memoLimit) this.retiredRuleMemoEntries += retireCompletedRuleMemoPrefix(this.memo, position);
-    if (entry.involved || this.memo.size > this.memoLimit) this.memo.delete(key);
+    const reusableRecursiveCall=entry.involved&&acceptRecursiveMemoEntry(entry,this.callStack);
+    if (entry.involved&&!reusableRecursiveCall || this.memo.size > this.memoLimit) this.memo.delete(key);
     // Only an evaluating call needs its rule, position, seeds and lexer
     // precedence state. Preserve its exact results and live keyword context
     // in the memo without retaining those retired active-call fields.
+    else if(reusableRecursiveCall)storeRecursiveMemoEntry(entry,key,this.memo);
     else this.memo.set(key, { results: entry.results, keywordContext: entry.keywordContext });
     return entry.results;
   }
@@ -3688,6 +3701,7 @@ export class Executor {
     if (this.peg) {
       let best = first[0];
       while (best) {
+        advanceRecursiveMemoSeed(entry,this.memo);
         entry.seed = [best];
         const [next] = this.ruleBody(rule, position, state, inToken);
         if (!next || next.end <= best.end) break;
@@ -3723,6 +3737,7 @@ export class Executor {
     let current = new Map(first.map((result) => [resultKey(result), result]));
     let seed = [...current.values()];
     for (let settled = 0; ;) {
+      advanceRecursiveMemoSeed(entry,this.memo);
       entry.seed = seed;
       const merged = new Map(current);
       let changed = false;

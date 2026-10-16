@@ -2191,6 +2191,35 @@ recursion and refusal with both authenticated original parser modules.
 Full generated-source fit still needs CI evidence. Failed source diagnostics
 report the actual memory, step, nesting or other exception phase and selected
 limits without substituting a result, masking the failure or enabling encoding.
+For JavaScript input regions at least as wide as that shared source page,
+completed recursive calls can also retain at most eight exact seed dependencies.
+Each dependency contains only an active-head depth, revision and invalidation
+keys; it does not retain the head, rule, seed results or tree. Cache hits require
+every active head and revision to match and propagate the same dependencies to
+their callers. A seed change invalidates its conditional entries. A completed
+head can substitute its remaining outer dependencies only when its complete
+ordered result identities equal its exact final seed; equal offsets or similar
+trees do not suffice. Independent exact final seeds remove that condition.
+Uncertain or conflicting dependencies retain the original uncached behavior.
+All newly computed calls and results keep their original charges, and invalidated
+entries never release mandatory charges. The existing memo cap, memory and step
+budgets, nesting checks and complete-source archive premise remain unchanged.
+Bounded tests exercise this large-input cache policy on tiny original Rust
+controls and authored recursive grammars, preserving full outcomes, recovery,
+ambiguity and original zero-budget refusals. They do not establish full-source
+resource fit or native parity. Prefix pages also reuse one most recent physical
+location across paired membership and value reads, refreshing it on dense
+promotion while preserving every logical entry and exceptional value.
+The same large-input policy can avoid entering a named syntax extra whose
+required ASCII literal prefix is absent, provided anonymous padding has only
+known nonempty ASCII literal or positive character-class starts and the grammar
+has no scanner expectation queries. Padding bytes and matching prefixes always
+retain the original path. Unknown rules, nullable or opaque padding and any
+expectation query retain the original evaluation. This avoids actual failed
+comment calls without dropping a grammar rule, suppressing a required request,
+raising a budget or changing the source. Frozen tiny Rust outcomes and explicit
+unknown-policy controls cover the optimization; complete source fit remains a
+CI obligation.
 The naming gate indexes exact words and every allowed WordNet synset by phrase
 role, length and position before applying its unchanged synonym predicate.
 Candidate pairs retain their original record order and every distinction rule.

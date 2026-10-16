@@ -22028,7 +22028,132 @@ const RULE_MEMO_WORKING_SET_NAME_INVENTORIES=[...new Set(RULE_MEMO_WORKING_SET_N
  extract: text => RULE_MEMO_WORKING_SET_NAME_BINDINGS.filter(row=>row.source===source&&text.includes(row.name)).map(row=>normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))),
  recordOf: name => RULE_MEMO_WORKING_SET_NAME_BINDINGS.find(row=>row.source===source&&normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))===name).id,
 }));
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES]);
+// Exact recursive seed dependencies and one recent physical prefix location.
+const RECURSIVE_SEED_CACHE_NAME_BINDINGS=[
+  {
+    "id": "repository.prefix-cache-recent-key",
+    "name": "recentKey",
+    "source": "js/src/grammar-runtime/prefix-reach-cache.js"
+  },
+  {
+    "id": "repository.prefix-cache-recent-location",
+    "name": "recentLocation",
+    "source": "js/src/grammar-runtime/prefix-reach-cache.js"
+  },
+  {
+    "id": "repository.check-prefix-cache-location-reuse",
+    "name": "prefix cache repeated lookups preserve absent entries promotion updates and exact values",
+    "source": "js/tests/grammar-prefix-cache-location.test.js"
+  },
+  {
+    "id": "repository.recursive-memo-selection",
+    "name": "recursiveMemoEnabled",
+    "source": "js/src/grammar-runtime/executor.js"
+  },
+  {
+    "id": "repository.read-recursive-memo-seed",
+    "name": "readRecursiveMemoSeed",
+    "source": "js/src/grammar-runtime/recursive-seed-memo.js"
+  },
+  {
+    "id": "repository.remember-recursive-memo-dependency",
+    "name": "rememberRecursiveMemoDependency",
+    "source": "js/src/grammar-runtime/recursive-seed-memo.js"
+  },
+  {
+    "id": "repository.accept-recursive-memo-entry",
+    "name": "acceptRecursiveMemoEntry",
+    "source": "js/src/grammar-runtime/recursive-seed-memo.js"
+  },
+  {
+    "id": "repository.reuse-recursive-memo-entry",
+    "name": "reuseRecursiveMemoEntry",
+    "source": "js/src/grammar-runtime/recursive-seed-memo.js"
+  },
+  {
+    "id": "repository.advance-recursive-memo-seed",
+    "name": "advanceRecursiveMemoSeed",
+    "source": "js/src/grammar-runtime/recursive-seed-memo.js"
+  },
+  {
+    "id": "repository.finish-recursive-memo-seed",
+    "name": "finishRecursiveMemoSeed",
+    "source": "js/src/grammar-runtime/recursive-seed-memo.js"
+  },
+  {
+    "id": "repository.store-recursive-memo-entry",
+    "name": "storeRecursiveMemoEntry",
+    "source": "js/src/grammar-runtime/recursive-seed-memo.js"
+  },
+  {
+    "id": "repository.recursive-memo-seed",
+    "name": "recursiveMemoSeed",
+    "source": "js/src/grammar-runtime/recursive-seed-memo.js"
+  },
+  {
+    "id": "repository.recursive-memo-dependency-set",
+    "name": "recursiveMemoDependencies",
+    "source": "js/src/grammar-runtime/recursive-seed-memo.js"
+  },
+  {
+    "id": "repository.recursive-memo-revision-conflict",
+    "name": "recursiveMemoConflict",
+    "source": "js/src/grammar-runtime/recursive-seed-memo.js"
+  },
+  {
+    "id": "repository.read-recursive-memo-baseline",
+    "name": "readRecursiveMemoBaseline",
+    "source": "js/tests/grammar-recursive-seed-memo.test.js"
+  },
+  {
+    "id": "repository.check-recursive-memo-dependencies",
+    "name": "recursive memo dependencies preserve active frames revisions and conservative refusal",
+    "source": "js/tests/grammar-recursive-seed-memo.test.js"
+  },
+  {
+    "id": "repository.check-recursive-memo-final-seeds",
+    "name": "recursive memo final seeds retain exact results and substitute every outer dependency",
+    "source": "js/tests/grammar-recursive-seed-memo.test.js"
+  },
+  {
+    "id": "repository.check-recursive-memo-frozen-outcomes",
+    "name": "recursive seed reuse preserves complete frozen Rust outcomes and unchanged rejection limits",
+    "source": "js/tests/grammar-recursive-seed-memo.test.js"
+  },
+  {
+    "id": "repository.check-recursive-memo-authored-recursion",
+    "name": "recursive seed reuse preserves authored left recursion ambiguity and empty growth",
+    "source": "js/tests/grammar-recursive-seed-memo.test.js"
+  }
+];
+RECURSIVE_SEED_CACHE_NAME_BINDINGS.push(...[
+  {
+    "id": "repository.read-trivia-prefix-policy",
+    "source": "js/src/grammar-runtime/trivia-prefix-cache.js",
+    "name": "readTriviaPrefixPolicy"
+  },
+  {
+    "id": "repository.accept-trivia-extra-prefix",
+    "source": "js/src/grammar-runtime/trivia-prefix-cache.js",
+    "name": "acceptTriviaExtraPrefix"
+  },
+  {
+    "id": "repository.trivia-prefix-policy",
+    "source": "js/src/grammar-runtime/executor.js",
+    "name": "triviaPrefixPolicy"
+  },
+  {
+    "id": "repository.check-trivia-prefix-conservation",
+    "source": "js/tests/grammar-trivia-prefix-cache.test.js",
+    "name": "trivia prefix policy preserves padding comments unknown rules and scanner expectations"
+  }
+]);
+const RECURSIVE_SEED_CACHE_NAME_INVENTORIES=[...new Set(RECURSIVE_SEED_CACHE_NAME_BINDINGS.map(row=>row.source))].map(source=>({
+ inventory: "recursive seed cache controls for "+source, files: [source],
+ extract: text => RECURSIVE_SEED_CACHE_NAME_BINDINGS.filter(row=>row.source===source&&text.includes(row.name)).map(row=>normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))),
+ recordOf: name => RECURSIVE_SEED_CACHE_NAME_BINDINGS.find(row=>row.source===source&&normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(row.name))===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {

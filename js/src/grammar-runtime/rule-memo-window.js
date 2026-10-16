@@ -1,7 +1,7 @@
 // A full cache must keep admitting work at the current source position.
 // Retire an earlier completed prefix; active recursion and all memory charges
 // remain intact. Small parses retain their original admission decisions.
-const RULE_MEMO_PAGE_WIDTH=65536;
+export const RULE_MEMO_PAGE_WIDTH=65536;
 
 function readRuleMemoPosition(key) {
   if(typeof key!=='string')return null;
