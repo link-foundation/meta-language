@@ -256,14 +256,18 @@ impl<'c> Executor<'c> {
         start: usize,
         kind: Option<Name>,
         trivia: bool,
-    ) -> Rc<Tree> {
+    ) -> Tree {
         let rule = &plan.rules[winner.rule];
         let mut tree = Tree::new(TreeType::Token, kind, start, winner.end);
         tree.trivia = trivia;
-        tree.lexical = Some(
-            json!({ "lexer": plan.name, "rule": rule.name, "type": rule.token_type, "channel": rule.channel, "disposition": rule.disposition }),
-        );
-        Rc::new(tree)
+        tree.lexical = Some(json!({
+            "lexer": plan.name.as_ref(),
+            "rule": rule.name.as_ref(),
+            "type": rule.token_type.as_ref(),
+            "channel": rule.channel.as_ref(),
+            "disposition": rule.disposition.as_ref(),
+        }));
+        tree
     }
 
     pub(super) fn skip_elected_trivia(
@@ -287,7 +291,13 @@ impl<'c> Executor<'c> {
                 .iter()
                 .find(|(source, _)| &**source == identity)
                 .map_or_else(|| Name::from(identity), |(_, public)| public.clone());
-            leaves.push(Self::elected_leaf(plan, &winner, cursor, Some(kind), true));
+            leaves.push(Rc::new(Self::elected_leaf(
+                plan,
+                &winner,
+                cursor,
+                Some(kind),
+                true,
+            )));
             cursor = winner.end;
             current = winner.state.clone();
             states.push(current.clone());
