@@ -2300,6 +2300,13 @@ identified correction, so the native runtime remains independent of the oracle.
 Local sandboxes and CI runners have a few gigabytes of memory. The tooling
 keeps every run within that bound instead of relying on a larger machine.
 
+Each bulk grammar worker reads projection metadata from its selected actual
+generated grammar. The fixture generator uses the same reader, while unrelated
+grammar projections and corpus definitions stay outside that worker's setup.
+Inventory fields, source names, missing-projection refusals and independent
+oracle comparisons retain their existing meaning. Bounded selected-grammar
+controls check fidelity; the complete workload and its timing remain CI checks.
+
 Use one shared repository checkout for ordinary development, review and bounded
 JavaScript checks, with explicit ownership of edited paths. Do not create a
 worktree or clone for each agent, test or review. The coordinator may select an
