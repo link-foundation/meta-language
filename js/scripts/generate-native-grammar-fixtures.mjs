@@ -34,7 +34,7 @@ import { fileURLToPath } from 'node:url';
 
 import { compileGrammar, languageEntry, parseGrammarLinks, renderSyntaxTree } from '../src/index.js';
 import { NATIVE_BATCH_FIXTURES } from './native-grammar-batch-fixtures.mjs';
-import { nativeOracleKinds } from './build-language-catalog.mjs';
+import { readNativeGrammarProjection } from './native-grammar-projection.mjs';
 import { corpusCases, grammarSourceOf } from './import-native-grammars.mjs';
 import { hasRecovery, nativeRows, oracleRecovers, oracleRows } from './native-grammar-rows.mjs';
 import { buildNativeGrammarFixtureFromParser } from './native-grammar-fixture.mjs';
@@ -46,9 +46,7 @@ const inventory = readProjectData(path.join(root, 'parity/language-grammar-inven
 // default tree places as the oracle does, which both runtimes read from the
 // language catalog.
 function nativeGrammar(id) {
-  const { grammar, hidden, anonymous, extras, rootIncludesLeadingTrivia } = inventory.nativeGrammars[id];
-  const oracleKinds = nativeOracleKinds(readFileSync(resolveProjectDataPath(path.join(root, grammar)), 'utf8'));
-  return { nativeGrammar: id, hidden, anonymous, extras, oracleKinds, ...(rootIncludesLeadingTrivia ? { rootIncludesLeadingTrivia } : {}) };
+  return readNativeGrammarProjection(id, inventory);
 }
 
 // The empty last field the RFC 4180 ABNF allows and the oracle recovers from.

@@ -33,6 +33,7 @@ import { readGrammarLicense } from './grammar-files.mjs';
 import { readGrammarReport, writeGrammarReport } from './grammar-report-files.mjs';
 import { planGrammarWorkOrder } from './grammar-work-order.mjs';
 import { describeGrammarRejection } from './grammar-rejection-description.mjs';
+import { readNativeGrammarProjection } from './native-grammar-projection.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const script = fileURLToPath(import.meta.url);
@@ -185,11 +186,14 @@ function compileAndParse(row, grammar, source, compileGrammar) {
 // its native grammar fixture.
 async function importPinned(pinned) {
   const { NAME_EXPANSIONS, importSource } = await import('./import-native-grammars.mjs');
-  const { NATIVE_GRAMMARS } = await import('./generate-native-grammar-fixtures.mjs');
   const naming = readJson(NAME_EXPANSIONS);
   const words = new Map(naming.words.map(({ word, replacement }) => [word, replacement]));
   const { imported, text } = importSource(pinned, words, naming.grammars[pinned.language]);
-  const { hidden, anonymous, extras, oracleKinds } = NATIVE_GRAMMARS.find(({ id }) => id === pinned.language);
+  // Fixture ids select their matching native grammar, independently of a
+  // source record's native field, just as the former fixture lookup did.
+  const { hidden, anonymous, extras, oracleKinds } = readNativeGrammarProjection(
+    `native-${pinned.language}`, readJson('parity/language-grammar-inventory.json'),
+  );
   return { imported, listing: text, projection: { hidden, anonymous, extras, oracleKinds } };
 }
 

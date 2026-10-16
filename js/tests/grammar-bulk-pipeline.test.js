@@ -17,6 +17,7 @@ import {
   createPipelineGlobalConceptSpace,
 } from '../scripts/run-grammar-bulk-pipeline.mjs';
 import { GRAMMAR_SOURCES } from '../scripts/build-vendored-grammars.mjs';
+import { readNativeGrammarProjection } from '../scripts/native-grammar-projection.mjs';
 import { compileGrammar, importAntlr, renderGrammarLinks, deserializeGrammar } from '../src/index.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
@@ -56,6 +57,42 @@ test('every catalog language with a grammar has a pinned tree-sitter source and 
     assert.ok(names.has(language), `grammars-v4 ${language} is no catalog language with a grammar`);
   }
   assert.match(v4.revision, /^[0-9a-f]{40}$/u);
+  for (const source of pinned) {
+    assert.equal(source.native, `native-${source.language}`, `${source.language}: pinned and fixture native identities`);
+  }
+  const prepared = read('parity/fixtures/native-grammars/ini.json');
+  const projection = readNativeGrammarProjection('native-ini', inventory);
+  assert.equal(projection.nativeGrammar, 'native-ini');
+  for (const field of ['hidden', 'anonymous', 'extras', 'oracleKinds']) {
+    assert.ok(Object.hasOwn(prepared, field), `INI fixture retains ${field}`);
+    assert.deepEqual(projection[field], prepared[field], `INI selected projection ${field}`);
+  }
+  // Selecting one projection must not inspect other grammars or use cached
+  // catalog names in place of the selected file's actual source names.
+  const selected = { grammar: 'selected.lino', hidden: ['padding'], anonymous: ['space'], extras: ['comment'], rootIncludesLeadingTrivia: true };
+  const available = { nativeGrammars: { 'native-selected': selected,
+    get 'native-unrelated'() { throw new Error('unrelated grammar metadata was inspected'); },
+  } };
+  const reads = [];
+  let text = '(grammar (start selected_root))\n'
+    + '(kind selected_alias (source-names (tree-sitter original_alias)))\n'
+    + '(rule selected_root normal (literal x) (source-names (tree-sitter original_root)))\n';
+  const readGrammar = file => { reads.push(file); return text; };
+  assert.deepEqual(readNativeGrammarProjection('native-selected', available, readGrammar), {
+    nativeGrammar: 'native-selected', hidden: ['padding'], anonymous: ['space'], extras: ['comment'],
+    oracleKinds: { selected_root: 'original_root', selected_alias: 'original_alias' }, rootIncludesLeadingTrivia: true,
+  });
+  assert.deepEqual(reads, ['selected.lino']);
+  assert.equal(readNativeGrammarProjection('native-selected', available, readGrammar).hidden, selected.hidden);
+  text = text.replace('original_root', 'updated_root');
+  assert.equal(readNativeGrammarProjection('native-selected', available, readGrammar).oracleKinds.selected_root, 'updated_root');
+  assert.deepEqual(reads, ['selected.lino', 'selected.lino', 'selected.lino']);
+  delete selected.rootIncludesLeadingTrivia;
+  assert.equal(Object.hasOwn(readNativeGrammarProjection('native-selected', available, readGrammar), 'rootIncludesLeadingTrivia'), false);
+  assert.throws(() => readNativeGrammarProjection('native-missing', available, readGrammar), TypeError);
+  assert.deepEqual(reads, ['selected.lino', 'selected.lino', 'selected.lino', 'selected.lino']);
+  text = '(grammar)\n(rule unfinished';
+  assert.throws(() => readNativeGrammarProjection('native-selected', available, readGrammar));
   observe(['everyCatalogLanguageImported'], 'bulk pipeline covers the catalog');
 });
 
