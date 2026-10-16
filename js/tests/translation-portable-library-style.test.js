@@ -229,6 +229,14 @@ test('complete sibling placement imports only actual sibling declarations', () =
   assert.equal(parts[3].source.includes('use super::'), false, 'local bindings, strings and comments do not import sibling items');
   for (const part of parts) assert.equal(part.source.includes('use super::*;'), false);
   assert.equal(parts[2].source.match(/self::first\(\)/gu)?.length, 1, 'the emitted reference remains unchanged');
+  const numbered = [10, 8, 2].map(value => `pub fn continuation${value}() -> bool {\n    true\n}\n`).join('')
+    + 'pub fn selected() -> bool {\n    self::continuation10() && self::continuation8() && self::continuation2()\n}\n';
+  const selected = partitionPortableRustLibrary(numbered, {directory: 'numbered_siblings', maximumLines: 6}).at(-1).source;
+  const imports = selected.slice(0, selected.indexOf('\n\n') + 1);
+  assert.deepEqual(imports.trim().split('\n'), ['use super::continuation2;', 'use super::continuation8;', 'use super::continuation10;']);
+  const formatted = spawnSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], {input: selected, encoding: 'utf8'});
+  assert.equal(formatted.status, 0, formatted.stderr);
+  assert.equal(formatted.stdout, selected, 'new sibling imports already follow the active 2024 formatter');
 });
 
 test('complete mechanical library expressions preserve opaque macros and lazy refusal paths', () => {

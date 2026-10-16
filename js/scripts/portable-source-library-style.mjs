@@ -1,6 +1,7 @@
 // Mechanical library ABI and module placement for complete checked output.
 // These styles retain emitted operations, evaluation order and source bodies.
 import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
 import {tokenize} from '../src/translation/lexer.js';
 import {readSourceTextRustBlock} from './source-text-byte-library-style.mjs';
 
@@ -240,10 +241,13 @@ export function partitionPortableRustLibrary(source, {notice = '', directory, ma
       needed.add(token.value);
     }
     const names = [...needed].sort();
-    // One explicit import per sibling is stable under rustfmt regardless of
-    // identifier length and retains self:: lookup through the module scope.
-    const imports = names.map(name => `use super::${name};\n`).join('');
-    const text = notice + imports + (imports ? '\n' : '') + part + '\n';
+    // Keep one explicit import per sibling and let the selected edition's
+    // formatter order numeric continuation names as well as ordinary names.
+    const imports = names.length ? spawnSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], {
+      input: names.map(name => `use super::${name};\n`).join(''), encoding: 'utf8',
+    }) : {status: 0, stdout: ''};
+    assert.equal(imports.status, 0, imports.stderr ?? imports.error?.message);
+    const text = notice + imports.stdout + (imports.stdout ? '\n' : '') + part + '\n';
     assert.ok(text.split('\n').length < 1000, 'explicit sibling imports retain a bounded child module');
     return {path: `${directory}/part_${index + 1}.rs`, source: text};
   })];
