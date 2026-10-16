@@ -108,8 +108,17 @@ function readDeclarations(source) {
         .some(item => item.kind === 'identifier' && !['Clone', 'Debug', 'PartialEq', 'Eq', 'PartialOrd', 'Ord'].includes(item.value))) shadowed = true;
     }
     if (token.kind !== 'identifier') continue;
+    if (token.value === 'use') {
+      const alias = [['identifier', 'pub'], ['identifier', 'use'], ['identifier', 'crate'], ['punct', '::'],
+        ['identifier', 'translation'], ['punct', '::'], ['identifier', 'frontend_rules'], ['punct', '::'],
+        ['identifier', 'ml_array'], ['punct', ';']];
+      // This generated relocation binds only the existing array provider. It
+      // imports no owned type, conversion trait or formatting macro.
+      if (alias.every(([kind, value], offset) => whole.tokens[at - 1 + offset]?.kind === kind
+        && whole.tokens[at - 1 + offset]?.value === value)) { at += alias.length - 2; continue; }
+    }
     if (token.value === 'use' || ['type', 'struct', 'enum', 'union', 'mod'].includes(token.value)
-      && ['String', 'Vec', 'f64', 'bool', 'u16', 'usize', 'i64', 'u64'].includes(whole.tokens[at + 1]?.value)) shadowed = true;
+      && ['String', 'Vec', 'f64', 'bool', 'u16', 'usize', 'i64', 'u64', 'std'].includes(whole.tokens[at + 1]?.value)) shadowed = true;
     if (token.value !== 'pub' || whole.tokens[at + 1]?.value !== 'fn' || whole.tokens[at + 3]?.value !== '(') continue;
     const name = whole.tokens[at + 2].value;
     let open = whole.matching.get(at + 3) + 1;
@@ -269,7 +278,7 @@ function readFlow(fn) {
   return {edges, patterns, matches, controlEnds, readIf};
 }
 
-function acceptFunction(fn) {
+function acceptFunction(fn, implicitReads) {
   const {tokens, matching, body, end} = fn;
   for (let at = body + 1; at < end; at += 1) {
     const token = tokens[at], previous = tokens[at - 1]?.value;
@@ -279,11 +288,23 @@ function acceptFunction(fn) {
     if (token.value === '||' && ['=', '(', '[', ',', '{', 'return', '=>'].includes(previous)) return false;
     if (token.kind !== 'macro') continue;
     if (!['format', 'vec'].includes(token.value) || matching.get(at + 1) === undefined) return false;
+    if (previous === '::' && !(tokens[at - 2]?.kind === 'identifier' && tokens[at - 2].value === 'std'
+      && tokens[at - 3]?.value !== '::')) return false;
     if (token.value === 'format') {
       const literal = tokens[at + 2];
       if (literal?.kind !== 'string') return false;
       const fields = literal.value.replaceAll('{{', '').replaceAll('}}', '').matchAll(/\{([^{}]*)\}/gu);
-      for (const [, field] of fields) if (!/^[0-9]*$/u.test(field)) return false;
+      for (const [, field] of fields) {
+        if (/^[0-9]*$/u.test(field)) continue;
+        if (!/^[A-Za-z_][A-Za-z_0-9]*$/u.test(field)) return false;
+        // Captured fields read the actual lexical binding. Retain that read
+        // through completion of every explicit argument, including a call
+        // which consumes a clone of the same binding later in this macro.
+        for (const index of [at + 2, matching.get(at + 1)]) {
+          if (!implicitReads.has(index)) implicitReads.set(index, new Set());
+          implicitReads.get(index).add(field);
+        }
+      }
       if (/[{}]/u.test(literal.value.replaceAll('{{', '').replaceAll('}}', '').replace(/\{[^{}]*\}/gu, ''))) return false;
     }
   }
@@ -514,7 +535,8 @@ export function readPortableOwnedSourceStyles(source) {
   const declarations = readDeclarations(source), actions = [];
   let adapted = source;
   for (const fn of declarations.functions) {
-    if (!acceptFunction(fn) || declarations.returns.get(fn.name) === undefined || source.split(fn.block).length !== 2) continue;
+    const implicitReads = new Map();
+    if (!acceptFunction(fn, implicitReads) || declarations.returns.get(fn.name) === undefined || source.split(fn.block).length !== 2) continue;
     let flow;
     try { flow = readFlow(fn); } catch (error) {
       if (error.message === 'unsupported owned source flow') continue;
@@ -538,7 +560,7 @@ export function readPortableOwnedSourceStyles(source) {
         if (seen.has(next)) continue;
         seen.add(next);
         if (definitions.get(next)?.has(token.value)) continue;
-        if (!declarationTokens.has(next) && !writeTokens.has(next)
+        if (implicitReads.get(next)?.has(token.value) || !declarationTokens.has(next) && !writeTokens.has(next)
           && tokens[next].kind === 'identifier' && tokens[next].value === token.value) live = true;
         else pending.push(...(flow.edges.get(next) ?? []));
       }

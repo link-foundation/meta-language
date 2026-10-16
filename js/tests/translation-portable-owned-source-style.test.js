@@ -8,7 +8,7 @@ import {emitJavaScript} from '../src/translation/emit-javascript.js';
 import {emitRust} from '../src/translation/emit-rust.js';
 import {STRING_PRELUDE} from '../src/translation/string-runtime.js';
 import {readPortableOwnedSourceStyles} from '../scripts/portable-owned-source-style.mjs';
-import {readPortableSourceParameterStyles} from '../scripts/portable-source-library-style.mjs';
+import {readPortableSourceParameterStyles, readPortableSourceLintStyles} from '../scripts/portable-source-library-style.mjs';
 
 const copies = source => (source.match(/\.clone\(\)/gu) ?? []).length;
 function review(source) {
@@ -31,6 +31,12 @@ test('declared owned String results lose only their dead branch copies and repla
   assert.equal(review(joined), joined, 'a read after the branch join keeps the original clone');
   const compound = 'pub fn compound(flag: bool, value: String) -> String { let copied = value.clone(); if flag && { self::condition() } { return copied; } self::observe(value); String::new() }';
   assert.equal(review(compound), compound, 'an unsupported condition block cannot hide the false continuation');
+  const priorCapture = 'pub fn prior_capture(value: String) -> String { let displayed = format!("{value}"); self::observe(displayed); value.clone() }';
+  assert.equal(copies(review(priorCapture)), 0, 'a completed plain capture does not keep a later terminal transfer live');
+  const captureBranch = 'pub fn capture_branch(value: String, flag: bool) -> String { if flag { value.clone() } else { format!("{{{value}}}") } }';
+  assert.equal(copies(review(captureBranch)), 0, 'an escaped-brace plain capture in another complete branch cannot read this branch transfer');
+  const standardCapture = 'pub fn standard_capture(value: String) -> String { let displayed = std::format!("{value}"); self::observe(displayed); value.clone() }';
+  assert.equal(copies(review(standardCapture)), 0, 'an unshadowed standard format macro retains the same explicit capture reads');
 });
 
 test('terminal function returns inside loops keep tuple order while loop backedges and breaks retain copies', () => {
@@ -122,11 +128,19 @@ test('borrowed values, escaped loans, shadowed bindings, captures and unknown sy
     'unknown_type!();\npub fn opaque_type(value: String) -> String { value.clone() }',
     '#[derive(Custom)]\npub struct Wrapper;\npub fn opaque_type(value: String) -> String { value.clone() }',
     'pub fn captured_format(value: String) -> String { let copied = value.clone(); let display = format!("{value}"); copied }',
+    'pub fn captured_argument(value: String) -> String { format!("{value} {}", self::consume(value.clone())) }',
+    'pub fn captured_tuple(value: String) -> String { format!("{value} {}", self::consume((value.clone(), value.len()))) }',
     'pub fn captured_width(value: String, width: usize) -> String { let copied = value.clone(); let display = format!("{:width$}", value); copied }',
+    'pub fn captured_debug(value: String) -> String { let copied = value.clone(); let display = format!("{value:?}"); copied }',
     'pub fn unsupported(value: String) -> String { for index in 0..1 { self::observe(index); } value.clone() }',
     'struct String;\npub fn custom(value: String) -> String { value.clone() }',
     'struct Vec<T>(T);\npub fn custom(value: Vec<String>) -> Vec<String> { value.clone() }',
     'use custom::String;\npub fn custom(value: String) -> String { value.clone() }',
+    'pub use crate::translation::frontend_rules::ml_array as String;\npub fn custom(value: String) -> String { value.clone() }',
+    'pub use std::format;\npub fn imported_macro(value: String) -> String { value.clone() }',
+    'pub use crate::translation::frontend_rules::*;\npub fn imported_glob(value: String) -> String { value.clone() }',
+    'pub mod custom { pub use std::format; }\npub fn qualified_macro(value: String) -> String { let displayed = custom::format!("{value}"); value.clone() }',
+    'pub mod std {}\npub fn shadowed_standard(value: String) -> String { std::format!("{}", value.clone()) }',
   ];
   for (const source of unchanged) assert.equal(review(source), source);
 });
@@ -172,6 +186,11 @@ test('actual checked JavaScript branches and changing string loops preserve valu
   assert.ok(result.actions.length > 0, 'actual source translation contains proven owned final copies');
   assert.ok(copies(result.source) < copies(loaned));
   review(loaned);
+  const alias = 'pub use crate::translation::frontend_rules::ml_array;\n';
+  const relocated = alias + loaned, composed = readPortableSourceLintStyles(relocated).source;
+  assert.ok(copies(review(relocated)) < copies(relocated), 'the exact generated array-provider alias admits actual checked function ownership facts');
+  assert.ok(composed.includes(alias), 'the complete composition retains the exact generated runtime relocation');
+  assert.ok(copies(composed) < copies(relocated), 'the complete composer consumes final copies without adding any source body');
   const context = {};
   runInNewContext(emitJavaScript(program).text, context, {timeout: 1000});
   for (const [value, flag, expected] of [['', true, 'empty'], ['kept', true, 'kept'], ['kept', false, 'fallback']]) {
