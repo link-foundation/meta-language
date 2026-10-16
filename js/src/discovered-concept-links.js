@@ -4,10 +4,11 @@ import { isDeepStrictEqual } from 'node:util';
 import { Grammar } from './grammar.js';
 import { createGlobalConceptSpace } from './global-concept-space.js';
 import { readFormalConceptDefinition } from './formal-concept-definition.js';
-import { acceptDiscoveredConceptShape } from './discovered-concept-rules.js';
+import { acceptDiscoveredConceptShape, acceptLegacyDiscoveredConceptFormat } from './discovered-concept-rules.js';
 import { LinkNetwork } from './network.js';
 import { LinkId, LinkMetadata, LinkType } from './primitives.js';
 import { decodeStructuredDataLinks, encodeStructuredDataLinks } from './structured-data-links.js';
+import { readGrammarSourceDefaultMatching } from './translation/grammar-selection-rules.js';
 
 const language = 'meta-language discovered concepts';
 const nodeLimit = 100000;
@@ -17,6 +18,20 @@ const fail = message => { throw new TypeError(`discovered concepts: ${message}`)
 const key = id => LinkId.from(id).asU64();
 const metadata = (term, definition) => new LinkMetadata({ linkType: LinkType.Semantic, named: true, language, term, definition });
 const bareSpace = ({ formalDefinitions, ...space }) => space;
+
+function acceptDiscoveredConceptCertificate(space, certificate, sources) {
+  const current = bareSpace(space);
+  if (isDeepStrictEqual(current, certificate)) return true;
+  if (!Array.isArray(certificate?.sources) || certificate.sources.some(source =>
+    !source || typeof source !== 'object' || Array.isArray(source) || Object.hasOwn(source, 'sourceFormat'))) return false;
+  if (sources.some(({ grammar }) => !acceptLegacyDiscoveredConceptFormat(
+    grammar.declarations.matching != null, readGrammarSourceDefaultMatching(grammar.sourceFormat ?? '')))) return false;
+  // Only wholly legacy certificates may omit this newly exposed provenance.
+  // Every source, context, identity, recursive definition and proof still has
+  // to equal the full current revalidation of the actual archived grammars.
+  const legacy = { ...current, sources: current.sources.map(({ sourceFormat, ...source }) => source) };
+  return isDeepStrictEqual(legacy, certificate);
+}
 
 function validateNetwork(network) {
   const links = network.links();
@@ -225,7 +240,7 @@ export function readDiscoveredConceptLinks(network, root) {
   }
   const sources = sourcesFromData(value.sources);
   const space = createGlobalConceptSpace(sources, { records: value.records, formalDefinitions, equivalences: value.equivalences, previous: value.previous === null ? undefined : { concepts: value.previous } });
-  if (!isDeepStrictEqual(bareSpace(space), value.space)) fail('stale or counterfeit global concept certificate');
+  if (!acceptDiscoveredConceptCertificate(space, value.space, sources)) fail('stale or counterfeit global concept certificate');
   const identities = new Map();
   const identitiesById = new Map();
   for (const id of list(identityRoot)) {
