@@ -1,8 +1,11 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { readProjectData } from './project-data.mjs';
 import { DecoratorSet } from '../src/decorators.js';
 import { stripRustSourceHeaderStyleParentheses, flattenRustSourceHeaderStyleFormat } from './rust-source-header-library-style.mjs';
+import { applyCompleteExpressionParenthesisStyles, replaceRecordedLibraryBaseStyle } from './complete-expression-parenthesis-styles.mjs';
+
+if (process.argv.includes('--check') && process.argv.some(argument => argument.startsWith('--update-'))) throw new Error('freshness checks cannot update recorded styles');
 
 const policyFile = new URL('../src/translation/data/rust-borrowed-call-interface.lino', import.meta.url);
 const policy = readProjectData(policyFile);
@@ -70,12 +73,21 @@ if (process.argv.includes('--javascript-only')) {
       }
       if (!changed) break;
     }
-    writeFileSync(style, new DecoratorSet([{ id: 'rust-borrowed-call-interface-library-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }]).toLino());
+    writeFileSync(style, replaceRecordedLibraryBaseStyle(existsSync(style) ? readFileSync(style, 'utf8') : '',
+      { id: 'rust-borrowed-call-interface-library-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }));
   }
   const decorated = DecoratorSet.fromLino(readFileSync(style, 'utf8')).decorate('emitter', { format: 'Rust', source: raw }).source;
-  const formatted = spawnSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], { input: decorated, encoding: 'utf8' });
-  if (formatted.error || formatted.status !== 0) throw formatted.error ?? new Error(formatted.stderr);
-  const generated = '// Generated through the checked JavaScript translator. Do not edit.\n' + formatted.stdout;
+  const format = input => {
+    const formatted = spawnSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], { input, encoding: 'utf8' });
+    if (formatted.error || formatted.status !== 0) throw formatted.error ?? new Error(formatted.stderr);
+    return formatted.stdout;
+  };
+  const document = readFileSync(style, 'utf8');
+  const correction = applyCompleteExpressionParenthesisStyles(document, format(decorated), {
+    update: process.argv.includes('--update-complete-expression-styles') || process.argv.includes('--update-styles'), format,
+  });
+  if (correction.document !== document) writeFileSync(style, correction.document);
+  const generated = '// Generated through the checked JavaScript translator. Do not edit.\n' + correction.source;
   if (process.argv.includes('--check')) {
     if (readFileSync(native, 'utf8') !== generated || !readFileSync(copy).equals(readFileSync(policyFile))) throw new Error('native borrowed call interface rules or policy are stale');
   } else { writeFileSync(native, generated); writeFileSync(copy, readFileSync(policyFile)); }

@@ -1,10 +1,13 @@
 // Generate both classifier adapters from the one linked-program schema; the
 // Rust decisions are translated by the same checked JavaScript pipeline.
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { DecoratorSet } from '../src/decorators.js';
 import { tokenize } from '../src/translation/lexer.js';
 import { readProjectData, readProjectFileBytes } from './project-data.mjs';
+import { applyCompleteExpressionParenthesisStyles, replaceRecordedLibraryBaseStyle } from './complete-expression-parenthesis-styles.mjs';
+
+if (process.argv.includes('--check') && process.argv.some(argument => argument.startsWith('--update-'))) throw new Error('freshness checks cannot update recorded styles');
 
 const schemaSource = new URL('../src/data/typed-program-links-schema.json', import.meta.url);
 const schemaText = readProjectFileBytes(schemaSource).toString('utf8');
@@ -177,8 +180,9 @@ if (process.argv.includes('--update-styles')) {
     styled = styled.slice(0, match.index) + `} else ${styled.slice(opening + 1, cursor - 1).trim()}` + styled.slice(cursor);
   }
   if (styled !== nested) actions.push({ op: 'replace', field: 'source', from: nested, to: styled });
-  writeFileSync(styleFile, new DecoratorSet([{ id: 'typed-program-link-library-style', level: 'emitter', order: 0,
-    when: [['format', 'Rust']], actions }]).toLino());
+  writeFileSync(styleFile, replaceRecordedLibraryBaseStyle(existsSync(styleFile) ? readFileSync(styleFile, 'utf8') : '',
+    { id: 'typed-program-link-library-style', level: 'emitter', order: 0,
+      when: [['format', 'Rust']], actions }));
 }
 let styles = DecoratorSet.fromLino(readFileSync(styleFile, 'utf8'));
 const format = (input) => {
@@ -245,14 +249,12 @@ if (process.argv.includes('--update-parenthesis-styles')) {
 // Reviewed multiline corrections share the frontend generator's convergent
 // formatted-module pipeline, so ordinary regeneration replays the Links data.
 // Legacy unscoped signature/documentation actions belong to raw emission only.
-const moduleStyles = new DecoratorSet(styles.decorators.filter(({ when }) =>
-  when.some(([field, value]) => field === 'scope' && value === 'formatted-module')));
-for (let round = 0; round < 10; round += 1) {
-  const next = format(moduleStyles.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source: formatted }).source);
-  if (next === formatted) break;
-  formatted = next;
-  if (round === 9) throw new Error('typed program link style decorators do not converge');
-}
+const document = readFileSync(styleFile, 'utf8');
+const correction = applyCompleteExpressionParenthesisStyles(document, formatted, {
+  update: process.argv.includes('--update-complete-expression-styles') || process.argv.includes('--update-styles'), format,
+});
+if (correction.document !== document) writeFileSync(styleFile, correction.document);
+formatted = correction.source;
 const rust = '// Generated from the shared typed-program-links schema through\n'
   + '// js/scripts/generate-typed-program-link-rules.mjs. Do not edit by hand.\n' + formatted;
 const artifacts = [

@@ -13,13 +13,13 @@ pub fn read_rust_borrowed_call_target_diagnostic(
     target_kind: &str,
     argument_status: &str,
 ) -> String {
-    if ((model != "closed primitive borrowed Rust call interface 1") || (kind != "call")) {
+    if (model != "closed primitive borrowed Rust call interface 1") || (kind != "call") {
         String::new()
     } else {
-        if (argument_status == "mismatch") {
+        if argument_status == "mismatch" {
             String::from("the linked program has inconsistent call argument type")
         } else {
-            if ((argument_status == "matched") && (target_kind == "call")) {
+            if (argument_status == "matched") && (target_kind == "call") {
                 String::from(
                     "Rust borrowed call interface: every caller must target an owned pure leaf without a static borrowed input",
                 )
