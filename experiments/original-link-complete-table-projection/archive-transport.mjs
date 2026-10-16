@@ -5,7 +5,7 @@ import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {LinkNetwork} from '../../js/src/network.js';
-import {Executor} from '../../js/src/grammar-runtime/executor.js';
+import {Executor,MemoryBudgetReached,StepLimitReached,NestingTooDeep} from '../../js/src/grammar-runtime/executor.js';
 import {decodeCanonicalStatements, LinoSerializationError} from '../../js/src/lino-serialization.js';
 const {StreamParser} = await import(pathToFileURL(createRequire(new URL('../../js/package.json', import.meta.url)).resolve('links-notation')).href);
 
@@ -81,7 +81,15 @@ function observeCompleteSourceParse(source, parseSource, onNativeRun, nativeRunC
     contexts.push({executor:this,next:this.budget.memory.cells+nativeRunCellInterval,event});
     try {
       onNativeRun(event('begin'));
-      const result = original.apply(this,args);
+      let result;
+      try {result = original.apply(this,args);}
+      catch (failure) {
+        const reason=failure instanceof MemoryBudgetReached?'memoryBudget':failure instanceof StepLimitReached?'stepLimit':failure instanceof NestingTooDeep||(failure instanceof RangeError&&/call stack/u.test(failure.message))?'nestingDepth':'exception';
+        // Existing CI consumers print phase verbatim; the rejection remains
+        // visible without rewriting their frozen producers or error identity.
+        try {onNativeRun({...event('failed-'+reason),steps:this.budget.steps,stepLimit:this.budget.limit,memoryLimit:this.budget.memory.limit,memoLimit:this.memoLimit,retiredRules:this.retiredRuleMemoEntries});} catch {}
+        throw failure;
+      }
       onNativeRun({...event('end'),accepted:result.ok});
       return result;
     } finally {contexts.pop();}

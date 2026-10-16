@@ -22,6 +22,7 @@ import { acceptFixedLexicalExpression } from './lexical-cache.js';
 import { releaseLexicalCaches, retainLexicalCache } from './lexical-cache-memory.js';
 import { packLexicalCacheResults, readLexicalCacheResults, packTriviaCacheResult } from './cache-storage.js';
 import { PrefixReachCache } from './prefix-reach-cache.js';
+import { retireCompletedRuleMemoPrefix } from './rule-memo-window.js';
 import { completeRuleContexts } from './precedence-contexts.js';
 import { acceptLexicalCacheContext, acceptLexicalCacheReservation, acceptPrecedenceOperandContext, acceptPrecedenceOperandHead, acceptScannerPreemptionBoundary, readScannerContinuationAction } from '../translation/frontend-rules.js';
 
@@ -2181,6 +2182,7 @@ export class Executor {
     this.reducing = this.settling.precedence ? this.longestTokens : null;
     this.depth = 0;
     this.memo = new Map();
+    this.retiredRuleMemoEntries = 0;
     this.memoLimit = options.memoLimit ?? DEFAULT_MEMO_LIMIT;
     this.callStack = [];
     this.triviaMemo = new Map();
@@ -3673,6 +3675,7 @@ export class Executor {
       this.callStack.pop();
       entry.evaluating = false;
     }
+    if (!entry.involved && this.memo.size > this.memoLimit) this.retiredRuleMemoEntries += retireCompletedRuleMemoPrefix(this.memo, position);
     if (entry.involved || this.memo.size > this.memoLimit) this.memo.delete(key);
     // Only an evaluating call needs its rule, position, seeds and lexer
     // precedence state. Preserve its exact results and live keyword context

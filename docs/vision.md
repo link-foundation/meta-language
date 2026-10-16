@@ -2180,6 +2180,17 @@ logical cache counts under normal, rejection and recovery modes. Authored
 strings shorter than 256 bytes and allocation-site metadata establish these
 local representation checks only; complete generated source fit remains a CI
 obligation under the original limits.
+After the rule memo reaches its existing cap, the JavaScript executor can
+retire a creation prefix of completed calls from earlier 64-KiB source pages.
+Active and involved left recursion stays cached. A current or later completed
+page ends the scan, preserving every remaining key, value and order. Retired
+rule entries stay charged against the original memory budget; the cap, step
+limit and rejection rules are unchanged. A bounded authored grammar crosses
+one page with a single padding token and compares complete results, left
+recursion and refusal with both authenticated original parser modules.
+Full generated-source fit still needs CI evidence. Failed source diagnostics
+report the actual memory, step, nesting or other exception phase and selected
+limits without substituting a result, masking the failure or enabling encoding.
 The naming gate indexes exact words and every allowed WordNet synset by phrase
 role, length and position before applying its unchanged synonym predicate.
 Candidate pairs retain their original record order and every distinction rule.
