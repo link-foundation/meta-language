@@ -5,7 +5,9 @@ import {typeError} from './diagnostics.js';
 import {checkRustSourceSignature} from './rust-source-signatures.js';
 import {checkOwnedProgramContainers} from './owned-program-containers.js';
 import {acceptRustConstFunctionModel,acceptRustConstFunctionType,acceptRustConstFunctionBinary,acceptRustConstFunctionContainer,acceptRustConstFunctionOffset,acceptRustConstFunctionInterval,acceptRustConstFunctionNameCharacter,acceptRustConstFunctionName,acceptRustConstFunctionFiniteLiteral} from './rust-const-function-rules.js';
+import {acceptRustConstBranchModel,acceptRustConstBranchType,acceptRustConstBranchKind,acceptRustConstBranchOperation,acceptRustConstBranchConditional} from './rust-const-branch-rules.js';
 export const RUST_CONST_FUNCTION_POLICY=readRuntimeProjectData(new URL('./data/rust-const-functions.lino',import.meta.url));
+const branchPolicy=readRuntimeProjectData(new URL('./data/rust-const-branches.lino',import.meta.url));
 const policy=RUST_CONST_FUNCTION_POLICY;
 const fail=reason=>{throw typeError('Rust const function proof: '+reason);};
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
@@ -20,8 +22,10 @@ const interval=(value,nonempty=false)=>{
 export function checkRustConstFunctionContainers(program){
  return checkOwnedProgramContainers(program,{selectedFields:['sourceConstFunction'],acceptContainer:acceptRustConstFunctionContainer,fail});
 }
-export function createRustConstFunctionProof(name,keyword,functionKeyword,headerEnd,bodyEnd){
- return{model:policy.model,language:'Rust',sourceName:name,keyword:keyword.value,keywordSpan:{start:keyword.start,end:keyword.end},functionKeywordSpan:{start:functionKeyword.start,end:functionKeyword.end},headerSpan:{start:keyword.start,end:headerEnd},bodySpan:{start:headerEnd,end:bodyEnd},interpretation:structuredClone(policy.interpretation)};
+export function createRustConstFunctionProof(name,keyword,functionKeyword,headerEnd,bodyEnd,model=policy.model){
+ const selected=acceptRustConstBranchModel(model)?branchPolicy:policy;
+ if(model!==selected.model)fail('the actual const source qualification or observation boundary changed');
+ return{model,language:'Rust',sourceName:name,keyword:keyword.value,keywordSpan:{start:keyword.start,end:keyword.end},functionKeywordSpan:{start:functionKeyword.start,end:functionKeyword.end},headerSpan:{start:keyword.start,end:headerEnd},bodySpan:{start:headerEnd,end:bodyEnd},interpretation:structuredClone(selected.interpretation)};
 }
 export function checkRustConstFunctionProof(program){
  if(!checkRustConstFunctionContainers(program))return false;
@@ -36,7 +40,8 @@ export function checkRustConstFunctionProof(program){
   fields(entry,policy.fields.declaration);fields(entry.sourceConstFunction,policy.fields.proof,true);
   if(entry.k!=='fn'||!nameAccepted(entry.name)||(!Array.isArray(entry.modulePath)||entry.modulePath.length)||entry.recursive!==false||entry.decreasing!=null||['generated','mutual'].some(field=>Object.hasOwn(entry,field)&&entry[field]!==false)||policy.reservedOwners.includes(entry.name)||entry.fullName!==entry.name)fail('the qualification needs an original closed flat predicate declaration');
   const proof=entry.sourceConstFunction;
-  if(!acceptRustConstFunctionModel(proof.model)||proof.model!==policy.model||proof.language!=='Rust'||proof.sourceName!==entry.name||proof.keyword!==policy.keyword||!same(proof.interpretation,policy.interpretation))fail('the actual const source qualification or observation boundary changed');
+  const branching=acceptRustConstBranchModel(proof.model),selected=branching?branchPolicy:policy;
+  if(!acceptRustConstFunctionModel(proof.model)||proof.model!==selected.model||proof.language!=='Rust'||proof.sourceName!==entry.name||proof.keyword!==policy.keyword||!same(proof.interpretation,selected.interpretation))fail('the actual const source qualification or observation boundary changed');
   for(const value of [entry.span,proof.keywordSpan,proof.functionKeywordSpan,proof.headerSpan,proof.bodySpan])interval(value,true);
   if(proof.keywordSpan.end-proof.keywordSpan.start!==policy.keyword.length||proof.functionKeywordSpan.end-proof.functionKeywordSpan.start!==policy.functionKeyword.length||proof.keywordSpan.end>proof.functionKeywordSpan.start||proof.headerSpan.start!==proof.keywordSpan.start||entry.span.start!==proof.keywordSpan.start||proof.headerSpan.end!==proof.bodySpan.start||proof.functionKeywordSpan.end>=proof.headerSpan.end||proof.bodySpan.end>entry.span.end)fail('the keyword, header and body intervals have contradictory ownership');
   if(!Array.isArray(entry.params)||entry.ret?.kind!=='bool')fail('the predicate needs actual direct primitive parameters and a Boolean result');
@@ -45,26 +50,29 @@ export function checkRustConstFunctionProof(program){
   if(entry.sourceSignature.lifetimeBindings.length)fail('lifetime binders require an independent source interpretation');
   const positions=[...entry.sourceSignature.parameters,entry.sourceSignature.result];
   for(const position of positions){
-   if(!acceptRustConstFunctionType(position.type.kind)||position.wrappers.length||position.lifetimes.length||position.owner.kind!=='primitive'||position.owner.path.length!==1||position.owner.path[0]!==policy.primitiveOwners[position.type.kind]||position.owner.arguments.length)fail('the interface needs actual unwrapped primitive bool or f64 owners');
+   if(!(branching?acceptRustConstBranchType(position.type.kind):acceptRustConstFunctionType(position.type.kind))||position.wrappers.length||position.lifetimes.length||position.owner.kind!=='primitive'||position.owner.path.length!==1||position.owner.path[0]!==policy.primitiveOwners[position.type.kind]||position.owner.arguments.length)fail(branching?'the decision-tree interface needs actual unwrapped primitive bool owners':'the interface needs actual unwrapped primitive bool or f64 owners');
   }
   const environment=new Map();
   for(const parameter of entry.params){fields(parameter,policy.fields.parameter);if(!nameAccepted(parameter.name)||parameter.guard!=null||parameter.default!=null||environment.has(parameter.name)||policy.reservedOwners.includes(parameter.name))fail('a parameter has an unproved source owner or default');environment.set(parameter.name,parameter.type);}
   let visits=0;
   function expression(node,depth=0){
    if(++visits>100000||depth>256)fail('the predicate exceeds its semantic traversal limit');
-   if(!node||!Object.hasOwn(policy.fields.expressions,node.k))fail('the expression has no primitive const predicate interpretation');
-   fields(node,policy.fields.expressions[node.k]);fields(node.type,['kind'],true);
-   if(!acceptRustConstFunctionType(node.type.kind))fail('the expression changes its primitive value domain');
+   if(!node||!Object.hasOwn(selected.fields.expressions,node.k)||branching&&!acceptRustConstBranchKind(node.k))fail('the expression has no primitive const predicate interpretation');
+   fields(node,selected.fields.expressions[node.k]);fields(node.type,['kind'],true);
+   if(!(branching?acceptRustConstBranchType(node.type.kind):acceptRustConstFunctionType(node.type.kind)))fail('the expression changes its primitive value domain');
    if(node.span!=null){interval(node.span);if(node.span.start<proof.bodySpan.start||node.span.end>proof.bodySpan.end)fail('an expression escaped its actual owned source body');}
    if(node.k==='lit'){
     if(node.type.kind==='bool'?typeof node.value!=='boolean':typeof node.value!=='string'||! /^(?:-?(?:[0-9]+(?:\.[0-9]+)?)(?:[eE][+-]?[0-9]+)?|NaN|Infinity|-Infinity)$/u.test(node.value)||!['NaN','Infinity','-Infinity'].includes(node.value)&&!acceptRustConstFunctionFiniteLiteral(Number(node.value)))fail('a literal has an invalid primitive value');
    }else if(node.k==='var'){
     if(typeof node.name!=='string'||!environment.has(node.name)||!same(environment.get(node.name),node.type))fail('a value lacks its actual primitive parameter owner');
    }else if(node.k==='unary'){
-    expression(node.arg,depth+1);if(node.op!=='not'||node.type.kind!=='bool'||node.arg.type.kind!=='bool')fail('only primitive Boolean negation is admitted');
+    expression(node.arg,depth+1);if(node.op!=='not'||node.type.kind!=='bool'||node.arg.type.kind!=='bool'||branching&&!acceptRustConstBranchOperation(node.k,node.op))fail('only primitive Boolean negation is admitted');
+   }else if(node.k==='if'){
+    expression(node.cond,depth+1);expression(node.then,depth+1);expression(node.else,depth+1);
+    if(!branching||!acceptRustConstBranchConditional(node.type.kind,node.cond.type.kind,node.then.type.kind,node.else.type.kind))fail('the conditional needs actual primitive Boolean condition and result branches');
    }else{
     expression(node.left,depth+1);expression(node.right,depth+1);
-    if(node.type.kind!=='bool'||!same(node.left.type,node.right.type)||!acceptRustConstFunctionBinary(node.left.type.kind,node.op)||node.domain!==undefined&&!same(node.domain,node.left.type)||node.semantics!==undefined&&node.semantics!==(node.left.type.kind==='float'?'ieee':'exact'))fail('the comparison has an unproved primitive operation or domain');
+    if(node.type.kind!=='bool'||!same(node.left.type,node.right.type)||!(branching?acceptRustConstBranchOperation(node.k,node.op):acceptRustConstFunctionBinary(node.left.type.kind,node.op))||node.domain!==undefined&&!same(node.domain,node.left.type)||node.semantics!==undefined&&node.semantics!==(node.left.type.kind==='float'?'ieee':'exact'))fail('the comparison has an unproved primitive operation or domain');
    }
   }
   expression(entry.body);if(entry.body.type.kind!=='bool')fail('the actual checked body does not return Boolean');

@@ -1,6 +1,6 @@
 // Generated from the linked const predicate policy. Do not edit.
 /** @param {string} model @returns {boolean} */
-export function acceptRustConstFunctionModel(model){return model === "" || model === "closed pure Rust const predicates 1";}
+export function acceptRustConstFunctionModel(model){return model === "" || model === "closed pure Rust const predicates 1" || model === "closed Boolean Rust const decision trees 1";}
 /** @param {string} kind @returns {boolean} */
 export function acceptRustConstFunctionType(kind){return kind === "bool" || kind === "float";}
 /** @param {string} kind @param {string} operation @returns {boolean} */

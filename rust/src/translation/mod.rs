@@ -58,6 +58,7 @@ pub mod rocq;
 pub(crate) mod runtime_shell;
 pub(crate) mod runtime_shell_rules;
 pub mod rust;
+mod rust_const_branch_rules;
 pub(crate) mod scalar_loop_rules;
 pub(crate) mod scoped_binding_emission;
 pub(crate) mod scoped_binding_emission_rules;

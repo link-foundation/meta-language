@@ -805,6 +805,17 @@ This source qualification does not establish general compile-time
 invocation, evaluation or diagnostics, public visibility or ABI equivalence;
 the paired native adapter retains the same owned facets, with native compilation
 and executable cross-runtime parity checked in CI.
+The independently selected `closed Boolean Rust const decision trees 1` model
+admits recursive Boolean conditional expressions, Boolean parameters and
+literals, negation, conjunction and disjunction. Every condition and both
+branches are validated, including unreachable branches. The owned model selects
+its inspectable interpretation after source-free text and binary reload;
+generated shared decisions enforce its exact expression and primitive-owner
+boundary. Calls, effects, local bindings, custom types and numeric comparisons
+require separate interpretations. Four complete qualified definitions have
+independent truth tables and source-free condition and branch edits checked in
+JavaScript. Native compilation and execution remain CI checks. The same limits
+on compile-time evaluation, diagnostics, visibility, linkage and ABI apply.
 The typed-program adapter's shared schema gives abbreviated host fields readable
 English relation names, including the Unicode code unit string model. The finite formal
 definition adapter checks closed recursive correspondences under supported

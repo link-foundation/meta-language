@@ -68,6 +68,7 @@ include = [
     "src/data/rust-owned-local-state.lino",
     "src/data/rust-owned-tuple-calls.lino",
     "src/data/rust-const-functions.lino",
+    "src/data/rust-const-branches.lino",
     "src/data/rust-runtime-shell.lino",
     "src/data/rust-number-literals.lino",
     "src/data/rust-cooked-string-escapes.lino",

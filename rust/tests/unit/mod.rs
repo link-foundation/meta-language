@@ -167,6 +167,7 @@ mod query_transform;
 mod resource_description_graphs;
 mod resource_description_ntriples;
 mod rust_codec;
+mod rust_const_branch_functions;
 mod self_description;
 mod self_translation;
 mod self_translation_scope;

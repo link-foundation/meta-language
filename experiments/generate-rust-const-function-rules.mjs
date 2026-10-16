@@ -5,6 +5,7 @@ import {writeProjectData,checkProjectData} from '../js/scripts/project-data.mjs'
 import {DecoratorSet} from '../js/src/decorators.js';
 import {formatProductRuleSource} from '../js/scripts/product-rule-style-corrections.mjs';
 import {stripRustSourceHeaderStyleParentheses} from '../js/scripts/rust-source-header-library-style.mjs';
+import {rustConstBranchPolicy} from './generate-rust-const-branch-rules.mjs';
 export const rustConstFunctionPolicy={
  version:1,model:'closed pure Rust const predicates 1',language:'Rust',keyword:'const',functionKeyword:'fn',
  primitiveTypes:['bool','float'],primitiveOwners:{bool:'bool',float:'f64'},
@@ -20,7 +21,7 @@ export const rustConstFunctionPolicy={
 export function rustConstFunctionRules(policy=rustConstFunctionPolicy){
  const either=(value,values)=>values.map(item=>value+' === '+JSON.stringify(item)).join(' || ');
  return '// Generated from the linked const predicate policy. Do not edit.\n'
- +'/** @param {string} model @returns {boolean} */\nexport function acceptRustConstFunctionModel(model){return model === "" || model === '+JSON.stringify(policy.model)+';}\n'
+ +'/** @param {string} model @returns {boolean} */\nexport function acceptRustConstFunctionModel(model){return model === "" || model === '+JSON.stringify(policy.model)+' || model === '+JSON.stringify(rustConstBranchPolicy.model)+';}\n'
  +'/** @param {string} kind @returns {boolean} */\nexport function acceptRustConstFunctionType(kind){return '+either('kind',policy.primitiveTypes)+';}\n'
  +'/** @param {string} kind @param {string} operation @returns {boolean} */\nexport function acceptRustConstFunctionBinary(kind,operation){return kind === "bool" && ('+either('operation',policy.booleanOperations)+') || kind === "float" && ('+either('operation',policy.numberOperations)+');}\n'
  +'/** @param {string} kind @param {boolean} dense @param {boolean} unrepresented @returns {boolean} */\nexport function acceptRustConstFunctionContainer(kind,dense,unrepresented){return !unrepresented && (kind === "record" || kind === "map" || (kind === "array" && dense));}\n'

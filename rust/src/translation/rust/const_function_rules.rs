@@ -2,7 +2,8 @@
 /// Apply a shared closed const predicate source decision.
 #[must_use]
 pub fn accept_rust_const_function_model(model: &str) -> bool {
-    model.is_empty() || model == "closed pure Rust const predicates 1"
+    (model.is_empty() || model == "closed pure Rust const predicates 1")
+        || model == "closed Boolean Rust const decision trees 1"
 }
 
 /// Apply a shared closed const predicate source decision.

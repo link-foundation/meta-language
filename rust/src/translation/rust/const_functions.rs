@@ -4,7 +4,7 @@ use crate::decorators::{
     Decorator, DecoratorAction, DecoratorLevel, DecoratorRecord, DecoratorSet,
 };
 use crate::translation::ir::FnDecl;
-use crate::translation::source_const_functions::policy;
+use crate::translation::source_const_functions::{policy, policy_for_model};
 use serde_json::{Value, json};
 use std::sync::OnceLock;
 
@@ -57,11 +57,12 @@ impl RustParser {
         header_end: usize,
     ) -> Value {
         let body_end = self.cursor.tokens[self.cursor.index - 1].end;
-        json!({"model":policy()["model"],"language":"Rust","sourceName":name,"keyword":keyword.value,
+        let selected = policy_for_model(&self.const_function_model);
+        json!({"model":self.const_function_model,"language":"Rust","sourceName":name,"keyword":keyword.value,
             "keywordSpan":{"start":keyword.start,"end":keyword.end},
             "functionKeywordSpan":{"start":function_keyword.start,"end":function_keyword.end},
             "headerSpan":{"start":keyword.start,"end":header_end},
-            "bodySpan":{"start":header_end,"end":body_end},"interpretation":policy()["interpretation"]})
+            "bodySpan":{"start":header_end,"end":body_end},"interpretation":selected["interpretation"]})
     }
 }
 

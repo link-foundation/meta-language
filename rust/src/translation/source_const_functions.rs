@@ -7,6 +7,9 @@ use super::rust::const_function_rules::{
     accept_rust_const_function_name_character, accept_rust_const_function_offset,
     accept_rust_const_function_type,
 };
+use super::rust_const_branch_rules::{
+    accept_rust_const_branch_model, accept_rust_const_branch_type,
+};
 use super::source_signatures::{SourceSignature, validate_source_signature};
 use super::types::Type;
 use serde_json::{Value, json};
@@ -22,6 +25,19 @@ pub fn policy() -> &'static Value {
         crate::read_structured_data_lino(include_str!("../data/rust-const-functions.lino"))
             .expect("the shared const function policy is valid")
     });
+    &POLICY
+}
+
+/// Select the inspected policy without changing either model's boundary.
+#[must_use]
+pub fn policy_for_model(model: &str) -> &'static Value {
+    static POLICY: LazyLock<Value> = LazyLock::new(|| {
+        crate::read_structured_data_lino(include_str!("../data/rust-const-branches.lino"))
+            .expect("the shared Boolean const branch policy is valid")
+    });
+    if !accept_rust_const_branch_model(model) {
+        return policy();
+    }
     &POLICY
 }
 
@@ -129,7 +145,7 @@ fn selected(value: &Value) -> Result<bool> {
     Ok(selected)
 }
 
-fn validate_interface(entry: &Value) -> Result<HashMap<String, Value>> {
+fn validate_interface(entry: &Value, branching: bool) -> Result<HashMap<String, Value>> {
     let parameters = array(
         &entry["params"],
         "the predicate needs actual direct primitive parameters and a Boolean result",
@@ -168,8 +184,11 @@ fn validate_interface(entry: &Value) -> Result<HashMap<String, Value>> {
         .iter()
         .chain(std::iter::once(&signature.result))
     {
-        if !accept_rust_const_function_type(position.ty.kind())
-            || !position.wrappers.is_empty()
+        if !(if branching {
+            accept_rust_const_branch_type(position.ty.kind())
+        } else {
+            accept_rust_const_function_type(position.ty.kind())
+        }) || !position.wrappers.is_empty()
             || !position.lifetimes.is_empty()
             || position.owner.kind != "primitive"
             || position.owner.path.len() != 1
@@ -177,9 +196,11 @@ fn validate_interface(entry: &Value) -> Result<HashMap<String, Value>> {
                 != Some(position.owner.path[0].as_str())
             || !position.owner.arguments.is_empty()
         {
-            return Err(fail(
-                "the interface needs actual unwrapped primitive bool or f64 owners",
-            ));
+            return Err(fail(if branching {
+                "the decision-tree interface needs actual unwrapped primitive bool owners"
+            } else {
+                "the interface needs actual unwrapped primitive bool or f64 owners"
+            }));
         }
     }
     let mut environment = HashMap::new();
@@ -221,12 +242,13 @@ fn validate_declaration(entry: &Value) -> Result<()> {
         ));
     }
     let model = proof["model"].as_str().unwrap_or_default();
+    let selected = policy_for_model(model);
     if !accept_rust_const_function_model(model)
-        || proof["model"] != policy()["model"]
+        || proof["model"] != selected["model"]
         || proof["language"] != "Rust"
         || proof["sourceName"] != entry["name"]
         || proof["keyword"] != policy()["keyword"]
-        || !same_order(&proof["interpretation"], &policy()["interpretation"])?
+        || !same_order(&proof["interpretation"], &selected["interpretation"])?
     {
         return Err(fail(
             "the actual const source qualification or observation boundary changed",
@@ -254,9 +276,9 @@ fn validate_declaration(entry: &Value) -> Result<()> {
             "the keyword, header and body intervals have contradictory ownership",
         ));
     }
-    let environment = validate_interface(entry)?;
+    let environment = validate_interface(entry, accept_rust_const_branch_model(model))?;
     let mut visits = 0;
-    expression::validate(&entry["body"], &environment, body, 0, &mut visits)?;
+    expression::validate(&entry["body"], &environment, selected, body, 0, &mut visits)?;
     if entry["body"]["type"]["kind"] != "bool" {
         return Err(fail("the actual checked body does not return Boolean"));
     }

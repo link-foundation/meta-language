@@ -604,7 +604,7 @@ class RustParser {
       this.origins.argument(this.origins.origin(body, path), sourceResult, body.span);
       this.origins.scope = previous;
       return { k: 'fn', name, params, ret, body, span: emptyOptionBody?{start:start.start,end:c.tokens[c.index-1].end}:span(start, c.peek()),
-        ...(constKeyword?{sourceConstFunction:createRustConstFunctionProof(name,constKeyword,functionKeyword,constHeaderEnd,c.tokens[c.index-1].end)}:{}),
+        ...(constKeyword?{sourceConstFunction:createRustConstFunctionProof(name,constKeyword,functionKeyword,constHeaderEnd,c.tokens[c.index-1].end,this.constFunctionModel)}:{}),
         ...(emptyOptionBody?{sourceEmptyOption:createRustEmptyOptionProof(this,name,sourceResult.emptyOptionResult,emptyOptionBody.construction)}:{}),
         ...(this.typeNamespaceModel ? {sourceTypeNamespace: createRustTypeNamespaceProof(sourceParams, sourceResult)} : {}),
         ...(this.localValueStateModel?{sourceSignature:signature,sourceLocalState:lowered.proof}:{}),

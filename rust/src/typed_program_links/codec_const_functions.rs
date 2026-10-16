@@ -1,6 +1,6 @@
 //! Authenticate comparison-sensitive const proof order before value projection.
 use super::super::{Result, error, field_of};
-use crate::translation::source_const_functions::policy;
+use crate::translation::source_const_functions::policy_for_model;
 use crate::{LinkId, LinkNetwork};
 use serde_json::{Map, Value};
 use std::collections::{HashMap, HashSet};
@@ -119,16 +119,21 @@ pub(super) fn validate_order(
         ));
     }
     for declaration in declarations {
-        let Some(interpretation) = field(fields, declaration, "sourceConstFunction")
-            .and_then(|proof| field(fields, proof, "interpretation"))
-        else {
+        let Some(proof) = field(fields, declaration, "sourceConstFunction") else {
             continue;
         };
+        let Some(interpretation) = field(fields, proof, "interpretation") else {
+            continue;
+        };
+        let model = field(fields, proof, "model")
+            .and_then(|model| network.link(model))
+            .and_then(|model| model.metadata().definition())
+            .unwrap_or_default();
         compare_order(
             network,
             fields,
             interpretation,
-            &policy()["interpretation"],
+            &policy_for_model(model)["interpretation"],
             0,
         )?;
     }
@@ -166,10 +171,11 @@ pub(super) fn prepare_order(program: &mut Value) -> Result<()> {
         return Ok(());
     };
     for declaration in declarations {
-        if let Some(proof) = declaration.get_mut("sourceConstFunction")
-            && let Some(interpretation) = proof.get_mut("interpretation")
-        {
-            restore_order(interpretation, &policy()["interpretation"])?;
+        if let Some(proof) = declaration.get_mut("sourceConstFunction") {
+            let expected = policy_for_model(proof["model"].as_str().unwrap_or_default());
+            if let Some(interpretation) = proof.get_mut("interpretation") {
+                restore_order(interpretation, &expected["interpretation"])?;
+            }
         }
     }
     Ok(())
