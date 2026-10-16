@@ -8,6 +8,7 @@ import { emitRust } from '../src/translation/emit-rust.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { DecoratorSet } from '../src/decorators.js';
 import { decorateEmitted } from '../src/grammar-emitters/common.js';
+import { readSourceTextRustBlock } from '../scripts/source-text-byte-library-style.mjs';
 
 const units = (text) => Array.from({ length: text.length }, (_, index) => text.charCodeAt(index));
 
@@ -116,11 +117,14 @@ test('reviewed Boolean helper styles preserve boundary flags, bounded context ov
   assert.match(strings, /pub const fn accept_scanner_preemption_boundary\(virtual_token: bool, at_boundary: bool\) -> bool/u);
   assert.match(strings, /pub const fn accept_lexical_cache_context\(in_token: bool, quiet: bool, repairing: bool\) -> bool/u);
   assert.match(strings, /pub const fn accept_lexical_cache_reservation\(cells: f64, count: f64, limit: f64\) -> bool/u);
-  const entry = strings.slice(strings.indexOf('pub fn accept_precedence_operand_context('));
+  const entry = readSourceTextRustBlock(strings, 'fn', 'accept_precedence_operand_context');
   assert.doesNotMatch(entry, /(?:owner_contexts|child_contexts|ml_s17)\.clone\(\)/u);
   const continuations = readFileSync(new URL('../../rust/src/translation/frontend_rules/continuations_2.rs', import.meta.url), 'utf8');
-  const loop = continuations.slice(continuations.indexOf('pub fn ml_accept_precedence_operand_context_loop28('), continuations.indexOf('const fn ml_main()'));
+  const loop = readSourceTextRustBlock(continuations, 'fn', 'ml_accept_precedence_operand_context_loop28');
   for (const input of ['owner_contexts', 'child_contexts']) assert.ok(loop.includes(`index < (${input}.len() as f64)`), `bounds for ${input}`);
   assert.doesNotMatch(loop, /ml_logical22\.clone\(\)/u);
   assert.equal((loop.match(/\.unwrap_or_default\(\)/gu) ?? []).length, 2, 'both nullable Boolean values default to false');
+  const winner = readSourceTextRustBlock(continuations, 'fn', 'ml_read_lexical_winner_index_loop29');
+  assert.equal((winner.match(/\.unwrap_or_default\(\)/gu) ?? []).length, 1, 'the independent lexical eligibility value defaults to false');
+  assert.equal((winner.match(/\.unwrap_or\(f64::NAN\)/gu) ?? []).length, 2, 'both independent lexical match ends preserve missing-number NaN');
 });

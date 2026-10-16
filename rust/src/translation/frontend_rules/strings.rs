@@ -294,24 +294,20 @@ pub fn read_lexical_cache_expression_form(kind: &str) -> f64 {
     }
 }
 
-pub fn read_unit_alternative_expression_form(kind: String) -> f64 {
+pub fn read_unit_alternative_expression_form(kind: &str) -> f64 {
     if (kind == "ref") {
         1f64
+    } else if (kind == "choice") {
+        2f64
+    } else if (((((((kind == "alias") || (kind == "capture")) || (kind == "precedence"))
+        || (kind == "namedPrecedence"))
+        || (kind == "dynamicPrecedence"))
+        || (kind == "optional"))
+        || (kind == "lexicalScope"))
+    {
+        3f64
     } else {
-        if (kind == "choice") {
-            2f64
-        } else {
-            if (((((((kind == "alias") || (kind == "capture")) || (kind == "precedence"))
-                || (kind == "namedPrecedence"))
-                || (kind == "dynamicPrecedence"))
-                || (kind == "optional"))
-                || (kind == "lexicalScope"))
-            {
-                3f64
-            } else {
-                0f64
-            }
-        }
+        0f64
     }
 }
 
@@ -356,20 +352,15 @@ pub const fn accept_precedence_operand_head(
     source_rule_matches || source_reduction_matches
 }
 
-pub fn read_lexical_winner_index(ends: Vec<f64>, eligible: Vec<bool>) -> f64 {
+pub fn read_lexical_winner_index(ends: &[f64], eligible: &[bool]) -> f64 {
     {
         let best = (-1f64);
         {
             let index = 0f64;
             {
-                let best_2 =
-                    crate::translation::frontend_rules::ml_read_lexical_winner_index_loop29(
-                        ends.clone(),
-                        eligible.clone(),
-                        best,
-                        index,
-                    );
-                best_2
+                crate::translation::frontend_rules::ml_read_lexical_winner_index_loop29(
+                    ends, eligible, best, index,
+                )
             }
         }
     }

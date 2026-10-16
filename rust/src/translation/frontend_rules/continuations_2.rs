@@ -94,40 +94,33 @@ pub fn ml_accept_precedence_operand_context_loop28(
 }
 
 pub fn ml_read_lexical_winner_index_loop29(
-    mut ends: Vec<f64>,
-    mut eligible: Vec<bool>,
+    ends: &[f64],
+    eligible: &[bool],
     mut best: f64,
     mut index: f64,
 ) -> f64 {
     loop {
-        return if ((index < (ends.len() as f64)) && (index < (eligible.len() as f64))) {
+        if ((index < (ends.len() as f64)) && (index < (eligible.len() as f64))) {
             {
-                let best_3 = if match crate::translation::frontend_rules::ml_array::optional_at(
-                    &eligible,
+                let best_3 = if (crate::translation::frontend_rules::ml_array::optional_at(
+                    eligible,
                     crate::translation::frontend_rules::ml_array::number_index(index),
-                ) {
-                    Some(ml_present) => ml_present,
-                    None => false,
-                } {
+                ))
+                .unwrap_or_default()
+                {
                     if ((best < (0f64))
-                        || ((match crate::translation::frontend_rules::ml_array::optional_at(
-                            &ends,
+                        || (((crate::translation::frontend_rules::ml_array::optional_at(
+                            ends,
                             crate::translation::frontend_rules::ml_array::number_index(index),
-                        ) {
-                            Some(ml_present) => ml_present,
-                            None => f64::NAN,
-                        }) > (match crate::translation::frontend_rules::ml_array::optional_at(
-                            &ends,
-                            crate::translation::frontend_rules::ml_array::number_index(best),
-                        ) {
-                            Some(ml_present) => ml_present,
-                            None => f64::NAN,
-                        })))
+                        ))
+                        .unwrap_or(f64::NAN))
+                            > ((crate::translation::frontend_rules::ml_array::optional_at(
+                                ends,
+                                crate::translation::frontend_rules::ml_array::number_index(best),
+                            ))
+                            .unwrap_or(f64::NAN))))
                     {
-                        {
-                            let best_2 = index;
-                            best_2
-                        }
+                        { index }
                     } else {
                         best
                     }
@@ -142,9 +135,8 @@ pub fn ml_read_lexical_winner_index_loop29(
                     }
                 }
             }
-        } else {
-            best
-        };
+        }
+        return { best };
     }
 }
 

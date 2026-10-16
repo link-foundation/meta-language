@@ -11,6 +11,7 @@ import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { tokenize } from '../src/translation/lexer.js';
+import { frontendRuleNativeStyleId, readFrontendRuleStyleCorrections } from './frontend-rule-style-corrections.mjs';
 
 const sourcePath = new URL('../src/translation/frontend-rules.js', import.meta.url);
 const outputPath = new URL('../../rust/src/translation/frontend_rules.rs', import.meta.url);
@@ -18,8 +19,10 @@ const decoratorsPath = new URL('../../parity/self-translation/frontend-rules-dec
 const source = readFileSync(sourcePath, 'utf8');
 const resultStyleId = 'reviewed-public-array-helper-results';
 const updateArrayResults = process.argv.includes('--update-array-result-styles');
+const updateNativeStyles = process.argv.includes('--update-reviewed-native-styles');
 let decorators = DecoratorSet.fromLino(readFileSync(decoratorsPath, 'utf8'));
 if (updateArrayResults) decorators = new DecoratorSet(decorators.decorators.filter(({ id }) => id !== resultStyleId));
+if (updateNativeStyles) decorators = new DecoratorSet(decorators.decorators.filter(({ id }) => id !== frontendRuleNativeStyleId));
 const emitted = emitRust(checkProgram(parseJavaScript(source)));
 const decorated = decorateEmitted('Rust', { source: emitted.text }, decorators).source;
 const formatted = spawnSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], { input: decorated, encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 });
@@ -37,6 +40,21 @@ for (let round = 0; round < 10; round += 1) {
   if (next.stdout === final.stdout) break;
   final = next;
   if (round === 9) throw new Error('frontend style decorators do not converge');
+}
+if (updateNativeStyles) {
+  const actions = readFrontendRuleStyleCorrections(final.stdout);
+  const nativeStyles = { id: frontendRuleNativeStyleId, level: 'emitter', order: 3000,
+    when: [['format', 'Rust'], ['scope', 'formatted-module']], actions };
+  decorators = new DecoratorSet([...decorators.decorators, nativeStyles]);
+  const previous = readFileSync(decoratorsPath, 'utf8').split('\n')
+    .filter(line => !line.startsWith('(decorator ' + frontendRuleNativeStyleId + ' ')).join('\n');
+  writeFileSync(decoratorsPath, previous + (previous.endsWith('\n') ? '\n' : '\n\n') + new DecoratorSet([nativeStyles]).toLino());
+  const styled = decorators.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source: final.stdout }).source;
+  final = spawnSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], { input: styled, encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 });
+  if (final.error || final.status !== 0) throw final.error ?? new Error(final.stderr);
+  if (decorators.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source: final.stdout }).source !== final.stdout) {
+    throw new Error('reviewed frontend native styles do not converge');
+  }
 }
 if (updateArrayResults) {
   // Public runtime aliases expose these useful query and collection results.
