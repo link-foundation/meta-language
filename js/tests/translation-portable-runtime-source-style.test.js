@@ -41,6 +41,8 @@ test('portable runtime styles preserve complete original helpers and replay as r
   assert.match(source, /map_or_else\(\|\| panic!\("array index out of range"\), Clone::clone\)/u);
   assert.match(source, /const fn integer\(value: f64\)/u);
   assert.match(source, /pub const fn integer\(value: f64\)/u, 'the ml_string integer helper is covered separately from the private array helper');
+  assert.ok(source.includes('pub const fn absolute(value: f64, length: usize) -> usize { integer(value).max(0.0).min(length as f64) as usize }'),
+    'the authenticated string index clamp keeps its complete body and only gains const qualification');
   assert.match(source, /pub const fn from_units\(units: Vec<u16>\)/u);
   assert.match(source, /pub const fn length\(&self\)/u);
   assert.match(source, /let Some\(separator\) = separator else \{ return vec!\[self\.clone\(\)\]; \};/u);
@@ -63,12 +65,16 @@ test('runtime source qualification refuses changed storage dependencies and leav
     STRING_PRELUDE.replace('if value.is_nan() { 0.0 } else { value.trunc() }', 'if value.is_nan() { value } else { value.trunc() }'),
     STRING_PRELUDE.replace('let count = integer(count);', 'let count = count;'),
     STRING_PRELUDE.replace('let length = integer(length).max(0.0);', 'let length = length;'),
+    STRING_PRELUDE.replace('integer(value).max(0.0).min(length as f64) as usize', 'integer(value).max(1.0).min(length as f64) as usize'),
     STRING_PRELUDE.replace('536870888.0', '536870889.0'),
     STRING_PRELUDE.replace('pub mod ml_string', 'pub mod unrelated'),
   ]) assert.deepEqual(readPortableRuntimeSourceStyles(changed), { source: changed, actions: [] });
   const external = 'pub fn integer(value:f64)->f64{if value.is_nan(){0.0}else{value.trunc()}}\n'
+    + 'pub fn absolute(value:f64,length:usize)->usize{integer(value).max(0.0).min(length as f64)as usize}\n'
     + 'pub mod unrelated { pub fn from_units(units:Vec<u16>)->Self{Self(units)} }';
   assert.deepEqual(readPortableRuntimeSourceStyles(external), { source: external, actions: [] });
+  const counterfeit = 'pub mod ml_string { pub fn absolute(value:f64,length:usize)->usize{integer(value).max(0.0).min(length as f64)as usize} }';
+  assert.deepEqual(readPortableRuntimeSourceStyles(counterfeit), { source: counterfeit, actions: [] });
   const array = readArrayRuntime().replace('panic!("array index out of range")', 'panic!("different panic")');
   const result = readPortableRuntimeSourceStyles(array).source;
   assert.match(result, /match index\.and_then/u, 'a different panic is never replaced by the known array failure');

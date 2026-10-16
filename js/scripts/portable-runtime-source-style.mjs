@@ -90,7 +90,7 @@ function readPortableRuntimeFunctions(source) {
 
 function stylePortableStringRuntimeFunction(name, source) {
   const replace = (before, after) => { source = replacePortableRuntimeTokens(source, before, after); };
-  if (['from_units', 'length'].includes(name)) replace('pub fn', 'pub const fn');
+  if (['from_units', 'length', 'absolute'].includes(name)) replace('pub fn', 'pub const fn');
   else if (name === 'integer') replace('fn integer', 'const fn integer');
   else if (name === 'split') replace(
     'let separator = match separator { Some(value) => value, None => return vec![self.clone()] };',
