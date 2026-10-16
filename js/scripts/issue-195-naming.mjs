@@ -45579,7 +45579,124 @@ const FORMAT_RETRY_SOURCE_BINDINGS=[
 ];
 const FORMAT_RETRY_SOURCE_NAME_INVENTORIES=[...new Set(FORMAT_RETRY_SOURCE_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B53 grammar source format and repeated download names for "+source,files:[source],extract:raw=>FORMAT_RETRY_SOURCE_BINDINGS.filter(row=>{if(row.source!==source)return false;const text=row.sourceField?readStructuredDataLino(raw)[row.sourceField]:raw;return typeof text==="string"&&text.split("\n").includes(row.sourceText)&&(!row.sourceContext||text.includes(row.sourceContext));}).map(row=>row.inventoryName),recordOf:name=>FORMAT_RETRY_SOURCE_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));
 // END B53 grammar source format and repeated download source names.
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory).map(reconcileBulkFortySevenNativeInventory).map(reconcileBulkFiftyHistoricalInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES, ...BULK_FORTY_SEVEN_NAME_INVENTORIES, ...BULK_FORTY_EIGHT_NAME_INVENTORIES, ...BULK_FORTY_NINE_NAME_INVENTORIES, ...BULK_FIFTY_NAME_INVENTORIES, ...BULK_FIFTY_ONE_NAME_INVENTORIES, ...VERSION_RANGE_EVIDENCE_NAME_INVENTORIES, ...FORMAT_RETRY_SOURCE_NAME_INVENTORIES]);
+// BEGIN B54 discovered certificate and model source names.
+const DISCOVERY_CERTIFICATE_BINDINGS=[
+  {
+    "id": "grammar.accept-discovered-concept-certificate",
+    "source": "js/src/discovered-concept-links.js",
+    "name": "acceptDiscoveredConceptCertificate",
+    "inventoryName": "accept discovered concept certificate",
+    "sourceText": "function acceptDiscoveredConceptCertificate(space, certificate, sources) {"
+  },
+  {
+    "id": "grammar.accept-discovered-concept-certificate",
+    "source": "rust/src/discovered_concept_links.rs",
+    "name": "accept_discovered_concept_certificate",
+    "inventoryName": "accept discovered concept certificate",
+    "sourceText": "fn accept_discovered_concept_certificate("
+  },
+  {
+    "id": "grammar.accept-legacy-discovered-concept-format",
+    "source": "js/src/discovered-concept-rules.js",
+    "name": "acceptLegacyDiscoveredConceptFormat",
+    "inventoryName": "accept legacy discovered concept format",
+    "sourceText": "export function acceptLegacyDiscoveredConceptFormat(explicitMatching, defaultMatching) {"
+  },
+  {
+    "id": "grammar.accept-legacy-discovered-concept-format",
+    "source": "rust/src/discovered_concept_rules.rs",
+    "name": "accept_legacy_discovered_concept_format",
+    "inventoryName": "accept legacy discovered concept format",
+    "sourceText": "pub fn accept_legacy_discovered_concept_format("
+  },
+  {
+    "id": "repository.read-discovered-syntax-tree-bytes",
+    "source": "js/tests/discovered-concept-links.test.js",
+    "name": "discoveredTreeBytes",
+    "inventoryName": "read discovered syntax tree bytes",
+    "sourceText": "function discoveredTreeBytes(tree) {"
+  },
+  {
+    "id": "repository.read-discovered-syntax-tree-bytes",
+    "source": "rust/tests/unit/discovered_concept_links.rs",
+    "name": "discovered_tree_bytes",
+    "inventoryName": "read discovered syntax tree bytes",
+    "sourceText": "fn discovered_tree_bytes(tree: &Value) -> Vec<u8> {"
+  },
+  {
+    "id": "repository.edit-discovered-data-envelope",
+    "source": "js/tests/discovered-concept-links.test.js",
+    "name": "editDiscoveredEnvelope",
+    "inventoryName": "edit discovered data envelope",
+    "sourceText": "function editDiscoveredEnvelope(packet, edit) {"
+  },
+  {
+    "id": "repository.edit-discovered-data-envelope",
+    "source": "rust/tests/unit/discovered_concept_links.rs",
+    "name": "edit_discovered_envelope",
+    "inventoryName": "edit discovered data envelope",
+    "sourceText": "fn edit_discovered_envelope("
+  },
+  {
+    "id": "repository.append-source-format-provenance-to-control-expectations",
+    "source": "js/tests/discovered-concept-links.test.js",
+    "name": "withDiscoveredSourceFormats",
+    "inventoryName": "append source format provenance to control expectations",
+    "sourceText": "function withDiscoveredSourceFormats(data) {"
+  },
+  {
+    "id": "repository.append-source-format-provenance-to-control-expectations",
+    "source": "rust/tests/unit/discovered_concept_links.rs",
+    "name": "with_discovered_source_formats",
+    "inventoryName": "append source format provenance to control expectations",
+    "sourceText": "fn with_discovered_source_formats(data: &Value) -> Value {"
+  },
+  {
+    "id": "repository.read-legacy-discovered-concept-fixture",
+    "source": "rust/tests/unit/discovered_concept_links.rs",
+    "name": "legacy_fixture",
+    "inventoryName": "read legacy discovered concept fixture",
+    "sourceText": "fn legacy_fixture() -> Value {"
+  },
+  {
+    "id": "repository.read-discovered-archive-line-identity",
+    "source": "rust/tests/unit/discovered_concept_links.rs",
+    "name": "serialized_link_identity",
+    "inventoryName": "read discovered archive line identity",
+    "sourceText": "fn serialized_link_identity(line: &str) -> LinkId {"
+  },
+  {
+    "id": "repository.check-legacy-discovered-concept-archive-meaning",
+    "source": "rust/tests/unit/discovered_concept_links.rs",
+    "name": "retained_legacy_and_current_discovery_archives_revalidate_the_same_meaning_and_cst",
+    "inventoryName": "check legacy discovered concept archive meaning",
+    "sourceText": "fn retained_legacy_and_current_discovery_archives_revalidate_the_same_meaning_and_cst() {"
+  },
+  {
+    "id": "repository.check-discovered-concept-certificate-field-forgeries",
+    "source": "rust/tests/unit/discovered_concept_links.rs",
+    "name": "discovery_certificates_refuse_mixed_format_provenance_and_all_other_forgeries",
+    "inventoryName": "check discovered concept certificate field forgeries",
+    "sourceText": "fn discovery_certificates_refuse_mixed_format_provenance_and_all_other_forgeries() {"
+  },
+  {
+    "id": "repository.check-legacy-discovered-format-matching-premises",
+    "source": "rust/tests/unit/discovered_concept_links.rs",
+    "name": "legacy_discovery_formats_admit_explicit_matching_and_refuse_implicit_peg_defaults",
+    "inventoryName": "check legacy discovered format matching premises",
+    "sourceText": "fn legacy_discovery_formats_admit_explicit_matching_and_refuse_implicit_peg_defaults() {"
+  },
+  {
+    "id": "translation.read-grammar-source-default-matching",
+    "source": "rust/tests/unit/grammar_output_equality/production_model/grammar_selection_rules.rs",
+    "name": "read_grammar_source_default_matching",
+    "inventoryName": "read grammar source default matching",
+    "sourceText": "pub fn read_grammar_source_default_matching(source_format: &str) -> String {"
+  }
+];
+const DISCOVERY_CERTIFICATE_NAME_INVENTORIES=[...new Set(DISCOVERY_CERTIFICATE_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B54 discovered certificate and model source names for "+source,files:[source],extract:text=>DISCOVERY_CERTIFICATE_BINDINGS.filter(row=>row.source===source&&text.split("\n").includes(row.sourceText)&&(!row.sourceContext||text.includes(row.sourceContext))).map(row=>row.inventoryName),recordOf:name=>DISCOVERY_CERTIFICATE_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));
+// END B54 discovered certificate and model source names.
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory).map(reconcileBulkFortySevenNativeInventory).map(reconcileBulkFiftyHistoricalInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES, ...BULK_FORTY_SEVEN_NAME_INVENTORIES, ...BULK_FORTY_EIGHT_NAME_INVENTORIES, ...BULK_FORTY_NINE_NAME_INVENTORIES, ...BULK_FIFTY_NAME_INVENTORIES, ...BULK_FIFTY_ONE_NAME_INVENTORIES, ...VERSION_RANGE_EVIDENCE_NAME_INVENTORIES, ...FORMAT_RETRY_SOURCE_NAME_INVENTORIES, ...DISCOVERY_CERTIFICATE_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
