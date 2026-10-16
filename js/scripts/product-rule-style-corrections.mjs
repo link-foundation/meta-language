@@ -226,12 +226,6 @@ function bindConditionBlocks(source) {
   throw new Error('product condition styles did not converge');
 }
 
-/** Reuse the existing branch, terminal-binding and condition styles on one
- * complete generated library function, preserving its original evaluation. */
-export function simplifyPortableProductLibraryStyles(source) {
-  return bindConditionBlocks(simplifyReturns(simplifyBranches(source)));
-}
-
 /** Record the full owning functions for the two published CI18 condition diagnostics. */
 export function readProductSourceConditionStyleCorrections(source) {
   const actions = [];

@@ -1,4 +1,5 @@
 import {captureRustRuntimeShell,checkRustRuntimeShellContainers} from './rust-runtime-shell.js';
+import { acceptOptionalAnnotationTypes } from './optional-inference.js';
 import {checkRustPureUnitCalls} from './rust-pure-unit-calls.js';
 import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 // Resolves names, checks types, and fixes the exact operator semantics of a
@@ -9,6 +10,9 @@ import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 // `Int` division for JavaScript's truncating BigInt division).
 
 import { typeError, unsupported } from './diagnostics.js';
+import { readArrayIterableForm, readReferenceMutationDiagnostic, selectOptionalArrayIndexNumber, selectOptionalArrayRead } from './array-value-rules.js';
+import { constructCallableFunctionType, readCallableCellElement, readCallableParameterTypes } from './callable-source.js';
+import { acceptCallableFunctionReference, readCallableApplicationError, readCallableCellError, requireCallableComputedApplication } from './callable-source-rules.js';
 import { checkRustSourceSignature } from './rust-source-signatures.js';
 import { validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes } from './rust-type-namespace.js';
 import {prepareRustPrimitiveOwnerProof,checkRustPrimitiveOwnerProof} from './rust-primitive-owners.js';
@@ -17,9 +21,15 @@ import {checkRustConstFunctionProof,checkRustConstFunctionContainers} from './ru
 import { acceptArgumentCount, acceptCheckedTypeQueryOperand, acceptTypeQueryOperand, readTypeQueryResult } from './frontend-rules.js';
 import { normaliseProof } from './proof.js';
 import { referenceOperation } from './reference-model.js';
+import { readSurfaceReferenceResultField, selectSurfaceReferenceAllocation, selectSurfaceReferenceRead } from './surface-reference-analysis-rules.js';
 import { acceptTupleIndex, readNumberDisplayRefusal, readScalarCellOperation, readTuplePosition } from './primitive-value-rules.js';
 import { checkRustScalarLoopProof } from './rust-scalar-loops.js';
-import { acceptOptionalAbsence } from './structured-type-rules.js';
+import { acceptOptionalAbsence, mergeOptionalAbsence } from './structured-type-rules.js';
+import { acceptOptionalLiteralAbsence, acceptOptionalPrimitiveKind, readOptionalLogicalOperation, readOptionalComparisonOperation, readOptionalBooleanOperation, readOptionalCoercionOperation, readOptionalFieldOperation, readOptionalNumberOperation, requireOptionalCoalescing, requireOptionalFlattening } from './optional-value-rules.js';
+import { readRecordValueOrder, readRecordFieldPosition, readRecordFieldOrder, readRecordMethodError } from './record-value-rules.js';
+import { readPrimitiveCopySliceForm, readPrimitiveMethodMinimumArguments, readPrimitiveMethodMaximumArguments,
+  readPrimitiveMethodArgumentCount, readPrimitiveMethodCheckedArgumentKind, readPrimitiveMethodDefaultForm,
+  readPrimitiveMethodDefaultValue, readPrimitiveMethodCheckedResultForm, readPrimitiveMethodArgumentObligation } from './primitive-method-rules.js';
 import { acceptProgramTupleProductModel } from '../typed-program-link-rules.js';
 import {
   BOOL, FLOAT, INT, NAT, STRING, UNIT, array, data, fixedBounds, immutableProductType, isFloat, isNatural, isNumeric, sameType, tuple, typeKey,
@@ -218,7 +228,10 @@ class Checker {
         ...(param.optional && { optional: true }),
       }));
       entry.ret = this.resolveType(item.semanticRet ?? item.ret, itemPath, item.span);
-      if (item.semanticRet) entry.annotatedRet = this.resolveType(item.ret, itemPath, item.span);
+      if (item.semanticRet) {
+        entry.annotatedRet = this.resolveType(item.ret, itemPath, item.span);
+        if (!acceptOptionalAnnotationTypes(entry.ret, entry.annotatedRet)) throw typeError('the semantic return type must retain the annotated value types', item.span);
+      }
       if (item.sourceSignature !== undefined) entry.sourceSignature = checkRustSourceSignature(item.sourceSignature, entry.params.map(parameter => parameter.type), entry.ret, this.language, value => this.resolveType(value, itemPath, item.span));
     });
     this.walk(items, path, (item, itemPath, entry) => {
@@ -264,6 +277,7 @@ class Checker {
     if (type.kind === 'array') return array(this.resolveType(type.element, path, span), Boolean(type.reference));
     if (type.kind === 'option' || type.kind === 'set' || type.kind === 'cell') return { ...type, element: this.resolveType(type.element, path, span) };
     if (type.kind === 'tuple') return { ...type, elements: type.elements.map((element) => this.resolveType(element, path, span)) };
+    if (type.kind === 'union') return { ...type, alternatives: type.alternatives.map(alternative => this.resolveType(alternative, path, span)) };
     if (type.kind === 'record') return { ...type, fields: type.fields.map((field) => ({ ...field, type: this.resolveType(field.type, path, span) })).sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0) };
     if (type.kind === 'map') return { ...type, key: this.resolveType(type.key, path, span), value: this.resolveType(type.value, path, span) };
     if (type.kind === 'function') return { ...type, params: type.params.map((param) => this.resolveType(param.type ?? param, path, span)), ret: this.resolveType(type.ret, path, span) };
@@ -440,7 +454,7 @@ class Checker {
     // Control flow passes its expected result type to every branch. Literal
     // builders already construct value payloads before the allocation below.
     let result = this.exprInner(node, env, path, expected, allowLiteral);
-    if (this.referenceSemantics && ['array', 'record', 'set', 'map'].includes(result.type.kind) && !result.type.reference) {
+    if (selectSurfaceReferenceAllocation(this.referenceSemantics, result.type.kind, result.type.reference)) {
       result = { k: 'referenceAllocate', value: result, type: { ...result.type, reference: true } };
     }
     if (node.span && !result.span) result.span = node.span;
@@ -479,15 +493,15 @@ class Checker {
           return { k: 'var', name: node.path[0], type: env.get(node.path[0]) };
         }
         const declaration = this.lookup(node.path, path, node.span);
-        if (declaration?.k === 'fn' && expected?.kind === 'function') {
-          return { k: 'functionRef', fn: declaration.fullName, type: { kind: 'function', params: declaration.params.map((param) => param.type), ret: declaration.ret } };
+        if (acceptCallableFunctionReference(node.k, expected?.kind ?? '', declaration?.k ?? '')) {
+          return { k: 'functionRef', fn: declaration.fullName, type: constructCallableFunctionType(declaration.params, declaration.ret) };
         }
         return this.application(node, [], env, path, expected, node.span);
       }
       case 'functionValue': {
         const declaration = this.lookup(node.path, path, node.span);
-        if (declaration?.k !== 'fn') throw typeError(`unknown function ${node.path.join('.')}`, node.span);
-        return { k: 'functionRef', fn: declaration.fullName, type: { kind: 'function', params: declaration.params.map((param) => param.type), ret: declaration.ret } };
+        if (!acceptCallableFunctionReference(node.k, '', declaration?.k ?? '')) throw typeError(`unknown function ${node.path.join('.')}`, node.span);
+        return { k: 'functionRef', fn: declaration.fullName, type: constructCallableFunctionType(declaration.params, declaration.ret) };
       }
       case 'dotCtor':
       case 'app':
@@ -543,32 +557,36 @@ class Checker {
       }
       case 'copySlice': {
         const object = this.expr(node.object, env, path, undefined);
-        if (object.type.kind === 'array' || object.type.kind === 'string') return object;
-        if (object.type.kind === 'record') return this.method({ ...node, k: 'method', op: 'slice', args: [] }, env, path, expected);
+        const form = readPrimitiveCopySliceForm(object.type.kind);
+        if (form === 'identity') return object;
+        if (form === 'method') return this.method({ ...node, k: 'method', op: 'slice', args: [] }, env, path, expected);
         throw unsupported('method call .slice()', 'this value has no string or array slice method', node.span);
       }
       case 'record':
         return this.recordLiteral(node, env, path, expected);
       case 'cellAllocate': {
-        const want = node.type?.element ? this.resolveType(node.type.element, path, node.span) : expected?.element;
+        const selected = readCallableCellElement(node, expected);
+        const want = selected.declared ? this.resolveType(selected.type, path, node.span) : selected.type;
         const raw = this.expr(node.value, env, path, want);
         const value = want ? coerce(raw, want, this.language, node.span) : raw;
         return { k: 'cellAllocate', value, referenceOperation: referenceOperation(readScalarCellOperation(node.k)).id, type: { kind: 'cell', element: want ?? value.type } };
       }
       case 'cellRead': {
         const cell = this.expr(node.cell, env, path, undefined);
-        if (cell.type.kind !== 'cell') throw typeError('reading a value requires a reference cell', node.span);
+        const error = readCallableCellError(cell.type.kind, node.k);
+        if (error) throw typeError(error, node.span);
         return { k: 'cellRead', cell, referenceOperation: referenceOperation(readScalarCellOperation(node.k)).id, type: cell.type.element };
       }
       case 'cellWrite': {
         const cell = this.expr(node.cell, env, path, undefined);
-        if (cell.type.kind !== 'cell') throw typeError('writing a value requires a reference cell', node.span);
+        const error = readCallableCellError(cell.type.kind, node.k);
+        if (error) throw typeError(error, node.span);
         const value = coerce(this.expr(node.value, env, path, cell.type.element), cell.type.element, this.language, node.span);
         const body = this.expr(node.body, env, path, expected);
         return { k: 'cellWrite', cell, value, body, referenceOperation: referenceOperation(readScalarCellOperation(node.k)).id, type: body.type };
       }
       case 'referenceWrite':
-        throw unsupported('reference mutation', 'this mutation requires its shared reference and slot operations to be represented', node.span);
+        throw unsupported(readReferenceMutationDiagnostic('feature'), readReferenceMutationDiagnostic('reason'), node.span);
       case 'set': {
         const want = node.type ? this.resolveType(node.type, path, node.span) : expected;
         const items = this.expr(node.items, env, path, want?.kind === 'set' ? array(want.element) : undefined);
@@ -600,11 +618,12 @@ class Checker {
       }
       case 'forOfIterable': {
         const object = this.expr(node.object, env, path, undefined);
-        if (object.type.kind === 'array') return object;
-        if (object.type.kind === 'string') return { k: 'stringPoints', object, type: array(STRING) };
-        if (object.type.reference && ['set', 'map'].includes(object.type.kind)) throw unsupported('mutable collection iteration', 'live collection iteration needs ordered entries and tombstones rather than a snapshot', node.span);
-        if (object.type.kind === 'set') return { k: 'collectionItems', object, op: 'values', type: array(object.type.element) };
-        if (object.type.kind === 'map') return { k: 'collectionItems', object, op: 'entries', type: array({ kind: 'tuple', elements: [object.type.key, object.type.value] }) };
+        const form = readArrayIterableForm(object.type.kind, object.type.reference === true);
+        if (form === 'array') return object;
+        if (form === 'string') return { k: 'stringPoints', object, type: array(STRING) };
+        if (form === 'mutable') throw unsupported('mutable collection iteration', 'live collection iteration needs ordered entries and tombstones rather than a snapshot', node.span);
+        if (form === 'set') return { k: 'collectionItems', object, op: 'values', type: array(object.type.element) };
+        if (form === 'map') return { k: 'collectionItems', object, op: 'entries', type: array({ kind: 'tuple', elements: [object.type.key, object.type.value] }) };
         throw unsupported('for-of iterator', 'this value needs an operational iterator representation', node.span);
       }
       case 'arrayIsArray': {
@@ -614,30 +633,45 @@ class Checker {
       }
       case 'lambda': {
         const inner = new Map(env);
-        const params = node.params.map((param, index) => {
-          const type = param.type ? this.resolveType(param.type, path, param.span) : expected?.kind === 'function' ? expected.params[index] : null;
+        const params = readCallableParameterTypes(node.params, expected).map(({ parameter: param, type: selected, declared }) => {
+          const type = declared ? this.resolveType(selected, path, param.span) : selected;
           if (!type) throw typeError(`cannot infer callback parameter ${param.name}`, param.span ?? node.span);
           bindLocal(inner, param.name, type);
           return { ...param, type };
         });
         const body = this.expr(node.body, inner, path, expected?.ret);
-        return { k: 'lambda', params, body, type: { kind: 'function', params: params.map((param) => param.type), ret: body.type } };
+        return { k: 'lambda', params, body, type: constructCallableFunctionType(params, body.type) };
       }
       case 'method':
         return this.method(node, env, path, expected);
       case 'none':
+        if (!acceptOptionalLiteralAbsence(node.absence)) throw typeError('an absent optional value requires its concrete null or undefined tag', node.span);
+        if (expected?.kind === 'option' && !acceptOptionalAbsence(expected.absence ?? 'both', node.absence)) throw typeError('an absent optional value disagrees with its retained absence policy', node.span);
         return { k: 'none', absence: node.absence, type: expected?.kind === 'option' ? expected : { kind: 'option', element: UNIT, absence: node.absence } };
+      case 'some': {
+        const type = this.resolveType(node.type, path, node.span);
+        if (type.kind !== 'option') throw typeError('a present optional value requires its actual optional type', node.span);
+        const value = coerce(this.expr(node.value, env, path, type.element), type.element, this.language, node.span);
+        return { k: 'some', value, type };
+      }
+      case 'flattenOption': {
+        const value = this.expr(node.value, env, path, undefined);
+        if (!requireOptionalFlattening(value.type.kind, value.type.element?.kind ?? '')) throw typeError('optional flattening requires two actual optional layers', node.span);
+        const inner = value.type.element;
+        return { k: 'flattenOption', value, type: { kind: 'option', element: inner.element, absence: mergeOptionalAbsence(inner.absence, value.type.absence) } };
+      }
       case 'coalesce': {
         const left = node.left.k === 'index' ? this.expr({ ...node.left, optional: true }, env, path, undefined) : this.expr(node.left, env, path, undefined);
-        if (left.type.kind !== 'option') return left;
+        if (!requireOptionalCoalescing(left.type.kind)) return left;
         const right = coerce(this.expr(node.right, env, path, left.type.element), left.type.element, this.language, node.span);
         return { k: 'coalesce', left, right, type: left.type.element };
       }
       case 'optionalField': {
         const object = this.expr(node.object, env, path, undefined);
-        if (object.type.kind !== 'option') return this.expr({ k: 'field', object: node.object, field: node.field, span: node.span }, env, path, expected);
-        if ((node.field === 'length' && ['string', 'array'].includes(object.type.element.kind)) || (node.field === 'size' && ['set', 'map'].includes(object.type.element.kind))) return { k: 'optionalProject', object, field: node.field, type: { kind: 'option', element: FLOAT, absence: 'undefined' } };
-        if (object.type.element.kind !== 'record') throw unsupported('optional field access', 'this property needs a known structural type', node.span);
+        const operation = readOptionalFieldOperation(object.type.kind, object.type.element?.kind ?? '', node.field);
+        if (operation === 'field') return this.expr({ k: 'field', object: node.object, field: node.field, span: node.span }, env, path, expected);
+        if (operation === 'project') return { k: 'optionalProject', object, field: node.field, type: { kind: 'option', element: FLOAT, absence: 'undefined' } };
+        if (operation === 'unsupported') throw unsupported('optional field access', 'this property needs a known structural type', node.span);
         const field = object.type.element.fields.find((field) => field.name === node.field);
         if (!field) throw typeError(`record has no field ${node.field}`, node.span);
         return flattenOption({ k: 'optionalField', object, field: node.field, index: object.type.element.fields.indexOf(field), type: { kind: 'option', element: field.type, absence: 'undefined' } });
@@ -659,11 +693,11 @@ class Checker {
           throw unsupported(`indexing of ${typeKey(object.type)}`, 'only arrays are indexed in the portable core', node.span);
         }
         let index = this.expr(node.index, env, path, undefined);
-        if (this.language === 'JavaScript' && index.type.kind === 'option' && ['float', 'unit'].includes(index.type.element.kind)) index = { k: 'optionalIndexNumber', arg: index, type: FLOAT };
+        if (selectOptionalArrayIndexNumber(this.language, index.type.kind, index.type.element?.kind ?? '')) index = { k: 'optionalIndexNumber', arg: index, type: FLOAT };
         if (!isFloat(index.type) && index.type.kind !== 'int' && index.type.kind !== 'nat') {
           throw typeError(`array index of type ${typeKey(index.type)}; an index is a Number or a BigInt`, node.index.span ?? node.span);
         }
-        if (node.optional || (this.language === 'JavaScript' && !node.provenInBounds) || (expected?.kind === 'option' && sameType(expected.element, object.type.element))) return flattenOption({ k: 'optionalIndex', array: object, index, type: { kind: 'option', element: object.type.element, absence: 'undefined' } });
+        if (selectOptionalArrayRead(this.language, node.optional === true, node.provenInBounds === true, expected?.kind === 'option' && sameType(expected.element, object.type.element))) return flattenOption({ k: 'optionalIndex', array: object, index, type: { kind: 'option', element: object.type.element, absence: 'undefined' } });
         return { k: 'index', array: object, index, type: object.type.element, ...(node.provenInBounds && { provenInBounds: true }) };
       }
       case 'typeOf': {
@@ -780,7 +814,12 @@ class Checker {
   recordLiteral(node, env, path, expected) {
     const entries = [];
     const bindings = [];
-    for (const entry of node.entries) {
+    const units = name => Array.from({ length: name.length }, (_, index) => name.charCodeAt(index));
+    const expectedNames = expected?.kind === 'record' ? expected.fields.map(field => units(field.name)) : [];
+    const evaluationOrder = readRecordValueOrder(node.entries.length, false);
+    if (evaluationOrder[0] < 0) throw typeError('record entries need an exact ordered input length', node.span);
+    for (const index of evaluationOrder) {
+      const entry = node.entries[index];
       if (entry.spread) {
         const value = this.expr(entry.value, env, path, undefined);
         if (value.type.kind !== 'record') throw typeError('record spread needs a record value', node.span);
@@ -789,7 +828,8 @@ class Checker {
         const object = { k: 'var', name, type: value.type };
         for (const [index, field] of value.type.fields.entries()) entries.push({ name: field.name, value: { k: 'recordField', object, field: field.name, index, type: field.type } });
       } else {
-        const want = expected?.kind === 'record' ? expected.fields.find((field) => field.name === entry.name)?.type : undefined;
+        const position = readRecordFieldPosition(expectedNames, units(entry.name));
+        const want = position < 0 ? undefined : expected.fields[position].type;
         const value = this.expr(entry.value, env, path, want);
         const name = this.freshName('ml_field');
         bindings.push({ name, value });
@@ -797,13 +837,43 @@ class Checker {
       }
     }
     // Overwritten fields still evaluate: bind every entry before selecting the final values.
-    const fields = new Map();
-    entries.forEach((entry) => fields.set(entry.name, entry));
-    const selected = [...fields.values()].sort((left, right) => left.name < right.name ? -1 : left.name > right.name ? 1 : 0);
+    const fieldOrder = readRecordFieldOrder(entries.map(entry => units(entry.name)));
+    if (fieldOrder[0] < 0) throw typeError('record fields contain an invalid UTF16 name', node.span);
+    const selected = fieldOrder.map(index => entries[index]);
     const type = { kind: 'record', fields: selected.map((entry) => ({ name: entry.name, type: entry.value.type })) };
     let body = { k: 'record', entries: selected, type };
-    for (const binding of bindings.reverse()) body = { k: 'let', name: binding.name, value: binding.value, body, type };
+    for (const index of readRecordValueOrder(bindings.length, true)) {
+      const binding = bindings[index];
+      body = { k: 'let', name: binding.name, value: binding.value, body, type };
+    }
     return body;
+  }
+
+  primitiveMethod(node, object, env, path) {
+    const receiver = object.type.kind;
+    const minimum = readPrimitiveMethodMinimumArguments(receiver, node.op);
+    const maximum = readPrimitiveMethodMaximumArguments(receiver, node.op);
+    if (minimum < 0) throw unsupported(`method call .${node.op}()`, `.${node.op}() has no checked string operation`, node.span);
+    if (node.args.length < minimum || node.args.length > maximum) throw unsupported(`method call .${node.op}()`, `.${node.op}() expects ${minimum === maximum ? minimum : `${minimum} to ${maximum}`} arguments`, node.span);
+    const element = object.type.element;
+    const obligation = readPrimitiveMethodArgumentObligation(receiver, node.op,
+      element?.kind === 'option' ? element.element.kind : element?.kind ?? '');
+    if (obligation) throw unsupported('array identity search', obligation, node.span);
+    const values = [];
+    for (let index = 0; index < readPrimitiveMethodArgumentCount(receiver, node.op); index += 1) {
+      const kind = readPrimitiveMethodCheckedArgumentKind(receiver, node.op, index);
+      const type = kind === 'element' ? object.type.element : kind === 'float' ? FLOAT : STRING;
+      const form = readPrimitiveMethodDefaultForm(receiver, node.op, index);
+      const fallback = form === 'absent' ? null : form === 'required' ? undefined
+        : literal(form === 'float' ? FLOAT : STRING, readPrimitiveMethodDefaultValue(receiver, node.op, index));
+      const argument = node.args[index];
+      values.push(argument ? coerce(this.expr(argument, env, path, type), type, this.language, argument.span ?? node.span) : fallback);
+    }
+    const form = readPrimitiveMethodCheckedResultForm(receiver, node.op);
+    const type = form === 'receiver' ? object.type : form === 'bool' ? BOOL : form === 'float' ? FLOAT
+      : form === 'array-string' ? array(STRING)
+      : form === 'optional-float' ? { kind: 'option', element: FLOAT, absence: 'undefined' } : STRING;
+    return { k: 'method', object, op: node.op, args: values, type, span: node.span };
   }
 
   method(node, env, path, expected) {
@@ -816,8 +886,8 @@ class Checker {
     const number = (index, fallback) => checked(index, FLOAT, literal(FLOAT, fallback));
     if (object.type.kind === 'record') {
       const field = object.type.fields.find((field) => field.name === node.op);
-      if (!field || field.type.kind !== 'function') throw typeError(`record has no method ${node.op}`, node.span);
-      if (args.length !== field.type.params.length) throw typeError(`.${node.op}() expects ${field.type.params.length} arguments`, node.span);
+      const error = readRecordMethodError(field?.type.kind ?? '', node.op, field?.type.params?.length ?? 0, args.length);
+      if (error) throw typeError(error, node.span);
       return { k: 'apply', fn: { k: 'recordField', object, field: node.op, index: object.type.fields.indexOf(field), type: field.type }, args: args.map((arg, index) => checked(index, field.type.params[index])), type: field.type.ret };
     }
     if (object.type.kind === 'set' || object.type.kind === 'map') {
@@ -835,35 +905,7 @@ class Checker {
       throw unsupported(`mutable collection .${node.op}()`, 'mutation requires shared reference identities and cells so aliases observe every change', node.span);
     }
     if (object.type.kind === 'string') {
-      let type;
-      let values;
-      switch (node.op) {
-        case 'split':
-          count(0, 2); type = array(STRING);
-          values = [checked(0, STRING, null), number(1, '4294967295')]; break;
-        case 'slice':
-          count(0, 2); type = STRING;
-          values = [number(0, '0'), number(1, 'Infinity')]; break;
-        case 'indexOf':
-        case 'lastIndexOf':
-          count(1, 2); type = FLOAT;
-          values = [checked(0, STRING), number(1, node.op === 'indexOf' ? '0' : 'Infinity')]; break;
-        case 'replace':
-        case 'replaceAll':
-          count(2); type = STRING;
-          values = [checked(0, STRING), checked(1, STRING)]; break;
-        case 'repeat':
-          count(1); type = STRING; values = [number(0)]; break;
-        case 'padStart':
-        case 'padEnd':
-          count(1, 2); type = STRING;
-          values = [number(0), checked(1, STRING, literal(STRING, ' '))]; break;
-        case 'codePointAt':
-          count(1); type = { kind: 'option', element: FLOAT, absence: 'undefined' }; values = [number(0)]; break;
-        default:
-          throw unsupported(`method call .${node.op}()`, `.${node.op}() has no checked string operation`, node.span);
-      }
-      return { k: 'method', object, op: node.op, args: values, type, span: node.span };
+      return this.primitiveMethod(node, object, env, path);
     }
     if (object.type.kind === 'array') {
       const element = object.type.element;
@@ -900,13 +942,10 @@ class Checker {
         return { k: 'method', object, op: node.op, args: [fn, initial], type: initial.type, span: node.span };
       }
       if (node.op === 'slice') {
-        count(0, 2);
-        return { k: 'method', object, op: node.op, args: [number(0, '0'), number(1, 'Infinity')], type: object.type, span: node.span };
+        return this.primitiveMethod(node, object, env, path);
       }
       if (node.op === 'indexOf' || node.op === 'lastIndexOf' || node.op === 'includes') {
-        count(1, 2);
-        if (['array', 'record', 'map', 'set', 'data', 'function'].includes(element.kind)) throw unsupported('array identity search', 'object identity must be represented before searching arrays of objects', node.span);
-        return { k: 'method', object, op: node.op, args: [checked(0, element), number(1, node.op === 'lastIndexOf' ? 'Infinity' : '0')], type: node.op === 'includes' ? BOOL : FLOAT, span: node.span };
+        return this.primitiveMethod(node, object, env, path);
       }
       if (node.op === 'join') {
         count(0, 1);
@@ -987,19 +1026,19 @@ class Checker {
     if (op === 'and' || op === 'or') {
       const left = this.expr(node.left, env, path, undefined);
       const right = this.expr(node.right, env, path, undefined);
-      if (left.type.kind === 'bool' && right.type.kind === 'bool') return { k: 'binary', op, left, right, type: BOOL };
-      if (this.language !== 'JavaScript') throw typeError('logical operands must be booleans', node.span);
+      const operation = readOptionalLogicalOperation(this.language, left.type.kind, right.type.kind,
+        left.type.kind === 'option' && sameType(left.type.element, right.type), right.type.kind === 'option' && sameType(right.type.element, left.type), sameType(left.type, right.type), op);
+      if (operation === 'boolean') return { k: 'binary', op, left, right, type: BOOL };
+      if (operation === 'language-error') throw typeError('logical operands must be booleans', node.span);
       const name = this.freshName('ml_logical');
       const bound = { k: 'var', name, type: left.type };
       let retained = bound;
       let other = right;
       let type = left.type;
-      if (left.type.kind === 'option' && sameType(left.type.element, right.type)) {
-        if (op === 'or') { retained = { k: 'unwrapOption', arg: bound, type: right.type }; type = right.type; }
-        else other = coerce(right, type, this.language, node.span);
-      } else if (right.type.kind === 'option' && sameType(right.type.element, left.type)) {
-        type = right.type; retained = coerce(bound, type, this.language, node.span);
-      } else if (!sameType(left.type, right.type)) throw unsupported('logical value union', 'these logical operands need a tagged union of their distinct value types', node.span);
+      if (operation === 'unwrap-left') { retained = { k: 'unwrapOption', arg: bound, type: right.type }; type = right.type; }
+      else if (operation === 'wrap-right') other = coerce(right, type, this.language, node.span);
+      else if (operation === 'wrap-left') { type = right.type; retained = coerce(bound, type, this.language, node.span); }
+      else if (operation === 'union-error') throw unsupported('logical value union', 'these logical operands need a tagged union of their distinct value types', node.span);
       const cond = this.booleanValue(bound, node.span);
       const body = { k: 'if', cond, then: op === 'or' ? retained : other, else: op === 'or' ? other : retained, type };
       return { k: 'let', name, value: left, body, type };
@@ -1016,12 +1055,11 @@ class Checker {
         if (left.type.kind === 'literal') left = this.expr(node.left, env, path, this.defaultNumber());
         if (right.type.kind === 'literal') right = this.expr(node.right, env, path, this.defaultNumber());
         if (left.type.kind === 'option' || right.type.kind === 'option') {
-          if (op === 'eq' || op === 'ne') {
-            const a = left.type.kind === 'option' ? left.type.element : left.type;
-            const b = right.type.kind === 'option' ? right.type.element : right.type;
-            if (sameType(a, b) && !primitiveKey(a)) throw unsupported('nullable object equality', 'equality of these values requires shared reference identities', node.span);
-            return { k: 'strictEqual', left, right, negate: op === 'ne', type: BOOL };
-          }
+          const a = left.type.kind === 'option' ? left.type.element : left.type;
+          const b = right.type.kind === 'option' ? right.type.element : right.type;
+          const operation = readOptionalComparisonOperation(this.language, left.type.kind, right.type.kind, op, sameType(a, b), primitiveKey(a));
+          if (operation === 'object-error') throw unsupported('nullable object equality', 'equality of these values requires shared reference identities', node.span);
+          if (operation === 'strict') return { k: 'strictEqual', left, right, negate: op === 'ne', type: BOOL };
           left = this.numberValue(left, node.span); right = this.numberValue(right, node.span);
           [left, right] = unify(left, right, this.language, node.span);
           return { k: 'binary', op, left, right, type: BOOL, domain: left.type };
@@ -1102,26 +1140,28 @@ class Checker {
   }
 
   numberValue(value, span) {
-    if (this.language !== 'JavaScript' || value.type.kind !== 'option') return value;
-    if (!['float', 'unit', 'bool'].includes(value.type.element.kind)) throw unsupported('nullable arithmetic operand', 'this operand needs its source numeric coercion and error behavior represented', span);
+    const operation = readOptionalNumberOperation(this.language, value.type.kind, value.type.element?.kind ?? '');
+    if (operation === 'identity') return value;
+    if (operation === 'unsupported') throw unsupported('nullable arithmetic operand', 'this operand needs its source numeric coercion and error behavior represented', span);
     return { k: 'nullishNumber', arg: value, type: FLOAT };
   }
 
   booleanValue(value, span) {
-    if (value.type.kind === 'bool') return value;
-    if (this.language !== 'JavaScript') return coerce(value, BOOL, this.language, span);
+    const operation = readOptionalBooleanOperation(this.language, value.type.kind);
+    if (operation === 'identity') return value;
+    if (operation === 'coerce') return coerce(value, BOOL, this.language, span);
     return { k: 'truthy', arg: value, type: BOOL };
   }
 
   referenceValue(value) {
-    return value.type.reference ? { k: 'referenceRead', reference: value, type: { ...value.type, reference: false } } : value;
+    return selectSurfaceReferenceRead(value.type.reference) ? { k: 'referenceRead', reference: value, type: { ...value.type, [readSurfaceReferenceResultField('referenceRead')]: false } } : value;
   }
 
   application(head, args, env, path, expected, span) {
-    if ((head.k !== 'name' && head.k !== 'dotCtor') || (head.k === 'name' && head.path.length === 1 && env.get(head.path[0])?.kind === 'function')) {
+    if (requireCallableComputedApplication(head.k, head.path?.length ?? 0, head.path?.length === 1 ? env.get(head.path[0])?.kind ?? '' : '')) {
       const fn = this.expr(head, env, path, undefined);
-      if (fn.type.kind !== 'function') throw typeError('the called value is not a function', span);
-      if (args.length !== fn.type.params.length) throw typeError(`function expects ${fn.type.params.length} arguments`, span);
+      const error = readCallableApplicationError(fn.type.kind, fn.type.params?.length ?? 0, args.length);
+      if (error) throw typeError(error, span);
       return { k: 'apply', fn, args: args.map((arg, index) => coerce(this.expr(arg, env, path, fn.type.params[index]), fn.type.params[index], this.language, span)), type: fn.type.ret };
     }
     if (head.k === 'dotCtor') {
@@ -1560,13 +1600,13 @@ function isOrdered(type) {
 }
 
 function primitiveKey(type) {
-  return ['bool', 'float', 'fixed', 'int', 'nat', 'string', 'unit'].includes(type.kind);
+  return acceptOptionalPrimitiveKind(type.kind);
 }
 
 function flattenOption(value) {
-  if (value.type.kind !== 'option' || value.type.element.kind !== 'option') return value;
+  if (!requireOptionalFlattening(value.type.kind, value.type.element?.kind ?? '')) return value;
   const inner = value.type.element;
-  const type = { kind: 'option', element: inner.element, absence: value.type.absence === inner.absence ? inner.absence : 'both' };
+  const type = { kind: 'option', element: inner.element, absence: mergeOptionalAbsence(inner.absence, value.type.absence) };
   return flattenOption({ k: 'flattenOption', value, type });
 }
 
@@ -1674,15 +1714,17 @@ export function coerce(value, type, language, span, flavor = undefined) {
   if (value.type.kind === 'literal') throw typeError('untyped literal', span);
   if (sameType(value.type, type)) return value;
   if (value.k === 'abort') return { ...value, type };
-  if (type.kind === 'option' && value.k === 'none') {
-    if (!acceptOptionalAbsence(type.absence, value.absence)) throw typeError(`expected ${type.absence} absence but found ${value.absence}`, span);
-    return { ...value, type };
-  }
-  if (language === 'JavaScript' && type.kind === 'option' && value.type.kind === 'unit' && acceptOptionalAbsence(type.absence, 'undefined')) {
+  const optional = readOptionalCoercionOperation(language, type.kind, value.type.kind, value.k,
+    type.kind === 'option' && acceptOptionalAbsence(type.absence, value.absence),
+    type.kind === 'option' && acceptOptionalAbsence(type.absence, 'undefined'),
+    type.kind === 'option' && sameType(value.type, type.element));
+  if (optional === 'absence-error') throw typeError(`expected ${type.absence} absence but found ${value.absence}`, span);
+  if (optional === 'none') return { ...value, type };
+  if (optional === 'unit' || optional === 'discard-unit') {
     const absent = { k: 'none', absence: 'undefined', type };
-    return value.k === 'unit' ? absent : { k: 'let', name: 'ml_discarded_unit', value, body: absent, type };
+    return optional === 'unit' ? absent : { k: 'let', name: 'ml_discarded_unit', value, body: absent, type };
   }
-  if (type.kind === 'option' && sameType(value.type, type.element)) return { k: 'some', value, type };
+  if (optional === 'some') return { k: 'some', value, type };
   if (language === 'JavaScript' && value.type.kind === 'nat' && type.kind === 'int') {
     return castTo(value, INT, 'exact', span);
   }

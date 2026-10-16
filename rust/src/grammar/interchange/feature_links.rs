@@ -9,7 +9,7 @@
 
 use super::super::feature::class_expression;
 use super::super::{
-    FeatureExpr, GrammarDeclarations, GrammarExpr, GrammarImportError, GrammarMacro,
+    FeatureExpr, GrammarDeclarations, GrammarExpr, GrammarImportError, GrammarLexer, GrammarMacro,
     GrammarScanner, GrammarSourceName, Operation, OperationCategory, PrecedenceEntry,
     RuleAttributes, UnicodeClassItem,
 };
@@ -155,6 +155,13 @@ pub fn render_declaration_links(declarations: &GrammarDeclarations) -> Vec<Strin
             percent_encode_links_text(&scanner.name),
             render_names("tokens", &scanner.tokens),
             render_operations("operations", &scanner.operations)
+        ));
+    }
+    for lexer in &declarations.lexers {
+        lines.push(format!(
+            "(lexer {} {})",
+            percent_encode_links_text(&lexer.name),
+            render_links_expression(&lexer.expression)
         ));
     }
     lines
@@ -324,6 +331,13 @@ pub(super) fn read_declaration(
                 name: decoded_word(args.first(), "a macro name")?,
                 parameters: names(&args[1], "parameters")?,
                 expression: parse_node(&args[2])?,
+            });
+        }
+        "lexer" => {
+            arity(head, args, 2)?;
+            declarations.lexers.push(GrammarLexer {
+                name: decoded_word(args.first(), "a lexer name")?,
+                expression: parse_node(&args[1])?,
             });
         }
         "scanner" => {

@@ -19,6 +19,8 @@ impl Executor<'_> {
             // Only the translated classifier decides which shapes are cacheable.
             let kind = match item {
                 Expr::Empty => "empty",
+                Expr::LexicalScope { .. } => "lexicalScope",
+                Expr::LexicalToken { .. } => "lexicalToken",
                 Expr::Terminal { .. } => "literal",
                 Expr::Seq(_) => "seq",
                 Expr::Choice { .. } => "choice",

@@ -11,18 +11,28 @@
 //! Mirrors `js/src/translation/javascript-infer.js`.
 
 mod arrays;
+mod callables;
+mod methods;
+mod numbers;
+mod optional_values;
+mod patterns;
 mod products;
+mod records;
+mod solver;
+mod term_facts;
+mod term_types;
 
 pub(super) use products::{infer_javascript_product_types, infer_javascript_types};
 
 use arrays::fill_arrays;
+use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
+use std::rc::Rc;
 
 use super::{
     BOOL, BinaryOp, FLOAT, INT, ROOT, Result, SCtor, SEffect, SExpr, SFn, SItem, SNode, SPattern,
     SPatternNode, SProgram, SProp, SPropNode, STRING, Span, Type, UnaryOp, type_error,
 };
-use crate::translation::scoped_binding_emission_rules::accept_java_script_scoped_binding_emission_absent_value_type;
 use crate::translation::types::UNIT;
 
 /// Writes the inferred types of the fields the translator makes up back.
@@ -65,11 +75,14 @@ fn collect_functions<'a>(
 }
 
 /// Writes the inferred types back, visiting the functions in the order they were collected.
-fn fill_functions(items: &mut [SItem], inferred: &mut impl Iterator<Item = (Vec<Type>, Type)>) {
+fn fill_functions(
+    items: &mut [SItem],
+    inferred: &mut impl Iterator<Item = (Vec<Type>, Type, Option<Type>)>,
+) {
     for item in items {
         match item {
             SItem::Fn(function) => {
-                let Some((params, ret)) = inferred.next() else {
+                let Some((params, ret, semantic_ret)) = inferred.next() else {
                     return;
                 };
                 for (param, ty) in function.params.iter_mut().zip(params) {
@@ -79,6 +92,9 @@ fn fill_functions(items: &mut [SItem], inferred: &mut impl Iterator<Item = (Vec<
                 }
                 if function.ret.is_none() {
                     function.ret = Some(ret);
+                }
+                if semantic_ret.is_some() {
+                    function.semantic_ret = semantic_ret;
                 }
             }
             SItem::Module(module) => fill_functions(&mut module.items, inferred),
@@ -93,8 +109,38 @@ enum Term {
     Known(Type),
     /// An array, whose element type may still be unknown.
     Array(Box<Self>),
+    /// Clones retain the actual shared absence owner used by JS unification.
+    Option {
+        element: Box<Self>,
+        absence: Rc<RefCell<String>>,
+    },
     /// A product preserves each ordered field's independently inferred type.
     Tuple(Vec<Self>),
+    Union(Vec<Self>),
+    Map {
+        key: Box<Self>,
+        value: Box<Self>,
+        reference: bool,
+    },
+    Set {
+        element: Box<Self>,
+        reference: bool,
+    },
+    /// Clones retain the actual mutable owner of open inferred record fields.
+    Record(Rc<RefCell<RecordTerm>>),
+    /// Callable slots retain their independently inferred variables.
+    Function {
+        params: Vec<Self>,
+        ret: Box<Self>,
+    },
+    /// A shared scalar cell retains its independently inferred element.
+    Cell(Box<Self>),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct RecordTerm {
+    fields: Vec<(String, Term)>,
+    open: bool,
 }
 
 #[derive(Clone)]
@@ -102,6 +148,37 @@ struct Signature {
     params: Vec<Term>,
     defaults: Vec<bool>,
     ret: Term,
+    declared_ret: Option<Term>,
+}
+
+#[derive(Clone)]
+struct FunctionResult {
+    result: Term,
+    declared: Option<Term>,
+    body: Term,
+}
+#[derive(Clone)]
+struct CallArguments {
+    parameters: Vec<Term>,
+    arguments: Vec<Term>,
+    place: Option<Span>,
+}
+struct Coalescing {
+    left: Term,
+    right: Term,
+    place: Option<Span>,
+}
+struct Join {
+    left: Term,
+    right: Term,
+    result: Term,
+    place: Option<Span>,
+}
+struct Arithmetic {
+    left: Term,
+    right: Option<Term>,
+    result: Term,
+    place: Option<Span>,
 }
 
 struct Plus {
@@ -122,6 +199,14 @@ struct IndexOf {
     object: Term,
     index: f64,
     literal: bool,
+    optional: bool,
+    proven_in_bounds: bool,
+    result: Term,
+    place: Option<Span>,
+}
+
+struct IterableOf {
+    object: Term,
     result: Term,
     place: Option<Span>,
 }
@@ -130,10 +215,22 @@ struct Inference {
     /// Constructors of every data type, in declaration order.
     data: Vec<(String, Vec<SCtor>)>,
     bindings: Vec<Option<Term>>,
+    unification_changes: usize,
     bigints: HashSet<usize>,
     plus: Vec<Plus>,
+    coalesces: Vec<Coalescing>,
+    joins: Vec<Join>,
+    results: Vec<FunctionResult>,
+    calls: Vec<CallArguments>,
+    conditions: Vec<(Term, Option<Span>)>,
+    arithmetic: Vec<Arithmetic>,
+    methods: Vec<methods::Method>,
+    includes: Vec<methods::Includes>,
+    array_includes: HashSet<*const SExpr>,
     fields: Vec<FieldOf>,
     indices: Vec<IndexOf>,
+    iterables: Vec<IterableOf>,
+    collections: HashMap<*const SExpr, (Term, Option<Span>)>,
     signatures: HashMap<String, Signature>,
     context: Vec<String>,
     /// The types of the fields the translator makes up, which are inferred
@@ -142,7 +239,12 @@ struct Inference {
     /// Array literals with no element of their own, whose element type the
     /// rest of the program fixes, by node.
     empty_arrays: HashMap<*const SExpr, (Term, Option<Span>)>,
+    records: HashMap<*const SExpr, Term>,
+    record_spreads: Vec<records::RecordSpread>,
     expression_terms: HashMap<*const SExpr, (Term, Option<Span>)>,
+    lambdas: HashMap<*const SExpr, Term>,
+    lambda_places: HashMap<*const SExpr, (Option<Span>, Vec<Option<Span>>)>,
+    cells: HashMap<*const SExpr, (Term, Option<Span>)>,
     record_expressions: bool,
 }
 
@@ -160,15 +262,32 @@ impl Inference {
         Self {
             data,
             bindings: Vec::new(),
+            unification_changes: 0,
             bigints: HashSet::new(),
             plus: Vec::new(),
+            coalesces: Vec::new(),
+            joins: Vec::new(),
+            results: Vec::new(),
+            calls: Vec::new(),
+            conditions: Vec::new(),
+            arithmetic: Vec::new(),
+            methods: Vec::new(),
+            includes: Vec::new(),
+            array_includes: HashSet::new(),
             fields: Vec::new(),
             indices: Vec::new(),
+            iterables: Vec::new(),
+            collections: HashMap::new(),
             signatures: HashMap::new(),
             context: vec![ROOT.to_owned()],
             field_terms: HashMap::new(),
             empty_arrays: HashMap::new(),
+            records: HashMap::new(),
+            record_spreads: Vec::new(),
             expression_terms: HashMap::new(),
+            lambdas: HashMap::new(),
+            lambda_places: HashMap::new(),
+            cells: HashMap::new(),
             record_expressions: false,
         }
     }
@@ -216,27 +335,6 @@ impl Inference {
         current
     }
 
-    /// A declared surface type as a term; the frontend writes `bigint` as `int`.
-    fn declared(&mut self, ty: Option<&Type>) -> Term {
-        match ty {
-            None => self.fresh(false),
-            Some(Type::Named { path, .. }) => Term::Known(Type::Data {
-                name: path.last().cloned().unwrap_or_default(),
-            }),
-            Some(Type::Nat) => Term::Known(INT),
-            Some(Type::Array { element, .. }) => {
-                Term::Array(Box::new(self.declared(Some(element))))
-            }
-            Some(Type::Tuple { elements }) => Term::Tuple(
-                elements
-                    .iter()
-                    .map(|element| self.declared(Some(element)))
-                    .collect(),
-            ),
-            Some(other) => Term::Known(other.clone()),
-        }
-    }
-
     fn unify(&mut self, left: &Term, right: &Term, place: Option<Span>) -> Result<()> {
         let a = self.resolve(left);
         let b = self.resolve(right);
@@ -254,7 +352,14 @@ impl Inference {
                 .then(|| "a bigint".to_owned()),
             Some(Term::Known(ty)) => Some(describe(ty)),
             Some(Term::Array(_)) => Some("an array".to_owned()),
+            Some(Term::Option { .. }) => Some("option".to_owned()),
             Some(Term::Tuple(_)) => Some("a tuple".to_owned()),
+            Some(Term::Union(_)) => Some("union".to_owned()),
+            Some(Term::Map { .. }) => Some("a map".to_owned()),
+            Some(Term::Set { .. }) => Some("a set".to_owned()),
+            Some(Term::Record(_)) => Some("an object".to_owned()),
+            Some(Term::Function { .. }) => Some("a function".to_owned()),
+            Some(Term::Cell(_)) => Some("a captured binding".to_owned()),
         };
         if let Some(described) = described {
             return Err(type_error(
@@ -271,19 +376,47 @@ impl Inference {
                         self.bigints.insert(*y);
                     }
                     self.bindings[*x] = Some(b.clone());
+                    self.unification_changes += 1;
                 }
                 Ok(())
             }
             (Term::Var(variable), other) | (other, Term::Var(variable)) => {
                 let integer = matches!(other, Term::Known(ty) if is_integer(ty));
                 if self.bigints.contains(variable) && !integer {
-                    return Err(type_error(
-                        format!(
-                            "a BigInt is used as {}; JavaScript does not mix BigInt with other types",
-                            describe_term(other)
-                        ),
-                        place,
-                    ));
+                    let value = match other {
+                        Term::Option { element, .. } => self.resolve(element),
+                        _ => other.clone(),
+                    };
+                    let value_kind = match &value {
+                        Term::Var(_) => "var",
+                        Term::Known(ty) => ty.kind(),
+                        _ => "",
+                    };
+                    let integer = matches!(&value, Term::Known(ty) if is_integer(ty));
+                    let operation =
+                        crate::translation::optional_value_rules::read_optional_big_int_constraint(
+                            if matches!(other, Term::Option { .. }) {
+                                "option"
+                            } else {
+                                ""
+                            },
+                            value_kind,
+                            integer,
+                        );
+                    if operation == "mark" {
+                        let Term::Var(variable) = value else {
+                            unreachable!("the generated BigInt plan requires an actual variable");
+                        };
+                        self.bigints.insert(variable);
+                    } else if operation == "error" {
+                        return Err(type_error(
+                            format!(
+                                "a BigInt is used as {}; JavaScript does not mix BigInt with other types",
+                                describe_term(other)
+                            ),
+                            place,
+                        ));
+                    }
                 }
                 if self.contains(other, *variable, &mut HashSet::new()) {
                     return Err(type_error(
@@ -292,9 +425,29 @@ impl Inference {
                     ));
                 }
                 self.bindings[*variable] = Some(other.clone());
+                self.unification_changes += 1;
                 Ok(())
             }
             (Term::Array(x), Term::Array(y)) => self.unify(x, y, place),
+            (Term::Record(left), Term::Record(right)) => self.unify_records(left, right, place),
+            (Term::Set { element: x, .. }, Term::Set { element: y, .. }) => self.unify(x, y, place),
+            (
+                Term::Map {
+                    key: a, value: b, ..
+                },
+                Term::Map {
+                    key: c, value: d, ..
+                },
+            ) => {
+                self.unify(a, c, place)?;
+                self.unify(b, d, place)
+            }
+            (Term::Union(_), Term::Union(_)) if self.same_term(&a, &b) => Ok(()),
+            (Term::Option { .. }, _) | (_, Term::Option { .. }) => {
+                self.unify_optional(&a, &b, place)
+            }
+            (Term::Function { .. }, Term::Function { .. }) => self.unify_callable(&a, &b, place),
+            (Term::Cell(_), Term::Cell(_)) => self.unify_cells(&a, &b, place),
             (Term::Tuple(left), Term::Tuple(right)) => {
                 if left.len() != right.len() {
                     return Err(type_error(
@@ -321,145 +474,6 @@ impl Inference {
         }
     }
 
-    fn run(
-        &mut self,
-        functions: &[(Vec<String>, &SFn)],
-        program: &SProgram,
-    ) -> Result<Vec<(Vec<Type>, Type)>> {
-        // The other items of the module keep the types their own translation checked.
-        for external in &program.externals {
-            let (params, ret) = external.signature();
-            let signature = Signature {
-                defaults: vec![false; params.len()],
-                params: params
-                    .into_iter()
-                    .map(|ty| self.declared(Some(ty)))
-                    .collect(),
-                ret: self.declared(Some(ret)),
-            };
-            self.signatures
-                .insert(format!("{ROOT}.{}", external.name()), signature);
-        }
-        for (path, function) in functions {
-            let params = function
-                .params
-                .iter()
-                .map(|param| self.declared(param.ty.as_ref()))
-                .collect();
-            let ret = self.declared(function.ret.as_ref());
-            let defaults = function
-                .params
-                .iter()
-                .map(|param| param.default_value.is_some())
-                .collect();
-            self.signatures.insert(
-                path.join("."),
-                Signature {
-                    params,
-                    defaults,
-                    ret,
-                },
-            );
-        }
-        for (path, function) in functions {
-            let signature = self.signatures[&path.join(".")].clone();
-            let ret = signature.ret.clone();
-            let env: Env = function
-                .params
-                .iter()
-                .zip(&signature.params)
-                .map(|(param, term)| (param.name.clone(), term.clone()))
-                .collect();
-            self.context = path[..path.len() - 1].to_vec();
-            for (param, term) in function.params.iter().zip(&signature.params) {
-                if let Some(default_value) = &param.default_value {
-                    let value = self.expr_expected(default_value, &Env::new(), Some(term))?;
-                    self.unify(&value, term, param.span)?;
-                }
-            }
-            let body = self.expr_expected(&function.body, &env, Some(&ret))?;
-            self.unify(&body, &ret, function.span)?;
-        }
-        self.context = vec![ROOT.to_owned()];
-        let mut env = Env::new();
-        for effect in program.main.iter().flat_map(|main| &main.effects) {
-            match effect {
-                SEffect::Print { expr, .. } => {
-                    self.expr(expr, &env)?;
-                }
-                SEffect::Let { name, value, .. } => {
-                    let term = self.expr(value, &env)?;
-                    env.insert(name.clone(), term);
-                }
-                SEffect::Assert { prop, .. } => self.prop(prop, &env)?,
-            }
-        }
-        self.solve()?;
-        Ok(functions
-            .iter()
-            .map(|(path, function)| {
-                let signature = &self.signatures[&path.join(".")];
-                let params = signature
-                    .params
-                    .iter()
-                    .map(|term| self.surface(term, function.span))
-                    .collect();
-                (params, self.surface(&signature.ret, function.span))
-            })
-            .collect())
-    }
-
-    /// Deferred `+` and field constraints, until nothing more is known; then `+` of unknowns adds numbers.
-    fn solve(&mut self) -> Result<()> {
-        let mut progress = true;
-        while progress {
-            progress = false;
-            let mut waiting = Vec::new();
-            for constraint in std::mem::take(&mut self.plus) {
-                if self.plus_step(&constraint, false)? {
-                    progress = true;
-                } else {
-                    waiting.push(constraint);
-                }
-            }
-            self.plus = waiting;
-            let mut waiting = Vec::new();
-            for constraint in std::mem::take(&mut self.fields) {
-                if self.field_step(&constraint)? {
-                    progress = true;
-                } else {
-                    waiting.push(constraint);
-                }
-            }
-            self.fields = waiting;
-            progress |= self.solve_product_indices()?;
-            // `.length` of a value nothing else fixes reads an array.
-            let length = self.fields.iter().find(|constraint| {
-                constraint.field == "length"
-                    && matches!(self.resolve(&constraint.object), Term::Var(_))
-            });
-            if let (false, Some(length)) = (progress, length) {
-                let (object, place) = (length.object.clone(), length.place);
-                let array = Term::Array(Box::new(self.fresh(false)));
-                self.unify(&object, &array, place)?;
-                progress = true;
-            }
-            if !progress && !self.indices.is_empty() {
-                let object = self.indices[0].object.clone();
-                let place = self.indices[0].place;
-                let element = self.fresh(false);
-                self.unify(&object, &Term::Array(Box::new(element)), place)?;
-                progress = true;
-            }
-            if !progress && !self.plus.is_empty() {
-                let first = self.plus.remove(0);
-                self.plus_step(&first, true)?;
-                progress = true;
-            }
-        }
-        Ok(())
-    }
-
     fn plus_step(&mut self, constraint: &Plus, force: bool) -> Result<bool> {
         let a = self.resolve(&constraint.left);
         let b = self.resolve(&constraint.right);
@@ -470,12 +484,38 @@ impl Inference {
         if !force && (matches!(a, Term::Var(_)) || matches!(b, Term::Var(_))) {
             return Ok(false);
         }
-        self.unify(&constraint.left, &constraint.right, constraint.place)?;
-        self.unify(&constraint.result, &constraint.left, constraint.place)?;
+        let left = self.numeric_value(&constraint.left);
+        let right = self.numeric_value(&constraint.right);
+        if self.resolve(&left) == Term::Known(STRING) || self.resolve(&right) == Term::Known(STRING)
+        {
+            return Err(type_error(
+                "nullable string addition needs a string or number result determined by the values",
+                constraint.place,
+            ));
+        }
+        self.unify(&left, &right, constraint.place)?;
+        self.unify(&constraint.result, &left, constraint.place)?;
         Ok(true)
     }
 
     fn field_step(&mut self, constraint: &FieldOf) -> Result<bool> {
+        if let Term::Record(owner) = self.resolve(&constraint.object) {
+            return self.record_field_constraint(
+                &owner,
+                &constraint.field,
+                &constraint.result,
+                constraint.place,
+            );
+        }
+        if constraint.field == "size"
+            && matches!(
+                self.resolve(&constraint.object),
+                Term::Map { .. } | Term::Set { .. }
+            )
+        {
+            self.unify(&constraint.result, &Term::Known(FLOAT), constraint.place)?;
+            return Ok(true);
+        }
         let name = match self.resolve(&constraint.object) {
             Term::Known(Type::Data { name }) => name,
             Term::Array(_) | Term::Tuple(_) | Term::Known(Type::String)
@@ -526,34 +566,6 @@ impl Inference {
         Ok(true)
     }
 
-    /// The inferred type as a surface type; an unconstrained `BigInt` is `bigint`, anything else unconstrained a Number.
-    fn surface(&self, term: &Term, place: Option<Span>) -> Type {
-        match self.resolve(term) {
-            Term::Var(id) => {
-                if self.bigints.contains(&id) {
-                    INT
-                } else {
-                    FLOAT
-                }
-            }
-            Term::Known(Type::Data { name }) => Type::Named {
-                path: vec![ROOT.to_owned(), name],
-                span: place,
-            },
-            Term::Known(ty) => ty,
-            Term::Array(element) => Type::Array {
-                element: Box::new(self.surface(&element, place)),
-                reference: false,
-            },
-            Term::Tuple(elements) => Type::Tuple {
-                elements: elements
-                    .iter()
-                    .map(|element| self.surface(element, place))
-                    .collect(),
-            },
-        }
-    }
-
     fn signature(&self, path: &[String]) -> Option<Signature> {
         let found = self.signatures.get(&path.join(".")).or_else(|| {
             // A call inside a namespace may name a sibling relative to it.
@@ -586,20 +598,11 @@ impl Inference {
             SNode::Bool { .. } => Ok(Term::Known(BOOL)),
             SNode::Str { .. } => Ok(Term::Known(STRING)),
             SNode::Unit => Ok(Term::Known(UNIT)),
-            SNode::None { absence } => {
-                if !accept_java_script_scoped_binding_emission_absent_value_type(
-                    "option", "float", absence, true,
-                ) {
-                    return Err(type_error(
-                        "the empty optional value needs its exact undefined Number interpretation",
-                        expr.span,
-                    ));
-                }
-                Ok(Term::Known(crate::translation::types::option(
-                    FLOAT,
-                    absence.clone(),
-                )))
-            }
+            SNode::None { .. }
+            | SNode::Some { .. }
+            | SNode::FlattenOption { .. }
+            | SNode::Coalesce { .. }
+            | SNode::OptionalField { .. } => self.optional_expr(expr, env, None),
             SNode::Name { path } => {
                 if let [name] = path.as_slice()
                     && let Some(term) = env.get(name)
@@ -608,10 +611,13 @@ impl Inference {
                 }
                 self.call(path, &[], env, expr.span)
             }
-            SNode::App { func, args } => match &func.node {
-                SNode::Name { path } => self.call(path, args, env, expr.span),
-                _ => Ok(self.fresh(false)),
-            },
+            SNode::App { func, args } => self.callable_application(func, args, env, expr.span),
+            SNode::Record { entries, .. } => self.record_expr(expr, entries, env, None),
+            SNode::FunctionValue { .. }
+            | SNode::Lambda { .. }
+            | SNode::CellAllocate { .. }
+            | SNode::CellRead { .. }
+            | SNode::CellWrite { .. } => self.callable_expr(expr, env, None),
             SNode::Field { object, field } => {
                 let object = self.expr(object, env)?;
                 let result = self.fresh(false);
@@ -626,10 +632,17 @@ impl Inference {
             SNode::Unary { op, arg } => {
                 let arg = self.expr(arg, env)?;
                 if *op == UnaryOp::Not {
-                    self.product_condition(&arg, expr.span)?;
+                    self.product_condition(&arg, expr.span);
                     return Ok(Term::Known(BOOL));
                 }
-                Ok(arg)
+                let result = self.fresh(false);
+                self.arithmetic.push(Arithmetic {
+                    left: arg,
+                    right: None,
+                    result: result.clone(),
+                    place: expr.span,
+                });
+                Ok(result)
             }
             SNode::Binary {
                 op, left, right, ..
@@ -640,11 +653,10 @@ impl Inference {
                 otherwise,
             } => {
                 let condition = self.expr(cond, env)?;
-                self.product_condition(&condition, cond.span.or(expr.span))?;
+                self.product_condition(&condition, cond.span.or(expr.span));
                 let then = self.expr(then, env)?;
                 let otherwise = self.expr(otherwise, env)?;
-                self.unify(&otherwise, &then, expr.span)?;
-                Ok(then)
+                Ok(self.join(then, otherwise, expr.span))
             }
             SNode::Let {
                 name, value, body, ..
@@ -668,7 +680,7 @@ impl Inference {
                     }
                     let body = self.expr(&row.body, &scope)?;
                     match &result {
-                        Some(result) => self.unify(&body, result, place)?,
+                        Some(previous) => result = Some(self.join(body, previous.clone(), place)),
                         None => result = Some(body),
                     }
                 }
@@ -678,6 +690,11 @@ impl Inference {
                 let value = self.expr(object, env)?;
                 self.unify(&value, &Term::Known(STRING), object.span)?;
                 Ok(Term::Known(STRING))
+            }
+            SNode::CopySlice { object } => self.expr(object, env),
+            SNode::Method { object, op, args } => self.method(object, op, args, env, expr.span),
+            SNode::StringTest { op, object, search } if op == "includes" => {
+                self.includes(expr, object, search, env)
             }
             SNode::StringTest { object, search, .. } => {
                 let object_type = self.expr(object, env)?;
@@ -740,7 +757,15 @@ impl Inference {
                         Term::Array(element) => {
                             item.spread && matches!(self.resolve(element), Term::Var(_))
                         }
-                        Term::Known(_) | Term::Tuple(_) => false,
+                        Term::Known(_)
+                        | Term::Tuple(_)
+                        | Term::Record(_)
+                        | Term::Union(_)
+                        | Term::Map { .. }
+                        | Term::Set { .. }
+                        | Term::Option { .. }
+                        | Term::Function { .. }
+                        | Term::Cell(_) => false,
                     };
                     if unknown {
                         let want = if item.spread {
@@ -758,7 +783,44 @@ impl Inference {
                     FLOAT
                 }))
             }
-            SNode::Index { object, index } => {
+            SNode::ForOfIterable { object, .. } => {
+                let object = self.expr(object, env)?;
+                let result = Term::Array(Box::new(self.fresh(false)));
+                self.iterables.push(IterableOf {
+                    object,
+                    result: result.clone(),
+                    place: expr.span,
+                });
+                self.collections
+                    .insert(std::ptr::from_ref(expr), (result.clone(), expr.span));
+                Ok(result)
+            }
+            SNode::StringPoints { object } => {
+                let value = self.expr(object, env)?;
+                self.unify(&value, &Term::Known(STRING), expr.span)?;
+                Ok(Term::Array(Box::new(Term::Known(STRING))))
+            }
+            SNode::ReferenceWrite {
+                object,
+                index,
+                value,
+                ..
+            } => {
+                self.expr(object, env)?;
+                if let Some(index) = index {
+                    self.expr(index, env)?;
+                }
+                if let Some(value) = value {
+                    self.expr(value, env)?;
+                }
+                Ok(Term::Known(UNIT))
+            }
+            SNode::Index {
+                object,
+                index,
+                optional,
+                proven_in_bounds,
+            } => {
                 let element = self.fresh(false);
                 let object_type = self.expr(object, env)?;
                 self.expr(index, env)?;
@@ -769,6 +831,14 @@ impl Inference {
                     object: object_type,
                     index: position,
                     literal,
+                    optional: optional
+                        .as_ref()
+                        .and_then(super::super::surface::SurfaceRawMetadata::as_boolean)
+                        == Some(true),
+                    proven_in_bounds: proven_in_bounds
+                        .as_ref()
+                        .and_then(super::super::surface::SurfaceRawMetadata::as_boolean)
+                        == Some(true),
                     result: element.clone(),
                     place: object.span.or(expr.span),
                 });
@@ -783,6 +853,8 @@ impl Inference {
                     object: object_type,
                     index: position,
                     literal: true,
+                    optional: false,
+                    proven_in_bounds: true,
                     result: element.clone(),
                     place: object.span.or(expr.span),
                 });
@@ -806,93 +878,6 @@ impl Inference {
                 })
             }
             _ => Ok(self.fresh(false)),
-        }
-    }
-
-    fn binary(
-        &mut self,
-        op: BinaryOp,
-        left: &SExpr,
-        right: &SExpr,
-        place: Option<Span>,
-        env: &Env,
-    ) -> Result<Term> {
-        let left_term = self.expr(left, env)?;
-        let right_term = self.expr(right, env)?;
-        match op {
-            BinaryOp::And | BinaryOp::Or => {
-                self.unify(&left_term, &Term::Known(BOOL), left.span.or(place))?;
-                self.unify(&right_term, &Term::Known(BOOL), right.span.or(place))?;
-                Ok(Term::Known(BOOL))
-            }
-            BinaryOp::Eq
-            | BinaryOp::Ne
-            | BinaryOp::Lt
-            | BinaryOp::Le
-            | BinaryOp::Gt
-            | BinaryOp::Ge => {
-                self.unify(&left_term, &right_term, place)?;
-                Ok(Term::Known(BOOL))
-            }
-            BinaryOp::Add | BinaryOp::Sub | BinaryOp::Mul | BinaryOp::Div | BinaryOp::Rem => {
-                self.unify(&left_term, &right_term, place)?;
-                Ok(left_term)
-            }
-            BinaryOp::Concat => Ok(Term::Known(STRING)),
-            BinaryOp::Plus => {
-                let result = self.fresh(false);
-                self.plus.push(Plus {
-                    left: left_term,
-                    right: right_term,
-                    result: result.clone(),
-                    place,
-                });
-                Ok(result)
-            }
-        }
-    }
-
-    fn pattern(
-        &mut self,
-        pattern: &SPattern,
-        ty: &Term,
-        scope: &mut Env,
-        place: Option<Span>,
-    ) -> Result<()> {
-        match &pattern.node {
-            SPatternNode::Ctor { path, args } => {
-                let (name, tag) = match path.as_slice() {
-                    [.., name, tag] => (name.clone(), tag.clone()),
-                    _ => return Ok(()),
-                };
-                self.unify(ty, &Term::Known(Type::Data { name: name.clone() }), place)?;
-                let count = self
-                    .data
-                    .iter()
-                    .find(|(data, _)| *data == name)
-                    .and_then(|(_, ctors)| ctors.iter().find(|ctor| ctor.name == tag))
-                    .map_or(0, |ctor| ctor.fields.len());
-                for (index, arg) in args.iter().enumerate() {
-                    let term = if index < count {
-                        self.field(&name, &tag, index)
-                    } else {
-                        self.fresh(false)
-                    };
-                    self.pattern(arg, &term, scope, place)?;
-                }
-                Ok(())
-            }
-            SPatternNode::BindOrCtor { name } | SPatternNode::Bind { name } => {
-                scope.insert(name.clone(), ty.clone());
-                Ok(())
-            }
-            SPatternNode::NumLit { .. } => {
-                let literal = self.fresh(true);
-                self.unify(ty, &literal, place)
-            }
-            SPatternNode::BoolLit { .. } => self.unify(ty, &Term::Known(BOOL), place),
-            SPatternNode::StrLit { .. } => self.unify(ty, &Term::Known(STRING), place),
-            _ => Ok(()),
         }
     }
 
@@ -966,7 +951,14 @@ fn describe_term(term: &Term) -> String {
     match term {
         Term::Known(ty) => describe(ty),
         Term::Array(_) => "an array".to_owned(),
+        Term::Option { .. } => "option".to_owned(),
         Term::Tuple(_) => "a tuple".to_owned(),
+        Term::Union(_) => "union".to_owned(),
+        Term::Map { .. } => "a map".to_owned(),
+        Term::Set { .. } => "a set".to_owned(),
+        Term::Record(_) => "an object".to_owned(),
+        Term::Function { .. } => "a function".to_owned(),
+        Term::Cell(_) => "a captured binding".to_owned(),
         Term::Var(_) => "an unknown type".to_owned(),
     }
 }

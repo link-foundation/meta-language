@@ -89,6 +89,8 @@ function ordinaryTypeKey(type) {
     }
     case 'tuple':
       return renderPortableTypeIdentity(type.kind, '', type.elements.map(typeKey));
+    case 'union':
+      return renderPortableTypeIdentity(type.kind, '', type.alternatives.map(typeKey));
     case 'record':
       return renderPortableTypeIdentity(type.kind, type.open ? 'open:' : '', [...type.fields].sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0).map(({ name, type: fieldType }) => JSON.stringify([name, typeKey(fieldType)])));
     case 'map':

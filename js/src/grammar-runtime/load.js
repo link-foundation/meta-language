@@ -7,6 +7,8 @@
 import { DEFAULT_SETTLING, settlingProblem } from '../grammar-feature-forms.js';
 import { OPERATION_CONTEXTS } from './operations.js';
 import { decodeAt, encodeText, foldCase, unicodePropertyMatcher } from './text.js';
+import { readLexerDeclaration } from './lexer-election.js';
+import { checkGrammarSelection } from './grammar-selection.js';
 
 /** A grammar that cannot be loaded or a parse that cannot run; `reason` names the step. */
 export class GrammarRuntimeError extends Error {
@@ -52,7 +54,7 @@ function grammarParts(value) {
 function resolveImports(value, context, chain) {
   const parts = grammarParts(value);
   const rules = new Map();
-  const declarations = { modes: [], extras: [], conflicts: [], precedences: [], macros: new Map(), scanners: [] };
+  const declarations = { modes: [], extras: [], conflicts: [], precedences: [], macros: new Map(), scanners: [], lexers: [] };
   for (const name of parts.declarations.imports ?? []) {
     if (chain.includes(name)) loadError('import', `import cycle ${[...chain, name].join(' -> ')}`);
     const imported = context.resolve(name, 'import');
@@ -64,6 +66,7 @@ function resolveImports(value, context, chain) {
     declarations.precedences.push(...resolved.declarations.precedences);
     for (const [macroName, macro] of resolved.declarations.macros) declarations.macros.set(macroName, macro);
     declarations.scanners.push(...resolved.declarations.scanners);
+    declarations.lexers.push(...resolved.declarations.lexers);
   }
   for (const rule of parts.rules) rules.set(rule.name, rule);
   const local = parts.declarations;
@@ -73,6 +76,7 @@ function resolveImports(value, context, chain) {
   declarations.precedences.push(...(local.precedences ?? []));
   for (const macro of local.macros ?? []) declarations.macros.set(macro.name, macro);
   declarations.scanners.push(...(local.scanners ?? []));
+  declarations.lexers.push(...(local.lexers ?? []));
   return { parts, rules, declarations };
 }
 
@@ -145,6 +149,17 @@ function expandMacros(expression, macros, active) {
 export function loadProgram(grammar, options = {}) {
   const context = {
     languages: new Map(),
+    programs: new WeakMap(),
+    captureOrigins: Boolean(options.globalConceptSpace),
+    select(name) {
+      if (this.languages.has(name)) return this.languages.get(name);
+      const grammar = typeof options.resolveGrammar === 'function' ? options.resolveGrammar(name) : undefined;
+      if (grammar === undefined || grammar === null) return null;
+      const program = typeof grammar === 'object' ? this.programs.get(grammar) : undefined;
+      const loaded = program ?? loadInContext(grammar, this);
+      this.languages.set(name, loaded);
+      return loaded;
+    },
     resolve(name, purpose) {
       const resolved = typeof options.resolveGrammar === 'function' ? options.resolveGrammar(name) : undefined;
       if (resolved === undefined || resolved === null) {
@@ -153,11 +168,25 @@ export function loadProgram(grammar, options = {}) {
       return resolved;
     },
   };
-  return loadInContext(grammar, context);
+  const program = loadInContext(grammar, context);
+  if (options.grammarName) context.languages.set(options.grammarName, program);
+  return program;
 }
 
 function loadInContext(grammar, context) {
   const { parts, rules: sourceRules, declarations } = resolveImports(grammar, context, []);
+  const lexers = new Map();
+  for (const declaration of declarations.lexers) {
+    if (lexers.has(declaration.name)) loadError('declaration', `duplicate lexer ${declaration.name}`);
+    const plan = readLexerDeclaration(declaration, (message) => loadError('declaration', message));
+    for (const reference of [...plan.owners.keys(), ...plan.bindings.values()]) {
+      if (!sourceRules.has(reference)) loadError('declaration', `undefined public lexical reference ${reference} in lexer ${plan.name}`);
+    }
+    const unresolved = plan.obligations.find(({ name }) => name === '');
+    if (unresolved) loadError('operation', `lexer ${plan.name} has an unresolved ${unresolved.category}: ${unresolved.source}`);
+    plan.program = plan.localRules.size === 0 ? null : loadInContext({ start: plan.localRules.keys().next().value, rules: [...plan.localRules.values()] }, context);
+    lexers.set(plan.name, plan);
+  }
   const macros = declarations.macros;
   const expand = (expression) => expandMacros(expression, macros, []);
   const expandOperations = (operations) => operations.map((operation) => mapOperation(operation, expand));
@@ -220,10 +249,17 @@ function loadInContext(grammar, context) {
 
   for (const [name, rule] of ruleSources) {
     if (rule.parameters?.length > 0) continue;
+    let expression = instantiate(rule.expression, null, `rule ${name}`);
+    if (parts.sourceFormat === 'antlr') {
+      const owner = [...lexers.values()].find((lexer) => lexer.owners.has(name));
+      let scoped = false;
+      visitExpression(expression, (item) => { if (item.kind === 'lexicalScope') scoped = true; });
+      if (owner && !scoped) expression = { kind: 'lexicalScope', name: owner.name, owner: owner.owners.get(name), item: expression };
+    }
     rules.set(name, {
       ...rule,
       nodeKind: name,
-      expression: instantiate(rule.expression, null, `rule ${name}`),
+      expression,
       action: rule.action ? instantiateOperations(rule.action, `rule ${name}`) : undefined,
     });
   }
@@ -270,6 +306,8 @@ function loadInContext(grammar, context) {
   const problem = settlingProblem(steps);
   if (problem) loadError('declaration', problem);
   const program = {
+    lexers,
+    defaultLexer: parts.sourceFormat === 'antlr' && lexers.size === 1 ? lexers.keys().next().value : '',
     matching,
     settling: Object.freeze({
       steps: Object.freeze([...steps]),
@@ -304,7 +342,11 @@ function loadInContext(grammar, context) {
     expectedReferences: new Map(),
     matchers: new WeakMap(),
     language: (name) => context.languages.get(name),
+    selectLanguage: (name) => context.select(name),
+    selectionSourceRules: context.captureOrigins ? JSON.parse(JSON.stringify(parts.rules)) : null,
+    selectionSourceDeclarations: context.captureOrigins ? JSON.parse(JSON.stringify(parts.declarations)) : null,
   };
+  if (grammar && typeof grammar === 'object') context.programs.set(grammar, program);
 
   // Checks and compiles every expression and operation.
   const embedded = new Set();
@@ -312,6 +354,11 @@ function loadInContext(grammar, context) {
     if (!modes.has(mode)) loadError('declaration', `undeclared mode ${mode} in ${owner}`);
   };
   const checkExpression = (expression, owner) => visitExpression(expression, (item) => {
+    checkGrammarSelection(item, (message) => loadError('selection', `${message} in ${owner}`));
+    if ((item.kind === 'lexicalScope' && item.name !== '' || item.kind === 'lexicalToken') && !lexers.has(item.name)) loadError('declaration', `undefined lexer scope ${item.name}`);
+    if (item.kind === 'lexicalScope' && (typeof item.owner !== 'string'
+      || (item.owner !== '' && (item.name === '' || !lexers.get(item.name)?.originalOwners.has(item.owner))))) loadError('declaration', `undefined original parser owner ${item.owner} in lexer scope ${item.name}`);
+    if (item.kind.startsWith('lexical') && !['lexicalScope', 'lexicalToken', 'lexicalPrecedence'].includes(item.kind)) loadError('declaration', `${item.kind} is only valid inside a lexer declaration`);
     compileMatcher(item, program.matchers);
     if (item.kind === 'embed') embedded.add(item.language);
     if (item.kind === 'expand' || item.kind === 'parameter') loadError('macro', `${item.kind} ${item.name} survives loading in ${owner}`);
@@ -375,14 +422,18 @@ function loadInContext(grammar, context) {
     rule.index = index;
     index += 1;
     const owner = `rule ${rule.nodeKind}`;
+    const originalOwner = program.lexers.get(program.defaultLexer)?.owners.get(name);
+    if (originalOwner !== undefined) rule.expression = { kind: 'lexicalScope', name: program.defaultLexer, owner: originalOwner, item: rule.expression };
     checkExpression(rule.expression, owner);
+    visitExpression(rule.expression, (item) => { if (item.kind === 'lexicalToken' || (rule.kind === 'token' && item.kind === 'lexicalScope')) rule.electedAlternatives = true; });
     if (rule.action) {
       if (rule.kind === 'silent' && rule.action.some(buildsNode)) loadError('operation', `silent ${owner} has no node for its action`);
       checkOperations(rule.action, 'action', owner);
     }
     for (const mode of rule.modes ?? []) checkMode(mode, owner);
     rule.lexicalPriority = rule.expression.kind === 'lexicalPrecedence' ? rule.expression.level : 0;
-    if (rule.channel !== undefined && rule.channel !== null && rule.channel !== 'default') {
+    const elected = [...lexers.values()].some((lexer) => [...lexer.bindings.values()].includes(name));
+    if (!elected && rule.channel !== undefined && rule.channel !== null && rule.channel !== 'default') {
       program.trivia.push({ expression: { kind: 'ref', name }, kind: rule.nodeKind, modes: rule.modes ?? null });
     }
   }

@@ -15,6 +15,10 @@ const functionSource = (name, parameters, result, body) => `/** ${parameters} @r
 const rule = (name, names, body) => functionSource(name, strings(names), 'string', body);
 let source = '// Generated from the linked closed primitive borrowed Rust call interface policy.\n';
 source += functionSource('acceptRustBorrowedCallInterfaceModel', strings(['model']), 'boolean', `return model === ${JSON.stringify(policy.model)};`);
+source += functionSource('readRustBorrowedCallTargetDiagnostic', strings(['model', 'kind', 'targetKind', 'argumentStatus']), 'string',
+  `if (model !== ${JSON.stringify(policy.model)} || kind !== ${JSON.stringify(policy.callerKind)}) return ""; `
+  + policy.targetDiagnostics.map(([status, target, diagnostic]) => `if (argumentStatus === ${JSON.stringify(status)}${target ? ` && targetKind === ${JSON.stringify(target)}` : ''}) return ${JSON.stringify(diagnostic)};`).join(' ')
+  + ' return "";');
 source += functionSource('acceptRustBorrowedCallTarget', '@param {boolean} owned @param {boolean} leaf @param {boolean} staticLifetime', 'boolean', 'return owned && leaf && !staticLifetime;');
 source += functionSource('acceptRustBorrowedCallShape', `${strings(['kind'])} @param {boolean} unrepresented @param {boolean} correctArity`, 'boolean', `return kind === ${JSON.stringify(policy.callerKind)} && !unrepresented && correctArity;`);
 source += functionSource('acceptRustBorrowedCallInventory', '@param {boolean} hasCaller', 'boolean', `return ${policy.requireCaller ? 'hasCaller' : 'true'};`);
@@ -33,13 +37,13 @@ if (process.argv.includes('--javascript-only')) {
   const { parseJavaScript } = await import('../src/translation/javascript.js');
   const { checkProgram } = await import('../src/translation/check.js');
   const { emitRust } = await import('../src/translation/emit-rust.js');
-  const raw = emitRust(checkProgram(parseJavaScript(source))).definitions.join('\n\n');
+  const raw = emitRust(checkProgram(parseJavaScript(source)), { arrayConsumption: true }).definitions.join('\n\n');
   if (process.argv.includes('--update-styles')) {
     const actions = []; let current = raw;
     const replace = (from, to) => {
       if (current.includes(from)) { actions.push({ op: 'replace', field: 'source', from, to }); current = current.split(from).join(to); }
     };
-    for (const name of ['model', 'kind', 'lifetime', 'inner', 'value', 'head', 'arguments_text', 'body']) replace(`${name}: String`, `${name}: &str`);
+    for (const name of ['model', 'kind', 'target_kind', 'argument_status', 'lifetime', 'inner', 'value', 'head', 'arguments_text', 'body']) replace(`${name}: String`, `${name}: &str`);
     for (const match of raw.matchAll(/^pub fn (\w+)/gmu)) replace(`pub fn ${match[1]}`, `/// Apply the shared closed primitive borrowed call interface policy.\n#[must_use]\npub fn ${match[1]}`);
     for (const name of ['accept_rust_borrowed_call_target', 'accept_rust_borrowed_call_inventory', 'accept_rust_borrowed_call_type']) replace(`pub fn ${name}`, `pub const fn ${name}`);
     replace('lifetime == ""', 'lifetime.is_empty()'); replace('String::from("")', 'String::new()');

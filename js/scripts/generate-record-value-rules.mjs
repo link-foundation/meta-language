@@ -120,7 +120,7 @@ export async function generateRecordValueRules({ check = false, native = false }
     // Translate the entire actual shared source. Do not substitute a native
     // planner or extract only a convenient function from the module.
     const program = checkProgram(parseJavaScript(policy.sourceClosure.source, { referenceSemantics: false }));
-    const emitted = emitRust(program);
+    const emitted = emitRust(program, { arrayConsumption: true });
     const artifact = { schemaVersion: 1, model: policy.model, sourceSha256: policy.sourceSha256,
       sourceClosure: policy.sourceClosure,
       definitions: emitted.definitions, rustSource: emitted.text, rustSha256: hash(emitted.text),

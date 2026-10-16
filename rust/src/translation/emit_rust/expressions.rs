@@ -18,19 +18,49 @@ impl RustEmitter<'_> {
                 expr.span,
             ));
         }
+        let stateful_receiver = match &expr.node {
+            Node::Index { array, .. }
+            | Node::OptionalIndex { array, .. }
+            | Node::Length { array } => array.ty.is_reference(),
+            Node::RecordField { object, .. }
+            | Node::TupleIndex { object, .. }
+            | Node::Method { object, .. }
+            | Node::CollectionItems { object, .. } => object.ty.is_reference(),
+            _ => false,
+        };
+        let reference_operation =
+            crate::translation::surface_reference_analysis_rules::read_surface_reference_emission_operation(
+                expr.kind(), stateful_receiver, expr.ty.is_reference(),
+            );
+        if !reference_operation.is_empty() {
+            return Err(unsupported(
+                &reference_operation,
+                &crate::translation::surface_reference_analysis_rules::read_surface_reference_emission_refusal(
+                    &reference_operation,
+                ),
+                expr.span,
+            ));
+        }
         match &expr.node {
+            Node::Record { entries } => self.record_value(entries),
+            Node::RecordField { object, index, .. } => self.record_field(object, *index),
             Node::Lit { value } => Ok(self.literal(expr, value)),
             Node::Unit => Ok("()".to_owned()),
-            Node::None { .. } => {
-                let Type::Option { element, .. } = &expr.ty else {
-                    return Err(unsupported(
-                        "empty optional value",
-                        "the value requires its retained optional type",
-                        expr.span,
-                    ));
-                };
-                Ok(format!("None::<{}>", self.ty(element)))
-            }
+            Node::None { .. }
+            | Node::Some { .. }
+            | Node::FlattenOption { .. }
+            | Node::Coalesce { .. }
+            | Node::OptionalField { .. }
+            | Node::OptionalProject { .. }
+            | Node::NullishNumber { .. }
+            | Node::OptionalIndexNumber { .. }
+            | Node::OptionalText { .. }
+            | Node::OptionalTypeOf { .. }
+            | Node::Truthy { .. }
+            | Node::StrictEqual { .. }
+            | Node::UnwrapOption { .. }
+            | Node::OptionalPredicate { .. } => self.optional_expr(expr),
+
             Node::Tuple {
                 items,
                 frozen,
@@ -57,7 +87,87 @@ impl RustEmitter<'_> {
                     format!("({text}).clone()")
                 })
             }
-            Node::Var { name } => Ok(own(name, &expr.ty)),
+            Node::Var { name } => Ok(
+                if self.array_final_uses.contains(&std::ptr::from_ref(expr)) {
+                    name.clone()
+                } else {
+                    own(name, &expr.ty)
+                },
+            ),
+            Node::FunctionRef { func } => Ok(
+                crate::translation::callable_source_rules::render_callable_function_reference(
+                    "Rust",
+                    &(format!("crate::{}", self.state.reference(func, "::"))),
+                ),
+            ),
+            Node::Apply { func, args } => {
+                let function = self.expr(func)?;
+                let arguments = args
+                    .iter()
+                    .map(|argument| self.expr(argument))
+                    .collect::<Result<Vec<_>>>()?;
+                Ok(
+                    crate::translation::callable_source_rules::render_callable_application(
+                        "Rust", &function, &arguments,
+                    ),
+                )
+            }
+            Node::Lambda { params, body } => self.callable_lambda(expr, params, body),
+            Node::CellAllocate { value } => {
+                let value = self.expr(value)?;
+                Ok(
+                    crate::translation::callable_source_rules::render_callable_cell_operation(
+                        "Rust",
+                        "cellAllocate",
+                        "",
+                        &value,
+                        "",
+                        "",
+                        "",
+                    ),
+                )
+            }
+            Node::CellRead { cell } => {
+                let cell = self.receiver(cell)?;
+                Ok(
+                    crate::translation::callable_source_rules::render_callable_cell_operation(
+                        "Rust", "cellRead", &cell, "", "", "", "",
+                    ),
+                )
+            }
+            Node::CellWrite { cell, value, body } => {
+                self.temporaries += 1;
+                let cell_name = format!("ml_cell{}", self.temporaries);
+                let value_name = format!("ml_value{}", self.temporaries);
+                let cell = self.expr(cell)?;
+                let value = self.expr(value)?;
+                let body = self.expr(body)?;
+                Ok(
+                    crate::translation::callable_source_rules::render_callable_cell_operation(
+                        "Rust",
+                        "cellWrite",
+                        &cell,
+                        &value,
+                        &body,
+                        &cell_name,
+                        &value_name,
+                    ),
+                )
+            }
+            Node::ReferenceAllocate { value } => {
+                let value = self.expr(value)?;
+                Ok(crate::translation::surface_reference_analysis_rules::render_surface_reference_operation(
+                    "Rust", "referenceAllocate", value, "",
+                ))
+            }
+            Node::ReferenceRead { reference } => {
+                self.temporaries += 1;
+                let temporary = format!("ml_reference_value{}", self.temporaries);
+                let value = self.receiver(reference)?;
+                Ok(crate::translation::surface_reference_analysis_rules::render_surface_reference_operation(
+                    "Rust", "referenceRead", value, &temporary,
+                ))
+            }
             Node::Print { text, body } => {
                 let text = self.expr(text)?;
                 let body = self.expr(body)?;
@@ -200,8 +310,12 @@ impl RustEmitter<'_> {
                 Ok(block(&format!("let {name} = {value};\n{body}")))
             }
             Node::Match { .. } => self.match_expr(expr),
+            Node::Method { .. } => self.primitive_method(expr),
             Node::StringMap { op, string } => {
                 let object = self.receiver(string)?;
+                if self.utf16_strings {
+                    return Ok(crate::translation::primitive_method_rules::render_primitive_string_representation(true, "map", &object, "", op));
+                }
                 Ok(
                     crate::translation::frontend_rules::render_string_map_expression(
                         "Rust", op, &object,
@@ -210,6 +324,10 @@ impl RustEmitter<'_> {
             }
             Node::StringTest { op, string, search } => {
                 let object = self.receiver(string)?;
+                if self.utf16_strings {
+                    let search = self.borrow(search)?;
+                    return Ok(crate::translation::primitive_method_rules::render_primitive_string_representation(true, "test", &object, &search, op));
+                }
                 let search = match &search.node {
                     Node::Lit { value } => rust_string(&value.text()),
                     _ => format!("{}.as_str()", self.receiver(search)?),
@@ -237,17 +355,23 @@ impl RustEmitter<'_> {
                                 arg.ty.kind(),
                                 *console,
                             );
-                        return Ok(format!("crate::ml_number::{function}({})", self.expr(arg)?));
+                        let text = format!("crate::ml_number::{function}({})", self.expr(arg)?);
+                        return Ok(crate::translation::primitive_method_rules::render_primitive_string_representation(self.utf16_strings, "text", &text, "", ""));
                     }
                     _ => {}
                 }
-                Ok(format!("{}.to_string()", self.receiver(arg)?))
+                let text = format!("{}.to_string()", self.receiver(arg)?);
+                Ok(crate::translation::primitive_method_rules::render_primitive_string_representation(self.utf16_strings, "text", &text, "", ""))
             }
             Node::Cast { .. } => self.cast(expr),
             Node::Abort { message } => Ok(format!("panic!(\"{{}}\", {})", rust_string(message))),
-            Node::Array { .. } | Node::Append { .. } | Node::Index { .. } | Node::Length { .. } => {
-                self.array_expr(expr)
-            }
+            Node::Array { .. }
+            | Node::Append { .. }
+            | Node::Index { .. }
+            | Node::Length { .. }
+            | Node::OptionalIndex { .. }
+            | Node::StringPoints { .. }
+            | Node::CollectionItems { .. } => self.array_expr(expr),
             Node::Math { .. } => self.math(expr),
         }
     }
@@ -297,7 +421,22 @@ impl RustEmitter<'_> {
                 rust_float(&text)
             }
             Type::Bool => text,
-            Type::String => format!("String::from({})", rust_string(&text)),
+            Type::String => {
+                crate::translation::primitive_method_rules::render_primitive_string_representation(
+                    self.utf16_strings,
+                    "literal",
+                    &(if self.utf16_strings {
+                        text.encode_utf16()
+                            .map(|unit| unit.to_string())
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    } else {
+                        rust_string(&text)
+                    }),
+                    "",
+                    "",
+                )
+            }
             other => unreachable!("no Rust literal for {}", other.kind()),
         }
     }
@@ -330,11 +469,15 @@ impl RustEmitter<'_> {
         match op {
             BinaryOp::And => Ok(format!("({} && {})", self.expr(left)?, self.expr(right)?)),
             BinaryOp::Or => Ok(format!("({} || {})", self.expr(left)?, self.expr(right)?)),
-            BinaryOp::Concat => Ok(format!(
-                "format!(\"{{}}{{}}\", {}, {})",
-                self.receiver(left)?,
-                self.receiver(right)?
-            )),
+            BinaryOp::Concat => {
+                let left = self.receiver(left)?;
+                let right = if self.utf16_strings {
+                    self.borrow(right)?
+                } else {
+                    self.receiver(right)?
+                };
+                Ok(crate::translation::primitive_method_rules::render_primitive_string_representation(self.utf16_strings, "concat", &left, &right, ""))
+            }
             BinaryOp::Eq
             | BinaryOp::Ne
             | BinaryOp::Lt

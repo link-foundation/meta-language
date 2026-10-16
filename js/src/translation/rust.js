@@ -31,7 +31,7 @@ import { TokenCursor, describe, tokenize } from './lexer.js';
 import { BOOL, FLOAT, STRING, UNIT, array, rustFixedType, tuple } from './types.js';
 import { RustSourceOrigins } from './rust-source-origins.js';
 import { acceptRustSourceBoxOwner, acceptRustSourceLifetimeBinding, acceptRustSourceLifetimeReference, acceptRustSourceLifetimeResult } from './rust-indirection-rules.js';
-import { acceptRustTupleIndexSpelling } from './rust-product-rules.js';
+import { acceptRustProductOrigin, acceptRustTupleIndexSpelling } from './rust-product-rules.js';
 import { acceptRustSourceArrayOwner, acceptRustSourceArrayElement, acceptRustSourceArrayResultModel, acceptRustSourceArrayResult } from './rust-array-rules.js';
 import { acceptRustUnwrittenScalarParameter } from './rust-scalar-parameter-rules.js';
 import { readRustScalarParameterBody } from './rust-scalar-parameters.js';
@@ -450,7 +450,7 @@ class RustParser {
       }
       c.expect(')', 'tuple type');
       const result = this.origins.typed(tuple(elements), this.modulePath, [], fields);
-      if (!this.origins.immutableProduct(this.origins.type)&&!this.origins.ownedLocalProduct(this.origins.type)) {
+      if (!acceptRustProductOrigin(this.origins.immutableProduct(this.origins.type), this.origins.ownedLocalProduct(this.origins.type))) {
         throw unsupported('immutable Rust tuple product', 'every field requires a direct recursively immutable scalar Copy source value', span(token, c.peek()));
       }
       return result;

@@ -41,6 +41,7 @@ impl RustParser {
         self.require_owned_local_program(&items, &main)?;
         self.require_const_function_program(&items, &main)?;
         Ok(SProgram {
+            reference_semantics: None,
             language: Language::Rust,
             items,
             main: Some(main),

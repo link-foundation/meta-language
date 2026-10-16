@@ -3,9 +3,10 @@ use super::{SourceLoop, scalar_loop_policy, scalar_loop_snapshot_binding};
 use crate::translation::diagnostics::{Result, unsupported};
 use crate::translation::scalar_loop_rules::{
     accept_rust_scalar_loop_model, accept_scalar_loop_binary_operation,
-    accept_scalar_loop_declaration_model, accept_scalar_loop_language,
-    accept_scalar_loop_math_operation, accept_scalar_loop_primitive_owner,
-    accept_scalar_loop_unary_operation, accept_scalar_loop_value_kind,
+    accept_scalar_loop_declaration_model, accept_scalar_loop_expression_type_annotation,
+    accept_scalar_loop_language, accept_scalar_loop_math_operation,
+    accept_scalar_loop_primitive_owner, accept_scalar_loop_unary_operation,
+    accept_scalar_loop_value_kind,
 };
 use crate::translation::source_signatures::{SourceSignature, validate_source_signature};
 use crate::translation::types::Type;
@@ -246,9 +247,15 @@ impl<'a> TreeAdapter<'a> {
     fn expression(&mut self, node: &'a Value, scope: &Scope<'a>, tail: bool) -> Result<()> {
         self.visit()?;
         let kind = text(node, "k")?;
-        if let Some(ty) = node.get("type")
-            && !accept_scalar_loop_value_kind(text(ty, "kind")?)
-        {
+        let annotation = node.get("type");
+        if !accept_scalar_loop_expression_type_annotation(
+            annotation.is_some(),
+            annotation.is_some_and(Value::is_null),
+            annotation
+                .and_then(|value| value.get("kind"))
+                .and_then(Value::as_str)
+                .unwrap_or_default(),
+        ) {
             return Err(fail("loop expressions require scalar value kinds"));
         }
         match kind {

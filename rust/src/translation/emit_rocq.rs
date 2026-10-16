@@ -24,7 +24,7 @@ use super::ir::{
     Pattern, Plan, Program, Prop, Semantics, TheoremDecl, rename_function, rename_main,
     rename_theorem,
 };
-use super::output::thread_output;
+use super::output::thread_output_for_target;
 use super::proof::prop_functions;
 use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
 use super::typed_program_link_rules::accept_program_tuple_product_model;
@@ -35,7 +35,9 @@ mod expressions;
 mod floats;
 mod math;
 mod mutual;
+mod optional_values;
 mod proofs;
+mod records;
 
 use self::arrays::{FLOAT_INDEX, LIST_AT};
 pub use self::floats::FLOAT_PRELUDE;
@@ -350,7 +352,7 @@ fn internal(message: String) -> TranslationError {
 /// # Errors
 /// On constructs the target cannot express faithfully.
 pub fn emit_rocq(source: &Program) -> Result<Emitted> {
-    let program = &*thread_output(source)?;
+    let program = &*thread_output_for_target(source, "Rocq")?;
     let state = EmitState::new(
         program,
         Language::Rocq,
@@ -525,6 +527,36 @@ impl RocqEmitter<'_> {
                     format!("({})%type", parts.join(" * "))
                 }
             }
+            Type::Record { fields, .. } => {
+                let children = fields
+                    .iter()
+                    .map(|field| self.ty(&field.ty))
+                    .collect::<Result<Vec<_>>>()?;
+                super::record_emission_rules::render_record_type("Rocq", &children)
+            }
+            Type::Union { .. } => {
+                return Err(crate::translation::diagnostics::type_error(
+                    super::type_syntax_rules::read_union_target_refusal("Rocq"),
+                    None,
+                ));
+            }
+            Type::Function { params, ret } => {
+                let parameters = params
+                    .iter()
+                    .map(|parameter| self.ty(parameter))
+                    .collect::<Result<Vec<_>>>()?;
+                let ret = self.ty(ret)?;
+                super::callable_source_rules::render_callable_function_type(
+                    "Rocq",
+                    &parameters,
+                    &ret,
+                )
+            }
+            Type::Absence { .. } => return Err(internal(
+                crate::translation::nullable_type_syntax_rules::read_nullable_type_target_refusal(
+                    "Rocq",
+                ),
+            )),
             other => return Err(internal(format!("no Rocq type for {}", other.kind()))),
         })
     }

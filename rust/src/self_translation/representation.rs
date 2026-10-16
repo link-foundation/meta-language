@@ -1,7 +1,9 @@
 //! Mechanical CST and checked-value boundaries for the shared representation.
 use std::sync::OnceLock;
 
-use crate::translation::diagnostics::{Result, type_error, unsupported};
+use crate::translation::diagnostics::{Result, type_error};
+use crate::translation::emit_common::Emitted;
+use crate::translation::emit_rust::emit_rust_with_representation;
 use crate::translation::ir::Program;
 use crate::translation::javascript::ModuleContext;
 use crate::{LinkNetwork, LinkType};
@@ -80,19 +82,15 @@ fn contains_text(value: &Value) -> bool {
     }
 }
 
-pub(super) fn validate(program: &Program) -> Result<()> {
+/// Validate actual selected Text lowering by producing its ordinary target result.
+/// `None` leaves a program without Text types to the caller's selected context.
+pub(super) fn validate(program: &Program) -> Result<Option<Emitted>> {
     // Every nested checked type and bound external signature participates.
     // Primitive source strings and comments are not type records.
     let value =
         serde_json::to_value(program).map_err(|failure| type_error(failure.to_string(), None))?;
     if contains_text(&value) {
-        return Err(unsupported(
-            "UTF16 Text representation",
-            policy()["nativeBoundary"]
-                .as_str()
-                .expect("the generated representation asset has its native boundary"),
-            None,
-        ));
+        return emit_rust_with_representation(program, true).map(Some);
     }
-    Ok(())
+    Ok(None)
 }

@@ -420,6 +420,7 @@ mod recovery_projection_tests {
             end,
             attributes: None,
             text: LeafText::Text(text.to_owned()),
+            lexical: None,
         }
     }
 

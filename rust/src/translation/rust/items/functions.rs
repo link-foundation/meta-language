@@ -298,6 +298,7 @@ impl RustParser {
             .capture_type_namespace(&source_params, &source_result)
             .map(Box::new);
         Ok(SFn {
+            semantic_ret: None,
             name,
             params,
             ret: Some(ret),

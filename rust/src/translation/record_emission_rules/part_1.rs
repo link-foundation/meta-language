@@ -270,10 +270,10 @@ pub fn render_record_field(target: &str, object: &str, field: &str, index: &str)
                 "{}{}",
                 (format!(
                     "{}{}",
-                    (format!("{}{}", (String::from("(")), object)),
+                    (format!("{}{}", (String::from("(")), object.to_owned())),
                     (String::from(")["))
                 )),
-                field
+                field.to_owned()
             )),
             (String::from("]"))
         )
@@ -282,10 +282,10 @@ pub fn render_record_field(target: &str, object: &str, field: &str, index: &str)
             "{}{}",
             (format!(
                 "{}{}",
-                (format!("{}{}", (String::from("(")), object)),
+                (format!("{}{}", (String::from("(")), object.to_owned())),
                 (String::from(")."))
             )),
-            index
+            index.to_owned()
         )
     } else {
         String::from("")
@@ -312,7 +312,7 @@ pub fn render_record_product_field(target: &str, object: &str, index: f64, count
                                 "{}{}",
                                 (format!(
                                     "{}{}",
-                                    (format!("{}{}", (String::from("(")), object)),
+                                    (format!("{}{}", (String::from("(")), object.to_owned())),
                                     (String::from(")"))
                                 )),
                                 suffix_2
@@ -401,7 +401,7 @@ pub fn ml_join_record_items_loop1(
             {
                 let text_3 = if index > 0f64 {
                     {
-                        let text_2 = format!("{}{}", text, separator);
+                        let text_2 = format!("{}{}", text, separator.to_owned());
                         text_2
                     }
                 } else {
@@ -438,22 +438,25 @@ pub fn ml_render_record_value_loop2(
     loop {
         if index < (items.len() as f64) {
             {
-                let entries_2 = self::ml_array::append(
-                    entries.clone(),
-                    vec![format!(
-                        "{}{}",
-                        (format!(
+                let entries_2 = {
+                    let (ml_append_right, ml_append_left) = (
+                        vec![format!(
                             "{}{}",
                             (format!(
                                 "{}{}",
-                                (String::from("[")),
-                                (self::read_required_text_fact(labels, index))
+                                (format!(
+                                    "{}{}",
+                                    (String::from("[")),
+                                    (self::read_required_text_fact(labels, index))
+                                )),
+                                (String::from("]: "))
                             )),
-                            (String::from("]: "))
-                        )),
-                        (self::read_required_text_fact(items, index))
-                    )],
-                );
+                            (self::read_required_text_fact(items, index))
+                        )],
+                        entries,
+                    );
+                    self::ml_array::append(ml_append_left, ml_append_right)
+                };
                 {
                     let index_2 = index + 1f64;
                     {
@@ -463,7 +466,7 @@ pub fn ml_render_record_value_loop2(
                 }
             }
         }
-        return { entries.clone() };
+        return { entries };
     }
 }
 

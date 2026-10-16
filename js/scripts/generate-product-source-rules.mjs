@@ -5,6 +5,7 @@ import { parseJavaScript } from '../src/translation/javascript.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { formatProductRuleSource, readProductRuleStyleCorrections, readProductSourceConditionStyleCorrections } from './product-rule-style-corrections.mjs';
+import { readPortableSourceParameterStyles } from './portable-source-library-style.mjs';
 
 const input = new URL('../src/translation/product-source-rules.js', import.meta.url);
 const style = new URL('../../parity/self-translation/product-source-rules-decorators.lino', import.meta.url);
@@ -41,7 +42,8 @@ if (process.argv.includes('--update-styles')) {
 let decorators = DecoratorSet.fromLino(readFileSync(style, 'utf8'));
 const reviewedId = 'reviewed-product-native-lints-285c8b13';
 const conditionId = 'reviewed-product-source-condition-lints-26667280';
-const base = new DecoratorSet(decorators.decorators.filter(definition => ![reviewedId, conditionId].includes(definition.id)));
+const parameterId = 'shared-product-source-parameter-loans';
+const base = new DecoratorSet(decorators.decorators.filter(definition => ![reviewedId, conditionId, parameterId].includes(definition.id)));
 for (const action of base.decorators.flatMap(definition => definition.actions)) {
   const numericHeader = action.from === generatedAllowances && action.to === numericAllowances;
   const continuation = continuationStyles.some(style => action.from === style.from && action.to === style.to);
@@ -73,9 +75,18 @@ if (process.argv.includes('--update-styles')) {
 const conditionRecorded = decorators.decorators.find(definition => definition.id === conditionId);
 if (JSON.stringify(conditionRecorded?.actions) !== JSON.stringify(conditionActions)) throw new Error('reviewed CI18 product condition styles are stale; regenerate with --update-styles');
 const conditions = new DecoratorSet([conditionRecorded]).decorate('emitter', { format: 'Rust', scope: 'formatted-product-source-conditions', source: conditionSource }).source;
+const parameters = readPortableSourceParameterStyles(conditions);
+if (process.argv.includes('--update-styles')) {
+  decorators = decorators.add({ id: parameterId, level: 'emitter', order: 3000,
+    when: [['format', 'Rust'], ['scope', 'formatted-product-source-parameters']], actions: parameters.actions });
+  writeFileSync(style, decorators.toLino());
+}
+const parameterRecorded = decorators.decorators.find(definition => definition.id === parameterId);
+if (JSON.stringify(parameterRecorded?.actions) !== JSON.stringify(parameters.actions)) throw new Error('product source parameter styles are stale; regenerate with --update-styles');
+const parameterSource = new DecoratorSet([parameterRecorded]).decorate('emitter', { format: 'Rust', scope: 'formatted-product-source-parameters', source: conditions }).source;
 const generated = '// Generated from js/src/translation/product-source-rules.js by the checked translator.\n'
   + '// Styles: parity/self-translation/product-source-rules-decorators.lino.\n'
-  + '// Do not edit by hand.\n' + formatProductRuleSource(conditions);
+  + '// Do not edit by hand.\n' + formatProductRuleSource(parameterSource);
 if (process.argv.includes('--check')) {
   if (readFileSync(output, 'utf8') !== generated) throw new Error('native product source solver is stale');
 } else writeFileSync(output, generated);

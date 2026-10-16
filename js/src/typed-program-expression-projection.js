@@ -21,6 +21,13 @@ export function projectLinkedProgramExpression(value, declarations = new Map(), 
   if (Object.hasOwn(TYPED_PROGRAM_LINKS_SCHEMA.expressionOperations, value?.k)
     && !acceptProgramExpressionOperation(value.k, value.op)) throw new TypeError('the linked program contains an unrecognized expression operation');
   let key = value?.k;
+  const alternatives = TYPED_PROGRAM_LINKS_SCHEMA.expressionProjectionAlternatives;
+  for (const alternative of alternatives && Object.hasOwn(alternatives, key) ? alternatives[key] : []) {
+    if (alternative.path.reduce((current, field) => current?.[field], value) === alternative.value) {
+      key = alternative.projection;
+      break;
+    }
+  }
   const base = plans[key];
   if (base?.variant) {
     const discriminator = base.variant.reduce((current, field) => current?.[field], value);
@@ -29,15 +36,21 @@ export function projectLinkedProgramExpression(value, declarations = new Map(), 
   }
   if (!readProgramExpressionProjection(key ?? '') || !plans[key].construct) throw new TypeError(`the linked expression ${value?.k} has no surface projection`);
   const plan = plans[key];
-  const result = { k: plan.construct, ...(value.span !== undefined ? { span: value.span } : {}) };
   const project = child => projectLinkedProgramExpression(child, declarations, {rootedNamespace});
+  if (plan.construct === 'operand') {
+    const projected = project(value[plan.operand]);
+    return value.span !== undefined && projected.span === undefined ? { ...projected, span: value.span } : projected;
+  }
+  const result = { k: plan.construct, ...(value.span !== undefined ? { span: value.span } : {}) };
   const operation = plan.renames?.[value.op] ?? value.op;
   for (const [target, mode, source, right] of plan.fields) {
     const child = value[source];
     if (mode === 'copy') { if (child !== undefined) result[target] = child; }
     else if (mode === 'expression') result[target] = project(child);
     else if (mode === 'expressions') result[target] = child.map(project);
+    else if (mode === 'nullable-expressions') result[target] = child.map(value => value === null ? null : project(value));
     else if (mode === 'name-path') result[target] = [child];
+    else if (mode === 'declaration-path') result[target] = projectLinkedProgramDeclarationPath(child, declarations, rootedNamespace);
     else if (mode === 'function-path') {
       const declaration=declarations.get(child);
       const qualifiedFunction=declaration?.k==='fn'&&Array.isArray(declaration.modulePath)&&declaration.modulePath.length>0;
@@ -50,6 +63,7 @@ export function projectLinkedProgramExpression(value, declarations = new Map(), 
       result[target]={k:'name',path};
     }
     else if (mode === 'array-items') result[target] = child.map((item) => ({ value: project(item), spread: plan.spreadOperations?.includes(value.op) ?? false }));
+    else if (mode === 'record-entries') result[target] = child.map(entry => ({ name: entry.name, spread: false, value: project(entry.value) }));
     else if (mode === 'spread-pair') result[target] = [child, value[right]].map((item) => ({ value: project(item), spread: true }));
     else if (mode === 'constructor-path') result[target] = { k: 'name', path: [...projectLinkedProgramDeclarationPath(value.data, declarations, rootedNamespace), child] };
     else if (mode === 'constructor-fields') {
@@ -64,6 +78,7 @@ export function projectLinkedProgramExpression(value, declarations = new Map(), 
       body: project(kase.body), ...(kase.span !== undefined ? { span: kase.span } : {}),
     }));
     else if (mode === 'element-type') result[target] = child.element;
+    else if (mode === 'return-type') result[target] = child.ret;
     else if (mode === 'binding-type') result[target] = child.type;
     else if (mode === 'integer-type') result[target] = child.kind !== 'float';
     else if (mode === 'operation') result[target] = operation;

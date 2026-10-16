@@ -17,6 +17,25 @@ impl Checker {
         span: Option<Span>,
     ) -> Result<Expr> {
         let segments = match &head.node {
+            SNode::Name { path } => path.as_slice(),
+            _ => &[],
+        };
+        let local_kind = env
+            .local(head)
+            .and_then(|name| env.vars.get(name))
+            .map_or("", Type::kind);
+        let path_length = serde_json::Number::from(segments.len())
+            .as_f64()
+            .expect("an arity has a Number representation");
+        if crate::translation::callable_source_rules::require_callable_computed_application(
+            head.kind(),
+            path_length,
+            &local_kind,
+        ) {
+            let function = self.expr(head, env, path, None, false)?;
+            return self.checked_callable_application(function, args, env, path, span);
+        }
+        let segments = match &head.node {
             SNode::DotCtor { name } => {
                 let Some(Type::Data { name: data_name }) = expected else {
                     return Err(type_error(

@@ -7,9 +7,70 @@ import { translateProgram } from '../src/program-translation.js';
 import { checkProgram } from '../src/translation/check.js';
 import { parseRust } from '../src/translation/rust.js';
 import { RustSourceOrigins } from '../src/translation/rust-source-origins.js';
-import { acceptRustImmutableProductType, acceptRustTupleIndexSpelling } from '../src/translation/rust-product-rules.js';
+import { acceptRustImmutableProductType, acceptRustProductOrigin, acceptRustTupleIndexSpelling } from '../src/translation/rust-product-rules.js';
+import { readProjectData } from '../scripts/project-data.mjs';
 
 const checkRust = source => checkProgram(parseRust(source));
+
+test('shared product admission keeps selected owned origins distinct from immutable Copy evidence', () => {
+  const fixture = readProjectData(new URL('../../experiments/owned-tuple-call-fixture.lino', import.meta.url));
+  const pair = { kind: 'tuple', elements: [{ kind: 'string' }, { kind: 'fixed', bits: 32, signed: true }] };
+  const origins = new RustSourceOrigins(new Map(), '', fixture.model);
+  const fields = pair.elements.map(type => origins.typeOrigin(type, []));
+  origins.typed(pair, [], [], fields);
+  const origin = origins.type;
+  assert.equal(origin.fields, fields);
+  assert.equal(origins.immutableProduct(origin), false);
+  assert.equal(origin.copyEvidence, false);
+  assert.equal(fields[0].copyEvidence, false);
+  assert.equal(origins.ownedLocalProduct(origin), true);
+  assert.equal(acceptRustProductOrigin(origins.immutableProduct(origin), origins.ownedLocalProduct(origin)), true);
+  origins.requireProduct(origin);
+
+  const ordinary = new RustSourceOrigins(new Map());
+  assert.equal(acceptRustProductOrigin(ordinary.immutableProduct(origin), ordinary.ownedLocalProduct(origin)), false);
+  assert.throws(() => ordinary.requireProduct(origin), /immutable Rust tuple product/u);
+  for (const change of [
+    value => { value.wrappers = ['reference']; },
+    value => { value.fields[0].wrappers = ['reference']; },
+    value => { value.fields[0].textSourceModel = 'string slice'; },
+    value => { value.fields[0].proven = false; },
+    value => { value.type.elements[1].signed = false; },
+  ]) {
+    const altered = structuredClone(origin);
+    change(altered);
+    assert.equal(acceptRustProductOrigin(origins.immutableProduct(altered), origins.ownedLocalProduct(altered)), false);
+    assert.throws(() => origins.requireProduct(altered), /immutable Rust tuple product/u);
+  }
+  const immutable = ordinary.typeOrigin({ kind: 'tuple', elements: [{ kind: 'bool' }, { kind: 'fixed', bits: 32, signed: true }] }, []);
+  assert.equal(ordinary.immutableProduct(immutable), true);
+  assert.equal(ordinary.ownedLocalProduct(immutable), false);
+  assert.equal(acceptRustProductOrigin(ordinary.immutableProduct(immutable), ordinary.ownedLocalProduct(immutable)), true);
+});
+
+test('selected owned tuple headers retain actual field owners before target-specific diagnostics', () => {
+  const fixture = readProjectData(new URL('../../experiments/owned-tuple-call-fixture.lino', import.meta.url));
+  const source = fixture.cases[0].source;
+  const surface = parseRust(source, { localValueStateModel: fixture.model });
+  const result = surface.items[0].sourceSignature.result;
+  assert.deepEqual(result.type, { kind: 'tuple', elements: [{ kind: 'string' }, { kind: 'fixed', bits: 32, signed: true }] });
+  assert.deepEqual(result.owner.arguments.map(owner => [owner.kind, owner.path]), [
+    ['library', ['std', 'string', 'String']], ['primitive', ['i32']],
+  ]);
+  assert.throws(() => parseRust(source), error => {
+    const start = source.indexOf('(String,i32)');
+    assert.equal(error.reason, 'immutable Rust tuple product: every field requires a direct recursively immutable scalar Copy source value');
+    assert.deepEqual(error.span, { start, end: start + '(String,i32)'.length });
+    return true;
+  });
+  const refusal = fixture.refusals.find(entry => entry.name === 'unknown target');
+  assert.throws(() => checkProgram(parseRust(refusal.source, { localValueStateModel: fixture.model })), error => {
+    assert.equal(error.kind, refusal.kind);
+    assert.equal(error.reason, refusal.reason);
+    assert.deepEqual(error.span, refusal.span);
+    return true;
+  });
+});
 
 test('Rust Copy products retain frozen construction, positional reads and immutable destructuring', () => {
   const source = `fn make() -> (u32, bool) { (5, true) }

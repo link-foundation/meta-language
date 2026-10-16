@@ -12,8 +12,17 @@ import { renderStringLengthExpression, renderStringMapExpression, renderStringTe
 // `--ml-check-theorems`, while the proof stays discharged by the source kernel.
 
 import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
+import { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';
+import { renderPrimitiveMethodArgument, renderPrimitiveMethodExpression, requirePrimitiveMethodUtf16, renderPrimitiveArraySearchExpression, renderPrimitiveStringRepresentation } from './primitive-method-rules.js';
+import { readSurfaceReferenceEmissionOperation, readSurfaceReferenceEmissionRefusal, renderSurfaceReferenceOperation } from './surface-reference-analysis-rules.js';
+import { renderRecordField, renderRecordValue } from './record-emission-rules.js';
+import { readUnionTargetRefusal } from './type-syntax-rules.js';
+import { readCallableCapturedBindings } from './callable-source.js';
+import { renderOptionalAbsentValue, renderOptionalCoalescing, renderOptionalConsoleText, renderOptionalFlattening, renderOptionalMatch, renderOptionalNumericPresent, renderOptionalPresentValue, renderOptionalPrimitiveTruth, renderOptionalProjection, renderOptionalStrictEquality, renderOptionalTypeQueryPresent, renderOptionalUnwrapping, requireOptionalNumericPredicate } from './optional-value-rules.js';
+import { renderCallableApplication, renderCallableCellOperation, renderCallableFunctionReference, renderCallableLambda } from './callable-source-rules.js';
 import {checkRustConstFunctionProof,renderRustConstFunctionHeader} from './rust-const-functions.js';
 import {checkRustOwnedLocalStateProof} from './rust-owned-local-state.js';
+import { readOwnedArrayFinalUses } from './owned-array-moves.js';
 import {validateRustTypeNamespace} from './rust-type-namespace.js';
 import { unsupported } from './diagnostics.js';
 import { typeKey } from './types.js';
@@ -647,7 +656,7 @@ export function emitRust(program, options = {}) {
   });
   // A local may not shadow another item of the module that the program calls or reads.
   for (const external of program.externals ?? []) state.claimed.add(externalName(external.k, external.name));
-  return new RustEmitter(program, state, sourceHeaders, borrowedCalls?.targets).file();
+  return new RustEmitter(program, state, sourceHeaders, borrowedCalls?.targets, options.arrayConsumption === true).file();
 }
 
 /** The Rust name of another item of the module: a function's in snake case, a constant's as it is written. */
@@ -687,11 +696,14 @@ export function emitRustConstants(program) {
 }
 
 class RustEmitter {
-  constructor(program, state, sourceHeaders = null, borrowedCallTargets = null) {
+  constructor(program, state, sourceHeaders = null, borrowedCallTargets = null, arrayConsumption = false) {
     this.program = program;
     this.state = state;
     this.sourceHeaders = sourceHeaders;
     this.borrowedCallTargets = borrowedCallTargets;
+    // Historical low-level profiles keep copies; ordinary source and Links
+    // translation explicitly select final binding consumption.
+    this.arrayConsumption = arrayConsumption;
     // The other items of the module the program calls or reads, which it does not declare.
     this.externals = new Map((program.externals ?? []).filter(({ name }) => !program.declarations.has(name)).map((external) => [external.name, external]));
     this.temporaries = 0;
@@ -704,7 +716,7 @@ class RustEmitter {
     this.usesOptional = false;
     const needsUnits = (node) => {
       if (!node || typeof node !== 'object') return false;
-      if (node.k === 'method' && node.object.type.kind === 'string') return true;
+      if (requirePrimitiveMethodUtf16(node.k ?? '', node.k === 'method' ? node.object.type.kind : '')) return true;
       return Object.entries(node).some(([key, value]) => key !== 'type' && key !== 'span' && (Array.isArray(value) ? value.some(needsUnits) : needsUnits(value)));
     };
     this.utf16Strings = Boolean(program.utf16Strings) || [...program.declarations.values()].some(needsUnits) || needsUnits(program.main);
@@ -779,7 +791,7 @@ class RustEmitter {
     if (k === 'fn') return `${externalName(k, e.fn)}(${e.args.map((arg) => this.expr(arg)).join(', ')})`;
     // A literal Number, boolean or machine integer is a const, a literal string a &str const, and any other value a static.
     if (literal && isCopyType(e.type, e.productModel)) return e.fn;
-    if (literal && e.type.kind === 'string') return this.utf16Strings ? `crate::ml_string::Text::from_text(${e.fn})` : `String::from(${e.fn})`;
+    if (literal && e.type.kind === 'string') return renderPrimitiveStringRepresentation(this.utf16Strings, 'constant', e.fn, '', '');
     return isCopyType(e.type, e.productModel) ? `*${e.fn}` : `${e.fn}.clone()`;
   }
 
@@ -814,7 +826,7 @@ class RustEmitter {
       case 'bool':
         return 'bool';
       case 'string':
-        return this.utf16Strings ? 'crate::ml_string::Text' : 'String';
+        return renderPrimitiveStringRepresentation(this.utf16Strings, 'type', '', '', '');
       case 'option':
         if (type.absence === 'both') {
           this.usesOptional = true;
@@ -840,6 +852,8 @@ class RustEmitter {
       case 'array':
         this.state.encode('arrays', 'a JavaScript array, which the portable core never mutates, is a Rust Vec; a read outside it panics');
         return renderRustCompoundType('array', '', [this.type(type.element)]);
+      case 'union':
+        throw new Error(readUnionTargetRefusal('Rust'));
       default:
         throw new Error(`no Rust type for ${type.kind}`);
     }
@@ -870,10 +884,12 @@ class RustEmitter {
 
   fn(entry) {
     const { params, body } = renameFunction(entry, snake, this.state.localReserved());
+    this.arrayFinalUses = this.arrayConsumption ? readOwnedArrayFinalUses(body) : new Set();
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
     const sourceHeader = this.sourceHeaders?.get(entry.fullName);
     if (sourceHeader) {
+      this.arrayFinalUses = new Set();
       if (this.borrowedCallTargets) {
         // The fresh scalar names cannot capture a parameter, local binder or
         // free variable of any later argument. Keep checked input names intact.
@@ -900,6 +916,7 @@ class RustEmitter {
     if (loop) {
       // A lifted loop runs as a loop: each iteration assigns the parameters their next values.
       this.loopParams = params.map((param) => param.name);
+      this.arrayFinalUses = this.arrayConsumption ? readOwnedArrayFinalUses(loop) : new Set();
       const text = this.expr(loop);
       this.loopParams = null;
       const binders = params.map((param) => `mut ${param.name}: ${this.type(param.type)}`).join(', ');
@@ -971,7 +988,7 @@ class RustEmitter {
       case 'bool':
         return 'vec![false, true]';
       case 'string':
-        return 'vec![String::new(), String::from("a"), String::from("ab")]';
+        return renderPrimitiveStringRepresentation(this.utf16Strings, 'examples', '', '', '');
       case 'unit':
         return 'vec![()]';
       case 'data': {
@@ -1067,81 +1084,37 @@ class RustEmitter {
   }
 
   lambda(e) {
-    const captured = new Map();
-    const visit = (node, bound) => {
-      if (!node || typeof node !== 'object') return;
-      if (node.k === 'var' && !bound.has(node.name)) captured.set(node.name, node.type);
-      if (node.k === 'let') {
-        visit(node.value, bound);
-        visit(node.body, new Set([...bound, node.name]));
-        return;
-      }
-      if (node.k === 'lambda') {
-        visit(node.body, new Set([...bound, ...node.params.map((param) => param.name)]));
-        return;
-      }
-      if (node.k === 'match') {
-        visit(node.scrutinee, bound);
-        for (const kase of node.cases) {
-          const names = kase.pattern.k === 'bind' || kase.pattern.k === 'natSucc' ? [kase.pattern.name] : (kase.pattern.binds ?? []).filter(Boolean);
-          visit(kase.body, new Set([...bound, ...names]));
-        }
-        return;
-      }
-      for (const [key, value] of Object.entries(node)) {
-        if (key === 'type' || key === 'span') continue;
-        if (Array.isArray(value)) value.forEach((item) => visit(item, bound));
-        else visit(value, bound);
-      }
-    };
-    visit(e.body, new Set(e.params.map((param) => param.name)));
+    const captured = readCallableCapturedBindings(e.body, e.params.map(param => param.name));
     const copies = [...captured].map(([name, type]) => `let ${name} = ${this.own(name, type)};`);
-    const closure = `std::rc::Rc::new(move |${e.params.map((param) => `${param.name}: ${this.type(param.type)}`).join(', ')}| -> ${this.type(e.type.ret)} { ${this.expr(e.body)} })`;
-    return copies.length ? `{ ${copies.join(' ')} ${closure} }` : closure;
+    return renderCallableLambda('Rust', e.params.map(param => param.name), e.params.map(param => this.type(param.type)), this.type(e.type.ret), this.expr(e.body), copies);
   }
 
   optionalMatch(arg, binder, present, nullCase, undefinedCase) {
-    if (arg.type.absence === 'both') {
-      this.usesOptional = true;
-      return `match ${this.expr(arg)} { crate::MlOptional::Value(${binder}) => ${present}, crate::MlOptional::Null => ${nullCase}, crate::MlOptional::Undefined => ${undefinedCase} }`;
-    }
-    return `match ${this.expr(arg)} { Some(${binder}) => ${present}, None => ${arg.type.absence === 'null' ? nullCase : undefinedCase} }`;
+    if (arg.type.absence === 'both') this.usesOptional = true;
+    return renderOptionalMatch('Rust', arg.type.absence, this.expr(arg), binder, present, nullCase, undefinedCase);
   }
 
   truthy(arg) {
     if (arg.type.kind === 'option') return this.optionalMatch(arg, 'ml_present', this.truthy({ k: 'var', name: 'ml_present', type: arg.type.element }), 'false', 'false');
     const value = this.receiver(arg);
-    if (arg.type.kind === 'bool') return this.expr(arg);
-    if (arg.type.kind === 'float') return `{ let ml_value = ${this.expr(arg)}; ml_value != 0f64 && !ml_value.is_nan() }`;
-    if (arg.type.kind === 'int' || arg.type.kind === 'nat') return `!${value}.is_zero()`;
-    if (arg.type.kind === 'fixed') return `(${value} != 0)`;
-    if (arg.type.kind === 'string') return this.utf16Strings ? `!${value}.0.is_empty()` : `!${value}.is_empty()`;
-    return `{ let _ = ${this.expr(arg)}; ${arg.type.kind !== 'unit'} }`;
+    const evaluated = ['int', 'nat', 'fixed', 'string'].includes(arg.type.kind) ? '' : this.expr(arg);
+    return renderOptionalPrimitiveTruth('Rust', arg.type.kind, evaluated, value, this.utf16Strings, Boolean(arg.type.signed));
   }
 
   strictEqual(e) {
     const typeA = e.left.type.kind === 'option' ? e.left.type.element : e.left.type;
     const typeB = e.right.type.kind === 'option' ? e.right.type.element : e.right.type;
-    const pattern = (type, name) => type.kind !== 'option' ? name : type.absence === 'both' ? `crate::MlOptional::Value(${name})` : `Some(${name})`;
-    const absences = (type) => type.kind !== 'option' ? [] : type.absence === 'both' ? [['null', 'crate::MlOptional::Null'], ['undefined', 'crate::MlOptional::Undefined']] : [[type.absence, 'None']];
     if (e.left.type.absence === 'both' || e.right.type.absence === 'both') this.usesOptional = true;
     const compare = typeKey(typeA) === typeKey(typeB) ? 'ml_left == ml_right' : 'false';
-    const cases = [`(${pattern(e.left.type, 'ml_left')}, ${pattern(e.right.type, 'ml_right')}) => ${compare}`];
-    for (const [a, pa] of absences(e.left.type)) for (const [b, pb] of absences(e.right.type)) cases.push(`(${pa}, ${pb}) => ${a === b}`);
-    cases.push('_ => false');
-    const result = `match (${this.expr(e.left)}, ${this.expr(e.right)}) { ${cases.join(', ')} }`;
-    return e.negate ? `!(${result})` : result;
+    return renderOptionalStrictEquality('Rust', e.left.type.kind, e.left.type.absence ?? '', e.right.type.kind, e.right.type.absence ?? '', compare, this.expr(e.left), this.expr(e.right), e.negate);
   }
 
   method(e) {
     if (e.object.type.kind === 'string') {
-      const names = { indexOf: 'index_of', lastIndexOf: 'last_index_of', codePointAt: 'code_point_at' };
       const object = this.receiver(e.object);
-      const argumentsText = e.args.map((arg) => arg === null ? 'None' : arg.type.kind === 'string' ? this.borrow(arg) : this.expr(arg));
-      if (e.op === 'split') return `${object}.split(${e.args[0] === null ? 'None' : `Some(${argumentsText[0]})`}, ${argumentsText[1]})`;
-      if (e.op === 'replace' || e.op === 'replaceAll') return `${object}.replace(${argumentsText.join(', ')}, ${e.op === 'replaceAll'})`;
-      if (e.op === 'padStart' || e.op === 'padEnd') return `${object}.pad(${argumentsText.join(', ')}, ${e.op === 'padStart'})`;
-      return `${object}.${names[e.op] ?? e.op}(${argumentsText.join(', ')})`;
+      const argumentsText = e.args.map((arg, index) => renderPrimitiveMethodArgument('Rust', 'string', e.op, index, arg === null,
+        arg === null ? 'None' : arg.type.kind === 'string' ? this.borrow(arg) : this.expr(arg)));
+      return renderPrimitiveMethodExpression('Rust', 'string', e.op, object, argumentsText.join(', '));
     }
     if (e.object.type.kind === 'array') {
       this.usesArray = true;
@@ -1160,10 +1133,11 @@ class RustEmitter {
         const values = `${this.receiver(e.object)}.iter().cloned().map(|ml_value| ${text('ml_value', e.object.type.element)}).collect::<Vec<_>>()`;
         return this.utf16Strings ? `crate::ml_string::join(&${values}, ${this.borrow(e.args[0])})` : `(${values}).join(${this.receiver(e.args[0])}.as_str())`;
       }
-      if (e.op === 'slice') return `crate::ml_array::slice(${this.borrow(e.object)}, ${e.args.map((arg) => this.expr(arg)).join(', ')})`;
+      if (e.op === 'slice') return renderPrimitiveMethodExpression('Rust', 'array', e.op, this.borrow(e.object), e.args.map((arg) => this.expr(arg)).join(', '));
       if (['indexOf', 'lastIndexOf', 'includes'].includes(e.op)) {
-        const comparator = e.op === 'includes' && e.object.type.element.kind === 'float' ? '|a: &f64, b: &f64| a == b || (a.is_nan() && b.is_nan())' : '|a, b| a == b';
-        return `crate::ml_array::${e.op === 'includes' ? 'includes' : 'index_of'}(${this.borrow(e.object)}, &${this.expr(e.args[0])}, ${this.expr(e.args[1])}, ${e.op === 'lastIndexOf'}, ${comparator})`;
+        const element = e.object.type.element;
+        return renderPrimitiveArraySearchExpression(e.op, this.borrow(e.object), this.expr(e.args[0]), this.expr(e.args[1]),
+          element.kind === 'option' ? element.element.kind : element.kind, element.kind === 'option' ? element.absence : '');
       }
       this.temporaries += 1;
       const suffix = this.temporaries;
@@ -1198,15 +1172,15 @@ class RustEmitter {
   expr(e) {
     if (e.k === 'ctor' && e.frozen && this.program.sourceLanguage === 'JavaScript') throw unsupported('explicit data object freeze', 'this target needs a JavaScript property descriptor model to retain explicit constructor freezing', e.span);
     const statefulReceiver = e.array?.type.reference || e.object?.type.reference;
-    if (statefulReceiver && ['index', 'optionalIndex', 'length', 'recordField', 'tupleIndex', 'method', 'collectionSize', 'collectionRead', 'collectionItems'].includes(e.k)) throw unsupported('reference operation', 'this operation needs the shared reference and slot runtime before target emission', e.span);
-    if (e.type?.reference && ['array', 'record', 'map', 'set', 'append'].includes(e.k)) throw unsupported('reference allocation', 'this allocation needs the shared reference and slot runtime before target emission', e.span);
+    const referenceOperation = readSurfaceReferenceEmissionOperation(e.k, Boolean(statefulReceiver), Boolean(e.type?.reference));
+    if (referenceOperation) throw unsupported(referenceOperation, readSurfaceReferenceEmissionRefusal(referenceOperation), e.span);
     switch (e.k) {
       case 'lit':
         return this.literal(e);
       case 'unit':
         return '()';
       case 'var':
-        return this.own(e.name, e.type);
+        return this.arrayFinalUses?.has(e) ? e.name : this.own(e.name, e.type);
       case 'call':
         if (this.borrowedCallTargets) {
           const signature = this.borrowedCallTargets.get(e.fn);
@@ -1217,58 +1191,52 @@ class RustEmitter {
         if (this.externals.has(e.fn)) return this.external(e, this.externals.get(e.fn));
         return `crate::${this.state.ref(e.fn, '::')}(${e.args.map((arg) => this.expr(arg)).join(', ')})`;
       case 'functionRef':
-        return `std::rc::Rc::new(crate::${this.state.ref(e.fn, '::')})`;
+        return renderCallableFunctionReference('Rust', `crate::${this.state.ref(e.fn, '::')}`);
       case 'apply':
-        return `(${this.expr(e.fn)})(${e.args.map((arg) => this.expr(arg)).join(', ')})`;
+        return renderCallableApplication('Rust', this.expr(e.fn), e.args.map(arg => this.expr(arg)));
       case 'lambda':
         return this.lambda(e);
       case 'method':
         return this.method(e);
       case 'record':
-        return `(${e.entries.map((entry) => this.expr(entry.value)).join(', ')}${e.entries.length === 1 ? ',' : ''})`;
+        return renderRecordValue('Rust', [], e.entries.map(entry => this.expr(entry.value)));
       case 'cellAllocate':
-        return `std::rc::Rc::new(std::cell::RefCell::new(${this.expr(e.value)}))`;
+        return renderCallableCellOperation('Rust', e.k, '', this.expr(e.value), '', '', '');
       case 'cellRead':
-        return `{ let ml_cell_value = ${this.receiver(e.cell)}.borrow().clone(); ml_cell_value }`;
+        return renderCallableCellOperation('Rust', e.k, this.receiver(e.cell), '', '', '', '');
       case 'cellWrite': {
         this.temporaries += 1;
         const cell = `ml_cell${this.temporaries}`;
         const value = `ml_value${this.temporaries}`;
-        return `{ let ${cell} = ${this.expr(e.cell)}; let ${value} = ${this.expr(e.value)}; *${cell}.borrow_mut() = ${value}; ${this.expr(e.body)} }`;
+        return renderCallableCellOperation('Rust', e.k, this.expr(e.cell), this.expr(e.value), this.expr(e.body), cell, value);
       }
       case 'referenceAllocate':
-        return `std::rc::Rc::new(std::cell::RefCell::new(${this.expr(e.value)}))`;
+        return renderSurfaceReferenceOperation('Rust', e.k, this.expr(e.value), '');
       case 'referenceRead': {
         this.temporaries += 1;
         const value = `ml_reference_value${this.temporaries}`;
-        return `{ let ${value} = ${this.receiver(e.reference)}.borrow().clone(); ${value} }`;
+        return renderSurfaceReferenceOperation('Rust', e.k, this.receiver(e.reference), value);
       }
       case 'recordField':
-        return `(${this.expr(e.object)}).${e.index}`;
+        return renderRecordField('Rust', this.expr(e.object), '', String(e.index));
       case 'tuple':
         if (Object.hasOwn(e, 'productModel') && !acceptProgramTupleProductModel(e.productModel, e.frozen === true)) throw unsupported('immutable tuple product model', 'the declared immutable value product requires its retained frozen facet', e.span);
         return renderTupleValue('Rust', e.items.map((item) => this.expr(item)), e.frozen === true);
       case 'tupleIndex':
         return this.tupleProjection(e);
       case 'none':
-        if (e.type.absence === 'both') {
-          this.usesOptional = true;
-          return `crate::MlOptional::${e.absence === 'null' ? 'Null' : 'Undefined'}`;
-        }
-        return `None::<${this.type(e.type.element)}>`;
+        if (e.type.absence === 'both') this.usesOptional = true;
+        return renderOptionalAbsentValue('Rust', e.type.absence, e.absence, e.type.absence === 'both' ? '' : this.type(e.type.element));
       case 'some':
-        if (e.type.absence === 'both') {
-          this.usesOptional = true;
-          return `crate::MlOptional::Value(${this.expr(e.value)})`;
-        }
-        return `Some(${this.expr(e.value)})`;
+        if (e.type.absence === 'both') this.usesOptional = true;
+        return renderOptionalPresentValue('Rust', e.type.absence, this.expr(e.value));
       case 'nullishNumber': {
         const element = e.arg.type.element;
-        const present = element.kind === 'bool' ? 'if ml_present { 1f64 } else { 0f64 }' : element.kind === 'unit' ? 'f64::NAN' : 'ml_present';
+        const present = renderOptionalNumericPresent('Rust', element.kind, 'arithmetic');
         return this.optionalMatch(e.arg, 'ml_present', present, renderAbsentNumberExpression('Rust', 'arithmetic', 'null'), renderAbsentNumberExpression('Rust', 'arithmetic', 'undefined'));
       }
       case 'optionalIndexNumber':
-        return this.optionalMatch(e.arg, 'ml_present', e.arg.type.element.kind === 'unit' ? 'f64::NAN' : 'ml_present', renderAbsentNumberExpression('Rust', 'array-index', 'null'), renderAbsentNumberExpression('Rust', 'array-index', 'undefined'));
+        return this.optionalMatch(e.arg, 'ml_present', renderOptionalNumericPresent('Rust', e.arg.type.element.kind, 'array-index'), renderAbsentNumberExpression('Rust', 'array-index', 'null'), renderAbsentNumberExpression('Rust', 'array-index', 'undefined'));
       case 'truthy':
         return this.truthy(e.arg);
       case 'strictEqual':
@@ -1276,57 +1244,43 @@ class RustEmitter {
       case 'optionalText': {
         const element = e.arg.type.element;
         let present = element.kind === 'unit' ? this.literal({ type: { kind: 'string' }, value: 'undefined' }) : this.expr({ k: 'toString', arg: { k: 'var', name: 'ml_present', type: element }, console: e.console, type: { kind: 'string' } });
-        if (e.console && ['int', 'nat', 'fixed'].includes(element.kind)) present = this.utf16Strings ? `(${present}).concat(&crate::ml_string::Text::from_text("n"))` : `format!("{}n", ${present})`;
+        present = renderOptionalConsoleText('Rust', present, ['int', 'nat', 'fixed'].includes(element.kind), e.console, this.utf16Strings);
         return this.optionalMatch(e.arg, 'ml_present', present, this.literal({ type: { kind: 'string' }, value: 'null' }), this.literal({ type: { kind: 'string' }, value: 'undefined' }));
       }
       case 'optionalTypeOf':
-        return this.optionalMatch(e.arg, 'ml_present', `{ let _ = ml_present; ${this.literal({ type: { kind: 'string' }, value: e.present ?? 'undefined' })} }`, this.literal({ type: { kind: 'string' }, value: 'object' }), this.literal({ type: { kind: 'string' }, value: 'undefined' }));
+        return this.optionalMatch(e.arg, 'ml_present', renderOptionalTypeQueryPresent('Rust', this.literal({ type: { kind: 'string' }, value: e.present ?? 'undefined' })), this.literal({ type: { kind: 'string' }, value: 'object' }), this.literal({ type: { kind: 'string' }, value: 'undefined' }));
       case 'unwrapOption':
-        if (e.arg.type.absence === 'both') { this.usesOptional = true; return `match ${this.expr(e.arg)} { crate::MlOptional::Value(ml_present) => ml_present, _ => unreachable!("a proven present value") }`; }
-        return `${this.receiver(e.arg)}.clone().expect("a proven present value")`;
+        if (e.arg.type.absence === 'both') this.usesOptional = true;
+        return renderOptionalUnwrapping('Rust', e.arg.type.absence, e.arg.type.absence === 'both' ? this.expr(e.arg) : '', e.arg.type.absence === 'both' ? '' : this.receiver(e.arg), '');
       case 'optionalPredicate': {
-        const present = e.arg.type.element.kind === 'float' ? this.math({ k: 'math', op: e.op, args: [{ k: 'var', name: 'ml_present', type: { kind: 'float' } }], type: { kind: 'bool' } }) : 'false';
+        const present = requireOptionalNumericPredicate(e.arg.type.element.kind) ? this.math({ k: 'math', op: e.op, args: [{ k: 'var', name: 'ml_present', type: { kind: 'float' } }], type: { kind: 'bool' } }) : 'false';
         return this.optionalMatch(e.arg, 'ml_present', present, 'false', 'false');
       }
       case 'flattenOption': {
         if (e.type.absence === 'both') this.usesOptional = true;
-        const absent = (absence) => e.type.absence === 'both' ? `crate::MlOptional::${absence === 'null' ? 'Null' : 'Undefined'}` : 'None';
-        const present = e.type.absence === 'both' ? 'crate::MlOptional::Value(ml_present)' : 'Some(ml_present)';
-        const cases = (type, binder, body) => type.absence === 'both'
-          ? `crate::MlOptional::Value(${binder}) => ${body}, crate::MlOptional::Null => ${absent('null')}, crate::MlOptional::Undefined => ${absent('undefined')}`
-          : `Some(${binder}) => ${body}, None => ${absent(type.absence)}`;
-        return `match ${this.expr(e.value)} { ${cases(e.value.type, 'ml_nested', `match ml_nested { ${cases(e.value.type.element, 'ml_present', present)} }`)} }`;
+        return renderOptionalFlattening('Rust', e.value.type.absence, e.value.type.element.absence, e.type.absence, this.expr(e.value));
       }
       case 'coalesce':
-        if (e.left.type.absence === 'both') {
-          this.usesOptional = true;
-          return `match ${this.expr(e.left)} { crate::MlOptional::Value(ml_value) => ml_value, _ => ${this.expr(e.right)} }`;
-        }
-        return `${this.receiver(e.left)}.clone().unwrap_or_else(|| ${this.expr(e.right)})`;
+        if (e.left.type.absence === 'both') this.usesOptional = true;
+        return renderOptionalCoalescing('Rust', e.left.type.absence, e.left.type.absence === 'both' ? this.expr(e.left) : '', e.left.type.absence === 'both' ? '' : this.receiver(e.left), this.expr(e.right));
       case 'optionalField': {
-        if (e.object.type.absence === 'both') {
-          this.usesOptional = true;
-          return `match ${this.expr(e.object)} { crate::MlOptional::Value(ml_record) => Some(ml_record.${e.index}), _ => None }`;
-        }
-        return `${this.receiver(e.object)}.clone().map(|ml_record| ml_record.${e.index})`;
+        if (e.object.type.absence === 'both') this.usesOptional = true;
+        return renderOptionalProjection('Rust', e.object.type.absence, e.object.type.absence === 'both' ? this.expr(e.object) : '', e.object.type.absence === 'both' ? '' : this.receiver(e.object), 'ml_record', `ml_record.${e.index}`, '');
       }
       case 'optionalProject': {
         const element = e.object.type.element;
         const length = element.kind === 'string' ? this.utf16Strings ? 'ml_value.length()' : renderStringLengthExpression('Rust', 'ml_value') : '(ml_value.len() as f64)';
-        if (e.object.type.absence === 'both') {
-          this.usesOptional = true;
-          return `match ${this.expr(e.object)} { crate::MlOptional::Value(ml_value) => Some(${length}), _ => None }`;
-        }
-        return `${this.receiver(e.object)}.clone().map(|ml_value| ${length})`;
+        if (e.object.type.absence === 'both') this.usesOptional = true;
+        return renderOptionalProjection('Rust', e.object.type.absence, e.object.type.absence === 'both' ? this.expr(e.object) : '', e.object.type.absence === 'both' ? '' : this.receiver(e.object), 'ml_value', length, '');
       }
       case 'optionalIndex': {
         this.usesArray = true;
         this.usesStandardArray = true;
-        const index = e.index.type.kind === 'float' ? `crate::ml_array::number_index(${this.expr(e.index)})` : `${this.receiver(e.index)}.to_index()`;
-        return `crate::ml_array::optional_at(${this.borrow(e.array)}, ${index})`;
+        const index = e.index.type.kind === 'float' ? this.expr(e.index) : this.receiver(e.index);
+        return renderOptionalArrayRead('Rust', e.index.type.kind, this.borrow(e.array), index);
       }
       case 'stringPoints':
-        return this.utf16Strings ? `${this.receiver(e.object)}.code_points()` : `${this.receiver(e.object)}.chars().map(|ml_character| ml_character.to_string()).collect::<Vec<String>>()`;
+        return renderStringPointIteration('Rust', this.utf16Strings, this.receiver(e.object));
       case 'set':
       case 'map': {
         this.usesArray = true;
@@ -1347,9 +1301,8 @@ class RustEmitter {
       }
       case 'collectionItems': {
         const map = e.object.type.kind === 'map';
-        if (e.op === 'entries') return map ? this.expr(e.object) : `${this.receiver(e.object)}.iter().map(|ml_value| (ml_value.clone(), ml_value.clone())).collect::<Vec<_>>()`;
-        if (!map) return this.expr(e.object);
-        return `${this.receiver(e.object)}.iter().map(|ml_pair| ml_pair.${e.op === 'keys' ? 0 : 1}.clone()).collect::<Vec<_>>()`;
+        const value = e.op === 'entries' && map || !map && e.op !== 'entries' ? this.expr(e.object) : this.receiver(e.object);
+        return renderCollectionIteration('Rust', map, e.op, value, '', '');
       }
       case 'ctor': {
         const entry = this.program.declarations.get(e.data);
@@ -1382,21 +1335,17 @@ class RustEmitter {
         if (e.arg.type.kind === 'float') {
           this.usesNumber = true;
           const text = `crate::ml_number::${readNumberDisplayFunction(e.arg.type.kind, Boolean(e.console))}(${this.expr(e.arg)})`;
-          return this.utf16Strings ? `crate::ml_string::Text::from_text(&${text})` : text;
+          return renderPrimitiveStringRepresentation(this.utf16Strings, 'text', text, '', '');
         }
-        return this.utf16Strings ? `crate::ml_string::Text::from_text(&${this.receiver(e.arg)}.to_string())` : `${this.receiver(e.arg)}.to_string()`;
+        return renderPrimitiveStringRepresentation(this.utf16Strings, 'text', `${this.receiver(e.arg)}.to_string()`, '', '');
       case 'stringMap':
         if (this.utf16Strings) {
-          if (e.op === 'toLowerCase' || e.op === 'toUpperCase') return `${this.receiver(e.string)}.map_case(${e.op === 'toUpperCase'})`;
-          const start = !['trimEnd', 'rustTrimEnd'].includes(e.op);
-          const end = !['trimStart', 'rustTrimStart'].includes(e.op);
-          return `${this.receiver(e.string)}.trim(${start}, ${end}, ${e.op.startsWith('rust')})`;
+          return renderPrimitiveStringRepresentation(true, 'map', this.receiver(e.string), '', e.op);
         }
         return renderStringMapExpression('Rust', e.op, this.receiver(e.string));
       case 'stringTest': {
         if (this.utf16Strings) {
-          const method = { startsWith: 'starts_with', endsWith: 'ends_with', includes: 'contains' }[e.op];
-          return `${this.receiver(e.string)}.${method}(${this.borrow(e.search)})`;
+          return renderPrimitiveStringRepresentation(true, 'test', this.receiver(e.string), this.borrow(e.search), e.op);
         }
         const search = e.search.k === 'lit' ? rustString(String(e.search.value)) : `${this.receiver(e.search)}.as_str()`;
         return renderStringTestExpression('Rust', e.op, this.receiver(e.string), search);
@@ -1409,6 +1358,10 @@ class RustEmitter {
         return e.items.length ? `vec![${e.items.map((item) => this.expr(item)).join(', ')}]` : `Vec::<${this.type(e.type.element)}>::new()`;
       case 'append':
         this.usesArray = true;
+        if (this.arrayFinalUses?.has(e.left)) {
+          // The right value may inspect the left array before its final move.
+          return `{ let (ml_append_right, ml_append_left) = (${this.expr(e.right)}, ${this.expr(e.left)}); crate::ml_array::append(ml_append_left, ml_append_right) }`;
+        }
         return `crate::ml_array::append(${this.expr(e.left)}, ${this.expr(e.right)})`;
       case 'index': {
         this.usesArray = true;
@@ -1419,7 +1372,7 @@ class RustEmitter {
         return `crate::ml_array::at(${this.borrow(e.array)}, ${index})`;
       }
       case 'length':
-        if (e.array.type.kind === 'string') return this.utf16Strings ? `${this.receiver(e.array)}.length()` : renderStringLengthExpression('Rust', this.receiver(e.array));
+        if (e.array.type.kind === 'string') return this.utf16Strings ? renderPrimitiveStringRepresentation(true, 'length', this.receiver(e.array), '', '') : renderStringLengthExpression('Rust', this.receiver(e.array));
         if (e.type.kind === 'float') return `(${this.receiver(e.array)}.len() as f64)`;
         this.usesBig = true;
         return `crate::ml::Big::from_u128(${this.receiver(e.array)}.len() as u128)`;
@@ -1483,8 +1436,9 @@ class RustEmitter {
       case 'bool':
         return String(e.value);
       case 'string':
-        if (this.utf16Strings) return `crate::ml_string::Text::from_units(vec![${Array.from({ length: String(e.value).length }, (_, index) => String(e.value).charCodeAt(index)).join(', ')}])`;
-        return `String::from(${rustString(String(e.value))})`;
+        return renderPrimitiveStringRepresentation(this.utf16Strings, 'literal', this.utf16Strings
+          ? Array.from({ length: String(e.value).length }, (_, index) => String(e.value).charCodeAt(index)).join(', ')
+          : rustString(String(e.value)), '', '');
       default:
         throw new Error(`no Rust literal for ${e.type.kind}`);
     }
@@ -1507,8 +1461,7 @@ class RustEmitter {
       case 'or':
         return `(${this.expr(e.left)} || ${this.expr(e.right)})`;
       case 'concat':
-        if (this.utf16Strings) return `${this.receiver(e.left)}.concat(${this.borrow(e.right)})`;
-        return `format!("{}{}", ${this.receiver(e.left)}, ${this.receiver(e.right)})`;
+        return renderPrimitiveStringRepresentation(this.utf16Strings, 'concat', this.receiver(e.left), this.utf16Strings ? this.borrow(e.right) : this.receiver(e.right), '');
       case 'eq':
       case 'ne':
       case 'lt':

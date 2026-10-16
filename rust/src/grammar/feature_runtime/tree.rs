@@ -75,6 +75,8 @@ pub enum SyntaxTree {
         attributes: Option<SyntaxAttributes>,
         /// The token text.
         text: LeafText,
+        /// Lossless source-local lexer metadata; absent on ordinary tokens.
+        lexical: Option<serde_json::Value>,
     },
     /// Input error recovery skipped, or the whole input of a refused parse.
     Error {
@@ -108,6 +110,8 @@ pub enum SyntaxTree {
         end: usize,
         /// The tree of the embedded language.
         root: Box<Self>,
+        /// Optional inspectable selection policy, origin metadata and witnesses.
+        selection: Option<Box<super::grammar_selection::GrammarSelection>>,
     },
 }
 
@@ -239,6 +243,7 @@ impl SyntaxTree {
                 start,
                 end,
                 root,
+                ..
             } => {
                 let _ = write!(out, "(EMBED {}@{start}..{end} ", render_name(language));
                 root.render_into(out);
@@ -317,6 +322,7 @@ pub(super) fn public_tree(node: &Tree, bytes: &[u8]) -> SyntaxTree {
             end: node.end,
             attributes: node.attributes.clone(),
             text: LeafText::of(bytes, node.start, node.end),
+            lexical: node.lexical.clone(),
         },
         TreeType::Error => error_tree(bytes, node.start, node.end, None),
         TreeType::Missing => SyntaxTree::Missing {
@@ -333,6 +339,9 @@ pub(super) fn public_tree(node: &Tree, bytes: &[u8]) -> SyntaxTree {
                 || error_tree(bytes, node.start, node.end, None),
                 |root| public_tree(root, bytes),
             )),
+            selection: node.selection.as_deref().map(|selection| {
+                Box::new(super::grammar_selection::public_selection(selection, bytes))
+            }),
         },
     }
 }
@@ -360,6 +369,8 @@ pub struct Ambiguity {
     pub start: usize,
     /// The byte after the last.
     pub end: usize,
+    /// Explicit accepted grammar alternatives for a language selection.
+    pub languages: Option<Vec<String>>,
 }
 
 /// The ambiguous nodes of an executor tree, in preorder, outside the declared conflicts.
@@ -387,6 +398,7 @@ pub(super) fn collect_ambiguities(
                         .to_owned(),
                     start: node.start,
                     end: node.end,
+                    languages: None,
                 });
             }
             for child in node.children.iter() {
@@ -394,8 +406,32 @@ pub(super) fn collect_ambiguities(
             }
         }
         TreeType::Embed => {
+            if let Some(selection) = &node.selection {
+                if selection.ambiguous {
+                    found.push(Ambiguity {
+                        rule: "any-grammar".to_owned(),
+                        start: node.start,
+                        end: node.end,
+                        languages: Some(
+                            selection
+                                .candidates
+                                .iter()
+                                .filter(|candidate| candidate["relation"] == "accepted")
+                                .filter_map(|candidate| {
+                                    candidate["language"].as_str().map(str::to_owned)
+                                })
+                                .collect(),
+                        ),
+                    });
+                }
+            }
             if let Some(root) = &node.root {
                 collect_ambiguities(root, compiled, node.program, found);
+            }
+            if let Some(selection) = &node.selection {
+                for alternative in &selection.alternatives {
+                    collect_ambiguities(&alternative.root, compiled, alternative.program, found);
+                }
             }
         }
         _ => {}

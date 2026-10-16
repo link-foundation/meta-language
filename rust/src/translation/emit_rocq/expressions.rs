@@ -45,18 +45,17 @@ impl RocqEmitter<'_> {
             }
         }
         match &e.node {
+            Node::Record { entries } => self.record_value(entries),
+            Node::RecordField { object, index, .. } => self.record_field(object, *index),
+            Node::ReferenceAllocate { .. } | Node::ReferenceRead { .. } | Node::CellAllocate { .. } | Node::CellRead { .. } | Node::CellWrite { .. } => Err(unsupported(
+                "mutable structural value",
+                &crate::translation::surface_reference_analysis_rules::read_surface_reference_refusal(),
+                e.span,
+            )),
             Node::Lit { value } => self.literal(&e.ty, value),
             Node::Unit => Ok("tt".to_owned()),
-            Node::None { .. } => {
-                let Type::Option { element, .. } = &e.ty else {
-                    return Err(unsupported(
-                        "empty optional value",
-                        "the value requires its retained optional type",
-                        e.span,
-                    ));
-                };
-                Ok(format!("(@None {})", self.ty(element)?))
-            }
+            Node::None { .. } | Node::Some { .. } | Node::FlattenOption { .. } | Node::Coalesce { .. } | Node::OptionalField { .. } | Node::OptionalProject { .. } | Node::NullishNumber { .. } | Node::OptionalIndexNumber { .. } | Node::OptionalText { .. } | Node::OptionalTypeOf { .. } | Node::Truthy { .. } | Node::StrictEqual { .. } | Node::UnwrapOption { .. } | Node::OptionalPredicate { .. } => self.optional_expr(e),
+
             Node::OutNil => Ok("(@nil string)".to_owned()),
             Node::OutCons { head, tail } => {
                 Ok(format!("({} :: {})", self.expr(head)?, self.expr(tail)?))
@@ -93,6 +92,17 @@ impl RocqEmitter<'_> {
             // Output threading leaves no `print` node.
             Node::Print { .. } => Err(internal("print with its output not threaded".to_owned())),
             Node::Var { name } => Ok(name.clone()),
+            Node::FunctionRef { func } => Ok(crate::translation::callable_source_rules::render_callable_function_reference("Rocq", &(self.state.reference(func, ".")))),
+            Node::Apply { func, args } => {
+                let function = self.expr(func)?;
+                let arguments = args.iter().map(|argument| self.expr(argument)).collect::<Result<Vec<_>>>()?;
+                Ok(crate::translation::callable_source_rules::render_callable_application("Rocq", &function, &arguments))
+            }
+            Node::Lambda { params, body } => {
+                let types = params.iter().map(|parameter| self.ty(&parameter.ty)).collect::<Result<Vec<_>>>()?;
+                let body = self.expr(body)?;
+                Ok(crate::translation::callable_source_rules::render_callable_lambda("Rocq", &(params.iter().map(|parameter| parameter.name.clone()).collect::<Vec<_>>()), &types, "", &body, &[]))
+            }
             Node::Call { func, args } => {
                 let member = self.current.as_ref().and_then(|current| {
                     let mutual = current.mutual.as_ref()?;
@@ -169,6 +179,7 @@ impl RocqEmitter<'_> {
                 Ok(format!("(let {name} := {value} in {})", self.expr(body)?))
             }
             Node::Match { scrutinee, cases } => self.match_expr(scrutinee, cases),
+            Node::Method { object, op, .. } => Err(crate::translation::diagnostics::unsupported(&format!(".{op}()"), &crate::translation::primitive_method_rules::read_primitive_method_rendering_refusal("Rocq", object.ty.kind(), op), e.span)),
             Node::StringMap { op, .. } => Err(crate::translation::diagnostics::unsupported(
                 &format!(".{op}()"),
                 &crate::translation::frontend_rules::read_string_map_refusal("Rocq", op),
@@ -200,7 +211,7 @@ impl RocqEmitter<'_> {
                 ..
             } => self.cast(arg, from, to, *flavor),
             Node::Abort { .. } => unthreaded("an abort"),
-            Node::Array { .. } | Node::Append { .. } | Node::Index { .. } | Node::Length { .. } => {
+            Node::Array { .. } | Node::Append { .. } | Node::Index { .. } | Node::Length { .. } | Node::OptionalIndex { .. } | Node::StringPoints { .. } | Node::CollectionItems { .. } => {
                 self.array_expr(e)
             }
             Node::Math { .. } => self.math(e),

@@ -7,7 +7,7 @@ import { checkProgram } from './translation/check.js';
 import {checkRustOwnedLocalStateRecordShapes} from './translation/rust-owned-local-state.js';
 import { validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes } from './translation/rust-type-namespace.js';
 import { projectLinkedProgramExpression, projectLinkedProgramDeclarationPath } from './typed-program-expression-projection.js';
-import { readProgramExpressionProjection, readProgramNeutralFieldDefault, readProgramPropositionOperandFields, readProgramPropositionBindingForm } from './typed-program-link-rules.js';
+import { readProgramDeclarationTypeProjectionField, readProgramExpressionProjection, readProgramNeutralFieldDefault, readProgramPropositionOperandFields, readProgramPropositionBindingForm } from './typed-program-link-rules.js';
 
 export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
   if(checkRustConstFunctionContainers(program))wholeProgram=true;
@@ -46,6 +46,7 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
     if (value.kind === 'data') return { kind: 'named', path: projectLinkedProgramDeclarationPath(value.name, program.declarations, rootedNamespace) };
     if (['array', 'option', 'set', 'cell'].includes(value.kind)) return { ...value, element: projectType(value.element) };
     if (value.kind === 'tuple') return { ...value, elements: value.elements.map(projectType) };
+    if (value.kind === 'union') return { ...value, alternatives: value.alternatives.map(projectType) };
     if (value.kind === 'record') return { ...value, fields: value.fields.map(field => ({ ...field, type: projectType(field.type) })) };
     if (value.kind === 'map') return { ...value, key: projectType(value.key), value: projectType(value.value) };
     if (value.kind === 'function') return { ...value, params: value.params.map(projectType), ret: projectType(value.ret) };
@@ -71,9 +72,15 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
       ...(entry.sourceUnitCloneDerivation!==undefined?{sourceUnitCloneDerivation:entry.sourceUnitCloneDerivation}:{}),
     };
     if (entry.k !== 'fn') throw new TypeError(`the linked declaration ${entry.k} has no checked surface projection`);
+    const annotation = readProgramDeclarationTypeProjectionField(entry.k, 'annotation');
+    const semantic = readProgramDeclarationTypeProjectionField(entry.k, 'semantic');
+    const result = readProgramDeclarationTypeProjectionField(entry.k, 'result');
+    const retained = annotation && Object.hasOwn(entry, annotation);
     return { k: 'fn', name: entry.name,
       params: entry.params.map(parameter => ({ ...parameter, type: projectType(parameter.type) })),
-      ret: projectType(entry.ret), body: projectExpression(entry.body), span: entry.span,
+      ret: projectType(retained ? entry[annotation] : entry.ret),
+      ...(retained ? {[semantic]: projectType(entry[result])} : {}),
+      body: projectExpression(entry.body), span: entry.span,
       ...(entry.generated !== undefined ? { generated: entry.generated } : {}),
       ...(entry.sourceConstFunction!==undefined?{sourceConstFunction:entry.sourceConstFunction}:{}),
       ...(entry.sourceSignature !== undefined ? { sourceSignature: entry.sourceSignature } : {}),

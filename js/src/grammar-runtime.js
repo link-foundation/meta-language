@@ -10,6 +10,7 @@ import { GrammarRuntimeError, loadProgram } from './grammar-runtime/load.js';
 import { decorateGrammar, decorateSyntaxTree } from './grammar-decorators.js';
 import { collectAmbiguities, firstRecovery, publicTree, renderSyntaxTree } from './grammar-runtime/syntax-tree.js';
 import { inputBytes, lineAndColumn } from './grammar-runtime/text.js';
+import { qualifyGrammarRoot } from './grammar-runtime/grammar-selection.js';
 
 export { GrammarRuntimeError, renderSyntaxTree };
 
@@ -57,7 +58,7 @@ function runParse(program, bytes, startRule, options, maxDepth, expectations, me
     executor.expectations = expectations.restart();
     prepare(executor);
     const outcome = executor.run(startRule);
-    if (!expectations.stale) return outcome;
+    if (!expectations.stale) return { ...outcome, executor };
   }
 }
 
@@ -88,7 +89,7 @@ function repairParse(program, bytes, startRule, options, maxDepth, failed, keywo
     }
     if (outcome.ok) return outcome;
   }
-  return { ok: true, root: outcome.partial };
+  return { ok: true, root: outcome.partial, executor: outcome.executor };
 }
 
 /**
@@ -117,6 +118,7 @@ function parseProgram(program, source, options) {
       });
       if (!outcome.ok && options.errorRecovery) outcome = repairParse(program, bytes, startRule, options, maxDepth, outcome, keywords, expectations, memory);
     } while (keywords && outcome.ok && keywords.conflicts(outcome.root));
+    if (outcome.ok && options.grammarName && options.globalConceptSpace) outcome.root = qualifyGrammarRoot(outcome.executor, outcome.root, options.grammarName);
   } catch (error) {
     if (error instanceof StepLimitReached) {
       return { ok: false, tree: null, ambiguities: [], rejection: { reason: 'stepLimit', limit: budget.limit } };
@@ -131,13 +133,17 @@ function parseProgram(program, source, options) {
     throw error;
   }
   if (!outcome.ok) {
+    const diagnostics = budget.memory.selectionDiagnostics;
+    if (diagnostics?.length) return { ok: false, tree: null, ambiguities: [], rejection: positioned(diagnostics[0].reason, bytes, diagnostics[0].start, { diagnostics }) };
     return { ok: false, tree: null, ambiguities: [], rejection: positioned('syntax', bytes, outcome.farthest, { expected: outcome.expected }) };
   }
   const tree = decorateSyntaxTree(publicTree(outcome.root, bytes), options.decorators);
   const ambiguities = collectAmbiguities(outcome.root, program);
   let rejection = null;
+  const diagnostics = memory.selectionDiagnostics;
   const recovery = firstRecovery(tree);
-  if (recovery && options.recovery !== 'accept') rejection = positioned('recovered', bytes, recovery.start);
+  if (diagnostics?.length) rejection = positioned(diagnostics[0].reason, bytes, diagnostics[0].start, { diagnostics });
+  else if (recovery && options.recovery !== 'accept') rejection = positioned('recovered', bytes, recovery.start);
   else if (ambiguities.length > 0 && options.ambiguity === 'reject') rejection = positioned('ambiguity', bytes, ambiguities[0].start);
   return { ok: rejection === null, tree, ambiguities, rejection };
 }
@@ -152,6 +158,10 @@ function parseProgram(program, source, options) {
  * `errorRecovery: true` repairs a failed parse into such a tree (at most
  * `maxRepairs` repair points) instead of rejecting it without one.
  * Each parse may override the options and choose a `startRule`.
+ * Linked `any-grammar` and `all-grammar` expressions retain candidate CSTs.
+ * Supplying both `grammarName` and an existing `globalConceptSpace` also
+ * stores the root invocation's qualified provenance in an embed boundary;
+ * other parses keep their existing root shape. Only identity mappings run.
  * `options.decorators` (a DecoratorSet) decorates the grammar's rules at the
  * `grammar-rule` level before it is loaded and every tree at the `executor`
  * and `recovery` levels (see `decorateSyntaxTree`).

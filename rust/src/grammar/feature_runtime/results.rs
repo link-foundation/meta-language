@@ -133,6 +133,8 @@ pub(super) struct Tree {
     pub(super) end: usize,
     pub(super) children: Children,
     pub(super) attributes: Option<BTreeMap<String, OperationValue>>,
+    /// Lossless source-local lexer metadata, including unknown linked keys.
+    pub(super) lexical: Option<serde_json::Value>,
     pub(super) precedence: Option<PrecedenceTag>,
     /// The innermost precedence over the node's last part, which its rule
     /// reduces with (see `reduction`).
@@ -177,6 +179,7 @@ pub(super) struct Tree {
     pub(super) language: Option<Name>,
     pub(super) root: Option<Rc<Self>>,
     pub(super) program: usize,
+    pub(super) selection: Option<Rc<super::grammar_selection::SelectionMetadata>>,
 }
 
 impl Tree {
@@ -193,6 +196,7 @@ impl Tree {
             end,
             children: no_children(),
             attributes: None,
+            lexical: None,
             precedence: None,
             tail: None,
             priority: None,
@@ -212,6 +216,7 @@ impl Tree {
             language: None,
             root: None,
             program: 0,
+            selection: None,
         }
     }
 
@@ -256,6 +261,7 @@ pub(super) fn with_leaf(leaves: &[Rc<Tree>], leaf: Tree) -> Children {
 /// One way an expression matches: its end, the state after it, the trees it built.
 #[derive(Clone, Debug)]
 pub(super) struct Res {
+    pub(super) lexical_family: Option<Name>,
     pub(super) end: usize,
     pub(super) state: State,
     pub(super) children: Children,
@@ -279,6 +285,7 @@ pub(super) struct Res {
 impl Res {
     pub(super) const fn new(end: usize, state: State, children: Children, dynamic: i64) -> Self {
         Self {
+            lexical_family: None,
             end,
             state,
             children,
@@ -294,6 +301,10 @@ impl Res {
 
     pub(super) fn join(left: &Self, right: Self, in_token: bool) -> Self {
         Self {
+            lexical_family: right
+                .lexical_family
+                .clone()
+                .or_else(|| left.lexical_family.clone()),
             end: right.end,
             state: right.state,
             children: if in_token {
@@ -324,8 +335,8 @@ impl Res {
         self
     }
 
-    pub(super) fn key(&self) -> (usize, State) {
-        (self.end, self.state.clone())
+    pub(super) fn key(&self) -> (usize, State, Option<Name>) {
+        (self.end, self.state.clone(), self.lexical_family.clone())
     }
 }
 
@@ -356,7 +367,7 @@ impl TokenOrder<'_> {
 #[derive(Clone, Debug, Default)]
 pub(super) struct ResultSet<'c> {
     pub(super) items: Vec<Res>,
-    index: HashMap<(usize, State), usize>,
+    index: HashMap<(usize, State, Option<Name>), usize>,
     /// The token ranks the `tokens` and `precedence` settling steps read.
     tokens: Option<TokenOrder<'c>>,
     /// The grammar's settling steps.
@@ -428,7 +439,7 @@ impl<'c> ResultSet<'c> {
     }
 
     /// The result of the end and state `key`, if any.
-    pub(super) fn get_key(&self, key: &(usize, State)) -> Option<&Res> {
+    pub(super) fn get_key(&self, key: &(usize, State, Option<Name>)) -> Option<&Res> {
         self.index.get(key).map(|&position| &self.items[position])
     }
 
@@ -529,6 +540,10 @@ pub(super) fn content_start(children: &[Rc<Tree>], fallback: usize) -> usize {
 /// lexical caches are counted while retained and may be discarded to free space.
 #[derive(Debug)]
 pub(super) struct Shared {
+    pub(super) runtime_error: Rc<RefCell<Option<super::load::GrammarRuntimeError>>>,
+    pub(super) global_concept_space: Option<Rc<serde_json::Value>>,
+    pub(super) selection_diagnostics: Rc<RefCell<Vec<serde_json::Value>>>,
+    pub(super) active_embedded: RefCell<HashSet<(usize, usize, usize)>>,
     pub(super) steps: Cell<usize>,
     pub(super) limit: usize,
     pub(super) frames: Cell<usize>,
@@ -649,7 +664,7 @@ pub(super) struct Scanned {
 
 /// A rule call: rule index, offset, state, in a token, and, while
 /// repairing, how it is made, plus the extra parser context and its start.
-pub(super) type MemoKey = (usize, usize, State, bool, Repair, InExtra, usize);
+pub(super) type MemoKey = (usize, usize, State, bool, Repair, InExtra, usize, Name);
 
 /// How a rule call is made while repairing: in the open, quietly (where
 /// nothing is repaired), or after a MISSING leaf at its offset.

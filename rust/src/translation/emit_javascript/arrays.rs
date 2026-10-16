@@ -15,10 +15,52 @@ impl JavaScriptEmitter<'_> {
                 self.expr(left)?,
                 self.expr(right)?
             )),
-            Node::Index { array, index } => {
+            Node::OptionalIndex { array, index } => {
+                let values = self.expr(array)?;
+                let position = self.expr(index)?;
+                Ok(
+                    crate::translation::array_value_rules::render_optional_array_read(
+                        "JavaScript",
+                        index.ty.kind(),
+                        &values,
+                        &position,
+                    ),
+                )
+            }
+            Node::StringPoints { object } => {
+                let value = self.expr(object)?;
+                Ok(
+                    crate::translation::array_value_rules::render_string_point_iteration(
+                        "JavaScript",
+                        false,
+                        &value,
+                    ),
+                )
+            }
+            Node::CollectionItems { object, op } => {
+                let map = matches!(object.ty, super::Type::Map { .. });
+                let value = self.expr(object)?;
+                Ok(
+                    crate::translation::array_value_rules::render_collection_iteration(
+                        "JavaScript",
+                        map,
+                        op,
+                        &value,
+                        "",
+                        "",
+                    ),
+                )
+            }
+            Node::Index {
+                array,
+                index,
+                proven_in_bounds,
+            } => {
                 self.arrays();
                 self.helpers.insert(Helper::At);
-                self.state.array_read();
+                if !proven_in_bounds {
+                    self.state.array_read();
+                }
                 Ok(format!(
                     "ml_at({}, {})",
                     self.expr(array)?,

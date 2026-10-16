@@ -92,6 +92,16 @@ pub fn render_portable_type_identity(kind: &str, detail: &str, children: &[Strin
             )),
             (String::from("]"))
         )
+    } else if (kind == "union") {
+        format!(
+            "{}{}",
+            (format!(
+                "{}{}",
+                (String::from("union:[")),
+                (crate::translation::structured_type_rules::join_type_names(children, ","))
+            )),
+            (String::from("]"))
+        )
     } else if (kind == "record") {
         format!(
             "{}{}",

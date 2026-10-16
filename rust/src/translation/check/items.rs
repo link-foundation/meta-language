@@ -86,6 +86,7 @@ impl Checker {
                     name: name.clone(),
                     params: Vec::new(),
                     ret: UNIT,
+                    annotated_ret: None,
                     body: Expr::new(Node::Unit, UNIT),
                     span,
                     generated: function.generated,
@@ -196,7 +197,16 @@ impl Checker {
                     default_value: param.default_value.clone(),
                 });
             }
-            let ret = self.resolve_type(item.ret.as_ref(), path, item.span)?;
+            let ret = self.resolve_type(
+                item.semantic_ret.as_ref().or(item.ret.as_ref()),
+                path,
+                item.span,
+            )?;
+            let annotated_ret = item
+                .semantic_ret
+                .as_ref()
+                .map(|_| self.resolve_type(item.ret.as_ref(), path, item.span))
+                .transpose()?;
             let mut source_signature = item.source_signature.as_deref().cloned();
             if let Some(signature) = source_signature.as_mut() {
                 for position in signature
@@ -216,11 +226,20 @@ impl Checker {
                     self.language.as_str(),
                 )?;
             }
+            if let Some(annotation) = &annotated_ret
+                && !super::optional_values::annotation_compatible(&ret, annotation)
+            {
+                return Err(type_error(
+                    "the semantic return type must retain the annotated value types",
+                    item.span,
+                ));
+            }
             let name = full(path, &item.name);
             if let Some(Decl::Fn(entry)) = self.decls.get_mut(&name) {
                 entry.source_signature = source_signature;
                 entry.params = params;
                 entry.ret = ret;
+                entry.annotated_ret = annotated_ret;
             }
             self.signatures.insert(name);
         }
@@ -501,6 +520,37 @@ impl Checker {
         );
         if !refusal.is_empty() {
             return Err(unsupported("Rust Float display", &refusal, expr.span));
+        }
+        if let Type::Option { element, .. } = &value.ty {
+            if !crate::translation::optional_value_rules::accept_optional_primitive_kind(
+                element.kind(),
+            ) {
+                return Err(unsupported(
+                    "output of nullable structured values",
+                    "this output needs its source structured-value formatter",
+                    expr.span,
+                ));
+            }
+            if style == ShowStyle::JsFormatFirst && **element == Type::String {
+                refuse_format(style, element, false, expr.span)?;
+            }
+            if matches!(
+                style,
+                ShowStyle::JsFormatNumber | ShowStyle::JsFormatInteger
+            ) {
+                return Err(unsupported(
+                    "numeric format of a nullable value",
+                    "the format directive converts each absent value before printing; this conversion needs its own operational formatter",
+                    expr.span,
+                ));
+            }
+            return Ok(Expr::new(
+                Node::OptionalText {
+                    arg: Box::new(value),
+                    console: style.is_console(),
+                },
+                STRING,
+            ));
         }
         let bigint = matches!(value.ty, Type::Int | Type::Nat);
         refuse_format(style, &value.ty, bigint, expr.span)?;

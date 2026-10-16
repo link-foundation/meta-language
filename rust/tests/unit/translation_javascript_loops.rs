@@ -145,6 +145,55 @@ fn mutable_bindings_javascript_could_not_run_as_translated_are_rejected() {
         ),
     ];
     for (source, message) in cases {
+        if source == "function f(n) { let x; x = n; return x; }"
+            || source == "function f(n) { while (n > 0n) { if (n === 3n) return n; n--; } }"
+        {
+            let calls = if source.contains("while") {
+                "console.log(f(4n));console.log(f(0n));"
+            } else {
+                "console.log(f(17));"
+            };
+            let runnable = format!("{source}\n{calls}");
+            let original = Command::new("node")
+                .args(["--input-type=module", "-e", &runnable])
+                .output()
+                .expect("Node.js supplies the original modern JavaScript observation");
+            assert!(
+                original.status.success(),
+                "{}",
+                String::from_utf8_lossy(&original.stderr)
+            );
+            let checked =
+                check_program(&parse(&runnable)).expect("modern optional loop source checks");
+            let text = emit_javascript(&checked)
+                .expect("modern optional loop source emits")
+                .text;
+            let emitted = Command::new("node")
+                .args(["--input-type=module", "-e", &text])
+                .output()
+                .expect("Node.js runs the actual emitted complete module");
+            assert_eq!(emitted.status.code(), original.status.code(), "{source}");
+            assert_eq!(emitted.stdout, original.stdout, "{source}");
+            assert_eq!(emitted.stderr, original.stderr, "{source}");
+            assert_eq!(
+                emitted.stdout,
+                if source.contains("while") {
+                    b"3n\nundefined\n".as_slice()
+                } else {
+                    b"17\n".as_slice()
+                }
+            );
+            for target in ["Rust", "Lean", "Rocq"] {
+                let translated = translate_program(&runnable, "JavaScript", target)
+                    .expect("the original modern loop input has a translation descriptor");
+                assert_eq!(
+                    translated.contract().support,
+                    TranslationSupport::SemanticTranslation,
+                    "{target}: {source}"
+                );
+            }
+            continue;
+        }
         let error = parse_javascript(source).expect_err(source);
         assert_eq!(error.message(), message, "{source}");
     }

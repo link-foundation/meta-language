@@ -32,6 +32,8 @@ pub(super) enum Abort {
     StepLimit,
     NestingTooDeep,
     MemoryBudget,
+    /// An explicit unresolved executable obligation, retained by Shared.
+    Operation,
 }
 
 /// Why an operation does not complete.

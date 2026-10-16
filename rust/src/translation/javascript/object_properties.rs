@@ -7,7 +7,7 @@ use super::{
 use crate::translation::primitive_value_rules::{
     accept_object_freeze_operand, accept_object_property_definition,
 };
-use crate::translation::surface::ConstructorPrototypeDefinition;
+use crate::translation::surface::{ConstructorPrototypeDefinition, SRecordEntry};
 
 fn literal_array_value(value: &SExpr) -> bool {
     match &value.node {
@@ -25,6 +25,8 @@ impl JavaScriptParser {
         let start = self.cursor.advance();
         let mut tag = None;
         let mut fields: Vec<(String, SExpr)> = Vec::new();
+        let mut entries = Vec::new();
+        let mut duplicate = None;
         let mut prototype_definition = None;
         let mut property_index = 0;
         while !self.cursor.is("}") {
@@ -32,8 +34,16 @@ impl JavaScriptParser {
             property_index += 1;
             let mut key = self.peek();
             let mut here = Some(span(&key, &key));
-            if self.cursor.is("...") {
-                return Err(unsupported("object spread", "name every field", here));
+            if self.cursor.eat("...").is_some() {
+                entries.push(SRecordEntry {
+                    name: None,
+                    spread: true,
+                    value: self.expr()?,
+                });
+                if self.cursor.eat(",").is_none() {
+                    break;
+                }
+                continue;
             }
             let computed = self.cursor.eat("[").is_some();
             if computed {
@@ -77,7 +87,13 @@ impl JavaScriptParser {
                     span: span(&key, &key),
                     index,
                 });
-            } else if key.value == "$" {
+            } else if super::surface_rules::read_java_script_object_property_form(
+                &key.value,
+                self.cursor.is("("),
+                self.cursor.is(":"),
+                !computed && key.kind == TokenKind::Identifier,
+            ) == "tag"
+            {
                 self.cursor.expect(":", Some("object"))?;
                 let value = self.cursor.advance();
                 if value.kind != TokenKind::String {
@@ -89,20 +105,22 @@ impl JavaScriptParser {
                 }
                 tag = Some(value.value);
             } else {
-                if fields.iter().any(|(name, _)| *name == key.value) {
-                    return Err(type_error(format!("duplicate field {}", key.value), here));
+                if duplicate.is_none() && fields.iter().any(|(name, _)| *name == key.value) {
+                    duplicate = Some(key.clone());
                 }
-                if self.cursor.is("(") {
-                    return Err(unsupported(
-                        "method in an object value",
-                        "functions as values are outside the portable core",
-                        here,
-                    ));
-                }
-                let value = if self.cursor.eat(":").is_some() {
+                let form = super::surface_rules::read_java_script_object_property_form(
+                    &key.value,
+                    self.cursor.is("("),
+                    self.cursor.is(":"),
+                    !computed && key.kind == TokenKind::Identifier,
+                );
+                let value = if form == "method" {
+                    self.read_closure(true)?
+                } else if form == "field" {
+                    self.cursor.advance();
                     self.expr()?
                 } else {
-                    if computed || key.kind != TokenKind::Identifier {
+                    if form == "missing-colon" {
                         return Err(Self::fail(
                             "expected : after the object property name",
                             &key,
@@ -110,27 +128,52 @@ impl JavaScriptParser {
                     }
                     self.reference(&key)?
                 };
-                fields.push((key.value, value));
+                entries.push(SRecordEntry {
+                    name: Some(key.value.clone()),
+                    spread: false,
+                    value: value.clone(),
+                });
+                if let Some((_, current)) = fields.iter_mut().find(|(name, _)| *name == key.value) {
+                    *current = value;
+                } else {
+                    fields.push((key.value, value));
+                }
             }
             if self.cursor.eat(",").is_none() {
                 break;
             }
         }
         self.cursor.expect("}", Some("object"))?;
-        let Some(tag) = tag else {
-            if let Some(prototype) = prototype_definition {
-                return Err(unsupported(
-                    "object prototype definition",
-                    "an uncomputed __proto__: entry is prototype-definition syntax rather than an own data property; the native surface model does not yet represent untagged records",
-                    Some(prototype.span),
-                ));
-            }
+        let form = super::surface_rules::read_java_script_object_value_form(
+            tag.is_some(),
+            duplicate.is_some(),
+            entries.iter().any(|entry| entry.spread),
+        );
+        if form == "record" {
+            return Ok(node(
+                SNode::Record {
+                    entries,
+                    ty: None,
+                    prototype_definition,
+                },
+                self.to_here(&start),
+            ));
+        }
+        if form == "duplicate" {
+            let key = duplicate.expect("shared duplicate selection");
+            return Err(type_error(
+                format!("duplicate field {}", key.value),
+                Some(span(&key, &key)),
+            ));
+        }
+        if form == "spread" {
             return Err(unsupported(
-                "object without a $ tag",
-                "a portable object is an alternative of a @typedef data type",
+                "tagged object spread",
+                "constructor spreads require a complete tagged field projection",
                 Some(self.to_here(&start)),
             ));
-        };
+        }
+        let tag = tag.expect("shared tagged constructor selection");
         Ok(node(
             SNode::CtorObject {
                 tag,

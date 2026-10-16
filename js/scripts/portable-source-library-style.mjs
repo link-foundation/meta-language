@@ -39,7 +39,8 @@ export function readPortableSourceParameterStyles(source, {publicNames = [], own
         element = element.slice(4, -1);
         depth += 1;
       }
-      param.borrow = (param.type === 'String' || depth > 0 && ['String', 'f64', 'bool'].includes(element))
+      const textLeaf = /^(?:[A-Za-z_][A-Za-z_0-9]*::)*ml_string::Text$/u.test(element);
+      param.borrow = (param.type === 'String' || depth > 0 && (['String', 'f64', 'bool'].includes(element) || textLeaf))
         && !assigned.has(param.name)
         && !(Object.hasOwn(ownedParameters, name) && ownedParameters[name].includes(param.name));
     }
@@ -57,6 +58,16 @@ export function readPortableSourceParameterStyles(source, {publicNames = [], own
     // longer identifier containing the parameter name retains its bytes.
     const copies = [];
     const before = tokenize(block, 'Rust').tokens;
+    const bodyStart = before.findIndex(token => token.kind === 'punct' && token.value === '{');
+    const parentheses = new Map(), openings = [];
+    for (let index = bodyStart; index < before.length; index += 1) {
+      if (before[index].kind !== 'punct') continue;
+      if (['(', '[', '{'].includes(before[index].value)) openings.push(index);
+      else if ([')', ']', '}'].includes(before[index].value)) {
+        const opening = openings.pop();
+        parentheses.set(opening, index);
+      }
+    }
     for (let index = 0; index < before.length; index += 1) {
       const token = before[index];
       const parameter = declaration.params.find(value => value.borrow && value.name === token.value);
@@ -71,6 +82,20 @@ export function readPortableSourceParameterStyles(source, {publicNames = [], own
         index += 4;
       } else if (before[index - 1]?.value === '&' && [',', ')'].includes(before[index + 1]?.value)) {
         copies.push([before[index - 1].start, before[index - 1].end, '']);
+      } else if (index > bodyStart && ['return', '=', ',', '(', '[', '{', '=>'].includes(before[index - 1]?.value)
+        && [',', ';', ')', ']', '}'].includes(before[index + 1]?.value)) {
+        // Final-use emission may transfer an owned parameter directly in a
+        // return, binding, tuple/array slot or owned call. Once its interface
+        // is borrowed, retain that original owned value with one copy here.
+        // Actual borrowed callees remove these leaf copies below, and an
+        // explicit reference (including parenthesized ones) stays borrowed.
+        let left = index, right = index;
+        while (before[left - 1]?.value === '(' && parentheses.get(left - 1) === right + 1) {
+          left -= 1; right += 1;
+        }
+        if (before[left - 1]?.value !== '&') {
+          copies.push([token.start, token.end, token.value + (parameter.type === 'String' ? '.to_owned()' : '.to_vec()')]);
+        }
       }
     }
     for (const [start, end, text] of copies.sort((left, right) => right[0] - left[0])) {
@@ -97,7 +122,12 @@ export function readPortableSourceParameterStyles(source, {publicNames = [], own
       for (const [position, [from, end]] of arguments_.entries()) {
         if (from === end || !target.params[position]?.borrow) continue;
         const text = block.slice(tokens[from].start, tokens[end - 1].end);
-        const borrowed = text.replace(/^(\w+)\.(?:to_vec|to_owned|clone)\(\)$/u, '$1');
+        let first = from, last = end;
+        while (tokens[first]?.value === '(' && matching.get(first) === last - 1) { first += 1; last -= 1; }
+        const grouped = block.slice(tokens[first].start, tokens[last - 1].end);
+        const leaf = /^\w+(?:\.(?:to_vec|to_owned|clone)\(\))?$/u.test(grouped)
+          || /^String::from\("[^"\\]*"\)$/u.test(grouped);
+        const borrowed = (leaf ? grouped : text).replace(/^(\w+)\.(?:to_vec|to_owned|clone)\(\)$/u, '$1');
         const parameter = declaration.params.find(value => value.name === borrowed);
         const literal = /^String::from\(("[^"\\]*")\)$/u.exec(borrowed);
         if (literal) edits.push([tokens[from].start, tokens[end - 1].end, literal[1]]);
@@ -129,11 +159,34 @@ export function partitionPortableRustLibrary(source, {notice = '', directory, ma
   assert.match(directory, /^[a-z][a-z_0-9]*$/u, 'a portable library has one explicit child-module directory');
   assert.ok(Number.isSafeInteger(maximumLines) && maximumLines > 0 && maximumLines < 990);
   const lines = source.trimEnd().split('\n');
+  // Attributes belong to their following declaration, including attributes
+  // rustfmt expands over multiple lines. Read balanced token spans so quoted
+  // brackets and nested attribute arguments cannot create module boundaries.
+  const tokens = tokenize(source, 'Rust').tokens;
+  const attributeLines = new Map();
+  const lineAt = offset => source.slice(0, offset).split('\n').length - 1;
+  for (let index = 0; index < tokens.length; index += 1) {
+    if (tokens[index].kind !== 'punct' || tokens[index].value !== '#'
+      || tokens[index + 1]?.value !== '[') continue;
+    let depth = 0, end = index + 1;
+    for (; end < tokens.length; end += 1) {
+      if (tokens[end].kind !== 'punct') continue;
+      if (tokens[end].value === '[') depth += 1;
+      if (tokens[end].value === ']' && --depth === 0) break;
+    }
+    assert.ok(end < tokens.length, 'a generated attribute has its complete bracket span');
+    attributeLines.set(lineAt(tokens[end].end), lineAt(tokens[index].start));
+    index = end;
+  }
   const starts = [];
   for (let index = 0; index < lines.length; index += 1) {
     if (!/^pub (?:fn|enum|struct|mod) /u.test(lines[index])) continue;
     let start = index;
-    while (start > (starts.at(-1) ?? 0) && /^(?:\s*|\/\/\/.*|#\[[^\n]*\])$/u.test(lines[start - 1])) start -= 1;
+    while (start > (starts.at(-1) ?? 0)) {
+      if (attributeLines.has(start - 1)) start = attributeLines.get(start - 1);
+      else if (/^(?:\s*|\/\/.*)$/u.test(lines[start - 1])) start -= 1;
+      else break;
+    }
     starts.push(start);
   }
   assert.ok(starts.length, 'a complete portable library has emitted public declarations');

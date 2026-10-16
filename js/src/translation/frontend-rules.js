@@ -562,7 +562,7 @@ export function readUnitAlternativeExpressionForm(kind) {
   if (kind === 'choice') return 2;
   if (kind === 'alias' || kind === 'capture' || kind === 'precedence'
     || kind === 'namedPrecedence' || kind === 'dynamicPrecedence'
-    || kind === 'optional') return 3;
+    || kind === 'optional' || kind === 'lexicalScope') return 3;
   return 0;
 }
 
@@ -610,4 +610,21 @@ export function acceptLexicalCacheReservation(cells, count, limit) {
  */
 export function acceptPrecedenceOperandHead(sourceRuleMatches, sourceReductionMatches) {
   return sourceRuleMatches || sourceReductionMatches;
+}
+
+/**
+ * The longest viable token wins; declaration order settles equal lengths.
+ * Channels and parser expectations never change this lexical election.
+ * @param {number[]} ends @param {boolean[]} eligible @returns {number}
+ */
+export function readLexicalWinnerIndex(ends, eligible) {
+  let best = -1;
+  let index = 0;
+  while (index < ends.length && index < eligible.length) {
+    if (eligible[index]) {
+      if (best < 0 || ends[index] > ends[best]) best = index;
+    }
+    index += 1;
+  }
+  return best;
 }

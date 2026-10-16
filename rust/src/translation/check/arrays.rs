@@ -5,6 +5,9 @@ use super::{
     Checker, Env, Expr, FLOAT, INT, Language, Node, Result, SArrayItem, SExpr, Span,
     TranslationError, Type, array, type_error, unsupported,
 };
+use crate::translation::array_value_rules::{
+    select_optional_array_index_number, select_optional_array_read,
+};
 use crate::translation::primitive_value_rules::accept_tuple_index;
 use std::collections::HashMap;
 
@@ -36,6 +39,68 @@ pub(super) fn immutable_product_value(value: &Expr, bindings: &HashMap<String, b
 }
 
 impl Checker {
+    /// Select a source iterator through the shared kind and reference policy.
+    pub(super) fn for_of_iterable(
+        &mut self,
+        object: &SExpr,
+        span: Option<Span>,
+        env: &Env,
+        path: &[String],
+    ) -> Result<Expr> {
+        let object = self.expr(object, env, path, None, false)?;
+        let form = crate::translation::array_value_rules::read_array_iterable_form(
+            object.ty.kind(),
+            object.ty.is_reference(),
+        );
+        match form.as_str() {
+            "array" => Ok(object),
+            "string" => Ok(Expr::new(
+                Node::StringPoints {
+                    object: Box::new(object),
+                },
+                array(Type::String),
+            )),
+            "mutable" => Err(unsupported(
+                "mutable collection iteration",
+                "live collection iteration needs ordered entries and tombstones rather than a snapshot",
+                span,
+            )),
+            "set" => {
+                let Type::Set { element, .. } = &object.ty else {
+                    unreachable!("a selected set iterator has its set owner");
+                };
+                let ty = array(element.as_ref().clone());
+                Ok(Expr::new(
+                    Node::CollectionItems {
+                        object: Box::new(object),
+                        op: "values".to_owned(),
+                    },
+                    ty,
+                ))
+            }
+            "map" => {
+                let Type::Map { key, value, .. } = &object.ty else {
+                    unreachable!("a selected map iterator has its map owner");
+                };
+                let ty = array(Type::Tuple {
+                    elements: vec![key.as_ref().clone(), value.as_ref().clone()],
+                });
+                Ok(Expr::new(
+                    Node::CollectionItems {
+                        object: Box::new(object),
+                        op: "entries".to_owned(),
+                    },
+                    ty,
+                ))
+            }
+            _ => Err(unsupported(
+                "for-of iterator",
+                "this value needs an operational iterator representation",
+                span,
+            )),
+        }
+    }
+
     /// `[a, ...xs, b]` is the array of the runs of elements between the spread
     /// arrays, appended in order; `[...xs]` is `xs` itself, since no array is
     /// ever mutated.
@@ -234,6 +299,7 @@ impl Checker {
         path: &[String],
     ) -> Result<Expr> {
         let object = self.expr(object, env, path, None, false)?;
+        let object = self.reference_value(object);
         let Type::Tuple { elements } = &object.ty else {
             return Err(type_error("tuple projection requires a tuple value", span));
         };
@@ -259,13 +325,31 @@ impl Checker {
     /// `xs[i]`, whose index is a Number or a `BigInt`.
     pub(super) fn index(
         &mut self,
-        object: &SExpr,
-        index: &SExpr,
-        span: Option<Span>,
+        node: &SExpr,
         env: &Env,
         path: &[String],
+        expected: Option<&Type>,
     ) -> Result<Expr> {
+        let super::SNode::Index {
+            object,
+            index,
+            optional,
+            proven_in_bounds,
+        } = &node.node
+        else {
+            unreachable!("an array index checker receives its actual surface index");
+        };
+        let span = node.span;
+        let optional = optional
+            .as_ref()
+            .and_then(super::super::surface::SurfaceRawMetadata::as_boolean)
+            == Some(true);
+        let proven_in_bounds = proven_in_bounds
+            .as_ref()
+            .and_then(super::super::surface::SurfaceRawMetadata::as_boolean)
+            == Some(true);
         let array = self.expr(object, env, path, None, false)?;
+        let array = self.reference_value(array);
         if let Type::Tuple { elements } = &array.ty
             && let super::SNode::Num {
                 value, negative, ..
@@ -299,6 +383,7 @@ impl Checker {
         };
         let place = index.span.or(span);
         let index = self.expr(index, env, path, None, false)?;
+        let index = self.array_index_number(index);
         if !index.ty.is_float() && !matches!(index.ty, Type::Int | Type::Nat) {
             return Err(type_error(
                 format!(
@@ -308,13 +393,70 @@ impl Checker {
                 place,
             ));
         }
-        Ok(Expr::new(
+        Ok(self.array_index_result(
+            array,
+            index,
+            element,
+            (optional, proven_in_bounds),
+            expected,
+        ))
+    }
+
+    fn array_index_number(&self, index: Expr) -> Expr {
+        let optional_element = match &index.ty {
+            Type::Option { element, .. } => element.kind(),
+            _ => "",
+        };
+        if select_optional_array_index_number(
+            self.language.as_str(),
+            index.ty.kind(),
+            optional_element,
+        ) {
+            return Expr::new(
+                Node::OptionalIndexNumber {
+                    arg: Box::new(index),
+                },
+                FLOAT,
+            );
+        }
+        index
+    }
+
+    fn array_index_result(
+        &self,
+        array: Expr,
+        index: Expr,
+        element: Type,
+        flags: (bool, bool),
+        expected: Option<&Type>,
+    ) -> Expr {
+        let (optional, proven_in_bounds) = flags;
+        let expected_optional = matches!(expected, Some(Type::Option { element: expected, .. }) if expected.as_ref() == &element);
+        if select_optional_array_read(
+            self.language.as_str(),
+            optional,
+            proven_in_bounds,
+            expected_optional,
+        ) {
+            return super::optional_values::flatten_option(Expr::new(
+                Node::OptionalIndex {
+                    array: Box::new(array),
+                    index: Box::new(index),
+                },
+                Type::Option {
+                    element: Box::new(element),
+                    absence: "undefined".to_owned(),
+                },
+            ));
+        }
+        Expr::new(
             Node::Index {
                 array: Box::new(array),
                 index: Box::new(index),
+                proven_in_bounds,
             },
             element,
-        ))
+        )
     }
 
     /// The length of an array: a Number, or for the counter of a for…of loop an integer.
@@ -340,22 +482,16 @@ impl Checker {
     }
 
     /// Array sizes and UTF-16 string lengths; `None` for other fields.
-    pub(super) fn length_field(
-        &mut self,
-        object: &SExpr,
-        env: &Env,
-        path: &[String],
-    ) -> Result<Option<Expr>> {
-        let array = self.expr(object, env, path, None, false)?;
+    pub(super) fn length_field(&self, array: Expr) -> Option<Expr> {
         if array.ty.element().is_some() || array.ty == Type::String {
-            return Ok(Some(Expr::new(
+            return Some(Expr::new(
                 Node::Length {
                     array: Box::new(array),
                 },
                 FLOAT,
-            )));
+            ));
         }
-        Ok(None)
+        None
     }
 }
 

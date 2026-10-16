@@ -540,7 +540,7 @@ function translateGroup(group, from, to, decorators, context = {}) {
     // A top-level constant is a Rust constant; other top-level statements run once, as a program.
     const constants = family(to) === 'Rust' ? emitRustConstants(program) : null;
     if (!constants && program.main.effects.length > 0) return carry(text, term, from, 'top-level statement');
-    emitted = constants ?? (family(to) === 'Rust' ? emitRust : emitJavaScript)(program);
+    emitted = constants ?? (family(to) === 'Rust' ? emitRust : emitJavaScript)(program, family(to) === 'Rust' ? {arrayConsumption: true} : {});
     signatures = program.imports ? context.externals : declaredSignatures(program, constants);
   } catch (error) {
     if (!(error instanceof TranslationError)) throw error;

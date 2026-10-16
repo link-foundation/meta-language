@@ -9,6 +9,12 @@ import { renderStringMapExpression, renderStringTestExpression } from './fronten
 // proof obligation stays discharged by the source language's kernel.
 
 import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
+import { renderSurfaceReferenceOperation } from './surface-reference-analysis-rules.js';
+import { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';
+import { renderPrimitiveMethodArgument, renderPrimitiveMethodExpression } from './primitive-method-rules.js';
+import { renderRecordField, renderRecordValue } from './record-emission-rules.js';
+import { readOptionalJavaScriptTextPrelude, renderOptionalAbsentValue, renderOptionalCoalescing, renderOptionalFlattening, renderOptionalJavaScriptOperation, renderOptionalPresentValue, renderOptionalPrimitiveTruth, renderOptionalProjection, renderOptionalStrictEquality, renderOptionalUnwrapping } from './optional-value-rules.js';
+import { renderCallableApplication, renderCallableCellOperation, renderCallableFunctionReference, renderCallableLambda } from './callable-source-rules.js';
 import { requireDataObjectFreeze } from './primitive-value-rules.js';
 import { renderJavaScriptUnit, renderTupleProjection, renderTupleValue } from './product-emission-rules.js';
 import { acceptProgramTupleProductModel } from '../typed-program-link-rules.js';
@@ -78,12 +84,7 @@ function ml_divide(a, b, rounding, zero, remainder, bounds) {
 function ml_showNumber(value) {
   return Object.is(value, -0) ? '-0' : String(value);
 }`,
-  showOptional: `function ml_showOptional(value) {
-  if (value === null) return 'null';
-  if (value === undefined) return 'undefined';
-  if (typeof value === 'bigint') return String(value) + 'n';
-  return Object.is(value, -0) ? '-0' : String(value);
-}`,
+  showOptional: readOptionalJavaScriptTextPrelude(),
   at: `// An element of an array; a read outside it, undefined in JavaScript, aborts.
 function ml_at(values, index) {
   const at = Number(index);
@@ -436,65 +437,65 @@ class JavaScriptEmitter {
       case 'call':
         return `${this.state.ref(e.fn)}(${e.args.map((arg) => this.expr(arg)).join(', ')})`;
       case 'functionRef':
-        return this.state.ref(e.fn);
+        return renderCallableFunctionReference('JavaScript', this.state.ref(e.fn));
       case 'apply':
-        return `(${this.expr(e.fn)})(${e.args.map((arg) => this.expr(arg)).join(', ')})`;
+        return renderCallableApplication('JavaScript', this.expr(e.fn), e.args.map(arg => this.expr(arg)));
       case 'lambda':
-        return `((${e.params.map((param) => param.name).join(', ')}) => ${this.expr(e.body)})`;
+        return renderCallableLambda('JavaScript', e.params.map(param => param.name), [], '', this.expr(e.body), []);
       case 'method':
-        return `(${this.expr(e.object)}).${e.op}(${e.args.map((arg) => arg === null ? 'undefined' : this.expr(arg)).join(', ')})`;
+        return renderPrimitiveMethodExpression('JavaScript', e.object.type.kind, e.op, this.expr(e.object),
+          e.args.map((arg, index) => renderPrimitiveMethodArgument('JavaScript', e.object.type.kind, e.op, index, arg === null, arg === null ? '' : this.expr(arg))).join(', '));
       case 'record':
-        return `({${e.entries.map((entry) => `[${JSON.stringify(entry.name)}]: ${this.expr(entry.value)}`).join(', ')}})`;
+        return renderRecordValue('JavaScript', e.entries.map(entry => JSON.stringify(entry.name)), e.entries.map(entry => this.expr(entry.value)));
       case 'cellAllocate':
-        return `({ value: ${this.expr(e.value)} })`;
+        return renderCallableCellOperation('JavaScript', e.k, '', this.expr(e.value), '', '', '');
       case 'cellRead':
-        return `(${this.expr(e.cell)}).value`;
+        return renderCallableCellOperation('JavaScript', e.k, this.expr(e.cell), '', '', '', '');
       case 'cellWrite':
-        return `((${this.expr(e.cell)}).value = ${this.expr(e.value)}, ${this.expr(e.body)})`;
+        return renderCallableCellOperation('JavaScript', e.k, this.expr(e.cell), this.expr(e.value), this.expr(e.body), '', '');
       case 'referenceAllocate':
-        return this.expr(e.value);
+        return renderSurfaceReferenceOperation('JavaScript', e.k, this.expr(e.value), '');
       case 'referenceRead':
-        return this.expr(e.reference);
+        return renderSurfaceReferenceOperation('JavaScript', e.k, this.expr(e.reference), '');
       case 'recordField':
-        return `(${this.expr(e.object)})[${JSON.stringify(e.field)}]`;
+        return renderRecordField('JavaScript', this.expr(e.object), JSON.stringify(e.field), '');
       case 'tuple':
         if (Object.hasOwn(e, 'productModel') && !acceptProgramTupleProductModel(e.productModel, e.frozen === true)) throw unsupported('immutable tuple product model', 'the declared immutable value product requires its retained frozen facet', e.span);
         return renderTupleValue('JavaScript', e.items.map((item) => this.expr(item)), e.frozen === true);
       case 'tupleIndex':
         return renderTupleProjection('JavaScript', this.expr(e.object), String(e.index));
       case 'none':
-        return e.absence === 'null' ? 'null' : 'undefined';
+        return renderOptionalAbsentValue('JavaScript', e.type.absence, e.absence, '');
       case 'some':
-        return this.expr(e.value);
+        return renderOptionalPresentValue('JavaScript', e.type.absence, this.expr(e.value));
       case 'flattenOption':
-        return this.expr(e.value);
+        return renderOptionalFlattening('JavaScript', e.value.type.absence, e.value.type.element.absence, e.type.absence, this.expr(e.value));
       case 'nullishNumber':
-        return `Number(${this.expr(e.arg)})`;
+        return renderOptionalJavaScriptOperation(e.k, this.expr(e.arg), '', false);
       case 'optionalIndexNumber':
-        return this.expr(e.arg);
+        return renderOptionalJavaScriptOperation(e.k, this.expr(e.arg), '', false);
       case 'truthy':
-        return `!!(${this.expr(e.arg)})`;
+        return renderOptionalPrimitiveTruth('JavaScript', e.arg.type.kind, this.expr(e.arg), '', false, false);
       case 'strictEqual':
-        return `(${this.expr(e.left)} ${e.negate ? '!==' : '==='} ${this.expr(e.right)})`;
+        return renderOptionalStrictEquality('JavaScript', e.left.type.kind, e.left.type.absence ?? '', e.right.type.kind, e.right.type.absence ?? '', '', this.expr(e.left), this.expr(e.right), e.negate);
       case 'optionalTypeOf':
-        return `(typeof ${this.expr(e.arg)})`;
+        return renderOptionalJavaScriptOperation(e.k, this.expr(e.arg), '', false);
       case 'optionalText':
-        if (e.console) { this.helpers.add('showOptional'); return `ml_showOptional(${this.expr(e.arg)})`; }
-        return `String(${this.expr(e.arg)})`;
+        if (e.console) this.helpers.add('showOptional');
+        return renderOptionalJavaScriptOperation(e.k, this.expr(e.arg), '', e.console);
       case 'unwrapOption':
-        return this.expr(e.arg);
+        return renderOptionalUnwrapping('JavaScript', e.arg.type.absence, this.expr(e.arg), '', '');
       case 'optionalPredicate':
-        return `Number.${e.op}(${this.expr(e.arg)})`;
+        return renderOptionalJavaScriptOperation(e.k, this.expr(e.arg), e.op, false);
       case 'coalesce':
-        return `(${this.expr(e.left)} ?? ${this.expr(e.right)})`;
+        return renderOptionalCoalescing('JavaScript', e.left.type.absence, this.expr(e.left), '', this.expr(e.right));
       case 'optionalField':
-        return `(${this.expr(e.object)})?.[${JSON.stringify(e.field)}]`;
       case 'optionalProject':
-        return `(${this.expr(e.object)})?.[${JSON.stringify(e.field)}]`;
+        return renderOptionalProjection('JavaScript', e.object.type.absence, this.expr(e.object), '', '', '', JSON.stringify(e.field));
       case 'optionalIndex':
-        return `(${this.expr(e.array)})[${this.expr(e.index)}]`;
+        return renderOptionalArrayRead('JavaScript', e.index.type.kind, this.expr(e.array), this.expr(e.index));
       case 'stringPoints':
-        return `[...${this.expr(e.object)}]`;
+        return renderStringPointIteration('JavaScript', false, this.expr(e.object));
       case 'set':
         return `new Set(${this.expr(e.items)})`;
       case 'map':
@@ -504,7 +505,7 @@ class JavaScriptEmitter {
       case 'collectionRead':
         return `(${this.expr(e.object)}).${e.op}(${this.expr(e.key)})`;
       case 'collectionItems':
-        return `[...(${this.expr(e.object)}).${e.op}()]`;
+        return renderCollectionIteration('JavaScript', e.object.type.kind === 'map', e.op, this.expr(e.object), '', '');
       case 'ctor': {
         const entry = this.program.declarations.get(e.data);
         const ctor = entry.ctors.find((candidate) => candidate.name === e.ctor);

@@ -11,11 +11,16 @@
 
 mod compile;
 mod executor;
+mod expectation_requests;
 mod forking;
+mod grammar_selection;
 mod joins;
 mod keyword_lexing;
 mod lexical_cache;
 mod lexical_cache_memory;
+mod lexical_election;
+pub(crate) mod lexical_kernel;
+mod lexical_plan;
 mod lexing;
 mod load;
 mod operations;
@@ -41,6 +46,7 @@ use std::collections::HashSet;
 use std::fmt;
 use std::rc::Rc;
 
+pub use grammar_selection::{GrammarSelection, GrammarSelectionAlternative};
 pub use load::GrammarRuntimeError;
 pub use operations::OperationValue;
 pub use tree::{Ambiguity, LeafText, SyntaxAttributes, SyntaxTree};
@@ -48,6 +54,7 @@ pub use tree::{Ambiguity, LeafText, SyntaxAttributes, SyntaxTree};
 use super::Grammar;
 use super::decorators::{decorate_grammar, decorate_syntax_tree};
 use crate::decorators::{DecoratorError, DecoratorLevel, DecoratorSet};
+use crate::translation::grammar_selection_rules;
 use executor::Executor;
 use operations::Abort;
 use program::{Compiled, SettlingStep};
@@ -67,6 +74,10 @@ const PARSE_STACK: usize = 256 * 1024 * 1024;
 /// value the parser was compiled with, and then the default.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct FeatureParseOptions {
+    /// Explicit root grammar identity for a stored qualified invocation.
+    pub grammar_name: Option<String>,
+    /// Existing checked global concept space, including definitions and origins.
+    pub global_concept_space: Option<serde_json::Value>,
     /// The rule to parse from instead of the grammar's start rule.
     pub start_rule: Option<String>,
     /// The bound on nested rule calls (default 1000).
@@ -102,6 +113,14 @@ pub struct FeatureParseOptions {
 impl FeatureParseOptions {
     fn over(&self, base: &Self) -> Self {
         Self {
+            grammar_name: self
+                .grammar_name
+                .clone()
+                .or_else(|| base.grammar_name.clone()),
+            global_concept_space: self
+                .global_concept_space
+                .clone()
+                .or_else(|| base.global_concept_space.clone()),
             start_rule: self.start_rule.clone().or_else(|| base.start_rule.clone()),
             max_depth: self.max_depth.or(base.max_depth),
             step_limit: self.step_limit.or(base.step_limit),
@@ -123,6 +142,8 @@ impl FeatureParseOptions {
 /// Why a parse rejects its input, and where.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ParseRejection {
+    /// Precise unknown, unsupported mapping, origin or embedding-cycle records.
+    pub diagnostics: Option<Vec<serde_json::Value>>,
     /// `syntax`, `nestingDepth`, `stepLimit`, `memoryBudget`, `recovered` or
     /// `ambiguity`.
     pub reason: &'static str,
@@ -141,6 +162,7 @@ pub struct ParseRejection {
 impl ParseRejection {
     const fn limited(reason: &'static str, limit: usize) -> Self {
         Self {
+            diagnostics: None,
             reason,
             offset: None,
             line: None,
@@ -153,6 +175,7 @@ impl ParseRejection {
     fn positioned(reason: &'static str, bytes: &[u8], offset: usize) -> Self {
         let (line, column) = text::line_and_column(bytes, offset);
         Self {
+            diagnostics: None,
             reason,
             offset: Some(offset),
             line: Some(line),
@@ -246,7 +269,7 @@ pub fn compile_feature_grammar(
     let decorated = decorate_grammar(grammar, &options.decorators, DecoratorLevel::GrammarRule)
         .map_err(decorator_error)?;
     Ok(FeatureGrammarParser {
-        compiled: load::load(&decorated, resolve_grammar)?,
+        compiled: load::load(&decorated, resolve_grammar, options.grammar_name.as_deref())?,
         options,
     })
 }
@@ -292,7 +315,7 @@ impl FeatureGrammarParser {
                             .unwrap_or_else(|panic| std::panic::resume_unwind(panic))
                     },
                 )
-        });
+        })?;
         if let Some(tree) = &outcome.tree {
             outcome.tree = Some(
                 decorate_syntax_tree(tree, &options.decorators, source).map_err(decorator_error)?,
@@ -423,7 +446,7 @@ fn parse_program(
     start_rule: usize,
     bytes: &[u8],
     options: &FeatureParseOptions,
-) -> ParseOutcome {
+) -> Result<ParseOutcome, GrammarRuntimeError> {
     let max_depth = options.max_depth.unwrap_or(DEFAULT_MAX_DEPTH);
     // Error recovery parses each repaired alternative too: twice the budget.
     let limit = options.step_limit.unwrap_or_else(|| {
@@ -434,11 +457,13 @@ fn parse_program(
                 1
             }
     });
-    let refused = |rejection, tree| ParseOutcome {
-        ok: false,
-        tree,
-        ambiguities: Vec::new(),
-        rejection: Some(rejection),
+    let refused = |rejection, tree| {
+        Ok(ParseOutcome {
+            ok: false,
+            tree,
+            ambiguities: Vec::new(),
+            rejection: Some(rejection),
+        })
     };
     // Under `(matching longest)` the input is parsed again while the tree
     // takes a token rule's leaf where a keyword a lexer prefers matched.
@@ -463,6 +488,10 @@ fn parse_program(
     let memory_limit = options.memory_limit.unwrap_or(DEFAULT_MEMORY_LIMIT);
     let cells = Rc::new(Cell::new(0));
     let lexical_caches = Rc::new(RefCell::new(Vec::new()));
+    let global_concept_space = options.global_concept_space.clone().map(Rc::new);
+    let selection_diagnostics = Rc::new(RefCell::new(Vec::new()));
+    let runtime_error = Rc::new(RefCell::new(None));
+    let last_steps = Cell::new(0);
     // Parses the whole input with a fresh executor. While a scanner's
     // `expected` was answered before the parse made the request it asks
     // about, the parse runs again with the requests so far (see
@@ -471,6 +500,10 @@ fn parse_program(
         let mut record = expectations.take();
         record.restart();
         let shared = Shared {
+            runtime_error: Rc::clone(&runtime_error),
+            global_concept_space: global_concept_space.clone(),
+            selection_diagnostics: Rc::clone(&selection_diagnostics),
+            active_embedded: RefCell::new(HashSet::new()),
             steps: Cell::new(0),
             limit,
             frames: Cell::new(0),
@@ -492,7 +525,9 @@ fn parse_program(
             );
             executor.repair_points = points.cloned();
             executor.keywords = keywords.as_ref();
-            executor.run(start_rule)
+            let outcome = executor.run(start_rule);
+            last_steps.set(shared.steps.get());
+            outcome
         };
         let record = shared.expectations.into_inner();
         let stale = record.stale;
@@ -526,6 +561,12 @@ fn parse_program(
         break outcome;
     };
     let root = match outcome {
+        Err(Abort::Operation) => {
+            return Err(runtime_error
+                .borrow_mut()
+                .take()
+                .expect("operation abort retains its runtime error"));
+        }
         Err(Abort::StepLimit) => {
             return refused(ParseRejection::limited("stepLimit", limit), None);
         }
@@ -542,11 +583,75 @@ fn parse_program(
         Ok(Outcome::Failed {
             farthest, expected, ..
         }) => {
+            if let Some(rejection) =
+                grammar_selection::selection_rejection(&selection_diagnostics.borrow(), bytes)
+            {
+                return refused(rejection, None);
+            }
             let mut rejection = ParseRejection::positioned("syntax", bytes, farthest);
             rejection.expected = Some(expected);
             return refused(rejection, None);
         }
         Ok(Outcome::Parsed(root)) => root,
+    };
+    // Root qualification follows keyword settling and recovery, spending the
+    // final attempt's remaining steps and the same retained memory cells.
+    let root = if let Some(language) = options
+        .grammar_name
+        .as_deref()
+        .filter(|name| !name.is_empty() && global_concept_space.is_some())
+    {
+        let shared = Shared {
+            runtime_error: Rc::clone(&runtime_error),
+            global_concept_space,
+            selection_diagnostics: Rc::clone(&selection_diagnostics),
+            active_embedded: RefCell::new(HashSet::new()),
+            steps: Cell::new(last_steps.get()),
+            limit,
+            frames: Cell::new(0),
+            memo_limit: options.memo_limit.unwrap_or(DEFAULT_MEMO_LIMIT),
+            cells: Rc::clone(&cells),
+            lexical_caches: Rc::clone(&lexical_caches),
+            memory_limit,
+            expectations: RefCell::new(Expectations::default()),
+        };
+        let executor = Executor::new(
+            compiled,
+            compiled.main,
+            bytes,
+            0,
+            bytes.len(),
+            &shared,
+            max_depth,
+        );
+        match executor.qualify_grammar_root(root, language) {
+            Ok(root) => root,
+            Err(Abort::Operation) => {
+                return Err(runtime_error
+                    .borrow_mut()
+                    .take()
+                    .expect("operation abort retains its runtime error"));
+            }
+            Err(Abort::StepLimit) => {
+                return refused(ParseRejection::limited("stepLimit", limit), None);
+            }
+            Err(Abort::MemoryBudget) => {
+                return refused(ParseRejection::limited("memoryBudget", memory_limit), None);
+            }
+            Err(Abort::NestingTooDeep) => {
+                return refused(
+                    ParseRejection::limited("nestingDepth", max_depth),
+                    Some(tree::error_tree(
+                        bytes,
+                        0,
+                        bytes.len(),
+                        Some("nestingDepth"),
+                    )),
+                );
+            }
+        }
+    } else {
+        root
     };
     let tree = tree::public_tree(&root, bytes);
     let mut ambiguities = Vec::new();
@@ -555,16 +660,18 @@ fn parse_program(
         .first_recovery()
         .filter(|_| options.accept_recovery != Some(true))
         .map(|recovery| ParseRejection::positioned("recovered", bytes, recovery.start()));
-    let rejection = recovered.or_else(|| {
-        ambiguities
-            .first()
-            .filter(|_| options.reject_ambiguity == Some(true))
-            .map(|first| ParseRejection::positioned("ambiguity", bytes, first.start))
-    });
-    ParseOutcome {
+    let rejection = grammar_selection::selection_rejection(&selection_diagnostics.borrow(), bytes)
+        .or(recovered)
+        .or_else(|| {
+            ambiguities
+                .first()
+                .filter(|_| options.reject_ambiguity == Some(true))
+                .map(|first| ParseRejection::positioned("ambiguity", bytes, first.start))
+        });
+    Ok(ParseOutcome {
         ok: rejection.is_none(),
         tree: Some(tree),
         ambiguities,
         rejection,
-    }
+    })
 }

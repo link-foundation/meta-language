@@ -80,9 +80,17 @@ pub enum Type {
         #[serde(default = "default_absence")]
         absence: std::string::String,
     },
+    /// A surface absence type; checked Links admission retains its old refusal.
+    Absence {
+        absence: std::string::String,
+    },
     /// A positional product type; value nodes retain the explicit frozen facet.
     Tuple {
         elements: Vec<Self>,
+    },
+    /// Ordered source alternatives retain their separate child identities.
+    Union {
+        alternatives: Vec<Self>,
     },
     /// Named fields, whose declaration order does not affect type identity.
     Record {
@@ -188,6 +196,7 @@ impl Type {
                 vec![element]
             }
             Self::Tuple { elements } => elements.iter().collect(),
+            Self::Union { alternatives } => alternatives.iter().collect(),
             Self::Record { fields, .. } => fields.iter().map(|field| &field.ty).collect(),
             Self::Map { key, value, .. } => vec![key, value],
             Self::Function { params, ret } => {
@@ -224,6 +233,12 @@ impl Type {
             },
             Self::Tuple { elements } => Self::Tuple {
                 elements: elements.iter().map(&mut map).collect::<Result<_, _>>()?,
+            },
+            Self::Union { alternatives } => Self::Union {
+                alternatives: alternatives
+                    .iter()
+                    .map(&mut map)
+                    .collect::<Result<_, _>>()?,
             },
             Self::Record { fields, open, .. } => {
                 let mut fields: Vec<_> = fields
@@ -286,6 +301,10 @@ impl Type {
                 std::string::String::new(),
                 elements.iter().map(Self::key).collect(),
             ),
+            Self::Union { alternatives } => (
+                std::string::String::new(),
+                alternatives.iter().map(Self::key).collect(),
+            ),
             Self::Record { fields, open, .. } => {
                 let mut sorted: Vec<_> = fields.iter().collect();
                 sorted.sort_by(|first, second| {
@@ -331,6 +350,29 @@ impl Type {
         }
     }
 
+    /// Copy the host type while writing its existing structural identity field.
+    /// Selection of this representation belongs to the generated rules.
+    #[must_use]
+    pub fn with_reference(&self, reference: bool) -> Self {
+        let mut result = self.clone();
+        match &mut result {
+            Self::Array {
+                reference: value, ..
+            }
+            | Self::Record {
+                reference: value, ..
+            }
+            | Self::Map {
+                reference: value, ..
+            }
+            | Self::Set {
+                reference: value, ..
+            } => *value = reference,
+            _ => {}
+        }
+        result
+    }
+
     /// The `kind` discriminant as the JavaScript runtime spells it.
     #[must_use]
     pub const fn kind(&self) -> &'static str {
@@ -346,7 +388,9 @@ impl Type {
             Self::Array { .. } => "array",
             Self::Cell { .. } => "cell",
             Self::Option { .. } => "option",
+            Self::Absence { .. } => "absence",
             Self::Tuple { .. } => "tuple",
+            Self::Union { .. } => "union",
             Self::Record { .. } => "record",
             Self::Map { .. } => "map",
             Self::Set { .. } => "set",

@@ -93,6 +93,61 @@ pub fn ml_accept_precedence_operand_context_loop28(
     }
 }
 
+pub fn ml_read_lexical_winner_index_loop29(
+    mut ends: Vec<f64>,
+    mut eligible: Vec<bool>,
+    mut best: f64,
+    mut index: f64,
+) -> f64 {
+    loop {
+        return if ((index < (ends.len() as f64)) && (index < (eligible.len() as f64))) {
+            {
+                let best_3 = if match crate::translation::frontend_rules::ml_array::optional_at(
+                    &eligible,
+                    crate::translation::frontend_rules::ml_array::number_index(index),
+                ) {
+                    Some(ml_present) => ml_present,
+                    None => false,
+                } {
+                    if ((best < (0f64))
+                        || ((match crate::translation::frontend_rules::ml_array::optional_at(
+                            &ends,
+                            crate::translation::frontend_rules::ml_array::number_index(index),
+                        ) {
+                            Some(ml_present) => ml_present,
+                            None => f64::NAN,
+                        }) > (match crate::translation::frontend_rules::ml_array::optional_at(
+                            &ends,
+                            crate::translation::frontend_rules::ml_array::number_index(best),
+                        ) {
+                            Some(ml_present) => ml_present,
+                            None => f64::NAN,
+                        })))
+                    {
+                        {
+                            let best_2 = index;
+                            best_2
+                        }
+                    } else {
+                        best
+                    }
+                } else {
+                    best
+                };
+                {
+                    let index_2 = (index + 1f64);
+                    {
+                        (best, index) = (best_3, index_2);
+                        continue;
+                    }
+                }
+            }
+        } else {
+            best
+        };
+    }
+}
+
 const fn ml_main() {}
 
 // Deep recursion in the source is not bounded by a small native stack.

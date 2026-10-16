@@ -49,10 +49,10 @@ test('all three actual record type decisions and six required-column definitions
   assert.deepEqual(surface.items.filter(item => item.k === 'fn' && !item.generated).map(item => item.name).sort(), [...names, ...helpers].sort());
   const checked = checkProgram(surface);
   const saved = encodeTypedProgramLinks(checked);
-  const originalRust = emitRust(checked).text;
+  const originalRust = emitRust(checked, { arrayConsumption: true }).text;
   for (const network of [LinkNetwork.fromLino(saved.network.toLino()), decodeLinkNetworkBinary(encodeLinkNetworkBinary(saved.network))]) {
     const reloaded = decodeTypedProgramLinks(network, saved.root);
-    const rust = emitRust(reloaded);
+    const rust = emitRust(reloaded, { arrayConsumption: true });
     assert.equal(rust.text, originalRust);
     assert.ok(rust.definitions.length >= names.length + helpers.length);
     for (const definition of rust.definitions) assert.ok(rust.text.includes(definition));

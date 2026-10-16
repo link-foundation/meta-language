@@ -13,6 +13,7 @@ pub(super) fn complete_rule_contexts(program: &Program, name: usize) -> Vec<bool
                 Expr::Choice { .. } => "choice",
                 Expr::Alias { .. } => "alias",
                 Expr::Capture { .. } => "capture",
+                Expr::LexicalScope { .. } => "lexicalScope",
                 Expr::Precedence { .. } => "precedence",
                 Expr::DynamicPrecedence { .. } => "dynamicPrecedence",
                 Expr::Repeat {
@@ -30,6 +31,7 @@ pub(super) fn complete_rule_contexts(program: &Program, name: usize) -> Vec<bool
                 (
                     3.0,
                     Expr::Alias { item, .. }
+                    | Expr::LexicalScope { item, .. }
                     | Expr::Capture { item, .. }
                     | Expr::Precedence { item, .. }
                     | Expr::DynamicPrecedence { item, .. }

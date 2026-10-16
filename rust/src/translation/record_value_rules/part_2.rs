@@ -188,10 +188,11 @@ pub fn ml_read_record_sorted_field_positions_loop9(
                     )) <= 0f64))
             {
                 {
-                    let merged_2 = self::ml_array::append(
-                        merged.clone(),
-                        vec![self::read_required_number_fact(sorted, left)],
-                    );
+                    let merged_2 = {
+                        let (ml_append_right, ml_append_left) =
+                            (vec![self::read_required_number_fact(sorted, left)], merged);
+                        self::ml_array::append(ml_append_left, ml_append_right)
+                    };
                     {
                         let left_2 = left + 1f64;
                         {
@@ -203,10 +204,11 @@ pub fn ml_read_record_sorted_field_positions_loop9(
             }
             {
                 {
-                    let merged_3 = self::ml_array::append(
-                        merged.clone(),
-                        vec![self::read_required_number_fact(sorted, right)],
-                    );
+                    let merged_3 = {
+                        let (ml_append_right, ml_append_left) =
+                            (vec![self::read_required_number_fact(sorted, right)], merged);
+                        self::ml_array::append(ml_append_left, ml_append_right)
+                    };
                     {
                         let right_2 = right + 1f64;
                         {
@@ -217,7 +219,7 @@ pub fn ml_read_record_sorted_field_positions_loop9(
                 }
             }
         }
-        return { merged.clone() };
+        return { merged };
     }
 }
 
@@ -250,13 +252,7 @@ pub fn ml_read_record_sorted_field_positions_loop8(
                             let right = middle;
                             {
                                 let merged_2 = self::ml_read_record_sorted_field_positions_loop9(
-                                    fields,
-                                    sorted,
-                                    merged.clone(),
-                                    middle,
-                                    end,
-                                    left,
-                                    right,
+                                    fields, sorted, merged, middle, end, left, right,
                                 );
                                 {
                                     let start_2 = start + (width * 2f64);
@@ -271,7 +267,7 @@ pub fn ml_read_record_sorted_field_positions_loop8(
                 }
             }
         }
-        return { merged.clone() };
+        return { merged };
     }
 }
 
@@ -310,7 +306,7 @@ pub fn ml_read_record_sorted_field_positions_loop7(
                 }
             }
         }
-        return { sorted.clone() };
+        return { sorted };
     }
 }
 
@@ -369,10 +365,13 @@ pub fn ml_read_record_field_order_loop10(
                 )) < 0f64)
             {
                 {
-                    let selected_2 = self::ml_array::append(
-                        selected.clone(),
-                        vec![self::read_required_number_fact(sorted, index)],
-                    );
+                    let selected_2 = {
+                        let (ml_append_right, ml_append_left) = (
+                            vec![self::read_required_number_fact(sorted, index)],
+                            selected,
+                        );
+                        self::ml_array::append(ml_append_left, ml_append_right)
+                    };
                     {
                         let index_2 = index + 1f64;
                         {
@@ -392,7 +391,7 @@ pub fn ml_read_record_field_order_loop10(
                 }
             }
         }
-        return { selected.clone() };
+        return { selected };
     }
 }
 
@@ -445,14 +444,21 @@ pub fn ml_read_record_field_insertion_order_loop13(
                                         && !((self::read_required_number_fact(first, middle))
                                             > index)
                                     {
-                                        selected.clone()
+                                        selected
                                     } else {
                                         {
-                                            let selected_2 = self::ml_array::append(
-                                                selected.clone(),
-                                                vec![self::read_required_number_fact(last, middle)],
-                                            );
-                                            selected_2
+                                            {
+                                                let (ml_append_right, ml_append_left) = (
+                                                    vec![self::read_required_number_fact(
+                                                        last, middle,
+                                                    )],
+                                                    selected,
+                                                );
+                                                self::ml_array::append(
+                                                    ml_append_left,
+                                                    ml_append_right,
+                                                )
+                                            }
                                         }
                                     };
                                 {
@@ -468,7 +474,7 @@ pub fn ml_read_record_field_insertion_order_loop13(
                 }
             }
         }
-        return { selected.clone() };
+        return { selected };
     }
 }
 
@@ -489,13 +495,7 @@ pub fn ml_read_record_field_insertion_order_loop12(
                     let upper = last.len() as f64;
                     {
                         let selected_2 = self::ml_read_record_field_insertion_order_loop13(
-                            fields,
-                            first,
-                            last,
-                            selected.clone(),
-                            index,
-                            lower,
-                            upper,
+                            fields, first, last, selected, index, lower, upper,
                         );
                         {
                             let index_2 = index + 1f64;
@@ -508,7 +508,7 @@ pub fn ml_read_record_field_insertion_order_loop12(
                 }
             }
         }
-        return { selected.clone() };
+        return { selected };
     }
 }
 
@@ -542,15 +542,17 @@ pub fn ml_read_record_field_insertion_order_loop11(
                 )) < 0f64)
             {
                 {
-                    let first_2 = self::ml_array::append(
-                        first.clone(),
-                        vec![self::read_required_number_fact(sorted, start)],
-                    );
+                    let first_2 = {
+                        let (ml_append_right, ml_append_left) =
+                            (vec![self::read_required_number_fact(sorted, start)], first);
+                        self::ml_array::append(ml_append_left, ml_append_right)
+                    };
                     {
-                        let last_2 = self::ml_array::append(
-                            last.clone(),
-                            vec![self::read_required_number_fact(sorted, index)],
-                        );
+                        let last_2 = {
+                            let (ml_append_right, ml_append_left) =
+                                (vec![self::read_required_number_fact(sorted, index)], last);
+                            self::ml_array::append(ml_append_left, ml_append_right)
+                        };
                         {
                             let start_2 = index + 1f64;
                             {
@@ -576,7 +578,7 @@ pub fn ml_read_record_field_insertion_order_loop11(
             }
         }
         return {
-            self::MlReadRecordFieldInsertionOrderLoop11Result::MlReadRecordFieldInsertionOrderLoop11Done(first.clone(), last.clone())
+            self::MlReadRecordFieldInsertionOrderLoop11Result::MlReadRecordFieldInsertionOrderLoop11Done(first, last)
         };
     }
 }
@@ -628,10 +630,11 @@ pub fn ml_record_type_fact_elements_loop15(
     loop {
         if edge < end {
             {
-                let values_2 = self::ml_array::append(
-                    values.clone(),
-                    vec![self::read_required_number_fact(targets, edge)],
-                );
+                let values_2 = {
+                    let (ml_append_right, ml_append_left) =
+                        (vec![self::read_required_number_fact(targets, edge)], values);
+                    self::ml_array::append(ml_append_left, ml_append_right)
+                };
                 {
                     let edge_2 = edge + 1f64;
                     {
@@ -641,7 +644,7 @@ pub fn ml_record_type_fact_elements_loop15(
                 }
             }
         }
-        return { values.clone() };
+        return { values };
     }
 }
 
@@ -697,10 +700,13 @@ pub fn ml_read_record_type_owner_presence_loop19(
     loop {
         if index < (children.len() as f64) {
             {
-                let pending_2 = self::ml_array::append(
-                    pending.clone(),
-                    vec![self::read_required_number_fact(children, index)],
-                );
+                let pending_2 = {
+                    let (ml_append_right, ml_append_left) = (
+                        vec![self::read_required_number_fact(children, index)],
+                        pending,
+                    );
+                    self::ml_array::append(ml_append_left, ml_append_right)
+                };
                 {
                     let index_2 = index + 1f64;
                     {
@@ -710,7 +716,7 @@ pub fn ml_read_record_type_owner_presence_loop19(
                 }
             }
         }
-        return { pending.clone() };
+        return { pending };
     }
 }
 
@@ -728,17 +734,20 @@ pub fn ml_read_record_type_owner_presence_loop20(
     loop {
         if index < (fields.len() as f64) {
             {
-                let pending_2 = self::ml_array::append(
-                    pending.clone(),
-                    vec![self::record_type_fact_field(
-                        starts,
-                        counts,
-                        labels,
-                        targets,
-                        self::read_required_number_fact(fields, index),
-                        "type",
-                    )],
-                );
+                let pending_2 = {
+                    let (ml_append_right, ml_append_left) = (
+                        vec![self::record_type_fact_field(
+                            starts,
+                            counts,
+                            labels,
+                            targets,
+                            self::read_required_number_fact(fields, index),
+                            "type",
+                        )],
+                        pending,
+                    );
+                    self::ml_array::append(ml_append_left, ml_append_right)
+                };
                 {
                     let index_2 = index + 1f64;
                     {
@@ -748,7 +757,7 @@ pub fn ml_read_record_type_owner_presence_loop20(
                 }
             }
         }
-        return { pending.clone() };
+        return { pending };
     }
 }
 
@@ -764,7 +773,6 @@ pub enum MlReadRecordTypeOwnerPresenceLoop17Result {
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-
 pub fn ml_read_record_type_owner_presence_loop17(
     texts: &[String],
     numbers: &[f64],
@@ -820,11 +828,3 @@ pub fn ml_read_record_type_owner_presence_loop17(
         };
     }
 }
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]

@@ -3,14 +3,19 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {execFileSync, spawnSync} from 'node:child_process';
-import {readFileSync, writeFileSync} from 'node:fs';
+import {existsSync, readFileSync, writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {checkProjectData, readProjectData, writeProjectData} from '../../js/scripts/project-data.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_FILE, ORIGINAL_LINK_RAW_SCHEMA_PRODUCER, ORIGINAL_LINK_RAW_SCHEMA_PROPERTIES,
   ORIGINAL_LINK_RAW_SCHEMA_ADDITIONS, readOriginalLinkRawHistoricalSources, verifyOriginalLinkRawSchemaSourceClosure} from './raw-schema-source-closure.mjs';
+import {verifyOriginalLinkRawSchemaExtensionClosure} from './raw-schema-extension-closure.mjs';
+import {verifyOriginalLinkRawSchemaSecondExtensionClosure} from './raw-schema-second-extension-closure.mjs';
+import {verifyOriginalLinkRawNativeModel} from './raw-native-observations.mjs';
 
 const root = new URL('../../', import.meta.url), receiptFile = new URL('./data/raw-schema-source-closure.lino', import.meta.url);
 const oracleFile = new URL('./raw-native-observations.mjs', import.meta.url);
+const extensionFile = new URL('./data/raw-schema-extension-closure.lino', import.meta.url);
+const secondExtensionFile = new URL('./data/raw-schema-second-extension-closure.lino', import.meta.url);
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const command = 'node experiments/original-link-complete-table-projection/generate-raw.mjs --native --check';
 const gitSource = (commit, file) => execFileSync('git', ['show', commit + ':' + file], {cwd: root, maxBuffer: 1024 * 1024});
@@ -21,16 +26,23 @@ export function generateOriginalLinkRawSchemaSourceClosure({check = false, schem
   const historicalSources = readOriginalLinkRawHistoricalSources(readFileSync(oracleFile, 'utf8'));
   if (check) {
     const receipt = readProjectData(receiptFile);
-    verifyOriginalLinkRawSchemaSourceClosure(receipt, actualBytes, historicalSources);
-    for (const [file, expected] of Object.entries(historicalSources)) {
-      const actual = readFileSync(new URL(file, import.meta.url));
-      assert.equal(sha256(actual), file === '../../' + ORIGINAL_LINK_RAW_SCHEMA_FILE ? receipt.current.sha256 : expected, file);
-    }
+    if (existsSync(secondExtensionFile)) {
+      verifyOriginalLinkRawSchemaSecondExtensionClosure(receipt, readProjectData(extensionFile), actualBytes, historicalSources, readProjectData(secondExtensionFile));
+      checkProjectData(extensionFile, readProjectData(extensionFile));
+      checkProjectData(secondExtensionFile, readProjectData(secondExtensionFile));
+    } else if (existsSync(extensionFile)) {
+      verifyOriginalLinkRawSchemaExtensionClosure(receipt, actualBytes, historicalSources, readProjectData(extensionFile));
+      checkProjectData(extensionFile, readProjectData(extensionFile));
+    } else verifyOriginalLinkRawSchemaSourceClosure(receipt, actualBytes, historicalSources);
+    // Every original source remains authenticated, including the independent
+    // runner closure and this schema's separately pinned append-only closure.
+    assert.equal(verifyOriginalLinkRawNativeModel().length, 47);
     checkProjectData(receiptFile, receipt);
     const pin = /^const schemaClosureReceiptSha256 = '([0-9a-f]{64})';$/mu.exec(readFileSync(oracleFile, 'utf8'))?.[1];
     assert.equal(pin, sha256(readFileSync(receiptFile)), 'the source-closure receipt pin matches its canonical bytes');
     return receipt;
   }
+  assert.equal(existsSync(extensionFile), false, 'the original receipt is immutable after a separate extension was recorded');
   assert.match(schemaCommit ?? '', /^[0-9a-f]{40}$/u, 'a committed immutable schema revision is required');
   const baseline = gitSource(ORIGINAL_LINK_RAW_SCHEMA_PRODUCER, ORIGINAL_LINK_RAW_SCHEMA_FILE);
   const current = gitSource(schemaCommit, ORIGINAL_LINK_RAW_SCHEMA_FILE);

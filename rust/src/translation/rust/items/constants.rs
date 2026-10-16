@@ -32,6 +32,7 @@ impl RustParser {
             .argument(&self.origins.origin(&body, path), &source_result, body.span)?;
         self.cursor.expect(";", Some("const"))?;
         Ok(SFn {
+            semantic_ret: None,
             name,
             params: Vec::new(),
             ret: Some(ret),

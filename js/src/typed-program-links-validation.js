@@ -1,3 +1,6 @@
+import { acceptOptionalLiteralAbsence } from './translation/optional-value-rules.js';
+import { acceptOptionalAbsence } from './translation/structured-type-rules.js';
+import { readCallableLinkedApplicationError } from './translation/callable-source-rules.js';
 import {checkRustRuntimeShell} from './translation/rust-runtime-shell.js';
 import {checkRustPureUnitCalls} from './translation/rust-pure-unit-calls.js';
 import {checkRustConstFunctionProof,checkRustConstFunctionContainers} from './translation/rust-const-functions.js';
@@ -12,9 +15,11 @@ import {checkRustPrimitiveOwnerProof} from './translation/rust-primitive-owners.
 import {checkRustOwnedLocalStateProof,checkRustOwnedLocalStateRecordShapes} from './translation/rust-owned-local-state.js';
 // Validate the source-free checked IR boundary before any target emission.
 import { fixedBounds, sameType } from './translation/types.js';
+import { readCallableOwnedParameters } from './translation/callable-source.js';
 import { checkLinkedMatchCoverage } from './translation/check.js';
 import { acceptLinkedTextConversionKind, readNumberDisplayRefusal, readTuplePosition } from './translation/primitive-value-rules.js';
 import { readLinkedPatternBindingScope } from './typed-program-pattern-bindings.js';
+import { acceptUnionTypeCount, acceptUnionTypeField } from './translation/type-syntax-rules.js';
 import {checkProgramDeclarationOwners} from './typed-program-declaration-owners.js';
 import { acceptProgramDivisionRounding, acceptProgramExpressionField, acceptProgramExpressionOperation, acceptProgramOptionalAbsence, acceptProgramTupleProductModel, readProgramReferenceRole } from './typed-program-link-rules.js';
 
@@ -84,6 +89,10 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     } else if (value.kind === 'tuple') {
       if (!Array.isArray(value.elements) || Object.keys(value).some(field => !['kind', 'elements'].includes(field))) throw new TypeError('a linked tuple type has a malformed element layout');
       value.elements.forEach(type);
+    } else if (value.kind === 'union') {
+      if (!Array.isArray(value.alternatives) || !acceptUnionTypeCount(value.alternatives.length)
+        || Object.keys(value).some(field => !acceptUnionTypeField(field))) throw new TypeError('a linked union type has a malformed ordered alternative layout');
+      for (const alternative of value.alternatives) type(alternative);
     }
     else if (value.kind === 'record') value.fields.forEach((field) => type(field.type));
     else if (value.kind === 'map') { type(value.key); type(value.value); }
@@ -133,6 +142,10 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     if (operationKinds.has(node.k) && !acceptProgramExpressionOperation(node.k, node.op)) throw new TypeError('a linked expression operation is unsupported');
     if (node.k === 'ctor' && Object.hasOwn(node, 'frozen') && typeof node.frozen !== 'boolean') throw new TypeError('a linked constructor immutability flag must be a boolean');
     if (node.type && node.k) type(node.type);
+    if (node.k === 'none') {
+      if (!acceptOptionalLiteralAbsence(node.absence)) throw new TypeError('an absent optional value requires its concrete null or undefined tag');
+      if (node.type?.kind !== 'option' || !acceptOptionalAbsence(node.type.absence ?? 'both', node.absence)) throw new TypeError('an absent optional value disagrees with its retained absence policy');
+    }
     if (node.span && (!Number.isSafeInteger(node.span.start) || !Number.isSafeInteger(node.span.end)
       || node.span.start < 0 || node.span.end < node.span.start)) throw new TypeError('a linked source span is invalid');
     if (node.k === 'lit') {
@@ -226,14 +239,14 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     }
     if (node.k === 'lambda') {
       const inner = new Map(environment);
-      node.params.forEach((parameter, index) => { ownBinder(parameter, node, index); type(parameter.type); inner.set(parameter.name, parameter); });
+      for (const { parameter, owner, index } of readCallableOwnedParameters(node)) { ownBinder(parameter, owner, index); type(parameter.type); inner.set(parameter.name, parameter); }
       expression(node.body, inner);
       same(node.type, { kind: 'function', params: node.params.map((parameter) => parameter.type), ret: node.body.type }, 'lambda type');
       return;
     }
     if (node.k === 'apply') {
-      if (node.fn.type?.kind !== 'function') throw new TypeError('a linked application does not target a function');
-      if (node.args.length !== node.fn.type.params.length) throw new TypeError('a linked application has the wrong number of arguments');
+      const error = readCallableLinkedApplicationError(node.fn.type?.kind ?? '', node.fn.type?.params?.length ?? 0, node.args.length);
+      if (error) throw new TypeError(error);
       node.args.forEach((argument, index) => same(argument.type, node.fn.type.params[index], 'application argument type'));
       same(node.type, node.fn.type.ret, 'application return type');
     }

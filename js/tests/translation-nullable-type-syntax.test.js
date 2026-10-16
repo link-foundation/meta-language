@@ -54,10 +54,10 @@ test('all three nullable source decisions and six actual dependency functions su
   assert.deepEqual(surface.items.filter(item => item.k === 'fn' && !item.generated).map(item => item.name).sort(), [...names, ...helpers].sort());
   const checked = checkProgram(surface);
   const saved = encodeTypedProgramLinks(checked);
-  const originalRust = emitRust(checked).text;
+  const originalRust = emitRust(checked, { arrayConsumption: true }).text;
   for (const network of [LinkNetwork.fromLino(saved.network.toLino()), decodeLinkNetworkBinary(encodeLinkNetworkBinary(saved.network))]) {
     const program = decodeTypedProgramLinks(network, saved.root);
-    const rust = emitRust(program);
+    const rust = emitRust(program, { arrayConsumption: true });
     assert.equal(rust.text, originalRust);
     assert.ok(rust.definitions.length >= names.length + helpers.length);
     for (const definition of rust.definitions) assert.ok(rust.text.includes(definition));

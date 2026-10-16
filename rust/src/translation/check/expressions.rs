@@ -8,9 +8,7 @@ use super::{
     text_lit, type_error, unsupported,
 };
 use crate::translation::surface::SurfaceBindingTypeAnnotation;
-use crate::translation::typed_program_link_rules::{
-    accept_program_optional_absence, accept_program_tuple_product_model,
-};
+use crate::translation::typed_program_link_rules::accept_program_tuple_product_model;
 
 mod calls;
 
@@ -28,10 +26,39 @@ impl Checker {
         allow_literal: bool,
     ) -> Result<Expr> {
         let mut result = self.expr_inner(node, env, path, expected, allow_literal)?;
+        if crate::translation::surface_reference_analysis_rules::select_surface_reference_allocation(
+            self.reference_semantics,
+            result.ty.kind(),
+            result.ty.is_reference(),
+        ) {
+            let ty = result.ty.with_reference(true);
+            result = Expr::new(
+                Node::ReferenceAllocate {
+                    value: Box::new(result),
+                },
+                ty,
+            );
+        }
         if node.span.is_some() && result.span.is_none() {
             result.span = node.span;
         }
         Ok(result)
+    }
+
+    pub(super) fn reference_value(&self, value: Expr) -> Expr {
+        if crate::translation::surface_reference_analysis_rules::select_surface_reference_read(
+            value.ty.is_reference(),
+        ) {
+            let ty = value.ty.with_reference(false);
+            Expr::new(
+                Node::ReferenceRead {
+                    reference: Box::new(value),
+                },
+                ty,
+            )
+        } else {
+            value
+        }
     }
 
     #[allow(clippy::too_many_lines)]
@@ -102,10 +129,19 @@ impl Checker {
             SNode::Str { value } => Ok(text_lit(STRING, value.clone())),
             SNode::Unit => Ok(Expr::new(Node::Unit, UNIT)),
             SNode::None { absence } => {
-                if !accept_program_optional_absence(absence) {
-                    return Err(unsupported(
-                        "empty optional value",
-                        "an empty optional value needs a recognized absence policy",
+                if !crate::translation::optional_value_rules::accept_optional_literal_absence(
+                    absence,
+                ) {
+                    return Err(type_error(
+                        "an absent optional value requires its concrete null or undefined tag",
+                        span,
+                    ));
+                }
+                if expected.is_some_and(|ty| {
+                    matches!(ty, Type::Option { .. }) && !ty.accepts_absence(absence)
+                }) {
+                    return Err(type_error(
+                        "an absent optional value disagrees with its retained absence policy",
                         span,
                     ));
                 }
@@ -123,37 +159,40 @@ impl Checker {
                     ty,
                 ))
             }
+            SNode::Some { .. }
+            | SNode::FlattenOption { .. }
+            | SNode::Coalesce { .. }
+            | SNode::OptionalField { .. } => self.optional_expr(node, env, path, expected),
             SNode::Name { path: segments } => {
                 if let Some(name) = env.local(node) {
                     return Ok(Expr::var(name, env.vars[name].clone()));
                 }
-                let _ = segments;
+                if let Some(reference) = self.callable_reference(node, segments, path, expected)? {
+                    return Ok(reference);
+                }
                 self.application(node, &[], env, path, expected, span)
             }
+            SNode::FunctionValue { .. }
+            | SNode::Lambda { .. }
+            | SNode::CellAllocate { .. }
+            | SNode::CellRead { .. }
+            | SNode::CellWrite { .. } => self.callable_expression(node, env, path, expected),
             SNode::DotCtor { .. } => self.application(node, &[], env, path, expected, span),
             SNode::App { func, args } => self.application(func, args, env, path, expected, span),
             SNode::Field { field, object } => {
-                if field == "length"
-                    && let Some(length) = self.length_field(object, env, path)?
-                {
-                    return Ok(length);
-                }
-                Err(unsupported(
-                    "field access",
-                    &format!("field {field} is only portable inside a constructor match"),
-                    span,
-                ))
+                self.record_source_field(object, field, env, path, span)
             }
             SNode::TypeOf { arg } => self.type_query(arg, env, path, span),
             SNode::Unary {
                 op: UnaryOp::Not,
                 arg,
             } => {
-                let arg = self.expr(arg, env, path, Some(&BOOL), false)?;
+                let arg = self.expr(arg, env, path, None, false)?;
+                let arg = self.boolean_value(arg, span)?;
                 Ok(Expr::new(
                     Node::Unary {
                         op: UnaryOp::Not,
-                        arg: Box::new(self.coerce(arg, &BOOL, span)?),
+                        arg: Box::new(arg),
                         semantics: None,
                     },
                     BOOL,
@@ -178,6 +217,7 @@ impl Checker {
                             unit: false,
                         },
                         span,
+                        parenthesized: arg.parenthesized.clone(),
                         block: arg.block,
                         tag_test: None,
                     };
@@ -185,6 +225,7 @@ impl Checker {
                 }
                 let numeric = expected.filter(|ty| ty.is_numeric());
                 let arg = self.expr(arg, env, path, numeric, false)?;
+                let arg = self.number_value(arg, span)?;
                 if arg.ty.is_float() {
                     return Ok(Expr::new(
                         Node::Unary {
@@ -245,8 +286,8 @@ impl Checker {
                 then,
                 otherwise,
             } => {
-                let checked = self.expr(cond, env, path, Some(&BOOL), false)?;
-                let cond = self.coerce(checked, &BOOL, span)?;
+                let checked = self.expr(cond, env, path, None, false)?;
+                let cond = self.boolean_value(checked, span)?;
                 let mut then_expr = self.expr(then, env, path, expected, allow_literal)?;
                 let else_expected = if then_expr.ty.is_literal() {
                     expected.cloned()
@@ -314,6 +355,10 @@ impl Checker {
                 self.match_cases(scrutinee, cases, span, env, path, expected)
             }
             SNode::StringMap { .. } => self.string_map(node, env, path),
+            SNode::CopySlice { object } => self.copy_slice(object, env, path, span),
+            SNode::Method { object, op, args } => {
+                self.primitive_method(object, op, args, env, path, span)
+            }
             SNode::StringTest { .. } => self.string_test(node, env, path),
             SNode::ToString { arg } => {
                 let arg = self.expr(arg, env, path, None, false)?;
@@ -327,6 +372,19 @@ impl Checker {
                 }
                 if arg.ty == Type::String {
                     return Ok(arg);
+                }
+                if let Type::Option { element, .. } = &arg.ty
+                    && crate::translation::optional_value_rules::accept_optional_primitive_kind(
+                        element.kind(),
+                    )
+                {
+                    return Ok(Expr::new(
+                        Node::OptionalText {
+                            arg: Box::new(arg),
+                            console: false,
+                        },
+                        STRING,
+                    ));
                 }
                 if arg.ty.element().is_some() {
                     return Err(array_text(span));
@@ -403,6 +461,20 @@ impl Checker {
             SNode::Array { items, element } => {
                 self.array_literal(items, element.as_ref(), span, env, path, expected)
             }
+            SNode::Record {
+                entries,
+                prototype_definition,
+                ..
+            } => {
+                if let Some(definition) = prototype_definition {
+                    return Err(unsupported(
+                        "object prototype definition",
+                        "an uncomputed __proto__: entry is prototype-definition syntax rather than an own data property; the portable core does not represent object prototypes",
+                        Some(definition.span),
+                    ));
+                }
+                self.record_literal(entries, env, path, expected, span)
+            }
             SNode::Tuple {
                 items,
                 frozen,
@@ -430,7 +502,27 @@ impl Checker {
             SNode::TupleIndex { object, index } => {
                 self.tuple_index(object, *index, span, env, path)
             }
-            SNode::Index { object, index } => self.index(object, index, span, env, path),
+            SNode::Index { .. } => self.index(node, env, path, expected),
+            SNode::ForOfIterable { object, .. } => self.for_of_iterable(object, span, env, path),
+            SNode::StringPoints { object } => {
+                let value = self.expr(object, env, path, Some(&STRING), false)?;
+                let object = self.coerce(value, &STRING, span)?;
+                Ok(Expr::new(
+                    Node::StringPoints {
+                        object: Box::new(object),
+                    },
+                    crate::translation::types::array(STRING),
+                ))
+            }
+            SNode::ReferenceWrite { .. } => Err(unsupported(
+                &crate::translation::array_value_rules::read_reference_mutation_diagnostic(
+                    "feature",
+                ),
+                &crate::translation::array_value_rules::read_reference_mutation_diagnostic(
+                    "reason",
+                ),
+                span,
+            )),
             SNode::Math { op, name, args } => self.math(op, name, args, span, env, path),
             other => Err(type_error(
                 format!("unknown expression {}", other.kind()),
@@ -453,15 +545,36 @@ impl Checker {
         allow_literal: bool,
     ) -> Result<Expr> {
         match op {
-            BinaryOp::And | BinaryOp::Or | BinaryOp::Concat => {
-                let ty = if op == BinaryOp::Concat { STRING } else { BOOL };
-                let checked = self.expr(left, env, path, Some(&ty), false)?;
-                let left = self.coerce(checked, &ty, span)?;
-                let checked = self.expr(right, env, path, Some(&ty), false)?;
-                let right = self.coerce(checked, &ty, span)?;
-                Ok(plain_binary(op, left, right, ty))
+            BinaryOp::And | BinaryOp::Or => {
+                let left = self.expr(left, env, path, None, false)?;
+                let right = self.expr(right, env, path, None, false)?;
+                self.logical_values(op, left, right, span)
+            }
+            BinaryOp::Concat => {
+                let left = self.expr(left, env, path, Some(&STRING), false)?;
+                let left = self.coerce(left, &STRING, span)?;
+                let right = self.expr(right, env, path, Some(&STRING), false)?;
+                let right = self.coerce(right, &STRING, span)?;
+                Ok(plain_binary(op, left, right, STRING))
             }
             _ if comparison(op) => {
+                if self.language == Language::JavaScript {
+                    let mut checked_left = self.expr(left, env, path, None, true)?;
+                    let mut checked_right = self.expr(right, env, path, None, true)?;
+                    if checked_left.ty.is_literal() {
+                        checked_left =
+                            self.expr(left, env, path, Some(&self.default_number()), false)?;
+                    }
+                    if checked_right.ty.is_literal() {
+                        checked_right =
+                            self.expr(right, env, path, Some(&self.default_number()), false)?;
+                    }
+                    if let Some(value) =
+                        self.optional_comparison(op, checked_left, checked_right, span)?
+                    {
+                        return Ok(value);
+                    }
+                }
                 let (left, right) = self.operands(left, right, env, path, span)?;
                 if matches!(left.ty, Type::Tuple { .. }) {
                     return Err(unsupported(
@@ -583,6 +696,24 @@ impl Checker {
                 surface.span,
             ));
         }
+        if let Type::Option { element, .. } = &checked.ty {
+            if !crate::translation::optional_value_rules::accept_optional_primitive_kind(
+                element.kind(),
+            ) {
+                return Err(unsupported(
+                    "string conversion of nullable structured values",
+                    "this conversion needs its source structured-value formatter",
+                    surface.span,
+                ));
+            }
+            return Ok(Expr::new(
+                Node::OptionalText {
+                    arg: Box::new(checked),
+                    console: false,
+                },
+                STRING,
+            ));
+        }
         if checked.ty.element().is_some() {
             return Err(array_text(surface.span));
         }
@@ -659,6 +790,10 @@ impl Checker {
         }
         if left.ty.is_literal() {
             left = self.expr(left_surface, env, path, Some(&right.ty), false)?;
+        }
+        if self.language == Language::JavaScript {
+            left = self.number_value(left, span)?;
+            right = self.number_value(right, span)?;
         }
         if self.language == Language::JavaScript && (left.ty == Type::Nat || right.ty == Type::Nat)
         {

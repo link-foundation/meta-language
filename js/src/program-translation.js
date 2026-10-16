@@ -66,7 +66,7 @@ export function translateProgram(source, sourceLanguage, targetLanguage, options
     const context = options.referenceSemantics === true ? { referenceSemantics: true } : {};
     const program = checkProgram(FRONTENDS[sourceSupport.name](text, context));
     if (options.utf16Strings === true) program.utf16Strings = true;
-    emitted = EMITTERS[targetSupport.name](program);
+    emitted = EMITTERS[targetSupport.name](program, targetSupport.name === 'Rust' ? {arrayConsumption: true} : {});
   } catch (error) {
     if (!(error instanceof TranslationError)) throw error;
     return envelopeTranslation(text, sourceSupport, targetSupport, contract, Object.freeze({

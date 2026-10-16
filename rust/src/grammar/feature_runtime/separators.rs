@@ -102,7 +102,8 @@ fn ends(expr: &Expr, bytes: &[u8], position: usize) -> Vec<usize> {
                 Vec::new()
             }
         }
-        Expr::Capture { item, .. }
+        Expr::LexicalScope { item, .. }
+        | Expr::Capture { item, .. }
         | Expr::Alias { item, .. }
         | Expr::Precedence { item, .. }
         | Expr::DynamicPrecedence { item, .. }

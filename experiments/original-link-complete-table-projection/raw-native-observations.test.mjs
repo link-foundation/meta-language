@@ -6,7 +6,12 @@ import {dirname, join} from 'node:path';
 import test from 'node:test';
 import {requireOriginalLinkRawPlanning, originalLinkRawNativeMode, planOriginalLinkRawNative, runOriginalLinkRawNative, runOriginalLinkRawPlanningPhases, verifyOriginalLinkRawNativeModel} from './raw-native-observations.mjs';
 import {readStructuredDataLino, structuredDataToLino} from '../../js/src/structured-data-links.js';
-import {readOriginalLinkRawHistoricalSources, verifyOriginalLinkRawSchemaSourceClosure} from './raw-schema-source-closure.mjs';
+import {readOriginalLinkRawHistoricalSources} from './raw-schema-source-closure.mjs';
+import {verifyOriginalLinkRawSchemaSecondExtensionClosure} from './raw-schema-second-extension-closure.mjs';
+
+const verifyOriginalLinkRawSchemaSourceClosure = (receipt, bytes, historicalSources) => verifyOriginalLinkRawSchemaSecondExtensionClosure(receipt,
+  readStructuredDataLino(readFileSync(new URL('./data/raw-schema-extension-closure.lino', import.meta.url), 'utf8')), bytes, historicalSources,
+  readStructuredDataLino(readFileSync(new URL('./data/raw-schema-second-extension-closure.lino', import.meta.url), 'utf8')));
 
 const schemaClosureFixture = () => ({
   receipt: readStructuredDataLino(readFileSync(new URL('./data/raw-schema-source-closure.lino', import.meta.url), 'utf8')),

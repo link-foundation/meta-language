@@ -1,6 +1,8 @@
 mod char_set;
 mod commands;
 mod lexer;
+mod lexical;
+mod sections;
 
 use char_set::{has_case, lower_char_set, negate_expr, with_case_variants};
 use commands::{apply_retypes, command_channel, command_type};
@@ -42,6 +44,11 @@ struct Parser {
     // the current rule, which may override it.
     case_insensitive: bool,
     rule_case_insensitive: bool,
+    sections: Vec<lexical::Section>,
+    section: Option<usize>,
+    mode: Option<String>,
+    lexical_facts: Vec<lexical::RuleFacts>,
+    obligations: Vec<lexical::Obligation>,
 }
 
 impl Parser {
@@ -52,6 +59,11 @@ impl Parser {
             pending_comments: Vec::new(),
             case_insensitive: false,
             rule_case_insensitive: false,
+            sections: Vec::new(),
+            section: None,
+            mode: None,
+            lexical_facts: Vec::new(),
+            obligations: Vec::new(),
         }
     }
 
@@ -68,8 +80,16 @@ impl Parser {
             }
             rules.push(self.parse_rule()?);
         }
+        let lexers = lexical::declarations(&self.sections, &self.lexical_facts, &rules);
         for rule in apply_retypes(rules) {
             grammar.add_rule(rule);
+        }
+        lexical::complete_bindings(&mut grammar, &lexers);
+        if !lexers.is_empty() {
+            grammar.set_declarations(crate::grammar::GrammarDeclarations {
+                lexers,
+                ..crate::grammar::GrammarDeclarations::default()
+            });
         }
 
         let Some(start) = grammar
@@ -85,62 +105,6 @@ impl Parser {
         Ok(grammar)
     }
 
-    fn parse_header(&mut self) -> Result<bool, GrammarImportError> {
-        let matched = if self.check_keyword("grammar") {
-            self.advance();
-            true
-        } else if (self.check_keyword("lexer") || self.check_keyword("parser"))
-            && self.check_next_keyword("grammar")
-        {
-            self.advance();
-            self.advance();
-            true
-        } else {
-            false
-        };
-
-        if !matched {
-            return Ok(false);
-        }
-        self.expect_ident("grammar name")?;
-        self.expect_semicolon()?;
-        self.pending_comments.clear();
-        self.case_insensitive = false;
-        Ok(true)
-    }
-
-    fn parse_skipped_directive(&mut self) -> Result<bool, GrammarImportError> {
-        if self.check_any_keyword(&["options", "tokens", "channels"]) {
-            let is_options = self.check_keyword("options");
-            self.advance();
-            if let Some(TokenKind::Action(options)) = self.peek_kind() {
-                if is_options {
-                    self.case_insensitive = parse_options(options)
-                        .iter()
-                        .rev()
-                        .find(|(key, _)| key == "caseInsensitive")
-                        .is_some_and(|(_, value)| value == "true");
-                }
-                self.advance();
-                self.try_consume_semicolon();
-                self.pending_comments.clear();
-                return Ok(true);
-            }
-            self.skip_until_semicolon()?;
-            self.pending_comments.clear();
-            return Ok(true);
-        }
-
-        if self.check_any_keyword(&["import", "mode"]) {
-            self.advance();
-            self.skip_until_semicolon()?;
-            self.pending_comments.clear();
-            return Ok(true);
-        }
-
-        Ok(false)
-    }
-
     /// A rule and the token type its `-> type(NAME)` command gives it.
     fn parse_rule(&mut self) -> Result<(GrammarRule, Option<String>), GrammarImportError> {
         let comments = std::mem::take(&mut self.pending_comments);
@@ -151,6 +115,23 @@ impl Parser {
         let mut comments = comments;
         comments.append(&mut self.pending_comments);
         let mut notes = Vec::new();
+        self.obligations.clear();
+        if let Some(section) = self
+            .section
+            .map(|index| &self.sections[index])
+            .filter(|section| section.kind == "parser")
+        {
+            self.obligations
+                .extend(
+                    section
+                        .unsupported_options
+                        .iter()
+                        .map(|source| lexical::Obligation {
+                            category: "option".to_owned(),
+                            source: source.clone(),
+                        }),
+                );
+        }
         self.parse_rule_prelude(&mut notes)?;
         self.expect_colon()?;
 
@@ -177,6 +158,13 @@ impl Parser {
         } else {
             None
         };
+        self.lexical_facts.push(lexical::RuleFacts {
+            section: self.section,
+            mode: self.mode.clone().unwrap_or_else(|| "default".to_owned()),
+            command: command.clone().unwrap_or_default(),
+            retype: retype.clone().unwrap_or_default(),
+            obligations: std::mem::take(&mut self.obligations),
+        });
         let mut rule = GrammarRule::new(name, expr).with_kind(kind);
         if channel.is_some() {
             rule = rule.with_attributes(RuleAttributes {
@@ -429,12 +417,20 @@ impl Parser {
     }
 
     fn parse_action(&mut self, notes: &mut Vec<String>) -> GrammarExpr {
-        self.advance();
-        if self.try_consume_question() {
-            notes.push("dropped predicate".to_string());
+        let source = match &self.advance().kind {
+            TokenKind::Action(source) => source.clone(),
+            _ => unreachable!("the action parser is called only for an action token"),
+        };
+        let category = if self.try_consume_question() {
+            "predicate"
         } else {
-            notes.push("dropped action".to_string());
-        }
+            "action"
+        };
+        self.obligations.push(lexical::Obligation {
+            category: category.to_owned(),
+            source,
+        });
+        notes.push(format!("dropped {category}"));
         GrammarExpr::Empty
     }
 

@@ -4,6 +4,7 @@
 // ERROR, MISSING and embedded-language nodes stay in the tree, so the tree
 // reproduces the input byte for byte.
 import { hexOf, quoteText, textOf } from './text.js';
+import { publicGrammarSelection } from './grammar-selection.js';
 
 function withText(target, bytes, start, end) {
   const text = textOf(bytes, start, end);
@@ -29,6 +30,7 @@ export function publicTree(node, bytes) {
       if (node.trivia) copy.trivia = true;
       Object.assign(copy, { start: node.start, end: node.end });
       if (node.attributes) copy.attributes = { ...node.attributes };
+      if (node.lexical) copy.lexical = { ...node.lexical };
       return withText(copy, bytes, node.start, node.end);
     }
     case 'error': {
@@ -41,8 +43,11 @@ export function publicTree(node, bytes) {
       if (node.literal) copy.literal = true;
       return copy;
     }
-    case 'embed':
-      return { type: 'embed', language: node.language, start: node.start, end: node.end, root: publicTree(node.root, bytes) };
+    case 'embed': {
+      const copy = { type: 'embed', language: node.language, start: node.start, end: node.end, root: publicTree(node.root, bytes) };
+      if (node.selection) copy.selection = publicGrammarSelection(node.selection, bytes, publicTree);
+      return copy;
+    }
     default: throw new TypeError(`unknown syntax tree node type ${node.type}`);
   }
 }
@@ -53,7 +58,9 @@ export function collectAmbiguities(node, program, found = []) {
     if (node.ambiguous && !program.conflicts.has(node.rule)) found.push({ rule: node.rule ?? node.kind, start: node.start, end: node.end });
     for (const child of node.children) collectAmbiguities(child, program, found);
   } else if (node.type === 'embed') {
+    if (node.selection?.ambiguous) found.push({ rule: 'any-grammar', start: node.start, end: node.end, languages: node.selection.candidates.filter(item => item.relation === 'accepted').map(item => item.language) });
     collectAmbiguities(node.root, node.program, found);
+    for (const alternative of node.selection?.alternatives ?? []) collectAmbiguities(alternative.root, alternative.program, found);
   }
   return found;
 }

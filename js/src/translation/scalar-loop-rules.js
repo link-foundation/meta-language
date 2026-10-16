@@ -7,6 +7,8 @@ export function acceptScalarLoopDeclarationModel(model) {return model === "close
 export function acceptScalarLoopLanguage(language) {return language === "Rust" || language === "JavaScript";}
 /** @param {string} kind @returns {boolean} */
 export function acceptScalarLoopValueKind(kind) {return kind === "float" || kind === "bool";}
+/** @param {boolean} present @param {boolean} nullValue @param {string} kind @returns {boolean} */
+export function acceptScalarLoopExpressionTypeAnnotation(present,nullValue,kind) {return !present || nullValue || kind === "float" || kind === "bool";}
 /** @param {string} operation @returns {boolean} */
 export function acceptScalarLoopBinaryOperation(operation) {return operation === "add" || operation === "sub" || operation === "mul" || operation === "div" || operation === "rem" || operation === "eq" || operation === "ne" || operation === "lt" || operation === "le" || operation === "gt" || operation === "ge" || operation === "and" || operation === "or" || operation === "plus";}
 /** @param {string} operation @returns {boolean} */

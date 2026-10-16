@@ -4,7 +4,7 @@
 import { unsupported } from './diagnostics.js';
 import { rustFixedType } from './types.js';
 import { acceptRustImmutableIndirectionLayer, acceptRustSourceIndirectionArgument, acceptRustSourceBoxCoercionLayer, acceptRustSourceBoxOwner, acceptRustSourceBoxAvailability, acceptRustSourceTextEquality, readRustSourceExpressionOrigin } from './rust-indirection-rules.js';
-import { acceptRustImmutableProductType } from './rust-product-rules.js';
+import { acceptRustImmutableProductType, acceptRustProductOrigin } from './rust-product-rules.js';
 import { acceptRustSourceArrayOwner, acceptRustSourceArrayCoercion, acceptRustFreshArrayResultTail } from './rust-array-rules.js';
 import {ownedLocalPair} from './rust-owned-local-state.js';
 
@@ -48,7 +48,7 @@ export class RustSourceOrigins {
   }
 
   requireProduct(origin, span) {
-    if (!this.collecting && (!origin.fields || !this.immutableProduct(origin)&&!this.ownedLocalProduct(origin))) {
+    if (!this.collecting && (!origin.fields || !acceptRustProductOrigin(this.immutableProduct(origin), this.ownedLocalProduct(origin)))) {
       throw unsupported('immutable Rust tuple product', 'every field requires a direct recursively immutable scalar Copy source value', span);
     }
   }

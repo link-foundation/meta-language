@@ -2,7 +2,7 @@
 import { readRuntimeProjectData } from '../project-data-loader.js';
 import { unsupported } from './diagnostics.js';
 import { checkRustSourceSignature } from './rust-source-signatures.js';
-import {acceptRustScalarLoopModel, acceptScalarLoopDeclarationModel, acceptScalarLoopLanguage, acceptScalarLoopValueKind, acceptScalarLoopPrimitiveOwner, acceptScalarLoopBinaryOperation, acceptScalarLoopUnaryOperation, acceptScalarLoopMathOperation} from './scalar-loop-rules.js';
+import {acceptRustScalarLoopModel, acceptScalarLoopDeclarationModel, acceptScalarLoopLanguage, acceptScalarLoopValueKind, acceptScalarLoopExpressionTypeAnnotation, acceptScalarLoopPrimitiveOwner, acceptScalarLoopBinaryOperation, acceptScalarLoopUnaryOperation, acceptScalarLoopMathOperation} from './scalar-loop-rules.js';
 export {acceptRustScalarLoopModel} from './scalar-loop-rules.js';
 
 export const RUST_SCALAR_LOOP_POLICY = readRuntimeProjectData(new URL('./data/rust-scalar-loops.lino', import.meta.url));
@@ -134,7 +134,7 @@ export function checkRustScalarLoopProof(item, language, declaredName = item.ful
       else fail('a scalar math argument must be one direct value', node.span);
     });
     else fail(`expression ${node.k ?? 'record'} has no closed scalar loop interpretation`, node.span);
-    if (node.type && !acceptScalarLoopValueKind(node.type.kind)) fail('a loop expression has a non-scalar value type', node.span);
+    if (!acceptScalarLoopExpressionTypeAnnotation(node.type !== undefined, node.type === null, node.type?.kind ?? '')) fail('a loop expression has a non-scalar value type', node.span);
   }
   expression(item.body, new Map([...names].map(name => [name, null])), true);
   if (!calls || calls !== proof.transitions.length) fail('the loop proof must describe every actual continuation', item.span);

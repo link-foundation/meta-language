@@ -51,7 +51,7 @@ const source = readFileSync(input, 'utf8');
 const closedSource = readSurfaceReferenceSourceModule(source);
 const sourceNames = [...closedSource.matchAll(/^(?:export )?function (\w+)\(/gmu)].map(match => match[1]);
 const snake = name => name.replace(/([a-z])([A-Z])/gu, '$1_$2').toLowerCase();
-const emitted = emitRust(checkProgram(parseJavaScript(closedSource, { referenceSemantics: false })));
+const emitted = emitRust(checkProgram(parseJavaScript(closedSource, { referenceSemantics: false })), { arrayConsumption: true });
 const moduleHeader = emitted.text.split('\n').find(line => line.startsWith('#![allow('));
 assert.ok(moduleHeader, 'the complete checked module retains its generated source-model header');
 const raw = [moduleHeader, ...emitted.preludes, ...emitted.definitions].join('\n\n');

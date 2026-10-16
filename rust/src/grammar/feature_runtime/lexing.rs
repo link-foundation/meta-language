@@ -69,6 +69,9 @@ impl Executor<'_> {
     /// own start, where the extra itself is being parsed.
     pub(super) fn skip_trivia(&mut self, position: usize, state: &State) -> Run<Rc<Skipped>> {
         let program = self.program;
+        if !self.lexer_family.is_empty() {
+            return self.skip_elected_trivia(&program.lexers[&self.lexer_family], position, state);
+        }
         let trivia = &program.trivia;
         if trivia.is_empty() {
             return Ok(Rc::new(Skipped {
@@ -583,6 +586,9 @@ impl Executor<'_> {
         in_token: bool,
     ) -> Run<Vec<Res>> {
         let (matcher, expectation, expected) = terminal;
+        if !in_token && !self.lexer_family.is_empty() {
+            return self.lexical_terminal(matcher, position, state);
+        }
         if !in_token && let Some(id) = expected {
             self.shared
                 .expectations
@@ -884,6 +890,7 @@ fn aliased_items<'c>(
         Expr::Repeat { item, .. }
         | Expr::And(item)
         | Expr::Not(item)
+        | Expr::LexicalScope { item, .. }
         | Expr::Capture { item, .. }
         | Expr::Precedence { item, .. }
         | Expr::DynamicPrecedence { item, .. }
@@ -894,6 +901,6 @@ fn aliased_items<'c>(
         | Expr::Missing { item, .. }
         | Expr::Embed { item, .. }
         | Expr::Recover { item, .. } => aliased_items(item, program, aliased),
-        Expr::Empty | Expr::Terminal { .. } | Expr::Ref(_) => {}
+        Expr::Empty | Expr::LexicalToken { .. } | Expr::Terminal { .. } | Expr::Ref(_) => {}
     }
 }

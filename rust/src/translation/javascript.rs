@@ -29,6 +29,7 @@ use super::types::{BOOL, FLOAT, INT, NAT, STRING, Type, array};
 use super::{Language, Span};
 
 mod array_methods;
+mod callables;
 mod console;
 mod declarations;
 mod expressions;
@@ -40,10 +41,13 @@ mod loops;
 mod lowering;
 mod math;
 mod object_properties;
+mod owned_array_append;
 mod product_source_rules;
 mod products;
+mod reference_analysis;
 mod scalar_loops;
 mod statements;
+mod surface_rules;
 use self::flow::{imperative, statement_uses};
 use self::imperative::lower_imperative;
 use self::lowering::{assertion_kind, guarded_parameter, lower, prop_of};
@@ -331,6 +335,10 @@ enum CaseTest {
         value: bool,
         span: Span,
     },
+    Value {
+        value: Box<SExpr>,
+        span: Span,
+    },
 }
 
 /// Where a block-declaration scan stops: the end of the file or the block's `}`.
@@ -352,6 +360,7 @@ struct JavaScriptParser {
     docs: Vec<Comment>,
     /// Tags of every @typedef data type, for `switch (x.$)`.
     data_types: Vec<SData>,
+    type_aliases: HashMap<String, String>,
     scope: Scope,
     literal_bindings: HashMap<String, SExpr>,
     assertion: Option<Assertion>,
@@ -366,6 +375,9 @@ struct JavaScriptParser {
     /// Whether a top-level statement is being read, where `return` is a syntax error.
     top_level: bool,
     readonly_constants: ReadonlyConstants,
+    reference_semantics: bool,
+    reference_semantics_forced: bool,
+    eliminated_owned_array_append_operations: Vec<Span>,
     scalar_loop_model: String,
     /// Functions and data types that loops and joins of statements lower to, and their count.
     generated: Vec<SItem>,
@@ -377,12 +389,15 @@ struct JavaScriptParser {
     imports: Vec<SImport>,
     exported_names: HashSet<String>,
     function_names: HashSet<String>,
+    owned_array_readers: owned_array_append::Readers,
+    owned_array_reader_namespace: usize,
     nested_product_bindings: HashSet<Span>,
     global_binding_names: HashSet<String>,
 }
 
 impl JavaScriptParser {
     fn new(source: &str, tokens: Vec<Token>, comments: &[Comment]) -> Self {
+        let reference_semantics = reference_analysis::requires_reference_semantics(&tokens, &[]);
         Self {
             source: Source::new(source),
             cursor: TokenCursor::new(tokens, Language::JavaScript),
@@ -392,6 +407,7 @@ impl JavaScriptParser {
                 .cloned()
                 .collect(),
             data_types: Vec::new(),
+            type_aliases: HashMap::new(),
             scope: Scope::default(),
             literal_bindings: HashMap::new(),
             assertion: None,
@@ -402,6 +418,9 @@ impl JavaScriptParser {
             jumps: Jumps::default(),
             top_level: false,
             readonly_constants: ReadonlyConstants::default(),
+            reference_semantics,
+            reference_semantics_forced: false,
+            eliminated_owned_array_append_operations: Vec::new(),
             scalar_loop_model: String::new(),
             generated: Vec::new(),
             generated_count: 0,
@@ -410,6 +429,8 @@ impl JavaScriptParser {
             imports: Vec::new(),
             exported_names: HashSet::new(),
             function_names: HashSet::new(),
+            owned_array_readers: HashMap::new(),
+            owned_array_reader_namespace: 0,
             nested_product_bindings: HashSet::new(),
             global_binding_names: HashSet::new(),
         }

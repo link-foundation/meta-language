@@ -78,6 +78,7 @@ pub(super) fn first_of(
         Expr::Token(item)
         | Expr::ImmediateToken(item)
         | Expr::LexicalPrecedence { item, .. }
+        | Expr::LexicalScope { item, .. }
         | Expr::Capture { item, .. }
         | Expr::Precedence { item, .. }
         | Expr::DynamicPrecedence { item, .. }
@@ -158,6 +159,7 @@ pub(super) fn follow_walk(
             item, max: Some(1), ..
         }
         | Expr::Alias { item, .. }
+        | Expr::LexicalScope { item, .. }
         | Expr::Capture { item, .. }
         | Expr::Precedence { item, .. }
         | Expr::DynamicPrecedence { item, .. } => follow_walk(item, after, rules, first, sets),
@@ -225,6 +227,7 @@ fn literal_walk(
             item, max: Some(1), ..
         }
         | Expr::Alias { item, .. }
+        | Expr::LexicalScope { item, .. }
         | Expr::Capture { item, .. }
         | Expr::Precedence { item, .. }
         | Expr::DynamicPrecedence { item, .. } => literal_walk(item, after, rules, first, sets),
@@ -265,6 +268,7 @@ pub(super) fn keyword_texts(rules: &[Rule]) -> HashSet<Vec<u8>> {
             Expr::Repeat { item, .. }
             | Expr::And(item)
             | Expr::Not(item)
+            | Expr::LexicalScope { item, .. }
             | Expr::Capture { item, .. }
             | Expr::Alias { item, .. }
             | Expr::Precedence { item, .. }
@@ -292,7 +296,8 @@ pub(super) fn units(expr: &Expr, found: &mut Vec<usize>) {
                 units(item, found);
             }
         }
-        Expr::Capture { item, .. }
+        Expr::LexicalScope { item, .. }
+        | Expr::Capture { item, .. }
         | Expr::Precedence { item, .. }
         | Expr::DynamicPrecedence { item, .. }
         | Expr::Alias { item, .. } => units(item, found),
@@ -359,6 +364,7 @@ pub(super) fn left_corner_follow(rules: &[Rule], first: &[HashSet<Lead>]) -> Vec
             }
             Expr::Choice { items, .. } => pending.extend(items),
             Expr::Repeat { item, .. }
+            | Expr::LexicalScope { item, .. }
             | Expr::Capture { item, .. }
             | Expr::Precedence { item, .. }
             | Expr::DynamicPrecedence { item, .. }

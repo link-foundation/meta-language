@@ -22,8 +22,37 @@ impl LeanEmitter<'_> {
                     self.expr(right, depth)?
                 )
             }
-            Node::Index { array, index } => {
-                self.state.array_read();
+            Node::OptionalIndex { array, index } => {
+                let position = self.expr(index, depth)?;
+                let values = self.expr(array, depth)?;
+                crate::translation::array_value_rules::render_optional_array_read(
+                    "Lean",
+                    index.ty.kind(),
+                    &values,
+                    &position,
+                )
+            }
+            Node::StringPoints { object } => {
+                let value = self.expr(object, depth)?;
+                crate::translation::array_value_rules::render_string_point_iteration(
+                    "Lean", false, &value,
+                )
+            }
+            Node::CollectionItems { object, op } => {
+                let map = matches!(object.ty, Type::Map { .. });
+                let value = self.expr(object, depth)?;
+                crate::translation::array_value_rules::render_collection_iteration(
+                    "Lean", map, op, &value, "", "",
+                )
+            }
+            Node::Index {
+                array,
+                index,
+                proven_in_bounds,
+            } => {
+                if !proven_in_bounds {
+                    self.state.array_read();
+                }
                 self.helpers.insert("arrayAt");
                 let values = self.expr(array, depth)?;
                 let text = self.expr(index, depth)?;

@@ -262,7 +262,9 @@ pub(super) struct ImmediateLiterals(pub(super) HashSet<Vec<u8>>);
 /// under its aliases and captures, or None.
 pub(super) fn immediate_pattern(expr: &Expr) -> Option<&Expr> {
     match expr {
-        Expr::Alias { item, .. } | Expr::Capture { item, .. } => immediate_pattern(item),
+        Expr::Alias { item, .. } | Expr::LexicalScope { item, .. } | Expr::Capture { item, .. } => {
+            immediate_pattern(item)
+        }
         Expr::ImmediateToken(item)
             if !matches!(
                 **item,
@@ -301,6 +303,7 @@ fn leading_literals(expr: &Expr, literals: &mut HashSet<Vec<u8>>) {
             }
         }
         Expr::Alias { item, .. }
+        | Expr::LexicalScope { item, .. }
         | Expr::Capture { item, .. }
         | Expr::Precedence { item, .. }
         | Expr::DynamicPrecedence { item, .. } => leading_literals(item, literals),

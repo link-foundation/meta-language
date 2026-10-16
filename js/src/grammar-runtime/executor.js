@@ -26,7 +26,12 @@ import { RULE_MEMO_PAGE_WIDTH, retireCompletedRuleMemoPrefix } from './rule-memo
 import { readRecursiveMemoSeed, rememberRecursiveMemoDependency, acceptRecursiveMemoEntry, reuseRecursiveMemoEntry, advanceRecursiveMemoSeed, finishRecursiveMemoSeed, storeRecursiveMemoEntry } from './recursive-seed-memo.js';
 import { readTriviaPrefixPolicy, acceptTriviaExtraPrefix } from './trivia-prefix-cache.js';
 import { completeRuleContexts } from './precedence-contexts.js';
-import { acceptLexicalCacheContext, acceptLexicalCacheReservation, acceptPrecedenceOperandContext, acceptPrecedenceOperandHead, acceptScannerPreemptionBoundary, readScannerContinuationAction } from '../translation/frontend-rules.js';
+import { acceptLexicalCacheContext, acceptLexicalCacheReservation, acceptPrecedenceOperandContext, acceptPrecedenceOperandHead, acceptScannerPreemptionBoundary, readLexicalWinnerIndex, readScannerContinuationAction } from '../translation/frontend-rules.js';
+import { lexerObligationsFor } from './lexer-election.js';
+import { acceptGrammarLexerMode, acceptGrammarLexerTrivia, acceptGrammarLexerExpectedToken, readGrammarLexerTriviaIdentity } from '../translation/grammar-lexer-rules.js';
+import { GrammarRuntimeError } from './load.js';
+import { evaluateGrammarSelection, runEmbeddedGrammar } from './grammar-selection.js';
+import { sameGrammarOutput, sameGrammarTree } from './tree-equality.js';
 
 /** Thrown when the rule nesting exceeds `maxDepth`; the driver turns it into an `ERROR` root. */
 export class NestingTooDeep extends Error {}
@@ -122,7 +127,7 @@ function makeResult(end, state, children = NO_CHILDREN, dynamic = 0, cost = 0) {
 }
 
 function resultKey(result) {
-  return `${result.end}|${result.state.key}`;
+  return `${result.end}|${result.state.key}${result.lexicalFamily === undefined ? '' : `|lexer:${result.lexicalFamily}`}`;
 }
 
 // The settling of a program loaded before grammars declared one: every step.
@@ -179,24 +184,7 @@ function addResult(results, result, tokens = null, settling = ALL_SETTLING) {
 // `+.` in a token tree, one run of `(precedence 0 right (repeat1 ...))` or two,
 // both flattened by the silent rule) are one parse, not an ambiguity.
 function sameOutput(a, b) {
-  if (a === b) return true;
-  if (a.length !== b.length) return false;
-  return a.every((first, index) => {
-    const second = b[index];
-    if (first === second) return true;
-    if (first.type !== second.type || first.kind !== second.kind || first.start !== second.start || first.end !== second.end) return false;
-    if (Boolean(first.trivia) !== Boolean(second.trivia) || (first.field ?? null) !== (second.field ?? null) || (first.language ?? null) !== (second.language ?? null)) return false;
-    if (!sameValue(first.attributes ?? null, second.attributes ?? null)) return false;
-    return first.type !== 'node' || sameOutput(first.children, second.children);
-  });
-}
-
-// Whether two attribute values are equal, objects whatever their key order.
-function sameValue(a, b) {
-  if (a === b) return true;
-  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null || Array.isArray(a) !== Array.isArray(b)) return false;
-  const keys = Object.keys(a);
-  return keys.length === Object.keys(b).length && keys.every((key) => Object.hasOwn(b, key) && sameValue(a[key], b[key]));
+  return sameGrammarOutput(a, b);
 }
 
 // Which of two results over the same text has the tokens a lexer prefers:
@@ -506,7 +494,7 @@ function directEdge(expression, side, owner, found = [], tag = null) {
     case 'precedence': case 'namedPrecedence':
       directEdge(expression.item, side, owner, found, { level: expression.level ?? 0, name: expression.name ?? null, associativity: expression.associativity, rule: owner });
       break;
-    case 'capture': case 'dynamicPrecedence': case 'alias':
+    case 'lexicalScope': case 'capture': case 'dynamicPrecedence': case 'alias':
     case 'optional': case 'repeat0': case 'repeat1': case 'repeat': directEdge(expression.item, side, owner, found, tag);
   }
   return found;
@@ -524,7 +512,7 @@ const IMMEDIATE_LITERALS = new WeakMap();
 function immediateLiterals(choice) {
   if (IMMEDIATE_LITERALS.has(choice)) return IMMEDIATE_LITERALS.get(choice);
   const patternOf = (expression) => {
-    if (expression.kind === 'alias' || expression.kind === 'capture') return patternOf(expression.item);
+    if (expression.kind === 'alias' || expression.kind === 'capture' || expression.kind === 'lexicalScope') return patternOf(expression.item);
     return expression.kind === 'immediateToken' && expression.item.kind !== 'literal' && expression.item.kind !== 'lexicalPrecedence' ? expression.item : null;
   };
   const leading = (expression) => {
@@ -532,7 +520,7 @@ function immediateLiterals(choice) {
       case 'immediateToken': return expression.item.kind === 'literal' ? [expression.item.value] : [];
       case 'seq': return expression.items.length > 0 ? leading(expression.items[0]) : [];
       case 'choice': return expression.items.flatMap(leading);
-      case 'alias': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': return leading(expression.item);
+      case 'lexicalScope': case 'alias': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': return leading(expression.item);
       default: return [];
     }
   };
@@ -602,7 +590,7 @@ function firstOf(expression, rules, sets, found = new Set()) {
       break;
     case 'choice': for (const item of expression.items) firstOf(item, rules, sets, found); break;
     case 'alias': found.add(`ref ${expression.name}`); firstOf(expression.item, rules, sets, found); break;
-    case 'token': case 'immediateToken': case 'lexicalPrecedence': case 'capture': case 'precedence': case 'namedPrecedence':
+    case 'lexicalScope': case 'token': case 'immediateToken': case 'lexicalPrecedence': case 'capture': case 'precedence': case 'namedPrecedence':
     case 'dynamicPrecedence': case 'optional': case 'repeat0': case 'repeat1': case 'repeat':
       firstOf(expression.item, rules, sets, found);
   }
@@ -635,7 +623,7 @@ function followSets(rules, first) {
         walk(expression.item, new Set([...firstOf(expression.item, rules, first), ...after]));
         break;
       case 'choice': for (const item of expression.items) walk(item, after); break;
-      case 'alias': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'optional':
+      case 'lexicalScope': case 'alias': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'optional':
         walk(expression.item, after);
     }
   };
@@ -675,7 +663,7 @@ function literalFollowSets(rules, first) {
         walk(expression.item, new Set([...firstOf(expression.item, rules, first), ...after]));
         break;
       case 'choice': for (const item of expression.items) walk(item, after); break;
-      case 'alias': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'optional':
+      case 'lexicalScope': case 'alias': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'optional':
         walk(expression.item, after);
     }
   };
@@ -719,7 +707,7 @@ function leftCornerFollow(rules, first) {
     switch (expression.kind) {
       case 'ref': return [expression.name];
       case 'choice': return expression.items.flatMap(units);
-      case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'alias': return units(expression.item);
+      case 'lexicalScope': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'alias': return units(expression.item);
       default: return [];
     }
   };
@@ -749,7 +737,7 @@ function leftCornerFollow(rules, first) {
         expression.items.forEach(walk);
         break;
       case 'choice': expression.items.forEach(walk); break;
-      case 'repeat0': case 'repeat1': case 'repeat': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'alias': case 'optional':
+      case 'lexicalScope': case 'repeat0': case 'repeat1': case 'repeat': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'alias': case 'optional':
         walk(expression.item);
     }
   };
@@ -786,7 +774,7 @@ function reductionFacts(grammar) {
   const visit = (name, expression) => {
     switch (expression.kind) {
       case 'choice': expression.items.forEach((item) => visit(name, item)); return;
-      case 'capture': case 'alias': visit(name, expression.item); return;
+      case 'lexicalScope': case 'capture': case 'alias': visit(name, expression.item); return;
       case 'precedence': case 'namedPrecedence': break;
       default: return;
     }
@@ -964,7 +952,7 @@ function unitClosure(grammar, slot) {
         if (solid.length === 1 && expression.items.length === 1) walk(solid[0]);
         break;
       }
-      case 'precedence': case 'namedPrecedence': case 'capture': case 'dynamicPrecedence': walk(expression.item);
+      case 'lexicalScope': case 'precedence': case 'namedPrecedence': case 'capture': case 'dynamicPrecedence': walk(expression.item);
     }
   };
   while (pending.length > 0) {
@@ -1008,7 +996,7 @@ function shiftItems(grammar, slot) {
           walk(expression.item, { level: expression.level ?? 0, name: expression.name ?? null, associativity: expression.associativity, rule: name }, rest);
           break;
         case 'repeat0': case 'repeat1': case 'repeat': walk(expression.item, tag, [expression, ...rest]); break;
-        case 'capture': case 'dynamicPrecedence': case 'alias': case 'optional': walk(expression.item, tag, rest);
+        case 'lexicalScope': case 'capture': case 'dynamicPrecedence': case 'alias': case 'optional': walk(expression.item, tag, rest);
       }
     };
     walk(rule.expression, null, []);
@@ -1717,19 +1705,7 @@ function sameTokens(a, b) {
 // two leftmost chains compared node by node share their subtrees, which
 // would otherwise be compared again for every pair above them.
 function sameTree(a, b, memo) {
-  if (a === b) return true;
-  if (a.type !== b.type || a.kind !== b.kind) return false;
-  if (a.type !== 'node') return a.start === b.start && a.end === b.end;
-  const known = memo?.get(a)?.get(b);
-  if (known !== undefined) return known;
-  const first = a.children.filter((child) => !isTrivia(child));
-  const second = b.children.filter((child) => !isTrivia(child));
-  const same = first.length === second.length && first.every((child, index) => sameTree(child, second[index], memo));
-  if (memo) {
-    if (!memo.has(a)) memo.set(a, new Map());
-    memo.get(a).set(b, same);
-  }
-  return same;
+  return sameGrammarTree(a, b, memo);
 }
 
 // Whether two child lists are the same trees over the same text.
@@ -2062,6 +2038,7 @@ function copyResult(result, changes) {
     precedence: result.precedence, tail: result.tail, ambiguous: result.ambiguous, cost: result.cost,
   };
   if (result.before !== undefined) copy.before = result.before;
+  if (result.lexicalFamily !== undefined) copy.lexicalFamily = result.lexicalFamily;
   if (result.open) copy.open = true;
   if (!('children' in changes)) shareChildren(copy, result);
   return Object.assign(copy, changes);
@@ -2077,6 +2054,7 @@ function joinResults(left, right, inToken) {
     ambiguous: left.ambiguous || right.ambiguous,
     cost: left.cost + right.cost,
   };
+  if (right.lexicalFamily !== undefined || left.lexicalFamily !== undefined) joined.lexicalFamily = right.lexicalFamily ?? left.lexicalFamily;
   if (right.open || (left.open && right.end === left.end)) joined.open = true;
   if (inToken) {
     joined.children = NO_CHILDREN;
@@ -2108,7 +2086,7 @@ function nullable(expression) {
     case 'repeat': return expression.min === 0 || nullable(expression.item);
     case 'seq': return expression.items.every(nullable);
     case 'choice': return expression.items.some(nullable);
-    case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'alias': case 'repeat1': return nullable(expression.item);
+    case 'lexicalScope': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'alias': case 'repeat1': return nullable(expression.item);
     default: return false;
   }
 }
@@ -2190,6 +2168,10 @@ export class Executor {
     this.memoLimit = options.memoLimit ?? DEFAULT_MEMO_LIMIT;
     this.callStack = [];
     this.triviaMemo = new Map();
+    this.lexerFamily = program.defaultLexer ?? '';
+    this.lexerWorkers = new Map();
+    this.lexerWinners = new Map();
+    this.lexerTerminals = new Map();
     this.separatorLeaves = new Map();
     // The starts of separators a token lexed at them took, going on past
     // the trivia, each with the node calls the token was lexed in, their
@@ -2322,6 +2304,100 @@ export class Executor {
     return results;
   }
 
+  // A context-free election within one source lexer. Probes use only that
+  // lexer's original closure, never canonical unions or parser expectations.
+  electedWinner(plan, position, state) {
+    const key = `${plan.name}|${position}|${state.key}`;
+    if (this.lexerWinners.has(key)) return this.lexerWinners.get(key);
+    let worker = this.lexerWorkers.get(plan.name);
+    if (!worker && plan.rules.length > 0) {
+      worker = new Executor(plan.program, this.bytes, this.begin, this.end, this.options, this.budget, this.maxDepth - this.depth);
+      this.lexerWorkers.set(plan.name, worker);
+    }
+    const stack = state.stacks[`lexer:${plan.name}:modes`] ?? ['default'];
+    const mode = stack[stack.length - 1];
+    const ends = [];
+    const eligible = [];
+    for (const rule of plan.rules) {
+      const result = acceptGrammarLexerMode(rule.mode, mode) ? worker.quietly(() => longestResult(worker.reference(rule.name, position, state, true))) : null;
+      ends.push(result?.end ?? -1);
+      eligible.push(result !== null && result.end > position);
+    }
+    const selected = readLexicalWinnerIndex(ends, eligible);
+    if (selected < 0) {
+      this.retain(1);
+      this.lexerWinners.set(key, null);
+      return null;
+    }
+    const rule = plan.rules[selected];
+    const unresolved = lexerObligationsFor(plan, rule.name)[0];
+    if (unresolved) throw new GrammarRuntimeError(`unresolved ${unresolved.category} in ${plan.name}:${rule.name}: ${unresolved.source}`, 'operation');
+    const working = workingState(state);
+    const nativeModes = working.modes;
+    working.modes = [...stack];
+    try { runStatements(rule.action, { state: working, step: () => this.step() }); }
+    catch (error) {
+      if (error instanceof OperationFailed) throw new GrammarRuntimeError(`failed lexer command in ${plan.name}:${rule.name}`, 'operation');
+      throw error;
+    }
+    working.stacks[`lexer:${plan.name}:modes`] = working.modes;
+    working.modes = nativeModes;
+    const winner = { rule, end: ends[selected], state: settleState(working) };
+    this.retain(1);
+    this.lexerWinners.set(key, winner);
+    return winner;
+  }
+
+  electedLeaf(plan, winner, start, kind, trivia = false) {
+    return { type: 'token', kind, start, end: winner.end, ...(trivia ? { trivia: true } : {}),
+      lexical: { lexer: plan.name, rule: winner.rule.name, type: winner.rule.type, channel: winner.rule.channel, disposition: winner.rule.disposition } };
+  }
+
+  skipElectedTrivia(plan, position, state) {
+    const leaves = [];
+    const states = [state];
+    let cursor = position;
+    let current = state;
+    for (;;) {
+      const winner = this.electedWinner(plan, cursor, current);
+      if (winner === null || !acceptGrammarLexerTrivia(winner.rule.channel, winner.rule.disposition)) break;
+      const identity = readGrammarLexerTriviaIdentity(winner.rule.name, winner.rule.type, winner.rule.disposition);
+      leaves.push(this.electedLeaf(plan, winner, cursor, plan.bindings.get(identity) ?? identity, true));
+      cursor = winner.end;
+      current = winner.state;
+      states.push(current);
+    }
+    return { end: cursor, leaves, state: current, states };
+  }
+
+  electedTerminal(plan, expected, position, state, kind) {
+    if (expected === undefined) throw new GrammarRuntimeError(`unbound parser literal in lexer ${plan.name}`, 'operation');
+    const skipped = this.skipElectedTrivia(plan, position, state);
+    const winner = this.electedWinner(plan, skipped.end, skipped.state);
+    if (winner !== null && acceptGrammarLexerExpectedToken(expected ?? '', winner.rule.type, expected === null)) {
+      const selectedKind = kind ?? plan.bindings.get(winner.rule.type) ?? winner.rule.type;
+      return [makeResult(winner.end, winner.state, [...skipped.leaves, this.electedLeaf(plan, winner, skipped.end, selectedKind)])];
+    }
+    this.fail(skipped.end, expected ?? 'token');
+    // Recovery may skip a complete token, never retry inside that token.
+    let boundary = skipped.end;
+    let boundaryState = skipped.state;
+    const retry = (cursor) => {
+      while (boundary < cursor) {
+        const token = this.electedWinner(plan, boundary, boundaryState);
+        if (token) { boundary = token.end; boundaryState = token.state; }
+        else boundary += decodeAt(this.bytes, boundary, this.end).length;
+      }
+      return boundary === cursor ? this.electedTerminal(plan, expected, cursor, boundaryState, kind) : [];
+    };
+    const elementKey = `${plan.name}|${expected}|${kind}`;
+    if (!this.lexerTerminals.has(elementKey)) {
+      this.retain(1);
+      this.lexerTerminals.set(elementKey, {});
+    }
+    return this.elementFailed(skipped.end, skipped.leaves, skipped.state, { kind: kind ?? expected }, this.lexerTerminals.get(elementKey), retry);
+  }
+
   // Skips trivia: repeatedly the longest match of any trivia expression
   // allowed in the current mode. State follows the selected parse, with a
   // snapshot at each leaf boundary for tokens that retake an extra's text.
@@ -2331,6 +2407,7 @@ export class Executor {
   // there (see `nestingExtras` in load.js), except at its own start, where
   // the extra is its own rule's first token.
   skipTrivia(position, state) {
+    if (this.lexerFamily !== '') return this.skipElectedTrivia(this.program.lexers.get(this.lexerFamily), position, state);
     const { trivia } = this.program;
     if (trivia.length === 0) return { end: position, leaves: NO_CHILDREN, state, states: [state] };
     const outrank = this.lexFrame(position)?.outranks?.get(position) ?? 0;
@@ -2750,6 +2827,12 @@ export class Executor {
   }
 
   terminal(expression, position, state, inToken) {
+    if (!inToken && this.lexerFamily !== '') {
+      const lexer = this.program.lexers.get(this.lexerFamily);
+      if (expression.kind === 'literal') return this.electedTerminal(lexer, lexer.literals.get(expression.value), position, state, expression.value);
+      if (expression.kind === 'any') return this.electedTerminal(lexer, null, position, state, null);
+      throw new GrammarRuntimeError(`unsupported parser terminal ${expression.kind} in lexer ${lexer.name}`, 'operation');
+    }
     if (!inToken) this.requestItem(expression, position);
     let { end: start, leaves, states } = this.terminalStart(position, state, inToken);
     let end = -1;
@@ -2829,6 +2912,20 @@ export class Executor {
     this.step();
     switch (expression.kind) {
       case 'empty': return [makeResult(position, state)];
+      case 'lexicalScope': {
+        const previous = this.lexerFamily;
+        this.lexerFamily = expression.name;
+        try {
+          const plan = this.program.lexers.get(expression.name);
+          const unresolved = expression.owner === '' ? null : plan?.obligations.find((entry) => entry.name === expression.owner);
+          if (unresolved) throw new GrammarRuntimeError(`unresolved ${unresolved.category} in ${plan.name}:${expression.owner}: ${unresolved.source}`, 'operation');
+          return this.evaluate(expression.item, position, state, inToken).map((result) => copyResult(result, { lexicalFamily: expression.name }));
+        } finally { this.lexerFamily = previous; }
+      }
+      case 'lexicalToken': {
+        const plan = this.program.lexers.get(expression.name);
+        return this.electedTerminal(plan, expression.token, position, state, plan.bindings.get(expression.token) ?? expression.token);
+      }
       case 'literal': case 'literalInsensitive': case 'charRange': case 'charClass': case 'byteClass': case 'any': case 'regex':
         return this.terminal(expression, position, state, inToken);
       case 'ref': return this.reference(expression.name, position, state, inToken);
@@ -2907,6 +3004,7 @@ export class Executor {
       case 'recover': return this.recover(expression, position, state, inToken);
       case 'missing': return this.missing(expression, position, state, inToken);
       case 'embed': return this.embed(expression, position, state, inToken);
+      case 'any-grammar': case 'all-grammar': return evaluateGrammarSelection(this, expression, position, state, inToken, Executor);
       default: throw new TypeError(`the grammar executor has no case for expression kind ${expression.kind}`);
     }
   }
@@ -3340,7 +3438,7 @@ export class Executor {
         const leads = expression.items.map((item) => this.leadPriority(item, visiting)).filter((lead) => lead !== null);
         return leads.length > 0 ? Math.min(...leads) : null;
       }
-      case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'alias':
+      case 'lexicalScope': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'alias':
       case 'optional': case 'repeat0': case 'repeat1': case 'repeat': return this.leadPriority(expression.item, visiting);
       case 'empty': case 'and': case 'not': return null;
       default: return 0;
@@ -3407,7 +3505,7 @@ export class Executor {
         return;
       }
       case 'choice': for (const item of expression.items) this.edgeRules(item, side, names); return;
-      case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'alias':
+      case 'lexicalScope': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'alias':
       case 'optional': case 'repeat0': case 'repeat1': case 'repeat': this.edgeRules(expression.item, side, names);
     }
   }
@@ -3418,7 +3516,7 @@ export class Executor {
     let kinds = this.operandMemo.get(expression);
     if (kinds) return kinds;
     const edge = (item, side) => {
-      if (item.kind === 'capture') return edge(item.item, side);
+      if (item.kind === 'capture' || item.kind === 'lexicalScope') return edge(item.item, side);
       if (item.kind === 'seq' && item.items.length > 0) return this.unitKinds(item.items[side === 'left' ? 0 : item.items.length - 1], new Set(), side);
       if (item.kind === 'choice') return union(item.items.map((choice) => edge(choice, side)));
       return null;
@@ -3455,7 +3553,7 @@ export class Executor {
         return kinds.length > 0 ? union(kinds) : null;
       }
       case 'choice': return union(expression.items.map((item) => this.unitKinds(item, visiting, side)));
-      case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence':
+      case 'lexicalScope': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence':
       case 'optional': case 'repeat0': case 'repeat1': case 'repeat': return this.unitKinds(expression.item, visiting, side);
       case 'alias': return new Set([expression.name]);
       default: return null;
@@ -3577,11 +3675,10 @@ export class Executor {
       const key = `${expression.language}|${start}|${region.end}`;
       let outcome = this.embedMemo.get(key);
       if (!outcome) {
-        const nested = new Executor(language, this.bytes, start, region.end, this.options, this.budget, this.maxDepth - this.depth);
-        nested.expectations = this.expectations;
-        outcome = nested.run(language.start);
-        this.embedMemo.set(key, outcome);
+        outcome = runEmbeddedGrammar(this, language, start, region.end, expression.language, Executor);
+        if (outcome) this.embedMemo.set(key, outcome);
       }
+      if (!outcome) continue;
       if (!outcome.ok) {
         for (const expectation of outcome.expected) this.fail(outcome.farthest, expectation);
         continue;
@@ -3617,6 +3714,11 @@ export class Executor {
   }
 
   referenceAt(name, position, state, inToken) {
+    if (!inToken && this.lexerFamily !== '') {
+      const plan = this.program.lexers.get(this.lexerFamily);
+      const binding = [...plan.bindings].find(([, canonical]) => canonical === name);
+      if (binding) return this.electedTerminal(plan, binding[0], position, state, name);
+    }
     if (!inToken && this.program.expectedReferences.size > 0) {
       const id = this.program.expectedReferences.get(name);
       if (id !== undefined) this.expectations.request(position, id);
@@ -3633,7 +3735,7 @@ export class Executor {
     // made in the open. Extra parser contexts have different trivia behavior
     // and must not reuse the results of an ordinary syntactic context.
     const quiet = !this.repairPoints ? '' : this.suppressed > 0 ? '|quiet' : this.chained.has(position) ? '|chained' : '';
-    const keyParts = [`${rule.index}`, `${position}`, `${state.key}`, `${inToken ? 1 : 0}`, `${this.inExtra}`, `${this.extraStart}${quiet}`];
+    const keyParts = [`${rule.index}`, `${position}`, `${state.key}`, `${inToken ? 1 : 0}`, `${this.inExtra}`, `${this.extraStart}${quiet}|lexer:${this.lexerFamily}`];
     const key = keyParts[2].length <= 64 ? keyParts.join('|')
       : `${keyParts[0]}|${keyParts[1]}|${keyParts[2]}|${keyParts[3]}|${keyParts[4]}|${keyParts[5]}`;
     const known = this.memo.get(key);
@@ -3780,6 +3882,7 @@ export class Executor {
   }
 
   ruleBody(rule, position, state, inToken) {
+    if (rule.kind === 'token' && rule.electedAlternatives) return this.evaluate(rule.expression, position, state, inToken);
     if (rule.kind === 'token' || rule.kind === 'atomic') {
       let { end: start, leaves, states } = this.terminalStart(position, state, inToken);
       // An extra token is the token of a rule that names it where the rule
@@ -4011,7 +4114,11 @@ export class Executor {
     const complete = [];
     let partial = null;
     for (const result of results) {
-      const trailing = this.skipTrivia(result.end, result.state);
+      const previousFamily = this.lexerFamily;
+      this.lexerFamily = result.lexicalFamily ?? previousFamily;
+      let trailing;
+      try { trailing = this.skipTrivia(result.end, result.state); }
+      finally { this.lexerFamily = previousFamily; }
       if (trailing.end === this.end) {
         complete.push({ result, trailing: trailing.leaves });
         continue;

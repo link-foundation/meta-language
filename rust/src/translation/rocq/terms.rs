@@ -755,6 +755,7 @@ impl RocqParser {
                             unit: false,
                         },
                         span: ascribed_span,
+                        parenthesized: inner.parenthesized,
                         block: inner.block,
                         tag_test: None,
                     });

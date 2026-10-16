@@ -42,6 +42,28 @@ pub(super) fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr,
         }
     }
     fn walk(node: &mut SExpr, arrays: &HashMap<*const SExpr, Type>) {
+        if let Some(ty) = arrays.get(&std::ptr::from_ref::<SExpr>(node)) {
+            match (&mut node.node, ty) {
+                (
+                    SNode::Lambda { params, ret, .. },
+                    Type::Function {
+                        params: inferred,
+                        ret: inferred_ret,
+                    },
+                ) => {
+                    for (parameter, ty) in params.iter_mut().zip(inferred) {
+                        if parameter.ty.is_none() {
+                            parameter.ty = Some(ty.clone());
+                        }
+                    }
+                    *ret = Some(inferred_ret.as_ref().clone());
+                }
+                (SNode::ForOfIterable { ty: retained, .. }, _) => *retained = Some(ty.clone()),
+                (SNode::Record { ty: retained, .. }, _) => *retained = Some(ty.clone()),
+                (SNode::CellAllocate { ty: retained, .. }, _) => *retained = Some(ty.clone()),
+                _ => {}
+            }
+        }
         if let Some(ty) = arrays.get(&std::ptr::from_ref::<SExpr>(node))
             && let SNode::Array { element, .. } = &mut node.node
         {
@@ -51,13 +73,47 @@ pub(super) fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr,
             walk(&mut test.object, arrays);
         }
         match &mut node.node {
+            SNode::Record {
+                entries,
+                prototype_definition,
+                ..
+            } => {
+                for entry in entries {
+                    walk(&mut entry.value, arrays);
+                }
+                if let Some(definition) = prototype_definition {
+                    walk(&mut definition.value, arrays);
+                }
+            }
+            SNode::Method { object, args, .. } => {
+                walk(object, arrays);
+                for arg in args.iter_mut().flatten() {
+                    walk(arg, arrays);
+                }
+            }
+            SNode::CopySlice { object } => walk(object, arrays),
             SNode::App { func, args } => {
                 walk(func, arrays);
                 for arg in args {
                     walk(arg, arrays);
                 }
             }
+            SNode::Lambda { params, body, .. } => {
+                for parameter in params {
+                    if let Some(value) = &mut parameter.default_value {
+                        walk(value, arrays);
+                    }
+                }
+                walk(body, arrays);
+            }
+            SNode::CellWrite { cell, value, body } => {
+                walk(cell, arrays);
+                walk(value, arrays);
+                walk(body, arrays);
+            }
             SNode::Field { object, .. }
+            | SNode::CellAllocate { value: object, .. }
+            | SNode::CellRead { cell: object }
             | SNode::TypeOf { arg: object }
             | SNode::Unary { arg: object, .. }
             | SNode::StringMap { object, .. }
@@ -65,7 +121,23 @@ pub(super) fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr,
             | SNode::Show { arg: object, .. }
             | SNode::Cast { arg: object, .. }
             | SNode::Length { object, .. }
+            | SNode::ForOfIterable { object, .. }
+            | SNode::StringPoints { object }
             | SNode::TupleIndex { object, .. } => walk(object, arrays),
+            SNode::ReferenceWrite {
+                object,
+                index,
+                value,
+                ..
+            } => {
+                walk(object, arrays);
+                if let Some(index) = index {
+                    walk(index, arrays);
+                }
+                if let Some(value) = value {
+                    walk(value, arrays);
+                }
+            }
             SNode::StringTest {
                 object: left,
                 search: right,
@@ -89,6 +161,7 @@ pub(super) fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr,
             | SNode::Index {
                 object: left,
                 index: right,
+                ..
             } => {
                 walk(left, arrays);
                 walk(right, arrays);

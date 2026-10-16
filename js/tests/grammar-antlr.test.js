@@ -236,7 +236,8 @@ test('left-recursive alternatives climb by precedence, with surrogate sets and n
 });
 
 test('caseInsensitive options match either case, and rule preludes join the doc', async () => {
-  const grammar = importAntlr(fixture('case-insensitive.g4'));
+  const source = fixture('case-insensitive.g4');
+  const grammar = importAntlr(source);
   assert.deepEqual(grammar.rule('ECHO').expression, G.literalInsensitive('echo'));
   assert.deepEqual(grammar.rule('WORD').expression, G.seq(
     G.charClass([range('a', 'c'), range('A', 'C')]),
@@ -245,7 +246,16 @@ test('caseInsensitive options match either case, and rule preludes join the doc'
   assert.deepEqual(grammar.rule('NAME').expression, G.repeat1(G.charClass([range('a', 'z')])));
   assert.equal(grammar.rule('TAGGED').doc, 'dropped returns [int count]; dropped locals [int indexBefore = -1]');
   const { compileGrammar } = await import('../src/index.js');
-  const parser = compileGrammar(grammar);
+  // ANTLR 4.13.2 options.md makes this combined grammar inherit its parser
+  // from Base. Its absent implementation cannot be assumed observationally
+  // equal to ANTLR's standard parser; keep the original source and refuse it.
+  assert.deepEqual(grammar.declarations.lexers[0].expression.items.filter(({ kind }) => kind === 'lexicalObligation'), [
+    { kind: 'lexicalObligation', name: '', category: 'option', source: ' superClass = Base; caseInsensitive = true; ' },
+  ]);
+  assert.throws(() => compileGrammar(grammar), /unresolved option:.*superClass = Base/u);
+  const caseOnly = importAntlr(source.replace('superClass = Base; ', ''));
+  assert.deepEqual(caseOnly.rules, grammar.rules);
+  const parser = compileGrammar(caseOnly);
   assert.equal(parser.parseTree('EcHo Bx_Z <abc>').ok, true);
   assert.equal(parser.parseTree('<ABC>').ok, false);
 

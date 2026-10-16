@@ -217,6 +217,15 @@ pub(super) enum Target {
 #[derive(Debug)]
 pub(super) enum Expr {
     Empty,
+    LexicalScope {
+        name: Name,
+        owner: Name,
+        item: Box<Self>,
+    },
+    LexicalToken {
+        name: Name,
+        token: Name,
+    },
     Terminal {
         matcher: Matcher,
         expectation: Name,
@@ -278,7 +287,15 @@ pub(super) enum Expr {
     Embed {
         language: Name,
         item: Box<Self>,
+        selection: Option<SelectionDescriptor>,
     },
+}
+
+/// Explicit, ordered candidates for the shared any/all grammar policy.
+#[derive(Clone, Debug)]
+pub(super) struct SelectionDescriptor {
+    pub(super) mode: Name,
+    pub(super) candidates: Vec<(Name, Name)>,
 }
 
 /// One loaded rule; an instance of a parameterized rule keeps its kind.
@@ -435,6 +452,10 @@ pub(super) struct Trivia {
 /// One loaded grammar.
 #[derive(Debug)]
 pub(super) struct Program {
+    pub(super) lexers: HashMap<Name, super::lexical_plan::LexicalPlan>,
+    pub(super) default_lexer: Name,
+    /// Immutable actual input definitions and metadata for origin validation.
+    pub(super) source_definition: serde_json::Value,
     pub(super) peg: bool,
     /// How two parses of one text that end alike are settled.
     pub(super) settling: Settling,

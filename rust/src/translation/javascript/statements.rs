@@ -7,8 +7,8 @@ use super::lowering::statement_span;
 use super::{
     AssertionKind, CaseTest, Clause, ERRORS, JavaScriptParser, Result, SComparison, SData, SEffect,
     SExpr, SNode, SProp, SPropNode, ShowStyle, Span, Stmt, Switch, Token, TokenKind,
-    TranslationError, accept_java_script_line_terminator, assertion_kind, has_ctor, node, prop_of,
-    span, type_error, unsupported,
+    TranslationError, accept_java_script_line_terminator, assertion_kind, has_ctor, node,
+    number_literal, prop_of, span, type_error, unsupported,
 };
 
 struct ArrayBinding {
@@ -242,6 +242,8 @@ impl JavaScriptParser {
                     SNode::Index {
                         object: Box::new(value),
                         index: Box::new(position),
+                        optional: None,
+                        proven_in_bounds: None,
                     },
                     binding.span,
                 );
@@ -540,14 +542,29 @@ impl JavaScriptParser {
         }
         let negative = self.cursor.eat("-").is_some();
         let value = self.peek();
+        let form = super::surface_rules::read_java_script_value_case_form(
+            match value.kind {
+                TokenKind::Number => "number",
+                TokenKind::String => "string",
+                TokenKind::Identifier => "identifier",
+                TokenKind::Punct => "punct",
+                _ => "",
+            },
+            &value.value,
+            &value.suffix,
+            negative,
+        );
         if value.kind == TokenKind::Number {
             self.cursor.advance();
-            if value.suffix != "n" {
-                return Err(unsupported(
-                    "case test on a Number",
-                    "a value switch compares BigInt or boolean literals; compare Numbers with if and ===",
-                    Some(span(&token, &value)),
-                ));
+            if form == "value" {
+                let mut literal = number_literal(&value);
+                if let SNode::Num { negative: flag, .. } = &mut literal.node {
+                    *flag = negative;
+                }
+                return Ok(CaseTest::Value {
+                    value: Box::new(literal),
+                    span: span(&token, &value),
+                });
             }
             return Ok(CaseTest::NumLit {
                 value: value.value.clone(),
@@ -555,11 +572,18 @@ impl JavaScriptParser {
                 span: span(&token, &value),
             });
         }
-        if !negative && (self.cursor.is("true") || self.cursor.is("false")) {
+        if form == "boolLit" {
             self.cursor.advance();
             return Ok(CaseTest::BoolLit {
                 value: token.value == "true",
                 span: span(&token, &token),
+            });
+        }
+        if form == "value" {
+            let value = self.expr()?;
+            return Ok(CaseTest::Value {
+                value: Box::new(value),
+                span: self.to_here(&token),
             });
         }
         Err(unsupported(

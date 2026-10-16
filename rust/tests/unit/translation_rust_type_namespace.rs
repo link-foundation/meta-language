@@ -708,11 +708,22 @@ fn container_at(network: &LinkNetwork, mut current: LinkId, path: &[Value]) -> L
                 .unwrap();
         } else {
             let name = segment.as_str().unwrap();
-            current = field(
-                network,
-                current,
-                schema["fields"][name].as_str().unwrap_or(name),
+            let label = schema["fields"][name].as_str().map_or_else(
+                || {
+                    let mut label = String::new();
+                    for character in name.chars() {
+                        if character.is_ascii_uppercase() {
+                            label.push(' ');
+                            label.push(character.to_ascii_lowercase());
+                        } else {
+                            label.push(character);
+                        }
+                    }
+                    label
+                },
+                str::to_owned,
             );
+            current = field(network, current, &label);
         }
     }
     current
@@ -735,13 +746,13 @@ fn raw_links_preserve_every_shared_container_location_before_rendering() {
             .unwrap();
         let (mut network, root) = archive(entry);
         assert!(decode_typed_program_links(&network, root).is_ok());
-        let container = container_at(&network, root, location["path"].as_array().unwrap());
+        let body = network.link(root).unwrap().references()[0];
+        let container = container_at(&network, body, location["path"].as_array().unwrap());
         let kind = location["kind"].as_str().unwrap();
         assert_eq!(
             network.link(container).unwrap().metadata().term(),
             meta_language::typed_program_links_schema()["containers"][kind].as_str()
         );
-        let body = network.link(root).unwrap().references()[0];
         let scalar = field(&network, body, "source language");
         network.insert_field(container, "opaque container fact", scalar);
         let loaded = LinkNetwork::from_lino(&network.to_lino()).unwrap();

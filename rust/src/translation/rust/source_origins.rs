@@ -15,7 +15,7 @@ use super::indirection_rules::{
     accept_rust_source_indirection_argument, accept_rust_source_text_equality,
     read_rust_source_expression_origin,
 };
-use super::product_rules::accept_rust_immutable_product_type;
+use super::product_rules::{accept_rust_immutable_product_type, accept_rust_product_origin};
 use super::{Result, SExpr, SNode, Span, Type, unsupported};
 
 mod patterns;
@@ -229,7 +229,10 @@ impl SourceOrigins {
     ) -> Result<()> {
         if !self.collecting
             && (origin.fields.is_none()
-                || (!origin.direct_copy_value() && !self.owned_local_product(origin)))
+                || !accept_rust_product_origin(
+                    origin.direct_copy_value(),
+                    self.owned_local_product(origin),
+                ))
         {
             return Err(unsupported(
                 "immutable Rust tuple product",
@@ -274,7 +277,7 @@ impl SourceOrigins {
         Ok(())
     }
 
-    fn owned_local_product(&self, origin: &SourceOrigin) -> bool {
+    pub(super) fn owned_local_product(&self, origin: &SourceOrigin) -> bool {
         self.owned_local_values
             && origin
                 .ty

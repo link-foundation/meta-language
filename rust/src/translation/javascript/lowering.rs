@@ -6,6 +6,9 @@ use super::{
     Stmt, Switch, TranslationError, UnaryOp, node, type_error, unsupported, wild,
 };
 
+mod traversal;
+pub(super) use traversal::{children, children_mut};
+
 /// What `assert.method` asserts: the lookup is in plain objects, so the names
 /// of `Object.prototype` find an inherited function and read as `notDeep`.
 pub(super) fn assertion_kind(method: &str, strict: bool) -> Option<AssertionKind> {
@@ -27,7 +30,11 @@ pub(super) fn assertion_kind(method: &str, strict: bool) -> Option<AssertionKind
 /// Statements to one expression: `const` is `let`, `if` with a returning
 /// branch selects between the branch and the rest, and every path must end
 /// in `return` or `throw`.
-pub(super) fn lower(statements: &[Stmt], place: Span) -> Result<SExpr> {
+pub(super) fn lower(
+    statements: &[Stmt],
+    place: Span,
+    generated_count: &mut usize,
+) -> Result<SExpr> {
     let list: Vec<&Stmt> = statements
         .iter()
         .flat_map(|statement| match statement {
@@ -38,7 +45,7 @@ pub(super) fn lower(statements: &[Stmt], place: Span) -> Result<SExpr> {
         })
         .filter(|statement| !matches!(statement, Stmt::Empty))
         .collect();
-    lower_at(&list, 0, place)
+    lower_at(&list, 0, place, generated_count)
 }
 
 pub(super) const fn statement_span(statement: &Stmt) -> Option<Span> {
@@ -73,7 +80,12 @@ pub(super) fn unreachable(list: &[&Stmt], index: usize) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn lower_at(list: &[&Stmt], index: usize, place: Span) -> Result<SExpr> {
+pub(super) fn lower_at(
+    list: &[&Stmt],
+    index: usize,
+    place: Span,
+    generated_count: &mut usize,
+) -> Result<SExpr> {
     // A function that finishes without returning returns undefined, the unit value.
     let Some(statement) = list.get(index) else {
         return Ok(node(SNode::Unit, place));
@@ -84,7 +96,7 @@ pub(super) fn lower_at(list: &[&Stmt], index: usize, place: Span) -> Result<SExp
                 name: name.clone(),
                 ty: None,
                 value: Box::new(value.clone()),
-                body: Box::new(lower_at(list, index + 1, place)?),
+                body: Box::new(lower_at(list, index + 1, place, generated_count)?),
             },
             *span,
         )),
@@ -110,7 +122,7 @@ pub(super) fn lower_at(list: &[&Stmt], index: usize, place: Span) -> Result<SExp
                 ));
             }
             unreachable(list, index)?;
-            lower(body, *span)
+            lower(body, *span, generated_count)
         }
         Stmt::If {
             cond,
@@ -125,22 +137,22 @@ pub(super) fn lower_at(list: &[&Stmt], index: usize, place: Span) -> Result<SExp
                     Some(*span),
                 ));
             }
-            let then = lower(then, *span)?;
+            let then = lower(then, *span, generated_count)?;
             if let Some(test) = tag_condition(cond) {
                 if otherwise.is_some() {
                     unreachable(list, index)?;
                 }
                 let other = match otherwise {
-                    Some(branch) => lower(branch, *span)?,
-                    None => lower_at(list, index + 1, place)?,
+                    Some(branch) => lower(branch, *span, generated_count)?,
+                    None => lower_at(list, index + 1, place, generated_count)?,
                 };
                 return lower_tag_if(test, then, other, *span);
             }
             let other = if let Some(branch) = otherwise {
                 unreachable(list, index)?;
-                lower(branch, *span)?
+                lower(branch, *span, generated_count)?
             } else {
-                lower_at(list, index + 1, place)?
+                lower_at(list, index + 1, place, generated_count)?
             };
             Ok(node(
                 SNode::If {
@@ -151,7 +163,7 @@ pub(super) fn lower_at(list: &[&Stmt], index: usize, place: Span) -> Result<SExp
                 *span,
             ))
         }
-        Stmt::Switch(switch) => lower_switch(switch, list, index, place),
+        Stmt::Switch(switch) => lower_switch(switch, list, index, place, generated_count),
         Stmt::Expr { span, .. } => Err(unsupported(
             "expression statement",
             "statements with effects are outside the portable core in function bodies",
@@ -239,6 +251,7 @@ pub(super) fn lower_switch(
     list: &[&Stmt],
     index: usize,
     place: Span,
+    generated_count: &mut usize,
 ) -> Result<SExpr> {
     for clause in &node.clauses {
         if !terminates(&clause.body) {
@@ -248,6 +261,17 @@ pub(super) fn lower_switch(
                 Some(clause.span),
             ));
         }
+    }
+    if super::surface_rules::accept_java_script_value_switch(
+        node.tag.is_some(),
+        node.clauses.iter().any(|clause| {
+            clause
+                .tests
+                .iter()
+                .any(|test| matches!(test, CaseTest::Value { .. }))
+        }),
+    ) {
+        return lower_value_switch(node, list, index, place, generated_count);
     }
     let tag_switch = node.tag.as_ref().map(|(subject, data)| TagSwitch {
         subject,
@@ -260,7 +284,7 @@ pub(super) fn lower_switch(
     let mut has_default = false;
     for clause in &node.clauses {
         for test in &clause.tests {
-            let body = lower(&clause.body, clause.span)?;
+            let body = lower(&clause.body, clause.span, generated_count)?;
             match (test, &tag_switch) {
                 (CaseTest::Default { span }, tag_switch) => {
                     has_default = true;
@@ -306,6 +330,12 @@ pub(super) fn lower_switch(
                     span: Some(clause.span),
                 }),
                 (CaseTest::Tag { .. }, None) => {}
+                (CaseTest::Value { span, .. }, _) => {
+                    return Err(TranslationError::syntax(
+                        "internal: an unlowered value switch case",
+                        Some(*span),
+                    ));
+                }
             }
         }
     }
@@ -316,7 +346,7 @@ pub(super) fn lower_switch(
     } else if !at_end && !has_default {
         rows.push(SRow {
             patterns: vec![wild(node.span)],
-            body: lower_at(list, index + 1, place)?,
+            body: lower_at(list, index + 1, place, generated_count)?,
             span: Some(node.span),
         });
     } else if has_default {
@@ -329,6 +359,183 @@ pub(super) fn lower_switch(
         },
         Some(node.span),
     ))
+}
+
+/// Adapt actual host cardinalities to the shared JavaScript instruction cursor.
+#[allow(clippy::cast_precision_loss)] // The counts address actual allocated syntax nodes.
+pub(super) fn read_value_switch_instruction(imperative: bool, step: usize, count: usize) -> String {
+    super::surface_rules::read_java_script_value_switch_instruction(
+        imperative,
+        step as f64,
+        count as f64,
+    )
+}
+
+/// The shared cursor supplies an integral position within these actual cases.
+#[allow(
+    clippy::cast_precision_loss,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
+pub(super) fn read_value_switch_position(imperative: bool, step: usize, count: usize) -> usize {
+    super::surface_rules::read_java_script_value_switch_position(
+        imperative,
+        step as f64,
+        count as f64,
+    ) as usize
+}
+
+/// Construct the existing expression form of an actual value-case record.
+pub(super) fn read_value_case_expression(test: &CaseTest) -> Option<(SExpr, Span)> {
+    match test {
+        CaseTest::Value { value, span } => Some((value.as_ref().clone(), *span)),
+        CaseTest::NumLit {
+            value,
+            negative,
+            span,
+        } => Some((
+            node(
+                SNode::Num {
+                    value: value.clone(),
+                    ty: None,
+                    negative: *negative,
+                    unit: false,
+                },
+                *span,
+            ),
+            *span,
+        )),
+        CaseTest::BoolLit { value, span } => {
+            Some((node(SNode::Bool { value: *value }, *span), *span))
+        }
+        CaseTest::Default { .. } | CaseTest::Tag { .. } => None,
+    }
+}
+
+/// Interpret the generated pure-switch instructions with existing AST constructors.
+fn lower_value_switch(
+    switch: &Switch,
+    list: &[&Stmt],
+    index: usize,
+    place: Span,
+    generated_count: &mut usize,
+) -> Result<SExpr> {
+    let fallback = switch.clauses.iter().find(|clause| {
+        clause
+            .tests
+            .iter()
+            .any(|test| matches!(test, CaseTest::Default { .. }))
+    });
+    let cases: Vec<_> = switch
+        .clauses
+        .iter()
+        .flat_map(|clause| {
+            clause
+                .tests
+                .iter()
+                .filter(|test| !matches!(test, CaseTest::Default { .. }))
+                .map(move |test| (test, clause))
+        })
+        .collect();
+    let mut name = String::new();
+    let mut read = None;
+    let mut body = None;
+    let mut condition = None;
+    let mut branch = None;
+    for step in 0.. {
+        let instruction = read_value_switch_instruction(false, step, cases.len());
+        match instruction.as_str() {
+            "capture" => {
+                *generated_count += 1;
+                name = format!("ml_switch{generated_count}");
+                read = Some(node(
+                    SNode::Name {
+                        path: vec![name.clone()],
+                    },
+                    switch.span,
+                ));
+            }
+            "fallback" => {
+                body = Some(if let Some(clause) = fallback {
+                    lower(&clause.body, clause.span, generated_count)?
+                } else if index + 1 < list.len() {
+                    lower_at(list, index + 1, place, generated_count)?
+                } else {
+                    node(SNode::Unit, switch.span)
+                });
+            }
+            "reachability" => {
+                if switch_terminates(switch) {
+                    unreachable(list, index)?;
+                }
+            }
+            "bind" => {
+                return Ok(node(
+                    SNode::Let {
+                        name,
+                        ty: None,
+                        value: Box::new(switch.scrutinee.clone()),
+                        body: Box::new(body.expect("the shared cursor reads its fallback first")),
+                    },
+                    switch.span,
+                ));
+            }
+            "test" | "body" | "select" => {
+                let (test, clause) = cases[read_value_switch_position(false, step, cases.len())];
+                match instruction.as_str() {
+                    "test" => {
+                        let (right, span) = read_value_case_expression(test).ok_or_else(|| {
+                            TranslationError::syntax(
+                                "internal: a tagged value-switch case",
+                                Some(clause.span),
+                            )
+                        })?;
+                        condition =
+                            Some(node(
+                                SNode::Binary {
+                                    op: BinaryOp::Eq,
+                                    left: Box::new(read.clone().expect(
+                                        "the shared cursor captures its discriminant first",
+                                    )),
+                                    right: Box::new(right),
+                                    rounding: None,
+                                },
+                                span,
+                            ));
+                    }
+                    "body" => branch = Some(lower(&clause.body, clause.span, generated_count)?),
+                    _ => {
+                        body = Some(node(
+                            SNode::If {
+                                cond: Box::new(
+                                    condition
+                                        .take()
+                                        .expect("the shared cursor constructs the test first"),
+                                ),
+                                then: Box::new(
+                                    branch
+                                        .take()
+                                        .expect("the shared cursor lowers the branch first"),
+                                ),
+                                otherwise: Box::new(
+                                    body.take()
+                                        .expect("the shared cursor reads its fallback first"),
+                                ),
+                            },
+                            clause.span,
+                        ));
+                    }
+                }
+            }
+            _ => {
+                return Err(TranslationError::syntax(
+                    format!("internal: unknown value-switch instruction {instruction}"),
+                    Some(switch.span),
+                ));
+            }
+        }
+    }
+    unreachable!("the shared instruction cursor terminates with bind")
 }
 
 /// The `default` of a tag switch covers the remaining alternatives; when it
@@ -495,152 +702,6 @@ pub(super) fn tag_row(
         body,
         span: Some(place),
     })
-}
-
-/// The subexpressions the JavaScript frontend's generic traversals visit.
-/// They skip keys named `span` and `type`, so constructor-object fields with
-/// those names are skipped too.
-pub(super) fn children(expr: &SExpr) -> Vec<&SExpr> {
-    let mut out: Vec<&SExpr> = Vec::new();
-    match &expr.node {
-        SNode::App { func, args } => {
-            out.push(func);
-            out.extend(args);
-        }
-        SNode::Field { object, .. } | SNode::Length { object, .. } => out.push(object),
-        SNode::Index { object, index } => {
-            out.push(object);
-            out.push(index);
-        }
-        SNode::Array { items, .. } | SNode::Math { args: items, .. } => {
-            out.extend(items.iter().map(|item| &item.value));
-        }
-        SNode::TypeOf { arg }
-        | SNode::Unary { arg, .. }
-        | SNode::StringMap { object: arg, .. }
-        | SNode::ToString { arg }
-        | SNode::Show { arg, .. } => {
-            out.push(arg);
-        }
-        SNode::StringTest {
-            object: left,
-            search: right,
-            ..
-        }
-        | SNode::Binary { left, right, .. } => {
-            out.push(left);
-            out.push(right);
-        }
-        SNode::If {
-            cond,
-            then,
-            otherwise,
-        } => {
-            out.push(cond);
-            out.push(then);
-            out.push(otherwise);
-        }
-        SNode::Let { value, body, .. } => {
-            out.push(value);
-            out.push(body);
-        }
-        SNode::Match { scrutinees, rows } => {
-            out.extend(scrutinees);
-            out.extend(rows.iter().map(|row| &row.body));
-        }
-        SNode::CtorObject {
-            fields,
-            prototype_definition,
-            ..
-        } => {
-            out.extend(
-                fields
-                    .iter()
-                    .filter(|(name, _)| name != "span" && name != "type")
-                    .map(|(_, value)| value),
-            );
-            if let Some(definition) = prototype_definition {
-                out.push(&definition.value);
-            }
-        }
-        _ => {}
-    }
-    if let Some(test) = &expr.tag_test {
-        out.push(&test.object);
-    }
-    out
-}
-
-/// The subexpressions of `children`, to rewrite.
-pub(super) fn children_mut(expr: &mut SExpr) -> Vec<&mut SExpr> {
-    let mut out: Vec<&mut SExpr> = Vec::new();
-    match &mut expr.node {
-        SNode::App { func, args } => {
-            out.push(func);
-            out.extend(args);
-        }
-        SNode::Field { object, .. } | SNode::Length { object, .. } => out.push(object),
-        SNode::Index { object, index } => {
-            out.push(object);
-            out.push(index);
-        }
-        SNode::Array { items, .. } | SNode::Math { args: items, .. } => {
-            out.extend(items.iter_mut().map(|item| &mut item.value));
-        }
-        SNode::TypeOf { arg }
-        | SNode::Unary { arg, .. }
-        | SNode::StringMap { object: arg, .. }
-        | SNode::ToString { arg }
-        | SNode::Show { arg, .. } => {
-            out.push(arg);
-        }
-        SNode::StringTest {
-            object: left,
-            search: right,
-            ..
-        }
-        | SNode::Binary { left, right, .. } => {
-            out.push(left);
-            out.push(right);
-        }
-        SNode::If {
-            cond,
-            then,
-            otherwise,
-        } => {
-            out.push(cond);
-            out.push(then);
-            out.push(otherwise);
-        }
-        SNode::Let { value, body, .. } => {
-            out.push(value);
-            out.push(body);
-        }
-        SNode::Match { scrutinees, rows } => {
-            out.extend(scrutinees);
-            out.extend(rows.iter_mut().map(|row| &mut row.body));
-        }
-        SNode::CtorObject {
-            fields,
-            prototype_definition,
-            ..
-        } => {
-            out.extend(
-                fields
-                    .iter_mut()
-                    .filter(|(name, _)| name != "span" && name != "type")
-                    .map(|(_, value)| value),
-            );
-            if let Some(definition) = prototype_definition {
-                out.push(&mut definition.value);
-            }
-        }
-        _ => {}
-    }
-    if let Some(test) = &mut expr.tag_test {
-        out.push(&mut test.object);
-    }
-    out
 }
 
 /// The names patterns bind.

@@ -30,10 +30,10 @@ test('all four actual type syntax functions and six required-column helpers surv
   assert.deepEqual(surface.items.filter(item => item.k === 'fn' && !item.generated).map(item => item.name).sort(), [...names, ...helpers].sort());
   const checked = checkProgram(surface);
   const packet = encodeTypedProgramLinks(checked);
-  const expectedRust = emitRust(checked).text;
+  const expectedRust = emitRust(checked, { arrayConsumption: true }).text;
   for (const network of [LinkNetwork.fromLino(packet.network.toLino()), decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))]) {
     const program = decodeTypedProgramLinks(network, packet.root);
-    const rust = emitRust(program);
+    const rust = emitRust(program, { arrayConsumption: true });
     assert.equal(rust.text, expectedRust);
     assert.ok(rust.definitions.length >= names.length + helpers.length);
     for (const definition of rust.definitions) assert.ok(rust.text.includes(definition));

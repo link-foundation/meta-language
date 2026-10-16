@@ -134,6 +134,7 @@ impl Executor<'_> {
             Expr::Token(item)
             | Expr::ImmediateToken(item)
             | Expr::Alias { item, .. }
+            | Expr::LexicalScope { item, .. }
             | Expr::Capture { item, .. }
             | Expr::Precedence { item, .. }
             | Expr::DynamicPrecedence { item, .. }

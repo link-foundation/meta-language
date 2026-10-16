@@ -1,6 +1,11 @@
 // Shared finite source-provenance constraints for immutable product admission.
 // False roots cannot acquire evidence from a closed cycle alone.
 
+/** @param {string} sourceKind @param {string} expectedKind @param {boolean} hasSpread @returns {boolean} */
+export function acceptJavaScriptArrayTupleContext(sourceKind, expectedKind, hasSpread) {
+  return sourceKind === 'array' && expectedKind === 'tuple' && !hasSpread;
+}
+
 /** @param {boolean[]} bases @param {number[]} targets @param {number[]} sources @param {boolean[]} conjunctions @returns {boolean[]} */
 export function solveProductSourceFacts(bases, targets, sources, conjunctions) {
   if (bases.length !== conjunctions.length || targets.length !== sources.length) return [];

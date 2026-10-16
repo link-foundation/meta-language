@@ -70,7 +70,7 @@ export async function generateGrammarSelectionRules({ check = false, native = fa
     const { parseJavaScript } = await import('../src/translation/javascript.js');
     const { checkProgram } = await import('../src/translation/check.js');
     const { emitRust } = await import('../src/translation/emit-rust.js');
-    const emitted = emitRust(checkProgram(parseJavaScript(policy.source, { referenceSemantics: false })));
+    const emitted = emitRust(checkProgram(parseJavaScript(policy.source, { referenceSemantics: false })), { arrayConsumption: true });
     const rustSource = format('// Generated from the complete shared grammar-selection-rules.js. Do not edit.\n' + emitted.text);
     const artifact = { schemaVersion: 1, model: policy.model, sourceSha256: policy.sourceSha256, formSourceSha256: policy.formSourceSha256,
       definitions: emitted.definitions, assumptions: emitted.assumptions, encodings: emitted.encodings, rustSource, rustSha256: digest(rustSource) };

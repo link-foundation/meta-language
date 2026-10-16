@@ -6,9 +6,9 @@ use crate::translation::structured_type_rules::{
 use std::collections::BTreeSet;
 
 use super::{
-    ARRAY_PRELUDE, Binder, Decl, Emitted, Expr, External, MATH_PRELUDE, ModuleTree, NUMBER_PRELUDE,
-    Node, PRELUDE, Prelude, Prop, Result, RustEmitter, TheoremCheck, Type, block,
-    comparison_operator, format_escape, indent, own, rename_function, rename_theorem, rust_string,
+    Binder, Decl, Emitted, Expr, External, MATH_PRELUDE, ModuleTree, NUMBER_PRELUDE, Node, PRELUDE,
+    Prelude, Prop, Result, RustEmitter, TheoremCheck, Type, block, comparison_operator,
+    format_escape, indent, own, read_array_prelude, rename_function, rename_theorem, rust_string,
     snake, tail_loop,
 };
 
@@ -44,7 +44,7 @@ impl<'p> RustEmitter<'p> {
             Some(main) => Some(self.main(main)?),
             None => None,
         };
-        let runner = self.theorem_runner();
+        let runner = self.theorem_runner()?;
         let entry = self.entry(main.is_some());
         let mut lines = vec![
             format!(
@@ -62,7 +62,7 @@ impl<'p> RustEmitter<'p> {
                 Prelude::Big => PRELUDE.to_owned(),
                 Prelude::Number => NUMBER_PRELUDE.to_owned(),
                 Prelude::Math => MATH_PRELUDE.to_owned(),
-                Prelude::Array => ARRAY_PRELUDE.to_owned(),
+                Prelude::Array => read_array_prelude(self.standard_array).to_owned(),
                 Prelude::String => crate::self_translation::representation::string_prelude(),
                 Prelude::Optional => read_rust_optional_prelude(),
             })
@@ -115,7 +115,7 @@ impl<'p> RustEmitter<'p> {
         }
     }
 
-    pub(super) fn ty(&mut self, ty: &Type) -> String {
+    pub(super) fn ty(&mut self, ty: &Type) -> Result<String> {
         let rendered = match ty {
             Type::Nat | Type::Int => {
                 self.preludes.insert(Prelude::Big);
@@ -131,7 +131,15 @@ impl<'p> RustEmitter<'p> {
                 "f64".to_owned()
             }
             Type::Bool => "bool".to_owned(),
-            Type::String => "String".to_owned(),
+            Type::String => {
+                crate::translation::primitive_method_rules::render_primitive_string_representation(
+                    self.utf16_strings,
+                    "type",
+                    "",
+                    "",
+                    "",
+                )
+            }
             Type::Unit => "()".to_owned(),
             Type::Data { name } => format!("crate::{}", self.state.reference(name, "::")),
             Type::Array { element, .. } => {
@@ -139,50 +147,62 @@ impl<'p> RustEmitter<'p> {
                     "arrays",
                     "a JavaScript array, which the portable core never mutates, is a Rust Vec; a read outside it panics",
                 );
-                render_rust_compound_type("array", "", &[self.ty(element)])
+                render_rust_compound_type("array", "", &[self.ty(element)?])
             }
-            Type::Cell { element } => render_rust_compound_type("cell", "", &[self.ty(element)]),
+            Type::Cell { element } => render_rust_compound_type("cell", "", &[self.ty(element)?]),
             Type::Option { element, absence } => {
                 if absence == "both" {
                     self.preludes.insert(Prelude::Optional);
                 }
-                render_rust_compound_type("option", absence, &[self.ty(element)])
+                render_rust_compound_type("option", absence, &[self.ty(element)?])
             }
             Type::Tuple { elements } => {
                 let children = elements
                     .iter()
                     .map(|child| self.ty(child))
-                    .collect::<Vec<_>>();
+                    .collect::<Result<Vec<_>>>()?;
                 render_rust_compound_type("tuple", "", &children)
             }
             Type::Record { fields, .. } => {
                 let children = fields
                     .iter()
                     .map(|field| self.ty(&field.ty))
-                    .collect::<Vec<_>>();
+                    .collect::<Result<Vec<_>>>()?;
                 render_rust_compound_type("record", "", &children)
             }
-            Type::Set { element, .. } => render_rust_compound_type("set", "", &[self.ty(element)]),
+            Type::Set { element, .. } => render_rust_compound_type("set", "", &[self.ty(element)?]),
             Type::Map { key, value, .. } => {
-                let children = vec![self.ty(key), self.ty(value)];
+                let children = vec![self.ty(key)?, self.ty(value)?];
                 render_rust_compound_type("map", "", &children)
             }
             Type::Function { params, ret } => {
                 let children = params
                     .iter()
                     .map(|param| self.ty(param))
-                    .collect::<Vec<_>>();
-                let result = self.ty(ret);
+                    .collect::<Result<Vec<_>>>()?;
+                let result = self.ty(ret)?;
                 render_rust_compound_type("function", &result, &children)
+            }
+            Type::Union { .. } => {
+                return Err(crate::translation::diagnostics::type_error(
+                    crate::translation::type_syntax_rules::read_union_target_refusal("Rust"),
+                    None,
+                ));
+            }
+            Type::Absence { .. } => {
+                return Err(crate::translation::diagnostics::type_error(
+                    crate::translation::nullable_type_syntax_rules::read_nullable_type_target_refusal("Rust"),
+                    None,
+                ));
             }
             other => unreachable!("no Rust type for {}", other.kind()),
         };
-        render_rust_reference_type(&rendered, ty.is_reference())
+        Ok(render_rust_reference_type(&rendered, ty.is_reference()))
     }
 
-    pub(super) fn field_type(&mut self, ty: &Type) -> String {
+    pub(super) fn field_type(&mut self, ty: &Type) -> Result<String> {
         if matches!(ty, Type::Data { .. }) {
-            format!("Box<{}>", self.ty(ty))
+            Ok(format!("Box<{}>", self.ty(ty)?))
         } else {
             self.ty(ty)
         }
@@ -234,7 +254,7 @@ impl<'p> RustEmitter<'p> {
                 .fields
                 .iter()
                 .map(|field| self.field_type(&field.ty))
-                .collect();
+                .collect::<Result<_>>()?;
             lines.push(format!("    {local}({}),", fields.join(", ")));
         }
         lines.push("}".to_owned());
@@ -246,9 +266,15 @@ impl<'p> RustEmitter<'p> {
             unreachable!("a function declaration")
         };
         let (params, body) = rename_function(function, &snake, &self.state.local_reserved());
+        self.array_final_uses = if self.array_consumption {
+            super::array_moves::final_uses(&body, None)
+        } else {
+            BTreeSet::new()
+        };
         let name = self.state.local_name(&function.full_name).to_owned();
         self.state.map(entry, &name);
         if let Some(signature) = self.source_headers.get(&function.full_name).cloned() {
+            self.array_final_uses.clear();
             if self.borrowed_call_targets.is_some() {
                 let mut reserved = self.state.local_reserved();
                 reserved.extend(params.iter().map(|parameter| parameter.name.clone()));
@@ -282,14 +308,23 @@ impl<'p> RustEmitter<'p> {
             // A lifted loop runs as a loop: each iteration assigns the parameters their next values.
             let names = params.iter().map(|param| param.name.clone()).collect();
             self.loop_params = Some((function.full_name.clone(), names));
+            self.array_final_uses = if self.array_consumption {
+                super::array_moves::final_uses(&body, Some(&function.full_name))
+            } else {
+                BTreeSet::new()
+            };
             let text = self.expr(&body);
             self.loop_params = None;
+            self.array_final_uses.clear();
             let text = text?;
             let binders: Vec<String> = params
                 .iter()
-                .map(|param| format!("mut {}: {}", param.name, self.ty(&param.ty)))
-                .collect();
-            let ret = self.ty(&function.ret);
+                .map(|param| {
+                    self.ty(&param.ty)
+                        .map(|ty| format!("mut {}: {ty}", param.name))
+                })
+                .collect::<Result<_>>()?;
+            let ret = self.ty(&function.ret)?;
             let body = format!("loop {{\n{}\n}}", indent(&format!("return {text};"), 1));
             return Ok(format!(
                 "pub fn {name}({}) -> {ret} {{\n{}\n}}",
@@ -299,10 +334,11 @@ impl<'p> RustEmitter<'p> {
         }
         let binders: Vec<String> = params
             .iter()
-            .map(|param| format!("{}: {}", param.name, self.ty(&param.ty)))
-            .collect();
-        let ret = self.ty(&function.ret);
+            .map(|param| self.ty(&param.ty).map(|ty| format!("{}: {ty}", param.name)))
+            .collect::<Result<_>>()?;
+        let ret = self.ty(&function.ret)?;
         let body = self.expr(&body)?;
+        self.array_final_uses.clear();
         Ok(
             crate::translation::rust::const_functions::render_const_function_header(
                 function,
@@ -368,8 +404,11 @@ impl<'p> RustEmitter<'p> {
         });
         let params: Vec<String> = binders
             .iter()
-            .map(|binder| format!("{}: {}", binder.name, self.ty(&binder.ty)))
-            .collect();
+            .map(|binder| {
+                self.ty(&binder.ty)
+                    .map(|ty| format!("{}: {ty}", binder.name))
+            })
+            .collect::<Result<_>>()?;
         let prop = self.prop(&prop)?;
         Ok(format!(
             "/// Executable form of theorem {}.\npub fn {name}({}) -> bool {{\n{}\n}}",
@@ -380,19 +419,19 @@ impl<'p> RustEmitter<'p> {
     }
 
     /// The property checked on every input of the binders' bounded domains.
-    pub(super) fn all_of(&mut self, binders: &[Binder], body: String) -> String {
-        binders.iter().rev().fold(body, |inner, binder| {
-            format!(
+    pub(super) fn all_of(&mut self, binders: &[Binder], body: String) -> Result<String> {
+        binders.iter().rev().try_fold(body, |inner, binder| {
+            Ok(format!(
                 "{}.into_iter().all(|{}| {inner})",
-                self.domain(&binder.ty, 3),
+                self.domain(&binder.ty, 3)?,
                 binder.name
-            )
+            ))
         })
     }
 
-    pub(super) fn theorem_runner(&mut self) -> Option<String> {
+    pub(super) fn theorem_runner(&mut self) -> Result<Option<String>> {
         if self.theorem_checks.is_empty() {
-            return None;
+            return Ok(None);
         }
         self.state.encode(
             "theorem-properties",
@@ -409,21 +448,21 @@ impl<'p> RustEmitter<'p> {
                     .map(|binder| own(&binder.name, &binder.ty))
                     .collect();
                 let call = format!("{}({})", check.reference, args.join(", "));
-                let holds = self.all_of(&check.binders, call);
+                let holds = self.all_of(&check.binders, call)?;
                 let source = format_escape(&check.source);
-                [
+                Ok([
                     format!("    if !({holds}) {{"),
                     format!("        panic!(\"theorem {source} fails on a bounded input\");"),
                     "    }".to_owned(),
                     format!("    println!(\"theorem {source}: holds on the bounded domain\");"),
                 ]
-                .join("\n")
+                .join("\n"))
             })
-            .collect();
-        Some(format!(
+            .collect::<Result<_>>()?;
+        Ok(Some(format!(
             "fn ml_check_theorems() {{\n{}\n}}",
             checks.join("\n")
-        ))
+        )))
     }
 
     pub(super) fn entry(&self, has_main: bool) -> String {
@@ -450,8 +489,8 @@ impl<'p> RustEmitter<'p> {
     }
 
     /// Values of a type up to a constructor depth, as a Rust `Vec`.
-    pub(super) fn domain(&mut self, ty: &Type, depth: i32) -> String {
-        match ty {
+    pub(super) fn domain(&mut self, ty: &Type, depth: i32) -> Result<String> {
+        Ok(match ty {
             Type::Nat => {
                 self.preludes.insert(Prelude::Big);
                 if depth >= 3 {
@@ -479,7 +518,13 @@ impl<'p> RustEmitter<'p> {
             }
             Type::Bool => "vec![false, true]".to_owned(),
             Type::String => {
-                "vec![String::new(), String::from(\"a\"), String::from(\"ab\")]".to_owned()
+                crate::translation::primitive_method_rules::render_primitive_string_representation(
+                    self.utf16_strings,
+                    "examples",
+                    "",
+                    "",
+                    "",
+                )
             }
             Type::Unit => "vec![()]".to_owned(),
             Type::Data { name } => {
@@ -487,7 +532,7 @@ impl<'p> RustEmitter<'p> {
                 let entry = program.data(name);
                 let mut lines = vec![format!(
                     "let mut values: Vec<{}> = Vec::new();",
-                    self.ty(ty)
+                    self.ty(ty)?
                 )];
                 for ctor in &entry.ctors {
                     let recursive = ctor
@@ -529,7 +574,7 @@ impl<'p> RustEmitter<'p> {
                         };
                         statement = format!(
                             "for {name} in {} {{\n{}\n}}",
-                            self.domain(&field.ty, inner_depth),
+                            self.domain(&field.ty, inner_depth)?,
                             indent(&statement, 1)
                         );
                     }
@@ -538,15 +583,20 @@ impl<'p> RustEmitter<'p> {
                 lines.push("values".to_owned());
                 block(&lines.join("\n"))
             }
-            other => unreachable!("no Rust domain for {}", other.kind()),
-        }
+            other => {
+                return Err(crate::translation::diagnostics::type_error(
+                    format!("no Rust domain for {}", other.kind()),
+                    None,
+                ));
+            }
+        })
     }
 
     pub(super) fn prop(&mut self, prop: &Prop) -> Result<String> {
         Ok(match prop {
             Prop::Forall { binders, body } => {
                 let body = self.prop(body)?;
-                self.all_of(binders, body)
+                self.all_of(binders, body)?
             }
             Prop::And { left, right } => {
                 format!("({} && {})", self.prop(left)?, self.prop(right)?)
@@ -598,6 +648,9 @@ impl<'p> RustEmitter<'p> {
 
     /// A comparison operand: read in place, a string literal as a `&str`.
     pub(super) fn compared(&mut self, expr: &Expr) -> Result<String> {
+        if self.utf16_strings && expr.ty == Type::String {
+            return self.receiver(expr);
+        }
         if let (Node::Lit { value }, Type::String) = (&expr.node, &expr.ty) {
             return Ok(rust_string(&value.text()));
         }

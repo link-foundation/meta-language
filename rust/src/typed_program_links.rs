@@ -7,7 +7,7 @@ use crate::translation::emit_common::{Assumption, Encoding, Mapping, TheoremReco
 use crate::translation::emit_javascript::{
     JavaScriptEmissionOptions, emit_javascript_with_options,
 };
-use crate::translation::emit_rust::{RustEmissionOptions, emit_rust_with_options};
+use crate::translation::emit_rust::{RustEmissionOptions, emit_rust_with_array_consumption};
 use crate::translation::ir::Program;
 use crate::translation::javascript::{parse_javascript, parse_javascript_with_scalar_loop_model};
 use crate::translation::rust::{
@@ -21,6 +21,8 @@ use serde_json::Value;
 use std::fmt;
 use std::sync::OnceLock;
 
+mod borrowed_call_diagnostics;
+mod callables;
 mod checked;
 mod codec;
 pub mod program_numeric_metadata;
@@ -744,8 +746,19 @@ pub fn emit_typed_program_links_with_options(
         crate::translation::scoped_binding_emission::validate_raw_program(network, root, model)
             .map_err(|failure| error(failure.to_string()))?;
     }
-    let program = decode_typed_program_links(network, root).map_err(|failure| {
-        if rust_target
+    let decoded = if rust_target
+        && options.java_script_scoped_binding_emission_model.is_none()
+        && let Some(model) = source_header_model.filter(|model| {
+            crate::translation::borrowed_call_interface_rules::accept_rust_borrowed_call_interface_model(model)
+        })
+    {
+        borrowed_call_diagnostics::decode(network, root, model)
+    } else {
+        decode_typed_program_links(network, root).map_err(|failure| (failure, false))
+    };
+    let program = decoded.map_err(|(failure, refined)| {
+        if !refined
+            && rust_target
             && options.java_script_scoped_binding_emission_model.is_none()
             && source_header_model.is_some()
         {
@@ -783,7 +796,7 @@ pub fn emit_typed_program_links_with_options(
                     "a JavaScript scoped binding emission model requires JavaScript target",
                 ));
             }
-            emit_rust_with_options(
+            emit_rust_with_array_consumption(
                 &program,
                 RustEmissionOptions {
                     source_header_model,

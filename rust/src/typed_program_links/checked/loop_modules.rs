@@ -6,7 +6,10 @@ use crate::translation::surface::{SFn, SItem, SModule, SParam};
 use std::collections::HashSet;
 
 pub(super) fn project_function(function: &FnDecl, program: &Program) -> Result<SItem> {
+    let (ret, semantic_ret) =
+        super::declarations::project_function_result_types(function, program)?;
     Ok(SItem::Fn(SFn {
+        semantic_ret,
         name: function.name.clone(),
         params: function
             .params
@@ -22,7 +25,7 @@ pub(super) fn project_function(function: &FnDecl, program: &Program) -> Result<S
                 })
             })
             .collect::<Result<_>>()?,
-        ret: Some(project_type(&function.ret, program)?),
+        ret: Some(ret),
         body: expression(&function.body, program)?,
         span: function.span,
         generated: function.generated,

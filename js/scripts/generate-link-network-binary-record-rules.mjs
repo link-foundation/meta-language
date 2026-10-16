@@ -42,6 +42,10 @@ const compilerReviewFile = new URL('../../parity/self-translation/binary-record-
 const compilerReview = readProjectData(compilerReviewFile);
 const {readBinaryRecordCompilerStyles} = await import('./binary-record-compiler-styles.mjs');
 derived.decorators.push(readBinaryRecordCompilerStyles(styleBinaryItems(items, new DecoratorSet(derived.decorators)), compilerReview));
+const blockReturnReviewFile = new URL('../../parity/self-translation/binary-record-ci-block-return-review-116894548503.lino', import.meta.url);
+const blockReturnReview = readProjectData(blockReturnReviewFile);
+const {readBinaryRecordBlockReturnStyles} = await import('./binary-record-block-return-styles.mjs');
+derived.decorators.push(readBinaryRecordBlockReturnStyles(styleBinaryItems(items, new DecoratorSet(derived.decorators)), blockReturnReview));
 const expectedStyles = new DecoratorSet(derived.decorators).toLino();
 if (process.argv.includes('--check')) assert.equal(readFileSync(styles, 'utf8'), expectedStyles, 'record-local binary styles are fresh');
 else writeFileSync(styles, expectedStyles);
@@ -56,6 +60,9 @@ globalThis[Symbol.for('meta-language binary record generation')] = {
   compilerReview: {sourceSha256:createHash('sha256').update(readFileSync(compilerReviewFile)).digest('hex'),
     styleBuilderSha256:createHash('sha256').update(readFileSync(new URL('./binary-record-compiler-styles.mjs', import.meta.url))).digest('hex'),
     logSha256:compilerReview.capture.logSha256, reviewedCloneCorrections:38, reviewedBindingRenames:5},
+  blockReturnReview: {sourceSha256:createHash('sha256').update(readFileSync(blockReturnReviewFile)).digest('hex'),
+    styleBuilderSha256:createHash('sha256').update(readFileSync(new URL('./binary-record-block-return-styles.mjs', import.meta.url))).digest('hex'),
+    logSha256:blockReturnReview.capture.logSha256, reviewedBindingReturns:3},
 };`;
 
 const replacements=[

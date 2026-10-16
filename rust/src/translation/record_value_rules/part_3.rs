@@ -2,6 +2,13 @@
 // Do not edit by hand.
 use super::*;
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
 pub fn ml_read_record_type_owner_presence_loop16(
     texts: &[String],
     numbers: &[f64],
@@ -48,14 +55,14 @@ pub fn ml_read_record_type_owner_presence_loop16(
                                                 }
 {
                                                     {
-                                                        let seen_2 = self::ml_array::append(seen.clone(), vec![node_2]);
+                                                        let seen_2 = { let (ml_append_right, ml_append_left) = (vec![node_2], seen); self::ml_array::append(ml_append_left, ml_append_right) };
                                                         if (((kind_2 == "array") || (kind_2 == "option")) || (kind_2 == "set")) || (kind_2 == "cell") {
                                                             {
-                                                                let pending_2 = self::ml_array::append(pending.clone(), vec![self::record_type_fact_field(starts, counts, labels, targets, node_2, "element")]);
+                                                                let pending_2 = { let (ml_append_right, ml_append_left) = (vec![self::record_type_fact_field(starts, counts, labels, targets, node_2, "element")], pending); self::ml_array::append(ml_append_left, ml_append_right) };
                                                                 {
                                                                     let position_3 = position + 1f64;
                                                                     {
-                                                                        (pending, seen, position) = (pending_2, seen_2.clone(), position_3);
+                                                                        (pending, seen, position) = (pending_2, seen_2, position_3);
                                                                         continue;
                                                                     }
                                                                 }
@@ -64,13 +71,13 @@ pub fn ml_read_record_type_owner_presence_loop16(
 {
                                                             if kind_2 == "map" {
                                                                 {
-                                                                    let pending_3 = self::ml_array::append(pending.clone(), vec![self::record_type_fact_field(starts, counts, labels, targets, node_2, "key")]);
+                                                                    let pending_3 = { let (ml_append_right, ml_append_left) = (vec![self::record_type_fact_field(starts, counts, labels, targets, node_2, "key")], pending); self::ml_array::append(ml_append_left, ml_append_right) };
                                                                     {
-                                                                        let pending_4 = self::ml_array::append(pending_3, vec![self::record_type_fact_field(starts, counts, labels, targets, node_2, "value")]);
+                                                                        let pending_4 = { let (ml_append_right, ml_append_left) = (vec![self::record_type_fact_field(starts, counts, labels, targets, node_2, "value")], pending_3); self::ml_array::append(ml_append_left, ml_append_right) };
                                                                         {
                                                                             let position_4 = position + 1f64;
                                                                             {
-                                                                                (pending, seen, position) = (pending_4, seen_2.clone(), position_4);
+                                                                                (pending, seen, position) = (pending_4, seen_2, position_4);
                                                                                 continue;
                                                                             }
                                                                         }
@@ -94,14 +101,14 @@ pub fn ml_read_record_type_owner_presence_loop16(
                                                                                 {
                                                                                     let index_2 = 0f64;
                                                                                     {
-                                                                                        let pending_5 = self::ml_read_record_type_owner_presence_loop19(pending.clone(), &(children), index_2);
+                                                                                        let pending_5 = self::ml_read_record_type_owner_presence_loop19(pending, &(children), index_2);
                                                                                         if kind_2 == "function" {
                                                                                             {
-                                                                                                let pending_6 = self::ml_array::append(pending_5.clone(), vec![self::record_type_fact_field(starts, counts, labels, targets, node_2, "ret")]);
+                                                                                                let pending_6 = { let (ml_append_right, ml_append_left) = (vec![self::record_type_fact_field(starts, counts, labels, targets, node_2, "ret")], pending_5); self::ml_array::append(ml_append_left, ml_append_right) };
                                                                                                 {
                                                                                                     let position_5 = position + 1f64;
                                                                                                     {
-                                                                                                        (pending, seen, position) = (pending_6, seen_2.clone(), position_5);
+                                                                                                        (pending, seen, position) = (pending_6, seen_2, position_5);
                                                                                                         continue;
                                                                                                     }
                                                                                                 }
@@ -111,7 +118,7 @@ pub fn ml_read_record_type_owner_presence_loop16(
                                                                                             {
                                                                                                 let position_6 = position + 1f64;
                                                                                                 {
-                                                                                                    (pending, seen, position) = (pending_5.clone(), seen_2.clone(), position_6);
+                                                                                                    (pending, seen, position) = (pending_5, seen_2, position_6);
                                                                                                     continue;
                                                                                                 }
                                                                                             }
@@ -131,11 +138,11 @@ pub fn ml_read_record_type_owner_presence_loop16(
                                                                                 {
                                                                                     let index_3 = 0f64;
                                                                                     {
-                                                                                        let pending_7 = self::ml_read_record_type_owner_presence_loop20(starts, counts, labels, targets, pending.clone(), &(fields), index_3);
+                                                                                        let pending_7 = self::ml_read_record_type_owner_presence_loop20(starts, counts, labels, targets, pending, &(fields), index_3);
                                                                                         {
                                                                                             let position_7 = position + 1f64;
                                                                                             {
-                                                                                                (pending, seen, position) = (pending_7, seen_2.clone(), position_7);
+                                                                                                (pending, seen, position) = (pending_7, seen_2, position_7);
                                                                                                 continue;
                                                                                             }
                                                                                         }
@@ -148,7 +155,7 @@ pub fn ml_read_record_type_owner_presence_loop16(
                                                                         {
                                                                             let position_8 = position + 1f64;
                                                                             {
-                                                                                (seen, position) = (seen_2.clone(), position_8);
+                                                                                (seen, position) = (seen_2, position_8);
                                                                                 continue;
                                                                             }
                                                                         }

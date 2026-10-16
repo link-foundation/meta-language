@@ -261,10 +261,9 @@ pub fn read_type_separator_positions(units: &[f64], separator: f64) -> Vec<f64> 
             {
                 let at = 0f64;
                 {
-                    let positions_2 = self::ml_read_type_separator_positions_loop1(
+                    self::ml_read_type_separator_positions_loop1(
                         units, separator, depth, positions, at,
-                    );
-                    positions_2
+                    )
                 }
             }
         }
@@ -337,12 +336,14 @@ pub fn ml_read_type_separator_positions_loop1(
                             {
                                 let positions_3 = if (depth_5 == 0f64) && (unit == separator) {
                                     {
-                                        let positions_2 =
-                                            self::ml_array::append(positions.clone(), vec![at]);
-                                        positions_2
+                                        {
+                                            let (ml_append_right, ml_append_left) =
+                                                (vec![at], positions);
+                                            self::ml_array::append(ml_append_left, ml_append_right)
+                                        }
                                     }
                                 } else {
-                                    positions.clone()
+                                    positions
                                 };
                                 {
                                     let at_2 = at + 1f64;
@@ -357,6 +358,6 @@ pub fn ml_read_type_separator_positions_loop1(
                 }
             }
         }
-        return { positions.clone() };
+        return { positions };
     }
 }

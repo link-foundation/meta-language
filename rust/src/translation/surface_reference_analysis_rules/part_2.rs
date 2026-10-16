@@ -159,7 +159,6 @@ pub fn ml_read_surface_reference_path_loop3(
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-
 pub fn ml_find_surface_reference_item_signature_loop4(
     columns: &[String],
     rows: &[f64],
@@ -181,7 +180,7 @@ pub fn ml_find_surface_reference_item_signature_loop4(
                 {
                     let kind = crate::translation::surface_reference_analysis_rules::read_surface_reference_kind(columns, rows, size, item);
                     {
-                        let name = format!("{}{}", (format!("{}{}", prefix, (String::from(".")))), (crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, item, "name"))));
+                        let name = format!("{}{}", (format!("{}{}", prefix.to_owned(), (String::from(".")))), (crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, item, "name"))));
                         {
                             let found_3 = if (kind == "fn") && (name == path) {
                                 { item }
@@ -310,9 +309,21 @@ pub fn ml_inspect_surface_reference_expression_loop8(columns: &[String], rows: &
                         ((size * 2f64) + offset),
                     );
                 {
-                    let inner_names_2 = crate::translation::frontend_rules::ml_array::append(inner_names.clone(), vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, param, "name"))]);
+                    let inner_names_2 = {
+                        let (ml_append_right, ml_append_left) = (vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, param, "name"))], inner_names);
+                        crate::translation::frontend_rules::ml_array::append(
+                            ml_append_left,
+                            ml_append_right,
+                        )
+                    };
                     {
-                        let inner_types_2 = crate::translation::frontend_rules::ml_array::append(inner_types.clone(), vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, param, "type")]);
+                        let inner_types_2 = {
+                            let (ml_append_right, ml_append_left) = (vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, param, "type")], inner_types);
+                            crate::translation::frontend_rules::ml_array::append(
+                                ml_append_left,
+                                ml_append_right,
+                            )
+                        };
                         {
                             let offset_2 = offset + 1f64;
                             {
@@ -326,7 +337,7 @@ pub fn ml_inspect_surface_reference_expression_loop8(columns: &[String], rows: &
             }
         }
         return {
-            crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceExpressionLoop8Result::MlInspectSurfaceReferenceExpressionLoop8Done(inner_names.clone(), inner_types.clone())
+            crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceExpressionLoop8Result::MlInspectSurfaceReferenceExpressionLoop8Done(inner_names, inner_types)
         };
     }
 }
@@ -338,7 +349,6 @@ pub fn ml_inspect_surface_reference_expression_loop8(columns: &[String], rows: &
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-
 pub fn ml_inspect_surface_reference_expression_loop9(
     columns: &[String],
     rows: &[f64],
@@ -471,9 +481,21 @@ pub fn ml_inspect_surface_reference_items_loop15(
                         ((size * 2f64) + position),
                     );
                 {
-                    let names_2 = crate::translation::frontend_rules::ml_array::append(names.clone(), vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, param, "name"))]);
+                    let names_2 = {
+                        let (ml_append_right, ml_append_left) = (vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, param, "name"))], names);
+                        crate::translation::frontend_rules::ml_array::append(
+                            ml_append_left,
+                            ml_append_right,
+                        )
+                    };
                     {
-                        let types_2 = crate::translation::frontend_rules::ml_array::append(types.clone(), vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, param, "type")]);
+                        let types_2 = {
+                            let (ml_append_right, ml_append_left) = (vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, param, "type")], types);
+                            crate::translation::frontend_rules::ml_array::append(
+                                ml_append_left,
+                                ml_append_right,
+                            )
+                        };
                         {
                             let position_2 = position + 1f64;
                             {
@@ -486,7 +508,7 @@ pub fn ml_inspect_surface_reference_items_loop15(
             }
         }
         return {
-            crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceItemsLoop15Result::MlInspectSurfaceReferenceItemsLoop15Done(names.clone(), types.clone())
+            crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceItemsLoop15Result::MlInspectSurfaceReferenceItemsLoop15Done(names, types)
         };
     }
 }
@@ -535,17 +557,17 @@ pub fn ml_inspect_surface_reference_items_loop13(
                                                         {
                                                             let finish = position + crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, (size + params));
                                                             {
-                                                                let ml_s13 = crate::translation::surface_reference_analysis_rules::ml_inspect_surface_reference_items_loop15(columns, rows, size, names.clone(), types.clone(), position, finish);
+                                                                let ml_s13 = crate::translation::surface_reference_analysis_rules::ml_inspect_surface_reference_items_loop15(columns, rows, size, names, types, position, finish);
                                                                 match ml_s13 {
                                                                     crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceItemsLoop15Result::MlInspectSurfaceReferenceItemsLoop15Done(names_2, types_2) => {
-                                                                        crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceItemsJoin14::MlInspectSurfaceReferenceItemsJoin14Next(names_2.clone(), types_2.clone())
+                                                                        crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceItemsJoin14::MlInspectSurfaceReferenceItemsJoin14Next(names_2, types_2)
                                                                     }
                                                                 }
                                                             }
                                                         }
                                                     }
                                                 } else {
-                                                    crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceItemsJoin14::MlInspectSurfaceReferenceItemsJoin14Next(names.clone(), types.clone())
+                                                    crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceItemsJoin14::MlInspectSurfaceReferenceItemsJoin14Next(names, types)
                                                 };
                                                 match ml_s12 {
                                                     crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceItemsJoin14::MlInspectSurfaceReferenceItemsJoin14Next(names_3, types_3) => {
@@ -596,7 +618,6 @@ pub enum MlHasSurfaceStructuralIdentityJoin17 {
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-
 pub fn ml_has_surface_structural_identity_loop16(
     columns: &[String],
     rows: &[f64],
@@ -637,21 +658,30 @@ pub fn ml_has_surface_structural_identity_loop16(
                                 {
                                     let ml_s14 = if binding {
                                         {
-                                            let names_2 = crate::translation::frontend_rules::ml_array::append(names.clone(), vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, effect, "name"))]);
+                                            let names_2 = {
+                                                let (ml_append_right, ml_append_left) = (vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, effect, "name"))], names);
+                                                crate::translation::frontend_rules::ml_array::append(
+                                                    ml_append_left,
+                                                    ml_append_right,
+                                                )
+                                            };
                                             {
-                                                let types_2 = crate::translation::frontend_rules::ml_array::append(types.clone(), vec![crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(result), 0f64)]);
+                                                let types_2 = {
+                                                    let (ml_append_right, ml_append_left) = (vec![crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(result), 0f64)], types);
+                                                    crate::translation::frontend_rules::ml_array::append(ml_append_left, ml_append_right)
+                                                };
                                                 crate::translation::surface_reference_analysis_rules::MlHasSurfaceStructuralIdentityJoin17::MlHasSurfaceStructuralIdentityJoin17Next(names_2, types_2)
                                             }
                                         }
                                     } else {
-                                        crate::translation::surface_reference_analysis_rules::MlHasSurfaceStructuralIdentityJoin17::MlHasSurfaceStructuralIdentityJoin17Next(names.clone(), types.clone())
+                                        crate::translation::surface_reference_analysis_rules::MlHasSurfaceStructuralIdentityJoin17::MlHasSurfaceStructuralIdentityJoin17Next(names, types)
                                     };
                                     match ml_s14 {
                                         crate::translation::surface_reference_analysis_rules::MlHasSurfaceStructuralIdentityJoin17::MlHasSurfaceStructuralIdentityJoin17Next(names_3, types_3) => {
                                             {
                                                 let offset_2 = offset + 1f64;
                                                 {
-                                                    (observed, names, types, offset) = (observed_3, names_3.clone(), types_3.clone(), offset_2);
+                                                    (observed, names, types, offset) = (observed_3, names_3, types_3, offset_2);
                                                     continue;
                                                 }
                                             }

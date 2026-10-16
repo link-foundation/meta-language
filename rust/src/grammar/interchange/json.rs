@@ -9,9 +9,9 @@ use serde_json::Value;
 use super::super::feature::{class_expression, feature_expression_fields, operation_form};
 use super::super::{
     ByteClassItem, CharClassItem, FeatureExpr, FeatureForm, FieldType, FieldValue, Grammar,
-    GrammarDeclarations, GrammarExpr, GrammarFormat, GrammarImportError, GrammarMacro, GrammarRule,
-    GrammarScanner, Operation, OperationCategory, PrecedenceEntry, RuleAttributes, RuleKind,
-    UnicodeClassItem,
+    GrammarDeclarations, GrammarExpr, GrammarFormat, GrammarImportError, GrammarLexer,
+    GrammarMacro, GrammarRule, GrammarScanner, Operation, OperationCategory, PrecedenceEntry,
+    RuleAttributes, RuleKind, UnicodeClassItem,
 };
 
 /// A JSON value whose objects keep their key order.
@@ -336,6 +336,15 @@ fn declarations_json(declarations: &GrammarDeclarations) -> Json {
             ])
         });
         entries.push(("scanners", Json::Array(scanners.collect())));
+    }
+    if !declarations.lexers.is_empty() {
+        let lexers = declarations.lexers.iter().map(|lexer| {
+            Json::Object(vec![
+                ("name", Json::str(&lexer.name)),
+                ("expression", expression_json(&lexer.expression)),
+            ])
+        });
+        entries.push(("lexers", Json::Array(lexers.collect())));
     }
     Json::Object(entries)
 }
@@ -688,6 +697,14 @@ fn read_declarations(value: &Value) -> Result<GrammarDeclarations, GrammarImport
                     array(scanner, "operations", what)?,
                     OperationCategory::Statement,
                 )?,
+            });
+        }
+    }
+    if let Some(Value::Array(lexers)) = value.get("lexers") {
+        for lexer in lexers {
+            declarations.lexers.push(GrammarLexer {
+                name: string(lexer, "name", what)?,
+                expression: read_expression(field(lexer, "expression", what)?)?,
             });
         }
     }

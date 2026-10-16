@@ -33,12 +33,14 @@ pub mod fidelity;
 pub mod import;
 pub mod inference;
 pub mod interchange;
+mod lexical_forms;
 mod links;
 pub mod merge;
 mod metadata;
 pub mod reverse;
 pub mod round_trip;
 pub mod runtime;
+mod selection_forms;
 pub mod surface;
 pub mod translate;
 pub mod validate;
@@ -59,9 +61,9 @@ pub use emit::{
 };
 pub use feature::{
     ByteClassItem, FEATURE_EXPRESSION_FORMS, FeatureExpr, FeatureForm, FieldType, FieldValue,
-    GrammarDeclarations, GrammarMacro, GrammarScanner, MATCHING_MODES, OPERATION_FORMS, Operation,
-    OperationCategory, PrecedenceEntry, RuleAttributes, SETTLING_STEPS, UnicodeClassItem,
-    default_settling, settling_problem,
+    GrammarDeclarations, GrammarLexer, GrammarMacro, GrammarScanner, MATCHING_MODES,
+    OPERATION_FORMS, Operation, OperationCategory, PrecedenceEntry, RuleAttributes, SETTLING_STEPS,
+    UnicodeClassItem, default_settling, settling_problem,
 };
 pub use fidelity::{
     FORMER_GRAMMAR_CONSTRUCTS, GRAMMAR_CONSTRUCTS, GRAMMAR_FORMATS, GrammarFidelityLevel,
@@ -687,6 +689,7 @@ impl Grammar {
                 precedences: Vec::new(),
                 macros: Vec::new(),
                 scanners: Vec::new(),
+                lexers: Vec::new(),
             },
             kinds: Vec::new(),
         }
@@ -824,6 +827,21 @@ impl Grammar {
         }
         for declared in &self.declarations.macros {
             declared.expression.collect_nonterminals(&mut names);
+        }
+        for lexer in &self.declarations.lexers {
+            if let GrammarExpr::Sequence(entries) = &lexer.expression {
+                for entry in entries {
+                    if let GrammarExpr::Feature(feature) = entry {
+                        let role = feature_runtime::lexical_kernel::entry_form(feature.head());
+                        if (role == 1 || role == 2)
+                            && let FeatureExpr::Form(form) = &**feature
+                            && let Some(item) = form.expression("item")
+                        {
+                            item.collect_nonterminals(&mut names);
+                        }
+                    }
+                }
+            }
         }
         names
     }

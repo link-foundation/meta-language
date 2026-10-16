@@ -9,7 +9,6 @@ use std::rc::Rc;
 use std::sync::Arc;
 
 use super::executor::{Element, Executor, Run};
-use super::forking::target_name;
 use super::operations::{
     Abort, Machine, OpError, OpResult, OperationValue, State, Working, run_statements,
 };
@@ -24,27 +23,6 @@ use super::walk::first_meaningful;
 use crate::grammar::RuleKind;
 
 impl Executor<'_> {
-    /// Records that the parse requests `item`, a literal or a rule a
-    /// scanner's `expected` may ask about, at `position` (see
-    /// `Expectations`).
-    pub(super) fn request_item(&self, item: &Expr, position: usize) {
-        let program = self.program;
-        let id = match item {
-            Expr::Ref(target) => program
-                .expected_references
-                .get(&**target_name(target, &program.rules))
-                .copied(),
-            Expr::Terminal { expected, .. } => *expected,
-            _ => None,
-        };
-        if let Some(id) = id {
-            self.shared
-                .expectations
-                .borrow_mut()
-                .request(position, (self.program_index, id));
-        }
-    }
-
     /// A rule call or an external token, memoized with left-recursion growth.
     pub(super) fn reference(
         &mut self,
@@ -83,6 +61,9 @@ impl Executor<'_> {
         in_token: bool,
     ) -> Run<Vec<Res>> {
         let program = self.program;
+        if let Some(results) = self.lexical_reference(target, position, state, in_token)? {
+            return Ok(results);
+        }
         if !in_token && !program.expected_references.is_empty() {
             let name = match target {
                 Target::External(name) => name,
@@ -119,6 +100,7 @@ impl Executor<'_> {
             self.repair_mode(position),
             self.in_extra,
             self.extra_start,
+            self.lexer_family.clone(),
         );
         if let Some(known) = self.memo.get(&key).cloned() {
             if let Some(keywords) = self.keywords {
@@ -271,7 +253,7 @@ impl Executor<'_> {
             entry.borrow_mut().seed = seed;
             let mut merged = current.clone();
             let mut changed = false;
-            let mut renewed: Vec<(usize, State)> = Vec::new();
+            let mut renewed: Vec<(usize, State, Option<Name>)> = Vec::new();
             for result in self.rule_body(rule, position, state, in_token)? {
                 let key = result.key();
                 let existing = merged
@@ -694,7 +676,13 @@ impl Executor<'_> {
         // The result that reaches farthest, with its cost before the rest.
         let mut partial: Option<(usize, usize, Res, Children)> = None;
         for result in results {
-            let trailing = self.skip_trivia(result.end, &result.state)?;
+            let previous = self.lexer_family.clone();
+            if let Some(family) = &result.lexical_family {
+                self.lexer_family = family.clone();
+            }
+            let trailing = self.skip_trivia(result.end, &result.state);
+            self.lexer_family = previous;
+            let trailing = trailing?;
             if trailing.end == self.end {
                 complete.push((result, trailing.leaves.clone(), None));
                 continue;

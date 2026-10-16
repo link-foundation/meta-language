@@ -11,7 +11,8 @@ import { emitRust } from './translation/emit-rust.js';
 import { validateLinkedTypedProgram } from './typed-program-links-validation.js';
 import { recheckLinkedTypedProgram } from './typed-program-checked-projection.js';
 import { readLinkedPatternBindingScope } from './typed-program-pattern-bindings.js';
-import { acceptProgramContainerFields, acceptProgramReferenceField, acceptProgramSchemaRoot, isUnsafeProgramField, readProgramContainerKind, readProgramScalarKind, readProgramReferenceSourceField, readProgramReferenceTargetField, readProgramExpressionOperandFields, readProgramPropositionOperandFields, readProgramPropositionBindingForm } from './typed-program-link-rules.js';
+import { readCallableOwnedParameters } from './translation/callable-source.js';
+import { acceptProgramContainerFields, acceptProgramReferenceField, acceptProgramSchemaRoot, isUnsafeProgramField, readProgramContainerKind, readProgramScalarKind, readProgramReferenceSourceField, readProgramReferenceTargetField, readProgramExpressionOperandFields, readProgramExpressionEntryOperandField, readProgramPropositionOperandFields, readProgramPropositionBindingForm } from './typed-program-link-rules.js';
 
 export const TYPED_PROGRAM_LINKS_SCHEMA = Object.freeze(readRuntimeProjectData(new URL('./data/typed-program-links-schema.json', import.meta.url)));
 const schema = TYPED_PROGRAM_LINKS_SCHEMA;
@@ -42,6 +43,7 @@ function bindingTargets(program) {
     if (type.kind === 'data') reference(type, 'name', schema.references.datatype, declarations.get(type.name));
     else if (['array', 'option', 'set', 'cell'].includes(type.kind)) walkType(type.element);
     else if (type.kind === 'tuple') type.elements.forEach(walkType);
+    else if (type.kind === 'union') type.alternatives.forEach(walkType);
     else if (type.kind === 'record') type.fields.forEach(field => walkType(field.type));
     else if (type.kind === 'map') { walkType(type.key); walkType(type.value); }
     else if (type.kind === 'function') { type.params.forEach(walkType); walkType(type.ret); }
@@ -78,7 +80,7 @@ function bindingTargets(program) {
     }
     if (node.k === 'lambda') {
       const inner = new Map(environment);
-      for (const parameter of node.params) inner.set(parameter.name, parameter);
+      for (const { parameter } of readCallableOwnedParameters(node)) inner.set(parameter.name, parameter);
       walk(node.body, inner);
       return;
     }
@@ -269,10 +271,8 @@ export function readTypedProgramBindingIdentities(network, root) {
       bindings.add(node);
       expression(node.value); expression(node.body);
     } else if (node.k === 'lambda') {
-      for (const parameter of node.params) bindings.add(parameter);
+      for (const { parameter } of readCallableOwnedParameters(node)) bindings.add(parameter);
       expression(node.body);
-    } else if (node.k === 'record') {
-      for (const entry of node.entries) expression(entry.value);
     } else if (node.k === 'match') {
       expression(node.scrutinee);
       for (const entry of node.cases) {
@@ -282,7 +282,9 @@ export function readTypedProgramBindingIdentities(network, root) {
     } else {
       for (const field of readProgramExpressionOperandFields(node.k ?? '').split(' ').filter(Boolean)) {
         const value = node[field];
-        if (Array.isArray(value)) value.forEach(expression);
+        const child = readProgramExpressionEntryOperandField(node.k ?? '', field);
+        if (child) value.forEach(entry => expression(entry[child]));
+        else if (Array.isArray(value)) value.forEach(expression);
         else expression(value);
       }
     }
@@ -359,7 +361,7 @@ export function emitTypedProgramLinks(network, root, target, options = {}) {
   if (!emit) throw new TypeError('typed linked emission currently writes JavaScript and Rust');
   if (options.rustSourceHeaderEmissionModel !== undefined && emit !== emitRust) throw new TypeError('a Rust source header emission model requires Rust target');
   if (options.javaScriptScopedBindingEmissionModel !== undefined && emit !== emitJavaScript) throw new TypeError('a JavaScript scoped binding emission model requires JavaScript target');
-  const emitted = emit === emitRust ? emit(program, { sourceHeaderModel: options.rustSourceHeaderEmissionModel }) : emit(program, {scopedBindingModel: options.javaScriptScopedBindingEmissionModel});
+  const emitted = emit === emitRust ? emit(program, { sourceHeaderModel: options.rustSourceHeaderEmissionModel, arrayConsumption: true }) : emit(program, {scopedBindingModel: options.javaScriptScopedBindingEmissionModel});
   return { code: emitted.text, language: emitted.language, mappings: emitted.mappings,
     assumptions: emitted.assumptions, encodings: emitted.encodings, theorems: emitted.theorems };
 }

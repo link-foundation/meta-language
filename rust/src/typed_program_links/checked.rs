@@ -85,6 +85,22 @@ fn validate_type_records(
             ));
         }
         let kind = value["k"].as_str().unwrap_or_default();
+        if kind == "apply" {
+            let count = |field: &Value| {
+                serde_json::Number::from(field.as_array().map_or(0, Vec::len))
+                    .as_f64()
+                    .expect("an allocated callable arity has a Number representation")
+            };
+            let refusal =
+                crate::translation::callable_source_rules::read_callable_linked_application_error(
+                    value["fn"]["type"]["kind"].as_str().unwrap_or_default(),
+                    count(&value["fn"]["type"]["params"]),
+                    count(&value["args"]),
+                );
+            if !refusal.is_empty() {
+                return Err(error(refusal));
+            }
+        }
         if kind == "toString" {
             let argument_kind = value["arg"]["type"]["kind"].as_str().unwrap_or_default();
             if !accept_linked_text_conversion_kind(argument_kind) {
@@ -126,6 +142,29 @@ fn validate_type_records(
                 .is_some_and(|name| data_names.contains(name))
         {
             return Err(error("the linked data type has no data declaration"));
+        }
+        if value["kind"] == "union" {
+            let admitted_fields = fields
+                .keys()
+                .all(|field| crate::translation::type_syntax_rules::accept_union_type_field(field));
+            let admitted_count = value["alternatives"]
+                .as_array()
+                .is_some_and(|alternatives| {
+                    let count = serde_json::Number::from(alternatives.len())
+                        .as_f64()
+                        .expect("an allocated union alternative count has a Number representation");
+                    crate::translation::type_syntax_rules::accept_union_type_count(count)
+                });
+            if !admitted_fields || !admitted_count {
+                return Err(error(
+                    "a linked union type has a malformed ordered alternative layout",
+                ));
+            }
+        }
+        if value["kind"] == "absence" {
+            return Err(error(
+                "the linked program contains unsupported type absence",
+            ));
         }
         if value["kind"] == "fixed" {
             let width = value["bits"]
@@ -305,6 +344,7 @@ pub(super) fn validate(program: &Program) -> Result<()> {
         })
         .transpose()?;
     let surface = SProgram {
+        reference_semantics: program.reference_semantics.then(|| true.into()),
         language: program.source_language,
         items,
         main,

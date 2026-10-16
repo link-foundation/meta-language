@@ -186,7 +186,7 @@ test('the entire reference rule module checks and emits every declaration with e
   assert.equal(Object.hasOwn(surface, 'referenceSemantics'), false);
   const checked = checkProgram(surface);
   for (const name of allNames) assert.equal(checked.declarations.get(name)?.k, 'fn', name);
-  const rust = emitRust(checked);
+  const rust = emitRust(checked, { arrayConsumption: true });
   assert.ok(rust.definitions.length >= allNames.length, 'all original declarations and actual lowered continuations are emitted');
   for (const name of allNames) {
     const nativeName = name.replace(/([a-z])([A-Z])/gu, '$1_$2').toLowerCase();
@@ -228,4 +228,41 @@ test('forged checked receiver and allocation flags retain the exact prior Rust e
   for (const kind of ['array', 'record', 'map', 'set', 'append']) assert.equal(readSurfaceReferenceEmissionOperation(kind, false, true), 'reference allocation');
   assert.equal(readSurfaceReferenceEmissionOperation('referenceRead', true, false), '');
   assert.equal(readSurfaceReferenceEmissionOperation('referenceAllocate', false, true), '');
+});
+
+test('default reference selection excludes only actual eliminated private append operations', () => {
+  const untyped = '/** @returns {number[]} */ function build(){const values=[];values.push(2);return values;}';
+  assert.throws(() => checkProgram(parseJavaScript(untyped, {referenceSemantics: false})), {
+    message: 'empty array of an unknown type: nothing fixes the type of the elements of this empty array; declare it with JSDoc at 57..59',
+  }, 'the original empty literal retains its preexisting element-inference boundary');
+  const source = untyped.replace('const values=[];', 'const values=[1];');
+  const surface = parseJavaScript(source);
+  assert.equal(Object.hasOwn(surface, 'referenceSemantics'), false);
+  const checked = checkProgram(surface);
+  assert.equal(checked.referenceSemantics, undefined);
+  assert.ok(emitRust(checked).text.includes('crate::ml_array::append('));
+  const packet = createTypedProgramLinks(source, 'JavaScript');
+  const replay = decodeTypedProgramLinks(LinkNetwork.fromLino(packet.network.toLino()), packet.root);
+  assert.strictEqual(recheckLinkedTypedProgram(replay, {wholeProgram: true}), replay);
+  const context = {};
+  runInNewContext(emitJavaScript(replay).text, context, {timeout: 1000});
+  assert.deepEqual(Array.from(context.build()), [1, 2]);
+  assert.equal(parseJavaScript(source, {referenceSemantics: true}).referenceSemantics, true);
+
+  const operation = {start: source.indexOf('.push'), end: source.indexOf('(2)') + 1};
+  assert.equal(requiresReferenceSemantics(source), original.requiresReferenceSemantics(source));
+  assert.equal(requiresReferenceSemantics(source, [operation]), false);
+  for (const suffix of [
+    'class Stateful {}',
+    'function mutate(other){other[0]=1;return other;}',
+    'function mutate(other){other.push(3);return other;}',
+    'let count=0;const next=()=>{count+=1;return count;};',
+  ]) assert.equal(requiresReferenceSemantics(source + suffix, [operation]), true, suffix);
+
+  const nested = source.replace('values.push(2)', 'values.push(other.push(2))');
+  const beforeArgument = {start: nested.indexOf('.push'), end: nested.indexOf('other.push')};
+  assert.equal(requiresReferenceSemantics(nested, [beforeArgument]), true, 'a nested argument mutation is retained');
+  const equality = source.replace('@returns {number[]}', '@returns {boolean}')
+    .replace('return values;', 'const alias=values;return values===alias;');
+  assert.equal(parseJavaScript(equality).referenceSemantics, true, 'late actual structural identity selection is retained');
 });

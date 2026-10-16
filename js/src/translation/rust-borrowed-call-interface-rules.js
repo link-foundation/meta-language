@@ -1,6 +1,8 @@
 // Generated from the linked closed primitive borrowed Rust call interface policy.
 /** @param {string} model @returns {boolean} */
 export function acceptRustBorrowedCallInterfaceModel(model) { return model === "closed primitive borrowed Rust call interface 1"; }
+/** @param {string} model @param {string} kind @param {string} targetKind @param {string} argumentStatus @returns {string} */
+export function readRustBorrowedCallTargetDiagnostic(model, kind, targetKind, argumentStatus) { if (model !== "closed primitive borrowed Rust call interface 1" || kind !== "call") return ""; if (argumentStatus === "mismatch") return "the linked program has inconsistent call argument type"; if (argumentStatus === "matched" && targetKind === "call") return "Rust borrowed call interface: every caller must target an owned pure leaf without a static borrowed input"; return ""; }
 /** @param {boolean} owned @param {boolean} leaf @param {boolean} staticLifetime @returns {boolean} */
 export function acceptRustBorrowedCallTarget(owned, leaf, staticLifetime) { return owned && leaf && !staticLifetime; }
 /** @param {string} kind @param {boolean} unrepresented @param {boolean} correctArity @returns {boolean} */

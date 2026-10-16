@@ -1,0 +1,3 @@
+JavaScript source translation preserves declared positional array contexts and lazily resolves referenced JSDoc aliases. Native parsing uses the shared JavaScript decisions for constructor diagnostics and string, Number and expression switch cases, preserving discriminant evaluation, case order, defaults and fallthrough. Dynamic switches also retain negative BigInt case literals.
+
+Object declarations retain ordinary record values and namespace ordering. Shared primitive method rules preserve UTF-16 string offsets, slice bounds and defaults. Array membership uses inferred receiver types and SameValueZero, including NaN, both zero signs and distinct nullable absences.

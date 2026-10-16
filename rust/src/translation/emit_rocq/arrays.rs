@@ -38,8 +38,51 @@ impl RocqEmitter<'_> {
                 self.expr(left)?,
                 self.expr(right)?
             )),
-            Node::Index { array, index } => {
-                self.state.array_read();
+            Node::OptionalIndex { array, index } => {
+                let position = self.expr(index)?;
+                if index.ty.is_float() {
+                    self.helpers.insert(Helper::FloatIndex);
+                }
+                let values = self.expr(array)?;
+                Ok(
+                    crate::translation::array_value_rules::render_optional_array_read(
+                        "Rocq",
+                        index.ty.kind(),
+                        &values,
+                        &position,
+                    ),
+                )
+            }
+            Node::StringPoints { .. } => Err(crate::translation::diagnostics::unsupported(
+                "string iteration",
+                "this target needs a Unicode code-point iterator over its UTF-8 string encoding",
+                e.span,
+            )),
+            Node::CollectionItems { object, op } => {
+                let map = matches!(object.ty, super::Type::Map { .. });
+                let (key, item) = if op != "entries" {
+                    match &object.ty {
+                        super::Type::Map { key, value, .. } => (self.ty(key)?, self.ty(value)?),
+                        _ => (String::new(), String::new()),
+                    }
+                } else {
+                    (String::new(), String::new())
+                };
+                let value = self.expr(object)?;
+                Ok(
+                    crate::translation::array_value_rules::render_collection_iteration(
+                        "Rocq", map, op, &value, &key, &item,
+                    ),
+                )
+            }
+            Node::Index {
+                array,
+                index,
+                proven_in_bounds,
+            } => {
+                if !proven_in_bounds {
+                    self.state.array_read();
+                }
                 self.helpers.insert(Helper::ListAt);
                 let mut text = self.expr(index)?;
                 if index.ty.is_float() {

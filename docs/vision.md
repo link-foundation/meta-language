@@ -719,8 +719,19 @@ refuses the three standard non-configurable global names; valid local shadows
 remain admitted. Both saved formats retain and validate this source context
 alongside the four operation premises. The
 complete matcher and five lowered programs are automatically emitted as Rust
-source data. Default production append refusals remain; native source capture,
-execution and general member-array or Map projection remain required work.
+source data. General member-array or Map projection requires separate proofs.
+The production source adapter additionally admits discarded variadic appends
+only after checking actual fresh allocations, lexical bindings, scalar readers,
+loop relations and absence of escapes. It lowers them to existing immutable
+array operations; checked Links reload needs no trusted ownership flag.
+Shared final-use decisions inspect the complete continuation graph before Rust
+can consume array storage. Public program translation, self-translation and
+source-free emission select this policy. Low-level `emitRust` and `emit_rust`
+retain their historical array-copy rendering for authenticated generation
+profiles; explicit array-consumption emission selects the optimized policy.
+This preserves frozen compiler/style receipts without changing checked meaning
+or adding caller-dependent behavior. Native compilation, execution and the
+complete resource fit remain CI evidence, independent of source generation.
 The separate `portable closed Rust text source certificate 1` experiment moves
 the complete finite text certificate into a kernel generated from shared links
 policy. Seventeen typed Number tables retain the actual token, declaration,

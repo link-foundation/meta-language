@@ -4,6 +4,7 @@
 // small traversal helpers shared by the emitters.
 
 import { checkRustScalarLoopProof } from './rust-scalar-loops.js';
+import { readCallableOwnedParameters } from './callable-source.js';
 
 /** A per-declaration name supply: target-legal, unique, deterministic. */
 export class Scope {
@@ -44,7 +45,7 @@ export function renameExpr(expr, env, scope) {
     case 'lambda': {
       const inner = new Map(env);
       const child = scope.child();
-      const params = expr.params.map((param) => {
+      const params = readCallableOwnedParameters(expr).map(({ parameter: param }) => {
         const name = child.fresh(param.name);
         inner.set(param.name, name);
         return { ...param, name };

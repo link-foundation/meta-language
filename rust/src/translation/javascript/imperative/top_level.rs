@@ -24,6 +24,7 @@ pub(in crate::translation::javascript) fn lower_top_level(
         renames: 0,
         generated: std::mem::take(&mut parser.generated),
         count: parser.generated_count,
+        cells: HashSet::new(),
     };
     let list = flat(statements);
     let declared: HashSet<String> = list
@@ -87,6 +88,7 @@ pub(in crate::translation::javascript) fn lower_top_level(
         .map(|name| Var {
             source: name.clone(),
             ir: name.clone(),
+            reference: false,
         })
         .collect();
     let value = lowering.seq(&list, 0, &ctx, &scope);

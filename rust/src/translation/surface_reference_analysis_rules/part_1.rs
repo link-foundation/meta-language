@@ -485,7 +485,7 @@ pub fn inspect_surface_reference_expression(
                     {
                         let name = crate::translation::surface_reference_analysis_rules::read_surface_reference_text(columns, size, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "name"));
                         {
-                            let body = crate::translation::surface_reference_analysis_rules::inspect_surface_reference_expression(columns, rows, size, program, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "body"), &(crate::translation::frontend_rules::ml_array::append(names.to_vec(), vec![name])), &(crate::translation::frontend_rules::ml_array::append(types.to_vec(), vec![crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(value), 0f64)])));
+                            let body = crate::translation::surface_reference_analysis_rules::inspect_surface_reference_expression(columns, rows, size, program, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "body"), &({ let (ml_append_right, ml_append_left) = (vec![name], names.to_vec()); crate::translation::frontend_rules::ml_array::append(ml_append_left, ml_append_right) }), &({ let (ml_append_right, ml_append_left) = (vec![crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(value), 0f64)], types.to_vec()); crate::translation::frontend_rules::ml_array::append(ml_append_left, ml_append_right) }));
                             vec![crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(body), 0f64), if ((crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(value), 1f64)) == 1f64) || ((crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(body), 1f64)) == 1f64) {
                                     1f64
                                 } else {
@@ -540,17 +540,17 @@ pub fn inspect_surface_reference_expression(
                                         {
                                             let end = offset + crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, (size + params));
                                             {
-                                                let ml_s6 = crate::translation::surface_reference_analysis_rules::ml_inspect_surface_reference_expression_loop8(columns, rows, size, inner_names.clone(), inner_types.clone(), offset, end);
+                                                let ml_s6 = crate::translation::surface_reference_analysis_rules::ml_inspect_surface_reference_expression_loop8(columns, rows, size, inner_names, inner_types, offset, end);
                                                 match ml_s6 {
                                                                 crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceExpressionLoop8Result::MlInspectSurfaceReferenceExpressionLoop8Done(inner_names_2, inner_types_2) => {
-                                                                    crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceExpressionJoin7::MlInspectSurfaceReferenceExpressionJoin7Next(inner_names_2.clone(), inner_types_2.clone())
+                                                                    crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceExpressionJoin7::MlInspectSurfaceReferenceExpressionJoin7Next(inner_names_2, inner_types_2)
                                                                 }
                                                             }
                                             }
                                         }
                                     }
                                 } else {
-                                    crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceExpressionJoin7::MlInspectSurfaceReferenceExpressionJoin7Next(inner_names.clone(), inner_types.clone())
+                                    crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceExpressionJoin7::MlInspectSurfaceReferenceExpressionJoin7Next(inner_names, inner_types)
                                 };
                                 match ml_s5 {
                                                 crate::translation::surface_reference_analysis_rules::MlInspectSurfaceReferenceExpressionJoin7::MlInspectSurfaceReferenceExpressionJoin7Next(inner_names_3, inner_types_3) => {
@@ -877,14 +877,14 @@ pub fn render_surface_reference_operation(
                         "{}{}",
                         (format!(
                             "{}{}",
-                            (format!("{}{}", (String::from("{ let ")), temporary)),
+                            (format!("{}{}", (String::from("{ let ")), temporary.to_owned())),
                             (String::from(" = "))
                         )),
                         value
                     )),
                     (String::from(".borrow().clone(); "))
                 )),
-                temporary
+                temporary.to_owned()
             )),
             (String::from(" }"))
         )

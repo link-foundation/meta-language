@@ -24,16 +24,20 @@ use super::ir::{
     Prop, Semantics, TheoremDecl, rename_function, rename_theorem,
 };
 use super::lean_root_names::LEAN_ROOT_NAMES;
-use super::output::thread_output;
+use super::output::thread_output_for_target;
 use super::proof::prop_functions;
 use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
 use super::typed_program_link_rules::accept_program_tuple_product_model;
 use super::types::Type;
 
 mod arrays;
+mod callables;
 mod helpers;
 mod main;
 mod math;
+mod optional_values;
+mod records;
+mod types;
 use self::helpers::HELPERS;
 
 const KEYWORDS: &[&str] = &[
@@ -183,7 +187,7 @@ fn generated(name: &str) -> Vec<String> {
 /// # Errors
 /// On constructs the target cannot express faithfully.
 pub fn emit_lean(source: &Program) -> Result<Emitted> {
-    let program = &*thread_output(source)?;
+    let program = &*thread_output_for_target(source, "Lean")?;
     let state = EmitState::new(
         program,
         Language::Lean,
@@ -291,69 +295,6 @@ impl LeanEmitter<'_> {
 
     fn module_name(&self, path: &[String]) -> String {
         self.state.module_name(path).unwrap_or_default().to_owned()
-    }
-
-    fn ty(&mut self, ty: &Type) -> Result<String> {
-        if ty.is_reference() || matches!(ty, Type::Cell { .. }) {
-            return Err(unsupported(
-                "mutable structural value",
-                "shared reference state needs an explicit target state model",
-                None,
-            ));
-        }
-        Ok(match ty {
-            Type::Nat => "Nat".to_owned(),
-            Type::Int => "Int".to_owned(),
-            Type::Fixed { signed, .. } => {
-                let represented = if *signed { "Int" } else { "Nat" };
-                self.state.machine_integer(ty, represented);
-                represented.to_owned()
-            }
-            Type::Float => {
-                self.state.encode(
-                    "floats",
-                    "a JavaScript Number is a Lean Float, the same IEEE-754 binary64 with the same arithmetic; % is ml_float_rem, the exact truncated remainder, and ml_js_number prints a value as JavaScript does",
-                );
-                "Float".to_owned()
-            }
-            Type::Bool => "Bool".to_owned(),
-            Type::String => "String".to_owned(),
-            Type::Unit => "Unit".to_owned(),
-            Type::Output => "List String".to_owned(),
-            Type::Option { element, absence } => {
-                let element = self.ty(element)?;
-                if absence == "both" {
-                    format!("(Option (Option {element}))")
-                } else {
-                    format!("(Option {element})")
-                }
-            }
-            Type::Data { name } => self.state.reference(name, "."),
-            Type::Array { element, .. } => {
-                self.state.encode(
-                    "arrays",
-                    "a JavaScript array, which the portable core never mutates, is a Lean Array; a read outside it panics",
-                );
-                format!("(Array {})", self.ty(element)?)
-            }
-            Type::Tuple { elements } => {
-                let mut parts = Vec::new();
-                for element in elements {
-                    parts.push(self.ty(element)?);
-                }
-                if parts.is_empty() {
-                    "Unit".to_owned()
-                } else {
-                    format!("({})", parts.join(" × "))
-                }
-            }
-            other => {
-                return Err(type_error(
-                    format!("no Lean type for {}", other.kind()),
-                    None,
-                ));
-            }
-        })
     }
 
     fn data(&mut self, entry: &Decl, data: &DataDecl) -> Result<String> {
@@ -611,6 +552,19 @@ impl LeanEmitter<'_> {
             }
         }
         Ok(match &e.node {
+            Node::Record { entries } => self.record_value(entries, depth)?,
+            Node::RecordField { object, index, .. } => self.record_field(object, *index, depth)?,
+            Node::ReferenceAllocate { .. }
+            | Node::ReferenceRead { .. }
+            | Node::CellAllocate { .. }
+            | Node::CellRead { .. }
+            | Node::CellWrite { .. } => {
+                return Err(unsupported(
+                    "mutable structural value",
+                    &super::surface_reference_analysis_rules::read_surface_reference_refusal(),
+                    e.span,
+                ));
+            }
             Node::Lit { value } => {
                 if e.ty.is_float() {
                     self.ty(&e.ty)?;
@@ -618,7 +572,20 @@ impl LeanEmitter<'_> {
                 literal(&e.ty, value)?
             }
             Node::Unit => "()".to_owned(),
-            Node::None { .. } => "none".to_owned(),
+            Node::None { .. }
+            | Node::Some { .. }
+            | Node::FlattenOption { .. }
+            | Node::Coalesce { .. }
+            | Node::OptionalField { .. }
+            | Node::OptionalProject { .. }
+            | Node::NullishNumber { .. }
+            | Node::OptionalIndexNumber { .. }
+            | Node::OptionalText { .. }
+            | Node::OptionalTypeOf { .. }
+            | Node::Truthy { .. }
+            | Node::StrictEqual { .. }
+            | Node::UnwrapOption { .. }
+            | Node::OptionalPredicate { .. } => self.optional_expr(e, depth)?,
             Node::OutNil => "([] : List String)".to_owned(),
             Node::OutCons { head, tail } => {
                 format!(
@@ -658,6 +625,9 @@ impl LeanEmitter<'_> {
                 }
             }
             Node::Var { name } => self.successors.get(name).unwrap_or(name).clone(),
+            Node::FunctionRef { .. } | Node::Apply { .. } | Node::Lambda { .. } => {
+                self.callable_expression(e, depth)?
+            }
             Node::Call { func, args } => {
                 let head = self.state.reference(func, ".");
                 self.application(head, args, depth)?
@@ -700,6 +670,17 @@ impl LeanEmitter<'_> {
                 )
             }
             Node::Match { scrutinee, cases } => self.match_expr(scrutinee, cases, depth)?,
+            Node::Method { object, op, .. } => {
+                return Err(unsupported(
+                    &format!(".{op}()"),
+                    &super::primitive_method_rules::read_primitive_method_rendering_refusal(
+                        "Lean",
+                        object.ty.kind(),
+                        op,
+                    ),
+                    e.span,
+                ));
+            }
             Node::StringMap { op, .. } => {
                 return Err(crate::translation::diagnostics::unsupported(
                     &format!(".{op}()"),
@@ -734,9 +715,13 @@ impl LeanEmitter<'_> {
                 ..
             } => self.cast(arg, from, to, *flavor, depth)?,
             Node::Abort { .. } => unthreaded("an abort"),
-            Node::Array { .. } | Node::Append { .. } | Node::Index { .. } | Node::Length { .. } => {
-                self.array_expr(e, depth)?
-            }
+            Node::Array { .. }
+            | Node::Append { .. }
+            | Node::Index { .. }
+            | Node::Length { .. }
+            | Node::OptionalIndex { .. }
+            | Node::StringPoints { .. }
+            | Node::CollectionItems { .. } => self.array_expr(e, depth)?,
             Node::Math { .. } => self.math(e, depth)?,
             // Output threading leaves no `print` node.
             Node::Print { .. } => {

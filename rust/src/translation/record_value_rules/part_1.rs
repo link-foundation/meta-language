@@ -379,11 +379,7 @@ pub fn read_record_value_order(count: f64, reverse: bool) -> Vec<f64> {
             let order = Vec::<f64>::new();
             {
                 let index = 0f64;
-                {
-                    let order_2 =
-                        self::ml_read_record_value_order_loop1(count, reverse, order, index);
-                    order_2
-                }
+                { self::ml_read_record_value_order_loop1(count, reverse, order, index) }
             }
         }
     } else {
@@ -490,8 +486,7 @@ pub fn read_record_sorted_field_positions(fields: &[Vec<f64>]) -> Vec<f64> {
                         {
                             let width = 1f64;
                             {
-                                let sorted_2 = self::ml_read_record_sorted_field_positions_loop7(fields, sorted, width);
-                                sorted_2
+                                self::ml_read_record_sorted_field_positions_loop7(fields, sorted, width)
                             }
                         }
                     }
@@ -518,15 +513,7 @@ pub fn read_record_field_order(fields: &[Vec<f64>]) -> Vec<f64> {
                 let selected = Vec::<f64>::new();
                 {
                     let index = 0f64;
-                    {
-                        let selected_2 = self::ml_read_record_field_order_loop10(
-                            fields,
-                            &(sorted),
-                            selected,
-                            index,
-                        );
-                        selected_2
-                    }
+                    { self::ml_read_record_field_order_loop10(fields, &(sorted), selected, index) }
                 }
             }
         }
@@ -567,8 +554,7 @@ pub fn read_record_field_insertion_order(fields: &[Vec<f64>]) -> Vec<f64> {
                                             {
                                                 let index_2 = 0f64;
                                                 {
-                                                    let selected_2 = self::ml_read_record_field_insertion_order_loop12(fields, &(first_2), &(last_2), selected, index_2);
-                                                    selected_2
+                                                    self::ml_read_record_field_insertion_order_loop12(fields, &(first_2), &(last_2), selected, index_2)
                                                 }
                                             }
                                         }
@@ -656,7 +642,7 @@ pub fn read_record_type_constraint_error(action: f64, name: &str) -> String {
     if (action == 3f64) || (action == 4f64) {
         format!(
             "{}{}",
-            (format!("{}{}", (String::from("record field ")), name)),
+            (format!("{}{}", (String::from("record field ")), name.to_owned())),
             (String::from(" is missing"))
         )
     } else {
@@ -673,7 +659,11 @@ pub fn read_record_method_error(
     arguments_count: f64,
 ) -> String {
     if kind != "function" {
-        format!("{}{}", (String::from("record has no method ")), operation)
+        format!(
+            "{}{}",
+            (String::from("record has no method ")),
+            operation.to_owned()
+        )
     } else if arguments_count != parameters {
         format!(
             "{}{}",
@@ -681,7 +671,7 @@ pub fn read_record_method_error(
                 "{}{}",
                 (format!(
                     "{}{}",
-                    (format!("{}{}", (String::from(".")), operation)),
+                    (format!("{}{}", (String::from(".")), operation.to_owned())),
                     (String::from("() expects "))
                 )),
                 (self::ml_number::js_number(parameters))
@@ -775,7 +765,7 @@ pub fn record_type_fact_elements(
     {
         let values = Vec::<f64>::new();
         if owner < 0f64 {
-            values.clone()
+            values
         } else {
             {
                 let start = self::read_required_number_fact(starts, owner);
@@ -783,15 +773,7 @@ pub fn record_type_fact_elements(
                     let end = start + self::read_required_number_fact(counts, owner);
                     {
                         let edge = start;
-                        {
-                            let values_2 = self::ml_record_type_fact_elements_loop15(
-                                targets,
-                                values.clone(),
-                                end,
-                                edge,
-                            );
-                            values_2
-                        }
+                        { self::ml_record_type_fact_elements_loop15(targets, values, end, edge) }
                     }
                 }
             }
@@ -806,7 +788,6 @@ pub fn record_type_fact_elements(
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-
 pub fn read_record_type_owner_presence(
     texts: &[String],
     numbers: &[f64],
@@ -854,14 +835,17 @@ pub fn ml_read_record_value_order_loop1(
     loop {
         if index < count {
             {
-                let order_2 = self::ml_array::append(
-                    order.clone(),
-                    vec![if reverse {
-                        (count - index) - 1f64
-                    } else {
-                        index
-                    }],
-                );
+                let order_2 = {
+                    let (ml_append_right, ml_append_left) = (
+                        vec![if reverse {
+                            (count - index) - 1f64
+                        } else {
+                            index
+                        }],
+                        order,
+                    );
+                    self::ml_array::append(ml_append_left, ml_append_right)
+                };
                 {
                     let index_2 = index + 1f64;
                     {
@@ -871,7 +855,7 @@ pub fn ml_read_record_value_order_loop1(
                 }
             }
         }
-        return { order.clone() };
+        return { order };
     }
 }
 

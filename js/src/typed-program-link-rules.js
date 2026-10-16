@@ -82,6 +82,7 @@ export function readProgramExpressionOperandFields(kind) {
   if ((kind === "append")) return "left right";
   if ((kind === "index")) return "array index";
   if ((kind === "length")) return "array";
+  if ((kind === "record")) return "entries";
   return "";
 }
 
@@ -120,7 +121,7 @@ export function readProgramNeutralFieldDefault(context, field) {
   if (((field === "frozen") && ((context === "expression:ctor") || (context === "expression:tuple"))) || ((context === "expression:toString" && field === "console"))) return "false";
   if ((context === "parameter") && ((field === "guard") || (field === "default"))) return "null";
   if ((context === "effect:let" && field === "constant")) return "false";
-  if ((field === "span") && ((context === "effect:let") || (context === "declaration:module") || (context === "effect:print") || (context === "expression:lit") || (context === "expression:unit") || (context === "expression:var") || (context === "expression:call") || (context === "expression:ctor") || (context === "expression:match") || (context === "expression:unary") || (context === "expression:binary") || (context === "expression:if") || (context === "expression:let") || (context === "expression:toString") || (context === "expression:stringMap") || (context === "expression:stringTest") || (context === "expression:cast") || (context === "expression:abort") || (context === "expression:print") || (context === "expression:array") || (context === "expression:append") || (context === "expression:index") || (context === "expression:length") || (context === "expression:math") || (context === "expression:tuple") || (context === "expression:tupleIndex") || (context === "expression:none"))) return "null";
+  if ((field === "span") && ((context === "effect:let") || (context === "declaration:module") || (context === "effect:print") || (context === "expression:lit") || (context === "expression:unit") || (context === "expression:var") || (context === "expression:call") || (context === "expression:ctor") || (context === "expression:match") || (context === "expression:unary") || (context === "expression:binary") || (context === "expression:if") || (context === "expression:let") || (context === "expression:toString") || (context === "expression:stringMap") || (context === "expression:stringTest") || (context === "expression:cast") || (context === "expression:abort") || (context === "expression:print") || (context === "expression:array") || (context === "expression:append") || (context === "expression:index") || (context === "expression:length") || (context === "expression:math") || (context === "expression:tuple") || (context === "expression:tupleIndex") || (context === "expression:none") || (context === "expression:referenceAllocate") || (context === "expression:referenceRead") || (context === "expression:functionRef") || (context === "expression:apply") || (context === "expression:lambda") || (context === "expression:record") || (context === "expression:recordField") || (context === "expression:cellAllocate") || (context === "expression:cellRead") || (context === "expression:cellWrite") || (context === "expression:some") || (context === "expression:flattenOption") || (context === "expression:coalesce") || (context === "expression:optionalField") || (context === "expression:optionalProject") || (context === "expression:optionalIndex") || (context === "expression:optionalIndexNumber") || (context === "expression:stringPoints") || (context === "expression:collectionItems") || (context === "expression:method"))) return "null";
   return "";
 }
 
@@ -128,6 +129,12 @@ export function readProgramNeutralFieldDefault(context, field) {
 export function acceptProgramExpressionField(kind, field) {
   if ((kind === "tuple")) return field === "k" || field === "type" || field === "span" || field === "items" || field === "frozen" || field === "productModel";
   if ((kind === "tupleIndex")) return field === "k" || field === "type" || field === "span" || field === "object" || field === "index";
+  if ((kind === "record")) return field === "k" || field === "type" || field === "span" || field === "entries";
+  if ((kind === "recordField")) return field === "k" || field === "type" || field === "span" || field === "object" || field === "field" || field === "index";
+  if ((kind === "some") || (kind === "flattenOption")) return field === "k" || field === "value" || field === "type" || field === "span";
+  if ((kind === "coalesce")) return field === "k" || field === "left" || field === "right" || field === "type" || field === "span";
+  if ((kind === "optionalField")) return field === "k" || field === "object" || field === "field" || field === "index" || field === "type" || field === "span";
+  if ((kind === "optionalProject")) return field === "k" || field === "object" || field === "field" || field === "type" || field === "span";
   return false;
 }
 
@@ -171,6 +178,28 @@ export function readProgramExpressionProjection(term) {
   if ((term === "tuple")) return "tuple";
   if ((term === "tupleIndex")) return "tupleIndex";
   if ((term === "none")) return "none";
+  if ((term === "referenceAllocate")) return "referenceAllocate";
+  if ((term === "referenceRead")) return "referenceRead";
+  if ((term === "length:referenceRead")) return "length:referenceRead";
+  if ((term === "functionRef")) return "functionRef";
+  if ((term === "apply")) return "apply";
+  if ((term === "lambda")) return "lambda";
+  if ((term === "record")) return "record";
+  if ((term === "recordField")) return "recordField";
+  if ((term === "cellAllocate")) return "cellAllocate";
+  if ((term === "cellRead")) return "cellRead";
+  if ((term === "cellWrite")) return "cellWrite";
+  if ((term === "some")) return "some";
+  if ((term === "flattenOption")) return "flattenOption";
+  if ((term === "coalesce")) return "coalesce";
+  if ((term === "optionalField")) return "optionalField";
+  if ((term === "optionalProject")) return "optionalProject";
+  if ((term === "optionalIndex")) return "optionalIndex";
+  if ((term === "optionalIndexNumber")) return "optionalIndexNumber";
+  if ((term === "stringPoints")) return "stringPoints";
+  if ((term === "collectionItems")) return "collectionItems";
+  if ((term === "method")) return "method";
+  if ((term === "index:provenInBounds")) return "index:provenInBounds";
   return "";
 }
 
@@ -231,5 +260,19 @@ export function readProgramPropositionBindingForm(kind) {
   if ((kind === "forall")) return "binders";
   if ((kind === "and") || (kind === "or") || (kind === "implies") || (kind === "not")) return "propositions";
   if ((kind === "bool") || (kind === "eq") || (kind === "ne") || (kind === "lt") || (kind === "le") || (kind === "gt") || (kind === "ge")) return "expressions";
+  return "";
+}
+
+/** @param {string} kind @param {string} field @returns {string} */
+export function readProgramExpressionEntryOperandField(kind, field) {
+  if ((kind === "record" && field === "entries")) return "value";
+  return "";
+}
+
+/** @param {string} kind @param {string} role @returns {string} */
+export function readProgramDeclarationTypeProjectionField(kind, role) {
+  if ((kind === "fn" && role === "annotation")) return "annotatedRet";
+  if ((kind === "fn" && role === "result")) return "ret";
+  if ((kind === "fn" && role === "semantic")) return "semanticRet";
   return "";
 }

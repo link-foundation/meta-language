@@ -1,27 +1,11 @@
 // Captured mutable bindings keep one shared cell through assignments, branches
 // and lifted loops. The source binding's value may change; its cell identity
 // remains the one every closure captured.
+import { acceptSharedSurfaceReferenceKind } from './surface-raw-metadata-rules.js';
+import { readCallableMutableCellNames } from './callable-source.js';
 
 export function mutableClosureCells(statements) {
-  const captured = new Set();
-  const assigned = new Set();
-  function visit(node) {
-    if (!node || typeof node !== 'object') return;
-    if (Array.isArray(node)) {
-      for (const child of node) visit(child);
-      return;
-    }
-    if (node.s === 'assign') assigned.add(node.name);
-    if (node.k === 'lambda') {
-      for (const name of node.captures ?? []) captured.add(name);
-      for (const name of node.assignedCaptures ?? []) assigned.add(name);
-    }
-    for (const [key, value] of Object.entries(node)) {
-      if (!['span', 'type', 'data', 'captures', 'assignedCaptures'].includes(key)) visit(value);
-    }
-  }
-  visit(statements);
-  return new Set([...captured].filter((name) => assigned.has(name)));
+  return readCallableMutableCellNames(statements);
 }
 
 /** Representation selection applies to declarations and inferred nested types alike. */
@@ -43,7 +27,7 @@ export function markSharedReferenceTypes(program) {
     const copy = {};
     copies.set(node, copy);
     for (const [key, value] of Object.entries(node)) copy[key] = visit(value);
-    if (['array', 'record', 'map', 'set'].includes(node.kind)) copy.reference = true;
+    if (acceptSharedSurfaceReferenceKind(node.kind)) copy.reference = true;
     if (inferredTypes?.has(node)) copiedTypes.set(copy, visit(inferredTypes.get(node)));
     return copy;
   }

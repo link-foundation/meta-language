@@ -5,9 +5,10 @@ use super::super::{
 use crate::translation::check::read_checked_match_pattern_bindings;
 use crate::translation::ir::{Decl, Effect, Expr, Node, Program};
 use crate::translation::typed_program_link_rules::{
-    is_unsafe_program_field, read_program_expression_operand_fields,
-    read_program_pattern_binding_form, read_program_proposition_binding_form,
-    read_program_proposition_operand_fields, read_program_reference_source_field,
+    is_unsafe_program_field, read_program_expression_entry_operand_field,
+    read_program_expression_operand_fields, read_program_pattern_binding_form,
+    read_program_proposition_binding_form, read_program_proposition_operand_fields,
+    read_program_reference_source_field,
 };
 use crate::{LinkId, LinkNetwork};
 use serde_json::Value;
@@ -40,6 +41,10 @@ fn reference(
 
 fn normalize_expression(value: &mut Value, expression: &Expr, program: &Program) -> Result<()> {
     match &expression.node {
+        Node::Lambda { body, .. } => {
+            normalize_expression(&mut value["body"], body, program)?;
+            return Ok(());
+        }
         Node::Let {
             value: bound, body, ..
         } => {
@@ -97,11 +102,22 @@ fn normalize_expression(value: &mut Value, expression: &Expr, program: &Program)
     let children = expression.children();
     let mut children = children.into_iter();
     for field in read_program_expression_operand_fields(expression.node.kind()).split_whitespace() {
+        let entry = read_program_expression_entry_operand_field(expression.node.kind(), field);
         let operand = value
             .get_mut(field)
             .ok_or_else(|| error("a checked expression is missing a shared operand"))?;
         if let Some(values) = operand.as_array_mut() {
             for operand in values {
+                let operand = if entry.is_empty() {
+                    operand
+                } else {
+                    operand.get_mut(&entry).ok_or_else(|| {
+                        error("a checked expression entry is missing its shared operand")
+                    })?
+                };
+                if operand.is_null() {
+                    continue;
+                }
                 let child = children
                     .next()
                     .ok_or_else(|| error("a shared expression operand is inconsistent"))?;
@@ -276,6 +292,28 @@ fn bindings(
                 .unwrap(),
             target,
         )?;
+    } else if kind == "lambda" {
+        let parameters = value["params"]
+            .as_array()
+            .ok_or_else(|| error("a checked lambda has no owned parameters"))?;
+        let mut inner = environment.clone();
+        for index in super::super::callables::parameter_ordinals(value) {
+            let parameter = &parameters[index];
+            let name = parameter["name"]
+                .as_str()
+                .ok_or_else(|| error("a checked callable parameter has no name"))?;
+            inner.insert(
+                name.to_owned(),
+                child_path(&child_path(path, "params"), index),
+            );
+        }
+        return bindings(
+            &value["body"],
+            &child_path(path, "body"),
+            &inner,
+            targets,
+            remaining,
+        );
     } else if kind == "let" {
         bindings(
             &value["value"],
@@ -356,15 +394,22 @@ fn bindings(
         return Ok(());
     }
     for field in read_program_expression_operand_fields(kind).split_whitespace() {
+        let entry = read_program_expression_entry_operand_field(kind, field);
         if let Some(values) = value[field].as_array() {
             for (index, child) in values.iter().enumerate() {
-                bindings(
-                    child,
-                    &child_path(&child_path(path, field), index),
-                    environment,
-                    targets,
-                    remaining,
-                )?;
+                let mut path = child_path(&child_path(path, field), index);
+                let child = if entry.is_empty() {
+                    child
+                } else {
+                    path = child_path(&path, &entry);
+                    child.get(&entry).ok_or_else(|| {
+                        error("a checked expression entry is missing its shared operand")
+                    })?
+                };
+                if child.is_null() {
+                    continue;
+                }
+                bindings(child, &path, environment, targets, remaining)?;
             }
         } else {
             bindings(

@@ -5,6 +5,8 @@
 // language and every grammar declaration the feature union adds, and the two
 // codecs below render and read them from that table, so both serializations
 // stay in step. docs/grammar/feature-union.md is the specification.
+import { GRAMMAR_LEXER_FORMS } from './grammar-lexer-forms.js';
+import { GRAMMAR_SELECTION_FORMS } from './grammar-selection-forms.js';
 
 /** The expression kinds the feature union adds, with their fields in listing order. */
 export const FEATURE_EXPRESSION_FORMS = Object.freeze({
@@ -22,6 +24,8 @@ export const FEATURE_EXPRESSION_FORMS = Object.freeze({
   missing: [['item', 'expression']],
   embed: [['language', 'name'], ['item', 'expression']],
   expand: [['name', 'name'], ['arguments', 'expressions']],
+  ...GRAMMAR_LEXER_FORMS,
+  ...GRAMMAR_SELECTION_FORMS,
 });
 
 /**
@@ -135,6 +139,7 @@ export function grammarDeclarations(grammar) {
     precedences: declarations.precedences ?? [],
     macros: declarations.macros ?? [],
     scanners: declarations.scanners ?? [],
+    ...(declarations.lexers?.length ? { lexers: declarations.lexers } : {}),
   };
 }
 

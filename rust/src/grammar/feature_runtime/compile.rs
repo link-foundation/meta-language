@@ -8,8 +8,8 @@ use std::sync::Arc;
 use super::load::{LoadResult, refuse};
 use super::operations::{Condition, Statement, ValueOp, allowed_in};
 use super::program::{
-    Associativity, ClassTest, Expr, Matcher, Name, Target, insensitive_expectation,
-    literal_expectation, range_expectation,
+    Associativity, ClassTest, Expr, Matcher, Name, SelectionDescriptor, Target,
+    insensitive_expectation, literal_expectation, range_expectation,
 };
 use super::text::{fold_case, unicode_property_matcher};
 use crate::grammar::{
@@ -23,6 +23,8 @@ pub(super) struct Compiler<'a> {
     modes: &'a HashSet<String>,
     node_kinds: HashMap<String, Name>,
     embedded: Vec<String>,
+    selected: Vec<String>,
+    pub(super) lexer_owners: HashMap<String, HashSet<String>>,
     /// The items a scanner's `expected` asks about, by their keys (see
     /// `expectation_key`), each with its id.
     pub(super) expectations: HashMap<String, usize>,
@@ -94,14 +96,16 @@ impl<'a> Compiler<'a> {
             modes,
             node_kinds,
             embedded: Vec::new(),
+            selected: Vec::new(),
+            lexer_owners: HashMap::new(),
             expectations: HashMap::new(),
             requesting: false,
         }
     }
 
     /// The embedded languages the compiled expressions name, in first-use order.
-    pub(super) fn into_embedded(self) -> Vec<String> {
-        self.embedded
+    pub(super) fn into_embedded(self) -> (Vec<String>, Vec<String>) {
+        (self.embedded, self.selected)
     }
 
     /// Refuses a mode the grammar does not declare.
@@ -264,6 +268,40 @@ impl<'a> Compiler<'a> {
 
     fn form(&mut self, form: &FeatureForm, owner: &str) -> LoadResult<Expr> {
         Ok(match form.head.as_str() {
+            "lexicalScope" | "lexicalToken" => {
+                let name = form.text("name").unwrap_or_default();
+                if (!name.is_empty() || form.head == "lexicalToken")
+                    && !self.lexer_owners.contains_key(name)
+                {
+                    return refuse("declaration", format!("undefined lexer scope {name}"));
+                }
+                if form.head == "lexicalScope" {
+                    let original = form.text("owner").unwrap_or_default();
+                    if !original.is_empty()
+                        && !self
+                            .lexer_owners
+                            .get(name)
+                            .is_some_and(|owners| owners.contains(original))
+                    {
+                        return refuse(
+                            "declaration",
+                            format!(
+                                "undefined original parser owner {original} in lexer scope {name}"
+                            ),
+                        );
+                    }
+                    Expr::LexicalScope {
+                        name: Arc::from(name),
+                        owner: Arc::from(original),
+                        item: self.item(form, "item", owner)?,
+                    }
+                } else {
+                    Expr::LexicalToken {
+                        name: Arc::from(name),
+                        token: Arc::from(form.text("token").unwrap_or_default()),
+                    }
+                }
+            }
             head @ ("precedence" | "namedPrecedence") => Expr::Precedence {
                 level: Self::level(form),
                 name: (head == "namedPrecedence")
@@ -344,6 +382,61 @@ impl<'a> Compiler<'a> {
                 Expr::Embed {
                     language: Arc::from(language.as_str()),
                     item: self.item(form, "item", owner)?,
+                    selection: None,
+                }
+            }
+            head @ ("any-grammar" | "all-grammar") => {
+                let mut candidates = Vec::new();
+                let mut names = HashSet::new();
+                for candidate in form.expressions("items") {
+                    let Some(candidate) = super::load::form_of(candidate, "grammar-candidate")
+                    else {
+                        return refuse(
+                            "selection",
+                            format!(
+                                "a grammar selection needs named grammar-candidate definitions and an explicit mapping in {owner}"
+                            ),
+                        );
+                    };
+                    let name = candidate.text("name").unwrap_or_default();
+                    let Some(mapping) = candidate.text("mapping") else {
+                        return refuse(
+                            "selection",
+                            format!("a grammar selection needs an explicit mapping in {owner}"),
+                        );
+                    };
+                    if name.is_empty() {
+                        return refuse(
+                            "selection",
+                            format!(
+                                "a grammar selection needs named grammar-candidate definitions in {owner}"
+                            ),
+                        );
+                    }
+                    if !names.insert(name.to_owned()) {
+                        return refuse(
+                            "selection",
+                            format!("duplicate selected grammar {name} in {owner}"),
+                        );
+                    }
+                    if !self.selected.iter().any(|selected| selected == name) {
+                        self.selected.push(name.to_owned());
+                    }
+                    candidates.push((Arc::from(name), Arc::from(mapping)));
+                }
+                if candidates.is_empty() {
+                    return refuse(
+                        "selection",
+                        format!("a grammar selection needs at least one candidate in {owner}"),
+                    );
+                }
+                Expr::Embed {
+                    language: Arc::from(""),
+                    item: self.item(form, "item", owner)?,
+                    selection: Some(SelectionDescriptor {
+                        mode: Arc::from(head),
+                        candidates,
+                    }),
                 }
             }
             head @ ("expand" | "parameter") => {

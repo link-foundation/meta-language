@@ -13,7 +13,8 @@ pub(super) fn extra_source(expression: &Expr) -> (&Expr, Option<Name>, bool) {
                 }
                 source = item;
             }
-            Expr::Capture { item, .. }
+            Expr::LexicalScope { item, .. }
+            | Expr::Capture { item, .. }
             | Expr::Precedence { item, .. }
             | Expr::DynamicPrecedence { item, .. }
             | Expr::LexicalPrecedence { item, .. }

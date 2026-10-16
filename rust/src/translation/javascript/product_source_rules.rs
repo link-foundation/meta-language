@@ -97,6 +97,15 @@ pub mod ml_math {
 pub use crate::translation::frontend_rules::ml_array;
 
 #[must_use]
+pub fn accept_java_script_array_tuple_context(
+    source_kind: &str,
+    expected_kind: &str,
+    has_spread: bool,
+) -> bool {
+    (((source_kind == "array") && (expected_kind == "tuple")) && !has_spread)
+}
+
+#[must_use]
 pub fn solve_product_source_facts(
     bases: &[bool],
     targets: &[f64],

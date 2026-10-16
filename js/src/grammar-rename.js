@@ -4,6 +4,8 @@
 // decorators can rename rules without loading the merge machinery.
 import { carryRuleDocs, Grammar } from './grammar.js';
 import { grammarDeclarations } from './grammar-feature-forms.js';
+import { mapLexerDeclaration } from './grammar-runtime/lexer-election.js';
+import { readGrammarLexerEntryForm } from './translation/grammar-lexer-rules.js';
 
 /** Raised when a rename is unknown, invalid or would capture another name. */
 export class GrammarRenameError extends Error {
@@ -122,18 +124,32 @@ export function mapDeclarations(declarations, rename) {
       tokens: [...scanner.tokens],
       operations: mapReferences(scanner.operations, rename),
     })),
+    lexers: (declarations.lexers ?? []).map((lexer) => mapLexerDeclaration(lexer, rename)),
   };
 }
 
 // Renames every rule reference (`ref`, with or without arguments) in an
 // expression, a feature form or an operation list, at any depth.
-export function mapReferences(value, rename) {
-  if (Array.isArray(value)) return value.map((item) => mapReferences(item, rename));
+export function mapReferences(value, rename, project = null) {
+  if (Array.isArray(value)) return value.map((item) => mapReferences(item, rename, project));
   if (value === null || typeof value !== 'object') return value;
   const copy = {};
-  for (const [key, field] of Object.entries(value)) copy[key] = mapReferences(field, rename);
+  for (const [key, field] of Object.entries(value)) copy[key] = mapReferences(field, rename, project);
   if (value.kind === 'ref' && value.operation === undefined && typeof value.name === 'string') {
     copy.name = rename(value.name);
+    if (project) return project(value, copy);
   }
   return copy;
+}
+
+/** Preserve an original expected token before its public name is reconciled. */
+export function projectLexicalReferences(grammar, value, qualify, rename) {
+  const bindings = new Map();
+  for (const lexer of grammar.declarations.lexers ?? []) for (const entry of lexer.expression.items) {
+    if (readGrammarLexerEntryForm(entry.kind) === 2 && !bindings.has(entry.item.name)) {
+      bindings.set(entry.item.name, { name: qualify(lexer.name), token: entry.name });
+    }
+  }
+  return mapReferences(value, (name) => name, (original, copy) => bindings.has(original.name)
+    ? { ...copy, kind: 'alias', name: rename(original.name), item: { kind: 'lexicalToken', ...bindings.get(original.name) } } : copy);
 }

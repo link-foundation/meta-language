@@ -144,7 +144,9 @@ fn declarations(value: Option<&Value>) -> Value {
     let mut context = json!({"matching":null,"settling":null,"imports":[],"modes":[],"extras":[],"conflicts":[],"precedences":[],"macros":[],"scanners":[]});
     if let Some(Value::Object(entries)) = value {
         for (key, value) in entries {
-            if context.get(key).is_some() && !value.is_null() {
+            let lexical_context =
+                key == "lexers" && value.as_array().is_some_and(|entries| !entries.is_empty());
+            if (context.get(key).is_some() || lexical_context) && !value.is_null() {
                 context[key] = value.clone();
             }
         }

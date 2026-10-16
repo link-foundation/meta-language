@@ -144,6 +144,82 @@ fn settings(data: &Value) -> GlobalConceptOptions {
     }
 }
 
+#[test]
+fn closed_global_context_retains_lexical_competition_modes_channels_actions_and_owners() {
+    let data = fixture();
+    let options = settings(&data);
+    assert_eq!(
+        create_global_concept_space(&sources(&data), &options).unwrap(),
+        data["expectedSpace"]
+    );
+    let mut scoped = data.clone();
+    for (index, source) in scoped["sources"]
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .enumerate()
+    {
+        let binding = if index == 0 { "atom" } else { "letter" };
+        source["grammar"]["declarations"]["lexers"] = json!([{
+            "name":"source lexer", "expression":{"kind":"seq", "items":[
+                {"kind":"lexicalMode","name":"quoted"},
+                {"kind":"lexicalChannel","name":"CUSTOM"},
+                {"kind":"lexicalRule","name":"ATOM","type":"ATOM","mode":"default","channel":"default","disposition":"emit","item":{"kind":"literal","value":"a"},"action":[]},
+                {"kind":"lexicalRule","name":"FALLBACK","type":"FALLBACK","mode":"default","channel":"CUSTOM","disposition":"emit","item":{"kind":"any"},"action":[]},
+                {"kind":"lexicalBinding","name":"ATOM","item":{"kind":"ref","name":binding}},
+                {"kind":"lexicalObligation","name":"","category":"option","source":" superClass = FirstBase; /* original context */ "}
+            ]}
+        }]);
+    }
+    let shared = create_global_concept_space(&sources(&scoped), &options).unwrap();
+    assert_eq!(
+        shared["mappings"]["first:atom"],
+        shared["mappings"]["second:letter"]
+    );
+    assert_eq!(
+        shared["mappings"]["first:root"],
+        shared["mappings"]["second:page"]
+    );
+    assert!(!shared["proofs"].as_array().unwrap().is_empty());
+    let links = global_concept_space_to_links(&shared).unwrap();
+    assert!(links.contains("lexicalRule"));
+    assert_eq!(
+        read_global_concept_space_links(&links, &options).unwrap(),
+        shared
+    );
+    for mutation in 0..8 {
+        let mut changed = scoped.clone();
+        let entries =
+            changed["sources"][1]["grammar"]["declarations"]["lexers"][0]["expression"]["items"]
+                .as_array_mut()
+                .unwrap();
+        match mutation {
+            0 => entries.swap(2, 3),
+            1 => entries[2]["channel"] = json!("CUSTOM"),
+            2 => entries[2]["mode"] = json!("quoted"),
+            3 => entries[2]["disposition"] = json!("skip"),
+            4 => entries[2]["action"] = json!([{"operation":"pushMode","mode":"quoted"}]),
+            5 => entries.push(json!({"kind":"lexicalObligation","name":"ATOM","category":"predicate","source":"unresolvedGuard()"})),
+            6 => entries.push(json!({"kind":"lexicalOwner","name":"original parser owner","item":{"kind":"ref","name":"page"}})),
+            _ => entries[5]["source"] = json!(" superClass = SecondBase; /* original context */ "),
+        }
+        let compared = create_global_concept_space(&sources(&changed), &options).unwrap();
+        assert_ne!(
+            compared["mappings"]["first:atom"],
+            compared["mappings"]["second:letter"]
+        );
+        assert_ne!(
+            compared["mappings"]["first:root"],
+            compared["mappings"]["second:page"]
+        );
+        assert!(compared["proofs"].as_array().unwrap().is_empty());
+        assert_eq!(
+            compared["failures"].as_array().unwrap().len(),
+            options.equivalences.len()
+        );
+    }
+}
+
 fn observe(requirement_id: &str, assertions: &[&str], test_name: &str) {
     record(&Observation {
         requirement_id,

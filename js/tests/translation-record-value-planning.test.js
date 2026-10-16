@@ -287,10 +287,10 @@ test('the entire actual record planning module survives checked Links replay and
   assert.deepEqual(surface.items.filter(item => item.k === 'fn' && !item.generated).map(item => item.name).sort(), [...names, ...privateNames, ...dependencyNames].sort());
   const checked = checkProgram(surface);
   const packet = encodeTypedProgramLinks(checked);
-  const originalRust = emitRust(checked).text;
+  const originalRust = emitRust(checked, { arrayConsumption: true }).text;
   for (const network of [LinkNetwork.fromLino(packet.network.toLino()), decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))]) {
     const program = decodeTypedProgramLinks(network, packet.root);
-    const rust = emitRust(program);
+    const rust = emitRust(program, { arrayConsumption: true });
     assert.equal(rust.text, originalRust);
     assert.ok(rust.definitions.length >= names.length + privateNames.length + dependencyNames.length);
     for (const definition of rust.definitions) assert.ok(rust.text.includes(definition));

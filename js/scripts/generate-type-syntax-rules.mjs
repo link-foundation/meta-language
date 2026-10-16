@@ -53,7 +53,7 @@ export async function generateTypeSyntaxRules({ check = false, native = false } 
     const { parseJavaScript } = await import('../src/translation/javascript.js');
     const { checkProgram } = await import('../src/translation/check.js');
     const { emitRust } = await import('../src/translation/emit-rust.js');
-    const emitted = emitRust(checkProgram(parseJavaScript(policy.sourceClosure.source, { referenceSemantics: false })));
+    const emitted = emitRust(checkProgram(parseJavaScript(policy.sourceClosure.source, { referenceSemantics: false })), { arrayConsumption: true });
     const artifact = { schemaVersion: 1, model: policy.model, sourceSha256: policy.sourceSha256,
       sourceClosure: policy.sourceClosure,
       definitions: emitted.definitions, rustSource: emitted.text, rustSha256: hash(emitted.text),

@@ -32,6 +32,94 @@ fn literal(value: &Value) -> String {
         value => format!("{value}f64"),
     }
 }
+
+#[test]
+fn scalar_loop_snapshot_annotations_preserve_inference_and_source_free_replay() {
+    let data = fixture();
+    let row = &data["cases"][1];
+    let original = parse_javascript_with_scalar_loop_model(
+        row["javaScriptDefinitions"].as_str().unwrap(),
+        data["model"].as_str().unwrap(),
+    )
+    .expect("actual emitted scalar loops admit their null snapshot annotations");
+    let original = serde_json::to_value(original).unwrap();
+    let binding = &original["items"][0]["body"]["then"];
+    assert_eq!(binding["k"], "let");
+    assert!(binding.get("type").is_some());
+    assert_eq!(binding["type"], Value::Null);
+
+    for annotation in [
+        None,
+        Some(Value::Null),
+        Some(serde_json::json!({"kind":"float"})),
+    ] {
+        let mut value = original.clone();
+        let binding = value["items"][0]["body"]["then"].as_object_mut().unwrap();
+        if let Some(annotation) = annotation {
+            binding.insert("type".into(), annotation);
+        } else {
+            binding.remove("type");
+        }
+        let surface: meta_language::translation::surface::SProgram =
+            serde_json::from_value(value.clone()).unwrap();
+        assert_eq!(serde_json::to_value(&surface).unwrap(), value);
+        let program = check_program(&surface).expect("scalar annotations retain their loop proof");
+        assert_eq!(
+            emit_rust(&program).unwrap().definitions.join("\n\n"),
+            row["reverseRustDefinitions"].as_str().unwrap()
+        );
+        let packet = meta_language::encode_typed_program_links(&program).unwrap();
+        let network = LinkNetwork::from_lino(&packet.network.to_lino()).unwrap();
+        let restored = decode_typed_program_links(&network, packet.root).unwrap();
+        assert_eq!(restored, program);
+        assert_eq!(
+            emit_typed_program_links(&network, packet.root, "JavaScript")
+                .unwrap()
+                .code,
+            emit_javascript(&program).unwrap().text
+        );
+    }
+}
+
+#[test]
+fn scalar_loop_snapshot_annotations_refuse_malformed_and_non_scalar_types() {
+    let data = fixture();
+    let surface = parse_javascript_with_scalar_loop_model(
+        data["cases"][1]["javaScriptDefinitions"].as_str().unwrap(),
+        data["model"].as_str().unwrap(),
+    )
+    .unwrap();
+    let original = serde_json::to_value(surface).unwrap();
+    for annotation in [
+        serde_json::json!(false),
+        serde_json::json!(0),
+        serde_json::json!(""),
+        serde_json::json!([]),
+        serde_json::json!({}),
+        serde_json::json!({"kind":null}),
+        serde_json::json!({"kind":1}),
+    ] {
+        let mut value = original.clone();
+        value["items"][0]["body"]["then"]["type"] = annotation;
+        assert!(
+            serde_json::from_value::<meta_language::translation::surface::SProgram>(value).is_err()
+        );
+    }
+    for annotation in [
+        serde_json::json!({"kind":"string"}),
+        serde_json::json!({"kind":"array","element":{"kind":"float"}}),
+    ] {
+        let mut value = original.clone();
+        value["items"][0]["body"]["then"]["type"] = annotation;
+        let surface = serde_json::from_value(value).unwrap();
+        let refused = check_program(&surface).unwrap_err();
+        assert_eq!(
+            refused.reason,
+            "Rust scalar loop: loop expressions require scalar value kinds"
+        );
+    }
+}
+
 #[test]
 fn complete_original_names_and_ordered_state_replay_through_both_frontends_and_archives() {
     let data = fixture();

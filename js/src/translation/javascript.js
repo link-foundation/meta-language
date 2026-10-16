@@ -13,16 +13,27 @@
 import { TranslationError, typeError, unsupported } from './diagnostics.js';
 import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation } from './frontend-rules.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
+import { readCallableReferenceConstruct, readCallableReferenceObligation, readCallableSurfaceConstructor } from './callable-source-rules.js';
 import { imperative, lowerImperative, lowerTopLevel, statementUses } from './javascript-lower.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
 import { BOOL, FLOAT, INT, NAT, STRING, array } from './types.js';
 import { bindArrayElements, isLiteralBinding, readArrayBinding, readClosure, readCompositeType, validateClosureCaptures } from './javascript-bindings.js';
 import { hasStructuralIdentity, requiresReferenceSemantics } from './reference-analysis.js';
+import { acceptSurfaceRawMetadataField, selectSurfaceReferenceSemantics } from './surface-raw-metadata-rules.js';
+import { readOptionalLogicalMixingError, readOptionalSourceLiteral } from './optional-value-rules.js';
 import { acceptObjectFreezeOperand, acceptObjectPropertyDefinition } from './primitive-value-rules.js';
 import { validateJavaScriptProducts } from './javascript-products.js';
 import {acceptRustScalarLoopModel} from './rust-scalar-loops.js';
 import {isJavaScriptScalarLoop, readJavaScriptScalarLoop, finishJavaScriptScalarLoops} from './javascript-scalar-loops.js';
 import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
+import { lowerOwnedArrayAppends, readOwnedArrayReaderParameters } from './owned-array-append.js';
+import { acceptJavaScriptFunctionStart, acceptJavaScriptNamespaceMethod,
+  readJavaScriptCollectionConstruction, readJavaScriptConstructionObligation,
+  readJavaScriptDocumentationTypeForm, readJavaScriptValueCaseForm,
+  acceptJavaScriptValueSwitch, readJavaScriptValueSwitchInstruction,
+  readJavaScriptValueSwitchPosition, readJavaScriptObjectStatementForm,
+  readJavaScriptObjectPropertyForm, readJavaScriptObjectValueForm,
+  readJavaScriptArrayMethodSurfaceForm } from './javascript-surface-rules.js';
 
 // The string predicates of the portable core: each reads the whole string,
 // so it means the same over UTF-16, UTF-8 and code points.
@@ -84,6 +95,9 @@ class JavaScriptParser {
     this.readonlyConstantInitializer = false;
     this.referenceSemantics = referenceSemantics ?? requiresReferenceSemantics(source);
     this.referenceSemanticsEnabled = referenceSemantics !== false;
+    this.referenceSemanticsOverride = referenceSemantics;
+    this.referenceSemanticsForced = false;
+    this.eliminatedOwnedArrayAppendOperations = [];
     // The other items of the module an item may call and read, by name.
     this.externals = new Map(externals.map((external) => [external.name, external]));
     this.moduleDirectory = moduleDirectory;
@@ -104,6 +118,8 @@ class JavaScriptParser {
     // Functions and data types that loops and joins of statements lower to, and their count.
     this.generated = [];
     this.generatedCount = 0;
+    this.ownedArrayReaders = new Map();
+    this.ownedArrayReaderNamespace = 0;
     this.assertion = null;
     // Async functions run sequentially: each call of one is awaited where it is
     // made, so nothing else runs until its result is back. `await` is allowed at
@@ -195,7 +211,7 @@ class JavaScriptParser {
         continue;
       }
       if (c.is('const') && c.peek(1).kind === 'identifier' && c.is('=', 2) && c.is('{', 3) && !(c.is('$', 4) && c.is(':', 5))) {
-        if (effects.length || pending.length) {
+        if (readJavaScriptObjectStatementForm(false, false, effects.length > 0 || pending.length > 0) === 'refuse-order') {
           throw unsupported(
             'namespace after a top-level statement',
             `the statements before const ${c.peek(1).value} would run before it is initialised; declare every namespace first`,
@@ -203,8 +219,8 @@ class JavaScriptParser {
           );
         }
         const close = this.matching(c.index + 3);
-        const methods = c.tokens.slice(c.index + 4, close).some((token, offset) => token.kind === 'identifier' && c.tokens[c.index + 5 + offset]?.value === '(');
-        if (methods) { items.push(this.namespace(start)); continue; }
+        const methods = c.tokens.slice(c.index + 4, close).some((token, offset) => acceptJavaScriptNamespaceMethod(token.kind, c.tokens[c.index + 5 + offset]?.value ?? ''));
+        if (readJavaScriptObjectStatementForm(false, methods, false) === 'namespace') { items.push(this.namespace(start)); continue; }
       }
       if (this.startsTopLevelImperative()) {
         pending.push(this.topLevelStatement());
@@ -223,13 +239,17 @@ class JavaScriptParser {
     const main = { effects, span: { start: 0, end: this.source.length } };
     if (this.sequentialAsync) main.sequentialAsync = true;
     const program = { language: 'JavaScript', items, main };
-    if (this.referenceSemantics) program.referenceSemantics = true;
+    if (this.eliminatedOwnedArrayAppendOperations.length) {
+      this.referenceSemantics = this.referenceSemanticsForced || (this.referenceSemanticsOverride
+        ?? requiresReferenceSemantics(this.source, this.eliminatedOwnedArrayAppendOperations));
+    }
+    if (selectSurfaceReferenceSemantics(this.referenceSemantics, false, this.referenceSemanticsEnabled)) program.referenceSemantics = true;
     if (this.imports.length) program.imports = this.imports;
     if (this.externals.size) program.externals = [...this.externals.values()];
     const inferred = inferJavaScriptTypes(program);
     finishJavaScriptScalarLoops(inferred);
     validateJavaScriptProducts(inferred, this.exportedNames);
-    if (this.referenceSemanticsEnabled && hasStructuralIdentity(inferred)) inferred.referenceSemantics = true;
+    if (selectSurfaceReferenceSemantics(false, this.referenceSemanticsEnabled && hasStructuralIdentity(inferred), this.referenceSemanticsEnabled)) inferred.referenceSemantics = true;
     return inferred;
   }
 
@@ -263,9 +283,8 @@ class JavaScriptParser {
       token = tokens[index];
       if (!token) return false;
     }
-    if (token.kind === 'identifier' && token.value === 'function') return true;
-    if (token.kind === 'identifier' && tokens[index + 1]?.value === '=>') return true;
-    return token.kind === 'punct' && token.value === '(' && tokens[this.matching(index) + 1]?.value === '=>';
+    const afterGroup = token.kind === 'punct' && token.value === '(' ? tokens[this.matching(index) + 1]?.value ?? '' : '';
+    return acceptJavaScriptFunctionStart(token.kind, token.value, tokens[index + 1]?.value ?? '', afterGroup);
   }
 
   /**
@@ -339,7 +358,7 @@ class JavaScriptParser {
         if (tag.tag !== 'typedef') continue;
         const range = { start: comment.start, end: comment.end };
         if (!tag.type || !tag.name) throw new TranslationError('syntax', '@typedef needs a type and a name', range);
-        if (!/\$\s*:/u.test(tag.type)) {
+        if (readJavaScriptDocumentationTypeForm(/\$\s*:/u.test(tag.type)) === 'alias') {
           if (this.typeAliases.has(tag.name) || this.dataTypes.has(tag.name)) throw typeError(`duplicate @typedef ${tag.name}`, range);
           this.typeAliases.set(tag.name, tag.type);
           continue;
@@ -587,6 +606,9 @@ class JavaScriptParser {
     }
     const statements = statementsOf();
     validateClosureCaptures(statements, this.referenceSemantics);
+    for (const proof of lowerOwnedArrayAppends(statements, params, this.ownedArrayReaders)) {
+      if (proof.operationSpan) this.eliminatedOwnedArrayAppendOperations.push(proof.operationSpan);
+    }
     this.scope = outer;
     this.inAsync = outerAsync;
     this.jumps = outerJumps;
@@ -606,7 +628,9 @@ class JavaScriptParser {
     const where = span(nameToken, c.peek());
     const rest = statements.slice(index);
     const body = imperative(rest) ? lowerImperative(this, name, params, rest, where) : this.lower(rest, where);
-    return { k: 'fn', name, params, ret, body, span: span(docToken, c.peek()) };
+    const declaration = { k: 'fn', name, params, ret, body, span: span(docToken, c.peek()) };
+    if (!this.ownedArrayReaderNamespace) this.ownedArrayReaders.set(name, readOwnedArrayReaderParameters(declaration, this.ownedArrayReaders, statements));
+    return declaration;
   }
 
   /** `const Name = { method(…) { … }, Nested: { … } };` is a module. */
@@ -638,9 +662,11 @@ class JavaScriptParser {
       if (!acceptObjectPropertyDefinition(member.value, false, c.is(':'))) {
         throw unsupported('object prototype definition', 'an uncomputed __proto__: entry is prototype-definition syntax rather than an own data property; the portable core does not represent object prototypes', span(member, member));
       }
-      if (c.is('(')) {
+      if (acceptJavaScriptNamespaceMethod(member.kind, c.peek().value)) {
         this.functionNames.add(`${name}.${member.value}`);
-        items.push(this.functionRest(member, member));
+        this.ownedArrayReaderNamespace += 1;
+        try { items.push(this.functionRest(member, member)); }
+        finally { this.ownedArrayReaderNamespace -= 1; }
       } else if (c.eat(':')) {
         if (c.is('{')) {
           items.push(this.namespaceBody(member.value, member));
@@ -1171,18 +1197,19 @@ class JavaScriptParser {
     }
     const negative = Boolean(c.eat('-'));
     const value = c.peek();
+    const form = readJavaScriptValueCaseForm(value.kind, value.value, value.suffix ?? '', negative);
     if (value.kind === 'number') {
       c.next();
-      if (value.suffix !== 'n') {
+      if (form === 'value') {
         return { k: 'value', value: { ...this.numberLiteral(value), ...(negative && { negative: true }) }, span: span(token, value) };
       }
       return { k: 'numLit', value: value.value, ...(negative && { negative }), span: span(token, value) };
     }
-    if (!negative && (c.is('true') || c.is('false'))) {
+    if (form === 'boolLit') {
       c.next();
       return { k: 'boolLit', value: token.value === 'true', span: span(token, token) };
     }
-    if (!negative && (value.kind === 'string' || value.kind === 'identifier')) return { k: 'value', value: this.expr(), span: span(token, c.peek()) };
+    if (form === 'value') return { k: 'value', value: this.expr(), span: span(token, c.peek()) };
     throw unsupported('case test', 'the cases of a value switch are BigInt or boolean literals', span(token, value));
   }
 
@@ -1401,19 +1428,34 @@ class JavaScriptParser {
         throw unsupported('case without a result', 'every case must end in return or throw; falling through is outside the portable core', clause.span);
       }
     }
-    if (!node.tagged && node.clauses.some((clause) => clause.tests.some((test) => test.k === 'value'))) {
+    if (acceptJavaScriptValueSwitch(node.tagged, node.clauses.some((clause) => clause.tests.some((test) => test.k === 'value')))) {
       const fallback = node.clauses.find((clause) => clause.tests.some((test) => test.k === 'default'));
       const where = node.span;
-      const name = `ml_switch${++this.generatedCount}`;
-      const read = { k: 'name', path: [name], span: where };
-      const result = fallback ? this.lower(fallback.body, fallback.span) : rest ? rest() : { k: 'unit', span: where };
-      if (this.switchTerminates(node)) unreachable();
       const clauses = node.clauses.flatMap((clause) => clause.tests.filter((test) => test.k !== 'default').map((test) => ({ test, clause })));
-      const body = clauses.reduceRight((otherwise, { test, clause }) => {
-        const right = test.k === 'value' ? test.value : test.k === 'boolLit' ? { k: 'bool', value: test.value, span: test.span } : { k: 'num', value: test.value, negative: test.negative, span: test.span };
-        return { k: 'if', cond: { k: 'binary', op: 'eq', left: read, right, span: test.span }, then: this.lower(clause.body, clause.span), else: otherwise, span: clause.span };
-      }, result);
-      return { k: 'let', name, value: node.discriminant, body, span: where };
+      let name, read, body, cond, then;
+      for (let step = 0; ; step += 1) {
+        const instruction = readJavaScriptValueSwitchInstruction(false, step, clauses.length);
+        if (instruction === 'capture') {
+          name = `ml_switch${++this.generatedCount}`;
+          read = { k: 'name', path: [name], span: where };
+        } else if (instruction === 'fallback') {
+          body = fallback ? this.lower(fallback.body, fallback.span) : rest ? rest() : { k: 'unit', span: where };
+        } else if (instruction === 'reachability') {
+          if (this.switchTerminates(node)) unreachable();
+        } else if (instruction === 'bind') {
+          return { k: 'let', name, value: node.discriminant, body, span: where };
+        } else {
+          const { test, clause } = clauses[readJavaScriptValueSwitchPosition(false, step, clauses.length)];
+          if (instruction === 'test') {
+            const right = test.k === 'value' ? test.value : test.k === 'boolLit' ? { k: 'bool', value: test.value, span: test.span } : { k: 'num', value: test.value, negative: test.negative, span: test.span };
+            cond = { k: 'binary', op: 'eq', left: read, right, span: test.span };
+          } else if (instruction === 'body') {
+            then = this.lower(clause.body, clause.span);
+          } else if (instruction === 'select') {
+            body = { k: 'if', cond, then, else: body, span: clause.span };
+          }
+        }
+      }
     }
     const rows = [];
     // `default` applies only when no case matches, wherever it stands.
@@ -1538,15 +1580,18 @@ class JavaScriptParser {
     for (;;) {
       const token = c.peek();
       if (c.eat('??')) {
-        if (!left.parenthesized && left.k === 'binary' && (left.op === 'and' || left.op === 'or')) throw new TranslationError('syntax', 'mixing ?? with && or || needs parentheses', token);
+        const leftError = readOptionalLogicalMixingError('left', coalesced, Boolean(left.parenthesized), left.k, left.op ?? '');
+        if (leftError) throw new TranslationError('syntax', leftError, token);
         const right = this.and();
-        if (!right.parenthesized && right.k === 'binary' && right.op === 'and') throw new TranslationError('syntax', 'mixing ?? with && needs parentheses', token);
+        const rightError = readOptionalLogicalMixingError('right', coalesced, Boolean(right.parenthesized), right.k, right.op ?? '');
+        if (rightError) throw new TranslationError('syntax', rightError, token);
         left = { k: 'coalesce', left, right, span: joined(left, right, token) };
         coalesced = true;
         continue;
       }
       if (!c.eat('||')) return left;
-      if (coalesced) throw new TranslationError('syntax', 'mixing ?? with || needs parentheses', token);
+      const logicalError = readOptionalLogicalMixingError('or', coalesced, false, '', '');
+      if (logicalError) throw new TranslationError('syntax', logicalError, token);
       const right = this.and();
       left = { k: 'binary', op: 'or', left, right, span: joined(left, right, token) };
     }
@@ -1707,11 +1752,12 @@ class JavaScriptParser {
         const arrayForm = readArrayMethodForm(field.value);
         if (c.is('(') && arrayForm !== '') {
           const args = this.arguments(field.value);
-          if (field.value === 'slice' && !args.length) {
+          const form = readJavaScriptArrayMethodSurfaceForm(field.value, args.length);
+          if (form === 'copySlice') {
             expr = { k: 'copySlice', object: expr, span: joined(expr, { span: span(token, c.peek()) }, token) };
             continue;
           }
-          if (field.value === 'slice' && args.length) {
+          if (form === 'method') {
             expr = { k: 'method', object: expr, op: field.value, args, span: joined(expr, { span: span(token, c.peek()) }, token) };
             continue;
           }
@@ -1759,7 +1805,7 @@ class JavaScriptParser {
       }
       if (c.is('(')) {
         const args = this.arguments('function value');
-        expr = { k: 'app', fn: expr, args, span: joined(expr, c.peek(), token) };
+        expr = { k: readCallableSurfaceConstructor('computed-call', false), fn: expr, args, span: joined(expr, c.peek(), token) };
         continue;
       }
       if (c.isKind('template')) throw unsupported('tagged template', 'template tags are functions as values', span(token, token));
@@ -1791,7 +1837,7 @@ class JavaScriptParser {
       c.next();
       const inner = this.expr();
       c.expect(')', 'parenthesised expression');
-      return { ...inner, parenthesized: true, span: span(token, c.peek()) };
+      return { ...inner, parenthesized: acceptSurfaceRawMetadataField('expression', 'parenthesized'), span: span(token, c.peek()) };
     }
     if (c.is('{')) return this.objectLiteral();
     if (c.is('[')) return this.arrayLiteral();
@@ -1900,17 +1946,18 @@ class JavaScriptParser {
         if (prototypeDefinition) throw new TranslationError('syntax', 'duplicate object prototype definition', span(key, key));
         c.expect(':', 'object prototype definition');
         prototypeDefinition = { value: this.expr(), span: span(key, key), index };
-      } else if (key.value === '$') {
+      } else if (readJavaScriptObjectPropertyForm(key.value, c.is('('), c.is(':'), !computed && key.kind === 'identifier') === 'tag') {
         c.expect(':', 'object');
         const value = c.next();
         if (value.kind !== 'string') throw unsupported('computed tag', 'the $ tag is a string literal', span(value, value));
         tag = value.value;
       } else {
         if (Object.hasOwn(fields, key.value)) duplicate ??= key;
-        if (c.is('(')) fields[key.value] = readClosure(this, true);
-        else if (c.eat(':')) fields[key.value] = this.expr();
+        const form = readJavaScriptObjectPropertyForm(key.value, c.is('('), c.is(':'), !computed && key.kind === 'identifier');
+        if (form === 'method') fields[key.value] = readClosure(this, true);
+        else if (form === 'field') { c.next(); fields[key.value] = this.expr(); }
         else {
-          if (computed || key.kind !== 'identifier') throw this.fail('expected : after the object property name', key);
+          if (form === 'missing-colon') throw this.fail('expected : after the object property name', key);
           fields[key.value] = this.reference(key);
         }
         entries.push({ name: key.value, spread: false, value: fields[key.value] });
@@ -1919,9 +1966,10 @@ class JavaScriptParser {
     }
     c.expect('}', 'object');
     const prototype = prototypeDefinition ? { prototypeDefinition } : {};
-    if (tag === null) return { k: 'record', entries, ...prototype, span: span(start, c.peek()) };
-    if (duplicate) throw typeError(`duplicate field ${duplicate.value}`, span(duplicate, duplicate));
-    if (entries.some((entry) => entry.spread)) throw unsupported('tagged object spread', 'constructor spreads require a complete tagged field projection', span(start, c.peek()));
+    const form = readJavaScriptObjectValueForm(tag !== null, duplicate !== null, entries.some((entry) => entry.spread));
+    if (form === 'record') return { k: 'record', entries, ...prototype, span: span(start, c.peek()) };
+    if (form === 'duplicate') throw typeError(`duplicate field ${duplicate.value}`, span(duplicate, duplicate));
+    if (form === 'spread') throw unsupported('tagged object spread', 'constructor spreads require a complete tagged field projection', span(start, c.peek()));
     return { k: 'ctorObject', tag, fields, ...prototype, span: span(start, c.peek()) };
   }
 
@@ -1960,16 +2008,18 @@ class JavaScriptParser {
       c.next();
       return { k: 'num', value: token.value, type: FLOAT, span: span(token, token) };
     }
-    if (token.value === 'null' || token.value === 'undefined' && !boundGlobal) { c.next(); return { k: 'none', absence: token.value, span: span(token, token) }; }
+    const absent = readOptionalSourceLiteral(token.value, boundGlobal);
+    if (absent) { c.next(); return { k: 'none', absence: absent, span: span(token, token) }; }
     if (token.value === 'new') {
       c.next();
       const constructor = c.identifier('constructor');
       const args = c.is('(') ? this.arguments(constructor.value) : [];
-      if ((constructor.value === 'Set' || constructor.value === 'Map') && args.length <= 1) {
+      const collection = readJavaScriptCollectionConstruction(constructor.value, args.length > 1);
+      if (collection !== '') {
         const items = args[0] ?? { k: 'array', items: [], span: span(token, c.peek()) };
-        return { k: constructor.value.toLowerCase(), [constructor.value === 'Set' ? 'items' : 'entries']: items, span: span(token, c.peek()) };
+        return { k: collection, [collection === 'set' ? 'items' : 'entries']: items, span: span(token, c.peek()) };
       }
-      throw unsupported(`new ${constructor.value}`, 'the constructor needs a registered portable type and construction rule', span(token, c.peek()));
+      throw unsupported(`new ${constructor.value}`, readJavaScriptConstructionObligation(), span(token, c.peek()));
     }
     if (['this', 'super', 'new', 'function', 'class', 'import', 'arguments'].includes(token.value)) {
       throw unsupported(`${token.value} expression`, 'outside the portable core', span(token, token));
@@ -1997,7 +2047,8 @@ class JavaScriptParser {
       return { k: 'math', op: MATH[name], name, args, span: span(token, c.peek()) };
     }
     if (!c.is('(')) {
-      if (this.functionNames.has(name)) return { k: 'functionValue', path: [ROOT, ...segments], span: where };
+      const constructor = readCallableSurfaceConstructor('name', this.functionNames.has(name));
+      if (constructor) return { k: constructor, path: [ROOT, ...segments], span: where };
       throw unsupported(`function value ${name}`, 'functions and namespaces are only portable when a function is called', where);
     }
     const args = this.arguments(name);
@@ -2036,12 +2087,9 @@ class JavaScriptParser {
 
   /** A local variable; reading one before its declaration throws in JavaScript. */
   reference(token) {
-    if (this.scope.tdz.has(token.value)) {
-      throw unsupported(`use of ${token.value} before its declaration`, 'the binding is in its temporal dead zone, where reading it throws a ReferenceError', span(token, token));
-    }
-    if (!this.scope.locals.has(token.value)) {
-      throw unsupported(`function value ${token.value}`, 'functions are only portable when called', span(token, token));
-    }
+    const temporal = this.scope.tdz.has(token.value);
+    const obligation = readCallableReferenceObligation(temporal, this.scope.locals.has(token.value));
+    if (obligation) throw unsupported(readCallableReferenceConstruct(token.value, temporal), obligation, span(token, token));
     return { k: 'name', path: [token.value], span: span(token, token) };
   }
 }

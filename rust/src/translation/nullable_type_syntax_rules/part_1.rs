@@ -248,7 +248,7 @@ pub fn read_nullable_type_absence(code: f64) -> String {
 pub fn read_nullable_type_target_refusal(target: &str) -> String {
     format!(
         "{}{}",
-        (format!("{}{}", (String::from("no ")), target)),
+        (format!("{}{}", (String::from("no ")), target.to_owned())),
         (String::from(" type for absence"))
     )
 }

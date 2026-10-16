@@ -37,6 +37,43 @@ pub fn rename_expr(expr: &Expr, env: &Env, scope: &mut Scope<'_>) -> Expr {
                 ..expr.clone()
             }
         }
+        Node::Lambda { params, body } => {
+            let value = serde_json::to_value(expr).expect("a checked lambda is serializable");
+            let facts =
+                crate::translation::surface_reference_facts::create_surface_reference_facts(&value);
+            let plan = crate::translation::callable_source_rules::plan_callable_parameter_ownership(
+                &facts.starts,
+                &facts.counts,
+                &facts.labels,
+                &facts.targets,
+                facts.root,
+            );
+            let mut inner = env.clone();
+            let mut child = scope.child();
+            let params = plan
+                .chunks_exact(3)
+                .map(|owner| {
+                    let index = owner[1]
+                        .to_string()
+                        .parse::<usize>()
+                        .expect("a parameter plan retains its actual ordinal");
+                    let parameter = &params[index];
+                    let name = child.fresh(&parameter.name);
+                    inner.insert(parameter.name.clone(), name.clone());
+                    super::LambdaParam {
+                        name,
+                        ..parameter.clone()
+                    }
+                })
+                .collect();
+            Expr {
+                node: Node::Lambda {
+                    params,
+                    body: Box::new(rename_expr(body, &inner, &mut child)),
+                },
+                ..expr.clone()
+            }
+        }
         Node::Match { scrutinee, cases } => {
             let scrutinee = rename_expr(scrutinee, env, scope);
             let cases = cases

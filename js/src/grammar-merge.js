@@ -11,9 +11,10 @@ import { renderDeclarationLinks, renderLinksExpression, renderRuleFieldLinks } f
 import { DecoratorSet, decoratorSet } from './decorators.js';
 import { GrammarMergeError, compareText, normalize, q } from './grammar-merge-normalize.js';
 import { reconcileClasses } from './grammar-reconcile.js';
-import { mapDeclarations, mapReferences, renamedRule } from './grammar-rename.js';
+import { mapDeclarations, mapReferences, renamedRule, projectLexicalReferences } from './grammar-rename.js';
 import { preserveSourceAlternatives, wrapLexicalProduction } from './grammar-merge-decisions.js';
 import { createGlobalConceptSpace } from './global-concept-space.js';
+import { lexerScopeOf, mapLexerDeclaration } from './grammar-runtime/lexer-election.js';
 
 export { GrammarMergeError } from './grammar-merge-normalize.js';
 
@@ -301,6 +302,7 @@ function mergeGroup(entry, fingerprint, samples, previousIdentities, decorators,
   const definitions = new Map();
   const concepts = new Map();
   const sourceProductions = [];
+  const hasLexers = entry.sources.some((source) => (source.grammar.declarations.lexers ?? []).length > 0);
   for (const id of classOrder) {
     const group = members.get(id);
     const representative = group[0];
@@ -316,14 +318,29 @@ function mergeGroup(entry, fingerprint, samples, previousIdentities, decorators,
         rule: node.rule,
         renamedRule: rule,
       });
-      return rule;
+      if (!hasLexers) return rule;
+      const projected = mapReferences(projectLexicalReferences(node.source.grammar, node.rule.expression, (name) => `${node.source.id}::${name}`, rename), rename);
+      const scope = lexerScopeOf(node.source.grammar, node.name);
+      const family = scope === '' ? '' : `${node.source.id}::${scope}`;
+      const item = rule.kind === 'token'
+        ? family === '' ? { kind: 'alias', name: names.get(classes[index.get(node.alias)]), item: { kind: 'token', item: projected } }
+          : { kind: 'lexicalToken', name: family, token: node.name }
+        : projected;
+      return { ...rule, expression: { kind: 'lexicalScope', name: family, owner: family !== '' && node.rule.kind === 'normal' ? node.name : '', item } };
     });
     const renamed = productionRules[0];
-    const proven = group.every((node) => strict[index.get(node.alias)] === strict[index.get(representative.alias)]);
+    const scopes = new Set(group.map((node) => {
+      const scope = lexerScopeOf(node.source.grammar, node.name);
+      return scope === '' ? '' : `${node.source.id}::${scope}`;
+    }));
+    // A public canonical name does not replace the original parser owner:
+    // that owner may carry distinct unresolved actions or predicates.
+    const owners = new Set(productionRules.map((rule) => rule.expression.owner));
+    const proven = scopes.size === 1 && owners.size === 1 && group.every((node) => strict[index.get(node.alias)] === strict[index.get(representative.alias)]);
     const form = normalize(!preserveSourceAlternatives(proven, group.length > 1) ? renamed.expression : {
       kind: 'choice',
       ordered: false,
-      items: productionRules.map((rule) => wrapLexicalProduction(rule.kind === 'token', renamed.kind === 'token')
+      items: productionRules.map((rule) => !hasLexers && wrapLexicalProduction(rule.kind === 'token', renamed.kind === 'token')
         ? { kind: 'token', item: rule.expression }
         : rule.expression),
     }, nameLabel);
@@ -506,7 +523,7 @@ function refine(nodes, index) {
 // its parses as the source it matches like.
 function mergeDeclarations(sources, canonical) {
   const settlings = [];
-  const declarations = { matching: null, settling: null, imports: [], modes: [], extras: [], conflicts: [], precedences: [], macros: [], scanners: [] };
+  const declarations = { matching: null, settling: null, imports: [], modes: [], extras: [], conflicts: [], precedences: [], macros: [], scanners: [], lexers: [] };
   const conflicts = [];
   const seen = { extras: new Set(), conflicts: new Set(), precedences: new Set(), macros: new Map(), scanners: new Map() };
   let matchingOwner = null;
@@ -514,6 +531,7 @@ function mergeDeclarations(sources, canonical) {
     renderDeclarationLinks({ imports: [], modes: [], extras: [], conflicts: [], precedences: [], macros: [], scanners: [], ...entry })[0];
   for (const source of sources) {
     const own = mapDeclarations(grammarDeclarations(source.grammar), (name) => canonical(source, name));
+    for (const lexer of source.grammar.declarations.lexers ?? []) declarations.lexers.push(mapLexerDeclaration(lexer, (name) => canonical(source, name), `${source.id}::${lexer.name}`));
     settlings.push({ owner: source.id, settling: own.settling ? [...own.settling] : null });
     if (own.matching !== undefined) {
       if (declarations.matching === null) {

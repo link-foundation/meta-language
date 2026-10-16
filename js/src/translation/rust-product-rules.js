@@ -10,3 +10,8 @@ export function acceptRustTupleIndexSpelling(text) {
   if (text.length === 0 || (text.length > 1 && text.startsWith('0'))) return false;
   return text.replaceAll('0', '').replaceAll('1', '').replaceAll('2', '').replaceAll('3', '').replaceAll('4', '').replaceAll('5', '').replaceAll('6', '').replaceAll('7', '').replaceAll('8', '').replaceAll('9', '') === '';
 }
+
+/** @param {boolean} immutableProduct @param {boolean} ownedLocalProduct @returns {boolean} */
+export function acceptRustProductOrigin(immutableProduct, ownedLocalProduct) {
+  return immutableProduct || ownedLocalProduct;
+}

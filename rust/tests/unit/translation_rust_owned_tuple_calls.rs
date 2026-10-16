@@ -329,6 +329,38 @@ fn all_five_complete_sources_match_actual_public_archives_and_both_formats() {
 }
 
 #[test]
+fn owned_tuple_headers_preserve_actual_field_owners_and_default_copy_refusals() {
+    let source = fixture()["cases"][0]["source"].as_str().unwrap();
+    let surface = parse_rust_with_owned_local_state_model(source, model(), "").unwrap();
+    let value = serde_json::to_value(&surface).unwrap();
+    let result = &value["items"][0]["sourceSignature"]["result"];
+    assert_eq!(
+        result["type"],
+        json!({"kind":"tuple","elements":[{"kind":"string"},{"kind":"fixed","bits":32,"signed":true}]})
+    );
+    assert_eq!(result["owner"]["arguments"][0]["kind"], "library");
+    assert_eq!(
+        result["owner"]["arguments"][0]["path"],
+        json!(["std", "string", "String"])
+    );
+    assert_eq!(result["owner"]["arguments"][1]["kind"], "primitive");
+    assert_eq!(result["owner"]["arguments"][1]["path"], json!(["i32"]));
+    let error = meta_language::translation::rust::parse_rust(source).unwrap_err();
+    assert_eq!(
+        error.reason,
+        "immutable Rust tuple product: every field requires a direct recursively immutable scalar Copy source value"
+    );
+    let start = source.find("(String,i32)").unwrap();
+    assert_eq!(
+        error.span,
+        Some(meta_language::translation::Span::new(
+            start,
+            start + "(String,i32)".len()
+        ))
+    );
+}
+
+#[test]
 fn all_thirteen_source_refusals_retain_exact_diagnostics_and_spans() {
     assert_eq!(fixture()["refusals"].as_array().unwrap().len(), 13);
     for entry in fixture()["refusals"].as_array().unwrap() {

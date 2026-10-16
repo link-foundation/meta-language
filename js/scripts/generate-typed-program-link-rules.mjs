@@ -2,9 +2,6 @@
 // Rust decisions are translated by the same checked JavaScript pipeline.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { parseJavaScript } from '../src/translation/javascript.js';
-import { checkProgram } from '../src/translation/check.js';
-import { emitRust } from '../src/translation/emit-rust.js';
 import { DecoratorSet } from '../src/decorators.js';
 import { tokenize } from '../src/translation/lexer.js';
 import { readProjectData, readProjectFileBytes } from './project-data.mjs';
@@ -105,17 +102,38 @@ const source = '// Generated from data/typed-program-links-schema.json. Do not e
   + `  return ${schema.divisionRoundingPolicies.map((rounding) => `rounding === ${JSON.stringify(rounding)}`).join(' || ')};\n}\n`;
 const propositionSource = '\n' + decide('readProgramPropositionOperandFields', Object.fromEntries(Object.entries(schema.propositionOperands).map(([kind, fields]) => [kind, fields.join(' ')])))
   + '\n' + decide('readProgramPropositionBindingForm', schema.propositionBindingForms);
-const emitted = emitRust(checkProgram(parseJavaScript(source)));
-const propositionDefinitions = emitRust(checkProgram(parseJavaScript(propositionSource))).definitions;
+const entryOperandSource = '\n/** @param {string} kind @param {string} field @returns {string} */\nexport function readProgramExpressionEntryOperandField(kind, field) {\n'
+  + decisionRows(Object.entries(schema.expressionOperandEntries ?? {}).flatMap(([kind, fields]) => Object.entries(fields).map(([field, child]) =>
+    [[`kind === ${JSON.stringify(kind)}`, `field === ${JSON.stringify(field)}`], JSON.stringify(child)])))
+  + '\n  return "";\n}\n';
+const declarationTypeSource = '\n/** @param {string} kind @param {string} role @returns {string} */\nexport function readProgramDeclarationTypeProjectionField(kind, role) {\n'
+  + decisionRows(Object.entries(schema.declarationTypeProjections ?? {}).flatMap(([kind, fields]) => Object.entries(fields).map(([role, field]) =>
+    [[`kind === ${JSON.stringify(kind)}`, `role === ${JSON.stringify(role)}`], JSON.stringify(field)])))
+  + '\n  return "";\n}\n';
+const javascript = source + propositionSource + entryOperandSource + declarationTypeSource;
+const javascriptFile = new URL('../src/typed-program-link-rules.js', import.meta.url);
+if (process.argv.includes('--check')) {
+  if (readFileSync(javascriptFile, 'utf8') !== javascript) throw new Error('typed program JavaScript rules are stale');
+} else writeFileSync(javascriptFile, javascript);
+if (process.argv.includes('--javascript-only')) process.exit(0);
+// The current classifier must exist before frontend/checker modules load it.
+// JS-only schema generation never imports or executes native emission.
+const [{parseJavaScript}, {checkProgram}, {emitRust}] = await Promise.all([
+  import('../src/translation/javascript.js'),
+  import('../src/translation/check.js'),
+  import('../src/translation/emit-rust.js'),
+]);
+const emitted = emitRust(checkProgram(parseJavaScript(source)), { arrayConsumption: true });
+const propositionDefinitions = emitRust(checkProgram(parseJavaScript(propositionSource + entryOperandSource + declarationTypeSource)), { arrayConsumption: true }).definitions;
 const raw = emitted.definitions.join('\n\n') + '\n\n' + propositionDefinitions.join('\n\n');
 const styleFile = new URL('../../parity/self-translation/typed-program-link-rules-decorators.lino', import.meta.url);
 if (process.argv.includes('--update-styles')) {
   const actions = [];
   let styled = raw;
   const replace = (from, to) => { if (styled.includes(from)) { actions.push({ op: 'replace', field: 'source', from, to }); styled = styled.split(from).join(to); } };
-  for (const name of ['term', 'label', 'name', 'revision', 'arity', 'width', 'absence', 'kind', 'operation', 'rounding', 'construct_kind', 'type_kind', 'context', 'field', 'model']) replace(`${name}: String`, `${name}: &str`);
+  for (const name of ['term', 'label', 'name', 'revision', 'arity', 'width', 'absence', 'kind', 'operation', 'rounding', 'construct_kind', 'type_kind', 'context', 'field', 'model', 'role']) replace(`${name}: String`, `${name}: &str`);
   replace('String::from("")', 'String::new()');
-  for (const name of ['term', 'label', 'name', 'revision', 'arity', 'width', 'absence', 'kind', 'operation', 'rounding', 'construct_kind', 'type_kind', 'context', 'field', 'model']) replace(`${name} == ""`, `${name}.is_empty()`);
+  for (const name of ['term', 'label', 'name', 'revision', 'arity', 'width', 'absence', 'kind', 'operation', 'rounding', 'construct_kind', 'type_kind', 'context', 'field', 'model', 'role']) replace(`${name} == ""`, `${name}.is_empty()`);
   for (const match of [...styled.matchAll(/\([a-z_]+ == "[^"\n]*"\)/gu)]) replace(match[0], match[0].slice(1, -1));
   for (const name of ['accept_program_container_fields', 'accept_program_expression_field', 'accept_program_tuple_product_model', 'accept_program_reference_field', 'is_unsafe_program_field', 'accept_program_schema_root', 'accept_program_machine_integer_width', 'accept_program_optional_absence', 'accept_program_expression_operation', 'accept_program_division_rounding']) {
     const begin = styled.indexOf(`pub fn ${name}`);
@@ -137,7 +155,7 @@ if (process.argv.includes('--update-styles')) {
     }
     replace(line, expression);
   }
-  for (const name of ['read_program_container_kind', 'accept_program_container_fields', 'accept_program_expression_field', 'accept_program_tuple_product_model', 'read_program_scalar_kind', 'read_program_reference_role', 'read_program_expression_projection', 'read_program_pattern_binding_form', 'read_program_expression_operand_fields', 'read_program_proposition_operand_fields', 'read_program_proposition_binding_form', 'read_program_reference_source_field', 'read_program_reference_target_field', 'read_program_neutral_field_default', 'accept_program_reference_field', 'is_unsafe_program_field', 'accept_program_schema_root', 'accept_program_machine_integer_width', 'accept_program_optional_absence', 'accept_program_expression_operation', 'accept_program_division_rounding']) {
+  for (const name of ['read_program_container_kind', 'accept_program_container_fields', 'accept_program_expression_field', 'accept_program_tuple_product_model', 'read_program_scalar_kind', 'read_program_reference_role', 'read_program_expression_projection', 'read_program_pattern_binding_form', 'read_program_expression_operand_fields', 'read_program_expression_entry_operand_field', 'read_program_declaration_type_projection_field', 'read_program_proposition_operand_fields', 'read_program_proposition_binding_form', 'read_program_reference_source_field', 'read_program_reference_target_field', 'read_program_neutral_field_default', 'accept_program_reference_field', 'is_unsafe_program_field', 'accept_program_schema_root', 'accept_program_machine_integer_width', 'accept_program_optional_absence', 'accept_program_expression_operation', 'accept_program_division_rounding']) {
     replace(`pub fn ${name}`, `/// Read the corresponding decision of the shared typed program links schema.\n#[must_use]\npub fn ${name}`);
   }
   // Keep deeply nested generated tails out of rustfmt, and store one
@@ -238,7 +256,7 @@ for (let round = 0; round < 10; round += 1) {
 const rust = '// Generated from the shared typed-program-links schema through\n'
   + '// js/scripts/generate-typed-program-link-rules.mjs. Do not edit by hand.\n' + formatted;
 const artifacts = [
-  [new URL('../src/typed-program-link-rules.js', import.meta.url), source + propositionSource],
+  [javascriptFile, javascript],
   [new URL('../../rust/src/translation/typed_program_link_rules.rs', import.meta.url), rust],
   [new URL('../../rust/src/data/typed-program-links-schema.lino', import.meta.url), schemaText],
 ];

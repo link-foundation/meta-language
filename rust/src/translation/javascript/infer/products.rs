@@ -1,10 +1,11 @@
 //! Product expression observations from the existing inference engine.
 
 use super::{
-    BOOL, Env, HashMap, HashSet, Inference, ROOT, Result, SExpr, SItem, SNode, SProgram, Span,
-    Term, Type, collect_functions, fill_arrays, fill_fields, fill_functions, type_error,
+    Env, HashMap, HashSet, Inference, ROOT, Result, SExpr, SItem, SNode, SProgram, Span, Term,
+    Type, collect_functions, fill_arrays, fill_fields, fill_functions, type_error,
 };
 use crate::translation::frontend_rules::accept_argument_count;
+use crate::translation::javascript::product_source_rules::accept_java_script_array_tuple_context;
 
 type ExpressionTypes = HashMap<*const SExpr, Type>;
 type InferredProgram = (SProgram, ExpressionTypes);
@@ -34,16 +35,21 @@ fn infer_javascript_types_with_observations(
     });
     if !observe
         && !untyped
+        && !super::callables::has_structural_inference(
+            &serde_json::to_value(&program).expect("a surface program is serializable"),
+        )
         && functions.iter().all(|(_, function)| {
             function.ret.is_some() && function.params.iter().all(|param| param.ty.is_some())
         })
     {
-        return Ok((program, HashMap::new()));
+        let mut observed = HashMap::new();
+        super::super::reference_analysis::mark_shared_reference_types(&mut program, &mut observed)?;
+        return Ok((program, observed));
     }
     let mut inference = Inference::new(&program.items);
     inference.record_expressions = observe;
     let inferred = inference.run(&functions, &program)?;
-    let expression_types = if observe {
+    let mut expression_types = if observe {
         inference
             .expression_terms
             .iter()
@@ -52,27 +58,113 @@ fn infer_javascript_types_with_observations(
     } else {
         HashMap::new()
     };
-    let arrays: HashMap<*const SExpr, Type> = inference
+    let mut arrays: HashMap<*const SExpr, Type> = inference
         .empty_arrays
         .iter()
         .map(|(node, (term, place))| (*node, inference.surface(term, *place)))
         .collect();
+    arrays.extend(inference.lambdas.iter().map(|(node, term)| {
+        let (place, places) = &inference.lambda_places[node];
+        let Term::Function { params, ret } = term else {
+            unreachable!("an observed Lambda retains its Function term")
+        };
+        (
+            *node,
+            Type::Function {
+                params: params
+                    .iter()
+                    .zip(places)
+                    .map(|(parameter, place)| inference.surface(parameter, *place))
+                    .collect(),
+                ret: Box::new(inference.surface(ret, *place)),
+            },
+        )
+    }));
+    arrays.extend(
+        inference
+            .collections
+            .iter()
+            .map(|(node, (term, place))| (*node, inference.surface(term, *place))),
+    );
+    arrays.extend(
+        inference
+            .cells
+            .iter()
+            .map(|(node, (term, place))| (*node, inference.surface(term, *place))),
+    );
+    arrays.extend(
+        inference
+            .records
+            .iter()
+            .map(|(node, term)| (*node, inference.surface(term, None))),
+    );
     let mut inferred = inferred.into_iter();
     fill_functions(&mut program.items, &mut inferred);
     fill_fields(&mut program.items, &inference);
     if !arrays.is_empty() {
         fill_arrays(&mut program, &arrays);
     }
+    super::methods::fill_methods(
+        &mut program,
+        &inference.array_includes,
+        &mut expression_types,
+    );
+    super::super::reference_analysis::mark_shared_reference_types(
+        &mut program,
+        &mut expression_types,
+    )?;
     Ok((program, expression_types))
 }
 
 impl Inference {
-    pub(super) fn product_condition(&mut self, term: &Term, place: Option<Span>) -> Result<()> {
-        // The source fact collector records whole product truthiness as its own obligation.
-        if self.record_expressions && matches!(self.resolve(term), Term::Tuple(_)) {
-            return Ok(());
+    /// Connect actual iterator element owners to the source-generated iterable form.
+    pub(super) fn solve_iterables(&mut self) -> Result<bool> {
+        let mut progress = false;
+        let mut waiting = Vec::new();
+        for constraint in std::mem::take(&mut self.iterables) {
+            let object = self.resolve(&constraint.object);
+            let kind = match &object {
+                Term::Array(_) => "array",
+                Term::Set { .. } => "set",
+                Term::Map { .. } => "map",
+                Term::Known(ty) => ty.kind(),
+                _ => "",
+            };
+            let form = crate::translation::array_value_rules::read_array_iterable_form(kind, false);
+            let element = match (form.as_str(), &object) {
+                ("array", Term::Array(element)) => Some(element.as_ref().clone()),
+                ("string", _) => Some(Term::Known(super::STRING)),
+                ("set", Term::Set { element, .. }) => Some(element.as_ref().clone()),
+                ("map", Term::Map { key, value, .. }) => Some(Term::Tuple(vec![
+                    key.as_ref().clone(),
+                    value.as_ref().clone(),
+                ])),
+                ("set", Term::Known(Type::Set { element, .. })) => {
+                    Some(self.declared(Some(element)))
+                }
+                ("map", Term::Known(Type::Map { key, value, .. })) => Some(Term::Tuple(vec![
+                    self.declared(Some(key)),
+                    self.declared(Some(value)),
+                ])),
+                _ => None,
+            };
+            if let Some(element) = element {
+                self.unify(
+                    &constraint.result,
+                    &Term::Array(Box::new(element)),
+                    constraint.place,
+                )?;
+                progress = true;
+            } else {
+                waiting.push(constraint);
+            }
         }
-        self.unify(term, &Term::Known(BOOL), place)
+        self.iterables = waiting;
+        Ok(progress)
+    }
+
+    pub(super) fn product_condition(&mut self, term: &Term, place: Option<Span>) {
+        self.conditions.push((term.clone(), place));
     }
 
     /// Apply the author's positional expected type without turning a source array into owned evidence.
@@ -83,18 +175,30 @@ impl Inference {
         expected: Option<&Term>,
     ) -> Result<Term> {
         let expected = expected.map(|term| self.resolve(term));
-        let Some(expected) = expected.filter(|_| self.record_expressions) else {
+        let Some(expected) = expected else {
             return self.expr(node, env);
         };
         let term = match (&node.node, &expected) {
+            (SNode::Record { entries, .. }, _) => {
+                self.record_expr(node, entries, env, Some(&expected))?
+            }
+            (SNode::Lambda { .. }, _) | (SNode::CellWrite { .. }, _) => {
+                self.callable_expr(node, env, Some(&expected))?
+            }
             (SNode::Array { items, .. }, Term::Tuple(elements))
-                if items.len() == elements.len() && items.iter().all(|item| !item.spread) =>
+                if accept_java_script_array_tuple_context(
+                    "array",
+                    "tuple",
+                    items.iter().any(|item| item.spread),
+                ) =>
             {
                 Term::Tuple(
                     items
                         .iter()
-                        .zip(elements)
-                        .map(|(item, element)| self.expr_expected(&item.value, env, Some(element)))
+                        .enumerate()
+                        .map(|(index, item)| {
+                            self.expr_expected(&item.value, env, elements.get(index))
+                        })
                         .collect::<Result<Vec<_>>>()?,
                 )
             }
@@ -122,16 +226,17 @@ impl Inference {
                 _,
             ) => {
                 let condition = self.expr(cond, env)?;
-                self.product_condition(&condition, cond.span.or(node.span))?;
+                self.product_condition(&condition, cond.span.or(node.span));
                 let yes = self.expr_expected(then, env, Some(&expected))?;
                 let no = self.expr_expected(otherwise, env, Some(&expected))?;
-                self.unify(&yes, &no, node.span)?;
-                yes
+                self.join(yes, no, node.span)
             }
             _ => return self.expr(node, env),
         };
-        self.expression_terms
-            .insert(std::ptr::from_ref(node), (term.clone(), node.span));
+        if self.record_expressions {
+            self.expression_terms
+                .insert(std::ptr::from_ref(node), (term.clone(), node.span));
+        }
         Ok(term)
     }
 
@@ -163,8 +268,18 @@ impl Inference {
         else {
             return Ok(self.fresh(false));
         };
+        self.calls.push(super::CallArguments {
+            parameters: signature.params.clone(),
+            arguments: arg_terms.clone(),
+            place,
+        });
         for ((term, param), arg) in arg_terms.iter().zip(&signature.params).zip(args) {
             self.unify(term, param, arg.span.or(place))?;
+            if let Term::Var(variable) = param
+                && matches!(self.resolve(term), Term::Option { .. })
+            {
+                self.bindings[*variable] = Some(self.resolve(term));
+            }
         }
         Ok(signature.ret)
     }
@@ -180,7 +295,19 @@ impl Inference {
                         .is_some_and(|next| self.contains(next, variable, seen))
             }
             Term::Array(element) => self.contains(element, variable, seen),
-            Term::Tuple(elements) => elements
+            Term::Record(owner) => owner
+                .borrow()
+                .fields
+                .iter()
+                .any(|(_, term)| self.contains(term, variable, seen)),
+            Term::Cell(element) => self.contains(element, variable, seen),
+            Term::Function { .. } => self.callable_contains(term, variable, seen),
+            Term::Option { element, .. } => self.contains(element, variable, seen),
+            Term::Map { key, value, .. } => {
+                self.contains(key, variable, seen) || self.contains(value, variable, seen)
+            }
+            Term::Set { element, .. } => self.contains(element, variable, seen),
+            Term::Tuple(elements) | Term::Union(elements) => elements
                 .iter()
                 .any(|element| self.contains(element, variable, seen)),
             Term::Known(_) => false,
@@ -206,7 +333,20 @@ impl Inference {
                     progress = true;
                 }
                 Term::Array(element) => {
-                    self.unify(&constraint.result, &element, constraint.place)?;
+                    let value = if crate::translation::array_value_rules::select_optional_array_read(
+                        "JavaScript",
+                        constraint.optional,
+                        constraint.proven_in_bounds,
+                        false,
+                    ) {
+                        super::optional_values::optional(*element, "undefined")
+                    } else {
+                        *element
+                    };
+                    self.unify(&constraint.result, &value, constraint.place)?;
+                    if let Term::Var(variable) = constraint.result {
+                        self.bindings[variable] = Some(value);
+                    }
                     progress = true;
                 }
                 object @ Term::Known(_) => {
@@ -216,7 +356,23 @@ impl Inference {
                         &Term::Array(Box::new(element.clone())),
                         constraint.place,
                     )?;
-                    self.unify(&constraint.result, &element, constraint.place)?;
+                    let value = if crate::translation::array_value_rules::select_optional_array_read(
+                        "JavaScript",
+                        constraint.optional,
+                        constraint.proven_in_bounds,
+                        false,
+                    ) {
+                        super::optional_values::optional(element, "undefined")
+                    } else {
+                        element
+                    };
+                    self.unify(&constraint.result, &value, constraint.place)?;
+                    if let Term::Var(variable) = constraint.result {
+                        self.bindings[variable] = Some(value);
+                    }
+                    progress = true;
+                }
+                _ => {
                     progress = true;
                 }
             }

@@ -13,6 +13,10 @@
 
 import { TranslationError, unsupported } from './diagnostics.js';
 import { mutableClosureCells } from './javascript-cells.js';
+import { readCallableCellLowering, renderCallableCellParameterName } from './callable-source-rules.js';
+import { renameCallableSourceExpression } from './callable-source.js';
+import { acceptJavaScriptValueSwitch, readJavaScriptValueSwitchInstruction,
+  readJavaScriptValueSwitchPosition } from './javascript-surface-rules.js';
 
 const ROOT = 'crate';
 const IMPERATIVE = new Set(['let', 'assign', 'assignReference', 'while', 'doWhile', 'for', 'break', 'continue', 'print', 'expr']);
@@ -142,7 +146,10 @@ function flat(statements) {
 /** The body of the function `name` of `params` from its statements. */
 export function lowerImperative(parser, name, params, statements, where, externalCells = new Set(), externalBindings = new Set()) {
   const cells = union(mutableClosureCells(statements), externalCells);
-  if (cells.size) parser.referenceSemantics = true;
+  if (cells.size) {
+    parser.referenceSemantics = true;
+    parser.referenceSemanticsForced = true;
+  }
   const lowering = new Lowering(parser, name, cells);
   const ctx = {
     // A function that finishes without returning returns undefined, the unit value.
@@ -155,10 +162,11 @@ export function lowerImperative(parser, name, params, statements, where, externa
   const captured = new Set([...externalCells, ...externalBindings]);
   const scope = [...captured].filter((name) => !params.some((param) => param.name === name))
     .map((name) => ({ source: name, ir: name, ...(externalCells.has(name) && { reference: true }) }));
-  for (const param of params) scope.push({ source: param.name, ir: cells.has(param.name) ? `ml_cell_${param.name}` : param.name, ...(cells.has(param.name) && { reference: true }) });
+  for (const param of params) scope.push({ source: param.name, ir: renderCallableCellParameterName(param.name, cells.has(param.name)), ...(cells.has(param.name) && { reference: true }) });
   let body = lowering.seq(flat(statements), 0, ctx, scope);
   for (const param of [...params].reverse()) {
-    if (cells.has(param.name)) body = { k: 'let', name: `ml_cell_${param.name}`, value: { k: 'cellAllocate', value: named(param.name, where), span: where }, body, span: where };
+    const allocation = readCallableCellLowering('declare', cells.has(param.name));
+    if (allocation) body = { k: 'let', name: renderCallableCellParameterName(param.name, true), value: { k: allocation, value: named(param.name, where), span: where }, body, span: where };
   }
   return body;
 }
@@ -253,24 +261,7 @@ class Lowering {
 
   /** A copy of a source expression that reads the variables it names in scope. */
   renamed(node, scope) {
-    if (!node || typeof node !== 'object') return node;
-    if (Array.isArray(node)) return node.map((item) => this.renamed(item, scope));
-    if (node.k === 'name' && node.path.length === 1) {
-      const binding = lookup(scope, node.path[0]);
-      const renamed = { ...node, path: [binding?.ir ?? node.path[0]] };
-      return binding?.reference ? { k: 'cellRead', cell: renamed, span: node.span } : renamed;
-    }
-    if (node.k === 'cellRead' || node.k === 'cellWrite') {
-      const cell = node.cell.k === 'name' && node.cell.path.length === 1 ? { ...node.cell, path: [lookup(scope, node.cell.path[0])?.ir ?? node.cell.path[0]] } : this.renamed(node.cell, scope);
-      return { ...node, cell, ...(node.value && { value: this.renamed(node.value, scope) }), ...(node.body && { body: this.renamed(node.body, scope) }) };
-    }
-    if (node.k === 'lambda') {
-      const inner = [...scope, ...node.params.map((param) => ({ source: param.name, ir: param.name }))];
-      return { ...node, params: node.params.map((param) => ({ ...param, ...(param.default && { default: this.renamed(param.default, scope) }) })), body: this.renamed(node.body, inner) };
-    }
-    const copy = {};
-    for (const [key, value] of Object.entries(node)) copy[key] = key === 'span' || key === 'type' || key === 'data' ? value : this.renamed(value, scope);
-    return copy;
+    return renameCallableSourceExpression(node, scope);
   }
 
   /** A declaration in scope; one that shadows a variable in scope gets a new name. */
@@ -299,7 +290,8 @@ class Lowering {
         const inner = this.declare(scope, statement.name);
         const name = inner.at(-1).ir;
         const body = this.seq(list, index + 1, ctx, inner);
-        if (inner.at(-1).reference) return { k: 'let', name, value: { k: 'cellAllocate', value, span: statement.span }, body, span: statement.span };
+        const allocation = readCallableCellLowering('declare', Boolean(inner.at(-1).reference));
+        if (allocation) return { k: 'let', name, value: { k: allocation, value, span: statement.span }, body, span: statement.span };
         if (value.k === 'none' && body.k === 'let' && body.name === name) {
           const reads = new Set();
           references(body.value, reads);
@@ -310,7 +302,8 @@ class Lowering {
       case 'assign': {
         const binding = lookup(scope, statement.name);
         const value = this.renamed(statement.value, scope);
-        if (binding?.reference) return { k: 'cellWrite', cell: named(binding.ir, statement.span), value, body: rest(), span: statement.span };
+        const operation = readCallableCellLowering('assign', Boolean(binding?.reference));
+        if (operation) return { k: operation, cell: named(binding.ir, statement.span), value, body: rest(), span: statement.span };
         return { k: 'let', name: binding.ir, value, body: rest(), span: statement.span };
       }
       case 'assignReference':
@@ -443,24 +436,37 @@ class Lowering {
     const renamed = { ...node, discriminant };
     const inner = { ...ctx, fall: () => ctx.fall(scope), brk: () => ctx.fall(scope), brkLive: ctx.live };
     const bodies = this.caseBodies(node);
-    if (!node.tagged && node.clauses.some((clause) => clause.tests.some((test) => test.k === 'value'))) {
-      const variable = this.generatedName('switch');
-      let otherwise = ctx.fall(scope);
+    if (acceptJavaScriptValueSwitch(node.tagged, node.clauses.some((clause) => clause.tests.some((test) => test.k === 'value')))) {
       const fallback = node.clauses.findIndex((clause) => clause.tests.some((test) => test.k === 'default'));
-      if (fallback >= 0) otherwise = this.seq(bodies[fallback], 0, inner, scope);
-      for (let index = node.clauses.length - 1; index >= 0; index -= 1) {
-        const tests = node.clauses[index].tests.filter((test) => test.k !== 'default').map((test) => {
-          const value = test.k === 'value' ? this.renamed(test.value, scope)
-            : test.k === 'strLit' ? { k: 'str', value: test.value, span: test.span }
-            : test.k === 'boolLit' ? { k: 'bool', value: test.value, span: test.span }
-            : { k: 'num', value: test.value, ...(test.type && { type: test.type }), span: test.span };
-          return { k: 'binary', op: 'eq', left: named(variable, node.span), right: value, span: test.span ?? node.span };
-        });
-        if (!tests.length) continue;
-        const cond = tests.reduce((left, right) => ({ k: 'binary', op: 'or', left, right, span: node.span }));
-        otherwise = { k: 'if', cond, then: this.seq(bodies[index], 0, inner, scope), else: otherwise, span: node.span };
+      let variable, otherwise, cond, then;
+      for (let step = 0; ; step += 1) {
+        const instruction = readJavaScriptValueSwitchInstruction(true, step, node.clauses.length);
+        if (instruction === 'capture') {
+          variable = this.generatedName('switch');
+        } else if (instruction === 'fallback') {
+          otherwise = ctx.fall(scope);
+          if (fallback >= 0) otherwise = this.seq(bodies[fallback], 0, inner, scope);
+        } else if (instruction === 'bind') {
+          return { k: 'let', name: variable, value: discriminant, body: otherwise, span: node.span };
+        } else {
+          const index = readJavaScriptValueSwitchPosition(true, step, node.clauses.length);
+          const tests = node.clauses[index].tests.filter((test) => test.k !== 'default');
+          if (!tests.length) continue;
+          if (instruction === 'test') {
+            cond = tests.map((test) => {
+              const value = test.k === 'value' ? this.renamed(test.value, scope)
+                : test.k === 'strLit' ? { k: 'str', value: test.value, span: test.span }
+                : test.k === 'boolLit' ? { k: 'bool', value: test.value, span: test.span }
+                : { k: 'num', value: test.value, ...(test.type && { type: test.type }), ...(test.negative && { negative: true }), span: test.span };
+              return { k: 'binary', op: 'eq', left: named(variable, node.span), right: value, span: test.span ?? node.span };
+            }).reduce((left, right) => ({ k: 'binary', op: 'or', left, right, span: node.span }));
+          } else if (instruction === 'body') {
+            then = this.seq(bodies[index], 0, inner, scope);
+          } else if (instruction === 'select') {
+            otherwise = { k: 'if', cond, then, else: otherwise, span: node.span };
+          }
+        }
       }
-      return { k: 'let', name: variable, value: discriminant, body: otherwise, span: node.span };
     }
     const rows = [];
     let defaults = [];

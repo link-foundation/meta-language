@@ -8,6 +8,12 @@ import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExp
 // so assertions about Numbers are still theorems closed by computation.
 
 import { unsupported } from './diagnostics.js';
+import { renderOptionalAbsentValue, renderOptionalCoalescing, renderOptionalConsoleText, renderOptionalFlattening, renderOptionalMatch, renderOptionalNumericPresent, renderOptionalPresentValue, renderOptionalPrimitiveTruth, renderOptionalProjection, renderOptionalStrictEquality, renderOptionalTypeQueryPresent, renderOptionalUnwrapping, requireOptionalNumericPredicate } from './optional-value-rules.js';
+import { renderCollectionIteration, renderOptionalArrayRead } from './array-value-rules.js';
+import { readPrimitiveMethodRenderingRefusal } from './primitive-method-rules.js';
+import { renderRecordProductField, renderRecordType, renderRecordValue } from './record-emission-rules.js';
+import { readUnionTargetRefusal } from './type-syntax-rules.js';
+import { renderCallableApplication, renderCallableFunctionReference, renderCallableFunctionType, renderCallableLambda } from './callable-source-rules.js';
 import { acceptProgramTupleProductModel } from '../typed-program-link-rules.js';
 import { renderAbsentNumberExpression } from './primitive-value-rules.js';
 import { propFunctions } from './proof.js';
@@ -258,7 +264,7 @@ function ident(name) {
 }
 
 export function emitRocq(source) {
-  const program = threadOutput(source);
+  const program = threadOutput(source, 'Rocq');
   const state = new EmitState(program, 'Rocq', ident, KEYWORDS, {
     ctorStyle: 'module',
     // Rocq derives these from inductives and Functions in the same namespace.
@@ -364,13 +370,15 @@ class RocqEmitter {
       case 'tuple':
         return type.elements.length ? `(${type.elements.map((element) => this.type(element)).join(' * ')})%type` : 'unit';
       case 'record':
-        return type.fields.length ? `(${type.fields.map((field) => this.type(field.type)).join(' * ')})%type` : 'unit';
+        return renderRecordType('Rocq', type.fields.map(field => this.type(field.type)));
       case 'function':
-        return `(${[...type.params.map((param) => this.type(param)), this.type(type.ret)].join(' -> ')})`;
+        return renderCallableFunctionType('Rocq', type.params.map(param => this.type(param)), this.type(type.ret));
       case 'set':
         return `(list ${this.type(type.element)})`;
       case 'map':
         return `(list (${this.type(type.key)} * ${this.type(type.value)}))%type`;
+      case 'union':
+        throw new Error(readUnionTargetRefusal('Rocq'));
       default:
         throw new Error(`no Rocq type for ${type.kind}`);
     }
@@ -661,14 +669,15 @@ class RocqEmitter {
         return e.args.length ? `(${head} ${e.args.map((arg) => this.expr(arg)).join(' ')})` : head;
       }
       case 'functionRef':
-        return this.state.ref(e.fn);
+        return renderCallableFunctionReference('Rocq', this.state.ref(e.fn));
       case 'apply':
-        return `(${this.expr(e.fn)} ${e.args.map((arg) => this.expr(arg)).join(' ')})`;
+        return renderCallableApplication('Rocq', this.expr(e.fn), e.args.map(arg => this.expr(arg)));
       case 'lambda':
-        return `(fun ${e.params.map((param) => `(${param.name} : ${this.type(param.type)})`).join(' ')} => ${this.expr(e.body)})`;
+        return renderCallableLambda('Rocq', e.params.map(param => param.name), e.params.map(param => this.type(param.type)), '', this.expr(e.body), []);
       case 'record':
-        return e.entries.length ? `(${e.entries.map((entry) => this.expr(entry.value)).join(', ')})` : 'tt';
+        return renderRecordValue('Rocq', [], e.entries.map(entry => this.expr(entry.value)));
       case 'recordField':
+        return renderRecordProductField('Rocq', this.expr(e.object), e.index, e.object.type.fields.length);
       case 'tupleIndex': {
         const count = e.object.type.kind === 'record' ? e.object.type.fields.length : e.object.type.elements.length;
         let value = this.expr(e.object);
@@ -678,18 +687,18 @@ class RocqEmitter {
       case 'tuple':
         return e.items.length ? `(${e.items.map((item) => this.expr(item)).join(', ')})` : 'tt';
       case 'none':
-        return e.type.absence === 'both' && e.absence === 'undefined' ? `(Some (@None ${this.type(e.type.element)}))` : `(@None ${e.type.absence === 'both' ? `(option ${this.type(e.type.element)})` : this.type(e.type.element)})`;
+        return renderOptionalAbsentValue('Rocq', e.type.absence, e.absence, this.type(e.type.element));
       case 'some':
-        return e.type.absence === 'both' ? `(Some (Some ${this.expr(e.value)}))` : `(Some ${this.expr(e.value)})`;
+        return renderOptionalPresentValue('Rocq', e.type.absence, this.expr(e.value));
       case 'nullishNumber': {
         const element = e.arg.type.element;
-        const present = element.kind === 'bool' ? '(if ml_present then 1%float else 0%float)' : element.kind === 'unit' ? 'PrimFloat.nan' : 'ml_present';
+        const present = renderOptionalNumericPresent('Rocq', element.kind, 'arithmetic');
         this.floats();
         return this.optionalMatch(e.arg, 'ml_present', present, renderAbsentNumberExpression('Rocq', 'arithmetic', 'null'), renderAbsentNumberExpression('Rocq', 'arithmetic', 'undefined'));
       }
       case 'optionalIndexNumber':
         this.floats();
-        return this.optionalMatch(e.arg, 'ml_present', e.arg.type.element.kind === 'unit' ? 'PrimFloat.nan' : 'ml_present', renderAbsentNumberExpression('Rocq', 'array-index', 'null'), renderAbsentNumberExpression('Rocq', 'array-index', 'undefined'));
+        return this.optionalMatch(e.arg, 'ml_present', renderOptionalNumericPresent('Rocq', e.arg.type.element.kind, 'array-index'), renderAbsentNumberExpression('Rocq', 'array-index', 'null'), renderAbsentNumberExpression('Rocq', 'array-index', 'undefined'));
       case 'truthy':
         return this.truthy(e.arg);
       case 'strictEqual':
@@ -697,42 +706,38 @@ class RocqEmitter {
       case 'optionalText': {
         const element = e.arg.type.element;
         let present = element.kind === 'string' ? 'ml_present' : element.kind === 'unit' ? '"undefined"%string' : this.toText({ k: 'var', name: 'ml_present', type: element }, e.console);
-        if (e.console && ['int', 'nat', 'fixed'].includes(element.kind)) present = `(String.append ${present} "n"%string)`;
+        present = renderOptionalConsoleText('Rocq', present, ['int', 'nat', 'fixed'].includes(element.kind), e.console, false);
         return this.optionalMatch(e.arg, 'ml_present', present, '"null"%string', '"undefined"%string');
       }
       case 'optionalTypeOf':
-        return this.optionalMatch(e.arg, 'ml_present', `"${e.present ?? 'undefined'}"%string`, '"object"%string', '"undefined"%string');
+        return this.optionalMatch(e.arg, 'ml_present', renderOptionalTypeQueryPresent('Rocq', `"${e.present ?? 'undefined'}"%string`), '"object"%string', '"undefined"%string');
       case 'unwrapOption':
-        return `(match ${this.expr(e.arg)} with | ${e.arg.type.absence === 'both' ? 'Some (Some ml_present)' : 'Some ml_present'} => ml_present | _ => ${this.inhabitant(e.type)} end)`;
+        return renderOptionalUnwrapping('Rocq', e.arg.type.absence, this.expr(e.arg), '', this.inhabitant(e.type));
       case 'optionalPredicate': {
-        const present = e.arg.type.element.kind === 'float' ? this.math({ k: 'math', op: e.op, args: [{ k: 'var', name: 'ml_present', type: { kind: 'float' } }], type: { kind: 'bool' } }) : 'false';
+        const present = requireOptionalNumericPredicate(e.arg.type.element.kind) ? this.math({ k: 'math', op: e.op, args: [{ k: 'var', name: 'ml_present', type: { kind: 'float' } }], type: { kind: 'bool' } }) : 'false';
         return this.optionalMatch(e.arg, 'ml_present', present, 'false', 'false');
       }
       case 'flattenOption': {
-        const absent = (absence) => e.type.absence === 'both' && absence === 'undefined' ? '(Some None)' : 'None';
-        const present = e.type.absence === 'both' ? '(Some (Some ml_present))' : '(Some ml_present)';
-        const cases = (type, binder, body) => type.absence === 'both' ? `| Some (Some ${binder}) => ${body} | None => ${absent('null')} | Some None => ${absent('undefined')}` : `| Some ${binder} => ${body} | None => ${absent(type.absence)}`;
-        return `(match ${this.expr(e.value)} with ${cases(e.value.type, 'ml_nested', `(match ml_nested with ${cases(e.value.type.element, 'ml_present', present)} end)`)} end)`;
+        return renderOptionalFlattening('Rocq', e.value.type.absence, e.value.type.element.absence, e.type.absence, this.expr(e.value));
       }
       case 'coalesce':
-        return `(match ${this.expr(e.left)} with | ${e.left.type.absence === 'both' ? 'Some (Some ml_value)' : 'Some ml_value'} => ml_value | _ => ${this.expr(e.right)} end)`;
+        return renderOptionalCoalescing('Rocq', e.left.type.absence, this.expr(e.left), '', this.expr(e.right));
       case 'optionalField': {
         const count = e.object.type.element.fields.length;
         let field = 'ml_record';
         for (let index = count - 1; index > e.index; index -= 1) field = `(fst ${field})`;
         if (e.index > 0) field = `(snd ${field})`;
-        return `(match ${this.expr(e.object)} with | ${e.object.type.absence === 'both' ? 'Some (Some ml_record)' : 'Some ml_record'} => Some ${field} | _ => None end)`;
+        return renderOptionalProjection('Rocq', e.object.type.absence, this.expr(e.object), '', 'ml_record', field, '');
       }
       case 'optionalProject': {
         this.floats();
         const length = e.object.type.element.kind === 'string' ? renderStringLengthExpression('Rocq', 'ml_value') : '(PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (List.length ml_value))))';
-        return `(match ${this.expr(e.object)} with | ${e.object.type.absence === 'both' ? 'Some (Some ml_value)' : 'Some ml_value'} => Some ${length} | _ => None end)`;
+        return renderOptionalProjection('Rocq', e.object.type.absence, this.expr(e.object), '', 'ml_value', length, '');
       }
       case 'optionalIndex': {
-        let index = this.expr(e.index);
-        if (e.index.type.kind === 'float') { this.helpers.add('floatIndex'); index = `(ml_float_index ${index})`; }
-        else if (e.index.type.kind === 'nat') index = `(Z.of_N ${index})`;
-        return `(let ml_index := ${index} in if Z.ltb ml_index 0 then None else List.nth_error ${this.expr(e.array)} (Z.to_nat ml_index))`;
+        const index = this.expr(e.index);
+        if (e.index.type.kind === 'float') this.helpers.add('floatIndex');
+        return renderOptionalArrayRead('Rocq', e.index.type.kind, this.expr(e.array), index);
       }
       case 'method':
         return this.method(e);
@@ -765,8 +770,8 @@ class RocqEmitter {
       }
       case 'collectionItems': {
         const map = e.object.type.kind === 'map';
-        if (e.op === 'entries') return map ? this.expr(e.object) : `(List.map (fun ml_value => (ml_value, ml_value)) ${this.expr(e.object)})`;
-        return map ? `(List.map (@${e.op === 'keys' ? 'fst' : 'snd'} ${this.type(e.object.type.key)} ${this.type(e.object.type.value)}) ${this.expr(e.object)})` : this.expr(e.object);
+        const project = map && e.op !== 'entries';
+        return renderCollectionIteration('Rocq', map, e.op, this.expr(e.object), project ? this.type(e.object.type.key) : '', project ? this.type(e.object.type.value) : '');
       }
       case 'ctor': {
         const head = this.state.ctorRef(e.data, e.ctor);
@@ -831,7 +836,7 @@ class RocqEmitter {
 
   /** Math and Number functions: PrimFloat's where they agree with JavaScript, the math helpers otherwise. */
   method(e) {
-    if (e.object.type.kind !== 'array') throw unsupported(`.${e.op}()`, 'this target needs a UTF-16 operational string encoding for this operation', e.span);
+    if (e.object.type.kind !== 'array') throw unsupported(`.${e.op}()`, readPrimitiveMethodRenderingRefusal('Rocq', e.object.type.kind, e.op), e.span);
     if (e.op === 'join') {
       const text = (name, type) => {
         if (type.kind === 'unit') return 'EmptyString';
@@ -841,7 +846,7 @@ class RocqEmitter {
       return `(let ml_values := ${this.expr(e.object)} in let ml_separator := ${this.expr(e.args[0])} in match ml_values with nil => EmptyString | ml_first :: ml_rest => List.fold_left (fun ml_accumulator ml_value => String.append ml_accumulator (String.append ml_separator ${text('ml_value', e.object.type.element)})) ml_rest ${text('ml_first', e.object.type.element)} end)`;
     }
     if (e.op === 'reduce' && e.args.length === 1) throw unsupported('array reduce without an initial value', 'the empty-array TypeError needs an operational abort encoding in Rocq', e.span);
-    if (!['map', 'filter', 'find', 'findIndex', 'some', 'every', 'flatMap', 'reduce'].includes(e.op)) throw unsupported(`.${e.op}()`, 'this array operation needs an operational encoding in Rocq', e.span);
+    if (!['map', 'filter', 'find', 'findIndex', 'some', 'every', 'flatMap', 'reduce'].includes(e.op)) throw unsupported(`.${e.op}()`, readPrimitiveMethodRenderingRefusal('Rocq', 'array', e.op) || 'this array operation needs an operational encoding in Rocq', e.span);
     const callback = e.args[0];
     const number = '(PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (snd ml_pair))))';
     const args = e.op === 'reduce' ? ['ml_accumulator', '(fst ml_pair)', number, 'ml_values'] : ['(fst ml_pair)', number, 'ml_values'];
@@ -859,32 +864,21 @@ class RocqEmitter {
   }
 
   optionalMatch(arg, binder, present, nullCase, undefinedCase) {
-    const cases = arg.type.absence === 'both' ? `| Some (Some ${binder}) => ${present} | None => ${nullCase} | Some None => ${undefinedCase}` : `| Some ${binder} => ${present} | None => ${arg.type.absence === 'null' ? nullCase : undefinedCase}`;
-    return `(match ${this.expr(arg)} with ${cases} end)`;
+    return renderOptionalMatch('Rocq', arg.type.absence, this.expr(arg), binder, present, nullCase, undefinedCase);
   }
 
   truthy(arg) {
     if (arg.type.kind === 'option') return this.optionalMatch(arg, 'ml_present', this.truthy({ k: 'var', name: 'ml_present', type: arg.type.element }), 'false', 'false');
     const value = this.expr(arg);
-    if (arg.type.kind === 'bool') return value;
-    if (arg.type.kind === 'float') { this.floats(); return `(let ml_value := ${value} in andb (negb (PrimFloat.eqb ml_value 0%float)) (negb (PrimFloat.is_nan ml_value)))`; }
-    if (arg.type.kind === 'int' || (arg.type.kind === 'fixed' && arg.type.signed)) return `(negb (Z.eqb ${value} 0))`;
-    if (arg.type.kind === 'nat' || arg.type.kind === 'fixed') return `(negb (N.eqb ${value} 0))`;
-    if (arg.type.kind === 'string') return `(negb (String.eqb ${value} EmptyString))`;
-    return `(let ml_ignored := ${value} in ${arg.type.kind !== 'unit'})`;
+    if (arg.type.kind === 'float') this.floats();
+    return renderOptionalPrimitiveTruth('Rocq', arg.type.kind, value, '', false, Boolean(arg.type.signed));
   }
 
   strictEqual(e) {
     const a = e.left.type.kind === 'option' ? e.left.type.element : e.left.type;
     const b = e.right.type.kind === 'option' ? e.right.type.element : e.right.type;
-    const pattern = (type, name) => type.kind !== 'option' ? name : type.absence === 'both' ? `Some (Some ${name})` : `Some ${name}`;
-    const absences = (type) => type.kind !== 'option' ? [] : type.absence === 'both' ? [['null', 'None'], ['undefined', 'Some None']] : [[type.absence, 'None']];
     const compare = JSON.stringify(a) === JSON.stringify(b) ? a.kind === 'unit' ? 'true' : this.comparison('eq', a, 'ml_left', 'ml_right') : 'false';
-    const cases = [`| (${pattern(e.left.type, 'ml_left')}, ${pattern(e.right.type, 'ml_right')}) => ${compare}`];
-    for (const [aa, pa] of absences(e.left.type)) for (const [bb, pb] of absences(e.right.type)) cases.push(`| (${pa}, ${pb}) => ${aa === bb}`);
-    cases.push('| _ => false');
-    const result = `(match (${this.expr(e.left)}, ${this.expr(e.right)}) with ${cases.join(' ')} end)`;
-    return e.negate ? `(negb ${result})` : result;
+    return renderOptionalStrictEquality('Rocq', e.left.type.kind, e.left.type.absence ?? '', e.right.type.kind, e.right.type.absence ?? '', compare, this.expr(e.left), this.expr(e.right), e.negate);
   }
 
   math(e) {

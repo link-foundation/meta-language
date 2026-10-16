@@ -12,6 +12,9 @@
 //!
 //! Mirrors `js/src/translation/output.js`.
 
+mod callables;
+mod evaluation;
+
 use std::borrow::Cow;
 use std::collections::HashSet;
 
@@ -44,25 +47,29 @@ fn effect_operand_any(effect: &Effect, test: &dyn Fn(&Expr) -> bool) -> bool {
 /// When an operand that prints or aborts sits in a compound assertion, or a
 /// theorem states a fact of a computation that may abort.
 pub fn thread_output(source: &Program) -> Result<Cow<'_, Program>> {
+    thread_output_for_target(source, "Lean")
+}
+
+/// Thread output using the selected pure target's shared callable boundary.
+///
+/// # Errors
+/// On an effectful callable type or an existing output sequencing obligation.
+pub fn thread_output_for_target<'a>(source: &'a Program, target: &str) -> Result<Cow<'a, Program>> {
     let program = settle_program(source);
-    let mut effectful = HashSet::new();
-    let mut grew = true;
-    while grew {
-        grew = false;
-        for entry in &program.declarations {
-            if let Decl::Fn(function) = entry
-                && !effectful.contains(&function.full_name)
-                && effects(&function.body, &effectful)
-            {
-                effectful.insert(function.full_name.clone());
-                grew = true;
-            }
-        }
-    }
+    let callables::CallableOutputAnalysis {
+        effectful,
+        count,
+        span,
+    } = callables::analyze(&program);
     if program.declarations.iter().any(|entry| matches!(entry,
         Decl::Fn(function) if function.source_signature.is_some() && effectful.contains(&function.full_name))) {
         return Err(unsupported("owned Rust source signature transformation",
             "effect threading changes the captured source header and requires a distinct signature transformation proof", None));
+    }
+    let refusal =
+        super::callable_emission_rules::read_callable_output_target_refusal(target, count);
+    if !refusal.is_empty() {
+        return Err(unsupported("effectful function value", &refusal, span));
     }
     let main_effects = program.main.as_ref().is_some_and(|main| {
         main.effects
@@ -93,6 +100,9 @@ pub fn thread_output(source: &Program) -> Result<Cow<'_, Program>> {
 }
 
 fn effects(expr: &Expr, effectful: &HashSet<String>) -> bool {
+    if !super::callable_emission_rules::accept_callable_creation_effect_traversal(expr.kind()) {
+        return false;
+    }
     match &expr.node {
         Node::Print { .. } => true,
         Node::Call { func, .. } if effectful.contains(func) => true,
@@ -105,7 +115,8 @@ fn effects(expr: &Expr, effectful: &HashSet<String>) -> bool {
 }
 
 fn aborting(expr: &Expr) -> bool {
-    aborts(expr) || expr.children().into_iter().any(aborting)
+    super::callable_emission_rules::accept_callable_creation_effect_traversal(expr.kind())
+        && (aborts(expr) || expr.children().into_iter().any(aborting))
 }
 
 fn prop_any(prop: &Prop, test: &dyn Fn(&Expr) -> bool) -> bool {
@@ -470,138 +481,6 @@ impl Threader<'_> {
         let (frames, out, mut values) = self.bind_all(&[operand], out)?;
         let value = values.pop().expect("one operand");
         Ok((frames, out, value))
-    }
-
-    /// `e` run after the lines `out`, a variable: its value paired with the
-    /// lines printed by then, or its abort.
-    fn io(&mut self, e: &Expr, out: Expr) -> Result<Expr> {
-        if !self.effects(e) {
-            return Ok(self.make(out, e.clone()));
-        }
-        let ty = self.pair_type(&e.ty);
-        let rebuilt = |node: Node| Expr {
-            node,
-            ty: ty.clone(),
-            span: e.span,
-        };
-        match &e.node {
-            Node::Print { text, body } => {
-                let (frames, before, text) = self.bind(text, out)?;
-                let after = self.fresh("o");
-                let value = Expr::new(
-                    Node::OutCons {
-                        head: Box::new(text),
-                        tail: Box::new(before),
-                    },
-                    Type::Output,
-                );
-                let body = self.io(body, Expr::var(after.clone(), Type::Output))?;
-                let inner = Expr::new(
-                    Node::Let {
-                        name: after,
-                        value: Box::new(value),
-                        body: Box::new(body),
-                    },
-                    ty,
-                );
-                Ok(self.close(frames, inner))
-            }
-            Node::Abort { message } => Ok(self.fail(out, literal(STRING, &message), &e.ty)),
-            Node::Call { func, args } => {
-                let operands: Vec<&Expr> = args.iter().collect();
-                let (frames, after, mut args) = self.bind_all(&operands, out)?;
-                let inner = if self.effectful.contains(func) {
-                    args.push(after);
-                    rebuilt(Node::Call {
-                        func: func.clone(),
-                        args,
-                    })
-                } else {
-                    let call = Expr {
-                        node: Node::Call {
-                            func: func.clone(),
-                            args,
-                        },
-                        ty: e.ty.clone(),
-                        span: e.span,
-                    };
-                    self.make(after, call)
-                };
-                Ok(self.close(frames, inner))
-            }
-            Node::If {
-                cond,
-                then,
-                otherwise,
-            } => {
-                let (frames, after, cond) = self.bind(cond, out)?;
-                let then = self.io(then, after.clone())?;
-                let otherwise = self.io(otherwise, after)?;
-                let inner = rebuilt(Node::If {
-                    cond: Box::new(cond),
-                    then: Box::new(then),
-                    otherwise: Box::new(otherwise),
-                });
-                Ok(self.close(frames, inner))
-            }
-            Node::Let { name, value, body } => {
-                let (frames, after, value) = self.bind(value, out)?;
-                let body = self.io(body, after)?;
-                let inner = rebuilt(Node::Let {
-                    name: name.clone(),
-                    value: Box::new(value),
-                    body: Box::new(body),
-                });
-                Ok(self.close(frames, inner))
-            }
-            Node::Match { scrutinee, cases } => {
-                let (frames, after, scrutinee) = self.bind(scrutinee, out)?;
-                let mut threaded = Vec::new();
-                for kase in cases {
-                    threaded.push(Case {
-                        pattern: kase.pattern.clone(),
-                        body: self.io(&kase.body, after.clone())?,
-                    });
-                }
-                let inner = rebuilt(Node::Match {
-                    scrutinee: Box::new(scrutinee),
-                    cases: threaded,
-                });
-                Ok(self.close(frames, inner))
-            }
-            // The right operand of `&&` and `||` runs only when the left one does not decide.
-            Node::Binary {
-                op: op @ (BinaryOp::And | BinaryOp::Or),
-                left,
-                right,
-                ..
-            } => {
-                let decided = Expr::lit(BOOL, LitValue::Bool(*op == BinaryOp::Or));
-                let (then, otherwise) = if *op == BinaryOp::And {
-                    ((**right).clone(), decided)
-                } else {
-                    (decided, (**right).clone())
-                };
-                let test = Expr::new(
-                    Node::If {
-                        cond: left.clone(),
-                        then: Box::new(then),
-                        otherwise: Box::new(otherwise),
-                    },
-                    BOOL,
-                );
-                self.io(&test, out)
-            }
-            // Every other node runs its operands in order, then computes from their values.
-            _ => {
-                let operands = e.children();
-                let (frames, after, values) = self.bind_all(&operands, out)?;
-                let mut values = values.into_iter();
-                let copy = e.map_children(&mut |_| values.next().expect("an operand value"));
-                let inner = self.complete(after, copy);
-                Ok(self.close(frames, inner))
-            }
-        }
     }
 
     /// A node whose operands are values, after the lines `out`: when it may

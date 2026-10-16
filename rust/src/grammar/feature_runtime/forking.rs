@@ -351,7 +351,8 @@ pub(super) fn direct_edge(
             };
             direct_edge(item, side, owner, rules, found, Some(&tag));
         }
-        Expr::Capture { item, .. }
+        Expr::LexicalScope { item, .. }
+        | Expr::Capture { item, .. }
         | Expr::DynamicPrecedence { item, .. }
         | Expr::Alias { item, .. }
         | Expr::Repeat { item, .. } => direct_edge(item, side, owner, rules, found, tag),
@@ -397,7 +398,8 @@ pub(super) fn edge_names(
                 edge_names(item, side, rules, names);
             }
         }
-        Expr::Capture { item, .. }
+        Expr::LexicalScope { item, .. }
+        | Expr::Capture { item, .. }
         | Expr::Precedence { item, .. }
         | Expr::DynamicPrecedence { item, .. }
         | Expr::Alias { item, .. }
@@ -692,6 +694,7 @@ fn rule_items<'e>(
         Expr::Repeat {
             item, max: Some(1), ..
         }
+        | Expr::LexicalScope { item, .. }
         | Expr::Capture { item, .. }
         | Expr::DynamicPrecedence { item, .. }
         | Expr::Alias { item, .. } => rule_items(item, owner, tag, rest, rules, first, items),
@@ -717,6 +720,7 @@ fn whole_refs(expr: &Expr, rules: &[Rule], found: &mut Vec<Name>) {
             whole_refs(&items[0], rules, found);
         }
         Expr::Precedence { item, .. }
+        | Expr::LexicalScope { item, .. }
         | Expr::Capture { item, .. }
         | Expr::DynamicPrecedence { item, .. } => whole_refs(item, rules, found),
         _ => {}

@@ -27,6 +27,23 @@ pub struct Param {
     pub default_value: Option<crate::translation::surface::SExpr>,
 }
 
+/// A lexically owned callable parameter retains its actual source metadata.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LambdaParam {
+    pub name: String,
+    #[serde(rename = "type")]
+    pub ty: Type,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub span: Option<Span>,
+    #[serde(default, rename = "default", skip_serializing_if = "Option::is_none")]
+    pub default_value: Option<crate::translation::surface::SExpr>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub guard: Option<Guard>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rocq_type: Option<String>,
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DataDecl {
@@ -55,6 +72,13 @@ pub struct FnDecl {
     pub name: String,
     pub params: Vec<Param>,
     pub ret: Type,
+    /// The retained source annotation before additional absence is inferred.
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::translation::present_type::read_present_type"
+    )]
+    pub annotated_ret: Option<Type>,
     pub body: Expr,
     #[serde(default)]
     pub span: Option<Span>,

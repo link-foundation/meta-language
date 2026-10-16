@@ -29,14 +29,19 @@ use super::ir::{
 use super::surface::{BinaryOp, External, Flavor, Rounding, SImport, UnaryOp};
 use super::types::Type;
 
+mod array_moves;
 mod arrays;
+mod callables;
 mod declarations;
 mod expressions;
 mod externals;
 mod math;
 mod number_prelude;
+mod optional_values;
+mod primitive_methods;
+mod records;
 
-use self::arrays::ARRAY_PRELUDE;
+use self::arrays::read_array_prelude;
 use self::externals::external_name;
 use self::math::MATH_PRELUDE;
 use self::number_prelude::NUMBER_PRELUDE;
@@ -532,20 +537,33 @@ pub fn emit_rust_with_options(
     program: &Program,
     options: RustEmissionOptions<'_>,
 ) -> Result<Emitted> {
-    emit_rust_context(program, options, false)
+    emit_rust_context(program, options, false, false)
+}
+
+/// Emit immutable array values by consuming each proven final lexical use.
+/// Historical low-level copy profiles remain available through [`emit_rust`].
+///
+/// # Errors
+/// On constructs or explicit source interfaces the target cannot preserve.
+pub fn emit_rust_with_array_consumption(
+    program: &Program,
+    options: RustEmissionOptions<'_>,
+) -> Result<Emitted> {
+    emit_rust_context(program, options, false, true)
 }
 
 pub(crate) fn emit_rust_with_representation(
     program: &Program,
     utf16_strings: bool,
 ) -> Result<Emitted> {
-    emit_rust_context(program, RustEmissionOptions::default(), utf16_strings)
+    emit_rust_context(program, RustEmissionOptions::default(), utf16_strings, true)
 }
 
 fn emit_rust_context(
     program: &Program,
     options: RustEmissionOptions<'_>,
     utf16_strings: bool,
+    array_consumption: bool,
 ) -> Result<Emitted> {
     super::source_type_namespaces::validate_source_type_namespaces(program)?;
     super::source_const_functions::validate_const_functions(program)?;
@@ -561,7 +579,9 @@ fn emit_rust_context(
         return super::runtime_shell::emit_rust(program, &runtime);
     }
     let mut emitter = rust_emitter(program);
-    emitter.utf16_strings = utf16_strings;
+    emitter.array_consumption = array_consumption;
+    emitter.utf16_strings =
+        utf16_strings || primitive_methods::program_requires_method_units(program);
     if emitter.utf16_strings {
         emitter.state.encode("utf16-strings", "strings are sequences of UTF-16 code units, retaining isolated surrogates and JavaScript offsets; output replaces isolated surrogates as Node writes UTF-8");
     }
@@ -613,6 +633,9 @@ fn rust_emitter(program: &Program) -> RustEmitter<'_> {
         borrowed_call_targets: None,
         borrowed_call_scope: None,
         utf16_strings: false,
+        standard_array: false,
+        array_final_uses: BTreeSet::new(),
+        array_consumption: false,
     }
 }
 
@@ -664,7 +687,7 @@ pub fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> {
         };
         ("&str".to_owned(), rust_string(&value.text()))
     } else {
-        (emitter.ty(&value.ty), emitter.expr(value)?)
+        (emitter.ty(&value.ty)?, emitter.expr(value)?)
     };
     let definition = render_constant_binding(&form, name, &ty, &expression);
     let preludes: Vec<String> = emitter
@@ -674,7 +697,7 @@ pub fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> {
             Prelude::Big => PRELUDE.to_owned(),
             Prelude::Number => NUMBER_PRELUDE.to_owned(),
             Prelude::Math => MATH_PRELUDE.to_owned(),
-            Prelude::Array => ARRAY_PRELUDE.to_owned(),
+            Prelude::Array => read_array_prelude(emitter.standard_array).to_owned(),
             Prelude::String => crate::self_translation::representation::string_prelude(),
             Prelude::Optional => super::structured_type_rules::read_rust_optional_prelude(),
         })
@@ -737,6 +760,12 @@ struct RustEmitter<'p> {
     borrowed_call_scope: Option<Scope<'p>>,
     /// Internal self-translation representation; actual Text values are guarded.
     utf16_strings: bool,
+    /// The JavaScript source selected optional reads or standard array methods.
+    standard_array: bool,
+    /// Actual last consuming occurrences in the current renamed checked tree.
+    array_final_uses: BTreeSet<*const Expr>,
+    /// Explicit emission profile; historical low-level output retains copies.
+    array_consumption: bool,
 }
 
 fn is_copy(ty: &Type, product_model: Option<&str>) -> bool {

@@ -80,6 +80,11 @@ pub(super) type RestKeys = Option<Rc<HashSet<Lead>>>;
 
 /// Interprets one program over `bytes[begin, end)`.
 pub(super) struct Executor<'c> {
+    pub(super) lexer_family: Name,
+    pub(super) lexer_workers: HashMap<Name, Box<Self>>,
+    pub(super) lexer_winners:
+        HashMap<(Name, usize, State), Option<Rc<super::lexical_election::LexicalWinner>>>,
+    pub(super) lexer_terminals: HashMap<(Name, Name, Option<Name>), usize>,
     pub(super) compiled: &'c Compiled,
     pub(super) program: &'c Program,
     /// The index of the program, by which the items a scanner's `expected`
@@ -173,6 +178,7 @@ pub(super) struct Executor<'c> {
 pub(super) enum Element {
     At(usize),
     Scanner(Name),
+    Lexical(usize),
 }
 
 impl Element {
@@ -201,6 +207,10 @@ impl<'c> Executor<'c> {
             trivia: &program.trivia,
         });
         Self {
+            lexer_family: program.default_lexer.clone(),
+            lexer_workers: HashMap::new(),
+            lexer_winners: HashMap::new(),
+            lexer_terminals: HashMap::new(),
             compiled,
             program,
             program_index,
@@ -410,6 +420,12 @@ impl<'c> Executor<'c> {
     ) -> Run<Vec<Res>> {
         match expr {
             Expr::Empty => Ok(vec![Res::new(position, state.clone(), no_children(), 0)]),
+            Expr::LexicalScope { name, owner, item } => {
+                self.evaluate_lexical_scope(name, owner, item, position, state, in_token)
+            }
+            Expr::LexicalToken { name, token } => {
+                self.evaluate_lexical_token(name, token, position, state)
+            }
             Expr::Terminal {
                 matcher,
                 expectation,
@@ -616,7 +632,16 @@ impl<'c> Executor<'c> {
                 };
                 Ok(vec![Res::new(position, state.clone(), children, 0)])
             }
-            Expr::Embed { language, item } => self.embed(language, item, position, state, in_token),
+            Expr::Embed {
+                language,
+                item,
+                selection,
+            } => match selection {
+                Some(descriptor) => {
+                    self.evaluate_grammar_selection(descriptor, item, position, state, in_token)
+                }
+                None => self.embed(language, item, position, state, in_token),
+            },
         }
     }
 
@@ -910,23 +935,11 @@ impl<'c> Executor<'c> {
             let outcome = if let Some(outcome) = self.embed_memo.get(&key) {
                 outcome.clone()
             } else {
-                let nested_program = &self.compiled.programs[program_index];
-                let start_rule = nested_program
-                    .start
-                    .as_deref()
-                    .and_then(|name| nested_program.rule_index.get(name))
-                    .copied()
-                    .unwrap_or_default();
-                let mut nested = Executor::new(
-                    self.compiled,
-                    program_index,
-                    self.bytes,
-                    start,
-                    region.end,
-                    self.shared,
-                    self.max_depth.saturating_sub(self.depth),
-                );
-                let outcome = Rc::new(nested.run(start_rule)?);
+                let Some(outcome) =
+                    self.run_embedded_grammar(program_index, start, region.end, language)?
+                else {
+                    continue;
+                };
                 self.embed_memo.insert(key, outcome.clone());
                 outcome
             };

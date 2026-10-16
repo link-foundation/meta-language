@@ -317,6 +317,7 @@ impl<'a> LeanParser<'a> {
         let mut main = None;
         self.items(&mut main, &mut items, &[])?;
         Ok(SProgram {
+            reference_semantics: None,
             language: Language::Lean,
             items,
             main,
@@ -624,6 +625,7 @@ impl<'a> LeanParser<'a> {
             let body = self.with_bound(0, Self::expr)?;
             self.end_decl(&start, "termination_by")?;
             return Ok(Definition::Fn(Box::new(SFn {
+                semantic_ret: None,
                 name,
                 params,
                 ret,
@@ -660,6 +662,7 @@ impl<'a> LeanParser<'a> {
         );
         self.end_decl(&start, "termination_by")?;
         Ok(Definition::Fn(Box::new(SFn {
+            semantic_ret: None,
             name,
             params: params.into_iter().chain(extra).collect(),
             ret,

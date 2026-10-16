@@ -12,6 +12,7 @@ pub(super) enum Helper {
     Assert,
     Equal,
     ShowNumber,
+    ShowOptional,
     At,
     Forall,
     Domains,
@@ -23,6 +24,10 @@ impl Helper {
             Self::OwnedTextInput => {
                 static TEXT: std::sync::OnceLock<String> = std::sync::OnceLock::new();
                 TEXT.get_or_init(crate::translation::rust::owned_local_state_rules::render_rust_owned_local_text_input)
+            }
+            Self::ShowOptional => {
+                static TEXT: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+                TEXT.get_or_init(crate::translation::optional_value_rules::read_optional_java_script_text_prelude)
             }
             Self::NatSub => {
                 "function ml_natSub(a, b) {

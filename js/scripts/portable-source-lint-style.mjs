@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {tokenize} from '../src/translation/lexer.js';
 import {readSourceTextRustBlock, simplifySourceTextRustParentheses} from './source-text-byte-library-style.mjs';
-import {simplifyPortableProductLibraryStyles} from './product-rule-style-corrections.mjs';
+import {simplifyPortableProductLibraryStyles} from './reviewed-rust-branch-styles.mjs';
 import {flattenRustSourceHeaderStyleFormat, stripRustSourceHeaderStyleParentheses} from './rust-source-header-library-style.mjs';
 
 function readPortableLintTokens(source) {

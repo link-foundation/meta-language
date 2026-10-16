@@ -7,7 +7,7 @@ use super::{
 use crate::translation::surface::BinaryOp;
 
 impl JavaScriptParser {
-    /// `let a = 1n, b = a;` declares assignable locals; each needs a value, since undefined is not portable.
+    /// `let a = 1n, b = a;` declares assignable locals; omission starts with undefined.
     pub(super) fn let_declarations(&mut self) -> Result<Vec<Stmt>> {
         let start = self.cursor.advance();
         if self.cursor.is("{") || self.cursor.is("[") {
@@ -23,14 +23,20 @@ impl JavaScriptParser {
             reserved(&name)?;
             // The binding is in its temporal dead zone in its own initialiser.
             self.scope.tdz.insert(name.value.clone());
-            if self.cursor.eat("=").is_none() {
-                return Err(unsupported(
-                    &format!("let {} without a value", name.value),
-                    "an uninitialised let holds undefined, which is not a portable value; give it an initial value",
-                    Some(span(&start, &name)),
-                ));
-            }
-            let value = self.expr()?;
+            let value = if self.cursor.eat("=").is_some() {
+                self.expr()?
+            } else {
+                node(
+                    SNode::None {
+                        absence:
+                            crate::translation::optional_value_rules::read_optional_source_literal(
+                                "undefined",
+                                false,
+                            ),
+                    },
+                    span(&start, &name),
+                )
+            };
             self.declare_local(&name.value, true);
             statements.push(Stmt::Let {
                 name: name.value,
@@ -282,7 +288,15 @@ impl JavaScriptParser {
         let name = self.cursor.identifier(Some("for…of"))?;
         reserved(&name)?;
         self.cursor.advance();
-        let iterable = self.expr()?;
+        let value = self.expr()?;
+        let iterable_span = value.span;
+        let iterable = SExpr::new(
+            SNode::ForOfIterable {
+                object: Box::new(value),
+                ty: None,
+            },
+            iterable_span,
+        );
         self.cursor.expect(")", Some("for"))?;
         self.generated_count += 1;
         let values = format!("ml_values{}", self.generated_count);
@@ -327,6 +341,8 @@ impl JavaScriptParser {
             SNode::Index {
                 object: Box::new(read(&values)),
                 index: Box::new(read(&index)),
+                optional: None,
+                proven_in_bounds: Some(true.into()),
             },
             place,
         );

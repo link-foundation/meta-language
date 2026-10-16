@@ -433,10 +433,8 @@ fn left_recursive_alternatives_climb_by_precedence_with_surrogate_sets_and_numer
 fn case_insensitive_options_match_either_case_and_rule_preludes_join_the_doc() {
     use meta_language::{FeatureParseOptions, compile_feature_grammar};
 
-    let grammar = import_antlr(include_str!(
-        "../fixtures/grammar/antlr/case-insensitive.g4"
-    ))
-    .expect("imports");
+    let source = include_str!("../fixtures/grammar/antlr/case-insensitive.g4");
+    let grammar = import_antlr(source).expect("imports");
     let class = |items: Vec<CharClassItem>| GrammarExpr::CharClass {
         negated: false,
         items,
@@ -468,7 +466,34 @@ fn case_insensitive_options_match_either_case_and_rule_preludes_join_the_doc() {
         Some("dropped returns [int count]; dropped locals [int indexBefore = -1]")
     );
     let options = FeatureParseOptions::default();
-    let parser = compile_feature_grammar(&grammar, None, options.clone()).expect("compiles");
+    // ANTLR 4.13.2 options.md assigns Base as this combined grammar's parser
+    // superclass. Preserve the original context without assuming its absent
+    // implementation equals the standard parser.
+    let value: serde_json::Value = serde_json::from_str(
+        &meta_language::grammar::interchange::serialize_grammar(&grammar),
+    )
+    .expect("serialized grammar wire");
+    let obligations = value["declarations"]["lexers"][0]["expression"]["items"]
+        .as_array()
+        .expect("lexical entries")
+        .iter()
+        .filter(|entry| entry["kind"] == "lexicalObligation")
+        .collect::<Vec<_>>();
+    assert_eq!(obligations.len(), 1);
+    assert_eq!(obligations[0]["category"], "option");
+    assert_eq!(
+        obligations[0]["source"],
+        " superClass = Base; caseInsensitive = true; "
+    );
+    let error = compile_feature_grammar(&grammar, None, options.clone())
+        .expect_err("an unspecified superclass remains unresolved");
+    assert_eq!(error.reason, "operation");
+    assert!(error.message.contains("superClass = Base"));
+    let case_only = import_antlr(&source.replace("superClass = Base; ", ""))
+        .expect("caseInsensitive-only control imports");
+    assert_eq!(case_only.rules(), grammar.rules());
+    let parser = compile_feature_grammar(&case_only, None, options.clone())
+        .expect("caseInsensitive-only control compiles");
     let accepts = |text: &str| {
         parser
             .parse_tree(text.as_bytes(), &options)

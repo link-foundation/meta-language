@@ -12,6 +12,7 @@ impl RocqParser {
         let mut main = None;
         let items = self.items(&mut main, &[])?;
         Ok(SProgram {
+            reference_semantics: None,
             language: Language::Rocq,
             items,
             main,
@@ -436,6 +437,7 @@ impl RocqParser {
             self.skip_obligations(&start, annotation)?;
         }
         Ok(Definition::Fn(Box::new(SFn {
+            semantic_ret: None,
             name,
             params: params
                 .into_iter()

@@ -18,7 +18,7 @@ export function readSurfaceReferenceMutatingMethods() {
 
 const mutatingMethods = readSurfaceReferenceMutatingMethods();
 
-export function requiresReferenceSemantics(source) {
+export function requiresReferenceSemantics(source, eliminatedOperations = []) {
   const { tokens } = tokenize(source, 'JavaScript');
   // Templates carry structured parts instead of value text. These columns
   // project only nonempty keyword/operator/method comparisons, so missing
@@ -27,11 +27,15 @@ export function requiresReferenceSemantics(source) {
   for (let index = 0; index < tokens.length; index += 1) {
     const token = tokens[index];
     const value = token.value ?? '';
+    // An accepted source rewrite supplies only its removed method syntax,
+    // ending before the first argument. Every other token observation stays
+    // intact, including nested mutation, assignment and closure triggers.
+    const eliminatedMethod = eliminatedOperations.some(operation => operation.start <= token.start && token.end <= operation.end);
     if (requireSurfaceReferenceToken([
       token.kind, value,
       tokens[index - 1]?.kind ?? '', tokens[index - 1]?.value ?? '', tokens[index - 2]?.value ?? '',
       tokens[index + 1]?.kind ?? '', tokens[index + 1]?.value ?? '', tokens[index + 2]?.value ?? '',
-    ], closure, acceptSurfaceReferenceMutatingMethod(value, mutatingMethods),
+    ], closure, !eliminatedMethod && acceptSurfaceReferenceMutatingMethod(value, mutatingMethods),
     )) return true;
   }
   return false;

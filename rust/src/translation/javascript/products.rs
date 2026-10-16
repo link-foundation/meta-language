@@ -34,6 +34,11 @@ impl super::JavaScriptParser {
 
     /// Read module bindings before function scopes are entered, as the JavaScript author does.
     pub(super) fn prescan_product_bindings(&mut self) {
+        self.function_names
+            .extend(self.externals.iter().filter_map(|item| match item {
+                super::External::Function { name, .. } => Some(name.clone()),
+                super::External::Constant { .. } => None,
+            }));
         let tokens = &self.cursor.tokens;
         let mut depth = 0usize;
         for index in self.cursor.index..tokens.len() {
@@ -136,14 +141,40 @@ fn copy_tuple(ty: &Type) -> bool {
         && elements.iter().all(|element| scalar(element) || copy_tuple(element)))
 }
 
-fn children(node: &SExpr) -> Vec<&SExpr> {
+pub(super) fn children(node: &SExpr) -> Vec<&SExpr> {
     let mut values: Vec<&SExpr> = match &node.node {
+        SNode::Method { object, args, .. } => std::iter::once(object.as_ref())
+            .chain(args.iter().flatten())
+            .collect(),
+        SNode::Record {
+            entries,
+            prototype_definition,
+            ..
+        } => {
+            let mut values: Vec<_> = entries.iter().map(|entry| &entry.value).collect();
+            if let Some(definition) = prototype_definition {
+                values.push(&definition.value);
+            }
+            values
+        }
+        SNode::CopySlice { object } => vec![object],
         SNode::App { func, args } => {
             let mut values = vec![func.as_ref()];
             values.extend(args);
             values
         }
+        SNode::Lambda { params, body, .. } => params
+            .iter()
+            .filter_map(|parameter| parameter.default_value.as_ref())
+            .chain(std::iter::once(body.as_ref()))
+            .collect(),
+        SNode::CellWrite { cell, value, body } => vec![cell, value, body],
         SNode::Field { object, .. }
+        | SNode::Some { value: object, .. }
+        | SNode::FlattenOption { value: object }
+        | SNode::OptionalField { object, .. }
+        | SNode::CellAllocate { value: object, .. }
+        | SNode::CellRead { cell: object }
         | SNode::TypeOf { arg: object }
         | SNode::Unary { arg: object, .. }
         | SNode::StringMap { object, .. }
@@ -151,15 +182,28 @@ fn children(node: &SExpr) -> Vec<&SExpr> {
         | SNode::Show { arg: object, .. }
         | SNode::Cast { arg: object, .. }
         | SNode::Length { object, .. }
+        | SNode::ForOfIterable { object, .. }
+        | SNode::StringPoints { object }
         | SNode::TupleIndex { object, .. } => vec![object],
+        SNode::ReferenceWrite {
+            object,
+            index,
+            value,
+            ..
+        } => {
+            let mut values = vec![object.as_ref()];
+            values.extend(index.iter().map(Box::as_ref));
+            values.extend(value.iter().map(Box::as_ref));
+            values
+        }
         SNode::StringTest { object, search, .. } => vec![object, search],
-        SNode::Binary { left, right, .. } => vec![left, right],
+        SNode::Binary { left, right, .. } | SNode::Coalesce { left, right } => vec![left, right],
         SNode::Let { value, body, .. }
         | SNode::Print {
             expr: value, body, ..
         } => vec![value, body],
         SNode::Cons { head, tail } => vec![head, tail],
-        SNode::Index { object, index } => vec![object, index],
+        SNode::Index { object, index, .. } => vec![object, index],
         SNode::If {
             cond,
             then,
@@ -244,7 +288,7 @@ pub(super) fn has_javascript_products(program: &SProgram, nested_bindings: &Hash
             })
 }
 
-fn prop_expressions(prop: &super::SProp) -> Vec<&SExpr> {
+pub(super) fn prop_expressions(prop: &super::SProp) -> Vec<&SExpr> {
     match &prop.node {
         super::SPropNode::Eq(comparison)
         | super::SPropNode::Ne(comparison)
@@ -535,7 +579,7 @@ impl<'a> Facts<'a> {
                 self.edge(id, yes, potential);
                 self.edge(id, no, potential);
             }
-            SNode::Index { object, index } => {
+            SNode::Index { object, index, .. } => {
                 let object = self.expression(object, env, context);
                 self.expression(index, env, context);
                 self.projections.push(Projection { node, object });
@@ -740,6 +784,38 @@ fn apply_projections(program: &mut SProgram, admitted: &HashMap<*const SExpr, us
             };
         }
         match &mut node.node {
+            SNode::Record {
+                entries,
+                prototype_definition,
+                ..
+            } => {
+                for entry in entries {
+                    walk(&mut entry.value, admitted);
+                }
+                if let Some(definition) = prototype_definition {
+                    walk(&mut definition.value, admitted);
+                }
+            }
+            SNode::Lambda { params, body, .. } => {
+                for parameter in params {
+                    if let Some(default) = &mut parameter.default_value {
+                        walk(default, admitted);
+                    }
+                }
+                walk(body, admitted);
+            }
+            SNode::CellWrite { cell, value, body } => {
+                walk(cell, admitted);
+                walk(value, admitted);
+                walk(body, admitted);
+            }
+            SNode::Method { object, args, .. } => {
+                walk(object, admitted);
+                for arg in args.iter_mut().flatten() {
+                    walk(arg, admitted);
+                }
+            }
+            SNode::CopySlice { object } => walk(object, admitted),
             SNode::App { func, args } => {
                 walk(func, admitted);
                 for arg in args {
@@ -747,6 +823,11 @@ fn apply_projections(program: &mut SProgram, admitted: &HashMap<*const SExpr, us
                 }
             }
             SNode::Field { object, .. }
+            | SNode::Some { value: object, .. }
+            | SNode::FlattenOption { value: object }
+            | SNode::OptionalField { object, .. }
+            | SNode::CellAllocate { value: object, .. }
+            | SNode::CellRead { cell: object }
             | SNode::TypeOf { arg: object }
             | SNode::Unary { arg: object, .. }
             | SNode::StringMap { object, .. }
@@ -754,12 +835,29 @@ fn apply_projections(program: &mut SProgram, admitted: &HashMap<*const SExpr, us
             | SNode::Show { arg: object, .. }
             | SNode::Cast { arg: object, .. }
             | SNode::Length { object, .. }
+            | SNode::ForOfIterable { object, .. }
+            | SNode::StringPoints { object }
             | SNode::TupleIndex { object, .. } => walk(object, admitted),
+            SNode::ReferenceWrite {
+                object,
+                index,
+                value,
+                ..
+            } => {
+                walk(object, admitted);
+                if let Some(index) = index {
+                    walk(index, admitted);
+                }
+                if let Some(value) = value {
+                    walk(value, admitted);
+                }
+            }
             SNode::StringTest { object, search, .. } => {
                 walk(object, admitted);
                 walk(search, admitted);
             }
             SNode::Binary { left, right, .. }
+            | SNode::Coalesce { left, right }
             | SNode::Let {
                 value: left,
                 body: right,
@@ -777,6 +875,7 @@ fn apply_projections(program: &mut SProgram, admitted: &HashMap<*const SExpr, us
             | SNode::Index {
                 object: left,
                 index: right,
+                ..
             } => {
                 walk(left, admitted);
                 walk(right, admitted);

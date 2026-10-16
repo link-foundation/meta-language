@@ -45,10 +45,14 @@ fn function<'a>(program: &'a Program, name: &str) -> &'a meta_language::translat
     function
 }
 
-fn field(network: &LinkNetwork, parent: LinkId, label: &str) -> (LinkId, LinkId) {
-    let label = meta_language::typed_program_links_schema()["fields"][label]
+fn field_key(network: &LinkNetwork, parent: LinkId, key: &str) -> (LinkId, LinkId) {
+    let label = meta_language::typed_program_links_schema()["fields"][key]
         .as_str()
-        .unwrap_or(label);
+        .unwrap_or(key);
+    field_label(network, parent, label)
+}
+
+fn field_label(network: &LinkNetwork, parent: LinkId, label: &str) -> (LinkId, LinkId) {
     network
         .links()
         .find_map(|link| match link.references() {
@@ -63,6 +67,34 @@ fn field(network: &LinkNetwork, parent: LinkId, label: &str) -> (LinkId, LinkId)
             _ => None,
         })
         .unwrap()
+}
+
+#[test]
+fn actual_parameter_labels_do_not_alias_source_signature_parameter_keys() {
+    let data = fixture();
+    let (network, root) = reload(&data["cases"][1]);
+    let body = network.link(root).unwrap().references()[0];
+    let directory = field_key(&network, body, "declarations").1;
+    let entry = network.link(directory).unwrap().references()[0];
+    let declaration = network.link(entry).unwrap().references()[1];
+    let parameters = field_key(&network, declaration, "params").1;
+    assert_eq!(
+        parameters,
+        field_label(&network, declaration, "parameters").1
+    );
+    let signature = field_key(&network, declaration, "sourceSignature").1;
+    let positions = field_key(&network, signature, "parameters").1;
+    assert_eq!(
+        positions,
+        field_label(&network, signature, "source signature parameters").1
+    );
+    assert_ne!(parameters, positions);
+    assert_eq!(network.link(parameters).unwrap().references().len(), 1);
+    assert_eq!(network.link(positions).unwrap().references().len(), 1);
+    assert_ne!(
+        network.link(parameters).unwrap().references()[0],
+        network.link(positions).unwrap().references()[0]
+    );
 }
 
 fn edit_definition(network: &LinkNetwork, id: LinkId, value: &str) -> LinkNetwork {
@@ -307,10 +339,10 @@ fn actual_owner_generated_and_linked_context_premises_cannot_be_erased() {
         );
     }
     let body = network.link(root).unwrap().references()[0];
-    let directory = field(&network, body, "declarations").1;
+    let directory = field_key(&network, body, "declarations").1;
     let entry = network.link(directory).unwrap().references()[0];
     let declaration = network.link(entry).unwrap().references()[1];
-    let parameters = field(&network, declaration, "parameters").1;
+    let parameters = field_key(&network, declaration, "params").1;
     let parameter = network.link(parameters).unwrap().references()[0];
     for value in [false, true] {
         let mut changed = network.clone();
@@ -393,7 +425,7 @@ fn malformed_header_facts_cross_function_binders_and_injected_lifetimes_refuse()
         "Rust", data["sourceSignatureModel"].as_str().unwrap(), None,
     ).unwrap();
     let body = archive.network.link(archive.root).unwrap().references()[0];
-    let directory = field(&archive.network, body, "declarations").1;
+    let directory = field_key(&archive.network, body, "declarations").1;
     let declarations = archive
         .network
         .link(directory)
@@ -414,12 +446,12 @@ fn malformed_header_facts_cross_function_binders_and_injected_lifetimes_refuse()
             )
         })
         .collect::<std::collections::BTreeMap<_, _>>();
-    let subtraction = field(&archive.network, declarations["subtract"], "body").1;
-    let left = field(&archive.network, subtraction, "left").1;
-    let binding = field(&archive.network, left, "binding reference").0;
+    let subtraction = field_key(&archive.network, declarations["subtract"], "body").1;
+    let left = field_key(&archive.network, subtraction, "left").1;
+    let binding = field_label(&archive.network, left, "binding reference").0;
     let other = archive
         .network
-        .link(field(&archive.network, declarations["other"], "parameters").1)
+        .link(field_key(&archive.network, declarations["other"], "params").1)
         .unwrap()
         .references()[0];
     let mut references = archive.network.link(binding).unwrap().references().to_vec();
@@ -556,7 +588,7 @@ fn source_free_body_edits_change_observations_without_changing_reference_facts()
     .unwrap();
     let before = decode_typed_program_links(&archive.network, archive.root).unwrap();
     let body = archive.network.link(archive.root).unwrap().references()[0];
-    let declarations = field(&archive.network, body, "declarations").1;
+    let declarations = field_key(&archive.network, body, "declarations").1;
     let declaration = archive
         .network
         .link(declarations)
@@ -575,9 +607,9 @@ fn source_free_body_edits_change_observations_without_changing_reference_facts()
             .then_some(pair[1])
         })
         .unwrap();
-    let addition = field(&archive.network, declaration, "body").1;
-    let right = field(&archive.network, addition, "right").1;
-    let literal = field(&archive.network, right, "value").1;
+    let addition = field_key(&archive.network, declaration, "body").1;
+    let right = field_key(&archive.network, addition, "right").1;
+    let literal = field_key(&archive.network, right, "value").1;
     assert_eq!(
         archive
             .network

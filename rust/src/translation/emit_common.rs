@@ -495,7 +495,7 @@ fn type_dependencies(ty: &Type, found: &mut HashSet<String>) {
 fn expr_dependencies(expr: &Expr, found: &mut HashSet<String>) {
     type_dependencies(&expr.ty, found);
     match &expr.node {
-        Node::Call { func, .. } => {
+        Node::Call { func, .. } | Node::FunctionRef { func } => {
             found.insert(func.clone());
         }
         Node::Ctor { data, .. } => {

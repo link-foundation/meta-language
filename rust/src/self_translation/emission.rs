@@ -47,9 +47,6 @@ pub(super) fn emit_item(
         }
     };
     let program = check_program(&surface)?;
-    if context.utf16_strings && family(to) == "Rust" {
-        super::representation::validate(&program)?;
-    }
     // A top-level constant is a Rust constant; other top-level statements run
     // once, as a program.
     let constants = if family(to) == "Rust" {
@@ -68,6 +65,12 @@ pub(super) fn emit_item(
     }
     let emitted = match constants {
         Some(emitted) => emitted,
+        None if family(to) == "Rust" && context.utf16_strings => {
+            match super::representation::validate(&program)? {
+                Some(emitted) => emitted,
+                None => emit_rust_with_representation(&program, true)?,
+            }
+        }
         None if family(to) == "Rust" => {
             emit_rust_with_representation(&program, context.utf16_strings)?
         }

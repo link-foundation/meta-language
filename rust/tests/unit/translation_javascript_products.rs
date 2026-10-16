@@ -72,6 +72,21 @@ fn translation_javascript_product_sources_refuse_unproved_ownership_and_uses() {
 }
 
 #[test]
+fn translation_javascript_products_in_record_entries_keep_the_existing_use_refusal() {
+    let source = "const record={value:Object.freeze([5,true])};console.log(record.value[0]);";
+    let error = parse_javascript(source)
+        .expect_err("an ordinary record does not establish an immutable product use proof");
+    assert_eq!(
+        error.construct.as_deref(),
+        Some("immutable tuple product use")
+    );
+    assert_eq!(
+        error.reason,
+        "a product only supports owned bindings, direct calls, and fixed positional reads"
+    );
+}
+
+#[test]
 fn translation_javascript_products_preserve_legacy_arrays_and_require_actual_callers() {
     let source = "/** @param {[number,number]} pair */function first(pair){return pair[0];}console.log(first([2,3]));";
     let surface = parse_javascript(source).expect("legacy homogeneous positional arrays parse");

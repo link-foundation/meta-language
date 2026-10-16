@@ -48,10 +48,14 @@ fn replay(definitions: &[String], data: &Value) -> meta_language::TypedProgramLi
     )
     .unwrap()
 }
-fn field(network: &LinkNetwork, parent: LinkId, label: &str) -> (LinkId, LinkId) {
-    let label = meta_language::typed_program_links_schema()["fields"][label]
+fn field_key(network: &LinkNetwork, parent: LinkId, key: &str) -> (LinkId, LinkId) {
+    let label = meta_language::typed_program_links_schema()["fields"][key]
         .as_str()
-        .unwrap_or(label);
+        .unwrap_or(key);
+    field_label(network, parent, label)
+}
+
+fn field_label(network: &LinkNetwork, parent: LinkId, label: &str) -> (LinkId, LinkId) {
     network
         .links()
         .find_map(|link| match link.references() {
@@ -280,7 +284,7 @@ fn linked_value_and_nested_reference_edits_change_actual_calls_without_source_re
     let (network, root) = reload(&data["cases"][0]);
     let program = decode_typed_program_links(&network, root).unwrap();
     let body = network.link(root).unwrap().references()[0];
-    let declarations = field(&network, body, "declarations").1;
+    let declarations = field_key(&network, body, "declarations").1;
     let leaf = network
         .link(declarations)
         .unwrap()
@@ -292,9 +296,9 @@ fn linked_value_and_nested_reference_edits_change_actual_calls_without_source_re
                 .then_some(pair[1])
         })
         .unwrap();
-    let expression = field(&network, leaf, "body").1;
-    let literal = field(&network, expression, "right").1;
-    let scalar = field(&network, literal, "value").1;
+    let expression = field_key(&network, leaf, "body").1;
+    let literal = field_key(&network, expression, "right").1;
+    let scalar = field_key(&network, literal, "value").1;
     let checked = serde_json::to_value(&function(&program, "leaf").body).unwrap();
     assert_eq!(
         network.link(scalar).unwrap().metadata().definition(),
@@ -382,7 +386,7 @@ fn redirected_declaration_links_and_unrepresented_raw_call_fields_refuse() {
         "Rust", data["sourceSignatureModel"].as_str().unwrap(), None,
     ).unwrap();
     let body = packet.network.link(packet.root).unwrap().references()[0];
-    let directory = field(&packet.network, body, "declarations").1;
+    let directory = field_key(&packet.network, body, "declarations").1;
     let declarations = packet
         .network
         .link(directory)
@@ -403,8 +407,8 @@ fn redirected_declaration_links_and_unrepresented_raw_call_fields_refuse() {
             )
         })
         .collect::<std::collections::BTreeMap<_, _>>();
-    let caller = field(&packet.network, declarations["caller"], "body").1;
-    let relation = field(&packet.network, caller, "declaration reference").0;
+    let caller = field_key(&packet.network, declarations["caller"], "body").1;
+    let relation = field_label(&packet.network, caller, "declaration reference").0;
     for target in ["caller", "other"] {
         let mut references = packet.network.link(relation).unwrap().references().to_vec();
         references[2] = declarations[target];
@@ -424,10 +428,18 @@ fn redirected_declaration_links_and_unrepresented_raw_call_fields_refuse() {
             }),
             "{refused}"
         );
+        assert_eq!(
+            refused.message,
+            if target == "caller" {
+                "Rust borrowed call interface: every caller must target an owned pure leaf without a static borrowed input"
+            } else {
+                "the linked program has inconsistent call argument type"
+            }
+        );
     }
     let (original, root) = reload(&data["cases"][0]);
     let body = original.link(root).unwrap().references()[0];
-    let directory = field(&original, body, "declarations").1;
+    let directory = field_key(&original, body, "declarations").1;
     let caller = original
         .link(directory)
         .unwrap()
@@ -440,7 +452,7 @@ fn redirected_declaration_links_and_unrepresented_raw_call_fields_refuse() {
         })
         .unwrap();
     for (owner, label) in [
-        (field(&original, caller, "body").1, "optional"),
+        (field_key(&original, caller, "body").1, "optional"),
         (caller, "unsafe"),
         (caller, "async"),
     ] {
@@ -460,6 +472,89 @@ fn redirected_declaration_links_and_unrepresented_raw_call_fields_refuse() {
             emit_typed_program_links_with_options(&restored, root, "Rust", &options(&data))
                 .is_err(),
             "{label}"
+        );
+    }
+}
+
+#[test]
+fn complete_program_argument_refusals_precede_nonleaf_targets_in_both_orders() {
+    let data = fixture();
+    let leaf = "fn leaf(value:&f64)->f64{*value}";
+    let first = "fn first(value:f64)->f64{leaf(&value)}";
+    let second = "fn second(value:f64)->f64{leaf(&value)}";
+    let other = "fn other(value:&bool)->f64{if *value{1.0}else{2.0}}";
+    for callers in [[first, second], [second, first]] {
+        let source = format!("{leaf}{}{other}fn main(){{}}", callers.join(""));
+        let packet = create_typed_program_links_with_rust_source_signature_model(
+            &source,
+            "Rust",
+            data["sourceSignatureModel"].as_str().unwrap(),
+            None,
+        )
+        .unwrap();
+        assert!(emit_typed_program_links(&packet.network, packet.root, "Rust").is_ok());
+        assert!(
+            emit_typed_program_links_with_options(
+                &packet.network,
+                packet.root,
+                "Rust",
+                &options(&data)
+            )
+            .is_ok()
+        );
+        let mut network = LinkNetwork::from_lino(&packet.network.to_lino()).unwrap();
+        let body = network.link(packet.root).unwrap().references()[0];
+        let directory = field_key(&network, body, "declarations").1;
+        let declarations = network
+            .link(directory)
+            .unwrap()
+            .references()
+            .iter()
+            .map(|id| {
+                let pair = network.link(*id).unwrap().references();
+                (
+                    network
+                        .link(pair[0])
+                        .unwrap()
+                        .metadata()
+                        .definition()
+                        .unwrap()
+                        .to_owned(),
+                    pair[1],
+                )
+            })
+            .collect::<std::collections::BTreeMap<_, _>>();
+        for (caller, target) in [("first", "first"), ("second", "other")] {
+            let expression = field_key(&network, declarations[caller], "body").1;
+            let relation = field_label(&network, expression, "declaration reference").0;
+            let mut references = network.link(relation).unwrap().references().to_vec();
+            references[2] = declarations[target];
+            network = edit_references(&network, relation, &references);
+        }
+        let failure =
+            emit_typed_program_links_with_options(&network, packet.root, "Rust", &options(&data))
+                .unwrap_err();
+        assert!(failure.message.contains("call argument type"), "{failure}");
+        assert_eq!(
+            failure.message,
+            "the linked program has inconsistent call argument type"
+        );
+        let expression = field_key(&network, declarations["second"], "body").1;
+        let arguments = field_key(&network, expression, "args").1;
+        network.insert_field(arguments, "opaque container fact", body);
+        let restored = LinkNetwork::from_lino(&network.to_lino()).unwrap();
+        let failure =
+            emit_typed_program_links_with_options(&restored, packet.root, "Rust", &options(&data))
+                .unwrap_err();
+        assert!(
+            failure
+                .message
+                .contains("ordered program container contains named fields"),
+            "{failure}"
+        );
+        assert_eq!(
+            failure.message,
+            "Rust source header emission: an ordered program container contains named fields"
         );
     }
 }
@@ -541,12 +636,12 @@ fn actual_primitive_expression_records_and_parameter_spans_retain_strict_field_a
             }
         }
         let body = original.link(root).unwrap().references()[0];
-        let directory = field(&original, body, "declarations").1;
+        let directory = field_key(&original, body, "declarations").1;
         let declaration = original
             .link(original.link(directory).unwrap().references()[0])
             .unwrap()
             .references()[1];
-        let parameters = field(&original, declaration, "parameters").1;
+        let parameters = field_key(&original, declaration, "params").1;
         let parameter = original.link(parameters).unwrap().references()[0];
         for field in ["async", "unsafe", "opaque"] {
             let mut changed = original.clone();
@@ -577,7 +672,7 @@ fn actual_primitive_expression_records_and_parameter_spans_retain_strict_field_a
                 .as_str()
                 .unwrap();
             let span = if object {
-                field(&original, declaration, label).1
+                field_label(&original, declaration, label).1
             } else {
                 changed.insert_link(
                     [],

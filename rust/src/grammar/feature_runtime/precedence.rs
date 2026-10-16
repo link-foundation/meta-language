@@ -58,7 +58,8 @@ pub(super) fn nullable(expr: &Expr) -> bool {
         Expr::Repeat { item, min, .. } => *min == 0 || nullable(item),
         Expr::Seq(items) => items.iter().all(nullable),
         Expr::Choice { items, .. } => items.iter().any(nullable),
-        Expr::Capture { item, .. }
+        Expr::LexicalScope { item, .. }
+        | Expr::Capture { item, .. }
         | Expr::Precedence { item, .. }
         | Expr::DynamicPrecedence { item, .. }
         | Expr::Alias { item, .. } => nullable(item),
@@ -420,6 +421,7 @@ impl Executor<'_> {
         while let Some(
             Expr::Precedence { item, .. }
             | Expr::DynamicPrecedence { item, .. }
+            | Expr::LexicalScope { item, .. }
             | Expr::Capture { item, .. },
         ) = body
         {
@@ -461,7 +463,8 @@ impl Executor<'_> {
                 .iter()
                 .filter_map(|item| self.lead_priority(item, visiting))
                 .min(),
-            Expr::Capture { item, .. }
+            Expr::LexicalScope { item, .. }
+            | Expr::Capture { item, .. }
             | Expr::Precedence { item, .. }
             | Expr::DynamicPrecedence { item, .. }
             | Expr::Alias { item, .. }
@@ -555,6 +558,7 @@ impl Executor<'_> {
                         Expr::Repeat { item, .. }
                         | Expr::And(item)
                         | Expr::Not(item)
+                        | Expr::LexicalScope { item, .. }
                         | Expr::Capture { item, .. }
                         | Expr::Alias { item, .. }
                         | Expr::DynamicPrecedence { item, .. }
@@ -565,7 +569,10 @@ impl Executor<'_> {
                         | Expr::Recover { item, .. }
                         | Expr::Missing { item, .. }
                         | Expr::Embed { item, .. } => pending.push(item),
-                        Expr::Empty | Expr::Terminal { .. } | Expr::Ref(_) => {}
+                        Expr::Empty
+                        | Expr::LexicalToken { .. }
+                        | Expr::Terminal { .. }
+                        | Expr::Ref(_) => {}
                     }
                 }
             }
@@ -606,7 +613,8 @@ impl Executor<'_> {
                     self.edge_rules(item, side, names);
                 }
             }
-            Expr::Capture { item, .. }
+            Expr::LexicalScope { item, .. }
+            | Expr::Capture { item, .. }
             | Expr::Precedence { item, .. }
             | Expr::DynamicPrecedence { item, .. }
             | Expr::Alias { item, .. }
@@ -718,7 +726,9 @@ impl Executor<'_> {
 
     pub(super) fn edge_kinds(&self, item: &Expr, side: Associativity) -> Option<HashSet<Name>> {
         match item {
-            Expr::Capture { item, .. } => self.edge_kinds(item, side),
+            Expr::LexicalScope { item, .. } | Expr::Capture { item, .. } => {
+                self.edge_kinds(item, side)
+            }
             Expr::Seq(items) if !items.is_empty() => {
                 let operand = if side == Associativity::Left {
                     &items[0]
@@ -777,7 +787,8 @@ impl Executor<'_> {
                     .iter()
                     .map(|item| self.unit_kinds(item, visiting, side)),
             ),
-            Expr::Capture { item, .. }
+            Expr::LexicalScope { item, .. }
+            | Expr::Capture { item, .. }
             | Expr::Precedence { item, .. }
             | Expr::DynamicPrecedence { item, .. }
             | Expr::Repeat { item, .. } => self.unit_kinds(item, visiting, side),

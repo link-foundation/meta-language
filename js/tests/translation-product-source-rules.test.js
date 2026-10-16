@@ -76,6 +76,18 @@ test('native solver keeps emitted helper dependencies and relocates exact genera
   assert.match(adapted, /self::ml_array::optional_at/u);
   assert.match(adapted, /self::MlClosure1Loop2Result/u);
   for (const decorator of style.decorators) {
+    if (decorator.id === 'shared-product-source-parameter-loans') {
+      assert.deepEqual(decorator.when, [['format', 'Rust'], ['scope', 'formatted-product-source-parameters']]);
+      assert.equal(decorator.actions.length, 1);
+      const action = decorator.actions[0];
+      assert.equal(action.op, 'replace');assert.equal(action.field, 'source');
+      assert.match(action.from, /^pub fn accept_java_script_array_tuple_context\(/u);
+      assert.equal(action.to, action.from.replace('source_kind: String', 'source_kind: &str')
+        .replace('expected_kind: String', 'expected_kind: &str'));
+      assert.equal(action.to.slice(action.to.indexOf('{')), action.from.slice(action.from.indexOf('{')),
+        'the complete contextual-array decision body remains byte exact');
+      continue;
+    }
     if (decorator.id === 'reviewed-product-source-condition-lints-26667280') {
       assert.deepEqual(decorator.when, [['format', 'Rust'], ['scope', 'formatted-product-source-conditions']]);
       assert.equal(decorator.actions.length, 1);
@@ -125,6 +137,7 @@ test('native solver keeps emitted helper dependencies and relocates exact genera
   const generated = readFileSync(new URL('../../rust/src/translation/javascript/product_source_rules.rs', import.meta.url), 'utf8');
   assert.match(generated, /Generated from js\/src\/translation\/product-source-rules\.js by the checked translator/u);
   assert.match(generated, /pub fn solve_product_source_facts/u);
+  assert.match(generated, /pub fn accept_java_script_array_tuple_context\(\s*source_kind: &str,\s*expected_kind: &str,/u);
   assert.match(generated, /pub mod ml_math/u);
   assert.match(generated, /pub use crate::translation::frontend_rules::ml_array;/u);
   for (const allowance of ['float_cmp', 'cast_precision_loss', 'cast_possible_truncation', 'cast_sign_loss']) assert.match(generated, new RegExp(`clippy::${allowance}\\b`, 'u'));

@@ -1,5 +1,6 @@
 import { compactDeclarations, RULE_ATTRIBUTES } from './grammar-feature-forms.js';
 import { createGrammarParser } from './grammar-runtime.js';
+import { readGrammarLexerEntryForm } from './translation/grammar-lexer-rules.js';
 
 /**
  * An order-preserving, serializable grammar intermediate representation. The
@@ -63,6 +64,10 @@ export class Grammar {
     for (const rule of this.rules.values()) collectReferences(rule.expression, names);
     for (const extra of this.declarations.extras ?? []) collectReferences(extra, names);
     for (const macro of this.declarations.macros ?? []) collectReferences(macro.expression, names);
+    for (const lexer of this.declarations.lexers ?? []) for (const entry of lexer.expression.items ?? []) {
+      const role = readGrammarLexerEntryForm(entry.kind);
+      if (role === 1 || role === 2) collectReferences(entry.item, names);
+    }
     return [...names].sort();
   }
 

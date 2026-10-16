@@ -42,6 +42,7 @@ export function renderPortableTypeIdentity(kind, detail, children) {
   if (kind === 'array' || kind === 'set' || kind === 'cell') return kind + ':' + children[0];
   if (kind === 'option') return 'option:' + detail + ':' + children[0];
   if (kind === 'tuple') return 'tuple:[' + joinTypeNames(children, ',') + ']';
+  if (kind === 'union') return 'union:[' + joinTypeNames(children, ',') + ']';
   if (kind === 'record') return 'record:' + detail + '[' + joinTypeNames(children, ',') + ']';
   if (kind === 'map') return 'map:' + children[0] + ':' + children[1];
   if (kind === 'function') return 'function:(' + joinTypeNames(children, ',') + '):' + detail;

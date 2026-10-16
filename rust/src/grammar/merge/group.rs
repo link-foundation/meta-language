@@ -8,7 +8,7 @@ use super::decisions::{preserve_source_alternatives, wrap_lexical_production};
 use super::declarations::{declarations_text, merge_declarations, rule_fields};
 use super::normalize::{normalize, quote};
 use super::reconcile::reconcile_classes;
-use super::rename::renamed_rule;
+use super::rename::{lexer_scope, map_references, project_lexical_references, renamed_rule};
 use super::{
     GRAMMAR_MERGE_METHOD, GrammarMergeAlternative, GrammarMergeAlternativeReason,
     GrammarMergeDecision, GrammarMergeDecisionKind, GrammarMergeError, GrammarMergeFailure,
@@ -342,6 +342,9 @@ pub(super) fn merge_group(
     let mut definitions = BTreeMap::new();
     let mut concepts = BTreeMap::new();
     let mut source_productions = Vec::new();
+    let has_lexers = entry
+        .iter()
+        .any(|source| !source.grammar.declarations().lexers.is_empty());
     for class in &class_order {
         let representative = &nodes[members[class][0]];
         let productions: Vec<GrammarRule> = members[class]
@@ -363,23 +366,108 @@ pub(super) fn merge_group(
                     rule: node.rule.clone(),
                     renamed_rule: renamed.clone(),
                 });
-                renamed
+                if !has_lexers {
+                    return renamed;
+                }
+                let projected = map_references(
+                    &project_lexical_references(
+                        node.source.grammar,
+                        &node.rule.expr,
+                        node.source.id,
+                        &rename,
+                    ),
+                    &rename,
+                );
+                let scope = lexer_scope(node.source.grammar, &node.rule.name);
+                let family = if scope.is_empty() {
+                    String::new()
+                } else {
+                    format!("{}::{scope}", node.source.id)
+                };
+                let item = if renamed.kind == RuleKind::Token {
+                    if family.is_empty() {
+                        GrammarExpr::feature(FeatureExpr::Form(FeatureForm::new(
+                            "alias",
+                            vec![
+                                FieldValue::Name(names[class].clone()),
+                                FieldValue::Expression(GrammarExpr::feature(FeatureExpr::Form(
+                                    FeatureForm::new(
+                                        "token",
+                                        vec![FieldValue::Expression(projected)],
+                                    ),
+                                ))),
+                            ],
+                        )))
+                    } else {
+                        GrammarExpr::feature(FeatureExpr::Form(FeatureForm::new(
+                            "lexicalToken",
+                            vec![
+                                FieldValue::Name(family.clone()),
+                                FieldValue::Name(node.rule.name.clone()),
+                            ],
+                        )))
+                    }
+                } else {
+                    projected
+                };
+                let owner = if !family.is_empty() && node.rule.kind == RuleKind::Normal {
+                    node.rule.name.clone()
+                } else {
+                    String::new()
+                };
+                GrammarRule {
+                    expr: GrammarExpr::feature(FeatureExpr::Form(FeatureForm::new(
+                        "lexicalScope",
+                        vec![
+                            FieldValue::Name(family),
+                            FieldValue::Name(owner),
+                            FieldValue::Expression(item),
+                        ],
+                    ))),
+                    ..renamed
+                }
             })
             .collect();
         let renamed = productions[0].clone();
-        let proven = members[class]
+        let scopes = members[class]
             .iter()
-            .all(|&position| strict[position] == strict[index[&representative.alias]]);
+            .map(|&position| {
+                let node = &nodes[position];
+                let scope = lexer_scope(node.source.grammar, &node.rule.name);
+                if scope.is_empty() {
+                    String::new()
+                } else {
+                    format!("{}::{scope}", node.source.id)
+                }
+            })
+            .collect::<BTreeSet<_>>();
+        let owners = productions
+            .iter()
+            .map(|rule| match &rule.expr {
+                GrammarExpr::Feature(feature) => match &**feature {
+                    FeatureExpr::Form(form) => form.text("owner").unwrap_or_default(),
+                    _ => "",
+                },
+                _ => "",
+            })
+            .collect::<BTreeSet<_>>();
+        let proven = scopes.len() == 1
+            && owners.len() == 1
+            && members[class]
+                .iter()
+                .all(|&position| strict[position] == strict[index[&representative.alias]]);
         let expression = if preserve_source_alternatives(proven, productions.len() > 1) {
             GrammarExpr::Choice {
                 ordered: false,
                 alternatives: productions
                     .iter()
                     .map(|rule| {
-                        if wrap_lexical_production(
-                            rule.kind == RuleKind::Token,
-                            renamed.kind == RuleKind::Token,
-                        ) {
+                        if !has_lexers
+                            && wrap_lexical_production(
+                                rule.kind == RuleKind::Token,
+                                renamed.kind == RuleKind::Token,
+                            )
+                        {
                             GrammarExpr::feature(FeatureExpr::Form(FeatureForm::new(
                                 "token",
                                 vec![FieldValue::Expression(rule.expr.clone())],

@@ -4,7 +4,7 @@ use super::super::array_rules::{accept_rust_source_array_element, accept_rust_so
 use super::super::indirection_rules::{
     accept_rust_source_box_owner, accept_rust_source_lifetime_reference,
 };
-use super::super::product_rules::accept_rust_immutable_product_type;
+use super::super::product_rules::accept_rust_product_origin;
 use super::super::{
     BOOL, Result, RustParser, STRING, SourceOrigin, Token, TokenKind, Type, UNIT,
     UNSUPPORTED_TYPES, rust_fixed_type, span, unsupported,
@@ -115,18 +115,21 @@ impl RustParser {
             }
             self.cursor.expect(")", Some("tuple type"))?;
             let children_accepted = fields.iter().all(SourceOrigin::direct_copy_value);
-            if !accept_rust_immutable_product_type("tuple", children_accepted, false) {
+            let ty = self
+                .origins
+                .typed(Type::Tuple { elements }, &self.module_path, Vec::new());
+            self.origins.current_type.copy_evidence = children_accepted.then_some(());
+            self.origins.current_type.fields = Some(fields);
+            if !accept_rust_product_origin(
+                self.origins.current_type.direct_copy_value(),
+                self.origins.owned_local_product(&self.origins.current_type),
+            ) {
                 return Err(unsupported(
                     "immutable Rust tuple product",
                     "every field requires a direct recursively immutable scalar Copy source value",
                     span(&token, self.cursor.peek()),
                 ));
             }
-            let ty = self
-                .origins
-                .typed(Type::Tuple { elements }, &self.module_path, Vec::new());
-            self.origins.current_type.copy_evidence = children_accepted.then_some(());
-            self.origins.current_type.fields = Some(fields);
             return Ok(ty);
         }
         let segments = self.path_segments("type")?;

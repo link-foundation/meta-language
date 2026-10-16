@@ -15,6 +15,15 @@ pub struct SArrayItem {
 }
 
 impl SArrayItem {
+    /// Construct a value slot whose optional spread field is absent.
+    pub(crate) const fn without_spread(value: SExpr) -> Self {
+        Self {
+            spread: false,
+            value,
+            spread_present: false,
+        }
+    }
+
     /// Construct an item whose Boolean spread flag is explicitly present.
     #[must_use]
     pub const fn new(value: SExpr, spread: bool) -> Self {

@@ -70,6 +70,7 @@ fn immediate_literals(expr: &Expr, texts: &mut HashSet<Vec<u8>>) {
         Expr::Repeat { item, .. }
         | Expr::And(item)
         | Expr::Not(item)
+        | Expr::LexicalScope { item, .. }
         | Expr::Capture { item, .. }
         | Expr::Alias { item, .. }
         | Expr::Precedence { item, .. }
@@ -79,7 +80,7 @@ fn immediate_literals(expr: &Expr, texts: &mut HashSet<Vec<u8>>) {
         | Expr::Predicate { item, .. }
         | Expr::Missing { item, .. }
         | Expr::Embed { item, .. } => immediate_literals(item, texts),
-        Expr::Empty | Expr::Terminal { .. } | Expr::Ref(_) => {}
+        Expr::Empty | Expr::LexicalToken { .. } | Expr::Terminal { .. } | Expr::Ref(_) => {}
     }
 }
 
@@ -177,6 +178,7 @@ impl Ranking {
             Expr::Repeat { item, .. }
             | Expr::And(item)
             | Expr::Not(item)
+            | Expr::LexicalScope { item, .. }
             | Expr::Capture { item, .. }
             | Expr::Alias { item, .. }
             | Expr::Precedence { item, .. }
@@ -187,7 +189,7 @@ impl Ranking {
             | Expr::Predicate { item, .. }
             | Expr::Missing { item, .. }
             | Expr::Embed { item, .. } => self.walk(item, aliased),
-            Expr::Empty | Expr::Terminal { .. } | Expr::Ref(_) => {}
+            Expr::Empty | Expr::LexicalToken { .. } | Expr::Terminal { .. } | Expr::Ref(_) => {}
         }
     }
 }

@@ -8,6 +8,7 @@ import { DecoratorSet } from '../src/decorators.js';
 import { checkProjectData, writeProjectData } from './project-data.mjs';
 import { simplifySourceTextRustParentheses } from './source-text-byte-library-style.mjs';
 import { simplifyRustBranches } from './reviewed-rust-branch-styles.mjs';
+import { readPortableSourceLintStyles } from './portable-source-lint-style.mjs';
 
 const input = new URL('../src/translation/array-value-rules.js', import.meta.url);
 const source = readFileSync(input, 'utf8');
@@ -33,7 +34,7 @@ if (!process.argv.includes('--javascript-only')) {
   const { parseJavaScript } = await import('../src/translation/javascript.js');
   const { checkProgram } = await import('../src/translation/check.js');
   const { emitRust } = await import('../src/translation/emit-rust.js');
-  const translated = emitRust(checkProgram(parseJavaScript(source)));
+  const translated = emitRust(checkProgram(parseJavaScript(source)), { arrayConsumption: true });
   assert.equal(translated.definitions.length, policy.decisions.length, 'all complete array definitions are emitted');
   const raw = translated.definitions.join('\n\n');
   const actions = [];
@@ -49,11 +50,14 @@ if (!process.argv.includes('--javascript-only')) {
   const adapted = initial.decorate('emitter', { format: 'Rust', source: raw }).source;
   const simplified = simplifyRustBranches(simplifySourceTextRustParentheses(adapted));
   if (simplified !== adapted) actions.push({ op: 'replace', field: 'source', from: adapted, to: simplified });
+  const reviewed = readPortableSourceLintStyles(simplified);
+  actions.push(...reviewed.actions);
   const styles = new DecoratorSet([{ id: 'array-value-library-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }]);
   const styleFile = new URL('../../parity/self-translation/array-value-rules-decorators.lino', import.meta.url);
   if (check) assert.equal(readFileSync(styleFile, 'utf8'), styles.toLino(), 'array library style remains derived from actual emitted definitions');
   else writeFileSync(styleFile, styles.toLino());
   const decorated = DecoratorSet.fromLino(readFileSync(styleFile, 'utf8')).decorate('emitter', { format: 'Rust', source: raw }).source;
+  assert.equal(decorated, reviewed.source, 'recorded array styles reproduce the common complete-source lint adaptations');
   const formatted = spawnSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], { input: decorated, encoding: 'utf8' });
   if (formatted.error || formatted.status !== 0) throw formatted.error ?? new Error(formatted.stderr);
   const text = '// Generated from the checked JavaScript array value decisions. Do not edit.\n' + formatted.stdout;

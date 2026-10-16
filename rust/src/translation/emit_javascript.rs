@@ -26,9 +26,13 @@ use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
 use super::types::{Type, fixed_bounds};
 
 mod arrays;
+mod callables;
+mod expressions;
 mod helpers;
 mod math;
 mod names;
+mod optional_values;
+mod records;
 mod theorems;
 use self::helpers::Helper;
 use self::names::{KEYWORDS, field_key, ident};
@@ -602,175 +606,6 @@ impl<'p> JavaScriptEmitter<'p> {
         lines.push("  }".to_owned());
         lines.push("}".to_owned());
         Ok(lines)
-    }
-
-    fn expr(&mut self, e: &Expr) -> Result<String> {
-        if e.ty.is_float() {
-            self.uses_float = true;
-        }
-        match &e.node {
-            Node::Lit { value } => literal(&e.ty, value),
-            Node::None { absence } => Ok(if absence == "null" {
-                "null"
-            } else {
-                "undefined"
-            }
-            .to_owned()),
-            Node::Unit => Ok(super::product_emission_rules::render_java_script_unit(
-                self.program.source_language.as_str(),
-            )),
-            Node::Tuple {
-                items,
-                frozen,
-                product_model,
-            } => {
-                if product_model.as_ref().is_some_and(|model| {
-                    !super::typed_program_link_rules::accept_program_tuple_product_model(
-                        model, *frozen,
-                    )
-                }) {
-                    return Err(unsupported(
-                        "immutable tuple product model",
-                        "the declared immutable value product requires its retained frozen facet",
-                        e.span,
-                    ));
-                }
-                let texts = self.exprs(items)?;
-                Ok(
-                    crate::translation::product_emission_rules::render_tuple_value(
-                        "JavaScript",
-                        &texts,
-                        *frozen,
-                    ),
-                )
-            }
-            Node::TupleIndex { object, index } => {
-                let text = self.expr(object)?;
-                Ok(
-                    crate::translation::product_emission_rules::render_tuple_projection(
-                        "JavaScript",
-                        &text,
-                        &index.to_string(),
-                    ),
-                )
-            }
-            Node::Var { name } => Ok(name.clone()),
-            Node::Print { text, body } => Ok(format!(
-                "(console.log({}), {})",
-                self.expr(text)?,
-                self.expr(body)?
-            )),
-            Node::OutNil | Node::OutCons { .. } => {
-                unreachable!("only the Lean and Rocq emitters thread output")
-            }
-            Node::Call { func, args } => {
-                let target = self.state.reference(func, ".");
-                let args = self.exprs(args)?;
-                Ok(format!("{target}({})", args.join(", ")))
-            }
-            Node::Ctor {
-                data,
-                ctor,
-                args,
-                frozen,
-            } => {
-                let entry = self.program.data(data);
-                let ctor = entry
-                    .ctors
-                    .iter()
-                    .find(|candidate| candidate.name == *ctor)
-                    .unwrap_or_else(|| panic!("{data} has no constructor {ctor}"));
-                let args = self.exprs(args)?;
-                Ok(ctor_object(
-                    ctor,
-                    &args,
-                    self.program.source_language,
-                    *frozen,
-                ))
-            }
-            Node::Unary { op, arg, .. } => {
-                let arg = self.expr(arg)?;
-                Ok(match op {
-                    UnaryOp::Not => format!("!{arg}"),
-                    UnaryOp::Neg => self.checked(negate(&arg), &e.ty, "neg"),
-                })
-            }
-            Node::Binary { .. } => self.binary(e),
-            Node::If {
-                cond,
-                then,
-                otherwise,
-            } => Ok(format!(
-                "({} ? {} : {})",
-                self.expr(cond)?,
-                self.expr(then)?,
-                self.expr(otherwise)?
-            )),
-            Node::Let { .. } | Node::Match { .. } => Ok(format!(
-                "(() => {{\n{}\n}})()",
-                indent(&self.statements(e)?.join("\n"), 1)
-            )),
-            Node::StringMap { op, string } => {
-                let value = self.expr(string)?;
-                let object = if matches!(string.node, Node::Var { .. } | Node::Lit { .. }) {
-                    value
-                } else {
-                    format!("({value})")
-                };
-                Ok(
-                    crate::translation::frontend_rules::render_string_map_expression(
-                        "JavaScript",
-                        op,
-                        &object,
-                    ),
-                )
-            }
-            Node::StringTest { op, string, search } => {
-                let value = self.expr(string)?;
-                let object = if matches!(string.node, Node::Var { .. } | Node::Lit { .. }) {
-                    value
-                } else {
-                    format!("({value})")
-                };
-                let search = self.expr(search)?;
-                Ok(
-                    crate::translation::frontend_rules::render_string_test_expression(
-                        "JavaScript",
-                        op,
-                        &object,
-                        &search,
-                    ),
-                )
-            }
-            Node::ToString { arg, console } => {
-                if *console && arg.ty.is_float() {
-                    self.helpers.insert(Helper::ShowNumber);
-                    Ok(format!("ml_showNumber({})", self.expr(arg)?))
-                } else if matches!(arg.ty, Type::String) {
-                    self.expr(arg)
-                } else {
-                    self.text_of(arg)
-                }
-            }
-            Node::Cast {
-                arg,
-                flavor,
-                message,
-                ..
-            } => self.cast(arg, *flavor, message.as_deref()),
-            Node::Abort { message } => {
-                self.helpers.insert(Helper::Abort);
-                Ok(format!("ml_abort({})", json_string(message)))
-            }
-            Node::Array { .. } | Node::Append { .. } | Node::Index { .. } | Node::Length { .. } => {
-                self.array_expr(e)
-            }
-            Node::Math { .. } => self.math(e),
-        }
-    }
-
-    pub(super) fn exprs(&mut self, list: &[Expr]) -> Result<Vec<String>> {
-        list.iter().map(|arg| self.expr(arg)).collect()
     }
 
     fn text_of(&mut self, arg: &Expr) -> Result<String> {

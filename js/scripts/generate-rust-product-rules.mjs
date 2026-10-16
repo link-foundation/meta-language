@@ -9,11 +9,11 @@ import { emitRust } from '../src/translation/emit-rust.js';
 const input = new URL('../src/translation/rust-product-rules.js', import.meta.url);
 const style = new URL('../../parity/self-translation/rust-product-rules-decorators.lino', import.meta.url);
 const output = new URL('../../rust/src/translation/rust/product_rules.rs', import.meta.url);
-const definitions = emitRust(checkProgram(parseJavaScript(readFileSync(input, 'utf8')))).definitions;
+const definitions = emitRust(checkProgram(parseJavaScript(readFileSync(input, 'utf8'))), { arrayConsumption: true }).definitions;
 const raw = definitions.join('\n\n');
 if (process.argv.includes('--update-styles')) {
   const actions = [];
-  for (const name of ['accept_rust_immutable_product_type', 'accept_rust_tuple_index_spelling']) {
+  for (const name of ['accept_rust_immutable_product_type', 'accept_rust_tuple_index_spelling', 'accept_rust_product_origin']) {
     actions.push({ op: 'replace', field: 'source', from: `pub fn ${name}`, to: `/// Admit the corresponding immutable Rust source product.\n#[must_use]\npub fn ${name}` });
   }
   for (const name of ['kind', 'text']) actions.push({ op: 'replace', field: 'source', from: `${name}: crate::ml_string::Text`, to: `${name}: &str` });
@@ -34,6 +34,7 @@ if (process.argv.includes('--update-styles')) {
     '!indirected && (kind == "bool" || kind == "float" || kind == "fixed" || kind == "unit" || (kind == "tuple" && children_accepted))',
     "if text.is_empty() || (text.len() > 1 && text.starts_with('0')) {",
     `text.replace([${Array.from({ length: 10 }, (_, digit) => `'${digit}'`).join(', ')}], "").is_empty()`,
+    'immutable_product || owned_local_product',
   ];
   const intermediate = new DecoratorSet([{ id: 'rust-product-source-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }]).decorate('emitter', { format: 'Rust', source: raw }).source;
   const bodies = intermediate.split('\n').filter(line => line.startsWith('    ') && !['false', '} else {', '}'].includes(line.trim()));

@@ -9,6 +9,7 @@ const source='// Generated from linked scalar loop source policy.\n'
  +choices('acceptScalarLoopDeclarationModel','model',[policy.declarationModel])
  +choices('acceptScalarLoopLanguage','language',policy.languages)
  +choices('acceptScalarLoopValueKind','kind',Object.keys(policy.types))
+ +'/** @param {boolean} present @param {boolean} nullValue @param {string} kind @returns {boolean} */\nexport function acceptScalarLoopExpressionTypeAnnotation(present,nullValue,kind) {return !present || nullValue || '+Object.keys(policy.types).map(kind=>'kind === '+JSON.stringify(kind)).join(' || ')+';}\n'
  +choices('acceptScalarLoopBinaryOperation','operation',policy.operations.binary)
  +choices('acceptScalarLoopUnaryOperation','operation',policy.operations.unary)
  +choices('acceptScalarLoopMathOperation','operation',policy.operations.math)
@@ -18,7 +19,7 @@ if(process.argv.includes('--check')){if(readFileSync(javascript,'utf8')!==source
 const {parseJavaScript}=await import('../src/translation/javascript.js');
 const {checkProgram}=await import('../src/translation/check.js');
 const {emitRust}=await import('../src/translation/emit-rust.js');
-const raw=emitRust(checkProgram(parseJavaScript(source))).definitions.join('\n\n');
+const raw=emitRust(checkProgram(parseJavaScript(source)), { arrayConsumption: true }).definitions.join('\n\n');
 if(process.argv.includes('--update-styles')){
  const actions=[];let current=raw;
  const replace=(from,to)=>{if(current.includes(from)){actions.push({op:'replace',field:'source',from,to});current=current.split(from).join(to);}};

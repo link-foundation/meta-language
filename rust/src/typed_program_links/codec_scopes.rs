@@ -5,10 +5,10 @@ use crate::LinkId;
 use crate::translation::check::read_checked_match_pattern_bindings;
 use crate::translation::ir::{Decl, Pattern};
 use crate::translation::typed_program_link_rules::{
-    read_program_expression_operand_fields, read_program_pattern_binding_form,
-    read_program_proposition_binding_form, read_program_proposition_operand_fields,
-    read_program_reference_role, read_program_reference_source_field,
-    read_program_reference_target_field,
+    read_program_expression_entry_operand_field, read_program_expression_operand_fields,
+    read_program_pattern_binding_form, read_program_proposition_binding_form,
+    read_program_proposition_operand_fields, read_program_reference_role,
+    read_program_reference_source_field, read_program_reference_target_field,
 };
 use crate::translation::types::Type;
 use serde_json::Value;
@@ -489,6 +489,29 @@ impl Decoder<'_> {
             if !has_reference && !ownership.declarations.contains_key(self.tag(id, "fn")) {
                 return Err(error("a linked declaration reference is unresolved"));
             }
+        } else if kind == "lambda" {
+            let parameters = self.array(
+                self.field(id, "params")
+                    .ok_or_else(|| error("a linked lambda has no owned parameter list"))?,
+            )?;
+            let value = self.render(id, &mut traversal.remaining, &mut traversal.bytes)?;
+            let mut inner = environment.clone();
+            for slot in super::super::callables::parameter_ordinals(&value) {
+                let parameter = *parameters
+                    .get(slot)
+                    .ok_or_else(|| error("a linked callable parameter has no original slot"))?;
+                own_binding(&mut traversal.binding_owners, parameter, id, slot)?;
+                traversal.identities.insert(parameter);
+                inner.insert(self.name(parameter)?, parameter);
+            }
+            return self.bindings(
+                self.field(id, "body")
+                    .ok_or_else(|| error("a linked lambda has no body"))?,
+                &inner,
+                ownership,
+                traversal,
+                false,
+            );
         } else if kind == "let" {
             self.bindings(
                 self.field(id, "value")
@@ -543,12 +566,23 @@ impl Decoder<'_> {
             return Ok(());
         }
         for field in read_program_expression_operand_fields(kind).split_whitespace() {
+            let entry = read_program_expression_entry_operand_field(kind, field);
             let child = self
                 .field(id, field)
                 .ok_or_else(|| error("a linked expression has no shared operand"))?;
             if let Some(Data::Array(values)) = self.values.get(&child) {
                 for child in values {
-                    self.bindings(*child, environment, ownership, traversal, false)?;
+                    let child = if entry.is_empty() {
+                        *child
+                    } else {
+                        self.field(*child, &entry).ok_or_else(|| {
+                            error("a linked expression entry has no shared operand")
+                        })?
+                    };
+                    if matches!(self.values.get(&child), Some(Data::Scalar(Value::Null))) {
+                        continue;
+                    }
+                    self.bindings(child, environment, ownership, traversal, false)?;
                 }
             } else {
                 self.bindings(child, environment, ownership, traversal, false)?;

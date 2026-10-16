@@ -283,6 +283,8 @@ pub const MAX_INTEGER_DIGITS: usize = 15;
 pub fn feature_expression_fields(head: &str) -> Option<FormFields> {
     FEATURE_EXPRESSION_FORMS
         .iter()
+        .chain(super::lexical_forms::LEXICAL_EXPRESSION_FORMS.iter())
+        .chain(super::selection_forms::SELECTION_EXPRESSION_FORMS.iter())
         .find(|(name, _)| *name == head)
         .map(|(_, fields)| *fields)
 }
@@ -635,6 +637,15 @@ pub struct GrammarScanner {
     pub operations: Vec<Operation>,
 }
 
+/// A source-local lexer declaration with its complete ordered Links plan.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct GrammarLexer {
+    /// The source lexer family name.
+    pub name: String,
+    /// The lexical declarations, candidates, bindings and obligations.
+    pub expression: GrammarExpr,
+}
+
 /// One entry of a precedence order: a named precedence or a rule, whose
 /// productions it ranks.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -695,6 +706,8 @@ pub struct GrammarDeclarations {
     pub macros: Vec<GrammarMacro>,
     /// External scanner declarations.
     pub scanners: Vec<GrammarScanner>,
+    /// Source-local lexer election declarations.
+    pub lexers: Vec<GrammarLexer>,
 }
 
 impl GrammarDeclarations {
@@ -731,6 +744,7 @@ impl GrammarDeclarations {
             ("precedences", self.precedences.is_empty()),
             ("macros", self.macros.is_empty()),
             ("scanners", self.scanners.is_empty()),
+            ("lexers", self.lexers.is_empty()),
         ] {
             if !empty {
                 present.push(name);

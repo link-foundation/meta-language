@@ -9,6 +9,10 @@ use super::{
 /// JavaScript runtime's depth-first key order, is rejected.
 pub(super) fn check_portable(node: &SExpr) -> Result<()> {
     let children: Vec<&SExpr> = match &node.node {
+        SNode::Method { object, args, .. } => std::iter::once(object.as_ref())
+            .chain(args.iter().flatten())
+            .collect(),
+        SNode::CopySlice { object } => vec![object],
         SNode::Cons { .. } | SNode::Nil | SNode::List { .. } => {
             return Err(unsupported(
                 "list value",
@@ -116,6 +120,17 @@ pub(super) fn scope_expr(node: SExpr, ty: &Type) -> SExpr {
             ty: Some(ty.clone()),
             negative,
             unit: false,
+        },
+        SNode::Method { object, op, args } => SNode::Method {
+            object: visit(object),
+            op,
+            args: args
+                .into_iter()
+                .map(|arg| arg.map(|arg| scope_expr(arg, ty)))
+                .collect(),
+        },
+        SNode::CopySlice { object } => SNode::CopySlice {
+            object: visit(object),
         },
         SNode::StringMap { op, object } => SNode::StringMap {
             op,

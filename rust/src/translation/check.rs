@@ -27,11 +27,15 @@ use super::types::{BOOL, FLOAT, INT, NAT, STRING, Type, UNIT, array, data, fixed
 use super::{Language, Span};
 
 mod arrays;
+mod callables;
 mod expressions;
 mod externals;
 mod items;
 mod matches;
 mod math;
+mod optional_values;
+mod primitive_methods;
+mod records;
 mod recursion;
 mod strings;
 mod type_queries;
@@ -120,6 +124,69 @@ pub fn coerce(
             ty: ty.clone(),
             ..value
         });
+    }
+    let absence = match &value.node {
+        Node::None { absence } => absence.as_str(),
+        _ => "",
+    };
+    let same_element = matches!(ty, Type::Option { element, .. } if value.ty.same(element));
+    let optional = super::optional_value_rules::read_optional_coercion_operation(
+        language.as_str(),
+        ty.kind(),
+        value.ty.kind(),
+        value.kind(),
+        ty.accepts_absence(absence),
+        ty.accepts_absence("undefined"),
+        same_element,
+    );
+    match optional.as_str() {
+        "absence-error" => {
+            let Type::Option {
+                absence: expected, ..
+            } = ty
+            else {
+                unreachable!("the generated absence check requires Option")
+            };
+            return Err(type_error(
+                format!("expected {expected} absence but found {absence}"),
+                span,
+            ));
+        }
+        "none" => {
+            return Ok(Expr {
+                ty: ty.clone(),
+                ..value
+            });
+        }
+        "unit" | "discard-unit" => {
+            let absent = Expr::new(
+                Node::None {
+                    absence: "undefined".to_owned(),
+                },
+                ty.clone(),
+            );
+            return Ok(if optional == "unit" {
+                absent
+            } else {
+                Expr::new(
+                    Node::Let {
+                        name: "ml_discarded_unit".to_owned(),
+                        value: Box::new(value),
+                        body: Box::new(absent),
+                    },
+                    ty.clone(),
+                )
+            });
+        }
+        "some" => {
+            return Ok(Expr::new(
+                Node::Some {
+                    value: Box::new(value),
+                },
+                ty.clone(),
+            ));
+        }
+        _ => {}
     }
     if language == Language::JavaScript && value.ty == Type::Nat && *ty == Type::Int {
         return cast_to(value, &INT, Flavor::Exact, span);
@@ -377,6 +444,7 @@ fn surface_let(name: &str, value: &str, body: SExpr, span: Option<Span>) -> SExp
 
 struct Checker {
     language: Language,
+    reference_semantics: bool,
     /// Declaration full names in declaration order.
     order: Vec<String>,
     decls: HashMap<String, Decl>,
@@ -394,6 +462,7 @@ impl Checker {
         modules.insert(String::new(), Scope::default());
         Self {
             language,
+            reference_semantics: false,
             order: Vec::new(),
             decls: HashMap::new(),
             signatures: HashSet::new(),
@@ -404,6 +473,16 @@ impl Checker {
     }
 
     fn program(mut self, surface: &SProgram) -> Result<Program> {
+        self.reference_semantics =
+            super::surface_raw_metadata_rules::select_surface_reference_semantics(
+                surface
+                    .reference_semantics
+                    .as_ref()
+                    .and_then(super::surface::SurfaceRawMetadata::as_boolean)
+                    .unwrap_or(false),
+                false,
+                false,
+            );
         self.declare(&surface.items, &[])?;
         let items = self.check_items(&surface.items)?;
         let main = match &surface.main {
@@ -422,6 +501,7 @@ impl Checker {
             .collect();
         analyse_recursion(&mut declarations);
         let mut program = Program {
+            reference_semantics: self.reference_semantics,
             schema_version: 1,
             source_language: self.language,
             items,

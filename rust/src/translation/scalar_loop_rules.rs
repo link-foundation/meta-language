@@ -27,6 +27,16 @@ pub fn accept_scalar_loop_value_kind(kind: &str) -> bool {
 
 /// Read the shared closed scalar loop admission.
 #[must_use]
+pub fn accept_scalar_loop_expression_type_annotation(
+    present: bool,
+    null_value: bool,
+    kind: &str,
+) -> bool {
+    !present || null_value || kind == "float" || kind == "bool"
+}
+
+/// Read the shared closed scalar loop admission.
+#[must_use]
 pub fn accept_scalar_loop_binary_operation(operation: &str) -> bool {
     operation == "add"
         || operation == "sub"

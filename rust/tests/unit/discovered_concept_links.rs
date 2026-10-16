@@ -35,8 +35,10 @@ fn tree_value(tree: &SyntaxTree) -> Value {
             end,
             attributes,
             text: LeafText::Text(text),
+            lexical,
         } => {
             assert!(field.is_none() && !trivia && attributes.is_none());
+            assert!(lexical.is_none());
             json!({"type": "token", "kind": kind, "start": start, "end": end, "text": text})
         }
         _ => panic!(

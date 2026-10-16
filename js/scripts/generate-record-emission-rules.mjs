@@ -55,8 +55,8 @@ export async function generateRecordEmissionRules({ check = false, native = fals
     const packet = encodeTypedProgramLinks(program);
     const textProgram = decodeTypedProgramLinks(LinkNetwork.fromLino(packet.network.toLino()), packet.root);
     const binaryProgram = decodeTypedProgramLinks(decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network)), packet.root);
-    const emitted = emitRust(textProgram);
-    if (emitRust(binaryProgram).text !== emitted.text) throw new Error('record emission rules differ after complete text and binary Links reload');
+    const emitted = emitRust(textProgram, { arrayConsumption: true });
+    if (emitRust(binaryProgram, { arrayConsumption: true }).text !== emitted.text) throw new Error('record emission rules differ after complete text and binary Links reload');
     const artifact = { schemaVersion: 1, model: policy.model, sourceSha256: policy.sourceSha256,
       sourceClosure: policy.sourceClosure,
       definitions: emitted.definitions, rustSource: emitted.text, rustSha256: hash(emitted.text),

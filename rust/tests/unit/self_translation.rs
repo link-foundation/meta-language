@@ -24,6 +24,35 @@ use super::issue_195_observations::{Observation, record};
 const FIXTURE: &str = "parity/self-translation/cases.lino";
 const HEADER: &str = "// meta-language:self-translation:v1 ";
 
+fn report_code_difference(name: &str, actual: &str, expected: &str) {
+    if actual == expected {
+        return;
+    }
+    let actual_characters = actual.chars().count();
+    let expected_characters = expected.chars().count();
+    let at = actual
+        .chars()
+        .zip(expected.chars())
+        .position(|(actual, expected)| actual != expected)
+        .unwrap_or(actual_characters.min(expected_characters));
+    let start = at.saturating_sub(90);
+    let window = |text: &str| {
+        text.chars()
+            .skip(start)
+            .take(180)
+            .collect::<String>()
+            .escape_debug()
+            .to_string()
+    };
+    eprintln!(
+        "self-translation mismatch {name}: first character {at}; actual bytes {} chars {actual_characters}; expected bytes {} chars {expected_characters}; actual window [{start}..] {}; expected window [{start}..] {}",
+        actual.len(),
+        expected.len(),
+        window(actual),
+        window(expected)
+    );
+}
+
 #[test]
 fn sibling_binding_runs_match_javascript_and_restore_their_source() {
     let fixture: serde_json::Value = super::project_data::read_project_data(include_str!(
@@ -61,6 +90,11 @@ fn sibling_binding_runs_match_javascript_and_restore_their_source() {
                 .items
                 .iter()
                 .all(|item| item.status == "translated")
+        );
+        report_code_difference(
+            entry["name"].as_str().unwrap(),
+            &translated.code,
+            &expected[index],
         );
         assert_eq!(translated.code, expected[index], "{}", entry["name"]);
         assert_eq!(

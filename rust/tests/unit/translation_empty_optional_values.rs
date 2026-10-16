@@ -114,9 +114,69 @@ fn empty_tags_elements_and_source_owner_shadowing_keep_their_boundary() {
         function.body.node = Node::None {
             absence: absence.into(),
         };
-        assert!(encode_typed_program_links(&forged).is_err());
+        if absence == "both" {
+            // A policy may admit both cases, while a concrete absent value
+            // still needs exactly one observed tag. Keep the original input.
+            assert!(encode_typed_program_links(&forged).is_err());
+            continue;
+        }
+        let packet = encode_typed_program_links(&forged)
+            .expect("the generic modern optional value is checked");
+        let network = LinkNetwork::from_lino(&packet.network.to_lino()).unwrap();
+        let restored = decode_typed_program_links(&network, packet.root).unwrap();
+        assert_eq!(restored, forged);
+        let original_source = format!("function empty(){{return {absence};}}console.log(empty());");
+        let emitted_source = format!(
+            "{}\nconsole.log(empty());",
+            emit_javascript(&restored).unwrap().text
+        );
+        let actual = run(Command::new("node").args(["--input-type=module", "-e", &emitted_source]));
+        let expected =
+            run(Command::new("node").args(["--input-type=module", "-e", &original_source]));
+        assert!(
+            actual.ok && expected.ok,
+            "{}\n{}",
+            actual.stderr,
+            expected.stderr
+        );
+        assert_eq!(actual.stdout, expected.stdout);
+        assert_eq!(actual.stderr, expected.stderr);
+        assert_eq!(actual.stdout, format!("{absence}\n"));
+        assert!(!emit_rust(&restored).unwrap().text.is_empty());
+        assert!(!emit_lean(&restored).unwrap().text.is_empty());
+        assert!(!emit_rocq(&restored).unwrap().text.is_empty());
     }
-    assert!(parse_javascript("function empty(){return null;}").is_err());
+    let null_program =
+        check_program(&parse_javascript("function empty(){return null;}").unwrap()).unwrap();
+    let Some(Decl::Fn(null)) = null_program.declaration("empty") else {
+        panic!("the original null input has an actual checked function");
+    };
+    assert_eq!(
+        null.ret,
+        Type::Option {
+            element: Box::new(Type::Float),
+            absence: "null".to_owned()
+        }
+    );
+    assert_eq!(
+        null.body.node,
+        Node::None {
+            absence: "null".to_owned()
+        }
+    );
+    let null_packet = encode_typed_program_links(&null_program).unwrap();
+    assert_eq!(
+        decode_typed_program_links(&null_packet.network, null_packet.root).unwrap(),
+        null_program
+    );
+    let null_source = format!(
+        "{}\nconsole.log(empty());",
+        emit_javascript(&null_program).unwrap().text
+    );
+    let null_observation =
+        run(Command::new("node").args(["--input-type=module", "-e", &null_source]));
+    assert!(null_observation.ok, "{}", null_observation.stderr);
+    assert_eq!(null_observation.stdout, "null\n");
     assert!(parse_javascript("function empty(){return undefined;const undefined=1;}").is_err());
     let shadowed = check_program(
         &parse_javascript("function shadowed(undefined){return undefined;}").unwrap(),

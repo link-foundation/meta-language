@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { runInNewContext } from 'node:vm';
 
 import { translateProgram } from '../src/program-translation.js';
+import { parseJavaScript } from '../src/translation/javascript.js';
+import { checkProgram } from '../src/translation/check.js';
+import { emitJavaScript } from '../src/translation/emit-javascript.js';
 
 const STRINGS = `/**
  * @param {string} name
@@ -33,7 +37,22 @@ test('startsWith, endsWith and includes on strings are a semantic translation in
 
 test('string tests that are not portable are refused with a reason', () => {
   assert.match(refusal("console.log('abc'.startsWith('a', 1));\n"), /one argument/u);
-  assert.match(refusal("const xs = [1];\nconsole.log(xs.includes(1));\n"), /portable on strings/u);
+});
+
+test('the original array membership input has array semantics', () => {
+  // The former /portable on strings/ assertion documented the old unconditional
+  // StringTest dispatch. Array.prototype.includes instead uses SameValueZero;
+  // translation-array-includes.test.js independently observes NaN and both zeros.
+  const source = "const xs = [1];\nconsole.log(xs.includes(1));\n";
+  const translated = translateProgram(source, 'JavaScript', 'Rust');
+  assert.equal(translated.diagnostic, null);
+  assert.equal(translated.contract.support, 'semantic-translation');
+  assert.ok(translated.code.includes('crate::ml_array::includes('));
+  for (const candidate of [source, emitJavaScript(checkProgram(parseJavaScript(source))).text]) {
+    const observations = [];
+    runInNewContext(candidate, { console: { log: value => observations.push(value) } });
+    assert.deepEqual(observations, [true]);
+  }
 });
 
 const CASES = `/**

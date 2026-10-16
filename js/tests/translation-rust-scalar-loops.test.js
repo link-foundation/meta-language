@@ -10,7 +10,61 @@ import vm from 'node:vm';
 import { publicDeclarationConsumers } from '../scripts/check-public-declaration-contracts.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
-import { createTypedProgramLinks, emitTypedProgramLinks, eraseTypeScript, LinkNetwork } from '../src/index.js';
+import { createTypedProgramLinks, decodeTypedProgramLinks, encodeTypedProgramLinks, emitTypedProgramLinks, eraseTypeScript, LinkNetwork } from '../src/index.js';
+import { parseJavaScript } from '../src/translation/javascript.js';
+import { checkProgram } from '../src/translation/check.js';
+import { checkRustScalarLoopProof } from '../src/translation/rust-scalar-loops.js';
+import { acceptScalarLoopExpressionTypeAnnotation } from '../src/translation/scalar-loop-rules.js';
+
+test('shared scalar loop annotation admission distinguishes inference from malformed present types', () => {
+  for (const [present, nullValue, kind, expected] of [
+    [false, false, '', true],
+    [true, true, '', true],
+    [true, false, 'float', true],
+    [true, false, 'bool', true],
+    [true, false, '', false],
+    [true, false, 'string', false],
+    [true, false, 'array', false],
+    [true, false, 'unit', false],
+  ]) assert.equal(acceptScalarLoopExpressionTypeAnnotation(present, nullValue, kind), expected);
+});
+
+test('actual scalar loop snapshots retain null, omitted and typed annotations through checking and source-free replay', () => {
+  const fixture = readProjectData(new URL('../../parity/fixtures/rust-scalar-loops.lino', import.meta.url));
+  const source = fixture.cases[1].javaScriptDefinitions;
+  const original = parseJavaScript(source, { scalarLoopModel: fixture.model });
+  assert.equal(original.items[0].body.then.k, 'let');
+  assert.equal(Object.hasOwn(original.items[0].body.then, 'type'), true);
+  assert.equal(original.items[0].body.then.type, null);
+  for (const annotation of [undefined, null, { kind: 'float' }]) {
+    const surface = JSON.parse(JSON.stringify(original));
+    const binding = surface.items[0].body.then;
+    if (annotation === undefined) delete binding.type;
+    else binding.type = annotation;
+    const restoredSurface = JSON.parse(JSON.stringify(surface));
+    assert.equal(Object.hasOwn(restoredSurface.items[0].body.then, 'type'), annotation !== undefined);
+    if (annotation !== undefined) assert.deepEqual(restoredSurface.items[0].body.then.type, annotation);
+    checkRustScalarLoopProof(restoredSurface.items[0], 'JavaScript');
+    const packet = encodeTypedProgramLinks(checkProgram(restoredSurface));
+    const network = LinkNetwork.fromLino(packet.network.toLino());
+    const program = decodeTypedProgramLinks(network, packet.root);
+    assert.equal(program.declarations.get('swap').sourceLoop.sourceName, 'swap');
+    const runtime = {};
+    vm.runInNewContext(emitTypedProgramLinks(network, packet.root, 'JavaScript').code, runtime, { timeout: 1000 });
+    assert.equal(runtime.swap(1, 2, 1, 0), 2);
+    assert.equal(Object.is(runtime.swap(0, -0, 1, 0), -0), true);
+  }
+});
+
+test('scalar loop snapshot proofs reject malformed annotations and retain scalar kind checks', () => {
+  const fixture = readProjectData(new URL('../../parity/fixtures/rust-scalar-loops.lino', import.meta.url));
+  const original = parseJavaScript(fixture.cases[1].javaScriptDefinitions, { scalarLoopModel: fixture.model });
+  for (const annotation of [false, 0, '', [], {}, { kind: null }, { kind: 1 }, { kind: 'string' }, { kind: 'array', element: { kind: 'float' } }]) {
+    const item = JSON.parse(JSON.stringify(original.items[0]));
+    item.body.then.type = annotation;
+    assert.throws(() => checkRustScalarLoopProof(item, 'JavaScript'), /a loop expression has a non-scalar value type/u);
+  }
+});
 
 async function runDeclaredConsumer(name, context) {
   const consumer = publicDeclarationConsumers().find(consumer => consumer.name === name);
