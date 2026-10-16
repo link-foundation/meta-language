@@ -30,7 +30,7 @@ pub fn read_grammar_lexer_literal_extension(
             vec![-1f64]
         } else {
             {
-                let owned = false;
+                let matching_owner_present = false;
                 {
                     let index = 0f64;
                     {
@@ -47,14 +47,14 @@ pub fn read_grammar_lexer_literal_extension(
                                     targets,
                                     item_kinds,
                                     count,
-                                    owned,
+                                    matching_owner_present,
                                     index,
                                     candidates,
                                     literals,
                                 );
                                 match ml_s8 {
-                                    self::MlReadGrammarLexerLiteralExtensionLoop10Result::MlReadGrammarLexerLiteralExtensionLoop10Done(owned_2, index_2, candidates_2, literals_2) => {
-                                        if owned_2 || (value == (self::ml_string::Text::from_units(vec![]))) {
+                                    self::MlReadGrammarLexerLiteralExtensionLoop10Result::MlReadGrammarLexerLiteralExtensionLoop10Done(matching_owner_present_2, index_2, candidates_2, literals_2) => {
+                                        if matching_owner_present_2 || (value == (self::ml_string::Text::from_units(vec![]))) {
                                             {
                                                 let order = self::read_grammar_lexer_text_position(parser_literals, value.clone());
                                                 if order < 0f64 {

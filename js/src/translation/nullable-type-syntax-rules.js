@@ -8,7 +8,7 @@ import { readRequiredTextFact } from './fact-column-rules.js';
 export function readNullableTypeSyntax(alternatives, first) {
   if (alternatives.length > 1) {
     let missing = 0;
-    let values = 0;
+    let valueAlternativeCount = 0;
     let value = -1;
     let absence = 0;
     for (let at = 0; at < alternatives.length; at += 1) {
@@ -17,11 +17,11 @@ export function readNullableTypeSyntax(alternatives, first) {
         missing += 1;
         absence = part === 'null' ? 1 : 2;
       } else {
-        values += 1;
+        valueAlternativeCount += 1;
         value = at;
       }
     }
-    if (missing > 0 && values === 1) return [1, value, missing > 1 ? 3 : absence];
+    if (missing > 0 && valueAlternativeCount === 1) return [1, value, missing > 1 ? 3 : absence];
     return [2, 0, 0];
   }
   const name = readRequiredTextFact(alternatives, 0);

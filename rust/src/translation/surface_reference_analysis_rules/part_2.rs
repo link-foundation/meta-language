@@ -3,6 +3,12 @@ use super::*;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_surface_reference_refusal() -> String {
+    String::from("shared reference state needs an explicit target state model")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_surface_reference_emission_operation(
     kind: &str,
     stateful_receiver: bool,

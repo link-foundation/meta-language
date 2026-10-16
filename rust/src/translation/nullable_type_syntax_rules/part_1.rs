@@ -178,7 +178,7 @@ pub fn read_nullable_type_syntax(alternatives: &[String], first: f64) -> Vec<f64
         {
             let missing = 0f64;
             {
-                let values = 0f64;
+                let value_alternative_count = 0f64;
                 {
                     let value = -1f64;
                     {
@@ -189,14 +189,14 @@ pub fn read_nullable_type_syntax(alternatives: &[String], first: f64) -> Vec<f64
                                 let ml_s1 = self::ml_read_nullable_type_syntax_loop1(
                                     alternatives,
                                     missing,
-                                    values,
+                                    value_alternative_count,
                                     value,
                                     absence,
                                     at,
                                 );
                                 match ml_s1 {
-                                    self::MlReadNullableTypeSyntaxLoop1Result::MlReadNullableTypeSyntaxLoop1Done(missing_2, values_2, value_2, absence_2) => {
-                                        if (missing_2 > 0f64) && (values_2 == 1f64) {
+                                    self::MlReadNullableTypeSyntaxLoop1Result::MlReadNullableTypeSyntaxLoop1Done(missing_2, value_alternative_count_2, value_2, absence_2) => {
+                                        if (missing_2 > 0f64) && (value_alternative_count_2 == 1f64) {
                                             vec![1f64, value_2, if missing_2 > 1f64 {
                                                 3f64
                                             } else {
@@ -263,7 +263,7 @@ pub enum MlReadNullableTypeSyntaxLoop1Result {
 pub fn ml_read_nullable_type_syntax_loop1(
     alternatives: &[String],
     mut missing: f64,
-    mut values: f64,
+    mut value_alternative_count: f64,
     mut value: f64,
     mut absence: f64,
     mut at: f64,
@@ -289,13 +289,14 @@ pub fn ml_read_nullable_type_syntax_loop1(
                 }
                 {
                     {
-                        let values_2 = values + 1f64;
+                        let value_alternative_count_2 = value_alternative_count + 1f64;
                         {
                             let value_2 = at;
                             {
                                 let at_3 = at + 1f64;
                                 {
-                                    (values, value, at) = (values_2, value_2, at_3);
+                                    (value_alternative_count, value, at) =
+                                        (value_alternative_count_2, value_2, at_3);
                                     continue;
                                 }
                             }
@@ -306,7 +307,10 @@ pub fn ml_read_nullable_type_syntax_loop1(
         }
         return {
             self::MlReadNullableTypeSyntaxLoop1Result::MlReadNullableTypeSyntaxLoop1Done(
-                missing, values, value, absence,
+                missing,
+                value_alternative_count,
+                value,
+                absence,
             )
         };
     }

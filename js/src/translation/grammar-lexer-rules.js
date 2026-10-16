@@ -135,20 +135,20 @@ export function readGrammarLexerLiteralExtension(owner, value, kinds, names, val
   const count = kinds.length;
   if (names.length !== count || values.length !== count || targets.length !== count
     || itemKinds.length !== count || itemValues.length !== count) return [-1];
-  let owned = false;
+  let matchingOwnerPresent = false;
   let index = 0;
   const candidates = [];
   const literals = [];
   while (index < count) {
     const form = readGrammarLexerEntryForm(readRequiredTextFact(kinds, index));
     const name = readRequiredTextFact(names, index);
-    if (form === 1 && readRequiredTextFact(targets, index) === owner) owned = true;
+    if (form === 1 && readRequiredTextFact(targets, index) === owner) matchingOwnerPresent = true;
     if (form === 3 && readRequiredTextFact(values, index) === value) return [0, -1, -1];
     candidates.push(form === 7 && !name.startsWith('@literal:') ? 'token' : 'silent');
     literals.push(readRequiredTextFact(itemKinds, index) === 'literal');
     index += 1;
   }
-  if (!owned || value === '') return [0, -1, -1];
+  if (!matchingOwnerPresent || value === '') return [0, -1, -1];
   const order = readGrammarLexerTextPosition(parserLiterals, value);
   if (order < 0) return [-1];
   const selected = readGrammarLexerLiteralRulePosition(value, 'combined', candidates, itemValues, literals);

@@ -262,8 +262,8 @@ function inspectSurfaceReferenceExpression(columns, rows, size, program, node, n
       && readSurfaceReferenceKind(columns, rows, size, rightNode) !== 'none'
       && (acceptSurfaceReferenceStructure(columns, rows, size, readRequiredNumberFact(left, 0)) || acceptSurfaceReferenceStructure(columns, rows, size, readRequiredNumberFact(right, 0)));
     const own = readSurfaceReferenceField(columns, rows, size, node, 'type');
-    const type = readSurfaceReferenceType(columns, own) !== -1 ? own : operation === 'plus' || operation === 'add' ? readRequiredNumberFact(left, 0) : -1;
-    return [type, observed ? 1 : 0];
+    const resultType = readSurfaceReferenceType(columns, own) !== -1 ? own : operation === 'plus' || operation === 'add' ? readRequiredNumberFact(left, 0) : -1;
+    return [resultType, observed ? 1 : 0];
   }
   if (kind === 'lambda') {
     let innerNames = names;

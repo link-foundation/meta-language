@@ -349,7 +349,7 @@ pub fn ml_read_grammar_lexer_literal_extension_loop10(
     targets: &[self::ml_string::Text],
     item_kinds: &[self::ml_string::Text],
     mut count: f64,
-    mut owned: bool,
+    mut matching_owner_present: bool,
     mut index: f64,
     mut candidates: Vec<self::ml_string::Text>,
     mut literals: Vec<bool>,
@@ -363,12 +363,12 @@ pub fn ml_read_grammar_lexer_literal_extension_loop10(
                 {
                     let name = self::read_required_text_fact(names, index);
                     {
-                        let owned_3 = if (form == 1f64)
+                        let matching_owner_present_3 = if (form == 1f64)
                             && ((self::read_required_text_fact(targets, index)) == owner)
                         {
                             { true }
                         } else {
-                            owned
+                            matching_owner_present
                         };
                         if (form == 3f64)
                             && ((self::read_required_text_fact(values, index)) == value)
@@ -413,8 +413,12 @@ pub fn ml_read_grammar_lexer_literal_extension_loop10(
                                     {
                                         let index_2 = index + 1f64;
                                         {
-                                            (owned, index, candidates, literals) =
-                                                (owned_3, index_2, candidates_2, literals_2);
+                                            (matching_owner_present, index, candidates, literals) = (
+                                                matching_owner_present_3,
+                                                index_2,
+                                                candidates_2,
+                                                literals_2,
+                                            );
                                             continue;
                                         }
                                     }
@@ -425,7 +429,7 @@ pub fn ml_read_grammar_lexer_literal_extension_loop10(
                 }
             }
         } else {
-            self::MlReadGrammarLexerLiteralExtensionLoop10Result::MlReadGrammarLexerLiteralExtensionLoop10Done(owned, index, candidates, literals)
+            self::MlReadGrammarLexerLiteralExtensionLoop10Result::MlReadGrammarLexerLiteralExtensionLoop10Done(matching_owner_present, index, candidates, literals)
         };
     }
 }

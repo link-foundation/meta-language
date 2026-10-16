@@ -510,14 +510,17 @@ pub fn inspect_surface_reference_expression(
                                         {
                                             let own = crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, node, "type");
                                             {
-                                                let type_ = if (crate::translation::surface_reference_analysis_rules::read_surface_reference_type(columns, own)) != -1f64 {
+                                                let result_type = if (crate::translation::surface_reference_analysis_rules::read_surface_reference_type(columns, own)) != -1f64 {
                                                             own
                                                         } else if (operation == "plus") || (operation == "add") {
                                                                 crate::translation::surface_reference_analysis_rules::read_required_number_fact(&(left), 0f64)
                                                             } else {
                                                                 -1f64
                                                             };
-                                                vec![type_, if observed { 1f64 } else { 0f64 }]
+                                                vec![
+                                                    result_type,
+                                                    if observed { 1f64 } else { 0f64 },
+                                                ]
                                             }
                                         }
                                     }
@@ -891,10 +894,4 @@ pub fn render_surface_reference_operation(
     } else {
         String::from("")
     }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_surface_reference_refusal() -> String {
-    String::from("shared reference state needs an explicit target state model")
 }
