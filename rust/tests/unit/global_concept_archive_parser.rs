@@ -576,7 +576,7 @@ fn archived_roots_retain_start_and_rule_order_and_allow_ordinary_start_overrides
         1,
     );
     for tampered in [&changed, &reordered] {
-        assert_ne!(tampered, archive);
+        assert_ne!(tampered, &archive);
         let existing = read_global_concept_space_links(tampered, &archive_settings()).unwrap_err();
         assert_eq!(
             create_global_concept_space_parser(
