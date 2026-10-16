@@ -54,3 +54,8 @@ export function readGrammarTreeRecursionPlan(kind, output) {
 export function readGrammarSelectionEqualityFields(alternative) {
   return alternative ? 'language|provenance' : 'mode|mapping|start|end|candidates|provenance|ambiguous';
 }
+
+/** @param {string} sourceFormat @returns {string} */
+export function readGrammarSourceDefaultMatching(sourceFormat) {
+  return sourceFormat === 'peg' ? 'peg' : 'generalized';
+}

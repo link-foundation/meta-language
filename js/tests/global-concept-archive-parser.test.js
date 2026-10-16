@@ -5,6 +5,8 @@ import { parseGrammarLinks } from '../src/grammar-links.js';
 import { createGlobalConceptSpace, createGlobalConceptSpaceParser,
   globalConceptSpaceToLinks, readGlobalConceptSpaceLinks } from '../src/global-concept-space.js';
 import { readStructuredDataLino, structuredDataToLino } from '../src/structured-data-links.js';
+import { encodeFormalConceptDefinition } from '../src/formal-concept-definition.js';
+import { readGrammarSourceDefaultMatching } from '../src/translation/grammar-selection-rules.js';
 import { nativeGrammarText } from '../src/native-grammar-parser.js';
 import { nativeRows } from '../scripts/native-grammar-rows.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
@@ -175,6 +177,100 @@ test('archive recursion keeps the shared budgets and same-region cycle diagnosti
   const result = createGlobalConceptSpaceParser(cyclicArchive, cycle.name, { records: [] }).parseTree(cycle.source);
   assert.equal(result.ok, false);
   assert.equal(result.rejection.reason, 'nonConsumingEmbeddingCycle');
+});
+
+test('archived raw PEG formats preserve possessive repetition and explicit generalized overrides', () => {
+  for (const format of ['', 'bnf', 'ebnf', 'abnf', 'antlr', 'lark', 'gbnf', 'tree-sitter', 'meta-language', 'inferred']) {
+    assert.equal(readGrammarSourceDefaultMatching(format), 'generalized');
+  }
+  assert.equal(readGrammarSourceDefaultMatching('peg'), 'peg');
+  const listing = '(grammar (start document))\n(rule document normal (seq (repeat0 (literal a)) (literal a)))\n';
+  const grammar = parseGrammarLinks(listing);
+  const specifications = [
+    { id: 'peg-default', format: 'peg', matching: null, accepted: false },
+    { id: 'peg-explicit', format: 'peg', matching: 'peg', accepted: false },
+    { id: 'generalized', format: null, matching: null, accepted: true },
+    { id: 'override', format: 'peg', matching: 'generalized', accepted: true },
+  ];
+  const sources = specifications.map(({ id, format, matching }) => ({ id, language: id,
+    grammar: new Grammar(grammar.start, grammar.rules, format, matching === null ? null : { matching }) }));
+  const meaning = encodeFormalConceptDefinition(undefined, { model: 'source text value' });
+  const space = createGlobalConceptSpace(sources, { records: [],
+    formalDefinitions: Object.fromEntries(sources.map(({ id }) => [`${id}:document`, meaning])),
+    equivalences: [['peg-default:document', 'peg-explicit:document']],
+  });
+  assert.deepEqual(space.failures, []);
+  assert.equal(space.mappings['peg-default:document'], space.mappings['peg-explicit:document']);
+  assert.notEqual(space.mappings['peg-default:document'], space.mappings['generalized:document']);
+  assert.notEqual(space.mappings['peg-default:document'], space.mappings['override:document']);
+  assert.equal(space.sources.find(({ id }) => id === 'peg-default').context.matching, null,
+    'the original declared matching remains absent rather than a fabricated declaration');
+  const expected = sources.map(({ id, grammar }, index) => {
+    const ordinary = compileGrammar(grammar).parseTree('a');
+    assert.equal(ordinary.ok, specifications[index].accepted, id);
+    const qualified = compileGrammar(grammar, { grammarName: id, globalConceptSpace: space }).parseTree('a');
+    assert.equal(qualified.ok, ordinary.ok, id);
+    if (!ordinary.ok) assert.equal(ordinary.rejection.reason, 'syntax');
+    return qualified;
+  });
+  const archive = globalConceptSpaceToLinks(space);
+  assert.ok(archive.includes('(grammar-source-format peg-default peg)'));
+  assert.ok(!archive.includes('(grammar-source-format generalized '));
+  for (const { grammar } of sources) grammar.rules.clear();
+  grammar.rules.clear();
+  const reloaded = readGlobalConceptSpaceLinks(archive, { records: [] });
+  assert.deepEqual(reloaded, space);
+  assert.equal(globalConceptSpaceToLinks(reloaded), archive);
+  for (let index = 0; index < specifications.length; index += 1) {
+    const { id } = specifications[index];
+    assert.deepEqual(createGlobalConceptSpaceParser(archive, id, { records: [] }).parseTree('a'), expected[index]);
+  }
+});
+
+test('archive format defaults and declared matching cannot bypass current concept witnesses', () => {
+  const listing = '(grammar (format peg) (start document))\n(rule document normal (seq (repeat0 (literal a)) (literal a)))\n';
+  const sources = ['first', 'second'].map(id => ({ id, language: id, grammar: parseGrammarLinks(listing) }));
+  sources[1].grammar = new Grammar(sources[1].grammar.start, sources[1].grammar.rules, 'peg', { matching: 'peg' });
+  const meaning = encodeFormalConceptDefinition(undefined, { model: 'source text value' });
+  const archive = globalConceptSpaceToLinks(createGlobalConceptSpace(sources, { records: [],
+    formalDefinitions: { 'first:document': meaning, 'second:document': meaning },
+    equivalences: [['first:document', 'second:document']],
+  }));
+  const original = readGlobalConceptSpaceLinks(archive, { records: [] });
+  // This exact format edit preserves semantics because the second source has
+  // actual explicit PEG matching. Format spelling alone cannot split a proof.
+  const explicitFormatEdit = archive.replace('(grammar-source-format second peg)', '(grammar-source-format second bnf)');
+  assert.notEqual(explicitFormatEdit, archive);
+  const unchanged = readGlobalConceptSpaceLinks(explicitFormatEdit, { records: [] });
+  assert.equal(unchanged.sources.find(({ id }) => id === 'second').sourceFormat, 'bnf');
+  assert.deepEqual(unchanged.mappings, original.mappings);
+  assert.deepEqual(unchanged.proofs, original.proofs);
+  assert.equal(createGlobalConceptSpaceParser(explicitFormatEdit, 'second', { records: [] }).parseTree('a').ok, false);
+  for (const changed of [
+    archive.replace('(grammar-source-format first peg)', '(grammar-source-format first bnf)'),
+    archive.replace('(grammar-source-format first peg)\n', ''),
+    archive.replace('(grammar-context second (matching peg))', '(grammar-context second (matching generalized))'),
+  ]) {
+    assert.notEqual(changed, archive);
+    for (const id of ['first', 'missing']) assert.throws(
+      () => createGlobalConceptSpaceParser(changed, id, { records: [] }), /unproved global concept correspondence|one-to-one proof/u);
+  }
+  for (const changed of [
+    archive.replace('(grammar-source-format first peg)', '(grammar-source-format first unknown)'),
+    archive.replace('(grammar-source-format first peg)', '(grammar-source-format first (peg))'),
+    archive.replace('(grammar-source-format first peg)', '(grammar-source-format first peg generalized)'),
+    `${archive}(grammar-source-format first peg)\n`,
+    `${archive}(grammar-source-format absent peg)\n`,
+    archive.replace('(grammar-context second (matching peg))', '(grammar-context second (matching unknown))'),
+  ]) {
+    assert.notEqual(changed, archive);
+    assert.throws(() => readGlobalConceptSpaceLinks(changed, { records: [] }), /format|matching|word/u);
+    assert.throws(() => createGlobalConceptSpaceParser(changed, 'missing', { records: [] }), /format|matching|word/u);
+  }
+  for (const format of ['unknown', '', 0, false]) {
+    const grammar = new Grammar('document', sources[0].grammar.rules, format);
+    assert.throws(() => createGlobalConceptSpace([{ id: 'unsupported', language: 'unsupported', grammar }], { records: [] }), /format/u);
+  }
 });
 
 test('one existing native JavaScript fixture executes from the archived shipped grammar with exact CST rows', () => {

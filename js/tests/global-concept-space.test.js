@@ -8,7 +8,7 @@ import test from 'node:test';
 
 import { Parser } from 'links-notation';
 import { deserializeGrammar, Grammar } from '../src/grammar.js';
-import { parseGrammarLinks } from '../src/grammar-links.js';
+import { parseGrammarLinks, percentEncodeLinksText } from '../src/grammar-links.js';
 import { GLOBAL_CONCEPT_PROOF_METHOD, createGlobalConceptSpace, globalConceptSpaceToLinks, readGlobalConceptSpaceLinks, translateGlobalConstruct } from '../src/global-concept-space.js';
 import { verifyGlobalConceptCorrespondence, acceptGlobalConceptHistory, selectGlobalConceptIdentity } from '../src/global-concept-rules.js';
 import { encodeFormalConceptDefinition } from '../src/formal-concept-definition.js';
@@ -19,6 +19,23 @@ const identityFixture = readProjectData(new URL('../../parity/fixtures/global-co
 const sources = () => fixture.sources.map(({ grammar, ...source }) => ({ ...source, grammar: deserializeGrammar(grammar) }));
 const options = (extra = {}) => ({ records: fixture.records, equivalences: fixture.equivalences, formalDefinitions: fixture.formalDefinitions, ...extra });
 const build = (input = sources(), extra = {}) => createGlobalConceptSpace(input, options(extra));
+// Add only facts recorded in the original inputs; never recapture the expected
+// concepts, identities, definitions, proofs or legacy archive from current code.
+function withSourceFormatProvenance(expected, input) {
+  const formats = new Map(input.map(({ id, grammar }) => [id, grammar.sourceFormat]));
+  return { ...expected, sources: expected.sources.map(source => ({ ...source,
+    ...(formats.get(source.id) == null ? {} : { sourceFormat: formats.get(source.id) }) })) };
+}
+function withSourceFormatStatements(links, input) {
+  const additions = input.filter(({ grammar }) => grammar.sourceFormat != null).map(({ id, grammar }) => [
+    `(grammar-origin ${percentEncodeLinksText(id)} `,
+    `(grammar-source-format ${percentEncodeLinksText(id)} ${percentEncodeLinksText(grammar.sourceFormat)})`,
+  ]);
+  return links.split('\n').flatMap(line => {
+    const addition = additions.find(([origin]) => line.startsWith(origin));
+    return addition ? [line, addition[1]] : [line];
+  }).join('\n');
+}
 const rewritten = (source, transform, declarations = source.grammar.declarations) => ({ ...source, grammar: new Grammar(source.grammar.start, [...source.grammar.rules].map(([name, rule]) => [name, transform(rule)]), source.grammar.sourceFormat, declarations) });
 const observe = (requirementId, assertions, testName) => recordIssue195Observations({
   requirementId, suffix: 'behavior', fixtureId: 'global-concept-space',
@@ -29,7 +46,7 @@ test('every imported language contributes all productions before proven deduplic
   const input = sources();
   const before = input.map(({ grammar }) => JSON.stringify([...grammar.rules]));
   const space = build(input);
-  assert.deepEqual(space, fixture.expectedSpace);
+  assert.deepEqual(space, withSourceFormatProvenance(fixture.expectedSpace, fixture.sources));
   assert.equal(space.sources.length, 2);
   assert.equal(Object.keys(space.mappings).length, 6);
   assert.equal(space.concepts.flatMap(({ origins }) => origins).length, 6);
@@ -132,7 +149,7 @@ test('shared grammar contexts preserve historical graph decisions while reducing
   const originalRecords = JSON.stringify(fixture.records);
   const originalDefinitions = JSON.stringify(fixture.formalDefinitions);
   assert.deepEqual(historical.createGlobalConceptSpace(sources(), options()), fixture.expectedSpace);
-  assert.deepEqual(current.createGlobalConceptSpace(sources(), options()), fixture.expectedSpace);
+  assert.deepEqual(current.createGlobalConceptSpace(sources(), options()), withSourceFormatProvenance(fixture.expectedSpace, fixture.sources));
 
   const authoredSources = changed => sources().map((source, sourceIndex) => {
     const leaf = sourceIndex === 0 ? 'atom' : 'letter';
@@ -182,7 +199,7 @@ test('shared grammar contexts preserve historical graph decisions while reducing
     }
     const historicalSpace = historical.createGlobalConceptSpace(input, options());
     const space = current.createGlobalConceptSpace(input, options());
-    assert.deepEqual(space, historicalSpace);
+    assert.deepEqual(space, withSourceFormatProvenance(historicalSpace, input));
     assert.deepEqual(space.proofs, historicalSpace.proofs);
     for (const [first, second] of fixture.equivalences) {
       if (changed) assert.notEqual(space.mappings[first], space.mappings[second], 'a changed lexer literal remains a distinct operational context');
@@ -283,9 +300,14 @@ test('generated identity loop styles retain owned string values', async () => {
 });
 
 test('the global links representation retains definitions, source aliases and proof edges', () => {
+  const legacy = readGlobalConceptSpaceLinks(fixture.expectedLinks, { records: fixture.records });
+  assert.deepEqual(legacy, fixture.expectedSpace);
+  assert.equal(globalConceptSpaceToLinks(legacy), fixture.expectedLinks);
+  assert.ok(legacy.sources.every(source => !Object.hasOwn(source, 'sourceFormat')),
+    'a legacy archive does not invent format provenance absent from its bytes');
   const space = build();
   const links = globalConceptSpaceToLinks(space);
-  assert.equal(links, fixture.expectedLinks);
+  assert.equal(links, withSourceFormatStatements(fixture.expectedLinks, fixture.sources));
   const parsed = new Parser({ comments: false }).parse(links);
   assert.ok(parsed.length > space.concepts.length);
   assert.match(links, /\(concept-origin .*first%3Aroot/);

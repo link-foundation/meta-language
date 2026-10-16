@@ -1,7 +1,8 @@
 // Generic grammar selection over an explicitly matched byte region. The
 // existing executor still owns grammar matching, recovery and all budgets.
 import { acceptGrammarSelectionCount, acceptGrammarSelectionMapping,
-  acceptGrammarSelectionMode, reportGrammarSelectionAmbiguity } from '../translation/grammar-selection-rules.js';
+  acceptGrammarSelectionMode, reportGrammarSelectionAmbiguity,
+  readGrammarSourceDefaultMatching } from '../translation/grammar-selection-rules.js';
 import { DEFAULT_SETTLING } from '../grammar-feature-forms.js';
 
 /** Validate the inspectable candidates without resolving unknown grammars. */
@@ -68,7 +69,7 @@ function readSelectionProvenance(executor, program, language, start, end) {
       const storedOrigin = concept?.origins.find(item => item.alias === origin);
       const definition = original ? { kind: original.kind ?? 'normal', expression: original.expression } : null;
       if (definition) for (const key of ['parameters', 'channel', 'modes', 'action']) if (original[key] !== undefined) definition[key] = original[key];
-      const sourceMatching = source?.context.matching ?? 'generalized';
+      const sourceMatching = source?.context.matching ?? readGrammarSourceDefaultMatching(source?.sourceFormat ?? '');
       const sourceContext = source ? { ...source.context, matching: sourceMatching, settling: source.context.settling ?? DEFAULT_SETTLING[sourceMatching] } : null;
       const actualContext = { matching: program.matching, settling: program.settling.steps, imports: [], modes: [], extras: [], conflicts: [], precedences: [], macros: [], scanners: [], ...program.selectionSourceDeclarations };
       actualContext.matching ??= program.matching;

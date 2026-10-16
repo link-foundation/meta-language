@@ -14,6 +14,7 @@ import { LANGUAGE_CATALOG, languageEntry } from './language-catalog.js';
 import { LinkNetwork } from './network.js';
 import { LinkId } from './primitives.js';
 import { readFormalConceptDefinition } from './formal-concept-definition.js';
+import { readGrammarSourceDefaultMatching } from './translation/grammar-selection-rules.js';
 
 /** The decision procedure used for every shared global identity. */
 export const GLOBAL_CONCEPT_PROOF_METHOD = 'recursive-structural-bijection';
@@ -46,6 +47,11 @@ function prepare(sources, records, formalDefinitions = {}) {
   const ordered = [...sources].sort((first, second) => compareText(first.id ?? '', second.id ?? ''));
   for (const source of ordered) {
     if (typeof source.id !== 'string' || source.id === '' || typeof source.language !== 'string' || source.language === '' || (source.edition !== undefined && typeof source.edition !== 'string') || !(source.grammar instanceof Grammar)) throw new TypeError('a global concept source needs an identity, language, edition and imported grammar');
+    if (source.grammar.sourceFormat != null) {
+      if (typeof source.grammar.sourceFormat !== 'string') throw new TypeError('a global grammar source format must be known text');
+      // Reuse the existing source-format grammar and its closed tag validation.
+      parseGrammarLinks(`(grammar (format ${percentEncodeLinksText(source.grammar.sourceFormat)}))\n(rule placeholder normal (empty))\n`);
+    }
     if (sourceIds.has(source.id)) throw new TypeError(`duplicate global concept source ${source.id}`);
     sourceIds.add(source.id);
     const nativeSources = new Set([`native:${source.language}`]);
@@ -118,8 +124,10 @@ function graphOf(nodes, aliases) {
     let context = sourceContexts.get(node.source);
     if (!context) {
       const declarations = grammarDeclarations(node.source.grammar);
-      declarations.matching ??= 'generalized';
+      declarations.matching ??= readGrammarSourceDefaultMatching(node.source.grammar.sourceFormat ?? '');
       declarations.settling ??= [...DEFAULT_SETTLING[declarations.matching]];
+      // Format spelling stays in source provenance. Its executable matching
+      // default is compared here, including an actual declared override.
       const references = [];
       const shape = canonical(shapeValue(declarations, node.source, aliases, references));
       if (!contextIdentities.has(shape)) contextIdentities.set(shape, contextIdentities.size);
@@ -242,7 +250,7 @@ export function createGlobalConceptSpace(sources, options = {}) {
     if (members.some((alias) => !aliases.has(alias))) return [{ members: [...members], reason: 'unknown-origin' }];
     return mappings[members[0]] === mappings[members[1]] ? [] : [{ members: [...members], reason: 'no-one-to-one-proof' }];
   });
-  return { schemaVersion: 1, sources: ordered.map(({ id, language, edition, grammar }) => ({ id, language, edition: edition ?? '', start: grammar.start, ruleOrder: grammar.ruleNames(), context: copy(grammarDeclarations(grammar)) })), concepts, mappings, proofs, failures, ambiguities, redirects, formalDefinitions: formal };
+  return { schemaVersion: 1, sources: ordered.map(({ id, language, edition, grammar }) => ({ id, language, edition: edition ?? '', start: grammar.start, ruleOrder: grammar.ruleNames(), context: copy(grammarDeclarations(grammar)), ...(grammar.sourceFormat == null ? {} : { sourceFormat: grammar.sourceFormat }) })), concepts, mappings, proofs, failures, ambiguities, redirects, formalDefinitions: formal };
 }
 
 /** Resolve a construct through its proven global identity, retaining target alternatives. */
@@ -265,6 +273,7 @@ export function globalConceptSpaceToLinks(space) {
   for (const source of space.sources) {
     const start = source.start === null ? '(start unspecified)' : `(start defined ${word(source.start)})`;
     lines.push(`(grammar-origin ${word(source.id)} ${word(source.language)} ${word(source.edition)} ${start} (rule-order ${source.ruleOrder.map(word).join(' ')}))`);
+    if (source.sourceFormat != null) lines.push(`(grammar-source-format ${word(source.id)} ${word(source.sourceFormat)})`);
     if (source.context.matching !== null) lines.push(`(grammar-context ${word(source.id)} (matching ${word(source.context.matching)}))`);
     if (source.context.settling !== null) lines.push(`(grammar-context ${word(source.id)} (settling ${source.context.settling.map(word).join(' ')}))`);
     for (const declaration of renderDeclarationLinks(source.context)) lines.push(`(grammar-context ${word(source.id)} ${declaration})`);
@@ -371,6 +380,11 @@ function readValidatedGlobalConceptArchive(source, options) {
       space.sources.push(entry);
       sourcesById.set(id, entry);
       contexts.set(id, []);
+    } else if (head === 'grammar-source-format') {
+      if (args.length !== 2) throw new TypeError('a grammar source format has an origin and one format');
+      const entry = sourcesById.get(linkWord(args[0]));
+      if (!entry || Object.hasOwn(entry, 'sourceFormat')) throw new TypeError('unknown or duplicate grammar source format origin');
+      entry.sourceFormat = linkWord(args[1]);
     } else if (head === 'grammar-context') {
       if (args.length !== 2 || !sourcesById.has(linkWord(args[0]))) throw new TypeError('unknown grammar context origin');
       contexts.get(linkWord(args[0])).push(args[1]);
@@ -448,7 +462,8 @@ function readValidatedGlobalConceptArchive(source, options) {
     const context = contexts.get(entry.id);
     const header = context.filter((field) => ['matching', 'settling'].includes(linkParts(field)[0])).map(printLink);
     const declarations = context.filter((field) => !['matching', 'settling'].includes(linkParts(field)[0])).map(printLink);
-    const placeholder = parseGrammarLinks(`(grammar ${header.join(' ')})\n${declarations.join('\n')}\n(rule placeholder normal (empty))\n`);
+    const format = Object.hasOwn(entry, 'sourceFormat') ? `(format ${percentEncodeLinksText(entry.sourceFormat)})` : '';
+    const placeholder = parseGrammarLinks(`(grammar ${format} ${header.join(' ')})\n${declarations.join('\n')}\n(rule placeholder normal (empty))\n`);
     entry.context = grammarDeclarations(placeholder);
     const rules = space.concepts.flatMap((concept) => concept.definitions.filter(({ origin }) => originsByAlias.get(origin).source === entry.id).map(({ origin, definition }) => {
       const provenance = originsByAlias.get(origin);
@@ -457,7 +472,7 @@ function readValidatedGlobalConceptArchive(source, options) {
     const byName = new Map(rules);
     if (rules.length !== entry.ruleOrder.length || entry.ruleOrder.some((name) => !byName.has(name)) || (entry.start !== null && !byName.has(entry.start))) throw new TypeError('grammar origin start or rule order disagrees with copied productions');
     const orderedRules = entry.ruleOrder.map((name) => [name, byName.get(name)]);
-    return { id: entry.id, language: entry.language, edition: entry.edition, grammar: new Grammar(entry.start, orderedRules, null, entry.context) };
+    return { id: entry.id, language: entry.language, edition: entry.edition, grammar: new Grammar(entry.start, orderedRules, entry.sourceFormat ?? null, entry.context) };
   });
   if (space.concepts.some((concept) => concept.origins.length === 0 || concept.definitions.length !== concept.origins.length)) throw new TypeError('a copied global origin needs exactly one production');
   if (Object.keys(space.formalDefinitions).some((alias) => !originsByAlias.has(alias))) throw new TypeError('unknown formal definition origin');
