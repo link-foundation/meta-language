@@ -642,6 +642,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "render_grammar_layout_links",
         "function",
     ),
+    (
+        "renderGrammarLexicalOwnerComparison",
+        "render_grammar_lexical_owner_comparison",
+        "function",
+    ),
     ("renderGrammarLinks", "render_grammar_links", "function"),
     (
         "renderLinksExpression",

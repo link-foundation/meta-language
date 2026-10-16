@@ -252,6 +252,7 @@ use meta_language::reconstruct_grammar as _;
 use meta_language::rename_grammar_rule as _;
 use meta_language::render_declaration_links as _;
 use meta_language::render_grammar_layout_links as _;
+use meta_language::render_grammar_lexical_owner_comparison as _;
 use meta_language::render_grammar_links as _;
 use meta_language::render_links_expression as _;
 use meta_language::render_lowering_metadata as _;

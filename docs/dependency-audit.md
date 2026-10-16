@@ -67,7 +67,7 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 155 | 154 | 1 | 0 |
+| Generators | 156 | 155 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -564,6 +564,7 @@ they are.
 | `js/scripts/build-unicode-identifier-properties.mjs` | `js/scripts/build-unicode-identifier-properties.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-vendored-grammars.mjs` | `js/scripts/build-vendored-grammars.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-web-tree-sitter-runtime.mjs` | `js/scripts/build-web-tree-sitter-runtime.mjs` | `script` |  | derived | behind | Built from `image emscripten/emsdk@4.0.15`, which is behind (see its reason). |
+| `js/scripts/generate-antlr-reverse-fixture.mjs` | `js/scripts/generate-antlr-reverse-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-array-value-rules.mjs` | `js/scripts/generate-array-value-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-assertion-version-policy.mjs` | `js/scripts/generate-assertion-version-policy.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-builtin-cst-expectations.mjs` | `js/scripts/generate-builtin-cst-expectations.mjs` | `script` |  | derived | current |  |
