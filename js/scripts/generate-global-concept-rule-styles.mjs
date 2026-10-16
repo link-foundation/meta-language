@@ -18,12 +18,14 @@ if (feedbackIndex !== -1) {
     decoratorFile: 'parity/self-translation/global-concept-rules-decorators.lino', allowedPaths: ['rust/src/global_concept_rules.rs'] });
   process.exit(0);
 }
+if (process.env.CI !== 'true' || process.env.GITHUB_ACTIONS !== 'true') throw new Error('native compiler style execution runs only in GitHub CI; use --feedback for offline replay');
 const directory = mkdtempSync(join(tmpdir(), 'global-concept-rule-styles-'));
 const paths = ['global_concept_rules.rs'];
+if (process.argv.includes('--check')) paths.push('global_concept_identity_rules.rs');
 const actions = [];
 try {
   for (const path of paths) writeFileSync(join(directory, path), readFileSync(join(root, 'rust/src', path)));
-  writeFileSync(join(directory, 'check.rs'), 'pub mod global_concept_rules;\n');
+  writeFileSync(join(directory, 'check.rs'), paths.map(path => `pub mod ${path.slice(0, -3)};\n`).join(''));
   for (let round = 0; round < 20; round += 1) {
     const result = spawnSync('clippy-driver', [
       '--edition', '2024', '--crate-type', 'lib', '--emit', 'metadata', '--error-format=json',

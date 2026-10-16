@@ -2000,6 +2000,12 @@ as a standalone Rust module with the crate's Clippy lint groups and warnings
 denied. This checks the generated interface without building the crate's
 dependencies. Compiler style fixes remain decorator data applied to a fixed
 point by the generator.
+The existing global-concept compiler check includes both closed generated
+modules, the original correspondence verifier and its identity decisions, with
+the same lint flags and original proof input. Actual raw diagnostics and both
+source snapshots remain CI artifacts. Both style commands refuse native
+compiler execution outside GitHub CI before creating compiler scratch. Explicit
+`--feedback` replay remains available locally without native compilation.
 
 Every job reports all of its failures in one run, not only the first: `cargo
 test` runs with `--no-fail-fast`, every check step after the first runs unless

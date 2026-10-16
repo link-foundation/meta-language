@@ -21,6 +21,7 @@ if (feedbackIndex !== -1) {
     decoratorFile: 'parity/self-translation/frontend-rules-decorators.lino', allowedPaths: paths.map((path) => `rust/src/translation/${path}`) });
   process.exit(0);
 }
+if (process.env.CI !== 'true' || process.env.GITHUB_ACTIONS !== 'true') throw new Error('native compiler style execution runs only in GitHub CI; use --feedback for offline replay');
 const directory = mkdtempSync(join(tmpdir(), 'frontend-rule-styles-'));
 const actions = [];
 try {
