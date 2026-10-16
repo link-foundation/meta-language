@@ -1,5 +1,7 @@
 //! Pattern-match compilation and exhaustiveness.
 
+use super::expectation::ExpectedType;
+
 use super::{
     BinaryOp, Case, Checker, Column, Ctor, Decimal, Entry, Env, Expr, Fact, Field, HashSet,
     Language, NAT_PATTERN_UNFOLD, NPat, Node, Pattern, Result, Row, SCase, SCasePattern, SExpr,
@@ -516,7 +518,7 @@ impl Checker {
         span: Option<Span>,
         env: &Env,
         path: &[String],
-        expected: Option<&Type>,
+        expected: ExpectedType<'_>,
     ) -> Result<Expr> {
         let variable = env.local(scrutinee).map(str::to_owned);
         if let Some(variable) = &variable
@@ -545,10 +547,22 @@ impl Checker {
             }
             pending.push((pattern, &kase.body, inner));
         }
-        let mut result_type = expected.cloned();
+        let partial_callable =
+            crate::translation::partial_callable_rules::require_partial_callable_result_inference(
+                expected.kind(),
+                expected.result().is_some(),
+            );
+        let mut result_type = expected.concrete().cloned();
         let mut checked = Vec::new();
         for (pattern, surface, inner) in pending {
-            let body = self.expr(surface, &inner, path, result_type.as_ref(), true)?;
+            let context = if partial_callable {
+                expected
+            } else {
+                result_type
+                    .as_ref()
+                    .map_or(expected, |ty| ExpectedType::Concrete(Some(ty)))
+            };
+            let body = self.expr_with_context(surface, &inner, path, context, true)?;
             if !body.ty.is_literal() && result_type.is_none() {
                 result_type = Some(body.ty.clone());
             }
@@ -589,7 +603,7 @@ impl Checker {
         variable: &str,
         env: &Env,
         path: &[String],
-        expected: Option<&Type>,
+        expected: ExpectedType<'_>,
     ) -> Result<Expr> {
         let Some(kase) = cases.iter().find(|candidate| match &candidate.pattern {
             SCasePattern::Ctor { path, .. } => path.last() == Some(&fact.ctor),
@@ -657,7 +671,7 @@ impl Checker {
         }
         // `knownMatch` passes the caller's `allowLiteral`; `match` is only
         // reached with the default `false`.
-        self.expr(&body, env, path, expected, false)
+        self.expr_with_context(&body, env, path, expected, false)
     }
 
     pub(super) fn pattern(

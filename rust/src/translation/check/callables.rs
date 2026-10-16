@@ -1,5 +1,6 @@
 //! Typed host adapters for the source-generated callable plans.
 
+use super::expectation::ExpectedType;
 use super::{
     Checker, Decl, Entry, Env, Expr, Node, Result, SExpr, SNode, Span, Type, coerce, type_error,
 };
@@ -65,7 +66,7 @@ impl Checker {
         node: &SExpr,
         segments: &[String],
         path: &[String],
-        expected: Option<&Type>,
+        expected: ExpectedType<'_>,
     ) -> Result<Option<Expr>> {
         let entry = self.lookup(segments, path, node.span)?;
         let function = match entry {
@@ -90,7 +91,7 @@ impl Checker {
         };
         let accepted = rules::accept_callable_function_reference(
             node.kind(),
-            expected.map_or("", Type::kind),
+            expected.kind(),
             if function.is_some() { "fn" } else { "" },
         );
         if !accepted {
@@ -232,14 +233,14 @@ impl Checker {
         node: &SExpr,
         env: &Env,
         path: &[String],
-        expected: Option<&Type>,
+        expected: ExpectedType<'_>,
     ) -> Result<Expr> {
         match &node.node {
             SNode::FunctionValue { path: segments } => self
                 .callable_reference(node, segments, path, expected)?
                 .ok_or_else(|| type_error("an actual function reference is required", node.span)),
             SNode::Lambda { params, body, .. } => {
-                let value = json!({"parameters":params,"expected":expected});
+                let value = json!({"parameters":params,"expected":expected.value()});
                 let facts = create_surface_reference_facts(&value);
                 let plan = rules::plan_callable_parameter_types(
                     &facts.forms,
@@ -291,10 +292,7 @@ impl Checker {
                         rocq_type: parameter.rocq_type.clone(),
                     });
                 }
-                let result = match expected {
-                    Some(Type::Function { ret, .. }) => Some(ret.as_ref()),
-                    _ => None,
-                };
+                let result = expected.result();
                 let body = self.expr(body, &inner, path, result, false)?;
                 let ty = callable_type(&parameters, &body.ty);
                 Ok(Expr::new(
@@ -306,7 +304,7 @@ impl Checker {
                 ))
             }
             SNode::CellAllocate { value: initial, .. } => {
-                let value = json!({"node":node,"expected":expected});
+                let value = json!({"node":node,"expected":expected.value()});
                 let facts = create_surface_reference_facts(&value);
                 let plan = rules::plan_callable_cell_element(
                     &facts.forms,
@@ -382,7 +380,7 @@ impl Checker {
                     node.span,
                     None,
                 )?;
-                let body = self.expr(body, env, path, expected, false)?;
+                let body = self.expr_with_context(body, env, path, expected, false)?;
                 let ty = body.ty.clone();
                 Ok(Expr::new(
                     Node::CellWrite {
