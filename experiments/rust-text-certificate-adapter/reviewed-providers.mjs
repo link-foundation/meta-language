@@ -31,6 +31,15 @@ export const reviewedOverlayProviderPolicy = {
         { module: 'translation/emit-javascript.js', sourceSha256: 'b4b1c287cd9c80848edd13b52fe521ec0b649f853e287dfd4e9b701dbacd8aaa' },
         { module: 'translation/emit-rust.js', sourceSha256: 'f1c3adcbee1adf091b9983009f822b279f43463e6660b22dfa399b98c9863d3d' },
       ] },
+    { sourceCommit: '10efc6489c30b7bbf6ea5383780da44a457e9aa2',
+      review: 'Reviewed the complete B47 provider diff: only the two target emitters changed. Both import the shared Array.from mapping renderer; JavaScript routes checked map expressions to it, while Rust delegates its existing ordered receiver/callback evaluation and parameter-count formatting. Codec, validation and recheck providers are byte-identical to the preceding revision. Every original overlay hook remains uniquely located and every original transformation and owner check remains required.',
+      providers: [
+        { module: 'typed-program-links.js', sourceSha256: 'a0f46c4fdca3ed9bb729da7a701266bf8d7609ba142bc3009cd6eafe39983458' },
+        { module: 'typed-program-links-validation.js', sourceSha256: '0d6e3b6a2b9883ac4f50b4383fe07823cda091961e72922d21a8821ba86226e3' },
+        { module: 'typed-program-checked-projection.js', sourceSha256: 'd32f1193251a24a7b189afd920bea253b2ad645ce4009600b6b34888571be826' },
+        { module: 'translation/emit-javascript.js', sourceSha256: 'ef5e10a72d358f7c98fe3ac0dbfc9699a5b2499a86911c851a1300693e84b5f6' },
+        { module: 'translation/emit-rust.js', sourceSha256: '79acfcfe14b78e81c604f31f8331f2b2845faffc4d9f342463dc18135c9fe3a6' },
+      ] },
   ],
 };
 
