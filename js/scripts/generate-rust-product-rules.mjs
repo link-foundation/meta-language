@@ -5,6 +5,9 @@ import { DecoratorSet } from '../src/decorators.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
+import { applyRecordedFamilyLibraryStyles } from './recorded-family-library-style.mjs';
+
+if (process.argv.includes('--check') && process.argv.some(argument => argument.startsWith('--update-'))) throw new Error('freshness checks cannot update recorded styles');
 
 const input = new URL('../src/translation/rust-product-rules.js', import.meta.url);
 const style = new URL('../../parity/self-translation/rust-product-rules-decorators.lino', import.meta.url);
@@ -42,11 +45,20 @@ if (process.argv.includes('--update-styles')) {
   for (const [index, line] of bodies.entries()) actions.push({ op: 'replace', field: 'source', from: line.trim(), to: nativeBodies[index] });
   writeFileSync(style, new DecoratorSet([{ id: 'rust-product-source-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }]).toLino());
 }
-const decorated = DecoratorSet.fromLino(readFileSync(style, 'utf8')).decorate('emitter', { format: 'Rust', source: raw }).source;
+const document = readFileSync(style, 'utf8');
+const decorated = DecoratorSet.fromLino(document).decorate('emitter', { format: 'Rust', source: raw }).source;
 if (decorated.includes('crate::ml_string')) throw new Error('product decision style left an unbound string runtime');
-const result = spawnSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], { input: decorated, encoding: 'utf8' });
-if (result.error || result.status !== 0) throw result.error ?? new Error(result.stderr);
-const generated = '// Generated from rust-product-rules.js by the checked translator.\n// Do not edit by hand.\n' + result.stdout;
+const format = input => {
+  const result = spawnSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], { input, encoding: 'utf8' });
+  if (result.error || result.status !== 0) throw result.error ?? new Error(result.stderr);
+  return result.stdout;
+};
+const correction = applyRecordedFamilyLibraryStyles(document, format(decorated), {
+  family: 'rust-product', update: process.argv.includes('--update-library-lint-styles'), format,
+  baseRecordHashes: ['c03e090ded54239fce3c2a011159354906834000d35f0baaa9740a09bb0b0f8e'],
+});
+if (correction.document !== document) writeFileSync(style, correction.document);
+const generated = '// Generated from rust-product-rules.js by the checked translator.\n// Do not edit by hand.\n' + correction.source;
 if (process.argv.includes('--check')) {
   if (readFileSync(output, 'utf8') !== generated) throw new Error('Rust source product rules are stale');
 } else writeFileSync(output, generated);

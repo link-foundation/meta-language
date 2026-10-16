@@ -5,7 +5,9 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { DecoratorSet } from '../src/decorators.js';
 import { checkProjectData, writeProjectData } from './project-data.mjs';
-import { simplifySourceTextRustParentheses } from './source-text-byte-library-style.mjs';
+import { applyRecordedFamilyLibraryStyles } from './recorded-family-library-style.mjs';
+
+if (process.argv.includes('--check') && process.argv.some(argument => argument.startsWith('--update-'))) throw new Error('freshness checks cannot update recorded styles');
 
 const policy = {
   schemaVersion: 1,
@@ -47,30 +49,23 @@ if (!process.argv.includes('--javascript-only')) {
   const definitions = emitRust(checkProgram(parseJavaScript(source)), { arrayConsumption: true }).definitions;
   assert.equal(definitions.length, 4, 'every complete checked metadata declaration is translated');
   const raw = definitions.join('\n\n');
-  const actions = [];
-  for (const name of ['context', 'field', 'form', 'kind']) {
-    if (raw.includes(name + ': String')) actions.push({ op: 'replace', field: 'source', from: name + ': String', to: name + ': &str' });
-    if (raw.includes(name + '.clone()')) actions.push({ op: 'replace', field: 'source', from: name + '.clone()', to: name });
-  }
-  for (const literal of new Set([...raw.matchAll(/String::from\("([^"\\]*)"\)/gu)].map(match => match[0]))) {
-    actions.push({ op: 'replace', field: 'source', from: literal, to: literal.slice('String::from('.length, -1) });
-  }
   for (const name of ['accept_surface_raw_metadata_field', 'accept_surface_raw_metadata_form', 'accept_shared_surface_reference_kind', 'select_surface_reference_semantics']) {
     assert.ok(raw.includes('pub fn ' + name + '('), 'each metadata decision retains its checked name');
-    actions.push({ op: 'replace', field: 'source', from: 'pub fn ' + name + '(', to: '/// Read a shared raw surface metadata decision.\n#[must_use]\npub fn ' + name + '(' });
   }
   const styleFile = new URL('../../parity/self-translation/surface-raw-metadata-rules-decorators.lino', import.meta.url);
-  const initial = new DecoratorSet([{ id: 'surface-raw-metadata-library-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }]);
-  const adapted = initial.decorate('emitter', { format: 'Rust', source: raw }).source;
-  const grouped = simplifySourceTextRustParentheses(adapted);
-  if (grouped !== adapted) actions.push({ op: 'replace', field: 'source', from: adapted, to: grouped });
-  const styles = new DecoratorSet([{ id: 'surface-raw-metadata-library-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }]);
-  if (check) assert.equal(readFileSync(styleFile, 'utf8'), styles.toLino(), 'raw metadata library styles are fresh');
-  else writeFileSync(styleFile, styles.toLino());
-  const decorated = DecoratorSet.fromLino(readFileSync(styleFile, 'utf8')).decorate('emitter', { format: 'Rust', source: raw }).source;
-  const formatted = spawnSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], { input: decorated, encoding: 'utf8' });
-  if (formatted.error || formatted.status !== 0) throw formatted.error ?? new Error(formatted.stderr);
-  const native = '// Generated from the checked JavaScript raw surface metadata decisions. Do not edit.\n' + formatted.stdout;
+  const document = readFileSync(styleFile, 'utf8');
+  const decorated = DecoratorSet.fromLino(document).decorate('emitter', { format: 'Rust', source: raw }).source;
+  const format = input => {
+    const formatted = spawnSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], { input, encoding: 'utf8' });
+    if (formatted.error || formatted.status !== 0) throw formatted.error ?? new Error(formatted.stderr);
+    return formatted.stdout;
+  };
+  const correction = applyRecordedFamilyLibraryStyles(document, format(decorated), {
+    family: 'surface-raw-metadata', update: process.argv.includes('--update-library-lint-styles'), format,
+    baseRecordHashes: ['755975f5d30f8da44ffcddbb53f9ced0f6a4bdd01c1fc171c333ca71c5421c1e'],
+  });
+  if (correction.document !== document) writeFileSync(styleFile, correction.document);
+  const native = '// Generated from the checked JavaScript raw surface metadata decisions. Do not edit.\n' + correction.source;
   const nativeFile = new URL('../../rust/src/translation/surface_raw_metadata_rules.rs', import.meta.url);
   if (check) assert.equal(readFileSync(nativeFile, 'utf8'), native, 'native raw metadata decisions are fresh');
   else writeFileSync(nativeFile, native);

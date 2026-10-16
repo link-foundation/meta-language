@@ -4,6 +4,7 @@ import { readProjectData } from './project-data.mjs';
 import { DecoratorSet } from '../src/decorators.js';
 import { stripRustSourceHeaderStyleParentheses, flattenRustSourceHeaderStyleFormat } from './rust-source-header-library-style.mjs';
 import { applyCompleteExpressionParenthesisStyles, replaceRecordedLibraryBaseStyle } from './complete-expression-parenthesis-styles.mjs';
+import { applyRecordedFamilyLibraryStyles } from './recorded-family-library-style.mjs';
 
 if (process.argv.includes('--check') && process.argv.some(argument => argument.startsWith('--update-'))) throw new Error('freshness checks cannot update recorded styles');
 
@@ -87,7 +88,13 @@ if (process.argv.includes('--javascript-only')) {
     update: process.argv.includes('--update-complete-expression-styles') || process.argv.includes('--update-styles'), format,
   });
   if (correction.document !== document) writeFileSync(style, correction.document);
-  const generated = '// Generated through the checked JavaScript translator. Do not edit.\n' + correction.source;
+  const reviewed = applyRecordedFamilyLibraryStyles(correction.document, correction.source, {
+    family: 'borrowed-call-interface', update: process.argv.includes('--update-library-lint-styles'), format,
+    baseRecordHashes: ['3903121bf6dde5224606b46b19f0a0838623e8d925ddeb43b3498087bf84c74c',
+      'fc5b057fea2655b94a3bebeaa9ea9c591f8d4d8e73061a5f15adf515cda84bd1'],
+  });
+  if (reviewed.document !== correction.document) writeFileSync(style, reviewed.document);
+  const generated = '// Generated through the checked JavaScript translator. Do not edit.\n' + reviewed.source;
   if (process.argv.includes('--check')) {
     if (readFileSync(native, 'utf8') !== generated || !readFileSync(copy).equals(readFileSync(policyFile))) throw new Error('native borrowed call interface rules or policy are stale');
   } else { writeFileSync(native, generated); writeFileSync(copy, readFileSync(policyFile)); }

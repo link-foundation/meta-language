@@ -1,7 +1,7 @@
 // Capture the inspectable selection schema and translate its portable decisions.
 // Host executor integration and native execution require independent CI checks.
 import { createHash } from 'node:crypto';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
@@ -9,6 +9,7 @@ import { GRAMMAR_SELECTION_FORMS } from '../src/grammar-selection-forms.js';
 import { readGrammarSelectionEqualityFields, readGrammarTreeEqualityFields,
   readGrammarTreeRecursionPlan } from '../src/translation/grammar-selection-rules.js';
 import { readProjectData, writeProjectData } from './project-data.mjs';
+import { applyRecordedFamilyLibraryStyles } from './recorded-family-library-style.mjs';
 
 const sourceFile = new URL('../src/translation/grammar-selection-rules.js', import.meta.url);
 const formFile = new URL('../src/grammar-selection-forms.js', import.meta.url);
@@ -16,6 +17,7 @@ const policyFiles = [new URL('../src/translation/data/grammar-selection-rules.li
 const nativeFile = new URL('../../rust/src/translation/grammar_selection_rules.rs', import.meta.url);
 const formOutput = new URL('../../rust/src/grammar/selection_forms.rs', import.meta.url);
 const nativeArtifact = new URL('../../parity/self-translation/grammar-selection-rules-native.lino', import.meta.url);
+const styleFile = new URL('../../parity/self-translation/grammar-selection-rules-decorators.lino', import.meta.url);
 const digest = source => createHash('sha256').update(source).digest('hex');
 
 export function grammarSelectionRulesPolicy() {
@@ -54,7 +56,8 @@ export function renderGrammarSelectionNativeForms(forms) {
     }).join(', ')}]),`).join('\n') + '\n];\n';
 }
 
-export async function generateGrammarSelectionRules({ check = false, native = false } = {}) {
+export async function generateGrammarSelectionRules({ check = false, native = false, updateLibraryLintStyles = false } = {}) {
+  if (check && updateLibraryLintStyles) throw new Error('freshness checks cannot update recorded styles');
   const policy = grammarSelectionRulesPolicy();
   for (const file of policyFiles) {
     if (check) {
@@ -71,9 +74,19 @@ export async function generateGrammarSelectionRules({ check = false, native = fa
     const { checkProgram } = await import('../src/translation/check.js');
     const { emitRust } = await import('../src/translation/emit-rust.js');
     const emitted = emitRust(checkProgram(parseJavaScript(policy.source, { referenceSemantics: false })), { arrayConsumption: true });
-    const rustSource = format('// Generated from the complete shared grammar-selection-rules.js. Do not edit.\n' + emitted.text);
+    if (emitted.preludes.length) throw new Error('grammar selection decisions must remain a closed scalar library');
+    const header = emitted.text.split('\n').find(line => line.startsWith('#![allow('));
+    if (!header) throw new Error('the checked grammar-selection emitter omitted its module header');
+    const library = format(header + '\n\n' + emitted.definitions.join('\n\n'));
+    const document = existsSync(styleFile) ? readFileSync(styleFile, 'utf8') : '';
+    const correction = applyRecordedFamilyLibraryStyles(document, library, {
+      family: 'grammar-selection', update: updateLibraryLintStyles, format, parameterLoans: true,
+    });
+    if (correction.document !== document) writeFileSync(styleFile, correction.document);
+    const rustSource = '// Generated from the complete shared grammar-selection-rules.js. Do not edit.\n' + correction.source;
     const artifact = { schemaVersion: 1, model: policy.model, sourceSha256: policy.sourceSha256, formSourceSha256: policy.formSourceSha256,
-      definitions: emitted.definitions, assumptions: emitted.assumptions, encodings: emitted.encodings, rustSource, rustSha256: digest(rustSource) };
+      definitions: emitted.definitions, assumptions: emitted.assumptions, encodings: emitted.encodings,
+      emittedSource: emitted.text, emittedSourceSha256: digest(emitted.text), rustSource, rustSha256: digest(rustSource) };
     if (check) {
       if (readFileSync(nativeFile, 'utf8') !== rustSource || !isDeepStrictEqual(readProjectData(nativeArtifact), artifact)) throw new Error('native grammar selection translation is stale');
     } else {
@@ -85,6 +98,7 @@ export async function generateGrammarSelectionRules({ check = false, native = fa
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  await generateGrammarSelectionRules({ check: process.argv.includes('--check'), native: process.argv.includes('--native') });
+  await generateGrammarSelectionRules({ check: process.argv.includes('--check'), native: process.argv.includes('--native'),
+    updateLibraryLintStyles: process.argv.includes('--update-library-lint-styles') });
   console.log('grammar selection policy, schema and requested native translation match');
 }
