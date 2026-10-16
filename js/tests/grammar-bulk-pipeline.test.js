@@ -179,6 +179,32 @@ test('additional grammar formats become native executable rules and retain impor
     { stage: 'additional official import', feature: 'undefined rules: TOKEN' },
     { stage: 'additional official import', feature: 'untranslated action' },
   ]);
+  const failing = await bulkLanguageRow({ name: 'Multiline option control', grammars: ['control'], source: 'x' }, () => {}, {
+    async loadTreeSitterSource() {
+      return { origin: 'synthetic plain-string control', text: JSON.stringify({ name: 'control', rules: { document: { type: 'STRING', value: 'x' } } }) };
+    },
+    async loadGrammarsV4() {
+      return { files: ['control/Control.g4'], entryPoint: 'start', text: "grammar Control; options {\n  superClass = UnresolvedBase;\r\n} start: A EOF; A: 'x';" };
+    },
+    loadAdditionalSources() { return []; },
+  });
+  assert.equal(failing.treeSitter.compiled, true);
+  assert.equal(failing.treeSitter.sample, 'accepted');
+  assert.equal(failing.grammarsV4.stage, 'compile');
+  assert.notEqual(failing.grammarsV4.compiled, true);
+  assert.match(failing.grammarsV4.error, /unresolved option:/u);
+  assert.ok(failing.grammarsV4.error.includes('\\n  superClass = UnresolvedBase;\\r\\n'));
+  assert.ok(failing.grammarsV4.error.length <= 300);
+  assert.doesNotMatch(failing.grammarsV4.error, /[\r\n]/u);
+  failing.missing = missingFeatures(failing);
+  assert.ok(failing.missing.some(({ stage, feature }) => stage === 'grammars-v4 compile' && feature === failing.grammarsV4.error));
+  const markdown = renderMatrix({
+    grammarsV4Revision: v4.revision, grammarsV4Notes: {}, languages: [failing],
+    summary: { treeSitterImported: 1, treeSitterCompiled: 1, treeSitterAccepted: 1, rowsMatch: 0, grammarsV4Imported: 1, grammarsV4Mapped: 1, grammarsV4Compiled: 0, grammarsV4Accepted: 0, merged: Number(failing.merge.stage === 'done'), mergedFromSeveral: Number(failing.merge.sources.length > 1), sharingRules: Number(failing.merge.sharedRules > 0), sharedRules: failing.merge.sharedRules ?? 0 },
+  });
+  assert.ok(markdown.split('\n').includes(`- grammars-v4 compile: ${failing.grammarsV4.error}`));
+  assert.ok(markdown.includes('\\n  superClass = UnresolvedBase;\\r\\n'));
+  assert.doesNotMatch(markdown, /\n  superClass = UnresolvedBase;/u);
 });
 
 test('decision reports explain every lost or changed shared correspondence', () => {

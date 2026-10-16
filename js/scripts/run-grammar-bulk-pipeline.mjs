@@ -149,7 +149,7 @@ export async function importAdditionalGrammar(source) {
   return startingAt(grammar, source.entryPoint ?? null);
 }
 
-const message = (error) => String(error?.message ?? error).split('\n')[0].slice(0, 300);
+const message = (error) => String(error?.message ?? error).replaceAll('\r', '\\r').replaceAll('\n', '\\n').slice(0, 300);
 const elapsed = (start) => Math.round(performance.now() - start);
 const sha256 = (text) => createHash('sha256').update(text).digest('hex');
 const bulkSourceId = (language, id) => `${language.replace(/[^A-Za-z0-9_-]/gu, '_')}--${id}`;
