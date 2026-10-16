@@ -188,9 +188,9 @@ pub fn read_optional_coercion_operation(
 #[must_use]
 pub fn read_optional_field_operation(kind: &str, element: &str, field: &str) -> String {
     if kind == "option" {
-        if (field == "length") && ((element == "string") || (element == "array")) {
-            String::from("project")
-        } else if (field == "size") && ((element == "set") || (element == "map")) {
+        if ((field == "length") && ((element == "string") || (element == "array")))
+            || ((field == "size") && ((element == "set") || (element == "map")))
+        {
             String::from("project")
         } else if element == "record" {
             String::from("optional-field")
@@ -672,10 +672,10 @@ pub fn render_optional_primitive_truth(
             format!(
                 "{{ let _ = {}; {} }}",
                 value.to_owned(),
-                if kind != "unit" {
-                    String::from("true")
-                } else {
+                if kind == "unit" {
                     String::from("false")
+                } else {
+                    String::from("true")
                 }
             )
         }
@@ -693,10 +693,10 @@ pub fn render_optional_primitive_truth(
             format!(
                 "(let ml_ignored := {}; {})",
                 value.to_owned(),
-                if kind != "unit" {
-                    String::from("true")
-                } else {
+                if kind == "unit" {
                     String::from("false")
+                } else {
+                    String::from("true")
                 }
             )
         }
@@ -716,10 +716,10 @@ pub fn render_optional_primitive_truth(
             format!(
                 "(let ml_ignored := {} in {})",
                 value.to_owned(),
-                if kind != "unit" {
-                    String::from("true")
-                } else {
+                if kind == "unit" {
                     String::from("false")
+                } else {
+                    String::from("true")
                 }
             )
         }

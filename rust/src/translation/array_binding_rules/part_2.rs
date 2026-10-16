@@ -13,14 +13,12 @@ pub fn plan_java_script_array_binding_names(
     values: &[self::ml_string::Text],
     start: f64,
 ) -> Vec<f64> {
-    if (((start < 0f64) || ((start % 1f64) != 0f64)) || (start >= (kinds.len() as f64)))
-        || (start >= (values.len() as f64))
-    {
-        vec![-1f64]
-    } else if ((self::read_required_text_fact(kinds, start))
-        != (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116])))
-        || ((self::read_required_text_fact(values, start))
-            != (self::ml_string::Text::from_units(vec![91])))
+    if ((((start < 0f64) || ((start % 1f64) != 0f64)) || (start >= (kinds.len() as f64)))
+        || (start >= (values.len() as f64)))
+        || (((self::read_required_text_fact(kinds, start))
+            != (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116])))
+            || ((self::read_required_text_fact(values, start))
+                != (self::ml_string::Text::from_units(vec![91]))))
     {
         vec![-1f64]
     } else {

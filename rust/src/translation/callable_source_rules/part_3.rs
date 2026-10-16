@@ -41,28 +41,26 @@ use super::read_required_text_fact;
 /// Execute the complete checked source algorithm.
 #[must_use]
 pub fn require_callable_structural_inference(kind: &str, type_kind: &str, operation: &str) -> bool {
-    if ((kind == "lambda") || (kind == "functionValue")) || (type_kind == "function") {
-        true
-    } else if (kind == "stringTest") && (operation == "includes") {
-        true
-    } else if ((((((((((((((((((kind == "none") || (kind == "coalesce"))
-        || (kind == "optionalField"))
-        || (kind == "record"))
-        || (kind == "method"))
-        || (kind == "map"))
-        || (kind == "set"))
-        || (kind == "arrayFrom"))
-        || (kind == "arrayIsArray"))
-        || (kind == "copySlice"))
-        || (kind == "forOfIterable"))
-        || (kind == "stringPoints"))
-        || (kind == "cellAllocate"))
-        || (kind == "cellRead"))
-        || (kind == "cellWrite"))
-        || (kind == "referenceWrite"))
-        || (kind == "index"))
-        || (kind == "tuple"))
-        || (kind == "tupleIndex")
+    if ((((kind == "lambda") || (kind == "functionValue")) || (type_kind == "function"))
+        || ((kind == "stringTest") && (operation == "includes")))
+        || (((((((((((((((((((kind == "none") || (kind == "coalesce"))
+            || (kind == "optionalField"))
+            || (kind == "record"))
+            || (kind == "method"))
+            || (kind == "map"))
+            || (kind == "set"))
+            || (kind == "arrayFrom"))
+            || (kind == "arrayIsArray"))
+            || (kind == "copySlice"))
+            || (kind == "forOfIterable"))
+            || (kind == "stringPoints"))
+            || (kind == "cellAllocate"))
+            || (kind == "cellRead"))
+            || (kind == "cellWrite"))
+            || (kind == "referenceWrite"))
+            || (kind == "index"))
+            || (kind == "tuple"))
+            || (kind == "tupleIndex"))
     {
         true
     } else {

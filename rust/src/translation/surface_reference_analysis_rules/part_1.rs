@@ -136,12 +136,11 @@ pub fn require_surface_reference_token(
                                     let after_following = crate::translation::surface_reference_analysis_rules::read_required_text_fact(window, 7f64);
                                     {
                                         let member = (previous == ".") || (previous == "?.");
-                                        if ((kind == "identifier") && (value == "class")) && !member
-                                        {
-                                            true
-                                        } else if (((kind == "identifier") && member)
-                                            && (following == "("))
-                                            && mutating_method
+                                        if (((kind == "identifier") && (value == "class"))
+                                            && !member)
+                                            || ((((kind == "identifier") && member)
+                                                && (following == "("))
+                                                && mutating_method)
                                         {
                                             true
                                         } else {
@@ -168,16 +167,14 @@ pub fn require_surface_reference_token(
                                                     if (kind != "punct") || (!assignment && !update)
                                                     {
                                                         false
-                                                    } else if (previous == "]")
+                                                    } else if ((previous == "]")
                                                         || ((previous_kind == "identifier")
                                                             && ((before_previous == ".")
-                                                                || (before_previous == "?.")))
-                                                    {
-                                                        true
-                                                    } else if (update
-                                                        && (following_kind == "identifier"))
-                                                        && ((after_following == ".")
-                                                            || (after_following == "["))
+                                                                || (before_previous == "?."))))
+                                                        || ((update
+                                                            && (following_kind == "identifier"))
+                                                            && ((after_following == ".")
+                                                                || (after_following == "[")))
                                                     {
                                                         true
                                                     } else {
@@ -270,7 +267,7 @@ pub fn accept_surface_reference_truthy_value(columns: &[String], size: f64, node
             } else if form == "number" {
                 (((crate::translation::surface_reference_analysis_rules::read_required_text_fact(columns, (size + node))) != "0") && ((crate::translation::surface_reference_analysis_rules::read_required_text_fact(columns, (size + node))) != "-0")) && ((crate::translation::surface_reference_analysis_rules::read_required_text_fact(columns, (size + node))) != "NaN")
             } else {
-                (form == "string") && ((crate::translation::surface_reference_analysis_rules::read_required_text_fact(columns, (size + node))) != "")
+                (form == "string") && (!((crate::translation::surface_reference_analysis_rules::read_required_text_fact(columns, (size + node)))).is_empty())
             }
         }
     }

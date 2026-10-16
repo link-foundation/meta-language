@@ -694,7 +694,7 @@ pub fn read_callable_eager_effects(
                         texts, starts, counts, labels, targets, node, "k",
                     );
                     if (self::accept_callable_creation_effect_traversal(&(kind))) {
-                        if self::require_callable_output_effect(
+                        if (self::require_callable_output_effect(
                             &(kind),
                             &(self::callable_emission_text(
                                 texts,
@@ -711,15 +711,13 @@ pub fn read_callable_eager_effects(
                             &(self::callable_emission_text(
                                 texts, starts, counts, labels, targets, node, "byZero",
                             )),
-                        ) {
-                            true
-                        } else if (kind == "call")
+                        )) || ((kind == "call")
                             && self::callable_emission_has_name(
                                 names,
                                 &(self::callable_emission_text(
                                     texts, starts, counts, labels, targets, node, "fn",
                                 )),
-                            )
+                            ))
                         {
                             true
                         } else {
@@ -733,30 +731,28 @@ pub fn read_callable_eager_effects(
                                             let target = self::callable_emission_text(
                                                 texts, starts, counts, labels, targets, fn_, "k",
                                             );
-                                            if (target == "functionRef")
+                                            if ((target == "functionRef")
                                                 && self::callable_emission_has_name(
                                                     names,
                                                     &(self::callable_emission_text(
                                                         texts, starts, counts, labels, targets,
                                                         fn_, "fn",
                                                     )),
-                                                )
-                                            {
-                                                self::MlReadCallableEagerEffectsJoin7::MlReadCallableEagerEffectsJoin7Return(true)
-                                            } else if (target == "lambda")
-                                                && self::read_callable_eager_effects(
-                                                    forms,
-                                                    texts,
-                                                    starts,
-                                                    counts,
-                                                    labels,
-                                                    targets,
-                                                    self::callable_emission_field(
-                                                        starts, counts, labels, targets, fn_,
-                                                        "body",
-                                                    ),
-                                                    names,
-                                                )
+                                                ))
+                                                || ((target == "lambda")
+                                                    && self::read_callable_eager_effects(
+                                                        forms,
+                                                        texts,
+                                                        starts,
+                                                        counts,
+                                                        labels,
+                                                        targets,
+                                                        self::callable_emission_field(
+                                                            starts, counts, labels, targets, fn_,
+                                                            "body",
+                                                        ),
+                                                        names,
+                                                    ))
                                             {
                                                 self::MlReadCallableEagerEffectsJoin7::MlReadCallableEagerEffectsJoin7Return(true)
                                             } else {

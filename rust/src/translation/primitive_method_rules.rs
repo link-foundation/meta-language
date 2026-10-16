@@ -171,9 +171,9 @@ pub fn read_primitive_method_minimum_arguments(receiver: &str, operation: &str) 
 
 #[must_use]
 pub fn read_primitive_method_maximum_arguments(receiver: &str, operation: &str) -> f64 {
-    if ((receiver == "array") && (operation == "slice"))
-        || ((receiver == "array")
-            && (((operation == "includes") || (operation == "indexOf"))
+    if (receiver == "array")
+        && ((operation == "slice")
+            || (((operation == "includes") || (operation == "indexOf"))
                 || (operation == "lastIndexOf")))
     {
         2f64

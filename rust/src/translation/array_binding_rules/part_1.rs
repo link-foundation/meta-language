@@ -395,7 +395,7 @@ pub mod ml_string {
         if value.is_nan() { 0.0 } else { value.trunc() }
     }
     #[must_use]
-    pub fn absolute(value: f64, length: usize) -> usize {
+    pub const fn absolute(value: f64, length: usize) -> usize {
         integer(value).max(0.0).min(length as f64) as usize
     }
     #[must_use]
@@ -573,16 +573,15 @@ pub fn accept_java_script_array_binding_name(
     duplicate: bool,
     reserved: &[self::ml_string::Text],
 ) -> bool {
-    if (((*kind)
+    if ((((*kind)
         != (self::ml_string::Text::from_units(vec![
             105, 100, 101, 110, 116, 105, 102, 105, 101, 114,
         ])))
         || ((*name) == (self::ml_string::Text::from_units(vec![]))))
-        || duplicate
-    {
-        false
-    } else if ((name.length()) >= 3f64)
-        && ((name.slice(0f64, 3f64)) == (self::ml_string::Text::from_units(vec![109, 108, 95])))
+        || duplicate)
+        || (((name.length()) >= 3f64)
+            && ((name.slice(0f64, 3f64))
+                == (self::ml_string::Text::from_units(vec![109, 108, 95]))))
     {
         false
     } else {

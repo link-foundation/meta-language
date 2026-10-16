@@ -230,43 +230,48 @@ pub fn plan_optional_type_constraints(
             let right_optional =
                 (self::optional_fact_tag(texts, starts, counts, labels, targets, right, "kind"))
                     == "option";
-            if !((left_optional) || (right_optional)) {
-                Vec::<f64>::new()
-            } else if left_optional {
-                {
-                    let first =
-                        self::optional_fact_field(starts, counts, labels, targets, left, "element");
+            if ((left_optional) || (right_optional)) {
+                if left_optional {
                     {
-                        let second = if right_optional {
-                            self::optional_fact_field(
-                                starts, counts, labels, targets, right, "element",
-                            )
-                        } else {
-                            right
-                        };
-                        vec![
-                            first,
-                            second,
-                            if left_optional && right_optional {
-                                left
+                        let first = self::optional_fact_field(
+                            starts, counts, labels, targets, left, "element",
+                        );
+                        {
+                            let second = if right_optional {
+                                self::optional_fact_field(
+                                    starts, counts, labels, targets, right, "element",
+                                )
                             } else {
-                                -1f64
-                            },
-                            if left_optional && right_optional {
                                 right
-                            } else {
-                                -1f64
-                            },
-                        ]
+                            };
+                            vec![
+                                first,
+                                second,
+                                if left_optional && right_optional {
+                                    left
+                                } else {
+                                    -1f64
+                                },
+                                if left_optional && right_optional {
+                                    right
+                                } else {
+                                    -1f64
+                                },
+                            ]
+                        }
                     }
+                } else {
+                    vec![
+                        self::optional_fact_field(
+                            starts, counts, labels, targets, right, "element",
+                        ),
+                        left,
+                        -1f64,
+                        -1f64,
+                    ]
                 }
             } else {
-                vec![
-                    self::optional_fact_field(starts, counts, labels, targets, right, "element"),
-                    left,
-                    -1f64,
-                    -1f64,
-                ]
+                Vec::<f64>::new()
             }
         }
     }
@@ -553,19 +558,15 @@ pub fn plan_inference_term_identity(
 ) -> Vec<f64> {
     {
         let kind = self::optional_fact_tag(texts, starts, counts, labels, targets, left, "kind");
-        {
-            let ml_library_inequality_4 = kind
-                != (self::optional_fact_tag(texts, starts, counts, labels, targets, right, "kind"));
-            if ml_library_inequality_4 {
-                Vec::<f64>::new()
-            } else if (kind == "var")
-                && ((self::optional_fact_tag(texts, starts, counts, labels, targets, left, "id"))
-                    != (self::optional_fact_tag(
-                        texts, starts, counts, labels, targets, right, "id",
-                    )))
-            {
-                Vec::<f64>::new()
-            } else if (kind == "fixed")
+        if ((((kind
+            != (self::optional_fact_tag(texts, starts, counts, labels, targets, right, "kind")))
+            || ((kind == "var")
+                && ((self::optional_fact_tag(
+                    texts, starts, counts, labels, targets, left, "id",
+                )) != (self::optional_fact_tag(
+                    texts, starts, counts, labels, targets, right, "id",
+                )))))
+            || ((kind == "fixed")
                 && (((self::optional_fact_tag(
                     texts, starts, counts, labels, targets, left, "bits",
                 )) != (self::optional_fact_tag(
@@ -574,18 +575,14 @@ pub fn plan_inference_term_identity(
                     texts, starts, counts, labels, targets, left, "signed",
                 )) != (self::optional_fact_tag(
                     texts, starts, counts, labels, targets, right, "signed",
-                ))))
-            {
-                Vec::<f64>::new()
-            } else if (kind == "data")
-                && ((self::optional_fact_tag(texts, starts, counts, labels, targets, left, "name"))
-                    != (self::optional_fact_tag(
-                        texts, starts, counts, labels, targets, right, "name",
-                    )))
-            {
-                Vec::<f64>::new()
-            } else if ((((kind == "array") || (kind == "record")) || (kind == "map"))
-                || (kind == "set"))
+                ))))))
+            || ((kind == "data")
+                && ((self::optional_fact_tag(
+                    texts, starts, counts, labels, targets, left, "name",
+                )) != (self::optional_fact_tag(
+                    texts, starts, counts, labels, targets, right, "name",
+                )))))
+            || (((((kind == "array") || (kind == "record")) || (kind == "map")) || (kind == "set"))
                 && (((self::optional_fact_tag(
                     texts,
                     starts,
@@ -603,55 +600,54 @@ pub fn plan_inference_term_identity(
                         targets,
                         right,
                         "reference",
-                    )) == "true"))
+                    )) == "true")))
+        {
+            Vec::<f64>::new()
+        } else if kind == "option" {
             {
-                Vec::<f64>::new()
-            } else if kind == "option" {
+                let first = left;
                 {
-                    let first = left;
+                    let second = right;
                     {
-                        let second = right;
+                        let first_absence = self::optional_fact_tag(
+                            texts, starts, counts, labels, targets, first, "absence",
+                        );
                         {
-                            let first_absence = self::optional_fact_tag(
-                                texts, starts, counts, labels, targets, first, "absence",
+                            let second_absence = self::optional_fact_tag(
+                                texts, starts, counts, labels, targets, second, "absence",
                             );
                             {
-                                let second_absence = self::optional_fact_tag(
-                                    texts, starts, counts, labels, targets, second, "absence",
-                                );
+                                let first_absence_3 = if (first_absence).is_empty() {
+                                    { String::from("both") }
+                                } else {
+                                    first_absence
+                                };
                                 {
-                                    let first_absence_3 = if (first_absence).is_empty() {
+                                    let second_absence_3 = if (second_absence).is_empty() {
                                         { String::from("both") }
                                     } else {
-                                        first_absence
+                                        second_absence
                                     };
                                     {
-                                        let second_absence_3 = if (second_absence).is_empty() {
-                                            { String::from("both") }
-                                        } else {
-                                            second_absence
-                                        };
+                                        let first_2 = self::optional_fact_field(
+                                            starts, counts, labels, targets, first, "element",
+                                        );
                                         {
-                                            let first_2 = self::optional_fact_field(
-                                                starts, counts, labels, targets, first, "element",
+                                            let second_2 = self::optional_fact_field(
+                                                starts, counts, labels, targets, second, "element",
                                             );
                                             {
-                                                let second_2 = self::optional_fact_field(
-                                                    starts, counts, labels, targets, second,
-                                                    "element",
-                                                );
-                                                {
-                                                    let ml_s2 =
-                                                        self::ml_plan_inference_term_identity_loop6(
-                                                            texts,
-                                                            starts,
-                                                            counts,
-                                                            labels,
-                                                            targets,
-                                                            first_2,
-                                                            first_absence_3,
-                                                        );
-                                                    match ml_s2 {
+                                                let ml_s2 =
+                                                    self::ml_plan_inference_term_identity_loop6(
+                                                        texts,
+                                                        starts,
+                                                        counts,
+                                                        labels,
+                                                        targets,
+                                                        first_2,
+                                                        first_absence_3,
+                                                    );
+                                                match ml_s2 {
                                                                         self::MlPlanInferenceTermIdentityLoop6Result::MlPlanInferenceTermIdentityLoop6Done(first_3, first_absence_4) => {
                                                                             {
                                                                                 let ml_s3 = self::ml_plan_inference_term_identity_loop7(texts, starts, counts, labels, targets, second_2, second_absence_3);
@@ -667,7 +663,6 @@ pub fn plan_inference_term_identity(
                                                                             }
                                                                         }
                                                                     }
-                                                }
                                             }
                                         }
                                     }
@@ -676,82 +671,81 @@ pub fn plan_inference_term_identity(
                         }
                     }
                 }
-            } else if ((kind == "array") || (kind == "set")) || (kind == "cell") {
-                vec![
-                    1f64,
-                    self::optional_fact_field(starts, counts, labels, targets, left, "element"),
-                    self::optional_fact_field(starts, counts, labels, targets, right, "element"),
-                ]
-            } else if kind == "map" {
-                vec![
-                    1f64,
-                    self::optional_fact_field(starts, counts, labels, targets, left, "key"),
-                    self::optional_fact_field(starts, counts, labels, targets, right, "key"),
-                    self::optional_fact_field(starts, counts, labels, targets, left, "value"),
-                    self::optional_fact_field(starts, counts, labels, targets, right, "value"),
-                ]
-            } else {
+            }
+        } else if ((kind == "array") || (kind == "set")) || (kind == "cell") {
+            vec![
+                1f64,
+                self::optional_fact_field(starts, counts, labels, targets, left, "element"),
+                self::optional_fact_field(starts, counts, labels, targets, right, "element"),
+            ]
+        } else if kind == "map" {
+            vec![
+                1f64,
+                self::optional_fact_field(starts, counts, labels, targets, left, "key"),
+                self::optional_fact_field(starts, counts, labels, targets, right, "key"),
+                self::optional_fact_field(starts, counts, labels, targets, left, "value"),
+                self::optional_fact_field(starts, counts, labels, targets, right, "value"),
+            ]
+        } else {
+            {
+                let pairs = vec![1f64];
                 {
-                    let pairs = vec![1f64];
+                    let ml_s4 = if ((kind == "tuple") || (kind == "union")) || (kind == "function")
                     {
-                        let ml_s4 = if ((kind == "tuple") || (kind == "union"))
-                            || (kind == "function")
                         {
+                            let field = if kind == "tuple" {
+                                String::from("elements")
+                            } else if kind == "union" {
+                                String::from("alternatives")
+                            } else {
+                                String::from("params")
+                            };
                             {
-                                let field = if kind == "tuple" {
-                                    String::from("elements")
-                                } else if kind == "union" {
-                                    String::from("alternatives")
-                                } else {
-                                    String::from("params")
-                                };
+                                let first_4 = self::optional_fact_field(
+                                    starts,
+                                    counts,
+                                    labels,
+                                    targets,
+                                    left,
+                                    &(field),
+                                );
                                 {
-                                    let first_4 = self::optional_fact_field(
+                                    let second_4 = self::optional_fact_field(
                                         starts,
                                         counts,
                                         labels,
                                         targets,
-                                        left,
+                                        right,
                                         &(field),
                                     );
                                     {
-                                        let second_4 = self::optional_fact_field(
-                                            starts,
-                                            counts,
-                                            labels,
-                                            targets,
-                                            right,
-                                            &(field),
-                                        );
+                                        let length =
+                                            self::read_required_number_fact(counts, first_4);
                                         {
-                                            let length =
-                                                self::read_required_number_fact(counts, first_4);
-                                            {
-                                                let ml_library_inequality_3 = length
-                                                    != (self::read_required_number_fact(
-                                                        counts, second_4,
-                                                    ));
-                                                if ml_library_inequality_3 {
-                                                    self::MlPlanInferenceTermIdentityJoin8::MlPlanInferenceTermIdentityJoin8Return(Vec::<f64>::new())
-                                                } else {
+                                            let ml_library_inequality_3 = length
+                                                != (self::read_required_number_fact(
+                                                    counts, second_4,
+                                                ));
+                                            if ml_library_inequality_3 {
+                                                self::MlPlanInferenceTermIdentityJoin8::MlPlanInferenceTermIdentityJoin8Return(Vec::<f64>::new())
+                                            } else {
+                                                {
+                                                    let at = 0f64;
                                                     {
-                                                        let at = 0f64;
-                                                        {
-                                                            let pairs_2 = self::ml_plan_inference_term_identity_loop14(starts, counts, targets, pairs, first_4, second_4, length, at);
-                                                            if kind == "function" {
-                                                                {
-                                                                    let pairs_3 = {
-                                                                        let (ml_append_right, ml_append_left) = (vec![self::optional_fact_field(starts, counts, labels, targets, left, "ret"), self::optional_fact_field(starts, counts, labels, targets, right, "ret")], pairs_2);
-                                                                        self::ml_array::append(
-                                                                            ml_append_left,
-                                                                            ml_append_right,
-                                                                        )
-                                                                    };
-                                                                    self::MlPlanInferenceTermIdentityJoin8::MlPlanInferenceTermIdentityJoin8Next(pairs_3)
-                                                                }
-                                                            } else {
-                                                                self::MlPlanInferenceTermIdentityJoin8::MlPlanInferenceTermIdentityJoin8Next(pairs_2)
+                                                        let pairs_2 = self::ml_plan_inference_term_identity_loop14(starts, counts, targets, pairs, first_4, second_4, length, at);
+                                                        if kind == "function" {
+                                                            {
+                                                                let pairs_3 = {
+                                                                    let (ml_append_right, ml_append_left) = (vec![self::optional_fact_field(starts, counts, labels, targets, left, "ret"), self::optional_fact_field(starts, counts, labels, targets, right, "ret")], pairs_2);
+                                                                    self::ml_array::append(
+                                                                        ml_append_left,
+                                                                        ml_append_right,
+                                                                    )
+                                                                };
+                                                                self::MlPlanInferenceTermIdentityJoin8::MlPlanInferenceTermIdentityJoin8Next(pairs_3)
                                                             }
+                                                        } else {
+                                                            self::MlPlanInferenceTermIdentityJoin8::MlPlanInferenceTermIdentityJoin8Next(pairs_2)
                                                         }
                                                     }
                                                 }
@@ -760,10 +754,13 @@ pub fn plan_inference_term_identity(
                                     }
                                 }
                             }
-                        } else {
-                            self::MlPlanInferenceTermIdentityJoin8::MlPlanInferenceTermIdentityJoin8Next(pairs)
-                        };
-                        match ml_s4 {
+                        }
+                    } else {
+                        self::MlPlanInferenceTermIdentityJoin8::MlPlanInferenceTermIdentityJoin8Next(
+                            pairs,
+                        )
+                    };
+                    match ml_s4 {
                                                     self::MlPlanInferenceTermIdentityJoin8::MlPlanInferenceTermIdentityJoin8Next(pairs_4) => {
                                                         {
                                                             let ml_s6 = if kind == "record" {
@@ -821,7 +818,6 @@ if ml_library_inequality_1 {
                                                         ml_result13
                                                     }
                                                 }
-                    }
                 }
             }
         }

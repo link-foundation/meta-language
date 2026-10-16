@@ -584,15 +584,13 @@ pub fn ml_accept_grammar_lexer_identifier_loop1(
                         122, 95,
                     ]))
                     .contains(&character);
-                    if !((letter)
+                    if ((letter)
                         || ((index > 0f64)
                             && (self::ml_string::Text::from_units(vec![
                                 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
                             ]))
                             .contains(&character)))
                     {
-                        self::MlAcceptGrammarLexerIdentifierLoop1Result::MlAcceptGrammarLexerIdentifierLoop1Return(false)
-                    } else {
                         {
                             let index_2 = index + 1f64;
                             {
@@ -600,6 +598,8 @@ pub fn ml_accept_grammar_lexer_identifier_loop1(
                                 continue;
                             }
                         }
+                    } else {
+                        self::MlAcceptGrammarLexerIdentifierLoop1Result::MlAcceptGrammarLexerIdentifierLoop1Return(false)
                     }
                 }
             }

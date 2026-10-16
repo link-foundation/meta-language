@@ -289,14 +289,12 @@ pub fn ml_read_grammar_lexer_declaration_issue_loop29(
                         declared_modes,
                         &(self::read_required_text_fact(modes, index)),
                     )) {
-                        if !((self::contains_grammar_lexer_text(
+                        if ((self::contains_grammar_lexer_text(
                             declared_channels,
                             &(self::read_required_text_fact(channels, index)),
                         )) || (self::accept_grammar_lexer_decimal(
                             &(self::read_required_text_fact(channels, index)),
                         ))) {
-                            self::MlReadGrammarLexerDeclarationIssueJoin30::MlReadGrammarLexerDeclarationIssueJoin30Return(vec![8f64, index, -1f64])
-                        } else {
                             {
                                 let disposition =
                                     self::read_required_text_fact(dispositions, index);
@@ -327,6 +325,8 @@ pub fn ml_read_grammar_lexer_declaration_issue_loop29(
                                     }
                                 }
                             }
+                        } else {
+                            self::MlReadGrammarLexerDeclarationIssueJoin30::MlReadGrammarLexerDeclarationIssueJoin30Return(vec![8f64, index, -1f64])
                         }
                     } else {
                         self::MlReadGrammarLexerDeclarationIssueJoin30::MlReadGrammarLexerDeclarationIssueJoin30Return(vec![7f64, index, -1f64])

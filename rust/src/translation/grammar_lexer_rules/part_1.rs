@@ -484,7 +484,7 @@ pub mod ml_string {
         if value.is_nan() { 0.0 } else { value.trunc() }
     }
     #[must_use]
-    pub fn absolute(value: f64, length: usize) -> usize {
+    pub const fn absolute(value: f64, length: usize) -> usize {
         integer(value).max(0.0).min(length as f64) as usize
     }
     #[must_use]
