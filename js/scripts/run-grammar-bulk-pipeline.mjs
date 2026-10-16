@@ -34,6 +34,7 @@ import { readGrammarReport, writeGrammarReport } from './grammar-report-files.mj
 import { planGrammarWorkOrder } from './grammar-work-order.mjs';
 import { describeGrammarRejection } from './grammar-rejection-description.mjs';
 import { readNativeGrammarProjection } from './native-grammar-projection.mjs';
+import { acquireAntlrAuxiliarySources } from './antlr-auxiliary-sources.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const script = fileURLToPath(import.meta.url);
@@ -88,13 +89,16 @@ export async function treeSitterGrammarJson(id) {
  * parser rule is the start rule.
  */
 export async function grammarsV4Text(language) {
-  const { revision, languages } = readJson(GRAMMARS_V4_SOURCES);
+  const registry = readJson(GRAMMARS_V4_SOURCES);
+  const { revision, languages } = registry;
   const files = languages[language];
   if (!files) return null;
   const url = (file) => `https://raw.githubusercontent.com/antlr/grammars-v4/${revision}/${file}`;
   const texts = await Promise.all(files.map((file) => fetchCached(url(file))));
   const desc = await fetchCached(url(`${dirname(files[0])}/desc.xml`)).catch(() => null);
-  return { files, text: texts.join('\n'), entryPoint: desc === null ? null : descEntryPoint(desc) };
+  const capturedAuxiliarySources = await acquireAntlrAuxiliarySources(language, files, texts, registry);
+  return { files, text: texts.join('\n'), entryPoint: desc === null ? null : descEntryPoint(desc),
+    ...(capturedAuxiliarySources ? { capturedAuxiliarySources } : {}) };
 }
 
 /** The first `<entry-point>` of a grammars-v4 `desc.xml`, or null. */
@@ -264,7 +268,8 @@ export async function bulkLanguageRow(entry, report = () => {}, options = {}) {
   try {
     const v4 = await (options.loadGrammarsV4 ?? grammarsV4Text)(entry.name);
     if (v4) {
-      row.grammarsV4 = { files: v4.files, stage: 'import' };
+      row.grammarsV4 = { files: v4.files, stage: 'import',
+        ...(v4.capturedAuxiliarySources ? { capturedAuxiliarySources: v4.capturedAuxiliarySources } : {}) };
       row.grammarsV4.sha256 = sha256(v4.text);
       report(row);
       const grammar = startingAt(importAntlr(v4.text), v4.entryPoint);
