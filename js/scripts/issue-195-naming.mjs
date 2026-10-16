@@ -39586,7 +39586,3817 @@ const hasBulkFortySixSourceAlias=function actualSourceAlias(text,source,name){
 const BULK_FORTY_SIX_NAME_INVENTORIES=[...new Set(BULK_FORTY_SIX_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B46 checked source controls for "+source,files:[source],extract:text=>BULK_FORTY_SIX_BINDINGS.filter(row=>row.source===source&&hasBulkFortySixSourceAlias(text,source,row.name)).map(row=>row.inventoryName),recordOf:name=>BULK_FORTY_SIX_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));
 const reconcileBulkFortySixLexicalInventory=inventory=>{const source=inventory.files.length===1?inventory.files[0]:null;if(!source||!BULK_FORTY_SIX_LEXICAL_FILES.includes(source)||inventory.inventory!=="B45 exact source controls for "+source)return inventory;const rows=BULK_FORTY_SIX_LEXICAL_BINDINGS.filter(row=>row.source===source);return {...inventory,extract:text=>rows.filter(row=>hasBulkFortySixSourceAlias(text,source,row.name)).map(row=>row.inventoryName),recordOf:name=>rows.find(row=>row.inventoryName===name).id};};
 // End B46 checked source registrations.
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES]);
+// B47 checked projection, binding and assertion source contracts.
+const BULK_FORTY_SEVEN_BINDINGS=[
+  {
+    "id": "repository.execute-batch-forty-seven-network-projection-accept-network-projection",
+    "source": "js/src/network-projection-rules.js",
+    "name": "acceptNetworkProjection",
+    "inventoryName": "accept-network-projection"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-network-projection-accept-network-projection-link",
+    "source": "js/src/network-projection-rules.js",
+    "name": "acceptNetworkProjectionLink",
+    "inventoryName": "accept-network-projection-link"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-network-projection-authoring-read-network-projection-source-module",
+    "source": "js/scripts/generate-network-projection-rules.mjs",
+    "name": "readNetworkProjectionSourceModule",
+    "inventoryName": "read-network-projection-source-module"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-network-projection-authoring-generate-network-projection-rules",
+    "source": "js/scripts/generate-network-projection-rules.mjs",
+    "name": "generateNetworkProjectionRules",
+    "inventoryName": "generate-network-projection-rules"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-read-java-script-array-binding-form",
+    "source": "js/src/translation/array-binding-rules.js",
+    "name": "readJavaScriptArrayBindingForm",
+    "inventoryName": "read-java-script-array-binding-form"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-read-java-script-array-rest-binding-error",
+    "source": "js/src/translation/array-binding-rules.js",
+    "name": "readJavaScriptArrayRestBindingError",
+    "inventoryName": "read-java-script-array-rest-binding-error"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-accept-java-script-array-binding-name",
+    "source": "js/src/translation/array-binding-rules.js",
+    "name": "acceptJavaScriptArrayBindingName",
+    "inventoryName": "accept-java-script-array-binding-name"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-read-java-script-array-binding-value-form",
+    "source": "js/src/translation/array-binding-rules.js",
+    "name": "readJavaScriptArrayBindingValueForm",
+    "inventoryName": "read-java-script-array-binding-value-form"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-accept-java-script-array-rest-receiver",
+    "source": "js/src/translation/array-binding-rules.js",
+    "name": "acceptJavaScriptArrayRestReceiver",
+    "inventoryName": "accept-java-script-array-rest-receiver"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-accept-java-script-array-binding-offset",
+    "source": "js/src/translation/array-binding-rules.js",
+    "name": "acceptJavaScriptArrayBindingOffset",
+    "inventoryName": "accept-java-script-array-binding-offset"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-accept-java-script-array-binding-offset-field",
+    "source": "js/src/translation/array-binding-rules.js",
+    "name": "acceptJavaScriptArrayBindingOffsetField",
+    "inventoryName": "accept-java-script-array-binding-offset-field"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-accept-java-script-array-binding-field",
+    "source": "js/src/translation/array-binding-rules.js",
+    "name": "acceptJavaScriptArrayBindingField",
+    "inventoryName": "accept-java-script-array-binding-field"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-read-java-script-array-default-operation",
+    "source": "js/src/translation/array-binding-rules.js",
+    "name": "readJavaScriptArrayDefaultOperation",
+    "inventoryName": "read-java-script-array-default-operation"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-plan-java-script-array-default-inference",
+    "source": "js/src/translation/array-binding-rules.js",
+    "name": "planJavaScriptArrayDefaultInference",
+    "inventoryName": "plan-java-script-array-default-inference"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-read-array-binding-fact-field",
+    "source": "js/src/translation/array-binding-rules.js",
+    "name": "readArrayBindingFactField",
+    "inventoryName": "read-array-binding-fact-field"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-read-array-binding-initializer-end",
+    "source": "js/src/translation/array-binding-rules.js",
+    "name": "readArrayBindingInitializerEnd",
+    "inventoryName": "read-array-binding-initializer-end"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-plan-java-script-array-binding-names",
+    "source": "js/src/translation/array-binding-rules.js",
+    "name": "planJavaScriptArrayBindingNames",
+    "inventoryName": "plan-java-script-array-binding-names"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-default-inference-transport-read-java-script-array-default-constraints",
+    "source": "js/src/translation/array-binding-inference.js",
+    "name": "readJavaScriptArrayDefaultConstraints",
+    "inventoryName": "read-java-script-array-default-constraints"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-binding-raw-wrapper-check-java-script-array-binding-wrapper",
+    "source": "js/src/translation/array-binding-validation.js",
+    "name": "checkJavaScriptArrayBindingWrapper",
+    "inventoryName": "check-java-script-array-binding-wrapper"
+  },
+  {
+    "id": "repository.batch-forty-seven-array-binding-policy-javascript-array-binding-policy",
+    "source": "js/src/translation/array-binding-policy.js",
+    "name": "JAVASCRIPT_ARRAY_BINDING_POLICY",
+    "inventoryName": "javascript-array-binding-policy"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-binding-authoring-read-array-binding-source-module",
+    "source": "js/scripts/generate-array-binding-rules.mjs",
+    "name": "readArrayBindingSourceModule",
+    "inventoryName": "read-array-binding-source-module"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-binding-authoring-generate-array-binding-rules",
+    "source": "js/scripts/generate-array-binding-rules.mjs",
+    "name": "generateArrayBindingRules",
+    "inventoryName": "generate-array-binding-rules"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-read-array-from-field",
+    "source": "js/src/translation/array-from-rules.js",
+    "name": "readArrayFromField",
+    "inventoryName": "read-array-from-field"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-read-array-from-element",
+    "source": "js/src/translation/array-from-rules.js",
+    "name": "readArrayFromElement",
+    "inventoryName": "read-array-from-element"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-read-array-from-kind",
+    "source": "js/src/translation/array-from-rules.js",
+    "name": "readArrayFromKind",
+    "inventoryName": "read-array-from-kind"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-read-array-from-argument-error",
+    "source": "js/src/translation/array-from-rules.js",
+    "name": "readArrayFromArgumentError",
+    "inventoryName": "read-array-from-argument-error"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-read-array-from-receiver-error",
+    "source": "js/src/translation/array-from-rules.js",
+    "name": "readArrayFromReceiverError",
+    "inventoryName": "read-array-from-receiver-error"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-plan-array-from-iteration-source-type",
+    "source": "js/src/translation/array-from-rules.js",
+    "name": "planArrayFromIterableType",
+    "inventoryName": "plan-array-from-iteration-source-type"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-plan-array-from-expected-element",
+    "source": "js/src/translation/array-from-rules.js",
+    "name": "planArrayFromExpectedElement",
+    "inventoryName": "plan-array-from-expected-element"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-plan-array-from-inference-inputs",
+    "source": "js/src/translation/array-from-rules.js",
+    "name": "planArrayFromInferenceInputs",
+    "inventoryName": "plan-array-from-inference-inputs"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-read-array-from-callback-error",
+    "source": "js/src/translation/array-from-rules.js",
+    "name": "readArrayFromCallbackError",
+    "inventoryName": "read-array-from-callback-error"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-plan-array-from-callback-constraints",
+    "source": "js/src/translation/array-from-rules.js",
+    "name": "planArrayFromCallbackConstraints",
+    "inventoryName": "plan-array-from-callback-constraints"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-plan-array-from-map-callback",
+    "source": "js/src/translation/array-from-rules.js",
+    "name": "planArrayFromMapCallback",
+    "inventoryName": "plan-array-from-map-callback"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-read-array-from-map-callback-error",
+    "source": "js/src/translation/array-from-rules.js",
+    "name": "readArrayFromMapCallbackError",
+    "inventoryName": "read-array-from-map-callback-error"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-render-array-from-mapping",
+    "source": "js/src/translation/array-from-rules.js",
+    "name": "renderArrayFromMapping",
+    "inventoryName": "render-array-from-mapping"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-identity-transport-array-from-facts",
+    "source": "js/src/translation/array-from.js",
+    "name": "arrayFromFacts",
+    "inventoryName": "array-from-facts"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-identity-transport-read-array-from-iteration-source-type",
+    "source": "js/src/translation/array-from.js",
+    "name": "readArrayFromIterableType",
+    "inventoryName": "read-array-from-iteration-source-type"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-identity-transport-read-array-from-expected-element",
+    "source": "js/src/translation/array-from.js",
+    "name": "readArrayFromExpectedElement",
+    "inventoryName": "read-array-from-expected-element"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-identity-transport-read-array-from-inference-inputs",
+    "source": "js/src/translation/array-from.js",
+    "name": "readArrayFromInferenceInputs",
+    "inventoryName": "read-array-from-inference-inputs"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-identity-transport-read-array-from-callback-constraints",
+    "source": "js/src/translation/array-from.js",
+    "name": "readArrayFromCallbackConstraints",
+    "inventoryName": "read-array-from-callback-constraints"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-identity-transport-read-array-from-map-callback",
+    "source": "js/src/translation/array-from.js",
+    "name": "readArrayFromMapCallback",
+    "inventoryName": "read-array-from-map-callback"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-authoring-read-array-from-source-module",
+    "source": "js/scripts/generate-array-from-rules.mjs",
+    "name": "readArrayFromSourceModule",
+    "inventoryName": "read-array-from-source-module"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-authoring-array-from-rules-policy",
+    "source": "js/scripts/generate-array-from-rules.mjs",
+    "name": "arrayFromRulesPolicy",
+    "inventoryName": "array-from-rules-policy"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-authoring-generate-array-from-rules",
+    "source": "js/scripts/generate-array-from-rules.mjs",
+    "name": "generateArrayFromRules",
+    "inventoryName": "generate-array-from-rules"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-another-tool-for-language-recognition-assertion-version-read-assertion-version-policy",
+    "source": "js/scripts/antlr-version-assertions.mjs",
+    "name": "readAssertionVersionPolicy",
+    "inventoryName": "read-assertion-version-policy"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-another-tool-for-language-recognition-assertion-version-select-another-tool-for-language-recognition-reference-assertion",
+    "source": "js/scripts/antlr-version-assertions.mjs",
+    "name": "selectAntlrReferenceAssertion",
+    "inventoryName": "select-another-tool-for-language-recognition-reference-assertion"
+  },
+  {
+    "id": "repository.batch-forty-seven-another-tool-for-language-recognition-assertion-version-assertion-version-policy-file",
+    "source": "js/scripts/antlr-version-assertions.mjs",
+    "name": "ASSERTION_VERSION_POLICY_FILE",
+    "inventoryName": "assertion-version-policy-file"
+  },
+  {
+    "id": "repository.batch-forty-seven-another-tool-for-language-recognition-assertion-version-another-tool-for-language-recognition-reference-policy-file",
+    "source": "js/scripts/antlr-version-assertions.mjs",
+    "name": "ANTLR_REFERENCE_POLICY_FILE",
+    "inventoryName": "another-tool-for-language-recognition-reference-policy-file"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-parser-generator-assertion-version-select-parser-generator-optimization-operation-assertion",
+    "source": "js/scripts/peggy-version-assertions.mjs",
+    "name": "selectPeggyOptimizerAssertion",
+    "inventoryName": "select-parser-generator-optimization-operation-assertion"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-observation-version-context-create-observation-version-validation-operation",
+    "source": "js/scripts/observation-version-assertions.mjs",
+    "name": "createObservationVersionValidator",
+    "inventoryName": "create-observation-version-validation-operation"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-independent-grammar-tool-outcome-operation-diagnostic",
+    "source": "js/scripts/grammar-tool-outcomes.mjs",
+    "name": "operationDiagnostic",
+    "inventoryName": "operation-diagnostic"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-independent-grammar-tool-outcome-grammar-tool-operation-failure",
+    "source": "js/scripts/grammar-tool-outcomes.mjs",
+    "name": "grammarToolOperationFailure",
+    "inventoryName": "grammar-tool-operation-failure"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-independent-grammar-tool-outcome-native-grammar-tool-outcome",
+    "source": "js/scripts/grammar-tool-outcomes.mjs",
+    "name": "nativeGrammarToolOutcome",
+    "inventoryName": "native-grammar-tool-outcome"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-independent-grammar-tool-outcome-target-grammar-tool-outcome",
+    "source": "js/scripts/grammar-tool-outcomes.mjs",
+    "name": "targetGrammarToolOutcome",
+    "inventoryName": "target-grammar-tool-outcome"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-independent-grammar-tool-outcome-is-grammar-tool-syntax-rejection",
+    "source": "js/scripts/grammar-tool-outcomes.mjs",
+    "name": "isGrammarToolSyntaxRejection",
+    "inventoryName": "is-grammar-tool-syntax-rejection"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-retained-lexical-literal-transport-extend-grammar-lexical-analyser-literal",
+    "source": "js/src/grammar-lexer-literal-extension.js",
+    "name": "extendGrammarLexerLiteral",
+    "inventoryName": "extend-grammar-lexical-analyser-literal"
+  },
+  {
+    "id": "repository.batch-forty-seven-original-identity-assertion-profile-original-link-identity-assertion-profiles",
+    "source": "experiments/original-link-identity/assertion-profiles.mjs",
+    "name": "originalLinkIdentityAssertionProfiles",
+    "inventoryName": "original-link-identity-assertion-profiles"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-original-identity-assertion-profile-authoring-verify-original-link-identity-assertion-sources",
+    "source": "experiments/original-link-identity/generate-assertion-profiles.mjs",
+    "name": "verifyOriginalLinkIdentityAssertionSources",
+    "inventoryName": "verify-original-link-identity-assertion-sources"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-original-identity-assertion-profile-authoring-generate-original-link-identity-assertion-profiles",
+    "source": "experiments/original-link-identity/generate-assertion-profiles.mjs",
+    "name": "generateOriginalLinkIdentityAssertionProfiles",
+    "inventoryName": "generate-original-link-identity-assertion-profiles"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-checked-record-projection-read-record-projection",
+    "source": "js/src/translation/record-value-rules.js",
+    "name": "readRecordProjection",
+    "inventoryName": "read-record-projection"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-checked-record-projection-read-record-projection-error",
+    "source": "js/src/translation/record-value-rules.js",
+    "name": "readRecordProjectionError",
+    "inventoryName": "read-record-projection-error"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-binding-parser-transport-array-binding-names",
+    "source": "js/src/translation/javascript-bindings.js",
+    "name": "arrayBindingNames",
+    "inventoryName": "array-binding-names"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-binding-parser-transport-read-array-binding-initializer",
+    "source": "js/src/translation/javascript-bindings.js",
+    "name": "readArrayBindingInitializer",
+    "inventoryName": "read-array-binding-initializer"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-independent-lexical-class-replay-lexical-owner-for",
+    "source": "js/scripts/grammar-interchange-tools.mjs",
+    "name": "lexicalOwnerFor",
+    "inventoryName": "lexical-owner-for"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-independent-lexical-class-replay-lower-independent-parser-generator-lexical-class",
+    "source": "js/scripts/grammar-interchange-tools.mjs",
+    "name": "lowerIndependentPeggyLexicalClass",
+    "inventoryName": "lower-independent-parser-generator-lexical-class"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-network-projection-test-host-role-network",
+    "source": "js/tests/network-projection.test.js",
+    "name": "roleNetwork",
+    "inventoryName": "role-network"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-test-host-execute",
+    "source": "js/tests/translation-javascript-array-rest-defaults.test.js",
+    "name": "execute",
+    "inventoryName": "execute"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-test-host-section",
+    "source": "js/tests/translation-array-from-rules.test.js",
+    "name": "section",
+    "inventoryName": "section"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-test-host-case-function",
+    "source": "js/tests/translation-array-from-rules.test.js",
+    "name": "caseFunction",
+    "inventoryName": "case-function"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-test-host-observe",
+    "source": "js/tests/translation-array-from-rules.test.js",
+    "name": "observe",
+    "inventoryName": "observe"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-checked-record-projection-test-host-records",
+    "source": "js/tests/typed-program-links-record-projection.test.js",
+    "name": "records",
+    "inventoryName": "records"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-checked-record-projection-test-host-observe",
+    "source": "js/tests/typed-program-links-record-projection.test.js",
+    "name": "observe",
+    "inventoryName": "observe"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-checked-record-projection-test-host-archive-forms",
+    "source": "js/tests/typed-program-links-record-projection.test.js",
+    "name": "archiveForms",
+    "inventoryName": "archive-forms"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-checked-record-projection-test-host-binding-names",
+    "source": "js/tests/typed-program-links-record-projection.test.js",
+    "name": "bindingNames",
+    "inventoryName": "binding-names"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-observation-version-context-test-host-with-version-fixture",
+    "source": "js/tests/issue-195-evidence-version-context.test.js",
+    "name": "withVersionFixture",
+    "inventoryName": "with-version-fixture"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-observation-version-context-test-host-observation",
+    "source": "js/tests/issue-195-evidence-version-context.test.js",
+    "name": "observation",
+    "inventoryName": "observation"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-observation-version-context-test-host-acceptance-case",
+    "source": "js/tests/issue-195-evidence-version-context.test.js",
+    "name": "acceptanceCase",
+    "inventoryName": "acceptance-case"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-original-oracle-conversion-create-array-from-original-oracles",
+    "source": "js/scripts/convert-array-from-original-oracles.mjs",
+    "name": "createArrayFromOriginalOracles",
+    "inventoryName": "create-array-from-original-oracles"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-original-oracle-conversion-check-array-from-original-oracles",
+    "source": "js/scripts/convert-array-from-original-oracles.mjs",
+    "name": "checkArrayFromOriginalOracles",
+    "inventoryName": "check-array-from-original-oracles"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-original-oracle-conversion-convert-array-from-original-oracles",
+    "source": "js/scripts/convert-array-from-original-oracles.mjs",
+    "name": "convertArrayFromOriginalOracles",
+    "inventoryName": "convert-array-from-original-oracles"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-linked-derived-number-operand-read-linked-program-number-operand",
+    "source": "js/src/typed-program-number-projection.js",
+    "name": "readLinkedProgramNumberOperand",
+    "inventoryName": "read-linked-program-number-operand"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-linked-derived-number-operand-test-host-observe",
+    "source": "js/tests/typed-program-number-projection.test.js",
+    "name": "observe",
+    "inventoryName": "observe"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-linked-derived-number-operand-test-host-arithmetic",
+    "source": "js/tests/typed-program-number-projection.test.js",
+    "name": "arithmetic",
+    "inventoryName": "arithmetic"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-linked-derived-number-context-accept-program-derived-number-operand",
+    "source": "js/src/typed-program-number-projection-rules.js",
+    "name": "acceptProgramDerivedNumberOperand",
+    "inventoryName": "accept-program-derived-number-operand"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-linked-derived-number-authoring-read-program-number-projection-source-module",
+    "source": "js/scripts/generate-program-number-projection-rules.mjs",
+    "name": "readProgramNumberProjectionSourceModule",
+    "inventoryName": "read-program-number-projection-source-module"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-linked-derived-number-authoring-generate-program-number-projection-rules",
+    "source": "js/scripts/generate-program-number-projection-rules.mjs",
+    "name": "generateProgramNumberProjectionRules",
+    "inventoryName": "generate-program-number-projection-rules"
+  },
+  {
+    "id": "repository.batch-forty-seven-linked-derived-number-authoring-program-number-projection-source",
+    "source": "js/scripts/generate-program-number-projection-rules.mjs",
+    "name": "PROGRAM_NUMBER_PROJECTION_SOURCE",
+    "inventoryName": "program-number-projection-source"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-partial-callable-expected-result-require-partial-callable-result-inference",
+    "source": "js/src/translation/partial-callable-rules.js",
+    "name": "requirePartialCallableResultInference",
+    "inventoryName": "require-partial-callable-result-inference"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-partial-callable-context-authoring-generate-partial-callable-rules",
+    "source": "js/scripts/generate-partial-callable-rules.mjs",
+    "name": "generatePartialCallableRules",
+    "inventoryName": "generate-partial-callable-rules"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-partial-callable-direct-surface-fixture-callable-expected-context-surface",
+    "source": "js/tests/fixtures/callable-expected-context.mjs",
+    "name": "callableExpectedContextSurface",
+    "inventoryName": "callable-expected-context-surface"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-partial-callable-direct-surface-fixture-callable-expected-context-cases",
+    "source": "js/tests/fixtures/callable-expected-context.mjs",
+    "name": "callableExpectedContextCases",
+    "inventoryName": "callable-expected-context-cases"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-partial-callable-direct-surface-fixture-callable-expected-context-summary",
+    "source": "js/tests/fixtures/callable-expected-context.mjs",
+    "name": "callableExpectedContextSummary",
+    "inventoryName": "callable-expected-context-summary"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-partial-callable-direct-fixture-integer-integer",
+    "source": "js/tests/fixtures/callable-expected-context.mjs",
+    "name": "integer",
+    "inventoryName": "integer"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-partial-callable-direct-fixture-scalar-scalar",
+    "source": "js/tests/fixtures/callable-expected-context.mjs",
+    "name": "scalar",
+    "inventoryName": "scalar"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-partial-callable-direct-fixture-name-name",
+    "source": "js/tests/fixtures/callable-expected-context.mjs",
+    "name": "name",
+    "inventoryName": "name"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-partial-callable-direct-fixture-lambda-lambda",
+    "source": "js/tests/fixtures/callable-expected-context.mjs",
+    "name": "lambda",
+    "inventoryName": "lambda"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-partial-callable-direct-fixture-visit-visit",
+    "source": "js/tests/fixtures/callable-expected-context.mjs",
+    "name": "visit",
+    "inventoryName": "visit"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-declared-observation-identity-observation-identity",
+    "source": "js/scripts/observation-version-assertions.mjs",
+    "name": "observationIdentity",
+    "inventoryName": "observation-identity"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-network-projection-all-four-network-projections-preserve-the-complete-independent-membership-matrix",
+    "source": "js/tests/network-projection.test.js",
+    "name": "all four network projections preserve the complete independent membership matrix",
+    "inventoryName": "all-four-network-projections-preserve-the-complete-independent-membership-matrix"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-network-projection-abstract-syntax-retains-original-concrete-provenance-field-layout-spans-and-recovery-flags",
+    "source": "js/tests/network-projection.test.js",
+    "name": "abstract syntax retains original concrete provenance, field layout, spans and recovery flags",
+    "inventoryName": "abstract-syntax-retains-original-concrete-provenance-field-layout-spans-and-recovery-flags"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-network-projection-ordinary-parsing-retains-source-bytes-and-concrete-links-before-and-after-explicit-abstract-selection",
+    "source": "js/tests/network-projection.test.js",
+    "name": "ordinary parsing retains source bytes and concrete links before and after explicit abstract selection",
+    "inventoryName": "ordinary-parsing-retains-source-bytes-and-concrete-links-before-and-after-explicit-abstract-selection"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-network-projection-invalid-projection-selections-refuse-without-changing-the-source-network",
+    "source": "js/tests/network-projection.test.js",
+    "name": "invalid projection selections refuse without changing the source network",
+    "inventoryName": "invalid-projection-selections-refuse-without-changing-the-source-network"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-network-projection-both-complete-projection-decisions-self-translate-to-all-four-targets-and-execute-in-comparison-with-every-fixture-cell",
+    "source": "js/tests/network-projection.test.js",
+    "name": "both complete projection decisions self-translate to all four targets and execute against every fixture cell",
+    "inventoryName": "both-complete-projection-decisions-self-translate-to-all-four-targets-and-execute-in-comparison-with-every-fixture-cell"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-ordered-array-binding-defaults-retain-null-instead-of-treating-it-as-undefined",
+    "source": "js/tests/translation-javascript-array-rest-defaults.test.js",
+    "name": "defaults retain null instead of treating it as undefined",
+    "inventoryName": "defaults-retain-null-instead-of-treating-it-as-undefined"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-ordered-array-binding-binding-scope-retains-the-right-hand-side-and-initializer-temporal-dead-zones",
+    "source": "js/tests/translation-javascript-array-rest-defaults.test.js",
+    "name": "binding scope retains the RHS and initializer temporal dead zones",
+    "inventoryName": "binding-scope-retains-the-right-hand-side-and-initializer-temporal-dead-zones"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-ordered-array-binding-an-aborting-default-stops-before-the-next-initializer",
+    "source": "js/tests/translation-javascript-array-rest-defaults.test.js",
+    "name": "an aborting default stops before the next initializer",
+    "inventoryName": "an-aborting-default-stops-before-the-next-initializer"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-ordered-array-binding-a-source-free-stored-suffix-operand-remains-an-changeable-semantic-link",
+    "source": "js/tests/translation-javascript-array-rest-defaults.test.js",
+    "name": "a source-free stored suffix operand remains an editable semantic link",
+    "inventoryName": "a-source-free-stored-suffix-operand-remains-an-changeable-semantic-link"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-ordered-array-binding-raw-rest-wrappers-reject-missing-forged-inherited-and-non-literal-operands",
+    "source": "js/tests/translation-javascript-array-rest-defaults.test.js",
+    "name": "raw rest wrappers reject missing forged inherited and nonliteral operands",
+    "inventoryName": "raw-rest-wrappers-reject-missing-forged-inherited-and-non-literal-operands"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-ordered-array-binding-default-inference-plans-retain-original-terms-and-defer-unresolved-values",
+    "source": "js/tests/translation-javascript-array-rest-defaults.test.js",
+    "name": "default inference plans retain original terms and defer unresolved values",
+    "inventoryName": "default-inference-plans-retain-original-terms-and-defer-unresolved-values"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-ordered-array-binding-validated-offset-payloads-normalize-only-the-internal-number-while-retaining-the-raw-surface",
+    "source": "js/tests/translation-javascript-array-rest-defaults.test.js",
+    "name": "validated offset payloads normalize only the internal Number while retaining the raw surface",
+    "inventoryName": "validated-offset-payloads-normalize-only-the-internal-number-while-retaining-the-raw-surface"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-ordered-array-binding-the-complete-portable-array-binding-kernel-checks-and-survives-both-links-transports",
+    "source": "js/tests/translation-javascript-array-rest-defaults.test.js",
+    "name": "the complete portable array binding kernel checks and survives both Links transports",
+    "inventoryName": "the-complete-portable-array-binding-kernel-checks-and-survives-both-links-transports"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-from-construction-array-from-checker-extraction-preserves-receiver-identity-callback-expectations-and-exact-original-diagnostics",
+    "source": "js/tests/translation-array-from-rules.test.js",
+    "name": "Array.from checker extraction preserves receiver identity, callback expectations and exact original diagnostics",
+    "inventoryName": "array-from-checker-extraction-preserves-receiver-identity-callback-expectations-and-exact-original-diagnostics"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-from-construction-array-from-inference-extraction-retains-original-terms-lazy-expected-elements-and-every-argument-evaluation",
+    "source": "js/tests/translation-array-from-rules.test.js",
+    "name": "Array.from inference extraction retains original terms, lazy expected elements and every argument evaluation",
+    "inventoryName": "array-from-inference-extraction-retains-original-terms-lazy-expected-elements-and-every-argument-evaluation"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-from-construction-callback-plans-preserve-fewer-input-arguments-original-pair-identities-and-the-shared-unification-operation-order",
+    "source": "js/tests/translation-array-from-rules.test.js",
+    "name": "callback plans preserve fewer supplied arguments, original pair identities and the shared unifier order",
+    "inventoryName": "callback-plans-preserve-fewer-input-arguments-original-pair-identities-and-the-shared-unification-operation-order"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-from-construction-iteration-source-inference-plans-preserve-ordered-map-children-and-the-original-pending-constraint-behavior",
+    "source": "js/tests/translation-array-from-rules.test.js",
+    "name": "iterable inference plans preserve ordered Map children and the original pending constraint behavior",
+    "inventoryName": "iteration-source-inference-plans-preserve-ordered-map-children-and-the-original-pending-constraint-behavior"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-from-construction-checked-map-repeated-derivation-preserves-original-callback-type-ownership-and-kind-count-parameter-refusals",
+    "source": "js/tests/translation-array-from-rules.test.js",
+    "name": "checked map rederivation preserves original callback type ownership and kind count parameter refusals",
+    "inventoryName": "checked-map-repeated-derivation-preserves-original-callback-type-ownership-and-kind-count-parameter-refusals"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-from-construction-the-extracted-map-formatting-operation-retains-all-four-original-target-bytes-and-child-emission-order",
+    "source": "js/tests/translation-array-from-rules.test.js",
+    "name": "the extracted map formatter retains all four original target bytes and child emission order",
+    "inventoryName": "the-extracted-map-formatting-operation-retains-all-four-original-target-bytes-and-child-emission-order"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-from-construction-actual-array-from-strings-and-mapping-functions-retain-code-points-callback-argument-counts-and-evaluation-order-after-source-free-reload",
+    "source": "js/tests/translation-array-from-rules.test.js",
+    "name": "actual Array.from strings and mappers retain code points, callback arities and evaluation order after source free reload",
+    "inventoryName": "actual-array-from-strings-and-mapping-functions-retain-code-points-callback-argument-counts-and-evaluation-order-after-source-free-reload"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-from-construction-array-from-keeps-collection-receiver-selection-and-existing-source-refusals",
+    "source": "js/tests/translation-array-from-rules.test.js",
+    "name": "Array.from keeps collection receiver selection and existing source refusals",
+    "inventoryName": "array-from-keeps-collection-receiver-selection-and-existing-source-refusals"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-from-construction-the-complete-array-from-source-and-actual-dependencies-check-and-self-translate-every-declaration",
+    "source": "js/tests/translation-array-from-rules.test.js",
+    "name": "the complete Array.from source and actual dependencies check and self translate every declaration",
+    "inventoryName": "the-complete-array-from-source-and-actual-dependencies-check-and-self-translate-every-declaration"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-checked-record-projection-whole-checked-record-projection-is-stable-under-repeated-application-without-introducing-new-binding-owners",
+    "source": "js/tests/typed-program-links-record-projection.test.js",
+    "name": "whole checked record projection is idempotent without introducing new binding owners",
+    "inventoryName": "whole-checked-record-projection-is-stable-under-repeated-application-without-introducing-new-binding-owners"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-checked-record-projection-whole-record-repeated-check-retains-source-free-value-edits-field-order-and-actual-binding-identities",
+    "source": "js/tests/typed-program-links-record-projection.test.js",
+    "name": "whole record rechecking retains source-free value edits field order and actual binding identities",
+    "inventoryName": "whole-record-repeated-check-retains-source-free-value-edits-field-order-and-actual-binding-identities"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-checked-record-projection-canonical-record-projections-reject-malformed-layouts-types-and-lexical-targets",
+    "source": "js/tests/typed-program-links-record-projection.test.js",
+    "name": "canonical record projections reject malformed layouts types and lexical targets",
+    "inventoryName": "canonical-record-projections-reject-malformed-layouts-types-and-lexical-targets"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-checked-record-projection-canonical-record-markers-still-check-every-child-while-raw-records-keep-source-order-lowering",
+    "source": "js/tests/typed-program-links-record-projection.test.js",
+    "name": "canonical record markers still check every child while raw records keep source-order lowering",
+    "inventoryName": "canonical-record-markers-still-check-every-child-while-raw-records-keep-source-order-lowering"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-observation-version-context-another-tool-for-language-recognition-context-authenticates-actual-paired-source-bytes-primary-ur-ls-and-the-fixed-selected-range",
+    "source": "js/tests/issue-195-evidence-version-context.test.js",
+    "name": "ANTLR context authenticates actual paired source bytes, primary URLs and the fixed selected range",
+    "inventoryName": "another-tool-for-language-recognition-context-authenticates-actual-paired-source-bytes-primary-ur-ls-and-the-fixed-selected-range"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-observation-version-context-parser-generator-optimization-operation-context-uses-the-installed-manifest-and-refuses-runtime-dependency-and-lock-drift",
+    "source": "js/tests/issue-195-evidence-version-context.test.js",
+    "name": "Peggy optimizer context uses the installed manifest and refuses runtime, dependency and lock drift",
+    "inventoryName": "parser-generator-optimization-operation-context-uses-the-installed-manifest-and-refuses-runtime-dependency-and-lock-drift"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-observation-version-context-declared-observation-scopes-require-complete-exact-version-context-independently-of-incoming-test-names",
+    "source": "js/tests/issue-195-evidence-version-context.test.js",
+    "name": "declared observation scopes require complete exact version context independently of incoming test names",
+    "inventoryName": "declared-observation-scopes-require-complete-exact-version-context-independently-of-incoming-test-names"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-observation-version-context-registered-binding-removal-and-range-widening-can-not-silently-remove-version-context-from-evidence",
+    "source": "js/tests/issue-195-evidence-version-context.test.js",
+    "name": "registered binding removal and range widening cannot silently unversion evidence",
+    "inventoryName": "registered-binding-removal-and-range-widening-can-not-silently-remove-version-context-from-evidence"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-observation-version-context-acceptance-retains-original-exact-commit-and-duplicate-gates-and-rejects-missing-or-forged-version-context",
+    "source": "js/tests/issue-195-evidence-version-context.test.js",
+    "name": "acceptance retains original exact-commit and duplicate gates and rejects missing or forged version context",
+    "inventoryName": "acceptance-retains-original-exact-commit-and-duplicate-gates-and-rejects-missing-or-forged-version-context"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-observation-version-context-the-real-links-observation-writer-preserves-selected-context-and-validates-before-duplicate-removal",
+    "source": "js/tests/issue-195-evidence-version-context.test.js",
+    "name": "the real Links observation writer preserves selected context and validates before deduplication",
+    "inventoryName": "the-real-links-observation-writer-preserves-selected-context-and-validates-before-duplicate-removal"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-observation-version-context-concrete-version-verification-cells-append-without-changing-the-original-behavior-scope",
+    "source": "js/tests/issue-195-evidence-version-context.test.js",
+    "name": "concrete version verification cells append without changing the original behavior scope",
+    "inventoryName": "concrete-version-verification-cells-append-without-changing-the-original-behavior-scope"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-assertion-version-range-another-tool-for-language-recognition-reference-assertions-admit-only-the-independently-fixed-inclusive-singleton-release",
+    "source": "js/tests/assertion-version-ranges.test.js",
+    "name": "ANTLR reference assertions admit only the independently pinned inclusive singleton release",
+    "inventoryName": "another-tool-for-language-recognition-reference-assertions-admit-only-the-independently-fixed-inclusive-singleton-release"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-assertion-version-range-the-original-unicode-policy-remains-unchanged-if-concrete-another-tool-for-language-recognition-observation-bindings-append",
+    "source": "js/tests/assertion-version-ranges.test.js",
+    "name": "the original Unicode policy remains unchanged when concrete ANTLR observation bindings append",
+    "inventoryName": "the-original-unicode-policy-remains-unchanged-if-concrete-another-tool-for-language-recognition-observation-bindings-append"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-assertion-version-range-parser-generator-optimization-operation-assertions-admit-only-the-actual-fixed-inclusive-singleton-release",
+    "source": "js/tests/assertion-version-ranges.test.js",
+    "name": "Peggy optimizer assertions admit only the actual pinned inclusive singleton release",
+    "inventoryName": "parser-generator-optimization-operation-assertions-admit-only-the-actual-fixed-inclusive-singleton-release"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-independent-lexical-class-replay-independent-optimized-parser-generator-character-sets-retain-exact-source-lexical-analyser-bindings-and-byte-diagnostics",
+    "source": "js/tests/grammar-interchange-tools.test.js",
+    "name": "independent optimized Peggy character sets retain exact source lexer bindings and byte diagnostics",
+    "inventoryName": "independent-optimized-parser-generator-character-sets-retain-exact-source-lexical-analyser-bindings-and-byte-diagnostics"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-independent-lexical-class-replay-independent-optimized-character-set-replay-refuses-extra-members-and-incompatible-source-contexts",
+    "source": "js/tests/grammar-interchange-tools.test.js",
+    "name": "independent optimized character set replay refuses extra members and incompatible source contexts",
+    "inventoryName": "independent-optimized-character-set-replay-refuses-extra-members-and-incompatible-source-contexts"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-independent-lexical-class-replay-an-edited-independent-literal-extends-the-shared-lexical-analyser-pool-and-retains-original-source-clauses",
+    "source": "js/tests/grammar-interchange-tools.test.js",
+    "name": "an edited independent literal extends the shared lexer pool and retains original source clauses",
+    "inventoryName": "an-edited-independent-literal-extends-the-shared-lexical-analyser-pool-and-retains-original-source-clauses"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-independent-lexical-class-replay-independent-tool-outcomes-preserve-operation-causes-and-refuse-resource-failures-as-syntax-evidence",
+    "source": "js/tests/grammar-interchange-tools.test.js",
+    "name": "independent tool outcomes preserve operation causes and refuse resource failures as syntax evidence",
+    "inventoryName": "independent-tool-outcomes-preserve-operation-causes-and-refuse-resource-failures-as-syntax-evidence"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-independent-lexical-class-replay-a-target-operation-failure-can-not-satisfy-the-independent-mutation-witness",
+    "source": "js/tests/grammar-interchange-tools.test.js",
+    "name": "a target operation failure cannot satisfy the independent mutation witness",
+    "inventoryName": "a-target-operation-failure-can-not-satisfy-the-independent-mutation-witness"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-original-identity-assertion-profile-additive-assertion-profiles-preserve-the-exact-original-policy-and-every-published-growth-control",
+    "source": "experiments/original-link-identity/identity.test.mjs",
+    "name": "additive assertion profiles preserve the exact original policy and every published growth control",
+    "inventoryName": "additive-assertion-profiles-preserve-the-exact-original-policy-and-every-published-growth-control"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-linked-derived-number-operand-whole-checked-arithmetic-derives-again-its-actual-optional-number-operand-after-text-and-binary-reload",
+    "source": "js/tests/typed-program-number-projection.test.js",
+    "name": "whole checked arithmetic rederives its actual optional-number operand after text and binary reload",
+    "inventoryName": "whole-checked-arithmetic-derives-again-its-actual-optional-number-operand-after-text-and-binary-reload"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-linked-derived-number-operand-a-derived-numeric-wrapper-can-not-become-a-root-or-hide-changed-operands-types-or-ownership-fields",
+    "source": "js/tests/typed-program-number-projection.test.js",
+    "name": "a derived numeric wrapper cannot become a root or hide changed operands, types or ownership fields",
+    "inventoryName": "a-derived-numeric-wrapper-can-not-become-a-root-or-hide-changed-operands-types-or-ownership-fields"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-linked-derived-number-operand-the-complete-portable-numeric-projection-module-checks-and-reloads-without-extracting-declarations",
+    "source": "js/tests/typed-program-number-projection.test.js",
+    "name": "the complete portable numeric projection module checks and reloads without extracting declarations",
+    "inventoryName": "the-complete-portable-numeric-projection-module-checks-and-reloads-without-extracting-declarations"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-linked-derived-number-operand-the-shared-native-control-retains-its-actual-java-script-source-archive-and-executable-value-edit",
+    "source": "js/tests/typed-program-number-projection.test.js",
+    "name": "the shared native control retains its actual JavaScript source archive and executable value edit",
+    "inventoryName": "the-shared-native-control-retains-its-actual-java-script-source-archive-and-executable-value-edit"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-partial-callable-expected-result-direct-surface-callback-contexts-retain-contextual-parameters-and-infer-actual-large-integer-returns-through-every-result-wrapper",
+    "source": "js/tests/translation-callable-expected-context.test.js",
+    "name": "direct Surface callback contexts retain contextual parameters and infer actual BigInt returns through every result wrapper",
+    "inventoryName": "direct-surface-callback-contexts-retain-contextual-parameters-and-infer-actual-large-integer-returns-through-every-result-wrapper"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-partial-callable-expected-result-the-original-incomplete-single-selection-value-match-callback-counterexample-survives-strict-source-free-text-and-binary-checks-again",
+    "source": "js/tests/translation-callable-expected-context.test.js",
+    "name": "the original incomplete Match1 callback counterexample survives strict source-free text and binary rechecks",
+    "inventoryName": "the-original-incomplete-single-selection-value-match-callback-counterexample-survives-strict-source-free-text-and-binary-checks-again"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-partial-callable-expected-result-partial-single-selection-value-match-result-inference-still-refuses-incompatible-actual-branch-returns",
+    "source": "js/tests/translation-callable-expected-context.test.js",
+    "name": "partial Match1 result inference still refuses incompatible actual branch returns",
+    "inventoryName": "partial-single-selection-value-match-result-inference-still-refuses-incompatible-actual-branch-returns"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-partial-callable-expected-result-the-complete-partial-callable-selector-translates-and-preserves-absent-in-comparison-with-present-return-contexts",
+    "source": "js/tests/translation-callable-expected-context.test.js",
+    "name": "the complete partial callable selector translates and preserves absent versus present return contexts",
+    "inventoryName": "the-complete-partial-callable-selector-translates-and-preserves-absent-in-comparison-with-present-return-contexts"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-admitted-source-table-accepted-cases",
+    "source": "js/tests/fixtures/array-binding-cases.mjs",
+    "name": "accepted",
+    "inventoryName": "accepted"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-binding-rest-source-once-elision",
+    "source": "js/tests/fixtures/array-binding-cases.mjs",
+    "name": "rest-source-once-elision",
+    "inventoryName": "rest-source-once-elision"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-binding-zero-start-rest-and-empty-tail",
+    "source": "js/tests/fixtures/array-binding-cases.mjs",
+    "name": "zero-start-rest-and-empty-tail",
+    "inventoryName": "zero-start-rest-and-empty-tail"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-binding-left-to-right-defaults-read-earlier-binding",
+    "source": "js/tests/fixtures/array-binding-cases.mjs",
+    "name": "left-to-right-defaults-read-earlier-binding",
+    "inventoryName": "left-to-right-defaults-read-earlier-binding"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-binding-present-zero-skips-fallback",
+    "source": "js/tests/fixtures/array-binding-cases.mjs",
+    "name": "present-zero-skips-fallback",
+    "inventoryName": "present-zero-skips-fallback"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-binding-present-false-and-empty-text-skip-default",
+    "source": "js/tests/fixtures/array-binding-cases.mjs",
+    "name": "present-false-and-empty-text-skip-default",
+    "inventoryName": "present-false-and-empty-text-skip-default"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-binding-rest-of-source-alias-preserves-values",
+    "source": "js/tests/fixtures/array-binding-cases.mjs",
+    "name": "rest-of-source-alias-preserves-values",
+    "inventoryName": "rest-of-source-alias-preserves-values"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-binding-for-of-for-each-iteration-rest",
+    "source": "js/tests/fixtures/array-binding-cases.mjs",
+    "name": "for-of-per-iteration-rest",
+    "inventoryName": "for-of-for-each-iteration-rest"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-binding-present-not-a-number-and-negative-zero-skip-default",
+    "source": "js/tests/fixtures/array-binding-cases.mjs",
+    "name": "present-nan-and-negative-zero-skip-default",
+    "inventoryName": "present-not-a-number-and-negative-zero-skip-default"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-refusal-source-table-refused-cases",
+    "source": "js/tests/fixtures/array-binding-cases.mjs",
+    "name": "refused",
+    "inventoryName": "refused"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-binding-rest-trailing-comma",
+    "source": "js/tests/fixtures/array-binding-cases.mjs",
+    "name": "rest-trailing-comma",
+    "inventoryName": "rest-trailing-comma"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-binding-rest-not-last",
+    "source": "js/tests/fixtures/array-binding-cases.mjs",
+    "name": "rest-not-last",
+    "inventoryName": "rest-not-last"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-binding-rest-default",
+    "source": "js/tests/fixtures/array-binding-cases.mjs",
+    "name": "rest-default",
+    "inventoryName": "rest-default"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-binding-duplicate-name",
+    "source": "js/tests/fixtures/array-binding-cases.mjs",
+    "name": "duplicate-name",
+    "inventoryName": "duplicate-name"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-binding-reserved-name",
+    "source": "js/tests/fixtures/array-binding-cases.mjs",
+    "name": "reserved-name",
+    "inventoryName": "reserved-name"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-binding-reserved-prefix",
+    "source": "js/tests/fixtures/array-binding-cases.mjs",
+    "name": "reserved-prefix",
+    "inventoryName": "reserved-prefix"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-binding-self-default-temporal-dead-zone",
+    "source": "js/tests/fixtures/array-binding-cases.mjs",
+    "name": "self-default-tdz",
+    "inventoryName": "self-default-temporal-dead-zone"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-binding-later-default-temporal-dead-zone",
+    "source": "js/tests/fixtures/array-binding-cases.mjs",
+    "name": "later-default-tdz",
+    "inventoryName": "later-default-temporal-dead-zone"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-binding-right-hand-side-temporal-dead-zone-shadow",
+    "source": "js/tests/fixtures/array-binding-cases.mjs",
+    "name": "rhs-tdz-shadow",
+    "inventoryName": "right-hand-side-temporal-dead-zone-shadow"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-binding-null-capable-default-unproved",
+    "source": "js/tests/fixtures/array-binding-cases.mjs",
+    "name": "nullable-default-unproved",
+    "inventoryName": "null-capable-default-unproved"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-binding-string-iteration-source-not-array",
+    "source": "js/tests/fixtures/array-binding-cases.mjs",
+    "name": "string-iterator-not-array",
+    "inventoryName": "string-iteration-source-not-array"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-binding-nested-rest-unproved",
+    "source": "js/tests/fixtures/array-binding-cases.mjs",
+    "name": "nested-rest-unproved",
+    "inventoryName": "nested-rest-unproved"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-binding-structured-default-unproved",
+    "source": "js/tests/fixtures/array-binding-cases.mjs",
+    "name": "structured-default-unproved",
+    "inventoryName": "structured-default-unproved"
+  },
+  {
+    "id": "repository.batch-forty-seven-partial-callable-expected-result-library-style-partial-callable-rules-library-style",
+    "source": "parity/self-translation/partial-callable-rules-decorators.lino",
+    "name": "partial_callable_rules-library-style",
+    "inventoryName": "partial-callable-rules-library-style"
+  },
+  {
+    "id": "repository.batch-forty-seven-linked-derived-number-operand-library-style-program-number-projection-rules-library-style",
+    "source": "parity/self-translation/program-number-projection-rules-decorators.lino",
+    "name": "program_number_projection_rules-library-style",
+    "inventoryName": "program-number-projection-rules-library-style"
+  },
+  {
+    "id": "repository.batch-forty-seven-network-projection-library-style-network-projection-rules-library-style",
+    "source": "parity/self-translation/network-projection-rules-decorators.lino",
+    "name": "network_projection_rules-library-style",
+    "inventoryName": "network-projection-rules-library-style"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-library-style-array-binding-rules-library-style",
+    "source": "parity/self-translation/array-binding-rules-decorators.lino",
+    "name": "array_binding_rules-library-style",
+    "inventoryName": "array-binding-rules-library-style"
+  },
+  {
+    "id": "repository.batch-forty-seven-array-from-construction-library-style-array-from-rules-library-style",
+    "source": "parity/self-translation/array-from-rules-decorators.lino",
+    "name": "array_from_rules-library-style",
+    "inventoryName": "array-from-rules-library-style"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-surface-constructor-s-node-array-binding-rest",
+    "source": "rust/src/translation/surface/nodes.rs",
+    "name": "SNode::ArrayBindingRest",
+    "inventoryName": "s-node-array-binding-rest"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-surface-constructor-s-node-array-binding-default",
+    "source": "rust/src/translation/surface/nodes.rs",
+    "name": "SNode::ArrayBindingDefault",
+    "inventoryName": "s-node-array-binding-default"
+  },
+  {
+    "id": "repository.batch-forty-seven-array-from-source-constructor-s-node-array-from-constructor",
+    "source": "rust/src/translation/surface/nodes.rs",
+    "name": "SNode::ArrayFrom",
+    "inventoryName": "s-node-array-from"
+  },
+  {
+    "id": "repository.select-original-network-projection-links",
+    "source": "js/src/network.js",
+    "name": "LinkNetwork::projectedLinks",
+    "inventoryName": "link-network-projected-links"
+  },
+  {
+    "id": "repository.select-original-network-projection-links",
+    "source": "js/src/network.js",
+    "name": "LinkNetwork::projected_links",
+    "inventoryName": "link-network-projected-links"
+  },
+  {
+    "id": "repository.batch-forty-seven-network-projection-value-network-projection",
+    "source": "js/src/primitives.js",
+    "name": "NetworkProjection",
+    "inventoryName": "network-projection"
+  },
+  {
+    "id": "repository.batch-forty-seven-network-projection-value-network-projection",
+    "source": "rust/src/network_projection.rs",
+    "name": "NetworkProjection",
+    "inventoryName": "network-projection"
+  },
+  {
+    "id": "repository.batch-forty-seven-network-projection-view-constructor-network-projection-lossless-view",
+    "source": "rust/src/network_projection.rs",
+    "name": "NetworkProjection::Lossless",
+    "inventoryName": "network-projection-lossless"
+  },
+  {
+    "id": "repository.batch-forty-seven-network-projection-view-constructor-network-projection-concrete-syntax",
+    "source": "rust/src/network_projection.rs",
+    "name": "NetworkProjection::ConcreteSyntax",
+    "inventoryName": "network-projection-concrete-syntax"
+  },
+  {
+    "id": "repository.batch-forty-seven-network-projection-view-constructor-network-projection-abstract-syntax",
+    "source": "rust/src/network_projection.rs",
+    "name": "NetworkProjection::AbstractSyntax",
+    "inventoryName": "network-projection-abstract-syntax"
+  },
+  {
+    "id": "repository.batch-forty-seven-network-projection-view-constructor-network-projection-semantic-view",
+    "source": "rust/src/network_projection.rs",
+    "name": "NetworkProjection::Semantic",
+    "inventoryName": "network-projection-semantic"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-network-projection-host-label",
+    "source": "rust/src/network_projection.rs",
+    "name": "label",
+    "inventoryName": "label"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-network-projection-host-includes",
+    "source": "rust/src/network_projection.rs",
+    "name": "includes",
+    "inventoryName": "includes"
+  },
+  {
+    "id": "repository.select-original-network-projection-links",
+    "source": "rust/src/link_network.rs",
+    "name": "projected_links",
+    "inventoryName": "projected-links"
+  },
+  {
+    "id": "repository.batch-forty-seven-callable-expected-context-expected-type-type",
+    "source": "rust/src/translation/check/expectation.rs",
+    "name": "ExpectedType",
+    "inventoryName": "expected-type"
+  },
+  {
+    "id": "repository.batch-forty-seven-callable-expected-context-constructor-expected-type-concrete",
+    "source": "rust/src/translation/check/expectation.rs",
+    "name": "ExpectedType::Concrete",
+    "inventoryName": "expected-type-concrete"
+  },
+  {
+    "id": "repository.batch-forty-seven-callable-expected-context-constructor-expected-type-callable-signature",
+    "source": "rust/src/translation/check/expectation.rs",
+    "name": "ExpectedType::Callable",
+    "inventoryName": "expected-type-callable"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-callable-expected-context-concrete",
+    "source": "rust/src/translation/check/expectation.rs",
+    "name": "concrete",
+    "inventoryName": "concrete"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-callable-expected-context-kind",
+    "source": "rust/src/translation/check/expectation.rs",
+    "name": "kind",
+    "inventoryName": "kind"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-callable-expected-context-result",
+    "source": "rust/src/translation/check/expectation.rs",
+    "name": "result",
+    "inventoryName": "result"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-callable-expected-context-value",
+    "source": "rust/src/translation/check/expectation.rs",
+    "name": "value",
+    "inventoryName": "value"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-callable-expected-expression-host-expression-with-callable-expectation",
+    "source": "rust/src/translation/check/expressions.rs",
+    "name": "expr_with_callable_expectation",
+    "inventoryName": "expression-with-callable-expectation"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-callable-expected-expression-host-expression-with-context",
+    "source": "rust/src/translation/check/expressions.rs",
+    "name": "expr_with_context",
+    "inventoryName": "expression-with-context"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-checked-receiver-method-host-primitive-method-on-checked-receiver",
+    "source": "rust/src/translation/check/primitive_methods.rs",
+    "name": "primitive_method_on_checked_receiver",
+    "inventoryName": "primitive-method-on-checked-receiver"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-inference-host-endpoint",
+    "source": "rust/src/translation/javascript/infer/array_from.rs",
+    "name": "endpoint",
+    "inventoryName": "endpoint"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-inference-host-array-from",
+    "source": "rust/src/translation/javascript/infer/array_from.rs",
+    "name": "array_from",
+    "inventoryName": "array-from"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-inference-host-array-from-iteration-source-element",
+    "source": "rust/src/translation/javascript/infer/array_from.rs",
+    "name": "array_from_iterable_element",
+    "inventoryName": "array-from-iteration-source-element"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-inference-host-array-from-callback",
+    "source": "rust/src/translation/javascript/infer/array_from.rs",
+    "name": "array_from_callback",
+    "inventoryName": "array-from-callback"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-inference-host-solve-array-from-iteration-source",
+    "source": "rust/src/translation/javascript/infer/array_from.rs",
+    "name": "solve_array_from_iterable",
+    "inventoryName": "solve-array-from-iteration-source"
+  },
+  {
+    "id": "repository.batch-forty-seven-array-binding-surface-host-surface-expression-type",
+    "source": "rust/src/translation/surface/array_bindings.rs",
+    "name": "SurfaceExpression",
+    "inventoryName": "surface-expression"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-binding-surface-host-present-block",
+    "source": "rust/src/translation/surface/array_bindings.rs",
+    "name": "present_block",
+    "inventoryName": "present-block"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-binding-surface-host-present-tag-test",
+    "source": "rust/src/translation/surface/array_bindings.rs",
+    "name": "present_tag_test",
+    "inventoryName": "present-tag-test"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-binding-surface-host-try-from",
+    "source": "rust/src/translation/surface/array_bindings.rs",
+    "name": "try_from",
+    "inventoryName": "try-from"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-binding-surface-host-validate",
+    "source": "rust/src/translation/surface/array_bindings.rs",
+    "name": "validate",
+    "inventoryName": "validate"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-binding-surface-host-offset",
+    "source": "rust/src/translation/surface/array_bindings.rs",
+    "name": "offset",
+    "inventoryName": "offset"
+  },
+  {
+    "id": "repository.batch-forty-seven-checked-record-surface-host-record-fields-type",
+    "source": "rust/src/translation/surface/record_projection.rs",
+    "name": "RecordFields",
+    "inventoryName": "record-fields"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-checked-record-surface-host-read-present-record-projection",
+    "source": "rust/src/translation/surface/record_projection.rs",
+    "name": "read_present_record_projection",
+    "inventoryName": "read-present-record-projection"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-checked-record-surface-host-read-record-projection",
+    "source": "rust/src/translation/surface/record_projection.rs",
+    "name": "read_record_projection",
+    "inventoryName": "read-record-projection"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-linked-derived-number-native-host-float-type",
+    "source": "rust/src/typed_program_links/number_projection.rs",
+    "name": "float_type",
+    "inventoryName": "float-type"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-linked-derived-number-native-host-read-linked-program-number-operand",
+    "source": "rust/src/typed_program_links/number_projection.rs",
+    "name": "read_linked_program_number_operand",
+    "inventoryName": "read-linked-program-number-operand"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-network-projection-native-control-fixture",
+    "source": "rust/tests/unit/network_projection.rs",
+    "name": "fixture",
+    "inventoryName": "fixture"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-network-projection-native-control-projection",
+    "source": "rust/tests/unit/network_projection.rs",
+    "name": "projection",
+    "inventoryName": "projection"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-network-projection-native-control-role",
+    "source": "rust/tests/unit/network_projection.rs",
+    "name": "role",
+    "inventoryName": "role"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-network-projection-native-control-role-network",
+    "source": "rust/tests/unit/network_projection.rs",
+    "name": "role_network",
+    "inventoryName": "role-network"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-network-projection-native-control-every-public-projection-matches-the-independent-role-matrix-without-copying-links",
+    "source": "rust/tests/unit/network_projection.rs",
+    "name": "every_public_projection_matches_the_independent_role_matrix_without_copying_links",
+    "inventoryName": "every-public-projection-matches-the-independent-role-matrix-without-copying-links"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-network-projection-native-control-abstract-results-keep-original-concrete-references-fields-spans-and-recovery",
+    "source": "rust/tests/unit/network_projection.rs",
+    "name": "abstract_results_keep_original_concrete_references_fields_spans_and_recovery",
+    "inventoryName": "abstract-results-keep-original-concrete-references-fields-spans-and-recovery"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-network-projection-native-control-default-parse-keeps-concrete-source-after-explicit-abstract-selection",
+    "source": "rust/tests/unit/network_projection.rs",
+    "name": "default_parse_keeps_concrete_source_after_explicit_abstract_selection",
+    "inventoryName": "default-parse-keeps-concrete-source-after-explicit-abstract-selection"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-network-projection-native-control-actual-native-and-javascript-apis-select-the-same-original-ids-from-one-saved-network",
+    "source": "rust/tests/unit/network_projection.rs",
+    "name": "actual_native_and_javascript_apis_select_the_same_original_ids_from_one_saved_network",
+    "inventoryName": "actual-native-and-javascript-apis-select-the-same-original-ids-from-one-saved-network"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-checked-record-native-control-marked",
+    "source": "rust/tests/unit/typed_program_record_projection.rs",
+    "name": "marked",
+    "inventoryName": "marked"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-checked-record-native-control-value",
+    "source": "rust/tests/unit/typed_program_record_projection.rs",
+    "name": "value",
+    "inventoryName": "value"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-checked-record-native-control-marked-record-surface-decoding-checks-original-descriptors-before-defaults",
+    "source": "rust/tests/unit/typed_program_record_projection.rs",
+    "name": "marked_record_surface_deserialization_checks_original_descriptors_before_defaults",
+    "inventoryName": "marked-record-surface-decoding-checks-original-descriptors-before-defaults"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-checked-record-native-control-present-invalid-record-markers-can-not-select-the-raw-surface-path",
+    "source": "rust/tests/unit/typed_program_record_projection.rs",
+    "name": "present_invalid_record_markers_cannot_select_the_raw_surface_path",
+    "inventoryName": "present-invalid-record-markers-can-not-select-the-raw-surface-path"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-checked-record-native-control-archives",
+    "source": "rust/tests/unit/typed_program_record_projection.rs",
+    "name": "archives",
+    "inventoryName": "archives"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-checked-record-native-control-replace-nine",
+    "source": "rust/tests/unit/typed_program_record_projection.rs",
+    "name": "replace_nine",
+    "inventoryName": "replace-nine"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-checked-record-native-control-canonical-record-programs-keep-strict-checks-and-source-free-value-edits",
+    "source": "rust/tests/unit/typed_program_record_projection.rs",
+    "name": "canonical_record_programs_keep_strict_checks_and_source_free_value_edits",
+    "inventoryName": "canonical-record-programs-keep-strict-checks-and-source-free-value-edits"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-construction-native-control-indexed-slices-and-string-copies-retain-actual-javascript-observations",
+    "source": "rust/tests/unit/translation_array_construction.rs",
+    "name": "indexed_slices_and_string_copies_retain_actual_javascript_observations",
+    "inventoryName": "indexed-slices-and-string-copies-retain-actual-javascript-observations"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-record-formal-emission-test-host-portable-emission",
+    "source": "rust/tests/unit/translation_record_values.rs",
+    "name": "portable_emission",
+    "inventoryName": "portable-emission"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-checking-host-number",
+    "source": "rust/src/translation/check/array_from.rs",
+    "name": "number",
+    "inventoryName": "number"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-checking-host-selected-type",
+    "source": "rust/src/translation/check/array_from.rs",
+    "name": "selected_type",
+    "inventoryName": "selected-type"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-checking-host-array-from",
+    "source": "rust/src/translation/check/array_from.rs",
+    "name": "array_from",
+    "inventoryName": "array-from"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-checking-host-array-map-on-checked-receiver",
+    "source": "rust/src/translation/check/array_from.rs",
+    "name": "array_map_on_checked_receiver",
+    "inventoryName": "array-map-on-checked-receiver"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-mapping-formal-emission-host-array-map-expression",
+    "source": "rust/src/translation/emit_lean/arrays.rs",
+    "name": "array_map_expression",
+    "inventoryName": "array-map-expression"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-native-control-observe",
+    "source": "rust/tests/unit/translation_array_from.rs",
+    "name": "observe",
+    "inventoryName": "observe"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-native-control-javascript-contract",
+    "source": "rust/tests/unit/translation_array_from.rs",
+    "name": "javascript_contract",
+    "inventoryName": "javascript-contract"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-from-native-control-array-from-keeps-code-points-mapping-function-argument-counts-effects-and-actual-raw-shape",
+    "source": "rust/tests/unit/translation_array_from.rs",
+    "name": "array_from_keeps_code_points_mapper_arities_effects_and_actual_raw_shape",
+    "inventoryName": "array-from-keeps-code-points-mapping-function-argument-counts-effects-and-actual-raw-shape"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-from-native-control-array-from-map-formatting-operation-keeps-every-existing-target-byte",
+    "source": "rust/tests/unit/translation_array_from.rs",
+    "name": "array_from_map_formatter_keeps_every_existing_target_byte",
+    "inventoryName": "array-from-map-formatting-operation-keeps-every-existing-target-byte"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-array-from-native-control-generated-array-from-mapping-runs-with-original-javascript-observations",
+    "source": "rust/tests/unit/translation_array_from.rs",
+    "name": "emitted_array_from_mapping_runs_with_original_javascript_observations",
+    "inventoryName": "generated-array-from-mapping-runs-with-original-javascript-observations"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-linked-derived-number-native-control-fixture",
+    "source": "rust/tests/unit/typed_program_number_projection.rs",
+    "name": "fixture",
+    "inventoryName": "fixture"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-linked-derived-number-native-control-packet",
+    "source": "rust/tests/unit/typed_program_number_projection.rs",
+    "name": "packet",
+    "inventoryName": "packet"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-linked-derived-number-native-control-archives",
+    "source": "rust/tests/unit/typed_program_number_projection.rs",
+    "name": "archives",
+    "inventoryName": "archives"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-linked-derived-number-native-control-observe",
+    "source": "rust/tests/unit/typed_program_number_projection.rs",
+    "name": "observe",
+    "inventoryName": "observe"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-linked-derived-number-native-control-edit-arithmetic",
+    "source": "rust/tests/unit/typed_program_number_projection.rs",
+    "name": "edit_arithmetic",
+    "inventoryName": "edit-arithmetic"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-linked-derived-number-native-control-edit-program",
+    "source": "rust/tests/unit/typed_program_number_projection.rs",
+    "name": "edit_program",
+    "inventoryName": "edit-program"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-linked-derived-number-native-control-source-free-numeric-operands-recheck-after-both-archives-and-keep-real-value-edits",
+    "source": "rust/tests/unit/typed_program_number_projection.rs",
+    "name": "source_free_numeric_operands_recheck_after_both_archives_and_keep_real_value_edits",
+    "inventoryName": "source-free-numeric-operands-recheck-after-both-archives-and-keep-real-value-edits"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-linked-derived-number-native-control-independent-wrappers-and-counterfeit-result-or-child-types-can-not-pass-full-repeated-check",
+    "source": "rust/tests/unit/typed_program_number_projection.rs",
+    "name": "standalone_wrappers_and_counterfeit_result_or_child_types_cannot_pass_full_rechecking",
+    "inventoryName": "independent-wrappers-and-counterfeit-result-or-child-types-can-not-pass-full-repeated-check"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-linked-derived-number-native-control-raw-wrapper-ownership-extensions-are-refused-after-source-free-reload",
+    "source": "rust/tests/unit/typed_program_number_projection.rs",
+    "name": "raw_wrapper_ownership_extensions_are_refused_after_source_free_reload",
+    "inventoryName": "raw-wrapper-ownership-extensions-are-refused-after-source-free-reload"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-partial-callable-native-control-fixtures",
+    "source": "rust/tests/unit/translation_callable_expected_context.rs",
+    "name": "fixtures",
+    "inventoryName": "fixtures"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-partial-callable-native-control-summary",
+    "source": "rust/tests/unit/translation_callable_expected_context.rs",
+    "name": "summary",
+    "inventoryName": "summary"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-partial-callable-native-control-visit",
+    "source": "rust/tests/unit/translation_callable_expected_context.rs",
+    "name": "visit",
+    "inventoryName": "visit"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-partial-callable-native-control-observe",
+    "source": "rust/tests/unit/translation_callable_expected_context.rs",
+    "name": "observe",
+    "inventoryName": "observe"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-partial-callable-native-control-direct-surface-partial-callable-contexts-keep-actual-parameters-returns-and-effect-order",
+    "source": "rust/tests/unit/translation_callable_expected_context.rs",
+    "name": "direct_surface_partial_callable_contexts_keep_actual_parameters_returns_and_effect_order",
+    "inventoryName": "direct-surface-partial-callable-contexts-keep-actual-parameters-returns-and-effect-order"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-partial-callable-native-control-original-single-selection-value-match-partial-return-counterexample-checks-again-both-source-free-archives",
+    "source": "rust/tests/unit/translation_callable_expected_context.rs",
+    "name": "original_match1_partial_return_counterexample_rechecks_both_source_free_archives",
+    "inventoryName": "original-single-selection-value-match-partial-return-counterexample-checks-again-both-source-free-archives"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-parser-host-array-binding-type",
+    "source": "rust/src/translation/javascript/array_bindings.rs",
+    "name": "ArrayBinding",
+    "inventoryName": "array-binding"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-parser-host-reserved-names",
+    "source": "rust/src/translation/javascript/array_bindings.rs",
+    "name": "reserved_names",
+    "inventoryName": "reserved-names"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-parser-host-kind",
+    "source": "rust/src/translation/javascript/array_bindings.rs",
+    "name": "kind",
+    "inventoryName": "kind"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-parser-host-array-binding-names",
+    "source": "rust/src/translation/javascript/array_bindings.rs",
+    "name": "array_binding_names",
+    "inventoryName": "array-binding-names"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-parser-host-read-array-binding",
+    "source": "rust/src/translation/javascript/array_bindings.rs",
+    "name": "read_array_binding",
+    "inventoryName": "read-array-binding"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-parser-host-read-array-binding-path",
+    "source": "rust/src/translation/javascript/array_bindings.rs",
+    "name": "read_array_binding_path",
+    "inventoryName": "read-array-binding-path"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-parser-host-array-binding-initializer",
+    "source": "rust/src/translation/javascript/array_bindings.rs",
+    "name": "array_binding_initializer",
+    "inventoryName": "array-binding-initializer"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-parser-host-bind-array-elements",
+    "source": "rust/src/translation/javascript/array_bindings.rs",
+    "name": "bind_array_elements",
+    "inventoryName": "bind-array-elements"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-parser-host-array-destructuring",
+    "source": "rust/src/translation/javascript/array_bindings.rs",
+    "name": "array_destructuring",
+    "inventoryName": "array-destructuring"
+  },
+  {
+    "id": "repository.batch-forty-seven-array-default-inference-native-host-default-binding-type",
+    "source": "rust/src/translation/javascript/infer/array_bindings.rs",
+    "name": "DefaultBinding",
+    "inventoryName": "default-binding"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-default-inference-native-host-array-binding-expression",
+    "source": "rust/src/translation/javascript/infer/array_bindings.rs",
+    "name": "array_binding_expr",
+    "inventoryName": "array-binding-expression"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-default-inference-native-host-solve-array-binding-defaults",
+    "source": "rust/src/translation/javascript/infer/array_bindings.rs",
+    "name": "solve_array_binding_defaults",
+    "inventoryName": "solve-array-binding-defaults"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-control-fixture",
+    "source": "rust/tests/unit/translation_javascript_array_bindings.rs",
+    "name": "fixture",
+    "inventoryName": "fixture"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-control-observe",
+    "source": "rust/tests/unit/translation_javascript_array_bindings.rs",
+    "name": "observe",
+    "inventoryName": "observe"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-ordered-array-binding-native-control-original-array-binding-sources-keep-output-and-both-source-free-archives",
+    "source": "rust/tests/unit/translation_javascript_array_bindings.rs",
+    "name": "original_array_binding_sources_keep_output_and_both_source_free_archives",
+    "inventoryName": "original-array-binding-sources-keep-output-and-both-source-free-archives"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-ordered-array-binding-native-control-every-original-binding-refusal-remains-a-refusal",
+    "source": "rust/tests/unit/translation_javascript_array_bindings.rs",
+    "name": "every_original_binding_refusal_remains_a_refusal",
+    "inventoryName": "every-original-binding-refusal-remains-a-refusal"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-control-raw-program",
+    "source": "rust/tests/unit/translation_javascript_array_bindings.rs",
+    "name": "raw_program",
+    "inventoryName": "raw-program"
+  },
+  {
+    "id": "repository.check-batch-forty-seven-ordered-array-binding-native-control-raw-binding-transport-preserves-presence-and-only-validates-the-selected-literal",
+    "source": "rust/tests/unit/translation_javascript_array_bindings.rs",
+    "name": "raw_binding_transport_preserves_presence_and_only_validates_the_selected_literal",
+    "inventoryName": "raw-binding-transport-preserves-presence-and-only-validates-the-selected-literal"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/scripts/antlr-version-assertions.mjs",
+    "name": "hash",
+    "inventoryName": "hash"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/scripts/peggy-version-assertions.mjs",
+    "name": "hash",
+    "inventoryName": "hash"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/scripts/generate-array-from-rules.mjs",
+    "name": "hash",
+    "inventoryName": "hash"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "experiments/original-link-identity/generate-assertion-profiles.mjs",
+    "name": "sha256",
+    "inventoryName": "secure-hash-algorithm-two-hundred-fifty-six"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/scripts/convert-array-from-original-oracles.mjs",
+    "name": "hash",
+    "inventoryName": "hash"
+  },
+  {
+    "id": "repository.batch-forty-seven-partial-callable-expected-result-native-part-one-type",
+    "source": "rust/src/translation/partial_callable_rules.rs",
+    "name": "part_1",
+    "inventoryName": "part-one"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-partial-callable-expected-result-require-partial-callable-result-inference",
+    "source": "rust/src/translation/partial_callable_rules/part_1.rs",
+    "name": "require_partial_callable_result_inference",
+    "inventoryName": "require-partial-callable-result-inference"
+  },
+  {
+    "id": "repository.batch-forty-seven-linked-derived-number-operand-native-part-one-type",
+    "source": "rust/src/translation/program_number_projection_rules.rs",
+    "name": "part_1",
+    "inventoryName": "part-one"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-linked-derived-number-context-accept-program-derived-number-operand",
+    "source": "rust/src/translation/program_number_projection_rules/part_1.rs",
+    "name": "accept_program_derived_number_operand",
+    "inventoryName": "accept-program-derived-number-operand"
+  },
+  {
+    "id": "repository.batch-forty-seven-network-projection-native-part-one-type",
+    "source": "rust/src/translation/network_projection_rules.rs",
+    "name": "part_1",
+    "inventoryName": "part-one"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-network-projection-accept-network-projection",
+    "source": "rust/src/translation/network_projection_rules/part_1.rs",
+    "name": "accept_network_projection",
+    "inventoryName": "accept-network-projection"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-network-projection-accept-network-projection-link",
+    "source": "rust/src/translation/network_projection_rules/part_1.rs",
+    "name": "accept_network_projection_link",
+    "inventoryName": "accept-network-projection-link"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-part-one-type",
+    "source": "rust/src/translation/array_binding_rules.rs",
+    "name": "part_1",
+    "inventoryName": "part-one"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-part-two-type",
+    "source": "rust/src/translation/array_binding_rules.rs",
+    "name": "part_2",
+    "inventoryName": "part-two"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-array",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_array",
+    "inventoryName": "meta-language-array"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-optional-at",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_array::optional_at",
+    "inventoryName": "meta-language-array-optional-at"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-at",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_array::at",
+    "inventoryName": "meta-language-array-at"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-number-index",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_array::number_index",
+    "inventoryName": "meta-language-array-number-index"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-append",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_array::append",
+    "inventoryName": "meta-language-array-append"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-integer",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_array::integer",
+    "inventoryName": "meta-language-array-integer"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-relative",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_array::relative",
+    "inventoryName": "meta-language-array-relative"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-slice",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_array::slice",
+    "inventoryName": "meta-language-array-slice"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-index-of",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_array::index_of",
+    "inventoryName": "meta-language-array-index-of"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-includes",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_array::includes",
+    "inventoryName": "meta-language-array-includes"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-set",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_array::set",
+    "inventoryName": "meta-language-array-set"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-map",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_array::map",
+    "inventoryName": "meta-language-array-map"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-meta-language-string-type",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string",
+    "inventoryName": "meta-language-string"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-meta-language-string-text-type",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string::Text",
+    "inventoryName": "meta-language-string-text"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-string-format",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string::fmt",
+    "inventoryName": "meta-language-string-format"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-string-from-text",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string::from_text",
+    "inventoryName": "meta-language-string-from-text"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-string-from-units",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string::from_units",
+    "inventoryName": "meta-language-string-from-units"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-string-length",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string::length",
+    "inventoryName": "meta-language-string-length"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-string-concatenate",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string::concat",
+    "inventoryName": "meta-language-string-concatenate"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-string-starts-with",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string::starts_with",
+    "inventoryName": "meta-language-string-starts-with"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-string-ends-with",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string::ends_with",
+    "inventoryName": "meta-language-string-ends-with"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-string-contains",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string::contains",
+    "inventoryName": "meta-language-string-contains"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-string-slice",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string::slice",
+    "inventoryName": "meta-language-string-slice"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-string-index-of",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string::index_of",
+    "inventoryName": "meta-language-string-index-of"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-string-last-index-of",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string::last_index_of",
+    "inventoryName": "meta-language-string-last-index-of"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-string-split",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string::split",
+    "inventoryName": "meta-language-string-split"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-string-code-point-at",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string::code_point_at",
+    "inventoryName": "meta-language-string-code-point-at"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-string-code-points",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string::code_points",
+    "inventoryName": "meta-language-string-code-points"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-string-repeat",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string::repeat",
+    "inventoryName": "meta-language-string-repeat"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-string-pad",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string::pad",
+    "inventoryName": "meta-language-string-pad"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-string-replace-search-matches",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string::replace",
+    "inventoryName": "meta-language-string-replace"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-string-trim",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string::trim",
+    "inventoryName": "meta-language-string-trim"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-string-map-case",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string::map_case",
+    "inventoryName": "meta-language-string-map-case"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-string-join",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string::join",
+    "inventoryName": "meta-language-string-join"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-string-integer",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string::integer",
+    "inventoryName": "meta-language-string-integer"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-string-absolute",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string::absolute",
+    "inventoryName": "meta-language-string-absolute"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-string-relative",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string::relative",
+    "inventoryName": "meta-language-string-relative"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-string-unsigned-integer-thirty-two-bit",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string::uint32",
+    "inventoryName": "meta-language-string-unsigned-integer-thirty-two-bit"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-string-substitute-replacement-patterns",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "ml_string::substitute",
+    "inventoryName": "meta-language-string-substitute"
+  },
+  {
+    "id": "translation.refuse-required-number-fact",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "refuse_required_number_fact",
+    "inventoryName": "refuse-required-number-fact"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-refuse-required-text-fact",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "refuse_required_text_fact",
+    "inventoryName": "refuse-required-text-fact"
+  },
+  {
+    "id": "translation.refuse-required-boolean-fact",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "refuse_required_boolean_fact",
+    "inventoryName": "refuse-required-boolean-fact"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-read-required-number-fact",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "read_required_number_fact",
+    "inventoryName": "read-required-number-fact"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-read-required-text-fact",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "read_required_text_fact",
+    "inventoryName": "read-required-text-fact"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-read-required-boolean-fact",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "read_required_boolean_fact",
+    "inventoryName": "read-required-boolean-fact"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-read-java-script-array-binding-form",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "read_java_script_array_binding_form",
+    "inventoryName": "read-java-script-array-binding-form"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-read-java-script-array-rest-binding-error",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "read_java_script_array_rest_binding_error",
+    "inventoryName": "read-java-script-array-rest-binding-error"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-accept-java-script-array-binding-name",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "accept_java_script_array_binding_name",
+    "inventoryName": "accept-java-script-array-binding-name"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-read-java-script-array-binding-value-form",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "read_java_script_array_binding_value_form",
+    "inventoryName": "read-java-script-array-binding-value-form"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-accept-java-script-array-rest-receiver",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "accept_java_script_array_rest_receiver",
+    "inventoryName": "accept-java-script-array-rest-receiver"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-accept-java-script-array-binding-offset",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "accept_java_script_array_binding_offset",
+    "inventoryName": "accept-java-script-array-binding-offset"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-accept-java-script-array-binding-offset-field",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "accept_java_script_array_binding_offset_field",
+    "inventoryName": "accept-java-script-array-binding-offset-field"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-accept-java-script-array-binding-field",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "accept_java_script_array_binding_field",
+    "inventoryName": "accept-java-script-array-binding-field"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-read-java-script-array-default-operation",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "read_java_script_array_default_operation",
+    "inventoryName": "read-java-script-array-default-operation"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-plan-java-script-array-default-inference",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "plan_java_script_array_default_inference",
+    "inventoryName": "plan-java-script-array-default-inference"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-read-array-binding-fact-field",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "read_array_binding_fact_field",
+    "inventoryName": "read-array-binding-fact-field"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-read-array-binding-initializer-end",
+    "source": "rust/src/translation/array_binding_rules/part_1.rs",
+    "name": "read_array_binding_initializer_end",
+    "inventoryName": "read-array-binding-initializer-end"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-plan-java-script-array-binding-names",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "plan_java_script_array_binding_names",
+    "inventoryName": "plan-java-script-array-binding-names"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-meta-language-accept-java-script-array-binding-name-loop-one-result-type",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "MlAcceptJavaScriptArrayBindingNameLoop1Result",
+    "inventoryName": "meta-language-accept-java-script-array-binding-name-loop-one-result"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-meta-language-accept-java-script-array-binding-name-loop-one-result-type-meta-language-accept-java-script-array-binding-name-loop-one-done-constructor",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "MlAcceptJavaScriptArrayBindingNameLoop1Result::MlAcceptJavaScriptArrayBindingNameLoop1Done",
+    "inventoryName": "meta-language-accept-java-script-array-binding-name-loop-one-result-meta-language-accept-java-script-array-binding-name-loop-one-done"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-meta-language-accept-java-script-array-binding-name-loop-one-result-type-meta-language-accept-java-script-array-binding-name-loop-one-return-constructor",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "MlAcceptJavaScriptArrayBindingNameLoop1Result::MlAcceptJavaScriptArrayBindingNameLoop1Return",
+    "inventoryName": "meta-language-accept-java-script-array-binding-name-loop-one-result-meta-language-accept-java-script-array-binding-name-loop-one-return"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-accept-java-script-array-binding-name-loop-one",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "ml_accept_java_script_array_binding_name_loop1",
+    "inventoryName": "meta-language-accept-java-script-array-binding-name-loop-one"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-meta-language-read-array-binding-fact-field-loop-two-result-type",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "MlReadArrayBindingFactFieldLoop2Result",
+    "inventoryName": "meta-language-read-array-binding-fact-field-loop-two-result"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-meta-language-read-array-binding-fact-field-loop-two-result-type-meta-language-read-array-binding-fact-field-loop-two-done-constructor",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "MlReadArrayBindingFactFieldLoop2Result::MlReadArrayBindingFactFieldLoop2Done",
+    "inventoryName": "meta-language-read-array-binding-fact-field-loop-two-result-meta-language-read-array-binding-fact-field-loop-two-done"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-meta-language-read-array-binding-fact-field-loop-two-result-type-meta-language-read-array-binding-fact-field-loop-two-return-constructor",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "MlReadArrayBindingFactFieldLoop2Result::MlReadArrayBindingFactFieldLoop2Return",
+    "inventoryName": "meta-language-read-array-binding-fact-field-loop-two-result-meta-language-read-array-binding-fact-field-loop-two-return"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-read-array-binding-fact-field-loop-two",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "ml_read_array_binding_fact_field_loop2",
+    "inventoryName": "meta-language-read-array-binding-fact-field-loop-two"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-meta-language-read-array-binding-initializer-end-loop-three-result-type",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "MlReadArrayBindingInitializerEndLoop3Result",
+    "inventoryName": "meta-language-read-array-binding-initializer-end-loop-three-result"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-meta-language-read-array-binding-initializer-end-loop-three-result-type-meta-language-read-array-binding-initializer-end-loop-three-done-constructor",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "MlReadArrayBindingInitializerEndLoop3Result::MlReadArrayBindingInitializerEndLoop3Done",
+    "inventoryName": "meta-language-read-array-binding-initializer-end-loop-three-result-meta-language-read-array-binding-initializer-end-loop-three-done"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-meta-language-read-array-binding-initializer-end-loop-three-result-type-meta-language-read-array-binding-initializer-end-loop-three-return-constructor",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "MlReadArrayBindingInitializerEndLoop3Result::MlReadArrayBindingInitializerEndLoop3Return",
+    "inventoryName": "meta-language-read-array-binding-initializer-end-loop-three-result-meta-language-read-array-binding-initializer-end-loop-three-return"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-meta-language-read-array-binding-initializer-end-join-four-type",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "MlReadArrayBindingInitializerEndJoin4",
+    "inventoryName": "meta-language-read-array-binding-initializer-end-join-four"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-meta-language-read-array-binding-initializer-end-join-four-type-meta-language-read-array-binding-initializer-end-join-four-next-constructor",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "MlReadArrayBindingInitializerEndJoin4::MlReadArrayBindingInitializerEndJoin4Next",
+    "inventoryName": "meta-language-read-array-binding-initializer-end-join-four-meta-language-read-array-binding-initializer-end-join-four-next"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-meta-language-read-array-binding-initializer-end-join-four-type-meta-language-read-array-binding-initializer-end-join-four-return-constructor",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "MlReadArrayBindingInitializerEndJoin4::MlReadArrayBindingInitializerEndJoin4Return",
+    "inventoryName": "meta-language-read-array-binding-initializer-end-join-four-meta-language-read-array-binding-initializer-end-join-four-return"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-read-array-binding-initializer-end-loop-three",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "ml_read_array_binding_initializer_end_loop3",
+    "inventoryName": "meta-language-read-array-binding-initializer-end-loop-three"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-meta-language-plan-java-script-array-binding-names-loop-five-result-type",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "MlPlanJavaScriptArrayBindingNamesLoop5Result",
+    "inventoryName": "meta-language-plan-java-script-array-binding-names-loop-five-result"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-meta-language-plan-java-script-array-binding-names-loop-five-result-type-meta-language-plan-java-script-array-binding-names-loop-five-done-constructor",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "MlPlanJavaScriptArrayBindingNamesLoop5Result::MlPlanJavaScriptArrayBindingNamesLoop5Done",
+    "inventoryName": "meta-language-plan-java-script-array-binding-names-loop-five-result-meta-language-plan-java-script-array-binding-names-loop-five-done"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-meta-language-plan-java-script-array-binding-names-loop-five-result-type-meta-language-plan-java-script-array-binding-names-loop-five-return-constructor",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "MlPlanJavaScriptArrayBindingNamesLoop5Result::MlPlanJavaScriptArrayBindingNamesLoop5Return",
+    "inventoryName": "meta-language-plan-java-script-array-binding-names-loop-five-result-meta-language-plan-java-script-array-binding-names-loop-five-return"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-meta-language-plan-java-script-array-binding-names-join-eight-type",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "MlPlanJavaScriptArrayBindingNamesJoin8",
+    "inventoryName": "meta-language-plan-java-script-array-binding-names-join-eight"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-meta-language-plan-java-script-array-binding-names-join-eight-type-meta-language-plan-java-script-array-binding-names-join-eight-next-constructor",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "MlPlanJavaScriptArrayBindingNamesJoin8::MlPlanJavaScriptArrayBindingNamesJoin8Next",
+    "inventoryName": "meta-language-plan-java-script-array-binding-names-join-eight-meta-language-plan-java-script-array-binding-names-join-eight-next"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-meta-language-plan-java-script-array-binding-names-join-eight-type-meta-language-plan-java-script-array-binding-names-join-eight-return-constructor",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "MlPlanJavaScriptArrayBindingNamesJoin8::MlPlanJavaScriptArrayBindingNamesJoin8Return",
+    "inventoryName": "meta-language-plan-java-script-array-binding-names-join-eight-meta-language-plan-java-script-array-binding-names-join-eight-return"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-meta-language-plan-java-script-array-binding-names-join-seven-type",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "MlPlanJavaScriptArrayBindingNamesJoin7",
+    "inventoryName": "meta-language-plan-java-script-array-binding-names-join-seven"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-meta-language-plan-java-script-array-binding-names-join-seven-type-meta-language-plan-java-script-array-binding-names-join-seven-next-constructor",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "MlPlanJavaScriptArrayBindingNamesJoin7::MlPlanJavaScriptArrayBindingNamesJoin7Next",
+    "inventoryName": "meta-language-plan-java-script-array-binding-names-join-seven-meta-language-plan-java-script-array-binding-names-join-seven-next"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-meta-language-plan-java-script-array-binding-names-join-seven-type-meta-language-plan-java-script-array-binding-names-join-seven-return-constructor",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "MlPlanJavaScriptArrayBindingNamesJoin7::MlPlanJavaScriptArrayBindingNamesJoin7Return",
+    "inventoryName": "meta-language-plan-java-script-array-binding-names-join-seven-meta-language-plan-java-script-array-binding-names-join-seven-return"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-meta-language-plan-java-script-array-binding-names-join-six-type",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "MlPlanJavaScriptArrayBindingNamesJoin6",
+    "inventoryName": "meta-language-plan-java-script-array-binding-names-join-six"
+  },
+  {
+    "id": "repository.batch-forty-seven-ordered-array-binding-native-meta-language-plan-java-script-array-binding-names-join-six-type-meta-language-plan-java-script-array-binding-names-join-six-next-constructor",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "MlPlanJavaScriptArrayBindingNamesJoin6::MlPlanJavaScriptArrayBindingNamesJoin6Next",
+    "inventoryName": "meta-language-plan-java-script-array-binding-names-join-six-meta-language-plan-java-script-array-binding-names-join-six-next"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-ordered-array-binding-native-meta-language-plan-java-script-array-binding-names-loop-five",
+    "source": "rust/src/translation/array_binding_rules/part_2.rs",
+    "name": "ml_plan_java_script_array_binding_names_loop5",
+    "inventoryName": "meta-language-plan-java-script-array-binding-names-loop-five"
+  },
+  {
+    "id": "repository.batch-forty-seven-array-from-construction-native-part-one-type",
+    "source": "rust/src/translation/array_from_rules.rs",
+    "name": "part_1",
+    "inventoryName": "part-one"
+  },
+  {
+    "id": "repository.batch-forty-seven-array-from-construction-native-part-two-type",
+    "source": "rust/src/translation/array_from_rules.rs",
+    "name": "part_2",
+    "inventoryName": "part-two"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-array",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "ml_array",
+    "inventoryName": "meta-language-array"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-optional-at",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "ml_array::optional_at",
+    "inventoryName": "meta-language-array-optional-at"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-at",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "ml_array::at",
+    "inventoryName": "meta-language-array-at"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-number-index",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "ml_array::number_index",
+    "inventoryName": "meta-language-array-number-index"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-append",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "ml_array::append",
+    "inventoryName": "meta-language-array-append"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-integer",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "ml_array::integer",
+    "inventoryName": "meta-language-array-integer"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-relative",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "ml_array::relative",
+    "inventoryName": "meta-language-array-relative"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-slice",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "ml_array::slice",
+    "inventoryName": "meta-language-array-slice"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-index-of",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "ml_array::index_of",
+    "inventoryName": "meta-language-array-index-of"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-includes",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "ml_array::includes",
+    "inventoryName": "meta-language-array-includes"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-set",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "ml_array::set",
+    "inventoryName": "meta-language-array-set"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-map",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "ml_array::map",
+    "inventoryName": "meta-language-array-map"
+  },
+  {
+    "id": "translation.refuse-required-number-fact",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "refuse_required_number_fact",
+    "inventoryName": "refuse-required-number-fact"
+  },
+  {
+    "id": "translation.refuse-required-text-fact",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "refuse_required_text_fact",
+    "inventoryName": "refuse-required-text-fact"
+  },
+  {
+    "id": "translation.refuse-required-boolean-fact",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "refuse_required_boolean_fact",
+    "inventoryName": "refuse-required-boolean-fact"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-native-read-required-number-fact",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "read_required_number_fact",
+    "inventoryName": "read-required-number-fact"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-native-read-required-text-fact",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "read_required_text_fact",
+    "inventoryName": "read-required-text-fact"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-native-read-required-boolean-fact",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "read_required_boolean_fact",
+    "inventoryName": "read-required-boolean-fact"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-native-select-optional-array-read",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "select_optional_array_read",
+    "inventoryName": "select-optional-array-read"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-native-select-optional-array-index-number",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "select_optional_array_index_number",
+    "inventoryName": "select-optional-array-index-number"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-native-read-array-iteration-source-form",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "read_array_iterable_form",
+    "inventoryName": "read-array-iteration-source-form"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-native-read-reference-mutation-diagnostic",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "read_reference_mutation_diagnostic",
+    "inventoryName": "read-reference-mutation-diagnostic"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-native-render-optional-array-read",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "render_optional_array_read",
+    "inventoryName": "render-optional-array-read"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-native-render-string-point-iteration",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "render_string_point_iteration",
+    "inventoryName": "render-string-point-iteration"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-native-render-collection-iteration",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "render_collection_iteration",
+    "inventoryName": "render-collection-iteration"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-read-array-from-field",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "read_array_from_field",
+    "inventoryName": "read-array-from-field"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-read-array-from-element",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "read_array_from_element",
+    "inventoryName": "read-array-from-element"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-read-array-from-kind",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "read_array_from_kind",
+    "inventoryName": "read-array-from-kind"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-read-array-from-argument-error",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "read_array_from_argument_error",
+    "inventoryName": "read-array-from-argument-error"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-read-array-from-receiver-error",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "read_array_from_receiver_error",
+    "inventoryName": "read-array-from-receiver-error"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-plan-array-from-iteration-source-type",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "plan_array_from_iterable_type",
+    "inventoryName": "plan-array-from-iteration-source-type"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-plan-array-from-expected-element",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "plan_array_from_expected_element",
+    "inventoryName": "plan-array-from-expected-element"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-plan-array-from-inference-inputs",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "plan_array_from_inference_inputs",
+    "inventoryName": "plan-array-from-inference-inputs"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-read-array-from-callback-error",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "read_array_from_callback_error",
+    "inventoryName": "read-array-from-callback-error"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-plan-array-from-callback-constraints",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "plan_array_from_callback_constraints",
+    "inventoryName": "plan-array-from-callback-constraints"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-plan-array-from-map-callback",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "plan_array_from_map_callback",
+    "inventoryName": "plan-array-from-map-callback"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-read-array-from-map-callback-error",
+    "source": "rust/src/translation/array_from_rules/part_1.rs",
+    "name": "read_array_from_map_callback_error",
+    "inventoryName": "read-array-from-map-callback-error"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-render-array-from-mapping",
+    "source": "rust/src/translation/array_from_rules/part_2.rs",
+    "name": "render_array_from_mapping",
+    "inventoryName": "render-array-from-mapping"
+  },
+  {
+    "id": "repository.batch-forty-seven-array-from-construction-native-meta-language-read-array-from-field-loop-one-result-type",
+    "source": "rust/src/translation/array_from_rules/part_2.rs",
+    "name": "MlReadArrayFromFieldLoop1Result",
+    "inventoryName": "meta-language-read-array-from-field-loop-one-result"
+  },
+  {
+    "id": "repository.batch-forty-seven-array-from-construction-native-meta-language-read-array-from-field-loop-one-result-type-meta-language-read-array-from-field-loop-one-done-constructor",
+    "source": "rust/src/translation/array_from_rules/part_2.rs",
+    "name": "MlReadArrayFromFieldLoop1Result::MlReadArrayFromFieldLoop1Done",
+    "inventoryName": "meta-language-read-array-from-field-loop-one-result-meta-language-read-array-from-field-loop-one-done"
+  },
+  {
+    "id": "repository.batch-forty-seven-array-from-construction-native-meta-language-read-array-from-field-loop-one-result-type-meta-language-read-array-from-field-loop-one-return-constructor",
+    "source": "rust/src/translation/array_from_rules/part_2.rs",
+    "name": "MlReadArrayFromFieldLoop1Result::MlReadArrayFromFieldLoop1Return",
+    "inventoryName": "meta-language-read-array-from-field-loop-one-result-meta-language-read-array-from-field-loop-one-return"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-native-meta-language-read-array-from-field-loop-one",
+    "source": "rust/src/translation/array_from_rules/part_2.rs",
+    "name": "ml_read_array_from_field_loop1",
+    "inventoryName": "meta-language-read-array-from-field-loop-one"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-native-meta-language-plan-array-from-callback-constraints-loop-two",
+    "source": "rust/src/translation/array_from_rules/part_2.rs",
+    "name": "ml_plan_array_from_callback_constraints_loop2",
+    "inventoryName": "meta-language-plan-array-from-callback-constraints-loop-two"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-array-from-construction-native-meta-language-plan-array-from-map-callback-loop-three",
+    "source": "rust/src/translation/array_from_rules/part_2.rs",
+    "name": "ml_plan_array_from_map_callback_loop3",
+    "inventoryName": "meta-language-plan-array-from-map-callback-loop-three"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-number-java-script-number",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_number::js_number",
+    "inventoryName": "meta-language-number-java-script-number"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-number-java-script-console",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_number::js_console",
+    "inventoryName": "meta-language-number-java-script-console"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-number-same-value",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_number::same_value",
+    "inventoryName": "meta-language-number-same-value"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-number-increment",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_number::increment",
+    "inventoryName": "meta-language-number-increment"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-number-decimal",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_number::decimal",
+    "inventoryName": "meta-language-number-decimal"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-mathematics-round",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math::round",
+    "inventoryName": "meta-language-mathematics-round"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-mathematics-sign",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math::sign",
+    "inventoryName": "meta-language-mathematics-sign"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-mathematics-maximum",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math::max",
+    "inventoryName": "meta-language-mathematics-maximum"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-mathematics-minimum",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math::min",
+    "inventoryName": "meta-language-mathematics-minimum"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-mathematics-maximum-of",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math::max_of",
+    "inventoryName": "meta-language-mathematics-maximum-of"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-mathematics-minimum-of",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math::min_of",
+    "inventoryName": "meta-language-mathematics-minimum-of"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-mathematics-is-integer",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math::is_integer",
+    "inventoryName": "meta-language-mathematics-is-integer"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-mathematics-is-safe-integer",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math::is_safe_integer",
+    "inventoryName": "meta-language-mathematics-is-safe-integer"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-optional-at",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::optional_at",
+    "inventoryName": "meta-language-array-optional-at"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-at",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::at",
+    "inventoryName": "meta-language-array-at"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-number-index",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::number_index",
+    "inventoryName": "meta-language-array-number-index"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-append",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::append",
+    "inventoryName": "meta-language-array-append"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-integer",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::integer",
+    "inventoryName": "meta-language-array-integer"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-relative",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::relative",
+    "inventoryName": "meta-language-array-relative"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-slice",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::slice",
+    "inventoryName": "meta-language-array-slice"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-index-of",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::index_of",
+    "inventoryName": "meta-language-array-index-of"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-includes",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::includes",
+    "inventoryName": "meta-language-array-includes"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-set",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::set",
+    "inventoryName": "meta-language-array-set"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-map",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::map",
+    "inventoryName": "meta-language-array-map"
+  },
+  {
+    "id": "translation.refuse-required-number-fact",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "refuse_required_number_fact",
+    "inventoryName": "refuse-required-number-fact"
+  },
+  {
+    "id": "translation.refuse-required-text-fact",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "refuse_required_text_fact",
+    "inventoryName": "refuse-required-text-fact"
+  },
+  {
+    "id": "translation.refuse-required-boolean-fact",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "refuse_required_boolean_fact",
+    "inventoryName": "refuse-required-boolean-fact"
+  },
+  {
+    "id": "translation.read-required-number-fact",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_required_number_fact",
+    "inventoryName": "read-required-number-fact"
+  },
+  {
+    "id": "translation.read-required-text-fact",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_required_text_fact",
+    "inventoryName": "read-required-text-fact"
+  },
+  {
+    "id": "translation.read-required-boolean-fact",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_required_boolean_fact",
+    "inventoryName": "read-required-boolean-fact"
+  },
+  {
+    "id": "translation.refuse-required-record-name",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "refuse_required_record_name",
+    "inventoryName": "refuse-required-record-name"
+  },
+  {
+    "id": "translation.read-required-record-name",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_required_record_name",
+    "inventoryName": "read-required-record-name"
+  },
+  {
+    "id": "translation.read-record-value-order",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_value_order",
+    "inventoryName": "read-record-value-order"
+  },
+  {
+    "id": "translation.accept-record-field-name",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "accept_record_field_name",
+    "inventoryName": "accept-record-field-name"
+  },
+  {
+    "id": "translation.compare-record-field-names",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "compare_record_field_names",
+    "inventoryName": "compare-record-field-names"
+  },
+  {
+    "id": "translation.read-record-field-position",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_field_position",
+    "inventoryName": "read-record-field-position"
+  },
+  {
+    "id": "repository.read-record-sorted-field-positions",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_sorted_field_positions",
+    "inventoryName": "read-record-sorted-field-positions"
+  },
+  {
+    "id": "translation.read-record-field-order",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_field_order",
+    "inventoryName": "read-record-field-order"
+  },
+  {
+    "id": "translation.read-record-field-insertion-order",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_field_insertion_order",
+    "inventoryName": "read-record-field-insertion-order"
+  },
+  {
+    "id": "translation.read-record-spread-role",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_spread_role",
+    "inventoryName": "read-record-spread-role"
+  },
+  {
+    "id": "translation.read-record-type-constraint-step",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_type_constraint_step",
+    "inventoryName": "read-record-type-constraint-step"
+  },
+  {
+    "id": "translation.read-record-type-constraint-error",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_type_constraint_error",
+    "inventoryName": "read-record-type-constraint-error"
+  },
+  {
+    "id": "translation.read-record-method-error",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_method_error",
+    "inventoryName": "read-record-method-error"
+  },
+  {
+    "id": "translation.read-record-field-inference-step",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_field_inference_step",
+    "inventoryName": "read-record-field-inference-step"
+  },
+  {
+    "id": "repository.read-record-type-fact-field",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "record_type_fact_field",
+    "inventoryName": "record-type-fact-field"
+  },
+  {
+    "id": "repository.read-record-type-fact-kind",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "record_type_fact_kind",
+    "inventoryName": "record-type-fact-kind"
+  },
+  {
+    "id": "repository.read-record-type-fact-elements",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "record_type_fact_elements",
+    "inventoryName": "record-type-fact-elements"
+  },
+  {
+    "id": "translation.read-record-type-owner-presence",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_type_owner_presence",
+    "inventoryName": "read-record-type-owner-presence"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-value-order-loop-one",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_read_record_value_order_loop1",
+    "inventoryName": "meta-language-read-record-value-order-loop-one"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-accept-record-field-name-loop-two-result",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlAcceptRecordFieldNameLoop3Result",
+    "inventoryName": "meta-language-accept-record-field-name-loop-three-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-accept-record-field-name-loop-two-result-meta-language-accept-record-field-name-loop-two-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlAcceptRecordFieldNameLoop3Result::MlAcceptRecordFieldNameLoop3Done",
+    "inventoryName": "meta-language-accept-record-field-name-loop-three-result-meta-language-accept-record-field-name-loop-three-done"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-accept-record-field-name-loop-two-result-meta-language-accept-record-field-name-loop-two-return-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlAcceptRecordFieldNameLoop3Result::MlAcceptRecordFieldNameLoop3Return",
+    "inventoryName": "meta-language-accept-record-field-name-loop-three-result-meta-language-accept-record-field-name-loop-three-return"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-accept-record-field-name-loop-two",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_accept_record_field_name_loop3",
+    "inventoryName": "meta-language-accept-record-field-name-loop-three"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-compare-record-field-names-loop-three-result",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlCompareRecordFieldNamesLoop4Result",
+    "inventoryName": "meta-language-compare-record-field-names-loop-four-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-compare-record-field-names-loop-three-result-meta-language-compare-record-field-names-loop-three-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlCompareRecordFieldNamesLoop4Result::MlCompareRecordFieldNamesLoop4Done",
+    "inventoryName": "meta-language-compare-record-field-names-loop-four-result-meta-language-compare-record-field-names-loop-four-done"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-compare-record-field-names-loop-three-result-meta-language-compare-record-field-names-loop-three-return-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlCompareRecordFieldNamesLoop4Result::MlCompareRecordFieldNamesLoop4Return",
+    "inventoryName": "meta-language-compare-record-field-names-loop-four-result-meta-language-compare-record-field-names-loop-four-return"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-compare-record-field-names-loop-three",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_compare_record_field_names_loop4",
+    "inventoryName": "meta-language-compare-record-field-names-loop-four"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-field-position-loop-five-result",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordFieldPositionLoop6Result",
+    "inventoryName": "meta-language-read-record-field-position-loop-six-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-field-position-loop-five-result-meta-language-read-record-field-position-loop-five-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordFieldPositionLoop6Result::MlReadRecordFieldPositionLoop6Done",
+    "inventoryName": "meta-language-read-record-field-position-loop-six-result-meta-language-read-record-field-position-loop-six-done"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-field-position-loop-five-result-meta-language-read-record-field-position-loop-five-return-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordFieldPositionLoop6Result::MlReadRecordFieldPositionLoop6Return",
+    "inventoryName": "meta-language-read-record-field-position-loop-six-result-meta-language-read-record-field-position-loop-six-return"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-field-position-loop-four-result",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordFieldPositionLoop5Result",
+    "inventoryName": "meta-language-read-record-field-position-loop-five-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-field-position-loop-four-result-meta-language-read-record-field-position-loop-four-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordFieldPositionLoop5Result::MlReadRecordFieldPositionLoop5Done",
+    "inventoryName": "meta-language-read-record-field-position-loop-five-result-meta-language-read-record-field-position-loop-five-done"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-field-position-loop-four-result-meta-language-read-record-field-position-loop-four-return-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordFieldPositionLoop5Result::MlReadRecordFieldPositionLoop5Return",
+    "inventoryName": "meta-language-read-record-field-position-loop-five-result-meta-language-read-record-field-position-loop-five-return"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-field-position-loop-five",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_field_position_loop6",
+    "inventoryName": "meta-language-read-record-field-position-loop-six"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-field-position-loop-four",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_field_position_loop5",
+    "inventoryName": "meta-language-read-record-field-position-loop-five"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-sorted-field-positions-loop-nine",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_sorted_field_positions_loop10",
+    "inventoryName": "meta-language-read-record-sorted-field-positions-loop-one-zero"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-sorted-field-positions-loop-eight",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_sorted_field_positions_loop9",
+    "inventoryName": "meta-language-read-record-sorted-field-positions-loop-nine"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-sorted-field-positions-loop-seven",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_sorted_field_positions_loop8",
+    "inventoryName": "meta-language-read-record-sorted-field-positions-loop-eight"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-sorted-field-positions-loop-six",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_sorted_field_positions_loop7",
+    "inventoryName": "meta-language-read-record-sorted-field-positions-loop-seven"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-sorted-field-positions-loop-six-result",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordSortedFieldPositionsLoop7Result",
+    "inventoryName": "meta-language-read-record-sorted-field-positions-loop-seven-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-sorted-field-positions-loop-six-result-meta-language-read-record-sorted-field-positions-loop-six-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordSortedFieldPositionsLoop7Result::MlReadRecordSortedFieldPositionsLoop7Done",
+    "inventoryName": "meta-language-read-record-sorted-field-positions-loop-seven-result-meta-language-read-record-sorted-field-positions-loop-seven-done"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-sorted-field-positions-loop-six-result-meta-language-read-record-sorted-field-positions-loop-six-return-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordSortedFieldPositionsLoop7Result::MlReadRecordSortedFieldPositionsLoop7Return",
+    "inventoryName": "meta-language-read-record-sorted-field-positions-loop-seven-result-meta-language-read-record-sorted-field-positions-loop-seven-return"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-field-order-loop-ten",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_field_order_loop11",
+    "inventoryName": "meta-language-read-record-field-order-loop-one-one"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-field-insertion-order-loop-thirteen",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_field_insertion_order_loop14",
+    "inventoryName": "meta-language-read-record-field-insertion-order-loop-one-four"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-field-insertion-order-loop-twelve",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_field_insertion_order_loop13",
+    "inventoryName": "meta-language-read-record-field-insertion-order-loop-one-three"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-field-insertion-order-loop-eleven",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_field_insertion_order_loop12",
+    "inventoryName": "meta-language-read-record-field-insertion-order-loop-one-two"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-field-insertion-order-loop-eleven-result",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordFieldInsertionOrderLoop12Result",
+    "inventoryName": "meta-language-read-record-field-insertion-order-loop-one-two-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-field-insertion-order-loop-eleven-result-meta-language-read-record-field-insertion-order-loop-eleven-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordFieldInsertionOrderLoop12Result::MlReadRecordFieldInsertionOrderLoop12Done",
+    "inventoryName": "meta-language-read-record-field-insertion-order-loop-one-two-result-meta-language-read-record-field-insertion-order-loop-one-two-done"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-record-type-fact-field-loop-fourteen-result",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlRecordTypeFactFieldLoop15Result",
+    "inventoryName": "meta-language-record-type-fact-field-loop-one-five-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-record-type-fact-field-loop-fourteen-result-meta-language-record-type-fact-field-loop-fourteen-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlRecordTypeFactFieldLoop15Result::MlRecordTypeFactFieldLoop15Done",
+    "inventoryName": "meta-language-record-type-fact-field-loop-one-five-result-meta-language-record-type-fact-field-loop-one-five-done"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-record-type-fact-field-loop-fourteen-result-meta-language-record-type-fact-field-loop-fourteen-return-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlRecordTypeFactFieldLoop15Result::MlRecordTypeFactFieldLoop15Return",
+    "inventoryName": "meta-language-record-type-fact-field-loop-one-five-result-meta-language-record-type-fact-field-loop-one-five-return"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-record-type-fact-field-loop-fourteen",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_record_type_fact_field_loop15",
+    "inventoryName": "meta-language-record-type-fact-field-loop-one-five"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-record-type-fact-elements-loop-fifteen",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_record_type_fact_elements_loop16",
+    "inventoryName": "meta-language-record-type-fact-elements-loop-one-six"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-type-owner-presence-loop-sixteen-result",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordTypeOwnerPresenceLoop17Result",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-one-seven-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-type-owner-presence-loop-sixteen-result-meta-language-read-record-type-owner-presence-loop-sixteen-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordTypeOwnerPresenceLoop17Result::MlReadRecordTypeOwnerPresenceLoop17Done",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-one-seven-result-meta-language-read-record-type-owner-presence-loop-one-seven-done"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-type-owner-presence-loop-sixteen-result-meta-language-read-record-type-owner-presence-loop-sixteen-return-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordTypeOwnerPresenceLoop17Result::MlReadRecordTypeOwnerPresenceLoop17Return",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-one-seven-result-meta-language-read-record-type-owner-presence-loop-one-seven-return"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-type-owner-presence-loop-seventeen-result",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordTypeOwnerPresenceLoop18Result",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-one-eight-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-type-owner-presence-loop-seventeen-result-meta-language-read-record-type-owner-presence-loop-seventeen-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordTypeOwnerPresenceLoop18Result::MlReadRecordTypeOwnerPresenceLoop18Done",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-one-eight-result-meta-language-read-record-type-owner-presence-loop-one-eight-done"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-type-owner-presence-loop-eighteen",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_type_owner_presence_loop19",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-one-nine"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-type-owner-presence-loop-nineteen",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_type_owner_presence_loop20",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-two-zero"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-type-owner-presence-loop-twenty",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_type_owner_presence_loop21",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-two-one"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-type-owner-presence-loop-seventeen",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_type_owner_presence_loop18",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-one-eight"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-type-owner-presence-loop-sixteen",
+    "source": "rust/src/translation/record_value_rules/part_3.rs",
+    "name": "ml_read_record_type_owner_presence_loop17",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-one-seven"
+  },
+  {
+    "id": "translation.record-value-native-part-one",
+    "source": "rust/src/translation/record_value_rules.rs",
+    "name": "part_1",
+    "inventoryName": "part-one"
+  },
+  {
+    "id": "translation.record-value-native-part-two",
+    "source": "rust/src/translation/record_value_rules.rs",
+    "name": "part_2",
+    "inventoryName": "part-two"
+  },
+  {
+    "id": "translation.record-value-native-part-three",
+    "source": "rust/src/translation/record_value_rules.rs",
+    "name": "part_3",
+    "inventoryName": "part-three"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-number",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_number",
+    "inventoryName": "meta-language-number"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-mathematics",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math",
+    "inventoryName": "meta-language-mathematics"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-array",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array",
+    "inventoryName": "meta-language-array"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-checked-record-projection-read-record-projection",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_projection",
+    "inventoryName": "read-record-projection"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-checked-record-projection-read-record-projection-error",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_projection_error",
+    "inventoryName": "read-record-projection-error"
+  },
+  {
+    "id": "repository.batch-forty-seven-checked-record-projection-native-meta-language-read-record-projection-error-loop-two-result-type",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "MlReadRecordProjectionErrorLoop2Result",
+    "inventoryName": "meta-language-read-record-projection-error-loop-two-result"
+  },
+  {
+    "id": "repository.batch-forty-seven-checked-record-projection-native-meta-language-read-record-projection-error-loop-two-result-type-meta-language-read-record-projection-error-loop-two-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "MlReadRecordProjectionErrorLoop2Result::MlReadRecordProjectionErrorLoop2Done",
+    "inventoryName": "meta-language-read-record-projection-error-loop-two-result-meta-language-read-record-projection-error-loop-two-done"
+  },
+  {
+    "id": "repository.batch-forty-seven-checked-record-projection-native-meta-language-read-record-projection-error-loop-two-result-type-meta-language-read-record-projection-error-loop-two-return-constructor",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "MlReadRecordProjectionErrorLoop2Result::MlReadRecordProjectionErrorLoop2Return",
+    "inventoryName": "meta-language-read-record-projection-error-loop-two-result-meta-language-read-record-projection-error-loop-two-return"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-checked-record-projection-native-meta-language-read-record-projection-error-loop-two",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_projection_error_loop2",
+    "inventoryName": "meta-language-read-record-projection-error-loop-two"
+  }
+];
+const BULK_FORTY_SEVEN_NATIVE_PREVIOUS_FILES=["rust/src/translation/record_value_rules.rs","rust/src/translation/record_value_rules/part_1.rs","rust/src/translation/record_value_rules/part_2.rs","rust/src/translation/record_value_rules/part_3.rs"];
+const BULK_FORTY_SEVEN_NATIVE_BINDINGS=[
+  {
+    "id": "translation.execute-record-value-native-meta-language-number-java-script-number",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_number::js_number",
+    "inventoryName": "meta-language-number-java-script-number"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-number-java-script-console",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_number::js_console",
+    "inventoryName": "meta-language-number-java-script-console"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-number-same-value",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_number::same_value",
+    "inventoryName": "meta-language-number-same-value"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-number-increment",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_number::increment",
+    "inventoryName": "meta-language-number-increment"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-number-decimal",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_number::decimal",
+    "inventoryName": "meta-language-number-decimal"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-mathematics-round",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math::round",
+    "inventoryName": "meta-language-mathematics-round"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-mathematics-sign",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math::sign",
+    "inventoryName": "meta-language-mathematics-sign"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-mathematics-maximum",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math::max",
+    "inventoryName": "meta-language-mathematics-maximum"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-mathematics-minimum",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math::min",
+    "inventoryName": "meta-language-mathematics-minimum"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-mathematics-maximum-of",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math::max_of",
+    "inventoryName": "meta-language-mathematics-maximum-of"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-mathematics-minimum-of",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math::min_of",
+    "inventoryName": "meta-language-mathematics-minimum-of"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-mathematics-is-integer",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math::is_integer",
+    "inventoryName": "meta-language-mathematics-is-integer"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-mathematics-is-safe-integer",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math::is_safe_integer",
+    "inventoryName": "meta-language-mathematics-is-safe-integer"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-optional-at",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::optional_at",
+    "inventoryName": "meta-language-array-optional-at"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-at",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::at",
+    "inventoryName": "meta-language-array-at"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-number-index",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::number_index",
+    "inventoryName": "meta-language-array-number-index"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-append",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::append",
+    "inventoryName": "meta-language-array-append"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-integer",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::integer",
+    "inventoryName": "meta-language-array-integer"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-relative",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::relative",
+    "inventoryName": "meta-language-array-relative"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-slice",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::slice",
+    "inventoryName": "meta-language-array-slice"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-index-of",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::index_of",
+    "inventoryName": "meta-language-array-index-of"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-includes",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::includes",
+    "inventoryName": "meta-language-array-includes"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-set",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::set",
+    "inventoryName": "meta-language-array-set"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-array-map",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array::map",
+    "inventoryName": "meta-language-array-map"
+  },
+  {
+    "id": "translation.refuse-required-number-fact",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "refuse_required_number_fact",
+    "inventoryName": "refuse-required-number-fact"
+  },
+  {
+    "id": "translation.refuse-required-text-fact",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "refuse_required_text_fact",
+    "inventoryName": "refuse-required-text-fact"
+  },
+  {
+    "id": "translation.refuse-required-boolean-fact",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "refuse_required_boolean_fact",
+    "inventoryName": "refuse-required-boolean-fact"
+  },
+  {
+    "id": "translation.read-required-number-fact",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_required_number_fact",
+    "inventoryName": "read-required-number-fact"
+  },
+  {
+    "id": "translation.read-required-text-fact",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_required_text_fact",
+    "inventoryName": "read-required-text-fact"
+  },
+  {
+    "id": "translation.read-required-boolean-fact",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_required_boolean_fact",
+    "inventoryName": "read-required-boolean-fact"
+  },
+  {
+    "id": "translation.refuse-required-record-name",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "refuse_required_record_name",
+    "inventoryName": "refuse-required-record-name"
+  },
+  {
+    "id": "translation.read-required-record-name",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_required_record_name",
+    "inventoryName": "read-required-record-name"
+  },
+  {
+    "id": "translation.read-record-value-order",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_value_order",
+    "inventoryName": "read-record-value-order"
+  },
+  {
+    "id": "translation.accept-record-field-name",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "accept_record_field_name",
+    "inventoryName": "accept-record-field-name"
+  },
+  {
+    "id": "translation.compare-record-field-names",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "compare_record_field_names",
+    "inventoryName": "compare-record-field-names"
+  },
+  {
+    "id": "translation.read-record-field-position",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_field_position",
+    "inventoryName": "read-record-field-position"
+  },
+  {
+    "id": "repository.read-record-sorted-field-positions",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_sorted_field_positions",
+    "inventoryName": "read-record-sorted-field-positions"
+  },
+  {
+    "id": "translation.read-record-field-order",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_field_order",
+    "inventoryName": "read-record-field-order"
+  },
+  {
+    "id": "translation.read-record-field-insertion-order",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_field_insertion_order",
+    "inventoryName": "read-record-field-insertion-order"
+  },
+  {
+    "id": "translation.read-record-spread-role",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_spread_role",
+    "inventoryName": "read-record-spread-role"
+  },
+  {
+    "id": "translation.read-record-type-constraint-step",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_type_constraint_step",
+    "inventoryName": "read-record-type-constraint-step"
+  },
+  {
+    "id": "translation.read-record-type-constraint-error",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_type_constraint_error",
+    "inventoryName": "read-record-type-constraint-error"
+  },
+  {
+    "id": "translation.read-record-method-error",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_method_error",
+    "inventoryName": "read-record-method-error"
+  },
+  {
+    "id": "translation.read-record-field-inference-step",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_field_inference_step",
+    "inventoryName": "read-record-field-inference-step"
+  },
+  {
+    "id": "repository.read-record-type-fact-field",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "record_type_fact_field",
+    "inventoryName": "record-type-fact-field"
+  },
+  {
+    "id": "repository.read-record-type-fact-kind",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "record_type_fact_kind",
+    "inventoryName": "record-type-fact-kind"
+  },
+  {
+    "id": "repository.read-record-type-fact-elements",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "record_type_fact_elements",
+    "inventoryName": "record-type-fact-elements"
+  },
+  {
+    "id": "translation.read-record-type-owner-presence",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_type_owner_presence",
+    "inventoryName": "read-record-type-owner-presence"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-value-order-loop-one",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_read_record_value_order_loop1",
+    "inventoryName": "meta-language-read-record-value-order-loop-one"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-accept-record-field-name-loop-two-result",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlAcceptRecordFieldNameLoop3Result",
+    "inventoryName": "meta-language-accept-record-field-name-loop-three-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-accept-record-field-name-loop-two-result-meta-language-accept-record-field-name-loop-two-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlAcceptRecordFieldNameLoop3Result::MlAcceptRecordFieldNameLoop3Done",
+    "inventoryName": "meta-language-accept-record-field-name-loop-three-result-meta-language-accept-record-field-name-loop-three-done"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-accept-record-field-name-loop-two-result-meta-language-accept-record-field-name-loop-two-return-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlAcceptRecordFieldNameLoop3Result::MlAcceptRecordFieldNameLoop3Return",
+    "inventoryName": "meta-language-accept-record-field-name-loop-three-result-meta-language-accept-record-field-name-loop-three-return"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-accept-record-field-name-loop-two",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_accept_record_field_name_loop3",
+    "inventoryName": "meta-language-accept-record-field-name-loop-three"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-compare-record-field-names-loop-three-result",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlCompareRecordFieldNamesLoop4Result",
+    "inventoryName": "meta-language-compare-record-field-names-loop-four-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-compare-record-field-names-loop-three-result-meta-language-compare-record-field-names-loop-three-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlCompareRecordFieldNamesLoop4Result::MlCompareRecordFieldNamesLoop4Done",
+    "inventoryName": "meta-language-compare-record-field-names-loop-four-result-meta-language-compare-record-field-names-loop-four-done"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-compare-record-field-names-loop-three-result-meta-language-compare-record-field-names-loop-three-return-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlCompareRecordFieldNamesLoop4Result::MlCompareRecordFieldNamesLoop4Return",
+    "inventoryName": "meta-language-compare-record-field-names-loop-four-result-meta-language-compare-record-field-names-loop-four-return"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-compare-record-field-names-loop-three",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_compare_record_field_names_loop4",
+    "inventoryName": "meta-language-compare-record-field-names-loop-four"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-field-position-loop-five-result",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordFieldPositionLoop6Result",
+    "inventoryName": "meta-language-read-record-field-position-loop-six-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-field-position-loop-five-result-meta-language-read-record-field-position-loop-five-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordFieldPositionLoop6Result::MlReadRecordFieldPositionLoop6Done",
+    "inventoryName": "meta-language-read-record-field-position-loop-six-result-meta-language-read-record-field-position-loop-six-done"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-field-position-loop-five-result-meta-language-read-record-field-position-loop-five-return-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordFieldPositionLoop6Result::MlReadRecordFieldPositionLoop6Return",
+    "inventoryName": "meta-language-read-record-field-position-loop-six-result-meta-language-read-record-field-position-loop-six-return"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-field-position-loop-four-result",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordFieldPositionLoop5Result",
+    "inventoryName": "meta-language-read-record-field-position-loop-five-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-field-position-loop-four-result-meta-language-read-record-field-position-loop-four-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordFieldPositionLoop5Result::MlReadRecordFieldPositionLoop5Done",
+    "inventoryName": "meta-language-read-record-field-position-loop-five-result-meta-language-read-record-field-position-loop-five-done"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-field-position-loop-four-result-meta-language-read-record-field-position-loop-four-return-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordFieldPositionLoop5Result::MlReadRecordFieldPositionLoop5Return",
+    "inventoryName": "meta-language-read-record-field-position-loop-five-result-meta-language-read-record-field-position-loop-five-return"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-field-position-loop-five",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_field_position_loop6",
+    "inventoryName": "meta-language-read-record-field-position-loop-six"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-field-position-loop-four",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_field_position_loop5",
+    "inventoryName": "meta-language-read-record-field-position-loop-five"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-sorted-field-positions-loop-nine",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_sorted_field_positions_loop10",
+    "inventoryName": "meta-language-read-record-sorted-field-positions-loop-one-zero"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-sorted-field-positions-loop-eight",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_sorted_field_positions_loop9",
+    "inventoryName": "meta-language-read-record-sorted-field-positions-loop-nine"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-sorted-field-positions-loop-seven",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_sorted_field_positions_loop8",
+    "inventoryName": "meta-language-read-record-sorted-field-positions-loop-eight"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-sorted-field-positions-loop-six",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_sorted_field_positions_loop7",
+    "inventoryName": "meta-language-read-record-sorted-field-positions-loop-seven"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-sorted-field-positions-loop-six-result",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordSortedFieldPositionsLoop7Result",
+    "inventoryName": "meta-language-read-record-sorted-field-positions-loop-seven-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-sorted-field-positions-loop-six-result-meta-language-read-record-sorted-field-positions-loop-six-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordSortedFieldPositionsLoop7Result::MlReadRecordSortedFieldPositionsLoop7Done",
+    "inventoryName": "meta-language-read-record-sorted-field-positions-loop-seven-result-meta-language-read-record-sorted-field-positions-loop-seven-done"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-sorted-field-positions-loop-six-result-meta-language-read-record-sorted-field-positions-loop-six-return-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordSortedFieldPositionsLoop7Result::MlReadRecordSortedFieldPositionsLoop7Return",
+    "inventoryName": "meta-language-read-record-sorted-field-positions-loop-seven-result-meta-language-read-record-sorted-field-positions-loop-seven-return"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-field-order-loop-ten",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_field_order_loop11",
+    "inventoryName": "meta-language-read-record-field-order-loop-one-one"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-field-insertion-order-loop-thirteen",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_field_insertion_order_loop14",
+    "inventoryName": "meta-language-read-record-field-insertion-order-loop-one-four"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-field-insertion-order-loop-twelve",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_field_insertion_order_loop13",
+    "inventoryName": "meta-language-read-record-field-insertion-order-loop-one-three"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-field-insertion-order-loop-eleven",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_field_insertion_order_loop12",
+    "inventoryName": "meta-language-read-record-field-insertion-order-loop-one-two"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-field-insertion-order-loop-eleven-result",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordFieldInsertionOrderLoop12Result",
+    "inventoryName": "meta-language-read-record-field-insertion-order-loop-one-two-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-field-insertion-order-loop-eleven-result-meta-language-read-record-field-insertion-order-loop-eleven-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordFieldInsertionOrderLoop12Result::MlReadRecordFieldInsertionOrderLoop12Done",
+    "inventoryName": "meta-language-read-record-field-insertion-order-loop-one-two-result-meta-language-read-record-field-insertion-order-loop-one-two-done"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-record-type-fact-field-loop-fourteen-result",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlRecordTypeFactFieldLoop15Result",
+    "inventoryName": "meta-language-record-type-fact-field-loop-one-five-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-record-type-fact-field-loop-fourteen-result-meta-language-record-type-fact-field-loop-fourteen-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlRecordTypeFactFieldLoop15Result::MlRecordTypeFactFieldLoop15Done",
+    "inventoryName": "meta-language-record-type-fact-field-loop-one-five-result-meta-language-record-type-fact-field-loop-one-five-done"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-record-type-fact-field-loop-fourteen-result-meta-language-record-type-fact-field-loop-fourteen-return-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlRecordTypeFactFieldLoop15Result::MlRecordTypeFactFieldLoop15Return",
+    "inventoryName": "meta-language-record-type-fact-field-loop-one-five-result-meta-language-record-type-fact-field-loop-one-five-return"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-record-type-fact-field-loop-fourteen",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_record_type_fact_field_loop15",
+    "inventoryName": "meta-language-record-type-fact-field-loop-one-five"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-record-type-fact-elements-loop-fifteen",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_record_type_fact_elements_loop16",
+    "inventoryName": "meta-language-record-type-fact-elements-loop-one-six"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-type-owner-presence-loop-sixteen-result",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordTypeOwnerPresenceLoop17Result",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-one-seven-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-type-owner-presence-loop-sixteen-result-meta-language-read-record-type-owner-presence-loop-sixteen-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordTypeOwnerPresenceLoop17Result::MlReadRecordTypeOwnerPresenceLoop17Done",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-one-seven-result-meta-language-read-record-type-owner-presence-loop-one-seven-done"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-type-owner-presence-loop-sixteen-result-meta-language-read-record-type-owner-presence-loop-sixteen-return-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordTypeOwnerPresenceLoop17Result::MlReadRecordTypeOwnerPresenceLoop17Return",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-one-seven-result-meta-language-read-record-type-owner-presence-loop-one-seven-return"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-type-owner-presence-loop-seventeen-result",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordTypeOwnerPresenceLoop18Result",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-one-eight-result"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-read-record-type-owner-presence-loop-seventeen-result-meta-language-read-record-type-owner-presence-loop-seventeen-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "MlReadRecordTypeOwnerPresenceLoop18Result::MlReadRecordTypeOwnerPresenceLoop18Done",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-one-eight-result-meta-language-read-record-type-owner-presence-loop-one-eight-done"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-type-owner-presence-loop-eighteen",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_type_owner_presence_loop19",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-one-nine"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-type-owner-presence-loop-nineteen",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_type_owner_presence_loop20",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-two-zero"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-type-owner-presence-loop-twenty",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_type_owner_presence_loop21",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-two-one"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-type-owner-presence-loop-seventeen",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_type_owner_presence_loop18",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-one-eight"
+  },
+  {
+    "id": "translation.execute-record-value-native-meta-language-read-record-type-owner-presence-loop-sixteen",
+    "source": "rust/src/translation/record_value_rules/part_3.rs",
+    "name": "ml_read_record_type_owner_presence_loop17",
+    "inventoryName": "meta-language-read-record-type-owner-presence-loop-one-seven"
+  },
+  {
+    "id": "translation.record-value-native-part-one",
+    "source": "rust/src/translation/record_value_rules.rs",
+    "name": "part_1",
+    "inventoryName": "part-one"
+  },
+  {
+    "id": "translation.record-value-native-part-two",
+    "source": "rust/src/translation/record_value_rules.rs",
+    "name": "part_2",
+    "inventoryName": "part-two"
+  },
+  {
+    "id": "translation.record-value-native-part-three",
+    "source": "rust/src/translation/record_value_rules.rs",
+    "name": "part_3",
+    "inventoryName": "part-three"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-number",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_number",
+    "inventoryName": "meta-language-number"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-mathematics",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_math",
+    "inventoryName": "meta-language-mathematics"
+  },
+  {
+    "id": "translation.record-value-native-meta-language-array",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "ml_array",
+    "inventoryName": "meta-language-array"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-checked-record-projection-read-record-projection",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_projection",
+    "inventoryName": "read-record-projection"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-checked-record-projection-read-record-projection-error",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "read_record_projection_error",
+    "inventoryName": "read-record-projection-error"
+  },
+  {
+    "id": "repository.batch-forty-seven-checked-record-projection-native-meta-language-read-record-projection-error-loop-two-result-type",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "MlReadRecordProjectionErrorLoop2Result",
+    "inventoryName": "meta-language-read-record-projection-error-loop-two-result"
+  },
+  {
+    "id": "repository.batch-forty-seven-checked-record-projection-native-meta-language-read-record-projection-error-loop-two-result-type-meta-language-read-record-projection-error-loop-two-done-constructor",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "MlReadRecordProjectionErrorLoop2Result::MlReadRecordProjectionErrorLoop2Done",
+    "inventoryName": "meta-language-read-record-projection-error-loop-two-result-meta-language-read-record-projection-error-loop-two-done"
+  },
+  {
+    "id": "repository.batch-forty-seven-checked-record-projection-native-meta-language-read-record-projection-error-loop-two-result-type-meta-language-read-record-projection-error-loop-two-return-constructor",
+    "source": "rust/src/translation/record_value_rules/part_1.rs",
+    "name": "MlReadRecordProjectionErrorLoop2Result::MlReadRecordProjectionErrorLoop2Return",
+    "inventoryName": "meta-language-read-record-projection-error-loop-two-result-meta-language-read-record-projection-error-loop-two-return"
+  },
+  {
+    "id": "repository.execute-batch-forty-seven-checked-record-projection-native-meta-language-read-record-projection-error-loop-two",
+    "source": "rust/src/translation/record_value_rules/part_2.rs",
+    "name": "ml_read_record_projection_error_loop2",
+    "inventoryName": "meta-language-read-record-projection-error-loop-two"
+  }
+];
+const hasBulkFortySevenSourceAlias=function hasBulkFortySevenAlias(text,source,name){
+ // Actual declaration forms are required. A re-export or import spelling alone
+ // cannot claim a fresh function definition. Title words stay the real words.
+ if(source.endsWith('-decorators.lino'))return /^[A-Za-z_0-9.-]+$/u.test(name)&&new RegExp('^\\(decorator '+name.replaceAll('.','\\.')+'(?:\\s|\\))','mu').test(text);
+ if(source.endsWith('.js')||source.endsWith('.mjs')){
+  if(name==='LinkNetwork::projectedLinks'||name==='LinkNetwork::projected_links')return /^export class LinkNetwork\b/mu.test(text)&&new RegExp('^  '+name.split('::')[1]+'\\(','mu').test(text);
+  if(name.includes(' '))return text.includes(name);
+  const escaped=name.replace(/[.*+?^${}()|[\]\\]/gu,character=>'\\'+character);
+  return new RegExp('^\\s*(?:export )?(?:async )?function '+escaped+'\\s*\\(','mu').test(text)||new RegExp('^\\s*(?:export )?const '+escaped+'\\s*=','mu').test(text)||(name.includes(' ')&&text.includes(name))||(source==='js/tests/fixtures/array-binding-cases.mjs'&&text.includes(name));
+ }
+ if(!name.includes('::'))return new RegExp('^\\s*(?:pub(?:\\([^)]*\\))?\\s+)?(?:(?:const\\s+)?fn|enum|struct|mod) '+name+'\\b','mu').test(text);
+ const parts=name.split('::');if(!parts.every(part=>/^[A-Za-z_][A-Za-z_0-9]*$/u.test(part)))return false;let scope=text,kind='mod';
+ for(let at=0;at<parts.length-1;at++){const pattern=new RegExp('^(\\s*)(?:pub(?:\\([^)]*\\))?\\s+)?(mod|enum|struct) '+parts[at]+'\\b[^\\{]*\\{[^]*?^\\1\\}','mu'),block=scope.match(pattern);if(!block)return false;scope=block[0];kind=block[2];}
+ const member=parts.at(-1);return kind==='enum'?new RegExp('^\\s*'+member+'(?:\\s*[,({=]|\\s*$)','mu').test(scope):new RegExp('^\\s*(?:pub(?:\\([^)]*\\))?\\s+)?(?:(?:const\\s+)?fn|enum|struct|mod) '+member+'\\b','mu').test(scope);
+};
+const BULK_FORTY_SEVEN_NAME_INVENTORIES=[...new Set(BULK_FORTY_SEVEN_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B47 checked source contracts for "+source,files:[source],extract:text=>BULK_FORTY_SEVEN_BINDINGS.filter(row=>row.source===source&&hasBulkFortySevenSourceAlias(text,source,row.name)).map(row=>row.inventoryName),recordOf:name=>BULK_FORTY_SEVEN_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));
+const reconcileBulkFortySevenNativeInventory=inventory=>{const source=inventory.files.length===1?inventory.files[0]:null;if(!source||!BULK_FORTY_SEVEN_NATIVE_PREVIOUS_FILES.includes(source)||inventory.inventory!=="B45 exact source controls for "+source)return inventory;const rows=BULK_FORTY_SEVEN_NATIVE_BINDINGS.filter(row=>row.source===source);return{...inventory,extract:text=>rows.filter(row=>hasBulkFortySevenSourceAlias(text,source,row.name)).map(row=>row.inventoryName),recordOf:name=>rows.find(row=>row.inventoryName===name).id};};
+// End B47 checked source registrations.
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory).map(reconcileBulkFortySevenNativeInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES, ...BULK_FORTY_SEVEN_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
