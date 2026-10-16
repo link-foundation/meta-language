@@ -919,7 +919,7 @@ export function createTypedProgramLinks(
     rustArrayResultModel?: 'immutable fresh scalar vector results 1';
     rustCompletionModel?: 'closed guarded function returns 1';
     /** Retains const qualification on closed primitive predicates; no compile-time evaluation requests. */
-    rustConstFunctionModel?: 'closed pure Rust const predicates 1';
+    rustConstFunctionModel?: 'closed pure Rust const predicates 1' | 'closed Boolean Rust const decision trees 1';
     /** Retains owned source header facts; does not promise source ABI emission. */
     rustSourceSignatureModel?: 'Rust source function signature 1',
     /** Resolves qualified and imported standard binary64 owners under explicit source checks. */
@@ -1575,7 +1575,7 @@ export class GrammarParseError extends Error {
 }
 
 export class GrammarRuntimeError extends Error {
-  reason: 'import' | 'embed' | 'macro' | 'parameter' | 'reference' | 'declaration' | 'operation' | 'pattern';
+  reason: 'import' | 'embed' | 'macro' | 'parameter' | 'reference' | 'declaration' | 'operation' | 'pattern' | 'selection';
 }
 
 export function createGrammarParser(
@@ -1835,6 +1835,20 @@ export const GLOBAL_CONCEPT_PROOF_METHOD: 'recursive-structural-bijection';
 export function createGlobalConceptSpace(sources: readonly GlobalConceptSource[], options?: GlobalConceptOptions): GlobalConceptSpace;
 export function globalConceptSpaceToLinks(space: GlobalConceptSpace): string;
 export function readGlobalConceptSpaceLinks(source: string, options?: GlobalConceptOptions): GlobalConceptSpace;
+/** Archive-owned identities and resolution cannot be replaced by parser options. */
+export type GlobalConceptSpaceParserOptions = GrammarParserOptions & {
+  resolveGrammar?: never;
+  grammarName?: never;
+  globalConceptSpace?: never;
+};
+export interface GlobalConceptSpaceParser {
+  parse(source: string | Uint8Array, options?: GlobalConceptSpaceParserOptions): SyntaxTreeNode;
+  parseTree(source: string | Uint8Array, options?: GlobalConceptSpaceParserOptions): GrammarParseOutcome;
+}
+export function createGlobalConceptSpaceParser(
+  source: string, sourceIdentifier: string,
+  options?: GlobalConceptSpaceParserOptions & Pick<GlobalConceptOptions, 'records'>,
+): GlobalConceptSpaceParser;
 export function verifyGlobalConceptCorrespondence(shapes: readonly string[], meanings: readonly string[],
   offsets: readonly number[], edges: readonly number[], first: readonly number[], second: readonly number[]): boolean;
 export interface GlobalConstructTranslation {

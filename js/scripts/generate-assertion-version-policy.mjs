@@ -39,6 +39,21 @@ export function assertionVersionPolicy() {
         expected: 'Peggy 5.1.0',
         evidence: 'js/package.json and js/package-lock.json pin Peggy 5.1.0. Its actual generate(..., { output: ast }) optimizer merges the retained BMP, ASCII and astral literal alternatives into class nodes; js/tests/grammar-interchange-tools.test.js executes the optimizer and retains every source lexer, offset and tampering assertion.',
       }],
+    }, {
+      id: 'typescript-const-model-rejection-diagnostic',
+      subject: 'TypeScript public declaration compiler',
+      comparison: { kind: 'release', precision: 3 },
+      expectations: [{
+        id: 'typescript-5-9-2-const-model-rejection',
+        minimum: '5.9.2', maximum: '5.9.2', includeMinimum: true, includeMaximum: true,
+        expected: ['TS2820'],
+        evidence: 'The existing TypeScript 5.9.2 compiler produced TS2820 for the unchanged closed pure Rust const predicates 99 consumer after adding the Boolean const model to the public union. The actual diagnostic is retained in /private/tmp/meta-language-bulk51-typescript-contract-probe.log (sha256 5ac1b0263186ac10bf1e0befcd32c40112f9bb8b3f2b3db120a8f1370fabb28c); this singleton records that local observation only.',
+      }, {
+        id: 'typescript-7-0-2-const-model-rejection',
+        minimum: '7.0.2', maximum: '7.0.2', includeMinimum: true, includeMaximum: true,
+        expected: ['TS2820'],
+        evidence: 'js/package.json and js/package-lock.json pin TypeScript 7.0.2. This singleton specifies the required CI diagnostic for the same unchanged closed pure Rust const predicates 99 consumer; it is not a local TypeScript 7 execution observation.',
+      }],
     }],
     observationBindings: [{
       testId: 'i195-assertion-explicit-version-ranges-tooling-antlr-command-order',
