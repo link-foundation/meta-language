@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { gzipSync } from 'node:zlib';
+import { gunzipSync, gzipSync } from 'node:zlib';
 import test from 'node:test';
 import { cleanMaterializedExternalGrammarAssets, downloadExternalGrammarAssets, externalGrammarDirectory, externalGrammarPath, readExternalGrammarAsset } from '../scripts/external-grammar-cache.mjs';
 
@@ -67,6 +67,39 @@ test('gzip downloads verify compressed and decoded pins and reject counterfeit c
   const counterfeit = workspace(context, { 'source/grammar.gz': { ...asset, decodedSha256: '0'.repeat(64) } });
   await assert.rejects(downloadExternalGrammarAssets({ ...counterfeit, all: true, fetchImpl: async () => new Response(raw) }), /decoded external grammar asset checksum mismatch/);
   assert.equal(existsSync(join(counterfeit.cacheRoot, 'source/grammar.gz')), false);
+  {
+    const raw = Buffer.from('pinned external grammar source\n'.repeat(32));
+    const recompressed = gzipSync(raw, { level: 9 });
+    const otherHeader = Buffer.from(recompressed);
+    otherHeader[4] = 1;
+    for (const bytes of [otherHeader, gzipSync(raw, { level: 1 })]) {
+      assert.notDeepEqual(bytes, recompressed, 'the exact archive is genuinely a different gzip representation');
+      assert.deepEqual(gunzipSync(bytes), raw, 'the alternate representation decodes to the same independently pinned source');
+      const asset = { ...receipt(bytes), encoding: 'gzip', decodedBytes: raw.length, decodedSha256: digest(raw), downloads: [
+        { url: 'https://upstream.example.test/source', transform: 'gzip' },
+        { url: 'https://archive.example.test/exact', transform: 'identity' },
+        { url: 'https://mirror.example.test/exact', transform: 'identity' },
+      ] };
+      const order = [...asset.downloads];
+      const options = workspace(context, { 'source/grammar.gz': asset });
+      const requests = [], delays = [];
+      await downloadExternalGrammarAssets({ ...options, all: true, materialize: true,
+        fetchImpl: async url => {
+          requests.push(url);
+          assert.equal(url, 'https://archive.example.test/exact');
+          assert.equal(existsSync(options.cacheRoot), false);
+          assert.equal(existsSync(join(options.root, 'source/grammar.gz')), false);
+          return new Response(bytes);
+        }, sleepImpl: async delay => { delays.push(delay); } });
+      assert.deepEqual(requests, ['https://archive.example.test/exact']);
+      assert.deepEqual(delays, []);
+      assert.deepEqual(asset.downloads, order, 'manifest ordering and descriptors were not mutated');
+      for (let index = 0; index < order.length; index++) assert.strictEqual(asset.downloads[index], order[index]);
+      assert.deepEqual(readFileSync(join(options.cacheRoot, 'source/grammar.gz')), bytes);
+      assert.deepEqual(readExternalGrammarAsset('source/grammar.gz', options), bytes);
+      assert.equal(digest(gunzipSync(readExternalGrammarAsset('source/grammar.gz', options))), asset.decodedSha256);
+    }
+  }
 });
 
 test('asset traversal, unregistered paths and symbolic parent escapes are refused', async context => {
@@ -278,6 +311,36 @@ test('permanent HTTP failures are not retried and retain authenticated mirror fa
   assert.deepEqual(requests, asset.downloads.map(({ url }) => url));
   assert.deepEqual(delays, []);
   assert.deepEqual(readExternalGrammarAsset('source/grammar.txt', options), bytes);
+  {
+    const raw = Buffer.from('pinned source fallback');
+    const bytes = gzipSync(raw, { level: 9 });
+    const asset = { ...receipt(bytes), encoding: 'gzip', decodedBytes: raw.length, decodedSha256: digest(raw), downloads: [
+      { url: 'https://upstream.example.test/first', transform: 'gzip' },
+      { url: 'https://archive.example.test/first', transform: 'identity' },
+      { url: 'https://upstream.example.test/second', transform: 'gzip' },
+      { url: 'https://archive.example.test/second', transform: 'identity' },
+    ] };
+    const order = [...asset.downloads];
+    const options = workspace(context, { 'source/grammar.gz': asset });
+    const requests = [], delays = [];
+    await downloadExternalGrammarAssets({ ...options, all: true, materialize: true,
+      fetchImpl: async url => {
+        requests.push(url);
+        assert.equal(existsSync(options.cacheRoot), false);
+        assert.equal(existsSync(join(options.root, 'source/grammar.gz')), false);
+        if (url === 'https://archive.example.test/second') return new Response('temporary failure', { status: 503 });
+        if (url !== 'https://upstream.example.test/second') return new Response('missing', { status: 404 });
+        return new Response(raw);
+      }, sleepImpl: async delay => { delays.push(delay); } });
+    assert.deepEqual(requests, ['https://archive.example.test/first',
+      ...Array(3).fill('https://archive.example.test/second'),
+      'https://upstream.example.test/first', 'https://upstream.example.test/second']);
+    assert.deepEqual(delays, [250, 500]);
+    assert.deepEqual(asset.downloads, order);
+    assert.deepEqual(readFileSync(join(options.cacheRoot, 'source/grammar.gz')), bytes);
+    assert.deepEqual(readFileSync(join(options.root, 'source/grammar.gz')), bytes);
+    assert.equal(digest(gunzipSync(bytes)), asset.decodedSha256);
+  }
 });
 
 test('integrity and HTTPS failures are fatal without retries or concealment by another mirror', async context => {
@@ -320,6 +383,68 @@ test('integrity and HTTPS failures are fatal without retries or concealment by a
     fetchImpl: () => { throw new Error('unsafe URLs must be refused before fetching'); },
     sleepImpl: () => { throw new Error('unsafe URLs must never retry'); } }), /downloads require HTTPS/u);
   assert.equal(existsSync(options.cacheRoot), false);
+  {
+    const raw = Buffer.from('pinned source fallback');
+    const changed = Buffer.from(raw);
+    changed[0] ^= 1;
+    const bytes = gzipSync(raw, { level: 9 });
+    const asset = { ...receipt(bytes), encoding: 'gzip', decodedBytes: raw.length, decodedSha256: digest(raw), downloads: [
+      { url: 'https://upstream.example.test/changed', transform: 'gzip' },
+      { url: 'https://archive.example.test/missing', transform: 'identity' },
+      { url: 'https://upstream.example.test/correct', transform: 'gzip' },
+    ] };
+    const options = workspace(context, { 'source/grammar.gz': asset });
+    const requests = [], delays = [];
+    await assert.rejects(downloadExternalGrammarAssets({ ...options, all: true, materialize: true,
+      fetchImpl: async url => {
+        requests.push(url);
+        if (url === 'https://archive.example.test/missing') return new Response('missing', { status: 404 });
+        return new Response(url === 'https://upstream.example.test/changed' ? changed : raw);
+      }, sleepImpl: async delay => { delays.push(delay); } }), /decoded external grammar asset checksum mismatch/u);
+    assert.deepEqual(requests, ['https://archive.example.test/missing', 'https://upstream.example.test/changed']);
+    assert.deepEqual(delays, []);
+    assert.equal(existsSync(options.cacheRoot), false);
+    assert.equal(existsSync(join(options.root, 'source/grammar.gz')), false);
+  }
+  {
+    const raw = Buffer.from('pinned source fallback');
+    const bytes = gzipSync(raw, { level: 9 });
+    for (const pins of [{}, { decodedBytes: raw.length }, { decodedSha256: digest(raw) },
+      { decodedBytes: -1, decodedSha256: digest(raw) }, { decodedBytes: 1.5, decodedSha256: digest(raw) },
+      { decodedBytes: raw.length, decodedSha256: 'not a digest' }]) {
+      const asset = { ...receipt(bytes), encoding: 'gzip', ...pins,
+        downloads: [{ url: 'https://upstream.example.test/source', transform: 'gzip' }] };
+      const options = workspace(context, { 'source/grammar.gz': asset });
+      let requests = 0;
+      const delays = [];
+      await assert.rejects(downloadExternalGrammarAssets({ ...options, all: true, materialize: true,
+        fetchImpl: async () => { requests++; return new Response(raw); },
+        sleepImpl: async delay => { delays.push(delay); } }), /invalid decoded grammar asset pin/u);
+      assert.equal(requests, 0);
+      assert.deepEqual(delays, []);
+      assert.equal(existsSync(options.cacheRoot), false);
+      assert.equal(existsSync(join(options.root, 'source/grammar.gz')), false);
+    }
+  }
+  {
+    const raw = Buffer.from('pinned source fallback');
+    const bytes = gzipSync(raw, { level: 9 });
+    const corrupt = Buffer.from(bytes);
+    corrupt[0] ^= 1;
+    const asset = { ...receipt(bytes), encoding: 'gzip', decodedBytes: raw.length, decodedSha256: digest(raw), downloads: [
+      { url: 'https://upstream.example.test/correct', transform: 'gzip' },
+      { url: 'https://archive.example.test/corrupt', transform: 'identity' },
+    ] };
+    const options = workspace(context, { 'source/grammar.gz': asset });
+    const requests = [], delays = [];
+    await assert.rejects(downloadExternalGrammarAssets({ ...options, all: true, materialize: true,
+      fetchImpl: async url => { requests.push(url); return new Response(url === 'https://archive.example.test/corrupt' ? corrupt : raw); },
+      sleepImpl: async delay => { delays.push(delay); } }), /external grammar asset checksum mismatch/u);
+    assert.deepEqual(requests, ['https://archive.example.test/corrupt']);
+    assert.deepEqual(delays, []);
+    assert.equal(existsSync(options.cacheRoot), false);
+    assert.equal(existsSync(join(options.root, 'source/grammar.gz')), false);
+  }
 });
 
 test('TLS, unsafe redirect and unclassified programming errors do not enter transport retries', async context => {

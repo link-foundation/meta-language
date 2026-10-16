@@ -243,12 +243,21 @@ async function acquire(path, context, options) {
     return { path, reused: true };
   }
   const errors = [];
-  for (const download of asset.downloads ?? []) {
+  const downloads = asset.downloads ?? [];
+  // Exact archived bytes do not depend on a local compressor's representation.
+  // Keep every descriptor and its original order within each acquisition group.
+  for (const download of [...downloads.filter(download => download.transform === 'identity'),
+    ...downloads.filter(download => download.transform !== 'identity')]) {
     try {
       const url = new URL(download.url);
       if (url.protocol !== 'https:') throw new Error('external grammar downloads require HTTPS');
+      if (download.transform === 'gzip' && (!Number.isSafeInteger(asset.decodedBytes) || asset.decodedBytes < 0
+        || !/^[a-f0-9]{64}$/.test(asset.decodedSha256))) throw new Error(`invalid decoded grammar asset pin: ${path}`);
       const limit = download.transform === 'gzip' ? asset.decodedBytes : asset.bytes;
       const raw = await downloadBytesWithRetries(url.href, limit, options);
+      if (download.transform === 'gzip' && (raw.length !== asset.decodedBytes || digest(raw) !== asset.decodedSha256)) {
+        throw new Error(`decoded external grammar asset checksum mismatch: ${path}`);
+      }
       const bytes = download.transform === 'gzip' ? gzipSync(raw, { level: 9 }) : raw;
       verify(bytes, asset, path);
       storeAcquired(path, bytes, context, options);
