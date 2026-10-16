@@ -144,13 +144,47 @@ fn settings(data: &Value) -> GlobalConceptOptions {
     }
 }
 
+// Extend only source provenance recorded by the original input grammars. The
+// fixture's identities, definitions, proofs and legacy archive stay untouched.
+fn with_source_format_provenance(expected: &Value, input: &[GlobalConceptSource]) -> Value {
+    let mut expected = expected.clone();
+    for source in expected["sources"].as_array_mut().unwrap() {
+        let original = input
+            .iter()
+            .find(|original| source["id"] == original.id)
+            .unwrap();
+        if let Some(format) = original.grammar.source_format() {
+            source["sourceFormat"] = json!(format.as_str());
+        }
+    }
+    expected
+}
+
+fn with_source_format_statements(links: &str, input: &[GlobalConceptSource]) -> String {
+    use meta_language::grammar::interchange::percent_encode_links_text;
+
+    let mut lines = Vec::new();
+    for line in links.split('\n') {
+        lines.push(line.to_owned());
+        for source in input {
+            let id = percent_encode_links_text(&source.id);
+            if line.starts_with(&format!("(grammar-origin {id} "))
+                && let Some(format) = source.grammar.source_format()
+            {
+                lines.push(format!("(grammar-source-format {id} {})", format.as_str()));
+            }
+        }
+    }
+    lines.join("\n")
+}
+
 #[test]
 fn closed_global_context_retains_lexical_competition_modes_channels_actions_and_owners() {
     let data = fixture();
     let options = settings(&data);
     assert_eq!(
         create_global_concept_space(&sources(&data), &options).unwrap(),
-        data["expectedSpace"]
+        with_source_format_provenance(&data["expectedSpace"], &sources(&data))
     );
     let mut scoped = data.clone();
     for (index, source) in scoped["sources"]
@@ -299,7 +333,10 @@ fn copied_global_productions_share_only_closed_recursive_correspondences() {
         root["origins"][0]["sourceNames"],
         json!([{"source":"upstream:first","name":"original_root"}])
     );
-    assert_eq!(space, data["expectedSpace"]);
+    assert_eq!(
+        space,
+        with_source_format_provenance(&data["expectedSpace"], &input)
+    );
     let test_name = "copied_global_productions_share_only_closed_recursive_correspondences";
     observe(
         "I195-GLOBAL-CONCEPT-SPACE",
@@ -480,6 +517,20 @@ fn global_identity_survives_reordering_incremental_import_and_safe_splitting() {
 fn global_links_reload_source_free_and_reject_invalid_or_omitted_proofs() {
     let data = fixture();
     let options = settings(&data);
+    let legacy =
+        read_global_concept_space_links(data["expectedLinks"].as_str().unwrap(), &options).unwrap();
+    assert_eq!(legacy, data["expectedSpace"]);
+    assert_eq!(
+        global_concept_space_to_links(&legacy).unwrap(),
+        data["expectedLinks"].as_str().unwrap()
+    );
+    assert!(
+        legacy["sources"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|source| source.get("sourceFormat").is_none())
+    );
     let space = create_global_concept_space(&sources(&data), &options).unwrap();
     let links = global_concept_space_to_links(&space).unwrap();
     assert!(links.contains("(source-alias first%3Aroot upstream%3Afirst original_root)"));
@@ -487,7 +538,10 @@ fn global_links_reload_source_free_and_reject_invalid_or_omitted_proofs() {
     assert!(links.contains("(literal %CE%B1)"));
     assert_eq!(links.matches("(concept-definition ").count(), 6);
     assert_eq!(links.matches("(formal-origin-definition ").count(), 4);
-    assert_eq!(links, data["expectedLinks"].as_str().unwrap());
+    assert_eq!(
+        links,
+        with_source_format_statements(data["expectedLinks"].as_str().unwrap(), &sources(&data))
+    );
     let reloaded = read_global_concept_space_links(&links, &options).unwrap();
     assert_eq!(reloaded, space);
     assert_eq!(global_concept_space_to_links(&reloaded).unwrap(), links);

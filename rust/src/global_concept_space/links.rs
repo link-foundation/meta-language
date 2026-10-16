@@ -52,6 +52,12 @@ pub fn global_concept_space_to_links(space: &Value) -> Result<String, String> {
                 .collect::<Result<Vec<_>, _>>()?
                 .join(" ")
         ));
+        if !source["sourceFormat"].is_null() {
+            lines.push(format!(
+                "(grammar-source-format {id} {})",
+                word(&source["sourceFormat"])?
+            ));
+        }
         let context = &source["context"];
         if !context["matching"].is_null() {
             lines.push(format!(
@@ -334,6 +340,19 @@ pub(super) fn read_validated_global_concept_archive(
                 contexts.insert(id.clone(), Vec::new());
                 entries.push(json!({"id":id,"language":link_word(&args[1])?,"edition":link_word(&args[2])?,"start":start,"ruleOrder":rule_order,"context":null}));
             }
+            "grammar-source-format" => {
+                if args.len() != 2 {
+                    return Err("a grammar source format has an origin and one format".to_owned());
+                }
+                let id = link_word(&args[0])?;
+                let index = *sources
+                    .get(&id)
+                    .ok_or("unknown or duplicate grammar source format origin")?;
+                if space["sources"][index].get("sourceFormat").is_some() {
+                    return Err("unknown or duplicate grammar source format origin".to_owned());
+                }
+                space["sources"][index]["sourceFormat"] = json!(link_word(&args[1])?);
+            }
             "grammar-context" => {
                 if args.len() != 2 {
                     return Err("unknown grammar context origin".to_owned());
@@ -513,8 +532,16 @@ pub(super) fn read_validated_global_concept_archive(
                 declared.push(print_link(field)?);
             }
         }
+        let format = source
+            .get("sourceFormat")
+            .map(|format| {
+                string(format)
+                    .map(|format| format!("(format {})", percent_encode_links_text(format)))
+            })
+            .transpose()?
+            .unwrap_or_default();
         let placeholder = parse_grammar_links(&format!(
-            "(grammar (start placeholder) {})\n{}\n(rule placeholder normal empty)\n",
+            "(grammar (start placeholder) {format} {})\n{}\n(rule placeholder normal empty)\n",
             header.join(" "),
             declared.join("\n")
         ))
@@ -564,7 +591,7 @@ pub(super) fn read_validated_global_concept_archive(
                 .position(|name| *name == rule["name"])
                 .unwrap_or(order.len())
         });
-        imported.push(json!({"id":source["id"],"language":source["language"],"edition":source["edition"],"grammar":{"start":source["start"],"rules":rules,"declarations":context}}));
+        imported.push(json!({"id":source["id"],"language":source["language"],"edition":source["edition"],"grammar":{"start":source["start"],"sourceFormat":source["sourceFormat"],"rules":rules,"declarations":context}}));
     }
     let mut required = Vec::new();
     for failure in array(&space["failures"])? {

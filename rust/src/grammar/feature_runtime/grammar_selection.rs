@@ -14,7 +14,7 @@ use crate::grammar::interchange::serialize_grammar;
 use crate::grammar::{Grammar, default_settling};
 use crate::translation::grammar_selection_rules::{
     accept_grammar_selection_count, accept_grammar_selection_mapping,
-    report_grammar_selection_ambiguity,
+    read_grammar_source_default_matching, report_grammar_selection_ambiguity,
 };
 
 /// One independently accepted concrete interpretation of a selected region.
@@ -247,7 +247,11 @@ impl Executor<'_> {
         let mut source_context = source.map_or(Value::Null, |source| source["context"].clone());
         if !source_context.is_null() {
             if source_context["matching"].is_null() {
-                source_context["matching"] = json!("generalized");
+                source_context["matching"] = json!(read_grammar_source_default_matching(
+                    source
+                        .and_then(|source| source["sourceFormat"].as_str())
+                        .unwrap_or_default()
+                ));
             }
             if source_context["settling"].is_null() {
                 source_context["settling"] = json!(default_settling(

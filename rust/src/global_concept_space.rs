@@ -14,8 +14,9 @@ use crate::global_concept_rules::verify_global_concept_correspondence;
 
 use crate::formal_concept_definition::read_formal_concept_definition;
 use crate::grammar::interchange::{deserialize_grammar, serialize_grammar};
-use crate::grammar::{Grammar, GrammarSourceName};
+use crate::grammar::{Grammar, GrammarFormat, GrammarSourceName};
 use crate::link_network::LinkNetwork;
+use crate::translation::grammar_selection_rules::read_grammar_source_default_matching;
 
 mod links;
 mod parser;
@@ -44,6 +45,7 @@ impl GlobalConceptSource {
     /// # Errors
     /// Returns a validation error for invalid source or grammar data.
     pub fn from_json(value: &Value) -> Result<Self, String> {
+        require_global_grammar_source_format(value["grammar"].get("sourceFormat"))?;
         let decoded = deserialize_grammar(&value["grammar"].to_string())
             .map_err(|error| error.to_string())?;
         let mut grammar = Grammar::new();
@@ -119,6 +121,20 @@ fn array(value: &Value) -> Result<&[Value], String> {
         .as_array()
         .map(Vec::as_slice)
         .ok_or_else(|| "expected an array in global concept data".to_owned())
+}
+
+fn require_global_grammar_source_format(value: Option<&Value>) -> Result<(), String> {
+    value
+        .filter(|value| !value.is_null())
+        .map(|value| {
+            let format = value
+                .as_str()
+                .ok_or("a global grammar source format must be known text")?;
+            GrammarFormat::from_tag(format)
+                .ok_or_else(|| format!("unknown grammar source format {format}"))
+        })
+        .transpose()
+        .map(|_| ())
 }
 
 fn canonical(value: &Value) -> String {
@@ -411,6 +427,7 @@ fn create_global_concept_space_in(
                     .to_owned(),
             );
         }
+        require_global_grammar_source_format(source["grammar"].get("sourceFormat"))?;
         if !source_ids.insert(id.to_owned()) {
             return Err(format!("duplicate global concept source {id}"));
         }
@@ -551,7 +568,11 @@ fn create_global_concept_space_in(
         let source = string(&ordered[node.source]["id"])?;
         let mut context = contexts[node.source].clone();
         if context["matching"].is_null() {
-            context["matching"] = json!("generalized");
+            context["matching"] = json!(read_grammar_source_default_matching(
+                ordered[node.source]["grammar"]["sourceFormat"]
+                    .as_str()
+                    .unwrap_or_default()
+            ));
         }
         if context["settling"].is_null() {
             context["settling"] = match context["matching"].as_str() {
@@ -732,7 +753,13 @@ fn create_global_concept_space_in(
             failures.push(json!({"members":members,"reason":reason}));
         }
     }
-    let sources: Vec<_> = ordered.iter().enumerate().map(|(index, source)| json!({"id":source["id"],"language":source["language"],"edition":source["edition"],"start":source["grammar"].get("start").unwrap_or(&Value::Null),"ruleOrder":source["grammar"]["rules"].as_array().map(|rules| rules.iter().map(|rule| rule["name"].clone()).collect::<Vec<_>>()).unwrap_or_default(),"context":contexts[index]})).collect();
+    let sources: Vec<_> = ordered.iter().enumerate().map(|(index, source)| {
+        let mut origin = json!({"id":source["id"],"language":source["language"],"edition":source["edition"],"start":source["grammar"].get("start").unwrap_or(&Value::Null),"ruleOrder":source["grammar"]["rules"].as_array().map(|rules| rules.iter().map(|rule| rule["name"].clone()).collect::<Vec<_>>()).unwrap_or_default(),"context":contexts[index]});
+        if let Some(format) = source["grammar"].get("sourceFormat").filter(|format| !format.is_null()) {
+            origin["sourceFormat"] = format.clone();
+        }
+        origin
+    }).collect();
     Ok((
         json!({"schemaVersion":1,"sources":sources,"concepts":concepts,"mappings":mappings,"proofs":proofs,"failures":failures,"ambiguities":ambiguities,"redirects":redirects,"formalDefinitions":formal}),
         graph,
