@@ -56,7 +56,9 @@ fn archives(packet: &TypedProgramLinks) -> [LinkNetwork; 2] {
 
 fn javascript_contract(source: &str) -> Value {
     let script = r#"
-import {createTypedProgramLinks,emitTypedProgramLinks} from './js/src/index.js';
+import {createTypedProgramLinks,decodeTypedProgramLinks,emitTypedProgramLinks} from './js/src/index.js';
+import {emitLean} from './js/src/translation/emit-lean.js';
+import {emitRocq} from './js/src/translation/emit-rocq.js';
 import vm from 'node:vm';
 import {format} from 'node:util';
 const source=process.argv[1];
@@ -65,7 +67,16 @@ vm.runInNewContext(source,{console:{log:(...values)=>lines.push(format(...values
 const packet=createTypedProgramLinks(source,'JavaScript');
 const codes={};
 for(const target of ['JavaScript','Rust','Lean','Rocq']){
-  try{codes[target]={code:emitTypedProgramLinks(packet.network,packet.root,target).code};}
+  try{
+    let code;
+    if(target==='Lean'||target==='Rocq'){
+      const program=decodeTypedProgramLinks(packet.network,packet.root);
+      code=(target==='Lean'?emitLean(program):emitRocq(program)).text;
+    }else{
+      code=emitTypedProgramLinks(packet.network,packet.root,target).code;
+    }
+    codes[target]={code};
+  }
   catch(error){codes[target]={error:error.message};}
 }
 console.log(JSON.stringify({lines,codes}));
