@@ -21309,7 +21309,292 @@ const BINARY_RECORD_NAME_INVENTORIES=BINARY_RECORD_NAME_BINDINGS.map(({inventory
  extract:(text,file)=>files[file].filter(({name})=>text.includes(name)).map(({name})=>normalizeArchiveLifecycleName(name)),
  recordOf:name=>Object.values(files).flat().find(entry=>normalizeArchiveLifecycleName(entry.name)===name).id,
 }));
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES]);
+// Distinct global identities, compact keyword ancestry and portable generator meanings.
+const GLOBAL_IDENTITY_RESOURCE_NAME_BINDINGS=[
+  {
+    "inventory": "global identity shared operations",
+    "files": {
+      "js/src/global-concept-rules.js": [
+        {
+          "name": "containsGlobalConceptIdentity",
+          "id": "repository.check-global-concept-identity-membership"
+        },
+        {
+          "name": "acceptGlobalConceptHistory",
+          "id": "repository.accept-global-concept-identity-history"
+        },
+        {
+          "name": "selectGlobalConceptIdentity",
+          "id": "repository.select-distinct-global-concept-identity"
+        }
+      ],
+      "rust/src/global_concept_identity_rules.rs": [
+        {
+          "name": "contains_global_concept_identity",
+          "id": "repository.check-global-concept-identity-membership"
+        },
+        {
+          "name": "accept_global_concept_history",
+          "id": "repository.accept-global-concept-identity-history"
+        },
+        {
+          "name": "select_global_concept_identity",
+          "id": "repository.select-distinct-global-concept-identity"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "global identity generated continuations",
+    "files": {
+      "rust/src/global_concept_identity_rules.rs": [
+        {
+          "name": "ml_contains_global_concept_identity_loop1",
+          "id": "repository.continue-global-concept-identity-membership"
+        },
+        {
+          "name": "ml_select_global_concept_identity_loop2",
+          "id": "repository.continue-global-concept-identity-selection"
+        },
+        {
+          "name": "MlContainsGlobalConceptIdentityLoop1Result",
+          "id": "repository.global-concept-identity-membership-result"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "global identity allocation state",
+    "files": {
+      "js/src/global-concept-space.js": [
+        {
+          "name": "reserved",
+          "id": "repository.reserved-global-concept-identities"
+        },
+        {
+          "name": "assigned",
+          "id": "repository.assigned-global-concept-identities"
+        },
+        {
+          "name": "previousAliases",
+          "id": "repository.historical-global-concept-origin-aliases"
+        }
+      ],
+      "rust/src/global_concept_space.rs": [
+        {
+          "name": "reserved",
+          "id": "repository.reserved-global-concept-identities"
+        },
+        {
+          "name": "assigned",
+          "id": "repository.assigned-global-concept-identities"
+        },
+        {
+          "name": "previous_aliases",
+          "id": "repository.historical-global-concept-origin-aliases"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "global identity shared controls",
+    "files": {
+      "js/scripts/generate-global-concept-space-fixture.mjs": [
+        {
+          "name": "identityFixture",
+          "id": "repository.global-concept-identity-controls"
+        }
+      ],
+      "js/tests/global-concept-space.test.js": [
+        {
+          "name": "identityFixture",
+          "id": "repository.global-concept-identity-controls"
+        }
+      ],
+      "rust/tests/unit/global_concept_space.rs": [
+        {
+          "name": "identity_controls",
+          "id": "repository.read-global-concept-identity-controls"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "global identity preservation checks",
+    "files": {
+      "js/tests/global-concept-space.test.js": [
+        {
+          "name": "restored changed origins cannot reuse another current concept identity",
+          "id": "repository.check-restored-global-concept-identities"
+        },
+        {
+          "name": "counterfeit duplicate historical identities or origins cannot prove shared meaning",
+          "id": "repository.check-counterfeit-global-concept-history"
+        },
+        {
+          "name": "shared identity selection reserves all historical and current candidates with stable results",
+          "id": "repository.check-global-concept-identity-selection"
+        }
+      ],
+      "rust/tests/unit/global_concept_space.rs": [
+        {
+          "name": "restored_changed_origins_retain_distinct_current_identities",
+          "id": "repository.check-restored-global-concept-identities"
+        },
+        {
+          "name": "shared_history_controls_refuse_duplicate_or_empty_identities_and_origins",
+          "id": "repository.check-native-global-concept-history-controls"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "global identity library styles",
+    "files": {
+      "js/scripts/global-concept-identity-styles.mjs": [
+        {
+          "name": "readGlobalConceptIdentityStyles",
+          "id": "repository.derive-global-concept-identity-styles"
+        }
+      ],
+      "js/scripts/generate-global-concept-rules.mjs": [
+        {
+          "name": "identityStyles",
+          "id": "repository.global-concept-identity-library-decorators"
+        }
+      ],
+      "js/tests/global-concept-space.test.js": [
+        {
+          "name": "generated identity loop styles retain owned string values",
+          "id": "repository.check-generated-identity-loop-ownership"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "binary generator relocation checks",
+    "files": {
+      "js/tests/link-network-binary.test.js": [
+        {
+          "name": "binary record generator paths relocate with the actual repository",
+          "id": "repository.check-binary-record-generator-relocation"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "binary record protected workflow gates",
+    "files": {
+      "js/tests/ci-workflow-structure.test.js": [
+        {
+          "name": "BINARY_RECORD_PACKAGE_STEPS",
+          "id": "repository.binary-record-generation-gates"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "compact keyword call state",
+    "files": {
+      "js/src/grammar-runtime/executor.js": [
+        {
+          "name": "keywordContext",
+          "id": "repository.keyword-parse-call-context"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "keyword parser preservation controls",
+    "files": {
+      "js/tests/grammar-keyword-context-memory.test.js": [
+        {
+          "name": "controls",
+          "id": "repository.keyword-parser-preservation-controls"
+        },
+        {
+          "name": "pins",
+          "id": "repository.frozen-keyword-parser-source-digests"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "keyword parser preservation operations",
+    "files": {
+      "js/tests/grammar-keyword-context-memory.test.js": [
+        {
+          "name": "frozenKeywordModule",
+          "id": "repository.prepare-frozen-keyword-parser-module"
+        },
+        {
+          "name": "frozenKeywordParser",
+          "id": "repository.prepare-frozen-keyword-parser"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "keyword parser preservation checks",
+    "files": {
+      "js/tests/grammar-keyword-context-memory.test.js": [
+        {
+          "name": "keyword call contexts retain live ancestry without memo results or seeds",
+          "id": "repository.check-compact-keyword-call-ancestry"
+        },
+        {
+          "name": "actual Rust keyword contexts exclude memo payloads while complete tiny parse outputs match the frozen driver",
+          "id": "repository.check-frozen-keyword-parser-outcomes"
+        },
+        {
+          "name": "keyword context separation preserves unchanged parse budgets and rejection decisions",
+          "id": "repository.check-keyword-parser-budget-preservation"
+        }
+      ]
+    }
+  },
+  {
+    "inventory": "native source parse diagnostics",
+    "files": {
+      "experiments/original-link-complete-table-projection/archive-transport.mjs": [
+        {
+          "name": "observeCompleteSourceParse",
+          "id": "repository.observe-complete-native-source-parse"
+        },
+        {
+          "name": "onNativeRun",
+          "id": "repository.native-source-execution-observer"
+        },
+        {
+          "name": "requireSuccessfulSourceArchive",
+          "id": "repository.require-successful-generated-source-parse"
+        }
+      ],
+      "experiments/original-link-complete-table-projection/raw-native-observations.mjs": [
+        {
+          "name": "onNativeRun",
+          "id": "repository.native-source-execution-observer"
+        }
+      ],
+      "js/tests/grammar-keyword-context-memory.test.js": [
+        {
+          "name": "complete source diagnostics observe real native runs and restore the executor",
+          "id": "repository.check-native-source-diagnostic-restoration"
+        },
+        {
+          "name": "valid generated source archives refuse failed or recovered parse graphs",
+          "id": "repository.check-generated-source-parse-admission"
+        }
+      ]
+    }
+  }
+];
+const GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES=GLOBAL_IDENTITY_RESOURCE_NAME_BINDINGS.map(({inventory,files})=>({
+ inventory,files:Object.keys(files),
+ extract:(text,file)=>files[file].filter(({name})=>text.includes(name)).map(({name})=>normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(name))),
+ recordOf:name=>Object.values(files).flat().find(entry=>normalizeOriginalRawCancellationName(normalizeArchiveLifecycleName(entry.name))===name).id,
+}));
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES]);
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
