@@ -2171,6 +2171,10 @@ and numeric end positions; unknown fields, descriptors or identities retain
 their complete original arrays. Homogeneous one-byte padding shares bounded
 leaf storage and materializes its full original spans and scanner states when
 read. Comments and heterogeneous states retain the original representation.
+Unknown complete padding records, sparse or decorated arrays, nonstandard
+property descriptors and unread accessors also retain the original objects.
+Packing validates descriptors before reading their values, preserves either
+zero sign in state comparisons and does not populate the shared pool on refusal.
 Frozen tiny Rust controls compare full outputs, steps, charged cells and all
 logical cache counts under normal, rejection and recovery modes. Authored
 strings shorter than 256 bytes and allocation-site metadata establish these

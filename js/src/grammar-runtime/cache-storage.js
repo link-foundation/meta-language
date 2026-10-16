@@ -4,7 +4,14 @@ const RESULT_FIELDS = new Set(['end','state','children','dynamic','precedence','
 const PADDING_RUN = Symbol('padding run');
 
 export function packLexicalCacheResults(results) {
-  if (results.length < 16) return results;
+  if (!Array.isArray(results) || Object.getPrototypeOf(results)!==Array.prototype || results.length < 16
+    || !Object.getOwnPropertyDescriptor(results,'length').writable
+    || Reflect.ownKeys(results).length !== results.length + 1) return results;
+  for (let index=0;index<results.length;index++) {
+    const descriptor=Object.getOwnPropertyDescriptor(results,index);
+    if (!descriptor || !Object.hasOwn(descriptor,'value') || !descriptor.enumerable || !descriptor.writable || !descriptor.configurable
+      || descriptor.value===null || typeof descriptor.value!=='object') return results;
+  }
   const template=results[0],keys=Reflect.ownKeys(template);
   if (!keys.includes('end') || keys.some(key=>!RESULT_FIELDS.has(key))) return results;
   const fields=new Set(keys),orders=new Map(),templates=[],shapes=[];
@@ -42,18 +49,37 @@ function readPaddingStates() {
 }
 
 export function packTriviaCacheResult(skipped,position,pool,limit) {
-  const {leaves,states,state,end}=skipped,length=leaves.length;
-  if (length<16 || end!==position+length || states.length!==length+1 || !states.every(value=>value===state)) return skipped;
+  if (skipped===null || typeof skipped!=='object' || Object.getPrototypeOf(skipped)!==Object.prototype) return skipped;
+  const fields=['end','leaves','state','states'],names=Reflect.ownKeys(skipped);
+  if (names.length!==fields.length || names.some((name,index)=>name!==fields[index])) return skipped;
+  for (const field of fields) {
+    const descriptor=Object.getOwnPropertyDescriptor(skipped,field);
+    if (!Object.hasOwn(descriptor,'value') || !descriptor.enumerable || !descriptor.writable || !descriptor.configurable) return skipped;
+  }
+  const {leaves,states,state,end}=skipped;
+  if (!Array.isArray(leaves) || !Array.isArray(states)
+    || Object.getPrototypeOf(leaves)!==Array.prototype || Object.getPrototypeOf(states)!==Array.prototype
+    || !Object.getOwnPropertyDescriptor(leaves,'length').writable || !Object.getOwnPropertyDescriptor(states,'length').writable) return skipped;
+  const length=leaves.length;
+  if (length<16 || end!==position+length || states.length!==length+1
+    || Reflect.ownKeys(leaves).length!==length+1 || Reflect.ownKeys(states).length!==states.length+1) return skipped;
+  for (const values of [leaves,states]) for (let index=0;index<values.length;index++) {
+    const descriptor=Object.getOwnPropertyDescriptor(values,index);
+    if (!descriptor || !Object.hasOwn(descriptor,'value') || !descriptor.enumerable || !descriptor.writable || !descriptor.configurable) return skipped;
+  }
+  if (!states.every(value=>Object.is(value,state))) return skipped;
   const keys=['type','kind','start','end','trivia'];
   for (let index=0;index<length;index++) {
-    const leaf=leaves[index],names=Reflect.ownKeys(leaf);
-    if (Object.getPrototypeOf(leaf)!==Object.prototype || names.length!==keys.length || names.some((name,index)=>name!==keys[index])
-      || leaf.type!=='token' || leaf.kind!==null || leaf.trivia!==true
-      || !Object.is(leaf.start,position+index) || leaf.end!==position+index+1) return skipped;
+    const leaf=leaves[index];
+    if (leaf===null || typeof leaf!=='object' || Object.getPrototypeOf(leaf)!==Object.prototype) return skipped;
+    const names=Reflect.ownKeys(leaf);
+    if (names.length!==keys.length || names.some((name,index)=>name!==keys[index])) return skipped;
     for (const key of keys) {
       const descriptor=Object.getOwnPropertyDescriptor(leaf,key);
       if (!Object.hasOwn(descriptor,'value') || !descriptor.enumerable || !descriptor.writable || !descriptor.configurable) return skipped;
     }
+    if (leaf.type!=='token' || leaf.kind!==null || leaf.trivia!==true
+      || !Object.is(leaf.start,position+index) || leaf.end!==position+index+1) return skipped;
   }
   for (const leaf of leaves) if (!pool.has(leaf.start)&&pool.size<limit) pool.set(leaf.start,leaf);
   const packed={end};
