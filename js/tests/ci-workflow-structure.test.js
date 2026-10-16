@@ -1043,6 +1043,12 @@ const BINARY_METADATA_PACKAGE_STEPS = [
     '504f362f65879d332962e1fcbc260e9dc583fc58464058d8bbaabcf67e49163f', 'binary-candidates'],
 ];
 
+const BINARY_RECORD_PACKAGE_STEPS = [
+  ["Check generated record-local binary link network rules",
+    "node scripts/generate-link-network-binary-record-rules.mjs --check",
+    "1d755a98d2dbcf4cc332cbe6dd8c3d0b40e715686f32c27cd48baf394f74bfef", 'binary-candidates'],
+];
+
 const RAW_SOURCE_PACKAGE_STEPS = [
   ['Check complete original link raw projection native generation',
     'node --max-old-space-size=1024 ../experiments/original-link-complete-table-projection/generate-raw.mjs --native --check',
@@ -1960,8 +1966,10 @@ test('new source-model cells append to the original seven cells without moving a
   const checks = parsed.get('package-checks').steps;
   for (const table of [COMPLETE_TABLE_PACKAGE_STEPS, BINARY_METADATA_PACKAGE_STEPS]) {
     const owner = table[0][3];
+    const expected = table === BINARY_METADATA_PACKAGE_STEPS
+      ? [...table.slice(0, 2), ...BINARY_RECORD_PACKAGE_STEPS, ...table.slice(2)] : table;
     assert.deepEqual(checks.filter(step => step.text.includes(`matrix.group == '${owner}'`)).map(step => step.name),
-      table.map(([name]) => name), 'new generators, injected contracts and formatting prerequisites retain their producer order');
+      expected.map(([name]) => name), 'new generators, injected contracts and formatting prerequisites retain their producer order');
   }
   assert.ok(checks.findIndex(step => step.name === BINARY_METADATA_PACKAGE_STEPS[0][0]) <
     checks.findIndex(step => step.name === BINARY_METADATA_PACKAGE_STEPS[1][0]));
@@ -2105,7 +2113,7 @@ function checkPackageStepConservation(parsed) {
     ...RUST_TEXT_CERTIFICATE_GENERATOR_STEPS, ...RUST_TEXT_CERTIFICATE_EXPERIMENT_STEPS,
     ...OWNED_SOURCE_ADAPTER_PACKAGE_STEPS, ...ORIGINAL_LINK_PROJECTION_PACKAGE_STEPS, ...ORIGINAL_LINK_SYMBOL_ORACLE_PACKAGE_STEPS,
     ...COMPLETE_TABLE_PACKAGE_STEPS, ...BINARY_METADATA_PACKAGE_STEPS, ...RAW_SOURCE_PACKAGE_STEPS,
-    ...NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS];
+    ...NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS, ...BINARY_RECORD_PACKAGE_STEPS];
   const expected = new Map([
     ...ORIGINAL_PACKAGE_STEPS.map(([name, hash, owner]) => [name, { hash, owner }]),
     ...additions.map(([name, command, hash, owner]) => [name, { hash, owner, command, addition: true }]),
@@ -2428,7 +2436,7 @@ test('every frozen generator addition rejects omission, duplication, condition, 
     ...OWNED_TUPLE_CALL_GENERATOR_PACKAGE_STEPS, ...RUST_LEXICAL_AND_OWNED_MODULE_GENERATOR_STEPS,
     ...RUST_RAW_STRING_AND_LITERAL_EDIT_GENERATOR_STEPS, ...RUST_TEXT_VALUE_PROJECTION_GENERATOR_STEPS,
     ...RUST_RAW_BINDING_IDENTIFIER_GENERATOR_STEPS, ...RUST_TEXT_CERTIFICATE_GENERATOR_STEPS,
-    ...NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS]) {
+    ...NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS, ...BINARY_RECORD_PACKAGE_STEPS]) {
     mutate(name, (steps, index) => steps.splice(index, 1));
     mutate(name, (steps, index) => steps.push({ ...steps[index] }));
     for (const [before, after] of [

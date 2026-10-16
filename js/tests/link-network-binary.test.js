@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { runInNewContext } from 'node:vm';
+import { DecoratorSet } from '../src/decorators.js';
 import { LinkNetwork } from '../src/network.js';
 import { ByteRange, LinkMetadata, LinkType } from '../src/primitives.js';
 import { encodeLinkNetworkBinary, decodeLinkNetworkBinary, BinaryLinksError } from '../src/link-network-binary.js';
@@ -137,4 +139,16 @@ test('record local metadata keeps byte limits and failure precedence identical',
   }
   for(let end=0;end<archive.length;end++){const input=archive.slice(0,end);assert.equal(transcodeLinkNetworkBinary(input,true,1000,65536),previous(input,true,1000,65536));}
  }
+});
+
+test('binary record generator paths relocate with the actual repository', () => {
+  const profile = DecoratorSet.fromLino(readFileSync(new URL('../../parity/self-translation/link-network-binary-record-generator-adapter.lino', import.meta.url), 'utf8'));
+  const action = profile.decorators.flatMap(row => row.actions).find(row => row.to?.startsWith('const styles = new URL('));
+  assert.ok(action);
+  assert.ok(action.to.includes('import.meta.url'));
+  assert.ok(!action.to.includes('file://'));
+  for (const base of ['file:///one/project/js/scripts/generate-link-network-binary-rules.mjs', 'file:///another%20checkout/%CE%B1/js/scripts/generate-link-network-binary-rules.mjs']) {
+    const actual = runInNewContext(action.to.replaceAll('import.meta.url', 'baseUrl') + '\nstyles.href;', { URL, baseUrl: base }, { timeout: 1000 });
+    assert.equal(actual, new URL('../../parity/self-translation/link-network-binary-record-rules-decorators.lino', base).href);
+  }
 });

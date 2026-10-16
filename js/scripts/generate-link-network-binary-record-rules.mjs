@@ -53,7 +53,7 @@ globalThis[Symbol.for('meta-language binary record generation')] = {
 
 const replacements=[
   ["const candidateMode = process.argv.includes('--metadata-buffer-candidate');",'const candidateMode = false;'],
-  ["const styles = candidateMode ? new URL('../../experiments/binary-metadata-buffer/native-styles.lino', import.meta.url) : originalStyles;",`const styles = new URL(${JSON.stringify(stylesFile.href)});`],
+  ["const styles = candidateMode ? new URL('../../experiments/binary-metadata-buffer/native-styles.lino', import.meta.url) : originalStyles;","const styles = new URL('../../parity/self-translation/link-network-binary-record-rules-decorators.lino', import.meta.url);"],
   ["const destination = new URL(candidateMode ? '../../experiments/binary-metadata-buffer/native/' : '../../rust/src/link_network_binary_rules/', import.meta.url);",`const destination = new URL('../../rust/src/link_network_binary_record_rules/', import.meta.url);`],
   ["parseJavaScript(readFileSync(source, 'utf8'), candidatePolicy?.parser ?? { referenceSemantics: false })",`parseJavaScript(${JSON.stringify(completeSource)}, candidatePolicy?.parser ?? { referenceSemantics: false })`],
   ["const decorators = DecoratorSet.fromLino(readFileSync(styles, 'utf8'));\nconst styled = styleBinaryItems(items, decorators);",deriveStyles],
