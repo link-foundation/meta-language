@@ -18,7 +18,7 @@ impl Checker {
                 let object = self.expr(object, env, path, None, false)?;
                 let object = Self::reference_value(object);
                 if self.language != Language::JavaScript
-                    || !rules::accept_java_script_array_rest_receiver(Text::from_text(
+                    || !rules::accept_java_script_array_rest_receiver(&Text::from_text(
                         object.ty.kind(),
                     ))
                 {
@@ -47,10 +47,10 @@ impl Checker {
                     _ => ("", None),
                 };
                 let operation = rules::read_java_script_array_default_operation(
-                    Text::from_text(self.language.as_str()),
-                    Text::from_text(left.ty.kind()),
-                    Text::from_text(absence),
-                    Text::from_text(element.map_or("", Type::kind)),
+                    &Text::from_text(self.language.as_str()),
+                    &Text::from_text(left.ty.kind()),
+                    &Text::from_text(absence),
+                    &Text::from_text(element.map_or("", Type::kind)),
                     true,
                 );
                 if operation.to_string() != "coalesce" {
@@ -65,10 +65,10 @@ impl Checker {
                     .clone();
                 let right = self.expr(fallback, env, path, Some(&element), false)?;
                 if rules::read_java_script_array_default_operation(
-                    Text::from_text(self.language.as_str()),
-                    Text::from_text(left.ty.kind()),
-                    Text::from_text(absence),
-                    Text::from_text(element.kind()),
+                    &Text::from_text(self.language.as_str()),
+                    &Text::from_text(left.ty.kind()),
+                    &Text::from_text(absence),
+                    &Text::from_text(element.kind()),
                     element.same(&right.ty),
                 )
                 .to_string()

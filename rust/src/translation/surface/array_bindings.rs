@@ -75,8 +75,8 @@ pub fn validate(node: &SExpr) -> TranslationResult<()> {
     };
     for field in extra.keys() {
         if !rules::accept_java_script_array_binding_field(
-            Text::from_text(node.node.kind()),
-            Text::from_text(field),
+            &Text::from_text(node.node.kind()),
+            &Text::from_text(field),
         ) {
             return Err(type_error(
                 "array binding contains an unrepresented field",
@@ -133,7 +133,7 @@ pub fn offset(start: &serde_json::Value, span: Option<Span>) -> TranslationResul
     let record = start.as_object().ok_or_else(failure)?;
     if record
         .keys()
-        .any(|field| !rules::accept_java_script_array_binding_offset_field(Text::from_text(field)))
+        .any(|field| !rules::accept_java_script_array_binding_offset_field(&Text::from_text(field)))
     {
         return Err(type_error(
             "array rest start contains an unrepresented field",

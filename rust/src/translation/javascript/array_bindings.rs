@@ -76,8 +76,8 @@ impl JavaScriptParser {
         let mut names = HashSet::new();
         for token in self.array_binding_names(self.cursor.index) {
             if !rules::accept_java_script_array_binding_name(
-                Text::from_text(kind(&token)),
-                Text::from_text(&token.value),
+                &Text::from_text(kind(&token)),
+                &Text::from_text(&token.value),
                 names.contains(&token.value),
                 reserved_names(),
             ) {
@@ -131,8 +131,8 @@ impl JavaScriptParser {
             } else {
                 let token = self.cursor.identifier(Some("array binding"))?;
                 if !rules::accept_java_script_array_binding_name(
-                    Text::from_text(kind(&token)),
-                    Text::from_text(&token.value),
+                    &Text::from_text(kind(&token)),
+                    &Text::from_text(&token.value),
                     seen.contains(&token.value),
                     reserved_names(),
                 ) {
@@ -144,9 +144,9 @@ impl JavaScriptParser {
                 }
                 seen.insert(token.value.clone());
                 let default_value = if rest {
-                    let reason = rules::read_java_script_array_rest_binding_error(Text::from_text(
-                        &self.peek().value,
-                    ))
+                    let reason = rules::read_java_script_array_rest_binding_error(
+                        &Text::from_text(&self.peek().value),
+                    )
                     .to_string();
                     if !reason.is_empty() {
                         return Err(unsupported(
