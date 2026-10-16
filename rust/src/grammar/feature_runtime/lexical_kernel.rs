@@ -24,11 +24,11 @@ pub fn position(value: f64) -> usize {
 }
 
 pub fn entry_form(kind: &str) -> usize {
-    position(rules::read_grammar_lexer_entry_form(text(kind)))
+    position(rules::read_grammar_lexer_entry_form(&text(kind)))
 }
 
 pub fn command_plan(command: &str, name: &str) -> Vec<String> {
-    rules::read_grammar_lexer_command_plan(text(command), text(name))
+    rules::read_grammar_lexer_command_plan(&text(command), &text(name))
         .iter()
         .map(ToString::to_string)
         .collect()
@@ -60,8 +60,8 @@ pub fn literal_rule(
     literals: &[bool],
 ) -> f64 {
     rules::read_grammar_lexer_literal_rule_position(
-        text(value),
-        text(section_kind),
+        &text(value),
+        &text(section_kind),
         &texts(kinds),
         &texts(values),
         literals,
@@ -75,8 +75,8 @@ pub fn literal_extension(
     parser_literals: &[String],
 ) -> Vec<f64> {
     rules::read_grammar_lexer_literal_extension(
-        text(owner),
-        text(value),
+        &text(owner),
+        &text(value),
         &texts(&columns[0]),
         &texts(&columns[1]),
         &texts(&columns[2]),
@@ -169,20 +169,20 @@ pub(super) fn obligations(
 }
 
 pub(super) fn active_mode(candidate: &str, active: &str) -> bool {
-    rules::accept_grammar_lexer_mode(text(candidate), text(active))
+    rules::accept_grammar_lexer_mode(&text(candidate), &text(active))
 }
 
 pub(super) fn trivia(channel: &str, disposition: &str) -> bool {
-    rules::accept_grammar_lexer_trivia(text(channel), text(disposition))
+    rules::accept_grammar_lexer_trivia(&text(channel), &text(disposition))
 }
 
 pub(super) fn trivia_identity(source: &str, emitted: &str, disposition: &str) -> String {
-    rules::read_grammar_lexer_trivia_identity(text(source), text(emitted), text(disposition))
+    rules::read_grammar_lexer_trivia_identity(&text(source), &text(emitted), &text(disposition))
         .to_string()
 }
 
 pub(super) fn expected_token(expected: &str, actual: &str, wildcard: bool) -> bool {
-    rules::accept_grammar_lexer_expected_token(text(expected), text(actual), wildcard)
+    rules::accept_grammar_lexer_expected_token(&text(expected), &text(actual), wildcard)
 }
 
 pub(super) fn winner(ends: &[f64], eligible: &[bool]) -> f64 {
