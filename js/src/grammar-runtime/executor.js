@@ -3735,7 +3735,7 @@ export class Executor {
     // made in the open. Extra parser contexts have different trivia behavior
     // and must not reuse the results of an ordinary syntactic context.
     const quiet = !this.repairPoints ? '' : this.suppressed > 0 ? '|quiet' : this.chained.has(position) ? '|chained' : '';
-    const keyParts = [`${rule.index}`, `${position}`, `${state.key}`, `${inToken ? 1 : 0}`, `${this.inExtra}`, `${this.extraStart}${quiet}|lexer:${this.lexerFamily}`];
+    const keyParts = [`${rule.index}`, `${position}`, `${state.key}`, `${inToken ? 1 : 0}`, `${this.inExtra}`, `${this.extraStart}${quiet}${this.lexerFamily ? `|lexer:${this.lexerFamily}` : ''}`];
     const key = keyParts[2].length <= 64 ? keyParts.join('|')
       : `${keyParts[0]}|${keyParts[1]}|${keyParts[2]}|${keyParts[3]}|${keyParts[4]}|${keyParts[5]}`;
     const known = this.memo.get(key);

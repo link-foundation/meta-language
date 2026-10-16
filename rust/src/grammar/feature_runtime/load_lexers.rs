@@ -6,7 +6,7 @@ use super::super::compile::Compiler;
 use super::super::lexical_plan::{self, LexicalRule, LexicalSource};
 use super::super::program::Name;
 use super::{Context, LoadResult, Resolved, load_in_context, refuse};
-use crate::grammar::{Grammar, GrammarFormat};
+use crate::grammar::Grammar;
 
 pub(super) fn configure_compiler(compiler: &mut Compiler<'_>, sources: &[LexicalSource]) {
     compiler.lexer_owners = sources
@@ -35,8 +35,8 @@ pub(super) fn is_elected(sources: &[LexicalSource], name: &str) -> bool {
     })
 }
 
-pub(super) fn default_lexer(grammar: &Grammar, sources: &[LexicalSource]) -> Name {
-    if grammar.source_format() == Some(GrammarFormat::Antlr) && sources.len() == 1 {
+pub(super) fn default_lexer(_grammar: &Grammar, sources: &[LexicalSource]) -> Name {
+    if sources.len() == 1 {
         sources[0].plan.name.clone()
     } else {
         Name::from("")

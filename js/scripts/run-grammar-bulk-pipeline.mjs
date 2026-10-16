@@ -584,17 +584,6 @@ export async function runBulkPipeline({ outDir, only = null, jobs = 2, timeout =
   const decisionChanges = compareMergeDecisionReports(previousMatrix, matrix);
   writeGrammarReport(join(outDir, 'grammar-merge-decision-changes.lino'), decisionChanges);
   const importedSources = rows.flatMap((row) => [...(row.conceptSources ?? []), ...(row.componentConceptSources ?? [])]);
-  const conceptSpace = createPipelineGlobalConceptSpace(importedSources, { formalDefinitions });
-  writeGrammarReport(join(outDir, 'global-concept-space-data.lino'), conceptSpace);
-  writeFileSync(join(outDir, 'global-concept-space.lino'), globalConceptSpaceToLinks(conceptSpace));
-  matrix.globalConceptSpace = {
-    copiedOrigins: Object.keys(conceptSpace.mappings).length,
-    concepts: conceptSpace.concepts.length,
-    proofs: conceptSpace.proofs.length,
-    formalOrigins: Object.keys(conceptSpace.formalDefinitions).length,
-    failures: conceptSpace.failures,
-    ambiguities: conceptSpace.ambiguities,
-  };
   mkdirSync(join(outDir, 'native-grammars'), { recursive: true });
   mkdirSync(join(outDir, 'native-grammar-components'), { recursive: true });
   for (const row of rows) {
@@ -610,6 +599,21 @@ export async function runBulkPipeline({ outDir, only = null, jobs = 2, timeout =
   }
   writeGrammarReport(join(outDir, 'grammar-bulk-matrix.lino'), matrix);
   writeFileSync(join(outDir, 'grammar-bulk-matrix.md'), renderMatrix(matrix));
+  // Retain every completed language and its diagnostics before the aggregate
+  // proof construction. A failed aggregate must not erase the original work.
+  process.stderr.write(`Building the global concept space from ${importedSources.length} imported sources\n`);
+  const conceptSpace = createPipelineGlobalConceptSpace(importedSources, { formalDefinitions });
+  writeGrammarReport(join(outDir, 'global-concept-space-data.lino'), conceptSpace);
+  writeFileSync(join(outDir, 'global-concept-space.lino'), globalConceptSpaceToLinks(conceptSpace));
+  matrix.globalConceptSpace = {
+    copiedOrigins: Object.keys(conceptSpace.mappings).length,
+    concepts: conceptSpace.concepts.length,
+    proofs: conceptSpace.proofs.length,
+    formalOrigins: Object.keys(conceptSpace.formalDefinitions).length,
+    failures: conceptSpace.failures,
+    ambiguities: conceptSpace.ambiguities,
+  };
+  writeGrammarReport(join(outDir, 'grammar-bulk-matrix.lino'), matrix);
   return matrix;
 }
 

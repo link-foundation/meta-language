@@ -582,13 +582,20 @@ impl JavaScriptParser {
         self.top_level = outer_top_level;
         let mut statements = statements?;
         super::callables::validate_closure_captures(&statements, self.reference_semantics)?;
-        self.eliminated_owned_array_append_operations.extend(
-            super::owned_array_append::lower_owned_array_appends(
-                &mut statements,
-                &params,
-                &self.owned_array_readers,
-            ),
-        );
+        // A forced reference context keeps the actual heap operations.
+        if !crate::translation::surface_raw_metadata_rules::select_surface_reference_semantics(
+            false,
+            self.reference_semantics_forced,
+            true,
+        ) {
+            self.eliminated_owned_array_append_operations.extend(
+                super::owned_array_append::lower_owned_array_appends(
+                    &mut statements,
+                    &params,
+                    &self.owned_array_readers,
+                ),
+            );
+        }
         // `if (n < 0n) throw …` as a leading statement makes `n` a natural number,
         // unless the body assigns it another value.
         let assigned = statement_uses(&statements).assigned;

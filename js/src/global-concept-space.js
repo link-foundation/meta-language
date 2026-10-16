@@ -109,16 +109,30 @@ function graphOf(nodes, aliases) {
   const meanings = [];
   const offsets = [0];
   const edges = [];
+  const sourceContexts = new Map();
+  const contextIdentities = new Map();
   for (const node of nodes) {
     const targets = [];
-    const declarations = grammarDeclarations(node.source.grammar);
-    declarations.matching ??= 'generalized';
-    declarations.settling ??= [...DEFAULT_SETTLING[declarations.matching]];
     const definition = shapeValue(production(node.rule), node.source, aliases, targets);
-    const context = shapeValue(declarations, node.source, aliases, targets);
-    shapes.push(canonical({ definition, context }));
+    let context = sourceContexts.get(node.source);
+    if (!context) {
+      const declarations = grammarDeclarations(node.source.grammar);
+      declarations.matching ??= 'generalized';
+      declarations.settling ??= [...DEFAULT_SETTLING[declarations.matching]];
+      const references = [];
+      const shape = canonical(shapeValue(declarations, node.source, aliases, references));
+      if (!contextIdentities.has(shape)) contextIdentities.set(shape, contextIdentities.size);
+      context = { identity: contextIdentities.get(shape), references };
+      sourceContexts.set(node.source, context);
+    }
+    // An identity is local to this graph and allocated by exact complete
+    // context-string equality, never a digest or a semantic premise. Separating
+    // the reference slots preserves shape equality: equal productions already
+    // have the same number of references before the shared context begins.
+    shapes.push(canonical({ definition, context: context.identity }));
     meanings.push(node.meaning);
     edges.push(...targets);
+    for (const reference of context.references) edges.push(reference);
     offsets.push(edges.length);
   }
   return { shapes, meanings, offsets, edges };

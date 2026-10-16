@@ -250,12 +250,10 @@ function loadInContext(grammar, context) {
   for (const [name, rule] of ruleSources) {
     if (rule.parameters?.length > 0) continue;
     let expression = instantiate(rule.expression, null, `rule ${name}`);
-    if (parts.sourceFormat === 'antlr') {
-      const owner = [...lexers.values()].find((lexer) => lexer.owners.has(name));
-      let scoped = false;
-      visitExpression(expression, (item) => { if (item.kind === 'lexicalScope') scoped = true; });
-      if (owner && !scoped) expression = { kind: 'lexicalScope', name: owner.name, owner: owner.owners.get(name), item: expression };
-    }
+    const owner = [...lexers.values()].find((lexer) => lexer.owners.has(name));
+    let scoped = false;
+    visitExpression(expression, (item) => { if (item.kind === 'lexicalScope') scoped = true; });
+    if (owner && !scoped) expression = { kind: 'lexicalScope', name: owner.name, owner: owner.owners.get(name), item: expression };
     rules.set(name, {
       ...rule,
       nodeKind: name,
@@ -307,7 +305,7 @@ function loadInContext(grammar, context) {
   if (problem) loadError('declaration', problem);
   const program = {
     lexers,
-    defaultLexer: parts.sourceFormat === 'antlr' && lexers.size === 1 ? lexers.keys().next().value : '',
+    defaultLexer: lexers.size === 1 ? lexers.keys().next().value : '',
     matching,
     settling: Object.freeze({
       steps: Object.freeze([...steps]),

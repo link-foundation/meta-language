@@ -606,8 +606,12 @@ class JavaScriptParser {
     }
     const statements = statementsOf();
     validateClosureCaptures(statements, this.referenceSemantics);
-    for (const proof of lowerOwnedArrayAppends(statements, params, this.ownedArrayReaders)) {
-      if (proof.operationSpan) this.eliminatedOwnedArrayAppendOperations.push(proof.operationSpan);
+    // An explicit or forced reference context keeps actual heap operations.
+    // Only the inferred construction context may become immutable rebinding.
+    if (!selectSurfaceReferenceSemantics(this.referenceSemanticsOverride === true, this.referenceSemanticsForced, true)) {
+      for (const proof of lowerOwnedArrayAppends(statements, params, this.ownedArrayReaders)) {
+        if (proof.operationSpan) this.eliminatedOwnedArrayAppendOperations.push(proof.operationSpan);
+      }
     }
     this.scope = outer;
     this.inAsync = outerAsync;

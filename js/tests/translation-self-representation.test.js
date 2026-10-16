@@ -37,7 +37,11 @@ test('complete actual numeric slice sibling fixture retains the selected full pr
   assert.ok(row);
   assert.equal(digest(row.source), '2516e06000b6eb83f19b43266fcbda6f97a21e1b9d422ddbc560fbb5af6d814f');
   const emitted = selfTranslate(row.source, 'JavaScript', 'Rust');
-  assert.equal(digest(emitted.code), '243076e865f01be5acdeb53604ad4ab2dc91baa4defac337a3138125a2058310');
+  // Public self-translation now selects proved final-use consumption. The old
+  // copy profile hash was 243076e865f01be5acdeb53604ad4ab2dc91baa4defac337a3138125a2058310.
+  // The full byte comparison changes only the two final Vec clones and their
+  // provenance hash; the source, complete prelude and roundtrip stay exact.
+  assert.equal(digest(emitted.code), 'a74925b5dc1d128d5bb6e72f5621a62ab88d2d239918cefe1f2319fa0d625d34');
   assert.ok(emitted.code.includes(STRING_PRELUDE));
   assert.equal(selfTranslate(emitted.code, 'Rust', 'JavaScript').code, row.source);
 });

@@ -48,10 +48,16 @@ test('the original array membership input has array semantics', () => {
   assert.equal(translated.diagnostic, null);
   assert.equal(translated.contract.support, 'semantic-translation');
   assert.ok(translated.code.includes('crate::ml_array::includes('));
-  for (const candidate of [source, emitJavaScript(checkProgram(parseJavaScript(source))).text]) {
+  // The original console receives a Boolean; the portable emitter preserves
+  // its printed line through its documented textual output boundary.
+  for (const [candidate, expected] of [
+    [source, [true]],
+    [emitJavaScript(checkProgram(parseJavaScript(source))).text, ['true']],
+  ]) {
     const observations = [];
     runInNewContext(candidate, { console: { log: value => observations.push(value) } });
-    assert.deepEqual(observations, [true]);
+    assert.deepEqual(observations, expected);
+    assert.deepEqual(observations.map(String), ['true']);
   }
 });
 

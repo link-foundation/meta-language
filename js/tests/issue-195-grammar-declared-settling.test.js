@@ -98,9 +98,14 @@ test('every importer settles through the same declared steps', (context) => {
   // the PEG one, and either follows a settling declared on it.
   const antlr = importAntlr("grammar g;\ns : a | b ;\na : 'x' ;\nb : 'x' ;\n");
   assert.equal(antlr.declarations.settling, undefined);
-  assert.deepEqual(settle(antlr, 'x'), ['(s (a "x"))', 1]);
-  assert.deepEqual(settle(withSettling(antlr, [...DEFAULT_SETTLING.generalized]), 'x'), ['(s (a "x"))', 1]);
-  assert.deepEqual(settle(withSettling(antlr, ['first']), 'x'), ['(s (a "x"))', 0]);
+  // Elected lexical leaves retain their concrete token kind and source
+  // provenance; settling still selects the same parser rule and ambiguity.
+  assert.deepEqual(settle(antlr, 'x'), ['(s (a (x "x")))', 1]);
+  assert.deepEqual(settle(withSettling(antlr, [...DEFAULT_SETTLING.generalized]), 'x'), ['(s (a (x "x")))', 1]);
+  assert.deepEqual(settle(withSettling(antlr, ['first']), 'x'), ['(s (a (x "x")))', 0]);
+  const unmarked = new Grammar(antlr.start, antlr.rules, undefined, antlr.declarations);
+  assert.deepEqual(settle(unmarked, 'x'), settle(antlr, 'x'));
+  assert.deepEqual(settle(parseGrammarLinks(renderGrammarLinks(unmarked)), 'x'), settle(antlr, 'x'));
   const pest = importPest('s = { a | b }\na = { "x" }\nb = { "x" }\n');
   assert.deepEqual(settle(pest, 'x'), settle(withSettling(pest, [...DEFAULT_SETTLING.peg]), 'x'));
   observe(['sharedByEveryImporter'], context.name);

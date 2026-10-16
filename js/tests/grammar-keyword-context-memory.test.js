@@ -181,6 +181,10 @@ test('rule call key construction preserves every frozen key byte',async()=>{
     return {key,events};
   };
   assert.deepEqual(trace(current),trace(previous),'field reads and string coercions retain their original order');
+  const args=[{index:0},0,{key:''},false,''];
+  const plain={inExtra:false,extraStart:-1};
+  assert.equal(current.call({...plain,lexerFamily:''},...args),previous.call(plain,...args));
+  assert.notEqual(current.call({...plain,lexerFamily:'source-a'},...args),current.call({...plain,lexerFamily:'source-b'},...args));
 });
 
 test('lazy child owners share one accessor while chains and frozen output identities remain exact',async()=>{

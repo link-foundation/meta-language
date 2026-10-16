@@ -90,7 +90,9 @@ export function verifyOriginalLinkCompleteTableNativeModel(read=readFileSync){re
   assert.equal(sha256(receiptBytes),runnerClosureReceiptSha256,'the frozen complete-table runner source-closure receipt changed');
   const additionalSources=Object.fromEntries(SOURCE_NATIVE_RUNNER_ADDITIONS.map(row=>[row.file,read(new URL('../../'+row.file,import.meta.url))]));
   const verifierSources=Object.fromEntries(SOURCE_NATIVE_RUNNER_VERIFIER_FILES.map(file=>[file,read(new URL('../../'+file,import.meta.url))]));
-  const closure=verifySourceNativeRunnerSourceClosure(readStructuredDataLino(receiptBytes.toString('utf8')),bytes,digests,{producerCommit:ORIGINAL_LINK_COMPLETE_TABLE_MODEL_COMMIT,additionalSources,verifierSources});
+  let closure;
+ try{closure=verifySourceNativeRunnerSourceClosure(readStructuredDataLino(receiptBytes.toString('utf8')),bytes,digests,{producerCommit:ORIGINAL_LINK_COMPLETE_TABLE_MODEL_COMMIT,additionalSources,verifierSources});}
+ catch(error){throw new Error('the frozen complete-table source changed: '+file,{cause:error});}
   assert.equal(closure.baselineSha256,expected);
   return{file,sha256:actual,producerSha256:expected,runnerSourceClosure:closure,sourceClosureReceiptSha256:runnerClosureReceiptSha256};
  }
