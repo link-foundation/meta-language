@@ -443,12 +443,15 @@ fn retained_legacy_and_current_discovery_archives_revalidate_the_same_meaning_an
     let current = fixture();
     let legacy = legacy_fixture();
     assert_eq!(
-        format!(
-            "{:x}",
-            Sha256::digest(include_bytes!(
-                "../../../parity/fixtures/discovered-concept-links-legacy.lino"
-            ))
-        ),
+        Sha256::digest(include_bytes!(
+            "../../../parity/fixtures/discovered-concept-links-legacy.lino"
+        ))
+        .iter()
+        .fold(String::with_capacity(64), |mut hexadecimal, byte| {
+            use std::fmt::Write as _;
+            write!(hexadecimal, "{byte:02x}").expect("writing into a String succeeds");
+            hexadecimal
+        },),
         "69daf66d8a97bedf33b84dcfe1dc5ca40718e86ba8c71034f7f3a1596b78e84e"
     );
     for field in [
