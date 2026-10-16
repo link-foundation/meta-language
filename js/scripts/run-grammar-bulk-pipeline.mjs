@@ -201,38 +201,64 @@ export async function bulkLanguageRow(entry, report = () => {}, options = {}) {
   const oracle = readJson('parity/fixtures/default-cst-expected.json').languages[entry.name]?.positive ?? null;
   const row = { language: entry.name, grammars: entry.grammars, treeSitter: { stage: 'source' }, grammarsV4: null, additionalSources: [], merge: null };
   const grammars = [];
-
-  const tree = row.treeSitter;
-  try {
-    const { origin, text, pinned } = await treeSitterGrammarJson(entry.grammars[0]);
-    tree.origin = origin;
-    tree.sha256 = sha256(text);
-    tree.stage = 'import';
-    const json = JSON.parse(text);
-    // A pinned source is imported as the shipped native grammar is, with its
-    // reviewed names and native scanner, and projected as its fixture is.
-    const { imported, listing, projection } = pinned ? await importPinned(pinned) : (() => {
-      const result = importTreeSitterNative(json, { wordRule: 'word_characters' });
-      const extras = (json.extras ?? []).filter(({ type }) => type === 'SYMBOL').map(({ name }) => name);
-      return { imported: result, listing: renderTreeSitterNative(result), projection: { extras, anonymous: ['unnamed_token'] } };
-    })();
-    tree.rules = imported.rules.length;
-    tree.approximations = imported.report.approximations.length;
-    tree.unsupported = imported.report.unsupported.map((item) => (typeof item === 'string' ? item : JSON.stringify(item)));
-    tree.stage = 'compile';
+  // Preserve the original first-source row and merge identity. Other catalog
+  // occurrences are audited independently; block/inline or dialect components
+  // are not interchangeable grammar roots to merge blindly.
+  row.treeSitterComponents = entry.grammars.map((id, position) => ({
+    id, position, includedInPrimaryMerge: position === 0,
+    sampleSha256: sha256(entry.source), sampleBytes: Buffer.byteLength(entry.source),
+    sampleRole: position === 0 ? 'catalog-language-sample' : 'catalog-document-probe-without-composition',
+    outcome: position === 0 ? row.treeSitter : { stage: 'pending' },
+  }));
+  row.componentConceptSources = [];
+  const componentDefinitions = new Map();
+  const sourceOf = options.loadTreeSitterSource ?? treeSitterGrammarJson;
+  for (const component of row.treeSitterComponents) {
+    const tree = component.outcome;
+    tree.stage = 'source';
     report(row);
-    const grammar = parseGrammarLinks(listing);
-    grammars.push({ id: 'tree-sitter', grammar });
-    const result = compileAndParse(tree, grammar, entry.source, compileGrammar);
-    tree.stage = 'done';
-    if (result.tree && oracle) tree.rowsMatch = JSON.stringify(nativeRows(result.tree, entry.source, projection)) === JSON.stringify(oracle);
-  } catch (error) {
-    tree.error = message(error);
+    try {
+      const { origin, text, pinned } = await sourceOf(component.id, component.position, entry);
+      tree.origin = origin;
+      tree.sha256 = sha256(text);
+      const definitionKey = JSON.stringify([component.id, tree.origin, tree.sha256]);
+      component.sourceOrigin = componentDefinitions.get(definitionKey)
+        ?? bulkSourceId(entry.name, component.position === 0 ? 'tree-sitter' : `tree-sitter-component-${component.position}-${component.id}`);
+      tree.stage = 'import';
+      const json = JSON.parse(text);
+      // A pinned source is imported as the shipped native grammar is, with its
+      // reviewed names and native scanner, and projected as its fixture is.
+      const { imported, listing, projection } = pinned ? await importPinned(pinned) : (() => {
+        const result = importTreeSitterNative(json, { wordRule: 'word_characters' });
+        const extras = (json.extras ?? []).filter(({ type }) => type === 'SYMBOL').map(({ name }) => name);
+        return { imported: result, listing: renderTreeSitterNative(result), projection: { extras, anonymous: ['unnamed_token'] } };
+      })();
+      tree.rules = imported.rules.length;
+      tree.approximations = imported.report.approximations.length;
+      tree.unsupported = imported.report.unsupported.map((item) => (typeof item === 'string' ? item : JSON.stringify(item)));
+      tree.stage = 'compile';
+      report(row);
+      const grammar = parseGrammarLinks(listing);
+      if (component.position === 0) grammars.push({ id: 'tree-sitter', grammar });
+      else {
+        component.grammarLinks = renderGrammarLinks(grammar);
+        if (!componentDefinitions.has(definitionKey)) row.componentConceptSources.push({
+          id: component.sourceOrigin,
+          language: entry.name, grammarLinks: component.grammarLinks,
+        });
+      }
+      componentDefinitions.set(definitionKey, component.sourceOrigin);
+      const result = compileAndParse(tree, grammar, entry.source, compileGrammar);
+      tree.stage = 'done';
+      if (component.position === 0 && result.tree && oracle) tree.rowsMatch = JSON.stringify(nativeRows(result.tree, entry.source, projection)) === JSON.stringify(oracle);
+    } catch (error) {
+      tree.error = message(error);
+    }
+    report(row);
   }
-  report(row);
 
   try {
-    const v4 = await grammarsV4Text(entry.name);
+    const v4 = await (options.loadGrammarsV4 ?? grammarsV4Text)(entry.name);
     if (v4) {
       row.grammarsV4 = { files: v4.files, stage: 'import' };
       row.grammarsV4.sha256 = sha256(v4.text);
@@ -254,7 +280,7 @@ export async function bulkLanguageRow(entry, report = () => {}, options = {}) {
   report(row);
 
   try {
-    for (const source of additionalGrammarTexts(entry.name)) {
+    for (const source of (options.loadAdditionalSources ?? additionalGrammarTexts)(entry.name)) {
       const stage = { id: source.id, format: source.format, origin: `${source.repository}@${source.revision}`, sha256: sha256(source.text), files: source.files, stage: 'import' };
       row.additionalSources.push(stage);
       report(row);
@@ -384,6 +410,16 @@ export function missingFeatures(row) {
   if (tree.timedOut) add(`tree-sitter ${tree.stage}`, 'timed out');
   if (tree.sample === 'rejected') add('tree-sitter sample', tree.rejection);
   if (tree.sample === 'accepted' && tree.rowsMatch === false) add('tree-sitter rows', 'the native rows differ from the oracle rows');
+  for (const component of row.treeSitterComponents ?? []) {
+    if (component.position === 0) continue;
+    const outcome = component.outcome;
+    const stage = `tree-sitter component ${component.position}:${component.id}`;
+    for (const item of outcome.unsupported ?? []) add(`${stage} import`, item);
+    if (outcome.error) add(`${stage} ${outcome.stage}`, outcome.error);
+    if (outcome.timedOut) add(`${stage} ${outcome.stage}`, 'timed out');
+    if (outcome.stage === 'pending') add(`${stage} source`, 'component audit did not start');
+    if (outcome.sample === 'rejected') add(`${stage} sample`, outcome.rejection);
+  }
   if (v4) {
     if (v4.undefinedRules?.length) add('grammars-v4 import', `undefined rules: ${v4.undefinedRules.join(' ')}`);
     if (v4.error) add(`grammars-v4 ${v4.stage}`, v4.error);
@@ -430,7 +466,9 @@ function runWorker(entry, { timeout, memory, formalDefinitionsFile }) {
     child.on('close', (code) => {
       clearTimeout(timer);
       // The stage still running when the process ended is the one that failed.
-      const running = [last.merge, ...(last.additionalSources ?? []).slice().reverse(), last.grammarsV4, last.treeSitter].find((stage) => stage && stage.stage !== 'done' && !stage.error);
+      const running = [last.merge, ...(last.additionalSources ?? []).slice().reverse(), last.grammarsV4,
+        ...(last.treeSitterComponents ?? []).slice(1).reverse().map(({ outcome }) => outcome), last.treeSitter]
+        .find((stage) => stage && stage.stage !== 'done' && stage.stage !== 'pending' && !stage.error);
       if (running && (timedOut || code !== 0)) {
         if (timedOut) running.timedOut = true;
         else running.error = message(stderr.trim().split('\n').filter(Boolean).pop() ?? `exit ${code}`);
@@ -465,6 +503,17 @@ export function renderMatrix(matrix) {
     const v4 = stageCells(row.grammarsV4);
     const merge = row.merge?.stage === 'done' ? [String(row.merge.rules), String(row.merge.sharedRules)] : [row.merge ? `fails in ${row.merge.stage}` : '', ''];
     lines.push(`| ${row.language} | ${tree[0]} | ${row.treeSitter.unsupported?.length ?? ''} | ${tree[1]} | ${tree[2]} | ${tree[3]} | ${yes(row.treeSitter.rowsMatch)} | ${v4.join(' | ')} | ${merge.join(' | ')} | ${row.missing.length} |`);
+  }
+  const components = matrix.languages.flatMap(row => (row.treeSitterComponents ?? []).map(component => ({ language: row.language, ...component })));
+  if (components.length > 0) {
+    lines.push('', '## Catalog grammar component audits', '',
+      'Each catalog occurrence is audited separately. Additional component probes do not establish composed-language support.', '',
+      '| Language | Position | Grammar | Source SHA-256 | Rules | Unsupported | Compiles | Sample |',
+      '| --- | ---: | --- | --- | ---: | ---: | --- | --- |');
+    for (const component of components) {
+      const cells = stageCells(component.outcome);
+      lines.push(`| ${component.language} | ${component.position} | ${component.id} | ${component.outcome.sha256 ?? ''} | ${cells[0]} | ${component.outcome.unsupported?.length ?? ''} | ${cells[1]} | ${cells[2]} |`);
+    }
   }
   lines.push('', '## Missing features', '');
   for (const row of matrix.languages) {
@@ -534,7 +583,7 @@ export async function runBulkPipeline({ outDir, only = null, jobs = 2, timeout =
   mkdirSync(outDir, { recursive: true });
   const decisionChanges = compareMergeDecisionReports(previousMatrix, matrix);
   writeGrammarReport(join(outDir, 'grammar-merge-decision-changes.lino'), decisionChanges);
-  const importedSources = rows.flatMap((row) => row.conceptSources ?? []);
+  const importedSources = rows.flatMap((row) => [...(row.conceptSources ?? []), ...(row.componentConceptSources ?? [])]);
   const conceptSpace = createPipelineGlobalConceptSpace(importedSources, { formalDefinitions });
   writeGrammarReport(join(outDir, 'global-concept-space-data.lino'), conceptSpace);
   writeFileSync(join(outDir, 'global-concept-space.lino'), globalConceptSpaceToLinks(conceptSpace));
@@ -547,10 +596,17 @@ export async function runBulkPipeline({ outDir, only = null, jobs = 2, timeout =
     ambiguities: conceptSpace.ambiguities,
   };
   mkdirSync(join(outDir, 'native-grammars'), { recursive: true });
+  mkdirSync(join(outDir, 'native-grammar-components'), { recursive: true });
   for (const row of rows) {
     if (row.nativeGrammar) writeFileSync(join(outDir, 'native-grammars', `${row.language.replace(/[^A-Za-z0-9_-]/gu, '_')}.lino`), row.nativeGrammar);
     delete row.nativeGrammar;
     delete row.conceptSources;
+    delete row.componentConceptSources;
+    for (const component of row.treeSitterComponents ?? []) if (component.grammarLinks) {
+      const file = `${row.language}-${component.position}-${component.id}`.replace(/[^A-Za-z0-9_-]/gu, '_');
+      writeFileSync(join(outDir, 'native-grammar-components', `${file}.lino`), component.grammarLinks);
+      delete component.grammarLinks;
+    }
   }
   writeGrammarReport(join(outDir, 'grammar-bulk-matrix.lino'), matrix);
   writeFileSync(join(outDir, 'grammar-bulk-matrix.md'), renderMatrix(matrix));

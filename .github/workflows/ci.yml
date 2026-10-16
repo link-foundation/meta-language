@@ -224,7 +224,24 @@ jobs:
       - name: Provision the pinned external grammar inputs
         run: node js/scripts/external-grammar-cache.mjs --all --materialize
 
+      # Source provenance only: reuse the immutable .crate Cargo already fetched.
+      # The receipt does not establish native Markdown scanner or CST support.
+      - name: Capture the pinned Markdown block and inline source closure
+        if: ${{ !cancelled() }}
+        run: >-
+          node js/scripts/capture-markdown-native-sources.mjs
+          --cargo-cache --out grammar-bulk/markdown-native-source-capture.lino
+
+      - name: Upload the authenticated Markdown source receipt
+        if: ${{ !cancelled() && hashFiles('grammar-bulk/markdown-native-source-capture.lino') != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: markdown-native-source-capture-${{ github.sha }}
+          path: grammar-bulk/markdown-native-source-capture.lino
+          if-no-files-found: error
+
       - name: Run the bulk grammar pipeline
+        if: ${{ !cancelled() }}
         run: node js/scripts/run-grammar-bulk-pipeline.mjs --out-dir grammar-bulk --jobs 4 --timeout 240
 
       - name: Publish the matrix in the job summary

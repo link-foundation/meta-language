@@ -48,8 +48,7 @@ test('every catalog language with a grammar has a pinned tree-sitter source and 
   );
   assert.ok(languages.length >= 57, `${languages.length} languages`);
   for (const { name, grammars, source } of languages) {
-    const id = grammars[0];
-    assert.ok(pinned.some(({ language }) => language === id) || GRAMMAR_SOURCES[id], `${name}: no pinned tree-sitter grammar ${id}`);
+    for (const id of grammars) assert.ok(pinned.some(({ language }) => language === id) || GRAMMAR_SOURCES[id], `${name}: no pinned tree-sitter grammar ${id}`);
     assert.equal(typeof source, 'string', `${name}: no sample source`);
   }
   const names = new Set(languages.map(({ name }) => name));
