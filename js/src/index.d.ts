@@ -1341,7 +1341,16 @@ export type GrammarExpression =
   | { kind: 'predicate'; item: GrammarExpression; condition: GrammarOperation }
   | { kind: 'recover'; item: GrammarExpression; synchronize: GrammarExpression }
   | { kind: 'embed'; language: string; item: GrammarExpression }
+  | { kind: 'any-grammar' | 'all-grammar'; item: GrammarExpression; items: GrammarSelectionCandidate[] }
+  | GrammarSelectionCandidate
   | { kind: 'expand'; name: string; arguments: GrammarExpression[] };
+
+export interface GrammarSelectionCandidate {
+  kind: 'grammar-candidate';
+  name: string;
+  /** Unknown named mappings are retained as explicit diagnostics. */
+  mapping: string;
+}
 
 /**
  * One operation of the scanner, action and predicate language of
@@ -1450,6 +1459,10 @@ export function emitPeggy(grammar: Grammar): string;
 export interface GrammarParserOptions extends DecoratorOptions {
   /** Returns the grammar an import or an embedded language names. */
   resolveGrammar?: (name: string) => Grammar | NormalizedGrammar | null | undefined;
+  /** Source-qualified root identity; with a concept space retains a root boundary. */
+  grammarName?: string;
+  /** Global origin membership is retained only after checking the actual source. */
+  globalConceptSpace?: GlobalConceptSpace;
   startRule?: string;
   maxDepth?: number;
   stepLimit?: number;
@@ -1487,24 +1500,51 @@ export type SyntaxTreeNode =
       attributes?: Record<string, string | number>;
       text: string | null;
       hex?: string;
+      lexical?: Record<string, unknown>;
     }
   | { type: 'error'; start: number; end: number; text: string | null; hex?: string; reason?: string }
   | { type: 'missing'; kind: string | null; start: number; end: number; literal?: true }
-  | { type: 'embed'; language: string; start: number; end: number; root: SyntaxTreeNode };
+  | { type: 'embed'; language: string; start: number; end: number; root: SyntaxTreeNode; selection?: GrammarSelection };
+
+export interface GrammarSelectionProvenance {
+  source: string;
+  language: string;
+  edition: string;
+  rules: Array<{ rule: string; origin: string; concept: string | null;
+    declaredConcept: string | null; sourceNames: GrammarSourceName[] }>;
+}
+export interface GrammarSelectionAlternative {
+  language: string;
+  root: SyntaxTreeNode;
+  provenance: GrammarSelectionProvenance;
+}
+export interface GrammarSelection {
+  mode: 'any-grammar' | 'all-grammar' | 'grammar-root';
+  mapping: string;
+  start: number;
+  end: number;
+  candidates: Array<{ language: string; relation: 'accepted' | 'rejected' | 'unknown';
+    reason?: string; mapping?: string; offset?: number; expected?: string[] }>;
+  provenance: GrammarSelectionProvenance;
+  alternatives: GrammarSelectionAlternative[];
+  ambiguous: boolean;
+}
 
 export interface GrammarRejection {
-  reason: 'syntax' | 'stepLimit' | 'memoryBudget' | 'nestingDepth' | 'recovered' | 'ambiguity';
+  reason: 'syntax' | 'stepLimit' | 'memoryBudget' | 'nestingDepth' | 'recovered' | 'ambiguity'
+    | 'unknownGrammar' | 'unsupportedEmbeddingMapping' | 'nonConsumingEmbeddingCycle' | 'unprovedGrammarOrigin';
   offset?: number;
   line?: number;
   column?: number;
   expected?: string[];
   limit?: number;
+  diagnostics?: Array<{ reason: string; language: string; start: number; end: number; mapping?: string; rule?: string }>;
 }
 
 export interface GrammarParseOutcome {
   ok: boolean;
   tree: SyntaxTreeNode | null;
-  ambiguities: Array<{ rule: string; start: number; end: number }>;
+  ambiguities: Array<{ rule: string; start: number; end: number; languages?: string[] }>;
   rejection: GrammarRejection | null;
 }
 

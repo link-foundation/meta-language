@@ -143,9 +143,9 @@ pub use global_concept_space::{
 };
 pub use grammar::feature_runtime::{
     Ambiguity, FeatureGrammarParser, FeatureParseOptions, GrammarParseError, GrammarResolver,
-    GrammarRuntimeError, LeafText, OperationValue, ParseOutcome, ParseRejection,
-    ParseWithGrammarError, SyntaxAttributes, SyntaxTree, compile_feature_grammar,
-    parse_with_grammar,
+    GrammarRuntimeError, GrammarSelection, GrammarSelectionAlternative, LeafText, OperationValue,
+    ParseOutcome, ParseRejection, ParseWithGrammarError, SyntaxAttributes, SyntaxTree,
+    compile_feature_grammar, parse_with_grammar,
 };
 pub use grammar::interchange::{
     GRAMMAR_LOWERING_FORMATS, GrammarLowering, GrammarLoweringEncoding, GrammarLoweringError,
