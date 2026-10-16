@@ -19,6 +19,7 @@ export const LinkType = Object.freeze({
 });
 
 export const NetworkProjection = Object.freeze({
+  Lossless: 'Lossless',
   ConcreteSyntax: 'ConcreteSyntax',
   AbstractSyntax: 'AbstractSyntax',
   Semantic: 'Semantic',

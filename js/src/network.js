@@ -10,6 +10,7 @@ import {
   LinkId,
   LinkMetadata,
   LinkType,
+  NetworkProjection,
   ParseConfiguration,
   Point,
   SourceSpan,
@@ -36,6 +37,7 @@ import {
   parseLinoStatements,
 } from './lino-serialization.js';
 import { grammarProvenance } from './language-catalog.js';
+import { acceptNetworkProjection, acceptNetworkProjectionLink } from './network-projection-rules.js';
 import { seedStatehoodWorkedExample } from './concept-ontology.js';
 import {
   CONCEPT_RECORDS,
@@ -498,6 +500,23 @@ export class LinkNetwork {
 
   links() {
     return [...this._links.values()].sort((left, right) => left.id().asU64() - right.id().asU64());
+  }
+
+  /**
+   * Select original links in identifier order. The omitted selection keeps
+   * concrete syntax; abstract syntax requires an explicit selection. References
+   * still resolve against this complete source network, including excluded
+   * source tokens and trivia. Returned links and metadata retain identity.
+   */
+  projectedLinks(projection = NetworkProjection.ConcreteSyntax) {
+    if (typeof projection !== 'string' || !acceptNetworkProjection(projection)) {
+      throw new TypeError('a network projection must be Lossless, ConcreteSyntax, AbstractSyntax or Semantic');
+    }
+    return this.links().filter(link => acceptNetworkProjectionLink(projection, link.metadata().linkType ?? ''));
+  }
+
+  projected_links(projection = NetworkProjection.ConcreteSyntax) {
+    return this.projectedLinks(projection);
   }
 
   len() {

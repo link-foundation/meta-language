@@ -152,6 +152,14 @@ export function selfTranslate(source: string, from: string, to: string, options?
  */
 export function selfTranslationSignatures(source: string, language: string, options?: SelfTranslationOptions): SelfTranslationSignature[];
 
+export type NetworkProjectionValue = 'Lossless' | 'ConcreteSyntax' | 'AbstractSyntax' | 'Semantic';
+export const NetworkProjection: Readonly<{
+  Lossless: 'Lossless';
+  ConcreteSyntax: 'ConcreteSyntax';
+  AbstractSyntax: 'AbstractSyntax';
+  Semantic: 'Semantic';
+}>;
+
 export type LinkTypeValue =
   | 'Concept'
   | 'Document'
@@ -1169,6 +1177,9 @@ export class LinkNetwork {
   linksNotationText(ids: LinkId[]): string;
   link(id: LinkId | number): Link | undefined;
   links(): Link[];
+  /** Original links; omission selects concrete syntax. Resolve provenance through this complete network. */
+  projectedLinks(projection?: NetworkProjectionValue): Link[];
+  projected_links(projection?: NetworkProjectionValue): Link[];
   len(): number;
   queryLinks(query: LinkQuery): Link[];
   find(query: LinkQuery): QueryMatch[];

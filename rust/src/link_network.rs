@@ -506,7 +506,11 @@ impl LinkNetwork {
         self.links.values().map(Arc::as_ref)
     }
 
-    /// Iterates over links included in the selected projection.
+    /// Iterates over original links included in the explicitly selected view.
+    ///
+    /// Identifiers, references and metadata retain their source identities.
+    /// Resolve references against this complete network, including concrete
+    /// tokens and trivia omitted from the abstract view. The source is unchanged.
     pub fn projected_links(&self, projection: NetworkProjection) -> impl Iterator<Item = &Link> {
         self.links().filter(move |link| projection.includes(link))
     }
