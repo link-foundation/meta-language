@@ -357,6 +357,12 @@ export function readPortableSourceLintStyles(source) {
   const numberStyles = readPortableNumberSourceStyles(adapted);
   for (const action of numberStyles.actions) replace(action.from, action.to);
   assert.equal(adapted, numberStyles.source, 'Number styles replay their complete checked source actions');
+  // Drop the same single-use temporary copies before inferring enum payload
+  // ownership. No formatting or branch rewrite hides an operand in this pass.
+  for (const [, name] of [...adapted.matchAll(/^pub fn (\w+)\(/gmu)]) {
+    const original = readSourceTextRustBlock(adapted, 'fn', name);
+    replace(original, removePortableTemporaryCopies(original));
+  }
   // Inspect ownership once while emitted format arguments remain explicit.
   // Formatting styles may capture names inside opaque format-string tokens.
   const ownedStyles = readPortableOwnedSourceStyles(adapted);
