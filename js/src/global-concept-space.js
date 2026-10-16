@@ -4,11 +4,12 @@ import { createHash } from 'node:crypto';
 import { Parser } from 'links-notation';
 
 import { CONCEPT_RECORDS } from './concept-records.js';
-import { Grammar } from './grammar.js';
+import { Grammar, compileGrammar } from './grammar.js';
+import { GrammarRuntimeError } from './grammar-runtime.js';
 import { DEFAULT_SETTLING, grammarDeclarations } from './grammar-feature-forms.js';
 import { parseGrammarLinks, percentDecodeLinksText, percentEncodeLinksText, renderDeclarationLinks, renderLinksExpression, renderRuleFieldLinks } from './grammar-links.js';
 import { compareText } from './grammar-merge-normalize.js';
-import { verifyGlobalConceptCorrespondence, acceptGlobalConceptHistory, selectGlobalConceptIdentity } from './global-concept-rules.js';
+import { verifyGlobalConceptCorrespondence, acceptGlobalConceptHistory, containsGlobalConceptIdentity, selectGlobalConceptIdentity } from './global-concept-rules.js';
 import { LANGUAGE_CATALOG, languageEntry } from './language-catalog.js';
 import { LinkNetwork } from './network.js';
 import { LinkId } from './primitives.js';
@@ -300,6 +301,49 @@ const printNetworkLink = (value) => value.values.length === 0 ? value.id : `(${v
 
 /** Reload source-free links and recheck every recorded shared concept proof. */
 export function readGlobalConceptSpaceLinks(source, options = {}) {
+  return readValidatedGlobalConceptArchive(source, options).space;
+}
+
+function requireGlobalConceptParserOptions(options) {
+  if (!options || typeof options !== 'object' || Array.isArray(options)) throw new TypeError('global concept parser options must be an object');
+  for (const name of ['resolveGrammar', 'globalConceptSpace', 'grammarName']) {
+    if (Object.hasOwn(options, name)) throw new TypeError(`the archived global concept space owns parser option ${name}`);
+  }
+}
+
+/** Compile an exact archived source identity, resolving every dependency from
+ * the same proof-checked Links archive. No original grammars or resolver are
+ * required. `records` configures archive validation; remaining options and
+ * per-parse overrides keep the existing concrete parser and budget behavior.
+ */
+export function createGlobalConceptSpaceParser(source, sourceIdentifier, options = {}) {
+  requireGlobalConceptParserOptions(options);
+  const { records, ...parserOptions } = options;
+  const { space, grammars } = readValidatedGlobalConceptArchive(source, { records });
+  if (typeof sourceIdentifier !== 'string' || !containsGlobalConceptIdentity([...grammars.keys()], sourceIdentifier)) {
+    throw new GrammarRuntimeError('an archived grammar needs an exact existing source identifier', 'selection');
+  }
+  const parser = compileGrammar(grammars.get(sourceIdentifier), {
+    ...parserOptions,
+    grammarName: sourceIdentifier,
+    globalConceptSpace: space,
+    resolveGrammar: name => grammars.get(name),
+  });
+  return {
+    parse(input, overrides = {}) {
+      requireGlobalConceptParserOptions(overrides);
+      return parser.parse(input, overrides);
+    },
+    parseTree(input, overrides = {}) {
+      requireGlobalConceptParserOptions(overrides);
+      return parser.parseTree(input, overrides);
+    },
+  };
+}
+
+// The executable grammar map is returned only after every original archive
+// check, including witnesses, current correspondence and final redirects.
+function readValidatedGlobalConceptArchive(source, options) {
   const statements = new Parser({ comments: false }).parse(source);
   const space = { schemaVersion: 1, sources: [], concepts: [], mappings: {}, proofs: [], failures: [], ambiguities: [], redirects: {}, formalDefinitions: {} };
   const sourcesById = new Map();
@@ -442,5 +486,5 @@ export function readGlobalConceptSpaceLinks(source, options = {}) {
     concept.proofs = space.proofs.flatMap((proof, index) => proof.correspondence.some(([first, second]) => present.has(first) && present.has(second)) ? [index] : []);
   }
   for (const [old, current] of Object.entries(space.redirects)) if (conceptsById.has(old) || !conceptsById.has(current) || old === current) throw new TypeError('invalid global concept identity redirect');
-  return space;
+  return { space, grammars: new Map(imported.map(({ id, grammar }) => [id, grammar])) };
 }
