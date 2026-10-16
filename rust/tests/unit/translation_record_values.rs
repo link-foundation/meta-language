@@ -249,7 +249,7 @@ fn complete_emitted_rust_for_a_declared_record_executes_its_actual_main() {
         .arg(&executable));
     assert!(compiled.ok, "{}", compiled.stderr);
     assert_eq!(fs::read_to_string(&source).unwrap(), emitted.code);
-    let observed = run(Command::new(executable));
+    let observed = run(&mut Command::new(executable));
     assert!(observed.ok, "{}", observed.stderr);
     assert_eq!(observed.stdout, "3\n");
 }

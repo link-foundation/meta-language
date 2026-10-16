@@ -30,3 +30,15 @@ pub(super) struct TokenRank {
     pub(super) specificity: u8,
     pub(super) order: usize,
 }
+// Bind every copied declaration without relaxing native lints.
+const _: fn() = || {
+    let _ = self::Associativity::Left;
+    let _ = self::Associativity::Right;
+    let _ = self::Associativity::None;
+    let _ = |value: &self::PrecedenceTag| {
+        let _ = (&value.level, &value.name, &value.associativity, &value.rule);
+    };
+    let _ = |value: &self::TokenRank| {
+        let _ = (&value.priority, &value.specificity, &value.order);
+    };
+};

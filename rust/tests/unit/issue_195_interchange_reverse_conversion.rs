@@ -262,7 +262,8 @@ fn issue_195_lossless_mode_reconstructs_every_source_exactly_from_links() {
                         let meta_language::GrammarExpr::Feature(feature) = entry else {
                             continue;
                         };
-                        let meta_language::FeatureExpr::Form(owner) = &**feature else {
+                        let meta_language::grammar::feature::FeatureExpr::Form(owner) = &**feature
+                        else {
                             continue;
                         };
                         if owner.head == "lexicalOwner"
@@ -272,7 +273,7 @@ fn issue_195_lossless_mode_reconstructs_every_source_exactly_from_links() {
                             assert!(edited.declarations().lexers.iter().any(|lexer| match &lexer.expression {
                                 meta_language::GrammarExpr::Sequence(entries) => entries.iter().any(|entry| match entry {
                                     meta_language::GrammarExpr::Feature(feature) => match &**feature {
-                                        meta_language::FeatureExpr::Form(candidate) => candidate.head == "lexicalOwner" && candidate.text("name") == owner.text("name")
+                                        meta_language::grammar::feature::FeatureExpr::Form(candidate) => candidate.head == "lexicalOwner" && candidate.text("name") == owner.text("name")
                                             && matches!(candidate.expression("item"), Some(meta_language::GrammarExpr::NonTerminal(target)) if target == text(renamed, "to")), _ => false,
                                     }, _ => false,
                                 }), _ => false,

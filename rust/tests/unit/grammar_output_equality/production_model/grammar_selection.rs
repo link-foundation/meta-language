@@ -22,3 +22,26 @@ pub(super) struct SelectionMetadata {
     pub(super) alternatives: Vec<AcceptedSelection>,
     pub(super) ambiguous: bool,
 }
+// Bind every copied declaration without relaxing native lints.
+const _: fn() = || {
+    let _ = |value: &self::AcceptedSelection| {
+        let _ = (
+            &value.language,
+            &value.root,
+            &value.program,
+            &value.provenance,
+        );
+    };
+    let _ = |value: &self::SelectionMetadata| {
+        let _ = (
+            &value.mode,
+            &value.mapping,
+            &value.start,
+            &value.end,
+            &value.candidates,
+            &value.provenance,
+            &value.alternatives,
+            &value.ambiguous,
+        );
+    };
+};

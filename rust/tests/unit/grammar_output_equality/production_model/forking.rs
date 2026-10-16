@@ -8,3 +8,16 @@ pub(super) enum Lead {
     Literal(Vec<u8>),
     Ref(Name),
 }
+// Bind every copied declaration without relaxing native lints.
+const _: fn() = || {
+    let _ = self::Lead::Literal;
+    let _ = self::Lead::Ref;
+    let _ = |value: &self::Lead| match value {
+        self::Lead::Literal(field_0) => {
+            let _ = field_0;
+        }
+        self::Lead::Ref(field_0) => {
+            let _ = field_0;
+        }
+    };
+};

@@ -2,7 +2,8 @@
 //! Rocq list, read through an optional bounds-checked helper that retains
 //! JavaScript's observable absence outside an array.
 
-use meta_language::{TranslationSupport, parse_javascript, translate_program};
+use meta_language::translation::javascript::parse_javascript;
+use meta_language::{TranslationSupport, translate_program};
 
 const ARRAYS: &str = "const xs = [1, 2];
 console.log(xs[1] + xs.length);

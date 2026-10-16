@@ -31,7 +31,7 @@ export function readRustSourceItems(bytes){
 }
 
 export function buildPrivateOutputTestModel(repository=root,policy=readProjectData(resolve(repository,policyFile))){
-  assert.equal(policy.schemaVersion,1);const cache=new Map(),inputs=[],bindings=[],sections=[],modules=[];
+  assert.equal(policy.schemaVersion,1);const cache=new Map(),inputs=[],bindings=[],sections=[],modules=[],localBindings=new Map();
   const source=file=>{
     if(!cache.has(file)){
       const bytes=readFileSync(resolve(repository,file));assert.ok(bytes.length<=131072);
@@ -44,15 +44,20 @@ export function buildPrivateOutputTestModel(repository=root,policy=readProjectDa
     assert.equal(found.length,1,'each source item selector owns one declaration');return found[0];
   };
   const bind=(module,parsed,items)=>{
+    const append=binding=>{
+      bindings.push(binding);
+      if(!localBindings.has(module))localBindings.set(module,[]);
+      localBindings.get(module).push(binding.replaceAll(module+'::','self::'));
+    };
     const name=node=>{const value=parsed.field(node,'name');assert.ok(value,'source declaration has a named field');return parsed.text(value);};
     const descend=(node,kind)=>node.children.flatMap(({node:child})=>child.term===kind?[child]:descend(child,kind));
     for(const {node,kind}of items){
-      if(kind==='function_item'&&node.children.some(({node})=>node.term==='visibility_modifier'))bindings.push(`let _ = ${module}::${name(node)};`);
+      if(kind==='function_item'&&node.children.some(({node})=>node.term==='visibility_modifier'))append(`let _ = ${module}::${name(node)};`);
       if(kind==='enum_item'){
         const variants=descend(node,'enum_variant'),arms=[];
         for(const variant of variants){
           const path=`${module}::${name(node)}::${name(variant)}`,body=parsed.field(variant,'body');
-          bindings.push(`let _ = ${path};`);
+          append(`let _ = ${path};`);
           if(body){
             assert.equal(body.term,'ordered_field_declaration_list','enum payload binding uses complete tuple fields');
             const fields=body.children.filter(({node})=>node.named&&!['attribute_item','visibility_modifier'].includes(node.term)).map((_,index)=>'field_'+index);
@@ -60,16 +65,16 @@ export function buildPrivateOutputTestModel(repository=root,policy=readProjectDa
             arms.push(`${path}(${fields.join(', ')}) => { ${fields.map(field=>'let _ = '+field+';').join(' ')} }`);
           }else arms.push(`${path} => {}`);
         }
-        if(variants.some(variant=>parsed.field(variant,'body')))bindings.push(`let _ = |value: &${module}::${name(node)}| { match value { ${arms.join(', ')} } };`);
+        if(variants.some(variant=>parsed.field(variant,'body')))append(`let _ = |value: &${module}::${name(node)}| { match value { ${arms.join(', ')} } };`);
       }
       if(kind==='struct_item'){
         const fields=descend(node,'field_declaration').map(name);
-        if(fields.length)bindings.push(`let _ = |value: &${module}::${name(node)}| { let _ = (${fields.map(field=>'&value.'+field).join(', ')}); };`);
+        if(fields.length)append(`let _ = |value: &${module}::${name(node)}| { let _ = (${fields.map(field=>'&value.'+field).join(', ')}); };`);
       }
       if(kind==='impl_item'&&!parsed.field(node,'trait')){
         const type=parsed.field(node,'type');assert.ok(type);
         for(const method of descend(node,'function_item').filter(node=>node.children.some(({node})=>node.term==='visibility_modifier')))
-          bindings.push(`let _ = ${module}::${parsed.text(type)}::${name(method)};`);
+          append(`let _ = ${module}::${parsed.text(type)}::${name(method)};`);
       }
     }
   };
@@ -106,10 +111,14 @@ export function buildPrivateOutputTestModel(repository=root,policy=readProjectDa
         parts.push('mod tests {\n'+bytes.toString('utf8')+'\n'+additional.map(row=>row.source).join('\n')+'\n}');
       }
     }
-    parts.push('');sections.push({module:module.name,sourceParts:parts.length});
+    // Bind copied items in their owning module, where original private types
+    // and fields are accessible. Their source visibility stays byte exact.
+    parts.push('// Bind every copied declaration without relaxing native lints.\nconst _: fn() = || {\n'
+      +[...new Set(localBindings.get(module.name)??[])].join('\n')+'\n};\n');
+    sections.push({module:module.name,sourceParts:parts.length});
     modules.push({name:module.name,parts});
   }
-  const unformatted='// Generated from complete owned Rust CST declarations. Do not edit by hand.\n'+modules.map(module=>'mod '+module.name+' {\n'+module.parts.join('\n')+'\n}').join('\n')+'\n// Keep every copied declaration and field bound without relaxing native lints.\nconst _: fn() = || {\n'+[...new Set(bindings)].join('\n')+'\n};\n';
+  const unformatted='// Generated from complete owned Rust CST declarations. Do not edit by hand.\n'+modules.map(module=>'mod '+module.name+' {\n'+module.parts.join('\n')+'\n}').join('\n')+'\n';
   const format=source=>{
     const formatted=spawnSync('rustfmt',['--edition','2024','--emit','stdout'],{input:source,encoding:'utf8',maxBuffer:2*1024*1024,timeout:10000});
     if(formatted.error||formatted.status!==0)throw formatted.error??new Error(formatted.stderr);
@@ -118,7 +127,7 @@ export function buildPrivateOutputTestModel(repository=root,policy=readProjectDa
   const combinedSource=format(unformatted),notice='// Generated from complete owned Rust CST declarations. Do not edit by hand.\n';
   assert.match(policy.moduleDirectory,/^[a-z_]+$/u,'generated comparison modules have an explicit local directory');
   const outputs=modules.map(module=>({file:resolve(repository,dirname(policy.output),policy.moduleDirectory,module.name+'.rs'),source:format(notice+module.parts.join('\n')+'\n')}));
-  const rootSource=notice+modules.map(module=>'#[path = "'+policy.moduleDirectory+'/'+module.name+'.rs"]\nmod '+module.name+';').join('\n')+'\n// Bind every copied declaration without relaxing native lints.\nconst _: fn() = || {\n'+[...new Set(bindings)].join('\n')+'\n};\n';
+  const rootSource=notice+modules.map(module=>'#[path = "'+policy.moduleDirectory+'/'+module.name+'.rs"]\nmod '+module.name+';').join('\n')+'\n';
   outputs.unshift({file:resolve(repository,policy.output),source:format(rootSource)});
   for(const output of outputs){
     output.file=output.file.slice(resolve(repository).length+1);

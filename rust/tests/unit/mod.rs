@@ -301,7 +301,6 @@ mod issue_195_grammar_profile_ruby;
 mod grammar_lexer_transport;
 mod grammar_output_equality;
 mod grammar_recursive_selection;
-mod translation_array_from;
 mod translation_callable_expected_context;
 mod translation_javascript_array_bindings;
 mod translation_owned_array_append;

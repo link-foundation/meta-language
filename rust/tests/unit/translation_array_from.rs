@@ -9,10 +9,10 @@ use meta_language::translation::emit_lean::emit_lean;
 use meta_language::translation::emit_rocq::emit_rocq;
 use meta_language::translation::emit_rust::emit_rust;
 use meta_language::translation::javascript::parse_javascript;
-use meta_language::typed_program_links::validate_checked_program;
 use meta_language::{
     BinaryLinksOptions, LinkNetwork, create_typed_program_links, decode_link_network_binary,
     decode_typed_program_links, emit_typed_program_links, encode_link_network_binary,
+    encode_typed_program_links,
 };
 use serde_json::Value;
 
@@ -72,7 +72,8 @@ fn array_from_keeps_code_points_mapper_arities_effects_and_actual_raw_shape() {
         let surface = parse_javascript(source).unwrap();
         assert_eq!(serde_json::to_value(&surface).unwrap(), original["surface"]);
         let program = check_program(&surface).unwrap();
-        validate_checked_program(&program).unwrap();
+        // The public encoder runs the same checked-program validator first.
+        encode_typed_program_links(&program).unwrap();
         assert_eq!(observe(&emit_javascript(&program).unwrap().text), expected);
         assert_eq!(
             emit_rust(&program).unwrap().text,
@@ -89,7 +90,7 @@ fn array_from_keeps_code_points_mapper_arities_effects_and_actual_raw_shape() {
             .unwrap(),
         ] {
             let decoded = decode_typed_program_links(&network, packet.root).unwrap();
-            validate_checked_program(&decoded).unwrap();
+            encode_typed_program_links(&decoded).unwrap();
             assert_eq!(decoded, program);
             assert_eq!(
                 observe(
@@ -108,7 +109,7 @@ fn array_from_map_formatter_keeps_every_existing_target_byte() {
     let source = "/** @returns {number[]} */function values(){return Array.from([1,2],(value,index)=>value+index);}";
     let original = javascript_contract(source);
     let program = check_program(&parse_javascript(source).unwrap()).unwrap();
-    validate_checked_program(&program).unwrap();
+    encode_typed_program_links(&program).unwrap();
     for (target, emitted) in [
         ("JavaScript", emit_javascript(&program).unwrap().text),
         ("Rust", emit_rust(&program).unwrap().text),

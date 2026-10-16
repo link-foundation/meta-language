@@ -46,6 +46,14 @@ test('private native model retains every selected declaration field and source p
   assert.ok(model.source.includes('&value.program'));
   assert.ok(!model.source.includes('#[allow(dead_code)]'));
   assert.ok(!model.source.includes('#[cfg(test)]'));
+  const walking=model.outputs.find(output=>output.file.endsWith('/walk.rs')).source;
+  const original=readRustSourceItems(readFileSync(new URL('../../rust/src/grammar/feature_runtime/walk.rs',import.meta.url)));
+  const privatePlan=original.items.find(item=>item.kind==='struct_item'&&item.name==='GrammarTreeEqualityPlan');
+  assert.ok(privatePlan);
+  assert.ok(!privatePlan.node.children.some(({node})=>node.term==='visibility_modifier'));
+  assert.match(walking,/let _ = \|value: &self::GrammarTreeEqualityPlan\|/u);
+  assert.match(walking,/&value\.fields, &value\.recursion/u);
+  assert.doesNotMatch(model.outputs[0].source,/walk::GrammarTreeEqualityPlan/u,'private bindings stay in the original owning module');
 });
 
 test('private native model refuses malformed concrete syntax and missing declaration selectors',()=>{

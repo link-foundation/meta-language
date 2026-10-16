@@ -224,3 +224,56 @@ impl Tree {
 pub(super) fn no_children() -> Children {
     children_of(Vec::new())
 }
+// Bind every copied declaration without relaxing native lints.
+const _: fn() = || {
+    let _ = self::TreeType::Node;
+    let _ = self::TreeType::Token;
+    let _ = self::TreeType::Error;
+    let _ = self::TreeType::Missing;
+    let _ = self::TreeType::Embed;
+    let _ = |value: &self::ChildList| {
+        let _ = (&value.count, &value.flat, &value.link);
+    };
+    let _ = self::children_of;
+    let _ = self::join_children;
+    let _ = |value: &self::Tree| {
+        let _ = (
+            &value.ty,
+            &value.kind,
+            &value.projection_name,
+            &value.projection_anonymous,
+            &value.rule,
+            &value.field,
+            &value.trivia,
+            &value.start,
+            &value.end,
+            &value.children,
+            &value.attributes,
+            &value.lexical,
+            &value.precedence,
+            &value.tail,
+            &value.priority,
+            &value.reduced,
+            &value.closes,
+            &value.reduced_to,
+            &value.forked_to,
+            &value.alone,
+            &value.before,
+            &value.dynamic,
+            &value.ambiguous,
+            &value.literal,
+            &value.scanned,
+            &value.lexed,
+            &value.plain,
+            &value.rank,
+            &value.language,
+            &value.root,
+            &value.program,
+            &value.selection,
+        );
+    };
+    let _ = self::Tree::new;
+    let _ = self::Tree::node;
+    let _ = self::Tree::trivia_leaf;
+    let _ = self::no_children;
+};

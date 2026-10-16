@@ -181,11 +181,11 @@ fn grammar_tree_equality_plan(kind: TreeType, output: bool) -> &'static GrammarT
         for kind in ["node", "token", "error", "missing", "embed"] {
             for output in [false, true] {
                 plans.push(GrammarTreeEqualityPlan {
-                    fields: read_grammar_tree_equality_fields(kind.to_owned(), output)
+                    fields: read_grammar_tree_equality_fields(kind, output)
                         .split('|')
                         .map(str::to_owned)
                         .collect(),
-                    recursion: read_grammar_tree_recursion_plan(kind.to_owned(), output),
+                    recursion: read_grammar_tree_recursion_plan(kind, output),
                 });
             }
         }
@@ -665,3 +665,35 @@ mod tests {
         assert_selection_difference(&reference, candidate);
     }
 }
+// Bind every copied declaration without relaxing native lints.
+const _: fn() = || {
+    let _ = self::Walk::Part;
+    let _ = self::Walk::Item;
+    let _ = self::Walk::End;
+    let _ = |value: &self::Walk| match value {
+        self::Walk::Part(field_0) => {
+            let _ = field_0;
+        }
+        self::Walk::Item(field_0) => {
+            let _ = field_0;
+        }
+        self::Walk::End(field_0) => {
+            let _ = field_0;
+        }
+    };
+    let _ = self::open_part;
+    let _ = self::next_item;
+    let _ = self::open_node;
+    let _ = self::items;
+    let _ = self::meaningful;
+    let _ = self::same_tree;
+    let _ = self::same_tree_in;
+    let _ = self::same_children;
+    let _ = self::same_output;
+    let _ = |value: &self::GrammarTreeEqualityPlan| {
+        let _ = (&value.fields, &value.recursion);
+    };
+    let _ = self::first_meaningful;
+    let _ = self::first_leaf_start;
+    let _ = self::leftmost_chain;
+};

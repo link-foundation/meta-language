@@ -43,7 +43,7 @@ fn generated_array_loops_consume_actual_final_bindings_without_repeated_vector_c
     }
     let compiled = run(compiler.arg(&source_path).arg("-o").arg(&executable));
     assert!(compiled.ok, "{}", compiled.stderr);
-    let observed = run(Command::new(executable));
+    let observed = run(&mut Command::new(executable));
     assert!(observed.ok, "{}", observed.stderr);
     assert_eq!(observed.stdout, "100002 0 100001\n2 12 12\n");
 }
@@ -86,7 +86,7 @@ fn copied_and_consumed_array_profiles_preserve_actual_alias_observations() {
         }
         let compiled = run(compiler.arg(&source_path).arg("-o").arg(&executable));
         assert!(compiled.ok, "{name}: {}", compiled.stderr);
-        let observed = run(Command::new(executable));
+        let observed = run(&mut Command::new(executable));
         assert!(observed.ok, "{name}: {}", observed.stderr);
         assert_eq!(observed.stdout, "12\n", "{name}");
     }

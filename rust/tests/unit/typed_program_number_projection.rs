@@ -72,7 +72,14 @@ fn source_free_numeric_operands_recheck_after_both_archives_and_keep_real_value_
     let fixture = fixture();
     let source = fixture["source"].as_str().unwrap();
     assert_eq!(
-        format!("{:x}", Sha256::digest(source.as_bytes())),
+        Sha256::digest(source.as_bytes()).iter().fold(
+            String::with_capacity(64),
+            |mut hexadecimal, byte| {
+                use std::fmt::Write as _;
+                write!(hexadecimal, "{byte:02x}").expect("writing into a String succeeds");
+                hexadecimal
+            },
+        ),
         fixture["sourceSha256"].as_str().unwrap()
     );
     let expected: Vec<String> = serde_json::from_value(fixture["output"].clone()).unwrap();
