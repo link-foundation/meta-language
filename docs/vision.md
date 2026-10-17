@@ -1463,6 +1463,20 @@ profiles refuse explicitly. Failed child parses may retain attempted source
 derivations, but a result without a complete physical root cannot establish
 mapped-CST ownership.
 
+The explicit syntactic `included-ranges` profile retains that full physical CST
+while concatenating ordered, disjoint UTF-8 byte ranges into a separate source
+plane. Ranges are relative to the selected region, align with scalar boundaries
+and must produce a proper byte contraction; all any/all candidates must declare
+the same range parameters. Correspondence intervals retain excluded gaps and
+scalar copies. Nested composition with `json-string` keeps each actual source
+plane and its derivation. After text/binary Links reload, the mapped-CST checker
+validates declared ranges and rederives bytes, intervals and child coverage
+from the physical source.
+Mapping work uses existing shared parse budgets. Ranges are explicit grammar
+data: dynamic discovery from CST fields and complete Markdown block/inline
+scanning remain gaps. Native compilation and runtime parity remain subject to
+CI verification.
+
 The default CST adapter follows supported discovered child regions through a
 FIFO queue, retaining direct-region order, actual parent Region links and
 once-composed absolute UTF-8 spans. `ParseConfiguration` bounds child depth,
