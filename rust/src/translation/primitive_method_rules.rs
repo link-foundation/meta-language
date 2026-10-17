@@ -200,7 +200,7 @@ pub fn read_primitive_method_maximum_arguments(receiver: &str, operation: &str) 
 
 #[must_use]
 pub fn read_primitive_method_argument_count(receiver: &str, operation: &str) -> f64 {
-    self::read_primitive_method_maximum_arguments(&(receiver), &(operation))
+    self::read_primitive_method_maximum_arguments(receiver, operation)
 }
 
 #[must_use]

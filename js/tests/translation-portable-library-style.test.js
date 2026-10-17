@@ -8,9 +8,13 @@ import {parseRust} from '../src/translation/rust.js';
 import {checkProgram} from '../src/translation/check.js';
 import {emitRust} from '../src/translation/emit-rust.js';
 import {emitJavaScript} from '../src/translation/emit-javascript.js';
+import {TranslationError} from '../src/translation/diagnostics.js';
+import {readPrimitiveMethodMaximumArguments, readPrimitiveMethodArgumentCount} from '../src/translation/primitive-method-rules.js';
 import {readPortableSourceParameterStyles, readPortableSourceLintStyles, partitionPortableRustLibrary} from '../scripts/portable-source-library-style.mjs';
 import {readSourceTextRustBlock} from '../scripts/source-text-byte-library-style.mjs';
 import {DecoratorSet} from '../src/decorators.js';
+import {applyRecordedFamilyLibraryStyles} from '../scripts/recorded-family-library-style.mjs';
+import {formatProductRuleSource} from '../scripts/product-rule-style-corrections.mjs';
 
 test('actual multi-line lint attributes remain attached to complete partitioned declarations', () => {
   const source = Array.from({length: 18}, (_, index) =>
@@ -360,6 +364,106 @@ test('actual repeated string predicates factor only immutable standard receiver 
   ];
   for (const candidate of declined) assert.equal((readPortableSourceLintStyles(candidate).source.match(/receiver == "array"/gu) ?? []).length, 2);
   assert.ok(readPortableSourceLintStyles(declined[3]).source.includes('/* retain */'));
+});
+
+test('existing borrowed string arguments normalize only proved same-module leaf reborrows when explicitly selected', () => {
+  const source = 'pub fn maximum(receiver:&str,operation:&str)->f64{if receiver=="string"{if operation=="slice"{2f64}else{-1f64}}else{-1f64}}\n'
+    + 'pub fn count(receiver:&str,operation:&str)->f64{self::maximum(&(receiver),&((operation)))}';
+  const options = {normalizeBorrowedArguments: true};
+  assert.deepEqual(readPortableSourceParameterStyles(source), {source, actions: []}, 'the historical default keeps its exact source and action bytes');
+  const styled = readPortableSourceParameterStyles(source, options);
+  assert.equal(styled.actions.length, 1);
+  assert.ok(styled.source.includes('self::maximum(receiver,operation)'));
+  const decorators = new DecoratorSet([{id: 'borrowed-string-leaf-control', level: 'emitter', order: 0,
+    when: [['format', 'Rust']], actions: styled.actions}]);
+  assert.equal(decorators.decorate('emitter', {format: 'Rust', source}).source, styled.source);
+  assert.deepEqual(readPortableSourceParameterStyles(styled.source, options), {source: styled.source, actions: []});
+  assert.throws(() => checkProgram(parseRust(source + '\nfn main() {}')), error => {
+    assert.ok(error instanceof TranslationError);
+    assert.equal(error.kind, 'unsupported');
+    assert.equal(error.reason, 'source indirection: source ownership requires an explicit dereference or matching immutable reference or Box type');
+    assert.deepEqual(error.span, {start: 172, end: 213});
+    return true;
+  }, 'raw redundant reborrows remain outside the existing Rust source-indirection model');
+  const selected = {};
+  runInNewContext(emitJavaScript(checkProgram(parseRust(styled.source + '\nfn main() {}'))).text, selected, {timeout: 1000});
+  for (const receiver of ['string', 'array', 'unknown', '']) for (const operation of ['slice', 'repeat', 'unknown', '']) {
+    assert.equal(selected.count(receiver, operation), receiver === 'string' && operation === 'slice' ? 2 : -1);
+  }
+  const generated = readFileSync(new URL('../../rust/src/translation/primitive_method_rules.rs', import.meta.url), 'utf8');
+  const actual = ['read_primitive_method_maximum_arguments', 'read_primitive_method_argument_count']
+    .map(name => readSourceTextRustBlock(generated, 'fn', name)).join('\n\n');
+  const normalized = readPortableSourceParameterStyles(actual, options);
+  assert.doesNotMatch(readSourceTextRustBlock(normalized.source, 'fn', 'read_primitive_method_argument_count'), /&\s*\(\s*(?:receiver|operation)\s*\)/u,
+    'the actual generated primitive wrapper loses both reported needless borrows');
+  const originalWrapper = readSourceTextRustBlock(actual, 'fn', 'read_primitive_method_argument_count');
+  const candidates = [normalized.source];
+  const provider = readFileSync(new URL('../src/translation/primitive-method-rules.js', import.meta.url), 'utf8');
+  const emitted = emitRust(checkProgram(parseJavaScript(provider, {referenceSemantics: false})), {arrayConsumption: true});
+  assert.equal(emitted.preludes.length, 0, 'the actual primitive generator remains a closed scalar module');
+  const header = emitted.text.split('\n').find(line => line.startsWith('#![allow('));
+  assert.ok(header);
+  const generatorSource = header + '\n\n' + emitted.definitions.join('\n\n').replace(/^pub fn /gmu, '#[must_use]\npub fn ');
+  const document = readFileSync(new URL('../../parity/self-translation/primitive-method-rules-decorators.lino', import.meta.url), 'utf8');
+  const base = DecoratorSet.fromLino(document).decorate('emitter', {format: 'Rust', source: generatorSource}).source;
+  const pipelineOptions = {family: 'primitive-method', parameterLoans: options, format: formatProductRuleSource,
+    baseRecordHashes: ['1d9aa8f1081ca8778572c8c33a29eb58d8c121125d6bf7dcab1a11f04dac168a']};
+  const pipeline = applyRecordedFamilyLibraryStyles(document, formatProductRuleSource(base), {...pipelineOptions, update: true});
+  assert.ok(pipeline.document.startsWith(document), 'the complete generator preserves every historical decorator byte');
+  const generatedWrapper = readSourceTextRustBlock(pipeline.source, 'fn', 'read_primitive_method_argument_count');
+  assert.equal((generatedWrapper.match(/&\s*\(\s*(?:receiver|operation)\s*\)/gu) ?? []).length, 0,
+    'complete checked emission and actual base-style composition must remove both CI reborrows');
+  const notice = '// Generated from js/src/translation/primitive-method-rules.js. Do not edit.\n';
+  assert.ok(generated.startsWith(notice));
+  assert.equal(pipeline.source, generated.slice(notice.length).replace(originalWrapper, generatedWrapper),
+    'every declaration outside the actual argument-count wrapper remains byte-identical');
+  assert.equal(applyRecordedFamilyLibraryStyles(pipeline.document, formatProductRuleSource(base), pipelineOptions).source,
+    pipeline.source, 'the actual generator pipeline replays its exact appended correction');
+  candidates.push(['read_primitive_method_maximum_arguments', 'read_primitive_method_argument_count']
+    .map(name => readSourceTextRustBlock(pipeline.source, 'fn', name)).join('\n\n'));
+  if (/&\s*\(\s*(?:receiver|operation)\s*\)/u.test(originalWrapper)) {
+    assert.throws(() => checkProgram(parseRust(actual + '\nfn main() {}')), error => error instanceof TranslationError
+      && error.kind === 'unsupported' && error.details.construct === 'source indirection',
+    'an older generated reborrow wrapper retains its explicit source-model refusal');
+  } else candidates.push(actual);
+  for (const candidate of candidates) {
+    const context = {};
+    runInNewContext(emitJavaScript(checkProgram(parseRust(candidate + '\nfn main() {}'))).text, context, {timeout: 1000});
+    for (const receiver of ['string', 'array', 'unknown']) for (const operation of ['slice', 'repeat', 'charCodeAt', 'codePointAt', 'includes', 'indexOf', 'lastIndexOf', 'split', 'replace', 'padStart', 'unknown']) {
+      const expected = receiver === 'array' ? ['slice', 'includes', 'indexOf', 'lastIndexOf'].includes(operation) ? 2 : -1
+        : receiver === 'string' ? ['repeat', 'charCodeAt', 'codePointAt'].includes(operation) ? 1
+          : ['split', 'slice', 'indexOf', 'lastIndexOf', 'replace', 'padStart'].includes(operation) ? 2 : -1 : -1;
+      assert.equal(readPrimitiveMethodMaximumArguments(receiver, operation), expected);
+      assert.equal(readPrimitiveMethodArgumentCount(receiver, operation), expected);
+      assert.equal(context.read_primitive_method_maximum_arguments(receiver, operation), expected);
+      assert.equal(context.read_primitive_method_argument_count(receiver, operation), expected);
+    }
+  }
+  const callee = 'pub fn inspected(value:&str)->f64{1f64}\n';
+  for (const caller of [
+    'pub fn selected(value:String)->f64{self::inspected(&(value))}',
+    'pub fn selected(value:&String)->f64{self::inspected(&(value))}',
+    'pub fn selected(value:&str)->f64{self::inspected(&(value.to_owned()))}',
+    'pub fn selected(value:&str)->f64{self::inspected(&(self::read(value)))}',
+    'pub fn selected(value:&str)->f64{external::inspected(&(value))}',
+    'pub fn selected(value:&str)->f64{inspected(&(value))}',
+    'pub fn selected(value:&str)->f64{let value=String::from("owned");self::inspected(&(value))}',
+    'pub fn selected(value:&str)->f64{match self::read(){value=>self::inspected(&(value))}}',
+    'pub fn selected(mut value:&str)->f64{value="changed";self::inspected(&(value))}',
+    'pub fn selected(value:&str)->f64{self::inspected(&(/* retain */value))}',
+    'pub fn selected(value:&str)->f64{self::inspected(&mut(value))}',
+    'pub fn selected(value:&str)->f64{let captured=||value;self::inspected(&(value))}',
+    'pub fn selected(value:&str)->f64{unknown!();self::inspected(&(value))}',
+  ]) {
+    const input = callee + caller;
+    assert.deepEqual(readPortableSourceParameterStyles(input, options), readPortableSourceParameterStyles(input),
+      'an unproved reborrow retains every historical default transformation');
+  }
+  const doubled = 'pub fn inspected(value:&&str)->f64{1f64}\npub fn selected(value:&str)->f64{self::inspected(&(value))}';
+  assert.deepEqual(readPortableSourceParameterStyles(doubled, options), readPortableSourceParameterStyles(doubled), 'an extra required reference level stays intact');
+  const caller = 'pub fn selected(value:&str)->f64{self::inspected(&(value))}';
+  const opaque = callee + caller + '\npub fn literal()->&\'static str{r#"' + caller + '"#}';
+  assert.deepEqual(readPortableSourceParameterStyles(opaque, options), readPortableSourceParameterStyles(opaque), 'a repeated complete source context cannot modify an opaque literal');
 });
 
 test('qualified String return proofs require the declared local module namespace', () => {

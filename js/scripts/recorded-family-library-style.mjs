@@ -30,7 +30,13 @@ export function applyRecordedFamilyLibraryStyles(document, source, {
   }
   // Derive the target from actual emitted/base output, independently of any
   // later recorded replacement. A forged replacement cannot certify itself.
-  let corrected = parameterLoans ? readPortableSourceParameterStyles(original).source : original;
+  let corrected = parameterLoans ? readPortableSourceParameterStyles(original,
+    typeof parameterLoans === 'object' ? parameterLoans : undefined).source : original;
+  if (parameterLoans && typeof parameterLoans === 'object' && parameterLoans.normalizeBorrowedArguments) {
+    // Re-read the first pass's actual interfaces: a converted String becomes
+    // an &str fact only after its source declaration has really changed.
+    corrected = readPortableSourceParameterStyles(corrected, parameterLoans).source;
+  }
   corrected = liftFamilyLibraryTruthinessConditions(corrected);
   corrected = flattenFamilyLibraryElseIf(corrected);
   corrected = mergeFamilyLibraryIdenticalBranches(corrected);

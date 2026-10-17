@@ -8,7 +8,7 @@ import {readSourceTextRustBlock} from './source-text-byte-library-style.mjs';
 export {readPortableSourceLintStyles} from './portable-source-lint-style.mjs';
 
 /** Borrow immutable primitive parameters; retain actual assigned parameters. */
-export function readPortableSourceParameterStyles(source, {publicNames = [], ownedParameters = {}} = {}) {
+export function readPortableSourceParameterStyles(source, {publicNames = [], ownedParameters = {}, normalizeBorrowedArguments = false} = {}) {
   const declarations = new Map();
   for (const [, name] of source.matchAll(/^pub fn (\w+)\(/gmu)) {
     const block = readSourceTextRustBlock(source, 'fn', name);
@@ -46,7 +46,7 @@ export function readPortableSourceParameterStyles(source, {publicNames = [], own
         && !assigned.has(param.name)
         && !(Object.hasOwn(ownedParameters, name) && ownedParameters[name].includes(param.name));
     }
-    declarations.set(name, {block, params});
+    declarations.set(name, {block, params, assigned, unique: !declarations.has(name)});
   }
   let adapted = source;
   const actions = [];
@@ -122,7 +122,12 @@ export function readPortableSourceParameterStyles(source, {publicNames = [], own
     for (const [start, end, text] of copies.sort((left, right) => right[0] - left[0])) {
       block = block.slice(0, start) + text + block.slice(end);
     }
-    const tokens = tokenize(block, 'Rust').tokens;
+    const {tokens, comments} = tokenize(block, 'Rust');
+    const body = tokens.findIndex(token => token.kind === 'punct' && token.value === '{');
+    const existingLoans = normalizeBorrowedArguments && declaration.unique && source.split(declaration.block).length === 2
+      && !tokens.slice(body + 1).some(token => token.kind === 'macro'
+        || token.kind === 'identifier' && ['let', 'match', 'for', 'fn', 'move', 'ref', 'unsafe', 'use'].includes(token.value)
+        || token.kind === 'punct' && ['|', '||'].includes(token.value));
     const matching = new Map(), stack = [];
     for (let index = 0; index < tokens.length; index += 1) {
       if (['(', '[', '{'].includes(tokens[index].value) && tokens[index].kind === 'punct') stack.push(index);
@@ -141,7 +146,28 @@ export function readPortableSourceParameterStyles(source, {publicNames = [], own
         else if (matching.has(at)) at = matching.get(at);
       }
       for (const [position, [from, end]] of arguments_.entries()) {
-        if (from === end || !target.params[position]?.borrow) continue;
+        if (from === end || !target.params[position]) continue;
+        const targetParameter = target.params[position];
+        if (existingLoans && target.unique && (targetParameter.type === '&str'
+          || targetParameter.borrow && targetParameter.type === 'String')
+          && tokens[index - 1]?.value === '::' && ['self', 'crate'].includes(tokens[index - 2]?.value)
+          && tokens[index - 3]?.value !== '::') {
+          let first = from, last = end;
+          while (tokens[first]?.value === '(' && matching.get(first) === last - 1) { first += 1; last -= 1; }
+          if (tokens[first]?.value === '&') {
+            first += 1;
+            while (tokens[first]?.value === '(' && matching.get(first) === last - 1) { first += 1; last -= 1; }
+            const name = tokens[first]?.value;
+            if (last === first + 1 && tokens[first]?.kind === 'identifier'
+              && declaration.params.filter(parameter => parameter.name === name && parameter.type === '&str').length === 1
+              && !declaration.assigned.has(name)
+              && !comments.some(comment => comment.start >= tokens[from].start && comment.end <= tokens[end - 1].end)) {
+              edits.push([tokens[from].start, tokens[end - 1].end, name]);
+              continue;
+            }
+          }
+        }
+        if (!targetParameter.borrow) continue;
         const text = block.slice(tokens[from].start, tokens[end - 1].end);
         let first = from, last = end;
         while (tokens[first]?.value === '(' && matching.get(first) === last - 1) { first += 1; last -= 1; }
