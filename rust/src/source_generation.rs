@@ -1,6 +1,9 @@
 use std::collections::BTreeSet;
 
+use crate::configuration::embedded_region_number;
 use crate::link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType};
+use crate::source::SourceSpan;
+use crate::translation::embedded_region_rules::accept_embedded_region_source_coverage;
 
 impl LinkNetwork {
     /// Inserts a source token that can be rendered without an original source span.
@@ -67,11 +70,54 @@ impl LinkNetwork {
     /// token links whose metadata language matches `language`.
     #[must_use]
     pub fn render_source(&self, language: &str) -> String {
+        if let Some(source) = self.render_source_token_coverage(language) {
+            return source;
+        }
         if let Some(source) = self.render_source_from_document(language) {
             return source;
         }
 
         self.render_source_roots(language)
+    }
+
+    fn render_source_token_coverage(&self, language: &str) -> Option<String> {
+        let mut tokens: Vec<_> = self
+            .links()
+            .filter(|link| {
+                link.metadata().link_type() == Some(LinkType::Token)
+                    && language_matches(link.metadata().language(), language)
+                    && !link.metadata().flags().is_missing()
+            })
+            .collect();
+        if !tokens.iter().any(|token| token.metadata().span().is_some()) {
+            return None;
+        }
+        tokens.sort_by_key(|token| {
+            let span = token.metadata().span();
+            (
+                span.is_none(),
+                span.map_or(0, |span| span.byte_range().start()),
+                token.id(),
+            )
+        });
+        let mut rendered = String::new();
+        let mut covered_until = 0;
+        for token in tokens {
+            let range = token.metadata().span().map(SourceSpan::byte_range);
+            if let Some(range) = range
+                && !accept_embedded_region_source_coverage(
+                    embedded_region_number(range.start()),
+                    embedded_region_number(covered_until),
+                )
+            {
+                continue;
+            }
+            rendered.push_str(token.metadata().term().unwrap_or_default());
+            if let Some(range) = range {
+                covered_until = range.end();
+            }
+        }
+        Some(rendered)
     }
 
     /// Renders source text from a specific syntax, document, region, or token link.

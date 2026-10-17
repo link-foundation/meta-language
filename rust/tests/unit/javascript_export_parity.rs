@@ -17,247 +17,8 @@ use super::issue_195_observations::{Observation, record};
 
 /// Every public item a JavaScript export maps to, imported to prove it exists.
 #[allow(unused_imports)]
-mod items {
-    use meta_language::API_OPERATIONS as _;
-    use meta_language::AccessMode as _;
-    use meta_language::ApiOperation as _;
-    use meta_language::ApiOperationEntry as _;
-    use meta_language::ApiStyle as _;
-    use meta_language::ApiStyleCell as _;
-    use meta_language::ApiStyleFixture as _;
-    use meta_language::ByteRange as _;
-    use meta_language::DECORATOR_LEVELS as _;
-    use meta_language::Decorator as _;
-    use meta_language::DecoratorError as _;
-    use meta_language::DecoratorSet as _;
-    use meta_language::EmbeddedRegion as _;
-    use meta_language::EngineNetwork as _;
-    use meta_language::ExprBuilder as _;
-    use meta_language::FORMER_CONCEPT_ID_VOCABULARY as _;
-    use meta_language::FORMER_CONCEPT_IDS as _;
-    use meta_language::FOUR_LANGUAGE_SUPPORT as _;
-    use meta_language::FluentPipeline as _;
-    use meta_language::GRAMMAR_COMMAND_USAGE as _;
-    use meta_language::GRAMMAR_DIAGNOSTIC_KINDS as _;
-    use meta_language::GRAMMAR_EXPORT_FORMATS as _;
-    use meta_language::GRAMMAR_IMPORT_FORMATS as _;
-    use meta_language::GRAMMAR_LOSSLESS_FORMATS as _;
-    use meta_language::GRAMMAR_LOWERING_FORMATS as _;
-    use meta_language::GRAMMAR_MERGE_METHOD as _;
-    use meta_language::GRAMMAR_ROUND_TRIP_MARKER as _;
-    use meta_language::Grammar as _;
-    use meta_language::GrammarBuilder as _;
-    use meta_language::GrammarEmitError as _;
-    use meta_language::GrammarImportError as _;
-    use meta_language::GrammarLoweringError as _;
-    use meta_language::GrammarMergeError as _;
-    use meta_language::GrammarParseError as _;
-    use meta_language::GrammarRenameError as _;
-    use meta_language::GrammarRuntimeError as _;
-    use meta_language::GraphQlAdapterError as _;
-    use meta_language::GraphQlArgumentRole as _;
-    use meta_language::GraphQlOperationType as _;
-    use meta_language::GraphQlRootMapping as _;
-    use meta_language::GraphQlSchemaRegistry as _;
-    use meta_language::LANGUAGE_REPRESENTATION_SCHEMA_VERSION as _;
-    use meta_language::LanguageProfile as _;
-    use meta_language::LanguageProfileLinks as _;
-    use meta_language::LanguageProfileViolation as _;
-    use meta_language::Link as _;
-    use meta_language::LinkCliSubstitution as _;
-    use meta_language::LinkCliSubstitutionKind as _;
-    use meta_language::LinkFlags as _;
-    use meta_language::LinkId as _;
-    use meta_language::LinkMetadata as _;
-    use meta_language::LinkNetwork as _;
-    use meta_language::LinkQuery as _;
-    use meta_language::LinkRule as _;
-    use meta_language::LinkRuleCapture as _;
-    use meta_language::LinkRuleCaptures as _;
-    use meta_language::LinkRuleMatch as _;
-    use meta_language::LinkRuleParseError as _;
-    use meta_language::LinkRuleRegistry as _;
-    use meta_language::LinkRuleSnapshotCase as _;
-    use meta_language::LinkRuleSnapshotExpectation as _;
-    use meta_language::LinkRuleSnapshotReport as _;
-    use meta_language::LinkRuleSnapshotResult as _;
-    use meta_language::LinkRuleSnapshotSuite as _;
-    use meta_language::LinkType as _;
-    use meta_language::LoweredQueryPlan as _;
-    use meta_language::MAX_LOWERED_CHARACTERS as _;
-    use meta_language::NetworkProjection as _;
-    use meta_language::NetworkSnapshot as _;
-    use meta_language::PROGRAM_REPRESENTATION_SCHEMA_VERSION as _;
-    use meta_language::PROGRAM_SNAPSHOT_SCHEMA_VERSION as _;
-    use meta_language::ParseConfiguration as _;
-    use meta_language::ParserRegistry as _;
-    use meta_language::Point as _;
-    use meta_language::ProbabilisticTruthValue as _;
-    use meta_language::Probability as _;
-    use meta_language::ProgramRepresentation as _;
-    use meta_language::ProgramRepresentationError as _;
-    use meta_language::QUERY_PLAN_VERSION as _;
-    use meta_language::QueryAggregateFunction as _;
-    use meta_language::QueryAuthorization as _;
-    use meta_language::QueryCapture as _;
-    use meta_language::QueryCaptures as _;
-    use meta_language::QueryComparisonOperator as _;
-    use meta_language::QueryIndex as _;
-    use meta_language::QueryMatch as _;
-    use meta_language::QueryOperation as _;
-    use meta_language::QueryParseError as _;
-    use meta_language::QueryPlan as _;
-    use meta_language::QuerySortDirection as _;
-    use meta_language::QuerySourceEvidence as _;
-    use meta_language::REQUIRED_CONCEPT_DISTINCTIONS as _;
-    use meta_language::REQUIRED_FOUNDATION_DISTINCTIONS as _;
-    use meta_language::ReadOnlyNetwork as _;
-    use meta_language::ReadOnlyViolation as _;
-    use meta_language::RegionDetectionPolicy as _;
-    use meta_language::RejectPredicateHost as _;
-    use meta_language::ReplacementReport as _;
-    use meta_language::ReplacementRule as _;
-    use meta_language::RepresentationLevel as _;
-    use meta_language::SELF_TRANSLATION_LANGUAGES as _;
-    use meta_language::SEMANTIC_CONSTRUCTS as _;
-    use meta_language::SEMANTIC_ENCODING as _;
-    use meta_language::SEMANTIC_OBSERVATION as _;
-    use meta_language::SQL_DIALECT_PROFILES as _;
-    use meta_language::SelfTranslationError as _;
-    use meta_language::SourceSpan as _;
-    use meta_language::SourceTextPredicateHost as _;
-    use meta_language::SqlAdapterError as _;
-    use meta_language::SqlAdapterErrorKind as _;
-    use meta_language::SqlRelationMapping as _;
-    use meta_language::SqlSchemaRegistry as _;
-    use meta_language::SubstitutionReport as _;
-    use meta_language::SubstitutionRule as _;
-    use meta_language::TextReplacement as _;
-    use meta_language::TranslationRule as _;
-    use meta_language::TranslationRuleSet as _;
-    use meta_language::TranslationSupport as _;
-    use meta_language::TranslationTemplate as _;
-    use meta_language::TraversalReport as _;
-    use meta_language::TraversalStrategy as _;
-    use meta_language::TriviaAttachmentPolicy as _;
-    use meta_language::TruthValue as _;
-    use meta_language::VerificationIssue as _;
-    use meta_language::VerificationReport as _;
-    use meta_language::accepts_text as _;
-    use meta_language::analyze_program as _;
-    use meta_language::assert_merge_complete as _;
-    use meta_language::assert_merge_shares as _;
-    use meta_language::canonical_language_name as _;
-    use meta_language::canonical_repeat as _;
-    use meta_language::canonical_rule_definition as _;
-    use meta_language::capture_grammar_layout as _;
-    use meta_language::carry_rule_docs as _;
-    use meta_language::check_concept_distinctions as _;
-    use meta_language::check_grammar_lowering as _;
-    use meta_language::check_grammar_reverse_conversion as _;
-    use meta_language::check_grammar_round_trip as _;
-    use meta_language::check_native_grammar_concepts as _;
-    use meta_language::choice as _;
-    use meta_language::compile_feature_grammar as _;
-    use meta_language::concept_correspondence as _;
-    use meta_language::concept_record as _;
-    use meta_language::concept_records as _;
-    use meta_language::concept_records_for_source_name as _;
-    use meta_language::construct_program as _;
-    use meta_language::construct_program_from_fragments as _;
-    use meta_language::current_concept_id as _;
-    use meta_language::decode_program_translation as _;
-    use meta_language::decorate_grammar as _;
-    use meta_language::decorate_syntax_tree as _;
-    use meta_language::deserialize_grammar as _;
-    use meta_language::detect_embedded_regions as _;
-    use meta_language::detect_embedded_regions_in_tree as _;
-    use meta_language::display_grammar_expression as _;
-    use meta_language::dropped_grammar_features as _;
-    use meta_language::emit_abnf as _;
-    use meta_language::emit_antlr as _;
-    use meta_language::emit_bnf as _;
-    use meta_language::emit_ebnf as _;
-    use meta_language::emit_gbnf as _;
-    use meta_language::emit_grammar_lossless as _;
-    use meta_language::emit_javascript_parser as _;
-    use meta_language::emit_lark as _;
-    use meta_language::emit_peggy as _;
-    use meta_language::emit_pest as _;
-    use meta_language::emit_tree_sitter_json as _;
-    use meta_language::grammar_emitter as _;
-    use meta_language::grammar_expr_concept_id as _;
-    use meta_language::grammar_importer as _;
-    use meta_language::grammar_names as _;
-    use meta_language::grammar_precedence_concepts as _;
-    use meta_language::grammar_provenance as _;
-    use meta_language::import_abnf as _;
-    use meta_language::import_antlr as _;
-    use meta_language::import_bnf as _;
-    use meta_language::import_ebnf as _;
-    use meta_language::import_gbnf as _;
-    use meta_language::import_grammar_lossless as _;
-    use meta_language::import_lark as _;
-    use meta_language::import_pest as _;
-    use meta_language::import_tree_sitter_json as _;
-    use meta_language::language_candidates_for_path as _;
-    use meta_language::language_catalog as _;
-    use meta_language::language_entry as _;
-    use meta_language::language_for_path as _;
-    use meta_language::language_support as _;
-    use meta_language::lower_grammar as _;
-    use meta_language::lower_graphql as _;
-    use meta_language::lower_sql as _;
-    use meta_language::merge_grammars as _;
-    use meta_language::mutate_grammar_start_rule as _;
-    use meta_language::native_construct_tree as _;
-    use meta_language::native_grammar_concept_reuse as _;
-    use meta_language::native_grammar_ids as _;
-    use meta_language::native_grammar_language as _;
-    use meta_language::native_grammar_rule_concepts as _;
-    use meta_language::native_grammar_source as _;
-    use meta_language::normalized_rule_definition as _;
-    use meta_language::parse_grammar_layout_links as _;
-    use meta_language::parse_grammar_links as _;
-    use meta_language::parse_links_expression as _;
-    use meta_language::parse_lowering_metadata as _;
-    use meta_language::parse_native_grammar as _;
-    use meta_language::parse_with_grammar as _;
-    use meta_language::percent_decode_links_text as _;
-    use meta_language::percent_encode_links_text as _;
-    use meta_language::query_by_concept_term as _;
-    use meta_language::read_translation_provenance as _;
-    use meta_language::reconstruct_grammar as _;
-    use meta_language::rename_grammar_rule as _;
-    use meta_language::render_declaration_links as _;
-    use meta_language::render_grammar_layout_links as _;
-    use meta_language::render_grammar_links as _;
-    use meta_language::render_links_expression as _;
-    use meta_language::render_lowering_metadata as _;
-    use meta_language::render_native_expression as _;
-    use meta_language::render_native_grammar as _;
-    use meta_language::render_rule_fields as _;
-    use meta_language::render_rule_link as _;
-    use meta_language::restore_source_names as _;
-    use meta_language::run_api_style_fixture as _;
-    use meta_language::run_grammar_command as _;
-    use meta_language::script_language as _;
-    use meta_language::self_translate as _;
-    use meta_language::self_translation_language as _;
-    use meta_language::self_translation_signatures as _;
-    use meta_language::sequence as _;
-    use meta_language::serialize_grammar as _;
-    use meta_language::shared_rule_decisions as _;
-    use meta_language::sniff_language as _;
-    use meta_language::source_meanings_in as _;
-    use meta_language::split_grammar_source as _;
-    use meta_language::translate_native_construct as _;
-    use meta_language::translate_native_construct_tree as _;
-    use meta_language::translate_program as _;
-    use meta_language::translation_contract as _;
-    use meta_language::translation_contracts as _;
-    use meta_language::validate as _;
-}
+#[path = "javascript_export_parity/items.rs"]
+mod items;
 
 /// Every JavaScript export as `(export, Rust path, kind)`.
 const EXPORTS: &[(&str, &str, &str)] = &[
@@ -269,6 +30,7 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("ApiStyleCell", "ApiStyleCell", "type"),
     ("ApiStyleFixture", "ApiStyleFixture", "type"),
     ("ApiStyleFixtureKind", "ApiStyleFixture", "type"),
+    ("BinaryLinksError", "BinaryLinksError", "type"),
     ("BindingRenameError", "ProgramRepresentationError", "type"),
     ("ByteRange", "ByteRange", "type"),
     ("CONCEPT_RECORDS", "concept_records", "function"),
@@ -285,6 +47,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "constant",
     ),
     ("FluentPipeline", "FluentPipeline", "type"),
+    (
+        "GLOBAL_CONCEPT_PROOF_METHOD",
+        "GLOBAL_CONCEPT_PROOF_METHOD",
+        "constant",
+    ),
     ("GRAMMAR_COMMAND_USAGE", "GRAMMAR_COMMAND_USAGE", "constant"),
     (
         "GRAMMAR_DIAGNOSTIC_KINDS",
@@ -427,6 +194,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("ReplacementRule", "ReplacementRule", "type"),
     ("RepresentationLevel", "RepresentationLevel", "type"),
     (
+        "ResourceDescriptionNTriplesError",
+        "ResourceDescriptionNTriplesError",
+        "type",
+    ),
+    (
         "SELF_TRANSLATION_LANGUAGES",
         "SELF_TRANSLATION_LANGUAGES",
         "constant",
@@ -494,6 +266,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     (
+        "checkGrammarSelectionMappedTree",
+        "check_grammar_selection_mapped_tree",
+        "function",
+    ),
+    (
         "checkNativeGrammarConcepts",
         "check_native_grammar_concepts",
         "function",
@@ -518,16 +295,57 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "construct_program_from_fragments",
         "function",
     ),
+    ("createConceptViews", "create_concept_views", "function"),
+    (
+        "createDiscoveredConceptLinks",
+        "create_discovered_concept_links",
+        "function",
+    ),
+    (
+        "createGlobalConceptSpace",
+        "create_global_concept_space",
+        "function",
+    ),
+    (
+        "createGlobalConceptSpaceParser",
+        "create_global_concept_space_parser",
+        "function",
+    ),
     ("createGrammarParser", "compile_feature_grammar", "function"),
     (
         "createProgramSnapshot",
         "ProgramRepresentation::serialize_snapshot",
         "method",
     ),
+    (
+        "createTypedProgramLinks",
+        "create_typed_program_links",
+        "function",
+    ),
     ("currentConceptId", "current_concept_id", "function"),
+    (
+        "decodeLinkNetworkBinary",
+        "decode_link_network_binary",
+        "function",
+    ),
     (
         "decodeProgramTranslation",
         "decode_program_translation",
+        "function",
+    ),
+    (
+        "decodeResourceDescriptionGraph",
+        "decode_resource_description_graph",
+        "function",
+    ),
+    (
+        "decodeStructuredDataLinks",
+        "decode_structured_data_links",
+        "function",
+    ),
+    (
+        "decodeTypedProgramLinks",
+        "decode_typed_program_links",
         "function",
     ),
     ("decorateGrammar", "decorate_grammar", "function"),
@@ -565,7 +383,17 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("emitLark", "emit_lark", "function"),
     ("emitPeggy", "emit_peggy", "function"),
     ("emitPest", "emit_pest", "function"),
+    (
+        "emitResourceDescriptionNTriples",
+        "emit_resource_description_ntriples",
+        "function",
+    ),
     ("emitTreeSitterJson", "emit_tree_sitter_json", "function"),
+    (
+        "emitTypedProgramLinks",
+        "emit_typed_program_links",
+        "function",
+    ),
     ("emit_abnf", "emit_abnf", "function"),
     ("emit_antlr", "emit_antlr", "function"),
     ("emit_bnf", "emit_bnf", "function"),
@@ -574,8 +402,44 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("emit_lark", "emit_lark", "function"),
     ("emit_pest", "emit_pest", "function"),
     ("emit_tree_sitter_json", "emit_tree_sitter_json", "function"),
+    (
+        "encodeFormalConceptDefinition",
+        "encode_formal_concept_definition",
+        "function",
+    ),
+    (
+        "encodeFormalFunctionDefinition",
+        "encode_formal_function_definition",
+        "function",
+    ),
+    (
+        "encodeLinkNetworkBinary",
+        "encode_link_network_binary",
+        "function",
+    ),
+    (
+        "encodeSharedNumericFunctionDefinition",
+        "encode_shared_numeric_function_definition",
+        "function",
+    ),
+    (
+        "encodeStructuredDataLinks",
+        "encode_structured_data_links",
+        "function",
+    ),
+    (
+        "encodeTypedProgramLinks",
+        "encode_typed_program_links",
+        "function",
+    ),
+    ("eraseTypeScript", "erase_type_script", "function"),
     ("fourLanguageSupport", "FOUR_LANGUAGE_SUPPORT", "constant"),
     ("freeze", "LinkNetwork::freeze", "method"),
+    (
+        "globalConceptSpaceToLinks",
+        "global_concept_space_to_links",
+        "function",
+    ),
     ("grammarEmitter", "grammar_emitter", "function"),
     (
         "grammarExprConceptId",
@@ -603,6 +467,16 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ),
     ("importLark", "import_lark", "function"),
     ("importPest", "import_pest", "function"),
+    (
+        "importResourceDescriptionGraph",
+        "import_resource_description_graph",
+        "function",
+    ),
+    (
+        "importResourceDescriptionNTriples",
+        "import_resource_description_ntriples",
+        "function",
+    ),
     (
         "importTreeSitterJson",
         "import_tree_sitter_json",
@@ -641,6 +515,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("lowerSql", "lower_sql", "function"),
     ("lower_sql", "lower_sql", "function"),
     ("mergeGrammars", "merge_grammars", "function"),
+    (
+        "mergeResourceDescriptionGraphs",
+        "merge_resource_description_graphs",
+        "function",
+    ),
     (
         "mutateGrammarStartRule",
         "mutate_grammar_start_rule",
@@ -695,15 +574,69 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "percent_encode_links_text",
         "function",
     ),
+    (
+        "projectTypeScriptTyping",
+        "project_type_script_typing",
+        "function",
+    ),
+    (
+        "proveFormalConceptEquivalence",
+        "prove_formal_concept_equivalence",
+        "function",
+    ),
     ("queryByConceptTerm", "query_by_concept_term", "function"),
+    ("readConceptOntology", "read_concept_ontology", "function"),
+    ("readConceptTaxonomy", "read_concept_taxonomy", "function"),
+    (
+        "readDiscoveredConceptLinks",
+        "read_discovered_concept_links",
+        "function",
+    ),
+    (
+        "readFormalConceptDefinition",
+        "read_formal_concept_definition",
+        "function",
+    ),
+    (
+        "readGlobalConceptSpaceLinks",
+        "read_global_concept_space_links",
+        "function",
+    ),
     (
         "readProgramSnapshot",
         "ProgramRepresentation::from_snapshot",
         "method",
     ),
     (
+        "readResourceDescriptionNTriplesSource",
+        "read_resource_description_ntriples_source",
+        "function",
+    ),
+    ("readSourceTextByte", "read_source_text_byte", "function"),
+    (
+        "readSourceTextByteLength",
+        "read_source_text_byte_length",
+        "function",
+    ),
+    ("readSourceTextUnits", "read_source_text_units", "function"),
+    (
+        "readStructuredDataLino",
+        "read_structured_data_lino",
+        "function",
+    ),
+    (
+        "readStructuredDataRecords",
+        "read_structured_data_records",
+        "function",
+    ),
+    (
         "readTranslationProvenance",
         "read_translation_provenance",
+        "function",
+    ),
+    (
+        "readTypedProgramBindingIdentities",
+        "read_typed_program_binding_identities",
         "function",
     ),
     ("reconstructGrammar", "reconstruct_grammar", "function"),
@@ -717,6 +650,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     (
         "renderGrammarLayoutLinks",
         "render_grammar_layout_links",
+        "function",
+    ),
+    (
+        "renderGrammarLexicalOwnerComparison",
+        "render_grammar_lexical_owner_comparison",
         "function",
     ),
     ("renderGrammarLinks", "render_grammar_links", "function"),
@@ -757,10 +695,30 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("sequence", "sequence", "function"),
     ("serializeGrammar", "serialize_grammar", "function"),
     ("sharedRuleDecisions", "shared_rule_decisions", "function"),
+    (
+        "sliceSourceTextBytes",
+        "slice_source_text_bytes",
+        "function",
+    ),
     ("sniffLanguage", "sniff_language", "function"),
     ("sourceMeanings", "source_meanings_in", "function"),
     ("sourceTextPredicateHost", "SourceTextPredicateHost", "type"),
     ("splitGrammarSource", "split_grammar_source", "function"),
+    (
+        "structuredDataRecordToLino",
+        "structured_data_record_to_lino",
+        "function",
+    ),
+    (
+        "structuredDataToLino",
+        "structured_data_to_lino",
+        "function",
+    ),
+    (
+        "translateGlobalConstruct",
+        "translate_global_construct",
+        "function",
+    ),
     (
         "translateNativeConstruct",
         "translate_native_construct",
@@ -775,18 +733,34 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("translationContract", "translation_contract", "function"),
     ("translationContracts", "translation_contracts", "function"),
     ("validateGrammar", "validate", "function"),
+    (
+        "verifyFormalConceptEquivalence",
+        "verify_formal_concept_equivalence",
+        "function",
+    ),
+    (
+        "verifyGlobalConceptCorrespondence",
+        "verify_global_concept_correspondence",
+        "function",
+    ),
+    (
+        "verifyResourceDescriptionGraphWitnesses",
+        "verify_resource_description_graph_witnesses",
+        "function",
+    ),
 ];
 
 const FIXTURE_ID: &str = "planned:repository-directive:i195-parity-feature-completeness";
 
 fn language_features() -> Value {
     let mut dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    while !dir.join("parity/language-features.json").is_file() {
-        assert!(dir.pop(), "parity/language-features.json should exist");
+    while !dir.join("parity/language-features.lino").is_file() {
+        assert!(dir.pop(), "parity/language-features.lino should exist");
     }
-    let text = fs::read_to_string(dir.join("parity/language-features.json"))
-        .expect("parity/language-features.json should be readable");
-    serde_json::from_str(&text).expect("parity/language-features.json should be JSON")
+    let text = fs::read_to_string(dir.join("parity/language-features.lino"))
+        .expect("parity/language-features.lino should be readable");
+    meta_language::read_structured_data_lino(&text)
+        .expect("parity/language-features.lino should be linked structured data")
 }
 
 #[test]

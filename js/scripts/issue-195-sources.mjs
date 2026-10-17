@@ -1,5 +1,5 @@
 // Source register of issue #195: the issue and every requirement-bearing
-// comment of pull request #196, each with the revision (updatedAt, byte count
+// comment of the original and remaining-scope discussions, each with the revision (updatedAt, byte count
 // and sha256 of the exact body the GitHub REST API returns) that the atomic
 // ledger in parity/issue-195-requirements.json was reconciled against.
 //
@@ -7,14 +7,78 @@
 // registered nor recognized as automation output is reported as unregistered,
 // so the ledger cannot silently keep a stale or incomplete requirement snapshot.
 // The offline check (the default) validates the committed register against the
-// ledger; `--online` also compares it with the live discussion.
+// ledger and captured direct instructions; `--online` also compares it with
+// the live issue #195/#199 and pull request #196/#201 discussions.
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 export const ISSUE_195_SOURCE_REGISTER_PATH = 'parity/issue-195-sources.json';
 export const ISSUE_195_SOURCE_REGISTER_SCHEMA_VERSION = 1;
 
 const REPOSITORY = 'link-foundation/meta-language';
+export const TRACKED_ISSUES = Object.freeze([195, 199, 224]);
+export const TRACKED_PULL_REQUESTS = Object.freeze([196, 201]);
+const REPOSITORY_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+
+// Actual direct conversation captures. Appending these declarations never
+// rewrites an earlier live source, capture, timestamp or ledger mapping.
+export const ASSERTION_POLICY_INSTRUCTION_SOURCES = Object.freeze([
+  {
+    id: 'modern-javascript-parity-expectations-2026-10-16',
+    key: 'modernJavaScriptParityRequest',
+    title: 'Use newer JavaScript behavior and correct obsolete native expectations',
+    role: 'Explicit user resolution of the retained Rust versus JavaScript string length and array bounds expectation conflict, with the exact question and reply.',
+    ledgerCoverage: ['I195-PARITY-MODERN-JAVASCRIPT-ARRAY-BEHAVIOR', 'I195-PARITY-OBSOLETE-NATIVE-EXPECTATIONS'],
+  },
+  {
+    id: 'compact-contributor-instructions-and-assertion-corrections-2026-10-16',
+    key: 'compactContributorInstructionsRequest',
+    title: 'Minimize contributor instructions and permit evidence based assertion corrections',
+    role: 'Direct user request to shorten AGENTS.md and CLAUDE.md without losing obligations and to allow genuinely wrong assertions to be fixed.',
+    ledgerCoverage: ['I195-CONTRIBUTOR-INSTRUCTIONS-CONCISE', 'I195-ASSERTION-EVIDENCE-BASED-CORRECTION'],
+  },
+  {
+    id: 'version-bounded-assertions-2026-10-16',
+    key: 'versionBoundedAssertionsRequest',
+    title: 'Bound version dependent assertions to the actual active language or dependency version',
+    role: 'Direct user requirement for explicit applicable version ranges on assertions that depend on language or dependency versions.',
+    ledgerCoverage: ['I195-ASSERTION-EXPLICIT-VERSION-RANGES', 'I195-ASSERTION-VERSION-COVERAGE', 'I195-ASSERTION-LANGUAGE-EDITION-ORDER'],
+  },
+].map(source => Object.freeze({ ...source, ledgerCoverage: Object.freeze(source.ledgerCoverage) })));
+
+/** Prepare append-only registrations from the actual captured UTF-8 bytes. */
+export async function appendAssertionPolicyInstructionSources(register, { root = REPOSITORY_ROOT, capturedAt = new Date().toISOString(), read = readFile } = {}) {
+  if (!Array.isArray(register?.requirementSources)) throw new TypeError('a requirement source register is required');
+  if (typeof capturedAt !== 'string' || !Number.isFinite(Date.parse(capturedAt))) {
+    throw new TypeError('an actual capture time is required; the conversation exposes no source timestamp');
+  }
+  const requirementSources = [...register.requirementSources];
+  for (const declaration of ASSERTION_POLICY_INSTRUCTION_SOURCES) {
+    const url = `parity/sources/${declaration.id}.txt`;
+    const body = await read(path.join(root, url), 'utf8');
+    const captured = { ...declaration, kind: 'direct-instruction', url, author: 'user',
+      createdAt: capturedAt, updatedAt: capturedAt,
+      revisionOrigin: 'capture time; the conversation does not expose a source timestamp',
+      bytes: byteLength(body), sha256: contentHash(body) };
+    const matches = registeredEntries(register).filter(entry => entry.id === declaration.id || entry.url === url || entry.key === declaration.key);
+    if (matches.length) {
+      if (matches.length !== 1 || matches[0].classification !== 'requirement') throw new Error(`conflicting captured source ${declaration.key}`);
+      const current = matches[0];
+      for (const field of ['id', 'key', 'kind', 'url', 'title', 'role', 'revisionOrigin', 'bytes', 'sha256']) {
+        if (current[field] !== captured[field]) throw new Error(`captured source ${declaration.key} changed ${field}`);
+      }
+      if (JSON.stringify(current.ledgerCoverage) !== JSON.stringify(captured.ledgerCoverage)) {
+        throw new Error(`captured source ${declaration.key} changed its original ledger coverage`);
+      }
+      continue;
+    }
+    requirementSources.push(captured);
+  }
+  return { ...register, requirementSources };
+}
 
 // Openings of the comments that the solver automation posts (session logs,
 // restart, usage-limit and resume notices and readiness markers); they carry
@@ -98,10 +162,25 @@ export function validateSourceRegister(register, manifest, sources) {
       }
     }
     if (!/^[0-9a-f]{64}$/.test(entry.sha256 ?? '')) errors.push(`source ${label} has no sha256 content hash`);
-    const expectedUrl = entry.kind === 'issue'
-      ? `https://github.com/${REPOSITORY}/issues/${entry.id}`
-      : `https://github.com/${REPOSITORY}/pull/196#issuecomment-${entry.id}`;
-    if (entry.url !== expectedUrl) errors.push(`source ${label} url must be ${expectedUrl}`);
+    if (entry.kind === 'issue') {
+      const expectedUrl = `https://github.com/${REPOSITORY}/issues/${entry.id}`;
+      if (entry.url !== expectedUrl) errors.push(`source ${label} url must be ${expectedUrl}`);
+    } else if (entry.kind === 'comment') {
+      const discussion = /^https:\/\/github\.com\/link-foundation\/meta-language\/(pull|issues)\/(\d+)#issuecomment-(\d+)$/u.exec(entry.url ?? '');
+      const tracked = discussion?.[1] === 'pull' ? TRACKED_PULL_REQUESTS : TRACKED_ISSUES;
+      if (!discussion || !tracked.includes(Number(discussion[2])) || discussion[3] !== String(entry.id)) {
+        errors.push(`source ${label} must cite its exact comment in a tracked issue or pull request`);
+      }
+    } else if (entry.kind === 'direct-instruction') {
+      if (entry.url !== `parity/sources/${entry.id}.txt` || !/^[a-z0-9-]+$/u.test(entry.id)) {
+        errors.push(`source ${label} must cite its captured direct instruction in parity/sources`);
+      }
+      if (entry.revisionOrigin !== 'capture time; the conversation does not expose a source timestamp') {
+        errors.push(`source ${label} must identify its timestamps as capture metadata`);
+      }
+    } else {
+      errors.push(`source ${label} has unknown kind ${entry.kind}`);
+    }
   }
   const rows = manifest.atomicRequirements ?? [];
   for (const entry of register.requirementSources ?? []) {
@@ -143,12 +222,14 @@ export function validateSourceRegister(register, manifest, sources) {
  * edited or deleted registered source and an unregistered, non-automation
  * comment are errors.
  */
-export function compareWithLiveDiscussion(register, { issue, comments }) {
+export function compareWithLiveDiscussion(register, { issue, issues = [], comments }) {
   const errors = [];
   const live = new Map([[String(issue.number ?? 195), { ...issue, kind: 'issue' }]]);
+  for (const additional of issues) live.set(String(additional.number), { ...additional, kind: 'issue' });
   for (const comment of comments) live.set(String(comment.id), { ...comment, kind: 'comment' });
   const registered = new Map(registeredEntries(register).map((entry) => [String(entry.id), entry]));
   for (const [id, entry] of registered) {
+    if (entry.kind === 'direct-instruction') continue;
     const current = live.get(id);
     if (!current) {
       errors.push(`registered ${entry.classification} ${entry.url} no longer exists`);
@@ -174,8 +255,9 @@ export function compareWithLiveDiscussion(register, { issue, comments }) {
 }
 
 /** Rewrites the revision fields of the registered entries from the live discussion. */
-export function refreshRegister(register, { issue, comments }) {
+export function refreshRegister(register, { issue, issues = [], comments }) {
   const live = new Map([[String(issue.number ?? 195), issue]]);
+  for (const additional of issues) live.set(String(additional.number), additional);
   for (const comment of comments) live.set(String(comment.id), comment);
   const refresh = (entry) => {
     const current = live.get(String(entry.id));
@@ -187,6 +269,25 @@ export function refreshRegister(register, { issue, comments }) {
     requirementSources: register.requirementSources.map(refresh),
     statusReports: register.statusReports.map(refresh),
   };
+}
+
+/** Captured conversation instructions are checked from their committed bytes. */
+export async function validateDirectInstructions(register, root = REPOSITORY_ROOT) {
+  const errors = [];
+  for (const entry of registeredEntries(register)) {
+    if (entry.kind !== 'direct-instruction') continue;
+    if (entry.url !== `parity/sources/${entry.id}.txt` || !/^[a-z0-9-]+$/u.test(entry.id)) continue;
+    try {
+      const body = await readFile(path.join(root, entry.url), 'utf8');
+      if (contentHash(body) !== entry.sha256 || byteLength(body) !== entry.bytes) {
+        errors.push(`direct instruction ${entry.url} differs from its registered content hash or byte count`);
+      }
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+      errors.push(`registered direct instruction ${entry.url} no longer exists`);
+    }
+  }
+  return errors;
 }
 
 function githubToken() {
@@ -220,20 +321,25 @@ async function githubGet(pathname, token) {
 }
 
 /**
- * Fetches the issue with its comments and every conversation comment, inline
- * review comment and review of pull request #196.
+ * Fetches every tracked issue and its comments, and every conversation comment,
+ * inline review comment and review of the original and follow-up pull requests.
+ * The injectable request keeps the endpoint coverage test independent of GitHub.
  */
-export async function fetchLiveDiscussion() {
+export async function fetchLiveDiscussion({ request = githubGet } = {}) {
   const token = githubToken();
-  const [issue, issueComments, conversation, reviewComments, reviews] = await Promise.all([
-    githubGet(`repos/${REPOSITORY}/issues/195`, token),
-    githubGet(`repos/${REPOSITORY}/issues/195/comments?per_page=100`, token),
-    githubGet(`repos/${REPOSITORY}/issues/196/comments?per_page=100`, token),
-    githubGet(`repos/${REPOSITORY}/pulls/196/comments?per_page=100`, token),
-    githubGet(`repos/${REPOSITORY}/pulls/196/reviews?per_page=100`, token),
+  const [issues, issueComments, pullRequestComments] = await Promise.all([
+    Promise.all(TRACKED_ISSUES.map((number) => request(`repos/${REPOSITORY}/issues/${number}`, token))),
+    Promise.all(TRACKED_ISSUES.map((number) => request(`repos/${REPOSITORY}/issues/${number}/comments?per_page=100`, token))),
+    Promise.all(TRACKED_PULL_REQUESTS.map(async (number) => {
+      const [conversation, reviewComments, reviews] = await Promise.all([
+        request(`repos/${REPOSITORY}/issues/${number}/comments?per_page=100`, token),
+        request(`repos/${REPOSITORY}/pulls/${number}/comments?per_page=100`, token),
+        request(`repos/${REPOSITORY}/pulls/${number}/reviews?per_page=100`, token),
+      ]);
+      const reviewBodies = reviews.filter((review) => (review.body ?? '').trim() !== '')
+        .map((review) => ({ ...review, created_at: review.submitted_at, updated_at: review.submitted_at }));
+      return [...conversation, ...reviewComments, ...reviewBodies];
+    })),
   ]);
-  const reviewBodies = reviews
-    .filter((review) => (review.body ?? '').trim() !== '')
-    .map((review) => ({ ...review, created_at: review.submitted_at, updated_at: review.submitted_at }));
-  return { issue, comments: [...issueComments, ...conversation, ...reviewComments, ...reviewBodies] };
+  return { issue: issues[0], issues: issues.slice(1), comments: [...issueComments.flat(), ...pullRequestComments.flat()] };
 }

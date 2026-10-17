@@ -3,11 +3,12 @@
 // It runs on main after merge with the workflow token and never as a pull
 // request check: the rules it inspects are live state outside the pull request.
 import { execFileSync } from 'node:child_process';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { buildIssue195Manifest } from './issue-195-acceptance-lib.mjs';
+import { writeProjectData } from './project-data.mjs';
 import {
   evaluateMergeEnforcement, inspectMergeEnforcement, verifyEvaluatedCheckout,
 } from './issue-195-merge-enforcement.mjs';
@@ -37,11 +38,11 @@ try {
 } catch (error) {
   report = { commit, checks: {}, errors: [error.message], notes: [] };
 }
-await writeFile(output, `${JSON.stringify(report, null, 2)}\n`);
+const actualOutput = writeProjectData(output, report, { format: 'lino' });
 for (const [assertion, holds] of Object.entries(report.checks)) {
   console.log(`${assertion}: ${holds ? 'observed' : 'missing'}`);
 }
 for (const note of report.notes) console.log(`note: ${note}`);
 for (const error of report.errors) console.error(error);
-console.log(`Post-merge merge enforcement report: ${output}`);
+console.log(`Post-merge merge enforcement report: ${actualOutput}`);
 if (report.errors.length > 0) process.exitCode = 1;

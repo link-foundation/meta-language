@@ -16,7 +16,7 @@ Status: both packages implement this page. The JavaScript package does so in
 native executor [`rust/src/grammar/feature_runtime/`](../../rust/src/grammar/feature_runtime/)
 (`compile_feature_grammar`, `FeatureGrammarParser`), which uses no parser
 generator. The shared fixture
-[`parity/fixtures/grammar-feature-union.json`](../../parity/fixtures/grammar-feature-union.json)
+[`parity/fixtures/grammar-feature-union.lino`](../../parity/fixtures/grammar-feature-union.lino)
 is the executable check both ports pass byte for byte
 ([`js/tests/issue-195-grammar-feature-union.test.js`](../../js/tests/issue-195-grammar-feature-union.test.js),
 [`rust/tests/unit/issue_195_grammar_feature_union.rs`](../../rust/tests/unit/issue_195_grammar_feature_union.rs)
@@ -34,7 +34,7 @@ class, or a call of a parameterized rule) by its native listing over
 equivalent references, written `feature(...)` in the merge decision: two
 such bodies merge only when they are the same form over rules the merge
 proves equivalent
-([`parity/fixtures/grammar-merge-features.json`](../../parity/fixtures/grammar-merge-features.json)).
+([`parity/fixtures/grammar-merge-features.lino`](../../parity/fixtures/grammar-merge-features.lino)).
 
 Known gaps: the merge does not normalize inside a feature form, so
 `alias(x, choice(a, b))` and `alias(x, choice(b, a))` stay apart. In the Rust crate,
@@ -288,7 +288,9 @@ Values: `integer`, `text`, `variable(name)` (0 when unset), `top(stack)` (0
 when empty), `depth(stack)`, `column` (0-based, in code points since the last
 line feed), `matched` (the matched text), `mode` (the current mode),
 `attribute(field, attribute)`, `sumOf(field, attribute)`, `fieldText(field)`,
-`length(value)` (code points of a text), `number(value)` (a text of at most 15
+`length(value)` (code points of a text), `uppercase(value)` (one Unicode
+uppercase scalar per input scalar, retaining characters whose uppercase spelling
+would expand), `number(value)` (a text of at most 15
 digits with an optional `-`), `add`, `subtract`, `multiply`. Arithmetic on a
 non-integer, or a result outside the safe integer range, fails.
 
@@ -296,12 +298,18 @@ A failing operation (`fail`, a failed `advance`, `consume`, `skip` or `pop`, a
 type error, a missing attribute) fails the scanner run, the action or the
 predicate; it never throws to the caller.
 
+Scanner expression predicates read the working state after preceding scanner
+operations. A failed scanner still discards that state, and lookahead does not
+consume the input or commit its own state changes.
+
 Each context admits a subset (`OPERATION_CONTEXTS` in
 [`operations.js`](../../js/src/grammar-runtime/operations.js)); loading rejects
 any other operation with reason `operation`:
 
 - scanner: every statement except `setAttribute` and `buildNode`; every
-  condition; every value except `matched`, `attribute`, `sumOf` and `fieldText`;
+  condition; every value except `attribute`, `sumOf` and `fieldText`. In a
+  scanner, `matched` reads the text consumed since the last `skip`, up to the
+  current cursor; `mark` does not change that text;
 - action: every statement except `advance`, `consume`, `skip`, `mark` and
   `emit`; every condition except `valid`, `next` and `expected`; every value;
 - predicate: conditions except `valid`, `next` and `expected`, and values except
@@ -854,7 +862,7 @@ Peggy, which is only a development dependency of tests that compare against it.
 
 ## Fixture and tests
 
-[`parity/fixtures/grammar-feature-union.json`](../../parity/fixtures/grammar-feature-union.json)
+[`parity/fixtures/grammar-feature-union.lino`](../../parity/fixtures/grammar-feature-union.lino)
 lists, per feature, a native listing, optional parser options, positive cases
 (`input` or `inputHex`, and the expected `tree` in the tree notation),
 negative cases (a `rejection`, with the `tree` and `ambiguities` when one was

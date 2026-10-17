@@ -96,9 +96,12 @@ fn root() -> PathBuf {
 }
 
 fn read_json(path: &Path) -> Value {
-    let text = fs::read_to_string(path)
-        .unwrap_or_else(|error| panic!("{} is readable: {error}", path.display()));
-    serde_json::from_str(&text)
+    let text = fs::read_to_string(
+        super::project_data::resolve_project_data_path(path)
+            .expect("one project data storage format"),
+    )
+    .unwrap_or_else(|error| panic!("{} is readable: {error}", path.display()));
+    super::project_data::read_project_data(&text)
         .unwrap_or_else(|error| panic!("{} is JSON: {error}", path.display()))
 }
 
@@ -791,6 +794,11 @@ fn the_ci_workload_report_holds_every_assertion_for_the_patched_crate() {
     let report = read_json(&path);
     assert_eq!(report["requirementId"], REQUIREMENT_ID);
     assert_eq!(report["fixture"], FIXTURE);
+    assert_eq!(
+        report["crate"]["counts"]["skipped"].as_u64(),
+        Some(0),
+        "every inventoried workload, including ignored round trips, must execute"
+    );
     let validation = validate(&report, &fixture(), Runtime::Rust);
     assert!(
         validation.problems.values().all(Vec::is_empty),

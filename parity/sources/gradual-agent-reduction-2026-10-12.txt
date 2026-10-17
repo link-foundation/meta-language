@@ -1,0 +1,1 @@
+Slowly reduce number of subagents and work only yourself once they all finish.

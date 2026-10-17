@@ -1,4 +1,4 @@
-//! The bundled semantic lexicon (`data/semantic-lexicon.json`): its concepts,
+//! The bundled semantic lexicon (`data/semantic-lexicon.lino`): its concepts,
 //! their definitions and the concrete syntax each concept has per language.
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::OnceLock;
@@ -76,7 +76,7 @@ pub(super) struct ConceptSyntaxEntry<'a> {
     pub(super) canonical: bool,
 }
 
-const SEMANTIC_LEXICON_JSON: &str = include_str!("../data/semantic-lexicon.json");
+const SEMANTIC_LEXICON_LINKS: &str = include_str!("../data/semantic-lexicon.lino");
 
 pub(super) fn semantic_lexicon() -> &'static SemanticLexicon {
     static LEXICON: OnceLock<SemanticLexicon> = OnceLock::new();
@@ -85,7 +85,8 @@ pub(super) fn semantic_lexicon() -> &'static SemanticLexicon {
 
 fn parse_semantic_lexicon() -> SemanticLexicon {
     let root: Value =
-        serde_json::from_str(SEMANTIC_LEXICON_JSON).expect("semantic lexicon JSON must parse");
+        crate::structured_data_links::read_structured_data_lino(SEMANTIC_LEXICON_LINKS)
+            .expect("semantic lexicon Links Notation must parse");
     let root = root
         .as_object()
         .expect("semantic lexicon root must be an object");

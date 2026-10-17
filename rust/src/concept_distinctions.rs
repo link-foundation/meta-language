@@ -13,7 +13,9 @@
 
 use std::collections::BTreeSet;
 
-use crate::concept_records::{ConceptRecord, SourceAlias, concept_records};
+use crate::concept_records::{
+    ConceptRecord, SourceAlias, concept_record, concept_records, concept_records_for_source_name,
+};
 use crate::foundation_models::{FoundationRegister, foundation_register};
 use crate::grammar::{Grammar, GrammarExpr, RuleKind};
 
@@ -27,68 +29,8 @@ pub struct RequiredDistinction {
 }
 
 /// The concept pairs that stay distinct in every grammar and program.
-pub const REQUIRED_CONCEPT_DISTINCTIONS: &[RequiredDistinction] = &[
-    RequiredDistinction {
-        concepts: ["grammar.ordered-choice", "grammar.unordered-choice"],
-        reason: "An ordered choice commits to the first alternative that matches, while an unordered choice accepts every alternative that matches, so the two accept different languages.",
-    },
-    RequiredDistinction {
-        concepts: ["grammar.lexical-precedence", "grammar.syntactic-precedence"],
-        reason: "Lexical precedence decides which token the lexer produces, while syntactic precedence decides between parse alternatives over tokens already produced.",
-    },
-    RequiredDistinction {
-        concepts: ["binding", "assignment"],
-        reason: "A binding introduces a name for a value in a scope, while an assignment updates the value stored in a location that already exists.",
-    },
-    RequiredDistinction {
-        concepts: ["grammar.list", "grammar.linked-list"],
-        reason: "A list rule is a delimited sequence of items, while a linked list is built from pairs and may end in a dotted pair, so a linked list has no counterpart among plain sequences.",
-    },
-    RequiredDistinction {
-        concepts: ["grammar.string", "grammar.symbol"],
-        reason: "A string literal denotes text, while a symbol denotes an interned identifier that compares by identity, so the same characters read as different data.",
-    },
-    RequiredDistinction {
-        concepts: ["grammar.member", "grammar.ini.setting"],
-        reason: "An object member pairs a name with any nested value, while an INI setting is one key and value line of a section whose value is raw text.",
-    },
-    RequiredDistinction {
-        concepts: ["grammar.object", "grammar.racket.hash-table"],
-        reason: "An object maps names to values with no stated key comparison, while a Racket hash table maps any datum keys under its equality, so the two key sets differ.",
-    },
-    RequiredDistinction {
-        concepts: ["grammar.value", "grammar.datum"],
-        reason: "A value of a data grammar is data only, while a datum is the external representation of a program value, which the reader may also read as code.",
-    },
-    RequiredDistinction {
-        concepts: ["grammar.identifier", "grammar.identifier-name"],
-        reason: "An identifier rule accepts letters, digits and underscores that start with a letter, while an ECMAScript identifier name also accepts dollar signs, Unicode letters and escapes.",
-    },
-    RequiredDistinction {
-        concepts: ["grammar.document", "grammar.program"],
-        reason: "A document is the whole text of a data or document format, while a program is source text the reader reads as code.",
-    },
-    RequiredDistinction {
-        concepts: ["grammar.boolean-value", "grammar.true-value"],
-        reason: "A boolean value rule accepts both truth values, while a true value rule accepts the literal true alone, so one cannot replace the other.",
-    },
-    RequiredDistinction {
-        concepts: ["grammar.program", "grammar.module"],
-        reason: "A program is source text the reader reads as code as a whole, while a TypeScript module declaration is one statement that opens a namespace inside a program.",
-    },
-    RequiredDistinction {
-        concepts: ["grammar.true-constant", "grammar.true-value"],
-        reason: "A Lean true constant accepts the proposition True as well as the Boolean literal true, while a true value rule accepts the literal true alone.",
-    },
-    RequiredDistinction {
-        concepts: ["grammar.symbol", "grammar.keyword"],
-        reason: "A symbol may name a variable, while a keyword evaluates to itself and is never a variable.",
-    },
-    RequiredDistinction {
-        concepts: ["grammar.comment", "grammar.block-comment"],
-        reason: "A comment rule covers every comment its format allows, while a block comment runs between nesting delimiters, so it does not end at the end of its line.",
-    },
-];
+pub const REQUIRED_CONCEPT_DISTINCTIONS: &[RequiredDistinction] =
+    include!("data/required-concept-distinctions.rs");
 
 /// The foundation model pairs that stay distinct; the register records the reason for each.
 pub const REQUIRED_FOUNDATION_DISTINCTIONS: &[[&str; 2]] = &[
@@ -201,12 +143,20 @@ pub fn source_meanings_in(
     alias: &SourceAlias,
     within: Option<&str>,
 ) -> Vec<String> {
-    let concepts = records.iter().filter(|record| {
-        record
-            .source_aliases
+    // Only the immutable embedded register has a process-local alias index.
+    // Caller-owned slices are inspected anew, including nested alias changes.
+    let concepts: Vec<&ConceptRecord> = if std::ptr::eq(records, concept_records()) {
+        concept_records_for_source_name(&alias.source, &alias.name)
+    } else {
+        records
             .iter()
-            .any(|candidate| candidate.source == alias.source && candidate.name == alias.name)
-    });
+            .filter(|record| {
+                record.source_aliases.iter().any(|candidate| {
+                    candidate.source == alias.source && candidate.name == alias.name
+                })
+            })
+            .collect()
+    };
     let models = register.models.iter().filter(|model| {
         model.source_aliases.iter().any(|candidate| {
             candidate.source == alias.source
@@ -217,6 +167,7 @@ pub fn source_meanings_in(
         })
     });
     concepts
+        .into_iter()
         .map(|record| record.id.clone())
         .chain(models.map(|model| model.id.clone()))
         .filter(|id| within_matches(id, within))
@@ -234,17 +185,18 @@ fn meaning_definition(
     register: &FoundationRegister,
     id: &str,
 ) -> Option<String> {
-    records
-        .iter()
-        .find(|record| record.id == id)
-        .map(|record| record.definition.clone())
-        .or_else(|| {
-            register
-                .models
-                .iter()
-                .find(|model| model.id == id)
-                .map(|model| model.definition.clone())
-        })
+    let concept = if std::ptr::eq(records, concept_records()) {
+        concept_record(id).filter(|record| record.id == id)
+    } else {
+        records.iter().find(|record| record.id == id)
+    };
+    concept.map(|record| record.definition.clone()).or_else(|| {
+        register
+            .models
+            .iter()
+            .find(|model| model.id == id)
+            .map(|model| model.definition.clone())
+    })
 }
 
 /// Relates two source spellings through the given records and foundation register.

@@ -1,6 +1,6 @@
 //! Bidirectional enforcement of the shared Rust <-> JavaScript parity manifest.
 //!
-//! `parity/language-features.json` is the single source of truth for the
+//! `parity/language-features.lino` is the single source of truth for the
 //! feature set both language implementations must keep in sync. The JavaScript
 //! side validates it with `js/scripts/check-js-rust-parity.mjs`; this test gives
 //! the Rust side an equivalent guard so the Rust test suite itself fails when the
@@ -8,7 +8,7 @@
 //! issue #163 rule: a feature added to one language forces the other to follow.
 
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 
 use meta_language::API_OPERATIONS;
 use serde_json::Value;
@@ -19,12 +19,12 @@ use serde_json::Value;
 fn repository_root() -> PathBuf {
     let mut dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     loop {
-        if dir.join("parity/language-features.json").is_file() {
+        if dir.join("parity/language-features.lino").is_file() {
             return dir;
         }
         assert!(
             dir.pop(),
-            "could not locate parity/language-features.json from the crate manifest"
+            "could not locate parity/language-features.lino from the crate manifest"
         );
     }
 }
@@ -32,8 +32,8 @@ fn repository_root() -> PathBuf {
 fn manifest() -> (PathBuf, Value) {
     let root = repository_root();
     let path = root.join("parity/language-features.json");
-    let text = fs::read_to_string(&path).expect("parity manifest should be readable");
-    let value: Value = serde_json::from_str(&text).expect("parity manifest should be valid JSON");
+    let value: Value = meta_language::project_data::read_project_data_file(&path)
+        .expect("parity manifest should be readable project data");
     (root, value)
 }
 
@@ -110,8 +110,11 @@ fn every_feature_row_declares_both_languages_with_existing_rust_evidence() {
                     let relative = path
                         .as_str()
                         .unwrap_or_else(|| panic!("{id} rust evidence entries must be strings"));
+                    let actual =
+                        meta_language::project_data::resolve_project_data_path(root.join(relative))
+                            .unwrap_or_else(|error| panic!("{id} rust evidence storage: {error}"));
                     assert!(
-                        root.join(relative).exists(),
+                        actual.exists(),
                         "{id} rust evidence does not exist: {relative}"
                     );
                 }
@@ -232,9 +235,22 @@ fn rust_evidence_paths_live_inside_the_rust_or_shared_trees() {
             let in_shared_tree = ["docs/", "parity/"]
                 .iter()
                 .any(|prefix| relative.starts_with(prefix));
+            let shared_experiment_data = relative.starts_with("experiments/")
+                && Path::new(relative)
+                    .extension()
+                    .and_then(|value| value.to_str())
+                    == Some("lino")
+                && Path::new(relative)
+                    .components()
+                    .all(|component| matches!(component, Component::Normal(_)))
+                && feature["javascript"]["evidence"]
+                    .as_array()
+                    .expect("JavaScript evidence array")
+                    .iter()
+                    .any(|evidence| evidence.as_str() == Some(relative));
             assert!(
-                in_rust_tree || in_shared_tree,
-                "{id} rust evidence {relative} must live under rust/ or a shared docs/parity tree"
+                in_rust_tree || in_shared_tree || shared_experiment_data,
+                "{id} rust evidence {relative} must live under rust/ or a shared docs/parity tree, or be experiment Links data cited by both runtimes"
             );
         }
     }

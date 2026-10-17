@@ -4,9 +4,10 @@
 // rust-golden.json holds the Rust probe's outputs on the same inputs: the small
 // sections whole, documents and queries as one SHA-256 digest per entry.
 // experiments/issue-195-formal-ai-golden.mjs regenerates it from a Rust run.
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+
 import { test } from 'node:test';
 
 import * as api from '../src/index.js';
@@ -17,7 +18,7 @@ import {
 } from '../scripts/issue-195-formal-ai-workload-probes.mjs';
 
 const fixtures = new URL('../../parity/fixtures/formal-ai-regressions/', import.meta.url);
-const golden = JSON.parse(readFileSync(new URL('rust-golden.json', fixtures), 'utf8'));
+const golden = readProjectData(new URL('rust-golden.json', fixtures));
 const javascript = formalAiHelpers(api).outputs(await buildFormalAiInputs(fixtures.pathname));
 const digest = (value) => createHash('sha256').update(canonical(value)).digest('hex');
 

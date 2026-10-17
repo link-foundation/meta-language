@@ -1,0 +1,1 @@
+Recorded Ruby source decisions now distinguish the reserved `defined?` operator from receiver method calls and declarations, and bind low-priority `and`/`or` operators outside unparenthesized command arguments while preserving parenthesized arguments.

@@ -1,0 +1,1 @@
+As we have multiple JavaScript + Rust projects, where automated translation of source code will help.

@@ -5,8 +5,9 @@
 // strings, and every other name's resolution unchanged, and rejects renames
 // that would capture another name.
 // The Rust twin is rust/tests/unit/issue_195_binding_rename_corpus.rs.
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+
 import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
 
@@ -17,7 +18,7 @@ import {
   recordIssue195Observations,
 } from './support/issue-195-observations.js';
 
-const corpus = JSON.parse(await readFile(new URL('../../parity/fixtures/four-language-conformance.json', import.meta.url)));
+const corpus = readProjectData(new URL('../../parity/fixtures/four-language-conformance.json', import.meta.url));
 
 const ASSERTIONS = [
   'symbolIdentity',

@@ -13,13 +13,15 @@ of the two published packages and the website crate, every lockfile
 resolution, the experiment manifests, the vendored grammar assets, the
 generators, the toolchains, the GitHub Actions, the build images, the runners
 and the published artifact contents, each with the current stable release its
-source reported on the audit date.
+source reported on the audit date or a later item-specific registry receipt.
+A receipt with `checkedAt` updates only that item; the full audit date and
+the previously recorded releases of every other item stay unchanged.
 
 ## Method
 
 `node js/scripts/check-dependencies.mjs --refresh` (`npm run dependencies:refresh`)
 reads every pin from the repository, queries the npm registry, the crates.io
-index, GitHub releases, nodejs.org and Docker Hub for the current stable
+index, PyPI JSON registry, GitHub releases, nodejs.org and Docker Hub for the current stable
 release, derives the reason of a locked package that a dependent's requirement
 holds from `js/package-lock.json` and `cargo metadata`, and rewrites
 `parity/dependency-inventory.json` and this document. Every other reason is
@@ -58,19 +60,19 @@ they are.
 | Category | Items | Current | Behind | Not applicable |
 |---|---|---|---|---|
 | JavaScript engines | 1 | 1 | 0 | 0 |
-| npm packages | 17 | 17 | 0 | 0 |
-| Rust package settings | 6 | 6 | 0 | 0 |
-| Rust crates | 306 | 282 | 24 | 0 |
+| npm packages | 38 | 38 | 0 | 0 |
+| Rust package settings | 9 | 9 | 0 | 0 |
+| Rust crates | 309 | 282 | 24 | 3 |
 | Experiment manifests | 6 | 6 | 0 | 0 |
-| Vendored generated parsers | 5 | 5 | 0 | 0 |
+| Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
-| Vendored WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 24 | 23 | 1 | 0 |
-| Toolchains and tools | 16 | 14 | 1 | 1 |
-| GitHub Actions | 20 | 20 | 0 | 0 |
+| Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
+| Generators | 175 | 174 | 1 | 0 |
+| Toolchains and tools | 17 | 15 | 1 | 1 |
+| GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 18 | 0 | 0 | 18 |
+| Published artifact contents | 83 | 0 | 0 | 83 |
 
 ## JavaScript engines
 
@@ -85,6 +87,26 @@ they are.
 | `@pdf-lib/standard-fonts` | `js/package-lock.json` | `js/package-lock.json` | `1.0.0` | transitive, development |  | 1.0.0 (npm registry, @pdf-lib/standard-fonts latest) | version | current |  |
 | `@pdf-lib/upng` | `js/package-lock.json` | `js/package-lock.json` | `1.0.1` | transitive, development |  | 1.0.1 (npm registry, @pdf-lib/upng latest) | version | current |  |
 | `@peggyjs/from-mem` | `js/package-lock.json` | `js/package-lock.json` | `3.1.4` | transitive, development |  | 3.1.4 (npm registry, @peggyjs/from-mem latest) | version | current |  |
+| `@typescript/typescript-aix-ppc64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-aix-ppc64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-darwin-arm64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-darwin-arm64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-darwin-x64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-darwin-x64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-freebsd-arm64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-freebsd-arm64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-freebsd-x64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-freebsd-x64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-linux-arm` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-linux-arm latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-linux-arm64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-linux-arm64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-linux-loong64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-linux-loong64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-linux-mips64el` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-linux-mips64el latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-linux-ppc64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-linux-ppc64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-linux-riscv64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-linux-riscv64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-linux-s390x` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-linux-s390x latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-linux-x64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-linux-x64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-netbsd-arm64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-netbsd-arm64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-netbsd-x64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-netbsd-x64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-openbsd-arm64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-openbsd-arm64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-openbsd-x64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-openbsd-x64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-sunos-x64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-sunos-x64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-win32-arm64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-win32-arm64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
+| `@typescript/typescript-win32-x64` | `js/package-lock.json` | `js/package-lock.json` | `7.0.2` | transitive, development |  | 7.0.2 (npm registry, @typescript/typescript-win32-x64 latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
 | `collapse-white-space` | `js/package-lock.json` | `js/package-lock.json` | `2.1.0` | transitive, development |  | 2.1.0 (npm registry, collapse-white-space latest) | version | current |  |
 | `commander` | `js/package-lock.json` | `js/package-lock.json` | `15.0.0` | transitive, development |  | 15.0.0 (npm registry, commander latest) | version | current |  |
 | `franc-min` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `6.2.0` | direct, development | `6.2.0` | 6.2.0 (npm registry, franc-min latest) | version | current |  |
@@ -97,6 +119,7 @@ they are.
 | `source-map-generator` | `js/package-lock.json` | `js/package-lock.json` | `2.0.7` | transitive, development |  | 2.0.7 (npm registry, source-map-generator latest) | version | current |  |
 | `trigram-utils` | `js/package-lock.json` | `js/package-lock.json` | `2.0.1` | transitive, development |  | 2.0.1 (npm registry, trigram-utils latest) | version | current |  |
 | `tslib` | `js/package-lock.json` | `js/package-lock.json` | `2.8.1` | transitive, development |  | 2.8.1 (npm registry, tslib latest) | version | current |  |
+| `typescript` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `7.0.2` | direct, development | `7.0.2` | 7.0.2 (npm registry, typescript latest) | version | current | Individually checked against the npm registry on 2026-10-13; the complete existing inventory audit date is retained. |
 | `web-tree-sitter` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `0.27.0` | direct, runtime | `0.27.0` | 0.27.0 (npm registry, web-tree-sitter latest) | version | current |  |
 | `wordnet-db` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `3.1.14` | direct, development | `3.1.14` | 3.1.14 (npm registry, wordnet-db latest) | version | current |  |
 
@@ -109,6 +132,9 @@ they are.
 | `edition` | `experiments/issue-195-projects/rust/Cargo.toml` | `experiments/issue-195-projects/rust/Cargo.toml` | `2024` | 2024 (Rust editions, the newest stable edition) | version | current |  |
 | `edition` | `rust/Cargo.toml` | `rust/Cargo.toml` | `2024` | 2024 (Rust editions, the newest stable edition) | version | current |  |
 | `rust-version` | `rust/Cargo.toml` | `rust/Cargo.toml` | `1.90` | 1.90 (cargo metadata, the highest rust-version of the resolved crates (meta-language 0.58.2, tree-sitter 0.27.0, tree-sitter-graphql 0.3.0)) | floor | current |  |
+| `edition` | `rust/oracles/agda-layout-source-oracle/Cargo.toml` | `rust/oracles/agda-layout-source-oracle/Cargo.toml` | `2024` | 2024 (Rust editions, the newest stable edition) | version | current |  |
+| `edition` | `rust/oracles/cmake-source-oracle/Cargo.toml` | `rust/oracles/cmake-source-oracle/Cargo.toml` | `2024` | 2024 (Rust editions, the newest stable edition) | version | current |  |
+| `edition` | `rust/oracles/native-source-oracles/Cargo.toml` | `rust/oracles/native-source-oracles/Cargo.toml` | `2024` | 2024 (Rust editions, the newest stable edition) | version | current |  |
 | `edition` | `rust/web/Cargo.toml` | `rust/web/Cargo.toml` | `2024` | 2024 (Rust editions, the newest stable edition) | version | current |  |
 
 ## Rust crates
@@ -135,7 +161,7 @@ they are.
 | `bytecheck` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.3` | transitive |  | 0.8.3 (crates.io, bytecheck) | version | current |  |
 | `byteorder` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.5.0` | transitive |  | 1.5.0 (crates.io, byteorder) | version | current |  |
 | `bytes` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.12.1` | transitive |  | 1.12.1 (crates.io, bytes) | version | current |  |
-| `cc` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.2.67` | direct, build | `1.2` | 1.6.0 (crates.io, cc) | version | behind | Held by the requirement of `tree-sitter-sequel` 0.3.11 (`~1.2.1`), which does not admit 1.6.0; it moves when that dependent does. |
+| `cc` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/oracles/agda-layout-source-oracle/Cargo.toml`, `rust/oracles/cmake-source-oracle/Cargo.toml`, `rust/oracles/native-source-oracles/Cargo.toml` | `1.2.67` | direct, build | `1; 1.2` | 1.6.0 (crates.io, cc) | version | behind | Held by the requirement of `tree-sitter-sequel` 0.3.11 (`~1.2.1`), which does not admit 1.6.0; it moves when that dependent does. |
 | `cfg-if` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.5` | transitive |  | 1.0.5 (crates.io, cfg-if) | version | current |  |
 | `clap_builder` | `rust/Cargo.lock` | `rust/Cargo.lock` | `4.6.7` | transitive |  | 4.6.7 (crates.io, clap_builder) | version | current |  |
 | `clap_derive` | `rust/Cargo.lock` | `rust/Cargo.lock` | `4.6.7` | transitive |  | 4.6.7 (crates.io, clap_derive) | version | current |  |
@@ -167,7 +193,7 @@ they are.
 | `fastrand` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.5.0` | transitive |  | 2.5.0 (crates.io, fastrand) | version | current |  |
 | `filetime` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.29` | transitive |  | 0.2.29 (crates.io, filetime) | version | current |  |
 | `find-msvc-tools` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.14` | transitive |  | 0.1.14 (crates.io, find-msvc-tools) | version | current |  |
-| `flate2` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.1.10` | direct, build | `1` | 1.1.10 (crates.io, flate2) | version | current |  |
+| `flate2` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/oracles/agda-layout-source-oracle/Cargo.toml`, `rust/oracles/cmake-source-oracle/Cargo.toml`, `rust/oracles/native-source-oracles/Cargo.toml` | `1.1.10` | direct, build | `1` | 1.1.10 (crates.io, flate2) | version | current |  |
 | `foldhash` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.5` | transitive |  | 0.2.0 (crates.io, foldhash) | version | behind | Held by the requirement of `hashbrown` 0.15.5 (`^0.1.2`), which does not admit 0.2.0; it moves when that dependent does. |
 | `form_urlencoded` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.2.2` | transitive |  | 1.2.2 (crates.io, form_urlencoded) | version | current |  |
 | `fst` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.7` | transitive |  | 0.4.7 (crates.io, fst) | version | current |  |
@@ -300,57 +326,57 @@ they are.
 | `thiserror` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.0.21` | transitive |  | 2.0.21 (crates.io, thiserror) | version | current |  |
 | `tinystr` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.4` | transitive |  | 0.8.4 (crates.io, tinystr) | version | current |  |
 | `tinyvec` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.13.3` | transitive |  | 1.13.3 (crates.io, tinyvec) | version | current |  |
-| `tree-sitter-agda` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.3.3` | direct, runtime | `=1.3.3` | 1.3.3 (crates.io, tree-sitter-agda) | version | current |  |
+| `tree-sitter-agda` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.3.3` | direct, development | `=1.3.3` | 1.3.3 (crates.io, tree-sitter-agda) | version | current |  |
 | `tree-sitter-bash` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.25.1` | direct, runtime | `=0.25.1` | 0.25.1 (crates.io, tree-sitter-bash) | version | current |  |
 | `tree-sitter-c-sharp` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.23.5` | direct, runtime | `=0.23.5` | 0.23.5 (crates.io, tree-sitter-c-sharp) | version | current |  |
 | `tree-sitter-c` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.24.2` | direct, development | `=0.24.2` | 0.24.2 (crates.io, tree-sitter-c) | version | current |  |
-| `tree-sitter-cpp` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.23.4` | direct, runtime | `=0.23.4` | 0.23.4 (crates.io, tree-sitter-cpp) | version | current |  |
-| `tree-sitter-css` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.25.0` | direct, runtime | `=0.25.0` | 0.25.0 (crates.io, tree-sitter-css) | version | current |  |
-| `tree-sitter-dart` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.2.0` | direct, runtime | `=0.2.0` | 0.2.0 (crates.io, tree-sitter-dart) | version | current |  |
+| `tree-sitter-cpp` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.23.4` | direct, development | `=0.23.4` | 0.23.4 (crates.io, tree-sitter-cpp) | version | current |  |
+| `tree-sitter-css` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.25.0` | direct, development | `=0.25.0` | 0.25.0 (crates.io, tree-sitter-css) | version | current |  |
+| `tree-sitter-dart` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.2.0` | direct, development | `=0.2.0` | 0.2.0 (crates.io, tree-sitter-dart) | version | current |  |
 | `tree-sitter-diff` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.1.0` | direct, development | `=0.1.0` | 0.1.0 (crates.io, tree-sitter-diff) | version | current |  |
 | `tree-sitter-elixir` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.3.5` | direct, runtime | `=0.3.5` | 0.3.5 (crates.io, tree-sitter-elixir) | version | current |  |
 | `tree-sitter-elm` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `5.9.4` | direct, runtime | `=5.9.4` | 5.9.4 (crates.io, tree-sitter-elm) | version | current |  |
-| `tree-sitter-erlang` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.20.0` | direct, runtime | `=0.20.0` | 0.20.0 (crates.io, tree-sitter-erlang) | version | current |  |
+| `tree-sitter-erlang` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.20.0` | direct, development | `=0.20.0` | 0.20.0 (crates.io, tree-sitter-erlang) | version | current |  |
 | `tree-sitter-go` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.25.0` | direct, development | `=0.25.0` | 0.25.0 (crates.io, tree-sitter-go) | version | current |  |
 | `tree-sitter-graphql` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.3.0` | direct, development | `=0.3.0` | 0.3.0 (crates.io, tree-sitter-graphql) | version | current |  |
-| `tree-sitter-groovy` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.1.2` | direct, runtime | `=0.1.2` | 0.1.2 (crates.io, tree-sitter-groovy) | version | current |  |
+| `tree-sitter-groovy` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.1.2` | direct, development | `=0.1.2` | 0.1.2 (crates.io, tree-sitter-groovy) | version | current |  |
 | `tree-sitter-haskell` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.24.1` | direct, runtime | `=0.24.1` | 0.24.1 (crates.io, tree-sitter-haskell) | version | current |  |
-| `tree-sitter-hcl` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.1.0` | direct, runtime | `=1.1.0` | 1.1.0 (crates.io, tree-sitter-hcl) | version | current |  |
-| `tree-sitter-html` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.23.2` | direct, runtime | `=0.23.2` | 0.23.2 (crates.io, tree-sitter-html) | version | current |  |
+| `tree-sitter-hcl` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.1.0` | direct, development | `=1.1.0` | 1.1.0 (crates.io, tree-sitter-hcl) | version | current |  |
+| `tree-sitter-html` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.23.2` | direct, development | `=0.23.2` | 0.23.2 (crates.io, tree-sitter-html) | version | current |  |
 | `tree-sitter-ini` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.4.0` | direct, development | `=1.4.0` | 1.4.0 (crates.io, tree-sitter-ini) | version | current |  |
 | `tree-sitter-java` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.23.5` | direct, development | `=0.23.5` | 0.23.5 (crates.io, tree-sitter-java) | version | current |  |
 | `tree-sitter-javascript` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.25.0` | direct, development | `=0.25.0` | 0.25.0 (crates.io, tree-sitter-javascript) | version | current |  |
 | `tree-sitter-json` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.24.8` | direct, development | `=0.24.8` | 0.24.8 (crates.io, tree-sitter-json) | version | current |  |
 | `tree-sitter-json5-orchard` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.1.0` | direct, development | `=0.1.0` | 0.1.0 (crates.io, tree-sitter-json5-orchard) | version | current |  |
 | `tree-sitter-kotlin-ng` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.1.0` | direct, runtime | `=1.1.0` | 1.1.0 (crates.io, tree-sitter-kotlin-ng) | version | current |  |
-| `tree-sitter-language` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.1.8` | direct, runtime | `0.1.8` | 0.1.8 (crates.io, tree-sitter-language) | version | current |  |
-| `tree-sitter-lua` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.5.0` | direct, runtime | `=0.5.0` | 0.5.0 (crates.io, tree-sitter-lua) | version | current |  |
+| `tree-sitter-language` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml`, `rust/oracles/agda-layout-source-oracle/Cargo.toml`, `rust/oracles/cmake-source-oracle/Cargo.toml`, `rust/oracles/native-source-oracles/Cargo.toml` | `0.1.8` | direct, runtime | `0.1.8` | 0.1.8 (crates.io, tree-sitter-language) | version | current |  |
+| `tree-sitter-lua` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.5.0` | direct, development | `=0.5.0` | 0.5.0 (crates.io, tree-sitter-lua) | version | current |  |
 | `tree-sitter-make` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.1.1` | direct, development | `=1.1.1` | 1.1.1 (crates.io, tree-sitter-make) | version | current |  |
 | `tree-sitter-matlab` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.3.1` | direct, runtime | `=1.3.1` | 1.3.1 (crates.io, tree-sitter-matlab) | version | current |  |
 | `tree-sitter-md-025` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.5.6` | direct, runtime | `=0.5.6` | 0.5.6 (crates.io, tree-sitter-md-025) | version | current |  |
-| `tree-sitter-nix` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.3.0` | direct, runtime | `=0.3.0` | 0.3.0 (crates.io, tree-sitter-nix) | version | current |  |
+| `tree-sitter-nix` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.3.0` | direct, development | `=0.3.0` | 0.3.0 (crates.io, tree-sitter-nix) | version | current |  |
 | `tree-sitter-ocaml` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.26.0` | direct, runtime | `=0.26.0` | 0.26.0 (crates.io, tree-sitter-ocaml) | version | current |  |
-| `tree-sitter-odin` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.3.0` | direct, runtime | `=1.3.0` | 1.3.0 (crates.io, tree-sitter-odin) | version | current |  |
-| `tree-sitter-pascal` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.10.2` | direct, runtime | `=0.10.2` | 0.10.2 (crates.io, tree-sitter-pascal) | version | current |  |
+| `tree-sitter-odin` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.3.0` | direct, development | `=1.3.0` | 1.3.0 (crates.io, tree-sitter-odin) | version | current |  |
+| `tree-sitter-pascal` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.10.2` | direct, development | `=0.10.2` | 0.10.2 (crates.io, tree-sitter-pascal) | version | current |  |
 | `tree-sitter-php` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.24.2` | direct, runtime | `=0.24.2` | 0.24.2 (crates.io, tree-sitter-php) | version | current |  |
-| `tree-sitter-powershell` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.26.4` | direct, runtime | `=0.26.4` | 0.26.4 (crates.io, tree-sitter-powershell) | version | current |  |
+| `tree-sitter-powershell` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.26.4` | direct, development | `=0.26.4` | 0.26.4 (crates.io, tree-sitter-powershell) | version | current |  |
 | `tree-sitter-proto` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.6.0` | direct, development | `=0.6.0` | 0.6.0 (crates.io, tree-sitter-proto) | version | current |  |
-| `tree-sitter-python` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.25.0` | direct, runtime | `=0.25.0` | 0.25.0 (crates.io, tree-sitter-python) | version | current |  |
-| `tree-sitter-r` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.3.0` | direct, runtime | `=1.3.0` | 1.3.0 (crates.io, tree-sitter-r) | version | current |  |
+| `tree-sitter-python` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.25.0` | direct, development | `=0.25.0` | 0.25.0 (crates.io, tree-sitter-python) | version | current |  |
+| `tree-sitter-r` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.3.0` | direct, development | `=1.3.0` | 1.3.0 (crates.io, tree-sitter-r) | version | current |  |
 | `tree-sitter-racket` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.25.0` | direct, development | `=0.25.0` | 0.25.0 (crates.io, tree-sitter-racket) | version | current |  |
 | `tree-sitter-regex` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.25.0` | direct, development | `=0.25.0` | 0.25.0 (crates.io, tree-sitter-regex) | version | current |  |
 | `tree-sitter-ruby` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.23.1` | direct, runtime | `=0.23.1` | 0.23.1 (crates.io, tree-sitter-ruby) | version | current |  |
 | `tree-sitter-scala` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.26.2` | direct, runtime | `=0.26.2` | 0.26.2 (crates.io, tree-sitter-scala) | version | current |  |
 | `tree-sitter-scheme` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.24.7` | direct, development | `=0.24.7` | 0.24.7 (crates.io, tree-sitter-scheme) | version | current |  |
-| `tree-sitter-sequel` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.3.11` | direct, runtime | `=0.3.11` | 0.3.11 (crates.io, tree-sitter-sequel) | version | current |  |
+| `tree-sitter-sequel` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.3.11` | direct, development | `=0.3.11` | 0.3.11 (crates.io, tree-sitter-sequel) | version | current |  |
 | `tree-sitter-solidity` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.2.13` | direct, development | `=1.2.13` | 1.2.13 (crates.io, tree-sitter-solidity) | version | current |  |
 | `tree-sitter-swift` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.7.4` | direct, runtime | `=0.7.4` | 0.7.4 (crates.io, tree-sitter-swift) | version | current |  |
-| `tree-sitter-toml-ng` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.7.0` | direct, runtime | `=0.7.0` | 0.7.0 (crates.io, tree-sitter-toml-ng) | version | current |  |
+| `tree-sitter-toml-ng` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.7.0` | direct, development | `=0.7.0` | 0.7.0 (crates.io, tree-sitter-toml-ng) | version | current |  |
 | `tree-sitter-typescript` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.23.2` | direct, development | `=0.23.2` | 0.23.2 (crates.io, tree-sitter-typescript) | version | current |  |
-| `tree-sitter-vb-dotnet` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.1.0` | direct, runtime | `=0.1.0` | 0.1.0 (crates.io, tree-sitter-vb-dotnet) | version | current |  |
-| `tree-sitter-xml` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.7.0` | direct, runtime | `=0.7.0` | 0.7.0 (crates.io, tree-sitter-xml) | version | current |  |
+| `tree-sitter-vb-dotnet` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.1.0` | direct, development | `=0.1.0` | 0.1.0 (crates.io, tree-sitter-vb-dotnet) | version | current |  |
+| `tree-sitter-xml` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.7.0` | direct, development | `=0.7.0` | 0.7.0 (crates.io, tree-sitter-xml) | version | current |  |
 | `tree-sitter-yaml` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.7.2` | direct, runtime | `=0.7.2` | 0.7.2 (crates.io, tree-sitter-yaml) | version | current |  |
-| `tree-sitter-zig` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.1.2` | direct, runtime | `=1.1.2` | 1.1.2 (crates.io, tree-sitter-zig) | version | current |  |
+| `tree-sitter-zig` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.1.2` | direct, development | `=1.1.2` | 1.1.2 (crates.io, tree-sitter-zig) | version | current |  |
 | `tree-sitter` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.27.0` | direct, runtime | `=0.27.0` | 0.27.0 (crates.io, tree-sitter) | version | current |  |
 | `ts-parser-perl` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `2.0.0` | direct, runtime | `=2.0.0` | 2.0.0 (crates.io, ts-parser-perl) | version | current |  |
 | `typenum` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.20.1` | transitive |  | 1.20.1 (crates.io, typenum) | version | current |  |
@@ -400,6 +426,9 @@ they are.
 | `zerovec` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.11.8` | transitive |  | 0.11.8 (crates.io, zerovec) | version | current |  |
 | `zlib-rs` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.6.8` | transitive |  | 0.6.8 (crates.io, zlib-rs) | version | current |  |
 | `zmij` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.23` | transitive |  | 1.0.23 (crates.io, zmij) | version | current |  |
+| `agda-layout-source-oracle` | `rust/Cargo.toml` | `rust/Cargo.toml` | `oracles/agda-layout-source-oracle` | direct, development |  |  | unversioned | not applicable |  |
+| `cmake-source-oracle` | `rust/Cargo.toml` | `rust/Cargo.toml` | `oracles/cmake-source-oracle` | direct, development |  | (Repository-local development oracle; source bytes and revision are pinned in parity/grammars/sources.json and grammar-lock.json.) | unversioned | not applicable |  |
+| `native-source-oracles` | `rust/Cargo.toml` | `rust/Cargo.toml` | `oracles/native-source-oracles` | direct, development |  |  | unversioned | not applicable |  |
 | `bumpalo` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `3.20.3` | transitive |  | 3.20.3 (crates.io, bumpalo) | version | current |  |
 | `cfg-if` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `1.0.5` | transitive |  | 1.0.5 (crates.io, cfg-if) | version | current |  |
 | `itoa` | `rust/web/Cargo.lock` | `rust/web/Cargo.lock` | `1.0.18` | transitive |  | 1.0.18 (crates.io, itoa) | version | current |  |
@@ -433,91 +462,92 @@ they are.
 | `tree-sitter-language` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `=0.1.8` | runtime |  | 0.1.8 (crates.io, tree-sitter-language) | version | current |  |
 | `tree-sitter` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `=0.27.0` | runtime |  | 0.27.0 (crates.io, tree-sitter) | version | current |  |
 
-## Vendored generated parsers
+## Downloaded generated parser sources
 
 | Item | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|
-| `rust/vendor/tree-sitter-cmake` | `js/src/vendor/grammars/grammar-lock.json`, `rust/vendor/tree-sitter-cmake/NOTICE.md` | `v0.7.5` | v0.7.5 (GitHub release, uyha/tree-sitter-cmake (the pin is identical of it)) | revision | current |  |
-| `rust/vendor/tree-sitter-csv` | `js/src/vendor/grammars/grammar-lock.json`, `rust/vendor/tree-sitter-csv/NOTICE.md` | `f6bf6e35eb0b95fbadea4bb39cb9709507fcb181` | v1.2.0 (GitHub release, tree-sitter-grammars/tree-sitter-csv (the pin is ahead of it)) | revision | current |  |
-| `rust/vendor/tree-sitter-lean` | `js/src/vendor/grammars/grammar-lock.json`, `rust/vendor/tree-sitter-lean/NOTICE.md` | `bd942cd2795016239be02b3b3d5ef635645ddd38` | v0.2.2 (GitHub release, wvhulle/tree-sitter-lean (the pin is ahead of it)) | revision | current |  |
-| `rust/vendor/tree-sitter-rocq` | `js/src/vendor/grammars/grammar-lock.json`, `rust/vendor/tree-sitter-rocq/NOTICE.md` | `300fe33fc299c30f736fd56d8ef8a28b08acd4e6` | v0.2.0 (GitHub release, aruzdh/tree-sitter-rocq (the pin is ahead of it)) | revision | current |  |
-| `rust/vendor/tree-sitter-rust` | `js/src/vendor/grammars/grammar-lock.json`, `rust/vendor/tree-sitter-rust/NOTICE.md` | `v0.24.2` | v0.24.2 (GitHub release, tree-sitter/tree-sitter-rust (the pin is identical of it)) | revision | current |  |
+| `aruzdh/tree-sitter-rocq` | `js/src/vendor/grammars/grammar-lock.lino`, `rust/vendor/tree-sitter-rocq/NOTICE.md` | `300fe33fc299c30f736fd56d8ef8a28b08acd4e6` | v0.2.0 (GitHub release, aruzdh/tree-sitter-rocq (the pin is ahead of it)) | revision | current |  |
+| `tree-sitter-grammars/tree-sitter-csv` | `js/src/vendor/grammars/grammar-lock.lino`, `rust/vendor/tree-sitter-csv/NOTICE.md` | `f6bf6e35eb0b95fbadea4bb39cb9709507fcb181` | v1.2.0 (GitHub release, tree-sitter-grammars/tree-sitter-csv (the pin is ahead of it)) | revision | current |  |
+| `tree-sitter/tree-sitter-rust` | `js/src/vendor/grammars/grammar-lock.lino`, `rust/vendor/tree-sitter-rust/NOTICE.md` | `v0.24.2` | v0.24.2 (GitHub release, tree-sitter/tree-sitter-rust (the pin is identical of it)) | revision | current |  |
+| `uyha/tree-sitter-cmake` | `js/src/vendor/grammars/grammar-lock.lino`, `rust/vendor/tree-sitter-cmake/NOTICE.md` | `v0.7.5` | v0.7.5 (GitHub release, uyha/tree-sitter-cmake (the pin is identical of it)) | revision | current |  |
+| `wvhulle/tree-sitter-lean` | `js/src/vendor/grammars/grammar-lock.lino`, `rust/vendor/tree-sitter-lean/NOTICE.md` | `bd942cd2795016239be02b3b3d5ef635645ddd38` | v0.2.2 (GitHub release, wvhulle/tree-sitter-lean (the pin is ahead of it)) | revision | current |  |
 
 ## Vendored runtime
 
 | Item | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|
-| `js/src/vendor/web-tree-sitter/web-tree-sitter.wasm.gz` | `js/src/vendor/web-tree-sitter/runtime-lock.json` | `0.27.0` | v0.27.0 (GitHub release, tree-sitter/tree-sitter) | version | behind | Built from `image emscripten/emsdk@4.0.15`, which is behind (see its reason). |
+| `js/src/vendor/web-tree-sitter/web-tree-sitter.wasm.gz` | `js/src/vendor/web-tree-sitter/runtime-lock.lino` | `0.27.0` | v0.27.0 (GitHub release, tree-sitter/tree-sitter) | version | behind | Built from `image emscripten/emsdk@4.0.15`, which is behind (see its reason). |
 
-## Vendored WebAssembly grammars
+## Downloaded WebAssembly grammars
 
 | Item | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|
-| `js/oracles/grammars/c.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.24.2` |  | derived | current |  |
-| `js/oracles/grammars/csv.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `f6bf6e35eb0b95fbadea4bb39cb9709507fcb181` |  | derived | current |  |
-| `js/oracles/grammars/diff.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.1.0` |  | derived | current |  |
-| `js/oracles/grammars/go.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.25.0` |  | derived | current |  |
-| `js/oracles/grammars/graphql.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.3.0` |  | derived | current |  |
-| `js/oracles/grammars/ini.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.4.0` |  | derived | current |  |
-| `js/oracles/grammars/java.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.5` |  | derived | current |  |
-| `js/oracles/grammars/javascript.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.25.0` |  | derived | current |  |
-| `js/oracles/grammars/json.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.24.8` |  | derived | current |  |
-| `js/oracles/grammars/json5.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.1.0` |  | derived | current |  |
-| `js/oracles/grammars/make.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.1.1` |  | derived | current |  |
-| `js/oracles/grammars/proto.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.6.0` |  | derived | current |  |
-| `js/oracles/grammars/racket.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.25.0` |  | derived | current |  |
-| `js/oracles/grammars/regex.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.25.0` |  | derived | current |  |
-| `js/oracles/grammars/rust.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `v0.24.2` |  | derived | current |  |
-| `js/oracles/grammars/scheme.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.24.7` |  | derived | current |  |
-| `js/oracles/grammars/solidity.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.2.13` |  | derived | current |  |
-| `js/oracles/grammars/tsx.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.2` |  | derived | current |  |
-| `js/oracles/grammars/typescript.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.2` |  | derived | current |  |
-| `js/src/vendor/grammars/agda.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.3.3` |  | derived | current |  |
-| `js/src/vendor/grammars/bash.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.25.1` |  | derived | current |  |
-| `js/src/vendor/grammars/cmake.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `v0.7.5` |  | derived | current |  |
-| `js/src/vendor/grammars/cpp.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.4` |  | derived | current |  |
-| `js/src/vendor/grammars/csharp.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.5` |  | derived | current |  |
-| `js/src/vendor/grammars/css.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.25.0` |  | derived | current |  |
-| `js/src/vendor/grammars/dart.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.2.0` |  | derived | current |  |
-| `js/src/vendor/grammars/dtd.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.7.0` |  | derived | current |  |
-| `js/src/vendor/grammars/elixir.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.3.5` |  | derived | current |  |
-| `js/src/vendor/grammars/elm.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `5.9.4` |  | derived | current |  |
-| `js/src/vendor/grammars/erlang.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.20.0` |  | derived | current |  |
-| `js/src/vendor/grammars/groovy.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.1.2` |  | derived | current |  |
-| `js/src/vendor/grammars/haskell.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.24.1` |  | derived | current |  |
-| `js/src/vendor/grammars/hcl.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.1.0` |  | derived | current |  |
-| `js/src/vendor/grammars/html.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.2` |  | derived | current |  |
-| `js/src/vendor/grammars/kotlin.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.1.0` |  | derived | current |  |
-| `js/src/vendor/grammars/lean.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `bd942cd2795016239be02b3b3d5ef635645ddd38` |  | derived | current |  |
-| `js/src/vendor/grammars/lua.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.5.0` |  | derived | current |  |
-| `js/src/vendor/grammars/markdown_inline.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.5.6` |  | derived | current |  |
-| `js/src/vendor/grammars/markdown.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.5.6` |  | derived | current |  |
-| `js/src/vendor/grammars/matlab.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.3.1` |  | derived | current |  |
-| `js/src/vendor/grammars/nix.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.3.0` |  | derived | current |  |
-| `js/src/vendor/grammars/ocaml_interface.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.26.0` |  | derived | current |  |
-| `js/src/vendor/grammars/ocaml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.26.0` |  | derived | current |  |
-| `js/src/vendor/grammars/odin.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.3.0` |  | derived | current |  |
-| `js/src/vendor/grammars/pascal.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.10.2` |  | derived | current |  |
-| `js/src/vendor/grammars/perl.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `2.0.0` |  | derived | current |  |
-| `js/src/vendor/grammars/php.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.24.2` |  | derived | current |  |
-| `js/src/vendor/grammars/powershell.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.26.4` |  | derived | current |  |
-| `js/src/vendor/grammars/python.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.25.0` |  | derived | current |  |
-| `js/src/vendor/grammars/r.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.3.0` |  | derived | current |  |
-| `js/src/vendor/grammars/rocq.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `300fe33fc299c30f736fd56d8ef8a28b08acd4e6` |  | derived | current |  |
-| `js/src/vendor/grammars/ruby.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.1` |  | derived | current |  |
-| `js/src/vendor/grammars/scala.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.26.2` |  | derived | current |  |
-| `js/src/vendor/grammars/sql.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.3.11` |  | derived | current |  |
-| `js/src/vendor/grammars/swift.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.7.4` |  | derived | current |  |
-| `js/src/vendor/grammars/toml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.7.0` |  | derived | current |  |
-| `js/src/vendor/grammars/vb.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.1.0` |  | derived | current |  |
-| `js/src/vendor/grammars/xml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.7.0` |  | derived | current |  |
-| `js/src/vendor/grammars/yaml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.7.2` |  | derived | current |  |
-| `js/src/vendor/grammars/zig.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.1.2` |  | derived | current |  |
+| `js/oracles/grammars/agda.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.3.3` |  | derived | current |  |
+| `js/oracles/grammars/c.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.24.2` |  | derived | current |  |
+| `js/oracles/grammars/cmake.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `v0.7.5` | (Repository-local development oracle; source bytes and revision are pinned in parity/grammars/sources.json and grammar-lock.json.) | derived | current |  |
+| `js/oracles/grammars/cpp.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.4` |  | derived | current |  |
+| `js/oracles/grammars/css.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.0` |  | derived | current |  |
+| `js/oracles/grammars/csv.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `f6bf6e35eb0b95fbadea4bb39cb9709507fcb181` |  | derived | current |  |
+| `js/oracles/grammars/dart.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.2.0` | (Repository-local development oracle; source bytes and revision are pinned in parity/grammars/sources.json and grammar-lock.json.) | derived | current |  |
+| `js/oracles/grammars/diff.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.1.0` |  | derived | current |  |
+| `js/oracles/grammars/dtd.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.7.0` |  | derived | current |  |
+| `js/oracles/grammars/erlang.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.20.0` |  | derived | current |  |
+| `js/oracles/grammars/go.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.0` |  | derived | current |  |
+| `js/oracles/grammars/graphql.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.3.0` |  | derived | current |  |
+| `js/oracles/grammars/groovy.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.1.2` |  | derived | current |  |
+| `js/oracles/grammars/hcl.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.1.0` |  | derived | current |  |
+| `js/oracles/grammars/html.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.2` |  | derived | current |  |
+| `js/oracles/grammars/ini.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.4.0` |  | derived | current |  |
+| `js/oracles/grammars/java.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.5` |  | derived | current |  |
+| `js/oracles/grammars/javascript.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.0` |  | derived | current |  |
+| `js/oracles/grammars/json.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.24.8` |  | derived | current |  |
+| `js/oracles/grammars/json5.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.1.0` |  | derived | current |  |
+| `js/oracles/grammars/lean.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `bd942cd2795016239be02b3b3d5ef635645ddd38` |  | derived | current |  |
+| `js/oracles/grammars/lua.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.5.0` |  | derived | current |  |
+| `js/oracles/grammars/make.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.1.1` |  | derived | current |  |
+| `js/oracles/grammars/nix.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.3.0` | (Repository-local development oracle; source bytes and revision are pinned in parity/grammars/sources.json and grammar-lock.json.) | derived | current |  |
+| `js/oracles/grammars/odin.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.3.0` |  | derived | current |  |
+| `js/oracles/grammars/pascal.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.10.2` |  | derived | current |  |
+| `js/oracles/grammars/powershell.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.26.4` |  | derived | current |  |
+| `js/oracles/grammars/proto.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.6.0` |  | derived | current |  |
+| `js/oracles/grammars/python.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.0` |  | derived | current |  |
+| `js/oracles/grammars/r.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.3.0` |  | derived | current |  |
+| `js/oracles/grammars/racket.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.0` |  | derived | current |  |
+| `js/oracles/grammars/regex.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.0` |  | derived | current |  |
+| `js/oracles/grammars/rocq.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `300fe33fc299c30f736fd56d8ef8a28b08acd4e6` |  | derived | current |  |
+| `js/oracles/grammars/rust.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `v0.24.2` |  | derived | current |  |
+| `js/oracles/grammars/scheme.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.24.7` |  | derived | current |  |
+| `js/oracles/grammars/solidity.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.2.13` |  | derived | current |  |
+| `js/oracles/grammars/sql.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.3.11` |  | derived | current |  |
+| `js/oracles/grammars/toml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.7.0` |  | derived | current |  |
+| `js/oracles/grammars/tsx.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.2` |  | derived | current |  |
+| `js/oracles/grammars/typescript.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.2` |  | derived | current |  |
+| `js/oracles/grammars/vb.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.1.0` |  | derived | current |  |
+| `js/oracles/grammars/xml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.7.0` |  | derived | current |  |
+| `js/oracles/grammars/zig.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.1.2` |  | derived | current |  |
+| `js/src/vendor/grammars/bash.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.25.1` |  | derived | current |  |
+| `js/src/vendor/grammars/csharp.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.5` |  | derived | current |  |
+| `js/src/vendor/grammars/elixir.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.3.5` |  | derived | current |  |
+| `js/src/vendor/grammars/elm.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `5.9.4` |  | derived | current |  |
+| `js/src/vendor/grammars/haskell.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.24.1` |  | derived | current |  |
+| `js/src/vendor/grammars/kotlin.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.1.0` |  | derived | current |  |
+| `js/src/vendor/grammars/markdown_inline.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.5.6` |  | derived | current |  |
+| `js/src/vendor/grammars/markdown.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.5.6` |  | derived | current |  |
+| `js/src/vendor/grammars/matlab.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `1.3.1` |  | derived | current |  |
+| `js/src/vendor/grammars/ocaml_interface.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.26.0` |  | derived | current |  |
+| `js/src/vendor/grammars/ocaml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.26.0` |  | derived | current |  |
+| `js/src/vendor/grammars/perl.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `2.0.0` |  | derived | current |  |
+| `js/src/vendor/grammars/php.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.24.2` |  | derived | current |  |
+| `js/src/vendor/grammars/ruby.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.23.1` |  | derived | current |  |
+| `js/src/vendor/grammars/scala.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.26.2` |  | derived | current |  |
+| `js/src/vendor/grammars/swift.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.7.4` |  | derived | current |  |
+| `js/src/vendor/grammars/yaml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.lino` | `0.7.2` |  | derived | current |  |
 
 ## Generators
 
 | Item | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|
+| `js/scripts/build-agda-layout-oracle.mjs` | `js/scripts/build-agda-layout-oracle.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-bidi-table.mjs` | `js/scripts/build-bidi-table.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-concept-records.mjs` | `js/scripts/build-concept-records.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-foundation-models.mjs` | `js/scripts/build-foundation-models.mjs` | `script` |  | derived | current |  |
@@ -526,55 +556,208 @@ they are.
 | `js/scripts/build-lean-root-names.mjs` | `js/scripts/build-lean-root-names.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-merge-quality-evidence.mjs` | `js/scripts/build-merge-quality-evidence.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-native-grammar-concept-reuse.mjs` | `js/scripts/build-native-grammar-concept-reuse.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-native-text-grammars.mjs` | `js/scripts/build-native-text-grammars.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-rust-cooked-string-escape-fixtures.mjs` | `js/scripts/build-rust-cooked-string-escape-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-rust-string-continuation-fixtures.mjs` | `js/scripts/build-rust-string-continuation-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-rust-unicode-escape-fixtures.mjs` | `js/scripts/build-rust-unicode-escape-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-translation-stage-fixtures.mjs` | `js/scripts/build-translation-stage-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-unicode-identifier-properties.mjs` | `js/scripts/build-unicode-identifier-properties.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-vendored-grammars.mjs` | `js/scripts/build-vendored-grammars.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-web-tree-sitter-runtime.mjs` | `js/scripts/build-web-tree-sitter-runtime.mjs` | `script` |  | derived | behind | Built from `image emscripten/emsdk@4.0.15`, which is behind (see its reason). |
+| `js/scripts/generate-antlr-reverse-fixture.mjs` | `js/scripts/generate-antlr-reverse-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-array-binding-rules.mjs` | `js/scripts/generate-array-binding-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-array-from-rules.mjs` | `js/scripts/generate-array-from-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-array-value-rules.mjs` | `js/scripts/generate-array-value-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-assertion-version-policy.mjs` | `js/scripts/generate-assertion-version-policy.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-builtin-cst-expectations.mjs` | `js/scripts/generate-builtin-cst-expectations.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-callable-emission-rules.mjs` | `js/scripts/generate-callable-emission-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-callable-source-rules.mjs` | `js/scripts/generate-callable-source-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-collection-construction-rules.mjs` | `js/scripts/generate-collection-construction-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-concept-view-fixture.mjs` | `js/scripts/generate-concept-view-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-concept-view-rules.mjs` | `js/scripts/generate-concept-view-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-csharp-pattern-fixture.mjs` | `js/scripts/generate-csharp-pattern-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-default-cst-expectations.mjs` | `js/scripts/generate-default-cst-expectations.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-discovered-concept-fixture.mjs` | `js/scripts/generate-discovered-concept-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-discovered-concept-rules.mjs` | `js/scripts/generate-discovered-concept-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-elm-candidate-fixtures.mjs` | `js/scripts/generate-elm-candidate-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-embedded-region-rules.mjs` | `js/scripts/generate-embedded-region-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-export-parity.mjs` | `js/scripts/generate-export-parity.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-formal-concept-fixtures.mjs` | `js/scripts/generate-formal-concept-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-formal-function-fixtures.mjs` | `js/scripts/generate-formal-function-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-formal-function-rules.mjs` | `js/scripts/generate-formal-function-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-formal-relation-fixtures.mjs` | `js/scripts/generate-formal-relation-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-formal-relation-rules.mjs` | `js/scripts/generate-formal-relation-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-frontend-rule-styles.mjs` | `js/scripts/generate-frontend-rule-styles.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-frontend-rules.mjs` | `js/scripts/generate-frontend-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-global-concept-rule-styles.mjs` | `js/scripts/generate-global-concept-rule-styles.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-global-concept-rules.mjs` | `js/scripts/generate-global-concept-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-global-concept-space-fixture.mjs` | `js/scripts/generate-global-concept-space-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-grammar-lexer-rules.mjs` | `js/scripts/generate-grammar-lexer-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-grammar-merge-decisions.mjs` | `js/scripts/generate-grammar-merge-decisions.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-grammar-prefix-operand-fixtures.mjs` | `js/scripts/generate-grammar-prefix-operand-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-grammar-rule-composition-rules.mjs` | `js/scripts/generate-grammar-rule-composition-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-grammar-selection-field-range-rules.mjs` | `js/scripts/generate-grammar-selection-field-range-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-grammar-selection-fixtures.mjs` | `js/scripts/generate-grammar-selection-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-grammar-selection-included-range-rules.mjs` | `js/scripts/generate-grammar-selection-included-range-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-grammar-selection-mapping-fixtures.mjs` | `js/scripts/generate-grammar-selection-mapping-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-grammar-selection-mapping-rules.mjs` | `js/scripts/generate-grammar-selection-mapping-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-grammar-selection-rules.mjs` | `js/scripts/generate-grammar-selection-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-issue-195-conformance.mjs` | `js/scripts/generate-issue-195-conformance.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-issue-195-generative.mjs` | `js/scripts/generate-issue-195-generative.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-line-terminator-rules.mjs` | `js/scripts/generate-javascript-line-terminator-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-scoped-binding-emission-fixtures.mjs` | `js/scripts/generate-javascript-scoped-binding-emission-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-scoped-binding-emission-rules.mjs` | `js/scripts/generate-javascript-scoped-binding-emission-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-surface-rules.mjs` | `js/scripts/generate-javascript-surface-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-tag-context-rules.mjs` | `js/scripts/generate-javascript-tag-context-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-link-network-binary-buffer-rules.mjs` | `js/scripts/generate-link-network-binary-buffer-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-link-network-binary-fixtures.mjs` | `js/scripts/generate-link-network-binary-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-link-network-binary-record-rules.mjs` | `js/scripts/generate-link-network-binary-record-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-link-network-binary-rules.mjs` | `js/scripts/generate-link-network-binary-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-lino-grammar-cases.mjs` | `js/scripts/generate-lino-grammar-cases.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-native-grammar-fixtures.mjs` | `js/scripts/generate-native-grammar-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-native-recovery.mjs` | `js/scripts/generate-native-recovery.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-native-scanner-profile-fixtures.mjs` | `js/scripts/generate-native-scanner-profile-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-native-scanner-profiles.mjs` | `js/scripts/generate-native-scanner-profiles.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-network-projection-rules.mjs` | `js/scripts/generate-network-projection-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-nullable-type-syntax-rules.mjs` | `js/scripts/generate-nullable-type-syntax-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-optional-rules.mjs` | `js/scripts/generate-optional-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-owned-array-append-rules.mjs` | `js/scripts/generate-owned-array-append-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-parameter-default-rules.mjs` | `js/scripts/generate-parameter-default-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-partial-callable-rules.mjs` | `js/scripts/generate-partial-callable-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-pdf-grammar-cases.mjs` | `js/scripts/generate-pdf-grammar-cases.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-primitive-method-rules.mjs` | `js/scripts/generate-primitive-method-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-primitive-value-rules.mjs` | `js/scripts/generate-primitive-value-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-private-output-test-model.mjs` | `js/scripts/generate-private-output-test-model.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-product-emission-rules.mjs` | `js/scripts/generate-product-emission-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-product-source-rules.mjs` | `js/scripts/generate-product-source-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-product-unit-fixture.mjs` | `js/scripts/generate-product-unit-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-program-number-projection-rules.mjs` | `js/scripts/generate-program-number-projection-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-program-numeric-metadata-rules.mjs` | `js/scripts/generate-program-numeric-metadata-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-project-data-tooling-fixture.mjs` | `js/scripts/generate-project-data-tooling-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-record-emission-rules.mjs` | `js/scripts/generate-record-emission-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-record-type-syntax-rules.mjs` | `js/scripts/generate-record-type-syntax-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-record-value-rules.mjs` | `js/scripts/generate-record-value-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-resource-description-fixture.mjs` | `js/scripts/generate-resource-description-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-resource-description-ntriples-characters.mjs` | `js/scripts/generate-resource-description-ntriples-characters.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-resource-description-ntriples-fixture.mjs` | `js/scripts/generate-resource-description-ntriples-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-resource-description-ntriples-rules.mjs` | `js/scripts/generate-resource-description-ntriples-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-resource-description-rules.mjs` | `js/scripts/generate-resource-description-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-ruby-expression-syntax-fixture.mjs` | `js/scripts/generate-ruby-expression-syntax-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-ruby-heredoc-fixture.mjs` | `js/scripts/generate-ruby-heredoc-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-ruby-literal-ci-regressions.mjs` | `js/scripts/generate-ruby-literal-ci-regressions.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-ruby-pattern-fixture.mjs` | `js/scripts/generate-ruby-pattern-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-array-result-fixtures.mjs` | `js/scripts/generate-rust-array-result-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-array-rules.mjs` | `js/scripts/generate-rust-array-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-array-runtime.mjs` | `js/scripts/generate-rust-array-runtime.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-array-source-fixtures.mjs` | `js/scripts/generate-rust-array-source-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-borrowed-call-interface-fixtures.mjs` | `js/scripts/generate-rust-borrowed-call-interface-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-borrowed-call-interface-rules.mjs` | `js/scripts/generate-rust-borrowed-call-interface-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-cast-syntax-rules.mjs` | `js/scripts/generate-rust-cast-syntax-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-character-literal-fixtures.mjs` | `js/scripts/generate-rust-character-literal-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-character-rules.mjs` | `js/scripts/generate-rust-character-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-completion-fixtures.mjs` | `js/scripts/generate-rust-completion-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-completion-panic-fixtures.mjs` | `js/scripts/generate-rust-completion-panic-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-completion-rules.mjs` | `js/scripts/generate-rust-completion-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-cooked-string-rules.mjs` | `js/scripts/generate-rust-cooked-string-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-diagnostic-attribute-rules.mjs` | `js/scripts/generate-rust-diagnostic-attribute-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-empty-option-fixtures.mjs` | `js/scripts/generate-rust-empty-option-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-empty-option-rules.mjs` | `js/scripts/generate-rust-empty-option-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-evidence-partition-policy.mjs` | `js/scripts/generate-rust-evidence-partition-policy.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-float-constant-fixtures.mjs` | `js/scripts/generate-rust-float-constant-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-float-operation-fixtures.mjs` | `js/scripts/generate-rust-float-operation-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-float-predicate-fixtures.mjs` | `js/scripts/generate-rust-float-predicate-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-float-predicate-rules.mjs` | `js/scripts/generate-rust-float-predicate-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-function-lifetime-fixtures.mjs` | `js/scripts/generate-rust-function-lifetime-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-indirection-rules.mjs` | `js/scripts/generate-rust-indirection-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-number-rules.mjs` | `js/scripts/generate-rust-number-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-primitive-owner-fixtures.mjs` | `js/scripts/generate-rust-primitive-owner-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-primitive-owner-rules.mjs` | `js/scripts/generate-rust-primitive-owner-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-product-rules.mjs` | `js/scripts/generate-rust-product-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-public-pure-unit-call-fixtures.mjs` | `js/scripts/generate-rust-public-pure-unit-call-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-pure-unit-call-fixtures.mjs` | `js/scripts/generate-rust-pure-unit-call-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-pure-unit-call-rules.mjs` | `js/scripts/generate-rust-pure-unit-call-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-raw-string-rules.mjs` | `js/scripts/generate-rust-raw-string-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-read-only-query-fixtures.mjs` | `js/scripts/generate-rust-read-only-query-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-read-only-query-rules.mjs` | `js/scripts/generate-rust-read-only-query-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-runtime-shell-fixtures.mjs` | `js/scripts/generate-rust-runtime-shell-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-runtime-shell-rules.mjs` | `js/scripts/generate-rust-runtime-shell-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-scalar-parameter-fixtures.mjs` | `js/scripts/generate-rust-scalar-parameter-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-scalar-parameter-rules.mjs` | `js/scripts/generate-rust-scalar-parameter-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-source-header-emission-fixtures.mjs` | `js/scripts/generate-rust-source-header-emission-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-source-header-emission-rules.mjs` | `js/scripts/generate-rust-source-header-emission-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-source-indirection-fixtures.mjs` | `js/scripts/generate-rust-source-indirection-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-source-signature-fixtures.mjs` | `js/scripts/generate-rust-source-signature-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-source-signature-rules.mjs` | `js/scripts/generate-rust-source-signature-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-source-whitespace-rules.mjs` | `js/scripts/generate-rust-source-whitespace-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-string-rules.mjs` | `js/scripts/generate-rust-string-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-type-namespace-fixtures.mjs` | `js/scripts/generate-rust-type-namespace-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-type-namespace-rules.mjs` | `js/scripts/generate-rust-type-namespace-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-unicode-escape-rules.mjs` | `js/scripts/generate-rust-unicode-escape-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-scalar-loop-rules.mjs` | `js/scripts/generate-scalar-loop-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-cases.mjs` | `js/scripts/generate-self-translation-cases.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-report.mjs` | `js/scripts/generate-self-translation-report.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-self-translation-representation.mjs` | `js/scripts/generate-self-translation-representation.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-shared-numeric-function-fixtures.mjs` | `js/scripts/generate-shared-numeric-function-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-shared-numeric-function-rules.mjs` | `js/scripts/generate-shared-numeric-function-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-source-span-fixtures.mjs` | `js/scripts/generate-source-span-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-source-span-rules.mjs` | `js/scripts/generate-source-span-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-source-text-byte-fixtures.mjs` | `js/scripts/generate-source-text-byte-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-source-text-byte-rules.mjs` | `js/scripts/generate-source-text-byte-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-stateful-extra-fixtures.mjs` | `js/scripts/generate-stateful-extra-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-string-code-unit-template.mjs` | `js/scripts/generate-string-code-unit-template.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-structured-data-link-rules.mjs` | `js/scripts/generate-structured-data-link-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-structured-data-migration-revisions.mjs` | `js/scripts/generate-structured-data-migration-revisions.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-structured-scanner-fixtures.mjs` | `js/scripts/generate-structured-scanner-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-structured-type-fixtures.mjs` | `js/scripts/generate-structured-type-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-structured-type-rules.mjs` | `js/scripts/generate-structured-type-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-surface-raw-metadata-rules.mjs` | `js/scripts/generate-surface-raw-metadata-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-surface-reference-analysis-rules.mjs` | `js/scripts/generate-surface-reference-analysis-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-translation-stage-refresh-receipt.mjs` | `js/scripts/generate-translation-stage-refresh-receipt.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-type-syntax-rules.mjs` | `js/scripts/generate-type-syntax-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-typed-program-algebraic-fixtures.mjs` | `js/scripts/generate-typed-program-algebraic-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-typed-program-link-rules.mjs` | `js/scripts/generate-typed-program-link-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-typed-program-links-fixtures.mjs` | `js/scripts/generate-typed-program-links-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-typed-program-tuple-fixtures.mjs` | `js/scripts/generate-typed-program-tuple-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-typescript-documentation-fixtures.mjs` | `js/scripts/generate-typescript-documentation-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-typescript-erasure-fixtures.mjs` | `js/scripts/generate-typescript-erasure-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-typescript-erasure-rules.mjs` | `js/scripts/generate-typescript-erasure-rules.mjs` | `script` |  | derived | current |  |
 | `rust/scripts/build-site.rs` | `rust/scripts/build-site.rs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 
-| Item | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
-|---|---|---|---|---|---|---|
-| `@secretlint/secretlint-rule-preset-recommend` | `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
-| `cargo-llvm-cov` | `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
-| `elan` | `.github/workflows/ci.yml` | `v4.2.4` | v4.2.4 (GitHub release, leanprover/elan) | version | current |  |
-| `lean` | `.github/workflows/ci.yml`, `experiments/issue-195-projects/lean/lean-toolchain`, `lean-toolchain` | `v4.34.1` | v4.34.1 (GitHub release, leanprover/lean4) | version | current |  |
-| `node` | `.github/workflows/ci.yml`, `.github/workflows/js.yml` | `22` | 22 (nodejs/Release schedule, oldest maintained LTS line (maintained: 22, 24)) | floor | current |  |
-| `node` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `24` | 24.21.0 (nodejs.org, newest LTS release (Krypton)) | major | current |  |
-| `npm` | `.github/workflows/js.yml` | `12` | 12.2.0 (npm registry, npm latest) | major | current |  |
-| `ocaml` | `.github/workflows/ci.yml` | `5.4` | 5.5.1 (GitHub release, ocaml/ocaml) | minor | behind | Held by ocamlfind 1.9.8, the newest ocamlfind release in opam-repository, which requires OCaml <5.5.0; rocq-runtime 9.3.0 needs ocamlfind (>=1.9.1), so the Rocq acceptance job builds with the newest OCaml it admits and moves when ocamlfind admits a newer line. |
-| `pre-commit/pre-commit-hooks` | `.pre-commit-config.yaml` | `v6.0.0` | v6.0.0 (GitHub release, pre-commit/pre-commit-hooks) | version | current |  |
-| `rocq-core` | `.github/workflows/ci.yml` | `9.3.0` | V9.3.0 (GitHub release, rocq-prover/rocq) | version | current |  |
-| `rocq-prover` | `.github/workflows/ci.yml` | `meta.1` |  | unversioned | not applicable |  |
-| `rocq-stdlib` | `.github/workflows/ci.yml` | `9.2.0` | V9.2.0 (GitHub release, rocq-prover/stdlib) | version | current |  |
-| `rust-script` | `rust/scripts/install-rust-script.sh` | `latest` |  | floating | current |  |
-| `secretlint` | `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
-| `tree-sitter-cli` | `js/src/vendor/grammars/grammar-lock.json`, `rust/src/data/grammar-lock.json` | `0.27.0` | 0.27.0 (npm registry, tree-sitter-cli latest) | version | current |  |
-| `wasm-pack` | `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
+| Item | Scope | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
+|---|---|---|---|---|---|---|---|
+| `@secretlint/secretlint-rule-preset-recommend` |  | `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
+| `cargo-llvm-cov` |  | `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
+| `elan` |  | `.github/workflows/ci.yml` | `v4.2.4` | v4.2.4 (GitHub release, leanprover/elan) | version | current |  |
+| `lean` |  | `.github/workflows/ci.yml`, `experiments/issue-195-projects/lean/lean-toolchain`, `lean-toolchain` | `v4.34.1` | v4.34.1 (GitHub release, leanprover/lean4) | version | current |  |
+| `node` |  | `.github/workflows/ci.yml`, `.github/workflows/js.yml` | `22` | 22 (nodejs/Release schedule, oldest maintained LTS line (maintained: 22, 24)) | floor | current |  |
+| `node` |  | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `24` | 24.21.0 (nodejs.org, newest LTS release (Krypton)) | major | current |  |
+| `npm` |  | `.github/workflows/js.yml` | `12` | 12.2.0 (npm registry, npm latest) | major | current |  |
+| `ocaml` |  | `.github/workflows/ci.yml` | `5.4` | 5.5.1 (GitHub release, ocaml/ocaml) | minor | behind | Held by ocamlfind 1.9.8, the newest ocamlfind release in opam-repository, which requires OCaml <5.5.0; rocq-runtime 9.3.0 needs ocamlfind (>=1.9.1), so the Rocq acceptance job builds with the newest OCaml it admits and moves when ocamlfind admits a newer line. |
+| `pre-commit/pre-commit-hooks` |  | `.pre-commit-config.yaml` | `v6.0.0` | v6.0.0 (GitHub release, pre-commit/pre-commit-hooks) | version | current |  |
+| `lark` | `pypi` | `.github/workflows/js.yml` | `1.3.1` | 1.3.1 (PyPI JSON registry, lark newest non-yanked stable release) | version | current |  |
+| `rocq-core` |  | `.github/workflows/ci.yml` | `9.3.0` | V9.3.0 (GitHub release, rocq-prover/rocq) | version | current |  |
+| `rocq-prover` |  | `.github/workflows/ci.yml` | `meta.1` |  | unversioned | not applicable |  |
+| `rocq-stdlib` |  | `.github/workflows/ci.yml` | `9.2.0` | V9.2.0 (GitHub release, rocq-prover/stdlib) | version | current |  |
+| `rust-script` |  | `rust/scripts/install-rust-script.sh` | `latest` |  | floating | current |  |
+| `secretlint` |  | `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
+| `tree-sitter-cli` |  | `js/src/vendor/grammars/grammar-lock.lino`, `rust/src/data/grammar-lock.lino` | `0.27.0` | 0.27.0 (npm registry, tree-sitter-cli latest) | version | current |  |
+| `wasm-pack` |  | `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
 
 ## GitHub Actions
 
 | Item | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|
 | `actions/cache` | `.github/workflows/ci.yml`, `.github/workflows/rust.yml` | `v6` | v6.1.0 (GitHub release, actions/cache) | major | current |  |
+| `actions/cache/restore` | `.github/workflows/ci.yml` | `v6` | v6.1.0 (GitHub release, actions/cache) | major | current |  |
+| `actions/cache/save` | `.github/workflows/ci.yml` | `v6` | v6.1.0 (GitHub release, actions/cache) | major | current |  |
 | `actions/checkout` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `v7` | v7.0.1 (GitHub release, actions/checkout) | major | current |  |
 | `actions/configure-pages` | `.github/workflows/rust.yml` | `v6` | v6.0.0 (GitHub release, actions/configure-pages) | major | current |  |
 | `actions/deploy-pages` | `.github/workflows/rust.yml` | `v5` | v5.0.1 (GitHub release, actions/deploy-pages) | major | current |  |
-| `actions/download-artifact` | `.github/workflows/ci.yml`, `.github/workflows/rust.yml` | `v8` | v8.0.1 (GitHub release, actions/download-artifact) | major | current |  |
+| `actions/download-artifact` | `.github/workflows/ci.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `v8` | v8.0.1 (GitHub release, actions/download-artifact) | major | current |  |
 | `actions/setup-node` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `v7` | v7.0.0 (GitHub release, actions/setup-node) | major | current |  |
-| `actions/upload-artifact` | `.github/workflows/ci.yml`, `.github/workflows/rust.yml` | `v7` | v7.0.1 (GitHub release, actions/upload-artifact) | major | current |  |
+| `actions/upload-artifact` | `.github/workflows/ci.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `v7` | v7.0.1 (GitHub release, actions/upload-artifact) | major | current |  |
 | `actions/upload-pages-artifact` | `.github/workflows/rust.yml` | `v5` | v5.0.0 (GitHub release, actions/upload-pages-artifact) | major | current |  |
 | `codecov/codecov-action` | `.github/workflows/rust.yml` | `v7` | v7.1.1 (GitHub release, codecov/codecov-action) | major | current |  |
 | `docker/build-push-action` | `.github/workflows/rust.yml` | `v7` | v7.4.0 (GitHub release, docker/build-push-action) | major | current |  |
@@ -593,7 +776,7 @@ they are.
 
 | Item | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|
-| `emscripten/emsdk` | `js/scripts/build-web-tree-sitter-runtime.mjs`, `js/src/vendor/web-tree-sitter/runtime-lock.json` | `4.0.15` | 6.0.11 (Docker Hub, emscripten/emsdk tags) | version | behind | Held by tree-sitter v0.27.0, whose `crates/loader/emscripten-version` pins emscripten 4.0.15 for the web-tree-sitter 0.27.0 runtime; another emscripten produces a different runtime, so the image moves with tree-sitter. |
+| `emscripten/emsdk` | `js/scripts/build-web-tree-sitter-runtime.mjs`, `js/src/vendor/web-tree-sitter/runtime-lock.lino` | `4.0.15` | 6.0.11 (Docker Hub, emscripten/emsdk tags) | version | behind | Held by tree-sitter v0.27.0, whose `crates/loader/emscripten-version` pins emscripten 4.0.15 for the web-tree-sitter 0.27.0 runtime; another emscripten produces a different runtime, so the image moves with tree-sitter. |
 
 ## Runners
 
@@ -613,16 +796,81 @@ they are.
 | `examples/**/*.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `README.md` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/**/*.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/concept-records.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/foundation-models.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/grammar-lock.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/language-catalog.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/language-trigrams.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/array-bindings.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/array-from-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/array-values.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/callable-emission-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/callable-source-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/collection-construction-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/concept-records.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/formal-concept-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/foundation-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-lexer-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-lock.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-rule-composition-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-selection-field-range-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-selection-included-range-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-selection-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-line-terminators.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-scoped-binding-emission.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-tag-context-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/language-catalog.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/language-trigrams.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/link-network-binary-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/native-grammars/*.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/semantic-lexicon.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `vendor/tree-sitter-cmake/**` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `vendor/tree-sitter-lean/**` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `vendor/tree-sitter-rocq/**` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/native-text-grammar.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/native-text-metadata.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/network-projection-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/nullable-type-syntax.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/optional-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/owned-array-append.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/parameter-default-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/partial-callable-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/program-number-projection-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/program-numeric-metadata.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/record-emission.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/record-type-syntax.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/record-values.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/reference-operations.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/resource-description-ntriples-profile.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/resource-description-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-borrowed-call-interface.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-cast-syntax.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-character-literals.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-character-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-const-branches.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-const-functions.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-cooked-string-escapes.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-diagnostic-attributes.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-empty-options.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-number-literals.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-owned-local-state.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-owned-tuple-calls.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-primitive-owners.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-pure-unit-calls.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-raw-string-literals.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-read-only-queries.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-runtime-shell.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-scalar-loops.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-source-header-emission.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-source-signatures.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-source-whitespace.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-type-namespace.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-unicode-escapes.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/self-translation-representation.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/semantic-lexicon.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/source-span.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/source-text-byte-model.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/string-code-unit-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/surface-raw-metadata.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/surface-reference-analysis.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/type-syntax.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/typed-program-links-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/typescript-erasure.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/typescript-portable-typing.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/translation/runtime/array-*.txt` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/translation/rust/completions.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/translation/rust/float-predicates.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `README.md` | `npm` | `js/package.json` | `files` |  | unversioned | not applicable |  |
 | `src` | `npm` | `js/package.json` | `files` |  | unversioned | not applicable |  |
 
@@ -633,7 +881,7 @@ they are.
 0 are stale and fail the delivery check.
 
 - `allocator-api2` `0.2.21` → `0.4.0` (`rust/Cargo.lock`): Held by the requirement of `hashbrown` 0.15.5 (`^0.2.9`), which does not admit 0.4.0; it moves when that dependent does. Delivered at its newest compatible release `0.2.21`, held by `crate rust/Cargo.lock hashbrown@0.15.5` (`^0.2.9`).
-- `cc` `1.2.67` → `1.6.0` (`rust/Cargo.lock`, `rust/Cargo.toml`): Held by the requirement of `tree-sitter-sequel` 0.3.11 (`~1.2.1`), which does not admit 1.6.0; it moves when that dependent does. Delivered at its newest compatible release `1.2.67`, held by `crate rust/Cargo.lock tree-sitter-sequel@0.3.11` (`~1.2.1`).
+- `cc` `1.2.67` → `1.6.0` (`rust/Cargo.lock`, `rust/oracles/agda-layout-source-oracle/Cargo.toml`, `rust/oracles/cmake-source-oracle/Cargo.toml`, `rust/oracles/native-source-oracles/Cargo.toml`): Held by the requirement of `tree-sitter-sequel` 0.3.11 (`~1.2.1`), which does not admit 1.6.0; it moves when that dependent does. Delivered at its newest compatible release `1.2.67`, held by `crate rust/Cargo.lock tree-sitter-sequel@0.3.11` (`~1.2.1`).
 - `foldhash` `0.1.5` → `0.2.0` (`rust/Cargo.lock`): Held by the requirement of `hashbrown` 0.15.5 (`^0.1.2`), which does not admit 0.2.0; it moves when that dependent does. Delivered at its newest compatible release `0.1.5`, held by `crate rust/Cargo.lock hashbrown@0.15.5` (`^0.1.2`).
 - `getrandom` `0.2.17` → `0.4.3` (`rust/Cargo.lock`): Held by the requirement of `ring` 0.17.14 (`^0.2.10`), which does not admit 0.4.3; it moves when that dependent does. Delivered at its newest compatible release `0.2.17`, held by `crate rust/Cargo.lock ring@0.17.14` (`^0.2.10`).
 - `hashbrown` `0.14.5` → `0.17.1` (`rust/Cargo.lock`): Held by the requirement of `dashmap` 6.2.1 (`^0.14.5`), which does not admit 0.17.1; it moves when that dependent does. Delivered at its newest compatible release `0.14.5`, held by `crate rust/Cargo.lock dashmap@6.2.1` (`^0.14.5`).
@@ -657,4 +905,4 @@ they are.
 - `windows-sys` `0.52.0` → `0.61.2` (`rust/Cargo.lock`): Held by the requirement of `ring` 0.17.14 (`^0.52`), which does not admit 0.61.2; it moves when that dependent does. Delivered at its newest compatible release `0.52.0`, held by `crate rust/Cargo.lock ring@0.17.14` (`^0.52`).
 - `windows-targets` `0.52.6` → `0.53.5` (`rust/Cargo.lock`): Held by the requirement of `windows-sys` 0.52.0 (`^0.52.0`), which does not admit 0.53.5; it moves when that dependent does. Delivered at its newest compatible release `0.52.6`, held by `crate rust/Cargo.lock windows-sys@0.52.0` (`^0.52.0`).
 - `ocaml` `5.4` → `5.5.1` (`.github/workflows/ci.yml`): Held by ocamlfind 1.9.8, the newest ocamlfind release in opam-repository, which requires OCaml <5.5.0; rocq-runtime 9.3.0 needs ocamlfind (>=1.9.1), so the Rocq acceptance job builds with the newest OCaml it admits and moves when ocamlfind admits a newer line. Delivered at its newest compatible release `5.4.1`, held by `opam ocamlfind 1.9.8` (`<5.5.0`).
-- `emscripten/emsdk` `4.0.15` → `6.0.11` (`js/scripts/build-web-tree-sitter-runtime.mjs`, `js/src/vendor/web-tree-sitter/runtime-lock.json`): Held by tree-sitter v0.27.0, whose `crates/loader/emscripten-version` pins emscripten 4.0.15 for the web-tree-sitter 0.27.0 runtime; another emscripten produces a different runtime, so the image moves with tree-sitter. Delivered at its newest compatible release `4.0.15`, held by `npm js/package-lock.json web-tree-sitter@0.27.0` (`=4.0.15`).
+- `emscripten/emsdk` `4.0.15` → `6.0.11` (`js/scripts/build-web-tree-sitter-runtime.mjs`, `js/src/vendor/web-tree-sitter/runtime-lock.lino`): Held by tree-sitter v0.27.0, whose `crates/loader/emscripten-version` pins emscripten 4.0.15 for the web-tree-sitter 0.27.0 runtime; another emscripten produces a different runtime, so the image moves with tree-sitter. Delivered at its newest compatible release `4.0.15`, held by `npm js/package-lock.json web-tree-sitter@0.27.0` (`=4.0.15`).

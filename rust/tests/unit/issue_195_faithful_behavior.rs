@@ -45,9 +45,14 @@ fn faithful() -> &'static Value {
     static FAITHFUL: OnceLock<Value> = OnceLock::new();
     FAITHFUL.get_or_init(|| {
         let path = root().join(observations::FOUR_LANGUAGE_FIXTURE);
-        let shared: Value =
-            serde_json::from_str(&fs::read_to_string(path).expect("shared corpus is readable"))
-                .expect("shared corpus is valid JSON");
+        let shared: Value = super::project_data::read_project_data(
+            &fs::read_to_string(
+                super::project_data::resolve_project_data_path(path)
+                    .expect("one project data storage format"),
+            )
+            .expect("shared corpus is readable"),
+        )
+        .expect("shared corpus is valid JSON");
         shared["faithfulBehavior"].clone()
     })
 }
@@ -70,7 +75,11 @@ fn source_text(case: &Value) -> String {
         .as_str()
         .expect("faithful directory");
     let file = case["file"].as_str().expect("case file");
-    fs::read_to_string(root().join(directory).join(file)).expect("faithful source is readable")
+    fs::read_to_string(
+        super::project_data::resolve_project_data_path(root().join(directory).join(file))
+            .expect("one project data storage format"),
+    )
+    .expect("faithful source is readable")
 }
 
 /// What a run prints and the message it aborts with (`None` when it ends normally).

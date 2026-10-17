@@ -7,11 +7,11 @@ import { deflateSync, inflateSync } from 'node:zlib';
 import peggy from 'peggy';
 import { PDFDocument } from 'pdf-lib';
 import * as pako from 'pako';
+import { readProjectData } from '../scripts/project-data.mjs';
 
 const compression = pako.default ?? pako;
 
-const inventory = JSON.parse(await readFile(
-  new URL('../../parity/dependency-inventory.json', import.meta.url), 'utf8'));
+const inventory = readProjectData(new URL('../../parity/dependency-inventory.json', import.meta.url));
 const lock = JSON.parse(await readFile(new URL('../package-lock.json', import.meta.url), 'utf8'));
 
 test('the repository npm lockfile uses each audited current stable release', () => {

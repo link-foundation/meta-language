@@ -39,7 +39,14 @@ fn matrix() -> Value {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("..")
         .join(LINO_MATRIX_FIXTURE);
-    serde_json::from_str(&fs::read_to_string(path).expect("matrix")).expect("matrix JSON")
+    super::project_data::read_project_data(
+        &fs::read_to_string(
+            super::project_data::resolve_project_data_path(path)
+                .expect("one project data storage format"),
+        )
+        .expect("matrix"),
+    )
+    .expect("matrix JSON")
 }
 
 fn field<'a>(shape: &'a Value, key: &str) -> &'a str {

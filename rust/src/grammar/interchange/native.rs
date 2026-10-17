@@ -10,8 +10,8 @@
 use super::super::feature::class_expression;
 use super::super::{
     CharClassItem, FeatureExpr, Grammar, GrammarDeclarations, GrammarExpr, GrammarFormat,
-    GrammarImportError, GrammarMacro, GrammarRule, GrammarScanner, MATCHING_MODES, Operation,
-    PrecedenceEntry, RuleAttributes, RuleKind, UnicodeClassItem, settling_problem,
+    GrammarImportError, GrammarLexer, GrammarMacro, GrammarRule, GrammarScanner, MATCHING_MODES,
+    Operation, PrecedenceEntry, RuleAttributes, RuleKind, UnicodeClassItem, settling_problem,
 };
 use super::feature_forms::{FormCodec, render_feature_form, render_operation};
 
@@ -102,6 +102,13 @@ pub fn render_native_grammar(grammar: &Grammar) -> String {
             render_name(&scanner.name),
             names(&scanner.tokens, ", "),
             operations(&scanner.operations)
+        ));
+    }
+    for lexer in &declarations.lexers {
+        lines.push(format!(
+            "lexer {} = {}",
+            render_name(&lexer.name),
+            render_native_expression(&lexer.expression)
         ));
     }
     for rule in grammar.rules() {
@@ -420,6 +427,14 @@ pub fn parse_native_grammar(source: &str) -> Result<Grammar, GrammarImportError>
                     parameters,
                     expression,
                 });
+            }
+            "lexer" => {
+                let name = cursor.name()?;
+                cursor.skip_spaces();
+                cursor.expect('=')?;
+                cursor.skip_spaces();
+                let expression = cursor.expression()?;
+                declarations.lexers.push(GrammarLexer { name, expression });
             }
             "scanner" => {
                 let name = cursor.name()?;

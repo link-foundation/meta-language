@@ -217,6 +217,15 @@ pub(super) enum Target {
 #[derive(Debug)]
 pub(super) enum Expr {
     Empty,
+    LexicalScope {
+        name: Name,
+        owner: Name,
+        item: Box<Self>,
+    },
+    LexicalToken {
+        name: Name,
+        token: Name,
+    },
     Terminal {
         matcher: Matcher,
         expectation: Name,
@@ -278,7 +287,25 @@ pub(super) enum Expr {
     Embed {
         language: Name,
         item: Box<Self>,
+        selection: Option<SelectionDescriptor>,
     },
+}
+
+/// Explicit, ordered candidates for the shared any/all grammar policy.
+#[derive(Clone, Debug)]
+pub(super) struct SelectionDescriptor {
+    pub(super) mode: Name,
+    pub(super) candidates: Vec<SelectionCandidate>,
+}
+
+/// One actual candidate form and its validated source-view parameters.
+#[derive(Clone, Debug)]
+pub(super) struct SelectionCandidate {
+    pub(super) kind: Name,
+    pub(super) name: Name,
+    pub(super) mapping: Name,
+    pub(super) ranges: Vec<[f64; 2]>,
+    pub(super) selector: Option<serde_json::Value>,
 }
 
 /// One loaded rule; an instance of a parameterized rule keeps its kind.
@@ -425,12 +452,20 @@ pub(super) enum InExtra {
 pub(super) struct Trivia {
     pub(super) expression: Expr,
     pub(super) kind: Option<Name>,
+    /// The outer alias applied to the public tree after lexing and scanners.
+    pub(super) projection_name: Option<Name>,
+    /// A private scanner extra keeps its source kind but exposes no name.
+    pub(super) projection_anonymous: bool,
     pub(super) modes: Option<Vec<Name>>,
 }
 
 /// One loaded grammar.
 #[derive(Debug)]
 pub(super) struct Program {
+    pub(super) lexers: HashMap<Name, super::lexical_plan::LexicalPlan>,
+    pub(super) default_lexer: Name,
+    /// Immutable actual input definitions and metadata for origin validation.
+    pub(super) source_definition: serde_json::Value,
     pub(super) peg: bool,
     /// How two parses of one text that end alike are settled.
     pub(super) settling: Settling,

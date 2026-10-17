@@ -1,12 +1,12 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 
 import { LinkNetwork, LinkType } from '../src/index.js';
 
-const { cases } = JSON.parse(
-  await readFile(new URL('../../parity/fixtures/lino-grammar-cases.json', import.meta.url), 'utf8'),
-);
+const { cases } = readProjectData(new URL('../../parity/fixtures/lino-grammar-cases.json', import.meta.url));
 
 /** The Syntax tree of a public LiNo network as {term, field, named, text, flags, children}. */
 function syntaxTree(network) {
@@ -159,16 +159,12 @@ test('the LiNo grammar CST records id, value and child fields and recovers per l
 });
 
 test('the recorded LiNo grammar specification is the grammar of the links-notation dependency', async () => {
-  const inventory = JSON.parse(
-    await readFile(new URL('../../parity/language-grammar-inventory.json', import.meta.url), 'utf8'),
-  );
+  const inventory = readProjectData(new URL('../../parity/language-grammar-inventory.json', import.meta.url));
   const declared = inventory.builtinGrammars['links-notation'];
-  const dependency = JSON.parse(
-    await readFile(new URL('../node_modules/links-notation/package.json', import.meta.url), 'utf8'),
-  );
+  const dependency = readProjectData(new URL('../node_modules/links-notation/package.json', import.meta.url));
   assert.equal(declared.version, dependency.version);
   assert.equal(
-    await readFile(new URL(`../../${declared.specification}`, import.meta.url), 'utf8'),
-    await readFile(new URL('../node_modules/links-notation/src/grammar.pegjs', import.meta.url), 'utf8'),
+    await readFile(resolveProjectDataPath(new URL(`../../${declared.specification}`, import.meta.url)), 'utf8'),
+    await readFile(resolveProjectDataPath(new URL('../node_modules/links-notation/src/grammar.pegjs', import.meta.url)), 'utf8'),
   );
 });

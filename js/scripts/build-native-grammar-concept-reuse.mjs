@@ -4,8 +4,8 @@
 // evidence of I195-MERGE-QUALITY-EVIDENCE): for every native grammar, the
 // rules that name a concept two or more native grammars share and the rules
 // that name a concept specific to that language, and every concept with the
-// languages that name it. Both runtimes compute the same report; the JSON
-// file is the fixture their tests compare against.
+// languages that name it. Both runtimes compute the same report; the links
+// snapshot is the fixture their tests compare against.
 //
 //   node js/scripts/build-native-grammar-concept-reuse.mjs          # write the report
 //   node js/scripts/build-native-grammar-concept-reuse.mjs --check  # fail on drift
@@ -14,34 +14,18 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { checkNativeGrammarConcepts, nativeGrammarConceptReuse } from '../src/grammar-concepts.js';
+import { readProjectFileBytes, serializeProjectData, writeProjectData } from './project-data.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 export const CONCEPT_REUSE_FIXTURE = 'parity/fixtures/native-grammar-concept-reuse.json';
 export const CONCEPT_REUSE_DOCUMENT = 'docs/grammar/native-grammar-concept-reuse.md';
 
 export function formatConceptReuse(report) {
-  const grammars = report.grammars.map(({ grammar, language, rules, shared, specific }) => [
-    '    {',
-    `      "grammar": ${JSON.stringify(grammar)},`,
-    `      "language": ${JSON.stringify(language)},`,
-    `      "rules": ${rules},`,
-    `      "shared": [${shared.map((entry) => `\n        ${JSON.stringify(entry)}`).join(',')}${shared.length > 0 ? '\n      ' : ''}],`,
-    `      "specific": [${specific.map((entry) => `\n        ${JSON.stringify(entry)}`).join(',')}${specific.length > 0 ? '\n      ' : ''}]`,
-    '    }',
-  ].join('\n'));
-  const concepts = report.concepts.map((entry) => `    ${JSON.stringify(entry)}`);
-  return [
-    '{',
-    '  "generatedBy": "js/scripts/build-native-grammar-concept-reuse.mjs",',
-    '  "grammars": [',
-    grammars.join(',\n'),
-    '  ],',
-    '  "concepts": [',
-    concepts.join(',\n'),
-    '  ]',
-    '}',
-    '',
-  ].join('\n');
+  return serializeProjectData(conceptReuseFixture(report), join(root, CONCEPT_REUSE_FIXTURE));
+}
+
+function conceptReuseFixture(report) {
+  return { generatedBy: 'js/scripts/build-native-grammar-concept-reuse.mjs', grammars: report.grammars, concepts: report.concepts };
 }
 
 const percent = (part, whole) => `${whole === 0 ? 0 : Math.round((100 * part) / whole)}%`;
@@ -101,7 +85,10 @@ async function main() {
   if (process.argv.includes('--check')) {
     const stale = [];
     for (const [path, text] of outputs) {
-      if ((await readFile(join(root, path), 'utf8').catch(() => '')) !== text) stale.push(path);
+      const current = path === CONCEPT_REUSE_FIXTURE
+        ? readProjectFileBytes(join(root, path)).toString('utf8')
+        : await readFile(join(root, path), 'utf8').catch(() => '');
+      if (current !== text) stale.push(path);
     }
     if (stale.length > 0) {
       console.error(`the native grammar concept reuse report is stale: ${stale.join(', ')}`);
@@ -111,7 +98,8 @@ async function main() {
     console.log(`the concept reuse report matches ${report.grammars.length} native grammars and ${report.concepts.length} concepts`);
     return;
   }
-  await Promise.all(outputs.map(([path, text]) => writeFile(join(root, path), text)));
+  writeProjectData(join(root, CONCEPT_REUSE_FIXTURE), conceptReuseFixture(report));
+  await writeFile(join(root, CONCEPT_REUSE_DOCUMENT), renderConceptReuseDocument(report));
   console.log(`wrote the concept reuse report of ${report.grammars.length} native grammars`);
 }
 

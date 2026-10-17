@@ -10,6 +10,8 @@ import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 import { buildIssue195Manifest, evaluateIssue195Acceptance } from '../scripts/issue-195-acceptance-lib.mjs';
+import { readAssertionVersionPolicy, selectAntlrReferenceAssertion } from '../scripts/antlr-version-assertions.mjs';
+import { selectPeggyOptimizerAssertion } from '../scripts/peggy-version-assertions.mjs';
 import { evidenceStages } from '../scripts/issue-195-evidence-stages.mjs';
 import { recordIssue195DirectiveObservation as observe } from './support/issue-195-observations.js';
 
@@ -17,6 +19,31 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const read = (relative) => readFileSync(path.join(root, relative), 'utf8');
 const manifest = await buildIssue195Manifest(root);
 const commit = 'c'.repeat(40);
+const versionRegistry = readAssertionVersionPolicy(root);
+const observationIdentity = ({ testId, assertionId, fixtureId }) => `${testId}\u0000${assertionId}\u0000${fixtureId}`;
+const versionBindings = new Map(versionRegistry.policy.observationBindings.map(binding => [observationIdentity(binding), binding]));
+const versionContexts = new Map();
+const versionSelectors = new Map([
+  ['antlr-lexer-reference-semantics', selectAntlrReferenceAssertion],
+  ['peggy-optimized-character-set-shape', selectPeggyOptimizerAssertion],
+]);
+
+function passingExecutionRecord(cell, assertionId, fixtureId) {
+  const record = {
+    testId: cell.testId, assertionId, fixtureId, fixtureDigest: manifest.fixtureCatalog[fixtureId].sha256,
+    runtime: cell.runtime, commit, outcome: 'passed', testName: 'gate self-test fixture',
+  };
+  const binding = versionBindings.get(observationIdentity(record));
+  if (binding) {
+    const select = versionSelectors.get(binding.assertionPolicy);
+    assert.equal(typeof select, 'function', `a source-authenticated selector is required for ${binding.assertionPolicy}`);
+    if (!versionContexts.has(binding.assertionPolicy)) {
+      versionContexts.set(binding.assertionPolicy, select({ root, registry: versionRegistry }));
+    }
+    record.versionApplicability = structuredClone([versionContexts.get(binding.assertionPolicy)]);
+  }
+  return record;
+}
 
 /** A passing result for `cell`, with every field the evaluator requires. */
 function passingResult(cell) {
@@ -31,10 +58,8 @@ function passingResult(cell) {
     evidenceArtifacts: ['issue-195-results/execution-records.jsonl'],
     ...(cell.kind === 'fault-injection' ? { failureLogs: ['issue-195-results/logs/fault-injection.log'] } : {}),
     assertionsPassed: cell.assertions,
-    executionRecords: cell.assertions.flatMap((assertionId) => cell.fixtureIds.map((fixtureId) => ({
-      testId: cell.testId, assertionId, fixtureId, fixtureDigest: manifest.fixtureCatalog[fixtureId].sha256,
-      runtime: cell.runtime, commit, outcome: 'passed', testName: 'gate self-test fixture',
-    }))),
+    executionRecords: cell.assertions.flatMap((assertionId) => cell.fixtureIds.map((fixtureId) =>
+      passingExecutionRecord(cell, assertionId, fixtureId))),
     fixtureDigests: Object.fromEntries(cell.fixtureIds.map((fixtureId) => [fixtureId, manifest.fixtureCatalog[fixtureId].sha256])),
   };
 }
@@ -63,7 +88,8 @@ test('the pre-merge aggregate is green when every pre-merge row passes', () => {
   const ledger = implementedLedger();
   const cells = preMergeCells(ledger);
   assert.ok(cells.length > 600, `${cells.length} pre-merge cells`);
-  const report = evaluateIssue195Acceptance(ledger, [document(cells.map(({ cell }) => passingResult(cell)))], {
+  const results = cells.map(({ cell }) => passingResult(cell));
+  const report = evaluateIssue195Acceptance(ledger, [document(results)], {
     checkpoint: 'pre-merge', commit,
   });
   assert.deepEqual(report.gateErrors, []);
@@ -74,6 +100,26 @@ test('the pre-merge aggregate is green when every pre-merge row passes', () => {
     checkpoint: 'pre-merge', commit,
   });
   assert.equal(withoutOne.passed, false);
+  // Version-bound fixtures must pass with actual selected source context, and
+  // cannot remain green if any one declared context is missing or altered.
+  assert.equal(results.flatMap(({ executionRecords }) => executionRecords)
+    .filter(record => Object.hasOwn(record, 'versionApplicability')).length, versionBindings.size);
+  for (const binding of versionBindings.values()) {
+    for (const mutation of ['missing', 'forged']) {
+      const changed = structuredClone(results);
+      const record = changed.find(({ testId }) => testId === binding.testId)?.executionRecords
+        .find(record => observationIdentity(record) === observationIdentity(binding));
+      assert.ok(record, `the complete golden fixture must include ${observationIdentity(binding)}`);
+      if (mutation === 'missing') delete record.versionApplicability;
+      else record.versionApplicability[0].activeVersion = 'unproven-version';
+      const refused = evaluateIssue195Acceptance(ledger, [document(changed)], { checkpoint: 'pre-merge', commit });
+      assert.equal(refused.passed, false, `${binding.assertionId}: ${mutation} context`);
+      assert.deepEqual(refused.gateErrors, []);
+      const cell = refused.requirements.flatMap(({ cells }) => cells).find(({ testId }) => testId === binding.testId);
+      assert.equal(cell.passed, false);
+      assert.match(cell.reasons.join('\n'), /execution record version applicability/u);
+    }
+  }
   observe('I195-ACCEPTANCE-PR-CHECKS-PASSABLE', ['everyPreMergeRowPassingGivesGreenAggregate'],
     'the pre-merge aggregate is green when every pre-merge row passes');
 });
@@ -135,7 +181,7 @@ test('pull request checks use no post-merge state, and post-merge reports never 
   }
   const acceptance = read('.github/workflows/ci.yml');
   assert.match(acceptance, /check-dependencies\.mjs --delivery --offline/u);
-  assert.match(acceptance, /\n {2}post-merge:\n {4}name: Post-merge Report\n {4}needs: js\n {4}if: \$\{\{ github\.event_name == 'push' && needs\.js\.result == 'success' \}\}\n {4}continue-on-error: true\n/u);
+  assert.match(acceptance, /\n {2}post-merge:\n {4}name: Post-merge Report\n {4}needs: \[js, self-translation-report-validation\]\n {4}if: \$\{\{ github\.event_name == 'push' && needs\.js\.result == 'success' \}\}\n {4}continue-on-error: true\n/u);
   observe('I195-ACCEPTANCE-PR-CHECKS-PASSABLE', ['pullRequestChecksUseNoPostMergeState', 'postMergeReportsAreNonBlocking'],
     'pull request checks use no post-merge state, and post-merge reports never block');
 });

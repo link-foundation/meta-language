@@ -1,0 +1,1 @@
+Also check best practices we have at https://github.com/link-assistant/router/pull/761, and try to reuse as much as we can of best ideas. Make sure all I asked at the moment are fully recorded in meta language vision and requirements.

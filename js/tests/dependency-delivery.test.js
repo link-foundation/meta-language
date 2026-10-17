@@ -5,10 +5,11 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 import { checkDeliveredDependencies, checkInventory, collectDependencies } from '../scripts/dependency-inventory.mjs';
+import { readProjectData } from '../scripts/project-data.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const fixture = 'parity/dependency-inventory.json';
-const inventory = JSON.parse(readFileSync(path.join(root, fixture), 'utf8'));
+const inventory = readProjectData(path.join(root, fixture));
 const collectedOf = (items) => items.map(({ current, evidence, reason, ...item }) => item);
 const current = {
   id: 'npm demo@2.0.0', category: 'npm', name: 'demo', scope: 'demo/package.json',

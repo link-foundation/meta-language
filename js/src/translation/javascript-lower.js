@@ -12,16 +12,25 @@
 // variable in scope are renamed, so no later statement sees them.
 
 import { TranslationError, unsupported } from './diagnostics.js';
+import { mutableClosureCells } from './javascript-cells.js';
+import { readCallableCellLowering, renderCallableCellParameterName } from './callable-source-rules.js';
+import { renameCallableSourceExpression } from './callable-source.js';
+import { requireJavaScriptBranchContinuation } from './frontend-rules.js';
+import { acceptJavaScriptValueSwitch, readJavaScriptValueSwitchInstruction,
+  readJavaScriptValueSwitchPosition } from './javascript-surface-rules.js';
 
 const ROOT = 'crate';
-const IMPERATIVE = new Set(['let', 'assign', 'while', 'doWhile', 'for', 'break', 'continue', 'print', 'expr']);
+const IMPERATIVE = new Set(['let', 'assign', 'assignReference', 'while', 'doWhile', 'for', 'break', 'continue', 'print', 'expr']);
 
 /** Whether statements use `let`, assignments, loops, `break`, `continue`, print or discard a value. */
-export function imperative(statements) {
+export function imperative(statements, parser) {
+  if (mutableClosureCells(statements).size) return true;
   return statements.some(function visit(statement) {
     if (IMPERATIVE.has(statement.s)) return true;
-    if (statement.s === 'block') return statement.body.some(visit);
-    if (statement.s === 'if') return statement.then.some(visit) || Boolean(statement.else?.some(visit));
+    if (statement.s === 'block') return !statement.inline && !parser.terminates(statement.body) || statement.body.some(visit);
+    if (statement.s === 'if') return requireJavaScriptBranchContinuation(parser.terminates(statement.then),
+      Boolean(statement.else), Boolean(statement.else && parser.terminates(statement.else)))
+      || statement.then.some(visit) || Boolean(statement.else?.some(visit));
     if (statement.s === 'switch') return statement.clauses.some((clause) => clause.body.some(visit));
     return false;
   });
@@ -59,6 +68,11 @@ function useStatement(statement, scope, uses) {
         uses.free.add(statement.name);
         uses.assigned.add(statement.name);
       }
+      return;
+    case 'assignReference':
+      read(statement.object);
+      if (statement.index) read(statement.index);
+      read(statement.value);
       return;
     case 'return':
     case 'expr':
@@ -104,6 +118,22 @@ function references(node, names) {
     for (const item of node) references(item, names);
     return;
   }
+  if (node.k === 'lambda') {
+    const captured = new Set();
+    references(node.body, captured);
+    for (const param of node.params) captured.delete(param.name);
+    for (const name of captured) names.add(name);
+    for (const param of node.params) if (param.default) references(param.default, names);
+    return;
+  }
+  if (node.k === 'let') {
+    references(node.value, names);
+    const body = new Set();
+    references(node.body, body);
+    body.delete(node.name);
+    for (const name of body) names.add(name);
+    return;
+  }
   if (node.k === 'name' && node.path.length === 1) names.add(node.path[0]);
   for (const [key, value] of Object.entries(node)) {
     if (key !== 'span' && key !== 'type' && key !== 'data') references(value, names);
@@ -117,8 +147,13 @@ function flat(statements) {
 }
 
 /** The body of the function `name` of `params` from its statements. */
-export function lowerImperative(parser, name, params, statements, where) {
-  const lowering = new Lowering(parser, name);
+export function lowerImperative(parser, name, params, statements, where, externalCells = new Set(), externalBindings = new Set()) {
+  const cells = union(mutableClosureCells(statements), externalCells);
+  if (cells.size) {
+    parser.referenceSemantics = true;
+    parser.referenceSemanticsForced = true;
+  }
+  const lowering = new Lowering(parser, name, cells);
   const ctx = {
     // A function that finishes without returning returns undefined, the unit value.
     fall: () => ({ k: 'unit', span: where }),
@@ -127,7 +162,16 @@ export function lowerImperative(parser, name, params, statements, where) {
     cont: () => internal('continue outside a loop', where),
     ...dead(),
   };
-  return lowering.seq(flat(statements), 0, ctx, params.map((param) => ({ source: param.name, ir: param.name })));
+  const captured = new Set([...externalCells, ...externalBindings]);
+  const scope = [...captured].filter((name) => !params.some((param) => param.name === name))
+    .map((name) => ({ source: name, ir: name, ...(externalCells.has(name) && { reference: true }) }));
+  for (const param of params) scope.push({ source: param.name, ir: renderCallableCellParameterName(param.name, cells.has(param.name)), ...(cells.has(param.name) && { reference: true }) });
+  let body = lowering.seq(flat(statements), 0, ctx, scope);
+  for (const param of [...params].reverse()) {
+    const allocation = readCallableCellLowering('declare', cells.has(param.name));
+    if (allocation) body = { k: 'let', name: renderCallableCellParameterName(param.name, true), value: { k: allocation, value: named(param.name, where), span: where }, body, span: where };
+  }
+  return body;
 }
 
 /**
@@ -211,26 +255,22 @@ function visible(scope) {
 }
 
 class Lowering {
-  constructor(parser, fn) {
+  constructor(parser, fn, cells = new Set()) {
     this.parser = parser;
     this.fn = fn;
     this.renames = 0;
+    this.cells = cells;
   }
 
   /** A copy of a source expression that reads the variables it names in scope. */
   renamed(node, scope) {
-    if (!node || typeof node !== 'object') return node;
-    if (Array.isArray(node)) return node.map((item) => this.renamed(item, scope));
-    if (node.k === 'name' && node.path.length === 1) return { ...node, path: [lookup(scope, node.path[0])?.ir ?? node.path[0]] };
-    const copy = {};
-    for (const [key, value] of Object.entries(node)) copy[key] = key === 'span' || key === 'type' || key === 'data' ? value : this.renamed(value, scope);
-    return copy;
+    return renameCallableSourceExpression(node, scope);
   }
 
   /** A declaration in scope; one that shadows a variable in scope gets a new name. */
   declare(scope, source) {
     const ir = lookup(scope, source) ? `ml_${source}_${++this.renames}` : source;
-    return [...scope, { source, ir }];
+    return [...scope, { source, ir, ...(this.cells.has(source) && { reference: true }) }];
   }
 
   /**
@@ -239,6 +279,8 @@ class Lowering {
    */
   seq(list, index, ctx, scope) {
     if (index === list.length) return ctx.fall(scope);
+    const guards = this.parser.tagGuardSequence(list, index);
+    if (guards) return this.compound(guards, ctx, scope);
     const statement = list[index];
     const last = index === list.length - 1;
     const exits = this.exits(statement);
@@ -251,10 +293,26 @@ class Lowering {
       case 'let': {
         const value = this.renamed(statement.value, scope);
         const inner = this.declare(scope, statement.name);
-        return { k: 'let', name: inner.at(-1).ir, value, body: this.seq(list, index + 1, ctx, inner), span: statement.span };
+        const name = inner.at(-1).ir;
+        const body = this.seq(list, index + 1, ctx, inner);
+        const allocation = readCallableCellLowering('declare', Boolean(inner.at(-1).reference));
+        if (allocation) return { k: 'let', name, value: { k: allocation, value, span: statement.span }, body, span: statement.span };
+        if (value.k === 'none' && body.k === 'let' && body.name === name) {
+          const reads = new Set();
+          references(body.value, reads);
+          if (!reads.has(name)) return body;
+        }
+        return { k: 'let', name, value, body, span: statement.span };
       }
-      case 'assign':
-        return { k: 'let', name: lookup(scope, statement.name).ir, value: this.renamed(statement.value, scope), body: rest(), span: statement.span };
+      case 'assign': {
+        const binding = lookup(scope, statement.name);
+        const value = this.renamed(statement.value, scope);
+        const operation = readCallableCellLowering('assign', Boolean(binding?.reference));
+        if (operation) return { k: operation, cell: named(binding.ir, statement.span), value, body: rest(), span: statement.span };
+        return { k: 'let', name: binding.ir, value, body: rest(), span: statement.span };
+      }
+      case 'assignReference':
+        return { k: 'let', name: this.generatedName('written'), value: { ...this.renamed(statement, scope), k: 'referenceWrite', s: undefined }, body: rest(), span: statement.span };
       case 'return':
         return ctx.ret(this.renamed(statement.expr, scope));
       case 'throw':
@@ -383,6 +441,38 @@ class Lowering {
     const renamed = { ...node, discriminant };
     const inner = { ...ctx, fall: () => ctx.fall(scope), brk: () => ctx.fall(scope), brkLive: ctx.live };
     const bodies = this.caseBodies(node);
+    if (acceptJavaScriptValueSwitch(node.tagged, node.clauses.some((clause) => clause.tests.some((test) => test.k === 'value')))) {
+      const fallback = node.clauses.findIndex((clause) => clause.tests.some((test) => test.k === 'default'));
+      let variable, otherwise, cond, then;
+      for (let step = 0; ; step += 1) {
+        const instruction = readJavaScriptValueSwitchInstruction(true, step, node.clauses.length);
+        if (instruction === 'capture') {
+          variable = this.generatedName('switch');
+        } else if (instruction === 'fallback') {
+          otherwise = ctx.fall(scope);
+          if (fallback >= 0) otherwise = this.seq(bodies[fallback], 0, inner, scope);
+        } else if (instruction === 'bind') {
+          return { k: 'let', name: variable, value: discriminant, body: otherwise, span: node.span };
+        } else {
+          const index = readJavaScriptValueSwitchPosition(true, step, node.clauses.length);
+          const tests = node.clauses[index].tests.filter((test) => test.k !== 'default');
+          if (!tests.length) continue;
+          if (instruction === 'test') {
+            cond = tests.map((test) => {
+              const value = test.k === 'value' ? this.renamed(test.value, scope)
+                : test.k === 'strLit' ? { k: 'str', value: test.value, span: test.span }
+                : test.k === 'boolLit' ? { k: 'bool', value: test.value, span: test.span }
+                : { k: 'num', value: test.value, ...(test.type && { type: test.type }), ...(test.negative && { negative: true }), span: test.span };
+              return { k: 'binary', op: 'eq', left: named(variable, node.span), right: value, span: test.span ?? node.span };
+            }).reduce((left, right) => ({ k: 'binary', op: 'or', left, right, span: node.span }));
+          } else if (instruction === 'body') {
+            then = this.seq(bodies[index], 0, inner, scope);
+          } else if (instruction === 'select') {
+            otherwise = { k: 'if', cond, then, else: otherwise, span: node.span };
+          }
+        }
+      }
+    }
     const rows = [];
     let defaults = [];
     node.clauses.forEach((clause, index) => {
@@ -415,7 +505,7 @@ class Lowering {
     const where = statement.span;
     const { assigned } = statementUses([statement]);
     const live = union(ctx.live, exits.brk ? ctx.brkLive : [], exits.cont ? ctx.contLive : []);
-    const carried = visible(scope).filter((entry) => assigned.has(entry.source) && live.has(entry.source));
+    const carried = visible(scope).filter((entry) => !entry.reference && assigned.has(entry.source) && live.has(entry.source));
     if (!exits.brk && !exits.cont && !exits.ret && carried.length === 1) {
       const [variable] = carried;
       const value = lowerWith({ ...ctx, fall: () => named(variable.ir, where) });
@@ -475,7 +565,7 @@ class Lowering {
     const whole = loop.s === 'for' ? { s: 'while', cond: loop.cond ?? { k: 'bool', value: true }, body: [...loop.body, ...loop.update] } : loop;
     const { free, assigned } = statementUses([whole]);
     const params = visible(scope).filter((entry) => free.has(entry.source));
-    const results = params.filter((entry) => assigned.has(entry.source) && !local.has(entry.source) && ctx.live.has(entry.source));
+    const results = params.filter((entry) => !entry.reference && assigned.has(entry.source) && !local.has(entry.source) && ctx.live.has(entry.source));
     const body = this.listExits(flat(loop.body));
     const returns = body.ret > 0;
     const ends = !infinite(loop) || body.brk > 0;
@@ -534,7 +624,7 @@ class Lowering {
     const test = (inner, then, otherwise) => (loop.cond && !infinite(loop)
       ? { k: 'if', cond: this.renamed(loop.cond, inner), then, else: otherwise(), span: where }
       : then);
-    const lowered = new Lowering(this.parser, this.fn);
+    const lowered = new Lowering(this.parser, this.fn, this.cells);
     lowered.renames = this.renames;
     let fnBody;
     if (loop.s === 'doWhile') {

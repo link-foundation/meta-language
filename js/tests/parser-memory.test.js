@@ -69,19 +69,30 @@ test('grammars load on first use, not when the package is imported', () => {
   const parser = new URL('../src/programming-language-parser.js', import.meta.url).href;
   const index = new URL('../src/index.js', import.meta.url).href;
   const script = `
+    const fs = (await import('node:fs')).default;
+    const { syncBuiltinESMExports } = await import('node:module');
+    const read = fs.readFileSync;
+    let nativeReads = 0;
+    fs.readFileSync = (path, ...args) => {
+      if (String(path).endsWith('/data/native-grammars/python.lino')) nativeReads += 1;
+      return read(path, ...args);
+    };
+    syncBuiltinESMExports();
     const { loadedGrammarIds } = await import(${JSON.stringify(parser)});
     const { LinkNetwork } = await import(${JSON.stringify(index)});
     const imported = loadedGrammarIds();
+    const nativeImported = nativeReads;
     LinkNetwork.parse('# Title\\n\\nSome *text*.\\n', 'Markdown');
-    LinkNetwork.parse('def main(): pass\\n', 'Python');
+    const first = LinkNetwork.parse('def main(): pass\\n', 'Python');
+    const nativeFirst = nativeReads;
     LinkNetwork.parse('def other(): pass\\n', 'Python');
-    console.log(JSON.stringify({ imported, parsed: loadedGrammarIds() }));
+    console.log(JSON.stringify({ imported, parsed: loadedGrammarIds(), nativeImported, nativeFirst, nativeFinal: nativeReads, native: first.parseGrammars().map(({id}) => id) }));
   `;
   const output = execFileSync(process.execPath, ['--input-type=module', '-e', script], {
     cwd: fileURLToPath(new URL('..', import.meta.url)),
     encoding: 'utf8',
   });
-  assert.deepEqual(JSON.parse(output), { imported: [], parsed: ['markdown', 'markdown_inline', 'python'] });
+  assert.deepEqual(JSON.parse(output), { imported: [], parsed: ['markdown', 'markdown_inline'], nativeImported: 0, nativeFirst: 1, nativeFinal: 1, native: ['native-python'] });
   observe('I195-RESOURCE-LAZY-GRAMMARS', ['noGrammarLoadedOnImport', 'grammarLoadedOnFirstUseAndCached'],
     'grammars load on first use, not when the package is imported');
 });
@@ -106,10 +117,11 @@ test('Markdown inline regions share one inline parser and delete their trees', (
 test('grammar code is not tiered up after parsing ends', () => {
   const index = new URL('../src/index.js', import.meta.url).href;
   const inventory = new URL('../../parity/language-grammar-inventory.json', import.meta.url);
+  const projectData = new URL('../scripts/project-data.mjs', import.meta.url).href;
   const script = `
-    const { readFileSync } = await import('node:fs');
+    const { readProjectData } = await import(${JSON.stringify(projectData)});
     const { LinkNetwork } = await import(${JSON.stringify(index)});
-    const { languages } = JSON.parse(readFileSync(new URL(${JSON.stringify(inventory.href)}), 'utf8'));
+    const { languages } = readProjectData(new URL(${JSON.stringify(inventory.href)}));
     const { source } = languages.find(({ name }) => name === 'PowerShell');
     for (let round = 0; round < 20; round += 1) LinkNetwork.parse(source, 'PowerShell');
     const parsed = process.memoryUsage().rss;

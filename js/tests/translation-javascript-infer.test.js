@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import { translateProgram } from '../src/program-translation.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { BOOL, FLOAT, INT, NAT, STRING } from '../src/translation/types.js';
+import { preservesTranslationBehavior } from './support/translation-behavior.js';
 
 const TREE = "/**\n * @typedef {{ $: 'leaf' } | { $: 'node', left: Tree, value: bigint, right: Tree }} Tree\n */\n";
 
@@ -49,11 +50,33 @@ test('uses that need different types are type errors', () => {
       'one value is used as a string and as a number; declare the types of the function with JSDoc at 64..67',
     ],
     ['function f(x) { return x + 1n; }\nconsole.log(f(1));', 'a BigInt is used as a number; JavaScript does not mix BigInt with other types at 23..29'],
-    ['function f(x) { return !x; }\nconsole.log(f(1));', 'one value is used as a number and as a boolean; declare the types of the function with JSDoc at 43..44'],
   ];
   for (const [source, message] of cases) {
     assert.throws(() => parseJavaScript(source), (error) => error.kind === 'type' && error.message === message, source);
   }
+});
+
+test('logical negation infers Number input and preserves JavaScript truthiness', () => {
+  const original = 'function f(x) { return !x; }\nconsole.log(f(1));';
+  preservesTranslationBehavior(original, 'false\n');
+  const source = `${original}\nconsole.log(f(0));\nconsole.log(f(-0));\nconsole.log(f(NaN));\nconsole.log(f(Infinity));\nconsole.log(f(-1));\n`;
+  assert.deepEqual(signature(parseJavaScript(source).items, 'f'), [[FLOAT], BOOL]);
+  preservesTranslationBehavior(source, 'false\ntrue\ntrue\ntrue\nfalse\nfalse\n');
+});
+
+test('recursive inferred records produce a type diagnostic without overflowing the host stack', () => {
+  const sources = [
+    'function width(expression){return expression.kind === "repeat" ? width(expression.item) * expression.min : 0;}',
+    'function width(expression){switch(expression.kind){case "repeat": return width(expression.item) * expression.min; default:return 0;}}',
+    'function identity(x){x.child=x;return x;}',
+  ];
+  for (const source of sources) {
+    assert.throws(() => parseJavaScript(source), (error) => error.kind === 'type' && /^a recursive inferred type needs an explicit data type at \d+\.\.\d+$/u.test(error.message), source);
+  }
+});
+
+test('sharing an inferred record type between sibling fields remains finite', () => {
+  preservesTranslationBehavior('function pair(x){return {left:x,right:x};}\nconsole.log(pair({value:1}).left.value);', '1\n');
 });
 
 test('an unannotated program is a semantic translation in every target', () => {

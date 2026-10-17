@@ -9,18 +9,18 @@ specification. Read it before changing the grammar, parsing, semantics,
 translation, dependency or acceptance code: a change that contradicts it must
 update the vision in the same pull request rather than add a competing
 description elsewhere. Requirements come from the sources registered in
-[`parity/issue-195-sources.json`](parity/issue-195-sources.json) and are tracked
-row by row in [`parity/issue-195-requirements.json`](parity/issue-195-requirements.json);
+[`parity/issue-195-sources.lino`](parity/issue-195-sources.lino) and are tracked
+row by row in [`parity/issue-195-requirements.lino`](parity/issue-195-requirements.lino);
 see [AGENTS.md](AGENTS.md) for the rules that automated contributors follow.
 
 ## Development Setup
 
 1. Install Rust with `rustup`.
-2. Install the standard tooling:
+2. Install the formatter for local checks. CI installs the native build and
+   analysis tools:
 
    ```bash
-   rustup component add rustfmt clippy
-   cargo install rust-script
+   rustup component add rustfmt
    ```
 
 3. Install the repository's git hooks. The pre-commit hook cleans the
@@ -33,19 +33,27 @@ see [AGENTS.md](AGENTS.md) for the rules that automated contributors follow.
    node scripts/install-dev-hooks.mjs --check
    ```
 
-4. Build and test. Long builds and test runs can go through the cleanup
-   wrapper, which bounds their parallelism and cleans up afterwards even when
-   they fail or are interrupted:
+4. Run targeted JavaScript tests and format the changed Rust files. Never
+   compile Rust locally. Long local checks go through the cleanup wrapper,
+   which bounds their parallelism and cleans up afterwards even when they
+   fail or are interrupted:
 
    ```bash
-   cd rust
-   export CARGO_BUILD_JOBS=2 RUST_TEST_THREADS=2 CARGO_INCREMENTAL=0
-   node ../scripts/with-cache-cleanup.mjs --event test -- cargo check --all-targets --all-features
-   node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --test unit <filter>
+   node scripts/with-cache-cleanup.mjs --event test -- node --test js/tests/<area>*.test.js
    ```
 
    `node scripts/clean-caches.mjs` prunes the caches to the disk budget at any
    time, and `node scripts/clean-caches.mjs --full` removes all of them.
+
+Use the shared checkout and follow [the resource policy](docs/vision.md#resource-limits)
+for task isolation and prompt release of clean task-owned worktrees. Cache
+cleanup does not remove sibling worktrees. Clean only meta-language-owned
+storage and preserve uncommitted work, verification evidence, active tasks and
+unrelated data. Rust compilation runs exclusively in CI/CD.
+Pass `--project-owned-only` to task-scoped cleanup and wrapped local checks.
+This restricts Cargo target discovery to the selected project, cleans stopped
+temporary scratch only when its ownership marker matches, disables container
+cleanup and low-disk escalation, and records the scope in the cleanup receipt.
 
 ## Code Standards
 
@@ -64,18 +72,21 @@ see [AGENTS.md](AGENTS.md) for the rules that automated contributors follow.
 
 Run the targeted checks for the change before pushing (see
 [AGENTS.md](AGENTS.md#local-checks-and-resources) for what not to run
-locally); CI runs the full suites:
+locally). From `rust/`, check each changed Rust file and use
+`--config skip_children=true` for module roots:
 
 ```bash
-cargo fmt --check
-CARGO_BUILD_JOBS=2 CARGO_INCREMENTAL=0 cargo check --all-targets --all-features
-RUST_TEST_THREADS=2 cargo test --test unit <filter>
-RUST_TEST_THREADS=2 cargo test --test integration <filter>
+rustfmt --edition 2024 --check path/to/changed.rs
+rustfmt --edition 2024 --check --config skip_children=true src/lib.rs tests/unit/mod.rs
 (cd ../js && node --test tests/<area>*.test.js)
-rust-script scripts/check-no-src-tests.rs
-rust-script scripts/check-file-size.rs
-rust-script scripts/check-crate-size.rs
 ```
+
+Never compile Rust locally. Run the corresponding bounded JavaScript checks
+and let CI run native compilation, tests and runtime parity. `cargo check`,
+`cargo test`, `cargo clippy` and `rust-script` checks execute in CI only. Native
+CI commands use the cleanup wrapper; configure
+`CARGO_BUILD_JOBS=2 RUST_TEST_THREADS=2 CARGO_INCREMENTAL=0` to bound compiler
+jobs, test threads and incremental output.
 
 The issue #195 delivery diagnostics can also inspect live merge enforcement
 and reject stale delivered dependencies. Pull request CI runs only the offline

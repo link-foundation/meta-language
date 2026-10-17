@@ -1,6 +1,9 @@
 # Keep vendored benchmark fixture byte counts stable across platforms.
 rust/benches/corpora/** text eol=lf
 
+# Canonical Links data participates in byte-exact reloads and provenance hashes.
+*.lino text eol=lf
+
 # Preserve downloaded CI logs verbatim; they can contain trailing spaces from GitHub Actions output.
 docs/case-studies/issue-177/ci-logs/*.log -whitespace
 
@@ -8,7 +11,7 @@ docs/case-studies/issue-177/ci-logs/*.log -whitespace
 # corpus into the translation stage fixtures; keep their bytes identical on every platform.
 parity/grammars/** text eol=lf
 # The pinned grammar sources the native grammars import are gzipped bytes.
-parity/grammars/sources/*.gz binary
+parity/grammars/**/*.gz binary
 parity/fixtures/translation-corpus/** text eol=lf
 # The issue #195 evidence corpus is hashed into every platform consumer report and must
 # hash identically on Windows checkouts, or the supported-platform join rejects them.
@@ -28,5 +31,14 @@ js/src/** text=auto eol=lf
 js/src/vendor/** -text
 parity/self-translation/** text=auto eol=lf
 parity/decorators/** text=auto eol=lf
+# The mapped-selection fixture pins these authored source files by exact bytes
+# and SHA-256. Keep their checkout bytes fixed without normalizing raw fixtures.
+js/tests/grammar-selection-json-string.test.js text eol=lf
+js/tests/support/grammar-selection-mapping-cases.js text eol=lf
+js/scripts/generate-grammar-selection-mapping-fixtures.mjs text eol=lf
+rust/tests/unit/grammar_recursive_selection.rs text eol=lf
+rust/tests/unit/grammar_recursive_selection_mapping.rs text eol=lf
+# The lexer-complement control matches its complete original source snapshot.
+rust/tests/fixtures/grammar/antlr/set-complement.g4 text eol=lf
 # Rust embeds a copy of the foundation register and compares it to this file byte for byte.
 parity/foundation-models.json text eol=lf

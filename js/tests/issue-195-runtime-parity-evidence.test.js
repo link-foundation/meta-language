@@ -22,15 +22,14 @@ import {
   parityDigests,
 } from '../scripts/issue-195-parity-evidence.mjs';
 import { runtimeObservation } from '../scripts/issue-195-runtime-observation.mjs';
+import { readProjectData } from '../scripts/project-data.mjs';
 import {
   ISSUE_195_FIXTURE_FILES,
   issue195FixtureDigest,
   recordIssue195DirectiveObservation as observe,
 } from './support/issue-195-observations.js';
 
-const manifest = JSON.parse(
-  await readFile(new URL('../../parity/issue-195-requirements.json', import.meta.url)),
-);
+const manifest = readProjectData(new URL('../../parity/issue-195-requirements.json', import.meta.url));
 const pinnedDigest = issue195FixtureDigest(ISSUE_195_FIXTURE_FILES.fourLanguage);
 const javascript = runtimeObservation();
 
@@ -166,11 +165,16 @@ test('issue 195 parity check streams the Rust probe to a file and keeps digests,
   assert.doesNotMatch(check, /'javascript\.json'|'rust\.json'|stableJson\(javascript\)|stableJson\(rust\)/u);
   assert.deepEqual(
     [PARITY_ARTIFACT_FILES.digests, PARITY_ARTIFACT_FILES.differences, PARITY_ARTIFACT_FILES.translations('rust')],
-    ['digests.ndjson', 'differences.ndjson', 'rust-translations.json'],
+    ['digests.lino', 'differences.lino', 'rust-translations.lino'],
   );
   const probe = await readFile(new URL('../../rust/examples/issue_195_runtime_probe.rs', import.meta.url), 'utf8');
   assert.match(probe, /BufWriter::new\(File::create\(path\)/u);
   assert.match(probe, /json!\(\{ "section": section, "index": index, "value": value \}\)/u);
+  assert.match(probe, /--ndjson/u, 'the existing NDJSON assertion retains its actual stdout wire protocol');
+  assert.match(probe, /write_runtime_probe_wire_records/u);
+  assert.match(probe, /structured_data_record_to_lino/u, 'persisted observations are inspectable LiNo');
+  const wire = await readFile(new URL('../../rust/examples/support/issue_195_probe_wire.rs', import.meta.url), 'utf8');
+  assert.match(wire, /serde_json::to_writer/u);
   const runner = await readFile(new URL('../scripts/run-issue-195-evidence.mjs', import.meta.url), 'utf8');
   assert.match(runner, /PARITY_ARTIFACT_FILES\.translations\(runtime\)/u);
   observe('I195-RESOURCE-PARITY-DIGESTS', ['probeStreamsNdjson', 'noLargeOutputBuffer'],

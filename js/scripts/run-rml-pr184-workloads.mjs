@@ -10,13 +10,13 @@
 // both consumers resolve meta-language to the artifact. It then runs RML's own
 // workload tests (node --test with a JSON-lines reporter, and cargo test of the
 // two workload targets) together with the consumer probes of
-// js/scripts/issue-195-rml-workload-probes.mjs, and writes a JSON report that
+// js/scripts/issue-195-rml-workload-probes.mjs, and writes a linked report that
 // js/scripts/issue-195-rml-workloads.mjs validates. The exit status is non-zero
 // when a run runtime has a problem.
 //
 // Usage:
 //   node js/scripts/run-rml-pr184-workloads.mjs --npm-tarball <meta-language-x.y.z.tgz>
-//     --crate <meta-language-x.y.z.crate> --work-dir <directory> --out <report.json>
+//     --crate <meta-language-x.y.z.crate> --work-dir <directory> --out <report.lino>
 //     [--rml-checkout <git checkout holding the pinned head>] [--skip-rust]
 // The tarball and the crate are each expected next to a `<artifact>.sha256`
 // file ("<digest>  <name>"), as the delivery candidates are published.
@@ -29,6 +29,8 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readProjectFileBytes, writeProjectData } from './project-data.mjs';
+import { consumeWorkloadWireData, consumeWorkloadWireEvents } from './workload-wire-data.mjs';
 
 import { gitBlob } from './issue-195-rml-pr184.mjs';
 import {
@@ -71,7 +73,7 @@ async function main() {
     schemaVersion: RML_WORKLOAD_SCHEMA_VERSION,
     requirementId: RML_WORKLOAD_REQUIREMENT,
     fixture: RML_WORKLOAD_FIXTURE,
-    fixtureSha256: sha256(await readFile(path.join(root, RML_WORKLOAD_FIXTURE))),
+    fixtureSha256: sha256(readProjectFileBytes(path.join(root, RML_WORKLOAD_FIXTURE))),
     platform: `${process.platform}-${process.arch}`,
     node: process.version,
     rml: rml.report,
@@ -88,7 +90,7 @@ async function main() {
   }
   report.logs = logs;
   await mkdir(path.dirname(output), { recursive: true });
-  await writeFile(output, `${JSON.stringify(report, null, 2)}\n`);
+  writeProjectData(output, report);
   console.log(`rml pr184 workloads: wrote ${output}`);
 
   let failed = mismatched.length > 0;
@@ -192,7 +194,7 @@ async function javascriptWorkloads(rmlDirectory) {
   };
 
   const files = workloadTestFiles(fixture, 'javascript');
-  const events = path.join(workDirectory, 'javascript-test-events.jsonl');
+  const events = path.join(workDirectory, 'javascript-test-events.wire.jsonl');
   await writeFile(path.join(directory, 'issue-195-test-events.mjs'), TEST_EVENT_REPORTER);
   // One test file at a time: theory-network.test.mjs reads the whole repository and is the
   // memory peak, so the files do not compete for memory.
@@ -203,7 +205,7 @@ async function javascriptWorkloads(rmlDirectory) {
     ...files.map((file) => path.posix.relative('js', file)),
   ], { cwd: directory, env: environment, allowFailure: true });
   const tests = existsSync(events)
-    ? (await readFile(events, 'utf8')).split('\n').filter(Boolean).map((line) => JSON.parse(line))
+    ? (await consumeWorkloadWireEvents(events, path.join(workDirectory, 'javascript-test-events.lino')))
       .filter(({ kind }) => kind === 'test')
       .map(({ file, name, outcome, error, process: child }) => ({
         file: file ? path.relative(rmlDirectory, file).split(path.sep).join('/') : null,
@@ -214,14 +216,15 @@ async function javascriptWorkloads(rmlDirectory) {
       }))
     : [];
 
-  const probePath = path.join(workDirectory, 'javascript-probe.json');
+  const probePath = path.join(workDirectory, 'javascript-probe.wire.json');
   await writeFile(path.join(directory, 'issue-195-meta-language-probe.mjs'), JAVASCRIPT_PROBE);
   const probeRun = await run('javascript-probe', process.execPath, ['issue-195-meta-language-probe.mjs', probePath], {
     cwd: directory,
     env: environment,
     allowFailure: true,
   });
-  const probe = existsSync(probePath) ? JSON.parse(await readFile(probePath, 'utf8')) : {};
+  const probe = existsSync(probePath)
+    ? await consumeWorkloadWireData(probePath, path.join(workDirectory, 'javascript-probe.lino')) : {};
   return {
     skipped: false,
     version,
@@ -307,8 +310,10 @@ async function rustWorkloads(rmlDirectory) {
     const name = RUST_PROBE_TESTS[assertion];
     const outcome = probeTests.find((entry) => entry.name === name)?.outcome ?? 'not run';
     const evidencePath = path.join(probeDirectory, `${assertion}.json`);
-    const evidence = outcome === 'passed' && existsSync(evidencePath)
-      ? JSON.parse(await readFile(evidencePath, 'utf8'))
+    const captured = existsSync(evidencePath)
+      ? await consumeWorkloadWireData(evidencePath, path.join(probeDirectory, `${assertion}.lino`)) : null;
+    const evidence = outcome === 'passed' && captured
+      ? captured
       : { checks: [{ name: `probe test ${name}`, holds: false, detail: `the probe test ${outcome}; see ${testRun.log}` }] };
     probe[assertion] = { test: name, outcome, checks: evidence.checks };
   }

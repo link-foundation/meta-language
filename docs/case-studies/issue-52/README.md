@@ -74,11 +74,11 @@ When this template adopts the pattern, also:
 
 Raw GitHub data is stored in `raw-data/`:
 
-- `issue-52.json` — the tracking issue at the time of registration.
-- `issue-52-comments.json` — issue comments at the time of registration (empty until the implementation PR lands).
-- `js-issue-62.json` — the primary upstream tracking issue on the JS template.
-- `vk-bot-desktop-issue-51.json` — the original problem statement that prompted the recipe.
-- `vk-bot-desktop-pr-52.json` — the reference implementation PR.
+- `issue-52.lino` — the tracking issue at the time of registration.
+- `issue-52-comments.lino` — issue comments at the time of registration (empty until the implementation PR lands).
+- `js-issue-62.lino` — the primary upstream tracking issue on the JS template.
+- `vk-bot-desktop-issue-51.lino` — the original problem statement that prompted the recipe.
+- `vk-bot-desktop-pr-52.lino` — the reference implementation PR.
 
 ## Status
 

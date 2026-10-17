@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::ops::Bound::{Excluded, Unbounded};
 
 use crate::configuration::{ParseConfiguration, RegionDetectionPolicy};
 use crate::language_catalog::canonical_language_name;
@@ -56,17 +57,45 @@ pub fn detect_embedded_regions_in_tree(
     language: &str,
     policy: RegionDetectionPolicy,
 ) -> Vec<EmbeddedRegion> {
-    let lines = LineIndex::new(text);
+    let mut index = HostTreeIndex::new(text);
+    detect_embedded_regions_in_scope(
+        network,
+        &mut index,
+        document,
+        text,
+        language,
+        policy,
+        ByteRange::new(0, text.len()),
+    )
+}
+
+/// Reads an already attached host CST against the original physical source.
+pub(crate) fn detect_embedded_regions_in_scope(
+    network: &LinkNetwork,
+    index: &mut HostTreeIndex,
+    parent: LinkId,
+    text: &str,
+    language: &str,
+    policy: RegionDetectionPolicy,
+    bounds: ByteRange,
+) -> Vec<EmbeddedRegion> {
     let host = canonical_language_name(language);
     if host == Some(TXT_LANGUAGE) {
-        return vec![region_for(&lines, TXT_LANGUAGE.to_string(), 0, text.len())];
+        return vec![region_for(
+            &index.lines,
+            TXT_LANGUAGE.to_string(),
+            bounds.start(),
+            bounds.end(),
+        )];
     }
     if !matches!(host, Some("HTML" | "Markdown")) {
         return Vec::new();
     }
-    let tree = HostTree::new(network, text);
+    index.update(network);
+    let lines = &index.lines;
+    let tree = HostTree::new(network, text, index);
     let mut found = Vec::new();
-    let mut stack = vec![document];
+    let mut stack = vec![parent];
     while let Some(node) = stack.pop() {
         if host == Some("HTML") {
             tree.visit_html(node, &mut found);
@@ -78,7 +107,7 @@ pub fn detect_embedded_regions_in_tree(
     found.sort_by_key(|(_, start, _)| *start);
     found
         .into_iter()
-        .map(|(language, start, end)| region_for(&lines, language, start, end))
+        .map(|(language, start, end)| region_for(lines, language, start, end))
         .collect()
 }
 
@@ -115,28 +144,49 @@ pub fn detect_embedded_regions(
 
 type FoundRegion = (String, usize, usize);
 
+/// Append-only CST lookup shared by every frame in one attachment traversal.
+pub(crate) struct HostTreeIndex {
+    children: HashMap<LinkId, Vec<LinkId>>,
+    last_link: Option<LinkId>,
+    lines: LineIndex,
+}
+
+impl HostTreeIndex {
+    pub(crate) fn new(text: &str) -> Self {
+        Self {
+            children: HashMap::new(),
+            last_link: None,
+            lines: LineIndex::new(text),
+        }
+    }
+
+    pub(crate) fn update(&mut self, network: &LinkNetwork) {
+        let lower = self.last_link.map_or(Unbounded, Excluded);
+        for (&id, link) in network.links.range((lower, Unbounded)) {
+            if link.metadata().link_type() == Some(LinkType::Syntax)
+                && let [parent] = link.references()
+            {
+                self.children.entry(*parent).or_default().push(id);
+            }
+            self.last_link = Some(id);
+        }
+    }
+}
+
 /// The host grammar CST of a network: `Syntax` links in child order below
 /// their parent.
 struct HostTree<'a> {
     network: &'a LinkNetwork,
     text: &'a str,
-    children: HashMap<LinkId, Vec<LinkId>>,
+    children: &'a HashMap<LinkId, Vec<LinkId>>,
 }
 
 impl<'a> HostTree<'a> {
-    fn new(network: &'a LinkNetwork, text: &'a str) -> Self {
-        let mut children: HashMap<LinkId, Vec<LinkId>> = HashMap::new();
-        for link in network.links() {
-            if link.metadata().link_type() == Some(LinkType::Syntax)
-                && let [parent] = link.references()
-            {
-                children.entry(*parent).or_default().push(link.id());
-            }
-        }
+    const fn new(network: &'a LinkNetwork, text: &'a str, index: &'a HostTreeIndex) -> Self {
         Self {
             network,
             text,
-            children,
+            children: &index.children,
         }
     }
 

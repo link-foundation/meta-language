@@ -1,7 +1,8 @@
 //! JavaScript arrays the program reads: a Rust `Vec`, a Lean `Array` and a
-//! Rocq list, read through a bounds-checked helper, under the assumption that
-//! every read is in bounds.
+//! Rocq list, read through an optional bounds-checked helper that retains
+//! JavaScript's observable absence outside an array.
 
+use meta_language::translation::javascript::parse_javascript;
 use meta_language::{TranslationSupport, translate_program};
 
 const ARRAYS: &str = "const xs = [1, 2];
@@ -37,7 +38,7 @@ fn refusal(source: &str) -> String {
 }
 
 #[test]
-fn arrays_the_program_reads_are_a_semantic_translation_in_every_target_assuming_reads_in_bounds() {
+fn arrays_the_program_reads_are_a_semantic_translation_in_every_target_with_observable_absence() {
     for target in ["Rust", "Lean", "Rocq"] {
         let translated =
             translate_program(ARRAYS, "JavaScript", target).expect("translation descriptor");
@@ -48,16 +49,16 @@ fn arrays_the_program_reads_are_a_semantic_translation_in_every_target_assuming_
             TranslationSupport::SemanticTranslation,
             "{target}"
         );
-        assert!(contract.assumptions.contains(&IN_BOUNDS), "{target}");
+        assert!(!contract.assumptions.contains(&IN_BOUNDS), "{target}");
     }
 }
 
 #[test]
-fn an_array_is_a_vec_an_array_and_a_list_read_through_a_bounds_checked_helper() {
+fn an_array_is_a_vec_an_array_and_a_list_read_through_an_optional_bounds_checked_helper() {
     let rust = code(ARRAYS, "Rust");
     for expected in [
         "let xs = vec![1f64, 2f64];",
-        "crate::ml_array::at(&xs, crate::ml_array::number_index(1f64)) + (xs.len() as f64)",
+        "match crate::ml_array::optional_at(&xs, crate::ml_array::number_index(1f64)) { Some(ml_present) => ml_present, None => f64::NAN } + (xs.len() as f64)",
         "crate::ml_array::append(vec![crate::ml::Big::from_i128(1)], vec![crate::ml::Big::from_i128(2)])",
     ] {
         assert!(rust.contains(expected), "{rust}");
@@ -65,7 +66,8 @@ fn an_array_is_a_vec_an_array_and_a_list_read_through_a_bounds_checked_helper() 
     let lean = code(ARRAYS, "Lean");
     for expected in [
         "let xs := (#[(1 : Float), (2 : Float)] : (Array Float))",
-        "(ml_array_at_float xs (1 : Float)) + (Float.ofNat xs.size)",
+        "xs[ml_index.toUInt64.toNat]? else none",
+        "| none => (0 / 0 : Float)) + (Float.ofNat xs.size)",
         "((#[(1 : Int)] : (Array Int)) ++ (#[(2 : Int)] : (Array Int)))",
     ] {
         assert!(lean.contains(expected), "{lean}");
@@ -73,7 +75,8 @@ fn an_array_is_a_vec_an_array_and_a_list_read_through_a_bounds_checked_helper() 
     let rocq = code(ARRAYS, "Rocq");
     for expected in [
         "let xs := (1%float :: 2%float :: @nil float) in",
-        "(ml_list_at xs (ml_float_index 1%float) 0%float)",
+        "List.nth_error xs (Z.to_nat ml_index)",
+        "| None => PrimFloat.nan end)",
         "(List.app (1%Z :: @nil Z) (2%Z :: @nil Z))",
     ] {
         assert!(rocq.contains(expected), "{rocq}");
@@ -105,19 +108,106 @@ fn the_array_forms_that_are_not_kept_are_refused_with_a_reason() {
         ),
         (
             "const xs = [1, 2];\nxs[0] = 3;\n",
-            "assignment of an array element: the portable core reads arrays and does not mutate them; build a new array with [...xs, value] at 19..24",
+            "reference mutation: this mutation requires its shared reference and slot operations to be represented at 19..28",
         ),
         (
             "const xs = [1, 2];\nconsole.log(xs === xs);\n",
             "comparison of arrays: === of two arrays compares which array each is, which a value translation does not keep; compare their elements at 31..40",
         ),
-        (
-            "const s = 'ab';\nconsole.log(s.length);\n",
-            "length of a string: String.prototype.length counts UTF-16 code units, which the portable string types do not keep at 28..36",
-        ),
     ] {
         assert_eq!(refusal(source), message, "{source}");
     }
+    // This original input was historically refused; the current shared
+    // JavaScript model preserves UTF-16 length and therefore admits it.
+    for target in ["Rust", "Lean", "Rocq"] {
+        code("const s = 'ab';\nconsole.log(s.length);\n", target);
+    }
     assert!(refusal("const xs = [1, , 2];\n").starts_with("array hole"));
     assert!(refusal("for (const k in { a: 1 }) console.log(k);\n").starts_with("for…in loop"));
+}
+
+#[test]
+fn utf16_string_length_retains_supplementary_characters_in_each_target() {
+    let source = "const s = 'a😀b';\nconsole.log(s.length);\n";
+    assert!(code(source, "Rust").contains("encode_utf16().count() as f64"));
+    assert!(code(source, "Lean").contains("if c.toNat > 65535 then 2 else 1"));
+    assert!(code(source, "Rocq").contains("ml_utf16_length"));
+}
+
+#[test]
+fn out_of_bounds_array_reads_retain_absence_instead_of_an_in_bounds_assumption() {
+    let source = "function read(xs, i) { return xs[i]; }\nconsole.log(read([1], 4) ?? 9);\n";
+    for target in ["Rust", "Lean", "Rocq"] {
+        let translated =
+            translate_program(source, "JavaScript", target).expect("translation descriptor");
+        assert!(
+            translated.diagnostic().is_none(),
+            "{target}: {:?}",
+            translated.diagnostic()
+        );
+        assert!(
+            !translated.contract().assumptions.contains(&IN_BOUNDS),
+            "{target}"
+        );
+        let expected = match target {
+            "Rust" => "crate::ml_array::optional_at",
+            "Lean" => "else none",
+            _ => "List.nth_error",
+        };
+        assert!(
+            translated.code().contains(expected),
+            "{}",
+            translated.code()
+        );
+    }
+}
+
+#[test]
+fn source_iteration_retains_its_actual_iterable_wrapper_and_generated_read_proof() {
+    fn count(value: &serde_json::Value, kind: &str, proven: bool) -> usize {
+        match value {
+            serde_json::Value::Object(fields) => {
+                if fields.get("k").and_then(serde_json::Value::as_str) == Some("forOfIterable") {
+                    assert_eq!(
+                        fields.get("type"),
+                        Some(&serde_json::json!({"kind":"array","element":{"kind":"int"}}))
+                    );
+                }
+                usize::from(
+                    fields.get("k").and_then(serde_json::Value::as_str) == Some(kind)
+                        && (!proven
+                            || fields.get("provenInBounds")
+                                == Some(&serde_json::Value::Bool(true))),
+                ) + fields
+                    .values()
+                    .map(|value| count(value, kind, proven))
+                    .sum::<usize>()
+            }
+            serde_json::Value::Array(values) => {
+                values.iter().map(|value| count(value, kind, proven)).sum()
+            }
+            _ => 0,
+        }
+    }
+    let program = parse_javascript(ARRAYS).expect("the original array program parses");
+    let raw = serde_json::to_value(program).expect("raw source tree serialization");
+    assert_eq!(count(&raw, "forOfIterable", false), 1);
+    assert_eq!(count(&raw, "index", true), 1);
+}
+
+#[test]
+fn string_iteration_uses_code_points_while_length_uses_utf16_units() {
+    let source = "function count(s) { let n = 0; for (const point of s) n += 1; return n; }\nconsole.log(count('a😀b'));\n";
+    assert!(code(source, "Rust").contains(".chars().map(|ml_character| ml_character.to_string())"));
+    assert!(
+        code(source, "Lean")
+            .contains(".toList.map (fun ml_character => String.singleton ml_character)")
+    );
+    let rocq = translate_program(source, "JavaScript", "Rocq").expect("translation descriptor");
+    assert!(
+        rocq.diagnostic()
+            .expect("explicit unsupported iterator encoding")
+            .message
+            .starts_with("string iteration:")
+    );
 }

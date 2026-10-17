@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { execFileSync } from 'node:child_process';
-import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -14,6 +14,8 @@ import {
   validateIssue195Manifest,
 } from './issue-195-acceptance-lib.mjs';
 import { CHECKPOINTS } from './issue-195-evidence-stages.mjs';
+import { readProjectData, writeProjectData } from './project-data.mjs';
+import { readStructuredDataLino } from '../src/structured-data-links.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const manifestPath = path.join(root, 'parity', 'issue-195-requirements.json');
@@ -28,14 +30,14 @@ function stableJson(value) {
 }
 
 async function readManifest() {
-  return JSON.parse(await readFile(manifestPath, 'utf8'));
+  return readProjectData(manifestPath);
 }
 
 async function readResults(directory) {
   try {
-    const names = (await readdir(directory)).filter((name) => name.endsWith('.json')).sort();
+    const names = (await readdir(directory)).filter((name) => /\.(json|lino)$/u.test(name)).sort();
     return await Promise.all(
-      names.map(async (name) => JSON.parse(await readFile(path.join(directory, name), 'utf8'))),
+      names.map(async (name) => readProjectData(path.join(directory, name))),
     );
   } catch (error) {
     if (error.code === 'ENOENT') return [];
@@ -47,19 +49,22 @@ function baselineManifest(reference) {
   if (!/^[A-Za-z0-9._/-]+$/.test(reference)) {
     throw new Error(`unsafe baseline reference: ${reference}`);
   }
-  try {
-    return JSON.parse(
-      execFileSync('git', ['show', `${reference}:parity/issue-195-requirements.json`], {
+  for (const format of ['lino', 'json']) {
+    let source;
+    try {
+      source = execFileSync('git', ['show', `${reference}:parity/issue-195-requirements.${format}`], {
         cwd: root,
         encoding: 'utf8',
         maxBuffer: 64 * 1024 * 1024,
         stdio: ['ignore', 'pipe', 'pipe'],
-      }),
-    );
-  } catch (error) {
-    if (error.status === 128) return null;
-    throw error;
+      });
+    } catch (error) {
+      if (error.status === 128) continue;
+      throw error;
+    }
+    return format === 'lino' ? readStructuredDataLino(source) : JSON.parse(source);
   }
+  return null;
 }
 
 function reportErrors(prefix, errors) {
@@ -69,7 +74,7 @@ function reportErrors(prefix, errors) {
 const generatedManifest = await buildIssue195Manifest(root);
 
 if (process.argv.includes('--refresh-manifest')) {
-  await writeFile(manifestPath, stableJson(generatedManifest));
+  writeProjectData(manifestPath, generatedManifest);
   console.log(
     `issue-195: wrote ${generatedManifest.atomicRequirements.length} atomic requirements to ${path.relative(root, manifestPath)}`,
   );
@@ -119,8 +124,8 @@ const gateResultsPath = option('--produce-gate-results');
 if (gateResultsPath) {
   const resolved = path.resolve(root, gateResultsPath);
   await mkdir(path.dirname(resolved), { recursive: true });
-  await writeFile(resolved, stableJson(runIssue195GateFaultInjections(manifest, commit)));
-  console.log(`issue-195: wrote gate fault-injection evidence to ${path.relative(root, resolved)}`);
+  const actual = writeProjectData(resolved, runIssue195GateFaultInjections(manifest, commit), { format: 'lino' });
+  console.log(`issue-195: wrote gate fault-injection evidence to ${path.relative(root, actual)}`);
 }
 
 if (
@@ -146,7 +151,8 @@ const jsonReportPath = option('--json-report');
 if (jsonReportPath) {
   const resolved = path.resolve(root, jsonReportPath);
   await mkdir(path.dirname(resolved), { recursive: true });
-  await writeFile(resolved, stableJson(report));
+  const actual = writeProjectData(resolved, report, { format: 'lino' });
+  console.log(`issue-195: wrote acceptance report to ${path.relative(root, actual)}`);
 }
 const markdown = renderIssue195Markdown(manifest, report);
 const claimProblems = universalClaimProblems(manifest, markdown);

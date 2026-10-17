@@ -1,3 +1,4 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 // Prints the native rows of SOURCE next to the tree-sitter oracle rows and the
 // first row where they part, to trace a clean-oracle tree difference.
 // Usage: SOURCE='fn f() { |(|a|b)| c; }' [GRAMMAR=c ORACLE=C] node experiments/native-rust-rows-diff.mjs
@@ -6,10 +7,11 @@ import { readFileSync } from 'node:fs';
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 import { nativeRows, oracleRecovers, oracleRows } from '../scripts/native-grammar-rows.mjs';
 
-const read = (relative) => readFileSync(new URL(`../../${relative}`, import.meta.url), 'utf8');
+const read = (relative) => readFileSync(resolveProjectDataPath(new URL(`../../${relative}`, import.meta.url)), 'utf8');
+const readData = (relative) => readProjectData(new URL(`../../${relative}`, import.meta.url));
 const grammar = process.env.GRAMMAR ?? 'rust';
 const language = process.env.ORACLE ?? 'Rust';
-const fixture = JSON.parse(read(`parity/fixtures/native-grammars/${grammar}.json`));
+const fixture = readData(`parity/fixtures/native-grammars/${grammar}.json`);
 const parser = compileGrammar(parseGrammarLinks(read(`parity/grammars/native/${grammar}.lino`)));
 const source = process.env.SOURCE;
 const expected = oracleRows(source, language);

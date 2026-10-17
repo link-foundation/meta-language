@@ -19,16 +19,21 @@ use super::diagnostics::{Result, TranslationError, type_error, unsupported};
 use super::emit_common::{EmitOptions, EmitState, Emitted};
 use super::ir::{
     Binder, ByZero, Case, Ctor, Decl, Effect, Expr, FnDecl, LitValue, Main, Node, Param, Pattern,
-    Program, Prop, Semantics, TheoremDecl, rename_function, rename_main, rename_theorem, tail_loop,
+    Program, Semantics, rename_function, rename_main, tail_loop,
 };
 use super::lexer::json_string;
 use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
 use super::types::{Type, fixed_bounds};
 
 mod arrays;
+mod callables;
+mod expressions;
 mod helpers;
 mod math;
 mod names;
+mod optional_values;
+mod records;
+mod theorems;
 use self::helpers::Helper;
 use self::names::{KEYWORDS, field_key, ident};
 
@@ -65,14 +70,14 @@ fn malformed(message: String) -> TranslationError {
     type_error(message, None)
 }
 
-fn ctor_object(ctor: &Ctor, args: &[String]) -> String {
+fn ctor_object(ctor: &Ctor, args: &[String], language: Language, explicit_frozen: bool) -> String {
     let fields: Vec<String> = ctor
         .fields
         .iter()
         .enumerate()
         .map(|(index, field)| {
             let arg = args.get(index).map_or("undefined", String::as_str);
-            format!("{}: {arg}", field_key(&field.name))
+            format!("[{}]: {arg}", field_key(&field.name))
         })
         .collect();
     let fields = if fields.is_empty() {
@@ -80,10 +85,13 @@ fn ctor_object(ctor: &Ctor, args: &[String]) -> String {
     } else {
         format!(", {}", fields.join(", "))
     };
-    format!(
-        "Object.freeze({{ $: '{}'{fields} }})",
-        ctor.name.replace('\'', "\\'")
-    )
+    let object = format!("{{ $: {}{fields} }}", json_string(&ctor.name));
+    if super::primitive_value_rules::require_data_object_freeze(language.as_str(), explicit_frozen)
+    {
+        format!("Object.freeze({object})")
+    } else {
+        format!("({object})")
+    }
 }
 
 /// Emits a checked program as JavaScript.
@@ -91,18 +99,54 @@ fn ctor_object(ctor: &Ctor, args: &[String]) -> String {
 /// # Errors
 /// On constructs the target cannot express faithfully.
 pub fn emit_javascript(program: &Program) -> Result<Emitted> {
+    emit_javascript_with_options(program, JavaScriptEmissionOptions::default())
+}
+
+/// Explicit checked local-scope models for JavaScript emission.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct JavaScriptEmissionOptions<'a> {
+    /// Canonical aliases for owned local binding records.
+    pub scoped_binding_model: Option<&'a str>,
+}
+
+/// Emit using a selected scoped binding interpretation.
+///
+/// # Errors
+/// Refuses unknown models and unsupported or invalid ownership scopes.
+pub fn emit_javascript_with_options(
+    program: &Program,
+    options: JavaScriptEmissionOptions<'_>,
+) -> Result<Emitted> {
+    super::source_type_namespaces::validate_source_type_namespaces(program)?;
+    let runtime = super::runtime_shell::validate_program(program)?;
+    if runtime.is_some() && options.scoped_binding_model.is_some() {
+        return Err(crate::translation::diagnostics::unsupported(
+            "closed Rust runtime shell",
+            "scoped target bindings require an independent runtime composition proof",
+            None,
+        ));
+    }
+    if let Some(model) = options.scoped_binding_model {
+        super::scoped_binding_emission::validate_program(program, model)?;
+    }
+    super::owned_local_state::validate_owned_local_state(program)?;
+    super::source_const_functions::validate_const_functions(program)?;
+    let mut reserved = KEYWORDS.to_vec();
+    if program.declarations.iter().any(|declaration| matches!(declaration, Decl::Fn(function) if function.source_local_state.is_some())) {
+        reserved.push("ml_ownedTextInput");
+    }
     let state = EmitState::new(
         program,
         Language::JavaScript,
         ident,
-        KEYWORDS,
+        &reserved,
         EmitOptions {
             modules_share_term_space: true,
             type_space: true,
             ..EmitOptions::default()
         },
     );
-    JavaScriptEmitter {
+    let mut emitted = JavaScriptEmitter {
         program,
         state,
         helpers: BTreeSet::new(),
@@ -110,8 +154,13 @@ pub fn emit_javascript(program: &Program) -> Result<Emitted> {
         theorem_checks: Vec::new(),
         uses_float: false,
         loop_params: None,
+        scoped_bindings: options.scoped_binding_model.is_some(),
     }
-    .file()
+    .file()?;
+    if let Some(runtime) = runtime {
+        super::runtime_shell::record_assumptions(&mut emitted, &runtime)?;
+    }
+    Ok(emitted)
 }
 
 /// Declarations grouped by module, in source order.
@@ -138,6 +187,8 @@ struct JavaScriptEmitter<'p> {
     /// The lifted loop being emitted as a loop, and its parameters, which
     /// each call to it assigns before the next iteration.
     loop_params: Option<(String, Vec<String>)>,
+    /// Selection is validated before any existing lexical allocator runs.
+    scoped_bindings: bool,
 }
 
 impl<'p> JavaScriptEmitter<'p> {
@@ -256,7 +307,11 @@ impl<'p> JavaScriptEmitter<'p> {
             Decl::Data(data) => {
                 let name = self.state.local_name(&data.full_name).to_owned();
                 self.state.map(entry, &name);
-                self.state.encode("data", "a data value is a frozen object whose $ property names its constructor and whose other properties are its fields");
+                self.state.encode("data", if self.program.source_language == Language::JavaScript {
+                    "a JavaScript data value is an object whose $ property names its constructor and whose other properties retain their own field names; explicit source freezing is preserved"
+                } else {
+                    "a data value is a frozen object whose $ property names its constructor and whose other properties are its fields"
+                });
                 Ok(None)
             }
             Decl::Fn(function) => self.function(entry, function).map(Some),
@@ -265,16 +320,77 @@ impl<'p> JavaScriptEmitter<'p> {
     }
 
     fn function(&mut self, entry: &Decl, function: &FnDecl) -> Result<String> {
-        let (params, body) = rename_function(function, &ident, &self.state.local_reserved());
+        let preserve = if self.scoped_bindings {
+            super::scoped_binding_emission::function_role(self.program, function)?
+        } else {
+            false
+        };
+        let local = |name: &str| {
+            if self.scoped_bindings {
+                ident(&super::scoped_binding_emission_rules::render_java_script_scoped_binding_identifier(name, preserve))
+            } else {
+                ident(name)
+            }
+        };
+        // The revalidated closed loop has no global declaration reads: its
+        // only call is its own tail continuation, lowered to writes/continue.
+        let reserved = if self.scoped_bindings
+            && !super::scoped_binding_emission_rules::reserve_java_script_scoped_binding_declaration_names(preserve)
+        {
+            KEYWORDS.iter().map(|name| (*name).to_owned()).collect()
+        } else {
+            self.state.local_reserved()
+        };
+        let (params, body) = rename_function(function, &local, &reserved);
         if params.iter().any(|param| param.ty.is_float()) || function.ret.is_float() {
             self.uses_float = true;
         }
         let name = self.state.local_name(&function.full_name).to_owned();
         self.state.map(entry, &name);
-        let mut lines: Vec<String> = params
-            .iter()
-            .filter_map(|param| self.parameter_guard(param))
-            .collect();
+        let mut lines = Vec::new();
+        for param in &params {
+            if function.source_local_state.is_some() {
+                lines.push(self.owned_local_parameter_guard(param));
+            }
+            lines.extend(self.parameter_guard(param));
+        }
+        if function.source_diagnostic_attributes.is_some() {
+            let normalization = &super::source_diagnostic_attributes::policy()["normalization"];
+            self.state.encode(
+                normalization["id"]
+                    .as_str()
+                    .expect("a shared normalization identifier"),
+                normalization["statement"]
+                    .as_str()
+                    .expect("a shared normalization statement"),
+            );
+        }
+        if function.source_const_function.is_some() {
+            for param in &params {
+                let kind = if param.ty.kind() == "bool" {
+                    "boolean"
+                } else {
+                    "number"
+                };
+                let name = &param.name;
+                lines.push(format!(
+                    "if (typeof {name} !== {kind:?}) throw new RangeError({:?});",
+                    format!("const predicate argument {name} requires {kind}")
+                ));
+            }
+            self.state.encode("rust-const-predicate-inputs", "the selected Rust const predicate model admits only primitive Boolean and binary64 input values; const evaluation requests remain outside this source interpretation");
+        }
+        if function.source_local_state.is_some() {
+            self.state.encode("owned-text-input", "the selected Rust local value model admits primitive Unicode scalar text, Boolean and signed i32 inputs; JavaScript rejects other input values before evaluating the body");
+            let assumption = &super::owned_local_state::policy()["targetInputAssumption"];
+            self.state.assume(
+                super::emit_common::AssumptionText {
+                    id: assumption["id"].as_str().unwrap(),
+                    statement: assumption["statement"].as_str().unwrap(),
+                },
+                None,
+            );
+        }
         if tail_loop(function) {
             // A lifted loop runs as a loop: each iteration assigns the parameters their next values.
             let names = params.iter().map(|param| param.name.clone()).collect();
@@ -295,6 +411,35 @@ impl<'p> JavaScriptEmitter<'p> {
         ))
     }
 
+    fn owned_local_parameter_guard(&mut self, param: &Param) -> String {
+        if param.ty == super::types::STRING {
+            self.helpers.insert(Helper::OwnedTextInput);
+            return format!(
+                "if (!ml_ownedTextInput({})) throw new RangeError({});",
+                param.name,
+                json_string(&format!(
+                    "String argument {} requires Unicode scalar text",
+                    param.name
+                ))
+            );
+        }
+        let kind = if param.ty == super::types::BOOL {
+            "boolean"
+        } else {
+            "bigint"
+        };
+        format!(
+            "if (typeof {} !== {}) throw new RangeError({});",
+            param.name,
+            json_string(kind),
+            json_string(&format!(
+                "{} argument {} requires {kind}",
+                param.ty.key(),
+                param.name
+            ))
+        )
+    }
+
     /// Machine-integer parameters are range-checked, as the Rust type guarantees.
     fn parameter_guard(&mut self, param: &Param) -> Option<String> {
         let Type::Fixed { bits, signed } = param.ty else {
@@ -311,176 +456,6 @@ impl<'p> JavaScriptEmitter<'p> {
                 param.name
             ))
         ))
-    }
-
-    fn theorem(&mut self, entry: &Decl, theorem: &TheoremDecl) -> Result<String> {
-        let (binders, prop, _) = rename_theorem(theorem, &ident, &self.state.local_reserved());
-        let name = self.state.local_name(&theorem.full_name).to_owned();
-        self.state.map(entry, &name);
-        self.state
-            .theorem(&theorem.full_name, &name, binders.is_empty(), true);
-        self.theorem_checks.push(TheoremCheck {
-            reference: self.state.reference(&theorem.full_name, "."),
-            binders: binders.clone(),
-            source: theorem.full_name.clone(),
-        });
-        let names: Vec<&str> = binders.iter().map(|binder| binder.name.as_str()).collect();
-        Ok(format!(
-            "{name}({}) {{\n  return {};\n}}",
-            names.join(", "),
-            self.prop(&prop)?
-        ))
-    }
-
-    fn theorem_runner(&mut self) -> Result<String> {
-        self.state.encode("theorem-properties", "each theorem is an executable property; --ml-check-theorems evaluates it on every input of a bounded domain, and its proof remains checked by the source kernel");
-        let mut checks = Vec::new();
-        for check in self.theorem_checks.clone() {
-            let mut domains = Vec::new();
-            for binder in &check.binders {
-                domains.push(self.domain(&binder.ty, 3)?);
-            }
-            let TheoremCheck {
-                reference, source, ..
-            } = check;
-            let call = if domains.is_empty() {
-                format!("{reference}()")
-            } else {
-                format!(
-                    "ml_product([{}]).every((args) => {reference}(...args))",
-                    domains.join(", ")
-                )
-            };
-            checks.push(format!("  if (!({call})) throw new Error('theorem {source} fails on a bounded input');\n  console.log('theorem {source}: holds on the bounded domain');"));
-        }
-        Ok(format!(
-            "function ml_checkTheorems() {{\n{}\n}}",
-            checks.join("\n")
-        ))
-    }
-
-    /// Values of a type up to a constructor depth, as JavaScript source.
-    fn domain(&mut self, ty: &Type, depth: i64) -> Result<String> {
-        self.helpers.insert(Helper::Domains);
-        let values = match ty {
-            Type::Nat => if depth >= 3 { "ml_nat" } else { "ml_small_nat" }.to_owned(),
-            Type::Int => if depth >= 3 { "ml_int" } else { "ml_small_int" }.to_owned(),
-            Type::Fixed { signed, .. } => if *signed {
-                "ml_small_int"
-            } else {
-                "ml_small_nat"
-            }
-            .to_owned(),
-            Type::Bool => "[false, true]".to_owned(),
-            Type::String => "['', 'a', 'ab']".to_owned(),
-            Type::Unit => "[null]".to_owned(),
-            Type::Data { name } => self.data_domain(name, depth)?,
-            other => {
-                return Err(malformed(format!(
-                    "no JavaScript domain for {}",
-                    other.kind()
-                )));
-            }
-        };
-        Ok(values)
-    }
-
-    fn data_domain(&mut self, name: &str, depth: i64) -> Result<String> {
-        let entry = self.program.data(name);
-        let mut values = Vec::new();
-        for ctor in &entry.ctors {
-            let recursive = ctor
-                .fields
-                .iter()
-                .any(|field| matches!(field.ty, Type::Data { .. }));
-            if recursive && depth <= 1 {
-                continue;
-            }
-            let mut fields = Vec::new();
-            for field in &ctor.fields {
-                let field_depth = if matches!(field.ty, Type::Data { .. }) {
-                    depth - 1
-                } else {
-                    1
-                };
-                fields.push(self.domain(&field.ty, field_depth)?);
-            }
-            if fields.is_empty() {
-                values.push(format!("[{}]", ctor_object(ctor, &[])));
-            } else {
-                let args: Vec<String> = (0..ctor.fields.len())
-                    .map(|index| format!("args[{index}]"))
-                    .collect();
-                values.push(format!(
-                    "ml_product([{}]).map((args) => {})",
-                    fields.join(", "),
-                    ctor_object(ctor, &args)
-                ));
-            }
-        }
-        if values.is_empty() {
-            return Ok("[]".to_owned());
-        }
-        let spread: Vec<String> = values.iter().map(|value| format!("...{value}")).collect();
-        Ok(format!("[{}]", spread.join(", ")))
-    }
-
-    fn prop(&mut self, prop: &Prop) -> Result<String> {
-        Ok(match prop {
-            Prop::Forall { binders, body } => {
-                let mut inner = self.prop(body)?;
-                for binder in binders.iter().rev() {
-                    let domain = self.domain(&binder.ty, 3)?;
-                    inner = format!("ml_forall({domain}, ({}) => {inner})", binder.name);
-                }
-                inner
-            }
-            Prop::And { left, right } => {
-                format!("({} && {})", self.prop(left)?, self.prop(right)?)
-            }
-            Prop::Or { left, right } => {
-                format!("({} || {})", self.prop(left)?, self.prop(right)?)
-            }
-            Prop::Implies { left, right } => {
-                format!("(!{} || {})", self.prop(left)?, self.prop(right)?)
-            }
-            Prop::Not { arg } => format!("!{}", self.prop(arg)?),
-            Prop::Bool { expr } => self.expr(expr)?,
-            Prop::Eq(comparison) | Prop::Ne(comparison) => {
-                let left = self.expr(&comparison.left)?;
-                let right = self.expr(&comparison.right)?;
-                let structured = matches!(comparison.left.ty, Type::Data { .. } | Type::Unit);
-                let equal = if structured {
-                    self.helpers.insert(Helper::Equal);
-                    format!("ml_equal({left}, {right})")
-                } else if comparison.same_value {
-                    format!("Object.is({left}, {right})")
-                } else {
-                    format!("({left} === {right})")
-                };
-                if matches!(prop, Prop::Eq(_)) {
-                    equal
-                } else {
-                    format!("!{equal}")
-                }
-            }
-            Prop::Lt(comparison)
-            | Prop::Le(comparison)
-            | Prop::Gt(comparison)
-            | Prop::Ge(comparison) => {
-                let operator = match prop {
-                    Prop::Lt(_) => "<",
-                    Prop::Le(_) => "<=",
-                    Prop::Gt(_) => ">",
-                    _ => ">=",
-                };
-                format!(
-                    "({} {operator} {})",
-                    self.expr(&comparison.left)?,
-                    self.expr(&comparison.right)?
-                )
-            }
-        })
     }
 
     /// A function body as statements that return its value.
@@ -619,13 +594,13 @@ impl<'p> JavaScriptEmitter<'p> {
                 .filter_map(|(index, bind)| {
                     bind.as_ref().map(|bind| {
                         format!(
-                            "const {bind} = {subject}.{};",
+                            "const {bind} = {subject}[{}];",
                             field_key(&ctor.fields[index].name)
                         )
                     })
                 })
                 .collect();
-            lines.push(format!("  case '{}': {{", ctor.name.replace('\'', "\\'")));
+            lines.push(format!("  case {}: {{", json_string(&ctor.name)));
             body.extend(self.statements(&kase.body)?);
             lines.push(indent(&body.join("\n"), 2));
             lines.push("  }".to_owned());
@@ -642,90 +617,6 @@ impl<'p> JavaScriptEmitter<'p> {
         lines.push("  }".to_owned());
         lines.push("}".to_owned());
         Ok(lines)
-    }
-
-    fn expr(&mut self, e: &Expr) -> Result<String> {
-        if e.ty.is_float() {
-            self.uses_float = true;
-        }
-        match &e.node {
-            Node::Lit { value } => literal(&e.ty, value),
-            Node::Unit => Ok("null".to_owned()),
-            Node::Var { name } => Ok(name.clone()),
-            Node::Print { text, body } => Ok(format!(
-                "(console.log({}), {})",
-                self.expr(text)?,
-                self.expr(body)?
-            )),
-            Node::OutNil | Node::OutCons { .. } => {
-                unreachable!("only the Lean and Rocq emitters thread output")
-            }
-            Node::Call { func, args } => {
-                let target = self.state.reference(func, ".");
-                let args = self.exprs(args)?;
-                Ok(format!("{target}({})", args.join(", ")))
-            }
-            Node::Ctor { data, ctor, args } => {
-                let entry = self.program.data(data);
-                let ctor = entry
-                    .ctors
-                    .iter()
-                    .find(|candidate| candidate.name == *ctor)
-                    .unwrap_or_else(|| panic!("{data} has no constructor {ctor}"));
-                let args = self.exprs(args)?;
-                Ok(ctor_object(ctor, &args))
-            }
-            Node::Unary { op, arg, .. } => {
-                let arg = self.expr(arg)?;
-                Ok(match op {
-                    UnaryOp::Not => format!("!{arg}"),
-                    UnaryOp::Neg => self.checked(negate(&arg), &e.ty, "neg"),
-                })
-            }
-            Node::Binary { .. } => self.binary(e),
-            Node::If {
-                cond,
-                then,
-                otherwise,
-            } => Ok(format!(
-                "({} ? {} : {})",
-                self.expr(cond)?,
-                self.expr(then)?,
-                self.expr(otherwise)?
-            )),
-            Node::Let { .. } | Node::Match { .. } => Ok(format!(
-                "(() => {{\n{}\n}})()",
-                indent(&self.statements(e)?.join("\n"), 1)
-            )),
-            Node::ToString { arg, console } => {
-                if *console && arg.ty.is_float() {
-                    self.helpers.insert(Helper::ShowNumber);
-                    Ok(format!("ml_showNumber({})", self.expr(arg)?))
-                } else if matches!(arg.ty, Type::String) {
-                    self.expr(arg)
-                } else {
-                    self.text_of(arg)
-                }
-            }
-            Node::Cast {
-                arg,
-                flavor,
-                message,
-                ..
-            } => self.cast(arg, *flavor, message.as_deref()),
-            Node::Abort { message } => {
-                self.helpers.insert(Helper::Abort);
-                Ok(format!("ml_abort({})", json_string(message)))
-            }
-            Node::Array { .. } | Node::Append { .. } | Node::Index { .. } | Node::Length { .. } => {
-                self.array_expr(e)
-            }
-            Node::Math { .. } => self.math(e),
-        }
-    }
-
-    pub(super) fn exprs(&mut self, list: &[Expr]) -> Result<Vec<String>> {
-        list.iter().map(|arg| self.expr(arg)).collect()
     }
 
     fn text_of(&mut self, arg: &Expr) -> Result<String> {
@@ -836,7 +727,17 @@ impl<'p> JavaScriptEmitter<'p> {
     }
 
     fn main(&mut self, main: &Main) -> Result<String> {
-        let effects = rename_main(main, &ident, &self.state.local_reserved());
+        if self.scoped_bindings {
+            super::scoped_binding_emission::main_role(self.program, main)?;
+        }
+        let local = |name: &str| {
+            if self.scoped_bindings {
+                ident(&super::scoped_binding_emission_rules::render_java_script_scoped_binding_identifier(name, false))
+            } else {
+                ident(name)
+            }
+        };
+        let effects = rename_main(main, &local, &self.state.local_reserved());
         let mut lines = Vec::new();
         let mut assertion = 0;
         for effect in &effects {

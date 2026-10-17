@@ -126,7 +126,7 @@ fixtures. The returned network contains the original GraphQL source/CST and
 carry exact byte/row/column spans.
 
 The shared fixture at
-[`parity/fixtures/graphql-query-plans.json`](../parity/fixtures/graphql-query-plans.json)
+[`parity/fixtures/graphql-query-plans.lino`](../parity/fixtures/graphql-query-plans.lino)
 covers every operation, filter composition, ordering, pagination, grouping, and
 common aggregate.
 
@@ -206,7 +206,7 @@ projection aliases, distinct queries, parameters, or vendor extensions—are
 rejected. Successful lowering is validation, never authorization: an execution
 engine must still apply identity, capability, resource, and mutation policy.
 
-[`parity/fixtures/sql-query-plans.json`](../parity/fixtures/sql-query-plans.json)
+[`parity/fixtures/sql-query-plans.lino`](../parity/fixtures/sql-query-plans.lino)
 drives Rust and JavaScript conformance for CRUD, aggregates, all vendor keys,
 invalid input, and provenance. It also lowers the `equivalentSql` entry from the
 GraphQL fixture and proves that both frontends produce the identical canonical

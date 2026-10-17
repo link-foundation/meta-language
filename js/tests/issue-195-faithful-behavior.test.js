@@ -11,6 +11,8 @@
 // source envelope, no assumption and no escape hatch of a proof target. A
 // fault-injected translation that aborts with another message is told apart.
 // The Rust twin is rust/tests/unit/issue_195_faithful_behavior.rs.
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
@@ -20,16 +22,18 @@ import { test } from 'node:test';
 
 import { decodeProgramTranslation, translateProgram } from '../src/index.js';
 import { ISSUE_195_FIXTURE_FILES, recordIssue195Observations } from './support/issue-195-observations.js';
+import { nativeRustChecksEnabled } from './support/native-rust-checks.js';
 
 const root = new URL('../../', import.meta.url);
-const fixture = JSON.parse(await readFile(new URL(ISSUE_195_FIXTURE_FILES.fourLanguage, root), 'utf8'));
+const fixture = readProjectData(new URL(ISSUE_195_FIXTURE_FILES.fourLanguage, root));
 const { faithfulBehavior, translationCorpus } = fixture;
 const directory = new URL(`${faithfulBehavior.directory}/`, root);
 const LANGUAGES = ['JavaScript', 'Rust', 'Lean', 'Rocq'];
 const BEHAVIORS = ['errorsPreserved', 'abortsPreserved', 'overflowPreserved', 'effectsPreserved'];
 const EXTENSIONS = { JavaScript: '.mjs', Rust: '.rs', Lean: '.lean', Rocq: '.v' };
 const TOOLS = { JavaScript: 'node', Rust: 'rustc', Lean: 'lean', Rocq: 'rocq' };
-// Acceptance runs must use every toolchain; other runs skip when one is absent.
+// Acceptance runs must use every toolchain; other runs need explicit native
+// opt-in and skip when one is absent.
 const toolchainRequired = Boolean(process.env.ISSUE_195_OBSERVATION_FILE);
 const REQUIREMENT_ID = 'I195-SEMANTICS-FAITHFUL-BEHAVIOR';
 
@@ -43,6 +47,7 @@ function run(command, args, cwd) {
 
 const availability = new Map();
 function toolAvailable(language) {
+  if (language === 'Rust' && !nativeRustChecksEnabled()) return Promise.resolve(false);
   if (!availability.has(language)) availability.set(language, run(TOOLS[language], ['--version']).then(({ ok }) => ok));
   return availability.get(language);
 }
@@ -108,7 +113,7 @@ async function withWorkspace(prefix, body) {
   }
 }
 
-const sourceText = (entry) => readFile(new URL(entry.file, directory), 'utf8');
+const sourceText = (entry) => readFile(resolveProjectDataPath(new URL(entry.file, directory)), 'utf8');
 const expected = (entry) => ({ lines: entry.lines, abort: entry.abort });
 const outcome = ({ lines, abort }) => ({ lines, abort });
 

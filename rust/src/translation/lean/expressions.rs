@@ -53,7 +53,7 @@ impl LeanParser<'_> {
             return Ok(expr(
                 SNode::Let {
                     name,
-                    ty,
+                    ty: ty.map(Into::into),
                     value: Box::new(value),
                     body: Box::new(body),
                 },

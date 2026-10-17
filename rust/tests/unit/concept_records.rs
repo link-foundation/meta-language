@@ -37,14 +37,42 @@ fn repository_file(relative: &str) -> Value {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("..")
         .join(relative);
-    let text = std::fs::read_to_string(&path)
-        .unwrap_or_else(|error| panic!("read {}: {error}", path.display()));
-    serde_json::from_str(&text).expect("the register is JSON")
+    meta_language::project_data::read_project_data_file(&path)
+        .unwrap_or_else(|error| panic!("read {}: {error}", path.display()))
 }
 
 /// The readable phrase an identity spells: its last segment with spaces for hyphens.
 fn phrase_of(id: &str) -> String {
     id.rsplit(['.', ':']).next().unwrap_or(id).replace('-', " ")
+}
+
+#[test]
+fn source_name_lookup_preserves_order_and_returns_independent_vectors() {
+    let expected: Vec<_> = concept_records()
+        .iter()
+        .filter(|record| {
+            record
+                .source_aliases
+                .iter()
+                .any(|alias| alias.source == "Python" && alias.name == "=")
+        })
+        .collect();
+    assert_eq!(
+        expected
+            .iter()
+            .map(|record| record.id.as_str())
+            .collect::<Vec<_>>(),
+        ["binding", "assignment"]
+    );
+    let mut first = concept_records_for_source_name("Python", "=");
+    assert_eq!(first, expected);
+    first.reverse();
+    first.pop();
+    assert_eq!(concept_records_for_source_name("Python", "="), expected);
+    assert_eq!(
+        concept_records_for_source_name("absent source", "absent name"),
+        [] as [&meta_language::ConceptRecord; 0]
+    );
 }
 
 fn has_alias(network: &LinkNetwork, concept: &str, vocabulary: &str, name: &str) -> bool {
@@ -179,6 +207,53 @@ fn every_runtime_name_is_unabbreviated_and_has_a_role() {
         ],
         "every_runtime_name_is_unabbreviated_and_has_a_role",
     );
+}
+
+#[test]
+fn migrated_native_former_ids_resolve_through_the_shared_records() {
+    let migrations = [
+        (
+            "grammar.bare-argument-unparenthesized-call",
+            "grammar.bare-argument-call-without-parentheses",
+        ),
+        (
+            "grammar.bare-argument-local-unparenthesized-call",
+            "grammar.bare-argument-local-call-without-parentheses",
+        ),
+        (
+            "grammar.bare-argument-remote-unparenthesized-call",
+            "grammar.bare-argument-remote-call-without-parentheses",
+        ),
+        (
+            "grammar.postfix-unparenthesized-call",
+            "grammar.postfix-call-without-parentheses",
+        ),
+        (
+            "grammar.attribute-unparenthesized-call",
+            "grammar.attribute-call-without-parentheses",
+        ),
+        (
+            "grammar.attribute-local-unparenthesized-call",
+            "grammar.attribute-local-call-without-parentheses",
+        ),
+        (
+            "grammar.postfix-attribute-unparenthesized-call",
+            "grammar.postfix-attribute-call-without-parentheses",
+        ),
+        (
+            "grammar.null-admitting-type-test-expression",
+            "grammar.null-capable-type-test-expression",
+        ),
+    ];
+    for (former, current) in migrations {
+        assert_eq!(current_concept_id(former), current);
+        assert_eq!(current_concept_id(current), current);
+        assert_eq!(concept_record(former), concept_record(current));
+        assert!(concept_record(current).is_some());
+    }
+    let unknown = "grammar.unregistered-concept-identity";
+    assert_eq!(concept_record(unknown), None);
+    assert_eq!(current_concept_id(unknown), unknown);
 }
 
 #[test]

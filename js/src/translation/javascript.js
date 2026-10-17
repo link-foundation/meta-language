@@ -11,19 +11,37 @@
 // obligation.
 
 import { TranslationError, typeError, unsupported } from './diagnostics.js';
-import { findDefaultParameterReference } from './frontend-rules.js';
+import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation, readJavaScriptTemporalBindingRead, readJavaScriptLexicalDeclarationStep } from './frontend-rules.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
+import { readJavaScriptTagOwnerPosition, readJavaScriptTagReceiverForm, readJavaScriptTagBindingStep, acceptJavaScriptTagHeaderFact, readJavaScriptTagDeclaredOwner } from './javascript-tag-context-rules.js';
+import { readCallableReferenceConstruct, readCallableReferenceObligation, readCallableSurfaceConstructor } from './callable-source-rules.js';
 import { imperative, lowerImperative, lowerTopLevel, statementUses } from './javascript-lower.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
 import { BOOL, FLOAT, INT, NAT, STRING, array } from './types.js';
+import { arrayBindingNames, bindArrayElements, isLiteralBinding, readArrayBinding, readArrayBindingInitializer, readClosure, readCompositeType, validateClosureCaptures } from './javascript-bindings.js';
+import { hasStructuralIdentity, requiresReferenceSemantics } from './reference-analysis.js';
+import { acceptSurfaceRawMetadataField, selectSurfaceReferenceSemantics } from './surface-raw-metadata-rules.js';
+import { readOptionalLogicalMixingError, readOptionalSourceLiteral } from './optional-value-rules.js';
+import { acceptObjectFreezeOperand, acceptObjectPropertyDefinition } from './primitive-value-rules.js';
+import { validateJavaScriptProducts } from './javascript-products.js';
+import {acceptRustScalarLoopModel} from './rust-scalar-loops.js';
+import {isJavaScriptScalarLoop, readJavaScriptScalarLoop, finishJavaScriptScalarLoops} from './javascript-scalar-loops.js';
+import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
+import { lowerOwnedArrayAppends, readOwnedArrayReaderParameters } from './owned-array-append.js';
+import { acceptJavaScriptFunctionStart, acceptJavaScriptNamespaceMethod,
+  readJavaScriptCollectionConstruction, readJavaScriptConstructionObligation,
+  readJavaScriptDocumentationTypeForm, readJavaScriptValueCaseForm,
+  acceptJavaScriptValueSwitch, readJavaScriptValueSwitchInstruction,
+  readJavaScriptValueSwitchPosition, readJavaScriptObjectStatementForm,
+  readJavaScriptObjectPropertyForm, readJavaScriptObjectValueForm,
+  readJavaScriptArrayMethodSurfaceForm, acceptJavaScriptTerminalTagGuard,
+  acceptJavaScriptTagGuardSequence } from './javascript-surface-rules.js';
 
 // The string predicates of the portable core: each reads the whole string,
 // so it means the same over UTF-16, UTF-8 and code points.
-const STRING_TESTS = new Set(['startsWith', 'endsWith', 'includes']);
 // String-to-string maps: the Unicode case mappings, which Rust's
 // to_lowercase/to_uppercase also follow, and trimming of the JavaScript
 // whitespace set.
-const STRING_MAPS = new Set(['toLowerCase', 'toUpperCase', 'trim', 'trimStart', 'trimEnd']);
 const ROOT = 'crate';
 const EQUALITY = { '===': 'eq', '!==': 'ne' };
 const RELATIONAL = { '<': 'lt', '<=': 'le', '>': 'gt', '>=': 'ge' };
@@ -66,24 +84,45 @@ const ASSERTIONS = { strictEqual: 'eq', notStrictEqual: 'ne', deepStrictEqual: '
  * imports items of the crate.
  */
 export function parseJavaScript(source, context = {}) {
+  if (!acceptRustScalarLoopModel(context.scalarLoopModel ?? '')) throw unsupported('JavaScript scalar loop model', 'the selected model is not registered');
   const { tokens, comments } = tokenize(source, 'JavaScript');
   return new JavaScriptParser(source, tokens, comments, context).file();
 }
 
 class JavaScriptParser {
-  constructor(source, tokens, comments, { externals = [], moduleDirectory = null } = {}) {
+  constructor(source, tokens, comments, { externals = [], moduleDirectory = null, literalBindings = new Map(), referenceSemantics, readonlyModuleConstants = false, scalarLoopModel = '' } = {}) {
     this.source = source;
+    this.scalarLoopModel = scalarLoopModel;
+    this.readonlyModuleConstants = readonlyModuleConstants;
+    this.readonlyConstantInitializer = false;
+    this.referenceSemantics = referenceSemantics ?? requiresReferenceSemantics(source);
+    this.referenceSemanticsEnabled = referenceSemantics !== false;
+    this.referenceSemanticsOverride = referenceSemantics;
+    this.referenceSemanticsForced = false;
+    this.eliminatedOwnedArrayAppendOperations = [];
     // The other items of the module an item may call and read, by name.
     this.externals = new Map(externals.map((external) => [external.name, external]));
     this.moduleDirectory = moduleDirectory;
     this.imports = [];
     this.cursor = new TokenCursor(tokens, 'JavaScript');
+    this.literalBindings = literalBindings;
     this.docs = comments.filter((comment) => comment.text.startsWith('/**') && comment.text !== '/**/');
     // Tags of every @typedef data type, for `switch (x.$)`.
     this.dataTypes = new Map();
+    this.typeAliases = new Map();
+    // Parser-only facts from actual lexical owners and actual source headers.
+    // They never become checked IR or substitute for semantic validation.
+    this.tagBindingTypes = new WeakMap();
+    this.tagFunctionResults = new Map([...this.externals.values()]
+      .filter(entry => entry.k === 'fn').map(entry => [entry.name, { type: entry.ret }]));
     // Locals in scope, the ones `let` or a parameter makes assignable, and
     // names of the current block still in their temporal dead zone.
     this.scope = { locals: new Set(), tdz: new Set(), mutable: new Set() };
+    // Parser-local origins survive early builtin normalization and body
+    // lowering. They are validated before type inference, never emitted as IR.
+    this.lexicalScopes = [{ parent: -1, boundary: 0, bindings: new Map() }];
+    this.lexicalScope = 0;
+    this.lexicalReads = [];
     // Enclosing loops and switches, for `break` and `continue`.
     this.jumps = { loops: 0, switches: 0 };
     // Whether a top-level statement is being read, where `return` is a syntax error.
@@ -91,14 +130,19 @@ class JavaScriptParser {
     // Functions and data types that loops and joins of statements lower to, and their count.
     this.generated = [];
     this.generatedCount = 0;
+    this.ownedArrayReaders = new Map();
+    this.ownedArrayReaderNamespace = 0;
     this.assertion = null;
     // Async functions run sequentially: each call of one is awaited where it is
     // made, so nothing else runs until its result is back. `await` is allowed at
     // the top level of the module and in async functions.
     this.asyncNames = new Set();
+    this.functionNames = new Set([...this.externals.values()].filter((item) => item.k === 'fn').map((item) => item.name));
     this.inAsync = true;
     this.unawaited = [];
     this.sequentialAsync = false;
+    this.exportedNames = new Set();
+    this.moduleBindings = new Set([...this.externals.keys(), ...this.literalBindings.keys()]);
   }
 
   fail(message, token = this.cursor.peek()) {
@@ -113,8 +157,45 @@ class JavaScriptParser {
       c.next();
       c.eat(';');
     }
-    this.scope = { locals: new Set(), tdz: this.blockDeclarations(c.index, () => c.atEnd()), mutable: new Set() };
+    this.scope = { locals: new Set(), tdz: this.blockDeclarations(c.index), mutable: new Set() };
+    for (const name of this.scope.tdz) this.lexicalBinding(name);
     this.asyncNames = this.asyncDeclarations(c.index);
+    let depth = 0;
+    for (let index = c.index; index < c.tokens.length; index += 1) {
+      const token = c.tokens[index];
+      if (depth === 0 && token.value === 'import' && token.kind === 'identifier') {
+        let braces = 0;
+        for (let at = index + 1; at < c.tokens.length; at += 1) {
+          const imported = c.tokens[at];
+          if (!braces && (imported.kind === 'string' || imported.value === 'from' || imported.value === ';')) break;
+          const previous = c.tokens[at - 1]?.value;
+          if (imported.kind === 'identifier' && (previous === 'import' || previous === 'as' || ['{', ','].includes(previous) && c.tokens[at + 1]?.value !== 'as')) this.moduleBindings.add(imported.value);
+          if (imported.value === '{') braces += 1;
+          if (imported.value === '}') braces -= 1;
+        }
+      }
+      if (depth === 0 && token.kind === 'identifier') {
+        if (token.value === 'function' && c.tokens[index + 1]?.kind === 'identifier') {
+          const name = c.tokens[index + 1].value;
+          const asynchronous = c.tokens[index - 1]?.value === 'async';
+          let head = index - (asynchronous ? 1 : 0);
+          if (c.tokens[head - 1]?.value === 'export') head -= 1;
+          this.functionNames.add(name);
+          const expression = c.tokens[index - 1]?.value === '=' || asynchronous && c.tokens[index - 2]?.value === '=';
+          if (!expression) this.rememberTagFunction(name, c.tokens[head], asynchronous);
+        }
+        if (token.value === 'const' && c.tokens[index + 1]?.kind === 'identifier' && c.tokens[index + 2]?.value === '=' && this.startsFunction(index + 3)) {
+          const name = c.tokens[index + 1].value;
+          const asynchronous = c.tokens[index + 3]?.value === 'async' && c.tokens[index + 4]?.value !== '=>';
+          const head = c.tokens[index - 1]?.value === 'export' ? index - 1 : index;
+          this.functionNames.add(name);
+          this.rememberTagFunction(name, c.tokens[head], asynchronous);
+        }
+      }
+      if (token.kind === 'punct' && ['(', '[', '{'].includes(token.value)) depth += 1;
+      if (token.kind === 'punct' && [')', ']', '}'].includes(token.value)) depth -= 1;
+    }
+    for (const name of [...this.scope.tdz, ...this.functionNames]) this.moduleBindings.add(name);
     // Top-level statements that declare or assign variables, lowered together
     // before the next statement that prints, binds a constant or asserts.
     let pending = [];
@@ -128,10 +209,13 @@ class JavaScriptParser {
         this.importDeclaration();
         continue;
       }
-      if (c.eat('export')) {
+      const exported = Boolean(c.eat('export'));
+      if (exported) {
         if (!c.is('function') && !c.is('const') && !(c.is('async') && c.is('function', 1))) {
           throw unsupported(`export ${describe(c.peek())}`, 'only function and const declarations are exported', span(start, c.peek()));
         }
+        const name = c.is('async') ? c.peek(2) : c.peek(1);
+        if (name.kind === 'identifier') this.exportedNames.add(name.value);
       }
       if (c.is('async') && c.is('function', 1)) {
         c.next();
@@ -155,24 +239,30 @@ class JavaScriptParser {
         continue;
       }
       if (c.is('const') && c.peek(1).kind === 'identifier' && c.is('=', 2) && c.is('{', 3) && !(c.is('$', 4) && c.is(':', 5))) {
-        if (effects.length || pending.length) {
+        if (readJavaScriptObjectStatementForm(false, false, effects.length > 0 || pending.length > 0) === 'refuse-order') {
           throw unsupported(
             'namespace after a top-level statement',
             `the statements before const ${c.peek(1).value} would run before it is initialised; declare every namespace first`,
             span(start, c.peek(1)),
           );
         }
-        items.push(this.namespace(start));
-        continue;
+        const methods = this.namespaceObjectHasMethods(c.index + 3);
+        if (readJavaScriptObjectStatementForm(false, methods, false) === 'namespace') { items.push(this.namespace(start)); continue; }
       }
       if (this.startsTopLevelImperative()) {
         pending.push(this.topLevelStatement());
         continue;
       }
       flush();
-      effects.push(this.mainStatement());
+      const effect = this.mainStatement();
+      const entries = Array.isArray(effect) ? effect : [effect];
+      if (exported) for (const entry of entries) {
+        if (entry.k === 'let' && !entry.name.startsWith('ml_')) this.exportedNames.add(entry.name);
+      }
+      effects.push(...entries);
     }
     flush();
+    this.validateLexicalBindings();
     if (this.unawaited.length) {
       const [call] = this.unawaited;
       throw unsupported(`call of async function ${call.name} without await`, 'the Promise it returns is outside the portable core; await it where it is called', call.span);
@@ -181,9 +271,18 @@ class JavaScriptParser {
     const main = { effects, span: { start: 0, end: this.source.length } };
     if (this.sequentialAsync) main.sequentialAsync = true;
     const program = { language: 'JavaScript', items, main };
+    if (this.eliminatedOwnedArrayAppendOperations.length) {
+      this.referenceSemantics = this.referenceSemanticsForced || (this.referenceSemanticsOverride
+        ?? requiresReferenceSemantics(this.source, this.eliminatedOwnedArrayAppendOperations));
+    }
+    if (selectSurfaceReferenceSemantics(this.referenceSemantics, false, this.referenceSemanticsEnabled)) program.referenceSemantics = true;
     if (this.imports.length) program.imports = this.imports;
     if (this.externals.size) program.externals = [...this.externals.values()];
-    return inferJavaScriptTypes(program);
+    const inferred = inferJavaScriptTypes(program);
+    finishJavaScriptScalarLoops(inferred);
+    validateJavaScriptProducts(inferred, this.exportedNames);
+    if (selectSurfaceReferenceSemantics(false, this.referenceSemanticsEnabled && hasStructuralIdentity(inferred), this.referenceSemanticsEnabled)) inferred.referenceSemantics = true;
+    return inferred;
   }
 
   /** Names of the top-level async functions, which every call must await. */
@@ -216,9 +315,8 @@ class JavaScriptParser {
       token = tokens[index];
       if (!token) return false;
     }
-    if (token.kind === 'identifier' && token.value === 'function') return true;
-    if (token.kind === 'identifier' && tokens[index + 1]?.value === '=>') return true;
-    return token.kind === 'punct' && token.value === '(' && tokens[this.matching(index) + 1]?.value === '=>';
+    const afterGroup = token.kind === 'punct' && token.value === '(' ? tokens[this.matching(index) + 1]?.value ?? '' : '';
+    return acceptJavaScriptFunctionStart(token.kind, token.value, tokens[index + 1]?.value ?? '', afterGroup);
   }
 
   /**
@@ -292,6 +390,11 @@ class JavaScriptParser {
         if (tag.tag !== 'typedef') continue;
         const range = { start: comment.start, end: comment.end };
         if (!tag.type || !tag.name) throw new TranslationError('syntax', '@typedef needs a type and a name', range);
+        if (readJavaScriptDocumentationTypeForm(/\$\s*:/u.test(tag.type)) === 'alias') {
+          if (this.typeAliases.has(tag.name) || this.dataTypes.has(tag.name)) throw typeError(`duplicate @typedef ${tag.name}`, range);
+          this.typeAliases.set(tag.name, tag.type);
+          continue;
+        }
         const { tokens } = tokenize(tag.type, 'JavaScript');
         const c = new TokenCursor(tokens, 'JavaScript');
         const ctors = [];
@@ -348,6 +451,8 @@ class JavaScriptParser {
 
   type(text, range) {
     const name = text.trim();
+    const composite = readCompositeType(this, name, range);
+    if (composite) return composite;
     if (name === 'bigint') return INT;
     if (name === 'boolean') return BOOL;
     if (name === 'string') return STRING;
@@ -355,6 +460,12 @@ class JavaScriptParser {
     if (name.endsWith('[]')) return array(this.type(name.slice(0, -2), range));
     const generic = /^(?:Array|ReadonlyArray)<(.+)>$/u.exec(name);
     if (generic) return array(this.type(generic[1], range));
+    if (this.typeAliases.has(name)) {
+      const expanded = this.typeAliases.get(name);
+      this.typeAliases.delete(name);
+      try { return this.type(expanded, range); }
+      finally { this.typeAliases.set(name, expanded); }
+    }
     if (!/^[A-Za-z_$][\w$]*$/u.test(name) || ['object', 'any', 'unknown', 'void', 'undefined', 'null', 'Object', 'Function', 'Array', 'symbol'].includes(name)) {
       throw unsupported(`JSDoc type {${name}}`, 'portable types are number, bigint, boolean, string, arrays T[] of them and @typedef data types', range);
     }
@@ -366,17 +477,19 @@ class JavaScriptParser {
     const doc = this.docs.findLast((comment) => comment.end <= token.start && this.source.slice(comment.end, token.start).trim() === '');
     if (!doc) return null;
     const params = new Map();
+    const optionalParams = new Set();
     let returns = null;
     for (const tag of jsdocTags(doc)) {
       if (tag.tag === 'param') {
         if (!tag.type || !tag.name) throw new TranslationError('syntax', '@param needs a type and a name', doc);
         if (params.has(tag.name)) throw typeError(`duplicate @param ${tag.name}`, doc);
         params.set(tag.name, tag.type);
+        if (tag.optional) optionalParams.add(tag.name);
       } else if (tag.tag === 'returns' || tag.tag === 'return') {
         returns = tag.type;
       }
     }
-    return { params, returns, range: { start: doc.start, end: doc.end } };
+    return { params, optionalParams, returns, range: { start: doc.start, end: doc.end } };
   }
 
   functionDeclaration(start, isAsync = false) {
@@ -443,6 +556,17 @@ class JavaScriptParser {
   parameters(name) {
     const c = this.cursor;
     const tokens = [];
+    const names = [];
+    let depth = 0;
+    let binding = true;
+    for (let at = c.index; at < c.tokens.length; at += 1) {
+      const token = c.tokens[at];
+      if (!depth && token.value === ')') break;
+      if (!depth && binding && token.kind === 'identifier') { names.push(token.value); binding = false; }
+      if (token.kind === 'punct' && ['(', '[', '{'].includes(token.value)) depth += 1;
+      else if (token.kind === 'punct' && [')', ']', '}'].includes(token.value)) depth -= 1;
+      else if (!depth && token.value === ',') binding = true;
+    }
     while (!c.is(')')) {
       const token = c.peek();
       if (c.is('...')) throw unsupported('rest parameter', 'functions take a fixed number of arguments', span(token, token));
@@ -456,7 +580,9 @@ class JavaScriptParser {
           const token = c.peek(reference);
           throw unsupported(`default reading parameter ${token.value}`, 'a call fills in a default where it leaves the argument out, so a default reads no parameter', span(token, token));
         }
-        tokens.push({ ...param, defaultValue: this.expr() });
+        const outer = this.scope;
+        this.scope = { ...outer, tdz: new Set([...outer.tdz, ...names]) };
+        try { tokens.push({ ...param, defaultValue: this.withLexicalScope([], () => this.expr(), 2) }); } finally { this.scope = outer; }
       }
       else if (tokens.at(-1)?.defaultValue) throw unsupported(`parameter ${param.value} after a default`, 'a call fills in trailing defaults only; give it a default too', span(param, param));
       else tokens.push(param);
@@ -479,10 +605,13 @@ class JavaScriptParser {
     const params = tokens.map((token) => {
       reserved(token);
       const text = doc?.params.get(token.value);
+      const optional = doc?.optionalParams.has(token.value) && !token.defaultValue;
+      const declared = text ? this.type(text, doc.range) : null;
+      const type = optional && declared ? { kind: 'option', element: declared, absence: 'undefined' } : declared;
       return {
         name: token.value,
-        type: text ? this.type(text, doc.range) : null,
-        ...(token.defaultValue ? { default: token.defaultValue } : {}),
+        type,
+        ...(token.defaultValue ? { default: token.defaultValue } : optional ? { optional: true, default: { k: 'none', absence: 'undefined', span: span(token, token) } } : {}),
         span: span(token, token),
       };
     });
@@ -501,7 +630,24 @@ class JavaScriptParser {
     this.topLevel = false;
     const names = params.map((param) => param.name);
     this.scope = { locals: new Set(names), tdz: new Set(), mutable: new Set(names) };
-    const statements = statementsOf();
+    if (this.scalarLoopModel && isJavaScriptScalarLoop(c)) {
+      let loop;
+      try { loop = this.withLexicalScope(names, () => readJavaScriptScalarLoop(this, name, params, isAsync), 2); }
+      finally { this.scope = outer; this.inAsync = outerAsync; this.jumps = outerJumps; this.topLevel = outerTopLevel; }
+      return {k: 'fn', name, params, ret, body: loop.body, sourceLoop: loop.proof, span: span(docToken, c.peek())};
+    }
+    const statements = this.withLexicalScope(names, () => {
+      for (const parameter of params) this.rememberTagBinding(parameter.name, { type: parameter.type });
+      return statementsOf();
+    }, 2);
+    validateClosureCaptures(statements, this.referenceSemantics);
+    // An explicit or forced reference context keeps actual heap operations.
+    // Only the inferred construction context may become immutable rebinding.
+    if (!selectSurfaceReferenceSemantics(this.referenceSemanticsOverride === true, this.referenceSemanticsForced, true)) {
+      for (const proof of lowerOwnedArrayAppends(statements, params, this.ownedArrayReaders)) {
+        if (proof.operationSpan) this.eliminatedOwnedArrayAppendOperations.push(proof.operationSpan);
+      }
+    }
     this.scope = outer;
     this.inAsync = outerAsync;
     this.jumps = outerJumps;
@@ -520,8 +666,38 @@ class JavaScriptParser {
     }
     const where = span(nameToken, c.peek());
     const rest = statements.slice(index);
-    const body = imperative(rest) ? lowerImperative(this, name, params, rest, where) : this.lower(rest, where);
-    return { k: 'fn', name, params, ret, body, span: span(docToken, c.peek()) };
+    const body = imperative(rest, this) ? lowerImperative(this, name, params, rest, where) : this.lower(rest, where);
+    const declaration = { k: 'fn', name, params, ret, body, span: span(docToken, c.peek()) };
+    if (!this.ownedArrayReaderNamespace) this.ownedArrayReaders.set(name, readOwnedArrayReaderParameters(declaration, this.ownedArrayReaders, statements));
+    return declaration;
+  }
+
+  /** Inspect property headers, not calls or closures inside their values. */
+  namespaceObjectHasMethods(index) {
+    const tokens = this.cursor.tokens;
+    const close = this.matching(index);
+    let member = index + 1;
+    while (member < close) {
+      // Identifier modifiers retain the namespace parser's existing accessor
+      // and asynchronous-method diagnostics; neither a colon nor a value is
+      // part of this header. Generator prefixes retain their refusal there too.
+      let header = member;
+      while (header < close && (tokens[header].kind === 'identifier' || tokens[header].kind === 'punct' && tokens[header].value === '*')) {
+        if (acceptJavaScriptNamespaceMethod(tokens[header].kind, tokens[header + 1]?.value ?? '')) return true;
+        header += 1;
+      }
+      if (tokens[member].kind === 'identifier' && tokens[member + 1]?.value === ':' && tokens[member + 2]?.value === '{'
+        && this.namespaceObjectHasMethods(member + 2)) return true;
+      // Balanced groups belong to this one property's value (or computed key).
+      // Opaque string, template and regex tokens cannot introduce boundaries.
+      while (member < close) {
+        const token = tokens[member];
+        if (token.kind === 'punct' && token.value === ',') { member += 1; break; }
+        if (token.kind === 'punct' && ['(', '[', '{'].includes(token.value)) member = this.matching(member) + 1;
+        else member += 1;
+      }
+    }
+    return false;
   }
 
   /** `const Name = { method(…) { … }, Nested: { … } };` is a module. */
@@ -550,8 +726,14 @@ class JavaScriptParser {
         throw unsupported(`${member.value} member`, 'accessors and asynchronous methods are outside the portable core', span(member, c.peek(1)));
       }
       c.next();
-      if (c.is('(')) {
-        items.push(this.functionRest(member, member));
+      if (!acceptObjectPropertyDefinition(member.value, false, c.is(':'))) {
+        throw unsupported('object prototype definition', 'an uncomputed __proto__: entry is prototype-definition syntax rather than an own data property; the portable core does not represent object prototypes', span(member, member));
+      }
+      if (acceptJavaScriptNamespaceMethod(member.kind, c.peek().value)) {
+        this.functionNames.add(`${name}.${member.value}`);
+        this.ownedArrayReaderNamespace += 1;
+        try { items.push(this.functionRest(member, member)); }
+        finally { this.ownedArrayReaderNamespace -= 1; }
       } else if (c.eat(':')) {
         if (c.is('{')) {
           items.push(this.namespaceBody(member.value, member));
@@ -567,23 +749,30 @@ class JavaScriptParser {
     return { k: 'module', name, items, span: span(start, c.peek()) };
   }
 
-  /** Names a block declares with `const`, which are in their temporal dead zone until declared. */
-  blockDeclarations(from, done) {
+  /** Every lexical declaration's names remain in their temporal dead zone until initialized. */
+  blockDeclarations(from) {
     const c = this.cursor;
     const names = new Set();
     const saved = c.index;
     c.index = from;
     let depth = 0;
-    while (!c.atEnd() && !(depth === 0 && done())) {
+    let declaration = false;
+    while (!c.atEnd()) {
       const token = c.next();
-      if (['{', '(', '['].includes(token.value) && token.kind === 'punct') depth += 1;
-      else if (['}', ')', ']'].includes(token.value) && token.kind === 'punct') depth -= 1;
-      else if (depth === 0 && token.kind === 'identifier' && (token.value === 'const' || token.value === 'let')) {
-        if (c.peek().kind === 'identifier') names.add(c.peek().value);
-        else if (c.is('{')) {
-          for (let offset = 1; !c.is('}', offset) && !c.isKind('eof', offset); offset += 1) {
-            if (c.peek(offset).kind === 'identifier' && (c.is(',', offset + 1) || c.is('}', offset + 1))) names.add(c.peek(offset).value);
-          }
+      const step = readJavaScriptLexicalDeclarationStep(token.kind, token.value, depth, declaration);
+      if (step === -1) break;
+      if (step === 1) depth += 1;
+      else if (step === 2) depth -= 1;
+      else if (step === 5) declaration = false;
+      if (step !== 3 && step !== 4) continue;
+      declaration = true;
+      if (c.peek().kind === 'identifier') names.add(c.peek().value);
+      else if (c.is('[')) {
+        for (const binding of arrayBindingNames(this, c.index)) names.add(binding.value);
+      }
+      else if (c.is('{')) {
+        for (let offset = 1; !c.is('}', offset) && !c.isKind('eof', offset); offset += 1) {
+          if (c.peek(offset).kind === 'identifier' && (c.is(',', offset + 1) || c.is('}', offset + 1))) names.add(c.peek(offset).value);
         }
       }
     }
@@ -595,20 +784,65 @@ class JavaScriptParser {
     const c = this.cursor;
     const outer = this.scope;
     const tdz = new Set(outer.tdz);
-    for (const name of this.blockDeclarations(c.index, () => c.is('}'))) tdz.add(name);
+    const names = this.blockDeclarations(c.index);
+    for (const name of names) tdz.add(name);
     this.scope = { locals: new Set(outer.locals), tdz, mutable: new Set(outer.mutable) };
     try {
-      return parse();
+      return this.withLexicalScope(names, parse);
     } finally {
       this.scope = outer;
     }
   }
 
   declareLocal(name, mutable = false) {
+    this.lexicalBinding(name);
     this.scope.locals.add(name);
     this.scope.tdz.delete(name);
     if (mutable) this.scope.mutable.add(name);
     else this.scope.mutable.delete(name);
+  }
+
+  withLexicalScope(names, parse, boundary = 0) {
+    const outer = this.lexicalScope;
+    this.lexicalScope = this.lexicalScopes.length;
+    this.lexicalScopes.push({ parent: outer, boundary, bindings: new Map() });
+    for (const name of names) this.lexicalBinding(name);
+    try { return parse(); } finally { this.lexicalScope = outer; }
+  }
+
+  lexicalBinding(name, initializedAt = -1) {
+    const bindings = this.lexicalScopes[this.lexicalScope].bindings;
+    if (initializedAt >= 0 || !bindings.has(name)) bindings.set(name, initializedAt);
+  }
+
+  lexicalRead(token, assignment = false, where = span(token, token)) {
+    this.lexicalReads.push({ scope: this.lexicalScope, name: token.value, start: token.start, span: where, assignment });
+  }
+
+  closure(method = false) {
+    return this.withLexicalScope([], () => {
+      const value = readClosure(this, method);
+      for (const parameter of value.params) this.lexicalBinding(parameter.name);
+      return value;
+    }, 1);
+  }
+
+  validateLexicalBindings() {
+    const bounds = [], names = [], ends = [];
+    for (const scope of this.lexicalScopes) {
+      bounds.push(names.length, scope.bindings.size, scope.boundary);
+      for (const [name, end] of scope.bindings) { names.push(name); ends.push(end); }
+    }
+    const plan = readJavaScriptTemporalBindingRead(this.lexicalScopes.map(scope => scope.parent), bounds, names, ends,
+      this.lexicalReads.map(read => read.scope), this.lexicalReads.map(read => read.name), this.lexicalReads.map(read => read.start));
+    if (!plan.length) return;
+    const read = this.lexicalReads[plan[0]];
+    if (plan[1] === 2) throw unsupported(`function reading ${read.name}`,
+      'a mutable module binding requires module-capture representation', read.span);
+    if (plan[1] === 1) throw unsupported(`closure reading ${read.name} before its declaration`,
+      'the captured binding may still be in its temporal dead zone; invoking the closure after initialization needs an invocation-order proof', read.span);
+    if (read.assignment) throw unsupported(`assignment of ${read.name} before its declaration`, 'the binding is in its temporal dead zone, where assigning it throws a ReferenceError', read.span);
+    throw unsupported(readCallableReferenceConstruct(read.name, true), readCallableReferenceObligation(true, true), read.span);
   }
 
   blockStatements() {
@@ -628,7 +862,7 @@ class JavaScriptParser {
   statement() {
     const c = this.cursor;
     const token = c.peek();
-    if (c.is('const')) return this.constStatement();
+    if (c.is('const')) return this.constStatement(this.topLevel && this.readonlyModuleConstants);
     if (c.is('let')) {
       const statements = this.letDeclarations();
       c.eat(';');
@@ -641,7 +875,7 @@ class JavaScriptParser {
       if (this.topLevel) throw unsupported('top-level return statement', 'return leaves a function, and a module has none to leave', span(token, token));
       c.next();
       // `return;` returns undefined, the unit value.
-      if (c.is(';') || c.is('}') || this.source.slice(token.end, c.peek().start).includes('\n')) {
+      if (c.is(';') || c.is('}') || findJavaScriptLineTerminator(this.source, token.end, c.peek().start) < c.peek().start) {
         c.eat(';');
         return { s: 'return', expr: { k: 'unit', span: span(token, token) }, span: span(token, c.peek()) };
       }
@@ -670,6 +904,11 @@ class JavaScriptParser {
     if (token.kind === 'identifier' && c.peek(1).kind === 'punct' && c.peek(1).value === ':') {
       throw unsupported(`label ${token.value}`, 'labels are outside the portable core; a break or continue applies to the innermost loop', span(token, c.peek(1)));
     }
+    if (this.startsReferenceAssignment()) {
+      const statement = this.referenceAssignment();
+      c.eat(';');
+      return statement;
+    }
     if (this.startsAssignment()) {
       const statement = this.assignment();
       c.eat(';');
@@ -680,18 +919,49 @@ class JavaScriptParser {
     return { s: 'expr', expr, span: span(token, c.peek()) };
   }
 
-  constStatement() {
+  constStatement(readonly = false) {
     const c = this.cursor;
     const start = c.next();
+    const statements = [];
+    const names = new Set();
+    do {
+      const binding = this.constDeclarator(start, readonly);
+      const entries = binding.s === 'block' && binding.inline ? binding.body : [binding];
+      for (const entry of entries) {
+        if (names.has(entry.name)) throw new TranslationError('syntax', `duplicate lexical binding ${entry.name}`, entry.span);
+        names.add(entry.name);
+      }
+      statements.push(...entries);
+    } while (c.eat(','));
+    c.eat(';');
+    return statements.length === 1 ? statements[0] : { s: 'block', inline: true, body: statements, span: span(start, c.peek()) };
+  }
+
+  constDeclarator(start, readonly) {
+    const c = this.cursor;
     if (c.is('{')) return this.destructuring(start);
-    if (c.is('[')) throw unsupported('array destructuring', 'bind each element by its index, const a = xs[0]', span(start, c.peek()));
+    if (c.is('[')) {
+      const bindings = readArrayBinding(this);
+      if (!bindings.length) throw unsupported('empty array binding', 'the iterator and destructibility need a checked representation', span(start, c.peek()));
+      c.expect('=', 'array binding');
+      const value = readArrayBindingInitializer(this, bindings, () => this.expr());
+      const where = span(start, c.peek());
+      const name = `ml_binding${++this.generatedCount}`;
+      const object = { k: 'name', path: [name], span: where };
+      for (const binding of bindings) this.declareLocal(binding.name);
+      return { s: 'block', inline: true, body: [{ s: 'const', name, value, span: where }, ...bindArrayElements(bindings, object, 'const', where)], span: where };
+    }
     const name = c.identifier('const');
     reserved(name);
+    this.scope.tdz.add(name.value);
     if (!c.eat('=')) throw this.fail('expected = in const');
-    const value = this.expr();
-    if (c.is(',')) throw unsupported('several declarators', 'declare one binding per const', span(start, c.peek()));
-    c.eat(';');
+    const previous = this.readonlyConstantInitializer;
+    this.readonlyConstantInitializer = readonly;
+    let value;
+    try { value = this.expr(); } finally { this.readonlyConstantInitializer = previous; }
+    const receiverFact = this.readTagReceiverFact(value);
     this.declareLocal(name.value);
+    if (receiverFact) this.rememberTagBinding(name.value, receiverFact);
     return { s: 'const', name: name.value, value, span: span(start, c.peek()) };
   }
 
@@ -710,9 +980,12 @@ class JavaScriptParser {
       if (!c.eat(',')) break;
     }
     c.expect('}', 'destructuring');
+    if (!pairs.length) throw unsupported('empty object binding', 'object destructibility needs a checked representation', span(start, c.peek()));
     c.expect('=', 'destructuring');
-    const object = this.expr();
-    c.eat(';');
+    const value = this.expr();
+    const where = span(start, c.peek());
+    const name = `ml_binding${++this.generatedCount}`;
+    const object = { k: 'name', path: [name], span: where };
     const statements = pairs.map((pair) => ({
       s: 'const',
       name: pair.name,
@@ -720,7 +993,7 @@ class JavaScriptParser {
       span: span(start, c.peek()),
     }));
     for (const pair of pairs) this.declareLocal(pair.name);
-    return { s: 'block', body: statements, inline: true, span: span(start, c.peek()) };
+    return { s: 'block', body: [{ s: 'const', name, value, span: where }, ...statements], inline: true, span: where };
   }
 
   /** `let a = 1n, b = a;` declares assignable locals; each needs a value, since undefined is not portable. */
@@ -734,11 +1007,9 @@ class JavaScriptParser {
       reserved(name);
       // The binding is in its temporal dead zone in its own initialiser.
       this.scope.tdz.add(name.value);
-      if (!c.eat('=')) {
-        throw unsupported(`let ${name.value} without a value`, 'an uninitialised let holds undefined, which is not a portable value; give it an initial value', span(start, name));
-      }
-      const value = this.expr();
+      const value = c.eat('=') ? this.expr() : { k: 'none', absence: 'undefined', span: span(start, name) };
       this.declareLocal(name.value, true);
+      this.lexicalBinding(name.value, c.peek().start);
       statements.push({ s: 'let', name: name.value, value, span: span(start, c.peek()) });
     } while (c.eat(','));
     return statements;
@@ -753,6 +1024,52 @@ class JavaScriptParser {
     return next.kind === 'punct' && (ASSIGNMENTS.has(next.value) || next.value === '++' || next.value === '--');
   }
 
+  startsReferenceAssignment() {
+    const c = this.cursor;
+    let index = c.index;
+    if (c.tokens[index]?.value === '++' || c.tokens[index]?.value === '--') index += 1;
+    if (c.tokens[index]?.kind !== 'identifier') return false;
+    index += 1;
+    let member = false;
+    for (;;) {
+      if (c.tokens[index]?.value === '.' && c.tokens[index + 1]?.kind === 'identifier') { member = true; index += 2; continue; }
+      if (c.tokens[index]?.value === '[') { member = true; index = this.matching(index) + 1; continue; }
+      break;
+    }
+    const operator = c.tokens[index];
+    return member && (operator?.kind === 'punct' && (ASSIGNMENTS.has(operator.value) || operator.value === '++' || operator.value === '--') || c.is('++') || c.is('--'));
+  }
+
+  referenceAssignment() {
+    const c = this.cursor;
+    const start = c.peek();
+    const prefix = c.is('++') || c.is('--') ? c.next() : null;
+    const token = c.identifier('reference assignment');
+    let object = this.reference(token);
+    let index = null;
+    let field = null;
+    for (;;) {
+      if (c.eat('.')) {
+        const member = c.identifier('reference field');
+        field = member.value;
+        index = null;
+      } else if (c.eat('[')) {
+        index = this.expr();
+        c.expect(']', 'reference index');
+        field = null;
+      } else throw this.fail('expected a field or index in reference assignment');
+      if (!c.is('.') && !c.is('[')) break;
+      object = field === null ? { k: 'index', object, index, span: span(start, c.peek()) } : { k: 'field', object, field, span: span(start, c.peek()) };
+    }
+    const op = prefix ? prefix.value : c.next().value;
+    const where = span(start, c.peek());
+    const target = { object, ...(field === null ? { index } : { field }) };
+    if (op === '++' || op === '--') return { s: 'assignReference', ...target, op, span: where };
+    if (op !== '=' && !COMPOUND[op]) throw unsupported(`${op} reference assignment`, 'the operator needs a source-language read and write rule', where);
+    const value = this.expr();
+    return { s: 'assignReference', ...target, value, op, span: span(start, c.peek()) };
+  }
+
   /** An assignment of a local: `x op= e` is `x = x op e`, and `x++` is `x = x + 1`. */
   assignment() {
     const c = this.cursor;
@@ -761,6 +1078,7 @@ class JavaScriptParser {
     const target = c.identifier('assignment');
     const op = prefix ? prefix.value : c.next().value;
     const where = span(start, c.peek());
+    this.lexicalRead(target, true, where);
     if (this.scope.tdz.has(target.value)) {
       throw unsupported(`assignment of ${target.value} before its declaration`, 'the binding is in its temporal dead zone, where assigning it throws a ReferenceError', where);
     }
@@ -821,11 +1139,16 @@ class JavaScriptParser {
 
   /** `for (let i = 0n; i < n; i++) …`: the variables of its head belong to the loop. */
   forStatement() {
+    return this.withLexicalScope([], () => this.forStatementInScope());
+  }
+
+  forStatementInScope() {
     const c = this.cursor;
     const start = c.next();
     if (c.is('await')) throw unsupported('for await', 'asynchronous iteration is outside the portable core', span(start, c.peek()));
     c.expect('(', 'for');
     const declared = c.is('let') || c.is('const') || c.is('var');
+    if ((c.is('const') || c.is('let')) && c.is('[', 1) && c.tokens[this.matching(c.index + 1) + 1]?.value === 'of') return this.forOf(start);
     if (c.isKind('identifier', declared ? 1 : 0) && (c.is('of', declared ? 2 : 1) || c.is('in', declared ? 2 : 1))) {
       const kind = c.peek(declared ? 2 : 1).value;
       if (kind === 'in') throw unsupported('for…in loop', 'iteration over the keys of objects is outside the portable core; count with for (let i = …; …; …)', span(start, c.peek()));
@@ -872,10 +1195,12 @@ class JavaScriptParser {
   forOf(start) {
     const c = this.cursor;
     const binding = c.next().value;
-    const name = c.identifier('for…of');
-    reserved(name);
-    c.next();
-    const iterable = this.expr();
+    const bindings = c.is('[') ? readArrayBinding(this) : null;
+    const name = bindings ? null : c.identifier('for…of');
+    if (name) reserved(name);
+    c.expect('of', 'for…of');
+    const value = bindings ? readArrayBindingInitializer(this, bindings, () => this.expr()) : this.expr();
+    const iterable = { k: 'forOfIterable', object: value, span: value.span };
     c.expect(')', 'for');
     this.generatedCount += 1;
     const values = `ml_values${this.generatedCount}`;
@@ -884,14 +1209,18 @@ class JavaScriptParser {
     this.scope = { locals: new Set(outer.locals), tdz: new Set(outer.tdz), mutable: new Set(outer.mutable) };
     let body;
     try {
-      this.declareLocal(name.value, binding === 'let');
+      for (const local of bindings ?? [{ name: name.value }]) {
+        this.declareLocal(local.name, binding === 'let');
+        this.lexicalBinding(local.name, c.peek().start);
+      }
       body = this.loopBody();
     } finally {
       this.scope = outer;
     }
     const where = span(start, c.peek());
     const read = (local) => ({ k: 'name', path: [local], span: where });
-    const element = { k: 'index', object: read(values), index: read(index), span: where };
+    const element = { k: 'index', object: read(values), index: read(index), provenInBounds: true, span: where };
+    const declarations = bindings ? [{ s: 'const', name: `ml_element${this.generatedCount}`, value: element, span: where }, ...bindArrayElements(bindings, read(`ml_element${this.generatedCount}`), binding, where)] : [{ s: binding, name: name.value, value: element, span: where }];
     return {
       s: 'block',
       body: [
@@ -901,7 +1230,7 @@ class JavaScriptParser {
           init: [{ s: 'let', name: index, value: { k: 'num', value: '0', span: where }, span: where }],
           cond: { k: 'binary', op: 'lt', left: read(index), right: { k: 'length', object: read(values), integer: true, span: where }, span: where },
           update: [{ s: 'assign', name: index, value: { k: 'binary', op: 'add', left: read(index), right: { k: 'num', value: '1', span: where }, span: where }, span: where }],
-          body: [{ s: binding, name: name.value, value: element, span: where }, { s: 'block', body, span: where }],
+          body: [...declarations, { s: 'block', body, span: where }],
           span: where,
         },
       ],
@@ -913,7 +1242,7 @@ class JavaScriptParser {
     const c = this.cursor;
     const token = c.next();
     const where = span(token, token);
-    if (c.isKind('identifier') && !c.is('case') && !c.is('default') && !this.source.slice(token.end, c.peek().start).includes('\n')) {
+    if (c.isKind('identifier') && !c.is('case') && !c.is('default') && findJavaScriptLineTerminator(this.source, token.end, c.peek().start) === c.peek().start) {
       throw unsupported(`labelled ${token.value}`, 'labels are outside the portable core; a break or continue applies to the innermost loop', span(token, c.peek()));
     }
     if (token.value === 'continue' && !this.jumps.loops) throw new TranslationError('syntax', 'continue outside a loop', where);
@@ -925,8 +1254,12 @@ class JavaScriptParser {
   throwStatement() {
     const c = this.cursor;
     const start = c.next();
+    if (findJavaScriptLineTerminator(this.source, start.end, c.peek().start) < c.peek().start) {
+      throw new TranslationError('syntax', 'line terminator after throw', span(start, start));
+    }
     if (!c.eat('new')) throw unsupported('throw of a non-error value', 'throw new Error(\'…\'), which aborts the program', span(start, c.peek()));
     const kind = c.identifier('throw');
+    this.lexicalRead(kind);
     if (!ERRORS.has(kind.value)) throw unsupported(`throw new ${kind.value}`, 'throw an Error, RangeError or TypeError', span(kind, kind));
     c.expect('(', 'throw');
     let message = '';
@@ -1014,17 +1347,19 @@ class JavaScriptParser {
     }
     const negative = Boolean(c.eat('-'));
     const value = c.peek();
+    const form = readJavaScriptValueCaseForm(value.kind, value.value, value.suffix ?? '', negative);
     if (value.kind === 'number') {
       c.next();
-      if (value.suffix !== 'n') {
-        throw unsupported('case test on a Number', 'a value switch compares BigInt or boolean literals; compare Numbers with if and ===', span(token, value));
+      if (form === 'value') {
+        return { k: 'value', value: { ...this.numberLiteral(value), ...(negative && { negative: true }) }, span: span(token, value) };
       }
       return { k: 'numLit', value: value.value, ...(negative && { negative }), span: span(token, value) };
     }
-    if (!negative && (c.is('true') || c.is('false'))) {
+    if (form === 'boolLit') {
       c.next();
       return { k: 'boolLit', value: token.value === 'true', span: span(token, token) };
     }
+    if (form === 'value') return { k: 'value', value: this.expr(), span: span(token, c.peek()) };
     throw unsupported('case test', 'the cases of a value switch are BigInt or boolean literals', span(token, value));
   }
 
@@ -1042,8 +1377,9 @@ class JavaScriptParser {
   /** Whether the next top-level statement declares or assigns variables, or is a block, if or loop. */
   startsTopLevelImperative() {
     const c = this.cursor;
+    if (c.is('const')) return false;
     if (['let', 'var', 'if', 'for', 'while', 'do'].some((word) => c.is(word)) && c.peek().kind === 'identifier') return true;
-    return c.is('{') || this.startsAssignment();
+    return c.is('{') || this.startsAssignment() || this.startsReferenceAssignment();
   }
 
   /** A top-level statement read as a function body's, where `return` has no function to leave. */
@@ -1072,7 +1408,12 @@ class JavaScriptParser {
     const token = c.peek();
     if (c.is('const')) {
       if (c.is('{', 1)) throw unsupported('top-level destructuring', 'bind each value with const', span(token, c.peek(1)));
-      const binding = this.constStatement();
+      const binding = this.constStatement(this.readonlyModuleConstants);
+      if (binding.s === 'block' && binding.inline) return binding.body.map(entry => {
+        if (isLiteralBinding(entry.value)) this.literalBindings.set(entry.name, entry.value);
+        return { k: 'let', name: entry.name, value: entry.value, constant: true, span: entry.span };
+      });
+      if (isLiteralBinding(binding.value)) this.literalBindings.set(binding.name, binding.value);
       return { k: 'let', name: binding.name, value: binding.value, constant: true, span: binding.span };
     }
     if (c.is('console') && c.is('.', 1)) return this.consoleStatement();
@@ -1090,6 +1431,7 @@ class JavaScriptParser {
   consoleStatement() {
     const c = this.cursor;
     const start = c.next();
+    this.lexicalRead(start);
     c.expect('.', 'console');
     const method = c.identifier('console');
     if (method.value !== 'log') {
@@ -1169,6 +1511,8 @@ class JavaScriptParser {
       // A function that finishes without returning returns undefined, the unit value.
       if (index === list.length) return { k: 'unit', span: where };
       const statement = list[index];
+      const guards = this.tagGuardSequence(list, index);
+      if (guards) return this.lowerSwitch(guards, null, () => {});
       switch (statement.s) {
         case 'const':
           return { k: 'let', name: statement.name, value: statement.value, body: at(index + 1), span: statement.span };
@@ -1240,6 +1584,35 @@ class JavaScriptParser {
         throw unsupported('case without a result', 'every case must end in return or throw; falling through is outside the portable core', clause.span);
       }
     }
+    if (acceptJavaScriptValueSwitch(node.tagged, node.clauses.some((clause) => clause.tests.some((test) => test.k === 'value')))) {
+      const fallback = node.clauses.find((clause) => clause.tests.some((test) => test.k === 'default'));
+      const where = node.span;
+      const clauses = node.clauses.flatMap((clause) => clause.tests.filter((test) => test.k !== 'default').map((test) => ({ test, clause })));
+      let name, read, body, cond, then;
+      for (let step = 0; ; step += 1) {
+        const instruction = readJavaScriptValueSwitchInstruction(false, step, clauses.length);
+        if (instruction === 'capture') {
+          name = `ml_switch${++this.generatedCount}`;
+          read = { k: 'name', path: [name], span: where };
+        } else if (instruction === 'fallback') {
+          body = fallback ? this.lower(fallback.body, fallback.span) : rest ? rest() : { k: 'unit', span: where };
+        } else if (instruction === 'reachability') {
+          if (this.switchTerminates(node)) unreachable();
+        } else if (instruction === 'bind') {
+          return { k: 'let', name, value: node.discriminant, body, span: where };
+        } else {
+          const { test, clause } = clauses[readJavaScriptValueSwitchPosition(false, step, clauses.length)];
+          if (instruction === 'test') {
+            const right = test.k === 'value' ? test.value : test.k === 'boolLit' ? { k: 'bool', value: test.value, span: test.span } : { k: 'num', value: test.value, negative: test.negative, span: test.span };
+            cond = { k: 'binary', op: 'eq', left: read, right, span: test.span };
+          } else if (instruction === 'body') {
+            then = this.lower(clause.body, clause.span);
+          } else if (instruction === 'select') {
+            body = { k: 'if', cond, then, else: body, span: clause.span };
+          }
+        }
+      }
+    }
     const rows = [];
     // `default` applies only when no case matches, wherever it stands.
     let defaults = [];
@@ -1278,6 +1651,40 @@ class JavaScriptParser {
     const covered = new Set(node.clauses.flatMap((clause) => clause.tests.filter((test) => test.k === 'tag').map((test) => test.tag)));
     if (!readsFields(body, subject)) return [{ patterns: [{ k: 'wild', span: where }], body, span: where }];
     return node.data.ctors.filter((ctor) => !covered.has(ctor.name)).map((ctor) => this.tagRow(node, { k: 'tag', tag: ctor.name, span: where }, body, where));
+  }
+
+  /** Consecutive returning tag guards are one existing exhaustive switch.
+   * Keeping their common default together lets its fields use every preceding
+   * exclusion before any constructor row is projected. No condition, binding,
+   * assignment or effect between guards is skipped.
+   */
+  tagGuardSequence(statements, index) {
+    const first = statements[index];
+    const subject = first?.s === 'if' ? this.tagCondition(first.cond) : null;
+    if (!subject) return null;
+    const clauses = [], covered = new Set();
+    let next = index;
+    while (next < statements.length) {
+      const statement = statements[next];
+      const test = statement.s === 'if' ? this.tagCondition(statement.cond) : null;
+      if (!test) break;
+      const sameBinding = test.object.path[0] === subject.object.path[0]
+        && test.data.name === subject.data.name && test.data.ctors === subject.data.ctors;
+      if (!acceptJavaScriptTerminalTagGuard(!test.negated, Boolean(statement.else),
+        this.terminates(statement.then), sameBinding, covered.has(test.tag))) break;
+      covered.add(test.tag);
+      clauses.push({ tests: [{ k: 'tag', tag: test.tag, span: statement.cond.span }],
+        body: statement.then, span: statement.span });
+      next += 1;
+    }
+    const remainder = statements.slice(next);
+    if (!acceptJavaScriptTagGuardSequence(clauses.length > 1, this.terminates(remainder))) return null;
+    const last = statements.at(-1);
+    const span = { start: first.span.start, end: last.span.end };
+    const tail = { start: remainder[0].span.start, end: last.span.end };
+    clauses.push({ tests: [{ k: 'default', span: tail }], body: remainder, span: tail });
+    return { s: 'switch', tagged: true, data: subject.data,
+      discriminant: { k: 'field', object: subject.object, field: '$', span: first.cond.span }, clauses, span };
   }
 
   /** `x.$ === 'tag'` on a local `x`: the data type and the tag, when it narrows `x`. */
@@ -1344,7 +1751,7 @@ class JavaScriptParser {
   expr() {
     const c = this.cursor;
     const start = c.peek();
-    if (start.kind === 'identifier' && c.is('=>', 1)) throw unsupported('arrow function', 'functions as values are outside the portable core', span(start, c.peek(1)));
+    if (this.startsFunction(c.index)) return this.closure();
     const cond = this.or();
     if (ASSIGNMENTS.has(c.peek().value) && c.peek().kind === 'punct') {
       throw unsupported('assignment', 'mutation is outside the portable core', span(start, c.peek()));
@@ -1359,10 +1766,22 @@ class JavaScriptParser {
   or() {
     const c = this.cursor;
     let left = this.and();
+    let coalesced = false;
     for (;;) {
       const token = c.peek();
-      if (c.is('??')) throw unsupported('nullish coalescing', 'null and undefined are outside the portable core', span(token, token));
+      if (c.eat('??')) {
+        const leftError = readOptionalLogicalMixingError('left', coalesced, Boolean(left.parenthesized), left.k, left.op ?? '');
+        if (leftError) throw new TranslationError('syntax', leftError, token);
+        const right = this.and();
+        const rightError = readOptionalLogicalMixingError('right', coalesced, Boolean(right.parenthesized), right.k, right.op ?? '');
+        if (rightError) throw new TranslationError('syntax', rightError, token);
+        left = { k: 'coalesce', left, right, span: joined(left, right, token) };
+        coalesced = true;
+        continue;
+      }
       if (!c.eat('||')) return left;
+      const logicalError = readOptionalLogicalMixingError('or', coalesced, false, '', '');
+      if (logicalError) throw new TranslationError('syntax', logicalError, token);
       const right = this.and();
       left = { k: 'binary', op: 'or', left, right, span: joined(left, right, token) };
     }
@@ -1403,14 +1822,71 @@ class JavaScriptParser {
     }
   }
 
+  /** Retain the actual source header; parse its annotation only if an
+   * ambiguous tag test actually needs the result context. Duplicate source
+   * declarations/imports supply no unique owner. No unrelated diagnostic is
+   * moved into this ordinary declaration census.
+   */
+  rememberTagFunction(name, token, asynchronous) {
+    if (this.tagFunctionResults.has(name)) this.tagFunctionResults.set(name, null);
+    else this.tagFunctionResults.set(name, { token, asynchronous });
+  }
+
+  rememberTagBinding(name, fact) {
+    const owner = this.lexicalScopes[this.lexicalScope];
+    let bindings = this.tagBindingTypes.get(owner);
+    if (!bindings) { bindings = new Map(); this.tagBindingTypes.set(owner, bindings); }
+    bindings.set(name, fact);
+  }
+
+  /** Only declared parameters, actual named call results, and immutable
+   * aliases of those facts contribute context. A nearer lexical declaration
+   * stops lookup even when it has no type fact. Closure/function boundaries
+   * never borrow a same-spelled outer parameter's context.
+   */
+  readTagReceiverFact(node) {
+    const target = node.k === 'app' ? node.fn : node;
+    const path = target.path ?? [];
+    const form = readJavaScriptTagReceiverForm(node.k, node.k === 'app' ? target.k : '', path, ROOT);
+    if (form === 1) return this.tagFunctionResults.get(path[1]) ?? null;
+    if (form !== 2) return null;
+    for (let index = this.lexicalScope; index >= 0; index = this.lexicalScopes[index].parent) {
+      const scope = this.lexicalScopes[index];
+      const step = readJavaScriptTagBindingStep(scope.bindings.has(path[0]), scope.boundary);
+      if (step === 1) return this.tagBindingTypes.get(scope)?.get(path[0]) ?? null;
+      if (step === 2) break;
+    }
+    return null;
+  }
+
+  readTagReceiverOwner(node) {
+    const fact = this.readTagReceiverFact(node);
+    if (!fact) return '';
+    let type = fact.type;
+    if (acceptJavaScriptTagHeaderFact(Boolean(type), Boolean(fact.token), Boolean(fact.asynchronous))) {
+      // This is speculative context, not ordinary declaration validation.
+      // A later malformed header must not replace the current tag refusal.
+      try {
+        const doc = this.jsdocFor(fact.token);
+        if (doc?.returns) type = this.type(doc.returns, doc.range);
+      } catch (error) {
+        if (error instanceof TranslationError) return '';
+        throw error;
+      }
+    }
+    return readJavaScriptTagDeclaredOwner(type?.kind ?? '', type?.path ?? [], type?.name ?? '', ROOT);
+  }
+
   /** `x.$ === 'tag'` tests the alternative of a data value. */
   tagTest(op, left, right, where) {
     const [field, tag] = left.k === 'field' && left.field === '$' ? [left, right] : [right, left];
     if (field.k !== 'field' || field.field !== '$') return null;
     if (tag.k !== 'str') throw unsupported('computed tag test', 'compare the $ tag with a string literal', where);
     const candidates = [...this.dataTypes].filter(([, ctors]) => ctors.some((ctor) => ctor.name === tag.value));
-    if (candidates.length !== 1) throw typeError(candidates.length ? `tag ${tag.value} is ambiguous between data types` : `no @typedef has tag ${tag.value}`, where);
-    const [name, ctors] = candidates[0];
+    const receiver = candidates.length > 1 ? this.readTagReceiverOwner(field.object) : '';
+    const position = readJavaScriptTagOwnerPosition(candidates.map(([name]) => name), receiver);
+    if (position < 0) throw typeError(candidates.length ? `tag ${tag.value} is ambiguous between data types` : `no @typedef has tag ${tag.value}`, where);
+    const [name, ctors] = candidates[position];
     const ctor = ctors.find((candidate) => candidate.name === tag.value);
     const pattern = { k: 'ctor', path: [ROOT, name, tag.value], args: ctor.fields.map(() => ({ k: 'wild', span: where })), span: where };
     return {
@@ -1483,6 +1959,10 @@ class JavaScriptParser {
   unary() {
     const c = this.cursor;
     const token = c.peek();
+    if (token.kind === 'identifier' && c.eat('typeof')) {
+      const arg = this.unary();
+      return { k: 'typeOf', arg, span: joined(token, arg, token) };
+    }
     if (c.eat('!')) {
       const arg = this.unary();
       return { k: 'unary', op: 'not', arg, span: joined(token, arg, token) };
@@ -1516,29 +1996,50 @@ class JavaScriptParser {
       if (c.is('.') && c.peek(1).kind === 'identifier') {
         c.next();
         const field = c.next();
-        if (c.is('(') && STRING_TESTS.has(field.value)) {
+        const arrayForm = readArrayMethodForm(field.value);
+        if (c.is('(') && arrayForm !== '') {
+          const args = this.arguments(field.value);
+          const form = readJavaScriptArrayMethodSurfaceForm(field.value, args.length);
+          if (form === 'copySlice') {
+            expr = { k: 'copySlice', object: expr, span: joined(expr, { span: span(token, c.peek()) }, token) };
+            continue;
+          }
+          if (form === 'method') {
+            expr = { k: 'method', object: expr, op: field.value, args, span: joined(expr, { span: span(token, c.peek()) }, token) };
+            continue;
+          }
+          if (!acceptArrayMethodArguments(arrayForm, args.length > 0, args.length === 1)) throw unsupported(`.${field.value}() with arguments`, 'array copying takes no index arguments until their bounds are modeled', span(token, c.peek()));
+          expr = { k: 'array', items: [expr, ...args].map((value) => ({ spread: true, value })), span: joined(expr, { span: span(token, c.peek()) }, token) };
+          continue;
+        }
+        if (c.is('(') && readStringTestOperation('JavaScript', field.value) !== '') {
           const args = this.arguments(field.value);
           if (args.length !== 1) throw unsupported(`.${field.value}() with ${args.length} arguments`, 'search the whole string, with one argument', span(token, c.peek()));
           expr = { k: 'stringTest', op: field.value, object: expr, search: args[0], span: joined(expr, { span: span(token, c.peek()) }, token) };
           continue;
         }
-        if (c.is('(') && STRING_MAPS.has(field.value)) {
+        if (c.is('(') && readStringMapOperation('JavaScript', field.value) !== '') {
           const args = this.arguments(field.value);
           if (args.length !== 0) throw unsupported(`.${field.value}() with ${args.length} arguments`, 'string maps take no arguments', span(token, c.peek()));
           expr = { k: 'stringMap', op: field.value, object: expr, span: joined(expr, { span: span(token, c.peek()) }, token) };
           continue;
         }
         if (c.is('(')) {
-          if (field.value !== 'toString') throw unsupported(`method call .${field.value}()`, 'methods of values are outside the portable core', span(token, c.peek()));
-          const args = this.arguments('toString');
-          if (args.length) throw unsupported('toString with a radix', 'only decimal text is portable', span(token, c.peek()));
-          expr = { k: 'toString', arg: expr, span: joined(expr, { span: span(token, c.peek()) }, token) };
+          const args = this.arguments(field.value);
+          if (field.value === 'toString') {
+            if (args.length) throw unsupported('toString with a radix', 'only decimal text is portable', span(token, c.peek()));
+            expr = { k: 'toString', arg: expr, span: joined(expr, { span: span(token, c.peek()) }, token) };
+          } else expr = { k: 'method', object: expr, op: field.value, args, span: joined(expr, { span: span(token, c.peek()) }, token) };
           continue;
         }
         expr = { k: 'field', object: expr, field: field.value, span: joined(expr, { span: span(field, field) }, token) };
         continue;
       }
-      if (c.is('?.')) throw unsupported('optional chaining', 'null and undefined are outside the portable core', span(token, token));
+      if (c.eat('?.')) {
+        const field = c.identifier('optional field');
+        expr = { k: 'optionalField', object: expr, field: field.value, span: joined(expr, field, token) };
+        continue;
+      }
       if (c.is('[')) {
         c.next();
         const index = this.expr();
@@ -1549,7 +2050,11 @@ class JavaScriptParser {
         }
         continue;
       }
-      if (c.is('(')) throw unsupported('call of a computed function', 'only named functions can be called', span(token, token));
+      if (c.is('(')) {
+        const args = this.arguments('function value');
+        expr = { k: readCallableSurfaceConstructor('computed-call', false), fn: expr, args, span: joined(expr, c.peek(), token) };
+        continue;
+      }
       if (c.isKind('template')) throw unsupported('tagged template', 'template tags are functions as values', span(token, token));
       if (c.is('++') || c.is('--')) throw unsupported(`${token.value} operator`, 'mutation is outside the portable core', span(token, token));
       return expr;
@@ -1559,6 +2064,7 @@ class JavaScriptParser {
   primary() {
     const c = this.cursor;
     const token = c.peek();
+    if (this.startsFunction(c.index)) return this.closure();
     switch (token.kind) {
       case 'number':
         c.next();
@@ -1575,18 +2081,14 @@ class JavaScriptParser {
         break;
     }
     if (c.is('(')) {
-      const close = this.matching(c.index);
-      if (this.cursor.tokens[close + 1]?.value === '=>') {
-        throw unsupported('arrow function', 'functions as values are outside the portable core', span(token, token));
-      }
       c.next();
       const inner = this.expr();
       c.expect(')', 'parenthesised expression');
-      return { ...inner, span: span(token, c.peek()) };
+      return { ...inner, parenthesized: acceptSurfaceRawMetadataField('expression', 'parenthesized'), span: span(token, c.peek()) };
     }
     if (c.is('{')) return this.objectLiteral();
     if (c.is('[')) return this.arrayLiteral();
-    if (c.is('/')) throw unsupported('regular expression', 'outside the portable core', span(token, token));
+    if (token.kind === 'regex' || c.is('/')) throw unsupported('regular expression', 'outside the portable core', span(token, token));
     throw this.fail('expected an expression');
   }
 
@@ -1663,27 +2165,59 @@ class JavaScriptParser {
     const c = this.cursor;
     const start = c.next();
     let tag = null;
-    const fields = {};
+    const fields = Object.create(null);
+    const entries = [];
+    let duplicate = null;
+    let prototypeDefinition = null;
+    let propertyIndex = 0;
     while (!c.is('}')) {
-      const key = c.peek();
-      if (c.is('...')) throw unsupported('object spread', 'name every field', span(key, key));
-      if (key.kind !== 'identifier') throw unsupported(`object key ${describe(key)}`, 'keys are identifiers', span(key, key));
-      c.next();
-      if (key.value === '$') {
+      let key = c.peek();
+      const index = propertyIndex++;
+      if (c.eat('...')) {
+        entries.push({ spread: true, value: this.expr() });
+        if (!c.eat(',')) break;
+        continue;
+      }
+      const computed = c.eat('[');
+      if (computed) {
+        const startKey = key;
+        const value = this.expr();
+        const close = c.expect(']', 'computed object key');
+        if (value.k !== 'str') throw unsupported('computed object key', 'the portable record shape needs a literal string key', span(startKey, close));
+        key = { kind: 'string', value: value.value, start: startKey.start, end: close.end };
+      } else {
+        if (key.kind !== 'identifier' && key.kind !== 'string') throw unsupported(`object key ${describe(key)}`, 'keys are literal names', span(key, key));
+        c.next();
+      }
+      if (!acceptObjectPropertyDefinition(key.value, Boolean(computed), c.is(':'))) {
+        if (prototypeDefinition) throw new TranslationError('syntax', 'duplicate object prototype definition', span(key, key));
+        c.expect(':', 'object prototype definition');
+        prototypeDefinition = { value: this.expr(), span: span(key, key), index };
+      } else if (readJavaScriptObjectPropertyForm(key.value, c.is('('), c.is(':'), !computed && key.kind === 'identifier') === 'tag') {
         c.expect(':', 'object');
         const value = c.next();
         if (value.kind !== 'string') throw unsupported('computed tag', 'the $ tag is a string literal', span(value, value));
         tag = value.value;
       } else {
-        if (Object.hasOwn(fields, key.value)) throw typeError(`duplicate field ${key.value}`, span(key, key));
-        if (c.is('(')) throw unsupported('method in an object value', 'functions as values are outside the portable core', span(key, key));
-        fields[key.value] = c.eat(':') ? this.expr() : this.reference(key);
+        if (Object.hasOwn(fields, key.value)) duplicate ??= key;
+        const form = readJavaScriptObjectPropertyForm(key.value, c.is('('), c.is(':'), !computed && key.kind === 'identifier');
+        if (form === 'method') fields[key.value] = this.closure(true);
+        else if (form === 'field') { c.next(); fields[key.value] = this.expr(); }
+        else {
+          if (form === 'missing-colon') throw this.fail('expected : after the object property name', key);
+          fields[key.value] = this.reference(key);
+        }
+        entries.push({ name: key.value, spread: false, value: fields[key.value] });
       }
       if (!c.eat(',')) break;
     }
     c.expect('}', 'object');
-    if (tag === null) throw unsupported('object without a $ tag', 'a portable object is an alternative of a @typedef data type', span(start, c.peek()));
-    return { k: 'ctorObject', tag, fields, span: span(start, c.peek()) };
+    const prototype = prototypeDefinition ? { prototypeDefinition } : {};
+    const form = readJavaScriptObjectValueForm(tag !== null, duplicate !== null, entries.some((entry) => entry.spread));
+    if (form === 'record') return { k: 'record', entries, ...prototype, span: span(start, c.peek()) };
+    if (form === 'duplicate') throw typeError(`duplicate field ${duplicate.value}`, span(duplicate, duplicate));
+    if (form === 'spread') throw unsupported('tagged object spread', 'constructor spreads require a complete tagged field projection', span(start, c.peek()));
+    return { k: 'ctorObject', tag, fields, ...prototype, span: span(start, c.peek()) };
   }
 
   /**
@@ -1709,18 +2243,39 @@ class JavaScriptParser {
       c.next();
       return { k: 'bool', value: token.value === 'true', span: span(token, token) };
     }
-    if (token.value === 'NaN' || token.value === 'Infinity') {
+    this.lexicalRead(token);
+    // These are global bindings rather than reserved literal keywords. A
+    // parameter or local declaration takes precedence, including its TDZ.
+    if (['NaN', 'Infinity', 'undefined'].includes(token.value) && (this.scope.locals.has(token.value) || this.scope.tdz.has(token.value))) {
+      c.next();
+      return this.reference(token);
+    }
+    const boundGlobal = this.moduleBindings.has(token.value) || this.externals.has(token.value) || this.literalBindings.has(token.value) || this.functionNames.has(token.value);
+    if (['NaN', 'Infinity', 'undefined'].includes(token.value) && boundGlobal && !this.externals.has(token.value) && !this.literalBindings.has(token.value) && !this.functionNames.has(token.value)) throw unsupported(`global binding ${token.value}`, 'a delayed function read needs an owned module binding; a mutable module binding requires module-capture representation, and neither can be replaced with the built-in constant', span(token, token));
+    if (!boundGlobal && (token.value === 'NaN' || token.value === 'Infinity')) {
       c.next();
       return { k: 'num', value: token.value, type: FLOAT, span: span(token, token) };
     }
-    if (['null', 'undefined'].includes(token.value)) {
-      throw unsupported(token.value, 'outside the portable core', span(token, token));
+    const absent = readOptionalSourceLiteral(token.value, boundGlobal);
+    if (absent) { c.next(); return { k: 'none', absence: absent, span: span(token, token) }; }
+    if (token.value === 'new') {
+      c.next();
+      const constructor = c.identifier('constructor');
+      this.lexicalRead(constructor);
+      const args = c.is('(') ? this.arguments(constructor.value) : [];
+      const collection = readJavaScriptCollectionConstruction(constructor.value, args.length > 1);
+      if (collection !== '') {
+        const items = args[0] ?? { k: 'array', items: [], span: span(token, c.peek()) };
+        return { k: collection, [collection === 'set' ? 'items' : 'entries']: items, span: span(token, c.peek()) };
+      }
+      throw unsupported(`new ${constructor.value}`, readJavaScriptConstructionObligation(), span(token, c.peek()));
     }
     if (['this', 'super', 'new', 'function', 'class', 'import', 'arguments'].includes(token.value)) {
       throw unsupported(`${token.value} expression`, 'outside the portable core', span(token, token));
     }
     c.next();
     if (this.scope.locals.has(token.value) || this.scope.tdz.has(token.value)) return this.reference(token);
+    if (this.literalBindings.has(token.value)) return { ...this.literalBindings.get(token.value), span: span(token, token) };
     if (this.assertion?.name === token.value) throw unsupported('assertion in an expression', 'assertions are top-level statements', span(token, token));
     // A constant of another item of the module is read by name.
     if (this.externals.get(token.value)?.k === 'const' && !c.is('(')) return { k: 'name', path: [ROOT, token.value], span: span(token, token) };
@@ -1741,12 +2296,36 @@ class JavaScriptParser {
       return { k: 'math', op: MATH[name], name, args, span: span(token, c.peek()) };
     }
     if (!c.is('(')) {
+      const constructor = readCallableSurfaceConstructor('name', this.functionNames.has(name));
+      if (constructor) return { k: constructor, path: [ROOT, ...segments], span: where };
       throw unsupported(`function value ${name}`, 'functions and namespaces are only portable when a function is called', where);
     }
     const args = this.arguments(name);
     const called = span(token, c.peek());
+    if (name === 'Array.from') return { k: 'arrayFrom', args, span: called };
+    if (name === 'Array.isArray' && args.length === 1) return { k: 'arrayIsArray', arg: args[0], span: called };
+    const arrayForm = readArrayMethodForm(name);
+    if (arrayForm === 'copy-from' || arrayForm === 'construct') {
+      if (!acceptArrayMethodArguments(arrayForm, args.length > 0, args.length === 1)) throw unsupported(`${name}() with ${args.length} arguments`, 'array copying takes one array and no mapping function', called);
+      return { k: 'array', items: args.map(value => ({ spread: arrayForm === 'copy-from', value })), span: called };
+    }
     if (name === 'String' && args.length === 1) return { k: 'toString', arg: args[0], span: called };
-    if (name === 'Object.freeze' && args.length === 1) return { ...args[0], span: called };
+    if (name === 'Object.freeze' && args.length === 1) {
+      if (this.functionNames.has('Object') || this.externals.has('Object')) throw unsupported('shadowed Object.freeze', 'immutable products require the actual unshadowed Object.freeze built-in', called);
+      const value = args[0];
+      const literalArray = (item) => ['num', 'bool', 'str', 'none'].includes(item.k)
+        || item.k === 'array' && item.items.every((entry) => !entry.spread && literalArray(entry.value));
+      const readonlyLiteral = this.readonlyConstantInitializer && value.k === 'array' && literalArray(value);
+      if (this.readonlyConstantInitializer && value.k === 'array' && !readonlyLiteral) throw unsupported('Object.freeze operand',
+        'readonly module constants require literal values; evaluated elements need a separate module initialization model', called);
+      if (!readonlyLiteral && value.k === 'array') {
+        if (!value.items.length || value.items.some((item) => item.spread || item.value.k === 'array')) throw unsupported('immutable tuple product', 'a fresh nonempty dense array needs scalar Copy elements or separately frozen nested products', called);
+        return { k: 'tuple', items: value.items.map(item => item.value), frozen: true, productModel: 'immutable value product', span: called };
+      }
+      if (!acceptObjectFreezeOperand(value.k, readonlyLiteral)) throw unsupported('Object.freeze operand',
+        'freezing this value needs an explicit property-descriptor operation; only direct tagged objects and readonly literal module constants are represented', called);
+      return { ...value, ...(value.k === 'ctorObject' && { frozen: true }), span: called };
+    }
     if (GLOBALS.has(segments[0]) || name === 'String') {
       throw unsupported(name, 'the JavaScript standard library is outside the portable core', called);
     }
@@ -1757,12 +2336,28 @@ class JavaScriptParser {
 
   /** A local variable; reading one before its declaration throws in JavaScript. */
   reference(token) {
-    if (this.scope.tdz.has(token.value)) {
-      throw unsupported(`use of ${token.value} before its declaration`, 'the binding is in its temporal dead zone, where reading it throws a ReferenceError', span(token, token));
+    this.lexicalRead(token);
+    const temporal = this.scope.tdz.has(token.value);
+    if (temporal) {
+      const bounds = [], names = [], ends = [];
+      for (const scope of this.lexicalScopes) {
+        bounds.push(names.length, scope.bindings.size, scope.boundary);
+        for (const [name, end] of scope.bindings) {
+          names.push(name);
+          // Only this already-established TDZ read is checked. Its actual
+          // lexical owner and closure boundaries select the diagnostic.
+          ends.push(name === token.value ? token.start + 1 : end);
+        }
+      }
+      const plan = readJavaScriptTemporalBindingRead(this.lexicalScopes.map(scope => scope.parent), bounds, names, ends,
+        [this.lexicalScope], [token.value], [token.start]);
+      if (plan[1] === 2) throw unsupported(`function reading ${token.value}`,
+        'a mutable module binding requires module-capture representation', span(token, token));
+      if (plan[1] === 1) throw unsupported(`closure reading ${token.value} before its declaration`,
+        'the captured binding may still be in its temporal dead zone; invoking the closure after initialization needs an invocation-order proof', span(token, token));
     }
-    if (!this.scope.locals.has(token.value)) {
-      throw unsupported(`function value ${token.value}`, 'functions are only portable when called', span(token, token));
-    }
+    const obligation = readCallableReferenceObligation(temporal, this.scope.locals.has(token.value));
+    if (obligation) throw unsupported(readCallableReferenceConstruct(token.value, temporal), obligation, span(token, token));
     return { k: 'name', path: [token.value], span: span(token, token) };
   }
 }
@@ -1884,8 +2479,10 @@ function jsdocTags(comment) {
       type = text.slice(index + 1, end).replaceAll('\n', ' ');
       index = end + 1;
     }
-    const name = /^[ \t]*([A-Za-z_$][\w$]*)/u.exec(text.slice(index))?.[1] ?? null;
-    tags.push({ tag: match[1], type, name });
+    const tail = text.slice(index);
+    const range = findDocumentationParameterRange(Array.from({ length: tail.length }, (_, offset) => tail.charCodeAt(offset)));
+    const name = range.length ? tail.slice(range[0], range[1]) : null;
+    tags.push({ tag: match[1], type, name, ...(tail.trimStart().startsWith('[') ? { optional: true } : {}) });
     pattern.lastIndex = index;
     match = pattern.exec(text);
   }

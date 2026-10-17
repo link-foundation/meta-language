@@ -6,6 +6,8 @@ use crate::link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType};
 use crate::lino_serialization::LinoSerializationError;
 
 mod semantic_lexicon;
+mod views;
+pub use views::{ConceptViews, create_concept_views, read_concept_ontology, read_concept_taxonomy};
 
 use semantic_lexicon::{
     SemanticLexiconConcept, is_wikidata_qid, is_wordnet_cili_id, semantic_lexicon,
@@ -43,10 +45,15 @@ pub const FORMER_CONCEPT_IDS: &[(&str, &str)] = &[
 /// The current identity of a concept: `id` itself, or the identity that replaced it.
 #[must_use]
 pub fn current_concept_id(id: &str) -> &str {
-    FORMER_CONCEPT_IDS
-        .iter()
-        .find(|(former, _)| *former == id)
-        .map_or(id, |(_, current)| current)
+    concept_record(id).map_or_else(
+        || {
+            FORMER_CONCEPT_IDS
+                .iter()
+                .find(|(former, _)| *former == id)
+                .map_or(id, |(_, current)| current)
+        },
+        |record| record.id.as_str(),
+    )
 }
 
 /// Summary returned after importing concept links from an ontology source.

@@ -4,17 +4,20 @@
 // derives the groups that combine them, and writes the verification cells.
 // A local run without --stage runs the same stages one after another.
 //
-// Each stage writes `work/stage-<name>.json`:
+// Each stage writes `work/stage-<name>.lino`:
 //
 //   { schemaVersion: 1, issue: 195, stage, commit, checkpoint,
 //     toolchainVersions, groups: { <group>: { commands, artifacts, failureLogs } },
 //     error: null | string }
 //
-// and appends its execution records to `work/stage-<name>.jsonl`. A stage that
+// and appends scoped execution records to `work/stage-<name>-observations.lino`. A stage that
 // fails, or never reports, becomes one gate error naming it instead of
 // stopping the run. A stage that runs `after` another (each Rust stage after
 // its JavaScript counterpart) and never reported because that stage failed
 // adds no error of its own: the blocking failure's one error names it.
+
+import { mergeJavaScriptSuitePartitions } from './issue-195-javascript-suite-partitions.mjs';
+import { mergeRustSuitePartitions } from './issue-195-rust-suite-partitions.mjs';
 
 export const RUNTIMES = Object.freeze(['javascript', 'rust']);
 export const NATIVE_TARGETS = Object.freeze(['JavaScript', 'Rust', 'Lean', 'Rocq']);
@@ -24,7 +27,7 @@ export const DECLARED_TOOLCHAINS = Object.freeze({ rustc: '1.99.0', lean: '4.34.
 
 const NATIVE_TOOLS = Object.freeze({ JavaScript: 'node', Rust: 'rustc', Lean: 'lean', Rocq: 'rocq' });
 // The suites' tests run the native toolchains on emitted translations.
-const SUITE_TOOLS = Object.freeze(['node', 'npm', 'rustc', 'cargo', 'lean', 'rocq']);
+const SUITE_TOOLS = Object.freeze(['node', 'npm', 'rustc', 'rustfmt', 'cargo', 'lean', 'rocq']);
 const CARGO_TOOLS = Object.freeze(['node', 'npm', 'rustc', 'cargo']);
 
 /** Bounds for every build and test command the evidence run spawns, unless the caller set them. */
@@ -98,7 +101,7 @@ export function evidenceStage(checkpoint, name) {
 
 /** Relative paths of a stage's record and execution records inside the results directory. */
 export function stageFiles(name) {
-  return { record: `work/stage-${name}.json`, observations: `work/stage-${name}.jsonl` };
+  return { record: `work/stage-${name}.lino`, observations: `work/stage-${name}-observations.lino` };
 }
 
 /** Problems with the declared toolchain versions among `versions`. */
@@ -134,7 +137,9 @@ export function bundleRecords(...records) {
  * produced it, and one error per stage that failed or did not report; a stage
  * skipped because the stage it runs after failed joins that stage's error.
  */
-export function mergeStageRecords({ checkpoint, commit, records }) {
+export function mergeStageRecords({ checkpoint, commit, records, javascriptTestGroups, verifyRustPhysicalUnion }) {
+  records = mergeJavaScriptSuitePartitions({ checkpoint, commit, records, testGroups: javascriptTestGroups });
+  records = mergeRustSuitePartitions({ checkpoint, commit, records, verifyPhysicalUnion: verifyRustPhysicalUnion });
   const groups = new Map();
   const stageErrors = [];
   const fail = (stage, error) => stageErrors.push({ stage, error });

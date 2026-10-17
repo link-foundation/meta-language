@@ -14,7 +14,6 @@
 // A link is {id, values, children} with id null when the link is unnamed; a
 // reference is a link with an id and no values or children; a parenthesized
 // group is {nested, children} with the links read inside the parentheses.
-import { readFile, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,6 +21,7 @@ import { fileURLToPath } from 'node:url';
 import { DEFAULT_MAX_DEPTH } from 'links-notation/src/Parser.js';
 import { stripComments } from 'links-notation/src/comments.js';
 import { parse } from 'links-notation/src/parser-generated.js';
+import { checkProjectData, readProjectData, writeProjectData } from './project-data.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const outputPath = join(root, 'parity/fixtures/lino-grammar-cases.json');
@@ -91,23 +91,24 @@ function official(source) {
 }
 
 // The conformance sources of the language inventory are always cases.
-const inventory = JSON.parse(await readFile(join(root, 'parity/language-grammar-inventory.json'), 'utf8'));
+const inventory = readProjectData(join(root, 'parity/language-grammar-inventory.json'));
 const { source: inventorySource, recoverySource } = inventory.languages.find(({ name }) => name === 'LiNo');
 const sources = [...new Set([inventorySource, recoverySource, ...HAND_WRITTEN, ...generated(600)])];
-const expected = `${JSON.stringify({
+const expected = {
   schemaVersion: 2,
   oracle: `links-notation@${version} src/parser-generated.js parse(stripComments(source), { maxDepth: ${DEFAULT_MAX_DEPTH} })`,
   cases: sources.map((source) => ({ source, links: official(source) })),
-}, null, 1)}\n`;
+};
 
 if (process.argv.includes('--check')) {
-  const committed = await readFile(outputPath, 'utf8');
-  if (committed !== expected) {
+  try {
+    checkProjectData(outputPath, expected);
+  } catch {
     console.error(`${outputPath} is stale; run node js/scripts/generate-lino-grammar-cases.mjs`);
     process.exit(1);
   }
   console.log(`lino grammar cases: ${sources.length} cases match the official parser`);
 } else {
-  await writeFile(outputPath, expected);
+  writeProjectData(outputPath, expected);
   console.log(`wrote ${sources.length} cases to ${outputPath}`);
 }

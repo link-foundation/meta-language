@@ -6,8 +6,9 @@
 // of its emitted text, the edit sequence must reach the intended structure,
 // and a follow-up edit must restore the constructed program.
 // The Rust twin is rust/tests/unit/issue_195_structured_transformations.rs.
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+
 import { test } from 'node:test';
 
 import {
@@ -21,7 +22,7 @@ import {
   recordIssue195Observations,
 } from './support/issue-195-observations.js';
 
-const corpus = JSON.parse(await readFile(new URL('../../parity/fixtures/four-language-conformance.json', import.meta.url)));
+const corpus = readProjectData(new URL('../../parity/fixtures/four-language-conformance.json', import.meta.url));
 
 const ASSERTIONS = [
   'publicApiUsed',

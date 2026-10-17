@@ -22,7 +22,7 @@ use crate::{
 };
 
 /// Default manifest path used by the bench and integration gate.
-pub const DEFAULT_CORPUS_MANIFEST: &str = "benches/corpus-manifest.json";
+pub const DEFAULT_CORPUS_MANIFEST: &str = "benches/corpus-manifest.lino";
 /// Default vendored corpus root used by the bench and integration gate.
 pub const DEFAULT_CORPORA_ROOT: &str = "benches/corpora";
 /// Published `TreeVada` headline average F1 from the E3 competitive-analysis notes.
@@ -269,14 +269,23 @@ pub fn run_competitor_suite_from_paths(
 ///
 /// Returns an error when the manifest cannot be read or parsed.
 pub fn load_manifest(path: &Path) -> Result<CompetitorManifest, BenchmarkError> {
-    let text = fs::read_to_string(path).map_err(|source| BenchmarkError::Io {
-        path: path.to_path_buf(),
+    let path = crate::resolve_project_data_path(path).map_err(BenchmarkError::Manifest)?;
+    let text = fs::read_to_string(&path).map_err(|source| BenchmarkError::Io {
+        path: path.clone(),
         source,
     })?;
-    let value = serde_json::from_str::<Value>(&text).map_err(|source| BenchmarkError::Json {
-        path: path.to_path_buf(),
-        source,
-    })?;
+    let value = if path
+        .extension()
+        .is_some_and(|extension| extension == "lino")
+    {
+        crate::read_structured_data_lino(&text)
+            .map_err(|message| BenchmarkError::Manifest(format!("{}: {message}", path.display())))?
+    } else {
+        serde_json::from_str::<Value>(&text).map_err(|source| BenchmarkError::Json {
+            path: path.clone(),
+            source,
+        })?
+    };
     parse_manifest(&value)
 }
 

@@ -1,13 +1,12 @@
 use std::collections::{BTreeMap, BTreeSet};
-use std::fs;
 use std::path::PathBuf;
 
 use serde_json::Value;
 
 fn repository_json(relative_path: &str) -> Value {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(relative_path);
-    serde_json::from_str(&fs::read_to_string(path).expect("shared JSON file is readable"))
-        .expect("shared JSON file is valid")
+    meta_language::project_data::read_project_data_file(path)
+        .expect("shared project data is readable and valid")
 }
 
 fn contains_hand_edited_completion(value: &Value) -> bool {
@@ -24,6 +23,11 @@ fn contains_hand_edited_completion(value: &Value) -> bool {
 #[test]
 fn issue_195_manifest_has_atomic_cross_runtime_traceability() {
     let manifest = repository_json("../parity/issue-195-requirements.json");
+    let register = repository_json("../parity/issue-195-sources.json");
+    let registered_sources = register["requirementSources"]
+        .as_array()
+        .expect("registered requirement sources");
+    let manifest_sources = manifest["sources"].as_object().expect("manifest sources");
     assert_eq!(manifest["schemaVersion"], 1);
     assert_eq!(manifest["issue"], 195);
 
@@ -41,11 +45,15 @@ fn issue_195_manifest_has_atomic_cross_runtime_traceability() {
         let id = requirement["id"].as_str().expect("stable requirement id");
         assert!(requirement_ids.insert(id), "duplicate requirement id {id}");
         assert!(id.starts_with("I195-"), "unexpected requirement id {id}");
+        let source = requirement["source"].as_str().expect("source identity");
         assert!(
-            requirement["source"]
-                .as_str()
-                .expect("source permalink")
-                .starts_with("https://github.com/link-foundation/meta-language/")
+            manifest_sources
+                .values()
+                .any(|registered| registered.as_str() == Some(source))
+                && registered_sources
+                    .iter()
+                    .any(|registered| registered["url"].as_str() == Some(source)),
+            "{id} must cite an exact registered requirement source: {source}"
         );
         assert!(!contains_hand_edited_completion(requirement));
 

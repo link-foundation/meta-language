@@ -4,7 +4,14 @@
 // part of the JavaScript frontend's input.
 
 import { TranslationError } from './diagnostics.js';
-import { decodeUnicodeEscape } from './frontend-rules.js';
+import { acceptControlParenthesis, acceptStatementBrace, decodeUnicodeEscape, readRustNumberBounds, regularExpressionEnd, startRegularExpression } from './frontend-rules.js';
+import { readRustSourceLineBreakEnd, readRustStringContinuationEnd } from './rust-string-rules.js';
+import { acceptRustCookedStringEscapePrefix, readRustAsciiEscapeValue } from './rust-cooked-string-rules.js';
+import { decodeRustUnicodeEscape } from './rust-unicode-escape-rules.js';
+import { decodeRustRawString } from './rust-raw-string-rules.js';
+import { decodeRustCharacterLiteral } from './rust-character-rules.js';
+import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
+import { acceptRustSourceWhitespace, acceptRustSourceByteOrderMark, acceptRustSourceNumberDigitBoundary } from './rust-source-whitespace-rules.js';
 
 const OPERATORS = {
   JavaScript: [
@@ -24,19 +31,38 @@ const COMMENTS = {
 };
 
 export function tokenize(source, language) {
+  return tokenizeRegion(source, language, 0, false, { units: null });
+}
+
+// Reuse the ordinary lexical decisions when finding a template substitution.
+// Opaque string, comment, regex and nested-template tokens cannot close it.
+function tokenizeRegion(source, language, startIndex, braced, encoding) {
   const operators = [...OPERATORS[language]].sort((left, right) => right.length - left.length);
   const comments = COMMENTS[language];
   const tokens = [];
   const commentList = [];
-  let index = 0;
+  // Encode once, on the first regular expression. Copying each remaining
+  // suffix makes a module with many literals take quadratic time and space.
+  const scopes = [];
+  const braces = [];
+  let closed = false;
+  let declarationBody = false;
+  let depth = 0;
+  let index = startIndex;
   while (index < source.length) {
     const char = source[index];
-    if (/\s/u.test(char)) {
+    if (braced && char === '}' && depth === 0) break;
+    // Classify the current one-unit character without another source-unit read.
+    // Full-source encoding remains lazy and shared by the escape algorithms.
+    const rustUnit = language === 'Rust' ? char.codePointAt(0) : -1;
+    if (language === 'Rust'
+      ? acceptRustSourceWhitespace(rustUnit) || acceptRustSourceByteOrderMark(rustUnit, index === 0)
+      : /\s/u.test(char)) {
       index += 1;
       continue;
     }
     if (comments.line && source.startsWith(comments.line, index)) {
-      const end = source.indexOf('\n', index);
+      const end = language === 'JavaScript' ? findJavaScriptLineTerminator(source, index) : source.indexOf('\n', index);
       const stop = end === -1 ? source.length : end;
       commentList.push({ text: source.slice(index, stop), start: index, end: stop });
       index = stop;
@@ -49,19 +75,69 @@ export function tokenize(source, language) {
       continue;
     }
     const start = index;
+    if (language === 'JavaScript' && char === '/' && (closed || startRegularExpression(['.', '?.'].includes(tokens.at(-2)?.value) ? 'member' : tokens.at(-1)?.kind ?? '', tokens.at(-1)?.value ?? ''))) {
+      encoding.units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
+      const end = regularExpressionEnd(encoding.units, index);
+      if (end < 0) throw new TranslationError('syntax', 'unterminated regular expression literal', { start, end: source.length });
+      tokens.push({ kind: 'regex', value: '/', raw: source.slice(index, end), start, end });
+      index = end;
+      closed = false;
+      continue;
+    }
+    const controlClosed = closed;
+    closed = false;
     if (language === 'JavaScript' && char === '`') {
-      tokens.push(templateToken(source, index));
+      tokens.push(templateToken(source, index, encoding));
       index = tokens.at(-1).end;
       continue;
     }
+    if (language === 'Rust' && char === 'r') {
+      encoding.units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
+      const literal = decodeRustRawString(encoding.units, index);
+      if (literal.$ === 'tooManyDelimiters') throw new TranslationError('syntax', 'Rust raw string exceeds 255 delimiter hashes', { start, end: source.length });
+      if (literal.$ === 'unterminated') throw new TranslationError('syntax', 'unterminated Rust raw string literal', { start, end: source.length });
+      if (literal.$ === 'carriageReturn') throw new TranslationError('syntax', 'isolated carriage return in a Rust string', { start: literal.at, end: literal.at + 1 });
+      if (literal.$ === 'nonScalar') throw new TranslationError('syntax', 'unpaired Unicode surrogate in a Rust raw string', { start: literal.at, end: literal.at + 1 });
+      if (literal.$ === 'literal') {
+        let value = '';
+        let cursor = literal.contentStart;
+        while (cursor < literal.contentEnd) {
+          const end = readRustSourceLineBreakEnd(encoding.units, cursor);
+          if (end >= 0) { value += '\n'; cursor = end; }
+          else { value += source[cursor]; cursor += 1; }
+        }
+        tokens.push({ kind: 'string', value, start, end: literal.end, raw: source.slice(start, literal.end) });
+        index = literal.end;
+        continue;
+      }
+    }
+    // Select only Rust apostrophe/byte-apostrophe prefixes. A notCharacter
+    // result consumes nothing, so existing lifetime and label paths stay exact.
+    if (language === 'Rust' && (char === "'" || (char === 'b' && source[index + 1] === "'"))) {
+      encoding.units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
+      const literal = decodeRustCharacterLiteral(encoding.units, index);
+      if (literal.$ === 'malformed') throw new TranslationError('syntax', 'malformed Rust character literal', { start: literal.at, end: literal.end });
+      if (literal.$ === 'unterminated') throw new TranslationError('syntax', 'unterminated Rust character literal', { start: literal.at, end: literal.end });
+      if (literal.$ === 'nonScalar') throw new TranslationError('unsupported', 'Rust character literal is not a Unicode scalar value', { start: literal.at, end: literal.end });
+      if (literal.$ === 'nonAscii') throw new TranslationError('syntax', 'non-ASCII source in a Rust byte character literal', { start: literal.at, end: literal.end });
+      if (literal.$ === 'unicodeByteEscape') throw new TranslationError('syntax', 'Unicode escape in a Rust byte character literal', { start: literal.at, end: literal.end });
+      if (literal.$ === 'unsupportedSuffix') throw new TranslationError('unsupported', 'Rust character literal suffix is outside the supported lexical profile', { start: literal.at, end: literal.end });
+      if (literal.$ === 'char' || literal.$ === 'byteChar') {
+        // Token.value is text in both runtimes. Distinct opaque kinds never
+        // enter the existing String or Number semantic admission branches.
+        tokens.push({ kind: literal.$, value: String(literal.value), start, end: literal.end, raw: source.slice(start, literal.end) });
+        index = literal.end;
+        continue;
+      }
+    }
     if (char === '"' || (language === 'JavaScript' && char === "'")) {
-      const token = stringToken(source, index, language);
+      const token = stringToken(source, index, language, encoding);
       tokens.push(token);
       index = token.end;
       continue;
     }
     if (language === 'Lean' && source.startsWith('s!"', index)) {
-      const token = stringToken(source, index + 2, language);
+      const token = stringToken(source, index + 2, language, encoding);
       tokens.push({ ...token, kind: 'interpolation', start, raw: source.slice(start, token.end) });
       index = token.end;
       continue;
@@ -73,6 +149,17 @@ export function tokenize(source, language) {
       continue;
     }
     if (/[0-9]/u.test(char)) {
+      if (language === 'Rust') {
+        encoding.units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
+        const [end, suffixStart, floating] = readRustNumberBounds(encoding.units, index);
+        const raw = source.slice(index, end);
+        const digits = source.slice(index, suffixStart);
+        if (!acceptRustSourceNumberDigitBoundary(floating, digits.endsWith('_'), source.slice(suffixStart, end), isIdentifierPart(source[end] ?? '', 'Rust'), end < source.length ? source.charCodeAt(end) : -1)) throw new TranslationError('syntax', `malformed number ${raw}`, { start, end });
+        if (floating && !Number.isFinite(Number(digits.replaceAll('_', '')))) throw new TranslationError('syntax', `floating-point literal out of range ${raw}`, { start, end });
+        tokens.push({ kind: 'number', ...(floating && { floating: true }), value: floating ? String(Number(digits.replaceAll('_', ''))) : digits.replaceAll('_', ''), suffix: source.slice(suffixStart, end), raw, start, end });
+        index = end;
+        continue;
+      }
       const match = /^[0-9][0-9_]*(?:[a-z][a-z0-9]*)?/u.exec(source.slice(index));
       const raw = match[0];
       const digits = /^[0-9_]*/u.exec(raw)[0];
@@ -109,10 +196,27 @@ export function tokenize(source, language) {
     }
     const operator = operators.find((candidate) => source.startsWith(candidate, index));
     const text = operator ?? String.fromCodePoint(source.codePointAt(index));
+    if (braced && text === '{') depth += 1;
+    if (braced && text === '}') depth -= 1;
+    if (language === 'JavaScript') {
+      if (text === '(') {
+        const declaration = tokens.at(-2)?.value === 'function' && (tokens.length === 2 || [';', '{', '}', 'export', 'async'].includes(tokens.at(-3)?.value));
+        scopes.push({ control: acceptControlParenthesis(tokens.at(-1)?.kind ?? '', tokens.at(-1)?.value ?? '', ['.', '?.'].includes(tokens.at(-2)?.value)), declaration });
+      }
+      if (text === ')') {
+        const scope = scopes.pop();
+        closed = scope?.control ?? false;
+        declarationBody = scope?.declaration ?? false;
+      } else if (text === '{') {
+        braces.push(acceptStatementBrace(tokens.at(-1)?.kind ?? (braced ? 'expression' : ''), tokens.at(-1)?.value ?? '', controlClosed, declarationBody));
+        declarationBody = false;
+      } else if (text === '}') closed = braces.pop() ?? false;
+      else declarationBody = false;
+    }
     tokens.push({ kind: 'punct', value: text, start, end: start + text.length, raw: text });
     index += text.length;
   }
-  tokens.push({ kind: 'eof', value: '', start: source.length, end: source.length, raw: '' });
+  tokens.push({ kind: 'eof', value: '', start: index, end: index, raw: '' });
   return { tokens, comments: commentList };
 }
 
@@ -171,10 +275,16 @@ function blockCommentEnd(source, index, comments) {
 // A \u escape at `at`: \u{X..} in JavaScript and Rust, and \uXXXX in
 // JavaScript, where a surrogate pair of two such escapes is one code point.
 // A lone surrogate is refused, because Rust strings cannot hold it.
-function unicodeEscape(source, at, language) {
-  const units = [];
-  for (let index = at; index < Math.min(source.length, at + 12); index += 1) units.push(source.charCodeAt(index));
-  const escape = decodeUnicodeEscape(units, language === 'JavaScript');
+function unicodeEscape(source, at, language, encoding = { units: null }) {
+  let escape;
+  if (language === 'Rust') {
+    encoding.units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
+    escape = decodeRustUnicodeEscape(encoding.units, at);
+  } else {
+    const units = [];
+    for (let index = at; index < Math.min(source.length, at + 12); index += 1) units.push(source.charCodeAt(index));
+    escape = decodeUnicodeEscape(units, language === 'JavaScript');
+  }
   if (escape.$ === 'malformed') throw new TranslationError('syntax', 'malformed unicode escape', { start: at, end: at + 2 });
   if (escape.$ === 'unsupported') {
     throw new TranslationError('unsupported', `unicode escape ${source.slice(at, at + escape.escapeLength)} is not a scalar value; Rust strings hold scalar values only`, { start: at, end: at + escape.end });
@@ -182,7 +292,7 @@ function unicodeEscape(source, at, language) {
   return { text: String.fromCodePoint(escape.code), end: at + escape.end };
 }
 
-function stringToken(source, index, language) {
+function stringToken(source, index, language, encoding) {
   const quote = source[index];
   let cursor = index + 1;
   let value = '';
@@ -198,28 +308,56 @@ function stringToken(source, index, language) {
     }
     if (char === '\\' && language !== 'Rocq') {
       const escaped = source[cursor + 1];
-      const simple = { n: '\n', t: '\t', r: '\r', '\\': '\\', '"': '"', "'": "'", 0: '\0', '{': '\\{' };
-      if (escaped === 'u') {
-        const escape = unicodeEscape(source, cursor, language);
+      if (language === 'Rust') {
+        encoding.units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
+        const end = readRustStringContinuationEnd(encoding.units, cursor);
+        if (end >= 0) { cursor = end; continue; }
+        if (!acceptRustCookedStringEscapePrefix(encoding.units[cursor + 1] ?? -1)) {
+          throw new TranslationError('syntax', `unsupported string escape \\${escaped}`, { start: cursor, end: cursor + 2 });
+        }
+        if (escaped === 'x') {
+          const valueUnit = readRustAsciiEscapeValue(encoding.units[cursor + 2] ?? -1, encoding.units[cursor + 3] ?? -1);
+          if (valueUnit < 0) throw new TranslationError('syntax', 'malformed Rust ASCII escape', { start: cursor, end: cursor + 2 });
+          value += String.fromCharCode(valueUnit);
+          cursor += 4;
+          continue;
+        }
+      }
+      if (language === 'JavaScript' && (/[1-9]/u.test(escaped ?? '') || (escaped === '0' && /[0-9]/u.test(source[cursor + 2] ?? '')))) {
+        throw new TranslationError('syntax', 'legacy octal string escape', { start: cursor, end: cursor + 2 });
+      }
+      if (language === 'JavaScript' && ['\n', '\r', '\u2028', '\u2029'].includes(escaped)) {
+        cursor += escaped === '\r' && source[cursor + 2] === '\n' ? 3 : 2;
+        continue;
+      }
+      const simple = { n: '\n', t: '\t', r: '\r', b: '\b', f: '\f', v: '\v', '\\': '\\', '"': '"', "'": "'", 0: '\0', '{': language === 'JavaScript' ? '{' : '\\{' };
+      if (escaped === 'u' || (language === 'JavaScript' && escaped === 'x')) {
+        const escape = unicodeEscape(source, cursor, language, encoding);
         value += escape.text;
         cursor = escape.end;
         continue;
       }
-      if (!(escaped in simple)) {
+      if (!(escaped in simple) && (language !== 'JavaScript' || escaped === undefined)) {
         throw new TranslationError('syntax', `unsupported string escape \\${escaped}`, { start: cursor, end: cursor + 2 });
       }
-      value += simple[escaped];
+      value += simple[escaped] ?? escaped;
       cursor += 2;
       continue;
     }
-    if (char === '\n' && language === 'JavaScript') break;
+    if (language === 'Rust' && char === '\r') {
+      encoding.units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
+      const end = readRustSourceLineBreakEnd(encoding.units, cursor);
+      if (end >= 0) { value += '\n'; cursor = end; continue; }
+      throw new TranslationError('syntax', 'isolated carriage return in a Rust string', { start: cursor, end: cursor + 1 });
+    }
+    if ((char === '\n' || char === '\r') && language === 'JavaScript') break;
     value += char;
     cursor += 1;
   }
   throw new TranslationError('syntax', 'unterminated string literal', { start: index, end: source.length });
 }
 
-function templateToken(source, index) {
+function templateToken(source, index, encoding) {
   const parts = [];
   let cursor = index + 1;
   let text = '';
@@ -231,16 +369,34 @@ function templateToken(source, index) {
     }
     if (char === '\\') {
       const escaped = source[cursor + 1];
-      const simple = { n: '\n', t: '\t', '\\': '\\', '`': '`', $: '$' };
-      if (!(escaped in simple)) {
+      if (['\n', '\r', '\u2028', '\u2029'].includes(escaped)) {
+        cursor += escaped === '\r' && source[cursor + 2] === '\n' ? 3 : 2;
+        continue;
+      }
+      const simple = { n: '\n', t: '\t', r: '\r', b: '\b', f: '\f', v: '\v', 0: '\0', '\\': '\\', '`': '`', $: '$' };
+      if (escaped === 'u' || escaped === 'x') {
+        const escape = unicodeEscape(source, cursor, 'JavaScript');
+        text += escape.text;
+        cursor = escape.end;
+        continue;
+      }
+      if (/[1-9]/u.test(escaped ?? '') || (escaped === '0' && /[0-9]/u.test(source[cursor + 2] ?? ''))) {
+        throw new TranslationError('syntax', 'legacy octal template escape', { start: cursor, end: cursor + 3 });
+      }
+      if (escaped === undefined) {
         throw new TranslationError('syntax', `unsupported template escape \\${escaped}`, { start: cursor, end: cursor + 2 });
       }
-      text += simple[escaped];
+      text += simple[escaped] ?? escaped;
       cursor += 2;
       continue;
     }
+    if (char === '\r') {
+      text += '\n';
+      cursor += source[cursor + 1] === '\n' ? 2 : 1;
+      continue;
+    }
     if (source.startsWith('${', cursor)) {
-      const close = matchingBrace(source, cursor + 1);
+      const close = matchingBrace(source, cursor + 1, encoding);
       parts.push({ text, expression: { source: source.slice(cursor + 2, close), offset: cursor + 2 } });
       text = '';
       cursor = close + 1;
@@ -252,15 +408,9 @@ function templateToken(source, index) {
   throw new TranslationError('syntax', 'unterminated template literal', { start: index, end: source.length });
 }
 
-export function matchingBrace(source, open) {
-  let depth = 0;
-  for (let cursor = open; cursor < source.length; cursor += 1) {
-    if (source[cursor] === '{') depth += 1;
-    if (source[cursor] === '}') {
-      depth -= 1;
-      if (depth === 0) return cursor;
-    }
-  }
+export function matchingBrace(source, open, encoding = { units: null }) {
+  const close = tokenizeRegion(source, 'JavaScript', open + 1, true, encoding).tokens.at(-1).end;
+  if (close < source.length) return close;
   throw new TranslationError('syntax', 'unbalanced braces', { start: open, end: source.length });
 }
 

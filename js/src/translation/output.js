@@ -10,8 +10,12 @@
 // conversions, whose pairs are generated data types.
 
 import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
+import { readOptionalOutputAbsences } from './optional-value-rules.js';
+import { acceptCallableCreationEffectTraversal, readCallableOutputTargetRefusal } from './callable-emission-rules.js';
+import { readCallableOutputAnalysis } from './callable-emission.js';
 import { unsupported } from './diagnostics.js';
 import { BOOL, INT, NAT, OUTPUT, STRING, data, fixedBounds, typeKey } from './types.js';
+import { readProgramExpressionEntryOperandField } from '../typed-program-link-rules.js';
 
 const SKIP = new Set(['type', 'domain', 'from', 'to', 'span']);
 
@@ -97,31 +101,27 @@ function settle(node) {
 }
 
 /** The checked program with its output and aborts threaded through, or the program itself when nothing below main prints or aborts. */
-export function threadOutput(source) {
+export function threadOutput(source, target = 'Lean') {
   const program = settleProgram(source);
   const functions = [...program.declarations.values()].filter((entry) => entry.k === 'fn');
-  const effectful = new Set();
+  const {effectful, obligations} = readCallableOutputAnalysis(program);
   const effects = (node) => {
     if (!node || typeof node !== 'object') return false;
     if (Array.isArray(node)) return node.some(effects);
+    if (!acceptCallableCreationEffectTraversal(node.k ?? '')) return false;
     if (node.k === 'print' || (node.k === 'call' && effectful.has(node.fn)) || aborts(node)) return true;
     return Object.entries(node).some(([key, value]) => !SKIP.has(key) && effects(value));
   };
-  for (let grew = true; grew;) {
-    grew = false;
-    for (const entry of functions) {
-      if (!effectful.has(entry.fullName) && effects(entry.body)) {
-        effectful.add(entry.fullName);
-        grew = true;
-      }
-    }
-  }
+  if (functions.some(entry => entry.sourceSignature !== undefined && effectful.has(entry.fullName))) throw unsupported('owned Rust source signature transformation', 'effect threading changes the captured source header and requires a distinct signature transformation proof');
+  const refusal = readCallableOutputTargetRefusal(target, obligations.length);
+  if (refusal) throw unsupported('effectful function value', refusal, obligations[0].span);
   // A step of main is a `print` effect itself; what threads is a value that prints or may abort.
   const operand = (effect) => (effect.k === 'let' ? effect.value : effect.k === 'assert' ? effect.prop : effect.expr);
   if (!effectful.size && !(program.main?.effects ?? []).some((effect) => effects(operand(effect)))) return program;
   const aborting = (node) => {
     if (!node || typeof node !== 'object') return false;
     if (Array.isArray(node)) return node.some(aborting);
+    if (!acceptCallableCreationEffectTraversal(node.k ?? '')) return false;
     if (aborts(node)) return true;
     return Object.entries(node).some(([key, value]) => !SKIP.has(key) && aborting(value));
   };
@@ -301,6 +301,20 @@ class Threader {
           cases: e.cases.map((kase) => ({ ...kase, body: this.io(kase.body, after) })),
           type,
         }));
+      case 'coalesce':
+        return this.bind(e.left, out, (after, left) => {
+          // A pure left expression also receives one binding: its value is
+          // tested and unwrapped without evaluating its source twice.
+          const name = this.fresh('optional');
+          const value = variable(name, left.type);
+          const tests = readOptionalOutputAbsences(left.type.absence).map(absence => ({
+            k: 'strictEqual', left: value, right: { k: 'none', absence, type: { kind: 'option', element: { kind: 'unit' }, absence } }, negate: true, type: BOOL,
+          }));
+          const cond = tests.reduce((first, second) => ({ k: 'binary', op: 'and', left: first, right: second, type: BOOL }));
+          const present = { k: 'unwrapOption', arg: value, type: e.type };
+          const body = { k: 'if', cond, then: this.make(after, present), else: this.io(e.right, after), type };
+          return { k: 'let', name, value: left, body, type };
+        });
       case 'binary':
         // The right operand of `&&` and `||` runs only when the left one does not decide.
         if (e.op === 'and' || e.op === 'or') {
@@ -315,13 +329,19 @@ class Threader {
     }
     // Every other node runs its operands in order, then computes from their values.
     const keys = Object.keys(e).filter((key) => !SKIP.has(key) && (Array.isArray(e[key]) || (e[key] && typeof e[key] === 'object' && e[key].k)));
-    const operands = keys.flatMap((key) => (Array.isArray(e[key]) ? e[key] : [e[key]]));
+    const operands = keys.flatMap((key) => {
+      if (!Array.isArray(e[key])) return [e[key]];
+      const field = readProgramExpressionEntryOperandField(e.k, key);
+      return field ? e[key].map(entry => entry[field]) : e[key];
+    });
     return this.bindAll(operands, out, (after, values) => {
       const copy = { ...e };
       let at = 0;
       for (const key of keys) {
         if (Array.isArray(e[key])) {
-          copy[key] = values.slice(at, at + e[key].length);
+          const field = readProgramExpressionEntryOperandField(e.k, key);
+          const selected = values.slice(at, at + e[key].length);
+          copy[key] = field ? e[key].map((entry, index) => ({ ...entry, [field]: selected[index] })) : selected;
           at += e[key].length;
         } else {
           copy[key] = values[at];

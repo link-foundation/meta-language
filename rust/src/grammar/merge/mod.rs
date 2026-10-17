@@ -6,6 +6,7 @@
 //! bisimulation and print the same canonical definitions, so their decisions
 //! agree.
 
+mod decisions;
 mod declarations;
 mod group;
 mod names;
@@ -95,9 +96,15 @@ pub struct GrammarMergeOptions<'a> {
     /// equivalent up to their lexical roles, or that share a name when no
     /// correspondence matched them (see `reconcile.rs`). Each such class is a
     /// [`GrammarMergeDecisionKind::Reconciled`] decision, kept by the
-    /// definition of its first source and the concept of its first rule that
-    /// has one.
+    /// union of every source production and the concept of its first rule
+    /// that has one. Correspondence is not proof of concept equivalence.
     pub reconcile: bool,
+    /// Cross-language aliases requiring a one-to-one global concept proof.
+    pub global_equivalences: Vec<[String; 2]>,
+    /// Optional semantic concept records for the global proof procedure.
+    pub concept_records: Option<serde_json::Value>,
+    /// Explicit supported operational Links archives, by origin or concept id.
+    pub formal_definitions: Option<serde_json::Value>,
 }
 
 /// What the merge decided about one class of rules.
@@ -316,12 +323,29 @@ pub struct MergedGrammarGroup {
     pub grammar: Grammar,
     /// Canonical rule name of every `sourceId:ruleName` alias.
     pub identities: BTreeMap<String, String>,
+    /// Every original production and its bound canonical references.
+    pub source_productions: Vec<GrammarMergeProduction>,
     /// Decisions with their justification.
     pub decisions: Vec<GrammarMergeDecision>,
     /// Candidate matches nominated by heuristics.
     pub nominations: Vec<GrammarMergeNomination>,
     /// Alternatives kept explicit.
     pub alternatives: Vec<GrammarMergeAlternative>,
+}
+
+/// One preserved source production in a merged grammar.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct GrammarMergeProduction {
+    /// Qualified source rule identity.
+    pub alias: String,
+    /// Canonical rule receiving this production.
+    pub canonical: String,
+    /// Original grammar notation.
+    pub source_format: String,
+    /// Exact original rule, including actions and aliases.
+    pub rule: GrammarRule,
+    /// Original production with rule references bound to canonical names.
+    pub renamed_rule: GrammarRule,
 }
 
 /// The result of [`merge_grammars`].
@@ -337,13 +361,19 @@ pub struct GrammarMergeResult {
     pub reused: Vec<String>,
     /// Keys of groups merged again.
     pub recomputed: Vec<String>,
+    /// One concept space containing all input languages and their proof records.
+    pub global_concept_space: serde_json::Value,
 }
 
 impl GrammarMergeResult {
     /// `"complete"` when every required equivalence holds, else `"incomplete"`.
     #[must_use]
-    pub const fn status(&self) -> &'static str {
-        if self.failures.is_empty() {
+    pub fn status(&self) -> &'static str {
+        if self.failures.is_empty()
+            && self.global_concept_space["failures"]
+                .as_array()
+                .is_none_or(Vec::is_empty)
+        {
             "complete"
         } else {
             "incomplete"
@@ -553,12 +583,34 @@ pub fn merge_grammars(
 
     let alternatives = edition_alternatives(&groups);
     let failures = required_failures(&required, &groups);
+    let global_sources: Vec<crate::global_concept_space::GlobalConceptSource> = sources
+        .iter()
+        .map(|source| crate::global_concept_space::GlobalConceptSource {
+            id: source.id.clone(),
+            language: source.language.clone(),
+            edition: source.edition.clone(),
+            grammar: source.grammar.clone(),
+        })
+        .collect();
+    let global_concept_space = crate::global_concept_space::create_global_concept_space(
+        &global_sources,
+        &crate::global_concept_space::GlobalConceptOptions {
+            previous: options
+                .previous
+                .map(|result| result.global_concept_space.clone()),
+            equivalences: options.global_equivalences.clone(),
+            records: options.concept_records.clone(),
+            formal_definitions: options.formal_definitions.clone(),
+        },
+    )
+    .map_err(GrammarMergeError::new)?;
     Ok(GrammarMergeResult {
         groups,
         alternatives,
         failures,
         reused,
         recomputed,
+        global_concept_space,
     })
 }
 
@@ -600,10 +652,10 @@ fn decorate_decisions(
 pub fn assert_merge_complete(
     result: &GrammarMergeResult,
 ) -> Result<&GrammarMergeResult, GrammarMergeError> {
-    if result.failures.is_empty() {
+    if result.status() == "complete" {
         return Ok(result);
     }
-    let detail = result
+    let mut detail = result
         .failures
         .iter()
         .map(|failure| {
@@ -616,6 +668,14 @@ pub fn assert_merge_complete(
         })
         .collect::<Vec<_>>()
         .join("; ");
+    if let Some(failures) = result.global_concept_space["failures"].as_array() {
+        for failure in failures {
+            if !detail.is_empty() {
+                detail.push_str("; ");
+            }
+            detail.push_str(&failure.to_string());
+        }
+    }
     Err(GrammarMergeError {
         message: format!("unresolved required equivalence: {detail}"),
         failures: result.failures.clone(),

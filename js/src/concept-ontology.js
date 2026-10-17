@@ -1,5 +1,6 @@
 // Worked-example concepts shared with Rust's `concept_ontology.rs`.
 import { LinkType } from './primitives.js';
+export { createConceptViews, readConceptOntology, readConceptTaxonomy } from './concept-views.js';
 
 export const STATEHOOD_PROPOSITION_SYNTAX = Object.freeze([
   ['English', 'Hawaii is a state.'],

@@ -1,0 +1,123 @@
+//! Checked namespace adapters for independently owned loop and type bindings.
+use super::{Result, error, expression, project_type};
+use crate::translation::ir::{Decl, FnDecl, Item, Program};
+use crate::translation::source_loops::validate_source_loop;
+use crate::translation::surface::{SFn, SItem, SModule, SParam};
+use std::collections::HashSet;
+
+pub(super) fn project_function(function: &FnDecl, program: &Program) -> Result<SItem> {
+    let (ret, semantic_ret) =
+        super::declarations::project_function_result_types(function, program)?;
+    Ok(SItem::Fn(SFn {
+        semantic_ret,
+        name: function.name.clone(),
+        params: function
+            .params
+            .iter()
+            .map(|parameter| -> Result<SParam> {
+                Ok(SParam {
+                    name: parameter.name.clone(),
+                    optional: parameter.optional,
+                    ty: Some(project_type(&parameter.ty, program)?),
+                    default_value: parameter.default_value.clone(),
+                    guard: parameter.guard.clone(),
+                    span: None,
+                    rocq_type: None,
+                })
+            })
+            .collect::<Result<_>>()?,
+        ret: Some(ret),
+        body: expression(&function.body, program)?,
+        span: function.span,
+        generated: function.generated,
+        source_signature: function.source_signature.clone().map(Box::new),
+        source_primitive_owners: function.source_primitive_owners.clone(),
+        source_empty_option: function.source_empty_option.clone().map(Box::new),
+        source_type_namespace: function.source_type_namespace.clone().map(Box::new),
+        source_loop: function.source_loop.clone().map(Box::new),
+        source_pure_unit: function.source_pure_unit.clone().map(Box::new),
+        source_local_state: function.source_local_state.clone().map(Box::new),
+        source_const_function: function.source_const_function.clone().map(Box::new),
+        source_diagnostic_attributes: function.source_diagnostic_attributes.clone().map(Box::new),
+    }))
+}
+
+pub(super) fn project_module(
+    item: &Item,
+    program: &Program,
+    path: &[String],
+    seen: &mut HashSet<String>,
+) -> Result<SItem> {
+    let Item::Module {
+        name,
+        full_name,
+        items,
+        span,
+    } = item
+    else {
+        return Err(error("an owned loop module needs its actual module item"));
+    };
+    let actual_path = path
+        .iter()
+        .cloned()
+        .chain(std::iter::once(name.clone()))
+        .collect::<Vec<_>>();
+    if name.is_empty() || actual_path.join(".") != *full_name || items.is_empty() {
+        return Err(error(
+            "the owned loop module has an inconsistent namespace binding",
+        ));
+    }
+    let mut projected = Vec::new();
+    for child in items {
+        if let Item::Module { .. } = child {
+            projected.push(project_module(child, program, &actual_path, seen)?);
+            continue;
+        }
+        let Item::Decl { full_name } = child else {
+            unreachable!("program items are declarations or modules");
+        };
+        if let Some(Decl::Data(data)) = program.declaration(full_name)
+            && program.declarations.iter().any(|declaration| matches!(declaration, Decl::Fn(function) if function.source_type_namespace.is_some()) || matches!(declaration, Decl::Data(data) if data.source_unit_clone_derivation.is_some()))
+        {
+            if data.module_path != actual_path
+                || data.full_name != *full_name
+                || actual_path.iter().chain(std::iter::once(&data.name)).cloned().collect::<Vec<_>>().join(".") != *full_name
+                || !seen.insert(full_name.clone())
+            {
+                return Err(error("the owned namespace datatype disagrees with its actual binding"));
+            }
+            projected.push(super::declarations::project_data(data, program)?);
+            continue;
+        }
+        let Some(Decl::Fn(function)) = program.declaration(full_name) else {
+            return Err(error(
+                "the Rust typed links adapter does not yet recheck module items",
+            ));
+        };
+        if function.module_path != actual_path
+            || function.full_name != *full_name
+            || actual_path
+                .iter()
+                .chain(std::iter::once(&function.name))
+                .cloned()
+                .collect::<Vec<_>>()
+                .join(".")
+                != *full_name
+            || !seen.insert(full_name.clone())
+        {
+            return Err(error(
+                "the owned loop declaration disagrees with its actual namespace binding",
+            ));
+        }
+        if function.source_loop.is_some() {
+            validate_source_loop(function, program.source_language.as_str())
+                .map_err(|failure| error(failure.to_string()))?;
+        }
+        projected.push(project_function(function, program)?);
+    }
+    Ok(SItem::Module(SModule {
+        name: name.clone(),
+        items: projected,
+        span: *span,
+    }))
+}

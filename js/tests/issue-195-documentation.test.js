@@ -26,10 +26,11 @@ import {
   unlabeledCaseStudies,
 } from '../scripts/issue-195-documentation.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
+import { readProjectData } from '../scripts/project-data.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
-const manifest = JSON.parse(readFileSync(path.join(root, 'parity/issue-195-requirements.json'), 'utf8'));
-const fixtures = JSON.parse(readFileSync(path.join(root, DOCUMENTATION_FIXTURES), 'utf8'));
+const manifest = readProjectData(path.join(root, 'parity/issue-195-requirements.json'));
+const fixtures = readProjectData(path.join(root, DOCUMENTATION_FIXTURES));
 const current = completionState(manifest);
 
 function observe(requirementId, assertions, testName) {

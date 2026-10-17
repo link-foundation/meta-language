@@ -19,7 +19,7 @@ use super::issue_195_native_grammar_rows::{Rows, cases, leaves, parse, rebuilt, 
 use super::issue_195_observations::{Observation, record};
 
 const FIXTURE_FILE: &str = "parity/fixtures/native-grammars/java.json";
-const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/java.json");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/java.lino");
 const GRAMMAR: &str = include_str!("../../../parity/grammars/native/java.lino");
 
 fn observe(assertions: &[&str], test_name: &str) {
@@ -34,7 +34,7 @@ fn observe(assertions: &[&str], test_name: &str) {
 }
 
 fn fixture() -> Value {
-    serde_json::from_str(FIXTURE).expect("the native Java fixture is JSON")
+    super::project_data::read_project_data(FIXTURE).expect("the native Java fixture is JSON")
 }
 
 fn parser() -> FeatureGrammarParser {

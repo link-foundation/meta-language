@@ -8,12 +8,18 @@ use std::sync::Arc;
 use super::load::{LoadResult, refuse};
 use super::operations::{Condition, Statement, ValueOp, allowed_in};
 use super::program::{
-    Associativity, ClassTest, Expr, Matcher, Name, Target, insensitive_expectation,
-    literal_expectation, range_expectation,
+    Associativity, ClassTest, Expr, Matcher, Name, SelectionCandidate, SelectionDescriptor, Target,
+    insensitive_expectation, literal_expectation, range_expectation,
 };
 use super::text::{fold_case, unicode_property_matcher};
 use crate::grammar::{
-    CharClassItem, FeatureExpr, FeatureForm, GrammarExpr, Operation, UnicodeClassItem,
+    CharClassItem, FeatureExpr, FeatureForm, FieldValue, GrammarExpr, Operation, UnicodeClassItem,
+};
+use crate::translation::grammar_selection_field_range_rules::accept_grammar_selection_field_range_candidate;
+use crate::translation::grammar_selection_included_range_rules::{
+    accept_grammar_selection_included_range_candidate,
+    accept_grammar_selection_included_range_source_range,
+    read_grammar_selection_included_range_field_order,
 };
 
 /// Compiles the expressions and operations of one grammar.
@@ -23,6 +29,8 @@ pub(super) struct Compiler<'a> {
     modes: &'a HashSet<String>,
     node_kinds: HashMap<String, Name>,
     embedded: Vec<String>,
+    selected: Vec<String>,
+    pub(super) lexer_owners: HashMap<String, HashSet<String>>,
     /// The items a scanner's `expected` asks about, by their keys (see
     /// `expectation_key`), each with its id.
     pub(super) expectations: HashMap<String, usize>,
@@ -94,14 +102,16 @@ impl<'a> Compiler<'a> {
             modes,
             node_kinds,
             embedded: Vec::new(),
+            selected: Vec::new(),
+            lexer_owners: HashMap::new(),
             expectations: HashMap::new(),
             requesting: false,
         }
     }
 
     /// The embedded languages the compiled expressions name, in first-use order.
-    pub(super) fn into_embedded(self) -> Vec<String> {
-        self.embedded
+    pub(super) fn into_embedded(self) -> (Vec<String>, Vec<String>) {
+        (self.embedded, self.selected)
     }
 
     /// Refuses a mode the grammar does not declare.
@@ -262,8 +272,88 @@ impl<'a> Compiler<'a> {
         form.integer("level").unwrap_or(0)
     }
 
+    fn read_selection_ranges(candidate: &FeatureForm, owner: &str) -> LoadResult<Vec<[f64; 2]>> {
+        let fields = read_grammar_selection_included_range_field_order("candidate");
+        if candidate.fields.len() != fields.split('|').count().saturating_sub(1)
+            || !matches!(candidate.field("ranges"), Some(FieldValue::Expressions(items)) if !items.is_empty())
+        {
+            return refuse(
+                "selection",
+                format!(
+                    "an included range candidate needs its complete ordered range definitions in {owner}"
+                ),
+            );
+        }
+        let mut ranges = Vec::new();
+        let fields = read_grammar_selection_included_range_field_order("range");
+        for expression in candidate.expressions("ranges") {
+            let Some(range) = super::load::form_of(expression, "source-range") else {
+                return refuse(
+                    "selection",
+                    format!(
+                        "an included source range needs its kind and nonempty integer byte bounds in {owner}"
+                    ),
+                );
+            };
+            let coordinate = |key| {
+                range
+                    .integer(key)
+                    .and_then(|value| u32::try_from(value).ok())
+                    .map_or(f64::NAN, f64::from)
+            };
+            let start = coordinate("start");
+            let end = coordinate("end");
+            if range.fields.len() != fields.split('|').count().saturating_sub(1)
+                || !accept_grammar_selection_included_range_source_range(&range.head, start, end)
+            {
+                return refuse(
+                    "selection",
+                    format!(
+                        "an included source range needs its kind and nonempty integer byte bounds in {owner}"
+                    ),
+                );
+            }
+            ranges.push([start, end]);
+        }
+        Ok(ranges)
+    }
+
     fn form(&mut self, form: &FeatureForm, owner: &str) -> LoadResult<Expr> {
         Ok(match form.head.as_str() {
+            "lexicalScope" | "lexicalToken" => {
+                let name = form.text("name").unwrap_or_default();
+                if (!name.is_empty() || form.head == "lexicalToken")
+                    && !self.lexer_owners.contains_key(name)
+                {
+                    return refuse("declaration", format!("undefined lexer scope {name}"));
+                }
+                if form.head == "lexicalScope" {
+                    let original = form.text("owner").unwrap_or_default();
+                    if !original.is_empty()
+                        && !self
+                            .lexer_owners
+                            .get(name)
+                            .is_some_and(|owners| owners.contains(original))
+                    {
+                        return refuse(
+                            "declaration",
+                            format!(
+                                "undefined original parser owner {original} in lexer scope {name}"
+                            ),
+                        );
+                    }
+                    Expr::LexicalScope {
+                        name: Arc::from(name),
+                        owner: Arc::from(original),
+                        item: self.item(form, "item", owner)?,
+                    }
+                } else {
+                    Expr::LexicalToken {
+                        name: Arc::from(name),
+                        token: Arc::from(form.text("token").unwrap_or_default()),
+                    }
+                }
+            }
             head @ ("precedence" | "namedPrecedence") => Expr::Precedence {
                 level: Self::level(form),
                 name: (head == "namedPrecedence")
@@ -344,6 +434,98 @@ impl<'a> Compiler<'a> {
                 Expr::Embed {
                     language: Arc::from(language.as_str()),
                     item: self.item(form, "item", owner)?,
+                    selection: None,
+                }
+            }
+            head @ ("any-grammar" | "all-grammar") => {
+                let mut candidates = Vec::new();
+                let mut names = HashSet::new();
+                for candidate in form.expressions("items") {
+                    let Some(candidate) = super::load::form_of(candidate, "grammar-candidate")
+                        .or_else(|| super::load::form_of(candidate, "grammar-range-candidate"))
+                        .or_else(|| super::load::form_of(candidate, "grammar-field-candidate"))
+                    else {
+                        return refuse(
+                            "selection",
+                            format!(
+                                "a grammar selection needs named grammar-candidate definitions and an explicit mapping in {owner}"
+                            ),
+                        );
+                    };
+                    let name = candidate.text("name").unwrap_or_default();
+                    let Some(mapping) = candidate.text("mapping") else {
+                        return refuse(
+                            "selection",
+                            format!("a grammar selection needs an explicit mapping in {owner}"),
+                        );
+                    };
+                    let has_included_ranges =
+                        accept_grammar_selection_included_range_candidate(&candidate.head, mapping);
+                    let fielded =
+                        accept_grammar_selection_field_range_candidate(&candidate.head, mapping);
+                    if candidate.head != "grammar-candidate" && !has_included_ranges && !fielded {
+                        return refuse(
+                            "selection",
+                            format!(
+                                "a grammar selection needs named grammar-candidate definitions and an explicit mapping in {owner}"
+                            ),
+                        );
+                    }
+                    let ranges = if has_included_ranges {
+                        Self::read_selection_ranges(candidate, owner)?
+                    } else {
+                        Vec::new()
+                    };
+                    let selector = if fielded {
+                        match crate::grammar::field_range_forms::read_selection_field_selector(
+                            candidate,
+                        ) {
+                            Ok(selector) => Some(selector),
+                            Err(message) => {
+                                return refuse("selection", format!("{message} in {owner}"));
+                            }
+                        }
+                    } else {
+                        None
+                    };
+                    if name.is_empty() {
+                        return refuse(
+                            "selection",
+                            format!(
+                                "a grammar selection needs named grammar-candidate definitions in {owner}"
+                            ),
+                        );
+                    }
+                    if !names.insert(name.to_owned()) {
+                        return refuse(
+                            "selection",
+                            format!("duplicate selected grammar {name} in {owner}"),
+                        );
+                    }
+                    if !self.selected.iter().any(|selected| selected == name) {
+                        self.selected.push(name.to_owned());
+                    }
+                    candidates.push(SelectionCandidate {
+                        kind: Arc::from(candidate.head.as_str()),
+                        name: Arc::from(name),
+                        mapping: Arc::from(mapping),
+                        ranges,
+                        selector,
+                    });
+                }
+                if candidates.is_empty() {
+                    return refuse(
+                        "selection",
+                        format!("a grammar selection needs at least one candidate in {owner}"),
+                    );
+                }
+                Expr::Embed {
+                    language: Arc::from(""),
+                    item: self.item(form, "item", owner)?,
+                    selection: Some(SelectionDescriptor {
+                        mode: Arc::from(head),
+                        candidates,
+                    }),
                 }
             }
             head @ ("expand" | "parameter") => {
@@ -632,6 +814,7 @@ impl<'a> Compiler<'a> {
             "sumOf" => ValueOp::SumOf(text("field"), text("attribute")),
             "fieldText" => ValueOp::FieldText(text("field")),
             "length" => ValueOp::Length(boxed_value(self, "value")?),
+            "uppercase" => ValueOp::Uppercase(boxed_value(self, "value")?),
             "number" => ValueOp::Number(boxed_value(self, "value")?),
             "add" => ValueOp::Add(boxed_value(self, "left")?, boxed_value(self, "right")?),
             "subtract" => {

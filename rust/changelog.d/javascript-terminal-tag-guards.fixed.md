@@ -1,0 +1,1 @@
+JavaScript translation now combines adjacent returning tag guards into one exhaustive match, so later field reads use every preceding constructor exclusion while preserving lexical scope, ordered effects and constructor validation.

@@ -9,15 +9,15 @@
 //   node js/scripts/build-foundation-models.mjs          # write both copies
 //   node js/scripts/build-foundation-models.mjs --check  # fail on drift or a violation
 import { readFileSync, readdirSync } from 'node:fs';
-import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readProjectData, checkProjectData, writeProjectData } from './project-data.mjs';
 
 import { checkFoundationModels } from '../src/foundation-models.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 export const FOUNDATION_REGISTER = 'parity/foundation-models.json';
-export const FOUNDATION_MODEL_PATHS = Object.freeze(['js/src/data/foundation-models.json', 'rust/src/data/foundation-models.json']);
+export const FOUNDATION_MODEL_PATHS = Object.freeze(['js/src/data/foundation-models.lino', 'rust/src/data/foundation-models.lino']);
 
 /** Production source directories whose code must stay foundation-neutral. */
 export const NEUTRAL_SOURCE_ROOTS = Object.freeze(['js/src', 'rust/src']);
@@ -61,17 +61,17 @@ export function consumerFoundationReferences(base = root) {
 }
 
 async function main() {
-  const text = await readFile(join(root, FOUNDATION_REGISTER), 'utf8');
+  const register = readProjectData(join(root, FOUNDATION_REGISTER));
   const check = process.argv.includes('--check');
-  if (!check) await Promise.all(FOUNDATION_MODEL_PATHS.map((path) => writeFile(join(root, path), text)));
-  const problems = checkFoundationModels(JSON.parse(text)).map(({ message }) => message);
+  if (!check) await Promise.all(FOUNDATION_MODEL_PATHS.map((path) => writeProjectData(join(root, path), register)));
+  const problems = checkFoundationModels(register).map(({ message }) => message);
   for (const { path, line, text: source } of consumerFoundationReferences()) {
     problems.push(`${path}:${line} names a consumer's own foundation in production code: ${source}`);
   }
   if (check) {
     for (const path of FOUNDATION_MODEL_PATHS) {
-      const current = await readFile(join(root, path), 'utf8').catch(() => '');
-      if (current !== text) problems.push(`${path} is stale; run: node js/scripts/build-foundation-models.mjs`);
+      try { checkProjectData(join(root, path), register); }
+      catch { problems.push(`${path} is stale; run: node js/scripts/build-foundation-models.mjs`); }
     }
   }
   if (problems.length > 0) {
@@ -82,7 +82,7 @@ async function main() {
     console.log(`wrote the foundation models to ${FOUNDATION_MODEL_PATHS.join(' and ')}`);
     return;
   }
-  const { models, correspondences } = JSON.parse(text);
+  const { models, correspondences } = register;
   console.log(`foundation models are neutral: ${models.length} models, ${correspondences.length} correspondences`);
 }
 

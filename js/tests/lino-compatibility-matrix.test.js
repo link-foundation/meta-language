@@ -4,6 +4,8 @@
 // links-notation release, and every feature is decoded by the official parser
 // and by meta-language's own reading alike, reconstructed exactly, edited and
 // encoded back into text both read the same way.
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -17,7 +19,7 @@ import { recordIssue195Observations } from './support/issue-195-observations.js'
 
 const MATRIX_FILE = 'parity/fixtures/lino-compatibility-matrix.json';
 const repositoryFile = (relative) => new URL(`../../${relative}`, import.meta.url);
-const readJson = (relative) => JSON.parse(readFileSync(repositoryFile(relative), 'utf8'));
+const readJson = (relative) => readProjectData(repositoryFile(relative));
 const matrix = readJson(MATRIX_FILE);
 const { version } = matrix.releases.npm;
 
@@ -52,11 +54,11 @@ test('both packages depend on the audited links-notation release', () => {
   assert.equal(manifest.dependencies?.[npm.package] ?? manifest.devDependencies?.[npm.package], npm.version);
   assert.equal(readJson(npm.lockfile).packages[`node_modules/${npm.package}`].version, npm.version);
   const { cratesIo } = matrix.releases;
-  const cargo = readFileSync(repositoryFile(cratesIo.manifest), 'utf8');
+  const cargo = readFileSync(resolveProjectDataPath(repositoryFile(cratesIo.manifest)), 'utf8');
   const declarations = [...cargo.matchAll(new RegExp(`^${cratesIo.package} = \\{ version = "([^"]+)"`, 'gmu'))];
   assert.ok(declarations.length > 0, `${cratesIo.manifest} declares ${cratesIo.package}`);
   for (const [, declared] of declarations) assert.equal(declared, cratesIo.version);
-  const locked = readFileSync(repositoryFile(cratesIo.lockfile), 'utf8');
+  const locked = readFileSync(resolveProjectDataPath(repositoryFile(cratesIo.lockfile)), 'utf8');
   assert.ok(locked.includes(`name = "${cratesIo.package}"\nversion = "${cratesIo.version}"\n`), `${cratesIo.lockfile} locks ${cratesIo.version}`);
   assert.equal(cratesIo.version, npm.version, 'both runtimes use the same release');
   observe('I195-LINO-UPGRADE', ['declaredReleaseMatchesMatrix'], 'both packages depend on the audited links-notation release');

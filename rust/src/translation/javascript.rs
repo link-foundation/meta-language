@@ -13,9 +13,10 @@
 //!
 //! Mirrors `js/src/translation/javascript.js`.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use super::diagnostics::{Result, TranslationError, type_error, unsupported};
+use super::javascript_line_terminator_rules::accept_java_script_line_terminator;
 use super::lexer::{
     Comment, Source, Token, TokenCursor, TokenKind, describe, is_js_space, tokenize,
 };
@@ -27,6 +28,9 @@ use super::surface::{
 use super::types::{BOOL, FLOAT, INT, NAT, STRING, Type, array};
 use super::{Language, Span};
 
+mod array_bindings;
+mod array_methods;
+mod callables;
 mod console;
 mod declarations;
 mod expressions;
@@ -34,10 +38,19 @@ mod flow;
 mod imperative;
 mod imports;
 mod infer;
+mod lexical_bindings;
 mod loops;
 mod lowering;
 mod math;
+mod object_properties;
+mod owned_array_append;
+mod product_source_rules;
+mod products;
+mod reference_analysis;
+mod scalar_loops;
 mod statements;
+mod surface_rules;
+mod tag_context;
 use self::flow::{imperative, statement_uses};
 use self::imperative::lower_imperative;
 use self::lowering::{assertion_kind, guarded_parameter, lower, prop_of};
@@ -121,6 +134,24 @@ pub fn parse_javascript(source: &str) -> Result<SProgram> {
     parse_javascript_in(source, &ModuleContext::default())
 }
 
+/// Read actual emitted scalar loops under the selected Number/Boolean interface.
+///
+/// # Errors
+/// Refuses unknown models and unproved state, snapshot or interface semantics.
+pub fn parse_javascript_with_scalar_loop_model(source: &str, model: &str) -> Result<SProgram> {
+    if !super::scalar_loop_rules::accept_rust_scalar_loop_model(model) {
+        return Err(unsupported(
+            "JavaScript scalar loop model",
+            "the selected model is not registered",
+            None,
+        ));
+    }
+    let tokens = tokenize(source, Language::JavaScript)?;
+    let mut parser = JavaScriptParser::new(source, tokens.tokens, &tokens.comments);
+    model.clone_into(&mut parser.scalar_loop_model);
+    parser.file()
+}
+
 /// What self-translation tells the frontend about the module of the item it reads.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct ModuleContext {
@@ -138,8 +169,19 @@ pub struct ModuleContext {
 ///
 /// As [`parse_javascript`].
 pub fn parse_javascript_in(source: &str, context: &ModuleContext) -> Result<SProgram> {
+    parse_javascript_bound_in(source, context, &HashMap::new(), false)
+}
+
+pub(crate) fn parse_javascript_bound_in(
+    source: &str,
+    context: &ModuleContext,
+    literal_bindings: &HashMap<String, SExpr>,
+    readonly_module_constants: bool,
+) -> Result<SProgram> {
     let tokens = tokenize(source, Language::JavaScript)?;
     let mut parser = JavaScriptParser::new(source, tokens.tokens, &tokens.comments);
+    parser.literal_bindings.clone_from(literal_bindings);
+    parser.readonly_constants.module = readonly_module_constants;
     parser.externals.clone_from(&context.externals);
     parser
         .module_directory
@@ -172,6 +214,7 @@ struct Assertion {
 /// A `JSDoc` block's `@param` types, in order, and its `@returns` type.
 struct JsDoc {
     params: Vec<(String, String)>,
+    optional_params: HashSet<String>,
     returns: Option<String>,
     range: Span,
 }
@@ -181,6 +224,7 @@ struct JsDocTag {
     tag: String,
     ty: Option<String>,
     name: Option<String>,
+    optional: bool,
 }
 
 /// Function-body statements before lowering to one expression.
@@ -296,6 +340,10 @@ enum CaseTest {
         value: bool,
         span: Span,
     },
+    Value {
+        value: Box<SExpr>,
+        span: Span,
+    },
 }
 
 /// Where a block-declaration scan stops: the end of the file or the block's `}`.
@@ -305,13 +353,28 @@ enum ScanEnd {
     Brace,
 }
 
+#[derive(Default)]
+struct ReadonlyConstants {
+    module: bool,
+    initializer: bool,
+}
+
+struct ReferenceSemantics {
+    enabled: bool,
+    forced: bool,
+}
+
 struct JavaScriptParser {
     source: Source,
     cursor: TokenCursor,
     docs: Vec<Comment>,
     /// Tags of every @typedef data type, for `switch (x.$)`.
     data_types: Vec<SData>,
+    type_aliases: HashMap<String, String>,
     scope: Scope,
+    lexical: lexical_bindings::Trace,
+    tag_function_results: HashMap<String, Option<tag_context::TagReceiverFact>>,
+    literal_bindings: HashMap<String, SExpr>,
     assertion: Option<Assertion>,
     /// Async functions run sequentially: each call of one is awaited where it
     /// is made, so nothing else runs until its result is back. `await` is
@@ -323,6 +386,10 @@ struct JavaScriptParser {
     jumps: Jumps,
     /// Whether a top-level statement is being read, where `return` is a syntax error.
     top_level: bool,
+    readonly_constants: ReadonlyConstants,
+    reference_state: ReferenceSemantics,
+    eliminated_owned_array_append_operations: Vec<Span>,
+    scalar_loop_model: String,
     /// Functions and data types that loops and joins of statements lower to, and their count.
     generated: Vec<SItem>,
     generated_count: usize,
@@ -331,10 +398,17 @@ struct JavaScriptParser {
     /// The module's directory inside its crate, which makes relative imports items of the crate.
     module_directory: Option<Vec<String>>,
     imports: Vec<SImport>,
+    exported_names: HashSet<String>,
+    function_names: HashSet<String>,
+    owned_array_readers: owned_array_append::Readers,
+    owned_array_reader_namespace: usize,
+    nested_product_bindings: HashSet<Span>,
+    global_binding_names: HashSet<String>,
 }
 
 impl JavaScriptParser {
     fn new(source: &str, tokens: Vec<Token>, comments: &[Comment]) -> Self {
+        let reference_semantics = reference_analysis::requires_reference_semantics(&tokens, &[]);
         Self {
             source: Source::new(source),
             cursor: TokenCursor::new(tokens, Language::JavaScript),
@@ -344,7 +418,11 @@ impl JavaScriptParser {
                 .cloned()
                 .collect(),
             data_types: Vec::new(),
+            type_aliases: HashMap::new(),
             scope: Scope::default(),
+            lexical: lexical_bindings::Trace::default(),
+            tag_function_results: HashMap::new(),
+            literal_bindings: HashMap::new(),
             assertion: None,
             async_names: HashSet::new(),
             in_async: true,
@@ -352,11 +430,24 @@ impl JavaScriptParser {
             sequential_async: false,
             jumps: Jumps::default(),
             top_level: false,
+            readonly_constants: ReadonlyConstants::default(),
+            reference_state: ReferenceSemantics {
+                enabled: reference_semantics,
+                forced: false,
+            },
+            eliminated_owned_array_append_operations: Vec::new(),
+            scalar_loop_model: String::new(),
             generated: Vec::new(),
             generated_count: 0,
             externals: Vec::new(),
             module_directory: None,
             imports: Vec::new(),
+            exported_names: HashSet::new(),
+            function_names: HashSet::new(),
+            owned_array_readers: HashMap::new(),
+            owned_array_reader_namespace: 0,
+            nested_product_bindings: HashSet::new(),
+            global_binding_names: HashSet::new(),
         }
     }
 
@@ -445,6 +536,10 @@ fn jsdoc_tags(comment: &Comment) -> Result<Vec<JsDocTag>> {
             tag,
             ty,
             name: jsdoc_name(&text[index.min(text.len())..]),
+            optional: text[index.min(text.len())..]
+                .iter()
+                .find(|&&ch| !u16::try_from(u32::from(ch)).is_ok_and(is_js_space))
+                == Some(&'['),
         });
         at = index;
     }
@@ -465,22 +560,18 @@ fn next_tag(text: &[char], from: usize) -> Option<(usize, usize)> {
     })
 }
 
-/// `^[ \t]*([A-Za-z_$][\w$]*)`.
+/// Read the shared `JSDoc` name range; convert its UTF-16 offsets at the host boundary.
 fn jsdoc_name(text: &[char]) -> Option<String> {
-    let start = text
-        .iter()
-        .take_while(|&&ch| ch == ' ' || ch == '\t')
-        .count();
-    let first = *text.get(start)?;
-    if !(first.is_ascii_alphabetic() || first == '_' || first == '$') {
+    let tail: String = text.iter().collect();
+    let units: Vec<u16> = tail.encode_utf16().collect();
+    let numeric: Vec<f64> = units.iter().map(|&unit| f64::from(unit)).collect();
+    let range = super::frontend_rules::find_documentation_parameter_range(&numeric);
+    if range.is_empty() {
         return None;
     }
-    Some(
-        text[start..]
-            .iter()
-            .take_while(|&&ch| ch.is_ascii_alphanumeric() || ch == '_' || ch == '$')
-            .collect(),
-    )
+    let start = super::frontend_rules::ml_array::number_index(range[0])?;
+    let end = super::frontend_rules::ml_array::number_index(range[1])?;
+    Some(String::from_utf16_lossy(units.get(start..end)?))
 }
 
 /// `/^[A-Za-z_$][\w$]*$/`.

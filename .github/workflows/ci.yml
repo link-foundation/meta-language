@@ -38,6 +38,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       rust: ${{ steps.paths.outputs.rust }}
+      native_test_inputs_changed: ${{ steps.paths.outputs.native_test_inputs_changed }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -48,15 +49,24 @@ jobs:
         env:
           BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
         run: |
-          rust_paths='^(rust/|parity/|docs/|scripts/|\.github/workflows/(ci|rust)\.yml$|\.secretlintrc\.json$)'
+          rust_paths='^(rust/|parity/|docs/|scripts/|experiments/rust-text-value-projection/|experiments/rust-raw-binding-identifiers/|experiments/rust-text-certificate/|experiments/rust-raw-binding-certificate-adapter/|experiments/rust-text-certificate-adapter/|experiments/rust-text-certificate-library/|experiments/original-link-identity/|experiments/original-link-role-projection/|experiments/fresh-number-array-collectors/|experiments/original-link-symbol-projection/|experiments/original-link-table-projection/|experiments/original-link-complete-table-projection/|experiments/binary-metadata-buffer/|js/scripts/generate-link-network-binary-rules\.mjs$|js/scripts/binary-metadata-candidate-styles\.mjs$|js/scripts/source-text-byte-library-style\.mjs$|js/scripts/product-rule-style-corrections\.mjs$|js/scripts/rust-library-packaging\.mjs$|experiments/source-native-observations\.mjs$|\.github/workflows/(ci|rust)\.yml$|\.secretlintrc\.json$)'
+          native_test_inputs_changed=false
           if [ -z "$BASE_SHA" ] || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
             rust=true
-          elif git diff --name-only "$BASE_SHA" HEAD | grep -Eq "$rust_paths"; then
-            rust=true
+            native_test_inputs_changed=true
           else
-            rust=false
+            changed_paths="$(git diff --name-only "$BASE_SHA" HEAD)"
+            if printf '%s\n' "$changed_paths" | grep -E "$rust_paths" > /dev/null; then
+              rust=true
+            else
+              rust=false
+            fi
+            if printf '%s\n' "$changed_paths" | grep -E "$rust_paths" | grep -Ev '\.md$' | grep -E '(^experiments/|\.lino$|^js/scripts/(generate-link-network-binary-rules|binary-metadata-candidate-styles|source-text-byte-library-style|product-rule-style-corrections)\.mjs$)' > /dev/null; then
+              native_test_inputs_changed=true
+            fi
           fi
           echo "rust=$rust" >> "$GITHUB_OUTPUT"
+          echo "native_test_inputs_changed=$native_test_inputs_changed" >> "$GITHUB_OUTPUT"
           echo "Rust workflow needed: $rust"
 
   js:
@@ -64,6 +74,8 @@ jobs:
     # js.yml has its own release trigger; calling it here too would publish twice.
     if: ${{ github.event_name != 'release' }}
     uses: ./.github/workflows/js.yml
+    with:
+      external_reports: true
     secrets: inherit
     # A called workflow gets at most the caller's permissions; publish asks for
     # id-token although it runs only on a release or a dispatch of js.yml.
@@ -73,9 +85,11 @@ jobs:
 
   rust:
     name: Rust
-    needs: [changes, js]
+    needs: [changes, js, self-translation-report-validation]
     if: ${{ needs.changes.outputs.rust == 'true' }}
     uses: ./.github/workflows/rust.yml
+    with:
+      native_test_inputs_changed: ${{ needs.changes.outputs.native_test_inputs_changed == 'true' }}
     secrets: inherit
     # The release and website jobs run on a push to main and ask for these.
     permissions:
@@ -101,6 +115,8 @@ jobs:
         shard: [1, 2, 3, 4, 5, 6, 7, 8]
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -114,6 +130,8 @@ jobs:
         working-directory: js
 
       - name: Report self-translation against the hand-written Rust
+        env:
+          META_LANGUAGE_REPORT_PROGRESS: '1'
         run: |
           node scripts/generate-self-translation-report.mjs --shard ${{ matrix.shard }}/8 --out-dir ../self-translation-report > /dev/null
           cat ../self-translation-report/self-translation-report.md >> "$GITHUB_STEP_SUMMARY"
@@ -126,6 +144,46 @@ jobs:
           name: self-translation-report-${{ github.sha }}-${{ matrix.shard }}
           path: self-translation-report
           if-no-files-found: error
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
+  self-translation-report-validation:
+    name: JavaScript / Self-Translation Report Assertions
+    needs: self-translation-report
+    if: ${{ !cancelled() && github.event_name != 'release' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: js
+
+      - name: Download the complete self-translation reports
+        if: ${{ !cancelled() }}
+        uses: actions/download-artifact@v8
+        with:
+          pattern: self-translation-report-${{ github.sha }}-*
+          path: issue-195-artifacts/self-translation-report
+
+      - name: Run the report artifact test group
+        if: ${{ !cancelled() }}
+        env:
+          ISSUE_195_SELF_TRANSLATION_REPORT_DIRECTORY: ${{ github.workspace }}/issue-195-artifacts/self-translation-report
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node scripts/test-groups.mjs --run report-artifacts
+        working-directory: js
 
       - name: Clean regenerable caches
         if: ${{ !cancelled() }}
@@ -163,7 +221,41 @@ jobs:
         run: cargo fetch --locked
         working-directory: rust
 
+      - name: Provision the pinned external grammar inputs
+        run: node js/scripts/external-grammar-cache.mjs --all --materialize
+
+      # Source provenance only: reuse the immutable .crate Cargo already fetched.
+      # The receipt does not establish native Markdown scanner or CST support.
+      - name: Capture the pinned Markdown block and inline source closure
+        if: ${{ !cancelled() }}
+        run: >-
+          node js/scripts/capture-markdown-native-sources.mjs
+          --cargo-cache --out grammar-bulk/markdown-native-source-capture.lino
+
+      - name: Upload the authenticated Markdown source receipt
+        if: ${{ !cancelled() && hashFiles('grammar-bulk/markdown-native-source-capture.lino') != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: markdown-native-source-capture-${{ github.sha }}
+          path: grammar-bulk/markdown-native-source-capture.lino
+          if-no-files-found: error
+
+      - name: Compare the pinned inline scanner source with shared Links operations
+        if: ${{ !cancelled() }}
+        run: >-
+          node experiments/markdown-inline-source-oracle/check.mjs
+          --cargo-cache --out grammar-bulk/markdown-inline-source-oracle.lino
+
+      - name: Upload the independent inline scanner comparisons
+        if: ${{ !cancelled() && hashFiles('grammar-bulk/markdown-inline-source-oracle.lino') != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: markdown-inline-source-oracle-${{ github.sha }}
+          path: grammar-bulk/markdown-inline-source-oracle.lino
+          if-no-files-found: error
+
       - name: Run the bulk grammar pipeline
+        if: ${{ !cancelled() }}
         run: node js/scripts/run-grammar-bulk-pipeline.mjs --out-dir grammar-bulk --jobs 4 --timeout 240
 
       - name: Publish the matrix in the job summary
@@ -171,11 +263,23 @@ jobs:
         run: cat grammar-bulk/grammar-bulk-matrix.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload the matrix
-        if: ${{ !cancelled() && hashFiles('grammar-bulk/grammar-bulk-matrix.json') != '' }}
+        if: ${{ !cancelled() && hashFiles('grammar-bulk/grammar-bulk-matrix.lino') != '' }}
         uses: actions/upload-artifact@v7
         with:
           name: grammar-bulk-matrix
           path: grammar-bulk/
+
+      - name: Upload the compact grammar summary
+        if: ${{ !cancelled() && hashFiles('grammar-bulk/grammar-bulk-matrix.md') != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: grammar-bulk-summary
+          path: grammar-bulk/grammar-bulk-matrix.md
+
+      - name: Remove the temporary external grammar inputs
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --clean-materialized
 
       - name: Clean regenerable caches
         if: ${{ !cancelled() }}
@@ -186,8 +290,8 @@ jobs:
     name: Delivery Candidates
     # The acceptance stages start only after every JavaScript job passed. On a
     # release, js.yml runs by its own trigger and the js job here is skipped.
-    needs: js
-    if: ${{ !cancelled() && (needs.js.result == 'success' || (github.event_name == 'release' && needs.js.result == 'skipped')) }}
+    needs: [js, self-translation-report-validation]
+    if: ${{ !cancelled() && (needs.js.result == 'success' || (github.event_name == 'release' && needs.js.result == 'skipped')) && (needs.self-translation-report-validation.result == 'success' || (github.event_name == 'release' && needs.self-translation-report-validation.result == 'skipped')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
@@ -212,6 +316,13 @@ jobs:
         run: npm ci --ignore-scripts
         working-directory: js
 
+      # The package remains install-script-free and parses offline. Its current
+      # compiled fallback grammars are staged from authenticated temporary
+      # inputs; upstream sources and independent oracles are never published.
+      - name: Provision the pinned package grammar binaries
+        if: ${{ github.event_name != 'release' }}
+        run: node js/scripts/external-grammar-cache.mjs --group wasm --materialize
+
       - name: Pack candidates or download the published release
         env:
           ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
@@ -221,6 +332,15 @@ jobs:
           --commit "$GITHUB_SHA"
           --prepare-candidates .issue-195-work/candidates
 
+      - name: Retain delivery candidate execution logs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-candidate-feedback-${{ github.sha }}
+          path: issue-195-results/logs/*.log
+          if-no-files-found: error
+          retention-days: 7
+
       - uses: actions/upload-artifact@v7
         with:
           name: issue-195-candidates-${{ github.sha }}
@@ -228,6 +348,11 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 30
+
+      - name: Remove the temporary external grammar inputs
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --clean-materialized
 
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
@@ -253,6 +378,14 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      # Only the repository reporting tools use these dependencies. Installed
+      # consumers still resolve and execute their exact candidate artifacts.
+      - name: Install the linked report reader dependencies
+        run: npm ci --ignore-scripts
+        working-directory: js
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@1.99.0
@@ -293,19 +426,48 @@ jobs:
           }
           "CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER=$msvcLinker" | Out-File -FilePath $env:GITHUB_ENV -Append
 
+          # Git's bin/bash.exe launcher prepends its own Unix tools, including link.exe.
+          # Restore only the validated MSVC directory after that launcher has run.
+          Split-Path -Parent $msvcLinker | Out-File -FilePath $env:GITHUB_PATH -Append
+          $bashEnvironment = Join-Path $env:RUNNER_TEMP "meta-language-msvc-bash-env.sh"
+          'export PATH="$(dirname "$(cygpath -u "$CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER")"):$PATH"' + "`n" |
+            Set-Content -LiteralPath $bashEnvironment -Encoding utf8 -NoNewline
+          "BASH_ENV=$($bashEnvironment.Replace('\', '/'))" | Out-File -FilePath $env:GITHUB_ENV -Append
+
       - uses: actions/download-artifact@v8
         with:
           name: issue-195-candidates-${{ github.sha }}
           path: .issue-195-work/candidates
 
+      - name: Verify Windows native linker resolution
+        if: ${{ !cancelled() && runner.os == 'Windows' }}
+        shell: bash
+        run: |
+          node --input-type=commonjs <<'NODE'
+          const path = require('node:path');
+          const {spawnSync} = require('node:child_process');
+          const expected = process.env.CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER;
+          if (!expected || !path.win32.isAbsolute(expected)) throw new Error('A validated absolute MSVC linker path is required');
+          const resolved = spawnSync('where.exe', ['link.exe'], {encoding: 'utf8', timeout: 10000, maxBuffer: 65536, windowsHide: true});
+          if (resolved.error || resolved.status !== 0 || resolved.signal !== null || typeof resolved.stdout !== 'string') {
+            throw new Error(`Windows linker lookup failed: status=${resolved.status}, signal=${resolved.signal}, ${resolved.error?.message ?? resolved.stderr}`, {cause: resolved.error});
+          }
+          const actual = resolved.stdout.split(/\r?\n/u)[0].trim();
+          if (!path.win32.isAbsolute(actual) || path.win32.normalize(actual).toLowerCase() !== path.win32.normalize(expected).toLowerCase()) {
+            throw new Error(`Windows native child resolves ${actual || '<no linker>'}; expected ${expected}`);
+          }
+          console.log(`Validated Windows native child linker: ${actual}`);
+          NODE
+
       - name: Install and parse the exact artifacts in clean consumers
+        if: ${{ !cancelled() }}
         shell: bash
         run: >-
           node js/scripts/run-issue-195-consumer.mjs
           --npm-tarball "$(ls .issue-195-work/candidates/*.tgz)"
           --crate "$(ls .issue-195-work/candidates/*.crate)"
           --work-dir "$RUNNER_TEMP/issue-195-consumer"
-          --out issue-195-artifacts/platform/report.json
+          --out issue-195-artifacts/platform/report.lino
 
       # The delivery gate: every retained item is current or at its verified
       # newest compatible release, and the clean consumer resolves the audited
@@ -333,7 +495,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: issue-195-platform-${{ matrix.os }}-${{ github.sha }}
-          path: issue-195-artifacts/platform/report.json
+          path: issue-195-artifacts/platform/report.lino
           if-no-files-found: error
           retention-days: 30
 
@@ -368,6 +530,14 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      # Only the repository reporting tools use these dependencies. Installed
+      # consumers still resolve and execute their exact candidate artifacts.
+      - name: Install the linked report reader dependencies
+        run: npm ci --ignore-scripts
+        working-directory: js
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@1.99.0
@@ -384,7 +554,7 @@ jobs:
           --npm-tarball "$(ls .issue-195-work/candidates/*.tgz)"
           --crate "$(ls .issue-195-work/candidates/*.crate)"
           --work-dir "$RUNNER_TEMP/issue-195-rml-workloads"
-          --out issue-195-artifacts/rml-workloads/report.json
+          --out issue-195-artifacts/rml-workloads/report.lino
 
       # The report is uploaded even when a workload fails: the aggregate validates it and
       # records nothing for the assertions it does not support.
@@ -393,7 +563,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: issue-195-rml-workloads-${{ github.sha }}
-          path: issue-195-artifacts/rml-workloads/report.json
+          path: issue-195-artifacts/rml-workloads/report.lino
           if-no-files-found: error
           retention-days: 30
 
@@ -412,14 +582,18 @@ jobs:
         shell: bash
         run: node scripts/clean-caches.mjs --event ci-teardown --target-dir "$RUNNER_TEMP/issue-195-rml-workloads/rml-target"
 
-  formal-ai-workloads:
-    name: Formal AI Workloads
+  formal-ai-workload-parts:
+    name: Formal AI Workloads (${{ matrix.partition }})
     needs: candidates
     runs-on: ubuntu-latest
-    # The Rust workloads build formal-ai and its dependencies from scratch.
+    strategy:
+      fail-fast: false
+      matrix:
+        partition: [corpus-ratchet, remaining]
+    # Every candidate runs fresh consumers; the optional target cache reuses build outputs only.
     timeout-minutes: 120
     concurrency:
-      group: issue-195-formal-ai-workloads-${{ github.ref }}
+      group: issue-195-formal-ai-workloads-${{ github.ref }}-${{ matrix.partition }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -428,6 +602,14 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      # Only the repository reporting tools use these dependencies. Installed
+      # consumers still resolve and execute their exact candidate artifacts.
+      - name: Install the linked report reader dependencies
+        run: npm ci --ignore-scripts
+        working-directory: js
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@1.99.0
@@ -451,7 +633,7 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ runner.os }}-cargo-formal-ai-${{ hashFiles('parity/fixtures/formal-ai-workloads.json', 'rust/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-formal-ai-${{ hashFiles('parity/fixtures/formal-ai-workloads.lino', 'rust/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-formal-ai-
 
@@ -460,6 +642,38 @@ jobs:
           name: issue-195-candidates-${{ github.sha }}
           path: .issue-195-work/candidates
 
+      # Candidate identity is independently checked before selecting a build
+      # cache. The runner repeats checksum and installed-path validation.
+      - name: Identify the exact Formal AI build cache
+        id: formal-ai-cache-key
+        shell: bash
+        env:
+          CACHE_CONTEXT: formal-ai-target-v1-${{ runner.os }}-${{ runner.arch }}-rust1.99.0-opt3-debug0-incremental0-${{ hashFiles('parity/fixtures/formal-ai-workloads.lino', 'js/scripts/run-formal-ai-workloads.mjs', 'js/scripts/issue-195-formal-ai-rust-probe.mjs', 'js/scripts/formal-ai-workload-partitions.mjs', 'js/scripts/formal-ai-partition-bundles.mjs') }}
+        run: |
+          set -euo pipefail
+          candidate_crates=(.issue-195-work/candidates/*.crate)
+          [ "${#candidate_crates[@]}" -eq 1 ]
+          candidate_crate="${candidate_crates[0]}"
+          (cd "$(dirname "$candidate_crate")" && sha256sum --check "$(basename "$candidate_crate").sha256")
+          candidate_digest="$(sha256sum "$candidate_crate" | cut -d ' ' -f 1)"
+          compiler_identity="$(rustc -vV)"
+          printf '%s\n' "$compiler_identity" | grep -Fx 'release: 1.99.0'
+          compiler_digest="$(printf '%s\n' "$compiler_identity" | sha256sum | cut -d ' ' -f 1)"
+          dependency_key="$CACHE_CONTEXT-$compiler_digest"
+          printf 'dependency_key=%s\nkey=%s\n' "$dependency_key" "$dependency_key-$candidate_digest" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Formal AI build outputs
+        id: formal-ai-target-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            ${{ runner.temp }}/issue-195-formal-ai-build/target/debug
+            ${{ runner.temp }}/issue-195-formal-ai-build/target/.rustc_info.json
+            ${{ runner.temp }}/issue-195-formal-ai-build/target/CACHEDIR.TAG
+          key: ${{ steps.formal-ai-cache-key.outputs.key }}
+          restore-keys: |
+            ${{ steps.formal-ai-cache-key.outputs.dependency_key }}-
+
       - name: Run the link-assistant/formal-ai workloads on the exact artifacts
         shell: bash
         run: >-
@@ -467,7 +681,9 @@ jobs:
           --npm-tarball "$(ls .issue-195-work/candidates/*.tgz)"
           --crate "$(ls .issue-195-work/candidates/*.crate)"
           --work-dir "$RUNNER_TEMP/issue-195-formal-ai-workloads"
-          --out issue-195-artifacts/formal-ai-workloads/report.json
+          --cargo-target-dir "$RUNNER_TEMP/issue-195-formal-ai-build/target"
+          --partition "${{ matrix.partition }}"
+          --out ".issue-195-work/formal-ai-partitions/${{ matrix.partition }}/partition.lino"
 
       # The report is uploaded even when a workload fails: the aggregate validates it and
       # records nothing for the assertions it does not support.
@@ -475,8 +691,113 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
+          name: issue-195-formal-ai-partition-${{ matrix.partition }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .issue-195-work/formal-ai-partitions/${{ matrix.partition }}/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload workload logs and runtime outputs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-formal-ai-workload-logs-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.partition }}
+          path: |
+            ${{ runner.temp }}/issue-195-formal-ai-workloads/*.log
+            ${{ runner.temp }}/issue-195-formal-ai-workloads/*-outputs.lino
+            ${{ runner.temp }}/issue-195-formal-ai-workloads/formal-ai-inputs.lino
+            ${{ runner.temp }}/issue-195-formal-ai-workloads/rust-probe/*.lino
+            ${{ runner.temp }}/issue-195-formal-ai-workloads/self-ast-*.lino
+            ${{ runner.temp }}/issue-195-formal-ai-workloads/post-update-Cargo.lock
+          if-no-files-found: ignore
+          retention-days: 30
+
+      # Save before teardown can prune build products. Every workload above
+      # still executes on a hit; neither consumers nor results enter this cache.
+      - name: Save Formal AI build outputs
+        if: ${{ !cancelled() && matrix.partition == 'remaining' && steps.formal-ai-cache-key.outcome == 'success' && steps.formal-ai-target-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            ${{ runner.temp }}/issue-195-formal-ai-build/target/debug
+            ${{ runner.temp }}/issue-195-formal-ai-build/target/.rustc_info.json
+            ${{ runner.temp }}/issue-195-formal-ai-build/target/CACHEDIR.TAG
+          key: ${{ steps.formal-ai-cache-key.outputs.key }}
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        shell: bash
+        run: env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/clean-caches.mjs --event ci-teardown --target-dir "$RUNNER_TEMP/issue-195-formal-ai-workloads/formal-ai-target" --target-dir "$RUNNER_TEMP/issue-195-formal-ai-build/target"
+
+  # Preserve the canonical full-report producer identity. Only independently
+  # verified partials enter its unchanged complete report/acceptance contract.
+  formal-ai-workloads:
+    name: Formal AI Workloads
+    needs: [candidates, formal-ai-workload-parts]
+    if: ${{ !cancelled() && needs.candidates.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: issue-195-formal-ai-workloads-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install the linked report reader dependencies
+        run: npm ci --ignore-scripts
+        working-directory: js
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: issue-195-candidates-${{ github.sha }}
+          path: .issue-195-work/candidates
+
+      - name: Download the exact corpus-ratchet partial
+        if: ${{ !cancelled() }}
+        uses: actions/download-artifact@v8
+        with:
+          name: issue-195-formal-ai-partition-corpus-ratchet-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .issue-195-work/formal-ai-partitions/corpus-ratchet
+
+      - name: Download the exact remaining partial
+        if: ${{ !cancelled() }}
+        uses: actions/download-artifact@v8
+        with:
+          name: issue-195-formal-ai-partition-remaining-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .issue-195-work/formal-ai-partitions/remaining
+
+      - name: Download both complete producer diagnostics
+        if: ${{ !cancelled() }}
+        uses: actions/download-artifact@v8
+        with:
+          pattern: issue-195-formal-ai-workload-logs-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}-*
+          path: .issue-195-work/formal-ai-partition-logs
+
+      - name: Merge the independently validated Formal AI workloads
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: >-
+          node js/scripts/run-formal-ai-workloads.mjs
+          --merge-partitions .issue-195-work/formal-ai-partitions/corpus-ratchet,.issue-195-work/formal-ai-partitions/remaining
+          --producer-result "${{ needs.formal-ai-workload-parts.result }}"
+          --npm-tarball "$(ls .issue-195-work/candidates/*.tgz)"
+          --crate "$(ls .issue-195-work/candidates/*.crate)"
+          --work-dir "$RUNNER_TEMP/issue-195-formal-ai-workloads"
+          --out issue-195-artifacts/formal-ai-workloads/report.lino
+
+      - name: Upload the workload report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
           name: issue-195-formal-ai-workloads-${{ github.sha }}
-          path: issue-195-artifacts/formal-ai-workloads/report.json
+          path: issue-195-artifacts/formal-ai-workloads/report.lino
           if-no-files-found: error
           retention-days: 30
 
@@ -486,23 +807,26 @@ jobs:
         with:
           name: issue-195-formal-ai-workload-logs-${{ github.sha }}
           path: |
-            ${{ runner.temp }}/issue-195-formal-ai-workloads/*.log
-            ${{ runner.temp }}/issue-195-formal-ai-workloads/*-outputs.json
-          if-no-files-found: ignore
+            .issue-195-work/formal-ai-partitions/
+            .issue-195-work/formal-ai-partition-logs/
+            ${{ runner.temp }}/issue-195-formal-ai-workloads/*-outputs.lino
+            ${{ runner.temp }}/issue-195-formal-ai-workloads/formal-ai-inputs.lino
+            ${{ runner.temp }}/issue-195-formal-ai-workloads/partition-provenance.lino
+          if-no-files-found: warn
           retention-days: 30
 
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
         working-directory: ${{ github.workspace }}
         shell: bash
-        run: node scripts/clean-caches.mjs --event ci-teardown --target-dir "$RUNNER_TEMP/issue-195-formal-ai-workloads/formal-ai-target"
+        run: env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/clean-caches.mjs --event ci-teardown --target-dir "$RUNNER_TEMP/issue-195-formal-ai-workloads"
 
   # The checkpoint evidence runs as separate stage jobs (js/scripts/issue-195-evidence-stages.mjs),
   # each on its own runner with only the toolchains it uses, and each uploading
   # its record. The Full Requirements Aggregate only merges and evaluates them.
   runtime-parity:
     name: Evidence Stage (runtime-parity)
-    needs: js
+    needs: [js, self-translation-report-validation]
     if: ${{ github.event_name != 'release' && needs.js.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -525,6 +849,9 @@ jobs:
       - name: Install JavaScript dependencies
         run: npm ci --ignore-scripts
         working-directory: js
+
+      - name: Provision the pinned runtime comparison grammars
+        run: node js/scripts/external-grammar-cache.mjs --group wasm --group native-oracles --materialize
 
       - name: Compare the JavaScript and Rust runtimes
         env:
@@ -551,6 +878,11 @@ jobs:
             issue-195-results/runtime-parity/
           if-no-files-found: error
           retention-days: 30
+
+      - name: Remove the temporary external grammar inputs
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --clean-materialized
 
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
@@ -736,6 +1068,10 @@ jobs:
           tar --extract --gzip --file "$archive" --directory "$RUNNER_TEMP"
           "${RUNNER_TEMP}/elan-init" -y --no-modify-path --default-toolchain leanprover/lean4:v4.34.1
           echo "${ELAN_HOME}/bin" >> "$GITHUB_PATH"
+          echo "ELAN_HOME=${ELAN_HOME}" >> "$GITHUB_ENV"
+          if ! "${ELAN_HOME}/bin/lean" --version; then
+            node scripts/install-ci-lean.mjs
+          fi
           "${ELAN_HOME}/bin/lean" --version
 
       - name: Setup OCaml
@@ -745,13 +1081,39 @@ jobs:
           ocaml-compiler: "5.4"
           opam-pin: false
 
-      - name: Install Rocq 9.3
+      - name: Identify the installed Rocq compiler cache
         if: ${{ matrix.target == 'rocq' }}
+        id: rocq-toolchain-cache
+        run: node scripts/ci-rocq-toolchain-cache.mjs --key
+
+      - name: Restore the installed Rocq compiler cache
+        if: ${{ matrix.target == 'rocq' && steps.rocq-toolchain-cache.outputs.enabled == 'true' }}
+        id: rocq-toolchain-restore
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ steps.rocq-toolchain-cache.outputs.path }}
+          key: ${{ steps.rocq-toolchain-cache.outputs.key }}
+
+      - name: Install Rocq 9.3
+        id: rocq-toolchain-install
+        if: ${{ matrix.target == 'rocq' }}
+        env:
+          ROCQ_TOOLCHAIN_CACHE_KEY: ${{ steps.rocq-toolchain-cache.outputs.key }}
+          ROCQ_TOOLCHAIN_CACHE_ENABLED: ${{ steps.rocq-toolchain-cache.outputs.enabled }}
+          ROCQ_TOOLCHAIN_CACHE_HIT: ${{ steps.rocq-toolchain-restore.outputs.cache-hit }}
         run: |
           opam repository add rocq-released https://rocq-prover.org/opam/released
           opam install --yes 'rocq-core=9.3.0' 'rocq-stdlib=9.2.0' 'rocq-prover=meta.1'
           opam var bin >> "$GITHUB_PATH"
           opam exec -- rocq --version
+          node scripts/ci-rocq-toolchain-cache.mjs --verify
+
+      - name: Save the verified Rocq compiler cache
+        if: ${{ matrix.target == 'rocq' && steps.rocq-toolchain-cache.outputs.enabled == 'true' && steps.rocq-toolchain-install.outputs.enabled == 'true' && steps.rocq-toolchain-install.outcome == 'success' && steps.rocq-toolchain-restore.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ steps.rocq-toolchain-cache.outputs.path }}
+          key: ${{ steps.rocq-toolchain-cache.outputs.key }}
 
       - name: Install JavaScript dependencies
         run: npm ci --ignore-scripts
@@ -775,6 +1137,11 @@ jobs:
           --results-dir issue-195-results
           --stage "$TARGET"
 
+      - name: Verify Unicode string length execution
+        run: >-
+          node js/scripts/check-translation-corpus-native.mjs
+          --target "${{ matrix.target }}" --fixture string-length
+
       # The record, execution records, logs and artifacts are uploaded even when
       # the stage fails: the aggregate reports the failure as one gate error.
       - name: Upload the stage outputs
@@ -796,17 +1163,69 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: node scripts/clean-caches.mjs --event ci-teardown
 
-  javascript-suite:
-    name: Evidence Stage (javascript-suite)
-    needs: [candidates, consumers, rml-workloads, formal-ai-workloads, self-translation-report]
+  javascript-suite-independent:
+    # Only the downstream partition reads the workload reports. Other partitions
+    # retain their exact scopes and artifacts while those producers run.
+    name: Evidence Stage (javascript-suite - ${{ matrix.group }} ${{ matrix.shard }})
+    needs: [candidates, self-translation-report]
     if: ${{ !cancelled() && github.event_name != 'release' && needs.candidates.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    # The evidence groups keep the same files and acceptance cells. Separate
+    # runners prevent the serial sum from exceeding the existing deadline.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - group: grammar
+            shard: 1/1
+            partition: 1-of-1
+          - group: grammar-native
+            shard: 1/3
+            partition: 1-of-3
+          - group: grammar-native
+            shard: 2/3
+            partition: 2-of-3
+          - group: grammar-native
+            shard: 3/3
+            partition: 3-of-3
+          - group: grammar-recovery
+            shard: 1/1
+            partition: 1-of-1
+          - group: grammar-scaling
+            shard: 1/1
+            partition: 1-of-1
+          - group: grammar-csharp
+            shard: 1/1
+            partition: 1-of-1
+          - group: grammar-elixir
+            shard: 1/1
+            partition: 1-of-1
+          - group: grammar-ruby
+            shard: 1/1
+            partition: 1-of-1
+          - group: translation
+            shard: 1/1
+            partition: 1-of-1
+          - group: report-artifacts
+            shard: 1/1
+            partition: 1-of-1
+          - group: conformance
+            shard: 1/2
+            partition: 1-of-2
+          - group: conformance
+            shard: 2/2
+            partition: 2-of-2
+          - group: tooling
+            shard: 1/1
+            partition: 1-of-1
     concurrency:
-      group: issue-195-stage-${{ github.ref }}-javascript-suite
+      group: issue-195-stage-${{ github.ref }}-javascript-suite-${{ matrix.group }}-${{ matrix.partition }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -819,7 +1238,7 @@ jobs:
         uses: dtolnay/rust-toolchain@1.99.0
         with:
           # JavaScript self-translation acceptance checks the emitted Rust.
-          components: clippy
+          components: rustfmt, clippy
 
       - name: Setup Lean
         env:
@@ -835,6 +1254,10 @@ jobs:
           tar --extract --gzip --file "$archive" --directory "$RUNNER_TEMP"
           "${RUNNER_TEMP}/elan-init" -y --no-modify-path --default-toolchain leanprover/lean4:v4.34.1
           echo "${ELAN_HOME}/bin" >> "$GITHUB_PATH"
+          echo "ELAN_HOME=${ELAN_HOME}" >> "$GITHUB_ENV"
+          if ! "${ELAN_HOME}/bin/lean" --version; then
+            node scripts/install-ci-lean.mjs
+          fi
           "${ELAN_HOME}/bin/lean" --version
 
       - name: Setup OCaml
@@ -843,16 +1266,205 @@ jobs:
           ocaml-compiler: "5.4"
           opam-pin: false
 
+      - name: Identify the installed Rocq compiler cache
+        id: rocq-toolchain-cache
+        run: node scripts/ci-rocq-toolchain-cache.mjs --key
+
+      - name: Restore the installed Rocq compiler cache
+        if: ${{ steps.rocq-toolchain-cache.outputs.enabled == 'true' }}
+        id: rocq-toolchain-restore
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ steps.rocq-toolchain-cache.outputs.path }}
+          key: ${{ steps.rocq-toolchain-cache.outputs.key }}
+
       - name: Install Rocq 9.3
+        id: rocq-toolchain-install
+        env:
+          ROCQ_TOOLCHAIN_CACHE_KEY: ${{ steps.rocq-toolchain-cache.outputs.key }}
+          ROCQ_TOOLCHAIN_CACHE_ENABLED: ${{ steps.rocq-toolchain-cache.outputs.enabled }}
+          ROCQ_TOOLCHAIN_CACHE_HIT: ${{ steps.rocq-toolchain-restore.outputs.cache-hit }}
         run: |
           opam repository add rocq-released https://rocq-prover.org/opam/released
           opam install --yes 'rocq-core=9.3.0' 'rocq-stdlib=9.2.0' 'rocq-prover=meta.1'
           opam var bin >> "$GITHUB_PATH"
           opam exec -- rocq --version
+          node scripts/ci-rocq-toolchain-cache.mjs --verify
+
+      - name: Save the verified Rocq compiler cache
+        if: ${{ steps.rocq-toolchain-cache.outputs.enabled == 'true' && steps.rocq-toolchain-install.outputs.enabled == 'true' && steps.rocq-toolchain-install.outcome == 'success' && steps.rocq-toolchain-restore.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ steps.rocq-toolchain-cache.outputs.path }}
+          key: ${{ steps.rocq-toolchain-cache.outputs.key }}
 
       - name: Install JavaScript dependencies
         run: npm ci --ignore-scripts
         working-directory: js
+
+      - name: Provision the pinned external grammar test inputs
+        run: node js/scripts/external-grammar-cache.mjs --all --materialize
+
+      - name: Download the complete self-translation reports
+        # Missing reports fail their assertion while the other suite tests still run.
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          pattern: self-translation-report-${{ github.sha }}-*
+          path: issue-195-artifacts/self-translation-report
+
+      - name: Build the independently corrected Agda layout oracle
+        if: ${{ !cancelled() }}
+        run: node js/scripts/build-agda-layout-oracle.mjs
+
+      - name: Produce the stage evidence
+        if: ${{ !cancelled() }}
+        env:
+          ISSUE_195_SELF_TRANSLATION_REPORT_DIRECTORY: ${{ github.workspace }}/issue-195-artifacts/self-translation-report
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_SHA: ${{ github.sha }}
+          ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
+          STAGE: javascript-suite
+          JAVASCRIPT_GROUP: ${{ matrix.group }}
+          JAVASCRIPT_SHARD: ${{ matrix.shard }}
+          META_LANGUAGE_TOOLING_FULL_SCOPE: '1'
+        run: >-
+          node js/scripts/run-issue-195-evidence.mjs
+          --checkpoint "$ACCEPTANCE_CHECKPOINT"
+          --commit "$GITHUB_SHA"
+          --results-dir issue-195-results
+          --stage "$STAGE"
+          --javascript-group "$JAVASCRIPT_GROUP"
+          --javascript-shard "$JAVASCRIPT_SHARD"
+          --candidates .issue-195-work/candidates
+          --platform-reports issue-195-artifacts/platform-reports
+
+      # The record, execution records, logs and artifacts are uploaded even when
+      # the stage fails: the aggregate reports the failure as one gate error.
+      - name: Upload the stage outputs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-stage-javascript-suite-${{ matrix.group }}-${{ matrix.partition }}-${{ github.sha }}
+          path: |
+            issue-195-results/work/stage-*
+            issue-195-results/work/native/
+            issue-195-results/logs/
+            issue-195-results/artifacts/
+            issue-195-results/runtime-parity/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Remove the temporary external grammar inputs
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --clean-materialized
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
+  javascript-suite:
+    name: Evidence Stage (javascript-suite - ${{ matrix.group }} ${{ matrix.shard }})
+    needs: [candidates, consumers, rml-workloads, formal-ai-workloads, self-translation-report]
+    if: ${{ !cancelled() && github.event_name != 'release' && needs.candidates.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    # The evidence groups keep the same files and acceptance cells. Separate
+    # runners prevent the serial sum from exceeding the existing deadline.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - group: downstream
+            shard: 1/1
+            partition: 1-of-1
+    concurrency:
+      group: issue-195-stage-${{ github.ref }}-javascript-suite-${{ matrix.group }}-${{ matrix.partition }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@1.99.0
+        with:
+          # JavaScript self-translation acceptance checks the emitted Rust.
+          components: rustfmt, clippy
+
+      - name: Setup Lean
+        env:
+          ELAN_HOME: ${{ runner.temp }}/elan-home
+          ELAN_VERSION: v4.2.4
+          ELAN_ARCHIVE_SHA256: 42b94d4244e8353142c456ec0e4ca6528fd898a6c604d4059f494e706e431f63
+        run: |
+          archive="${RUNNER_TEMP}/elan-x86_64-unknown-linux-gnu.tar.gz"
+          curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail \
+            "https://github.com/leanprover/elan/releases/download/${ELAN_VERSION}/elan-x86_64-unknown-linux-gnu.tar.gz" \
+            --output "$archive"
+          echo "${ELAN_ARCHIVE_SHA256}  ${archive}" | sha256sum --check --strict
+          tar --extract --gzip --file "$archive" --directory "$RUNNER_TEMP"
+          "${RUNNER_TEMP}/elan-init" -y --no-modify-path --default-toolchain leanprover/lean4:v4.34.1
+          echo "${ELAN_HOME}/bin" >> "$GITHUB_PATH"
+          echo "ELAN_HOME=${ELAN_HOME}" >> "$GITHUB_ENV"
+          if ! "${ELAN_HOME}/bin/lean" --version; then
+            node scripts/install-ci-lean.mjs
+          fi
+          "${ELAN_HOME}/bin/lean" --version
+
+      - name: Setup OCaml
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: "5.4"
+          opam-pin: false
+
+      - name: Identify the installed Rocq compiler cache
+        id: rocq-toolchain-cache
+        run: node scripts/ci-rocq-toolchain-cache.mjs --key
+
+      - name: Restore the installed Rocq compiler cache
+        if: ${{ steps.rocq-toolchain-cache.outputs.enabled == 'true' }}
+        id: rocq-toolchain-restore
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ steps.rocq-toolchain-cache.outputs.path }}
+          key: ${{ steps.rocq-toolchain-cache.outputs.key }}
+
+      - name: Install Rocq 9.3
+        id: rocq-toolchain-install
+        env:
+          ROCQ_TOOLCHAIN_CACHE_KEY: ${{ steps.rocq-toolchain-cache.outputs.key }}
+          ROCQ_TOOLCHAIN_CACHE_ENABLED: ${{ steps.rocq-toolchain-cache.outputs.enabled }}
+          ROCQ_TOOLCHAIN_CACHE_HIT: ${{ steps.rocq-toolchain-restore.outputs.cache-hit }}
+        run: |
+          opam repository add rocq-released https://rocq-prover.org/opam/released
+          opam install --yes 'rocq-core=9.3.0' 'rocq-stdlib=9.2.0' 'rocq-prover=meta.1'
+          opam var bin >> "$GITHUB_PATH"
+          opam exec -- rocq --version
+          node scripts/ci-rocq-toolchain-cache.mjs --verify
+
+      - name: Save the verified Rocq compiler cache
+        if: ${{ steps.rocq-toolchain-cache.outputs.enabled == 'true' && steps.rocq-toolchain-install.outputs.enabled == 'true' && steps.rocq-toolchain-install.outcome == 'success' && steps.rocq-toolchain-restore.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ steps.rocq-toolchain-cache.outputs.path }}
+          key: ${{ steps.rocq-toolchain-cache.outputs.key }}
+
+      - name: Install JavaScript dependencies
+        run: npm ci --ignore-scripts
+        working-directory: js
+
+      - name: Provision the pinned external grammar test inputs
+        run: node js/scripts/external-grammar-cache.mjs --all --materialize
 
       - name: Download the relative-meta-logic workload report
         # A missing report leaves I195-DOWNSTREAM-RML-WORKLOADS unobserved instead of stopping the stage.
@@ -878,21 +1490,31 @@ jobs:
           pattern: self-translation-report-${{ github.sha }}-*
           path: issue-195-artifacts/self-translation-report
 
+      - name: Build the independently corrected Agda layout oracle
+        if: ${{ !cancelled() }}
+        run: node js/scripts/build-agda-layout-oracle.mjs
+
       - name: Produce the stage evidence
+        if: ${{ !cancelled() }}
         env:
           ISSUE_195_SELF_TRANSLATION_REPORT_DIRECTORY: ${{ github.workspace }}/issue-195-artifacts/self-translation-report
-          ISSUE_195_RML_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/rml-workloads/report.json
-          ISSUE_195_FORMAL_AI_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/formal-ai-workloads/report.json
+          ISSUE_195_RML_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/rml-workloads/report.lino
+          ISSUE_195_FORMAL_AI_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/formal-ai-workloads/report.lino
           GH_TOKEN: ${{ github.token }}
           GITHUB_SHA: ${{ github.sha }}
           ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
           STAGE: javascript-suite
+          JAVASCRIPT_GROUP: ${{ matrix.group }}
+          JAVASCRIPT_SHARD: ${{ matrix.shard }}
+          META_LANGUAGE_TOOLING_FULL_SCOPE: '1'
         run: >-
           node js/scripts/run-issue-195-evidence.mjs
           --checkpoint "$ACCEPTANCE_CHECKPOINT"
           --commit "$GITHUB_SHA"
           --results-dir issue-195-results
           --stage "$STAGE"
+          --javascript-group "$JAVASCRIPT_GROUP"
+          --javascript-shard "$JAVASCRIPT_SHARD"
           --candidates .issue-195-work/candidates
           --platform-reports issue-195-artifacts/platform-reports
 
@@ -902,7 +1524,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
-          name: issue-195-stage-javascript-suite-${{ github.sha }}
+          name: issue-195-stage-javascript-suite-${{ matrix.group }}-${{ matrix.partition }}-${{ github.sha }}
           path: |
             issue-195-results/work/stage-*
             issue-195-results/work/native/
@@ -912,20 +1534,34 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      - name: Remove the temporary external grammar inputs
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --clean-materialized
+
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
         working-directory: ${{ github.workspace }}
         run: node scripts/clean-caches.mjs --event ci-teardown
 
   rust-suite:
-    name: Evidence Stage (rust-suite)
-    needs: [candidates, consumers, rml-workloads, formal-ai-workloads, javascript-suite]
-    if: ${{ !cancelled() && github.event_name != 'release' && needs.candidates.result == 'success' && needs.javascript-suite.result == 'success' }}
+    name: Evidence Stage (rust-suite - ${{ matrix.physical_shard }}/8)
+    needs: [candidates, consumers, rml-workloads, formal-ai-workloads, javascript-suite-independent, javascript-suite]
+    if: ${{ !cancelled() && github.event_name != 'release' && needs.candidates.result == 'success' && needs.javascript-suite.result == 'success' && needs.javascript-suite-independent.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        physical_shard: [1, 2, 3, 4, 5, 6, 7, 8]
     concurrency:
-      group: issue-195-stage-${{ github.ref }}-rust-suite
+      group: issue-195-stage-${{ github.ref }}-rust-suite-${{ matrix.physical_shard }}
       cancel-in-progress: true
+    env:
+      META_LANGUAGE_SHARD_PROFILE: evidence
+      META_LANGUAGE_SHARD_PLATFORM: ubuntu-latest
+      META_LANGUAGE_SHARD_SUITE: all
+      META_LANGUAGE_SHARD_INDEX: ${{ matrix.physical_shard }}
     steps:
       - uses: actions/checkout@v7
 
@@ -940,7 +1576,7 @@ jobs:
         uses: dtolnay/rust-toolchain@1.99.0
         with:
           # The self-translation tests check translated Rust with clippy-driver.
-          components: clippy
+          components: rustfmt, clippy
 
       - name: Setup Lean
         env:
@@ -956,6 +1592,10 @@ jobs:
           tar --extract --gzip --file "$archive" --directory "$RUNNER_TEMP"
           "${RUNNER_TEMP}/elan-init" -y --no-modify-path --default-toolchain leanprover/lean4:v4.34.1
           echo "${ELAN_HOME}/bin" >> "$GITHUB_PATH"
+          echo "ELAN_HOME=${ELAN_HOME}" >> "$GITHUB_ENV"
+          if ! "${ELAN_HOME}/bin/lean" --version; then
+            node scripts/install-ci-lean.mjs
+          fi
           "${ELAN_HOME}/bin/lean" --version
 
       - name: Setup OCaml
@@ -964,16 +1604,44 @@ jobs:
           ocaml-compiler: "5.4"
           opam-pin: false
 
+      - name: Identify the installed Rocq compiler cache
+        id: rocq-toolchain-cache
+        run: node scripts/ci-rocq-toolchain-cache.mjs --key
+
+      - name: Restore the installed Rocq compiler cache
+        if: ${{ steps.rocq-toolchain-cache.outputs.enabled == 'true' }}
+        id: rocq-toolchain-restore
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ steps.rocq-toolchain-cache.outputs.path }}
+          key: ${{ steps.rocq-toolchain-cache.outputs.key }}
+
       - name: Install Rocq 9.3
+        id: rocq-toolchain-install
+        env:
+          ROCQ_TOOLCHAIN_CACHE_KEY: ${{ steps.rocq-toolchain-cache.outputs.key }}
+          ROCQ_TOOLCHAIN_CACHE_ENABLED: ${{ steps.rocq-toolchain-cache.outputs.enabled }}
+          ROCQ_TOOLCHAIN_CACHE_HIT: ${{ steps.rocq-toolchain-restore.outputs.cache-hit }}
         run: |
           opam repository add rocq-released https://rocq-prover.org/opam/released
           opam install --yes 'rocq-core=9.3.0' 'rocq-stdlib=9.2.0' 'rocq-prover=meta.1'
           opam var bin >> "$GITHUB_PATH"
           opam exec -- rocq --version
+          node scripts/ci-rocq-toolchain-cache.mjs --verify
+
+      - name: Save the verified Rocq compiler cache
+        if: ${{ steps.rocq-toolchain-cache.outputs.enabled == 'true' && steps.rocq-toolchain-install.outputs.enabled == 'true' && steps.rocq-toolchain-install.outcome == 'success' && steps.rocq-toolchain-restore.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ steps.rocq-toolchain-cache.outputs.path }}
+          key: ${{ steps.rocq-toolchain-cache.outputs.key }}
 
       - name: Install JavaScript dependencies
         run: npm ci --ignore-scripts
         working-directory: js
+
+      - name: Provision the pinned external grammar test inputs
+        run: node js/scripts/external-grammar-cache.mjs --all --materialize
 
       - name: Download the relative-meta-logic workload report
         # A missing report leaves I195-DOWNSTREAM-RML-WORKLOADS unobserved instead of stopping the stage.
@@ -999,11 +1667,15 @@ jobs:
           pattern: self-translation-report-${{ github.sha }}-*
           path: issue-195-artifacts/self-translation-report
 
+      - name: Configure the complete native evidence partition
+        run: node js/scripts/rust-test-shards.mjs --configure
+
       - name: Produce the stage evidence
+        id: rust-suite-evidence
         env:
           ISSUE_195_SELF_TRANSLATION_REPORT_DIRECTORY: ${{ github.workspace }}/issue-195-artifacts/self-translation-report
-          ISSUE_195_RML_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/rml-workloads/report.json
-          ISSUE_195_FORMAL_AI_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/formal-ai-workloads/report.json
+          ISSUE_195_RML_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/rml-workloads/report.lino
+          ISSUE_195_FORMAL_AI_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/formal-ai-workloads/report.lino
           GH_TOKEN: ${{ github.token }}
           GITHUB_SHA: ${{ github.sha }}
           ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
@@ -1014,8 +1686,24 @@ jobs:
           --commit "$GITHUB_SHA"
           --results-dir issue-195-results
           --stage "$STAGE"
+          --rust-shard "${{ matrix.physical_shard }}/8"
           --candidates .issue-195-work/candidates
           --platform-reports issue-195-artifacts/platform-reports
+
+      - name: Seal the native evidence inventory and outcomes
+        if: ${{ !cancelled() }}
+        env:
+          META_LANGUAGE_SHARD_RESULT: ${{ steps.rust-suite-evidence.outcome }}
+        run: node js/scripts/rust-test-shards.mjs --finish
+
+      - name: Upload the authenticated native evidence partition
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: rust-physical-evidence-ubuntu-latest-all-${{ matrix.physical_shard }}-${{ github.sha }}
+          path: issue-195-artifacts/rust-physical-shards/
+          if-no-files-found: error
+          retention-days: 30
 
       # The record, execution records, logs and artifacts are uploaded even when
       # the stage fails: the aggregate reports the failure as one gate error.
@@ -1023,7 +1711,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
-          name: issue-195-stage-rust-suite-${{ github.sha }}
+          name: issue-195-stage-rust-suite-${{ matrix.physical_shard }}-of-8-${{ github.sha }}
           path: |
             issue-195-results/work/stage-*
             issue-195-results/work/native/
@@ -1032,6 +1720,11 @@ jobs:
             issue-195-results/runtime-parity/
           if-no-files-found: error
           retention-days: 30
+
+      - name: Remove the temporary external grammar inputs
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --clean-materialized
 
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
@@ -1064,6 +1757,9 @@ jobs:
         run: npm ci --ignore-scripts
         working-directory: js
 
+      - name: Provision the pinned external grammar package binaries
+        run: node js/scripts/external-grammar-cache.mjs --group wasm --materialize
+
       - name: Download delivery candidates
         uses: actions/download-artifact@v8
         with:
@@ -1078,8 +1774,8 @@ jobs:
 
       - name: Produce the stage evidence
         env:
-          ISSUE_195_RML_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/rml-workloads/report.json
-          ISSUE_195_FORMAL_AI_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/formal-ai-workloads/report.json
+          ISSUE_195_RML_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/rml-workloads/report.lino
+          ISSUE_195_FORMAL_AI_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/formal-ai-workloads/report.lino
           GH_TOKEN: ${{ github.token }}
           GITHUB_SHA: ${{ github.sha }}
           ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
@@ -1109,6 +1805,11 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      - name: Remove the temporary external grammar inputs
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/external-grammar-cache.mjs --clean-materialized
+
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
         working-directory: ${{ github.workspace }}
@@ -1119,7 +1820,7 @@ jobs:
   # check depends on them, and a failure here is fixed in a follow-up commit.
   post-merge:
     name: Post-merge Report
-    needs: js
+    needs: [js, self-translation-report-validation]
     if: ${{ github.event_name == 'push' && needs.js.result == 'success' }}
     continue-on-error: true
     permissions:
@@ -1162,7 +1863,7 @@ jobs:
           --evaluate
           --checkpoint post-merge
           --results-dir issue-195-results
-          --json-report issue-195-artifacts/post-merge-report.json
+          --json-report issue-195-artifacts/post-merge-report.lino
           --markdown-report issue-195-artifacts/post-merge-report.md
 
       - name: Publish the post-merge report
@@ -1184,7 +1885,7 @@ jobs:
 
   acceptance:
     name: Full Requirements Aggregate
-    needs: [js, candidates, consumers, rml-workloads, formal-ai-workloads, runtime-parity, native-javascript, native-rust, native-translations, javascript-suite, rust-suite, delivery]
+    needs: [js, rust, self-translation-report-validation, candidates, consumers, rml-workloads, formal-ai-workloads, javascript-suite-independent, runtime-parity, native-javascript, native-rust, native-translations, javascript-suite, rust-suite, delivery]
     # GitHub reports a skipped job as a successful required check. This job
     # always runs and fails itself when there are no candidates to evaluate.
     if: ${{ always() }}
@@ -1206,12 +1907,13 @@ jobs:
         env:
           CANDIDATES_RESULT: ${{ needs.candidates.result }}
           JAVASCRIPT_RESULT: ${{ needs.js.result }}
+          REPORTS_RESULT: ${{ needs.self-translation-report-validation.result }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          if [ "$JAVASCRIPT_RESULT" = failure ] || [ "$JAVASCRIPT_RESULT" = cancelled ]; then
+          if [ "$JAVASCRIPT_RESULT" = failure ] || [ "$JAVASCRIPT_RESULT" = cancelled ] || [ "$REPORTS_RESULT" = failure ] || [ "$REPORTS_RESULT" = cancelled ]; then
             failed=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs" --paginate \
               --jq '.jobs[] | select(.name | startswith("JavaScript / ")) | select(.conclusion == "failure" or .conclusion == "cancelled" or .conclusion == "timed_out") | .name' 2>/dev/null | paste -sd ',' - | sed 's/,/, /g')
-            echo "::error::${failed:-The JavaScript workflow} finished as '${JAVASCRIPT_RESULT}'; the acceptance stages run only after every JavaScript job passes, so none of them ran"
+            echo "::error::${failed:-The JavaScript workflow and report assertions} finished as '${JAVASCRIPT_RESULT}/${REPORTS_RESULT}'; the acceptance stages run only after every JavaScript job passes, so none of them ran"
           else
             echo "::error::Delivery Candidates finished as '${CANDIDATES_RESULT}'; the Full Requirements Aggregate cannot pass without them"
           fi
@@ -1232,6 +1934,38 @@ jobs:
         run: npm ci --ignore-scripts
         working-directory: js
 
+      - name: Provision the authenticated grammar input for manifest validation
+        run: node js/scripts/external-grammar-cache.mjs --asset parity/grammars/links-notation-0.22.0.pegjs --materialize
+
+      - name: Identify admitted Rust physical profiles
+        id: rust-physical-admission
+        if: ${{ !cancelled() && (needs.rust.result != 'skipped' || needs.rust-suite.result != 'skipped') }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs?per_page=100" --paginate --slurp > "$RUNNER_TEMP/rust-physical-jobs.json"
+          node js/scripts/rust-test-shards.mjs --admission "$RUNNER_TEMP/rust-physical-jobs.json"
+
+      - name: Download complete Rust physical partitions
+        if: ${{ !cancelled() && steps.rust-physical-admission.outputs.enabled == 'true' }}
+        uses: actions/download-artifact@v8
+        with:
+          pattern: rust-physical-*-${{ github.sha }}
+          path: issue-195-artifacts/rust-physical-partitions
+
+      - name: Require the complete authenticated Rust test union
+        if: ${{ !cancelled() && (needs.rust.result != 'skipped' || needs.rust-suite.result != 'skipped') }}
+        env:
+          RUST_WORKFLOW_RESULT: ${{ needs.rust.result }}
+          RUST_EVIDENCE_RESULT: ${{ needs.rust-suite.result }}
+          META_LANGUAGE_SHARD_EXPECTED_PROFILES: ${{ steps.rust-physical-admission.outputs.profiles }}
+        run: |
+          if [ -n "$META_LANGUAGE_SHARD_EXPECTED_PROFILES" ]; then
+            node js/scripts/rust-test-shards.mjs --verify issue-195-artifacts/rust-physical-partitions
+          fi
+          if [ "$RUST_WORKFLOW_RESULT" != skipped ]; then test "$RUST_WORKFLOW_RESULT" = success; fi
+          if [ "$RUST_EVIDENCE_RESULT" != skipped ]; then test "$RUST_EVIDENCE_RESULT" = success; fi
+
       - name: Validate atomic manifest and protected scope baseline
         env:
           BASELINE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || github.event.release.target_commitish }}
@@ -1244,6 +1978,8 @@ jobs:
         if: ${{ !cancelled() && needs.candidates.result == 'success' }}
         uses: actions/download-artifact@v8
         with:
+          # Every matrix partition carries distinct stage/observation identities;
+          # merge retains all of them for the complete logical-suite validator.
           pattern: issue-195-stage-*-${{ github.sha }}
           path: issue-195-results
           merge-multiple: true
@@ -1267,11 +2003,11 @@ jobs:
           ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
         run: >-
           node js/scripts/check-issue-195-acceptance.mjs
-          --produce-gate-results issue-195-results/gate-faults.json
+          --produce-gate-results issue-195-results/gate-faults.lino
           --evaluate
           --checkpoint "$ACCEPTANCE_CHECKPOINT"
           --results-dir issue-195-results
-          --json-report issue-195-artifacts/report.json
+          --json-report issue-195-artifacts/report.lino
           --markdown-report issue-195-artifacts/report.md
 
       - name: Publish per-requirement evidence report
@@ -1287,6 +2023,10 @@ jobs:
             issue-195-results/work/native/
           if-no-files-found: error
           retention-days: 30
+
+      - name: Remove the temporary manifest grammar input
+        if: ${{ !cancelled() && hashFiles('js/scripts/external-grammar-cache.mjs') != '' }}
+        run: node js/scripts/external-grammar-cache.mjs --clean-materialized
 
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}

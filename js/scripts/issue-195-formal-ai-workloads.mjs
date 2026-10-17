@@ -11,9 +11,9 @@
 // same outputs, and sharedConceptsReused holds only when they agree.
 // `validateFormalAiWorkloadReport` is the pure check of the runner's report for
 // one runtime, shared by the runner and the tests; the Rust suite ports it.
-import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readProjectData } from './project-data.mjs';
 
 export const FORMAL_AI_WORKLOAD_REQUIREMENT = 'I195-DOWNSTREAM-FORMAL-AI-WORKLOADS';
 export const FORMAL_AI_WORKLOAD_FIXTURE_ID = 'planned:repository-directive:i195-downstream-formal-ai-workloads';
@@ -38,7 +38,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 
 /** The pinned formal-ai fixture. */
 export function loadFormalAiWorkloadFixture(directory = root) {
-  return JSON.parse(readFileSync(path.join(directory, FORMAL_AI_WORKLOAD_FIXTURE), 'utf8'));
+  return readProjectData(path.join(directory, FORMAL_AI_WORKLOAD_FIXTURE));
 }
 
 /** The inventoried workload files `runtime` runs, as formal-ai repository paths. */
@@ -173,6 +173,9 @@ function testProblems(runtime, part, fixture) {
   for (const entry of tests.filter(({ outcome }) => outcome === 'failed')) {
     problems.push(`the ${runtime} workload ${entry.file} › ${entry.name} failed`);
   }
+  for (const entry of tests.filter(({ outcome }) => outcome === 'skipped')) {
+    problems.push(`the ${runtime} workload ${entry.file} › ${entry.name} was skipped`);
+  }
   for (const file of workloadFiles(fixture, runtime)) {
     if (!tests.some((entry) => entry.file === file && entry.outcome === 'passed')) {
       problems.push(`no ${runtime} test of ${file} passed`);
@@ -225,4 +228,25 @@ export function validateFormalAiWorkloadReport(report, fixture, runtime) {
     problems,
     observed: FORMAL_AI_WORKLOAD_ASSERTIONS.filter((assertion) => problems[assertion].length === 0),
   };
+}
+
+// A partition is deliberately not a complete report. Reuse the original
+// installed-artifact/probe checks without pretending its partial test list
+// covers every inventoried workload file. The partition validator separately
+// proves exact target-qualified execution against the complete native --list.
+export function formalAiWorkloadPartitionGroundingProblems(report, fixture) {
+  const problems = [];
+  const javascript = validateFormalAiWorkloadReport(report, fixture, 'javascript');
+  for (const [assertion, entries] of Object.entries(javascript.problems)) {
+    problems.push(...entries.map((entry) => `javascript ${assertion}: ${entry}`));
+  }
+  if (report?.schemaVersion !== FORMAL_AI_WORKLOAD_SCHEMA_VERSION || !report?.crate || report.crate.skipped) {
+    problems.push('a native partition requires the original report schema and a real crate run');
+    return problems;
+  }
+  problems.push(...checkoutProblems(report, fixture), ...artifactProblems('rust', report.crate));
+  for (const assertion of FORMAL_AI_PROBE_ASSERTIONS) {
+    problems.push(...probeProblems('rust', report.crate, assertion));
+  }
+  return problems;
 }

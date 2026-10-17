@@ -1,3 +1,4 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 // Requirement I195-GRAMMAR-NATIVE-LEAN: the native merged Lean grammar,
 // parity/grammars/native/lean.lino, which js/scripts/import-native-grammars.mjs
 // imports from the pinned tree-sitter-lean4 grammar with its external layout
@@ -21,9 +22,10 @@ import { nativeRows, oracleRecovers, oracleRows } from '../scripts/native-gramma
 import { corpusCases, grammarSourceOf } from '../scripts/import-native-grammars.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
-const read = (relative) => readFileSync(new URL(`../../${relative}`, import.meta.url), 'utf8');
+const read = (relative) => readFileSync(resolveProjectDataPath(new URL(`../../${relative}`, import.meta.url)), 'utf8');
+const readData = (relative) => readProjectData(new URL(`../../${relative}`, import.meta.url));
 const entry = NATIVE_GRAMMARS.find(({ id }) => id === 'lean');
-const fixture = JSON.parse(read(fixturePath(entry)));
+const fixture = readData(fixturePath(entry));
 const links = read(entry.grammar);
 const parser = compileGrammar(parseGrammarLinks(links));
 
@@ -139,6 +141,22 @@ test('native Lean trees keep every byte of the source, comments and white space 
   observe(['nativeLeanTreesLossless'], context.name);
 });
 
+test('explicit Lean applications attach each argument to the preceding application', () => {
+  const source = '#check @plant Tree rain\n';
+  const outcome = parser.parseTree(source);
+  assert.equal(outcome.ok, true);
+  assert.deepEqual(outcome.ambiguities, []);
+  const rows = nativeRows(outcome.tree, source, fixture);
+  assert.deepEqual(rows.filter((row) => row[2] === 'application').map((row) => [row[4], row[5]]), [[7, 23], [7, 18]]);
+  assert.deepEqual(rows.filter((row) => row[2] === 'explicit').map((row) => [row[4], row[5]]), [[7, 13]]);
+});
+
 test('the native Lean fixture is current', () => {
-  assert.equal(renderFixture(buildNativeGrammarFixture(entry)), read(fixturePath(entry)));
+  const actual = buildNativeGrammarFixture(entry);
+  for (const key of ['matches', 'divergences', 'rejections']) {
+    for (const [index, observed] of actual[key].entries()) {
+      if (JSON.stringify(observed) !== JSON.stringify(fixture[key][index])) console.error('native fixture change:', JSON.stringify({ grammar: entry.id, key, index, observed }));
+    }
+  }
+  assert.equal(renderFixture(actual), read(fixturePath(entry)));
 });

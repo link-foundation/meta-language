@@ -1,0 +1,7 @@
+// Generated from the private linked Rust text-value projection policy. Do not edit.
+/** @param {string} model @returns {boolean} */
+export function acceptRustTextValueProjectionModel(model){return model === "closed standard Rust text value projection 1";}
+/** @param {boolean} standard @param {boolean} slice @param {number} layers @returns {string} */
+export function readRustTextValueProjectionDomain(standard,slice,layers){return standard && layers === 0 ? "owned standard String" : standard && layers === 1 ? "shared standard String" : slice && layers === 1 ? "shared primitive str" : "";}
+/** @param {string} operation @param {string} domain @returns {boolean} */
+export function acceptRustTextValueProjectionOperation(operation,domain){return (operation === "owned standard String move" && (domain === "owned standard String")) || (operation === "standard String construction from borrowed text" && (domain === "shared primitive str" || domain === "static primitive str literal")) || (operation === "standard String clone" && (domain === "owned standard String" || domain === "shared standard String")) || (operation === "standard borrowed str owned construction" && (domain === "shared primitive str" || domain === "static primitive str literal")) || (operation === "standard borrowed str display construction" && (domain === "shared primitive str" || domain === "static primitive str literal"));}

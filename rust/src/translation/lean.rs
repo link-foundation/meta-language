@@ -317,11 +317,14 @@ impl<'a> LeanParser<'a> {
         let mut main = None;
         self.items(&mut main, &mut items, &[])?;
         Ok(SProgram {
+            reference_semantics: None,
             language: Language::Lean,
             items,
             main,
             imports: Vec::new(),
             externals: Vec::new(),
+            source_pure_unit_calls: None,
+            source_runtime_shell: None,
         })
     }
 
@@ -492,6 +495,7 @@ impl<'a> LeanParser<'a> {
             ctors,
             span: Some(self.span_to_next(&start)),
             generated: false,
+            source_unit_clone_derivation: None,
         })
     }
 
@@ -621,12 +625,22 @@ impl<'a> LeanParser<'a> {
             let body = self.with_bound(0, Self::expr)?;
             self.end_decl(&start, "termination_by")?;
             return Ok(Definition::Fn(Box::new(SFn {
+                semantic_ret: None,
                 name,
                 params,
                 ret,
+                source_signature: None,
+                source_primitive_owners: None,
+                source_empty_option: None,
+                source_type_namespace: None,
+                source_local_state: None,
+                source_const_function: None,
+                source_diagnostic_attributes: None,
+                source_loop: None,
                 body,
                 span: Some(self.span_to_next(&start)),
                 generated: false,
+                source_pure_unit: None,
             })));
         }
         if !self.cursor.is("|") {
@@ -649,12 +663,22 @@ impl<'a> LeanParser<'a> {
         );
         self.end_decl(&start, "termination_by")?;
         Ok(Definition::Fn(Box::new(SFn {
+            semantic_ret: None,
             name,
             params: params.into_iter().chain(extra).collect(),
             ret,
+            source_signature: None,
+            source_primitive_owners: None,
+            source_empty_option: None,
+            source_type_namespace: None,
+            source_local_state: None,
+            source_const_function: None,
+            source_diagnostic_attributes: None,
+            source_loop: None,
             body,
             span: Some(self.span_to_next(&start)),
             generated: false,
+            source_pure_unit: None,
         })))
     }
 
@@ -704,6 +728,7 @@ impl<'a> LeanParser<'a> {
                 effects,
                 span: Some(at),
                 sequential_async: false,
+                source_runtime_worker: None,
             },
             at,
         ))
@@ -736,6 +761,7 @@ impl<'a> LeanParser<'a> {
                 value,
                 constant: false,
                 span: Some(self.span_to_next(&token)),
+                source_pure_unit_call: None,
             });
         }
         Err(unsupported(
@@ -779,6 +805,7 @@ fn bind_or_ctor(head: PatternHead, token: &Token) -> SPattern {
 const fn param(name: String, ty: Type) -> SParam {
     SParam {
         name,
+        optional: false,
         default_value: None,
         ty: Some(ty),
         span: None,

@@ -3,6 +3,9 @@
 // reserved words of the target never change which value a name denotes) and
 // small traversal helpers shared by the emitters.
 
+import { checkRustScalarLoopProof } from './rust-scalar-loops.js';
+import { readCallableOwnedParameters } from './callable-source.js';
+
 /** A per-declaration name supply: target-legal, unique, deterministic. */
 export class Scope {
   constructor(ident, reserved = new Set()) {
@@ -38,6 +41,16 @@ export function renameExpr(expr, env, scope) {
       const value = renameExpr(expr.value, env, scope);
       const name = scope.fresh(expr.name);
       return { ...expr, name, value, body: renameExpr(expr.body, new Map(env).set(expr.name, name), scope) };
+    }
+    case 'lambda': {
+      const inner = new Map(env);
+      const child = scope.child();
+      const params = readCallableOwnedParameters(expr).map(({ parameter: param }) => {
+        const name = child.fresh(param.name);
+        inner.set(param.name, name);
+        return { ...param, name };
+      });
+      return { ...expr, params, body: renameExpr(expr.body, inner, child) };
     }
     case 'match':
       return {
@@ -114,7 +127,11 @@ export function renameFunction(entry, ident, reserved) {
  * million iterations needs no million stack frames; null otherwise.
  */
 export function tailLoop(entry, body) {
-  if (!entry.generated || !entry.recursive) return null;
+  if (!entry.recursive) return null;
+  if (!entry.generated) {
+    if (entry.sourceLoop === undefined) return null;
+    checkRustScalarLoopProof(entry, entry.sourceLoop.language);
+  }
   const rewrite = (e) => {
     switch (e.k) {
       case 'call':

@@ -1,5 +1,6 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+
 import { test } from 'node:test';
 
 import {
@@ -9,9 +10,7 @@ import {
   analyzeProgram,
 } from '../src/index.js';
 
-const evidence = JSON.parse(
-  await readFile(new URL('../../parity/fixtures/issue-195-evidence.json', import.meta.url)),
-);
+const evidence = readProjectData(new URL('../../parity/fixtures/issue-195-evidence.json', import.meta.url));
 const encoder = new TextEncoder();
 
 test('pinned external corpora and representative projects exercise every four-language frontend', () => {

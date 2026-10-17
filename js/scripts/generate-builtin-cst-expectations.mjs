@@ -21,7 +21,7 @@
 // with UTF-8 byte offsets and flags drawn from E (error), M (missing) and
 // X (extra). Built-in grammars own their whitespace as extra nodes.
 import { createHash } from 'node:crypto';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -30,6 +30,7 @@ import { DEFAULT_MAX_DEPTH } from 'links-notation/src/Parser.js';
 import { stripComments } from 'links-notation/src/comments.js';
 import { parse as parseLinks } from 'links-notation/src/parser-generated.js';
 import { PDFDict, PDFName, PDFParser, PDFRef } from 'pdf-lib';
+import { checkProjectData, readProjectData, writeProjectData } from './project-data.mjs';
 
 const require = createRequire(import.meta.url);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -349,24 +350,8 @@ async function builtinRows(language, source, positive) {
 
 // ---- output ------------------------------------------------------------------
 
-function formatExpected(value) {
-  const render = (item, indent) => {
-    if (Array.isArray(item) && item.length && Array.isArray(item[0])) {
-      return `[\n${item.map((row) => `${indent}  ${JSON.stringify(row)}`).join(',\n')}\n${indent}]`;
-    }
-    if (Array.isArray(item)) return JSON.stringify(item);
-    if (item && typeof item === 'object') {
-      const entries = Object.entries(item);
-      if (!entries.length) return '{}';
-      return `{\n${entries.map(([key, entry]) => `${indent}  ${JSON.stringify(key)}: ${render(entry, `${indent}  `)}`).join(',\n')}\n${indent}}`;
-    }
-    return JSON.stringify(item);
-  };
-  return `${render(value, '')}\n`;
-}
-
 async function generate() {
-  const inventory = JSON.parse(await readFile(inventoryPath, 'utf8'));
+  const inventory = readProjectData(inventoryPath);
   const result = {};
   for (const language of inventory.languages) {
     if (!language.builtinGrammar) continue;
@@ -397,14 +382,16 @@ async function generate() {
   };
 }
 
-const expected = formatExpected(await generate());
+const expected = await generate();
 if (process.argv.includes('--check')) {
-  if ((await readFile(expectedPath, 'utf8').catch(() => '')) !== expected) {
+  try {
+    checkProjectData(expectedPath, expected);
+  } catch {
     console.error('parity/fixtures/builtin-cst-expected.json is stale; run node js/scripts/generate-builtin-cst-expectations.mjs');
     process.exit(1);
   }
   console.log('builtin CST expectations match');
 } else {
-  await writeFile(expectedPath, expected);
+  writeProjectData(expectedPath, expected);
   console.log('wrote parity/fixtures/builtin-cst-expected.json');
 }

@@ -113,6 +113,10 @@ export type SelfTranslationSignature =
   | { readonly k: 'const'; readonly name: string; readonly type: SelfTranslationType; readonly literal: boolean };
 
 export interface SelfTranslationOptions {
+  /** Uses one UTF-16 string representation across all emitted module items. */
+  readonly utf16Strings?: boolean;
+  /** Forces shared reference values across module items; observable identity and mutation also select them automatically. */
+  readonly referenceSemantics?: boolean;
   /** Emitter decorators applied to each translated item. */
   readonly decorators?: unknown;
   /** The module's directory inside its crate, as path segments; the crate root by default. */
@@ -120,6 +124,18 @@ export interface SelfTranslationOptions {
   /** The signatures `selfTranslationSignatures` gives for each imported module, by import specifier. */
   readonly imports?: Readonly<Record<string, readonly SelfTranslationSignature[]>>;
 }
+export interface TypeScriptErasure {
+  start: number;
+  end: number;
+  term: string;
+}
+export interface ErasedTypeScript {
+  code: string;
+  erasures: TypeScriptErasure[];
+}
+export function eraseTypeScript(source: string): ErasedTypeScript;
+/** Projects supported TypeScript compile-time annotations into the shared JavaScript frontend's JSDoc form. */
+export function projectTypeScriptTyping(source: string): string;
 
 /**
  * Translates one of meta-language's own modules between JavaScript,
@@ -135,6 +151,14 @@ export function selfTranslate(source: string, from: string, to: string, options?
  * that translate into Rust, for the `imports` of a module that imports them.
  */
 export function selfTranslationSignatures(source: string, language: string, options?: SelfTranslationOptions): SelfTranslationSignature[];
+
+export type NetworkProjectionValue = 'Lossless' | 'ConcreteSyntax' | 'AbstractSyntax' | 'Semantic';
+export const NetworkProjection: Readonly<{
+  Lossless: 'Lossless';
+  ConcreteSyntax: 'ConcreteSyntax';
+  AbstractSyntax: 'AbstractSyntax';
+  Semantic: 'Semantic';
+}>;
 
 export type LinkTypeValue =
   | 'Concept'
@@ -651,6 +675,7 @@ export class LinkFlags {
 }
 
 export class LinkMetadata {
+  term?: string;
   static new(): LinkMetadata;
   definition?: string;
   span?: SourceSpan;
@@ -840,6 +865,7 @@ export function translateProgram(
   source: string,
   sourceLanguage: string,
   targetLanguage: string,
+  options?: { utf16Strings?: boolean; referenceSemantics?: boolean },
 ): ProgramTranslation;
 export function decodeProgramTranslation(
   code: string,
@@ -849,6 +875,83 @@ export function readTranslationProvenance(
   code: string,
   targetLanguage: string,
 ): ReadTranslationProvenance;
+
+/** A source-free checked semantic program with direct declaration and binder links. */
+export interface TypedProgramLinks {
+  readonly network: LinkNetwork;
+  readonly root: LinkId;
+}
+export interface CheckedTypedProgram {
+  readonly language: string;
+  readonly declarations: Map<string, object>;
+  readonly main: object;
+  readonly [field: string]: unknown;
+}
+export interface TypedProgramLinksEmission {
+  readonly code: string;
+  readonly language: 'JavaScript' | 'Rust';
+  readonly mappings: readonly TranslationMapping[];
+  readonly assumptions: readonly TranslationAssumption[];
+  readonly encodings: readonly TranslationEncoding[];
+  readonly theorems: readonly TranslationObligation[];
+}
+/** Selects supported emission models from validated owned program facts. */
+export interface TypedProgramLinksEmissionOptions {
+  /** Preserves selected immutable-reference Rust headers and closed call interfaces. */
+  readonly rustSourceHeaderEmissionModel?: 'primitive borrowed Rust function header 1' | 'closed primitive borrowed Rust call interface 1';
+  /** Allocates JavaScript aliases from actual checked local binding owners. */
+  readonly javaScriptScopedBindingEmissionModel?: 'owned JavaScript scoped bindings 1';
+}
+/** Actual UTF-16 units of primitive Unicode scalar text; rejects unpaired surrogates. */
+export function readSourceTextUnits(text: string): number[];
+/** Exact UTF-8 byte length under the bounded Unicode scalar text model. */
+export function readSourceTextByteLength(text: string): number;
+/** Exact UTF-8 byte, or null for a nonintegral or out-of-bounds offset. */
+export function readSourceTextByte(text: string, offset: number): number | null;
+/** Unchanged substring at ordered UTF-8 scalar boundaries, or null. */
+export function sliceSourceTextBytes(text: string, start: number, end: number): string | null;
+
+/** Imports the supported checked JavaScript or Rust core as editable semantic links. */
+export function createTypedProgramLinks(
+  source: string,
+  language: string,
+  options?: { provenance?: unknown; utf16Strings?: boolean; context?: object;
+    rustArrayResultModel?: 'immutable fresh scalar vector results 1';
+    rustCompletionModel?: 'closed guarded function returns 1';
+    /** Retains const qualification on closed primitive predicates; no compile-time evaluation requests. */
+    rustConstFunctionModel?: 'closed pure Rust const predicates 1' | 'closed Boolean Rust const decision trees 1';
+    /** Retains owned source header facts; does not promise source ABI emission. */
+    rustSourceSignatureModel?: 'Rust source function signature 1',
+    /** Resolves qualified and imported standard binary64 owners under explicit source checks. */
+    rustPrimitiveOwnerModel?: 'standard primitive Rust binary64 owner 1',
+    /** Retains checked owned text state, source moves and canonical local copies. */
+    rustOwnedLocalStateModel?: 'closed owned text local state 1' | 'canonical owned text local copies 1' | 'closed owned text tuple initialization calls 1',
+    /** Retains closed zero-argument private or bare-public pure Unit helpers and owned calls. */
+    rustRuntimeShellModel?: 'closed pure Rust unit runtime shell 1',
+    rustPureUnitCallModel?: 'closed pure Rust unit calls 1' | 'closed public pure Rust unit calls 1',
+    /** Resolves owned Rust header paths against the separate type namespace. */
+    rustTypeNamespaceModel?: 'resolved Rust type namespace 1',
+    /** Captures closed zero-argument primitive empty-option Rust functions. */
+    rustEmptyOptionSourceModel?: 'closed empty primitive Rust option 1',
+    rustScalarLoopModel?: 'closed primitive scalar loop 1' | 'closed declaration scalar loop 1',
+    javaScriptScalarLoopModel?: 'closed primitive scalar loop 1' | 'closed declaration scalar loop 1' },
+): TypedProgramLinks;
+export function encodeTypedProgramLinks(
+  program: CheckedTypedProgram,
+  options?: { provenance?: unknown },
+): TypedProgramLinks;
+export function decodeTypedProgramLinks(
+  network: LinkNetwork,
+  root: LinkIdValue,
+  options?: { nodeLimit?: number; depthLimit?: number },
+): CheckedTypedProgram;
+/** Emits from current links after scope and semantic validation, without source restoration. */
+export function emitTypedProgramLinks(
+  network: LinkNetwork,
+  root: LinkIdValue,
+  target: string,
+  options?: TypedProgramLinksEmissionOptions,
+): TypedProgramLinksEmission;
 
 export const PROGRAM_REPRESENTATION_SCHEMA_VERSION: 1;
 export const PROGRAM_SNAPSHOT_SCHEMA_VERSION: 1;
@@ -1074,6 +1177,9 @@ export class LinkNetwork {
   linksNotationText(ids: LinkId[]): string;
   link(id: LinkId | number): Link | undefined;
   links(): Link[];
+  /** Original links; omission selects concrete syntax. Resolve provenance through this complete network. */
+  projectedLinks(projection?: NetworkProjectionValue): Link[];
+  projected_links(projection?: NetworkProjectionValue): Link[];
   len(): number;
   queryLinks(query: LinkQuery): Link[];
   find(query: LinkQuery): QueryMatch[];
@@ -1104,15 +1210,34 @@ export class Link {
   metadata(): LinkMetadata;
 }
 
+export interface EmbeddedRegionLimits {
+  depthLimit?: number;
+  countLimit?: number;
+  byteLimit?: number;
+}
+
 export class ParseConfiguration {
+  constructor(options?: {
+    triviaAttachmentPolicy?: string;
+    regionDetectionPolicy?: RegionDetectionPolicyValue;
+    accessMode?: string;
+    embeddedRegionDepthLimit?: number;
+    embeddedRegionCountLimit?: number;
+    embeddedRegionByteLimit?: number;
+  });
   readonly triviaAttachmentPolicy: string;
   readonly regionDetectionPolicy: RegionDetectionPolicyValue;
   readonly accessMode: string;
+  /** Adapter traversal bounds, independent of each grammar parser's budgets. */
+  readonly embeddedRegionDepthLimit: number;
+  readonly embeddedRegionCountLimit: number;
+  readonly embeddedRegionByteLimit: number;
   static default(): ParseConfiguration;
   withTriviaAttachmentPolicy(policy: string): ParseConfiguration;
   withRegionDetectionPolicy(policy: RegionDetectionPolicyValue): ParseConfiguration;
   with_region_detection_policy(policy: RegionDetectionPolicyValue): ParseConfiguration;
   withAccessMode(mode: string): ParseConfiguration;
+  withEmbeddedRegionLimits(limits?: EmbeddedRegionLimits): ParseConfiguration;
 }
 
 export class LinkQuery {
@@ -1246,7 +1371,56 @@ export type GrammarExpression =
   | { kind: 'predicate'; item: GrammarExpression; condition: GrammarOperation }
   | { kind: 'recover'; item: GrammarExpression; synchronize: GrammarExpression }
   | { kind: 'embed'; language: string; item: GrammarExpression }
+  | { kind: 'any-grammar' | 'all-grammar'; item: GrammarExpression; items: Array<GrammarSelectionCandidate | GrammarRangeSelectionCandidate | GrammarFieldSelectionCandidate> }
+  | GrammarSelectionCandidate
+  | GrammarRangeSelectionCandidate
+  | GrammarSourceRange
+  | GrammarFieldSelectionCandidate
+  | GrammarSourceFieldSelector
   | { kind: 'expand'; name: string; arguments: GrammarExpression[] };
+
+export interface GrammarSelectionCandidate {
+  kind: 'grammar-candidate';
+  name: string;
+  /** Unknown named mappings are retained as explicit diagnostics. */
+  mapping: string;
+}
+
+/** An ordered nonempty range in UTF-8 bytes relative to the matched region. */
+export interface GrammarSourceRange {
+  kind: 'source-range';
+  start: number;
+  end: number;
+}
+
+/** One explicit source view shared by every any/all candidate. The selected
+ * scalar-aligned ranges must omit at least one byte from the physical region.
+ */
+export interface GrammarRangeSelectionCandidate {
+  kind: 'grammar-range-candidate';
+  name: string;
+  mapping: 'included-ranges';
+  ranges: GrammarSourceRange[];
+}
+
+/** A finite window of topmost physical, non-trivia capture fields. Occurrence
+ * indices are unsigned 32-bit integers; first is zero-based and count is positive.
+ */
+export interface GrammarSourceFieldSelector {
+  kind: 'source-field-selector';
+  label: string;
+  mode: 'include' | 'exclude';
+  first: number;
+  count: number;
+}
+
+/** Every candidate in one selection must use the same physical field selector. */
+export interface GrammarFieldSelectionCandidate {
+  kind: 'grammar-field-candidate';
+  name: string;
+  mapping: 'field-ranges';
+  selector: GrammarSourceFieldSelector;
+}
 
 /**
  * One operation of the scanner, action and predicate language of
@@ -1355,6 +1529,10 @@ export function emitPeggy(grammar: Grammar): string;
 export interface GrammarParserOptions extends DecoratorOptions {
   /** Returns the grammar an import or an embedded language names. */
   resolveGrammar?: (name: string) => Grammar | NormalizedGrammar | null | undefined;
+  /** Source-qualified root identity; with a concept space retains a root boundary. */
+  grammarName?: string;
+  /** Global origin membership is retained only after checking the actual source. */
+  globalConceptSpace?: GlobalConceptSpace;
   startRule?: string;
   maxDepth?: number;
   stepLimit?: number;
@@ -1392,28 +1570,182 @@ export type SyntaxTreeNode =
       attributes?: Record<string, string | number>;
       text: string | null;
       hex?: string;
+      lexical?: Record<string, unknown>;
     }
   | { type: 'error'; start: number; end: number; text: string | null; hex?: string; reason?: string }
   | { type: 'missing'; kind: string | null; start: number; end: number; literal?: true }
-  | { type: 'embed'; language: string; start: number; end: number; root: SyntaxTreeNode };
+  | { type: 'embed'; language: string; start: number; end: number; root: SyntaxTreeNode;
+      /** Full physical host children for an explicitly mapped selection. */
+      sourceChildren?: SyntaxTreeNode[]; selection?: GrammarSelection };
+
+/** Physical spelling only. Mapped embeds retain their source children and omit
+ * decoded roots and selection metadata. Identity embed roots remain opaque to
+ * field selection while their physical spelling is retained in the witness.
+ */
+export type GrammarPhysicalWitnessTree =
+  | (Omit<Extract<SyntaxTreeNode, { type: 'node' }>, 'children'> & { children: GrammarPhysicalWitnessTree[] })
+  | Extract<SyntaxTreeNode, { type: 'token' | 'error' | 'missing' }>
+  | { type: 'embed'; language: string; start: number; end: number;
+      sourceChildren: GrammarPhysicalWitnessTree[]; root?: never; selection?: never }
+  | { type: 'embed'; language: string; start: number; end: number;
+      root: GrammarPhysicalWitnessTree; sourceChildren?: never; selection?: never };
+
+export interface GrammarFieldRangeWitness {
+  start: number;
+  end: number;
+  children: GrammarPhysicalWitnessTree[];
+}
+
+export interface GrammarFieldRangeOccurrence {
+  /** Alternating child-role strings and zero-based child indices, beginning
+   * with 'children'. Identity embed roots are never traversed for occurrences.
+   */
+  path: Array<'children' | 'sourceChildren' | number>;
+  start: number;
+  end: number;
+}
+
+export interface GrammarFieldRangeSourceDerivation {
+  operation: 'field-ranges';
+  input: number;
+  start: number;
+  end: number;
+  selector: GrammarSourceFieldSelector;
+  occurrences: GrammarFieldRangeOccurrence[];
+  ranges: Array<[number, number]>;
+  witness: GrammarFieldRangeWitness;
+}
+
+export type GrammarSourcePlaneDerivation =
+  | { operation: 'json-string'; input: number; start: number; end: number }
+  | { operation: 'included-ranges'; input: number; start: number; end: number; ranges: Array<[number, number]> }
+  | GrammarFieldRangeSourceDerivation;
+
+/** An ordered once-owned source definition. identity equals its zero-based
+ * table position; these local references are not LinkNetwork identifiers.
+ */
+export interface GrammarSourcePlane {
+  kind: 'grammar-source';
+  identity: number;
+  encoding: 'UTF-8';
+  byteLength: number;
+  derivation: null | GrammarSourcePlaneDerivation;
+}
+
+export interface GrammarSourceMapping {
+  kind: 'source-mapping';
+  operation: 'json-string';
+  input: number;
+  output: number;
+  /** Ordered [physicalStart, physicalEnd, decodedStart, decodedEnd] byte intervals. */
+  intervals: Array<[number, number, number, number]>;
+}
+
+export interface GrammarIncludedRangeSourceMapping {
+  kind: 'source-mapping';
+  operation: 'included-ranges';
+  input: number;
+  output: number;
+  ranges: Array<[number, number]>;
+  /** Scalar copies, excluded gaps and boundary points in their original order. */
+  intervals: Array<[number, number, number, number]>;
+}
+
+export interface GrammarFieldRangeSourceMapping {
+  kind: 'source-mapping';
+  operation: 'field-ranges';
+  input: number;
+  output: number;
+  selector: GrammarSourceFieldSelector;
+  occurrences: GrammarFieldRangeOccurrence[];
+  ranges: Array<[number, number]>;
+  /** Scalar copies, excluded gaps and boundary points in physical source order. */
+  intervals: Array<[number, number, number, number]>;
+}
+
+export type GrammarSelectionSourceMapping =
+  | GrammarSourceMapping
+  | GrammarIncludedRangeSourceMapping
+  | GrammarFieldRangeSourceMapping;
+
+/** A covering source spelling, not an exact byte correspondence inside a scalar. */
+export interface GrammarSourceRoute {
+  output: number;
+  outputStart: number;
+  outputEnd: number;
+  input: number;
+  inputStart: number;
+  inputEnd: number;
+  displayAnchor: number;
+}
+
+/** Complete physical root plus the actual source definitions needed to resolve
+ * mapped child references. A failed result with tree:null is not this bundle.
+ */
+export interface GrammarMappedTreeBundle {
+  tree: SyntaxTreeNode;
+  sourcePlanes: GrammarSourcePlane[];
+}
+
+export interface GrammarSelectionProvenance {
+  source: string;
+  language: string;
+  edition: string;
+  rules: Array<{ rule: string; origin: string; concept: string | null;
+    declaredConcept: string | null; sourceNames: GrammarSourceName[] }>;
+}
+export interface GrammarSelectionAlternative {
+  language: string;
+  root: SyntaxTreeNode;
+  provenance: GrammarSelectionProvenance;
+}
+export interface GrammarSelection {
+  mode: 'any-grammar' | 'all-grammar' | 'grammar-root';
+  mapping: string;
+  start: number;
+  end: number;
+  candidates: Array<{ language: string; relation: 'accepted' | 'rejected' | 'unknown';
+    reason?: string; mapping?: string; offset?: number; expected?: string[];
+    source?: number; sourceOffset?: number; physicalRange?: [number, number];
+    offsetSemantics?: 'covering-source-spelling' }>;
+  /** Present only when the explicit mapping owns a separately decoded source. */
+  sourceMapping?: GrammarSelectionSourceMapping;
+  provenance: GrammarSelectionProvenance;
+  alternatives: GrammarSelectionAlternative[];
+  ambiguous: boolean;
+}
 
 export interface GrammarRejection {
-  reason: 'syntax' | 'stepLimit' | 'memoryBudget' | 'nestingDepth' | 'recovered' | 'ambiguity';
+  reason: 'syntax' | 'stepLimit' | 'memoryBudget' | 'nestingDepth' | 'recovered' | 'ambiguity'
+    | 'unknownGrammar' | 'unsupportedEmbeddingMapping' | 'invalidEmbeddingMapping'
+    | 'nonConsumingEmbeddingCycle' | 'unprovedGrammarOrigin';
   offset?: number;
   line?: number;
   column?: number;
   expected?: string[];
   limit?: number;
+  offsetSemantics?: 'covering-source-spelling';
+  diagnostics?: Array<{ reason: string; language?: string; start: number; end: number;
+    mapping?: string; rule?: string; expected?: string[]; source?: number;
+    sourceStart?: number; sourceEnd?: number; sourceRoute?: GrammarSourceRoute[];
+    offsetSemantics?: 'covering-source-spelling' }>;
 }
 
 export interface GrammarParseOutcome {
   ok: boolean;
   tree: SyntaxTreeNode | null;
-  ambiguities: Array<{ rule: string; start: number; end: number }>;
+  ambiguities: Array<{ rule: string; start: number; end: number; languages?: string[];
+    source?: number; sourceStart?: number; sourceEnd?: number; sourceRoute?: GrammarSourceRoute[];
+    offsetSemantics?: 'covering-source-spelling' }>;
   rejection: GrammarRejection | null;
+  /** Present only after entering an explicit mapped-source profile. Rows may
+   * retain validated transforms attempted by a child grammar that rejected.
+   */
+  sourcePlanes?: GrammarSourcePlane[];
 }
 
 export interface GrammarParser {
+  /** A mapped success requires parseTree so its source-plane registry is retained. */
   parse(source: string | Uint8Array, options?: GrammarParserOptions): SyntaxTreeNode;
   parseTree(source: string | Uint8Array, options?: GrammarParserOptions): GrammarParseOutcome;
 }
@@ -1429,7 +1761,7 @@ export class GrammarParseError extends Error {
 }
 
 export class GrammarRuntimeError extends Error {
-  reason: 'import' | 'embed' | 'macro' | 'parameter' | 'reference' | 'declaration' | 'operation' | 'pattern';
+  reason: 'import' | 'embed' | 'macro' | 'parameter' | 'reference' | 'declaration' | 'operation' | 'pattern' | 'selection';
 }
 
 export function createGrammarParser(
@@ -1437,6 +1769,13 @@ export function createGrammarParser(
   options?: GrammarParserOptions,
 ): GrammarParser;
 export function renderSyntaxTree(node: SyntaxTreeNode): string;
+/** Validate mapping correspondence in ordinary plain data after generic Links
+ * decode. Returns the same bundle. This does not prove grammar membership;
+ * complete CSTs still require parsing with their actual grammar definitions.
+ */
+export function checkGrammarSelectionMappedTree<T>(bundle: T,
+  options?: Pick<GrammarParserOptions, 'memoryLimit' | 'stepLimit' | 'maxDepth' | 'errorRecovery'>,
+): T & GrammarMappedTreeBundle;
 export function compileGrammar(
   grammar: Grammar | NormalizedGrammar,
   options?: GrammarParserOptions,
@@ -1502,6 +1841,217 @@ export function emitTreeSitterJson(grammar: Grammar, options?: DecoratorOptions)
 export const emit_tree_sitter_json: typeof emitTreeSitterJson;
 
 export const GRAMMAR_MERGE_METHOD: 'recursive-structural-bisimulation';
+/** Every imported production has a qualified origin before meaning is shared. */
+export interface GlobalConceptSource {
+  id: string;
+  language: string;
+  edition?: string;
+  grammar: Grammar;
+}
+export interface GlobalConceptOrigin {
+  alias: string;
+  source: string;
+  language: string;
+  edition: string;
+  rule: string;
+  concept: string | null;
+  sourceNames: Array<{ source: string; name: string }>;
+}
+export interface GlobalConceptProof {
+  method: 'recursive-structural-bijection';
+  first: string;
+  second: string;
+  correspondence: Array<[string, string]>;
+}
+export interface GlobalConceptSpace {
+  schemaVersion: 1;
+  sources: Array<{ id: string; language: string; edition: string; start: string | null;
+    ruleOrder: string[]; context: GrammarDeclarations; sourceFormat?: string }>;
+  concepts: Array<{ id: string; origins: GlobalConceptOrigin[]; definition: Omit<GrammarRuleValue, 'name'>;
+    definitions: Array<{ origin: string; definition: Omit<GrammarRuleValue, 'name'> }>; proofs: number[] }>;
+  mappings: Record<string, string>;
+  proofs: GlobalConceptProof[];
+  failures: Array<{ members: [string, string]; reason: 'unknown-origin' | 'no-one-to-one-proof' }>;
+  ambiguities: Array<{ alias: string; meanings: string[] }>;
+  redirects: Record<string, string>;
+  formalDefinitions: Record<string, PortableFormalConceptArchive>;
+}
+export interface GlobalConceptOptions {
+  previous?: GlobalConceptSpace | null;
+  equivalences?: Array<[string, string]>;
+  records?: readonly (ConceptRecord & {
+    readonly formalDefinition?: FormalConceptArchive | PortableFormalConceptArchive;
+  })[];
+  formalDefinitions?: Readonly<Record<string, FormalConceptArchive | PortableFormalConceptArchive>>;
+}
+/** Explicit discovery outputs and copied formal archives in one inspectable graph. */
+export interface DiscoveredConceptLinks {
+  network: LinkNetwork;
+  root: LinkId;
+  space: GlobalConceptSpace;
+}
+export interface DiscoveredConceptGraph {
+  sources: GlobalConceptSource[];
+  space: GlobalConceptSpace;
+  formalDefinitions: Record<string, FormalConceptArchive>;
+}
+export function createDiscoveredConceptLinks(
+  sources: readonly GlobalConceptSource[], options?: GlobalConceptOptions,
+): DiscoveredConceptLinks;
+export function readDiscoveredConceptLinks(network: LinkNetwork, root: LinkIdValue): DiscoveredConceptGraph;
+
+export interface ConceptViews {
+  network: LinkNetwork;
+  root: LinkId;
+  ontology: LinkId;
+  taxonomy: LinkId;
+}
+export interface ConceptViewDeclaration<Kind extends string> {
+  members?: readonly string[];
+  roots?: readonly { identity: string; typeModel?: FormalConceptArchive | PortableFormalConceptArchive }[];
+  relations?: readonly { source: string; target: string; kind: Kind; model: FormalConceptArchive | PortableFormalConceptArchive }[];
+}
+export interface ConceptViewOptions {
+  orphans?: readonly { identity: string; definition: FormalConceptArchive | PortableFormalConceptArchive; provenance?: unknown }[];
+  ontology?: ConceptViewDeclaration<'association' | 'axiom'>;
+  taxonomy?: ConceptViewDeclaration<'classification' | 'subsumption'>;
+}
+export interface ConceptViewResult {
+  view: number;
+  concepts: Array<{ identity: string; link: number; definitionRoots: number[]; provenanceRoots: number[]; provenance: unknown }>;
+  roots: Array<{ link: number; concept: number; typeModel: number | null }>;
+  relations: Array<{ link: number; source: number; target: number; kind: string; model: number }>;
+  selectedRoots: number[];
+  reachable: number[];
+}
+export function createConceptViews(base?: DiscoveredConceptLinks | null, options?: ConceptViewOptions): ConceptViews;
+export function readConceptOntology(network: LinkNetwork, root: LinkIdValue, options?: { selectedRoot?: LinkIdValue }): ConceptViewResult;
+export function readConceptTaxonomy(network: LinkNetwork, root: LinkIdValue, options?: { selectedRoot?: LinkIdValue }): ConceptViewResult;
+
+export interface BinaryLinksOptions { recordLimit?: number; byteLimit?: number }
+export class BinaryLinksError extends TypeError { constructor(message: string) }
+export function encodeLinkNetworkBinary(network: LinkNetwork, options?: BinaryLinksOptions): Uint8Array;
+export function decodeLinkNetworkBinary(bytes: Uint8Array | readonly number[], options?: BinaryLinksOptions): LinkNetwork;
+
+/** Structured RDF 1.1 terms; syntax import and OWL entailment are separate operations. */
+export type ResourceDescriptionTerm =
+  | { kind: 'identifier'; value: string }
+  | { kind: 'blank'; value: string; sourceIdentifier?: string }
+  | { kind: 'literal'; value: string; datatype?: string; language?: string };
+export type ResourceDescriptionStatement = [ResourceDescriptionTerm, ResourceDescriptionTerm, ResourceDescriptionTerm];
+/** Decoded terms always carry explicit blank scopes and normalized literal metadata. */
+export type DecodedResourceDescriptionTerm =
+  | { kind: 'identifier'; value: string }
+  | { kind: 'blank'; value: string; sourceIdentifier: string }
+  | { kind: 'literal'; value: string; datatype: string; language: string };
+export type DecodedResourceDescriptionStatement = [
+  Exclude<DecodedResourceDescriptionTerm, { kind: 'literal' }>,
+  Extract<DecodedResourceDescriptionTerm, { kind: 'identifier' }>,
+  DecodedResourceDescriptionTerm,
+];
+export interface ResourceDescriptionLinks { network: LinkNetwork; root: LinkId }
+export interface ResourceDescriptionGraph {
+  model: string;
+  triples: DecodedResourceDescriptionStatement[];
+  occurrences: Array<{ statementIndex: number; sourceIdentifier: string; position: number; sourceLanguage: string }>;
+}
+export function importResourceDescriptionGraph(
+  triples: readonly Readonly<ResourceDescriptionStatement>[],
+  options: { sourceIdentifier: string; network?: LinkNetwork },
+): ResourceDescriptionLinks;
+export function decodeResourceDescriptionGraph(
+  network: LinkNetwork, root: LinkIdValue, options?: { nodeLimit?: number },
+): ResourceDescriptionGraph;
+export function mergeResourceDescriptionGraphs(inputs: readonly ResourceDescriptionLinks[]): ResourceDescriptionLinks;
+export function verifyResourceDescriptionGraphWitnesses(network: LinkNetwork, root: LinkIdValue): boolean;
+
+export interface ResourceDescriptionNTriplesLinks extends ResourceDescriptionLinks { syntaxRoot: LinkId }
+export interface ResourceDescriptionNTriplesOutput { source: string; correspondence: ResourceDescriptionLinks }
+export class ResourceDescriptionNTriplesError extends TypeError {
+  constructor(kind: string, offset: number, message: string);
+  kind: string;
+  offset: number;
+}
+export function importResourceDescriptionNTriples(source: string, options: {
+  sourceIdentifier: string; network?: LinkNetwork; correspondence?: ResourceDescriptionLinks;
+}): ResourceDescriptionNTriplesLinks;
+export function emitResourceDescriptionNTriples(network: LinkNetwork, root: LinkIdValue): ResourceDescriptionNTriplesOutput;
+export function readResourceDescriptionNTriplesSource(network: LinkNetwork, syntaxRoot: LinkIdValue): string;
+
+export interface FormalConceptArchive {
+  readonly network: LinkNetwork;
+  readonly root: LinkId;
+}
+export interface PortableFormalConceptArchive {
+  readonly links: string;
+  readonly root: number;
+}
+export interface FormalConceptDefinition {
+  readonly schemaVersion: 1;
+  readonly model: string;
+  readonly shapes: readonly string[];
+  readonly offsets: readonly number[];
+  readonly edges: readonly number[];
+}
+/** Copies a checked operational definition and its declared supported model into links. */
+export function encodeFormalConceptDefinition(
+  value?: CheckedTypedProgram | TypedProgramLinks | object,
+  options?: { model?: string; provenance?: unknown },
+): FormalConceptArchive;
+export function readFormalConceptDefinition(
+  value: FormalConceptArchive | PortableFormalConceptArchive,
+): FormalConceptDefinition;
+/** Extracts the selected checked function and its actual closed recursive dependency links. */
+export type FormalFunctionSelector = string | number | LinkId;
+export function encodeFormalFunctionDefinition(
+  value: TypedProgramLinks | PortableFormalConceptArchive,
+  declaration: FormalFunctionSelector,
+  options?: { provenance?: unknown },
+): FormalConceptArchive;
+/** Selects a closed Number/Boolean function under an explicit shared value model. */
+export function encodeSharedNumericFunctionDefinition(
+  value: TypedProgramLinks | PortableFormalConceptArchive,
+  declaration: FormalFunctionSelector,
+  options?: { provenance?: unknown },
+): FormalConceptArchive;
+/** Returns a closed correspondence under the declared model, or null if none is proved. */
+export function proveFormalConceptEquivalence(
+  first: FormalConceptArchive | PortableFormalConceptArchive,
+  second: FormalConceptArchive | PortableFormalConceptArchive,
+): FormalConceptArchive | null;
+export function verifyFormalConceptEquivalence(
+  first: FormalConceptArchive | PortableFormalConceptArchive,
+  second: FormalConceptArchive | PortableFormalConceptArchive,
+  certificate: FormalConceptArchive | PortableFormalConceptArchive,
+): boolean;
+export const GLOBAL_CONCEPT_PROOF_METHOD: 'recursive-structural-bijection';
+export function createGlobalConceptSpace(sources: readonly GlobalConceptSource[], options?: GlobalConceptOptions): GlobalConceptSpace;
+export function globalConceptSpaceToLinks(space: GlobalConceptSpace): string;
+export function readGlobalConceptSpaceLinks(source: string, options?: GlobalConceptOptions): GlobalConceptSpace;
+/** Archive-owned identities and resolution cannot be replaced by parser options. */
+export type GlobalConceptSpaceParserOptions = GrammarParserOptions & {
+  resolveGrammar?: never;
+  grammarName?: never;
+  globalConceptSpace?: never;
+};
+export interface GlobalConceptSpaceParser {
+  parse(source: string | Uint8Array, options?: GlobalConceptSpaceParserOptions): SyntaxTreeNode;
+  parseTree(source: string | Uint8Array, options?: GlobalConceptSpaceParserOptions): GrammarParseOutcome;
+}
+export function createGlobalConceptSpaceParser(
+  source: string, sourceIdentifier: string,
+  options?: GlobalConceptSpaceParserOptions & Pick<GlobalConceptOptions, 'records'>,
+): GlobalConceptSpaceParser;
+export function verifyGlobalConceptCorrespondence(shapes: readonly string[], meanings: readonly string[],
+  offsets: readonly number[], edges: readonly number[], first: readonly number[], second: readonly number[]): boolean;
+export interface GlobalConstructTranslation {
+  relation: 'translated' | 'ambiguous' | 'untranslatable' | 'unknown';
+  concept: string | null;
+  origins: GlobalConceptOrigin[];
+  proofs: number[];
+}
+export function translateGlobalConstruct(space: GlobalConceptSpace, alias: string,
+  language: string, options?: { edition?: string }): GlobalConstructTranslation;
 export interface GrammarMergeSource {
   id: string;
   language: string;
@@ -1550,11 +2100,15 @@ export interface GrammarMergeResult {
   failures: GrammarMergeFailure[];
   reused: string[];
   recomputed: string[];
+  globalConceptSpace: GlobalConceptSpace;
 }
 export interface GrammarMergeOptions extends DecoratorOptions {
   samples?: Record<string, string[]>;
   requiredEquivalences?: Array<[string, string]>;
   previous?: GrammarMergeResult | null;
+  reconcile?: boolean;
+  globalEquivalences?: Array<[string, string]>;
+  conceptRecords?: readonly ConceptRecord[];
 }
 export class GrammarMergeError extends Error {
   failures: GrammarMergeFailure[];
@@ -1678,6 +2232,19 @@ export const GRAMMAR_EXPORT_FORMATS: readonly GrammarInterchangeFormat[];
 export function grammarImporter(format: string): ((source: string) => Grammar) | null;
 export function grammarEmitter(format: string): ((grammar: Grammar) => GrammarEmitResult) | null;
 export function renderNativeGrammar(grammar: Grammar): string;
+export type StructuredDataValue = null | boolean | number | string | StructuredDataValue[] | { [key: string]: StructuredDataValue };
+export interface StructuredDataLinksLimits { nodeLimit?: number; depthLimit?: number; byteLimit?: number; }
+export interface StructuredDataLinksArchive {
+  network: { link(id: LinkId): Link | undefined; links(): Link[]; toLino(): string };
+  root: LinkId;
+}
+export function encodeStructuredDataLinks(value: StructuredDataValue, limits?: StructuredDataLinksLimits): StructuredDataLinksArchive;
+export function decodeStructuredDataLinks(network: StructuredDataLinksArchive['network'], root: LinkId, limits?: StructuredDataLinksLimits): StructuredDataValue;
+export function structuredDataToLino(value: StructuredDataValue, limits?: StructuredDataLinksLimits): string;
+export function readStructuredDataLino(source: string, limits?: StructuredDataLinksLimits): StructuredDataValue;
+export function structuredDataRecordToLino(value: StructuredDataValue, namespace?: string, limits?: StructuredDataLinksLimits): string;
+export function readStructuredDataRecords(source: string, limits?: StructuredDataLinksLimits): StructuredDataValue[];
+
 export function renderNativeExpression(expression: GrammarExpression): string;
 export function parseNativeGrammar(source: string): Grammar;
 export const GRAMMAR_COMMAND_USAGE: string;

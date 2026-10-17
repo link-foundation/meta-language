@@ -42,6 +42,34 @@ pub(super) fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr,
         }
     }
     fn walk(node: &mut SExpr, arrays: &HashMap<*const SExpr, Type>) {
+        if let Some(ty) = arrays.get(&std::ptr::from_ref::<SExpr>(node)) {
+            match (&mut node.node, ty) {
+                (
+                    SNode::Lambda { params, ret, .. },
+                    Type::Function {
+                        params: inferred,
+                        ret: inferred_ret,
+                    },
+                ) => {
+                    for (parameter, ty) in params.iter_mut().zip(inferred) {
+                        if parameter.ty.is_none() {
+                            parameter.ty = Some(ty.clone());
+                        }
+                    }
+                    *ret = Some(inferred_ret.as_ref().clone());
+                }
+                (
+                    SNode::ForOfIterable { ty: retained, .. }
+                    | SNode::Set { ty: retained, .. }
+                    | SNode::Map { ty: retained, .. }
+                    | SNode::ArrayFrom { ty: retained, .. }
+                    | SNode::Record { ty: retained, .. }
+                    | SNode::CellAllocate { ty: retained, .. },
+                    _,
+                ) => *retained = Some(ty.clone()),
+                _ => {}
+            }
+        }
         if let Some(ty) = arrays.get(&std::ptr::from_ref::<SExpr>(node))
             && let SNode::Array { element, .. } = &mut node.node
         {
@@ -51,19 +79,93 @@ pub(super) fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr,
             walk(&mut test.object, arrays);
         }
         match &mut node.node {
+            SNode::ArrayBindingDefault {
+                value, fallback, ..
+            } => {
+                walk(value, arrays);
+                walk(fallback, arrays);
+            }
+            SNode::Record {
+                entries,
+                prototype_definition,
+                ..
+            } => {
+                for entry in entries {
+                    walk(&mut entry.value, arrays);
+                }
+                if let Some(definition) = prototype_definition {
+                    walk(&mut definition.value, arrays);
+                }
+            }
+            SNode::Method { object, args, .. } => {
+                walk(object, arrays);
+                for arg in args.iter_mut().flatten() {
+                    walk(arg, arrays);
+                }
+            }
+            SNode::ArrayFrom { args, .. } => {
+                for argument in args {
+                    walk(argument, arrays);
+                }
+            }
             SNode::App { func, args } => {
                 walk(func, arrays);
                 for arg in args {
                     walk(arg, arrays);
                 }
             }
-            SNode::Field { object, .. }
+            SNode::Lambda { params, body, .. } => {
+                for parameter in params {
+                    if let Some(value) = &mut parameter.default_value {
+                        walk(value, arrays);
+                    }
+                }
+                walk(body, arrays);
+            }
+            SNode::CellWrite { cell, value, body } => {
+                walk(cell, arrays);
+                walk(value, arrays);
+                walk(body, arrays);
+            }
+            SNode::ArrayBindingRest { object, .. }
+            | SNode::Set { items: object, .. }
+            | SNode::Map {
+                entries: object, ..
+            }
+            | SNode::CopySlice { object }
+            | SNode::Field { object, .. }
+            | SNode::CellAllocate { value: object, .. }
+            | SNode::CellRead { cell: object }
+            | SNode::TypeOf { arg: object }
             | SNode::Unary { arg: object, .. }
+            | SNode::StringMap { object, .. }
             | SNode::ToString { arg: object }
             | SNode::Show { arg: object, .. }
             | SNode::Cast { arg: object, .. }
-            | SNode::Length { object, .. } => walk(object, arrays),
-            SNode::Binary { left, right, .. }
+            | SNode::Length { object, .. }
+            | SNode::ForOfIterable { object, .. }
+            | SNode::StringPoints { object }
+            | SNode::TupleIndex { object, .. } => walk(object, arrays),
+            SNode::ReferenceWrite {
+                object,
+                index,
+                value,
+                ..
+            } => {
+                walk(object, arrays);
+                if let Some(index) = index {
+                    walk(index, arrays);
+                }
+                if let Some(value) = value {
+                    walk(value, arrays);
+                }
+            }
+            SNode::StringTest {
+                object: left,
+                search: right,
+                ..
+            }
+            | SNode::Binary { left, right, .. }
             | SNode::Let {
                 value: left,
                 body: right,
@@ -81,6 +183,7 @@ pub(super) fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr,
             | SNode::Index {
                 object: left,
                 index: right,
+                ..
             } => {
                 walk(left, arrays);
                 walk(right, arrays);
@@ -108,12 +211,19 @@ pub(super) fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr,
                     walk(&mut case.body, arrays);
                 }
             }
-            SNode::CtorObject { fields, .. } => {
+            SNode::CtorObject {
+                fields,
+                prototype_definition,
+                ..
+            } => {
                 for (_, value) in fields {
                     walk(value, arrays);
                 }
+                if let Some(definition) = prototype_definition {
+                    walk(&mut definition.value, arrays);
+                }
             }
-            SNode::List { items } => {
+            SNode::List { items } | SNode::Tuple { items, .. } => {
                 for item in items {
                     walk(item, arrays);
                 }

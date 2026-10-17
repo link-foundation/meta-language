@@ -6,11 +6,13 @@ import { buildCacheCleanupRequirements } from './issue-195-cache-requirements.mj
 import { CONSUMER_MATRIX, downstreamByRow, parseConsumerMatrix } from './issue-195-downstream.mjs';
 import { evidenceGroupFor } from './issue-195-evidence-plan.mjs';
 import { VISION_REQUIREMENTS, buildVisionRequirements, traceabilityFor } from './issue-195-vision-requirements.mjs';
+import { readProjectData, readProjectFileBytes } from './project-data.mjs';
 
 export const ISSUE_195_MANIFEST_SCHEMA_VERSION = 1;
 
 export const ISSUE_195_SOURCES = Object.freeze({
   issue: 'https://github.com/link-foundation/meta-language/issues/195',
+  remainingScope: 'https://github.com/link-foundation/meta-language/issues/199',
   clarification:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5795832509',
   acceptanceGate:
@@ -47,8 +49,68 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-6024489303',
   bulkDeliveryRepost:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-6025209380',
-  bulkDeliverySecondRepost:
+  bulkDeliveryFinalRepost:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-6025369792',
+  followupDeliveryAudit:
+    'https://github.com/link-foundation/meta-language/pull/201#issuecomment-6059812347',
+  latestDeliveryAudit:
+    'https://github.com/link-foundation/meta-language/pull/201#issuecomment-6116039616',
+  formalAiSelfTranslation:
+    'https://github.com/link-foundation/meta-language/issues/199#issuecomment-6055834620',
+  reverseStringSemantics:
+    'https://github.com/link-foundation/meta-language/issues/199#issuecomment-6101425254',
+  globalConceptSpace:
+    'parity/sources/global-concept-space-2026-10-12.txt',
+  recursiveDefinitionsRequest:
+    'parity/sources/recursive-formal-definitions-2026-10-12.txt',
+  linksFoundationRequest:
+    'parity/sources/links-foundation-and-fractal-motivation-2026-10-12.txt',
+  recordConversationRequest:
+    'parity/sources/record-conversation-requirements-2026-10-12.txt',
+  associativeFoundationRequest:
+    'parity/sources/associative-stack-and-theory-foundation-2026-10-12.txt',
+  dynamicKnowledgeRequest:
+    'parity/sources/dynamic-knowledge-and-grammar-inference-2026-10-12.txt',
+  translationPriorityRequest:
+    'parity/sources/bidirectional-translation-priority-2026-10-12.txt',
+  multiProjectTranslationRequest:
+    'parity/sources/multi-project-translation-reuse-2026-10-12.txt',
+  externalGrammarStorageRequest:
+    'parity/sources/temporary-external-grammar-inputs-2026-10-12.txt',
+  externalGrammarIgnoreRequest:
+    'parity/sources/ignored-external-grammar-folders-2026-10-12.txt',
+  associativeDataStorageRequest:
+    'parity/sources/associative-data-storage-2026-10-12.txt',
+  agentReductionRequest:
+    'parity/sources/gradual-agent-reduction-2026-10-12.txt',
+  ciFollowThroughRequest:
+    'parity/sources/ci-follow-through-2026-10-13.txt',
+  expandedDelegationRequest:
+    'parity/sources/expanded-agent-delegation-2026-10-13.txt',
+  localResourceScopeRequest:
+    'parity/sources/meta-language-local-resource-scope-2026-10-16.txt',
+  ciCancellationInvestigationRequest:
+    'parity/sources/ci-cancellation-investigation-2026-10-16.txt',
+  recursiveConcreteSyntaxRequest:
+    'parity/sources/recursive-concrete-syntax-and-any-grammar-2026-10-16.txt',
+  ownLanguageGrammarPriorityRequest:
+    'parity/sources/own-language-complete-grammar-priority-2026-10-16.txt',
+  routerPracticeRecordingRequest:
+    'parity/sources/router-practice-reuse-and-current-recording-2026-10-16.txt',
+  modernJavaScriptParityRequest:
+    'parity/sources/modern-javascript-parity-expectations-2026-10-16.txt',
+  compactContributorInstructionsRequest:
+    'parity/sources/compact-contributor-instructions-and-assertion-corrections-2026-10-16.txt',
+  versionBoundedAssertionsRequest:
+    'parity/sources/version-bounded-assertions-2026-10-16.txt',
+  grammarInferenceIssue:
+    'https://github.com/link-foundation/meta-language/issues/224',
+  localResourceReminderRequest:
+    'parity/sources/local-resource-reminder-2026-10-17.txt',
+  minimalDiskContinuationRequest:
+    'parity/sources/minimal-disk-continuation-2026-10-18.txt',
+  twoSubagentContinuationLimitRequest:
+    'parity/sources/two-subagent-continuation-limit-2026-10-18.txt',
 });
 
 // The rows the audit of c39470d0 lists as open work.
@@ -257,6 +319,8 @@ function requirement({
 }) {
   return {
     id,
+    critical: true,
+    fullScopeReleaseBlocker: true,
     source,
     area,
     scope,
@@ -885,13 +949,13 @@ export async function buildIssue195Manifest(root) {
   const inventoryPath = path.join(root, 'parity', 'language-grammar-inventory.json');
   const corpusPath = path.join(root, 'parity', 'fixtures', 'four-language-conformance.json');
   const registerPath = path.join(root, 'parity', 'issue-195-sources.json');
-  const [inventoryText, corpusText, registerText, consumerMatrixText] = await Promise.all([
-    readFile(inventoryPath, 'utf8'),
-    readFile(corpusPath, 'utf8'),
-    readFile(registerPath, 'utf8'),
+  const [inventoryText, corpusText, register, consumerMatrixText] = await Promise.all([
+    readProjectFileBytes(inventoryPath),
+    readProjectFileBytes(corpusPath),
+    readProjectData(registerPath),
     readFile(path.join(root, CONSUMER_MATRIX), 'utf8'),
   ]);
-  const inventory = JSON.parse(inventoryText);
+  const inventory = readProjectData(inventoryPath);
   const fixtureCatalog = {};
   const requirements = [
     ...buildCstRequirements(inventory, fixtureCatalog),
@@ -910,6 +974,14 @@ export async function buildIssue195Manifest(root) {
     ...buildVisionRequirements(fixtureCatalog, {
       requirement, verification, pinnedFixture, source: ISSUE_195_SOURCES.repositoryDirective,
       sourceByRequirement: {
+        ...Object.fromEntries(VISION_REQUIREMENTS.filter(({ sourceKey }) => sourceKey)
+          .map(({ id, sourceKey }) => [id, ISSUE_195_SOURCES[sourceKey]])),
+        ...Object.fromEntries(VISION_REQUIREMENTS.filter(({ id }) => id.startsWith('I195-GLOBAL-CONCEPT-'))
+          .map(({ id }) => [id, ISSUE_195_SOURCES.globalConceptSpace])),
+        'I195-GRAMMAR-NATURAL-LANGUAGE-REPRESENTATION': ISSUE_195_SOURCES.latestDeliveryAudit,
+        'I195-STRING-TRIM-SEMANTICS': ISSUE_195_SOURCES.reverseStringSemantics,
+        ...Object.fromEntries(['HERE-DOCUMENTS', 'INTERPOLATED-QUOTES', 'OFFSIDE-LAYOUT', 'FENCED-BLOCKS']
+          .map((suffix) => [`I195-GRAMMAR-SCANNER-${suffix}`, ISSUE_195_SOURCES.latestDeliveryAudit])),
         'I195-DEPENDENCY-CURRENT-STABLE-DELIVERY': ISSUE_195_SOURCES.consolidatedChecklist,
         'I195-DOWNSTREAM-RML-PR184-AUDIT': ISSUE_195_SOURCES.consolidatedChecklist,
         'I195-DOWNSTREAM-TYPESCRIPT-TRANSLATIONS': ISSUE_195_SOURCES.consolidatedChecklist,
@@ -946,6 +1018,19 @@ export async function buildIssue195Manifest(root) {
         'I195-NAMING-NATIVE-GRAMMARS': ISSUE_195_SOURCES.greenPathAudit,
         ...Object.fromEntries(VISION_REQUIREMENTS.filter(({ area }) => area === 'resource-limits')
           .map(({ id }) => [id, ISSUE_195_SOURCES.resourceAudit])),
+        'I195-RESOURCE-BOUNDED-MEMORY-REGRESSIONS': ISSUE_195_SOURCES.remainingScope,
+        'I195-GRAMMAR-SCANNER-DELIMITER-FAMILIES': ISSUE_195_SOURCES.remainingScope,
+        'I195-GRAMMAR-SCANNER-COUNTED-DELIMITERS': ISSUE_195_SOURCES.remainingScope,
+        'I195-GRAMMAR-NATIVE-LUA': ISSUE_195_SOURCES.remainingScope,
+        'I195-GRAMMAR-NATIVE-HCL': ISSUE_195_SOURCES.remainingScope,
+        'I195-GRAMMAR-NATIVE-R': ISSUE_195_SOURCES.remainingScope,
+        'I195-GRAMMAR-NATIVE-ODIN': ISSUE_195_SOURCES.remainingScope,
+        'I195-GRAMMAR-NATIVE-AGDA': ISSUE_195_SOURCES.remainingScope,
+        'I195-GRAMMAR-NATIVE-HTML': ISSUE_195_SOURCES.remainingScope,
+        'I195-GRAMMAR-SCANNER-STATE-SEMANTICS': ISSUE_195_SOURCES.remainingScope,
+        'I195-GRAMMAR-NATIVE-XML': ISSUE_195_SOURCES.remainingScope,
+        'I195-GRAMMAR-NATIVE-DTD': ISSUE_195_SOURCES.remainingScope,
+        'I195-GRAMMAR-NATIVE-PYTHON': ISSUE_195_SOURCES.remainingScope,
         // The next-phase audit asks for JavaScript first, self-translation, decorators and bulk
         // grammar work; the audit of fe9b6ff1 makes the CI order and declared settling binding.
         ...Object.fromEntries(VISION_REQUIREMENTS.filter(({ area }) => area === 'javascript-first')
@@ -964,7 +1049,6 @@ export async function buildIssue195Manifest(root) {
       },
     }),
   ];
-  const register = JSON.parse(registerText);
   const consumersByRow = downstreamByRow(parseConsumerMatrix(consumerMatrixText));
   for (const entry of requirements) {
     entry.traceability = traceabilityFor(entry, { fixtureCatalog, register, evidenceGroupFor, consumersByRow });
@@ -977,7 +1061,7 @@ export async function buildIssue195Manifest(root) {
   for (const fixture of Object.values(fixtureCatalog)) {
     if (fixture.path && !digests[fixture.path]) {
       try {
-        digests[fixture.path] = sha256(await readFile(path.join(root, fixture.path), 'utf8'));
+        digests[fixture.path] = sha256(readProjectFileBytes(path.join(root, fixture.path)));
       } catch {
         // The manifest keeps a null digest so the aggregate gate fails closed.
       }

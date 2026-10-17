@@ -201,15 +201,27 @@ fn every_importer_settles_through_the_same_declared_steps() {
     let antlr = import_antlr("grammar g;\ns : a | b ;\na : 'x' ;\nb : 'x' ;\n")
         .expect("the ANTLR grammar imports");
     assert_eq!(antlr.declarations().settling, None);
-    assert_eq!(settle(&antlr, "x"), tree("(s (a \"x\"))", 1));
+    assert_eq!(settle(&antlr, "x"), tree("(s (a (x \"x\")))", 1));
     assert_eq!(
         settle(&with_settling(&antlr, default_settling("generalized")), "x"),
-        tree("(s (a \"x\"))", 1)
+        tree("(s (a (x \"x\")))", 1)
     );
     assert_eq!(
         settle(&with_settling(&antlr, &["first"]), "x"),
-        tree("(s (a \"x\"))", 0)
+        tree("(s (a (x \"x\")))", 0)
     );
+    // Lexical ownership follows declarations after source-format erasure.
+    let mut unmarked = Grammar::new()
+        .with_start(antlr.start().expect("the imported start exists"))
+        .with_declarations(antlr.declarations().clone());
+    unmarked.set_kinds(antlr.kinds().to_vec());
+    for rule in antlr.rules() {
+        unmarked.add_rule(rule.clone());
+    }
+    assert_eq!(settle(&unmarked, "x"), settle(&antlr, "x"));
+    let restored = parse_grammar_links(&render_grammar_links(&unmarked))
+        .expect("the source-free lexical declarations reload");
+    assert_eq!(settle(&restored, "x"), settle(&antlr, "x"));
     let pest = import_pest("s = { a | b }\na = { \"x\" }\nb = { \"x\" }\n")
         .expect("the pest grammar imports");
     assert_eq!(

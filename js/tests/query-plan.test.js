@@ -1,5 +1,6 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+
 import test from 'node:test';
 
 import {
@@ -11,18 +12,8 @@ import {
   lowerSql,
 } from '../src/index.js';
 
-const sqlFixtures = JSON.parse(
-  await readFile(
-    new URL('../../parity/fixtures/sql-query-plans.json', import.meta.url),
-    'utf8',
-  ),
-);
-const graphqlFixtures = JSON.parse(
-  await readFile(
-    new URL('../../parity/fixtures/graphql-query-plans.json', import.meta.url),
-    'utf8',
-  ),
-);
+const sqlFixtures = readProjectData(new URL('../../parity/fixtures/sql-query-plans.json', import.meta.url));
+const graphqlFixtures = readProjectData(new URL('../../parity/fixtures/graphql-query-plans.json', import.meta.url));
 
 function registry() {
   return SqlSchemaRegistry.fromJson(sqlFixtures.registry);

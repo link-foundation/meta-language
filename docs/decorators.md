@@ -43,8 +43,8 @@ survives, and the empty text is written `%`. Use
 
 | Level | Record | `drop` | JavaScript hook | Rust hook |
 | --- | --- | --- | --- | --- |
-| `importer` | `{ format, name, kind, concept }` per rule | removes the rule | `importGbnf(text, { decorators })` and every other importer | `decorate_grammar(&grammar, &set, DecoratorLevel::Importer)` on what an importer returns |
-| `grammar-rule` | `{ name, kind, concept }` per rule | removes the rule | `decorateGrammar`, `compileGrammar(grammar, { decorators })` | `decorate_grammar`, `FeatureParseOptions::decorators` |
+| `importer` | `{ format, name, kind, concept, composition }` per rule | removes the rule | `importGbnf(text, { decorators })` and every other importer | `decorate_grammar(&grammar, &set, DecoratorLevel::Importer)` on what an importer returns |
+| `grammar-rule` | `{ name, kind, concept, composition }` per rule | removes the rule | `decorateGrammar`, `compileGrammar(grammar, { decorators })` | `decorate_grammar`, `FeatureParseOptions::decorators` |
 | `merge-decision` | `{ kind, name, members, basis, definition }` per decision | removes the decision | `mergeGrammars(sources, { decorators })` | `GrammarMergeOptions::decorators` |
 | `concept-mapping` | `{ from, rule, to, relation, concept, rules }` (rules joined by spaces) | the construct becomes `unknown` | `translateNativeConstruct(from, rule, to, { decorators })` | `translate_native_construct_decorated` |
 | `executor` | `{ type, kind, field, text }` per node and token | unwraps a node into its children; a token cannot be dropped | parser `{ decorators }` | `FeatureParseOptions::decorators` |
@@ -56,6 +56,65 @@ survives, and the empty text is written `%`. Use
 
 A hook refuses a decoration that would lose input: dropping a token, an ERROR
 node or the root of a tree is a `DecoratorError`.
+
+## Composing a grammar rule
+
+`composition` starts empty. Set it to one `any-grammar` or `all-grammar` Links
+expression with `empty` as the insertion slot. The hook puts the rule's actual
+original expression in that slot. This opt-in form accepts normal syntactic
+rules and a nonempty list of uniquely named candidates using one common
+`field-ranges` or `json-string` profile. Field candidates must share the same
+complete selector. Unsupported profiles, malformed data and replacement bodies
+refuse.
+
+This example uses the existing public API and stores its decorator as text
+through `DecoratorSet.toLino()`, which handles percent encoding:
+
+```javascript
+import { DecoratorSet, decorateGrammar, compileGrammar, parseGrammarLinks } from 'meta-language';
+
+const host = parseGrammarLinks(`
+(grammar (start document))
+(rule document normal (seq (literal prefix) (capture labeled value (literal 7)) (literal suffix)))
+`);
+const number = parseGrammarLinks(`
+(grammar (start number))
+(rule number normal (literal 7))
+`);
+const policy = new DecoratorSet([{
+  id: 'select-value', level: 'grammar-rule',
+  when: [['name', 'document']],
+  actions: [{ op: 'set', field: 'composition', value:
+    '(any-grammar empty (grammar-field-candidate ExampleNumber field-ranges (source-field-selector value include 0 1)))' }],
+}]);
+const restored = DecoratorSet.fromLino(policy.toLino());
+const sources = new Map([
+  ['ExampleHost', decorateGrammar(host, restored)],
+  ['ExampleNumber', number],
+]);
+const parser = compileGrammar(sources.get('ExampleHost'), {
+  resolveGrammar: name => sources.get(name),
+});
+const outcome = parser.parseTree('prefix7suffix');
+console.log(outcome.ok, outcome.sourcePlanes.length); // true 2
+```
+
+Bind each policy to its intended source grammar before adding that grammar to
+the resolver or global archive. A matching local rule name does not select a
+global source; resolved children need their own policies applied separately.
+Use `parseTree` to retain both the physical CST and the derived source-plane
+table. Reapplying the same validated selection does not add another wrapper;
+removal or replacement starts from the original grammar.
+
+Authoring refuses composition combined with `executor` or `recovery` levels.
+Before publishing a tree with retained mapped source planes, the runtime also
+refuses any effective level of either kind. This includes fallback success
+retaining attempted mappings, parse-time overrides, archived grammars and
+resolved child grammars. Identity-only results retain their existing behavior.
+See the authoritative
+[vision's decorator contract](vision.md#javascript-first-and-self-translation)
+and [concrete syntax requirements](vision.md#concrete-and-abstract-syntax-trees).
+Native compilation and runtime parity require CI verification.
 
 ## Making translated output match hand-written code
 

@@ -1,3 +1,5 @@
+import { acceptEmbeddedRegionLimit, readEmbeddedRegionDefaultLimit } from './translation/embedded-region-rules.js';
+
 export const LinkType = Object.freeze({
   Concept: 'Concept',
   Document: 'Document',
@@ -19,6 +21,7 @@ export const LinkType = Object.freeze({
 });
 
 export const NetworkProjection = Object.freeze({
+  Lossless: 'Lossless',
   ConcreteSyntax: 'ConcreteSyntax',
   AbstractSyntax: 'AbstractSyntax',
   Semantic: 'Semantic',
@@ -30,17 +33,33 @@ export const TriviaAttachmentPolicy = Object.freeze({
   Combined: 'Combined',
 });
 
+function readLinkIdValue(value) {
+  const identifier = value instanceof LinkId;
+  const descriptor = identifier ? Object.getOwnPropertyDescriptor(value, 'value') : null;
+  const original = identifier
+    ? descriptor && Object.hasOwn(descriptor, 'value') ? descriptor.value : undefined
+    : value;
+  const text = typeof original === 'string' ? original.trim() : null;
+  const numeric = typeof original === 'number' || typeof original === 'bigint'
+    || text !== null && /^[0-9]+$/u.test(text)
+    ? Number(original) : Number.NaN;
+  if (identifier && typeof original !== 'number' || !Number.isSafeInteger(numeric) || numeric < 1) {
+    throw new TypeError('link id must be an exact positive safe integer');
+  }
+  return numeric;
+}
+
 export class LinkId {
   constructor(value) {
-    const numeric = Number(value);
-    if (!Number.isInteger(numeric) || numeric < 1) {
-      throw new TypeError(`link id must be a positive integer, got ${value}`);
-    }
-    this.value = numeric;
+    this.value = readLinkIdValue(value);
   }
 
   static from(value) {
-    return value instanceof LinkId ? value : new LinkId(value);
+    if (value instanceof LinkId) {
+      readLinkIdValue(value);
+      return value;
+    }
+    return new LinkId(value);
   }
 
   static fromU64(value) {
@@ -48,23 +67,23 @@ export class LinkId {
   }
 
   asU64() {
-    return this.value;
+    return readLinkIdValue(this);
   }
 
   equals(other) {
-    return this.value === LinkId.from(other).value;
+    return readLinkIdValue(this) === LinkId.from(other).value;
   }
 
   toJSON() {
-    return this.value;
+    return readLinkIdValue(this);
   }
 
   toString() {
-    return String(this.value);
+    return String(readLinkIdValue(this));
   }
 
   valueOf() {
-    return this.value;
+    return readLinkIdValue(this);
   }
 }
 
@@ -265,10 +284,19 @@ export class ParseConfiguration {
     triviaAttachmentPolicy = TriviaAttachmentPolicy.Combined,
     regionDetectionPolicy = 'Both',
     accessMode = 'mutable',
+    embeddedRegionDepthLimit = readEmbeddedRegionDefaultLimit('depth'),
+    embeddedRegionCountLimit = readEmbeddedRegionDefaultLimit('count'),
+    embeddedRegionByteLimit = readEmbeddedRegionDefaultLimit('bytes'),
   } = {}) {
+    for (const value of [embeddedRegionDepthLimit, embeddedRegionCountLimit, embeddedRegionByteLimit]) {
+      if (typeof value !== 'number' || !acceptEmbeddedRegionLimit(value)) throw new RangeError('embedded region limits must be nonnegative safe integers');
+    }
     this.triviaAttachmentPolicy = triviaAttachmentPolicy;
     this.regionDetectionPolicy = regionDetectionPolicy;
     this.accessMode = accessMode;
+    this.embeddedRegionDepthLimit = embeddedRegionDepthLimit;
+    this.embeddedRegionCountLimit = embeddedRegionCountLimit;
+    this.embeddedRegionByteLimit = embeddedRegionByteLimit;
   }
 
   static default() {
@@ -289,5 +317,18 @@ export class ParseConfiguration {
 
   withAccessMode(accessMode) {
     return new ParseConfiguration({ ...this, accessMode });
+  }
+
+  /** Bounds default-CST attachment, independently of parser evaluation budgets. */
+  withEmbeddedRegionLimits({
+    depthLimit = this.embeddedRegionDepthLimit,
+    countLimit = this.embeddedRegionCountLimit,
+    byteLimit = this.embeddedRegionByteLimit,
+  } = {}) {
+    return new ParseConfiguration({ ...this,
+      embeddedRegionDepthLimit: depthLimit,
+      embeddedRegionCountLimit: countLimit,
+      embeddedRegionByteLimit: byteLimit,
+    });
   }
 }

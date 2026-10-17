@@ -9,8 +9,9 @@
 // a package missing any step, or an emitter that writes the unlowered grammar,
 // is reported as broken instead of dropping the feature silently. The Rust
 // twin is rust/tests/unit/issue_195_interchange_faithful_lowering.rs.
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+
 import { test } from 'node:test';
 
 import {
@@ -33,7 +34,7 @@ import {
 } from '../src/index.js';
 import { ISSUE_195_FIXTURE_FILES, recordIssue195Observations } from './support/issue-195-observations.js';
 
-const corpus = JSON.parse(await readFile(new URL('../../parity/fixtures/grammar-importers.json', import.meta.url)));
+const corpus = readProjectData(new URL('../../parity/fixtures/grammar-importers.json', import.meta.url));
 
 const REQUIREMENT_ID = 'I195-INTERCHANGE-FAITHFUL-LOWERING';
 

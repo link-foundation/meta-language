@@ -16,21 +16,22 @@
 use std::collections::HashSet;
 use std::rc::Rc;
 
-use serde_json::Value;
-
 use super::flow::{
-    Exits, Uses, case_bodies, exhaustive, exits, flat, infinite, json, list_exits, local_name,
-    loop_parts, statement_uses, walked,
+    Exits, Uses, case_bodies, exhaustive, exits, flat, infinite, list_exits, loop_parts,
+    statement_uses,
 };
 use super::lowering::{
-    TagSwitch, default_rows, lower_tag_if, statement_span, switch_tags, tag_condition, tag_row,
+    TagSwitch, default_rows, lower_tag_if, read_value_case_expression,
+    read_value_switch_instruction, read_value_switch_position, statement_span, switch_tags,
+    tag_condition, tag_guard_sequence, tag_row,
 };
 use super::{
-    CaseTest, JavaScriptParser, ROOT, Result, SCtor, SData, SExpr, SField, SFn, SItem, SNode,
-    SParam, SPattern, SPatternNode, SRow, Span, Stmt, Switch, TranslationError, Type, node,
+    BinaryOp, CaseTest, JavaScriptParser, ROOT, Result, SCtor, SData, SExpr, SField, SFn, SItem,
+    SNode, SParam, SPattern, SPatternNode, SRow, Span, Stmt, Switch, TranslationError, Type, node,
     unsupported, wild,
 };
 
+mod loops;
 mod top_level;
 pub(super) use self::top_level::lower_top_level;
 
@@ -39,6 +40,7 @@ pub(super) use self::top_level::lower_top_level;
 struct Var {
     source: String,
     ir: String,
+    reference: bool,
 }
 
 /// The variable a source name refers to in a scope: the latest entry for it.
@@ -60,30 +62,8 @@ fn visible(scope: &[Var]) -> Vec<Var> {
 
 /// A copy of a source expression that reads the variables it names in scope.
 fn renamed(expr: &SExpr, scope: &[Var]) -> Result<SExpr> {
-    fn visit(value: &mut Value, scope: &[Var]) {
-        match value {
-            Value::Array(items) => items.iter_mut().for_each(|item| visit(item, scope)),
-            Value::Object(map) => {
-                if let Some(name) = local_name(map) {
-                    let ir =
-                        lookup(scope, name).map_or_else(|| name.to_owned(), |var| var.ir.clone());
-                    map.insert("path".to_owned(), Value::Array(vec![Value::String(ir)]));
-                    return;
-                }
-                for (key, value) in map.iter_mut() {
-                    if walked(key) {
-                        visit(value, scope);
-                    }
-                }
-            }
-            _ => {}
-        }
-    }
-    let mut value = json(expr);
-    visit(&mut value, scope);
-    serde_json::from_value(value).map_err(|error| {
-        TranslationError::syntax(format!("internal: renamed expression: {error}"), expr.span)
-    })
+    let scope = serde_json::Value::Array(scope.iter().map(|entry| serde_json::json!({"source":entry.source,"ir":entry.ir,"reference":entry.reference})).collect());
+    super::callables::rename_expression(expr, &scope)
 }
 
 fn named(name: &str, place: Span) -> SExpr {
@@ -132,11 +112,30 @@ pub(super) fn lower_imperative(
     statements: &[Stmt],
     place: Span,
 ) -> Result<SExpr> {
+    lower_imperative_with_captures(parser, name, params, statements, place, &[], &[])
+}
+
+pub(super) fn lower_imperative_with_captures(
+    parser: &mut JavaScriptParser,
+    name: &str,
+    params: &[SParam],
+    statements: &[Stmt],
+    place: Span,
+    external_cells: &[String],
+    external_bindings: &[String],
+) -> Result<SExpr> {
+    let mut cells = super::callables::mutable_cells(statements);
+    cells.extend(external_cells.iter().cloned());
+    if !cells.is_empty() {
+        parser.reference_state.enabled = true;
+        parser.reference_state.forced = true;
+    }
     let mut lowering = Lowering {
         function: name.to_owned(),
         renames: 0,
         generated: std::mem::take(&mut parser.generated),
         count: parser.generated_count,
+        cells,
     };
     let ctx = Ctx {
         // A function that finishes without returning returns undefined, the unit value.
@@ -148,17 +147,57 @@ pub(super) fn lower_imperative(
         brk_live: Rc::default(),
         cont_live: Rc::default(),
     };
-    let scope: Vec<Var> = params
+    let mut captured = HashSet::new();
+    let mut scope: Vec<Var> = external_cells
         .iter()
-        .map(|param| Var {
-            source: param.name.clone(),
-            ir: param.name.clone(),
+        .chain(external_bindings)
+        .filter(|name| {
+            captured.insert((*name).clone())
+                && !params.iter().any(|parameter| parameter.name == **name)
+        })
+        .map(|name| Var {
+            source: name.clone(),
+            ir: name.clone(),
+            reference: external_cells.contains(name),
         })
         .collect();
-    let body = lowering.seq(&flat(statements), 0, &ctx, &scope);
+    scope.extend(params.iter().map(|param| Var {
+        source: param.name.clone(),
+        ir: crate::translation::callable_source_rules::render_callable_cell_parameter_name(
+            &param.name,
+            lowering.cells.contains(&param.name),
+        ),
+        reference: lowering.cells.contains(&param.name),
+    }));
+    let mut body = lowering.seq(&flat(statements), 0, &ctx, &scope)?;
+    for parameter in params.iter().rev() {
+        let allocation = crate::translation::callable_source_rules::read_callable_cell_lowering(
+            "declare",
+            lowering.cells.contains(&parameter.name),
+        );
+        if !allocation.is_empty() {
+            let name =
+                crate::translation::callable_source_rules::render_callable_cell_parameter_name(
+                    &parameter.name,
+                    true,
+                );
+            body = let_node(
+                name,
+                node(
+                    SNode::CellAllocate {
+                        value: Box::new(named(&parameter.name, place)),
+                        ty: None,
+                    },
+                    place,
+                ),
+                body,
+                place,
+            );
+        }
+    }
     parser.generated = lowering.generated;
     parser.generated_count = lowering.count;
-    body
+    Ok(body)
 }
 
 struct Lowering {
@@ -166,6 +205,7 @@ struct Lowering {
     renames: usize,
     generated: Vec<SItem>,
     count: usize,
+    cells: HashSet<String>,
 }
 
 /// A generated data type's alternative, which carries `variables`.
@@ -181,6 +221,8 @@ impl Alternative {
             SNode::CtorObject {
                 tag: self.ctor.clone(),
                 fields: self.variables.iter().cloned().zip(values).collect(),
+                frozen: false,
+                prototype_definition: None,
             },
             self.place,
         )
@@ -246,6 +288,7 @@ impl Lowering {
         inner.push(Var {
             source: source.to_owned(),
             ir,
+            reference: self.cells.contains(source),
         });
         inner
     }
@@ -267,6 +310,9 @@ impl Lowering {
         let Some(statement) = list.get(index) else {
             return (ctx.fall)(self, scope);
         };
+        if let Some(guards) = tag_guard_sequence(list[index..].iter()) {
+            return self.compound(&guards, ctx, scope);
+        }
         let at_end = index + 1 == list.len();
         let exits = exits(statement);
         if !at_end && exits.fall == 0 {
@@ -288,12 +334,43 @@ impl Lowering {
                 let inner = self.declare(scope, name);
                 let ir = inner[inner.len() - 1].ir.clone();
                 let body = self.seq(list, index + 1, ctx, &inner)?;
+                let operation =
+                    crate::translation::callable_source_rules::read_callable_cell_lowering(
+                        "declare",
+                        inner[inner.len() - 1].reference,
+                    );
+                let value = if operation.is_empty() {
+                    value
+                } else {
+                    node(
+                        SNode::CellAllocate {
+                            value: Box::new(value),
+                            ty: None,
+                        },
+                        *span,
+                    )
+                };
                 return Ok(let_node(ir, value, body, *span));
             }
             Stmt::Assign { name, value, span } => {
                 let ir = lookup(scope, name).map_or_else(|| name.clone(), |var| var.ir.clone());
                 let value = renamed(value, scope)?;
                 let body = rest(self, scope)?;
+                let reference = lookup(scope, name).is_some_and(|entry| entry.reference);
+                let operation =
+                    crate::translation::callable_source_rules::read_callable_cell_lowering(
+                        "assign", reference,
+                    );
+                if !operation.is_empty() {
+                    return Ok(node(
+                        SNode::CellWrite {
+                            cell: Box::new(named(&ir, *span)),
+                            value: Box::new(value),
+                            body: Box::new(body),
+                        },
+                        *span,
+                    ));
+                }
                 return Ok(let_node(ir, value, body, *span));
             }
             Stmt::Return { expr, .. } => {
@@ -325,7 +402,12 @@ impl Lowering {
             // A statement that discards its value still runs it, for the lines
             // it prints and the aborts it may reach.
             Stmt::Expr { expr, span } => {
-                let name = self.generated_name("ignored");
+                let name =
+                    self.generated_name(if matches!(expr.node, SNode::ReferenceWrite { .. }) {
+                        "written"
+                    } else {
+                        "ignored"
+                    });
                 let value = renamed(expr, scope)?;
                 let body = rest(self, scope)?;
                 return Ok(let_node(name, value, body, *span));
@@ -434,6 +516,17 @@ impl Lowering {
             brk_live: Rc::clone(&ctx.live),
             ..ctx.clone()
         };
+        if super::surface_rules::accept_java_script_value_switch(
+            node.tag.is_some(),
+            node.clauses.iter().any(|clause| {
+                clause
+                    .tests
+                    .iter()
+                    .any(|test| matches!(test, CaseTest::Value { .. }))
+            }),
+        ) {
+            return self.lower_value_switch(node, ctx, scope, scrutinee, &inner);
+        }
         let tag_switch = node.tag.as_ref().map(|(_, data)| TagSwitch {
             subject: scrutinee.simple_name().unwrap_or_default(),
             data,
@@ -461,6 +554,12 @@ impl Lowering {
                         rows.push(tag_row(tag_switch, tag, *span, &body, clause.span)?);
                     }
                     (CaseTest::Tag { .. }, None) => {}
+                    (CaseTest::Value { span, .. }, _) => {
+                        return Err(TranslationError::syntax(
+                            "internal: an unlowered value switch case",
+                            Some(*span),
+                        ));
+                    }
                     (
                         CaseTest::NumLit {
                             value,
@@ -504,6 +603,128 @@ impl Lowering {
             },
             Some(node.span),
         ))
+    }
+
+    /// Construct existing nodes in the order selected by the generated cursor.
+    fn lower_value_switch(
+        &mut self,
+        switch: &Switch,
+        ctx: &Ctx,
+        scope: &[Var],
+        scrutinee: SExpr,
+        inner: &Ctx,
+    ) -> Result<SExpr> {
+        let bodies = case_bodies(switch);
+        let fallback = switch.clauses.iter().position(|clause| {
+            clause
+                .tests
+                .iter()
+                .any(|test| matches!(test, CaseTest::Default { .. }))
+        });
+        let mut variable = String::new();
+        let mut otherwise = None;
+        let mut condition = None;
+        let mut branch = None;
+        for step in 0.. {
+            let instruction = read_value_switch_instruction(true, step, switch.clauses.len());
+            match instruction.as_str() {
+                "capture" => variable = self.generated_name("switch"),
+                "fallback" => {
+                    otherwise = Some((ctx.fall)(self, scope)?);
+                    if let Some(index) = fallback {
+                        otherwise =
+                            Some(self.seq(&Rc::new(bodies[index].clone()), 0, inner, scope)?);
+                    }
+                }
+                "bind" => {
+                    return Ok(node(
+                        SNode::Let {
+                            name: variable,
+                            ty: None,
+                            value: Box::new(scrutinee),
+                            body: Box::new(
+                                otherwise.expect("the shared cursor reads its fallback first"),
+                            ),
+                        },
+                        switch.span,
+                    ));
+                }
+                "test" | "body" | "select" => {
+                    let index = read_value_switch_position(true, step, switch.clauses.len());
+                    let tests: Vec<_> = switch.clauses[index]
+                        .tests
+                        .iter()
+                        .filter(|test| !matches!(test, CaseTest::Default { .. }))
+                        .collect();
+                    if tests.is_empty() {
+                        continue;
+                    }
+                    match instruction.as_str() {
+                        "test" => {
+                            let mut comparisons = Vec::new();
+                            for test in tests {
+                                let (value, span) =
+                                    read_value_case_expression(test).ok_or_else(|| {
+                                        internal("a tagged value-switch case", switch.span)
+                                    })?;
+                                comparisons.push(node(
+                                    SNode::Binary {
+                                        op: BinaryOp::Eq,
+                                        left: Box::new(named(&variable, switch.span)),
+                                        right: Box::new(renamed(&value, scope)?),
+                                        rounding: None,
+                                    },
+                                    span,
+                                ));
+                            }
+                            condition = comparisons.into_iter().reduce(|left, right| {
+                                node(
+                                    SNode::Binary {
+                                        op: BinaryOp::Or,
+                                        left: Box::new(left),
+                                        right: Box::new(right),
+                                        rounding: None,
+                                    },
+                                    switch.span,
+                                )
+                            });
+                        }
+                        "body" => {
+                            branch =
+                                Some(self.seq(&Rc::new(bodies[index].clone()), 0, inner, scope)?);
+                        }
+                        _ => {
+                            otherwise =
+                                Some(node(
+                                    SNode::If {
+                                        cond: Box::new(condition.take().expect(
+                                            "the shared cursor constructs its tests first",
+                                        )),
+                                        then: Box::new(
+                                            branch.take().expect(
+                                                "the shared cursor lowers its branch first",
+                                            ),
+                                        ),
+                                        otherwise: Box::new(
+                                            otherwise.take().expect(
+                                                "the shared cursor reads its fallback first",
+                                            ),
+                                        ),
+                                    },
+                                    switch.span,
+                                ));
+                        }
+                    }
+                }
+                _ => {
+                    return Err(internal(
+                        &format!("unknown value-switch instruction {instruction}"),
+                        switch.span,
+                    ));
+                }
+            }
+        }
+        unreachable!("the shared instruction cursor terminates with bind")
     }
 
     /// A statement that continues at several places, followed by more
@@ -605,6 +826,7 @@ impl Lowering {
             ctors,
             span: Some(place),
             generated: true,
+            source_unit_clone_derivation: None,
         }));
         let scrutinee = self.compound(statement, &inner, scope)?;
         Ok(node(
@@ -614,258 +836,6 @@ impl Lowering {
             },
             place,
         ))
-    }
-
-    /// A loop is a tail-recursive function of the variables it uses. It
-    /// returns the live variables it assigns when it ends, or the function's
-    /// result when it returns; `local` are the variables of a for loop's head.
-    #[allow(clippy::too_many_lines)]
-    fn lower_loop(
-        &mut self,
-        statement: &Stmt,
-        ctx: &Ctx,
-        scope: &[Var],
-        local: &HashSet<String>,
-    ) -> Result<SExpr> {
-        let Some(parts) = loop_parts(statement) else {
-            return Err(TranslationError::syntax("a loop that is not a loop", None));
-        };
-        let place = parts.place;
-        let whole = match statement {
-            Stmt::For { .. } => Stmt::While {
-                cond: parts
-                    .cond
-                    .cloned()
-                    .unwrap_or_else(|| SExpr::new(SNode::Bool { value: true }, None)),
-                body: parts.body.iter().chain(parts.update).cloned().collect(),
-                span: place,
-            },
-            other => other.clone(),
-        };
-        let Uses { free, assigned } = statement_uses(&[whole]);
-        let params: Vec<Var> = visible(scope)
-            .into_iter()
-            .filter(|entry| free.contains(&entry.source))
-            .collect();
-        let results: Vec<Var> = params
-            .iter()
-            .filter(|entry| {
-                assigned.contains(&entry.source)
-                    && !local.contains(&entry.source)
-                    && ctx.live.contains(&entry.source)
-            })
-            .cloned()
-            .collect();
-        let body_exits = list_exits(&flat(parts.body));
-        let returns = body_exits.ret > 0;
-        let ends = !infinite(parts.cond) || body_exits.brk > 0;
-        let name = self.generated_name("loop");
-        let call = {
-            let name = name.clone();
-            let args: Vec<String> = params.iter().map(|entry| entry.ir.clone()).collect();
-            Rc::new(move || {
-                node(
-                    SNode::App {
-                        func: Box::new(node(
-                            SNode::Name {
-                                path: vec![ROOT.to_owned(), name.clone()],
-                            },
-                            place,
-                        )),
-                        args: args.iter().map(|arg| named(arg, place)).collect(),
-                    },
-                    place,
-                )
-            })
-        };
-        let loop_scope = params.clone();
-        let mut give: Give =
-            Rc::new(move |_, _| Err(internal("a loop without a return returned", place)));
-        let (finish, call_site): (Jump, Site) = if !returns && ends && results.len() == 1 {
-            let result = results[0].ir.clone();
-            let finish: Jump = {
-                let result = result.clone();
-                Rc::new(move |_| Ok(named(&result, place)))
-            };
-            let call = Rc::clone(&call);
-            let ctx = ctx.clone();
-            let scope = scope.to_vec();
-            let site: Site = Box::new(move |lowering| {
-                let body = (ctx.fall)(lowering, &scope)?;
-                Ok(let_node(result, call(), body, place))
-            });
-            (finish, site)
-        } else if !ends {
-            // The loop only ends by returning from the function, or never.
-            give = Rc::new(|_, value| Ok(value));
-            let call = Rc::clone(&call);
-            let ctx = ctx.clone();
-            let site: Site = Box::new(move |lowering| {
-                if returns {
-                    (ctx.ret)(lowering, call())
-                } else {
-                    Ok(call())
-                }
-            });
-            (
-                Rc::new(move |_| Err(internal("a loop without an end ended", place))),
-                site,
-            )
-        } else {
-            let data = format!("{name}_result");
-            let mut ctors = Vec::new();
-            let mut rows = Vec::new();
-            let done = format!("{name}_done");
-            let variables: Vec<String> = results.iter().map(|entry| entry.ir.clone()).collect();
-            ctors.push(SCtor {
-                name: done.clone(),
-                fields: variables.iter().map(|variable| untyped(variable)).collect(),
-            });
-            let alternative = Alternative {
-                ctor: done.clone(),
-                variables: variables.clone(),
-                place,
-            };
-            let finish: Jump = Rc::new(move |_| {
-                let values = alternative
-                    .variables
-                    .iter()
-                    .map(|variable| named(variable, place))
-                    .collect();
-                Ok(alternative.make(values))
-            });
-            let body = (ctx.fall)(self, scope)?;
-            rows.push(ctor_row(&data, &done, &variables, body, place));
-            if returns {
-                let value = format!("ml_result{}", self.count);
-                let returned = format!("{name}_return");
-                ctors.push(SCtor {
-                    name: returned.clone(),
-                    fields: vec![untyped(&value)],
-                });
-                let alternative = Alternative {
-                    ctor: returned.clone(),
-                    variables: vec![value.clone()],
-                    place,
-                };
-                give = Rc::new(move |_, result| Ok(alternative.make(vec![result])));
-                let body = (ctx.ret)(self, named(&value, place))?;
-                rows.push(ctor_row(&data, &returned, &[value], body, place));
-            }
-            self.generated.push(SItem::Data(SData {
-                name: data,
-                ctors,
-                span: Some(place),
-                generated: true,
-            }));
-            let call = Rc::clone(&call);
-            let site: Site = Box::new(move |_| {
-                Ok(node(
-                    SNode::Match {
-                        scrutinees: vec![call()],
-                        rows,
-                    },
-                    place,
-                ))
-            });
-            (finish, site)
-        };
-        // Every variable the loop uses is live at its next iteration, the live ones it assigns after it.
-        let iterating: Rc<HashSet<String>> =
-            Rc::new(params.iter().map(|entry| entry.source.clone()).collect());
-        let ending: Rc<HashSet<String>> =
-            Rc::new(results.iter().map(|entry| entry.source.clone()).collect());
-        let lives = |fall: Fall| Ctx {
-            fall,
-            ret: Rc::clone(&give),
-            brk: Rc::clone(&finish),
-            cont: Rc::clone(&finish),
-            live: Rc::clone(&iterating),
-            brk_live: Rc::clone(&ending),
-            cont_live: Rc::clone(&iterating),
-        };
-        let cond = parts.cond.filter(|_| !infinite(parts.cond));
-        // The next iteration: a for loop's update, then the call with the variables' current values.
-        let next = Rc::clone(&call);
-        let again: Fall = if parts.update.is_empty() {
-            Rc::new(move |_, _| Ok(next()))
-        } else {
-            let call = next;
-            let update = Rc::new(parts.update.to_vec());
-            let mut ctx = lives(Rc::new(move |_, _| Ok(call())));
-            ctx.cont = Rc::clone(&finish);
-            Rc::new(move |lowering, inner| lowering.seq(&update, 0, &ctx, inner))
-        };
-        let test = |lowering: &mut Self, then: SExpr| -> Result<SExpr> {
-            let Some(cond) = cond else {
-                return Ok(then);
-            };
-            let cond = renamed(cond, &loop_scope)?;
-            let otherwise = finish(lowering)?;
-            Ok(node(
-                SNode::If {
-                    cond: Box::new(cond),
-                    then: Box::new(then),
-                    otherwise: Box::new(otherwise),
-                },
-                place,
-            ))
-        };
-        let fn_body = if parts.do_while {
-            let next: Fall = {
-                let call = Rc::clone(&call);
-                let cond = cond.cloned();
-                let loop_scope = loop_scope.clone();
-                let finish = Rc::clone(&finish);
-                Rc::new(move |lowering, _| {
-                    let then = call();
-                    let Some(cond) = &cond else {
-                        return Ok(then);
-                    };
-                    let cond = renamed(cond, &loop_scope)?;
-                    let otherwise = finish(lowering)?;
-                    Ok(node(
-                        SNode::If {
-                            cond: Box::new(cond),
-                            then: Box::new(then),
-                            otherwise: Box::new(otherwise),
-                        },
-                        place,
-                    ))
-                })
-            };
-            let mut body_ctx = lives(Rc::clone(&next));
-            body_ctx.cont = Rc::new(move |lowering| next(lowering, &[]));
-            self.seq(&flat(parts.body), 0, &body_ctx, &loop_scope)?
-        } else {
-            let next: Fall = {
-                let loop_scope = loop_scope.clone();
-                Rc::new(move |lowering, _| again(lowering, &loop_scope))
-            };
-            let mut body_ctx = lives(Rc::clone(&next));
-            body_ctx.cont = Rc::new(move |lowering| next(lowering, &[]));
-            let body = self.seq(&flat(parts.body), 0, &body_ctx, &loop_scope)?;
-            test(self, body)?
-        };
-        self.generated.push(SItem::Fn(SFn {
-            name,
-            params: params
-                .iter()
-                .map(|entry| SParam {
-                    name: entry.ir.clone(),
-                    default_value: None,
-                    ty: None,
-                    span: Some(place),
-                    guard: None,
-                    rocq_type: None,
-                })
-                .collect(),
-            ret: None,
-            body: fn_body,
-            span: Some(place),
-            generated: true,
-        }));
-        call_site(self)
     }
 }
 

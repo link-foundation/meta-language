@@ -24,17 +24,23 @@ const RECOVERY: &str = "parity/fixtures/native-recovery.json";
 const FEATURE_LINKS: [&str; 5] = ["scanner", "conflict", "precedences", "extra", "kind"];
 
 fn path(file: &str) -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("..")
-        .join(file)
+        .join(file);
+    super::project_data::resolve_project_data_path(path).expect("project data path resolves")
 }
 
 fn read(file: &str) -> String {
-    std::fs::read_to_string(path(file)).unwrap_or_else(|error| panic!("{file} reads: {error}"))
+    std::fs::read_to_string(
+        super::project_data::resolve_project_data_path(path(file))
+            .expect("one project data storage format"),
+    )
+    .unwrap_or_else(|error| panic!("{file} reads: {error}"))
 }
 
 fn read_json(file: &str) -> Value {
-    serde_json::from_str(&read(file)).unwrap_or_else(|error| panic!("{file} is JSON: {error}"))
+    super::project_data::read_project_data(&read(file))
+        .unwrap_or_else(|error| panic!("{file} is JSON: {error}"))
 }
 
 fn observe(assertions: &[&str], test_name: &str) {
@@ -176,11 +182,11 @@ fn record_of(
         "fixture": fixture_file,
         "oracle": fixture["oracle"],
         "sources": fixture["sources"],
-        "corpus": fixture["sources"]
+        "corpus": fixture["corpus"]["url"].as_str().map(Value::from).or_else(|| fixture["sources"]
             .as_array()
             .expect("sources")
             .iter()
-            .find(|source| source.as_str().is_some_and(is_upstream_corpus)),
+            .find(|source| source.as_str().is_some_and(is_upstream_corpus)).cloned()),
         "mergeReport": report.as_ref().map(|_| report_file.clone()),
         "coverage": {
             "rules": rules,
@@ -248,7 +254,7 @@ fn issue_195_merge_quality_evidence_rust_report_equals_the_published_report() {
     let report = report();
     let published = read_json(FIXTURE);
     assert_eq!(published["grammars"].as_array().expect("grammars"), &report);
-    assert_eq!(report.len(), 21);
+    assert_eq!(report.len(), 43);
     for record in &report {
         let grammar = &record["grammar"];
         let coverage = &record["coverage"];

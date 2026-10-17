@@ -6,7 +6,8 @@
 // native tree is clean but no merged extension of a native grammar fixture, is no recovery
 // discrepancy: it is reported, not recorded, and the script fails.
 //   node scripts/generate-native-recovery.mjs [--check] [LANGUAGE...]
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
+import { checkProjectData, readProjectData, writeProjectData } from './project-data.mjs';
 
 import { LinkNetwork } from '../src/index.js';
 import { LANGUAGE_CATALOG } from '../src/language-catalog.js';
@@ -36,9 +37,9 @@ const CATEGORIES = {
 const args = process.argv.slice(2);
 const check = args.includes('--check');
 const root = new URL('../../parity/fixtures/', import.meta.url);
-const json = (path) => JSON.parse(readFileSync(new URL(path, root), 'utf8'));
-const conformance = json('issue-195-conformance/manifest.json');
-const generative = json('issue-195-generative/manifest.json');
+const fixture = (path) => readProjectData(new URL(path, root));
+const conformance = fixture('issue-195-conformance/manifest.json');
+const generative = fixture('issue-195-generative/manifest.json');
 const native = (language) => isNativeGrammar(LANGUAGE_CATALOG.languages.find((entry) => entry.name === language).grammars[0].id);
 const requested = args.filter((arg) => !arg.startsWith('--'));
 const languages = requested.length ? requested : Object.keys(conformance.languages).filter(native);
@@ -54,9 +55,9 @@ function* cases(language) {
   for (const project of details.projects) {
     corpus.set(`project/${project.file.split('/').pop()}`, readFileSync(new URL(`issue-195-conformance/${project.file}`, root), 'utf8'));
   }
-  const hosts = json('issue-195-conformance/cases.json').mixed;
+  const hosts = fixture('issue-195-conformance/cases.json').mixed;
   const document = (source) => renderCstLines(documentGrammarRoots(LinkNetwork.parse(source, language), language), language).text;
-  for (const entry of json(`issue-195-conformance/${details.oracle}`).cases) {
+  for (const entry of fixture(`issue-195-conformance/${details.oracle}`).cases) {
     if (entry.kind === 'mixed') {
       const host = hosts.find((candidate) => candidate.id === entry.hostCase);
       const region = regionGrammarRoots(LinkNetwork.parse(host.source, host.host)).find((candidate) => candidate.language === language &&
@@ -67,7 +68,7 @@ function* cases(language) {
       yield { suite: 'conformance', id: entry.id, source, oracle: entry.cst, native: document(source) };
     }
   }
-  for (const entry of json(`issue-195-generative/${generative.languages[language].file}`).cases) {
+  for (const entry of fixture(`issue-195-generative/${generative.languages[language].file}`).cases) {
     yield { suite: 'generative', id: entry.id, source: entry.source, oracle: entry.cst, native: document(entry.source) };
     if (entry.kind === 'metamorphic') {
       yield { suite: 'generative', id: `${entry.id} (variant)`, source: entry.variant, oracle: entry.variantCst, native: document(entry.variant) };
@@ -96,19 +97,21 @@ for (const language of languages) {
 }
 const order = (record) => `${record.language}\u0000${record.suite}`;
 records.sort((left, right) => order(left).localeCompare(order(right)));
-const output = `${JSON.stringify({
+const output = {
   description: 'Conformance and generative cases whose native recovery differs from the tree-sitter oracle, each with a justified category; written by js/scripts/generate-native-recovery.mjs and checked by js/tests/support/native-recovery.js and rust/tests/unit/native_recovery_records.rs.',
   categories: CATEGORIES,
   cases: records,
-}, null, 2)}\n`;
+};
 const target = new URL(`../../${NATIVE_RECOVERY_FILE}`, import.meta.url);
 if (check) {
-  if (readFileSync(target, 'utf8') !== output) {
+  try {
+    checkProjectData(target, output);
+  } catch {
     console.error(`${NATIVE_RECOVERY_FILE} is stale; run node scripts/generate-native-recovery.mjs`);
     process.exitCode = 1;
   }
 } else {
-  writeFileSync(target, output);
+  writeProjectData(target, output);
   console.log(`wrote ${NATIVE_RECOVERY_FILE}: ${records.length} cases`);
 }
 for (const problem of refused) console.error(problem);

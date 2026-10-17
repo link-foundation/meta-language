@@ -1,3 +1,4 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 // Requirement I195-GRAMMAR-NATIVE-SCHEME: the native merged Scheme grammar,
 // parity/grammars/native/scheme.lino, builds the concrete syntax trees of the
 // tree-sitter-scheme oracle the native grammar replaced as the default Scheme parse.
@@ -18,9 +19,10 @@ import {
 import { nativeRows, oracleRecovers, oracleRows } from '../scripts/native-grammar-rows.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
-const read = (relative) => readFileSync(new URL(`../../${relative}`, import.meta.url), 'utf8');
+const read = (relative) => readFileSync(resolveProjectDataPath(new URL(`../../${relative}`, import.meta.url)), 'utf8');
+const readData = (relative) => readProjectData(new URL(`../../${relative}`, import.meta.url));
 const entry = NATIVE_GRAMMARS.find(({ id }) => id === 'scheme');
-const fixture = JSON.parse(read(fixturePath(entry)));
+const fixture = readData(fixturePath(entry));
 const links = read(entry.grammar);
 const parser = compileGrammar(parseGrammarLinks(links));
 

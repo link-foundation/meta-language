@@ -22,12 +22,13 @@ import {
   nameProblems,
 } from '../scripts/issue-195-naming.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
+import { readProjectData } from '../scripts/project-data.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const wordnet = loadWordNet();
 const registers = loadNamingRegisters(root);
 const context = { wordnet, vocabulary: registers.vocabulary };
-const { fixtures } = JSON.parse(readFileSync(new URL(`../../${NAMING_FIXTURES}`, import.meta.url), 'utf8'));
+const { fixtures } = readProjectData(new URL(`../../${NAMING_FIXTURES}`, import.meta.url));
 const repository = checkRepositoryNames(root, wordnet);
 
 function observe(assertions, testName) {
@@ -143,10 +144,11 @@ test('every name the sources define has a concept record and every record is use
   assert.equal(new Set(repository.formers.map(({ table }) => table)).size, FORMER_NAME_TABLES.length);
   // Every described inventory describes each name it defines.
   const descriptions = extractSourceDescriptions(root);
+  const names = extractNameInventory(root);
   const exempt = (name) => repository.exemptions.some(({ pattern }) => new RegExp(pattern, 'u').test(name));
   for (const inventory of new Set(descriptions.map((entry) => entry.inventory))) {
     const files = new Set(descriptions.filter((entry) => entry.inventory === inventory).map((entry) => entry.file));
-    const defined = new Set(extractNameInventory(root).filter((entry) => entry.inventory === inventory && files.has(entry.file) && !exempt(entry.name)).map((entry) => entry.name));
+    const defined = new Set(names.filter((entry) => entry.inventory === inventory && files.has(entry.file) && !exempt(entry.name)).map((entry) => entry.name));
     const described = new Set(descriptions.filter((entry) => entry.inventory === inventory).map((entry) => entry.name));
     assert.deepEqual([...described].sort(), [...defined].sort(), inventory);
   }

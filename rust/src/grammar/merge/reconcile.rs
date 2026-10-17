@@ -29,6 +29,8 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
 
 use super::GrammarMergeError;
+use super::decisions::accept_rule_correspondence;
+use super::declarations::rule_fields;
 use super::group::{Node, alias_of, source_label};
 use super::names::compared_name;
 use super::normalize::{normalize, quote};
@@ -92,7 +94,15 @@ pub(super) fn reconcile_classes(
             if by_source.len() < 2 {
                 continue;
             }
-            if by_source.values().all(|set| set.len() == 1) {
+            let concepts: BTreeSet<&str> = positions
+                .iter()
+                .filter_map(|&position| nodes[position].rule.concept.as_deref())
+                .collect();
+            if accept_rule_correspondence(
+                by_source.len() > 1,
+                by_source.values().all(|set| set.len() == 1),
+                concepts.len() <= 1,
+            ) {
                 reconciled.insert(*class);
             } else {
                 for &position in positions {
@@ -163,7 +173,10 @@ fn refine_up_to_roles(
             };
             if tokens[position] {
                 let role = roles[position].as_deref().unwrap_or_default();
-                signatures.push(format!("{prefix}|lex|{role}"));
+                signatures.push(format!(
+                    "{prefix}|lex|{role}|{}",
+                    rule_fields(node.rule, &str::to_owned).trim_start()
+                ));
                 continue;
             }
             let current = &classes;
@@ -247,7 +260,11 @@ fn reconcile_by_name(
         }
         let name = compared_name(&node.rule.name, node.source.language);
         if !name.is_empty() {
-            by_name.entry(name).or_default().push(position);
+            let key = format!(
+                "{name}\0{}",
+                rule_fields(node.rule, &str::to_owned).trim_start()
+            );
+            by_name.entry(key).or_default().push(position);
         }
     }
     let mut used = BTreeSet::new();
@@ -269,6 +286,13 @@ fn reconcile_by_name(
             .iter()
             .any(|&position| tokens[position] != tokens[positions[0]])
         {
+            continue;
+        }
+        let concepts: BTreeSet<&str> = positions
+            .iter()
+            .filter_map(|&position| nodes[position].rule.concept.as_deref())
+            .collect();
+        if concepts.len() > 1 {
             continue;
         }
         let key = Key::Name(strict[positions[0]]);
@@ -836,15 +860,10 @@ fn comparison_text(
     rule: &GrammarRule,
     label: &dyn Fn(&str) -> String,
 ) -> Result<String, GrammarMergeError> {
-    let parameters = &rule.attributes.parameters;
-    let parameters = if parameters.is_empty() {
-        String::new()
-    } else {
-        format!(" ({})", parameters.join(" "))
-    };
     Ok(format!(
-        "{}{parameters}",
-        normalize(&parser_form(&rule.expr, true), label)?.text
+        "{}{}",
+        normalize(&parser_form(&rule.expr, true), label)?.text,
+        rule_fields(rule, label).trim_start()
     ))
 }
 

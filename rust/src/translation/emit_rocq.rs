@@ -24,9 +24,10 @@ use super::ir::{
     Pattern, Plan, Program, Prop, Semantics, TheoremDecl, rename_function, rename_main,
     rename_theorem,
 };
-use super::output::thread_output;
+use super::output::thread_output_for_target;
 use super::proof::prop_functions;
 use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
+use super::typed_program_link_rules::accept_program_tuple_product_model;
 use super::types::Type;
 
 mod arrays;
@@ -34,7 +35,9 @@ mod expressions;
 mod floats;
 mod math;
 mod mutual;
+mod optional_values;
 mod proofs;
+mod records;
 
 use self::arrays::{FLOAT_INDEX, LIST_AT};
 pub use self::floats::FLOAT_PRELUDE;
@@ -226,6 +229,9 @@ enum Helper {
     FloatSame,
     FloatRem,
     Math,
+    StringStartsWith,
+    StringEndsWith,
+    StringIncludes,
     ListAt,
     FloatIndex,
     Fix,
@@ -235,7 +241,7 @@ enum Helper {
 }
 
 impl Helper {
-    const ALL: [Self; 15] = [
+    const ALL: [Self; 18] = [
         Self::Digits,
         Self::ZToString,
         Self::BoolToString,
@@ -245,6 +251,9 @@ impl Helper {
         Self::FloatSame,
         Self::FloatRem,
         Self::Math,
+        Self::StringStartsWith,
+        Self::StringEndsWith,
+        Self::StringIncludes,
         Self::ListAt,
         Self::FloatIndex,
         Self::Fix,
@@ -252,6 +261,21 @@ impl Helper {
         Self::Decide,
         Self::Emit,
     ];
+
+    fn render_definition(self) -> String {
+        match self {
+            Self::StringStartsWith => {
+                crate::translation::frontend_rules::read_string_test_support("Rocq", "startsWith")
+            }
+            Self::StringEndsWith => {
+                crate::translation::frontend_rules::read_string_test_support("Rocq", "endsWith")
+            }
+            Self::StringIncludes => {
+                crate::translation::frontend_rules::read_string_test_support("Rocq", "includes")
+            }
+            _ => self.text().to_owned(),
+        }
+    }
 
     const fn text(self) -> &'static str {
         match self {
@@ -263,6 +287,7 @@ impl Helper {
             Self::JsConsole => JS_CONSOLE,
             Self::FloatSame => FLOAT_SAME,
             Self::FloatRem => FLOAT_REM,
+            Self::StringStartsWith | Self::StringEndsWith | Self::StringIncludes => "",
             Self::Math => MATH,
             Self::ListAt => LIST_AT,
             Self::FloatIndex => FLOAT_INDEX,
@@ -327,7 +352,7 @@ fn internal(message: String) -> TranslationError {
 /// # Errors
 /// On constructs the target cannot express faithfully.
 pub fn emit_rocq(source: &Program) -> Result<Emitted> {
-    let program = &*thread_output(source)?;
+    let program = &*thread_output_for_target(source, "Rocq")?;
     let state = EmitState::new(
         program,
         Language::Rocq,
@@ -413,7 +438,7 @@ impl RocqEmitter<'_> {
         lines.extend(prelude.iter().map(|line| (*line).to_owned()));
         lines.push(String::new());
         for helper in helper_text {
-            lines.push(helper.text().to_owned());
+            lines.push(helper.render_definition());
             lines.push(String::new());
         }
         for block in blocks {
@@ -452,6 +477,13 @@ impl RocqEmitter<'_> {
     }
 
     fn ty(&mut self, ty: &Type) -> Result<String> {
+        if ty.is_reference() || matches!(ty, Type::Cell { .. }) {
+            return Err(unsupported(
+                "mutable structural value",
+                "shared reference state needs an explicit target state model",
+                None,
+            ));
+        }
         Ok(match ty {
             Type::Nat => "N".to_owned(),
             Type::Int => "Z".to_owned(),
@@ -468,14 +500,76 @@ impl RocqEmitter<'_> {
             Type::String => "string".to_owned(),
             Type::Unit => "unit".to_owned(),
             Type::Output => "list string".to_owned(),
+            Type::Option { element, absence } => {
+                let element = self.ty(element)?;
+                if absence == "both" {
+                    format!("(option (option {element}))")
+                } else {
+                    format!("(option {element})")
+                }
+            }
             Type::Data { name } => self.state.reference(name, "."),
-            Type::Array { element } => {
+            Type::Array { element, .. } => {
                 self.state.encode(
                     "arrays",
                     "a JavaScript array, which the portable core never mutates, is a Rocq list; a read walks it to the index",
                 );
                 format!("(list {})", self.ty(element)?)
             }
+            Type::Set { element, .. } => {
+                let element = self.ty(element)?;
+                super::collection_construction_rules::render_collection_construction_type(
+                    "Rocq", "set", &element, "",
+                )
+            }
+            Type::Map { key, value, .. } => {
+                let key = self.ty(key)?;
+                let value = self.ty(value)?;
+                super::collection_construction_rules::render_collection_construction_type(
+                    "Rocq", "map", &key, &value,
+                )
+            }
+            Type::Tuple { elements } => {
+                let mut parts = Vec::new();
+                for element in elements {
+                    parts.push(self.ty(element)?);
+                }
+                if parts.is_empty() {
+                    "unit".to_owned()
+                } else {
+                    format!("({})%type", parts.join(" * "))
+                }
+            }
+            Type::Record { fields, .. } => {
+                let children = fields
+                    .iter()
+                    .map(|field| self.ty(&field.ty))
+                    .collect::<Result<Vec<_>>>()?;
+                super::record_emission_rules::render_record_type("Rocq", &children)
+            }
+            Type::Union { .. } => {
+                return Err(crate::translation::diagnostics::type_error(
+                    super::type_syntax_rules::read_union_target_refusal("Rocq"),
+                    None,
+                ));
+            }
+            Type::Function { params, ret } => {
+                let parameters = params
+                    .iter()
+                    .map(|parameter| self.ty(parameter))
+                    .collect::<Result<Vec<_>>>()?;
+                let ret = self.ty(ret)?;
+                super::callable_source_rules::render_callable_function_type(
+                    "Rocq",
+                    &parameters,
+                    &ret,
+                )
+            }
+            Type::Absence { .. } => return Err(internal(
+                crate::translation::nullable_type_syntax_rules::read_nullable_type_target_refusal(
+                    "Rocq",
+                ),
+            )),
             other => return Err(internal(format!("no Rocq type for {}", other.kind()))),
         })
     }

@@ -12,28 +12,36 @@
 //!
 //! Mirrors `js/src/translation/emit-rust.js`.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 
 use super::Language;
 use super::decimal::Decimal;
 use super::diagnostics::{Result, unsupported};
 use super::emit_common::{CtorStyle, EmitOptions, EmitState, Emitted};
+use super::frontend_rules::{
+    accept_constant_emission, constant_binding_form, render_constant_binding,
+};
 use super::ir::{
-    Binder, ByZero, Decl, Effect, Expr, LitValue, Node, Pattern, Program, Prop, Semantics,
+    Binder, ByZero, Decl, Effect, Expr, LitValue, Node, Pattern, Program, Prop, Scope, Semantics,
     rename_function, rename_main, rename_theorem, tail_loop,
 };
 use super::surface::{BinaryOp, External, Flavor, Rounding, SImport, UnaryOp};
 use super::types::Type;
 
+mod array_moves;
 mod arrays;
+mod callables;
 mod declarations;
 mod expressions;
 mod externals;
 mod math;
 mod number_prelude;
+mod optional_values;
+mod primitive_methods;
+mod records;
 
-use self::arrays::ARRAY_PRELUDE;
+use self::arrays::read_array_prelude;
 use self::externals::external_name;
 use self::math::MATH_PRELUDE;
 use self::number_prelude::NUMBER_PRELUDE;
@@ -511,88 +519,84 @@ fn camel(name: &str) -> String {
 /// # Errors
 /// On constructs the target cannot express faithfully.
 pub fn emit_rust(program: &Program) -> Result<Emitted> {
-    rust_emitter(program).file()
+    emit_rust_with_options(program, RustEmissionOptions::default())
 }
 
-/// Emits a module whose only statement declares a top-level constant as a
-/// Rust constant, or `None` for any other program (mirrors
-/// `emitRustConstants`).
-///
-/// A literal number or boolean is a `const` of its type, a literal string a
-/// `&str` constant, and any other value a lazily computed `static`.
+/// Optional explicit source-interface interpretations for Rust emission.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct RustEmissionOptions<'a> {
+    /// Preserve primitive immutable-reference headers under the selected model.
+    pub source_header_model: Option<&'a str>,
+}
+
+/// Emit a checked program with an explicitly selected source-header model.
 ///
 /// # Errors
-/// On a constant value the target cannot express faithfully.
-pub fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> {
-    let Some(main) = &program.main else {
-        return Ok(None);
-    };
-    let [
-        Effect::Let {
-            name,
-            value,
-            constant: true,
-            ..
-        },
-    ] = main.effects.as_slice()
-    else {
-        return Ok(None);
-    };
-    let identifier = name
-        .chars()
-        .next()
-        .is_some_and(|first| first.is_ascii_alphabetic() || first == '_')
-        && name
-            .chars()
-            .all(|character| character.is_ascii_alphanumeric() || character == '_');
-    if !program.declarations.is_empty()
-        || name.starts_with("ml_")
-        || KEYWORDS.contains(&name.as_str())
-        || !identifier
-    {
-        return Ok(None);
+/// Refuses unsupported models, interfaces and contexts before rendering.
+pub fn emit_rust_with_options(
+    program: &Program,
+    options: RustEmissionOptions<'_>,
+) -> Result<Emitted> {
+    emit_rust_context(program, options, false, false)
+}
+
+/// Emit immutable array values by consuming each proven final lexical use.
+/// Historical low-level copy profiles remain available through [`emit_rust`].
+///
+/// # Errors
+/// On constructs or explicit source interfaces the target cannot preserve.
+pub fn emit_rust_with_array_consumption(
+    program: &Program,
+    options: RustEmissionOptions<'_>,
+) -> Result<Emitted> {
+    emit_rust_context(program, options, false, true)
+}
+
+pub(crate) fn emit_rust_with_representation(
+    program: &Program,
+    utf16_strings: bool,
+) -> Result<Emitted> {
+    emit_rust_context(program, RustEmissionOptions::default(), utf16_strings, true)
+}
+
+fn emit_rust_context(
+    program: &Program,
+    options: RustEmissionOptions<'_>,
+    utf16_strings: bool,
+    array_consumption: bool,
+) -> Result<Emitted> {
+    super::source_type_namespaces::validate_source_type_namespaces(program)?;
+    super::source_const_functions::validate_const_functions(program)?;
+    super::owned_local_state::validate_owned_local_state(program)?;
+    if let Some(runtime) = super::runtime_shell::validate_program(program)? {
+        if options.source_header_model.is_some() {
+            return Err(crate::translation::diagnostics::unsupported(
+                "closed Rust runtime shell",
+                "target header changes require an independent runtime composition proof",
+                None,
+            ));
+        }
+        return super::runtime_shell::emit_rust(program, &runtime);
     }
     let mut emitter = rust_emitter(program);
-    let literal = match &value.node {
-        Node::Lit { value } => Some(value),
-        _ => None,
-    };
-    let scalar = matches!(value.ty, Type::Float | Type::Bool | Type::Fixed { .. });
-    let definition = match literal {
-        Some(_) if scalar => {
-            let ty = emitter.ty(&value.ty);
-            format!("pub const {name}: {ty} = {};", emitter.expr(value)?)
+    emitter.array_consumption = array_consumption;
+    emitter.utf16_strings =
+        utf16_strings || primitive_methods::program_requires_method_units(program);
+    if emitter.utf16_strings {
+        emitter.state.encode("utf16-strings", "strings are sequences of UTF-16 code units, retaining isolated surrogates and JavaScript offsets; output replaces isolated surrogates as Node writes UTF-8");
+    }
+    if let Some(model) = options.source_header_model {
+        if super::borrowed_call_interface_rules::accept_rust_borrowed_call_interface_model(model) {
+            let interface =
+                super::borrowed_call_interface::read_rust_borrowed_call_interface(program, model)?;
+            emitter.source_headers = interface.headers;
+            emitter.borrowed_call_targets = Some(interface.targets);
+        } else {
+            emitter.source_headers =
+                super::source_header_emission::read_rust_source_header_emission(program, model)?;
         }
-        Some(text) if value.ty == Type::String => {
-            format!("pub const {name}: &str = {};", rust_string(&text.text()))
-        }
-        _ => {
-            let ty = emitter.ty(&value.ty);
-            format!(
-                "pub static {name}: std::sync::LazyLock<{ty}> = std::sync::LazyLock::new(|| {});",
-                emitter.expr(value)?
-            )
-        }
-    };
-    let preludes: Vec<String> = emitter
-        .preludes
-        .iter()
-        .map(|prelude| {
-            match prelude {
-                Prelude::Big => PRELUDE,
-                Prelude::Number => NUMBER_PRELUDE,
-                Prelude::Math => MATH_PRELUDE,
-                Prelude::Array => ARRAY_PRELUDE,
-            }
-            .to_owned()
-        })
-        .collect();
-    let mut text = preludes.clone();
-    text.push(definition.clone());
-    let mut result = emitter.state.finish(text.join("\n\n"), None);
-    result.preludes = preludes;
-    result.definitions = vec![definition];
-    Ok(Some(result))
+    }
+    emitter.file()
 }
 
 /// The Rust emitter of `program`, with every name of the module's other items
@@ -625,7 +629,91 @@ fn rust_emitter(program: &Program) -> RustEmitter<'_> {
         theorem_checks: Vec::new(),
         preludes: BTreeSet::new(),
         loop_params: None,
+        source_headers: BTreeMap::new(),
+        borrowed_call_targets: None,
+        borrowed_call_scope: None,
+        utf16_strings: false,
+        standard_array: false,
+        array_final_uses: BTreeSet::new(),
+        array_consumption: false,
     }
+}
+
+/// Emits a top-level constant with the JavaScript-generated eligibility,
+/// binding form and rendering decisions, or `None` for other programs.
+///
+/// # Errors
+/// On a constant value the target cannot express faithfully.
+pub fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> {
+    let Some(main) = &program.main else {
+        return Ok(None);
+    };
+    let Some(Effect::Let {
+        name,
+        value,
+        constant,
+        ..
+    }) = main.effects.first()
+    else {
+        return Ok(None);
+    };
+    let legal_name = !name.starts_with("ml_")
+        && !KEYWORDS.contains(&name.as_str())
+        && name.bytes().enumerate().all(|(index, byte)| {
+            byte.is_ascii_alphabetic() || byte == b'_' || (index > 0 && byte.is_ascii_digit())
+        })
+        && !name.is_empty();
+    #[allow(clippy::cast_precision_loss)]
+    if !accept_constant_emission(
+        *constant,
+        main.effects.len() as f64,
+        program.declarations.len() as f64,
+        legal_name,
+    ) {
+        return Ok(None);
+    }
+    let mut emitter = rust_emitter(program);
+    let form = constant_binding_form(
+        if matches!(value.node, Node::Lit { .. }) {
+            "lit"
+        } else {
+            ""
+        },
+        value.ty.kind(),
+    );
+    let (ty, expression) = if form == "string" {
+        let Node::Lit { value } = &value.node else {
+            unreachable!("the generated string form requires a literal");
+        };
+        ("&str".to_owned(), rust_string(&value.text()))
+    } else {
+        (emitter.ty(&value.ty)?, emitter.expr(value)?)
+    };
+    let definition = render_constant_binding(&form, name, &ty, &expression);
+    let preludes: Vec<String> = emitter
+        .preludes
+        .iter()
+        .map(|prelude| match prelude {
+            Prelude::Big => PRELUDE.to_owned(),
+            Prelude::Number => NUMBER_PRELUDE.to_owned(),
+            Prelude::Math => MATH_PRELUDE.to_owned(),
+            Prelude::Array => read_array_prelude(emitter.standard_array).to_owned(),
+            Prelude::String => crate::self_translation::representation::string_prelude(),
+            Prelude::Optional => super::structured_type_rules::read_rust_optional_prelude(),
+        })
+        .collect();
+    let mut output = emitter.state.finish(
+        preludes
+            .iter()
+            .chain(std::iter::once(&definition))
+            .cloned()
+            .collect::<Vec<_>>()
+            .join("\n\n"),
+        None,
+    );
+    output.preludes = preludes;
+    output.definitions = vec![definition];
+    Ok(Some(output))
 }
 
 /// Declarations grouped by source module, in declaration order.
@@ -650,6 +738,8 @@ enum Prelude {
     Number,
     Math,
     Array,
+    String,
+    Optional,
 }
 
 struct RustEmitter<'p> {
@@ -662,13 +752,34 @@ struct RustEmitter<'p> {
     /// The lifted loop being emitted as a loop, and its parameters, which
     /// each call to it assigns before the next iteration.
     loop_params: Option<(String, Vec<String>)>,
+    /// Validated owned source signatures selected before interface rendering.
+    source_headers: BTreeMap<String, super::source_signatures::SourceSignature>,
+    /// Actual owned leaf signatures for the selected direct-call interface.
+    borrowed_call_targets: Option<BTreeMap<String, super::source_signatures::SourceSignature>>,
+    /// Per-function hygienic names, reserved against every argument and binder.
+    borrowed_call_scope: Option<Scope<'p>>,
+    /// Internal self-translation representation; actual Text values are guarded.
+    utf16_strings: bool,
+    /// The JavaScript source selected optional reads or standard array methods.
+    standard_array: bool,
+    /// Actual last consuming occurrences in the current renamed checked tree.
+    array_final_uses: BTreeSet<*const Expr>,
+    /// Explicit emission profile; historical low-level output retains copies.
+    array_consumption: bool,
 }
 
-const fn is_copy(ty: &Type) -> bool {
-    matches!(
-        ty,
-        Type::Bool | Type::Fixed { .. } | Type::Float | Type::Unit
-    )
+fn is_copy(ty: &Type, product_model: Option<&str>) -> bool {
+    if matches!(ty, Type::Tuple { .. }) && product_model != Some("immutable value product") {
+        return false;
+    }
+    let fields = match ty {
+        Type::Tuple { elements } => elements
+            .iter()
+            .map(|item| is_copy(item, product_model))
+            .collect(),
+        _ => Vec::new(),
+    };
+    super::product_emission_rules::accept_tuple_copy_type(ty.kind(), &fields)
 }
 
 const fn comparison_operator(op: BinaryOp) -> &'static str {
@@ -696,7 +807,7 @@ impl RustEmitter<'_> {}
 
 /// An owned copy of a variable.
 fn own(name: &str, ty: &Type) -> String {
-    if is_copy(ty) {
+    if is_copy(ty, None) {
         name.to_owned()
     } else {
         format!("{name}.clone()")
@@ -736,7 +847,7 @@ fn rust_string(text: &str) -> String {
     format!("\"{}\"", rust_escape(text))
 }
 
-fn indent(text: &str, depth: usize) -> String {
+pub(super) fn indent(text: &str, depth: usize) -> String {
     let pad = "    ".repeat(depth);
     text.split('\n')
         .map(|line| {

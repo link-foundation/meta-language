@@ -17,111 +17,136 @@ use super::cst_sexpression::{normalize, render_network};
 use super::issue_195_native_grammar_rows::{cases, parser, source};
 use super::issue_195_observations::{Observation, record};
 
-const GRAMMARS: [(&str, &str, &str); 21] = [
+const GRAMMARS: [(&str, &str, &str); 26] = [
     (
         "json",
         include_str!("../../../parity/grammars/native/json.lino"),
-        include_str!("../../../parity/fixtures/native-grammars/json.json"),
+        include_str!("../../../parity/fixtures/native-grammars/json.lino"),
     ),
     (
         "ini",
         include_str!("../../../parity/grammars/native/ini.lino"),
-        include_str!("../../../parity/fixtures/native-grammars/ini.json"),
+        include_str!("../../../parity/fixtures/native-grammars/ini.lino"),
     ),
     (
         "diff",
         include_str!("../../../parity/grammars/native/diff.lino"),
-        include_str!("../../../parity/fixtures/native-grammars/diff.json"),
+        include_str!("../../../parity/fixtures/native-grammars/diff.lino"),
     ),
     (
         "csv",
         include_str!("../../../parity/grammars/native/csv.lino"),
-        include_str!("../../../parity/fixtures/native-grammars/csv.json"),
+        include_str!("../../../parity/fixtures/native-grammars/csv.lino"),
     ),
     (
         "json5",
         include_str!("../../../parity/grammars/native/json5.lino"),
-        include_str!("../../../parity/fixtures/native-grammars/json5.json"),
+        include_str!("../../../parity/fixtures/native-grammars/json5.lino"),
     ),
     (
         "scheme",
         include_str!("../../../parity/grammars/native/scheme.lino"),
-        include_str!("../../../parity/fixtures/native-grammars/scheme.json"),
+        include_str!("../../../parity/fixtures/native-grammars/scheme.lino"),
     ),
     (
         "racket",
         include_str!("../../../parity/grammars/native/racket.lino"),
-        include_str!("../../../parity/fixtures/native-grammars/racket.json"),
+        include_str!("../../../parity/fixtures/native-grammars/racket.lino"),
     ),
     (
         "c",
         include_str!("../../../parity/grammars/native/c.lino"),
-        include_str!("../../../parity/fixtures/native-grammars/c.json"),
+        include_str!("../../../parity/fixtures/native-grammars/c.lino"),
     ),
     (
         "rust",
         include_str!("../../../parity/grammars/native/rust.lino"),
-        include_str!("../../../parity/fixtures/native-grammars/rust.json"),
+        include_str!("../../../parity/fixtures/native-grammars/rust.lino"),
     ),
     (
         "javascript",
         include_str!("../../../parity/grammars/native/javascript.lino"),
-        include_str!("../../../parity/fixtures/native-grammars/javascript.json"),
+        include_str!("../../../parity/fixtures/native-grammars/javascript.lino"),
     ),
     (
         "typescript",
         include_str!("../../../parity/grammars/native/typescript.lino"),
-        include_str!("../../../parity/fixtures/native-grammars/typescript.json"),
+        include_str!("../../../parity/fixtures/native-grammars/typescript.lino"),
     ),
     (
         "tsx",
         include_str!("../../../parity/grammars/native/tsx.lino"),
-        include_str!("../../../parity/fixtures/native-grammars/tsx.json"),
+        include_str!("../../../parity/fixtures/native-grammars/tsx.lino"),
     ),
     (
         "lean",
         include_str!("../../../parity/grammars/native/lean.lino"),
-        include_str!("../../../parity/fixtures/native-grammars/lean.json"),
+        include_str!("../../../parity/fixtures/native-grammars/lean.lino"),
     ),
     (
         "rocq",
         include_str!("../../../parity/grammars/native/rocq.lino"),
-        include_str!("../../../parity/fixtures/native-grammars/rocq.json"),
+        include_str!("../../../parity/fixtures/native-grammars/rocq.lino"),
     ),
     (
         "java",
         include_str!("../../../parity/grammars/native/java.lino"),
-        include_str!("../../../parity/fixtures/native-grammars/java.json"),
+        include_str!("../../../parity/fixtures/native-grammars/java.lino"),
     ),
     (
         "go",
         include_str!("../../../parity/grammars/native/go.lino"),
-        include_str!("../../../parity/fixtures/native-grammars/go.json"),
+        include_str!("../../../parity/fixtures/native-grammars/go.lino"),
     ),
     (
         "regex",
         include_str!("../../../parity/grammars/native/regex.lino"),
-        include_str!("../../../parity/fixtures/native-grammars/regex.json"),
+        include_str!("../../../parity/fixtures/native-grammars/regex.lino"),
     ),
     (
         "graphql",
         include_str!("../../../parity/grammars/native/graphql.lino"),
-        include_str!("../../../parity/fixtures/native-grammars/graphql.json"),
+        include_str!("../../../parity/fixtures/native-grammars/graphql.lino"),
     ),
     (
         "proto",
         include_str!("../../../parity/grammars/native/proto.lino"),
-        include_str!("../../../parity/fixtures/native-grammars/proto.json"),
+        include_str!("../../../parity/fixtures/native-grammars/proto.lino"),
     ),
     (
         "make",
         include_str!("../../../parity/grammars/native/make.lino"),
-        include_str!("../../../parity/fixtures/native-grammars/make.json"),
+        include_str!("../../../parity/fixtures/native-grammars/make.lino"),
     ),
     (
         "solidity",
         include_str!("../../../parity/grammars/native/solidity.lino"),
-        include_str!("../../../parity/fixtures/native-grammars/solidity.json"),
+        include_str!("../../../parity/fixtures/native-grammars/solidity.lino"),
+    ),
+    (
+        "toml",
+        include_str!("../../../parity/grammars/native/toml.lino"),
+        include_str!("../../../parity/fixtures/native-grammars/toml.lino"),
+    ),
+    (
+        "zig",
+        include_str!("../../../parity/grammars/native/zig.lino"),
+        include_str!("../../../parity/fixtures/native-grammars/zig.lino"),
+    ),
+    (
+        "pascal",
+        include_str!("../../../parity/grammars/native/pascal.lino"),
+        include_str!("../../../parity/fixtures/native-grammars/pascal.lino"),
+    ),
+    (
+        "vb",
+        include_str!("../../../parity/grammars/native/vb.lino"),
+        include_str!("../../../parity/fixtures/native-grammars/vb.lino"),
+    ),
+    (
+        "lua",
+        include_str!("../../../parity/grammars/native/lua.lino"),
+        include_str!("../../../parity/fixtures/native-grammars/lua.lino"),
     ),
 ];
 
@@ -140,7 +165,8 @@ fn grammars() -> Vec<(&'static str, Value, FeatureGrammarParser)> {
     GRAMMARS
         .iter()
         .map(|(id, grammar, fixture)| {
-            let fixture = serde_json::from_str(fixture).expect("the fixture is JSON");
+            let fixture =
+                super::project_data::read_project_data(fixture).expect("the fixture is JSON");
             (*id, fixture, parser(grammar))
         })
         .collect()

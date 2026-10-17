@@ -160,16 +160,27 @@ fn leaves(node: &Node) -> Vec<&Node> {
     }
 }
 
-#[test]
-fn lino_grammar_cst_carries_the_links_of_the_official_links_notation_parser() {
+/// Preserve the shared fixture and the legacy deeply nested JSON boundary.
+pub(super) fn read_lino_grammar_cases() -> Value {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../parity/fixtures/lino-grammar-cases.json");
-    let text = fs::read_to_string(path).expect("LiNo grammar cases are readable");
+    let physical = super::project_data::resolve_project_data_path(path)
+        .expect("one project data storage format");
+    let text = fs::read_to_string(&physical).expect("LiNo grammar cases are readable");
+    if physical.extension().and_then(|value| value.to_str()) == Some("lino") {
+        return meta_language::structured_data_links::read_structured_data_lino(&text)
+            .expect("LiNo grammar cases are valid structured project data");
+    }
     // The deep-nesting cases hold links nested further than serde_json's
     // default recursion limit.
     let mut deserializer = serde_json::Deserializer::from_str(&text);
     deserializer.disable_recursion_limit();
-    let fixture = Value::deserialize(&mut deserializer).expect("LiNo grammar cases are valid JSON");
+    Value::deserialize(&mut deserializer).expect("LiNo grammar cases are valid JSON")
+}
+
+#[test]
+fn lino_grammar_cst_carries_the_links_of_the_official_links_notation_parser() {
+    let fixture = read_lino_grammar_cases();
     for case in fixture["cases"].as_array().expect("cases") {
         let source = case["source"].as_str().expect("source");
         let network = LinkNetwork::parse(source, "LiNo", ParseConfiguration::default());

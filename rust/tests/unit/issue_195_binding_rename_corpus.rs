@@ -16,7 +16,7 @@ use serde_json::Value;
 
 use super::issue_195_observations as observations;
 
-const FIXTURE: &str = include_str!("../../../parity/fixtures/four-language-conformance.json");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/four-language-conformance.lino");
 
 const ASSERTIONS: &[&str] = &[
     "symbolIdentity",
@@ -189,7 +189,8 @@ fn check_language(corpus: &Value, language: &str) {
 
 #[test]
 fn issue_195_binding_rename_follows_symbol_identity_and_rejects_capture() {
-    let corpus: Value = serde_json::from_str(FIXTURE).expect("four-language corpus");
+    let corpus: Value =
+        super::project_data::read_project_data(FIXTURE).expect("four-language corpus");
     for language in corpus["languages"].as_array().expect("languages") {
         check_language(&corpus, text(language, "name"));
     }

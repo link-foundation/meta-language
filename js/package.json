@@ -35,6 +35,10 @@
     "check:default-cst": "node scripts/generate-default-cst-expectations.mjs --check",
     "check:self-translation": "node scripts/generate-self-translation-cases.mjs --check",
     "check:frontend-rules": "node scripts/generate-frontend-rules.mjs --check",
+    "check:self-translation:representation": "node scripts/generate-self-translation-representation.mjs --native --check",
+    "check:rust-cast-syntax": "node scripts/generate-rust-cast-syntax-rules.mjs --check",
+    "check:original-link-schema-closure": "node ../experiments/original-link-complete-table-projection/generate-raw-schema-source-closure.mjs --check",
+    "check:frontend-rule-styles": "node scripts/generate-frontend-rule-styles.mjs --check",
     "check:lino-grammar": "node scripts/generate-lino-grammar-cases.mjs --check",
     "check:pdf-grammar": "node scripts/generate-pdf-grammar-cases.mjs --check",
     "check:native-imports": "node scripts/import-native-grammars.mjs --check",
@@ -42,6 +46,8 @@
     "check:builtin-cst": "node scripts/generate-builtin-cst-expectations.mjs --check",
     "check:language-catalog": "node scripts/build-language-catalog.mjs --check",
     "check:concept-records": "node scripts/build-concept-records.mjs --check",
+    "check:global-concepts": "node scripts/generate-global-concept-rules.mjs --check && node scripts/generate-global-concept-space-fixture.mjs --check",
+    "check:merge-decisions": "node scripts/generate-grammar-merge-decisions.mjs --check",
     "check:concept-reuse": "node scripts/build-native-grammar-concept-reuse.mjs --check",
     "check:merge-quality": "node scripts/build-merge-quality-evidence.mjs --check",
     "check:foundations": "node scripts/build-foundation-models.mjs --check",
@@ -77,6 +83,7 @@
     "franc-min": "6.2.0",
     "pdf-lib": "1.17.1",
     "peggy": "5.1.0",
+    "typescript": "7.0.2",
     "wordnet-db": "3.1.14"
   },
   "overrides": {

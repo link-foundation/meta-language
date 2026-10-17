@@ -23,6 +23,7 @@ On npmjs.com open **meta-language → Settings → Trusted Publisher**, choose
 | Repository | `meta-language` |
 | Workflow filename | `js.yml` |
 | Environment name | *(leave empty)* |
+| Allowed actions | Enable direct publishing with `npm publish` |
 
 - The workflow filename is the bare filename. Do not enter the path
   `.github/workflows/js.yml`. npm compares the field with the workflow in the
@@ -32,6 +33,9 @@ On npmjs.com open **meta-language → Settings → Trusted Publisher**, choose
   If an environment is added to the job later, enter the same name here.
 - The dispatching workflow (`rust.yml`) is not the publisher. npm only sees
   `js.yml`, which is the workflow that runs `npm publish`.
+- Direct publishing must be allowed. Permission to stage a package alone does
+  not authorize the workflow's `npm publish` command. See the
+  [npm settings reference](https://docs.npmjs.com/trusted-publishers/#for-github-actions).
 - After the first trusted publish succeeds, **Publishing access** can be set to
   *Require two-factor authentication and disallow tokens*. The `NPM_TOKEN`
   secret is then no longer used.
@@ -70,14 +74,30 @@ the step:
 
 ## Publishing versions that were missed
 
-The registry served only `0.46.0` while the trusted publisher was missing. Once
-the settings above are saved, publish the latest release from its tag:
+The [October 12 audit](https://github.com/link-foundation/meta-language/pull/201#issuecomment-6116039616)
+recorded npm `0.46.0` and crate `1.0.0`. Once the settings above are saved,
+recover the missing npm artifact from the corresponding existing release tag:
 
 ```bash
-gh workflow run js.yml --ref v0.58.2 -f release_version=0.58.2
+gh workflow run js.yml --ref v1.0.0 -f release_version=1.0.0
 ```
 
-Each release after that is published by the dispatch in step 2.
+Use the tag's version for both arguments when recovering a later release.
+A workflow dispatch on a tag executes the workflow stored on that tag; an
+older tag does not acquire checks added by a later commit. Future releases use
+the updated workflow through the dispatch in step 2.
+
+`js/scripts/release-publication.mjs` rejects publishing from a branch or a
+different commit. It checks the tag, requested version, npm manifest, both
+lockfile version fields and crate manifest before authentication. The registry
+preflight requires the matching non-yanked crate and its checksum. Only an
+npm HTTP 404 means the npm artifact is absent; authentication, network and
+server failures stop publication. After publishing, the workflow waits for
+the npm artifact and verifies that both registries serve that same version.
+An already published version runs this verification without requesting a
+publish credential. Registry presence alone does not establish the downstream
+delivery requirements: the post-merge evidence jobs must still install and
+test the published artifacts.
 
 ## Reference
 

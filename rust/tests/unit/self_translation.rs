@@ -6,6 +6,7 @@
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
 use std::fs;
+use std::io::Write as _;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -24,13 +25,157 @@ use super::issue_195_observations::{Observation, record};
 const FIXTURE: &str = "parity/self-translation/cases.lino";
 const HEADER: &str = "// meta-language:self-translation:v1 ";
 
+fn report_code_difference(name: &str, actual: &str, expected: &str) {
+    if actual == expected {
+        return;
+    }
+    let actual_characters = actual.chars().count();
+    let expected_characters = expected.chars().count();
+    let at = actual
+        .chars()
+        .zip(expected.chars())
+        .position(|(actual, expected)| actual != expected)
+        .unwrap_or(actual_characters.min(expected_characters));
+    let start = at.saturating_sub(90);
+    let window = |text: &str| {
+        text.chars()
+            .skip(start)
+            .take(180)
+            .collect::<String>()
+            .escape_debug()
+            .to_string()
+    };
+    eprintln!(
+        "self-translation mismatch {name}: first character {at}; actual bytes {} chars {actual_characters}; expected bytes {} chars {expected_characters}; actual window [{start}..] {}; expected window [{start}..] {}",
+        actual.len(),
+        expected.len(),
+        window(actual),
+        window(expected)
+    );
+}
+
+#[test]
+fn sibling_binding_runs_match_javascript_and_restore_their_source() {
+    let fixture: serde_json::Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/self-translation-bindings.lino"
+    ))
+    .unwrap();
+    let script = "import fs from 'node:fs'; import {readProjectData} from './js/scripts/project-data.mjs'; import {selfTranslate} from './js/src/self-translation.js'; const fixture=readProjectData('parity/fixtures/self-translation-bindings.json'); process.stdout.write(JSON.stringify(fixture.cases.map(entry=>selfTranslate(entry.module ? fs.readFileSync(entry.module,'utf8') : entry.source,'JavaScript','Rust').code)));";
+    let output = Command::new("node")
+        .current_dir(root())
+        .args(["--input-type=module", "-e", script])
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let expected: Vec<String> = serde_json::from_slice(&output.stdout).unwrap();
+    for (index, entry) in fixture["cases"].as_array().unwrap().iter().enumerate() {
+        let source = entry["source"].as_str().map_or_else(
+            || {
+                fs::read_to_string(
+                    super::project_data::resolve_project_data_path(
+                        root().join(entry["module"].as_str().unwrap()),
+                    )
+                    .expect("one project data storage format"),
+                )
+                .unwrap()
+            },
+            str::to_owned,
+        );
+        let _ = std::io::stderr().write_all(
+            format!(
+                "self-translation phase: sibling case={} forward start\n",
+                entry["name"]
+            )
+            .as_bytes(),
+        );
+        let translated = self_translate(&source, "JavaScript", "Rust").unwrap();
+        assert!(
+            translated
+                .items
+                .iter()
+                .all(|item| item.status == "translated")
+        );
+        report_code_difference(
+            entry["name"].as_str().unwrap(),
+            &translated.code,
+            &expected[index],
+        );
+        assert_eq!(translated.code, expected[index], "{}", entry["name"]);
+        let _ = std::io::stderr().write_all(
+            format!(
+                "self-translation phase: sibling case={} reverse start\n",
+                entry["name"]
+            )
+            .as_bytes(),
+        );
+        assert_eq!(
+            self_translate(&translated.code, "Rust", "JavaScript")
+                .unwrap()
+                .code,
+            source
+        );
+    }
+    for entry in fixture["refusals"].as_array().unwrap() {
+        let source = entry["source"].as_str().unwrap();
+        let translated = self_translate(source, "JavaScript", "Rust").unwrap();
+        let statuses: Vec<_> = translated
+            .items
+            .iter()
+            .filter(|item| {
+                matches!(
+                    item.term.as_str(),
+                    "function_declaration" | "export_statement"
+                )
+            })
+            .map(|item| item.status)
+            .collect();
+        assert_eq!(statuses, ["carried"], "{}", entry["name"]);
+        assert_eq!(
+            self_translate(&translated.code, "Rust", "JavaScript")
+                .unwrap()
+                .code,
+            source
+        );
+    }
+    let source = "/** @returns {number} */\nfunction good() { return 7; }\n\nfunction unavailable() { return new Date(); }\n\n/** @returns {number} */\nexport function caller() { return unavailable(); }\n";
+    let translated = self_translate(source, "JavaScript", "Rust").unwrap();
+    let statuses: Vec<_> = translated
+        .items
+        .iter()
+        .filter(|item| {
+            matches!(
+                item.term.as_str(),
+                "function_declaration" | "export_statement"
+            )
+        })
+        .map(|item| item.status)
+        .collect();
+    assert_eq!(statuses, ["translated", "carried", "carried"]);
+    assert!(!translated.code.contains("pub fn unavailable("));
+    assert!(!translated.code.contains("pub fn caller("));
+    assert_eq!(
+        self_translate(&translated.code, "Rust", "JavaScript")
+            .unwrap()
+            .code,
+        source
+    );
+}
+
 fn root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..")
 }
 
 fn read(name: &str) -> String {
     let path = root().join("parity/self-translation").join(name);
-    fs::read_to_string(&path).unwrap_or_else(|error| panic!("{}: {error}", path.display()))
+    fs::read_to_string(
+        super::project_data::resolve_project_data_path(&path)
+            .expect("one project data storage format"),
+    )
+    .unwrap_or_else(|error| panic!("{}: {error}", path.display()))
 }
 
 fn observe(requirement_id: &str, assertions: &[&str], test_name: &str) {
@@ -390,7 +535,11 @@ fn meta_languages_own_modules_round_trip_byte_for_byte() {
         ("rust/src/binary_format.rs", "Rust", "TypeScript"),
         ("js/src/primitives.js", "JavaScript", "Rust"),
     ] {
-        let source = fs::read_to_string(root().join(file)).expect("the module reads");
+        let source = fs::read_to_string(
+            super::project_data::resolve_project_data_path(root().join(file))
+                .expect("one project data storage format"),
+        )
+        .expect("the module reads");
         let same = self_translate(&source, language, language).expect("translates");
         assert_eq!(same.code, source, "{file}");
         let there = self_translate(&source, language, other).expect("translates");
@@ -529,11 +678,16 @@ fn the_rust_suite_checks_the_published_per_module_difference_report() {
         "the report generator succeeds:\n{}",
         String::from_utf8_lossy(&output.stderr)
     );
-    let report: serde_json::Value = serde_json::from_str(
-        &fs::read_to_string(directory.join("self-translation-report.json"))
-            .expect("the JSON report is published"),
+    let report: serde_json::Value = super::project_data::read_project_data(
+        &fs::read_to_string(
+            super::project_data::resolve_project_data_path(
+                directory.join("self-translation-report.lino"),
+            )
+            .expect("one project data storage format"),
+        )
+        .expect("the Links Notation report is published"),
     )
-    .expect("the JSON report parses");
+    .expect("the Links Notation report parses");
     assert_eq!(report["failures"], serde_json::json!([]));
     let modules = report["modules"]
         .as_array()
@@ -550,8 +704,13 @@ fn the_rust_suite_checks_the_published_per_module_difference_report() {
         assert!(row["sharedLines"].as_u64().is_some());
         assert!(row["decorated"]["sharedLines"].as_u64().is_some());
     }
-    let markdown = fs::read_to_string(directory.join("self-translation-report.md"))
-        .expect("the Markdown report is published");
+    let markdown = fs::read_to_string(
+        super::project_data::resolve_project_data_path(
+            directory.join("self-translation-report.md"),
+        )
+        .expect("one project data storage format"),
+    )
+    .expect("the Markdown report is published");
     for name in names {
         assert!(
             markdown.contains(&format!("| {name} |")),
@@ -692,30 +851,7 @@ fn a_translated_item_whose_definitions_carry_attributes_translates_back_to_its_s
     assert_eq!(back.code, source);
 }
 
-#[test]
-fn a_sibling_that_does_not_translate_leaves_its_callers_carried() {
-    let source = "/** @param {bigint} n @returns {boolean} */\nfunction isEven(n) {\n  return n === 0n ? true : isOdd(n - 1n);\n}\n\n/** @param {bigint} n @returns {boolean} */\nfunction isOdd(n) {\n  return n === 0n ? false : isEven(n - 1n);\n}\n\n/** @param {number} x @returns {number} */\nfunction opaque(x) {\n  return [x].map((y) => y)[0];\n}\n\n/** @param {number} x @returns {number} */\nfunction caller(x) {\n  return opaque(x) + 1;\n}\n";
-    let translation = self_translate(source, "JavaScript", "Rust").expect("translates");
-    // Mutually recursive siblings are a cycle, which stays unbound.
-    for needle in [
-        "function isEven",
-        "function isOdd",
-        "function opaque",
-        "function caller",
-    ] {
-        assert_eq!(
-            status_of(&translation, source, needle),
-            "carried",
-            "{needle}"
-        );
-    }
-    let caller = translation
-        .items
-        .iter()
-        .find(|item| source[item.start..].starts_with("function caller"))
-        .expect("the caller is an item");
-    assert_eq!(caller.reason.as_deref(), Some("type"));
-}
+include!("self_translation_siblings.rs");
 
 #[test]
 fn a_relative_import_of_items_of_the_crate_translates_as_a_use_declaration() {

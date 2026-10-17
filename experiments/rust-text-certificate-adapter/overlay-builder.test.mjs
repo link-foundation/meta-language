@@ -1,0 +1,107 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import {relocateCheckedModuleImports} from './overlay.mjs';
+import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {readProjectData} from '../../js/scripts/project-data.mjs';
+import {readReviewedOverlayProviderSources,reviewedOverlayProviderPolicy} from './reviewed-providers.mjs';
+import {createCheckedModuleOverlay} from './overlay.mjs';
+import {parseJavaScript} from '../../js/src/translation/javascript.js';
+
+test('lexical module relocation preserves active imports and resource bases without changing inert expressions',()=>{
+ const source='import value from "./provider.js";\nexport {value} from "./export.js";\nexport const data=new URL("./data.lino",import.meta.url);\nconst inert="import.meta.url";\nfrom\n"./inert.js";\nconst property=object.import.meta.url;\nconst lazy=import("./lazy.js");';
+ const origin='file:///original/module.js',linked=relocateCheckedModuleImports(source,origin,url=>url==='file:///original/provider.js'?'file:///overlay/provider.js':url);
+ assert.ok(linked.includes('from "file:///overlay/provider.js"'));assert.ok(linked.includes('new URL("./data.lino","file:///original/module.js")'));assert.ok(linked.includes('inert="import.meta.url"'));
+ assert.ok(linked.includes('from "file:///original/export.js"'));assert.ok(linked.includes('from\n"./inert.js"'));assert.ok(linked.includes('object.import.meta.url'));assert.ok(linked.includes('import("file:///original/lazy.js")'));
+});
+
+test('reviewed provider revisions preserve historical receipts and refuse every unreviewed byte change',async()=>{
+ const modules=reviewedOverlayProviderPolicy.revisions[0].providers.map(row=>row.module),sourceRoot=new URL('../../js/src/',import.meta.url);
+ for(const historical of reviewedOverlayProviderPolicy.historicalOverlays){
+  const file=new URL('../'+historical.experiment+'/data/overlays.lino',import.meta.url),before=readFileSync(file);
+  assert.equal(createHash('sha256').update(before).digest('hex'),historical.sourceSha256);
+  const selected=readReviewedOverlayProviderSources({experiment:historical.experiment,modules});
+  assert.ok(reviewedOverlayProviderPolicy.revisions.includes(selected.revision));
+  for(const changed of modules)assert.throws(()=>readReviewedOverlayProviderSources({experiment:historical.experiment,modules,
+   readSource:module=>readFileSync(new URL(module,sourceRoot),'utf8')+(module===changed?'\n':'')}),/no unique reviewed revision/u,changed);
+  if(selected.revision!==reviewedOverlayProviderPolicy.revisions[0])await assert.rejects(createCheckedModuleOverlay({records:readProjectData(file)}),/exact overlay provider changed/u);
+  assert.deepEqual(readFileSync(file),before);
+ }
+});
+
+test('the collection renderer revision restores all five complete preceding providers by its exact inverse',()=>{
+ const current=reviewedOverlayProviderPolicy.revisions.at(-1),previous=reviewedOverlayProviderPolicy.revisions.at(-2);
+ assert.equal(current.sourceCommit,'b51d48140220bf2ac071334d79d28aa77273c00e');
+ assert.equal(previous.sourceCommit,'b87d3499746d56e8f303464343c8edfecef84a8a');
+ assert.deepEqual(current.providers.map(row=>row.module),previous.providers.map(row=>row.module));
+ const policySource=readFileSync(new URL('./reviewed-providers.mjs',import.meta.url),'utf8');
+ const marker="    { sourceCommit: 'b51d48140220bf2ac071334d79d28aa77273c00e',\n";
+ assert.equal(policySource.split(marker).length,2);
+ const start=policySource.indexOf(marker),end=policySource.indexOf('\n  ],\n};',start);
+ assert.ok(end>start);
+ assert.equal(createHash('sha256').update(policySource.slice(0,start)+policySource.slice(end+1)).digest('hex'),
+  '6cc35c56132e1da0715302046535a25258bfa1b7b998d918c367e357e8913018','all preceding provider registrations and the full reader remain byte exact');
+ const collectionTests=readFileSync(new URL('../../js/tests/translation-collection-construction.test.js',import.meta.url),'utf8');
+ const branchStart='const originalBranches=',branchEnd='\n};\nconst originalSources=';
+ assert.equal(collectionTests.split(branchStart).length,2);assert.equal(collectionTests.split(branchEnd).length,2);
+ const branches=JSON.parse(collectionTests.slice(collectionTests.indexOf(branchStart)+branchStart.length,collectionTests.indexOf(branchEnd)+2));
+ for(const[target,pin]of Object.entries({
+  JavaScript:'7b0bd63e09ce0aa72bb077aa0cdce0b9daaab036e2c0d1e739c59b830b59df5b',Rust:'9d7d395b1fac905a4455c472eeb81939b33e4d1781a457744913425498dd22e1',
+  Lean:'59d6c5001f117178abc22962f9063fdb4ec22fefe8512452a013cbc3064e4294',Rocq:'c03707727d898497d151101c8ff4e748f6bef2e6ee5b3afbc1ffa8eae58dc267',
+ }))assert.equal(createHash('sha256').update(branches[target]).digest('hex'),pin,'the original '+target+' constructor template stays independently frozen');
+ const collectionPolicy=readProjectData(new URL('../../js/src/translation/data/collection-construction-rules.lino',import.meta.url));
+ assert.deepEqual(readProjectData(new URL('../../rust/src/data/collection-construction-rules.lino',import.meta.url)),collectionPolicy);
+ assert.equal(collectionPolicy.sourceSha256,'e9e21ed1c12c208190ec62595d2f3f52fd6a1329a82df133832f7add8f683502');
+ const collectionSource=readFileSync(new URL('../../'+collectionPolicy.sourcePath,import.meta.url),'utf8');
+ assert.equal(collectionPolicy.source,collectionSource);
+ for(const input of collectionPolicy.sourceClosure.inputs){
+  const bytes=readFileSync(new URL('../../'+input.path,import.meta.url));
+  assert.equal(bytes.toString('utf8'),input.source);assert.equal(bytes.length,input.bytes);
+  assert.equal(createHash('sha256').update(bytes).digest('hex'),input.sourceSha256);
+ }
+ assert.equal(collectionPolicy.sourceClosure.inputs.length,2);
+ assert.equal(collectionPolicy.sourceClosure.removedImports.length,1);
+ assert.equal(collectionSource.split(collectionPolicy.sourceClosure.removedImports[0]).length,2);
+ assert.equal(collectionPolicy.sourceClosure.source,collectionPolicy.sourceClosure.inputs[0].source+'\n'+collectionSource.replace(collectionPolicy.sourceClosure.removedImports[0],''));
+ const sourceSurface=parseJavaScript(collectionPolicy.sourceClosure.source,{referenceSemantics:false});
+ const sourceInventory=sourceSurface.items.map((item,ordinal)=>({ordinal,kind:item.k,name:item.name,generated:item.generated===true}));
+ assert.deepEqual(sourceInventory.filter(item=>!item.generated).map(item=>[item.kind,item.name]),[
+  ['fn','refuseRequiredNumberFact'],['fn','refuseRequiredTextFact'],['fn','refuseRequiredBooleanFact'],
+  ['fn','readRequiredNumberFact'],['fn','readRequiredTextFact'],['fn','readRequiredBooleanFact'],
+  ['fn','readCollectionConstructionField'],['fn','readCollectionConstructionElement'],['fn','readCollectionConstructionKind'],
+  ['fn','planCollectionConstructionInference'],['fn','planCollectionConstructionChecked'],['fn','readCollectionConstructionKeyAdmission'],
+  ['fn','readCollectionConstructionDiagnostic'],['fn','readCollectionConstructionBinding'],
+  ['fn','renderCollectionConstructionType'],['fn','renderCollectionConstruction'],
+ ],'all ten construction definitions, three required readers and three private refusal helpers retain their actual source owners');
+ assert.deepEqual(sourceInventory.filter(item=>item.generated).map(item=>[item.kind,item.name]),[
+  ['data','ml_readCollectionConstructionField_loop1_result'],['fn','ml_readCollectionConstructionField_loop1'],
+ ],'both actual generated data/function owners remain represented');
+ const artifact=readProjectData(new URL('../../parity/self-translation/collection-construction-rules-native.lino',import.meta.url));
+ assert.deepEqual(artifact.sourceClosure,collectionPolicy.sourceClosure);
+ assert.deepEqual(artifact.inventory,sourceInventory);
+ assert.deepEqual(artifact.checkedNamedSourceInventory.map(({ordinal,kind,name,generated})=>({ordinal,kind,name,generated})),sourceInventory);
+ for(const replay of artifact.replays)assert.deepEqual(replay.checkedNamedSourceInventory,artifact.checkedNamedSourceInventory);
+ const replacements={
+  'translation/emit-javascript.js': {original:branches.JavaScript,current:"      case 'set':\n      case 'map':\n        return renderCollectionConstruction('JavaScript', e.k, '', this.expr(e.k === 'set' ? e.items : e.entries), '', '', '');\n"},
+  'translation/emit-rust.js': {original:branches.Rust,current:"      case 'set':\n      case 'map': {\n        this.usesArray = true;\n        this.usesStandardArray = true;\n        const key = e.k === 'set' ? e.type.element : e.type.key;\n        const values = this.expr(e.k === 'set' ? e.items : e.entries);\n        return renderCollectionConstruction('Rust', e.k, key.kind, values, '', '', '');\n      }\n"},
+ };
+ const changed=[],sourceRoot=new URL('../../js/src/',import.meta.url);
+ for(const[index,row]of current.providers.entries()){
+  const source=readFileSync(new URL(row.module,sourceRoot),'utf8');
+  assert.equal(createHash('sha256').update(source).digest('hex'),row.sourceSha256);
+  let restored=source;
+  if(Object.hasOwn(replacements,row.module)){
+   changed.push(row.module);
+   const imported="import { renderCollectionConstruction } from './collection-construction-rules.js';\n",replacement=replacements[row.module];
+   assert.equal(restored.split(imported).length,2);assert.equal(restored.split(replacement.current).length,2);
+   restored=restored.replace(imported,'').replace(replacement.current,replacement.original);
+  }
+  assert.equal(createHash('sha256').update(restored).digest('hex'),previous.providers[index].sourceSha256,
+   row.module+': the exact contextual inverse restores the complete preceding source');
+ }
+ assert.deepEqual(changed,['translation/emit-javascript.js','translation/emit-rust.js']);
+ for(const historical of reviewedOverlayProviderPolicy.historicalOverlays){
+  const bytes=readFileSync(new URL('../'+historical.experiment+'/data/overlays.lino',import.meta.url));
+  assert.equal(createHash('sha256').update(bytes).digest('hex'),historical.sourceSha256);
+ }
+});

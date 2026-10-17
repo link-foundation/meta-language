@@ -3,23 +3,31 @@
 // or unregistered comment is reported, and the register and the ledger agree.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import { test } from 'node:test';
 
 import { ISSUE_195_SOURCES } from '../scripts/issue-195-requirements.mjs';
 import {
+  ASSERTION_POLICY_INSTRUCTION_SOURCES,
+  appendAssertionPolicyInstructionSources,
   compareWithLiveDiscussion,
   contentHash,
+  fetchLiveDiscussion,
   isAutomationComment,
   refreshRegister,
   revisionOf,
   validateSourceRegister,
+  validateDirectInstructions,
 } from '../scripts/issue-195-sources.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
+import { readProjectData } from '../scripts/project-data.mjs';
 
 const REGISTER_FILE = 'parity/issue-195-sources.json';
 const repositoryFile = (relative) => new URL(`../../${relative}`, import.meta.url);
-const register = JSON.parse(readFileSync(repositoryFile(REGISTER_FILE), 'utf8'));
-const manifest = JSON.parse(readFileSync(repositoryFile('parity/issue-195-requirements.json'), 'utf8'));
+const register = readProjectData(repositoryFile(REGISTER_FILE));
+const manifest = readProjectData(repositoryFile('parity/issue-195-requirements.json'));
 
 function observeSourceRegister(assertions, testName) {
   recordIssue195Observations({
@@ -150,4 +158,202 @@ test('an edited, deleted or unregistered comment is reported and automation outp
     ['editedSourceDetected', 'deletedSourceDetected', 'unregisteredCommentDetected', 'automationCommentsIgnored'],
     'an edited, deleted or unregistered comment is reported and automation output is ignored',
   );
+});
+
+test('the remaining-scope issue is checked and refreshed independently of the original issue', () => {
+  const discussion = syntheticDiscussion();
+  const additional = { ...discussion.issue, number: 199, body: '# Remaining scope\nrelease and memory regressions' };
+  discussion.issues = [additional];
+  discussion.register.requirementSources.push({
+    id: '199', kind: 'issue', key: 'remainingScope', role: 'remaining scope',
+    url: 'https://github.com/link-foundation/meta-language/issues/199',
+    title: 'Remaining scope', ledgerCoverage: ['I195-'], ...revisionOf(additional),
+  });
+  assert.deepEqual(compareWithLiveDiscussion(discussion.register, discussion), []);
+  const edited = { ...discussion, issues: [{ ...additional, body: 'changed remaining scope' }] };
+  assert.match(compareWithLiveDiscussion(discussion.register, edited)[0], /issues\/199 was edited/u);
+  const refreshed = refreshRegister(discussion.register, edited);
+  assert.deepEqual(compareWithLiveDiscussion(refreshed, edited), []);
+  assert.equal(refreshed.requirementSources[0].sha256, contentHash(discussion.issue.body));
+  assert.match(compareWithLiveDiscussion(refreshed, { ...edited, issues: [] })[0], /issues\/199 no longer exists/u);
+});
+
+test('source discovery includes every original and follow-up discussion endpoint', async () => {
+  const endpoints = [];
+  const discussion = await fetchLiveDiscussion({ request: async (endpoint) => {
+    endpoints.push(endpoint);
+    const issueNumber = /^repos\/[^/]+\/[^/]+\/issues\/(\d+)$/u.exec(endpoint)?.[1];
+    if (issueNumber) return { number: Number(issueNumber), body: `Issue ${issueNumber}` };
+    if (endpoint.includes('/reviews?')) return [
+      { id: 99, body: '', submitted_at: '2026-10-12T00:00:00Z' },
+      { id: 100, body: 'A reviewed requirement', submitted_at: '2026-10-12T00:00:00Z' },
+    ];
+    return [{ id: endpoint, body: endpoint }];
+  } });
+  assert.deepEqual(endpoints.sort(), [
+    'issues/195', 'issues/195/comments?per_page=100',
+    'issues/199', 'issues/199/comments?per_page=100',
+    'issues/224', 'issues/224/comments?per_page=100',
+    'issues/196/comments?per_page=100', 'pulls/196/comments?per_page=100', 'pulls/196/reviews?per_page=100',
+    'issues/201/comments?per_page=100', 'pulls/201/comments?per_page=100', 'pulls/201/reviews?per_page=100',
+  ].map((endpoint) => `repos/link-foundation/meta-language/${endpoint}`).sort());
+  assert.equal(discussion.issue.number, 195);
+  assert.deepEqual(discussion.issues.map(({ number }) => number), [199, 224]);
+  assert.ok(discussion.comments.some(({ body }) => body.includes('issues/199/comments')));
+  assert.ok(discussion.comments.some(({ body }) => body.includes('issues/201/comments')));
+  const reviews = discussion.comments.filter(({ body }) => body === 'A reviewed requirement');
+  assert.equal(reviews.length, 2);
+  assert.ok(reviews.every(({ created_at, updated_at }) => created_at === updated_at && updated_at === '2026-10-12T00:00:00Z'));
+  assert.ok(discussion.comments.every(({ body }) => body !== ''));
+});
+
+test('follow-up comment permalinks are validated without assuming pull request 196', () => {
+  const discussion = syntheticDiscussion();
+  const manifest = { atomicRequirements: [{ id: 'I195-TEST', source: discussion.register.requirementSources[0].url }] };
+  for (const url of [
+    'https://github.com/link-foundation/meta-language/pull/201#issuecomment-1',
+    'https://github.com/link-foundation/meta-language/issues/199#issuecomment-1',
+  ]) {
+    discussion.register.requirementSources[1].url = url;
+    const sources = Object.fromEntries(discussion.register.requirementSources.map(({ key, url }) => [key, url]));
+    assert.deepEqual(validateSourceRegister(discussion.register, manifest, sources), []);
+  }
+  discussion.register.requirementSources[1].url = 'https://github.com/link-foundation/meta-language/pull/201#issuecomment-2';
+  const sources = Object.fromEntries(discussion.register.requirementSources.map(({ key, url }) => [key, url]));
+  assert.match(validateSourceRegister(discussion.register, manifest, sources).join('\n'), /exact comment/u);
+});
+
+test('captured conversation instructions detect changed or missing committed bytes', async () => {
+  const contractFile = ISSUE_195_SOURCES.recordConversationRequest;
+  const contractBytes = readFileSync(repositoryFile(contractFile));
+  assert.equal(contractBytes.toString('utf8'), 'Make sure it is recorded.');
+  const contractFixture = manifest.fixtureCatalog['conversation-contract:recordConversationRequest'];
+  assert.equal(contractFixture.path, contractFile);
+  assert.equal(contentHash(contractBytes), contractFixture.sha256);
+  const before = structuredClone(register);
+  const knownCaptures = Object.entries(ISSUE_195_SOURCES).filter(([, url]) => url.startsWith('parity/sources/') && url.endsWith('.txt'));
+  assert.ok(knownCaptures.length > 0);
+  assert.deepEqual(validateSourceRegister(register, manifest, ISSUE_195_SOURCES), []);
+  for (const [key, url] of knownCaptures) {
+    const entries = register.requirementSources.filter(entry => entry.key === key || entry.url === url);
+    assert.equal(entries.length, 1, `${key} has exactly one registered capture`);
+    const [entry] = entries;
+    assert.equal(entry.key, key);
+    assert.equal(entry.url, url);
+    assert.equal(entry.kind, 'direct-instruction');
+    assert.equal(entry.revisionOrigin, 'capture time; the conversation does not expose a source timestamp');
+    assert.ok(Number.isFinite(Date.parse(entry.createdAt)) && Number.isFinite(Date.parse(entry.updatedAt)));
+    const bytes = readFileSync(repositoryFile(url));
+    assert.equal(bytes.length, entry.bytes, `${key} preserves its captured byte count`);
+    assert.equal(contentHash(bytes), entry.sha256, `${key} preserves its authoritative captured hash`);
+    for (const prefix of entry.ledgerCoverage) {
+      const rows = manifest.atomicRequirements.filter(row => row.id.startsWith(prefix));
+      assert.ok(rows.length > 0, `${key} maps ${prefix} to actual atomic obligations`);
+      for (const row of rows) {
+        assert.ok(row.source === url || row.traceability.sources.includes(key), `${key} covers ${row.id}`);
+        assert.equal(row.critical, true, row.id);
+        assert.equal(row.fullScopeReleaseBlocker, true, row.id);
+      }
+    }
+  }
+  const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), 'meta-language-source-register-'));
+  const instruction = register.requirementSources.find(({ kind }) => kind === 'direct-instruction');
+  assert.ok(instruction);
+  assert.equal(instruction.revisionOrigin, 'capture time; the conversation does not expose a source timestamp');
+  assert.deepEqual(await validateDirectInstructions(register), []);
+  const body = readFileSync(repositoryFile(instruction.url), 'utf8');
+  try {
+    await mkdir(path.join(temporaryRoot, 'parity', 'sources'), { recursive: true });
+    for (const source of register.requirementSources.filter(({ kind }) => kind === 'direct-instruction')) {
+      await writeFile(path.join(temporaryRoot, source.url), readFileSync(repositoryFile(source.url), 'utf8'));
+    }
+    assert.deepEqual(await validateDirectInstructions(register, temporaryRoot), []);
+    await writeFile(path.join(temporaryRoot, instruction.url), `${body}Changed obligation.`);
+    assert.match((await validateDirectInstructions(register, temporaryRoot))[0], /content hash or byte count/u);
+    await rm(path.join(temporaryRoot, instruction.url));
+    assert.match((await validateDirectInstructions(register, temporaryRoot))[0], /no longer exists/u);
+    const missing = structuredClone(register);
+    missing.requirementSources = missing.requirementSources.filter(entry => entry.url !== instruction.url);
+    assert.ok(validateSourceRegister(missing, manifest, ISSUE_195_SOURCES).some(error => error.includes(instruction.key)),
+      'removing a known capture registration cannot shrink the declared source inventory');
+    const unmapped = structuredClone(register);
+    unmapped.requirementSources.find(entry => entry.url === instruction.url).ledgerCoverage = ['I195-UNMAPPED-CONVERSATION-CAPTURE'];
+    assert.ok(validateSourceRegister(unmapped, manifest, ISSUE_195_SOURCES).some(error => error.includes('I195-UNMAPPED-CONVERSATION-CAPTURE')),
+      'a capture must retain a mapping to actual atomic obligations');
+    const repeated = await appendAssertionPolicyInstructionSources(register, { capturedAt: '2026-10-17T00:00:00.000Z' });
+    assert.deepEqual(repeated, register, 'an update retains every current source, its first capture time and its mapping');
+    await assert.rejects(appendAssertionPolicyInstructionSources(register, {
+      capturedAt: '2026-10-17T00:00:00.000Z',
+      read: async file => `${readFileSync(file, 'utf8')}Changed obligation.`,
+    }), /changed bytes/u, 'an update cannot bless changed bytes of an existing capture');
+    assert.deepEqual(register, before, 'positive checks and refused edits never mutate the authoritative register');
+  } finally {
+    await rm(temporaryRoot, { recursive: true, force: true });
+  }
+  // This is the finite declared capture inventory. It cannot detect a message
+  // outside the registered source contract or establish language behavior.
+  recordIssue195Observations({
+    requirementId: 'I195-CONVERSATION-VERBATIM-REGISTER', suffix: 'behavior', runtime: 'tooling',
+    fixtureId: 'conversation-contract:recordConversationRequest', fixtureFile: contractFile,
+    assertions: ['conversationMessagesCapturedVerbatim', 'captureHashesVerified', 'allConversationObligationsMapped'],
+    testName: 'captured conversation instructions detect changed or missing committed bytes',
+  });
+});
+
+test('reviewed assertion policy captures append exact source bytes without changing any original source', async () => {
+  const discussion = syntheticDiscussion();
+  const before = structuredClone(discussion.register);
+  const updated = await appendAssertionPolicyInstructionSources(discussion.register, { capturedAt: '2026-10-16T00:00:00.000Z' });
+  assert.deepEqual(discussion.register, before, 'the input register is not mutated');
+  assert.deepEqual(updated.requirementSources.slice(0, before.requirementSources.length), before.requirementSources);
+  assert.deepEqual(updated.statusReports, before.statusReports);
+  const additions = updated.requirementSources.slice(before.requirementSources.length);
+  assert.equal(additions.length, ASSERTION_POLICY_INSTRUCTION_SOURCES.length);
+  for (const [index, entry] of additions.entries()) {
+    const declaration = ASSERTION_POLICY_INSTRUCTION_SOURCES[index];
+    const body = readFileSync(repositoryFile(entry.url), 'utf8');
+    assert.equal(entry.id, declaration.id);
+    assert.equal(entry.key, declaration.key);
+    assert.equal(entry.sha256, contentHash(body));
+    assert.equal(entry.bytes, Buffer.byteLength(body, 'utf8'));
+    assert.equal(entry.revisionOrigin, 'capture time; the conversation does not expose a source timestamp');
+    assert.deepEqual(entry.ledgerCoverage, declaration.ledgerCoverage);
+  }
+  const rows = before.requirementSources.map((entry, index) => ({ id: `I195-ORIGINAL-${index}`, source: entry.url }));
+  rows.push(...additions.flatMap(entry => entry.ledgerCoverage.map(id => ({ id, source: entry.url }))));
+  const sources = Object.fromEntries(updated.requirementSources.map(({ key, url }) => [key, url]));
+  assert.deepEqual(validateSourceRegister(updated, { atomicRequirements: rows }, sources), []);
+  assert.deepEqual(await validateDirectInstructions(updated), []);
+});
+
+test('repeat source updates preserve the first capture time and each exact direct instruction entry', async () => {
+  const discussion = syntheticDiscussion();
+  const first = await appendAssertionPolicyInstructionSources(discussion.register, { capturedAt: '2026-10-16T00:00:00.000Z' });
+  const before = structuredClone(first);
+  const repeated = await appendAssertionPolicyInstructionSources(first, { capturedAt: '2026-10-17T12:34:56.000Z' });
+  assert.deepEqual(first, before, 'a repeat update does not mutate its register');
+  assert.deepEqual(repeated, first, 'neither old sources nor capture timestamps refresh');
+  const refreshed = refreshRegister(repeated, discussion);
+  assert.deepEqual(refreshed.requirementSources.filter(entry => entry.kind === 'direct-instruction'),
+    first.requirementSources.filter(entry => entry.kind === 'direct-instruction'), 'live revision refresh preserves direct capture metadata');
+});
+
+test('source updates refuse changed capture bytes and conflicting capture identities without rewriting the register', async () => {
+  const first = await appendAssertionPolicyInstructionSources(syntheticDiscussion().register, { capturedAt: '2026-10-16T00:00:00.000Z' });
+  const before = structuredClone(first);
+  await assert.rejects(appendAssertionPolicyInstructionSources(first, {
+    capturedAt: '2026-10-17T00:00:00.000Z',
+    read: async file => {
+      const body = readFileSync(file, 'utf8');
+      const changed = (body[0] === 'X' ? 'Y' : 'X') + body.slice(1);
+      assert.equal(Buffer.byteLength(changed, 'utf8'), Buffer.byteLength(body, 'utf8'));
+      return changed;
+    },
+  }), /changed sha256/u);
+  assert.deepEqual(first, before, 'refusing a changed capture preserves every old registration');
+  const conflicting = structuredClone(first);
+  conflicting.statusReports.push({ ...conflicting.requirementSources.at(-1) });
+  const conflictingBefore = structuredClone(conflicting);
+  await assert.rejects(appendAssertionPolicyInstructionSources(conflicting), /conflicting captured source/u);
+  assert.deepEqual(conflicting, conflictingBefore);
 });

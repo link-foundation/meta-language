@@ -25,17 +25,17 @@ impl Executor<'_> {
         &mut self,
         item: &Expr,
         leaves: &[Rc<Tree>],
-        state: &State,
+        states: &[State],
     ) -> Run<()> {
         let Some(keywords) = self.keywords else {
             return Ok(());
         };
         let call = self.call_stack.last().and_then(|frame| frame.borrow().call);
-        for leaf in leaves {
+        for (index, leaf) in leaves.iter().enumerate() {
             if !is_separator(leaf) {
                 continue;
             }
-            let reach = self.prefix_reach(item, leaf.start, state)?;
+            let reach = self.prefix_reach(item, leaf.start, &states[index])?;
             if reach >= leaf.end {
                 keywords.borrow_mut().match_join(leaf.start, reach, call);
             }
@@ -47,12 +47,12 @@ impl Executor<'_> {
     /// of the lexical `expr`, as far as a lexer reads on with it. It mirrors
     /// prefixReach in js/src/grammar-runtime/executor.js.
     fn prefix_reach(&mut self, expr: &Expr, position: usize, state: &State) -> Run<usize> {
-        let key = (std::ptr::from_ref(expr).addr(), position);
+        let key = (std::ptr::from_ref(expr).addr(), position, state.clone());
         if let Some(reach) = self.prefix_reaches.get(&key) {
             return Ok(*reach);
         }
         // A rule that reaches itself at one offset reads on no farther.
-        self.prefix_reaches.insert(key, position);
+        self.prefix_reaches.insert(key.clone(), position);
         let reach = self.prefix_reach_of(expr, position, state)?;
         self.prefix_reaches.insert(key, reach);
         Ok(reach)
@@ -134,6 +134,7 @@ impl Executor<'_> {
             Expr::Token(item)
             | Expr::ImmediateToken(item)
             | Expr::Alias { item, .. }
+            | Expr::LexicalScope { item, .. }
             | Expr::Capture { item, .. }
             | Expr::Precedence { item, .. }
             | Expr::DynamicPrecedence { item, .. }

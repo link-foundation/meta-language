@@ -8,6 +8,21 @@ use serde::{Deserialize, Deserializer, Serialize};
 use super::types::Type;
 use super::{Language, Span};
 
+mod externals;
+pub use externals::{External, ExternalParam, SImport, SImportName};
+mod array_item;
+pub use array_item::SArrayItem;
+mod binding_type_annotation;
+pub use binding_type_annotation::SurfaceBindingTypeAnnotation;
+mod raw_metadata;
+pub use raw_metadata::SurfaceRawMetadata;
+mod nodes;
+pub use nodes::SNode;
+pub(crate) mod array_bindings;
+mod record_entry;
+pub use record_entry::SRecordEntry;
+mod record_projection;
+
 #[allow(clippy::trivially_copy_pass_by_ref)] // serde passes fields by reference
 const fn is_false(value: &bool) -> bool {
     !*value
@@ -30,11 +45,19 @@ fn numeral<'de, D: Deserializer<'de>>(deserializer: D) -> Result<String, D::Erro
 
 /// A surface expression.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "array_bindings::SurfaceExpression")]
 pub struct SExpr {
     #[serde(flatten)]
     pub node: SNode,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub span: Option<Span>,
+    /// Grouping is raw source metadata, with absence independent of its value.
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "raw_metadata::read_present_surface_raw_metadata"
+    )]
+    pub parenthesized: Option<SurfaceRawMetadata>,
     /// Set on a Rust block expression (`{ … }`) used as a value.
     #[serde(default, skip_serializing_if = "is_false")]
     pub block: bool,
@@ -60,6 +83,7 @@ impl SExpr {
         Self {
             node,
             span,
+            parenthesized: None,
             block: false,
             tag_test: None,
         }
@@ -191,186 +215,16 @@ pub enum Flavor {
     Clamp,
 }
 
+/// A source prototype definition, preserved until the checker refuses it.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(tag = "k", rename_all = "camelCase", rename_all_fields = "camelCase")]
-pub enum SNode {
-    Num {
-        value: String,
-        #[serde(rename = "type", default, skip_serializing_if = "Option::is_none")]
-        ty: Option<Type>,
-        #[serde(default, skip_serializing_if = "is_false")]
-        negative: bool,
-        /// The 1 of `x++`, which takes the type of `x`.
-        #[serde(default, skip_serializing_if = "is_false")]
-        unit: bool,
-    },
-    Bool {
-        value: bool,
-    },
-    Str {
-        value: String,
-    },
-    Unit,
-    Name {
-        path: Vec<String>,
-    },
-    /// Lean's `.ctor`, resolved against the expected type.
-    DotCtor {
-        name: String,
-    },
-    App {
-        #[serde(rename = "fn")]
-        func: Box<SExpr>,
-        args: Vec<SExpr>,
-    },
-    Field {
-        object: Box<SExpr>,
-        field: String,
-    },
-    Unary {
-        op: UnaryOp,
-        arg: Box<SExpr>,
-    },
-    Binary {
-        op: BinaryOp,
-        left: Box<SExpr>,
-        right: Box<SExpr>,
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        rounding: Option<Rounding>,
-    },
-    If {
-        cond: Box<SExpr>,
-        then: Box<SExpr>,
-        #[serde(rename = "else")]
-        otherwise: Box<SExpr>,
-    },
-    Let {
-        name: String,
-        #[serde(rename = "type", default, skip_serializing_if = "Option::is_none")]
-        ty: Option<Type>,
-        value: Box<SExpr>,
-        body: Box<SExpr>,
-    },
-    Match {
-        scrutinees: Vec<SExpr>,
-        rows: Vec<SRow>,
-    },
-    /// A single-level match, as pattern compilation produces it.
-    Match1 {
-        scrutinee: Box<SExpr>,
-        cases: Vec<SCase>,
-    },
-    ToString {
-        arg: Box<SExpr>,
-    },
-    Show {
-        arg: Box<SExpr>,
-        style: ShowStyle,
-    },
-    Cast {
-        arg: Box<SExpr>,
-        to: Type,
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        from: Option<Type>,
-        flavor: Flavor,
-    },
-    Abort {
-        message: String,
-    },
-    /// `console.log(expr)`, then `body`.
-    Print {
-        expr: Box<SExpr>,
-        style: ShowStyle,
-        body: Box<SExpr>,
-    },
-    /// A JavaScript `{ $: 'tag', field: value }` constructor object, fields in source order.
-    CtorObject {
-        tag: String,
-        #[serde(with = "ordered_fields")]
-        fields: Vec<(String, SExpr)>,
-    },
-    /// A JavaScript array literal `[a, ...xs, b]`.
-    Array {
-        items: Vec<SArrayItem>,
-        /// The element type inference fixed for a literal with no element of its own.
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        element: Option<Type>,
-    },
-    /// `xs[i]`, a read of an array element.
-    Index {
-        object: Box<SExpr>,
-        index: Box<SExpr>,
-    },
-    /// The length of an array: a Number, or for the counter of a for…of loop a `BigInt`.
-    Length {
-        object: Box<SExpr>,
-        integer: bool,
-    },
-    /// A call of a Math or Number function, `Math.max(a, ...xs)`: `op` is
-    /// the function and `name` the path the program called it by.
-    Math {
-        op: String,
-        name: String,
-        args: Vec<SArrayItem>,
-    },
-    // Frontend-internal forms; the checker rejects them if they reach it.
-    Cons {
-        head: Box<SExpr>,
-        tail: Box<SExpr>,
-    },
-    Nil,
-    List {
-        items: Vec<SExpr>,
-    },
-    Tag {
-        tag: String,
-    },
-    Default,
-}
-
-impl SNode {
-    /// The `k` discriminant.
-    #[must_use]
-    pub const fn kind(&self) -> &'static str {
-        match self {
-            Self::Num { .. } => "num",
-            Self::Bool { .. } => "bool",
-            Self::Str { .. } => "str",
-            Self::Unit => "unit",
-            Self::Name { .. } => "name",
-            Self::DotCtor { .. } => "dotCtor",
-            Self::App { .. } => "app",
-            Self::Field { .. } => "field",
-            Self::Unary { .. } => "unary",
-            Self::Binary { .. } => "binary",
-            Self::If { .. } => "if",
-            Self::Let { .. } => "let",
-            Self::Match { .. } => "match",
-            Self::Match1 { .. } => "match1",
-            Self::ToString { .. } => "toString",
-            Self::Show { .. } => "show",
-            Self::Cast { .. } => "cast",
-            Self::Abort { .. } => "abort",
-            Self::Print { .. } => "print",
-            Self::CtorObject { .. } => "ctorObject",
-            Self::Array { .. } => "array",
-            Self::Index { .. } => "index",
-            Self::Length { .. } => "length",
-            Self::Math { .. } => "math",
-            Self::Cons { .. } => "cons",
-            Self::Nil => "nil",
-            Self::List { .. } => "list",
-            Self::Tag { .. } => "tag",
-            Self::Default => "default",
-        }
-    }
-}
-
-/// An element of an array literal, or with `spread` the elements of an array.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct SArrayItem {
-    pub spread: bool,
-    pub value: SExpr,
+#[serde(rename_all = "camelCase")]
+pub struct ConstructorPrototypeDefinition {
+    /// The complete initializer expression.
+    pub value: Box<SExpr>,
+    /// The uncomputed property key's source range.
+    pub span: Span,
+    /// The original property position, including the constructor tag.
+    pub index: usize,
 }
 
 /// An object whose keys keep their insertion order, as JavaScript objects do.
@@ -672,6 +526,9 @@ pub struct Guard {
 #[serde(rename_all = "camelCase")]
 pub struct SParam {
     pub name: String,
+    /// An omitted documented parameter passes its actual undefined default.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub optional: bool,
     #[serde(default, rename = "default", skip_serializing_if = "Option::is_none")]
     pub default_value: Option<SExpr>,
     #[serde(rename = "type", default, skip_serializing_if = "Option::is_none")]
@@ -694,20 +551,99 @@ pub struct SData {
     /// A data type the translator made up, whose name may use the reserved `ml_` prefix.
     #[serde(default, skip_serializing_if = "is_false")]
     pub generated: bool,
+    /// Optional actual field-free Rust Clone derivation owned by this datatype.
+    #[serde(
+        default,
+        rename = "sourceUnitCloneDerivation",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub source_unit_clone_derivation: Option<Box<serde_json::Value>>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SFn {
+    /// Actual complete pure Unit header and body sites under the selected model.
+    #[serde(
+        default,
+        rename = "sourcePureUnit",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub source_pure_unit: Option<Box<serde_json::Value>>,
     pub name: String,
     pub params: Vec<SParam>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ret: Option<Type>,
+    /// Actual inferred return when source annotations omit an absence case.
+    #[serde(
+        default,
+        rename = "semanticRet",
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::translation::present_type::read_present_type"
+    )]
+    pub semantic_ret: Option<Type>,
     pub body: SExpr,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub span: Option<Span>,
     /// A function the translator made up, such as a lifted loop.
     #[serde(default, skip_serializing_if = "is_false")]
     pub generated: bool,
+    /// Optional owned facts from the actually parsed source function header.
+    #[serde(
+        default,
+        rename = "sourceSignature",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub source_signature: Option<Box<super::source_signatures::SourceSignature>>,
+    /// Optional owned scalar loop state and checked continuation interpretation.
+    #[serde(
+        default,
+        rename = "sourceLoop",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub source_loop: Option<Box<super::source_loops::SourceLoop>>,
+    /// Owned actual standard primitive paths, imported aliases and body sites.
+    #[serde(
+        default,
+        rename = "sourcePrimitiveOwners",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub source_primitive_owners: Option<serde_json::Value>,
+    /// Optional owned standard empty-option source interpretation.
+    #[serde(
+        default,
+        rename = "sourceEmptyOption",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub source_empty_option: Option<Box<serde_json::Value>>,
+    /// Optional actual Rust type spellings with rechecked scoped ownership.
+    #[serde(
+        default,
+        rename = "sourceTypeNamespace",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub source_type_namespace: Option<Box<serde_json::Value>>,
+    /// Ordered owned local String moves, copies and replacements.
+    #[serde(
+        default,
+        rename = "sourceLocalState",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub source_local_state: Option<Box<serde_json::Value>>,
+    /// Owned actual const qualification of a closed primitive predicate.
+    #[serde(
+        default,
+        rename = "sourceConstFunction",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub source_const_function: Option<Box<serde_json::Value>>,
+    /// Ordered original diagnostic-only attributes attached to this const function.
+    #[serde(
+        default,
+        rename = "sourceDiagnosticAttributes",
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::translation::source_diagnostic_attributes::read_present_surface_facet"
+    )]
+    pub source_diagnostic_attributes: Option<Box<serde_json::Value>>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -769,6 +705,9 @@ pub enum SEffect {
         span: Option<Span>,
     },
     Let {
+        /// Actual ordered owned Unit-call statement site.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        source_pure_unit_call: Option<serde_json::Value>,
         name: String,
         #[serde(rename = "type", default, skip_serializing_if = "Option::is_none")]
         ty: Option<Type>,
@@ -787,6 +726,13 @@ pub enum SEffect {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SMain {
+    /// Owned worker context for an independently selected complete runtime.
+    #[serde(
+        default,
+        rename = "sourceRuntimeWorker",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub source_runtime_worker: Option<serde_json::Value>,
     pub effects: Vec<SEffect>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub span: Option<Span>,
@@ -798,6 +744,28 @@ pub struct SMain {
 /// A parsed source program.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SProgram {
+    /// Preserve the raw program representation selector without erasing null.
+    #[serde(
+        default,
+        rename = "referenceSemantics",
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "raw_metadata::read_present_surface_raw_metadata"
+    )]
+    pub reference_semantics: Option<SurfaceRawMetadata>,
+    /// Complete owned source runtime interpretation, separate from its pure core.
+    #[serde(
+        default,
+        rename = "sourceRuntimeShell",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub source_runtime_shell: Option<serde_json::Value>,
+    /// Independently selected complete pure Unit program interpretation.
+    #[serde(
+        default,
+        rename = "sourcePureUnitCalls",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub source_pure_unit_calls: Option<serde_json::Value>,
     pub language: Language,
     pub items: Vec<SItem>,
     #[serde(default)]
@@ -808,86 +776,4 @@ pub struct SProgram {
     /// The other items of the module, which the program calls and reads.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub externals: Vec<External>,
-}
-
-/// A named import of items of another module of the crate,
-/// `import { a, b as c } from './m.mjs'`.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct SImport {
-    /// The imported module's path inside the crate.
-    pub module: Vec<String>,
-    pub names: Vec<SImportName>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub span: Option<Span>,
-}
-
-/// An imported item: its name in its module and the name the import binds.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct SImportName {
-    pub imported: String,
-    pub local: String,
-}
-
-/// Another item of the module, which a program calls or reads by name
-/// without declaring it.
-///
-/// A function comes with its signature, and a constant with its type and
-/// whether a literal gives its value.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(tag = "k")]
-pub enum External {
-    #[serde(rename = "fn")]
-    Function {
-        name: String,
-        params: Vec<ExternalParam>,
-        ret: Type,
-    },
-    #[serde(rename = "const")]
-    Constant {
-        name: String,
-        #[serde(rename = "type")]
-        ty: Type,
-        literal: bool,
-    },
-}
-
-impl External {
-    /// The name the program calls or reads the item by.
-    #[must_use]
-    pub fn name(&self) -> &str {
-        match self {
-            Self::Function { name, .. } | Self::Constant { name, .. } => name,
-        }
-    }
-
-    /// The types of a function's parameters and its result, or a constant's type.
-    #[must_use]
-    pub fn signature(&self) -> (Vec<&Type>, &Type) {
-        match self {
-            Self::Function { params, ret, .. } => {
-                (params.iter().map(|param| &param.ty).collect(), ret)
-            }
-            Self::Constant { ty, .. } => (Vec::new(), ty),
-        }
-    }
-
-    /// The item under the name `name`.
-    #[must_use]
-    pub fn renamed(&self, name: &str) -> Self {
-        let mut renamed = self.clone();
-        match &mut renamed {
-            Self::Function { name: own, .. } | Self::Constant { name: own, .. } => {
-                name.clone_into(own);
-            }
-        }
-        renamed
-    }
-}
-
-/// A parameter of another item's function.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ExternalParam {
-    pub name: String,
-    #[serde(rename = "type")]
-    pub ty: Type,
 }

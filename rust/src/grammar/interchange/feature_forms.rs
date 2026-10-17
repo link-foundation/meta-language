@@ -4,7 +4,8 @@
 
 use super::super::feature::{
     ByteClassItem, FeatureExpr, FeatureForm, FieldType, FieldValue, FormFields, Operation,
-    OperationCategory, check_integer, feature_expression_fields, operation_form,
+    OperationCategory, check_grammar_selection_included_range_form, check_integer,
+    feature_expression_fields, operation_form,
 };
 use super::super::{GrammarExpr, GrammarImportError};
 use super::native::Cursor;
@@ -54,6 +55,8 @@ fn render_fields(fields: FormFields, values: &[FieldValue], codec: &impl FormCod
 
 /// Renders one operation of the scanner and action language.
 pub(super) fn render_operation(operation: &Operation, codec: &impl FormCodec) -> String {
+    check_grammar_selection_included_range_form(operation)
+        .expect("a grammar operation retains every included-range field");
     let fields = operation_form(&operation.head).map_or(&[][..], |(_, fields)| fields);
     codec.call(
         &operation.head,
@@ -78,6 +81,8 @@ pub(super) fn render_feature_form(feature: &FeatureExpr, codec: &impl FormCodec)
             Some(codec.byte_class(*negated, items))
         }
         FeatureExpr::Form(form) => {
+            check_grammar_selection_included_range_form(form)
+                .expect("a grammar expression retains every included-range field");
             let fields = feature_expression_fields(&form.head)?;
             Some(codec.call(&form.head, render_fields(fields, &form.fields, codec)))
         }

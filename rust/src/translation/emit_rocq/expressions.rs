@@ -2,22 +2,107 @@
 
 use super::{
     BinaryOp, ByZero, Case, Effect, Expr, Flavor, Helper, LitValue, Main, Node, Pattern, Rc,
-    Result, RocqEmitter, Rounding, Semantics, Type, UnaryOp, ident, internal, op_name, rename_main,
-    unsupported, unthreaded,
+    Result, RocqEmitter, Rounding, Semantics, Type, UnaryOp, accept_program_tuple_product_model,
+    ident, internal, op_name, rename_main, unsupported, unthreaded,
 };
 
 impl RocqEmitter<'_> {
     pub(super) fn expr(&mut self, e: &Expr) -> Result<String> {
+        if self.program.source_language == crate::translation::Language::JavaScript
+            && matches!(&e.node, Node::Ctor { frozen: true, .. })
+        {
+            return Err(unsupported(
+                "explicit data object freeze",
+                "this target needs a JavaScript property descriptor model to retain explicit constructor freezing",
+                e.span,
+            ));
+        }
+        if let Node::Tuple {
+            frozen,
+            product_model: Some(model),
+            ..
+        } = &e.node
+        {
+            if !accept_program_tuple_product_model(model, *frozen) {
+                return Err(unsupported(
+                    "immutable tuple product model",
+                    "the tuple model must be immutable value product with explicit frozen evidence",
+                    e.span,
+                ));
+            }
+            let mut pending = vec![&e.ty];
+            while let Some(ty) = pending.pop() {
+                if let Type::Tuple { elements } = ty {
+                    if elements.len() < 2 {
+                        return Err(unsupported(
+                            "immutable tuple arity",
+                            "this target needs a nominal product representation to distinguish unit and single-element tuple arities",
+                            e.span,
+                        ));
+                    }
+                    pending.extend(elements);
+                }
+            }
+        }
         match &e.node {
+            Node::Record { entries } => self.record_value(entries),
+            Node::RecordField { object, index, .. } => self.record_field(object, *index),
+            Node::ReferenceAllocate { .. } | Node::ReferenceRead { .. } | Node::CellAllocate { .. } | Node::CellRead { .. } | Node::CellWrite { .. } => Err(unsupported(
+                "mutable structural value",
+                &crate::translation::surface_reference_analysis_rules::read_surface_reference_refusal(),
+                e.span,
+            )),
             Node::Lit { value } => self.literal(&e.ty, value),
             Node::Unit => Ok("tt".to_owned()),
+            Node::None { .. } | Node::Some { .. } | Node::FlattenOption { .. } | Node::Coalesce { .. } | Node::OptionalField { .. } | Node::OptionalProject { .. } | Node::NullishNumber { .. } | Node::OptionalIndexNumber { .. } | Node::OptionalText { .. } | Node::OptionalTypeOf { .. } | Node::Truthy { .. } | Node::StrictEqual { .. } | Node::UnwrapOption { .. } | Node::OptionalPredicate { .. } => self.optional_expr(e),
+
             Node::OutNil => Ok("(@nil string)".to_owned()),
             Node::OutCons { head, tail } => {
                 Ok(format!("({} :: {})", self.expr(head)?, self.expr(tail)?))
             }
+            Node::Tuple { items, .. } => {
+                let mut parts = Vec::new();
+                for item in items {
+                    parts.push(self.expr(item)?);
+                }
+                Ok(if parts.is_empty() {
+                    "tt".to_owned()
+                } else {
+                    format!("({})", parts.join(", "))
+                })
+            }
+            Node::TupleIndex { object, index } => {
+                let Type::Tuple { elements } = &object.ty else {
+                    return Err(unsupported(
+                        "tuple projection",
+                        "the projection needs a checked tuple layout",
+                        e.span,
+                    ));
+                };
+                let mut value = self.expr(object)?;
+                for _ in (*index + 1)..elements.len() {
+                    value = format!("(fst {value})");
+                }
+                Ok(if *index == 0 {
+                    value
+                } else {
+                    format!("(snd {value})")
+                })
+            }
             // Output threading leaves no `print` node.
             Node::Print { .. } => Err(internal("print with its output not threaded".to_owned())),
             Node::Var { name } => Ok(name.clone()),
+            Node::FunctionRef { func } => Ok(crate::translation::callable_source_rules::render_callable_function_reference("Rocq", &(self.state.reference(func, ".")))),
+            Node::Apply { func, args } => {
+                let function = self.expr(func)?;
+                let arguments = args.iter().map(|argument| self.expr(argument)).collect::<Result<Vec<_>>>()?;
+                Ok(crate::translation::callable_source_rules::render_callable_application("Rocq", &function, &arguments))
+            }
+            Node::Lambda { params, body } => {
+                let types = params.iter().map(|parameter| self.ty(&parameter.ty)).collect::<Result<Vec<_>>>()?;
+                let body = self.expr(body)?;
+                Ok(crate::translation::callable_source_rules::render_callable_lambda("Rocq", &(params.iter().map(|parameter| parameter.name.clone()).collect::<Vec<_>>()), &types, "", &body, &[]))
+            }
             Node::Call { func, args } => {
                 let member = self.current.as_ref().and_then(|current| {
                     let mutual = current.mutual.as_ref()?;
@@ -58,7 +143,9 @@ impl RocqEmitter<'_> {
                 };
                 self.application(head, args)
             }
-            Node::Ctor { data, ctor, args } => {
+            Node::Ctor {
+                data, ctor, args, ..
+            } => {
                 let head = self.state.ctor_ref(data, ctor, ".");
                 self.application(head, args)
             }
@@ -92,6 +179,45 @@ impl RocqEmitter<'_> {
                 Ok(format!("(let {name} := {value} in {})", self.expr(body)?))
             }
             Node::Match { scrutinee, cases } => self.match_expr(scrutinee, cases),
+            Node::Method { object, op, args } => {
+                if matches!(object.ty, Type::Array { .. }) && op == "map" {
+                    let callback = args.first().and_then(Option::as_ref).expect("the checked map has its actual callback");
+                    let Type::Function { params, .. } = &callback.ty else {
+                        unreachable!("the map checker retained its actual function type");
+                    };
+                    if params.len() > 1 { self.floats(); }
+                    let count = serde_json::Number::from(params.len()).as_f64().expect("a checked parameter count has a Number representation");
+                    let object = self.expr(object)?;
+                    let callback = self.expr(callback)?;
+                    Ok(crate::translation::array_from_rules::render_array_from_mapping(
+                        "Rocq", &object, &callback, count, "",
+                    ))
+                } else {
+                    Err(crate::translation::diagnostics::unsupported(&format!(".{op}()"), &crate::translation::primitive_method_rules::read_primitive_method_rendering_refusal("Rocq", object.ty.kind(), op), e.span))
+                }
+            }
+            Node::StringMap { op, .. } => Err(crate::translation::diagnostics::unsupported(
+                &format!(".{op}()"),
+                &crate::translation::frontend_rules::read_string_map_refusal("Rocq", op),
+                e.span,
+            )),
+            Node::StringTest { op, string, search } => {
+                let helper =
+                    crate::translation::frontend_rules::read_string_test_helper("Rocq", op);
+                self.helpers.insert(match helper.as_str() {
+                    "stringStartsWith" => Helper::StringStartsWith,
+                    "stringEndsWith" => Helper::StringEndsWith,
+                    "stringIncludes" => Helper::StringIncludes,
+                    _ => unreachable!("checked string predicate has a helper"),
+                });
+                let object = self.expr(string)?;
+                let search = self.expr(search)?;
+                Ok(
+                    crate::translation::frontend_rules::render_string_test_expression(
+                        "Rocq", op, &object, &search,
+                    ),
+                )
+            }
             Node::ToString { arg, console } => self.text_of(arg, *console),
             Node::Cast {
                 arg,
@@ -101,7 +227,7 @@ impl RocqEmitter<'_> {
                 ..
             } => self.cast(arg, from, to, *flavor),
             Node::Abort { .. } => unthreaded("an abort"),
-            Node::Array { .. } | Node::Append { .. } | Node::Index { .. } | Node::Length { .. } => {
+            Node::Array { .. } | Node::Set { .. } | Node::Map { .. } | Node::Append { .. } | Node::Index { .. } | Node::Length { .. } | Node::OptionalIndex { .. } | Node::StringPoints { .. } | Node::CollectionItems { .. } => {
                 self.array_expr(e)
             }
             Node::Math { .. } => self.math(e),
@@ -167,7 +293,18 @@ impl RocqEmitter<'_> {
             Type::Float => "0%float".to_owned(),
             Type::Unit => "tt".to_owned(),
             Type::Output => "(@nil string)".to_owned(),
-            Type::Array { element } => format!("(@nil {})", self.ty(element)?),
+            Type::Array { element, .. } => format!("(@nil {})", self.ty(element)?),
+            Type::Tuple { elements } => {
+                let mut parts = Vec::new();
+                for element in elements {
+                    parts.push(self.inhabitant(element)?);
+                }
+                if parts.is_empty() {
+                    "tt".to_owned()
+                } else {
+                    format!("({})", parts.join(", "))
+                }
+            }
             Type::Data { name } => {
                 let program = self.program;
                 let entry = program.data(name);

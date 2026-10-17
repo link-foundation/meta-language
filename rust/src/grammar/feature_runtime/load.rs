@@ -8,12 +8,20 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt;
 use std::sync::Arc;
 
+#[path = "load_lexers.rs"]
+mod lexical;
+#[path = "load_selection.rs"]
+mod selection;
+#[path = "load_trivia.rs"]
+mod trivia;
+
 use super::compile::Compiler;
 use super::forking::GrammarFacts;
 use super::program::{
     Compiled, Expr, Program, Rule, Scanner, Settling, SettlingStep, Target, Trivia,
 };
 use super::token_ranks::token_ranks;
+use crate::grammar::feature::check_grammar_selection_included_range_grammar;
 use crate::grammar::interchange::render_native_expression;
 use crate::grammar::{
     FeatureExpr, FeatureForm, FieldValue, Grammar, GrammarExpr, GrammarFormat, GrammarMacro,
@@ -105,7 +113,7 @@ pub(super) fn form_of<'a>(expr: &'a GrammarExpr, head: &str) -> Option<&'a Featu
 }
 
 /// Rewrites the direct sub-expressions of `expr`.
-fn map_children_mut(expr: &mut GrammarExpr, map: &mut impl FnMut(&mut GrammarExpr)) {
+pub(super) fn map_children_mut(expr: &mut GrammarExpr, map: &mut impl FnMut(&mut GrammarExpr)) {
     match expr {
         GrammarExpr::Optional(inner)
         | GrammarExpr::ZeroOrMore(inner)
@@ -170,6 +178,8 @@ struct Context<'a> {
     resolver: Resolver<'a>,
     programs: Vec<Program>,
     languages: HashMap<String, usize>,
+    root_name: Option<String>,
+    capture_origins: bool,
 }
 
 impl Context<'_> {
@@ -202,6 +212,7 @@ struct Resolved {
     precedences: Vec<Vec<PrecedenceEntry>>,
     macros: Ordered<GrammarMacro>,
     scanners: Vec<GrammarScanner>,
+    lexers: Vec<crate::grammar::GrammarLexer>,
 }
 
 // Imports: every imported grammar's rules first (recursively, in import
@@ -213,6 +224,9 @@ fn resolve_imports(
     context: &Context<'_>,
     chain: &[String],
 ) -> LoadResult<Resolved> {
+    if let Err(message) = check_grammar_selection_included_range_grammar(grammar) {
+        return refuse("selection", message);
+    }
     let declarations = grammar.declarations();
     let mut resolved = Resolved {
         start: grammar
@@ -229,6 +243,7 @@ fn resolve_imports(
         precedences: Vec::new(),
         macros: Ordered::new(),
         scanners: Vec::new(),
+        lexers: Vec::new(),
     };
     for name in &declarations.imports {
         let mut next = chain.to_vec();
@@ -249,6 +264,7 @@ fn resolve_imports(
             resolved.macros.set(macro_name, item);
         }
         resolved.scanners.extend(inner.scanners);
+        resolved.lexers.extend(inner.lexers);
     }
     for rule in grammar.rules() {
         resolved.rules.set(
@@ -270,6 +286,7 @@ fn resolve_imports(
     resolved
         .scanners
         .extend(declarations.scanners.iter().cloned());
+    resolved.lexers.extend(declarations.lexers.iter().cloned());
     Ok(resolved)
 }
 
@@ -490,11 +507,17 @@ impl Instantiator<'_> {
 }
 
 /// Loads `grammar` and every language it embeds.
-pub(super) fn load(grammar: &Grammar, resolver: Resolver<'_>) -> LoadResult<Compiled> {
+pub(super) fn load(
+    grammar: &Grammar,
+    resolver: Resolver<'_>,
+    root_name: Option<&str>,
+) -> LoadResult<Compiled> {
     let mut context = Context {
         resolver,
         programs: Vec::new(),
         languages: HashMap::new(),
+        root_name: root_name.map(str::to_owned),
+        capture_origins: root_name.is_some(),
     };
     let main = load_in_context(grammar, &mut context)?;
     Ok(Compiled {
@@ -525,6 +548,7 @@ fn nesting_extras(
                 }
             }
             Expr::Repeat { item, .. }
+            | Expr::LexicalScope { item, .. }
             | Expr::Capture { item, .. }
             | Expr::Alias { item, .. }
             | Expr::Precedence { item, .. }
@@ -540,7 +564,7 @@ fn nesting_extras(
                 targets(item, found);
                 targets(synchronize, found);
             }
-            Expr::Empty | Expr::Terminal { .. } => {}
+            Expr::Empty | Expr::LexicalToken { .. } | Expr::Terminal { .. } => {}
         }
     }
     let mut nesting = HashSet::new();
@@ -579,7 +603,9 @@ fn nesting_extras(
 }
 
 fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<usize> {
+    let source_grammar = grammar;
     let resolved = resolve_imports(grammar, context, &[])?;
+    let lexical_sources = lexical::read_lexers(&resolved)?;
     let macros = &resolved.macros;
     let expand = |expr: &GrammarExpr| expand_macros(expr, macros, &mut Vec::new());
 
@@ -740,6 +766,7 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
         .map(|(name, instance)| (name.clone(), Arc::from(instance.node_kind.as_str())))
         .collect();
     let mut compiler = Compiler::new(&rule_index, &external, &modes, node_kinds);
+    lexical::configure_compiler(&mut compiler, &lexical_sources);
     // The items a scanner's `expected` asks about, each with an id, which
     // the parse requests where its rules try them (see `Expectations` in
     // executor.rs); a scanner that asks answers per context offset.
@@ -768,13 +795,19 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
     let mut trivia = Vec::new();
     for extra in &extras {
         let expression = compiler.expression(extra, "an extra")?;
-        let kind = match extra {
-            GrammarExpr::NonTerminal(name) => Some(Arc::from(name.as_str())),
-            _ => None,
+        // Scanner and nesting decisions retain the source identity. An outer
+        // alias is applied only when the selected tree becomes public.
+        let (source, projection_name, projection_anonymous) = trivia::extra_source(&expression);
+        let kind = match source {
+            Expr::Ref(Target::Rule(index)) => Some(Arc::from(instances.items[*index].0.as_str())),
+            Expr::Ref(Target::External(name)) => Some(name.clone()),
+            _ => projection_name.clone(),
         };
         trivia.push(Trivia {
             expression,
             kind,
+            projection_name,
+            projection_anonymous,
             modes: None,
         });
     }
@@ -787,7 +820,8 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
         compiler.requesting = true;
         let expression = compiler.expression(&instance.expression, &owner);
         compiler.requesting = false;
-        let expression = expression?;
+        let expression =
+            lexical::wrap_parser_owner(expression?, source_grammar, &lexical_sources, name);
         let action = match &instance.action {
             Some(action) => {
                 if source.kind == RuleKind::Silent && action.iter().any(builds_node) {
@@ -818,15 +852,18 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
             .and_then(|form| form.integer("level"))
             .unwrap_or(0);
         let node_kind: Arc<str> = Arc::from(instance.node_kind.as_str());
-        if source
-            .attributes
-            .channel
-            .as_deref()
-            .is_some_and(|channel| channel != "default")
+        if !lexical::is_elected(&lexical_sources, name)
+            && source
+                .attributes
+                .channel
+                .as_deref()
+                .is_some_and(|channel| channel != "default")
         {
             trivia.push(Trivia {
                 expression: super::program::Expr::Ref(Target::Rule(index)),
                 kind: Some(node_kind.clone()),
+                projection_name: None,
+                projection_anonymous: false,
                 modes: rule_modes.clone(),
             });
         }
@@ -863,7 +900,7 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
             consults,
         });
     }
-    let embedded = compiler.into_embedded();
+    let (embedded, selected) = compiler.into_embedded();
 
     let index = context.programs.len();
     let token_ranks = (settling.has(SettlingStep::Tokens)
@@ -890,7 +927,15 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
         settling.has(SettlingStep::Precedence),
     );
     let nesting_extras = nesting_extras(&trivia, &rules, &rule_index);
+    let source_definition = if context.capture_origins || !selected.is_empty() {
+        super::grammar_selection::selection_source_definition(source_grammar)
+    } else {
+        serde_json::Value::Null
+    };
     context.programs.push(Program {
+        lexers: HashMap::new(),
+        default_lexer: lexical::default_lexer(source_grammar, &lexical_sources),
+        source_definition,
         peg,
         settling,
         token_ranks,
@@ -907,15 +952,13 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
         expected_references,
         grammar,
     });
-    for language in embedded {
-        if context.languages.contains_key(&language) {
-            continue;
-        }
-        context.languages.insert(language.clone(), usize::MAX);
-        let grammar = context.resolve(&language, "embed")?;
-        let loaded = load_in_context(&grammar, context)?;
-        context.languages.insert(language, loaded);
+    lexical::load_lexers(index, lexical_sources, context)?;
+    if index == 0
+        && let Some(name) = &context.root_name
+    {
+        context.languages.insert(name.clone(), index);
     }
+    selection::load_embedded_grammar_sources(embedded, selected, context)?;
     Ok(index)
 }
 

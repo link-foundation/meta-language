@@ -231,11 +231,11 @@ The following data files were collected for this case study:
 
 | File | Description |
 |------|-------------|
-| `pr-114-data/pr-details.json` | Full PR metadata including files, comments, reviews |
+| `pr-114-data/pr-details.lino` | Full PR metadata including files, comments, reviews |
 | `pr-114-data/pr-diff.patch` | Complete diff of changes in PR #114 |
-| `pr-114-data/pr-review-comments.json` | Inline code review comments |
-| `pr-114-data/pr-conversation-comments.json` | General PR discussion comments |
-| `pr-114-data/pr-commits.json` | Commit history of the PR |
+| `pr-114-data/pr-review-comments.lino` | Inline code review comments |
+| `pr-114-data/pr-conversation-comments.lino` | General PR discussion comments |
+| `pr-114-data/pr-commits.lino` | Commit history of the PR |
 | `pr-114-data/issue-113-details.txt` | Original issue description |
 | `pr-114-data/solution-draft-log-1.txt.gz` | AI solution draft log (first iteration, compressed) |
 | `pr-114-data/solution-draft-log-2.txt.gz` | AI solution draft log (second iteration, compressed) |

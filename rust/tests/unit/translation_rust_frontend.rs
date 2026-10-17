@@ -1,7 +1,9 @@
 //! The Rust-source frontend: accepted programs parse to the surface objects the JavaScript
 //! frontend builds, and rejected programs raise the same errors with the same messages.
 
+use meta_language::translation::Language;
 use meta_language::translation::diagnostics::ErrorKind;
+use meta_language::translation::lexer::{TokenKind, tokenize};
 use meta_language::translation::rust::parse_rust;
 use serde_json::{Value, json};
 
@@ -206,9 +208,9 @@ fn rejected_programs_raise_the_javascript_errors() {
             "mutable binding: mutation is outside the portable core at 22..26",
         ),
         (
-            "fn f(v: Vec<u64>) -> u64 { 0 } fn main() { println!(\"x\"); }",
+            "fn f(v: List<u64>) -> u64 { 0 } fn main() { println!(\"x\"); }",
             ErrorKind::Unsupported,
-            "type Vec<…>: generic types are outside the portable core at 8..11",
+            "type List<…>: generic types are outside the portable core at 8..12",
         ),
         (
             "fn main() { println!(\"{:?}\", 1u64); }",
@@ -250,7 +252,7 @@ fn rejected_programs_raise_the_javascript_errors() {
             ErrorKind::Type,
             "super beyond crate root at 0..12",
         ),
-        // The JavaScript frontend loops here: its visibility scan does not stop at the end of input.
+        // Both frontends stop an unfinished visibility scan at the end of input.
         (
             "fn main() { println!(\"x\"); }\npub(crate",
             ErrorKind::Syntax,
@@ -263,6 +265,72 @@ fn rejected_programs_raise_the_javascript_errors() {
 }
 
 #[test]
+fn the_original_vector_rejection_source_has_its_exact_supported_array_surface() {
+    let source = "fn f(v: Vec<u64>) -> u64 { 0 } fn main() { println!(\"x\"); }";
+    assert_eq!(
+        surface(source),
+        json!({
+            "language": "Rust",
+            "items": [{
+                "k": "fn", "name": "f",
+                "params": [{ "name": "v", "type": { "kind": "array", "element": u64_type() } }],
+                "ret": u64_type(),
+                "body": { "k": "num", "value": "0" }
+            }],
+            "main": { "effects": [{ "k": "print", "expr": { "k": "str", "value": "x" }, "style": "rust" }] }
+        })
+    );
+}
+
+#[test]
+fn cast_target_grouping_delimits_the_type_before_less_than_comparison() {
+    for body in [
+        "value as f64 < limit",
+        "value as f64 /* < trivia */ < limit",
+    ] {
+        let source = format!("fn below(value:f64,limit:f64)->bool {{ {body} }} fn main(){{}}");
+        let start = source.rfind('<').unwrap();
+        let type_start = source.find("as f64").unwrap() + 3;
+        assert_eq!(
+            failure(&source),
+            (
+                ErrorKind::Unsupported,
+                format!(
+                    "type f64<…>: generic types are outside the portable core at {type_start}..{start}"
+                )
+            )
+        );
+        let error = meta_language::translation::rust::parse_rust_with_primitive_owner_model(
+            &source,
+            "standard primitive Rust binary64 owner 1",
+            "",
+        )
+        .expect_err("a selected primitive owner still requires cast grouping");
+        assert_eq!(
+            (error.kind, error.message()),
+            (
+                ErrorKind::Syntax,
+                format!(
+                    "a cast before < requires parentheses at {start}..{}",
+                    start + 1
+                )
+            )
+        );
+    }
+    for body in [
+        "(value as f64) < limit",
+        "value as (f64) < limit",
+        "value as ((f64)) < limit",
+        "value as f64 <= limit",
+        "value as f64 >= limit",
+        "value as f64 > limit",
+    ] {
+        let source = format!("fn below(value:f64,limit:f64)->bool {{ {body} }} fn main(){{}}");
+        assert!(parse_rust(&source).is_ok(), "{source}");
+    }
+}
+
+#[test]
 fn lexer_errors_surface_unchanged() {
     assert_eq!(
         failure("fn f(n: u64) -> u64 {\n  \"abc\n}\nfn main() { println!(\"x\"); }\n"),
@@ -271,4 +339,78 @@ fn lexer_errors_surface_unchanged() {
             "unterminated string literal at 54..60".to_owned()
         )
     );
+}
+
+#[test]
+fn decimal_separators_before_complete_integer_suffixes_keep_exact_tokens() {
+    for suffix in [
+        "u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64", "u128", "i128", "usize", "isize",
+    ] {
+        for separators in ["_", "__", "___"] {
+            let source = format!("12_345{separators}{suffix}");
+            let tokens = tokenize(&source, Language::Rust).unwrap();
+            let token = &tokens.tokens[0];
+            assert_eq!(token.kind, TokenKind::Number);
+            assert_eq!(token.value, "12345");
+            assert_eq!(token.suffix, suffix);
+            assert_eq!(token.raw, source);
+            assert_eq!(token.start, 0);
+            assert_eq!(token.end, source.len());
+        }
+    }
+    let source = include_str!("translation_rust_runtime_shell.rs");
+    let tokens = tokenize(source, Language::Rust).unwrap();
+    let token = tokens
+        .tokens
+        .iter()
+        .find(|token| token.raw == "9007199254740992_u64")
+        .unwrap();
+    assert_eq!(token.value, "9007199254740992");
+    assert_eq!(token.suffix, "u64");
+    assert_eq!(
+        tokens.tokens.last().unwrap().end,
+        source.encode_utf16().count()
+    );
+}
+
+#[test]
+fn suffixed_separator_admission_keeps_old_rust_and_javascript_refusals() {
+    for source in [
+        "1_",
+        "1__",
+        "1_u",
+        "1_u7",
+        "1_u64extra",
+        "1_u64_",
+        "1_u64_foo",
+        "1_U64",
+        "1_unknown",
+        "1_u64é",
+        "1_u64λ",
+        "1_u64\u{0301}",
+        "1_u64𝔘",
+        "1_u64\u{00a0}",
+    ] {
+        let error = tokenize(source, Language::Rust).unwrap_err();
+        assert_eq!(error.kind, ErrorKind::Syntax);
+        assert!(error.message().contains("malformed number"));
+    }
+    for source in [
+        "1_",
+        "1__0",
+        "1_u64",
+        "9_007_199_254_740_992_u64",
+        "1_0n_",
+        "0xff_u8",
+        "08",
+        "1.5n",
+        "3in",
+        "0x_1",
+        "1e_2",
+    ] {
+        assert_eq!(
+            tokenize(source, Language::JavaScript).unwrap_err().kind,
+            ErrorKind::Syntax
+        );
+    }
 }

@@ -85,6 +85,10 @@ pub(super) fn merge_declarations(
         let own = map_declarations(source.grammar.declarations(), &|name| {
             canonical(source, name)
         });
+        for mut lexer in own.lexers {
+            lexer.name = format!("{}::{}", source.id, lexer.name);
+            merged.lexers.push(lexer);
+        }
         settlings.push((source.id, own.settling));
         if let Some(matching) = own.matching {
             match &merged.matching {

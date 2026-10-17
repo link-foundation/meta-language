@@ -200,6 +200,7 @@ impl Executor<'_> {
         in_token: bool,
     ) -> Run<Vec<Res>> {
         let skipped = self.terminal_start(position, state, in_token)?;
+        let state = &skipped.state;
         let start = skipped.end;
         let mut best: Option<(Res, i64, &Expr)> = None;
         for item in items {
@@ -261,7 +262,9 @@ pub(super) struct ImmediateLiterals(pub(super) HashSet<Vec<u8>>);
 /// under its aliases and captures, or None.
 pub(super) fn immediate_pattern(expr: &Expr) -> Option<&Expr> {
     match expr {
-        Expr::Alias { item, .. } | Expr::Capture { item, .. } => immediate_pattern(item),
+        Expr::Alias { item, .. } | Expr::LexicalScope { item, .. } | Expr::Capture { item, .. } => {
+            immediate_pattern(item)
+        }
         Expr::ImmediateToken(item)
             if !matches!(
                 **item,
@@ -300,6 +303,7 @@ fn leading_literals(expr: &Expr, literals: &mut HashSet<Vec<u8>>) {
             }
         }
         Expr::Alias { item, .. }
+        | Expr::LexicalScope { item, .. }
         | Expr::Capture { item, .. }
         | Expr::Precedence { item, .. }
         | Expr::DynamicPrecedence { item, .. } => leading_literals(item, literals),

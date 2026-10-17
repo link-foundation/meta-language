@@ -12,11 +12,14 @@ impl RocqParser {
         let mut main = None;
         let items = self.items(&mut main, &[])?;
         Ok(SProgram {
+            reference_semantics: None,
             language: Language::Rocq,
             items,
             main,
             imports: Vec::new(),
             externals: Vec::new(),
+            source_pure_unit_calls: None,
+            source_runtime_shell: None,
         })
     }
 
@@ -271,6 +274,7 @@ impl RocqParser {
             ctors,
             span: Some(span(&start, self.peek())),
             generated: false,
+            source_unit_clone_derivation: None,
         })
     }
 
@@ -433,11 +437,13 @@ impl RocqParser {
             self.skip_obligations(&start, annotation)?;
         }
         Ok(Definition::Fn(Box::new(SFn {
+            semantic_ret: None,
             name,
             params: params
                 .into_iter()
                 .map(|binder| SParam {
                     name: binder.name,
+                    optional: false,
                     default_value: None,
                     ty: binder.ty,
                     span: binder.span,
@@ -446,9 +452,18 @@ impl RocqParser {
                 })
                 .collect(),
             ret: Some(ret),
+            source_signature: None,
+            source_primitive_owners: None,
+            source_empty_option: None,
+            source_type_namespace: None,
+            source_local_state: None,
+            source_const_function: None,
+            source_diagnostic_attributes: None,
+            source_loop: None,
             body,
             span: Some(span(&start, self.peek())),
             generated: false,
+            source_pure_unit: None,
         })))
     }
 
@@ -572,6 +587,7 @@ impl RocqParser {
                 effects,
                 span: Some(main_span),
                 sequential_async: false,
+                source_runtime_worker: None,
             },
             main_span,
         ))

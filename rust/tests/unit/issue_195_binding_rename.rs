@@ -9,8 +9,14 @@ use serde_json::Value;
 fn binding_aware_rename_preserves_scopes_properties_unicode_and_observations() {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../parity/fixtures/four-language-conformance.json");
-    let corpus: Value = serde_json::from_str(&fs::read_to_string(path).expect("shared corpus"))
-        .expect("valid shared corpus");
+    let corpus: Value = super::project_data::read_project_data(
+        &fs::read_to_string(
+            super::project_data::resolve_project_data_path(path)
+                .expect("one project data storage format"),
+        )
+        .expect("shared corpus"),
+    )
+    .expect("valid shared corpus");
 
     for fixture in corpus["renameCases"].as_array().expect("rename cases") {
         let language = fixture["language"].as_str().expect("language");
@@ -117,8 +123,14 @@ fn binding_rename_rejects_capture_of_an_unresolved_reference() {
 fn binding_rename_distinguishes_disjoint_nested_names_from_capture() {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../parity/fixtures/four-language-conformance.json");
-    let corpus: Value = serde_json::from_str(&fs::read_to_string(path).expect("shared corpus"))
-        .expect("valid shared corpus");
+    let corpus: Value = super::project_data::read_project_data(
+        &fs::read_to_string(
+            super::project_data::resolve_project_data_path(path)
+                .expect("one project data storage format"),
+        )
+        .expect("shared corpus"),
+    )
+    .expect("valid shared corpus");
 
     for fixture in corpus["nestedRenameCases"]
         .as_array()
@@ -162,8 +174,14 @@ fn binding_rename_distinguishes_disjoint_nested_names_from_capture() {
 fn javascript_var_bindings_use_function_scope_and_include_early_references() {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../parity/fixtures/four-language-conformance.json");
-    let corpus: Value = serde_json::from_str(&fs::read_to_string(path).expect("shared corpus"))
-        .expect("valid shared corpus");
+    let corpus: Value = super::project_data::read_project_data(
+        &fs::read_to_string(
+            super::project_data::resolve_project_data_path(path)
+                .expect("one project data storage format"),
+        )
+        .expect("shared corpus"),
+    )
+    .expect("valid shared corpus");
 
     for fixture in corpus["varScopeCases"].as_array().expect("var scope cases") {
         let source = fixture["source"].as_str().expect("source");

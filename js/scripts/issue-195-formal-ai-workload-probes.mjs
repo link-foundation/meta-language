@@ -16,6 +16,7 @@
 // runtimes produced the same links and projections.
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { readProjectData } from './project-data.mjs';
 
 export { TEST_EVENT_REPORTER } from './issue-195-rml-workload-probes.mjs';
 
@@ -235,6 +236,7 @@ export async function buildFormalAiInputs(checkout) {
     linkEditRulesText: data.linkEditRules,
     linkEdits: [...LINK_EDIT_CASES, ...linoLinkEditCases(data.programGrammars)],
     projections: PROJECTION_CASES,
+    semanticProjections: readProjectData(new URL('../../parity/fixtures/formal-ai-semantic-projections.json', import.meta.url)).cases,
   };
 }
 

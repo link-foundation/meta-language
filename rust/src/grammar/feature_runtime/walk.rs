@@ -5,7 +5,13 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
+use std::sync::OnceLock;
 
+use super::grammar_selection::{AcceptedSelection, SelectionMetadata};
+use super::grammar_selection_rules::{
+    read_grammar_selection_equality_fields, read_grammar_tree_equality_fields,
+    read_grammar_tree_recursion_plan,
+};
 use super::results::{Children, Tree, TreeType};
 
 /// One step of a walk over the leaves of a result: a part of a child list,
@@ -112,17 +118,22 @@ fn same_tree_with(a: &Rc<Tree>, b: &Rc<Tree>, memo: Option<&TreeMemo>) -> bool {
     if Rc::ptr_eq(a, b) {
         return true;
     }
-    if a.ty != b.ty || a.kind != b.kind {
+    if a.ty != b.ty || !same_tree_header(a, b, &grammar_tree_equality_plan(a.ty, false).fields) {
         return false;
     }
-    if a.ty != TreeType::Node {
-        return a.start == b.start && a.end == b.end;
+    let plan = grammar_tree_equality_plan(a.ty, false);
+    if plan.recursion == "leaf" {
+        return true;
     }
     let key = (Rc::as_ptr(a), Rc::as_ptr(b));
     if let Some(known) = memo.and_then(|memo| memo.borrow().get(&key).copied()) {
         return known;
     }
-    let same = same_children_with(&a.children, &b.children, memo);
+    let same = if plan.recursion == "full-embedding" {
+        same_embedding(a, b, &TreeMemo::default())
+    } else {
+        same_children_with(&a.children, &b.children, memo)
+    };
     if let Some(memo) = memo {
         memo.borrow_mut().insert(key, same);
     }
@@ -152,21 +163,190 @@ fn same_children_with(a: &Children, b: &Children, memo: Option<&TreeMemo>) -> bo
 /// two, both flattened by the silent rule) are one parse, not an ambiguity.
 /// It mirrors sameOutput in js/src/grammar-runtime/executor.js.
 pub(super) fn same_output(a: &Children, b: &Children) -> bool {
+    same_output_with(a, b, &TreeMemo::default())
+}
+
+/// Cached projections of the generated portable field and recursive-role plan.
+struct GrammarTreeEqualityPlan {
+    fields: Vec<String>,
+    recursion: String,
+}
+
+fn grammar_tree_equality_plan(kind: TreeType, output: bool) -> &'static GrammarTreeEqualityPlan {
+    static PLANS: OnceLock<Vec<GrammarTreeEqualityPlan>> = OnceLock::new();
+    let plans = PLANS.get_or_init(|| {
+        let mut plans = Vec::new();
+        for kind in ["node", "token", "error", "missing", "embed"] {
+            for output in [false, true] {
+                plans.push(GrammarTreeEqualityPlan {
+                    fields: read_grammar_tree_equality_fields(kind, output)
+                        .split('|')
+                        .map(str::to_owned)
+                        .collect(),
+                    recursion: read_grammar_tree_recursion_plan(kind, output),
+                });
+            }
+        }
+        plans
+    });
+    let index = match kind {
+        TreeType::Node => 0,
+        TreeType::Token => 1,
+        TreeType::Error => 2,
+        TreeType::Missing => 3,
+        TreeType::Embed => 4,
+    };
+    &plans[index * 2 + usize::from(output)]
+}
+
+fn grammar_selection_equality_fields(alternative: bool) -> &'static [String] {
+    static FIELDS: OnceLock<[Vec<String>; 2]> = OnceLock::new();
+    &FIELDS.get_or_init(|| {
+        [false, true].map(|alternative| {
+            read_grammar_selection_equality_fields(alternative)
+                .split('|')
+                .map(str::to_owned)
+                .collect()
+        })
+    })[usize::from(alternative)]
+}
+
+/// Metadata keeps array order, exact key presence and linked object-key order.
+fn same_tree_metadata(a: &serde_json::Value, b: &serde_json::Value) -> bool {
+    use serde_json::Value;
+    match (a, b) {
+        (Value::Array(a), Value::Array(b)) => {
+            a.len() == b.len() && a.iter().zip(b).all(|(a, b)| same_tree_metadata(a, b))
+        }
+        (Value::Object(a), Value::Object(b)) => {
+            a.len() == b.len()
+                && a.iter().zip(b).all(|((key, value), (other_key, other))| {
+                    key == other_key && same_tree_metadata(value, other)
+                })
+        }
+        _ => a == b,
+    }
+}
+
+fn same_tree_header(a: &Tree, b: &Tree, fields: &[String]) -> bool {
+    fields.iter().all(|field| match field.as_str() {
+        "type" => a.ty == b.ty,
+        "kind" => a.kind == b.kind,
+        "projectionName" => a.projection_name == b.projection_name,
+        "projectionAnonymous" => a.projection_anonymous == b.projection_anonymous,
+        "start" => a.start == b.start,
+        "end" => a.end == b.end,
+        "trivia" => a.trivia == b.trivia,
+        "literal" => a.literal == b.literal,
+        "field" => a.field == b.field,
+        "language" => a.language == b.language,
+        "attributes" => a.attributes == b.attributes,
+        "lexical" => match (&a.lexical, &b.lexical) {
+            (None, None) => true,
+            (Some(a), Some(b)) => same_tree_metadata(a, b),
+            _ => false,
+        },
+        _ => false,
+    })
+}
+
+fn same_output_with(a: &Children, b: &Children, memo: &TreeMemo) -> bool {
     Rc::ptr_eq(a, b)
-        || (a.len() == b.len()
-            && a.iter().zip(b.iter()).all(|(first, second)| {
-                Rc::ptr_eq(first, second)
-                    || (first.ty == second.ty
-                        && first.kind == second.kind
-                        && first.start == second.start
-                        && first.end == second.end
-                        && first.trivia == second.trivia
-                        && first.field == second.field
-                        && first.language == second.language
-                        && first.attributes == second.attributes
-                        && (first.ty != TreeType::Node
-                            || same_output(&first.children, &second.children)))
-            }))
+        || (a.count == b.count
+            && items(a)
+                .zip(items(b))
+                .all(|(a, b)| same_output_tree(&a, &b, memo)))
+}
+
+fn same_output_tree(a: &Rc<Tree>, b: &Rc<Tree>, memo: &TreeMemo) -> bool {
+    if Rc::ptr_eq(a, b) {
+        return true;
+    }
+    let plan = grammar_tree_equality_plan(a.ty, true);
+    if a.ty != b.ty || !same_tree_header(a, b, &plan.fields) {
+        return false;
+    }
+    let key = (Rc::as_ptr(a), Rc::as_ptr(b));
+    if let Some(known) = memo.borrow().get(&key).copied() {
+        return known;
+    }
+    let same = match plan.recursion.as_str() {
+        "full-children" => same_output_with(&a.children, &b.children, memo),
+        "full-embedding" => same_embedding(a, b, memo),
+        "leaf" => true,
+        _ => false,
+    };
+    memo.borrow_mut().insert(key, same);
+    same
+}
+
+fn same_embedding(a: &Tree, b: &Tree, memo: &TreeMemo) -> bool {
+    let physical = match (&a.source_children, &b.source_children) {
+        (None, None) => true,
+        (Some(a), Some(b)) => same_output_with(a, b, memo),
+        _ => false,
+    };
+    if !physical {
+        return false;
+    }
+    let roots = match (&a.root, &b.root) {
+        (None, None) => true,
+        (Some(a), Some(b)) => same_output_tree(a, b, memo),
+        _ => false,
+    };
+    roots
+        && match (&a.selection, &b.selection) {
+            (None, None) => true,
+            (Some(a), Some(b)) => same_selection(a, b, memo),
+            _ => false,
+        }
+}
+
+fn same_selection(a: &SelectionMetadata, b: &SelectionMetadata, memo: &TreeMemo) -> bool {
+    let source_mapping = match (&a.source_mapping, &b.source_mapping) {
+        (None, None) => true,
+        (Some(a), Some(b)) => same_tree_metadata(a, b),
+        _ => false,
+    };
+    source_mapping
+        && grammar_selection_equality_fields(false)
+            .iter()
+            .all(|field| match field.as_str() {
+                "mode" => a.mode == b.mode,
+                "mapping" => a.mapping == b.mapping,
+                "start" => a.start == b.start,
+                "end" => a.end == b.end,
+                "candidates" => {
+                    a.candidates.len() == b.candidates.len()
+                        && a.candidates
+                            .iter()
+                            .zip(&b.candidates)
+                            .all(|(a, b)| same_tree_metadata(a, b))
+                }
+                "provenance" => same_tree_metadata(&a.provenance, &b.provenance),
+                "ambiguous" => a.ambiguous == b.ambiguous,
+                _ => false,
+            })
+        && a.alternatives.len() == b.alternatives.len()
+        && a.alternatives
+            .iter()
+            .zip(&b.alternatives)
+            .all(|(a, b)| same_selection_alternative(a, b, memo))
+}
+
+fn same_selection_alternative(
+    a: &AcceptedSelection,
+    b: &AcceptedSelection,
+    memo: &TreeMemo,
+) -> bool {
+    grammar_selection_equality_fields(true)
+        .iter()
+        .all(|field| match field.as_str() {
+            "language" => a.language == b.language,
+            "provenance" => same_tree_metadata(&a.provenance, &b.provenance),
+            _ => false,
+        })
+        && same_output_tree(&a.root, &b.root, memo)
 }
 
 /// The first child of a list that is not trivia, without flattening it.

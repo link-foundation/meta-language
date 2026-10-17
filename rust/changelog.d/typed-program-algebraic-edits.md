@@ -1,0 +1,1 @@
+Source-free translation fixtures now cover algebraic choices, recursive trees and zero/successor datatypes in JavaScript and Rust. Shared link edits exercise constructor, datatype, field and shadowed binder identities, and reject malformed scope, type, arity, coverage and metadata changes. CI executes the Rust originals and translated programs independently.

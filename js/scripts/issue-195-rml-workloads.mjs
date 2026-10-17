@@ -6,9 +6,9 @@
 // consumer probes of js/scripts/issue-195-rml-workload-probes.mjs, and writes a
 // report. `validateRmlWorkloadReport` is the pure check of that report for one
 // runtime, shared by the runner and the tests; the Rust suite ports it.
-import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readProjectData } from './project-data.mjs';
 
 import { RML_PR184_FIXTURE } from './issue-195-rml-pr184.mjs';
 
@@ -35,7 +35,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 
 /** The pinned pull request 184 fixture. */
 export function loadRmlWorkloadFixture(directory = root) {
-  return JSON.parse(readFileSync(path.join(directory, RML_WORKLOAD_FIXTURE), 'utf8'));
+  return readProjectData(path.join(directory, RML_WORKLOAD_FIXTURE));
 }
 
 /** The inventoried workload test files of `runtime`, as RML repository paths. */

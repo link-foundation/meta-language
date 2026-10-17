@@ -1,0 +1,1 @@
+Native JavaScript emission now preserves the existing source Unit representation inside selected products: JavaScript-origin Unit remains undefined and Rust-origin Unit remains null. Both adapters use the same automatically translated emission rule.

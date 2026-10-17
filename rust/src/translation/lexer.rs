@@ -12,9 +12,20 @@ use regex::Regex;
 
 use super::decimal::Decimal;
 use super::diagnostics::{ErrorKind, Result, TranslationError};
-use super::frontend_rules::{UnicodeEscape, decode_unicode_escape};
+use super::frontend_rules::{
+    UnicodeEscape, accept_control_parenthesis, accept_statement_brace, decode_unicode_escape,
+    read_rust_number_bounds, read_rust_source_line_break_end, read_rust_string_continuation_end,
+    regular_expression_end, start_regular_expression,
+};
+use super::javascript_line_terminator_rules::accept_java_script_line_terminator;
 use super::js_number::js_number_literal;
 use super::{Language, Span};
+
+mod cooked_strings;
+mod number_rules;
+mod raw_strings;
+mod source_whitespace;
+mod unicode_escapes;
 
 /// Source text addressed by UTF-16 code units, as JavaScript strings are.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -107,7 +118,10 @@ pub enum TokenKind {
     Identifier,
     Macro,
     Punct,
+    RegularExpression,
     String,
+    Character,
+    ByteCharacter,
     Interpolation,
     Template,
     Eof,
@@ -132,6 +146,8 @@ pub struct Token {
     pub value: String,
     /// The letters after a number's digits (`n`, `u32`, `x1fn`).
     pub suffix: String,
+    /// A decimal or explicitly suffixed binary floating-point literal.
+    pub floating: bool,
     pub raw: String,
     pub start: usize,
     pub end: usize,
@@ -148,6 +164,7 @@ impl Token {
             kind,
             value,
             suffix: String::new(),
+            floating: false,
             raw,
             start,
             end,
@@ -328,21 +345,59 @@ pub fn tokenize(text: &str, language: Language) -> Result<Tokens> {
 ///
 /// See [`tokenize`].
 pub fn tokenize_source(source: &Source, language: Language) -> Result<Tokens> {
+    tokenize_region(source, language, 0, false, &mut None)
+}
+
+// Use ordinary lexical decisions for template substitutions: opaque tokens
+// cannot close their surrounding expression. Offsets stay in the full source.
+fn tokenize_region(
+    source: &Source,
+    language: Language,
+    start: usize,
+    braced: bool,
+    units: &mut Option<Vec<f64>>,
+) -> Result<Tokens> {
     let operators = operators(language);
     let comments = comment_syntax(language);
     let mut tokens: Vec<Token> = Vec::new();
     let mut comment_list = Vec::new();
-    let mut index = 0;
+    // Encode lazily once; copying each suffix is quadratic in modules with
+    // many regular-expression literals. The shared rule uses absolute offsets.
+    let mut scopes = Vec::new();
+    let mut statement_blocks = Vec::new();
+    let mut closed = false;
+    let mut declaration_body = false;
+    let mut depth = 0usize;
+    let mut index = start;
     while index < source.len() {
         let unit = source.units[index];
-        if is_js_space(unit) {
+        if braced && source.is_char(index, '}') && depth == 0 {
+            break;
+        }
+        let whitespace = if language == Language::Rust {
+            source_whitespace::accept_rust_source_whitespace(f64::from(unit))
+                || source_whitespace::accept_rust_source_byte_order_mark(
+                    f64::from(unit),
+                    index == 0,
+                )
+        } else {
+            is_js_space(unit)
+        };
+        if whitespace {
             index += 1;
             continue;
         }
         if let Some(line) = comments.line
             && source.starts_with(line, index)
         {
-            let stop = source.index_of("\n", index).unwrap_or(source.len());
+            let stop = if language == Language::JavaScript {
+                source.units[index..]
+                    .iter()
+                    .position(|unit| accept_java_script_line_terminator(f64::from(*unit)))
+                    .map_or(source.len(), |offset| index + offset)
+            } else {
+                source.index_of("\n", index).unwrap_or(source.len())
+            };
             comment_list.push(Comment {
                 text: source.slice(index, stop),
                 start: index,
@@ -363,20 +418,82 @@ pub fn tokenize_source(source: &Source, language: Language) -> Result<Tokens> {
         }
         let start = index;
         let ch = source.char_at(index);
+        if language == Language::JavaScript && ch == Some('/') {
+            let previous = tokens.last();
+            let kind = previous.map_or("", |token| match token.kind {
+                TokenKind::Identifier => "identifier",
+                TokenKind::Punct => "punct",
+                _ => "other",
+            });
+            let kind = if tokens
+                .iter()
+                .rev()
+                .nth(1)
+                .is_some_and(|token| token.value == "." || token.value == "?.")
+            {
+                "member"
+            } else {
+                kind
+            };
+            let value = previous.map_or("", |token| token.value.as_str());
+            if closed || start_regular_expression(kind, value) {
+                let units = units.get_or_insert_with(|| {
+                    source.units().iter().map(|unit| f64::from(*unit)).collect()
+                });
+                #[allow(clippy::cast_precision_loss)]
+                let end = regular_expression_end(units, index as f64);
+                if end < 0.0 {
+                    return Err(TranslationError::syntax(
+                        "unterminated regular expression literal",
+                        Some(span(start, source.len())),
+                    ));
+                }
+                #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+                let end = end as usize;
+                tokens.push(Token::new(
+                    TokenKind::RegularExpression,
+                    "/".to_owned(),
+                    source.slice(index, end),
+                    start,
+                    end,
+                ));
+                index = end;
+                closed = false;
+                continue;
+            }
+        }
+        let control_closed = closed;
+        closed = false;
         if language == Language::JavaScript && ch == Some('`') {
-            let token = template_token(source, index)?;
+            let token = template_token(source, index, units)?;
+            index = token.end;
+            tokens.push(token);
+            continue;
+        }
+        if language == Language::Rust
+            && ch == Some('r')
+            && let Some(token) = raw_string_token(source, index, units)?
+        {
+            index = token.end;
+            tokens.push(token);
+            continue;
+        }
+        if language == Language::Rust
+            && (ch == Some('\'') || (ch == Some('b') && source.is_char(index + 1, '\'')))
+            && let Some(token) = rust_character_token(source, index, units)?
+        {
             index = token.end;
             tokens.push(token);
             continue;
         }
         if ch == Some('"') || (language == Language::JavaScript && ch == Some('\'')) {
-            let token = string_token(source, index, language)?;
+            let token = string_token(source, index, language, units)?;
             index = token.end;
             tokens.push(token);
             continue;
         }
         if language == Language::Lean && source.starts_with("s!\"", index) {
-            let mut token = string_token(source, index + 2, language)?;
+            let mut token = string_token(source, index + 2, language, units)?;
             token.kind = TokenKind::Interpolation;
             token.start = start;
             token.raw = source.slice(start, token.end);
@@ -397,6 +514,12 @@ pub fn tokenize_source(source: &Source, language: Language) -> Result<Tokens> {
             continue;
         }
         if ch.is_some_and(|ch| ch.is_ascii_digit()) {
+            if language == Language::Rust {
+                let token = rust_number(source, index, units)?;
+                index = token.end;
+                tokens.push(token);
+                continue;
+            }
             let mut stop = index;
             while source
                 .char_at(stop)
@@ -481,6 +604,66 @@ pub fn tokenize_source(source: &Source, language: Language) -> Result<Tokens> {
                 |operator| (*operator).to_owned(),
             );
         let length = text.encode_utf16().count();
+        if braced && text == "{" {
+            depth += 1;
+        }
+        if braced && text == "}" {
+            depth -= 1;
+        }
+        if language == Language::JavaScript {
+            if text == "(" {
+                let qualified = tokens
+                    .iter()
+                    .rev()
+                    .nth(1)
+                    .is_some_and(|token| token.value == "." || token.value == "?.");
+                let declaration = tokens
+                    .iter()
+                    .rev()
+                    .nth(1)
+                    .is_some_and(|token| token.value == "function")
+                    && (tokens.len() == 2
+                        || tokens.iter().rev().nth(2).is_some_and(|token| {
+                            matches!(token.value.as_str(), ";" | "{" | "}" | "export" | "async")
+                        }));
+                let control = tokens.last().is_some_and(|token| {
+                    let kind = if token.kind == TokenKind::Identifier {
+                        "identifier"
+                    } else {
+                        "other"
+                    };
+                    accept_control_parenthesis(kind, &token.value, qualified)
+                });
+                scopes.push((control, declaration));
+            }
+            if text == ")" {
+                let (control, declaration) = scopes.pop().unwrap_or((false, false));
+                closed = control;
+                declaration_body = declaration;
+            } else if text == "{" {
+                let kind =
+                    tokens.last().map_or(
+                        if braced { "expression" } else { "" },
+                        |token| match token.kind {
+                            TokenKind::Identifier => "identifier",
+                            TokenKind::Punct => "punct",
+                            _ => "other",
+                        },
+                    );
+                let value = tokens.last().map_or("", |token| token.value.as_str());
+                statement_blocks.push(accept_statement_brace(
+                    kind,
+                    value,
+                    control_closed,
+                    declaration_body,
+                ));
+                declaration_body = false;
+            } else if text == "}" {
+                closed = statement_blocks.pop().unwrap_or(false);
+            } else {
+                declaration_body = false;
+            }
+        }
         tokens.push(Token::new(
             TokenKind::Punct,
             text.clone(),
@@ -494,8 +677,8 @@ pub fn tokenize_source(source: &Source, language: Language) -> Result<Tokens> {
         TokenKind::Eof,
         String::new(),
         String::new(),
-        source.len(),
-        source.len(),
+        index,
+        index,
     ));
     Ok(Tokens {
         tokens,
@@ -503,392 +686,7 @@ pub fn tokenize_source(source: &Source, language: Language) -> Result<Tokens> {
     })
 }
 
-fn javascript_number_regex() -> &'static Regex {
-    static NUMBER: OnceLock<Regex> = OnceLock::new();
-    NUMBER.get_or_init(|| {
-        let run = |digit: &str| format!("{digit}(?:_?{digit})*");
-        let decimal = run("[0-9]");
-        Regex::new(&format!(
-            r"^(?:0[xX]{}|0[oO]{}|0[bB]{}|(?:(?:0|[1-9](?:_?{decimal})?)(?:\.(?:{decimal})?)?|\.{decimal})(?:[eE][+-]?{decimal})?)n?",
-            run("[0-9a-fA-F]"),
-            run("[0-7]"),
-            run("[01]"),
-        ))
-        .expect("JavaScript numeric literal")
-    })
-}
-
-/// An ECMAScript numeric literal. A `BigInt` (`5n`, `0x1fn`) keeps its decimal
-/// digits as `value` with suffix `n`; a Number keeps `String(Number(raw))`, the
-/// value JavaScript prints, with an empty suffix.
-fn javascript_number(source: &Source, index: usize) -> Result<Token> {
-    let rest = source.slice(index, source.len());
-    let found = javascript_number_regex().find(&rest);
-    let raw = found.map_or_else(|| source.slice(index, index + 1), |m| m.as_str().to_owned());
-    let end = index + raw.len();
-    let next = source.char_at(end);
-    let malformed = || {
-        let stop = if end < source.len() { end + 1 } else { end };
-        TranslationError::syntax(
-            format!("malformed number {}", source.slice(index, stop)),
-            Some(span(index, stop)),
-        )
-    };
-    // `08`, `1_`, `3in` and `1.5n` are SyntaxErrors in JavaScript.
-    if found.is_none()
-        || next.is_some_and(|ch| ch.is_ascii_alphanumeric() || ch == '_' || ch == '$')
-    {
-        return Err(malformed());
-    }
-    let text = raw.replace('_', "");
-    let token = if let Some(digits) = text.strip_suffix('n') {
-        let hex = digits.starts_with("0x") || digits.starts_with("0X");
-        if !hex && digits.contains(['.', 'e', 'E']) {
-            return Err(malformed());
-        }
-        let value = Decimal::parse(digits).ok_or_else(malformed)?;
-        let mut token = Token::new(TokenKind::Number, value.digits, raw, index, end);
-        token.suffix = String::from("n");
-        token
-    } else {
-        let value = js_number_literal(&text).ok_or_else(malformed)?;
-        Token::new(TokenKind::Number, value, raw, index, end)
-    };
-    Ok(token)
-}
-
-fn block_comment_end(source: &Source, index: usize, comments: &CommentSyntax) -> Result<usize> {
-    let open = comments.open.encode_utf16().count();
-    let close = comments.close.encode_utf16().count();
-    let mut depth = 0usize;
-    let mut cursor = index;
-    while cursor < source.len() {
-        if source.starts_with(comments.open, cursor) {
-            depth += 1;
-            cursor += open;
-            if !comments.nested && depth > 1 {
-                depth = 1;
-            }
-            continue;
-        }
-        if source.starts_with(comments.close, cursor) {
-            // A close before any open (impossible from `tokenize`) would go negative in JavaScript.
-            depth = depth.saturating_sub(1);
-            cursor += close;
-            if depth == 0 {
-                return Ok(cursor);
-            }
-            continue;
-        }
-        cursor += 1;
-    }
-    Err(TranslationError::syntax(
-        "unterminated block comment",
-        Some(span(index, source.len())),
-    ))
-}
-
-fn string_token(source: &Source, index: usize, language: Language) -> Result<Token> {
-    let quote = source.units[index];
-    let mut cursor = index + 1;
-    let mut value: Vec<u16> = Vec::new();
-    while cursor < source.len() {
-        let unit = source.units[cursor];
-        if unit == quote {
-            if language == Language::Rocq && source.is_char(cursor + 1, '"') {
-                value.push(u16::from(b'"'));
-                cursor += 2;
-                continue;
-            }
-            let mut token = Token::new(
-                TokenKind::String,
-                String::from_utf16_lossy(&value),
-                source.slice(index, cursor + 1),
-                index,
-                cursor + 1,
-            );
-            token.raw = source.slice(index, cursor + 1);
-            return Ok(token);
-        }
-        if unit == u16::from(b'\\') && language != Language::Rocq {
-            let escaped = source.char_at(cursor + 1);
-            if escaped == Some('u') {
-                let units = source.units()[cursor..source.len().min(cursor + 12)]
-                    .iter()
-                    .map(|unit| f64::from(*unit))
-                    .collect();
-                match decode_unicode_escape(units, language == Language::JavaScript) {
-                    UnicodeEscape::Scalar(code, end) => {
-                        // The generated decoder returns integral scalar values and
-                        // offsets inside the twelve-code-unit input window.
-                        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-                        let character =
-                            char::from_u32(code as u32).expect("decoded Unicode scalar");
-                        let mut units = [0; 2];
-                        value.extend_from_slice(character.encode_utf16(&mut units));
-                        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-                        {
-                            cursor += end as usize;
-                        }
-                        continue;
-                    }
-                    UnicodeEscape::Malformed => {
-                        return Err(TranslationError::syntax(
-                            "malformed unicode escape",
-                            Some(span(cursor, cursor + 2)),
-                        ));
-                    }
-                    UnicodeEscape::Unsupported(end, escape_length) => {
-                        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-                        let (end, escape_length) = (end as usize, escape_length as usize);
-                        return Err(TranslationError::new(
-                            ErrorKind::Unsupported,
-                            format!(
-                                "unicode escape {} is not a scalar value; Rust strings hold scalar values only",
-                                source.slice(cursor, cursor + escape_length)
-                            ),
-                            Some(span(cursor, cursor + end)),
-                        ));
-                    }
-                }
-            }
-            let replacement = match escaped {
-                Some('n') => "\n",
-                Some('t') => "\t",
-                Some('r') => "\r",
-                Some('\\') => "\\",
-                Some('"') => "\"",
-                Some('\'') => "'",
-                Some('0') => "\0",
-                Some('{') => "\\{",
-                _ => {
-                    return Err(TranslationError::syntax(
-                        format!(
-                            "unsupported string escape \\{}",
-                            escaped_text(source, cursor + 1)
-                        ),
-                        Some(span(cursor, cursor + 2)),
-                    ));
-                }
-            };
-            value.extend(replacement.encode_utf16());
-            cursor += 2;
-            continue;
-        }
-        if unit == u16::from(b'\n') && language == Language::JavaScript {
-            break;
-        }
-        value.push(unit);
-        cursor += 1;
-    }
-    Err(TranslationError::syntax(
-        "unterminated string literal",
-        Some(span(index, source.len())),
-    ))
-}
-
-fn template_token(source: &Source, index: usize) -> Result<Token> {
-    let mut parts = Vec::new();
-    let mut cursor = index + 1;
-    let mut text: Vec<u16> = Vec::new();
-    while cursor < source.len() {
-        let unit = source.units[cursor];
-        if unit == u16::from(b'`') {
-            parts.push(TemplatePart {
-                text: String::from_utf16_lossy(&text),
-                expression: None,
-            });
-            let raw = source.slice(index, cursor + 1);
-            let mut token = Token::new(TokenKind::Template, String::new(), raw, index, cursor + 1);
-            token.parts = parts;
-            return Ok(token);
-        }
-        if unit == u16::from(b'\\') {
-            let replacement = match source.char_at(cursor + 1) {
-                Some('n') => '\n',
-                Some('t') => '\t',
-                Some('\\') => '\\',
-                Some('`') => '`',
-                Some('$') => '$',
-                _ => {
-                    return Err(TranslationError::syntax(
-                        format!(
-                            "unsupported template escape \\{}",
-                            escaped_text(source, cursor + 1)
-                        ),
-                        Some(span(cursor, cursor + 2)),
-                    ));
-                }
-            };
-            text.push(replacement as u16);
-            cursor += 2;
-            continue;
-        }
-        if source.starts_with("${", cursor) {
-            let close = matching_brace(source, cursor + 1)?;
-            parts.push(TemplatePart {
-                text: String::from_utf16_lossy(&text),
-                expression: Some(TemplateExpression {
-                    source: source.slice(cursor + 2, close),
-                    offset: cursor + 2,
-                }),
-            });
-            text.clear();
-            cursor = close + 1;
-            continue;
-        }
-        text.push(unit);
-        cursor += 1;
-    }
-    Err(TranslationError::syntax(
-        "unterminated template literal",
-        Some(span(index, source.len())),
-    ))
-}
-
-/// The escaped unit as JavaScript interpolates it (`undefined` past the end).
-fn escaped_text(source: &Source, index: usize) -> String {
-    if index < source.len() {
-        source.slice(index, index + 1)
-    } else {
-        "undefined".to_owned()
-    }
-}
-
-/// The index of the `}` closing the `{` at `open`.
-///
-/// # Errors
-///
-/// Returns a syntax error when the braces are unbalanced.
-pub fn matching_brace(source: &Source, open: usize) -> Result<usize> {
-    let mut depth = 0i64;
-    for cursor in open..source.len() {
-        if source.is_char(cursor, '{') {
-            depth += 1;
-        }
-        if source.is_char(cursor, '}') {
-            depth -= 1;
-            if depth == 0 {
-                return Ok(cursor);
-            }
-        }
-    }
-    Err(TranslationError::syntax(
-        "unbalanced braces",
-        Some(span(open, source.len())),
-    ))
-}
-
-/// Cursor over a token list with the helpers every frontend needs.
-#[derive(Clone, Debug)]
-pub struct TokenCursor {
-    pub tokens: Vec<Token>,
-    pub language: Language,
-    pub index: usize,
-}
-
-impl TokenCursor {
-    #[must_use]
-    pub const fn new(tokens: Vec<Token>, language: Language) -> Self {
-        Self {
-            tokens,
-            language,
-            index: 0,
-        }
-    }
-
-    #[must_use]
-    pub fn peek(&self) -> &Token {
-        self.peek_at(0)
-    }
-
-    #[must_use]
-    pub fn peek_at(&self, offset: usize) -> &Token {
-        &self.tokens[(self.index + offset).min(self.tokens.len() - 1)]
-    }
-
-    pub fn advance(&mut self) -> Token {
-        let token = self.peek().clone();
-        if token.kind != TokenKind::Eof {
-            self.index += 1;
-        }
-        token
-    }
-
-    #[must_use]
-    pub fn is(&self, value: &str) -> bool {
-        self.is_at(value, 0)
-    }
-
-    #[must_use]
-    pub fn is_at(&self, value: &str, offset: usize) -> bool {
-        let token = self.peek_at(offset);
-        matches!(token.kind, TokenKind::Punct | TokenKind::Identifier) && token.value == value
-    }
-
-    #[must_use]
-    pub fn is_kind(&self, kind: TokenKind) -> bool {
-        self.peek().kind == kind
-    }
-
-    #[must_use]
-    pub fn is_kind_at(&self, kind: TokenKind, offset: usize) -> bool {
-        self.peek_at(offset).kind == kind
-    }
-
-    pub fn eat(&mut self, value: &str) -> Option<Token> {
-        if self.is(value) {
-            Some(self.advance())
-        } else {
-            None
-        }
-    }
-
-    /// Consumes `value`.
-    ///
-    /// # Errors
-    ///
-    /// Returns a syntax error naming the token found instead.
-    pub fn expect(&mut self, value: &str, context: Option<&str>) -> Result<Token> {
-        if self.is(value) {
-            return Ok(self.advance());
-        }
-        let token = self.peek();
-        Err(TranslationError::syntax(
-            format!(
-                "expected {value}{} but found {}",
-                context.map_or_else(String::new, |context| format!(" in {context}")),
-                describe(token)
-            ),
-            Some(token.span()),
-        ))
-    }
-
-    /// Consumes an identifier.
-    ///
-    /// # Errors
-    ///
-    /// Returns a syntax error naming the token found instead.
-    pub fn identifier(&mut self, context: Option<&str>) -> Result<Token> {
-        let token = self.peek();
-        if token.kind != TokenKind::Identifier {
-            return Err(TranslationError::syntax(
-                format!(
-                    "expected identifier{} but found {}",
-                    context.map_or_else(String::new, |context| format!(" in {context}")),
-                    describe(token)
-                ),
-                Some(token.span()),
-            ));
-        }
-        Ok(self.advance())
-    }
-
-    #[must_use]
-    pub fn at_end(&self) -> bool {
-        self.peek().kind == TokenKind::Eof
-    }
-}
+include!("lexer/literals.rs");
 
 /// `JSON.stringify(token.raw)`, or `end of input`.
 #[must_use]

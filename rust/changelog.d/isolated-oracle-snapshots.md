@@ -1,0 +1,1 @@
+Development grammar fixtures reuse one independent snapshot for the rows and recovery checks of each source. Isolated oracle workers load the authenticated UTF-8 runtime directly, avoiding unrelated concept-register startup work while preserving process isolation and all grammar assertions.

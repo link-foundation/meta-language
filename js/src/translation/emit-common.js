@@ -219,7 +219,7 @@ export function dependencies(entry) {
       return;
     }
     if (node.kind === 'data') found.add(node.name);
-    if (node.k === 'call') found.add(node.fn);
+    if (node.k === 'call' || node.k === 'functionRef') found.add(node.fn);
     if (node.k === 'ctor') found.add(node.data);
     for (const value of Object.values(node)) visit(value);
   };
@@ -242,6 +242,26 @@ export function dependencies(entry) {
   }
   found.delete(entry.fullName);
   return found;
+}
+
+/** Child types remain visible through every compound portable representation. */
+export function typeChildren(type) {
+  if (type.kind === 'array' || type.kind === 'option' || type.kind === 'set' || type.kind === 'cell') return [type.element];
+  if (type.kind === 'tuple') return type.elements;
+  if (type.kind === 'record') return type.fields.map((field) => field.type);
+  if (type.kind === 'map') return [type.key, type.value];
+  if (type.kind === 'function') return [...type.params, type.ret];
+  return [];
+}
+
+export function typeContains(program, type, kind, seen = new Set()) {
+  if (type.kind === kind) return true;
+  if (type.kind === 'data') {
+    if (seen.has(type.name)) return false;
+    seen.add(type.name);
+    return program.declarations.get(type.name).ctors.some((ctor) => ctor.fields.some((field) => typeContains(program, field.type, kind, seen)));
+  }
+  return typeChildren(type).some((child) => typeContains(program, child, kind, seen));
 }
 
 /**

@@ -64,7 +64,9 @@ fn left_sequences<'e>(expr: &'e Expr, found: &mut Vec<&'e [Expr]>) {
                 left_sequences(item, found);
             }
         }
-        Expr::Capture { item, .. } | Expr::Alias { item, .. } => left_sequences(item, found),
+        Expr::LexicalScope { item, .. } | Expr::Capture { item, .. } | Expr::Alias { item, .. } => {
+            left_sequences(item, found);
+        }
         Expr::Precedence {
             associativity: Associativity::Left,
             item,
@@ -177,6 +179,7 @@ fn shared_aliases(rules: &[Rule]) -> HashSet<Lead> {
             Expr::Repeat { item, .. }
             | Expr::And(item)
             | Expr::Not(item)
+            | Expr::LexicalScope { item, .. }
             | Expr::Capture { item, .. }
             | Expr::Precedence { item, .. }
             | Expr::DynamicPrecedence { item, .. }

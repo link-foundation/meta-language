@@ -1,5 +1,5 @@
 // The dependency inventory: every dependency, toolchain, action, image and
-// vendored asset the repository declares is in parity/dependency-inventory.json
+// downloaded asset the repository declares is in the dependency inventory
 // with its current stable release, the audit is dated, and a retained item
 // behind that release without a recorded compatibility reason fails the check
 // (requirement I195-DEPENDENCY-INVENTORY).
@@ -15,17 +15,22 @@ import {
   INVENTORY_FILE,
   checkInventory,
   collectDependencies,
+  comparePypiVersions,
   ownStatus,
+  pinnedPipPackages,
   refreshInventory,
+  reconcileLocalDeclarations,
   registryHttp,
+  releaseResolvers,
   renderAuditDocument,
   statuses,
 } from '../scripts/dependency-inventory.mjs';
+import { readProjectData } from '../scripts/project-data.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const REQUIREMENT = 'I195-DEPENDENCY-INVENTORY';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const inventory = JSON.parse(readFileSync(path.join(root, INVENTORY_FILE), 'utf8'));
+const inventory = readProjectData(path.join(root, INVENTORY_FILE));
 const TODAY = '2026-09-29';
 
 function observe(assertions, testName) {
@@ -41,6 +46,103 @@ function observe(assertions, testName) {
 }
 
 const kinds = (problems) => problems.map(({ kind }) => kind);
+
+test('workflow pip pins use normalized PyPI names and retain the declared exact versions', () => {
+  assert.deepEqual(pinnedPipPackages(`
+    # python3 -m pip install ignored==9.0.0
+    python3 -m pip install --disable-pip-version-check --no-cache-dir lark==1.3.1
+    pip3 install 'Example_Package[extra]==2.0.1' \\
+      Another.Package==1.2.0.post1 # comment==0.1.0
+  `), [
+    { name: 'lark', pinned: '1.3.1' },
+    { name: 'example-package', pinned: '2.0.1' },
+    { name: 'another-package', pinned: '1.2.0.post1' },
+  ]);
+  assert.deepEqual(pinnedPipPackages('pip install unpinned range>=1.0 wildcard==1.*'), []);
+  const actual = collectDependencies(root).find((item) => item.id === 'toolchain pypi lark@1.3.1');
+  assert.ok(actual);
+  assert.deepEqual(actual.source, { type: 'pypi', package: 'lark' });
+  assert.deepEqual(actual.declaredIn, ['.github/workflows/js.yml']);
+  assert.throws(() => reconcileLocalDeclarations({ auditDate: TODAY, items: [] }, [actual]), /live dependency refresh/u);
+});
+
+test('the primary PyPI resolver excludes yanked and prerelease distributions and caches its one registry request', async () => {
+  const requests = [];
+  const resolvers = releaseResolvers({ today: TODAY, github: () => assert.fail('no GitHub calls'), http: async (url, headers) => {
+    requests.push({ url, headers });
+    return JSON.stringify({ info: { name: 'Example_Package', version: '9.0.0rc1' }, releases: {
+      '1.0.0': [{ yanked: false }], '2.0.0': [{ yanked: false }], '2.0.0.post1': [{ yanked: false }],
+      '3.0.0': [{ yanked: true }], '8.0.0': [], '9.0.0rc1': [{ yanked: false }],
+      '8.0.0.dev1': [{ yanked: false }], '1!9.0rc1': [{ yanked: false }],
+    } });
+  } });
+  const source = { package: 'example-package' };
+  const result = await resolvers.pypi(source);
+  assert.equal(result.current, '2.0.0.post1');
+  assert.equal((await resolvers.pypi(source)).current, result.current);
+  assert.deepEqual(requests, [{ url: 'https://pypi.org/pypi/example-package/json', headers: { accept: 'application/json' } }]);
+  assert.equal(ownStatus({ compare: 'version', pinned: '2.0.0', current: result.current, source: { type: 'pypi' } }), 'behind');
+  assert.equal(comparePypiVersions('1!1.0', '999.0.0'), 1);
+  assert.equal(comparePypiVersions('1.0.0.1', '1.0.0'), 1);
+  assert.equal(comparePypiVersions('1.0', '1.0.0'), 0);
+  assert.equal(comparePypiVersions('999999999999999999999999', '999999999999999999999998'), 1);
+});
+
+test('PyPI resolver fails closed on missing projects, outages and unusable registry metadata', async () => {
+  const resolver = (http) => releaseResolvers({ today: TODAY, github: () => assert.fail('no GitHub calls'), http }).pypi({ package: 'lark' });
+  await assert.rejects(resolver(async () => { throw new Error('HTTP 503'); }), /HTTP 503/u);
+  await assert.rejects(resolver(async () => { throw new Error('HTTP 404'); }), /HTTP 404/u);
+  await assert.rejects(resolver(async () => 'not JSON'));
+  await assert.rejects(resolver(async () => JSON.stringify({ info: { name: 'other' }, releases: {} })), /inconsistent project/u);
+  await assert.rejects(resolver(async () => JSON.stringify({ info: { name: 'lark' }, releases: { '2.0.0rc1': [{ yanked: false }], '1.0.0': [{ yanked: true }] } })), /no available stable release/u);
+  await assert.rejects(resolver(async () => JSON.stringify({ info: { name: 'lark' }, releases: { 'unknown-stable': [{ yanked: false }] } })), /unsupported stable PyPI version/u);
+});
+
+test('local declaration reconciliation retains audited releases and rejects unaudited external pins', () => {
+  const external = { id: 'npm example@1', category: 'npm', name: 'example', pinned: '1',
+    source: { type: 'npm', package: 'example' }, declaredIn: ['package.json'] };
+  const local = { id: 'generator rules@script', category: 'generator', name: 'rules', pinned: 'script',
+    source: { type: 'none' }, declaredIn: ['rules.mjs'] };
+  const audit = { auditDate: '2026-10-06', items: [{ ...external, current: '2', evidence: 'registry receipt',
+    reason: 'verified compatibility constraint', compatible: '1' }] };
+  const updated = reconcileLocalDeclarations(audit, [{ ...external, declaredIn: ['package.json', 'consumer.json'] }, local]);
+  assert.equal(updated.auditDate, audit.auditDate);
+  assert.equal(updated.items[0].current, '2');
+  assert.equal(updated.items[0].compatible, '1');
+  assert.equal(updated.items[0].evidence, 'registry receipt');
+  assert.deepEqual(updated.items[0].declaredIn, ['package.json', 'consumer.json']);
+  assert.deepEqual(updated.items[1].dependsOn, []);
+  assert.deepEqual(audit.items[0].declaredIn, ['package.json']);
+  assert.throws(() => reconcileLocalDeclarations(audit, [{ ...external, id: 'npm example@3', pinned: '3' }]), /live dependency refresh/u);
+  assert.throws(() => reconcileLocalDeclarations(audit, [{ ...external, source: { type: 'npm', package: 'different' } }]), /release source changed/u);
+
+  const collected = collectDependencies(root);
+  const cache = collected.find(({ id }) => id === 'action actions/cache@v6');
+  assert.ok(cache);
+  assert.equal(cache.name, 'actions/cache');
+  assert.equal(cache.pinned, 'v6');
+  assert.equal(cache.compare, 'major');
+  assert.deepEqual(cache.source, { type: 'github-release', repository: 'actions/cache' });
+  const auditedCache = inventory.items.find(({ id }) => id === cache.id);
+  for (const field of ['name', 'pinned', 'compare', 'source', 'declaredIn']) assert.deepEqual(cache[field], auditedCache[field]);
+  for (const action of ['actions/cache/restore', 'actions/cache/save']) {
+    const child = collected.find(({ id }) => id === `action ${action}@v6`);
+    assert.ok(child, action);
+    assert.equal(child.category, 'action');
+    assert.equal(child.name, action, 'the complete child action retains its identity');
+    assert.equal(child.pinned, cache.pinned);
+    assert.equal(child.compare, cache.compare);
+    assert.deepEqual(child.source, cache.source, 'nested actions share only the actual repository release source');
+    assert.deepEqual(child.declaredIn, ['.github/workflows/ci.yml']);
+    assert.throws(() => reconcileLocalDeclarations({ auditDate: TODAY, items: [auditedCache] }, [child]), /live dependency refresh/u);
+  }
+  const checkout = collected.find(({ id }) => id === 'action actions/checkout@v7');
+  assert.deepEqual(checkout.source, { type: 'github-release', repository: 'actions/checkout' });
+  assert.equal(checkout.compare, 'major');
+  const rust = collected.find(({ id }) => id === 'action dtolnay/rust-toolchain@1.99.0');
+  assert.deepEqual(rust.source, { type: 'github-release', repository: 'rust-lang/rust' });
+  assert.equal(rust.compare, 'version');
+});
 
 /** A toolchain item as the collector records it, with its resolved current release. */
 function toolchain(name, pinned, current, extra = {}) {
@@ -171,4 +273,19 @@ test('the registry client retries dropped connections and transient answers, and
   const offline = scripted([dropped(), dropped(), dropped(), dropped()]);
   await assert.rejects(registryHttp({ fetch: offline.fetch, sleep })('https://registry.example/b'), { message: 'https://registry.example/b: fetch failed (ECONNRESET)' });
   assert.equal(offline.calls.length, 4, 'the client gives up after its attempts');
+});
+
+test('private oracle manifests and their shared lock dependencies are inventoried', () => {
+  const collected = collectDependencies(root);
+  const manifest = 'rust/oracles/cmake-source-oracle/Cargo.toml';
+  const local = collected.find(({ name, scope }) => name === 'cmake-source-oracle' && scope === 'rust/Cargo.toml');
+  assert.equal(local.kind, 'development');
+  assert.equal(local.pinned, 'oracles/cmake-source-oracle');
+  assert.equal(local.source.type, 'none');
+  for (const name of ['cc', 'flate2', 'tree-sitter-language']) {
+    const item = collected.find((entry) => entry.category === 'crate' && entry.scope === 'rust/Cargo.lock' && entry.name === name);
+    assert.ok(item.declaredIn.includes(manifest), name);
+    assert.equal(item.source.type, 'crate');
+    assert.ok(item.requirement, name);
+  }
 });

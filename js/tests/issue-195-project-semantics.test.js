@@ -7,8 +7,9 @@
 // expansion, tactics, attributes, effects).
 // The Rust twin is rust/tests/unit/issue_195_project_semantics.rs; the
 // projects themselves are in experiments/issue-195-projects.
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+
 import { test } from 'node:test';
 
 import { analyzeProgram, SEMANTIC_CONSTRUCTS } from '../src/index.js';
@@ -18,7 +19,7 @@ import {
   recordIssue195Observations,
 } from './support/issue-195-observations.js';
 
-const corpus = JSON.parse(await readFile(new URL('../../parity/fixtures/four-language-conformance.json', import.meta.url)));
+const corpus = readProjectData(new URL('../../parity/fixtures/four-language-conformance.json', import.meta.url));
 
 const ASSERTIONS = [
   'projectContextLoaded',

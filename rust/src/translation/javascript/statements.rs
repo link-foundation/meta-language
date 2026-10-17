@@ -5,10 +5,12 @@ use super::imperative::lower_top_level;
 use super::loops::reserved;
 use super::lowering::statement_span;
 use super::{
-    AssertionKind, CaseTest, Clause, ERRORS, JavaScriptParser, Result, SComparison, SData, SEffect,
-    SExpr, SNode, SProp, SPropNode, ShowStyle, Span, Stmt, Switch, Token, TokenKind,
-    assertion_kind, has_ctor, node, prop_of, span, type_error, unsupported,
+    AssertionKind, CaseTest, Clause, ERRORS, HashSet, JavaScriptParser, Result, SComparison, SData,
+    SEffect, SExpr, SNode, SProp, SPropNode, ShowStyle, Span, Stmt, Switch, Token, TokenKind,
+    TranslationError, accept_java_script_line_terminator, assertion_kind, has_ctor, node,
+    number_literal, prop_of, span, type_error, unsupported,
 };
+use crate::translation::scoped_binding_emission_rules::accept_java_script_literal_binding;
 
 impl JavaScriptParser {
     pub(super) fn statement(&mut self) -> Result<Stmt> {
@@ -45,8 +47,9 @@ impl JavaScriptParser {
             }
             self.cursor.advance();
             let next = self.cursor.peek().start;
-            let line_break = token.end < next
-                && self.source.units()[token.end..next].contains(&u16::from(b'\n'));
+            let line_break = self.source.units()[token.end..next]
+                .iter()
+                .any(|unit| accept_java_script_line_terminator(f64::from(*unit)));
             // `return;` returns undefined, the unit value.
             if self.cursor.is(";") || self.cursor.is("}") || line_break {
                 self.cursor.eat(";");
@@ -140,16 +143,65 @@ impl JavaScriptParser {
     }
 
     pub(super) fn const_statement(&mut self) -> Result<Stmt> {
+        self.const_declarations(self.top_level && self.readonly_constants.module)
+    }
+
+    fn const_declarations(&mut self, readonly: bool) -> Result<Stmt> {
         let start = self.cursor.advance();
-        if self.cursor.is("{") {
-            return self.destructuring(&start);
+        let mut statements = Vec::new();
+        let mut names = HashSet::new();
+        loop {
+            let binding = self.const_declarator(&start, readonly)?;
+            let entries = match binding {
+                Stmt::Block {
+                    body, inline: true, ..
+                } => body,
+                binding => vec![binding],
+            };
+            for entry in &entries {
+                let Stmt::Const { name, span, .. } = entry else {
+                    unreachable!("const declarators contain only constant bindings")
+                };
+                if !names.insert(name.clone()) {
+                    return Err(TranslationError::syntax(
+                        format!("duplicate lexical binding {name}"),
+                        Some(*span),
+                    ));
+                }
+            }
+            statements.extend(entries);
+            if self.cursor.eat(",").is_none() {
+                break;
+            }
         }
-        let (name, value, span) = self.const_binding(&start)?;
+        self.cursor.eat(";");
+        if statements.len() == 1 {
+            return Ok(statements.remove(0));
+        }
+        Ok(Stmt::Block {
+            body: statements,
+            inline: true,
+            span: self.to_here(&start),
+        })
+    }
+
+    fn const_declarator(&mut self, start: &Token, readonly: bool) -> Result<Stmt> {
+        if self.cursor.is("{") {
+            return self.destructuring(start);
+        }
+        if self.cursor.is("[") {
+            return self.array_destructuring(start);
+        }
+        let (name, value, span) = self.const_binding(start, readonly)?;
         Ok(Stmt::Const { name, value, span })
     }
 
     /// `const name = value;` after the `const`.
-    pub(super) fn const_binding(&mut self, start: &Token) -> Result<(String, SExpr, Span)> {
+    pub(super) fn const_binding(
+        &mut self,
+        start: &Token,
+        readonly: bool,
+    ) -> Result<(String, SExpr, Span)> {
         if self.cursor.is("[") {
             return Err(unsupported(
                 "array destructuring",
@@ -159,19 +211,20 @@ impl JavaScriptParser {
         }
         let name = self.cursor.identifier(Some("const"))?;
         reserved(&name)?;
+        self.scope.tdz.insert(name.value.clone());
         if self.cursor.eat("=").is_none() {
             return Err(self.fail_here("expected = in const"));
         }
-        let value = self.expr()?;
-        if self.cursor.is(",") {
-            return Err(unsupported(
-                "several declarators",
-                "declare one binding per const",
-                Some(self.to_here(start)),
-            ));
-        }
-        self.cursor.eat(";");
+        let previous = self.readonly_constants.initializer;
+        self.readonly_constants.initializer = readonly;
+        let result = self.expr();
+        self.readonly_constants.initializer = previous;
+        let value = result?;
+        let receiver_fact = self.read_tag_receiver_fact(&value);
         self.declare_local(&name.value, false);
+        if let Some(fact) = receiver_fact {
+            self.lexical.tag_binding(&name.value, fact);
+        }
         Ok((name.value, value, self.to_here(start)))
     }
 
@@ -208,24 +261,40 @@ impl JavaScriptParser {
             }
         }
         self.cursor.expect("}", Some("destructuring"))?;
+        if pairs.is_empty() {
+            return Err(unsupported(
+                "empty object binding",
+                "object destructibility needs a checked representation",
+                Some(self.to_here(start)),
+            ));
+        }
         self.cursor.expect("=", Some("destructuring"))?;
-        let object = self.expr()?;
-        self.cursor.eat(";");
+        let value = self.expr()?;
         let whole = self.to_here(start);
-        let statements = pairs
-            .iter()
-            .map(|(field, name, place)| Stmt::Const {
-                name: name.clone(),
-                value: node(
-                    SNode::Field {
-                        object: Box::new(object.clone()),
-                        field: field.clone(),
-                    },
-                    *place,
-                ),
-                span: whole,
-            })
-            .collect();
+        self.generated_count += 1;
+        let name = format!("ml_binding{}", self.generated_count);
+        let object = node(
+            SNode::Name {
+                path: vec![name.clone()],
+            },
+            whole,
+        );
+        let mut statements = vec![Stmt::Const {
+            name,
+            value,
+            span: whole,
+        }];
+        statements.extend(pairs.iter().map(|(field, name, place)| Stmt::Const {
+            name: name.clone(),
+            value: node(
+                SNode::Field {
+                    object: Box::new(object.clone()),
+                    field: field.clone(),
+                },
+                *place,
+            ),
+            span: whole,
+        }));
         for (_, name, _) in &pairs {
             self.declare_local(name, false);
         }
@@ -238,6 +307,15 @@ impl JavaScriptParser {
 
     pub(super) fn throw_statement(&mut self) -> Result<Stmt> {
         let start = self.cursor.advance();
+        if self.source.units()[start.end..self.cursor.peek().start]
+            .iter()
+            .any(|unit| accept_java_script_line_terminator(f64::from(*unit)))
+        {
+            return Err(TranslationError::syntax(
+                "line terminator after throw",
+                Some(span(&start, &start)),
+            ));
+        }
         if self.cursor.eat("new").is_none() {
             return Err(unsupported(
                 "throw of a non-error value",
@@ -246,6 +324,7 @@ impl JavaScriptParser {
             ));
         }
         let kind = self.cursor.identifier(Some("throw"))?;
+        self.lexical.read(&kind, false, kind.span());
         if !ERRORS.contains(&kind.value.as_str()) {
             return Err(unsupported(
                 &format!("throw new {}", kind.value),
@@ -408,14 +487,29 @@ impl JavaScriptParser {
         }
         let negative = self.cursor.eat("-").is_some();
         let value = self.peek();
+        let form = super::surface_rules::read_java_script_value_case_form(
+            match value.kind {
+                TokenKind::Number => "number",
+                TokenKind::String => "string",
+                TokenKind::Identifier => "identifier",
+                TokenKind::Punct => "punct",
+                _ => "",
+            },
+            &value.value,
+            &value.suffix,
+            negative,
+        );
         if value.kind == TokenKind::Number {
             self.cursor.advance();
-            if value.suffix != "n" {
-                return Err(unsupported(
-                    "case test on a Number",
-                    "a value switch compares BigInt or boolean literals; compare Numbers with if and ===",
-                    Some(span(&token, &value)),
-                ));
+            if form == "value" {
+                let mut literal = number_literal(&value);
+                if let SNode::Num { negative: flag, .. } = &mut literal.node {
+                    *flag = negative;
+                }
+                return Ok(CaseTest::Value {
+                    value: Box::new(literal),
+                    span: span(&token, &value),
+                });
             }
             return Ok(CaseTest::NumLit {
                 value: value.value.clone(),
@@ -423,11 +517,18 @@ impl JavaScriptParser {
                 span: span(&token, &value),
             });
         }
-        if !negative && (self.cursor.is("true") || self.cursor.is("false")) {
+        if form == "boolLit" {
             self.cursor.advance();
             return Ok(CaseTest::BoolLit {
                 value: token.value == "true",
                 span: span(&token, &token),
+            });
+        }
+        if form == "value" {
+            let value = self.expr()?;
+            return Ok(CaseTest::Value {
+                value: Box::new(value),
+                span: self.to_here(&token),
             });
         }
         Err(unsupported(
@@ -512,7 +613,19 @@ impl JavaScriptParser {
         Ok(())
     }
 
-    pub(super) fn main_statement(&mut self) -> Result<SEffect> {
+    fn is_literal_binding(value: &SExpr) -> bool {
+        let mut has_spread = false;
+        let all_children_admitted = match &value.node {
+            SNode::Record { entries, .. } => entries.iter().all(|entry| {
+                has_spread = entry.spread;
+                !has_spread && Self::is_literal_binding(&entry.value)
+            }),
+            _ => true,
+        };
+        accept_java_script_literal_binding(value.node.kind(), has_spread, all_children_admitted)
+    }
+
+    pub(super) fn main_statement(&mut self) -> Result<Vec<SEffect>> {
         let token = self.peek();
         if self.cursor.is("const") {
             if self.cursor.is_at("{", 1) {
@@ -522,23 +635,54 @@ impl JavaScriptParser {
                     Some(span(&token, self.cursor.peek_at(1))),
                 ));
             }
-            let start = self.cursor.advance();
-            let (name, value, span) = self.const_binding(&start)?;
-            return Ok(SEffect::Let {
+            let binding = self.const_declarations(self.readonly_constants.module)?;
+            if let Stmt::Block {
+                body, inline: true, ..
+            } = binding
+            {
+                return Ok(body
+                    .into_iter()
+                    .map(|entry| match entry {
+                        Stmt::Const { name, value, span } => {
+                            if Self::is_literal_binding(&value) {
+                                self.literal_bindings.insert(name.clone(), value.clone());
+                            }
+                            SEffect::Let {
+                                name,
+                                ty: None,
+                                value,
+                                constant: true,
+                                span: Some(span),
+
+                                source_pure_unit_call: None,
+                            }
+                        }
+                        _ => unreachable!("array binding blocks contain only constants"),
+                    })
+                    .collect());
+            }
+            let Stmt::Const { name, value, span } = binding else {
+                unreachable!("a single const declarator retains its binding")
+            };
+            if Self::is_literal_binding(&value) {
+                self.literal_bindings.insert(name.clone(), value.clone());
+            }
+            return Ok(vec![SEffect::Let {
                 name,
                 ty: None,
                 value,
                 constant: true,
                 span: Some(span),
-            });
+                source_pure_unit_call: None,
+            }]);
         }
         if self.cursor.is("console") && self.cursor.is_at(".", 1) {
-            return self.console_statement();
+            return self.console_statement().map(|effect| vec![effect]);
         }
         if let Some(assertion) = &self.assertion
             && self.cursor.is(&assertion.name)
         {
-            return self.assert_statement();
+            return self.assert_statement().map(|effect| vec![effect]);
         }
         let statements = ["switch", "try", "throw", "class", "return"];
         if token.kind == TokenKind::Identifier && statements.contains(&token.value.as_str()) {
@@ -553,13 +697,14 @@ impl JavaScriptParser {
         let value = self.expr()?;
         self.cursor.eat(";");
         self.generated_count += 1;
-        Ok(SEffect::Let {
+        Ok(vec![SEffect::Let {
             name: format!("ml_main_ignored{}", self.generated_count),
             ty: None,
             value,
             constant: false,
             span: Some(self.to_here(&token)),
-        })
+            source_pure_unit_call: None,
+        }])
     }
 
     pub(super) fn console_statement(&mut self) -> Result<SEffect> {
@@ -574,6 +719,7 @@ impl JavaScriptParser {
     /// `console.log(expr);`: the printed expression and the statement's span.
     fn console_call(&mut self) -> Result<(SExpr, Span)> {
         let start = self.cursor.advance();
+        self.lexical.read(&start, false, start.span());
         self.cursor.expect(".", Some("console"))?;
         let method = self.cursor.identifier(Some("console"))?;
         if method.value != "log" {

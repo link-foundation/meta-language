@@ -18,7 +18,8 @@
 //                                                      rewrite the fixture from a checkout of the head
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { readProjectData, writeProjectData } from './project-data.mjs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -264,9 +265,9 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 
 /** The fixture, the audit section and the ledger rows of this repository. */
 export function loadRmlPr184Audit(directory = root) {
-  const manifest = JSON.parse(readFileSync(path.join(directory, 'parity/issue-195-requirements.json'), 'utf8'));
+  const manifest = readProjectData(path.join(directory, 'parity/issue-195-requirements.json'));
   return {
-    fixture: JSON.parse(readFileSync(path.join(directory, RML_PR184_FIXTURE), 'utf8')),
+    fixture: readProjectData(path.join(directory, RML_PR184_FIXTURE)),
     audit: parseRmlPr184Audit(readFileSync(path.join(directory, CONSUMER_MATRIX), 'utf8')),
     context: {
       requirements: new Map(manifest.atomicRequirements.map((row) => [row.id, row])),
@@ -294,7 +295,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
       },
       workloads: inventoryWorkloads(files),
     };
-    writeFileSync(path.join(root, RML_PR184_FIXTURE), `${JSON.stringify(fixture, null, 2)}\n`);
+    writeProjectData(path.join(root, RML_PR184_FIXTURE), fixture);
     console.log(`wrote ${fixture.workloads.length} workloads of ${fixture.headRevision} to ${RML_PR184_FIXTURE}`);
   } else {
     const { fixture, audit, context } = loadRmlPr184Audit();

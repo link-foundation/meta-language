@@ -14,8 +14,8 @@
 //   logs) and holds no other worktree;
 // - no build is active on it: no live lease, and no Cargo lock held.
 import { execFileSync, spawnSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import {
-  appendFileSync,
   existsSync,
   linkSync,
   lstatSync,
@@ -24,6 +24,7 @@ import {
   readFileSync,
   readlinkSync,
   realpathSync,
+  renameSync,
   rmSync,
   statSync,
   statfsSync,
@@ -31,6 +32,8 @@ import {
 } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { processIdentity, processIdentityAlive, sameProcess } from './process-identity.mjs';
+import { readBootstrapStructuredDataRecords, structuredDataRecordToLino, structuredDataToLino } from './structured-data-bootstrap.mjs';
 
 import {
   BUILDKIT_BUILDER,
@@ -71,13 +74,7 @@ const toPosix = (relative) => relative.split(path.sep).join('/');
 
 /** Whether a process id belongs to a live process. */
 export function processAlive(pid) {
-  if (!Number.isInteger(pid) || pid <= 0) return false;
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch (error) {
-    return error.code === 'EPERM';
-  }
+  return processIdentityAlive({ pid });
 }
 
 /** The worktree root and its git directories, or null outside a git worktree. */
@@ -101,6 +98,8 @@ export function assertNoTraversal(value, flag) {
 export class UsageError extends Error {}
 
 // Leases mark active builds, tests and acceptance runs of this worktree.
+// Their JSON identity is a coordination protocol: older active cleanup
+// processes must recognize these leases and the cleanup.lock owner below.
 
 const leaseDirectory = (stateDir) => path.join(stateDir, 'leases');
 
@@ -111,7 +110,7 @@ export function acquireLease({ cwd = process.cwd(), label = 'build', pid = proce
   const directory = leaseDirectory(repository.stateDir);
   mkdirSync(directory, { recursive: true });
   const file = path.join(directory, `${pid}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}.json`);
-  writeFileSync(file, `${JSON.stringify({ pid, label, root: repository.root, createdAt: new Date().toISOString() })}\n`);
+  writeFileSync(file, `${JSON.stringify({ ...processIdentity(pid), label, root: repository.root, createdAt: new Date().toISOString() })}\n`);
   return {
     file,
     release() {
@@ -138,8 +137,8 @@ export function liveLeases(stateDir) {
     } catch {
       continue;
     }
-    if (lease.pid === process.pid) continue;
-    if (processAlive(lease.pid)) leases.push(lease);
+    if (sameProcess(lease, processIdentity())) continue;
+    if (processIdentityAlive(lease)) leases.push(lease);
     else rmSync(file, { force: true });
   }
   return leases;
@@ -154,8 +153,10 @@ const STALE_GUARD_MS = 60_000;
 
 /** Creates `file` holding this pid, or returns false when it already exists. */
 function createLockFile(file) {
-  const temporary = `${file}.${process.pid}.tmp`;
-  writeFileSync(temporary, `${process.pid}\n`);
+  const owner = processIdentity();
+  const temporary = `${file}.${owner.pid}-${randomUUID()}.tmp`;
+  const identity = `${JSON.stringify(owner)}\n`;
+  writeFileSync(temporary, identity);
   try {
     linkSync(temporary, file);
     return true;
@@ -164,7 +165,7 @@ function createLockFile(file) {
     if (!['EPERM', 'ENOTSUP', 'EOPNOTSUPP', 'ENOSYS'].includes(error.code)) throw error;
     // File systems without hard links fall back to an exclusive create.
     try {
-      writeFileSync(file, `${process.pid}\n`, { flag: 'wx' });
+      writeFileSync(file, identity, { flag: 'wx' });
       return true;
     } catch (fallbackError) {
       if (fallbackError.code === 'EEXIST') return false;
@@ -184,8 +185,13 @@ function lockHolder(file) {
     if (error.code === 'ENOENT') return undefined;
     throw error;
   }
-  const pid = Number.parseInt(text, 10);
-  return Number.isInteger(pid) ? pid : null;
+  try {
+    const identity = JSON.parse(text);
+    if (Number.isInteger(identity)) return { pid: identity };
+    return Number.isInteger(identity?.pid) ? identity : null;
+  } catch {
+    return null;
+  }
 }
 
 const olderThan = (file, milliseconds) => {
@@ -208,7 +214,8 @@ function breakStaleLock(file, holder) {
     return false;
   }
   try {
-    if (lockHolder(file) === holder) rmSync(file, { force: true });
+    const current = lockHolder(file);
+    if (current === holder || (current && holder && sameProcess(current, holder))) rmSync(file, { force: true });
     return true;
   } finally {
     rmSync(guard, { recursive: true, force: true });
@@ -224,8 +231,8 @@ function acquireCleanupLock(stateDir) {
     if (holder === undefined) continue;
     // Only the exclusive-create fallback can leave a lock without a pid; it is stale once old.
     if (holder === null && !olderThan(file, STALE_GUARD_MS)) return { busy: -1 };
-    if (holder !== null && holder !== process.pid && processAlive(holder)) return { busy: holder };
-    if (!breakStaleLock(file, holder)) return { busy: holder ?? -1 };
+    if (holder !== null && !sameProcess(holder, processIdentity()) && processIdentityAlive(holder)) return { busy: holder.pid };
+    if (!breakStaleLock(file, holder)) return { busy: holder?.pid ?? -1 };
   }
   return { busy: -1 };
 }
@@ -327,6 +334,7 @@ function workingDirectory(entry) {
 /** Processes read from `procRoot` (`/proc`); the parameter lets tests supply a fake one. */
 export function linuxProcesses(procRoot = '/proc') {
   const processes = [];
+  const ownNamespace = attempt(() => readlinkSync(path.join(procRoot, 'self/ns/pid')));
   for (const name of readdirSync(procRoot)) {
     if (!/^\d+$/u.test(name)) continue;
     const entry = path.join(procRoot, name);
@@ -337,8 +345,11 @@ export function linuxProcesses(procRoot = '/proc') {
     const targetDir = environment.split('\0').find((variable) => variable.startsWith('CARGO_TARGET_DIR='));
     const cwd = workingDirectory(entry);
     if (cwd === EXITING) continue;
+    const namespace = attempt(() => readlinkSync(path.join(entry, 'ns/pid')));
+    const status = namespace && namespace === ownNamespace ? attempt(() => readFileSync(path.join(entry, 'status'), 'utf8')) : null;
+    const namespacePids = status?.match(/^NSpid:\s+([\d\s]+)$/mu)?.[1].trim().split(/\s+/u);
     processes.push({
-      pid: Number(name),
+      pid: namespacePids ? Number(namespacePids.at(-1)) : Number(name),
       ppid: Number(processState(stat).split(' ')[1]),
       executable: attempt(() => readlinkSync(path.join(entry, 'exe')).replace(/ \(deleted\)$/u, '')),
       cwd,
@@ -359,12 +370,24 @@ function listedProcesses() {
     { encoding: 'utf8', timeout: 20000, windowsHide: true })
     : spawnSync('ps', ['-axww', '-o', 'pid=,ppid=,command='], { encoding: 'utf8', timeout: 20000 });
   if (listing.status !== 0 || typeof listing.stdout !== 'string') return null;
+  // The command line cannot delimit an executable path that contains spaces.
+  // POSIX ps exposes that path separately; keep the whole comm column instead
+  // of inferring the path from the command's first whitespace-delimited word.
+  const executableListing = windows ? null : spawnSync('ps', ['-axww', '-o', 'pid=,comm='],
+    { encoding: 'utf8', timeout: 20000 });
+  const executables = new Map();
+  if (executableListing?.status === 0 && typeof executableListing.stdout === 'string') {
+    for (const line of executableListing.stdout.split(/\r?\n/u)) {
+      const match = /^\s*(\d+)\s+(.*)$/u.exec(line);
+      if (match && path.isAbsolute(match[2].trim())) executables.set(Number(match[1]), real(match[2].trim()));
+    }
+  }
   const processes = [];
   for (const line of listing.stdout.split(/\r?\n/u)) {
     const fields = windows ? line.split('\t') : /^\s*(\d+)\s+(\d+)\s+(.*)$/u.exec(line)?.slice(1);
     if (!fields || fields.length < 3 || !/^\d+$/u.test(fields[0])) continue;
     const command = (windows ? fields.slice(3).join('\t') : fields[2]).trim();
-    const program = windows ? fields[2] : command.split(/\s+/u)[0];
+    const program = windows ? fields[2] : executables.get(Number(fields[0])) ?? command.split(/\s+/u)[0];
     processes.push({
       pid: Number(fields[0]),
       ppid: Number(fields[1]),
@@ -511,7 +534,8 @@ function buildContext(repository, options) {
   const targetDirectories = [
     ...options.targetDirectories,
     ...['CARGO_TARGET_DIR', 'CARGO_BUILD_TARGET_DIR'].map((name) => options.env[name]).filter(Boolean),
-  ].map((directory) => (path.isAbsolute(directory) ? real(directory) : resolveUserPath(directory)));
+  ].map((directory) => (path.isAbsolute(directory) ? real(directory) : resolveUserPath(directory)))
+    .filter((directory) => !options.projectOwnedOnly || strictlyInside(directory, root));
   const protectedPaths = [
     ...PROTECTED_DIRECTORIES.map((directory) => path.join(root, directory)),
     ...resultsDirectories,
@@ -523,11 +547,12 @@ function buildContext(repository, options) {
     ignored: listIgnored(root),
     worktrees: otherWorktrees(root),
     targetDirectories,
+    projectOwnedOnly: options.projectOwnedOnly,
     evidenceDirectories: resultsDirectories.map((directory) => path.relative(root, directory)),
     resultsDirectories,
     scratchExceptions: resultsDirectories.map((directory) => path.join(directory, 'work')),
     protectedPaths,
-    evidenceFiles: /\.(?:jsonl?|log)$/u,
+    evidenceFiles: /\.(?:jsonl?|lino|log)$/u,
     // Emitted translations and their reproducers, which native validation
     // records cite as artifacts.
     workEvidence: resultsDirectories.map((directory) => path.join(directory, 'work', 'native')),
@@ -577,7 +602,7 @@ function refusal(candidate, context, ignored) {
   if (inside(context.root, target)) return 'contains the repository';
   if (candidate.scratchMarker) {
     if (path.dirname(target) !== context.tmpRoot) return 'scratch marker outside the temporary directory';
-    if (candidate.scratchMarker.pid !== process.pid && processAlive(candidate.scratchMarker.pid)) {
+    if (processIdentityAlive(candidate.scratchMarker)) {
       return `scratch still in use by pid ${candidate.scratchMarker.pid}`;
     }
     return null;
@@ -587,7 +612,7 @@ function refusal(candidate, context, ignored) {
     if (inside(target, path.join(context.root, '.git'))) return 'inside the git directory';
     if (hasTrackedUnder(context, relative)) return 'holds tracked files';
     if (!ignored.has(relative)) return 'not ignored by git';
-  } else if (!(candidate.externalRoot && inside(target, candidate.externalRoot) && isCargoTargetDirectory(candidate.externalRoot))) {
+  } else if (context.projectOwnedOnly || !(candidate.externalRoot && inside(target, candidate.externalRoot) && isCargoTargetDirectory(candidate.externalRoot))) {
     return 'outside the repository';
   }
   for (const protectedPath of context.protectedPaths) {
@@ -673,14 +698,15 @@ function normalizeOptions(options) {
     mode,
     budgetBytes: Math.round(budgetMb * MB),
     minFreeBytes: Math.round(minFreeMb * MB),
-    preflight: options.preflight ?? true,
+    preflight: options.projectOwnedOnly ? false : options.preflight ?? true,
+    projectOwnedOnly: Boolean(options.projectOwnedOnly),
     dryRun: Boolean(options.dryRun),
     classes,
     targetDirectories: (options.targetDirectories ?? []).map((value) => assertNoTraversal(value, '--target-dir')),
     resultsDirectories: (options.resultsDirectories ?? []).map((value) => assertNoTraversal(value, '--results-dir')),
     protect: (options.protect ?? []).map((value) => assertNoTraversal(value, '--protect')),
     tmpRoot: options.tmpRoot,
-    docker: options.docker ?? true,
+    docker: options.projectOwnedOnly ? false : options.docker ?? true,
   };
 }
 
@@ -699,6 +725,7 @@ export function runCleanup(rawOptions = {}) {
   const started = Date.now();
   const options = normalizeOptions(rawOptions);
   const base = { schemaVersion: 1, event: options.event, mode: options.mode, dryRun: options.dryRun, startedAt: new Date(started).toISOString() };
+  if(options.projectOwnedOnly)base.scope='project-owned-only';
   const repository = resolveRepository(options.cwd);
   if (!repository) return { ...base, status: 'skipped', reason: 'not inside a git worktree, or git is not installed' };
   const lock = acquireCleanupLock(repository.stateDir);
@@ -829,8 +856,28 @@ function displayPath(root, candidate) {
 
 function persistReport(stateDir, report) {
   mkdirSync(stateDir, { recursive: true });
-  writeFileSync(path.join(stateDir, 'last-run.json'), `${JSON.stringify(report, null, 2)}\n`);
-  const historyFile = path.join(stateDir, 'history.jsonl');
+  const atomicWrite = (file, text) => {
+    const temporary = `${file}.${randomUUID()}.tmp`;
+    try { writeFileSync(temporary, text, { flag: 'wx' }); renameSync(temporary, file); }
+    finally { rmSync(temporary, { force: true }); }
+  };
+  atomicWrite(path.join(stateDir, 'last-run.lino'), structuredDataToLino(report));
+  const historyFile = path.join(stateDir, 'history.lino');
+  let records = [];
+  if (existsSync(historyFile)) {
+    const source = readFileSync(historyFile, 'utf8');
+    readBootstrapStructuredDataRecords(source, { byteLimit: 16 * MB });
+    records = source.split('\n').filter(Boolean).slice(-HISTORY_LIMIT);
+  }
+  // Read the old owned history once; coordination protocols remain JSON so
+  // older active lease/lock/scratch owners can still be recognized safely.
+  const legacyHistory = path.join(stateDir, 'history.jsonl');
+  if (existsSync(legacyHistory)) {
+    const source = readFileSync(legacyHistory, 'utf8');
+    if (Buffer.byteLength(source) > 16 * MB) throw new Error('legacy cache history exceeds its migration byte limit');
+    records.push(...source.split('\n').filter(Boolean).slice(-HISTORY_LIMIT)
+      .map(line => structuredDataRecordToLino(JSON.parse(line)).trimEnd()));
+  }
   const summary = {
     event: report.event,
     mode: report.effectiveMode ?? report.mode,
@@ -840,9 +887,10 @@ function persistReport(stateDir, report) {
     afterBytes: report.afterBytes,
     reclaimedBytes: report.reclaimedBytes,
   };
-  appendFileSync(historyFile, `${JSON.stringify(summary)}\n`);
-  const lines = readFileSync(historyFile, 'utf8').split('\n').filter(Boolean);
-  if (lines.length > HISTORY_LIMIT) writeFileSync(historyFile, `${lines.slice(-HISTORY_LIMIT).join('\n')}\n`);
+  records.push(structuredDataRecordToLino(summary).trimEnd());
+  atomicWrite(historyFile, `${records.slice(-HISTORY_LIMIT).join('\n')}\n`);
+  rmSync(legacyHistory, { force: true });
+  rmSync(path.join(stateDir, 'last-run.json'), { force: true });
 }
 
 /** Human-readable byte count. */

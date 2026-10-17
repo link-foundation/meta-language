@@ -1,16 +1,17 @@
 //! The concept records shared with the JavaScript runtime.
 //!
-//! `src/data/concept-records.json` is generated from
+//! `src/data/concept-records.lino` is generated from
 //! `parity/naming/canonical-concepts.json` by
 //! `js/scripts/build-concept-records.mjs`; the npm package ships the same
 //! file, so both runtimes agree on every canonical identity, its readable
 //! English phrase, definition, constraints, source aliases and former names.
 
+use std::collections::{BTreeMap, BTreeSet};
 use std::sync::OnceLock;
 
 use serde::Deserialize;
 
-const CONCEPT_RECORDS_JSON: &str = include_str!("data/concept-records.json");
+const CONCEPT_RECORDS_LINKS: &str = include_str!("data/concept-records.lino");
 
 /// Whether a canonical name is a concept (a noun phrase) or an operation (a verb phrase).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
@@ -76,30 +77,61 @@ struct ConceptRecordFile {
 pub fn concept_records() -> &'static [ConceptRecord] {
     static RECORDS: OnceLock<Vec<ConceptRecord>> = OnceLock::new();
     RECORDS.get_or_init(|| {
-        serde_json::from_str::<ConceptRecordFile>(CONCEPT_RECORDS_JSON)
-            .expect("the embedded concept records are valid")
-            .concepts
+        serde_json::from_value::<ConceptRecordFile>(
+            crate::structured_data_links::read_structured_data_lino(CONCEPT_RECORDS_LINKS)
+                .expect("the embedded concept links are valid"),
+        )
+        .expect("the embedded concept records are valid")
+        .concepts
     })
 }
 
 /// Returns the record whose identity or former name is `name`.
 #[must_use]
 pub fn concept_record(name: &str) -> Option<&'static ConceptRecord> {
-    concept_records()
-        .iter()
-        .find(|record| record.id == name || record.former_names.iter().any(|former| former == name))
+    static NAMES: OnceLock<BTreeMap<&'static str, &'static ConceptRecord>> = OnceLock::new();
+    NAMES
+        .get_or_init(|| {
+            let mut names = BTreeMap::new();
+            for record in concept_records() {
+                names.entry(record.id.as_str()).or_insert(record);
+                for former in &record.former_names {
+                    names.entry(former.as_str()).or_insert(record);
+                }
+            }
+            names
+        })
+        .get(name)
+        .copied()
 }
 
 /// Returns the records a source (such as `ebnf` or `Rust`) names `name`, in register order.
 #[must_use]
 pub fn concept_records_for_source_name(source: &str, name: &str) -> Vec<&'static ConceptRecord> {
-    concept_records()
-        .iter()
-        .filter(|record| {
-            record
-                .source_aliases
-                .iter()
-                .any(|alias| alias.source == source && alias.name == name)
+    type SourceNameIndex =
+        BTreeMap<&'static str, BTreeMap<&'static str, Vec<&'static ConceptRecord>>>;
+    static SOURCES: OnceLock<SourceNameIndex> = OnceLock::new();
+    SOURCES
+        .get_or_init(|| {
+            let mut sources: SourceNameIndex = BTreeMap::new();
+            for record in concept_records() {
+                let mut seen = BTreeSet::new();
+                for alias in &record.source_aliases {
+                    let key = (alias.source.as_str(), alias.name.as_str());
+                    if seen.insert(key) {
+                        sources
+                            .entry(key.0)
+                            .or_default()
+                            .entry(key.1)
+                            .or_default()
+                            .push(record);
+                    }
+                }
+            }
+            sources
         })
-        .collect()
+        .get(source)
+        .and_then(|names| names.get(name))
+        .cloned()
+        .unwrap_or_default()
 }

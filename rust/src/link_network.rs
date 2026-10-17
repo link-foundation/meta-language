@@ -231,13 +231,19 @@ impl Link {
 }
 
 /// Mutable links network for CST, AST, semantic, and self-description links.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LinkNetwork {
     pub(crate) next_id: u64,
     pub(crate) links: BTreeMap<LinkId, Arc<Link>>,
     pub(crate) terms: BTreeMap<Arc<str>, LinkId>,
     pub(crate) concept_syntax: BTreeMap<(Arc<str>, Arc<str>), Arc<str>>,
     pub(crate) strings: BTreeSet<Arc<str>>,
+}
+
+impl Default for LinkNetwork {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl LinkNetwork {
@@ -500,7 +506,11 @@ impl LinkNetwork {
         self.links.values().map(Arc::as_ref)
     }
 
-    /// Iterates over links included in the selected projection.
+    /// Iterates over original links included in the explicitly selected view.
+    ///
+    /// Identifiers, references and metadata retain their source identities.
+    /// Resolve references against this complete network, including concrete
+    /// tokens and trivia omitted from the abstract view. The source is unchanged.
     pub fn projected_links(&self, projection: NetworkProjection) -> impl Iterator<Item = &Link> {
         self.links().filter(move |link| projection.includes(link))
     }

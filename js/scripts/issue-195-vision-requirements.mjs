@@ -6,6 +6,7 @@
 // that states the obligation. A runtime whose implementation does not exist yet
 // has a null entry point, and its cells stay failing until tests executed on
 // the exact commit record every assertion; nothing here is marked complete.
+import { CRITICAL_CONVERSATION_REQUIREMENTS } from './issue-195-conversation-requirements.mjs';
 
 export const VISION_SPECIFICATION = 'docs/vision.md';
 export const SOURCE_REGISTER = 'parity/issue-195-sources.json';
@@ -31,6 +32,370 @@ const JAVASCRIPT_LINO = ['js/src/lino-grammar.js', 'js/src/lino-semantics.js', '
 const RUST_LINO = ['rust/src/lino_grammar.rs', 'rust/src/lino_parser.rs', 'rust/Cargo.toml'];
 
 export const VISION_REQUIREMENTS = Object.freeze([
+  ...CRITICAL_CONVERSATION_REQUIREMENTS,
+  ...[
+    ['HERE-DOCUMENTS', 'line-anchored quoted and FIFO here-document scanner boundaries',
+      'Shared scanner descriptors preserve quoted opening labels, whole-line closing labels and FIFO pending bodies. Both executors match the shared accepted concrete trees and reject malformed boundaries without leaking speculative label state.',
+      'scannerHereDocumentsMatchFixtures'],
+    ['INTERPOLATED-QUOTES', 'independent nested quoted and interpolation scanner contexts',
+      'Shared scanner descriptors preserve nested quote and brace contexts inside interpolation. Both executors match the shared accepted concrete trees and reject truncated or mismatched boundaries without confusing enclosing contexts.',
+      'scannerInterpolationContextsMatchFixtures'],
+    ['OFFSIDE-LAYOUT', 'shared offside-layout scanner token boundaries',
+      'Descriptor-owned offside layout emits the configured opening, separator and closing tokens, retains exact Unicode source and matches the shared accepted concrete trees. Both executors reject the malformed layout fixtures and preserve independent state between inputs.',
+      'scannerOffsideLayoutMatchesFixtures'],
+    ['FENCED-BLOCKS', 'Markdown fence marker width and indentation scanner rules',
+      'Shared fence descriptors retain opening marker identity and width, permit only configured indentation and keep shorter or different-marker fences inside body text. Both executors match the shared concrete trees, preserve source bytes and reject malformed boundaries.',
+      'scannerFencedBlocksMatchFixtures'],
+  ].map(([suffix, construct, expectedBehavior, assertion]) => ({
+    id: `I195-GRAMMAR-SCANNER-${suffix}`,
+    area: 'native-grammar', specification: 'grammar-feature-union',
+    fixture: 'parity/fixtures/scanner-structured-contexts.json',
+    fixtureId: 'scanner-structured-contexts',
+    construct, expectedBehavior, assertions: [assertion],
+    javascript: ['js/scripts/structured-scanner-families.mjs', 'js/tests/grammar-scanner-structured-contexts.test.js'],
+    rust: ['rust/src/grammar/feature_runtime/executor.rs', 'rust/tests/unit/issue_195_grammar_scanner_families.rs'],
+  })),
+  ...[
+    ['SPACE', 'one global concept space for every language and grammar',
+      'Every rule of every input grammar and translation representation belongs to one global concept space. Equivalent verified occurrences resolve to a stable global identity; concepts without a proven counterpart retain a separate identity in that same space.',
+      ['allRulesInOneSpace', 'stableIdentities']],
+    ['COPY', 'lossless copied concepts before deduplication',
+      'Automatic import and translation copy every concept and recursive definition into the global space before deduplication. The copied inventory includes every source concept and preserves its occurrences without presenting potential correspondences as shared identities.',
+      ['copiesBeforeDeduplication']],
+    ['EQUIVALENCE', 'checked recursive one-to-one correspondence of concept meaning',
+      'Deduplication accepts only a checked one-to-one certificate for complete reachable concept definitions with matching operational contexts and justified semantic meaning, including recursive references. Equal spelling or syntax without established meaning is insufficient.',
+      ['recursiveOneToOneProof', 'matchingOperationalContext']],
+    ['UNPROVED', 'preserved unproved and ambiguous concept correspondences',
+      'Unproved, incomplete or ambiguous equivalence claims preserve separate concept identities and explicit uncertainty. The verifier rejects fabricated or invalid certificates instead of treating declarations or accepted samples as proof.',
+      ['rejectUnprovedEquivalence', 'preserveAmbiguity']],
+    ['DISTINCTIONS', 'distinct semantic meanings inside the global concept space',
+      'Concepts with different operational or semantic meanings retain distinct global identities even when their spelling or accepted syntax coincides. Integer models, binding, effects, proof universes and language-specific distinctions survive deduplication.',
+      ['preserveDistinctMeanings']],
+    ['REUSE', 'complete reuse of every verified equivalent concept',
+      'Every concept with a verified faithful one-to-one correspondence is reused through one global identity at every applicable occurrence across languages and grammars. Deduplication is deterministic and does not leave verified duplicates isolated in language-specific spaces.',
+      ['reuseEveryVerifiedCorrespondence']],
+    ['PROVENANCE', 'qualified aliases and source provenance after global reuse',
+      'Global reuse preserves every language-qualified original rule alias, source identity, occurrence and provenance. Export and translation can recover language-specific syntax without relying on discarded definitions or unqualified name guesses.',
+      ['preserveQualifiedProvenance']],
+    ['SERIALIZATION', 'reloadable Links representation of the global concept space',
+      'The complete global concept space, copied definitions, correspondences and verified certificates serialize as Links Notation and reload without the original source definitions while preserving identities, semantics and qualified provenance.',
+      ['linksRoundTrip']],
+    ['RUNTIME-PARITY', 'automatically translated global concept verification decisions',
+      'Both runtime packages compute the same global concept equivalence and reuse decisions from shared data. The portable JavaScript verification rules generate their Rust counterpart automatically and shared accepted and rejected certificates produce matching decisions.',
+      ['generatedRuntimeDecisions']],
+  ].map(([suffix, construct, expectedBehavior, assertions]) => ({
+    id: `I195-GLOBAL-CONCEPT-${suffix}`,
+    area: 'global-concept-space', specification: 'global-concept-space',
+    fixture: 'parity/fixtures/global-concept-space.json',
+    fixtureId: 'global-concept-space',
+    construct, expectedBehavior, assertions,
+    javascript: ['js/src/global-concept-space.js', 'js/tests/global-concept-space.test.js'],
+    rust: ['rust/src/global_concept_space.rs', 'rust/src/global_concept_rules.rs', 'rust/tests/unit/global_concept_space.rs'],
+  })),
+  {
+    id: 'I195-GRAMMAR-NATURAL-LANGUAGE-REPRESENTATION',
+    area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-text-grammars.json',
+    fixtureId: 'native-text-grammars',
+    construct: 'defined native representation of natural-language documents',
+    expectedBehavior: 'Natural-language documents use executable Links grammar definitions to retain Unicode lexemes, punctuation, whitespace, sentences, document structure, exact source spans and rejected-control diagnostics. Both packages preserve every input byte. This native representation exposes language-specific annotations and unresolved alternatives without declaring full linguistic semantics from segmentation or a starter lexicon.',
+    assertions: ['nativeNaturalLanguageGrammarExecuted', 'naturalLanguageUnicodeSpansLossless', 'naturalLanguageSentenceLexemesPreserved', 'naturalLanguageControlDiagnostics'],
+    javascript: ['js/src/text-grammar.js', 'js/tests/native-text-grammars.test.js'],
+    rust: ['rust/src/structured_text_parser.rs'],
+  },
+  {
+    id: 'I195-STRING-TRIM-SEMANTICS',
+    area: 'full-semantics', specification: 'four-language-semantics-and-translation',
+    fixture: 'parity/fixtures/string-trim-semantics.json',
+    fixtureId: 'string-trim-semantics',
+    construct: 'Rust and JavaScript whitespace semantics in bidirectional string trimming',
+    expectedBehavior: 'Rust trim, trim_start and trim_end translated into JavaScript retain the Unicode White_Space predicate, and JavaScript trimming translated into Rust retains ECMAScript whitespace. Shared NEL, BOM, ASCII, NBSP and supplementary Unicode fixtures distinguish the predicates in both directions; supported translations execute faithfully and do not return a source envelope.',
+    assertions: ['rustWhitespacePreserved', 'ecmascriptWhitespacePreserved', 'bidirectionalUnicodeTrimFixtures', 'trimTranslationsHaveNoSourceEnvelope'],
+    javascript: ['js/src/translation/emit-common.js', 'js/src/translation/emit-javascript.js', 'js/src/translation/emit-rust.js', 'js/tests/translation-string-trim-semantics.test.js'],
+    rust: ['rust/src/translation/frontend_rules/strings.rs', 'rust/src/translation/emit_javascript.rs', 'rust/src/translation/emit_rust.rs', 'rust/tests/unit/translation_string_trim_semantics.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-SCANNER-FRAGMENTS', area: 'native-grammar', specification: 'grammar-feature-union',
+    fixture: 'parity/fixtures/scanner-fragments.json',
+    construct: 'fragment prefix pairing, marker and lexical context policies',
+    expectedBehavior: 'Shared grammar data consumes paired fragment prefixes with exact parity, requires a marker when configured, classifies nested delimiters through non-consuming opening context and rejects invalid content. Lexical external rules preserve following context without consuming it. Counted content supports explicit whitespace and end policies. Both executors match the shared concrete trees and preserve every input byte.',
+    assertions: ['pairedFragmentPrefixes', 'requiredFragmentMarker', 'delimiterOpeningLookahead', 'lexicalTokenContext', 'countedContentPolicies'],
+    javascript: ['js/scripts/scanner-families.mjs', 'js/tests/issue-195-grammar-scanner-families.test.js'],
+    rust: ['rust/src/grammar/feature_runtime/executor.rs', 'rust/tests/unit/issue_195_grammar_scanner_families.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-SCANNER-REMEMBERED-CONTENT', area: 'native-grammar', specification: 'grammar-feature-union',
+    fixture: 'parity/fixtures/scanner-remembered-content.json',
+    construct: 'whole tagged literals and grammar surrounded remembered content',
+    expectedBehavior: 'Shared scanner families preserve exact opening label text through whole literals and separate content tokens surrounded by grammar-owned punctuation. They retain other labels inside content, empty labels where configured and independent successive literals; both executors reproduce the shared lossless concrete trees and reject mismatched, malformed and truncated labels.',
+    assertions: ['rememberedLiteralText', 'rememberedContentText'],
+    javascript: ['js/scripts/scanner-families.mjs', 'js/tests/issue-195-grammar-scanner-families.test.js'],
+    rust: ['rust/src/grammar/feature_runtime/executor.rs', 'rust/tests/unit/issue_195_grammar_scanner_families.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-SCANNER-REMEMBERED-DELIMITERS', area: 'native-grammar', specification: 'grammar-feature-union',
+    fixture: 'parity/fixtures/scanner-remembered-delimiters.json',
+    construct: 'exact textual delimiter state in generated native grammar data',
+    expectedBehavior: 'A generated opening token stores its complete delimiter text. The content scanner ends only before an exactly matching closing tag, preserves other tags as content and clears delimiter state on closing. Both executors preserve every byte and match the shared concrete trees for empty, Unicode and successive differently tagged bodies, and reject mismatched, truncated or malformed tags.',
+    assertions: ['rememberedDelimiterText'],
+    javascript: ['js/scripts/scanner-families.mjs', 'js/tests/issue-195-grammar-scanner-families.test.js'],
+    rust: ['rust/src/grammar/feature_runtime/executor.rs', 'rust/tests/unit/issue_195_grammar_scanner_families.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-SCANNER-CONTEXT-TOKENS', area: 'native-grammar', specification: 'grammar-feature-union',
+    fixture: 'parity/fixtures/scanner-context-tokens.json',
+    construct: 'marked context tokens and line counted delimiters',
+    expectedBehavior: 'Shared scanner data emits zero-width marked boundaries without consuming lookahead, requires configurable whitespace and delimiter contexts, excludes delimiters inside comments, and closes counted quote runs only after a later line break and padding. Optional prefixes and bounded counter overflow follow their descriptors. Both executors preserve every source byte, match the shared concrete trees and reject invalid contexts and truncated delimiters.',
+    assertions: ['lookaheadBoundaries', 'contextTokens', 'lineCountedDelimiters'],
+    javascript: ['js/scripts/scanner-families.mjs', 'js/tests/issue-195-grammar-scanner-families.test.js'],
+    rust: ['rust/src/grammar/feature_runtime/executor.rs', 'rust/tests/unit/issue_195_grammar_scanner_families.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-DART', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/dart.json',
+    construct: 'generated native Dart grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native Dart grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary Dart parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativeDartGrammarIsCanonicalLinks', 'nativeDartTreesMatchOracle', 'nativeDartTreesLossless', 'nativeDartRejectsInvalidInput', 'nativeDartUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-dart.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_dart.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-NIX', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/nix.json',
+    construct: 'generated native Nix grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native Nix grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary Nix parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativeNixGrammarIsCanonicalLinks', 'nativeNixTreesMatchOracle', 'nativeNixTreesLossless', 'nativeNixRejectsInvalidInput', 'nativeNixUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-nix.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_nix.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-PYTHON', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/python.json',
+    construct: 'generated native Python grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native Python grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary Python parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativePythonGrammarIsCanonicalLinks', 'nativePythonTreesMatchOracle', 'nativePythonTreesLossless', 'nativePythonRejectsInvalidInput', 'nativePythonUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-python.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_python.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-CMAKE', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/cmake.json',
+    construct: 'generated native CMake grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native CMake grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary CMake parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativeCmakeGrammarIsCanonicalLinks', 'nativeCmakeTreesMatchOracle', 'nativeCmakeTreesLossless', 'nativeCmakeRejectsInvalidInput', 'nativeCmakeUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-cmake.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_cmake.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-CPP', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/cpp.json',
+    construct: 'generated native C++ grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native C++ grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary C++ parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativeCppGrammarIsCanonicalLinks', 'nativeCppTreesMatchOracle', 'nativeCppTreesLossless', 'nativeCppRejectsInvalidInput', 'nativeCppUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-cpp.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_cpp.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-SQL', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/sql.json',
+    construct: 'generated native SQL grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native SQL grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary SQL parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativeSqlGrammarIsCanonicalLinks', 'nativeSqlTreesMatchOracle', 'nativeSqlTreesLossless', 'nativeSqlRejectsInvalidInput', 'nativeSqlUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-sql.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_sql.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-GROOVY', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/groovy.json',
+    construct: 'generated native Groovy grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native Groovy grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary Groovy parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativeGroovyGrammarIsCanonicalLinks', 'nativeGroovyTreesMatchOracle', 'nativeGroovyTreesLossless', 'nativeGroovyRejectsInvalidInput', 'nativeGroovyUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-groovy.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_groovy.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-SCANNER-STATE-SEMANTICS', area: 'native-grammar', specification: 'grammar-feature-union',
+    fixture: 'parity/fixtures/scanner-state-semantics.json',
+    construct: 'scanner state-dependent predicates and scalar uppercase name conversion',
+    expectedBehavior: 'Both executors evaluate scanner expression predicates against the state produced by preceding scanner operations, preserve failed-run isolation, and convert each name scalar to one uppercase scalar without expanding multi-scalar uppercase spellings. The shared fixtures run the same Links operations and preserve accepted source bytes.',
+    assertions: ['scannerCaseConversionUsesSingleScalars', 'scannerPredicatesSeeCurrentState', 'scannerStateFailuresRemainIsolated'],
+    javascript: ['js/src/grammar-runtime/operations.js', 'js/src/grammar-runtime/executor.js', 'js/tests/issue-195-grammar-scanner-families.test.js'],
+    rust: ['rust/src/grammar/feature_runtime/operations.rs', 'rust/src/grammar/feature_runtime/rules.rs', 'rust/tests/unit/issue_195_grammar_scanner_families.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-AGDA', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/agda.json',
+    construct: 'generated native Agda grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native Agda grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary Agda parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativeAgdaGrammarIsCanonicalLinks', 'nativeAgdaTreesMatchOracle', 'nativeAgdaTreesLossless', 'nativeAgdaRejectsInvalidInput', 'nativeAgdaUpstreamCorpusMatchesOracle', 'nativeAgdaDeclaredDivergencesLossless'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-agda.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_agda.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-HTML', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/html.json',
+    construct: 'generated native HTML grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native HTML grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary HTML parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativeHtmlGrammarIsCanonicalLinks', 'nativeHtmlTreesMatchOracle', 'nativeHtmlTreesLossless', 'nativeHtmlRejectsInvalidInput', 'nativeHtmlUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-html.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_html.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-ODIN', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/odin.json',
+    construct: 'generated native Odin grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native Odin grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary Odin parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativeOdinGrammarIsCanonicalLinks', 'nativeOdinTreesMatchOracle', 'nativeOdinTreesLossless', 'nativeOdinRejectsInvalidInput', 'nativeOdinUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-odin.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_odin.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-XML', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/xml.json',
+    construct: 'generated native XML grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native XML grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary XML parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativeXMLGrammarIsCanonicalLinks', 'nativeXMLTreesMatchOracle', 'nativeXMLTreesLossless', 'nativeXMLRejectsInvalidInput', 'nativeXMLUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-xml.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_xml.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-DTD', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/dtd.json',
+    construct: 'generated native DTD grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native DTD grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary DTD parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativeDTDGrammarIsCanonicalLinks', 'nativeDTDTreesMatchOracle', 'nativeDTDTreesLossless', 'nativeDTDRejectsInvalidInput', 'nativeDTDUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-dtd.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_dtd.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-CSS', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/css.json',
+    construct: 'generated native CSS grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native CSS grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary CSS parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativeCssGrammarIsCanonicalLinks', 'nativeCssTreesMatchOracle', 'nativeCssTreesLossless', 'nativeCssRejectsInvalidInput', 'nativeCssUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-css.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_css.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-POWERSHELL', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/powershell.json',
+    construct: 'generated native PowerShell grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native PowerShell grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary PowerShell parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativePowerShellGrammarIsCanonicalLinks', 'nativePowerShellTreesMatchOracle', 'nativePowerShellTreesLossless', 'nativePowerShellRejectsInvalidInput', 'nativePowerShellUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-powershell.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_powershell.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-ERLANG', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/erlang.json',
+    construct: 'generated native Erlang grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native Erlang grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary Erlang parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativeErlangGrammarIsCanonicalLinks', 'nativeErlangTreesMatchOracle', 'nativeErlangTreesLossless', 'nativeErlangRejectsInvalidInput', 'nativeErlangUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-erlang.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_erlang.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-TOML', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/toml.json',
+    construct: 'generated native TOML grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native TOML grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary TOML parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativeTomlGrammarIsCanonicalLinks', 'nativeTomlTreesMatchOracle', 'nativeTomlTreesLossless', 'nativeTomlRejectsInvalidInput', 'nativeTomlUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-toml.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_toml.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-ZIG', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/zig.json',
+    construct: 'generated native Zig grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native Zig grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary Zig parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativeZigGrammarIsCanonicalLinks', 'nativeZigTreesMatchOracle', 'nativeZigTreesLossless', 'nativeZigRejectsInvalidInput', 'nativeZigUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-zig.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_zig.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-PASCAL', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/pascal.json',
+    construct: 'generated native Pascal grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native Pascal grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary Pascal parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativePascalGrammarIsCanonicalLinks', 'nativePascalTreesMatchOracle', 'nativePascalTreesLossless', 'nativePascalRejectsInvalidInput', 'nativePascalUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-pascal.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_pascal.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-VB', area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/vb.json',
+    construct: 'generated native Visual Basic grammar and pinned independent source corpus',
+    expectedBehavior: 'The automatic import pipeline generates the canonical native Visual Basic grammar from pinned upstream sources with recorded naming and grammar reconciliation decisions. Both executors match the independent oracle on every focused accepted fixture and pinned upstream corpus input, preserve every source byte, and reject and losslessly recover the invalid focused fixtures. Ordinary Visual Basic parsing selects the native grammar in both packages; the independent parser is a development oracle.',
+    assertions: ['nativeVisualBasicGrammarIsCanonicalLinks', 'nativeVisualBasicTreesMatchOracle', 'nativeVisualBasicTreesLossless', 'nativeVisualBasicRejectsInvalidInput', 'nativeVisualBasicUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/native-grammar-parser.js', 'js/tests/issue-195-grammar-native-vb.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_vb.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-SCANNER-DELIMITER-RUNS', area: 'native-grammar', specification: 'grammar-feature-union',
+    fixture: 'parity/fixtures/scanner-delimiter-runs.json',
+    construct: 'parameterized quote delimiter runs and zero-width line boundaries',
+    expectedBehavior: 'Shared scanner family data generates quote-run content and closing tokens for configurable delimiter lengths, preserves shorter embedded runs and longer trailing runs, and rejects truncation. A shared line-boundary scanner skips horizontal space and carriage returns, emits a boundary only before a newline or end of input, and leaves the newline to the grammar. JavaScript and Rust execute identical data and produce identical byte-preserving concrete trees.',
+    assertions: ['delimiterRuns', 'lineBoundaries'],
+    javascript: ['js/scripts/scanner-families.mjs', 'js/tests/issue-195-grammar-scanner-families.test.js'],
+    rust: ['rust/src/grammar/feature_runtime/executor.rs', 'rust/tests/unit/issue_195_grammar_scanner_families.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-LUA',
+    area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/lua.json',
+    construct: 'generated native Lua grammar with shared long-bracket scanner data',
+    expectedBehavior:
+      'The automatic import pipeline generates the canonical native Lua grammar from pinned tree-sitter-lua 0.5.0 sources and records its naming decisions and scanner provenance. Both executors match the independent oracle on the focused fixture and every input in the pinned upstream corpus, preserve every accepted source byte, and reject the invalid sources. The ordinary Lua parse uses the shipped native grammar in both packages; the Rust oracle crate is a development dependency. Long strings and block comments share generated scanner operations for opening, content and closing tokens, including empty content, repeated delimiter counts, Unicode, embedded candidate closers, state reset, NUL rejection and the pinned scanner\'s eight-bit count behavior.',
+    assertions: ['nativeLuaGrammarIsCanonicalLinks', 'nativeLuaTreesMatchOracle', 'nativeLuaTreesLossless', 'nativeLuaRejectsInvalidInput', 'nativeLuaUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/grammar-runtime/executor.js', 'js/tests/issue-195-grammar-native-lua.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_lua.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-HCL',
+    area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/hcl.json',
+    construct: 'generated native HCL grammar with shared template context and here-document scanner data',
+    expectedBehavior:
+      'The automatic import pipeline generates the canonical native HCL grammar from pinned tree-sitter-hcl 1.1.0 sources and records its naming decisions and scanner provenance. Both executors match the independent oracle on the focused fixture and every input in the pinned upstream corpus, preserve every accepted source byte, and reject and losslessly recover invalid sources. The ordinary HCL and Terraform parses use the shipped native grammar in both packages; the Rust oracle crate is a development dependency. Quoted strings, interpolation, directives and here-documents share generated scanner operations, context stacks and remembered label text, including nested expressions, escapes, Unicode content, indentation, delimiter lookalikes, closing-line boundaries and state reset.',
+    assertions: ['nativeHclCatalogDispatch', 'nativeHclGrammarIsCanonicalLinks', 'nativeHclTreesMatchOracle', 'nativeHclTreesLossless', 'nativeHclRejectsInvalidInput', 'nativeHclUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/grammar-runtime/executor.js', 'js/tests/issue-195-grammar-native-hcl.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_hcl.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-R',
+    area: 'native-grammar', specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/r.json',
+    construct: 'generated native R grammar with shared quoted counted delimiter and scoped layout scanner data',
+    expectedBehavior:
+      'The automatic import pipeline generates the canonical native R grammar from pinned tree-sitter-r 1.3.0 sources and records its naming decisions and scanner provenance. Both executors match the independent oracle on the focused fixture and every input in the pinned upstream corpus, preserve every accepted source byte, and reject and losslessly recover invalid sources. The ordinary R and r parses use the shipped native grammar in both packages; the Rust oracle crate is a development dependency. Raw literals remember their quote, bracket and bounded marker count. Contextual bracket scopes control line endings and continuation keywords, including nested indexing, Unicode content, closing lookalikes, identifier boundaries and state reset.',
+    assertions: ['nativeRCatalogDispatch', 'nativeRGrammarIsCanonicalLinks', 'nativeRTreesMatchOracle', 'nativeRTreesLossless', 'nativeRRejectsInvalidInput', 'nativeRUpstreamCorpusMatchesOracle'],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/grammar-runtime/executor.js', 'js/tests/issue-195-grammar-native-r.test.js'],
+    rust: ['rust/src/native_grammar_parser.rs', 'rust/tests/unit/issue_195_grammar_native_r.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-SCANNER-COUNTED-DELIMITERS',
+    area: 'native-grammar',
+    specification: 'grammar-feature-union',
+    fixture: 'parity/fixtures/scanner-counted-delimiters.json',
+    construct: 'raw tokens with parameterized repeated opening and closing delimiter counts',
+    expectedBehavior:
+      'Scanner family descriptors generate executable Links Notation operations that count opening markers and require the matching count at closing. Both executors preserve identical concrete trees and every UTF-8 byte for Rust-style raw strings and Lua-style long brackets, keep shorter embedded closing candidates as content, clear state between successive tokens, and reject the recorded wrong-count and truncated inputs.',
+    assertions: ['rustStyleRawDelimiters', 'luaStyleLongDelimiters'],
+    javascript: ['js/scripts/scanner-families.mjs', 'js/src/grammar-runtime/executor.js', 'js/tests/issue-195-grammar-scanner-families.test.js'],
+    rust: ['rust/src/grammar/feature_runtime/executor.rs', 'rust/tests/unit/issue_195_grammar_scanner_families.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-SCANNER-DELIMITER-FAMILIES',
+    area: 'native-grammar',
+    specification: 'grammar-feature-union',
+    fixture: 'parity/fixtures/scanner-families.json',
+    construct: 'reusable data generators for nested delimiters, escaped strings and interpolation boundaries',
+    expectedBehavior:
+      'JSON scanner family descriptors generate executable Links Notation operations without host callbacks. Both executors preserve identical concrete trees and every UTF-8 byte for nested comment delimiters, escaped complete strings, escaped string content, interpolation boundaries and alternate nested delimiters, and reject each recorded truncated or invalid input.',
+    assertions: ['nestedComments', 'escapedStrings', 'quotedContent', 'interpolationBoundaries', 'alternateNestedDelimiters'],
+    javascript: ['js/scripts/scanner-families.mjs', 'js/src/grammar-runtime/executor.js', 'js/tests/issue-195-grammar-scanner-families.test.js'],
+    rust: ['rust/src/grammar/feature_runtime/executor.rs', 'rust/tests/unit/issue_195_grammar_scanner_families.rs'],
+  },
   {
     id: 'I195-VISION-SPECIFICATION',
     area: 'vision-and-traceability',
@@ -1355,6 +1720,18 @@ export const VISION_REQUIREMENTS = Object.freeze([
     tooling: ['js/src/programming-language-parser.js'],
   },
   {
+    id: 'I195-RESOURCE-BOUNDED-MEMORY-REGRESSIONS',
+    area: 'resource-limits',
+    specification: 'resource-limits',
+    construct: 'bounded-heap and peak-RSS regressions for the parser and evidence memory fixes',
+    expectedBehavior:
+      'CI executes bounded-heap or peak-RSS regression checks for the parse memo budget, lazy grammar loading, Markdown inline parser reuse, compact source offset maps and streamed parity evidence. The formal-ai TypeScript parse exhaustion cause is recorded and its capped-heap diagnostic regression remains executable.',
+    assertions: ['parseMemoBudgetBoundedHeap', 'lazyGrammarsBoundedHeapAndPeakRss', 'inlineParserBoundedHeapAndPeakRss',
+      'sourceOffsetsBoundedHeapAndPeakRss', 'parityArtifactsBoundedHeapAndPeakRss'],
+    tooling: ['js/tests/issue-195-parse-memory-budget.test.js', 'js/tests/issue-195-evidence-memory.test.js',
+      'js/scripts/issue-195-parity-evidence.mjs'],
+  },
+  {
     id: 'I195-RESOURCE-GRAMMAR-TIERING-BUDGET',
     area: 'resource-limits',
     specification: 'resource-limits',
@@ -1622,11 +1999,29 @@ const RUNTIMES = ['javascript', 'rust', 'tooling'];
 /** Builds the ledger entries with the ledger's own constructors. */
 export function buildVisionRequirements(fixtureCatalog, { requirement, verification, pinnedFixture, source, sourceByRequirement = {} }) {
   return VISION_REQUIREMENTS.map((row) => {
-    const fixtureId = `planned:repository-directive:${row.id.toLowerCase()}`;
+    const fixtureId = row.fixtureId ?? `planned:repository-directive:${row.id.toLowerCase()}`;
     fixtureCatalog[fixtureId] = row.fixture
       ? pinnedFixture(row.fixture, `${VISION_SPECIFICATION}#${row.specification}: ${row.construct}`)
       : pinnedFixture(VISION_SPECIFICATION, `#${row.specification}: ${row.construct}`);
+    const fixtureIds = [fixtureId];
+    for (const fixture of row.additionalFixtures ?? []) {
+      fixtureCatalog[fixture.id] = pinnedFixture(fixture.path, `${VISION_SPECIFICATION}#${row.specification}: ${row.construct}`);
+      fixtureIds.push(fixture.id);
+    }
     const requiredRuntimes = RUNTIMES.filter((runtime) => runtime in row);
+    const additionalVerifications = (row.additionalVerifications ?? []).map((cell) => {
+      if (!requiredRuntimes.includes(cell.runtime)) throw new Error(`additional verification runtime is not required: ${row.id}`);
+      const extraFixtureIds = cell.fixtures.map((fixture) => {
+        if (Object.hasOwn(fixtureCatalog, fixture.id)) throw new Error(`duplicate additional verification fixture: ${fixture.id}`);
+        fixtureCatalog[fixture.id] = pinnedFixture(fixture.path, fixture.selector);
+        return fixture.id;
+      });
+      return verification({
+        requirementId: row.id, runtime: cell.runtime, suffix: cell.suffix,
+        fixtureIds: extraFixtureIds, assertions: cell.assertions,
+        checkpoint: row.checkpoint ?? 'pre-merge',
+      });
+    });
     return requirement({
       id: row.id,
       source: sourceByRequirement[row.id] ?? source,
@@ -1640,15 +2035,15 @@ export function buildVisionRequirements(fixtureCatalog, { requirement, verificat
       expectedBehavior: row.expectedBehavior,
       requiredRuntimes,
       implementationEntryPoints: Object.fromEntries(requiredRuntimes.map((runtime) => [runtime, row[runtime]])),
-      verifications: requiredRuntimes.map((runtime) =>
+      verifications: [...requiredRuntimes.map((runtime) =>
         verification({
           requirementId: row.id,
           runtime,
           suffix: row.checkpoint === 'release-delivery' ? 'published' : 'behavior',
-          fixtureIds: [fixtureId],
+          fixtureIds,
           assertions: row.assertions,
           checkpoint: row.checkpoint ?? 'pre-merge',
-        })),
+        })), ...additionalVerifications],
     });
   });
 }

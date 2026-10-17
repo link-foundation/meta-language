@@ -1,0 +1,1 @@
+Generate pinned metadata and authenticated listed-file capture for six ANTLR lexer/parser base sources, retaining primary G4 byte hashes, file-qualified provenance and UTF-8 join ranges while keeping external files in ignored temporary storage. Transitive dependencies, superclass and base behavior, actions and predicates remain unresolved until separately lowered and checked.

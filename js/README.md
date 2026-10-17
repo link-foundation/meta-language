@@ -20,7 +20,7 @@ Rust `LinkType::Token` name; `LinkType.SourceToken` remains available for
 existing JavaScript callers.
 
 Feature parity with the Rust crate is enforced by
-[`../parity/language-features.json`](../parity/language-features.json) and the
+[`../parity/language-features.lino`](../parity/language-features.lino) and the
 `npm run check:parity` gate (see [Parity](#parity) below).
 
 See [`../docs/translation-rules.md`](../docs/translation-rules.md) for recursive
@@ -130,7 +130,7 @@ the check while every kernel rejects it.
 
 ## Parity
 
-Every feature in [`../parity/language-features.json`](../parity/language-features.json)
+Every feature in [`../parity/language-features.lino`](../parity/language-features.lino)
 must be implemented in both Rust and JavaScript. `npm run check:parity` validates
 the manifest, confirms each cell's evidence files exist, and asserts the
 JavaScript `API_OPERATIONS` registry covers every operation family and API style.

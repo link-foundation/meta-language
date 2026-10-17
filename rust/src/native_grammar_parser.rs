@@ -30,95 +30,10 @@ use crate::{
     native_grammar, parse_grammar_links,
 };
 
-/// The Links Notation text of every native grammar the catalog ships, by
-/// catalog file; `tests/unit/default_cst_expectations.rs` checks that the
-/// catalog's native grammars are exactly the shipped files.
-const NATIVE_GRAMMAR_TEXTS: &[(&str, &str)] = &[
-    (
-        "native-grammars/c.lino",
-        include_str!("data/native-grammars/c.lino"),
-    ),
-    (
-        "native-grammars/csv.lino",
-        include_str!("data/native-grammars/csv.lino"),
-    ),
-    (
-        "native-grammars/diff.lino",
-        include_str!("data/native-grammars/diff.lino"),
-    ),
-    (
-        "native-grammars/go.lino",
-        include_str!("data/native-grammars/go.lino"),
-    ),
-    (
-        "native-grammars/graphql.lino",
-        include_str!("data/native-grammars/graphql.lino"),
-    ),
-    (
-        "native-grammars/ini.lino",
-        include_str!("data/native-grammars/ini.lino"),
-    ),
-    (
-        "native-grammars/java.lino",
-        include_str!("data/native-grammars/java.lino"),
-    ),
-    (
-        "native-grammars/javascript.lino",
-        include_str!("data/native-grammars/javascript.lino"),
-    ),
-    (
-        "native-grammars/json.lino",
-        include_str!("data/native-grammars/json.lino"),
-    ),
-    (
-        "native-grammars/json5.lino",
-        include_str!("data/native-grammars/json5.lino"),
-    ),
-    (
-        "native-grammars/lean.lino",
-        include_str!("data/native-grammars/lean.lino"),
-    ),
-    (
-        "native-grammars/make.lino",
-        include_str!("data/native-grammars/make.lino"),
-    ),
-    (
-        "native-grammars/proto.lino",
-        include_str!("data/native-grammars/proto.lino"),
-    ),
-    (
-        "native-grammars/racket.lino",
-        include_str!("data/native-grammars/racket.lino"),
-    ),
-    (
-        "native-grammars/regex.lino",
-        include_str!("data/native-grammars/regex.lino"),
-    ),
-    (
-        "native-grammars/rocq.lino",
-        include_str!("data/native-grammars/rocq.lino"),
-    ),
-    (
-        "native-grammars/rust.lino",
-        include_str!("data/native-grammars/rust.lino"),
-    ),
-    (
-        "native-grammars/scheme.lino",
-        include_str!("data/native-grammars/scheme.lino"),
-    ),
-    (
-        "native-grammars/solidity.lino",
-        include_str!("data/native-grammars/solidity.lino"),
-    ),
-    (
-        "native-grammars/tsx.lino",
-        include_str!("data/native-grammars/tsx.lino"),
-    ),
-    (
-        "native-grammars/typescript.lino",
-        include_str!("data/native-grammars/typescript.lino"),
-    ),
-];
+// The Links Notation text of every native grammar the catalog ships, by
+// catalog file; `tests/unit/default_cst_expectations.rs` checks that the
+// catalog's native grammars are exactly the shipped files.
+include!("data/native-grammar-texts.rs");
 
 /// One node of a projected native tree; offsets are UTF-8 byte offsets. The
 /// flags mirror tree-sitter's node flags.
@@ -198,6 +113,7 @@ pub fn parse_native(id: &str, source: &str) -> NativeNode {
                 anonymous: entry.anonymous.iter().map(String::as_str).collect(),
                 extras: entry.extras.iter().map(String::as_str).collect(),
                 oracle_kinds: &entry.oracle_kinds,
+                root_includes_leading_trivia: entry.root_includes_leading_trivia,
             }
             .root(&tree, length),
             _ => error_root(),
@@ -207,6 +123,7 @@ pub fn parse_native(id: &str, source: &str) -> NativeNode {
 }
 
 struct Projection<'a> {
+    root_includes_leading_trivia: bool,
     hidden: BTreeSet<&'a str>,
     anonymous: BTreeSet<&'a str>,
     extras: BTreeSet<&'a str>,
@@ -386,10 +303,14 @@ impl Projection<'_> {
         };
         let mut leaves = Vec::new();
         collect_leaves(tree, &mut leaves);
-        let start = leaves
-            .iter()
-            .find(|leaf| !self.invisible(leaf))
-            .map_or(length, |leaf| self.span(leaf).0);
+        let start = if self.root_includes_leading_trivia {
+            tree.start()
+        } else {
+            leaves
+                .iter()
+                .find(|leaf| !self.invisible(leaf))
+                .map_or(length, |leaf| self.span(leaf).0)
+        };
         let hidden_missing = children.iter().any(|child| self.hidden_missing(child));
         let children = self.project(children);
         NativeNode {

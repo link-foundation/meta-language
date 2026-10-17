@@ -1,5 +1,6 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+
 import { test } from 'node:test';
 
 import {
@@ -272,9 +273,7 @@ function assertConnectedRegion(network, source, language, rootTerm, regionSource
   ));
 }
 
-const regionCases = JSON.parse(
-  await readFile(new URL('../../parity/fixtures/embedded-region-cases.json', import.meta.url), 'utf8'),
-);
+const regionCases = readProjectData(new URL('../../parity/fixtures/embedded-region-cases.json', import.meta.url));
 
 test('host grammar CSTs delimit the shared embedded region cases in both APIs', () => {
   for (const { host, policy, source, regions } of regionCases.cases) {

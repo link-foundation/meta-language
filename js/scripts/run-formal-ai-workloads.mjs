@@ -16,16 +16,19 @@
 // into a clean consumer (empty node_modules, fresh cache) and runs formal-ai's
 // data through the public API (js/scripts/issue-195-formal-ai-consumer.mjs).
 // Both runtimes write the same outputs from one inputs file; their comparison
-// joins both sharedConceptsReused observations. The JSON report is validated by
+// joins both sharedConceptsReused observations. The linked report is validated by
 // js/scripts/issue-195-formal-ai-workloads.mjs; the exit status is non-zero when
 // a run runtime has a problem.
 //
 // Usage:
 //   node js/scripts/run-formal-ai-workloads.mjs --npm-tarball <meta-language-x.y.z.tgz>
-//     --crate <meta-language-x.y.z.crate> --work-dir <directory> --out <report.json>
+//     --crate <meta-language-x.y.z.crate> --work-dir <directory> --out <report.lino>
 //     [--formal-ai-checkout <git checkout holding the pinned revision>] [--skip-rust]
 // The tarball and the crate are each expected next to a `<artifact>.sha256`
 // file ("<digest>  <name>"), as the delivery candidates are published.
+// --cargo-target-dir is a CI-only build cache location: exactly
+// $RUNNER_TEMP/issue-195-formal-ai-build/target on GitHub Actions. It never
+// retains a consumer, candidate source, probe output or evidence document.
 // --skip-rust is for local runs only: the report then has no Rust run, the Rust
 // assertions stay unobserved and the comparison fails for want of Rust outputs.
 // CI runs both runtimes.
@@ -44,11 +47,13 @@
 import { createHash } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, lstatSync, realpathSync } from 'node:fs';
 import { mkdir, readFile, readdir, rm, statfs, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readProjectFileBytes, writeProjectData } from './project-data.mjs';
+import { consumeWorkloadWireData, consumeWorkloadWireEvents } from './workload-wire-data.mjs';
 
 import { gitBlob } from './issue-195-rml-pr184.mjs';
 import {
@@ -84,6 +89,14 @@ import {
   workloadFiles,
 } from './issue-195-formal-ai-workloads.mjs';
 import { satisfies } from './semver-range.mjs';
+import {
+  formalAiPartitionExpectations,
+  mergeFormalAiPartitionBundles,
+  readFormalAiPartitionBundle,
+  runFormalAiNativePartition,
+  writeFormalAiPartitionBundle,
+} from './formal-ai-partition-bundles.mjs';
+import { formalAiRustProfileEnvironment, validateFormalAiWorkloadPartition } from './formal-ai-workload-partitions.mjs';
 
 // Cargo settings that keep formal-ai's build within a standard runner; see the header.
 const RUST_BUILD_DEFAULTS = Object.freeze({
@@ -102,11 +115,14 @@ const HEARTBEAT_MS = 60_000;
 const MEMORY_FLOOR_BYTES = 1.5 * 2 ** 30;
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+const mergePartitions = option('--merge-partitions', null);
+const partition = option('--partition', null);
 const skipRust = process.argv.includes('--skip-rust');
 const tarball = path.resolve(required('--npm-tarball'));
 const crate = skipRust ? null : path.resolve(required('--crate'));
 const workDirectory = path.resolve(required('--work-dir'));
 const output = path.resolve(required('--out'));
+const inputsWirePath = path.join(workDirectory, 'formal-ai-inputs.wire.json');
 const formalAiCheckout = option('--formal-ai-checkout', null);
 const fixture = loadFormalAiWorkloadFixture(root);
 // The cargo test targets of formal-ai's workload tests, by the file cargo announces each under.
@@ -114,6 +130,10 @@ const RUST_TARGETS = Object.freeze({ 'rust/tests/unit/mod.rs': 'unit', 'rust/tes
 const PROBE_FILE = `rust/tests/${RUST_PROBE_TARGET}.rs`;
 
 const logs = [];
+const partitionState = {};
+if (partition && (!['corpus-ratchet', 'remaining'].includes(partition) || skipRust || mergePartitions)) {
+  throw new Error('--partition requires exactly one real native producer, without --skip-rust or --merge-partitions');
+}
 
 async function main() {
   await rm(workDirectory, { recursive: true, force: true });
@@ -125,7 +145,7 @@ async function main() {
     schemaVersion: FORMAL_AI_WORKLOAD_SCHEMA_VERSION,
     requirementId: FORMAL_AI_WORKLOAD_REQUIREMENT,
     fixture: FORMAL_AI_WORKLOAD_FIXTURE,
-    fixtureSha256: sha256(await readFile(path.join(root, FORMAL_AI_WORKLOAD_FIXTURE))),
+    fixtureSha256: sha256(readProjectFileBytes(path.join(root, FORMAL_AI_WORKLOAD_FIXTURE))),
     platform: `${process.platform}-${process.arch}`,
     node: process.version,
     formalAi: formalAi.report,
@@ -136,9 +156,12 @@ async function main() {
     report.npm = skipped(reason);
     report.crate = skipped(reason);
   } else {
-    const inputsPath = path.join(workDirectory, 'formal-ai-inputs.json');
+    const inputsPath = path.join(workDirectory, 'formal-ai-inputs.lino');
     const inputs = await buildFormalAiInputs(formalAi.directory);
-    await writeFile(inputsPath, `${JSON.stringify(inputs)}\n`);
+    writeProjectData(inputsPath, inputs);
+    // The probe programs consume a temporary JSON interoperability projection;
+    // the retained input and its report digest refer to the linked document.
+    await writeFile(inputsWirePath, `${JSON.stringify(inputs)}\n`);
     report.inputs = {
       file: path.basename(inputsPath),
       sha256: sha256(await readFile(inputsPath)),
@@ -147,11 +170,13 @@ async function main() {
       rules: inputs.rules.length,
       linkEdits: inputs.linkEdits.length,
       projections: inputs.projections.length,
+      semanticProjections: inputs.semanticProjections.length,
+      semanticProjectionFixtureSha256: sha256(readProjectFileBytes(path.join(root, 'parity/fixtures/formal-ai-semantic-projections.json'))),
     };
-    report.npm = await guarded(() => javascriptWorkloads(formalAi.directory, inputsPath, outputs));
+    report.npm = await guarded(() => javascriptWorkloads(formalAi.directory, inputsWirePath, outputs));
     report.crate = skipRust
       ? skipped('--skip-rust: the Rust workloads were not run')
-      : await guarded(() => rustWorkloads(formalAi.directory, inputsPath, outputs));
+      : await guarded(() => rustWorkloads(formalAi.directory, inputsWirePath, outputs));
     // The two runtimes reuse the same concepts only when they produced the same links and projections.
     const comparison = compareRuntimeOutputs(outputs.javascript, outputs.rust);
     report.comparison = comparison;
@@ -164,13 +189,30 @@ async function main() {
   }
   report.logs = logs;
   await mkdir(path.dirname(output), { recursive: true });
-  await writeFile(output, `${JSON.stringify(report, null, 2)}\n`);
+  let partialProblems = [];
+  if (partition) {
+    const expected = await formalAiPartitionExpectations({ root, tarball, crate, fixture });
+    await writeFormalAiPartitionBundle({ partition, expected, report, state: partitionState, workDirectory, output });
+    const bundle = await readFormalAiPartitionBundle(path.dirname(output));
+    partialProblems = validateFormalAiWorkloadPartition(bundle.envelope, fixture, expected, bundle.files).problems;
+    for (const problem of partialProblems) console.error(`${partition}: ${problem}`);
+  } else writeProjectData(output, report);
   console.log(`formal-ai workloads: wrote ${output}`);
 
-  let failed = mismatched.length > 0;
+  let failed = mismatched.length > 0 || partialProblems.length > 0;
   for (const runtime of ['javascript', 'rust']) {
     if (runtime === 'rust' && skipRust) {
       console.log('rust: not run (--skip-rust)');
+      continue;
+    }
+    // A partial is never accepted by the full native validator. The source-only
+    // merger will prove its actual selected identities and the complete union.
+    if (partition && runtime === 'rust') {
+      const part = report.crate;
+      failed ||= Boolean(part.error) || part.skipped || part.exit !== 0 ||
+        part.tests?.some(({ outcome }) => outcome !== 'passed') ||
+        part.probeTests?.length !== 2 || part.probeTests?.some(({ outcome }) => outcome !== 'passed') ||
+        FORMAL_AI_PROBE_ASSERTIONS.some((assertion) => part.probe?.[assertion]?.holds !== true);
       continue;
     }
     const { problems, observed } = validateFormalAiWorkloadReport(report, fixture, runtime);
@@ -274,7 +316,7 @@ async function javascriptWorkloads(formalAiDirectory, inputsPath, outputs) {
   };
 
   const dataFiles = new Set(Object.values(FORMAL_AI_DATA_FILES));
-  const events = path.join(workDirectory, 'javascript-test-events.jsonl');
+  const events = path.join(workDirectory, 'javascript-test-events.wire.jsonl');
   await writeFile(path.join(directory, 'formal-ai-helpers.mjs'), consumerHelpersModule());
   await writeFile(path.join(directory, 'formal-ai-workloads.test.mjs'), JAVASCRIPT_WORKLOAD_TESTS);
   await writeFile(path.join(directory, 'issue-195-test-events.mjs'), TEST_EVENT_REPORTER);
@@ -286,7 +328,7 @@ async function javascriptWorkloads(formalAiDirectory, inputsPath, outputs) {
   ], { cwd: directory, env: environment, allowFailure: true });
   // Each test name starts with the formal-ai data file it ran; a test without one is kept unattributed.
   const tests = existsSync(events)
-    ? (await readFile(events, 'utf8')).split('\n').filter(Boolean).map((line) => JSON.parse(line))
+    ? (await consumeWorkloadWireEvents(events, path.join(workDirectory, 'javascript-test-events.lino')))
       .filter(({ kind }) => kind === 'test')
       .map(({ name, outcome, error, process: child }) => {
         const [prefix, ...rest] = name.split(TEST_NAME_SEPARATOR);
@@ -301,14 +343,16 @@ async function javascriptWorkloads(formalAiDirectory, inputsPath, outputs) {
       })
     : [];
 
-  const probePath = path.join(workDirectory, 'javascript-probe.json');
+  const probePath = path.join(workDirectory, 'javascript-probe.wire.json');
   await writeFile(path.join(directory, 'issue-195-meta-language-probe.mjs'), JAVASCRIPT_PROBE);
   const probeRun = await run('javascript-probe', process.execPath, ['issue-195-meta-language-probe.mjs', probePath, inputsPath], {
     cwd: directory,
     env: environment,
     allowFailure: true,
   });
-  const probe = existsSync(probePath) ? JSON.parse(await readFile(probePath, 'utf8')) : {};
+  if (partition) partitionState.javascriptProbeExit = probeRun.code;
+  const probe = existsSync(probePath)
+    ? await consumeWorkloadWireData(probePath, path.join(workDirectory, 'javascript-probe.lino')) : {};
   outputs.javascript = probe.outputs;
   return {
     skipped: false,
@@ -320,14 +364,16 @@ async function javascriptWorkloads(formalAiDirectory, inputsPath, outputs) {
     counts: countOutcomes(tests),
     exit: testRun.code,
     outputs: await outputsFile('javascript', probe.outputs),
+    semanticProjectionObservations: probe.semanticProjectionObservations ?? [],
     probe: probeAssertions(probe, probeRun),
   };
 }
 
 async function rustWorkloads(formalAiDirectory, inputsPath, outputs) {
+  const cargoTargetDirectory = formalAiCargoTargetDirectory(workDirectory, option('--cargo-target-dir', null));
   const directory = path.join(formalAiDirectory, 'rust');
   const extracted = path.join(workDirectory, 'crate-source');
-  const target = path.join(workDirectory, 'formal-ai-target');
+  const target = cargoTargetDirectory;
   const probeDirectory = path.join(workDirectory, 'rust-probe');
   const bytes = await readFile(crate);
   const checksum = {
@@ -370,6 +416,18 @@ async function rustWorkloads(formalAiDirectory, inputsPath, outputs) {
     [RUST_PROBE_ENVIRONMENT.inputs]: inputsPath,
     [RUST_PROBE_ENVIRONMENT.directory]: probeDirectory,
   };
+  if (partition) {
+    partitionState.profileEnvironment = formalAiRustProfileEnvironment(environment);
+    partitionState.profile = Object.fromEntries([
+      ...Object.keys(RUST_BUILD_DEFAULTS).filter((name) => name !== 'RUST_TEST_THREADS').map((name) => [name, environment[name]]),
+      ['RUST_TEST_THREADS', '1'], ['patchedCrateOptLevel', PATCHED_CRATE_OPT_LEVEL],
+    ]);
+    partitionState.compiler = (await run('rust-compiler-identity', 'rustc', ['-vV'], { cwd: directory, env: environment })).stdout;
+    await writeFile(path.join(workDirectory, 'rust-compiler-identity.txt'), partitionState.compiler);
+    writeProjectData(path.join(workDirectory, 'compiler-profile.lino'), {
+      profile: partitionState.profile, environment: partitionState.profileEnvironment, configuration,
+    }, { format: 'lino' });
+  }
 
   // formal-ai's Cargo.lock pins the dependencies of the published meta-language; the candidate
   // may need newer ones (for instance tree-sitter-language ^0.1.8 where the lock holds 0.1.7), so
@@ -383,6 +441,7 @@ async function rustWorkloads(formalAiDirectory, inputsPath, outputs) {
     exit: lockRefreshRun.code,
     lockChanged: (await readFile(lockPath, 'utf8')) !== lockBefore,
   };
+  const refreshedLock = partition ? await readFile(lockPath) : null;
   const metadata = JSON.parse((await run('rust-metadata', 'cargo', [
     ...configuration, 'metadata', '--format-version', '1',
   ], { cwd: directory, env: environment })).stdout);
@@ -390,20 +449,29 @@ async function rustWorkloads(formalAiDirectory, inputsPath, outputs) {
   const metaLanguage = metaLanguagePackages[0] ?? {};
   const selfAstCensus = await refreshSelfAstCensus(formalAiDirectory, directory, configuration, environment);
   const workloads = fixture.workloads.filter(({ kind, file }) => kind === 'test' && file.startsWith('rust/'));
-  const filters = [...new Set([...workloads.map(({ filter }) => filter), 'issue_195_probe_'])];
+  // The pinned workload includes an ignored exhaustive round trip. It remains
+  // part of the requested inventory and must execute with the other tests.
+  const filters = ['--include-ignored', ...new Set([...workloads.map(({ filter }) => filter), 'issue_195_probe_'])];
   // formal-ai's own test groups, filtered to the inventoried modules, and the probe, in one patched build.
-  const testRun = await run('rust-workloads', 'cargo', [
+  const testRun = partition ? await runFormalAiNativePartition({
+    partition, fixture, configuration, directory, environment, run, workDirectory, state: partitionState,
+  }) : await run('rust-workloads', 'cargo', [
     ...configuration, 'test', '--no-fail-fast',
     ...[...new Set(workloads.map((entry) => entry.target)), RUST_PROBE_TARGET].flatMap((name) => ['--test', name]),
     // One test at a time, so each test's line names its peak (see `testTrace`).
     '--', '--test-threads=1', ...filters,
   ], { cwd: directory, env: { ...environment, RUST_TEST_THREADS: '1' }, allowFailure: true, traceTests: true });
-  const executed = libtestOutcomes(testRun.combined).map((entry) => {
+  const executed = partition && testRun.outcomes ? testRun.outcomes.map(({ file, name, outcome }) => ({ file, name, outcome }))
+    : libtestOutcomes(testRun.combined).map((entry) => {
     const targetName = RUST_TARGETS[entry.file];
     const workload = workloads.find((candidate) => candidate.target === targetName && entry.name.startsWith(candidate.filter));
     return workload ? { ...entry, file: workload.file } : entry;
   });
   const lock = await readFile(lockPath, 'utf8');
+  if (partition) {
+    if (sha256(refreshedLock) !== sha256(Buffer.from(lock))) throw new Error('Cargo.lock changed after the candidate-only dependency refresh');
+    await writeFile(path.join(workDirectory, 'post-update-Cargo.lock'), lock);
+  }
   const lockEntry = /\[\[package\]\]\nname = "meta-language"\nversion = "([^"]+)"\n(?:source = "([^"]+)"\n)?/u.exec(lock);
   const resolution = {
     declaredRequirement,
@@ -425,13 +493,15 @@ async function rustWorkloads(formalAiDirectory, inputsPath, outputs) {
   const outcome = (name) => probeTests.find((entry) => entry.name === name)?.outcome ?? 'not run';
   const evidence = async (name) => {
     const file = path.join(probeDirectory, `${name}.json`);
-    return existsSync(file) ? JSON.parse(await readFile(file, 'utf8')) : null;
+    return existsSync(file)
+      ? consumeWorkloadWireData(file, path.join(probeDirectory, `${name}.lino`)) : null;
   };
   const probeFailure = (name) => check(`probe test ${name}`, {
     holds: false,
     detail: `the probe test ${outcome(name)}; see ${testRun.log}`,
   });
-  outputs.rust = outcome(RUST_PROBE_TESTS.outputs) === 'passed' ? await evidence('rust-outputs') ?? undefined : undefined;
+  const capturedOutputs = await evidence('rust-outputs');
+  outputs.rust = outcome(RUST_PROBE_TESTS.outputs) === 'passed' ? capturedOutputs ?? undefined : undefined;
   const distinctions = await evidence('distinctionsPreserved');
   const distinctionChecks = distinctions?.checks ?? [];
   if (distinctionChecks.length === 0 ||
@@ -496,10 +566,15 @@ async function rustWorkloads(formalAiDirectory, inputsPath, outputs) {
 async function refreshSelfAstCensus(formalAiDirectory, directory, configuration, environment) {
   const censusDirectory = path.join(formalAiDirectory, SELF_AST_CENSUS_DIRECTORY);
   const before = await readCensus(censusDirectory);
+  if (partition) writeProjectData(path.join(workDirectory, 'self-ast-before.lino'),
+    [...before].sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0), { format: 'lino' });
   const refresh = await run('rust-self-ast-census-refresh', 'cargo', [
     ...configuration, 'run', '--quiet', '--example', SELF_AST_CENSUS_EXAMPLE,
   ], { cwd: directory, env: environment, allowFailure: true });
-  const comparison = compareSelfAstCensus(before, await readCensus(censusDirectory));
+  const after = await readCensus(censusDirectory);
+  if (partition) writeProjectData(path.join(workDirectory, 'self-ast-after.lino'),
+    [...after].sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0), { format: 'lino' });
+  const comparison = compareSelfAstCensus(before, after);
   return {
     command: ['cargo', 'run', '--example', SELF_AST_CENSUS_EXAMPLE].join(' '),
     exit: refresh.code,
@@ -526,8 +601,8 @@ function check(name, { holds, detail }) {
 // The outputs of one runtime are kept beside the logs; the report names the file and its digest.
 async function outputsFile(runtime, value) {
   if (!value) return null;
-  const file = path.join(workDirectory, `${runtime}-outputs.json`);
-  await writeFile(file, `${JSON.stringify(value, null, 2)}\n`);
+  const file = path.join(workDirectory, `${runtime}-outputs.lino`);
+  writeProjectData(file, value);
   return { file: path.basename(file), sha256: sha256(await readFile(file)) };
 }
 
@@ -606,6 +681,37 @@ async function expectedChecksum(artifact) {
     throw new Error(`checksum file names ${name}, expected ${path.basename(artifact)}`);
   }
   return digest;
+}
+
+// An external build cache is admitted only by an explicit CI argument in the
+// fixed task namespace. An ambient Cargo target or a cache marker is not proof
+// of ownership. Inspect existing path components without following symlinks.
+function formalAiCargoTargetDirectory(workDirectory, requested, environment = process.env) {
+  if (requested === null) return path.join(workDirectory, 'formal-ai-target');
+  const temporary = environment.RUNNER_TEMP;
+  if (!['true', '1'].includes(environment.CI) || environment.GITHUB_ACTIONS !== 'true'
+    || typeof temporary !== 'string' || !path.isAbsolute(temporary)
+    || path.resolve(temporary) !== temporary || realpathSync(temporary) !== temporary) {
+    throw new Error('--cargo-target-dir requires the canonical GitHub Actions RUNNER_TEMP directory');
+  }
+  const owner = path.join(temporary, 'issue-195-formal-ai-build');
+  const target = path.join(owner, 'target');
+  if (requested !== target) throw new Error('--cargo-target-dir must name the exact task-owned build target');
+  for (const [parent, child] of [[workDirectory, target], [target, workDirectory]]) {
+    const relative = path.relative(parent, child);
+    if (relative === '' || relative !== '..' && !relative.startsWith('..' + path.sep) && !path.isAbsolute(relative)) {
+      throw new Error('the cached target and fresh workload directory must not contain one another');
+    }
+  }
+  for (const directory of [temporary, owner, target]) {
+    let status;
+    try { status = lstatSync(directory); }
+    catch (error) { if (error.code === 'ENOENT' && directory !== temporary) continue; throw error; }
+    if (status.isSymbolicLink() || !status.isDirectory()) {
+      throw new Error('the task-owned build target cannot traverse a symlink or non-directory');
+    }
+  }
+  return target;
 }
 
 // The parent environment with a single PATH entry on Windows (as in run-issue-195-consumer.mjs).
@@ -746,4 +852,16 @@ function required(name) {
   return value;
 }
 
-await main();
+try {
+  if (mergePartitions) {
+    if (skipRust || option('--cargo-target-dir', null)) throw new Error('merge mode cannot skip native evidence or initialize a Cargo target');
+    const result = await mergeFormalAiPartitionBundles({
+      directories: mergePartitions.split(','), root, tarball, crate, fixture, workDirectory, output,
+      producerResult: required('--producer-result'),
+    });
+    for (const problem of result.problems) console.error(problem);
+    if (result.problems.length) process.exitCode = 1;
+  } else await main();
+} finally {
+  await rm(inputsWirePath, { force: true });
+}

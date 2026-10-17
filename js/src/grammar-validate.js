@@ -60,6 +60,8 @@ export function displayGrammarExpression(expression) {
       return expression.label === null
         ? `capture(${inner(expression.item)})`
         : `${expression.label}:(${inner(expression.item)})`;
+    case 'lexicalScope': return `lexicalScope(${debugString(expression.name)}, ${debugString(expression.owner)}, ${inner(expression.item)})`;
+    case 'lexicalToken': return `lexicalToken(${debugString(expression.name)}, ${debugString(expression.token)})`;
     default: throw new TypeError(`unknown grammar expression kind ${expression.kind}`);
   }
 }
@@ -237,12 +239,12 @@ function computeNullability(rules) {
 function isNullable(expression, nullability) {
   switch (expression.kind) {
     case 'literal': case 'literalInsensitive': return expression.value.length === 0;
-    case 'charRange': case 'charClass': case 'any': return false;
+    case 'charRange': case 'charClass': case 'any': case 'lexicalToken': return false;
     case 'ref': return nullability.get(expression.name) ?? false;
     case 'choice': return expression.items.some((item) => isNullable(item, nullability));
     case 'seq': return expression.items.every((item) => isNullable(item, nullability));
     case 'empty': case 'optional': case 'repeat0': case 'and': case 'not': return true;
-    case 'repeat1': case 'capture': return isNullable(expression.item, nullability);
+    case 'repeat1': case 'capture': case 'lexicalScope': return isNullable(expression.item, nullability);
     case 'repeat': return expression.min === 0 || isNullable(expression.item, nullability);
     default: throw new TypeError(`unknown grammar expression kind ${expression.kind}`);
   }
@@ -265,7 +267,7 @@ function computeSuspiciousNullability(rules, nullability) {
 function isSuspiciousNullable(expression, nullability, suspicious) {
   switch (expression.kind) {
     case 'literal': case 'literalInsensitive': return expression.value.length === 0;
-    case 'charRange': case 'charClass': case 'any': return false;
+    case 'charRange': case 'charClass': case 'any': case 'lexicalToken': return false;
     case 'ref': return suspicious.get(expression.name) ?? false;
     case 'choice': return expression.items.some((item) => isSuspiciousNullable(item, nullability, suspicious));
     case 'seq':
@@ -274,7 +276,7 @@ function isSuspiciousNullable(expression, nullability, suspicious) {
           && expression.items.some((item) => isSuspiciousNullable(item, nullability, suspicious)));
     case 'empty': case 'optional': case 'and': case 'not': return true;
     case 'repeat0': case 'repeat1': case 'repeat': return isNullable(expression.item, nullability);
-    case 'capture': return isSuspiciousNullable(expression.item, nullability, suspicious);
+    case 'capture': case 'lexicalScope': return isSuspiciousNullable(expression.item, nullability, suspicious);
     default: throw new TypeError(`unknown grammar expression kind ${expression.kind}`);
   }
 }

@@ -1,0 +1,1 @@
+Share exact global grammar context shapes during concept proof construction to avoid copying entire lexer declarations for every production. Preserve completed bulk grammar artifacts before aggregate proof generation, keep source-format-free lexer loading and explicit reference semantics, and distribute grammar CI checks across three partitions.

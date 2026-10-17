@@ -1,3 +1,4 @@
+import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExpression, readStringTestHelper, readStringTestSupport } from './frontend-rules.js';
 // Lean 4 emitter. Naturals are `Nat`, integers `Int`; machine integers are
 // represented by `Nat`/`Int` with explicit range checks that `panic!` where
 // Rust would panic. Recursion is structural and annotated as such, so the
@@ -6,12 +7,22 @@
 // JavaScript Number is a `Float`; the kernel cannot compute with `Float`,
 // so an assertion about Numbers is checked when `main` runs, as in the source.
 
-import { unsupported } from './diagnostics.js';
+import { typeError, unsupported } from './diagnostics.js';
+import { renderCollectionConstruction, renderCollectionConstructionType } from './collection-construction-rules.js';
+import { renderOptionalAbsentValue, renderOptionalCoalescing, renderOptionalConsoleText, renderOptionalFlattening, renderOptionalMatch, renderOptionalNumericPresent, renderOptionalPresentValue, renderOptionalPrimitiveTruth, renderOptionalProjection, renderOptionalStrictEquality, renderOptionalTypeQueryPresent, renderOptionalUnwrapping, requireOptionalNumericPredicate } from './optional-value-rules.js';
+import { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';
+import { renderArrayFromMapping } from './array-from-rules.js';
+import { readPrimitiveMethodRenderingRefusal } from './primitive-method-rules.js';
+import { renderRecordProductField, renderRecordType, renderRecordValue } from './record-emission-rules.js';
+import { readUnionTargetRefusal } from './type-syntax-rules.js';
+import { renderCallableApplication, renderCallableFunctionReference, renderCallableFunctionType, renderCallableLambda } from './callable-source-rules.js';
+import { acceptProgramTupleProductModel } from '../typed-program-link-rules.js';
 import { propFunctions } from './proof.js';
 import { renameFunction, renameMain, renameTheorem } from './ir.js';
 import { threadOutput } from './output.js';
-import { EmitState, mutualGroups, numberDependence, opaqueDependence, orderDeclarations, unthreaded } from './emit-common.js';
+import { EmitState, mutualGroups, numberDependence, opaqueDependence, orderDeclarations, typeContains, unthreaded } from './emit-common.js';
 import { LEAN_ROOT_NAMES } from './lean-root-names.js';
+import { renderAbsentNumberExpression } from './primitive-value-rules.js';
 
 const KEYWORDS = new Set([
   'abbrev', 'at', 'attribute', 'axiom', 'by', 'calc', 'class', 'def', 'deriving', 'do', 'else', 'end', 'example',
@@ -125,9 +136,7 @@ def ml_float_rem (x y : Float) : Float :=
     let r := (mx * 2 ^ (ex - e).toNat) % (my * 2 ^ (ey - e).toNat)
     let magnitude := Float.scaleB (Float.ofNat r) e
     if x.toBits.toNat ≥ 2 ^ 63 then -magnitude else magnitude`,
-  stringIncludes: `/-- String.prototype.includes: the search occurs at some position of the string. -/
-def ml_string_includes (string search : String) : Bool :=
-  (List.range (string.length + 1)).any fun index => (string.drop index).startsWith search`,
+  stringIncludes: readStringTestSupport('Lean', 'includes'),
   arrayAt: `/-- The element at an index; a read outside the array, undefined in JavaScript, panics. -/
 def ml_array_at {α : Type} [Inhabited α] (values : Array α) (index : Int) : α :=
   if h : 0 ≤ index ∧ index.toNat < values.size then values[index.toNat]'h.2
@@ -168,7 +177,7 @@ function ident(name) {
 }
 
 export function emitLean(source) {
-  const program = threadOutput(source);
+  const program = threadOutput(source, 'Lean');
   const state = new EmitState(program, 'Lean', ident, KEYWORDS, {
     ctorStyle: 'data',
     generated: (name) => [`${name}.eq_1`],
@@ -239,6 +248,7 @@ class LeanEmitter {
   }
 
   type(type) {
+    if (type.reference || type.kind === 'cell') throw unsupported('mutable structural value', 'shared reference state needs an explicit target state model');
     switch (type.kind) {
       case 'nat':
         return 'Nat';
@@ -263,12 +273,27 @@ class LeanEmitter {
       case 'array':
         this.state.encode('arrays', 'a JavaScript array, which the portable core never mutates, is a Lean Array; a read outside it panics');
         return `(Array ${this.type(type.element)})`;
+      case 'option':
+        return type.absence === 'both' ? `(Option (Option ${this.type(type.element)}))` : `(Option ${this.type(type.element)})`;
+      case 'tuple':
+        return type.elements.length ? `(${type.elements.map((element) => this.type(element)).join(' × ')})` : 'Unit';
+      case 'record':
+        return renderRecordType('Lean', type.fields.map(field => this.type(field.type)));
+      case 'function':
+        return renderCallableFunctionType('Lean', type.params.map(param => this.type(param)), this.type(type.ret));
+      case 'set':
+        return renderCollectionConstructionType('Lean', type.kind, this.type(type.element), '');
+      case 'map':
+        return renderCollectionConstructionType('Lean', type.kind, this.type(type.key), this.type(type.value));
+      case 'union':
+        throw typeError(readUnionTargetRefusal('Lean'));
       default:
         throw new Error(`no Lean type for ${type.kind}`);
     }
   }
 
   data(entry) {
+    if (typeContains(this.program, { kind: 'data', name: entry.fullName }, 'function')) throw unsupported('callable data field', 'callable fields need their own representation and equality encoding before deriving data instances', entry.span);
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
     const ctors = entry.ctors.map((ctor) => {
@@ -282,6 +307,7 @@ class LeanEmitter {
   }
 
   undecidable(name, seen = new Set()) {
+    if (typeContains(this.program, { kind: 'data', name }, 'float')) return true;
     if (seen.has(name)) return false;
     seen.add(name);
     const bad = (type, nested) => type.kind === 'float' || (type.kind === 'array' && bad(type.element, true))
@@ -385,6 +411,18 @@ class LeanEmitter {
   }
 
   expr(e, depth) {
+    if (e.k === 'ctor' && e.frozen && this.program.sourceLanguage === 'JavaScript') throw unsupported('explicit data object freeze', 'this target needs a JavaScript property descriptor model to retain explicit constructor freezing', e.span);
+    if (e.k === 'tuple' && Object.hasOwn(e, 'productModel')) {
+      if (!acceptProgramTupleProductModel(e.productModel, e.frozen)) throw unsupported('immutable tuple product model', 'the tuple model must be immutable value product with explicit frozen evidence', e.span);
+      const pending = [e.type];
+      while (pending.length) {
+        const type = pending.pop();
+        if (type.kind !== 'tuple') continue;
+        if (type.elements.length < 2) throw unsupported('immutable tuple arity', 'this target needs a nominal product representation to distinguish unit and single-element tuple arities', e.span);
+        pending.push(...type.elements);
+      }
+    }
+    if (['cellAllocate', 'cellRead', 'cellWrite', 'referenceAllocate', 'referenceRead', 'referenceWrite'].includes(e.k)) throw unsupported('mutable structural value', 'shared reference state needs an explicit target state model', e.span);
     switch (e.k) {
       case 'lit':
         return this.literal(e);
@@ -399,6 +437,94 @@ class LeanEmitter {
       case 'call': {
         const head = this.state.ref(e.fn);
         return e.args.length ? `(${head} ${e.args.map((arg) => this.expr(arg, depth)).join(' ')})` : head;
+      }
+      case 'functionRef':
+        return renderCallableFunctionReference('Lean', this.state.ref(e.fn));
+      case 'apply':
+        return renderCallableApplication('Lean', this.expr(e.fn, depth), e.args.map(arg => this.expr(arg, depth)));
+      case 'lambda':
+        return renderCallableLambda('Lean', e.params.map(param => param.name), e.params.map(param => this.type(param.type)), '', this.expr(e.body, depth), []);
+      case 'record':
+        return renderRecordValue('Lean', [], e.entries.map(entry => this.expr(entry.value, depth)));
+      case 'recordField':
+        return renderRecordProductField('Lean', this.expr(e.object, depth), e.index, e.object.type.fields.length);
+      case 'tupleIndex': {
+        const count = e.object.type.kind === 'record' ? e.object.type.fields.length : e.object.type.elements.length;
+        return count === 1 ? this.expr(e.object, depth) : `(${this.expr(e.object, depth)})${'.2'.repeat(e.index)}${e.index < count - 1 ? '.1' : ''}`;
+      }
+      case 'tuple':
+        return e.items.length ? `(${e.items.map((item) => this.expr(item, depth)).join(', ')})` : '()';
+      case 'none':
+        return renderOptionalAbsentValue('Lean', e.type.absence, e.absence, '');
+      case 'some':
+        return renderOptionalPresentValue('Lean', e.type.absence, this.expr(e.value, depth));
+      case 'nullishNumber': {
+        const element = e.arg.type.element;
+        const present = renderOptionalNumericPresent('Lean', element.kind, 'arithmetic');
+        return this.optionalMatch(e.arg, 'ml_present', present, renderAbsentNumberExpression('Lean', 'arithmetic', 'null'), renderAbsentNumberExpression('Lean', 'arithmetic', 'undefined'), depth);
+      }
+      case 'optionalIndexNumber':
+        return this.optionalMatch(e.arg, 'ml_present', renderOptionalNumericPresent('Lean', e.arg.type.element.kind, 'array-index'), renderAbsentNumberExpression('Lean', 'array-index', 'null'), renderAbsentNumberExpression('Lean', 'array-index', 'undefined'), depth);
+      case 'truthy':
+        return this.truthy(e.arg, depth);
+      case 'strictEqual':
+        return this.strictEqual(e, depth);
+      case 'optionalText': {
+        const element = e.arg.type.element;
+        let present = element.kind === 'string' ? 'ml_present' : element.kind === 'unit' ? '"undefined"' : this.toText({ k: 'var', name: 'ml_present', type: element }, depth, e.console);
+        present = renderOptionalConsoleText('Lean', present, ['int', 'nat', 'fixed'].includes(element.kind), e.console, false);
+        return this.optionalMatch(e.arg, 'ml_present', present, '"null"', '"undefined"', depth);
+      }
+      case 'optionalTypeOf':
+        return this.optionalMatch(e.arg, 'ml_present', renderOptionalTypeQueryPresent('Lean', JSON.stringify(e.present ?? 'undefined')), '"object"', '"undefined"', depth);
+      case 'unwrapOption':
+        return renderOptionalUnwrapping('Lean', e.arg.type.absence, this.expr(e.arg, depth), '', '');
+      case 'optionalPredicate': {
+        const present = requireOptionalNumericPredicate(e.arg.type.element.kind) ? this.math({ k: 'math', op: e.op, args: [{ k: 'var', name: 'ml_present', type: { kind: 'float' } }], type: { kind: 'bool' } }, depth) : 'false';
+        return this.optionalMatch(e.arg, 'ml_present', present, 'false', 'false', depth);
+      }
+      case 'flattenOption': {
+        return renderOptionalFlattening('Lean', e.value.type.absence, e.value.type.element.absence, e.type.absence, this.expr(e.value, depth));
+      }
+      case 'coalesce':
+        return renderOptionalCoalescing('Lean', e.left.type.absence, this.expr(e.left, depth), '', this.expr(e.right, depth));
+      case 'optionalField': {
+        const count = e.object.type.element.fields.length;
+        const field = count === 1 ? 'ml_record' : `ml_record${'.2'.repeat(e.index)}${e.index < count - 1 ? '.1' : ''}`;
+        return renderOptionalProjection('Lean', e.object.type.absence, this.expr(e.object, depth), '', 'ml_record', field, '');
+      }
+      case 'optionalProject': {
+        const length = e.object.type.element.kind === 'string' ? renderStringLengthExpression('Lean', 'ml_value') : '(Float.ofNat ml_value.size)';
+        return renderOptionalProjection('Lean', e.object.type.absence, this.expr(e.object, depth), '', 'ml_value', length, '');
+      }
+      case 'optionalIndex': {
+        const index = this.expr(e.index, depth);
+        const value = this.expr(e.array, depth);
+        return renderOptionalArrayRead('Lean', e.index.type.kind, value, index);
+      }
+      case 'method':
+        return this.method(e, depth);
+      case 'stringPoints':
+        return renderStringPointIteration('Lean', false, this.expr(e.object, depth));
+      case 'set':
+      case 'map': {
+        const set = e.k === 'set';
+        const keyType = set ? e.type.element : e.type.key;
+        const values = this.expr(set ? e.items : e.entries, depth);
+        return renderCollectionConstruction('Lean', e.k, keyType.kind, values, this.type(e.type), '', '');
+      }
+      case 'collectionSize':
+        return `(Float.ofNat ${this.expr(e.object, depth)}.size)`;
+      case 'collectionRead': {
+        const keyType = e.object.type.kind === 'map' ? e.object.type.key : e.object.type.element;
+        const key = e.object.type.kind === 'map' ? 'ml_value.1' : 'ml_value';
+        const equal = keyType.kind === 'float' ? `(${key} == ml_search || (${key}.isNaN && ml_search.isNaN))` : `(${key} == ml_search)`;
+        const result = e.op === 'get' ? `((ml_values.toList.find? (fun ml_value => ${equal})).map (fun ml_pair => ml_pair.2))` : `(ml_values.any (fun ml_value => ${equal}))`;
+        return `(let ml_values := ${this.expr(e.object, depth)}; let ml_search := ${this.expr(e.key, depth)}; ${result})`;
+      }
+      case 'collectionItems': {
+        const map = e.object.type.kind === 'map';
+        return renderCollectionIteration('Lean', map, e.op, this.expr(e.object, depth), '', '');
       }
       case 'ctor': {
         const head = this.state.ctorRef(e.data, e.ctor);
@@ -419,15 +545,13 @@ class LeanEmitter {
       case 'toString':
         return e.arg.type.kind === 'string' ? this.expr(e.arg, depth) : this.toText(e.arg, depth, e.console);
       case 'stringMap':
-        throw unsupported(`.${e.op}()`, e.op.startsWith('trim') ? 'JavaScript whitespace trimming has no Lean library counterpart; Lean trims ASCII whitespace only' : 'Unicode case mapping has no Lean library counterpart; Lean maps ASCII letters only', e.span);
+        throw unsupported(`.${e.op}()`, readStringMapRefusal('Lean', e.op), e.span);
       case 'stringTest': {
         const string = this.expr(e.string, depth);
         const search = this.expr(e.search, depth);
-        if (e.op === 'includes') {
-          this.helpers.add('stringIncludes');
-          return `(ml_string_includes ${string} ${search})`;
-        }
-        return `(String.${e.op} ${string} ${search})`;
+        const helper = readStringTestHelper('Lean', e.op);
+        if (helper) this.helpers.add(helper);
+        return renderStringTestExpression('Lean', e.op, string, search);
       }
       case 'cast':
         return this.cast(e, depth);
@@ -438,7 +562,7 @@ class LeanEmitter {
       case 'append':
         return `(${this.expr(e.left, depth)} ++ ${this.expr(e.right, depth)})`;
       case 'index': {
-        this.state.arrayRead();
+        if (!e.provenInBounds) this.state.arrayRead();
         this.helpers.add('arrayAt');
         const values = this.expr(e.array, depth);
         const index = this.expr(e.index, depth);
@@ -449,6 +573,7 @@ class LeanEmitter {
         return `(ml_array_at ${values} ${e.index.type.kind === 'nat' ? `(Int.ofNat ${index})` : index})`;
       }
       case 'length':
+        if (e.array.type.kind === 'string') return renderStringLengthExpression('Lean', this.expr(e.array, depth));
         return `(${e.type.kind === 'float' ? 'Float.ofNat' : 'Int.ofNat'} ${this.expr(e.array, depth)}.size)`;
       case 'math':
         return this.math(e, depth);
@@ -458,6 +583,51 @@ class LeanEmitter {
   }
 
   /** Math and Number functions: Float's where they agree with JavaScript, the math helpers otherwise. */
+  method(e, depth) {
+    if (e.object.type.kind !== 'array') throw unsupported(`.${e.op}()`, readPrimitiveMethodRenderingRefusal('Lean', e.object.type.kind, e.op), e.span);
+    const object = this.expr(e.object, depth);
+    if (e.op === 'join') {
+      const text = (name, type) => {
+        if (type.kind === 'unit') return '""';
+        if (type.kind === 'option') return `(match ${name} with | ${type.absence === 'both' ? 'some (some ml_present)' : 'some ml_present'} => ${text('ml_present', type.element)} | _ => "")`;
+        return type.kind === 'string' ? name : this.toText({ k: 'var', name, type }, depth, false);
+      };
+      return `(String.intercalate ${this.expr(e.args[0], depth)} (${object}.toList.map (fun ml_value => ${text('ml_value', e.object.type.element)})))`;
+    }
+    if (e.op === 'reduce' && e.args.length === 1) throw unsupported('array reduce without an initial value', 'the empty-array TypeError needs an operational abort encoding in Lean', e.span);
+    if (!['map', 'filter', 'find', 'findIndex', 'some', 'every', 'flatMap', 'reduce'].includes(e.op)) throw unsupported(`.${e.op}()`, readPrimitiveMethodRenderingRefusal('Lean', 'array', e.op) || 'this array operation needs an operational encoding in Lean', e.span);
+    const callback = e.args[0];
+    if (e.op === 'map') return renderArrayFromMapping('Lean', object, this.expr(callback, depth), callback.type.params.length, '');
+    const args = e.op === 'reduce' ? ['ml_accumulator', 'ml_pair.1', '(Float.ofNat ml_pair.2)', 'ml_values'] : ['ml_pair.1', '(Float.ofNat ml_pair.2)', 'ml_values'];
+    const call = callback.type.params.length ? `(ml_callback ${args.slice(0, callback.type.params.length).join(' ')})` : 'ml_callback';
+    const head = `(let ml_values := ${object}; let ml_callback := ${this.expr(callback, depth)}; `;
+    const pairs = 'ml_values.toList.zipIdx';
+    const lambda = `(fun ml_pair => ${call})`;
+    if (e.op === 'flatMap') return `${head} (${pairs}.flatMap (fun ml_pair => ${call}.toList)).toArray)`;
+    if (e.op === 'some' || e.op === 'every') return `${head} ${pairs}.${e.op === 'some' ? 'any' : 'all'} ${lambda})`;
+    if (e.op === 'filter') return `${head} ((${pairs}.filter ${lambda}).map (fun ml_pair => ml_pair.1)).toArray)`;
+    if (e.op === 'find') return `${head} (${pairs}.find? ${lambda}).map (fun ml_pair => ml_pair.1))`;
+    if (e.op === 'findIndex') return `${head} ((${pairs}.find? ${lambda}).map (fun ml_pair => Float.ofNat ml_pair.2)).getD (-1 : Float))`;
+    return `${head} ${pairs}.foldl (fun ml_accumulator ml_pair => ${call}) ${this.expr(e.args[1], depth)})`;
+  }
+
+  optionalMatch(arg, binder, present, nullCase, undefinedCase, depth) {
+    return renderOptionalMatch('Lean', arg.type.absence, this.expr(arg, depth), binder, present, nullCase, undefinedCase);
+  }
+
+  truthy(arg, depth) {
+    if (arg.type.kind === 'option') return this.optionalMatch(arg, 'ml_present', this.truthy({ k: 'var', name: 'ml_present', type: arg.type.element }, depth), 'false', 'false', depth);
+    const value = this.expr(arg, depth);
+    return renderOptionalPrimitiveTruth('Lean', arg.type.kind, value, '', false, Boolean(arg.type.signed));
+  }
+
+  strictEqual(e, depth) {
+    const a = e.left.type.kind === 'option' ? e.left.type.element : e.left.type;
+    const b = e.right.type.kind === 'option' ? e.right.type.element : e.right.type;
+    const compare = JSON.stringify(a) === JSON.stringify(b) ? '(ml_left == ml_right)' : 'false';
+    return renderOptionalStrictEquality('Lean', e.left.type.kind, e.left.type.absence ?? '', e.right.type.kind, e.right.type.absence ?? '', compare, this.expr(e.left, depth), this.expr(e.right, depth), e.negate);
+  }
+
   math(e, depth) {
     const args = e.args.map((arg) => this.expr(arg, depth));
     const native = { abs: 'Float.abs', floor: 'Float.floor', ceil: 'Float.ceil', sqrt: 'Float.sqrt', isFinite: 'Float.isFinite', isNaN: 'Float.isNaN' }[e.op];

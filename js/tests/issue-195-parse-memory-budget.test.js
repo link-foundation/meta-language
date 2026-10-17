@@ -15,7 +15,7 @@ import { compileGrammar } from '../src/grammar.js';
 import { parseGrammarLinks } from '../src/grammar-links.js';
 import { memoryBudget } from '../src/grammar-runtime/executor.js';
 import { nativeGrammarText } from '../src/native-grammar-parser.js';
-import { recordIssue195Observations } from './support/issue-195-observations.js';
+import { recordIssue195Observations, recordIssue195DirectiveObservation } from './support/issue-195-observations.js';
 
 const REQUIREMENT = 'I195-RESOURCE-PARSE-MEMORY-BUDGET';
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -76,6 +76,8 @@ test('under a capped heap a large TypeScript parse ends with a diagnostic instea
   const { rejection, heapMiB } = JSON.parse(run.stdout);
   assert.deepEqual(rejection, { reason: 'memoryBudget', limit: 100000 });
   assert.ok(heapMiB < 128, `heap ${heapMiB} MiB`);
+  recordIssue195DirectiveObservation('I195-RESOURCE-BOUNDED-MEMORY-REGRESSIONS', ['parseMemoBudgetBoundedHeap'],
+    'under a capped heap a large TypeScript parse ends with a diagnostic instead of exhausting the heap');
   observe(['cappedHeapParseEndsWithDiagnostic'],
     'under a capped heap a large TypeScript parse ends with a diagnostic instead of exhausting the heap');
 });

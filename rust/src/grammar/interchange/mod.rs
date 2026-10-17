@@ -633,7 +633,9 @@ fn round_trip_command(context: &mut Context<'_>) -> Result<i32, CommandError> {
     .map_err(|error| match error {
         GrammarRoundTripError::Import(error) => import_failure(&file, &format, &error),
         GrammarRoundTripError::Emit(error) => emit_failure(&format, &error),
-        error @ (GrammarRoundTripError::Normalize(_) | GrammarRoundTripError::MissingStartRule) => {
+        error @ (GrammarRoundTripError::Normalize(_)
+        | GrammarRoundTripError::MissingStartRule
+        | GrammarRoundTripError::LexicalDeclaration(_)) => {
             CommandError::with_detail(format!("cannot round-trip {file}"), error.to_string())
         }
     })?;

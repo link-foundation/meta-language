@@ -21,7 +21,9 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
 import { makeScratchDirectory } from '../../scripts/lib/scratch.mjs';
-import { ORACLE_GRAMMAR_DIRECTORY, PACKAGED_GRAMMAR_DIRECTORY, grammarFile } from './grammar-files.mjs';
+import { ORACLE_GRAMMAR_DIRECTORY, PACKAGED_GRAMMAR_DIRECTORY, grammarDirectory, grammarFile } from './grammar-files.mjs';
+import { externalGrammarDirectory, readExternalGrammarAsset } from './external-grammar-cache.mjs';
+import { readProjectData, resolveProjectDataPath, writeProjectData } from './project-data.mjs';
 
 const run = promisify(execFile);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -40,10 +42,11 @@ const rustLockPath = join(root, 'rust/src/data/grammar-lock.json');
  * generated parser or the Rust build.
  */
 export const GRAMMAR_SOURCES = Object.freeze({
-  agda: { crate: 'tree-sitter-agda', dir: '.' },
+  agda: { crate: 'tree-sitter-agda', dir: '.', oracle: true },
   bash: { crate: 'tree-sitter-bash', dir: '.' },
   c: { crate: 'tree-sitter-c', dir: '.', oracle: true },
   cmake: {
+    oracle: true,
     vendored: 'rust/vendor/tree-sitter-cmake',
     upstream: 'uyha/tree-sitter-cmake',
     version: 'v0.7.5',
@@ -53,7 +56,7 @@ export const GRAMMAR_SOURCES = Object.freeze({
     patch: 'rust/vendor/tree-sitter-cmake/scanner-state.patch',
     dir: '.',
   },
-  cpp: { crate: 'tree-sitter-cpp', dir: '.' },
+  cpp: { crate: 'tree-sitter-cpp', dir: '.', oracle: true },
   csv: {
     vendored: 'rust/vendor/tree-sitter-csv',
     upstream: 'tree-sitter-grammars/tree-sitter-csv',
@@ -66,19 +69,19 @@ export const GRAMMAR_SOURCES = Object.freeze({
     dir: 'csv',
   },
   csharp: { crate: 'tree-sitter-c-sharp', dir: '.' },
-  css: { crate: 'tree-sitter-css', dir: '.' },
-  dart: { crate: 'tree-sitter-dart', dir: '.' },
+  css: { crate: 'tree-sitter-css', dir: '.', oracle: true },
+  dart: { crate: 'tree-sitter-dart', dir: '.', oracle: true },
   diff: { crate: 'tree-sitter-diff', dir: '.', oracle: true },
-  dtd: { crate: 'tree-sitter-xml', dir: 'dtd' },
+  dtd: { crate: 'tree-sitter-xml', dir: 'dtd', oracle: true },
   elixir: { crate: 'tree-sitter-elixir', dir: '.' },
   elm: { crate: 'tree-sitter-elm', dir: '.' },
-  erlang: { crate: 'tree-sitter-erlang', dir: '.' },
+  erlang: { crate: 'tree-sitter-erlang', dir: '.', oracle: true },
   go: { crate: 'tree-sitter-go', dir: '.', oracle: true },
   graphql: { crate: 'tree-sitter-graphql', dir: '.', oracle: true },
-  groovy: { crate: 'tree-sitter-groovy', dir: '.' },
+  groovy: { crate: 'tree-sitter-groovy', dir: '.', oracle: true },
   haskell: { crate: 'tree-sitter-haskell', dir: '.' },
-  hcl: { crate: 'tree-sitter-hcl', dir: '.' },
-  html: { crate: 'tree-sitter-html', dir: '.' },
+  hcl: { crate: 'tree-sitter-hcl', dir: '.', oracle: true },
+  html: { crate: 'tree-sitter-html', dir: '.', oracle: true },
   ini: { crate: 'tree-sitter-ini', dir: '.', oracle: true },
   java: { crate: 'tree-sitter-java', dir: '.', oracle: true },
   javascript: { crate: 'tree-sitter-javascript', dir: '.', oracle: true },
@@ -86,35 +89,37 @@ export const GRAMMAR_SOURCES = Object.freeze({
   json5: { crate: 'tree-sitter-json5-orchard', dir: '.', oracle: true },
   kotlin: { crate: 'tree-sitter-kotlin-ng', dir: '.' },
   lean: {
+    oracle: true,
     vendored: 'rust/vendor/tree-sitter-lean',
     upstream: 'wvhulle/tree-sitter-lean',
     version: 'bd942cd2795016239be02b3b3d5ef635645ddd38',
     revision: 'bd942cd2795016239be02b3b3d5ef635645ddd38',
-    // The tree-sitter-lean4 0.3.0 crate's sources, vendored so rust/build.rs
+    // The tree-sitter-lean4 0.3.0 crate's sources, vendored so the development oracle build
     // compiles them with MSVC's /utf-8: the crate's build script does not, and
     // its non-ASCII node names then are not UTF-8 on Windows.
     dir: '.',
   },
-  lua: { crate: 'tree-sitter-lua', dir: '.' },
+  lua: { crate: 'tree-sitter-lua', dir: '.', oracle: true },
   make: { crate: 'tree-sitter-make', dir: '.', oracle: true },
   markdown: { crate: 'tree-sitter-md-025', dir: 'tree-sitter-markdown' },
   markdown_inline: { crate: 'tree-sitter-md-025', dir: 'tree-sitter-markdown-inline' },
   matlab: { crate: 'tree-sitter-matlab', dir: '.' },
-  nix: { crate: 'tree-sitter-nix', dir: '.' },
+  nix: { crate: 'tree-sitter-nix', dir: '.', oracle: true },
   ocaml: { crate: 'tree-sitter-ocaml', dir: 'grammars/ocaml' },
   ocaml_interface: { crate: 'tree-sitter-ocaml', dir: 'grammars/interface' },
-  odin: { crate: 'tree-sitter-odin', dir: '.' },
-  pascal: { crate: 'tree-sitter-pascal', dir: '.' },
+  odin: { crate: 'tree-sitter-odin', dir: '.', oracle: true },
+  pascal: { crate: 'tree-sitter-pascal', dir: '.', oracle: true },
   perl: { crate: 'ts-parser-perl', dir: '.' },
   php: { crate: 'tree-sitter-php', dir: 'php' },
-  powershell: { crate: 'tree-sitter-powershell', dir: '.' },
+  powershell: { crate: 'tree-sitter-powershell', dir: '.', oracle: true },
   proto: { crate: 'tree-sitter-proto', dir: '.', oracle: true },
-  python: { crate: 'tree-sitter-python', dir: '.' },
-  r: { crate: 'tree-sitter-r', dir: '.' },
+  python: { crate: 'tree-sitter-python', dir: '.', oracle: true },
+  r: { crate: 'tree-sitter-r', dir: '.', oracle: true },
   racket: { crate: 'tree-sitter-racket', dir: '.', oracle: true },
   regex: { crate: 'tree-sitter-regex', dir: '.', oracle: true },
   ruby: { crate: 'tree-sitter-ruby', dir: '.' },
   rocq: {
+    oracle: true,
     vendored: 'rust/vendor/tree-sitter-rocq',
     upstream: 'aruzdh/tree-sitter-rocq',
     version: '300fe33fc299c30f736fd56d8ef8a28b08acd4e6',
@@ -143,17 +148,17 @@ export const GRAMMAR_SOURCES = Object.freeze({
   scala: { crate: 'tree-sitter-scala', dir: '.' },
   scheme: { crate: 'tree-sitter-scheme', dir: '.', oracle: true },
   solidity: { crate: 'tree-sitter-solidity', dir: '.', oracle: true },
-  sql: { crate: 'tree-sitter-sequel', dir: '.' },
+  sql: { crate: 'tree-sitter-sequel', dir: '.', oracle: true },
   // The 0.7.4 scanner exits through stderr when allocation fails, which a
   // Wasm parser cannot import; the Wasm build traps instead.
   swift: { crate: 'tree-sitter-swift', dir: '.', wasmPatch: 'js/scripts/grammar-patches/tree-sitter-swift-wasm.patch' },
-  toml: { crate: 'tree-sitter-toml-ng', dir: '.' },
+  toml: { crate: 'tree-sitter-toml-ng', dir: '.', oracle: true },
   tsx: { crate: 'tree-sitter-typescript', dir: 'tsx', oracle: true },
   typescript: { crate: 'tree-sitter-typescript', dir: 'typescript', oracle: true },
-  vb: { crate: 'tree-sitter-vb-dotnet', dir: '.' },
-  xml: { crate: 'tree-sitter-xml', dir: 'xml' },
+  vb: { crate: 'tree-sitter-vb-dotnet', dir: '.', oracle: true },
+  xml: { crate: 'tree-sitter-xml', dir: 'xml', oracle: true },
   yaml: { crate: 'tree-sitter-yaml', dir: '.' },
-  zig: { crate: 'tree-sitter-zig', dir: '.' },
+  zig: { crate: 'tree-sitter-zig', dir: '.', oracle: true },
 });
 
 // zlib writes a zero mtime, so identical wasm always yields identical archives.
@@ -261,8 +266,8 @@ export async function grammarSource(id, versions) {
   if (source.vendored) {
     return {
       ...source,
-      crateDir: join(root, source.vendored),
-      parser: gunzipSync(await readFile(join(root, source.vendored, 'src/parser.c.gz'))),
+      crateDir: externalGrammarDirectory(source.vendored),
+      parser: gunzipSync(readExternalGrammarAsset(`${source.vendored}/src/parser.c.gz`)),
     };
   }
   const version = versions.get(source.crate);
@@ -305,8 +310,8 @@ export async function checkoutUpstream(source, checkout, treeSitter, { regenerat
 // headers the vendored copy keeps, so rust/build.rs compiles them.
 async function replaceVendoredParser(source, generated) {
   const parser = await readFile(join(generated, 'parser.c'));
-  await writeFile(join(root, source.vendored, 'src/parser.c.gz'), gzipSync(parser, { level: 9 }));
-  const headers = join(root, source.vendored, 'src/tree_sitter');
+  await writeFile(join(externalGrammarDirectory(`${source.vendored}/src`), 'parser.c.gz'), gzipSync(parser, { level: 9 }));
+  const headers = externalGrammarDirectory(`${source.vendored}/src/tree_sitter`);
   for (const header of await readdir(headers)) {
     if (existsSync(join(generated, 'tree_sitter', header))) await cp(join(generated, 'tree_sitter', header), join(headers, header));
   }
@@ -372,7 +377,9 @@ async function buildOne(id, versions, treeSitter, options) {
       maxBuffer: 64 * 1024 * 1024,
     });
     const wasm = await readFile(output);
-    await writeFile(join(root, grammarFile(source, `${id}.wasm.gz`)), compressWasm(wasm));
+    const destination = externalGrammarDirectory(grammarDirectory(source));
+    await mkdir(destination, { recursive: true });
+    await writeFile(join(destination, `${id}.wasm.gz`), compressWasm(wasm));
     const license = await licenseText(source.vendored ? join(work, 'crate') : source.crateDir);
     if (license) await writeFile(join(root, grammarFile(source, `${id}.LICENSE`)), license);
     return {
@@ -424,7 +431,7 @@ async function checkLock(lock, versions) {
     if (sha256(parser) !== entry.parserSha256) {
       problems.push(`${id}: parser.c digest differs from the Rust build input`);
     }
-    const wasm = gunzipSync(await readFile(join(root, grammarFile(source, `${id}.wasm.gz`))));
+    const wasm = gunzipSync(readExternalGrammarAsset(grammarFile(source, `${id}.wasm.gz`)));
     if (sha256(wasm) !== entry.wasmSha256) problems.push(`${id}: wasm digest mismatch`);
   }
   return problems;
@@ -486,20 +493,20 @@ ${table(true)}`;
 
 /** The lock ships in both packages: npm under src/vendor, the crate under src/data. */
 async function writeLock(lock) {
-  const text = `${JSON.stringify(lock, null, 2)}\n`;
-  await writeFile(lockPath, text);
-  await writeFile(rustLockPath, text);
+  writeProjectData(lockPath, lock);
+  writeProjectData(rustLockPath, lock);
   await writeNotice(lock);
 }
 
 async function main() {
   const args = process.argv.slice(2);
   const versions = await cargoLockVersions();
-  const previous = existsSync(lockPath) ? JSON.parse(await readFile(lockPath, 'utf8')) : null;
+  const previous = existsSync(resolveProjectDataPath(lockPath)) ? readProjectData(lockPath) : null;
 
   if (args.includes('--check')) {
     const problems = await checkLock(previous, versions);
-    if (!existsSync(rustLockPath) || (await readFile(rustLockPath, 'utf8')) !== (await readFile(lockPath, 'utf8'))) {
+    if (!existsSync(resolveProjectDataPath(rustLockPath))
+      || JSON.stringify(readProjectData(rustLockPath)) !== JSON.stringify(previous)) {
       problems.push('rust/src/data/grammar-lock.json differs from the npm grammar lock');
     }
     if (problems.length) {

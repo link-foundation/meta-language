@@ -37,6 +37,45 @@ pub fn rename_expr(expr: &Expr, env: &Env, scope: &mut Scope<'_>) -> Expr {
                 ..expr.clone()
             }
         }
+        Node::Lambda { params, body } => {
+            let value = serde_json::to_value(expr).expect("a checked lambda is serializable");
+            let facts =
+                crate::translation::surface_reference_facts::create_surface_reference_facts(&value);
+            let plan = crate::translation::callable_source_rules::plan_callable_parameter_ownership(
+                &facts.starts,
+                &facts.counts,
+                &facts.labels,
+                &facts.targets,
+                facts.root,
+            );
+            let mut inner = env.clone();
+            let mut child = scope.child();
+            let params = plan
+                .as_chunks::<3>()
+                .0
+                .iter()
+                .map(|owner| {
+                    let index = owner[1]
+                        .to_string()
+                        .parse::<usize>()
+                        .expect("a parameter plan retains its actual ordinal");
+                    let parameter = &params[index];
+                    let name = child.fresh(&parameter.name);
+                    inner.insert(parameter.name.clone(), name.clone());
+                    super::LambdaParam {
+                        name,
+                        ..parameter.clone()
+                    }
+                })
+                .collect();
+            Expr {
+                node: Node::Lambda {
+                    params,
+                    body: Box::new(rename_expr(body, &inner, &mut child)),
+                },
+                ..expr.clone()
+            }
+        }
         Node::Match { scrutinee, cases } => {
             let scrutinee = rename_expr(scrutinee, env, scope);
             let cases = cases
@@ -153,7 +192,12 @@ pub fn rename_prop(prop: &Prop, env: &Env, scope: &mut Scope<'_>) -> Prop {
 /// a loop of a million iterations needs no million stack frames.
 #[must_use]
 pub fn tail_loop(entry: &FnDecl) -> bool {
-    entry.generated && entry.recursive && tail_calls_only(&entry.body, &entry.full_name, true)
+    entry.recursive
+        && (entry.generated
+            || entry.source_loop.as_ref().is_some_and(|proof| {
+                super::super::source_loops::validate_source_loop(entry, &proof.language).is_ok()
+            }))
+        && tail_calls_only(&entry.body, &entry.full_name, true)
 }
 
 fn tail_calls_only(expr: &Expr, name: &str, tail: bool) -> bool {
@@ -303,6 +347,7 @@ pub fn rename_main(
                 value,
                 constant,
                 span,
+                source_pure_unit_call,
             } => {
                 let value = rename_expr(value, &env, &mut scope);
                 let fresh = scope.fresh(name);
@@ -312,6 +357,7 @@ pub fn rename_main(
                     value,
                     constant: *constant,
                     span: *span,
+                    source_pure_unit_call: source_pure_unit_call.clone(),
                 }
             }
             Effect::Unwrap {

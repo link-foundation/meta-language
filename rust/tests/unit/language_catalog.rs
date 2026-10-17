@@ -13,12 +13,18 @@ fn repository_file(path: &str) -> String {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("..")
         .join(path);
-    fs::read_to_string(path).expect("repository file is readable")
+    fs::read_to_string(
+        super::project_data::resolve_project_data_path(path)
+            .expect("one project data storage format"),
+    )
+    .expect("repository file is readable")
 }
 
 fn inventory() -> Value {
-    serde_json::from_str(&repository_file("parity/language-grammar-inventory.json"))
-        .expect("inventory is valid JSON")
+    super::project_data::read_project_data(&repository_file(
+        "parity/language-grammar-inventory.json",
+    ))
+    .expect("inventory is valid JSON")
 }
 
 fn strings(value: &Value) -> Vec<String> {
@@ -48,6 +54,28 @@ fn rust_ships_the_language_catalog_the_javascript_package_ships() {
         .map(|language| language["name"].as_str().expect("name"))
         .collect();
     assert_eq!(names, expected);
+}
+
+#[test]
+fn rust_catalog_retains_source_provenance_embedding_and_edition_metadata() {
+    let catalog: Value = super::project_data::read_project_data(&repository_file(
+        "js/src/data/language-catalog.json",
+    ))
+    .unwrap();
+    for language in catalog["languages"].as_array().unwrap() {
+        let entry = language_entry(language["name"].as_str().unwrap()).unwrap();
+        assert_eq!(
+            entry.grammar_sources,
+            *language["grammarSources"].as_array().unwrap()
+        );
+        assert_eq!(
+            entry.embedded_languages,
+            strings(&language["embeddedLanguages"])
+        );
+        assert_eq!(entry.versions.as_ref(), language.get("versions"));
+        assert_eq!(entry.editions.as_ref(), language.get("editions"));
+        assert_eq!(entry.dialects.as_ref(), language.get("dialects"));
+    }
 }
 
 #[test]
@@ -120,8 +148,9 @@ fn every_registered_extension_dispatches_to_its_language() {
 
 #[test]
 fn grammar_provenance_names_the_locked_grammar_versions_and_digests() {
-    let lock: Value = serde_json::from_str(&repository_file("rust/src/data/grammar-lock.json"))
-        .expect("grammar lock is valid JSON");
+    let lock: Value =
+        super::project_data::read_project_data(&repository_file("rust/src/data/grammar-lock.json"))
+            .expect("grammar lock is valid JSON");
     let inventory = inventory();
     for language in inventory["languages"].as_array().expect("languages") {
         let name = language["name"].as_str().expect("name");
@@ -175,9 +204,12 @@ fn grammar_provenance_names_the_locked_grammar_versions_and_digests() {
                 // specification, a native grammar with the digest of its
                 // Links Notation text.
                 let specification = fs::read(
-                    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                        .join("..")
-                        .join(declared[file].as_str().expect("grammar file")),
+                    super::project_data::resolve_project_data_path(
+                        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                            .join("..")
+                            .join(declared[file].as_str().expect("grammar file")),
+                    )
+                    .expect("one project data storage format"),
                 )
                 .expect("built-in grammar specification is readable");
                 assert_eq!(

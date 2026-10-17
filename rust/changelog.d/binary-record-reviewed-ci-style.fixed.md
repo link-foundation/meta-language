@@ -1,0 +1,1 @@
+Native binary record generation replays reviewed CI diagnostics as linked styles, removing reported redundant clones and renaming conflicting local bindings without changing the checked JavaScript algorithm or frozen producer. Redundant visibility qualifiers in the existing self-translation adapter are corrected. Native compilation and behavioral validation remain CI obligations.

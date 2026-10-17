@@ -7,7 +7,7 @@
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 
-use super::{Group, GroupKind, Translated, translate_group};
+use super::{Context, Group, GroupKind, Translated, translate_group};
 use crate::decorators::DecoratorSet;
 use crate::translation::Language;
 use crate::translation::ir::{Decl, Effect, Node, Program};
@@ -26,7 +26,7 @@ struct ImportScan {
 /// What a JavaScript item declares and names, read from its tokens.
 #[derive(Clone)]
 pub(super) struct Scan {
-    declares: Option<String>,
+    pub(super) declares: Option<String>,
     pub(super) exported: bool,
     is_async: bool,
     mentions: Vec<String>,
@@ -159,9 +159,8 @@ pub(super) fn declared_signatures(program: &Program, constant: bool) -> Vec<Exte
 
 fn portable(ty: &Type) -> bool {
     match ty {
-        Type::Array { element } => portable(element),
         Type::Data { .. } => false,
-        _ => true,
+        _ => ty.children().into_iter().all(portable),
     }
 }
 
@@ -177,6 +176,7 @@ pub(super) struct Binder<'g, 'a> {
     pub(super) decorators: &'g DecoratorSet,
     pub(super) module_directory: &'g [String],
     pub(super) imports: &'g BTreeMap<String, Vec<External>>,
+    pub(super) utf16_strings: bool,
 }
 
 impl Binder<'_, '_> {
@@ -186,6 +186,11 @@ impl Binder<'_, '_> {
             .groups
             .iter()
             .map(|group| match &group.kind {
+                GroupKind::Item { text, .. } if self.from == "TypeScript" => {
+                    super::erase_type_script(text)
+                        .ok()
+                        .and_then(|erased| scan_item(&erased.code))
+                }
                 GroupKind::Item { text, .. } => scan_item(text),
                 _ => None,
             })
@@ -229,7 +234,10 @@ impl Binder<'_, '_> {
                 self.from,
                 self.to,
                 self.decorators,
-                &ModuleContext::default(),
+                &Context {
+                    utf16_strings: self.utf16_strings,
+                    ..Context::default()
+                },
             ));
             return;
         };
@@ -243,7 +251,7 @@ impl Binder<'_, '_> {
             for (imported, local) in &imports.names {
                 if let Some(signature) = provided
                     .iter()
-                    .find(|candidate| candidate.name() == imported)
+                    .find(|candidate| candidate.name() == imported && accept_signature(candidate))
                 {
                     externals.push(signature.renamed(local));
                 }
@@ -270,15 +278,18 @@ impl Binder<'_, '_> {
                 if let Some(signature) = out
                     .signatures
                     .iter()
-                    .find(|candidate| candidate.name() == name)
+                    .find(|candidate| candidate.name() == name && accept_signature(candidate))
                 {
                     externals.push(signature.clone());
                 }
             }
         }
-        let context = ModuleContext {
-            externals,
-            module_directory: Some(self.module_directory.to_vec()),
+        let context = Context {
+            module: ModuleContext {
+                externals,
+                module_directory: Some(self.module_directory.to_vec()),
+            },
+            utf16_strings: self.utf16_strings,
         };
         state.outs[index] = Some(translate_group(
             group,
@@ -297,4 +308,12 @@ struct Visit {
     owners: HashMap<String, usize>,
     outs: Vec<Option<Translated>>,
     visiting: HashSet<usize>,
+}
+
+const fn accept_signature(signature: &External) -> bool {
+    let (constant, literal) = match signature {
+        External::Constant { literal, .. } => (true, *literal),
+        External::Function { .. } => (false, false),
+    };
+    crate::translation::frontend_rules::accept_declaration_signature(constant, literal)
 }

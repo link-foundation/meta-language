@@ -8,9 +8,12 @@ use super::structural::{
     join_choice, join_sequence, lower_repeat, negated_lookahead_set, repeat_bounds, wrap,
 };
 use super::{EmitReport, GrammarEmitError, finish_lines, unsupported_error};
+use crate::grammar::feature_runtime::lexical_kernel;
 use crate::grammar::{
     CharClassItem, Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleKind, import_antlr,
 };
+
+mod lexical;
 
 const FORMAT: GrammarFormat = GrammarFormat::Antlr;
 const LABEL: &str = "ANTLR";
@@ -52,7 +55,7 @@ const RESERVED_TOKENS: &[&str] = &["EOF"];
 /// their minimum, and counted repetitions that would expand to more than 256
 /// copies of their operand.
 pub fn emit_antlr(grammar: &Grammar) -> Result<(String, EmitReport), GrammarEmitError> {
-    AntlrEmitter::new(grammar).emit()
+    AntlrEmitter::new(grammar)?.emit()
 }
 
 #[derive(Debug)]
@@ -62,10 +65,12 @@ struct AntlrEmitter<'grammar> {
     report: EmitReport,
     foreign: bool,
     rule: String,
+    parser_production: bool,
+    lexical_emission: Option<lexical::LexicalEmission>,
 }
 
 impl<'grammar> AntlrEmitter<'grammar> {
-    fn new(grammar: &'grammar Grammar) -> Self {
+    fn new(grammar: &'grammar Grammar) -> Result<Self, GrammarEmitError> {
         let mut report = EmitReport::default();
         let candidates = grammar
             .rules()
@@ -80,13 +85,16 @@ impl<'grammar> AntlrEmitter<'grammar> {
             reference_candidate,
             &mut report,
         );
-        Self {
+        let lexical_emission = lexical::source_free_lexer_emission(grammar, &names)?;
+        Ok(Self {
             grammar,
             names,
             report,
             foreign: grammar.source_format() != Some(FORMAT),
             rule: String::new(),
-        }
+            parser_production: false,
+            lexical_emission,
+        })
     }
 
     fn emit(mut self) -> Result<(String, EmitReport), GrammarEmitError> {
@@ -135,6 +143,21 @@ impl<'grammar> AntlrEmitter<'grammar> {
         };
         let mut order = effective.into_iter().collect::<Vec<_>>();
         order.extend((0..rules.len()).filter(|&index| Some(index) != effective));
+        if let Some(emission) = &self.lexical_emission {
+            let mut lexical = 0;
+            return order
+                .into_iter()
+                .map(|index| {
+                    if is_lexer_kind(rules[index].kind) {
+                        let selected = emission.order[lexical];
+                        lexical += 1;
+                        selected
+                    } else {
+                        index
+                    }
+                })
+                .collect();
+        }
         order
     }
 
@@ -159,6 +182,7 @@ impl<'grammar> AntlrEmitter<'grammar> {
         let rule = &self.grammar.rules()[index];
         let name = self.names.rule_name(index).to_string();
         self.rule.clone_from(&name);
+        self.parser_production = rule.kind == RuleKind::Normal;
         let lexer = is_lexer_kind(rule.kind);
         self.note_kind(rule, &name);
 
@@ -171,7 +195,18 @@ impl<'grammar> AntlrEmitter<'grammar> {
         }
         lines.extend(doc.comments);
 
-        let body = self.render(rule.expr())?.0;
+        let lexical = self
+            .lexical_emission
+            .as_ref()
+            .and_then(|emission| emission.rules.get(&rule.name))
+            .cloned();
+        let body = self
+            .render(
+                lexical
+                    .as_ref()
+                    .map_or_else(|| rule.expr(), |local| &local.expression),
+            )?
+            .0;
         let mut line = if rule.kind == RuleKind::Silent {
             format!("fragment {name} :")
         } else {
@@ -181,7 +216,11 @@ impl<'grammar> AntlrEmitter<'grammar> {
             line.push(' ');
             line.push_str(&body);
         }
-        if let Some(command) = doc.command {
+        if let Some(command) = doc
+            .command
+            .or_else(|| lexical.as_ref().map(|local| local.command.clone()))
+            .filter(|command| !command.is_empty())
+        {
             line.push(' ');
             line.push_str(&command);
         }
@@ -309,6 +348,37 @@ impl<'grammar> AntlrEmitter<'grammar> {
         let mut rendered = Vec::with_capacity(items.len());
         let mut index = 0;
         while index < items.len() {
+            if !self.foreign
+                && self.parser_production
+                && let GrammarExpr::Not(excluded) = &items[index]
+                && matches!(items.get(index + 1), Some(GrammarExpr::AnyChar))
+            {
+                let operands = match excluded.as_ref() {
+                    GrammarExpr::Choice { alternatives, .. } => alternatives.as_slice(),
+                    _ => std::slice::from_ref(excluded.as_ref()),
+                };
+                let (kinds, values): (Vec<_>, Vec<_>) = operands
+                    .iter()
+                    .map(|operand| {
+                        let (kind, value) = match operand {
+                            GrammarExpr::Terminal(value) => ("literal", value.as_str()),
+                            GrammarExpr::NonTerminal(name) => ("ref", self.names.resolve(name)),
+                            GrammarExpr::Not(inner)
+                                if matches!(inner.as_ref(), GrammarExpr::AnyChar) =>
+                            {
+                                ("not", "any")
+                            }
+                            _ => ("unsupported", ""),
+                        };
+                        (kind.to_owned(), value.to_owned())
+                    })
+                    .unzip();
+                if lexical_kernel::parser_token_negation(true, &kinds, &values) {
+                    rendered.push(self.render_not(excluded)?);
+                    index += 2;
+                    continue;
+                }
+            }
             if self.foreign
                 && let Some((negated, class)) = negated_lookahead_set(items, index)
             {
@@ -338,6 +408,9 @@ impl<'grammar> AntlrEmitter<'grammar> {
     }
 
     fn render_not(&mut self, inner: &GrammarExpr) -> Result<Rendered, GrammarEmitError> {
+        if !self.foreign && self.parser_production && matches!(inner, GrammarExpr::AnyChar) {
+            return Ok(("EOF".to_owned(), Precedence::Atom));
+        }
         if matches!(inner, GrammarExpr::CharClass { negated: false, .. }) {
             self.note("emitted negative lookahead over a character set as a complemented set");
         } else if self.foreign {

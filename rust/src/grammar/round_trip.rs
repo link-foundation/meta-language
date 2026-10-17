@@ -12,6 +12,8 @@
 use std::error::Error;
 use std::fmt;
 
+mod lexical;
+
 use super::emit::{EmitReport, GrammarEmitError};
 use super::import::GrammarImportError;
 use super::merge::{GrammarMergeError, normalized_rule_definition};
@@ -183,6 +185,8 @@ pub enum GrammarRoundTripError {
     Normalize(GrammarMergeError),
     /// The grammar has no start rule to mutate.
     MissingStartRule,
+    /// A source-scoped lexical declaration cannot be extended faithfully.
+    LexicalDeclaration(String),
 }
 
 impl fmt::Display for GrammarRoundTripError {
@@ -194,6 +198,7 @@ impl fmt::Display for GrammarRoundTripError {
             Self::MissingStartRule => {
                 formatter.write_str("the grammar has no start rule to mutate")
             }
+            Self::LexicalDeclaration(message) => formatter.write_str(message),
         }
     }
 }
@@ -249,7 +254,29 @@ pub fn mutate_grammar_start_rule(
     if let Some(format) = grammar.source_format() {
         mutated.set_source_format(format);
     }
+    mutated.set_kinds(grammar.kinds().to_vec());
+    let mut declarations = grammar.declarations().clone();
+    declarations.lexers = declarations
+        .lexers
+        .iter()
+        .map(|lexer| lexical::extend_literal(&mutated, lexer, &start, marker))
+        .collect::<Result<_, _>>()?;
+    mutated.set_declarations(declarations);
     Ok(mutated)
+}
+
+/// Renders the full Links comparison under checked original-owner alpha-renaming.
+///
+/// # Errors
+///
+/// Refuses duplicate original owners, nonbijective actual public bindings and
+/// obligations whose labels cannot be separated from raw lexical rule names.
+pub fn render_grammar_lexical_owner_comparison(
+    grammar: &Grammar,
+) -> Result<String, GrammarRoundTripError> {
+    Ok(super::interchange::render_grammar_links(
+        &lexical::canonical_owners(grammar)?,
+    ))
 }
 
 /// Round trips `source` through a mutated export and reports every failure.

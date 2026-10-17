@@ -39,8 +39,14 @@ pub fn read_native_recovery() -> Value {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("..")
         .join(NATIVE_RECOVERY_FILE);
-    serde_json::from_slice(&fs::read(&path).expect("native recovery records"))
-        .expect("native recovery JSON")
+    super::project_data::read_project_data(
+        &fs::read_to_string(
+            super::project_data::resolve_project_data_path(&path)
+                .expect("one project data storage format"),
+        )
+        .expect("native recovery records"),
+    )
+    .expect("native recovery JSON")
 }
 
 /// The sources a native grammar reads as a merged source extends its
@@ -54,12 +60,17 @@ pub fn merged_extensions() -> BTreeSet<String> {
     let mut sources = BTreeSet::new();
     for entry in fs::read_dir(&directory).expect("native grammar fixtures") {
         let path = entry.expect("native grammar fixture").path();
-        if path.extension().is_none_or(|extension| extension != "json") {
+        if path.extension().is_none_or(|extension| extension != "lino") {
             continue;
         }
-        let fixture: Value =
-            serde_json::from_slice(&fs::read(&path).expect("native grammar fixture"))
-                .expect("native grammar fixture JSON");
+        let fixture: Value = super::project_data::read_project_data(
+            &fs::read_to_string(
+                super::project_data::resolve_project_data_path(&path)
+                    .expect("one project data storage format"),
+            )
+            .expect("native grammar fixture"),
+        )
+        .expect("native grammar fixture JSON");
         for divergence in fixture["divergences"].as_array().into_iter().flatten() {
             if let Some(source) = divergence["source"].as_str() {
                 sources.insert(source.to_string());

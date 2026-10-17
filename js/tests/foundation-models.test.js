@@ -4,6 +4,8 @@
 // production source builds in a consumer's own foundation, and the check
 // rejects a hard-coded universal logic (requirement I195-VISION-FOUNDATION-NEUTRAL).
 // The Rust twin is rust/tests/unit/foundation_models.rs.
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -31,7 +33,7 @@ import { recordIssue195Observations } from './support/issue-195-observations.js'
 const REQUIREMENT = 'I195-VISION-FOUNDATION-NEUTRAL';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const LANGUAGES = ['JavaScript', 'Rust', 'Lean', 'Rocq'];
-const stages = JSON.parse(readFileSync(path.join(root, 'parity/fixtures/translation-stages.json'), 'utf8'));
+const stages = readProjectData(path.join(root, 'parity/fixtures/translation-stages.json'));
 
 function observe(assertions, testName) {
   recordIssue195Observations({
@@ -48,8 +50,8 @@ const kinds = (register) => checkFoundationModels(register).map(({ kind }) => ki
 const copy = () => structuredClone(FOUNDATION_MODELS);
 
 test('foundations are data: every family has distinct models and every language records its own', () => {
-  const register = readFileSync(path.join(root, FOUNDATION_REGISTER), 'utf8');
-  for (const file of FOUNDATION_MODEL_PATHS) assert.equal(readFileSync(path.join(root, file), 'utf8'), register, file);
+  const register = readFileSync(resolveProjectDataPath(path.join(root, FOUNDATION_REGISTER)), 'utf8');
+  for (const file of FOUNDATION_MODEL_PATHS) assert.equal(readFileSync(resolveProjectDataPath(path.join(root, file)), 'utf8'), register, file);
   assert.deepEqual(checkFoundationModels(FOUNDATION_MODELS), []);
   const families = FOUNDATION_MODELS.families.map(({ id }) => id);
   assert.deepEqual(families, ['integer-model', 'overflow-model', 'universe-model', 'effect-model', 'proof-system', 'logic-model']);

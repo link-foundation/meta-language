@@ -20,9 +20,9 @@ Preserved artifacts:
 - `ci-logs/rust-28398677445.log`
 - `ci-logs/javascript-28398677404.log`
 - `ci-logs/rust-28401016525.log`
-- `rust-run-28398677445.json`
-- `javascript-run-28398677404.json`
-- `rust-run-28401016525.json`
+- `rust-run-28398677445.lino`
+- `javascript-run-28398677404.lino`
+- `rust-run-28401016525.lino`
 - `template-data/*`
 
 ## Findings

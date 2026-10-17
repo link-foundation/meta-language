@@ -1,5 +1,7 @@
 import { access, readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
+import { readProjectData, checkProjectData, resolveProjectDataPath } from './project-data.mjs';
 
 import {
   ASSERTION_PROFILES,
@@ -7,8 +9,9 @@ import {
   ISSUE_195_SOURCES,
   buildIssue195Manifest,
 } from './issue-195-requirements.mjs';
-import { buildLanguageCatalog, formatLanguageCatalog } from './build-language-catalog.mjs';
+import { buildLanguageCatalog } from './build-language-catalog.mjs';
 import { CHECKPOINTS, stageGateError } from './issue-195-evidence-stages.mjs';
+import { createObservationVersionValidator } from './observation-version-assertions.mjs';
 
 export {
   ASSERTION_PROFILES,
@@ -19,6 +22,7 @@ export {
 
 const SOURCE_LABELS = Object.freeze({
   issue: 'Issue #195',
+  remainingScope: 'Issue #199: remaining implementation and delivery',
   clarification: 'Full-support clarification',
   acceptanceGate: 'Executable acceptance-gate clarification',
   completeScope: 'Directive to complete the entire scope',
@@ -37,6 +41,20 @@ const SOURCE_LABELS = Object.freeze({
   finishTheWorkAudit: 'Audit of c39470d0: every open row is work this PR delivers',
   bulkDeliveryAudit: 'Re-posted audit of c39470d0: deliver the open rows in bulk',
   bulkDeliveryRepost: 'Second identical re-post of the c39470d0 bulk-delivery audit',
+  bulkDeliveryFinalRepost: 'Final re-post of the c39470d0 bulk-delivery audit',
+  followupDeliveryAudit: 'PR #201 complete delivery audit of 9917e358',
+  latestDeliveryAudit: 'PR #201 progress and remaining-delivery audit of 3bee2a79',
+  formalAiSelfTranslation: 'Formal AI self-translation constructs and release request',
+  reverseStringSemantics: 'Router reverse trimming and Unicode whitespace semantics',
+  globalConceptSpace: 'Captured direct request for one global grammar concept space',
+  recursiveDefinitionsRequest: 'Captured recursive formal definitions and ontology/taxonomy requirements',
+  linksFoundationRequest: 'Captured links foundation and fractal modelling motivation',
+  recordConversationRequest: 'Captured instruction to record all conversation requirements',
+  associativeFoundationRequest: 'Captured project-wide associative stack and meta-theory adoption request',
+  dynamicKnowledgeRequest: 'Captured RDF/OWL, dynamic reconstruction and grammar inference requirements',
+  translationPriorityRequest: 'Captured immediate bidirectional Rust/JavaScript translation priority',
+  multiProjectTranslationRequest: 'Captured reusable translation across multiple real projects',
+  grammarInferenceIssue: 'Issue #224: automatic grammar discovery and attributed semantics',
 });
 
 function allKeys(value, prefix = '') {
@@ -153,7 +171,7 @@ export async function validateIssue195Manifest(manifest, root) {
       }
       for (const relativePath of paths) {
         try {
-          await access(path.join(root, relativePath));
+          await access(resolveProjectDataPath(path.join(root, relativePath)));
         } catch {
           errors.push(`${entry.id} ${runtime} entry point does not exist: ${relativePath}`);
         }
@@ -161,9 +179,7 @@ export async function validateIssue195Manifest(manifest, root) {
     }
   }
 
-  const inventory = JSON.parse(
-    await readFile(path.join(root, 'parity', 'language-grammar-inventory.json'), 'utf8'),
-  );
+  const inventory = readProjectData(path.join(root, 'parity', 'language-grammar-inventory.json'));
   const languageNames = new Set(inventory.languages.map(({ name }) => name));
   const extensionNames = new Set(Object.keys(inventory.extensionDispatch ?? {}));
   for (const name of languageNames) {
@@ -189,20 +205,19 @@ export async function validateIssue195Manifest(manifest, root) {
 
   // Both runtimes dispatch names, aliases, extensions, and default grammars
   // from the same generated catalog, so it must equal the inventory exactly.
-  const lock = JSON.parse(
-    await readFile(path.join(root, 'js', 'src', 'vendor', 'grammars', 'grammar-lock.json'), 'utf8'),
-  );
+  const lock = readProjectData(path.join(root, 'js', 'src', 'vendor', 'grammars', 'grammar-lock.json'));
   let expectedCatalog;
   try {
-    expectedCatalog = formatLanguageCatalog(buildLanguageCatalog(inventory, lock));
+    expectedCatalog = buildLanguageCatalog(inventory, lock);
   } catch (error) {
     errors.push(`language catalog cannot be generated: ${error.message}`);
   }
   if (expectedCatalog) {
     for (const runtime of ['js', 'rust']) {
       const catalogPath = path.join(root, runtime, 'src', 'data', 'language-catalog.json');
-      const shipped = await readFile(catalogPath, 'utf8').catch(() => undefined);
-      if (shipped !== expectedCatalog) {
+      try {
+        checkProjectData(catalogPath, expectedCatalog);
+      } catch {
         errors.push(`${runtime} language catalog does not match the inventory`);
       }
     }
@@ -252,9 +267,12 @@ function resultIndex(resultDocuments) {
 export function evaluateIssue195Acceptance(
   manifest,
   resultDocuments,
-  { checkpoint = 'all', commit = 'WORKTREE' } = {},
+  { checkpoint = 'all', commit = 'WORKTREE', versionPolicyRoot } = {},
 ) {
   const { byTestId, errors } = resultIndex(resultDocuments);
+  let validateVersionContext;
+  try { validateVersionContext = createObservationVersionValidator({ root: versionPolicyRoot }); }
+  catch (error) { errors.push(`observation version policy cannot be validated: ${error.message}`); }
   const knownTestIds = new Set(
     manifest.atomicRequirements.flatMap((entry) => entry.verifications.map((cell) => cell.testId)),
   );
@@ -330,6 +348,10 @@ export function evaluateIssue195Acceptance(
             if (record.fixtureDigest !== manifest.fixtureCatalog[record.fixtureId]?.sha256) {
               reasons.push(`execution record fixture digest mismatch for ${record.fixtureId}`);
             }
+            try {
+              if (!validateVersionContext) throw new Error('the declared version policy is unavailable');
+              validateVersionContext(record, { fixtureFile: manifest.fixtureCatalog[record.fixtureId]?.path });
+            } catch (error) { reasons.push(`execution record version applicability: ${error.message}`); }
             if (record.outcome === 'passed') executed.add(key);
           }
         }
@@ -412,6 +434,35 @@ export function evaluateIssue195Acceptance(
 
 export function compareScopeBaseline(baseline, candidate) {
   const errors = [];
+  for (const field of ['checkpoints', 'resultPolicy']) {
+    if (!Object.hasOwn(baseline, field)) continue;
+    const oldPolicy = baseline[field];
+    const newPolicy = candidate[field];
+    if (!oldPolicy || typeof oldPolicy !== 'object' || Array.isArray(oldPolicy) ||
+        !newPolicy || typeof newPolicy !== 'object' || Array.isArray(newPolicy)) {
+      if (!isDeepStrictEqual(oldPolicy, newPolicy)) {
+        errors.push(`protected acceptance policy changed: ${field}`);
+      }
+      continue;
+    }
+    for (const [key, oldValue] of Object.entries(oldPolicy)) {
+      const newValue = newPolicy[key];
+      if (!Object.hasOwn(newPolicy, key) ||
+          (Array.isArray(oldValue)
+            ? !Array.isArray(newValue) || oldValue.some((value) =>
+              !newValue.some((candidateValue) => isDeepStrictEqual(value, candidateValue)))
+            : !isDeepStrictEqual(oldValue, newValue))) {
+        errors.push(`protected acceptance policy changed: ${field}.${key}`);
+      }
+    }
+    if (field === 'checkpoints') {
+      const oldOrder = Object.keys(oldPolicy);
+      const retainedOrder = Object.keys(newPolicy).filter((key) => Object.hasOwn(oldPolicy, key));
+      if (!isDeepStrictEqual(oldOrder, retainedOrder)) {
+        errors.push('protected acceptance checkpoint order changed');
+      }
+    }
+  }
   const baselineRequirements = new Map(
     baseline.atomicRequirements.map((entry) => [entry.id, entry]),
   );
@@ -426,6 +477,15 @@ export function compareScopeBaseline(baseline, candidate) {
     }
     for (const field of ['source', 'area', 'expectedBehavior']) {
       if (newEntry[field] !== oldEntry[field]) {
+        errors.push(`protected requirement field changed for ${id}: ${field}`);
+      }
+    }
+    for (const field of ['critical', 'fullScopeReleaseBlocker']) {
+      const oldPresent = Object.hasOwn(oldEntry, field);
+      const newPresent = Object.hasOwn(newEntry, field);
+      const strengthened = newPresent && newEntry[field] === true &&
+        (!oldPresent || oldEntry[field] === false);
+      if (!strengthened && (oldPresent !== newPresent || newEntry[field] !== oldEntry[field])) {
         errors.push(`protected requirement field changed for ${id}: ${field}`);
       }
     }
@@ -754,7 +814,8 @@ export function renderIssue195Markdown(manifest, report) {
     '',
     'Every source below is registered with its revision and content hash in `parity/issue-195-sources.json`; `npm run check:issue-195:sources -- --online` reports an edited or unregistered comment.',
     '',
-    ...Object.entries(manifest.sources).map(([key, url]) => `- [${SOURCE_LABELS[key] ?? key}](${url})`),
+    ...Object.entries(manifest.sources).map(([key, url]) =>
+      `- [${SOURCE_LABELS[key] ?? key}](${url.startsWith('parity/') ? `../${url}` : url})`),
     '',
     '## Enforcement status',
     '',

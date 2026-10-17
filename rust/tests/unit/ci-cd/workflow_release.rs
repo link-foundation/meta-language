@@ -146,14 +146,45 @@ fn release_workflow_jobs_have_explicit_timeouts() {
         .iter()
         .map(|(job_name, _)| *job_name)
         .collect::<Vec<_>>();
-    assert_eq!(actual_jobs, expected_jobs);
+    assert_eq!(
+        actual_jobs
+            .iter()
+            .copied()
+            .filter(|job_name| *job_name != "original-link-raw-observations")
+            .collect::<Vec<_>>(),
+        expected_jobs,
+        "preserve all seventeen original jobs in their original order"
+    );
+    let mut complete_jobs = expected_jobs;
+    complete_jobs.insert(10, "original-link-raw-observations");
+    assert_eq!(actual_jobs, complete_jobs);
 
-    for (job_name, timeout_minutes) in expected_timeouts {
+    for (job_name, timeout_minutes) in expected_timeouts
+        .into_iter()
+        .chain([("original-link-raw-observations", 15)])
+    {
         let job = job_block(&workflow, job_name);
-        let expected = format!("    timeout-minutes: {timeout_minutes}\n");
+        // Keep the published Windows grammar exception exactly; every other
+        // test matrix cell retains the original fifteen-minute deadline.
+        let expected = if job_name == "test" {
+            assert!(job.contains("        os: [ubuntu-latest, macos-latest, windows-latest]\n"));
+            assert!(job.contains(
+                "        suite: [grammar, inference, generative, translation, remaining]\n"
+            ));
+            "    timeout-minutes: ${{ matrix.os == 'windows-latest' && matrix.suite == 'grammar' && 30 || 15 }}\n".to_owned()
+        } else {
+            format!("    timeout-minutes: {timeout_minutes}\n")
+        };
         assert!(
             job.contains(&expected),
             "{job_name} should declare {expected:?}"
+        );
+        assert_eq!(
+            job.lines()
+                .filter(|line| line.starts_with("    timeout-minutes:"))
+                .collect::<Vec<_>>(),
+            [expected.trim_end()],
+            "{job_name} should declare its exact deadline once"
         );
     }
 }
@@ -311,9 +342,170 @@ fn rust_script_installation_is_locked_and_retried() {
 #[test]
 fn workflow_propagates_cancellation_without_always_override() {
     let workflow = release_workflow();
-    assert_eq!(workflow.matches("always()").count(), 0);
-    assert!(workflow.contains("!cancelled()"));
-    assert!(!workflow.contains("if: !cancelled()"));
+    // The JavaScript workflow contract retains this one artifact-only upload
+    // after failure/cancellation. It cannot admit a job, run a command or
+    // substitute a successful observation; all execution gates stay unchanged.
+    let diagnostics = r#"      - name: Retain raw source native process diagnostics
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: source-native-diagnostics-original-link-raw-${{ github.sha }}
+          path: issue-195-artifacts/source-native-observations/
+          if-no-files-found: warn
+          retention-days: 30
+
+"#;
+    let prerequisites = r#"    needs: [detect-changes, changelog, cargo-lock, check]
+    if: |
+      !cancelled() &&
+      needs.cargo-lock.result == 'success' &&
+      needs.check.result == 'success' &&
+      (needs.changelog.result == 'success' || needs.changelog.result == 'skipped') && (
+        github.event_name == 'push' ||
+        github.event_name == 'workflow_dispatch' ||
+        inputs.native_test_inputs_changed == true ||
+        needs.detect-changes.outputs.any-code-changed == 'true' ||
+        needs.detect-changes.outputs.rs-changed == 'true' ||
+        needs.detect-changes.outputs.toml-changed == 'true' ||
+        needs.detect-changes.outputs.workflow-changed == 'true'
+      )
+"#;
+    let execution = r#"      - name: Run complete original link raw observations
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        env:
+          CI: 'true'
+          ORIGINAL_LINK_RAW_NATIVE: '1'
+        run: node scripts/with-cache-cleanup.mjs --event test -- node --max-old-space-size=1024 --test --test-concurrency=1 experiments/original-link-complete-table-projection/raw-native-observations.test.mjs
+
+"#;
+    let report = r#"      - name: Retain complete original link raw observations
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: original-link-raw-native-observations-${{ github.sha }}
+          path: issue-195-artifacts/original-link-raw-native-observations.lino
+          if-no-files-found: error
+          retention-days: 7
+
+"#;
+    let mut cases = vec![("original workflow", workflow.clone(), true)];
+    for (name, replacement) in [
+        ("omitted upload", String::new()),
+        ("duplicate upload", diagnostics.repeat(2)),
+        (
+            "success-only upload",
+            diagnostics.replace("always()", "success()"),
+        ),
+        (
+            "cancellable upload",
+            diagnostics.replace("always()", "!cancelled()"),
+        ),
+        (
+            "changed path",
+            diagnostics.replace("source-native-observations/", "other/"),
+        ),
+        (
+            "changed action",
+            diagnostics.replace("upload-artifact@v7", "upload-artifact@v6"),
+        ),
+        (
+            "ignored missing diagnostics",
+            diagnostics.replace("if-no-files-found: warn", "if-no-files-found: ignore"),
+        ),
+        (
+            "changed retention",
+            diagnostics.replace("retention-days: 30", "retention-days: 7"),
+        ),
+        (
+            "command instead of upload",
+            diagnostics.replace("uses: actions/upload-artifact@v7", "run: echo diagnostic"),
+        ),
+    ] {
+        cases.push((name, workflow.replacen(diagnostics, &replacement, 1), false));
+    }
+    cases.push((
+        "upload before execution",
+        workflow.replacen(diagnostics, "", 1).replacen(
+            execution,
+            &(diagnostics.to_owned() + execution),
+            1,
+        ),
+        false,
+    ));
+    cases.push((
+        "another job override",
+        workflow.clone() + "\n  unexpected:\n    if: ${{ always() }}\n",
+        false,
+    ));
+    cases.push((
+        "another execution override",
+        workflow.replacen(execution, &execution.replace("!cancelled()", "always()"), 1),
+        false,
+    ));
+    cases.push((
+        "changed prerequisite",
+        workflow.replacen(
+            job_block(&workflow, "original-link-raw-observations"),
+            &job_block(&workflow, "original-link-raw-observations").replacen(
+                prerequisites,
+                &prerequisites.replace("needs.check.result == 'success'", "true"),
+                1,
+            ),
+            1,
+        ),
+        false,
+    ));
+    cases.push((
+        "changed source command",
+        workflow.replacen(
+            execution,
+            &execution.replace("--test-concurrency=1", "--test-concurrency=2"),
+            1,
+        ),
+        false,
+    ));
+    cases.push((
+        "weakened observation upload",
+        workflow.replacen(
+            report,
+            &report.replace("if-no-files-found: error", "if-no-files-found: warn"),
+            1,
+        ),
+        false,
+    ));
+    for (name, workflow, accepted) in cases {
+        let checked = std::panic::catch_unwind(|| {
+            let raw = job_block(&workflow, "original-link-raw-observations");
+            assert_eq!(workflow.matches(diagnostics).count(), 1);
+            assert_eq!(raw.matches(diagnostics).count(), 1);
+            assert_eq!(raw.matches(prerequisites).count(), 1);
+            assert_eq!(
+                step_block(raw, "Run complete original link raw observations"),
+                execution
+            );
+            assert_eq!(
+                step_block(raw, "Retain complete original link raw observations"),
+                report
+            );
+            assert_eq!(
+                step_block(raw, "Retain raw source native process diagnostics"),
+                diagnostics
+            );
+            assert!(raw.contains(
+                &(report.to_owned()
+                    + diagnostics
+                    + "      - name: Clean raw source observation caches\n")
+            ));
+            // Exclude only the fully authenticated artifact span. The original
+            // cancellation assertions still protect every remaining byte.
+            let workflow = workflow.replacen(diagnostics, "", 1);
+            assert_eq!(workflow.matches("always()").count(), 0);
+            assert!(workflow.contains("!cancelled()"));
+            assert!(!workflow.contains("if: !cancelled()"));
+        });
+        assert_eq!(checked.is_ok(), accepted, "{name}");
+    }
 }
 
 #[test]

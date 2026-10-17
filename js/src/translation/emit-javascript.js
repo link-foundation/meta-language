@@ -1,3 +1,5 @@
+import {checkRustRuntimeShell,recordRustRuntimeShellAssumptions,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
+import { renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
 // JavaScript emitter. Every portable integer is a BigInt, so naturals and
 // integers stay unbounded and machine integers are range-checked exactly as
 // Rust checks them; a Number stays a Number. Data values are plain objects whose `$` property names
@@ -7,9 +9,27 @@
 // proof obligation stays discharged by the source language's kernel.
 
 import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
+import { renderCollectionConstruction } from './collection-construction-rules.js';
+import { renderSurfaceReferenceOperation } from './surface-reference-analysis-rules.js';
+import { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';
+import { renderArrayFromMapping } from './array-from-rules.js';
+import { renderPrimitiveMethodArgument, renderPrimitiveMethodExpression } from './primitive-method-rules.js';
+import { renderRecordField, renderRecordValue } from './record-emission-rules.js';
+import { readOptionalJavaScriptTextPrelude, renderOptionalAbsentValue, renderOptionalCoalescing, renderOptionalFlattening, renderOptionalJavaScriptOperation, renderOptionalPresentValue, renderOptionalPrimitiveTruth, renderOptionalProjection, renderOptionalStrictEquality, renderOptionalUnwrapping } from './optional-value-rules.js';
+import { renderCallableApplication, renderCallableCellOperation, renderCallableFunctionReference, renderCallableLambda } from './callable-source-rules.js';
+import { requireDataObjectFreeze } from './primitive-value-rules.js';
+import { renderJavaScriptUnit, renderTupleProjection, renderTupleValue } from './product-emission-rules.js';
+import { acceptProgramTupleProductModel } from '../typed-program-link-rules.js';
 import { unsupported } from './diagnostics.js';
 import { fixedBounds, typeKey } from './types.js';
 import { renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
+import {readJavaScriptScopedBindingEmission} from './javascript-scoped-binding-emission.js';
+import {reserveJavaScriptScopedBindingDeclarationNames} from './javascript-scoped-binding-emission-rules.js';
+import {checkRustConstFunctionProof} from './rust-const-functions.js';
+import {readRustDiagnosticAttributeNormalization} from './rust-diagnostic-attributes.js';
+import {checkRustOwnedLocalStateProof,RUST_OWNED_LOCAL_STATE_POLICY} from './rust-owned-local-state.js';
+import {validateRustTypeNamespace} from './rust-type-namespace.js';
+import {renderRustOwnedLocalTextInput} from './rust-owned-local-state-rules.js';
 import { EmitState, withParts } from './emit-common.js';
 
 const KEYWORDS = new Set([
@@ -23,6 +43,7 @@ const KEYWORDS = new Set([
 ]);
 
 const HELPERS = {
+  ownedTextInput: renderRustOwnedLocalTextInput(),
   natSub: `function ml_natSub(a, b) {
   return a > b ? a - b : 0n;
 }`,
@@ -66,6 +87,7 @@ function ml_divide(a, b, rounding, zero, remainder, bounds) {
 function ml_showNumber(value) {
   return Object.is(value, -0) ? '-0' : String(value);
 }`,
+  showOptional: readOptionalJavaScriptTextPrelude(),
   at: `// An element of an array; a read outside it, undefined in JavaScript, aborts.
 function ml_at(values, index) {
   const at = Number(index);
@@ -92,15 +114,25 @@ function ident(name) {
   return result;
 }
 
-export function emitJavaScript(program) {
-  const state = new EmitState(program, 'JavaScript', ident, KEYWORDS, { modulesShareTermSpace: true, typeSpace: true });
-  return new JavaScriptEmitter(program, state).file();
+export function emitJavaScript(program, options = {}) {
+  validateRustTypeNamespace(program);
+  checkRustConstFunctionProof(program);
+  const runtimeShell=checkRustRuntimeShell(program);
+  if(runtimeShell&&options.scopedBindingModel!==undefined)refuseRustRuntimeShellComposition('scoped target bindings require an independent runtime composition proof');
+  checkRustOwnedLocalStateProof(program);
+  const scopedBindings = options.scopedBindingModel === undefined ? null : readJavaScriptScopedBindingEmission(program, options.scopedBindingModel);
+  const reserved = new Set(KEYWORDS);
+  if ([...program.declarations.values()].some(entry => Object.hasOwn(entry, 'sourceLocalState'))) reserved.add('ml_ownedTextInput');
+  const state = new EmitState(program, 'JavaScript', ident, reserved, { modulesShareTermSpace: true, typeSpace: true });
+  recordRustRuntimeShellAssumptions(state,runtimeShell);
+  return new JavaScriptEmitter(program, state, scopedBindings).file();
 }
 
 class JavaScriptEmitter {
-  constructor(program, state) {
+  constructor(program, state, scopedBindings = null) {
     this.program = program;
     this.state = state;
+    this.scopedBindings = scopedBindings;
     this.helpers = new Set();
     this.temporaries = 0;
     this.theoremChecks = [];
@@ -126,7 +158,7 @@ class JavaScriptEmitter {
     }
     const main = this.program.main ? this.main(this.program.main) : null;
     if (this.theoremChecks.length) this.helpers.add('domains').add('forall');
-    const helperOrder = ['natSub', 'fixed', 'divide', 'toNatChecked', 'abort', 'assert', 'equal', 'showNumber', 'at', 'forall', 'domains'];
+    const helperOrder = ['ownedTextInput', 'natSub', 'fixed', 'divide', 'toNatChecked', 'abort', 'assert', 'equal', 'showNumber', 'showOptional', 'at', 'forall', 'domains'];
     const entry = [
       this.theoremChecks.length ? this.theoremRunner() : null,
       main,
@@ -170,7 +202,9 @@ class JavaScriptEmitter {
   declaration(entry) {
     if (entry.k === 'data') {
       this.state.map(entry, this.state.localName(entry.fullName));
-      this.state.encode('data', 'a data value is a frozen object whose $ property names its constructor and whose other properties are its fields');
+      this.state.encode('data', this.program.sourceLanguage === 'JavaScript'
+        ? 'a JavaScript data value is an object whose $ property names its constructor and whose other properties retain their own field names; explicit source freezing is preserved'
+        : 'a data value is a frozen object whose $ property names its constructor and whose other properties are its fields');
       return null;
     }
     if (entry.k === 'fn') return this.fn(entry);
@@ -178,11 +212,28 @@ class JavaScriptEmitter {
   }
 
   fn(entry) {
-    const { params, body } = renameFunction(entry, ident, this.state.localReserved());
+    const local = this.scopedBindings ? name => ident(this.scopedBindings(name, entry)) : ident;
+    // A revalidated closed loop reads only its locals, Math and its own tail
+    // continuation, which becomes writes/continue before JavaScript emission.
+    const reserved = this.scopedBindings && !reserveJavaScriptScopedBindingDeclarationNames(entry.sourceLoop !== undefined)
+      ? KEYWORDS : this.state.localReserved();
+    const { params, body } = renameFunction(entry, local, reserved);
     if (params.some((param) => param.type.kind === 'float') || entry.ret.kind === 'float') this.usesFloat = true;
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
-    const guards = params.flatMap((param) => this.parameterGuard(param));
+    const guards = params.flatMap((param) => this.parameterGuard(param, entry.sourceLocalState !== undefined));
+    if(entry.sourceDiagnosticAttributes!==undefined){
+      const normalization=readRustDiagnosticAttributeNormalization();
+      this.state.encode(normalization.id,normalization.statement);
+    }
+    if(entry.sourceConstFunction!==undefined){
+      for(const param of params){const kind=param.type.kind==='bool'?'boolean':'number';guards.push(`if (typeof ${param.name} !== ${JSON.stringify(kind)}) throw new RangeError(${JSON.stringify(`const predicate argument ${param.name} requires ${kind}`)});`);}
+      this.state.encode('rust-const-predicate-inputs','the selected Rust const predicate model admits only primitive Boolean and binary64 input values; const evaluation requests remain outside this source interpretation');
+    }
+    if (entry.sourceLocalState !== undefined) {
+      this.state.encode('owned-text-input', 'the selected Rust local value model admits primitive Unicode scalar text, Boolean and signed i32 inputs; JavaScript rejects other input values before evaluating the body');
+      this.state.assume(RUST_OWNED_LOCAL_STATE_POLICY.targetInputAssumption);
+    }
     const loop = tailLoop(entry, body);
     // A lifted loop runs as a loop: each iteration assigns the parameters their next values.
     this.loopParams = loop && params.map((param) => param.name);
@@ -192,11 +243,21 @@ class JavaScriptEmitter {
   }
 
   /** Machine-integer parameters are range-checked, as the Rust type guarantees. */
-  parameterGuard(param) {
-    if (param.type.kind !== 'fixed') return [];
+  parameterGuard(param, ownedLocalState = false) {
+    const guards = [];
+    if (ownedLocalState) {
+      if (param.type.kind === 'string') {
+        this.helpers.add('ownedTextInput');
+        guards.push(`if (!ml_ownedTextInput(${param.name})) throw new RangeError(${JSON.stringify(`String argument ${param.name} requires Unicode scalar text`)});`);
+      } else {
+        const type = param.type.kind === 'bool' ? 'boolean' : 'bigint';
+        guards.push(`if (typeof ${param.name} !== ${JSON.stringify(type)}) throw new RangeError(${JSON.stringify(`${typeKey(param.type)} argument ${param.name} requires ${type}`)});`);
+      }
+    }
+    if (param.type.kind !== 'fixed') return guards;
     this.helpers.add('fixed');
     const { min, max } = fixedBounds(param.type);
-    return [`ml_fixed(${param.name}, ${min}n, ${max}n, ${JSON.stringify(`${typeKey(param.type)} argument ${param.name} out of range`)});`];
+    return [...guards, `ml_fixed(${param.name}, ${min}n, ${max}n, ${JSON.stringify(`${typeKey(param.type)} argument ${param.name} out of range`)});`];
   }
 
   theorem(entry) {
@@ -215,7 +276,9 @@ class JavaScriptEmitter {
       const call = binders.length
         ? `ml_product([${domains.join(', ')}]).every((args) => ${ref}(...args))`
         : `${ref}()`;
-      return `  if (!(${call})) throw new Error('theorem ${source} fails on a bounded input');\n  console.log('theorem ${source}: holds on the bounded domain');`;
+      const failure = JSON.stringify(`theorem ${source} fails on a bounded input`);
+      const success = JSON.stringify(`theorem ${source}: holds on the bounded domain`);
+      return `  if (!(${call})) throw new Error(${failure});\n  console.log(${success});`;
     });
     return `function ml_checkTheorems() {\n${checks.join('\n')}\n}`;
   }
@@ -253,14 +316,16 @@ class JavaScriptEmitter {
     }
   }
 
-  ctorObject(entry, ctor, args) {
-    const fields = ctor.fields.map((field, index) => `${fieldKey(field.name)}: ${args[index]}`);
-    return `Object.freeze({ $: '${ctor.name.replace(/'/gu, "\\'")}'${fields.length ? `, ${fields.join(', ')}` : ''} })`;
+  ctorObject(entry, ctor, args, explicitFrozen = false) {
+    const fields = ctor.fields.map((field, index) => `[${fieldKey(field.name)}]: ${args[index]}`);
+    const object = `{ $: ${JSON.stringify(ctor.name)}${fields.length ? `, ${fields.join(', ')}` : ''} }`;
+    return requireDataObjectFreeze(this.program.sourceLanguage, explicitFrozen) ? `Object.freeze(${object})` : `(${object})`;
   }
 
   prop(prop) {
     switch (prop.p) {
       case 'forall': {
+        this.helpers.add('forall');
         const body = this.prop(prop.body);
         return prop.binders.reduceRight(
           (inner, binder) => `ml_forall(${this.domain(binder.type, 3)}, (${binder.name}) => ${inner})`,
@@ -353,9 +418,9 @@ class JavaScriptEmitter {
       if (kase.pattern.k !== 'ctor') continue;
       const ctor = entry.ctors.find((candidate) => candidate.name === kase.pattern.ctor);
       const binds = kase.pattern.binds
-        .map((bind, index) => (bind ? `const ${bind} = ${subject}.${fieldKey(ctor.fields[index].name)};` : null))
+        .map((bind, index) => (bind ? `const ${bind} = ${subject}[${fieldKey(ctor.fields[index].name)}];` : null))
         .filter(Boolean);
-      lines.push(`  case '${ctor.name.replace(/'/gu, "\\'")}': {`);
+      lines.push(`  case ${JSON.stringify(ctor.name)}: {`);
       lines.push(indent([...binds, ...this.statements(kase.body)].join('\n'), 2));
       lines.push('  }');
     }
@@ -373,15 +438,85 @@ class JavaScriptEmitter {
       case 'lit':
         return this.literal(e);
       case 'unit':
-        return 'null';
+        return renderJavaScriptUnit(this.program.sourceLanguage);
       case 'var':
         return e.name;
       case 'call':
         return `${this.state.ref(e.fn)}(${e.args.map((arg) => this.expr(arg)).join(', ')})`;
+      case 'functionRef':
+        return renderCallableFunctionReference('JavaScript', this.state.ref(e.fn));
+      case 'apply':
+        return renderCallableApplication('JavaScript', this.expr(e.fn), e.args.map(arg => this.expr(arg)));
+      case 'lambda':
+        return renderCallableLambda('JavaScript', e.params.map(param => param.name), [], '', this.expr(e.body), []);
+      case 'method':
+        if (e.op === 'map' && e.args.length === 1 && e.args[0] !== null) return renderArrayFromMapping('JavaScript', this.expr(e.object), this.expr(e.args[0]), 0, '');
+        return renderPrimitiveMethodExpression('JavaScript', e.object.type.kind, e.op, this.expr(e.object),
+          e.args.map((arg, index) => renderPrimitiveMethodArgument('JavaScript', e.object.type.kind, e.op, index, arg === null, arg === null ? '' : this.expr(arg))).join(', '));
+      case 'record':
+        return renderRecordValue('JavaScript', e.entries.map(entry => JSON.stringify(entry.name)), e.entries.map(entry => this.expr(entry.value)));
+      case 'cellAllocate':
+        return renderCallableCellOperation('JavaScript', e.k, '', this.expr(e.value), '', '', '');
+      case 'cellRead':
+        return renderCallableCellOperation('JavaScript', e.k, this.expr(e.cell), '', '', '', '');
+      case 'cellWrite':
+        return renderCallableCellOperation('JavaScript', e.k, this.expr(e.cell), this.expr(e.value), this.expr(e.body), '', '');
+      case 'referenceAllocate':
+        return renderSurfaceReferenceOperation('JavaScript', e.k, this.expr(e.value), '');
+      case 'referenceRead':
+        return renderSurfaceReferenceOperation('JavaScript', e.k, this.expr(e.reference), '');
+      case 'recordField':
+        return renderRecordField('JavaScript', this.expr(e.object), JSON.stringify(e.field), '');
+      case 'tuple':
+        if (Object.hasOwn(e, 'productModel') && !acceptProgramTupleProductModel(e.productModel, e.frozen === true)) throw unsupported('immutable tuple product model', 'the declared immutable value product requires its retained frozen facet', e.span);
+        return renderTupleValue('JavaScript', e.items.map((item) => this.expr(item)), e.frozen === true);
+      case 'tupleIndex':
+        return renderTupleProjection('JavaScript', this.expr(e.object), String(e.index));
+      case 'none':
+        return renderOptionalAbsentValue('JavaScript', e.type.absence, e.absence, '');
+      case 'some':
+        return renderOptionalPresentValue('JavaScript', e.type.absence, this.expr(e.value));
+      case 'flattenOption':
+        return renderOptionalFlattening('JavaScript', e.value.type.absence, e.value.type.element.absence, e.type.absence, this.expr(e.value));
+      case 'nullishNumber':
+        return renderOptionalJavaScriptOperation(e.k, this.expr(e.arg), '', false);
+      case 'optionalIndexNumber':
+        return renderOptionalJavaScriptOperation(e.k, this.expr(e.arg), '', false);
+      case 'truthy':
+        return renderOptionalPrimitiveTruth('JavaScript', e.arg.type.kind, this.expr(e.arg), '', false, false);
+      case 'strictEqual':
+        return renderOptionalStrictEquality('JavaScript', e.left.type.kind, e.left.type.absence ?? '', e.right.type.kind, e.right.type.absence ?? '', '', this.expr(e.left), this.expr(e.right), e.negate);
+      case 'optionalTypeOf':
+        return renderOptionalJavaScriptOperation(e.k, this.expr(e.arg), '', false);
+      case 'optionalText':
+        if (e.console) this.helpers.add('showOptional');
+        return renderOptionalJavaScriptOperation(e.k, this.expr(e.arg), '', e.console);
+      case 'unwrapOption':
+        return renderOptionalUnwrapping('JavaScript', e.arg.type.absence, this.expr(e.arg), '', '');
+      case 'optionalPredicate':
+        return renderOptionalJavaScriptOperation(e.k, this.expr(e.arg), e.op, false);
+      case 'coalesce':
+        return renderOptionalCoalescing('JavaScript', e.left.type.absence, this.expr(e.left), '', this.expr(e.right));
+      case 'optionalField':
+      case 'optionalProject':
+        return renderOptionalProjection('JavaScript', e.object.type.absence, this.expr(e.object), '', '', '', JSON.stringify(e.field));
+      case 'optionalIndex':
+        return renderOptionalArrayRead('JavaScript', e.index.type.kind, this.expr(e.array), this.expr(e.index));
+      case 'stringPoints':
+        return renderStringPointIteration('JavaScript', false, this.expr(e.object));
+      case 'set':
+      case 'map':
+        return renderCollectionConstruction('JavaScript', e.k, '', this.expr(e.k === 'set' ? e.items : e.entries), '', '', '');
+      case 'collectionSize':
+        return `(${this.expr(e.object)}).size`;
+      case 'collectionRead':
+        return `(${this.expr(e.object)}).${e.op}(${this.expr(e.key)})`;
+      case 'collectionItems':
+        return renderCollectionIteration('JavaScript', e.object.type.kind === 'map', e.op, this.expr(e.object), '', '');
       case 'ctor': {
         const entry = this.program.declarations.get(e.data);
         const ctor = entry.ctors.find((candidate) => candidate.name === e.ctor);
-        return this.ctorObject(entry, ctor, e.args.map((arg) => this.expr(arg)));
+        return this.ctorObject(entry, ctor, e.args.map((arg) => this.expr(arg)), Boolean(e.frozen));
       }
       case 'unary':
         if (e.op === 'not') return `!${this.expr(e.arg)}`;
@@ -403,11 +538,14 @@ class JavaScriptEmitter {
         return e.arg.type.kind === 'string' ? this.expr(e.arg) : this.toText(e.arg);
       case 'stringMap': {
         const string = e.string.k === 'var' || e.string.k === 'lit' ? this.expr(e.string) : `(${this.expr(e.string)})`;
-        return `${string}.${e.op}()`;
+        if (e.op === 'rustTrim') return `${string}.replace(/^\\p{White_Space}+|\\p{White_Space}+$/gu, '')`;
+        if (e.op === 'rustTrimStart') return `${string}.replace(/^\\p{White_Space}+/u, '')`;
+        if (e.op === 'rustTrimEnd') return `${string}.replace(/\\p{White_Space}+$/u, '')`;
+        return renderStringMapExpression('JavaScript', e.op, string);
       }
       case 'stringTest': {
         const string = e.string.k === 'var' || e.string.k === 'lit' ? this.expr(e.string) : `(${this.expr(e.string)})`;
-        return `${string}.${e.op}(${this.expr(e.search)})`;
+        return renderStringTestExpression('JavaScript', e.op, string, this.expr(e.search));
       }
       case 'cast':
         return this.cast(e);
@@ -422,7 +560,7 @@ class JavaScriptEmitter {
       case 'index':
         this.arrays();
         this.helpers.add('at');
-        this.state.arrayRead();
+        if (!e.provenInBounds) this.state.arrayRead();
         return `ml_at(${this.expr(e.array)}, ${this.expr(e.index)})`;
       case 'length':
         return e.type.kind === 'float' ? `${this.expr(e.array)}.length` : `BigInt(${this.expr(e.array)}.length)`;
@@ -527,7 +665,8 @@ class JavaScriptEmitter {
   }
 
   main(main) {
-    const { effects } = renameMain(main, ident, this.state.localReserved());
+    const local = this.scopedBindings ? name => ident(this.scopedBindings(name, main)) : ident;
+    const { effects } = renameMain(main, local, this.state.localReserved());
     const lines = [];
     let assertion = 0;
     for (const effect of effects) {
@@ -552,11 +691,10 @@ function negate(text) {
 }
 
 function fieldKey(name) {
-  return ident(name);
+  return JSON.stringify(name);
 }
 
 function indent(text, depth) {
   const pad = '  '.repeat(depth);
   return text.split('\n').map((line) => (line ? `${pad}${line}` : line)).join('\n');
 }
-

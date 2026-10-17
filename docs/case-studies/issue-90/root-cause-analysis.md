@@ -53,7 +53,7 @@ stable `rustdoc` does not emit a root `index.html` for a normal `cargo doc
 ## Why it was silent (the deeper cause)
 
 The deploy was **green on every one of the ten releases** between 2026-06-07 and
-2026-06-14 ([`raw-data/deployments-github-pages.json`](./raw-data/deployments-github-pages.json)).
+2026-06-14 ([`raw-data/deployments-github-pages.lino`](./raw-data/deployments-github-pages.lino)).
 `actions/deploy-pages` reports success when the artifact is accepted and
 published — it does **not** fetch the root URL to confirm it loads. The job's
 implicit success criterion ("artifact uploaded") did not match the real

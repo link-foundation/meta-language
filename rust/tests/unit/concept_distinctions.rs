@@ -36,8 +36,12 @@ fn fixture() -> Value {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("..")
         .join(FIXTURE);
-    let text = std::fs::read_to_string(path).expect("the fixture reads");
-    serde_json::from_str(&text).expect("the fixture is JSON")
+    let text = std::fs::read_to_string(
+        super::project_data::resolve_project_data_path(path)
+            .expect("one project data storage format"),
+    )
+    .expect("the fixture reads");
+    super::project_data::read_project_data(&text).expect("the fixture is JSON")
 }
 
 fn alias(value: &Value) -> SourceAlias {
@@ -53,6 +57,52 @@ fn records() -> Vec<ConceptRecord> {
 
 fn register() -> FoundationRegister {
     foundation_register().clone()
+}
+
+#[test]
+fn custom_record_alias_and_definition_changes_remain_visible() {
+    let first = SourceAlias {
+        source: "custom source".to_owned(),
+        name: "first".to_owned(),
+    };
+    let second = SourceAlias {
+        source: "custom source".to_owned(),
+        name: "second".to_owned(),
+    };
+    let mut records = concept_records()
+        .iter()
+        .filter(|record| matches!(record.id.as_str(), "binding" | "assignment"))
+        .cloned()
+        .collect::<Vec<_>>();
+    records[0].source_aliases = vec![first.clone(), first.clone()];
+    records[1].source_aliases = vec![second.clone()];
+    let register = register();
+    assert_eq!(
+        source_meanings_in(&records, &register, &first, None),
+        ["binding"]
+    );
+    records[1].source_aliases.push(first.clone());
+    assert_eq!(
+        source_meanings_in(&records, &register, &first, None),
+        ["binding", "assignment"]
+    );
+    assert_eq!(
+        concept_correspondence_in(&records, &register, &first, &second, None).relation,
+        CorrespondenceRelation::Ambiguous
+    );
+    records.remove(0);
+    records[0].definition = "The revised declared meaning.".to_owned();
+    let shared = concept_correspondence_in(&records, &register, &first, &second, None);
+    assert_eq!(shared.shared.as_deref(), Some("assignment"));
+    assert_eq!(
+        shared.justification.as_deref(),
+        Some("The revised declared meaning.")
+    );
+    records[0].source_aliases.pop();
+    assert_eq!(
+        source_meanings_in(&records, &register, &first, None),
+        [] as [String; 0]
+    );
 }
 
 fn kinds(records: &[ConceptRecord], register: &FoundationRegister) -> Vec<&'static str> {
@@ -190,6 +240,9 @@ fn check_rejects_records_that_merge_or_fail_to_justify_a_required_distinction() 
             "grammar.true-constant / grammar.true-value",
             "grammar.symbol / grammar.keyword",
             "grammar.comment / grammar.block-comment",
+            "grammar.null-keyword / grammar.nil-keyword",
+            "grammar.collection-comprehension / grammar.for-expression",
+            "grammar.binary-expression / grammar.binary-operator",
         ]
     );
     assert_eq!(REQUIRED_FOUNDATION_DISTINCTIONS.len(), 6);

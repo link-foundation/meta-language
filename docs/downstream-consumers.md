@@ -9,7 +9,7 @@
 This document maps what the two downstream consumers named in the vision
 actually use or require from meta-language to meta-language capabilities,
 rows of the issue 195 requirement ledger
-([parity/issue-195-requirements.json](../parity/issue-195-requirements.json))
+([parity/issue-195-requirements.lino](../parity/issue-195-requirements.lino))
 and tests in this repository. It records an audit. It is not a statement that
 either consumer is served completely, and it does not mark any ledger row as
 satisfied.
@@ -125,7 +125,7 @@ consumer test runs are not observations of the issue 195 acceptance suite.
 
 The workloads below are every file of that head that reaches meta-language:
 the sources that import the package or a source that does, and the tests that
-import such a source. [`parity/fixtures/rml-pr184-workloads.json`](../parity/fixtures/rml-pr184-workloads.json)
+import such a source. [`parity/fixtures/rml-pr184-workloads.lino`](../parity/fixtures/rml-pr184-workloads.lino)
 records them with their blob ids. Pre-merge acceptance derives the inventory
 again from verified immutable GitHub blobs at the committed pin.
 `node js/scripts/issue-195-rml-pr184.mjs --online` also compares the live pull
@@ -188,7 +188,7 @@ the pinned runs below do not verify those changes.
 | formal-ai's Links Notation seed and benchmark data parse and reconstruct losslessly | LiNo CST; formal-ai fixtures from `data/seed/` and `data/benchmarks/` in the parity corpora | `I195-CST-lino` | `rust/tests/unit/parity_corpora.rs` (Rust only) | covered by tests |
 | A JavaScript use of meta-language inside formal-ai | None exists at the inspected commit; formal-ai's [package.json][fai-pkg] has no meta-language dependency. The acceptance job instead runs formal-ai's Links Notation data (seed grammars, projection rules, link-edit rules, hello-world programs, benchmark suite) through the npm candidate's public API in a clean consumer and compares the outputs with formal-ai's Rust functions | `I195-DOWNSTREAM-FORMAL-AI-WORKLOADS`, `I195-DOWNSTREAM-FORMAL-AI-PUBLISHED` | `js/tests/issue-195-downstream-formal-ai-workloads.test.js` (validates the npm part of that report) | not yet implemented |
 | formal-ai built against the current crate: it declares 0.58.2 | Crate 0.58.2 on crates.io | `I195-DELIVERY-CRATE-CANDIDATE`, `I195-DELIVERY-CRATE-PUBLISHED` | `js/tests/issue-195-delivery.test.js` (checks this repository's packaging, not formal-ai) | not yet verified |
-| formal-ai workloads run against clean installed meta-language artifacts, candidate and published | Candidate and published crate consumed by formal-ai's own test suites, pinned with their blobs in `parity/fixtures/formal-ai-workloads.json` | `I195-DOWNSTREAM-FORMAL-AI-WORKLOADS`, `I195-DOWNSTREAM-FORMAL-AI-PUBLISHED` | `js/tests/issue-195-downstream-formal-ai-workloads.test.js`, `rust/tests/unit/issue_195_downstream_formal_ai_workloads.rs` (validate the report of the CI job "Formal AI Workloads" in `.github/workflows/ci.yml`) | not yet verified |
+| formal-ai workloads run against clean installed meta-language artifacts, candidate and published | Candidate and published crate consumed by formal-ai's own test suites, pinned with their blobs in `parity/fixtures/formal-ai-workloads.lino` | `I195-DOWNSTREAM-FORMAL-AI-WORKLOADS`, `I195-DOWNSTREAM-FORMAL-AI-PUBLISHED` | `js/tests/issue-195-downstream-formal-ai-workloads.test.js`, `rust/tests/unit/issue_195_downstream_formal_ai_workloads.rs` (validate the report of the CI job "Formal AI Workloads" in `.github/workflows/ci.yml`) | not yet verified |
 
 [fai-cargo]: https://github.com/link-assistant/formal-ai/blob/d209aac6461b355f1a527831202af3423135f7e6/rust/Cargo.toml
 [fai-pkg]: https://github.com/link-assistant/formal-ai/blob/d209aac6461b355f1a527831202af3423135f7e6/package.json

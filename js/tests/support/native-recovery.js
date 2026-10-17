@@ -10,8 +10,9 @@
 // merged extension: a source a native grammar fixture records as a divergence of its merged
 // sources. Mirrored by
 // rust/tests/unit/native_recovery_records.rs.
+import { readProjectData } from '../../scripts/project-data.mjs';
 import { createHash } from 'node:crypto';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readdirSync } from 'node:fs';
 
 import { parseCstLines, rowOffsets } from './cst-lines.js';
 
@@ -20,7 +21,7 @@ const sha256 = (text) => createHash('sha256').update(text).digest('hex');
 const point = ({ row, column }) => `${row}:${column}`;
 
 export function readNativeRecovery() {
-  return JSON.parse(readFileSync(new URL(`../../../${NATIVE_RECOVERY_FILE}`, import.meta.url), 'utf8'));
+  return readProjectData(new URL(`../../../${NATIVE_RECOVERY_FILE}`, import.meta.url));
 }
 
 /**
@@ -30,8 +31,8 @@ export function readNativeRecovery() {
  */
 export function mergedExtensions() {
   const directory = new URL('../../../parity/fixtures/native-grammars/', import.meta.url);
-  return new Set(readdirSync(directory).filter((file) => file.endsWith('.json'))
-    .flatMap((file) => JSON.parse(readFileSync(new URL(file, directory), 'utf8')).divergences ?? [])
+  return new Set(readdirSync(directory).filter((file) => file.endsWith('.lino'))
+    .flatMap((file) => readProjectData(new URL(file, directory)).divergences ?? [])
     .map(({ source }) => source));
 }
 

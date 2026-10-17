@@ -24,6 +24,7 @@ pub(in crate::translation::javascript) fn lower_top_level(
         renames: 0,
         generated: std::mem::take(&mut parser.generated),
         count: parser.generated_count,
+        cells: HashSet::new(),
     };
     let list = flat(statements);
     let declared: HashSet<String> = list
@@ -59,6 +60,8 @@ pub(in crate::translation::javascript) fn lower_top_level(
                                 .iter()
                                 .map(|entry| (entry.ir.clone(), named(&entry.ir, place)))
                                 .collect(),
+                            frozen: false,
+                            prototype_definition: None,
                         },
                         place,
                     );
@@ -85,6 +88,7 @@ pub(in crate::translation::javascript) fn lower_top_level(
         .map(|name| Var {
             source: name.clone(),
             ir: name.clone(),
+            reference: false,
         })
         .collect();
     let value = lowering.seq(&list, 0, &ctx, &scope);
@@ -96,6 +100,7 @@ pub(in crate::translation::javascript) fn lower_top_level(
             value,
             constant: false,
             span: Some(place),
+            source_pure_unit_call: None,
         };
         match (carried.as_slice(), data) {
             ([only], _) => vec![bind(only.source.clone(), value)],
@@ -110,6 +115,7 @@ pub(in crate::translation::javascript) fn lower_top_level(
                     }],
                     span: Some(place),
                     generated: true,
+                    source_unit_clone_derivation: None,
                 }));
                 let whole = format!("{data}_value");
                 let names: Vec<String> = carried.iter().map(|entry| entry.ir.clone()).collect();

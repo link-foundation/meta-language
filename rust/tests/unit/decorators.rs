@@ -23,11 +23,13 @@ fn read(name: &str) -> String {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../parity/decorators")
         .join(name);
-    std::fs::read_to_string(&path).unwrap_or_else(|error| panic!("{}: {error}", path.display()))
+    let actual = super::project_data::resolve_project_data_path(&path)
+        .expect("one project data storage format");
+    std::fs::read_to_string(actual).unwrap_or_else(|error| panic!("{}: {error}", path.display()))
 }
 
 fn cases() -> Value {
-    serde_json::from_str(&read("cases.json")).expect("the decorator cases parse")
+    super::project_data::read_project_data(&read("cases.json")).expect("the decorator cases parse")
 }
 
 fn set(name: &str) -> DecoratorSet {

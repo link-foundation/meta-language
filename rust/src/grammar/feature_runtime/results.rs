@@ -11,10 +11,11 @@ use std::rc::Rc;
 
 use super::forking::{GrammarFacts, Lead};
 pub(super) use super::keyword_lexing::KeywordLexing;
+use super::lexical_cache_memory::LexicalCaches;
 use super::operations::{OperationValue, State};
 use super::ordering::settled_order;
 pub(super) use super::ordering::{complete_order, preferred_tokens};
-use super::program::{Name, PrecedenceTag, Settling, TokenRank, TokenRanks, Trivia};
+use super::program::{InExtra, Name, PrecedenceTag, Settling, TokenRank, TokenRanks, Trivia};
 use super::separators::separator_text;
 pub(super) use super::walk::same_children;
 use super::walk::same_output;
@@ -122,6 +123,9 @@ pub(super) fn join_children(left: &Children, right: &Children) -> Children {
 pub(super) struct Tree {
     pub(super) ty: TreeType,
     pub(super) kind: Option<Name>,
+    /// An extra's outer alias; internal lexer decisions keep `kind` unchanged.
+    pub(super) projection_name: Option<Name>,
+    pub(super) projection_anonymous: bool,
     pub(super) rule: Option<Name>,
     pub(super) field: Option<Name>,
     pub(super) trivia: bool,
@@ -129,6 +133,8 @@ pub(super) struct Tree {
     pub(super) end: usize,
     pub(super) children: Children,
     pub(super) attributes: Option<BTreeMap<String, OperationValue>>,
+    /// Lossless source-local lexer metadata, including unknown linked keys.
+    pub(super) lexical: Option<serde_json::Value>,
     pub(super) precedence: Option<PrecedenceTag>,
     /// The innermost precedence over the node's last part, which its rule
     /// reduces with (see `reduction`).
@@ -173,6 +179,8 @@ pub(super) struct Tree {
     pub(super) language: Option<Name>,
     pub(super) root: Option<Rc<Self>>,
     pub(super) program: usize,
+    pub(super) selection: Option<Rc<super::grammar_selection::SelectionMetadata>>,
+    pub(super) source_children: Option<Children>,
 }
 
 impl Tree {
@@ -180,6 +188,8 @@ impl Tree {
         Self {
             ty,
             kind,
+            projection_name: None,
+            projection_anonymous: false,
             rule: None,
             field: None,
             trivia: false,
@@ -187,6 +197,7 @@ impl Tree {
             end,
             children: no_children(),
             attributes: None,
+            lexical: None,
             precedence: None,
             tail: None,
             priority: None,
@@ -206,6 +217,8 @@ impl Tree {
             language: None,
             root: None,
             program: 0,
+            selection: None,
+            source_children: None,
         }
     }
 
@@ -250,6 +263,7 @@ pub(super) fn with_leaf(leaves: &[Rc<Tree>], leaf: Tree) -> Children {
 /// One way an expression matches: its end, the state after it, the trees it built.
 #[derive(Clone, Debug)]
 pub(super) struct Res {
+    pub(super) lexical_family: Option<Name>,
     pub(super) end: usize,
     pub(super) state: State,
     pub(super) children: Children,
@@ -273,6 +287,7 @@ pub(super) struct Res {
 impl Res {
     pub(super) const fn new(end: usize, state: State, children: Children, dynamic: i64) -> Self {
         Self {
+            lexical_family: None,
             end,
             state,
             children,
@@ -288,6 +303,10 @@ impl Res {
 
     pub(super) fn join(left: &Self, right: Self, in_token: bool) -> Self {
         Self {
+            lexical_family: right
+                .lexical_family
+                .clone()
+                .or_else(|| left.lexical_family.clone()),
             end: right.end,
             state: right.state,
             children: if in_token {
@@ -318,8 +337,8 @@ impl Res {
         self
     }
 
-    pub(super) fn key(&self) -> (usize, State) {
-        (self.end, self.state.clone())
+    pub(super) fn key(&self) -> (usize, State, Option<Name>) {
+        (self.end, self.state.clone(), self.lexical_family.clone())
     }
 }
 
@@ -350,7 +369,7 @@ impl TokenOrder<'_> {
 #[derive(Clone, Debug, Default)]
 pub(super) struct ResultSet<'c> {
     pub(super) items: Vec<Res>,
-    index: HashMap<(usize, State), usize>,
+    index: HashMap<(usize, State, Option<Name>), usize>,
     /// The token ranks the `tokens` and `precedence` settling steps read.
     tokens: Option<TokenOrder<'c>>,
     /// The grammar's settling steps.
@@ -400,6 +419,7 @@ impl<'c> ResultSet<'c> {
                         if order == Ordering::Equal
                             && self.settling.ambiguity()
                             && existing.cost == 0
+                            && !existing.ambiguous
                             && !same_output(&result.children, &existing.children)
                         {
                             existing.ambiguous = true;
@@ -421,7 +441,7 @@ impl<'c> ResultSet<'c> {
     }
 
     /// The result of the end and state `key`, if any.
-    pub(super) fn get_key(&self, key: &(usize, State)) -> Option<&Res> {
+    pub(super) fn get_key(&self, key: &(usize, State, Option<Name>)) -> Option<&Res> {
         self.index.get(key).map(|&position| &self.items[position])
     }
 
@@ -514,18 +534,29 @@ pub(super) fn content_start(children: &[Rc<Tree>], fallback: usize) -> usize {
         .map_or(fallback, |child| child.start)
 }
 
+/// The program index, source-buffer address, start and end of one embedded parse.
+pub(super) type EmbeddedInvocationIdentity = (usize, usize, usize, usize);
+
 /// The step budget and the frame count of one parse, shared with every
 /// embedded-language executor, the record of what the parse expects, and the
 /// memo cells the whole parse took of its memory budget: one per rule call
 /// recorded and one per result such a call keeps, across its runs and repair
-/// rounds, counted and never released (see `Executor::retain`).
+/// rounds, counted and never released (see `Executor::retain`). Optional fixed
+/// lexical caches are counted while retained and may be discarded to free space.
 #[derive(Debug)]
 pub(super) struct Shared {
-    pub(super) steps: Cell<usize>,
+    pub(super) runtime_error: Rc<RefCell<Option<super::load::GrammarRuntimeError>>>,
+    pub(super) global_concept_space: Option<Rc<serde_json::Value>>,
+    pub(super) selection_diagnostics: Rc<RefCell<Vec<serde_json::Value>>>,
+    pub(super) active_embedded: Rc<RefCell<HashSet<EmbeddedInvocationIdentity>>>,
+    pub(super) selection_sources: Rc<RefCell<super::selection_source_mapping::SourceRegistry>>,
+    pub(super) selection_mapping_failures: Rc<RefCell<Vec<serde_json::Value>>>,
+    pub(super) steps: Rc<Cell<usize>>,
     pub(super) limit: usize,
-    pub(super) frames: Cell<usize>,
+    pub(super) frames: Rc<Cell<usize>>,
     pub(super) memo_limit: usize,
     pub(super) cells: Rc<Cell<usize>>,
+    pub(super) lexical_caches: LexicalCaches,
     pub(super) memory_limit: usize,
     pub(super) expectations: RefCell<Expectations>,
 }
@@ -624,6 +655,9 @@ pub(super) struct Entry {
 pub(super) struct Skipped {
     pub(super) end: usize,
     pub(super) leaves: Children,
+    pub(super) state: State,
+    /// The initial state, then the state after each retained trivia leaf.
+    pub(super) states: Vec<State>,
 }
 
 /// One run of an external scanner.
@@ -636,8 +670,8 @@ pub(super) struct Scanned {
 }
 
 /// A rule call: rule index, offset, state, in a token, and, while
-/// repairing, how it is made.
-pub(super) type MemoKey = (usize, usize, State, bool, Repair);
+/// repairing, how it is made, plus the extra parser context and its start.
+pub(super) type MemoKey = (usize, usize, State, bool, Repair, InExtra, usize, Name);
 
 /// How a rule call is made while repairing: in the open, quietly (where
 /// nothing is repaired), or after a MISSING leaf at its offset.

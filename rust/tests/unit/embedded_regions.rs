@@ -76,8 +76,14 @@ fn assert_connected_region_bounds(
 fn region_cases() -> Value {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../parity/fixtures/embedded-region-cases.json");
-    serde_json::from_str(&fs::read_to_string(path).expect("region cases are readable"))
-        .expect("region cases are valid JSON")
+    super::project_data::read_project_data(
+        &fs::read_to_string(
+            super::project_data::resolve_project_data_path(path)
+                .expect("one project data storage format"),
+        )
+        .expect("region cases are readable"),
+    )
+    .expect("region cases are valid JSON")
 }
 
 #[test]

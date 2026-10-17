@@ -1,3 +1,4 @@
+import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExpression, readStringTestHelper, readStringTestSupport } from './frontend-rules.js';
 // Rocq emitter. Naturals become binary `N` and integers `Z`, so programs
 // run at their source sizes (unary `nat` cannot hold 20!). Structural
 // recursion over data is a `Fixpoint`; recursion that decreases a natural is
@@ -6,15 +7,22 @@
 // A JavaScript Number is a primitive `float`, which the kernel computes with,
 // so assertions about Numbers are still theorems closed by computation.
 
-import { unsupported } from './diagnostics.js';
+import { typeError, unsupported } from './diagnostics.js';
+import { readCollectionConstructionBinding, renderCollectionConstruction, renderCollectionConstructionType } from './collection-construction-rules.js';
+import { renderOptionalAbsentValue, renderOptionalCoalescing, renderOptionalConsoleText, renderOptionalFlattening, renderOptionalMatch, renderOptionalNumericPresent, renderOptionalPresentValue, renderOptionalPrimitiveTruth, renderOptionalProjection, renderOptionalStrictEquality, renderOptionalTypeQueryPresent, renderOptionalUnwrapping, requireOptionalNumericPredicate } from './optional-value-rules.js';
+import { renderCollectionIteration, renderOptionalArrayRead } from './array-value-rules.js';
+import { renderArrayFromMapping } from './array-from-rules.js';
+import { readPrimitiveMethodRenderingRefusal } from './primitive-method-rules.js';
+import { renderRecordProductField, renderRecordType, renderRecordValue } from './record-emission-rules.js';
+import { readUnionTargetRefusal } from './type-syntax-rules.js';
+import { renderCallableApplication, renderCallableFunctionReference, renderCallableFunctionType, renderCallableLambda } from './callable-source-rules.js';
+import { acceptProgramTupleProductModel } from '../typed-program-link-rules.js';
+import { renderAbsentNumberExpression } from './primitive-value-rules.js';
 import { propFunctions } from './proof.js';
 import { renameFunction, renameMain, renameTheorem } from './ir.js';
 import { threadOutput } from './output.js';
 import { EmitState, mutualGroups, orderDeclarations, unthreaded } from './emit-common.js';
 
-const ROCQ_STRING_TESTS = Object.freeze({
-  startsWith: 'ml_string_starts_with', endsWith: 'ml_string_ends_with', includes: 'ml_string_includes',
-});
 const KEYWORDS = new Set([
   'as', 'at', 'cofix', 'else', 'end', 'exists', 'exists2', 'fix', 'for', 'forall', 'fun', 'if', 'IF', 'in', 'let',
   'match', 'mod', 'Prop', 'return', 'Set', 'SProp', 'then', 'Type', 'using', 'where', 'with', 'struct', 'measure',
@@ -206,15 +214,9 @@ Definition ml_is_finite (x : float) : bool := negb (orb (PrimFloat.is_nan x) (Pr
 Definition ml_is_integer (x : float) : bool := andb (ml_is_finite x) (PrimFloat.eqb (ml_trunc x) x).
 Definition ml_is_safe_integer (x : float) : bool :=
   andb (ml_is_integer x) (PrimFloat.leb (PrimFloat.abs x) 9007199254740991%float).`,
-  stringStartsWith: `(* String.prototype.startsWith: the string begins with the search. *)
-Definition ml_string_starts_with (string search : string) : bool := String.prefix search string.`,
-  stringEndsWith: `(* String.prototype.endsWith: the string ends with the search. *)
-Definition ml_string_ends_with (string search : string) : bool :=
-  Nat.leb (String.length search) (String.length string) &&
-  String.eqb (String.substring (String.length string - String.length search) (String.length search) string) search.`,
-  stringIncludes: `(* String.prototype.includes: the search occurs at some position of the string. *)
-Definition ml_string_includes (string search : string) : bool :=
-  match String.index 0 search string with Some _ => true | None => false end.`,
+  stringStartsWith: readStringTestSupport('Rocq', 'startsWith'),
+  stringEndsWith: readStringTestSupport('Rocq', 'endsWith'),
+  stringIncludes: readStringTestSupport('Rocq', 'includes'),
   listAt: `(* The element at an index, walking the list; a read outside it, undefined
    in JavaScript, is outside the in-bounds assumption. *)
 Fixpoint ml_list_at {A : Type} (values : list A) (index : Z) (fallback : A) : A :=
@@ -264,7 +266,7 @@ function ident(name) {
 }
 
 export function emitRocq(source) {
-  const program = threadOutput(source);
+  const program = threadOutput(source, 'Rocq');
   const state = new EmitState(program, 'Rocq', ident, KEYWORDS, {
     ctorStyle: 'module',
     // Rocq derives these from inductives and Functions in the same namespace.
@@ -340,6 +342,7 @@ class RocqEmitter {
   }
 
   type(type) {
+    if (type.reference || type.kind === 'cell') throw unsupported('mutable structural value', 'shared reference state needs an explicit target state model');
     switch (type.kind) {
       case 'nat':
         return 'N';
@@ -364,6 +367,20 @@ class RocqEmitter {
       case 'array':
         this.state.encode('arrays', 'a JavaScript array, which the portable core never mutates, is a Rocq list; a read walks it to the index');
         return `(list ${this.type(type.element)})`;
+      case 'option':
+        return type.absence === 'both' ? `(option (option ${this.type(type.element)}))` : `(option ${this.type(type.element)})`;
+      case 'tuple':
+        return type.elements.length ? `(${type.elements.map((element) => this.type(element)).join(' * ')})%type` : 'unit';
+      case 'record':
+        return renderRecordType('Rocq', type.fields.map(field => this.type(field.type)));
+      case 'function':
+        return renderCallableFunctionType('Rocq', type.params.map(param => this.type(param)), this.type(type.ret));
+      case 'set':
+        return renderCollectionConstructionType('Rocq', type.kind, this.type(type.element), '');
+      case 'map':
+        return renderCollectionConstructionType('Rocq', type.kind, this.type(type.key), this.type(type.value));
+      case 'union':
+        throw typeError(readUnionTargetRefusal('Rocq'));
       default:
         throw new Error(`no Rocq type for ${type.kind}`);
     }
@@ -613,6 +630,18 @@ class RocqEmitter {
   }
 
   expr(e) {
+    if (e.k === 'ctor' && e.frozen && this.program.sourceLanguage === 'JavaScript') throw unsupported('explicit data object freeze', 'this target needs a JavaScript property descriptor model to retain explicit constructor freezing', e.span);
+    if (e.k === 'tuple' && Object.hasOwn(e, 'productModel')) {
+      if (!acceptProgramTupleProductModel(e.productModel, e.frozen)) throw unsupported('immutable tuple product model', 'the tuple model must be immutable value product with explicit frozen evidence', e.span);
+      const pending = [e.type];
+      while (pending.length) {
+        const type = pending.pop();
+        if (type.kind !== 'tuple') continue;
+        if (type.elements.length < 2) throw unsupported('immutable tuple arity', 'this target needs a nominal product representation to distinguish unit and single-element tuple arities', e.span);
+        pending.push(...type.elements);
+      }
+    }
+    if (['cellAllocate', 'cellRead', 'cellWrite', 'referenceAllocate', 'referenceRead', 'referenceWrite'].includes(e.k)) throw unsupported('mutable structural value', 'shared reference state needs an explicit target state model', e.span);
     switch (e.k) {
       case 'lit':
         return this.literal(e);
@@ -641,6 +670,108 @@ class RocqEmitter {
         const head = self ? this.current.name : this.state.ref(e.fn);
         return e.args.length ? `(${head} ${e.args.map((arg) => this.expr(arg)).join(' ')})` : head;
       }
+      case 'functionRef':
+        return renderCallableFunctionReference('Rocq', this.state.ref(e.fn));
+      case 'apply':
+        return renderCallableApplication('Rocq', this.expr(e.fn), e.args.map(arg => this.expr(arg)));
+      case 'lambda':
+        return renderCallableLambda('Rocq', e.params.map(param => param.name), e.params.map(param => this.type(param.type)), '', this.expr(e.body), []);
+      case 'record':
+        return renderRecordValue('Rocq', [], e.entries.map(entry => this.expr(entry.value)));
+      case 'recordField':
+        return renderRecordProductField('Rocq', this.expr(e.object), e.index, e.object.type.fields.length);
+      case 'tupleIndex': {
+        const count = e.object.type.kind === 'record' ? e.object.type.fields.length : e.object.type.elements.length;
+        let value = this.expr(e.object);
+        for (let index = count - 1; index > e.index; index -= 1) value = `(fst ${value})`;
+        return e.index === 0 ? value : `(snd ${value})`;
+      }
+      case 'tuple':
+        return e.items.length ? `(${e.items.map((item) => this.expr(item)).join(', ')})` : 'tt';
+      case 'none':
+        return renderOptionalAbsentValue('Rocq', e.type.absence, e.absence, this.type(e.type.element));
+      case 'some':
+        return renderOptionalPresentValue('Rocq', e.type.absence, this.expr(e.value));
+      case 'nullishNumber': {
+        const element = e.arg.type.element;
+        const present = renderOptionalNumericPresent('Rocq', element.kind, 'arithmetic');
+        this.floats();
+        return this.optionalMatch(e.arg, 'ml_present', present, renderAbsentNumberExpression('Rocq', 'arithmetic', 'null'), renderAbsentNumberExpression('Rocq', 'arithmetic', 'undefined'));
+      }
+      case 'optionalIndexNumber':
+        this.floats();
+        return this.optionalMatch(e.arg, 'ml_present', renderOptionalNumericPresent('Rocq', e.arg.type.element.kind, 'array-index'), renderAbsentNumberExpression('Rocq', 'array-index', 'null'), renderAbsentNumberExpression('Rocq', 'array-index', 'undefined'));
+      case 'truthy':
+        return this.truthy(e.arg);
+      case 'strictEqual':
+        return this.strictEqual(e);
+      case 'optionalText': {
+        const element = e.arg.type.element;
+        let present = element.kind === 'string' ? 'ml_present' : element.kind === 'unit' ? '"undefined"%string' : this.toText({ k: 'var', name: 'ml_present', type: element }, e.console);
+        present = renderOptionalConsoleText('Rocq', present, ['int', 'nat', 'fixed'].includes(element.kind), e.console, false);
+        return this.optionalMatch(e.arg, 'ml_present', present, '"null"%string', '"undefined"%string');
+      }
+      case 'optionalTypeOf':
+        return this.optionalMatch(e.arg, 'ml_present', renderOptionalTypeQueryPresent('Rocq', `"${e.present ?? 'undefined'}"%string`), '"object"%string', '"undefined"%string');
+      case 'unwrapOption':
+        return renderOptionalUnwrapping('Rocq', e.arg.type.absence, this.expr(e.arg), '', this.inhabitant(e.type));
+      case 'optionalPredicate': {
+        const present = requireOptionalNumericPredicate(e.arg.type.element.kind) ? this.math({ k: 'math', op: e.op, args: [{ k: 'var', name: 'ml_present', type: { kind: 'float' } }], type: { kind: 'bool' } }) : 'false';
+        return this.optionalMatch(e.arg, 'ml_present', present, 'false', 'false');
+      }
+      case 'flattenOption': {
+        return renderOptionalFlattening('Rocq', e.value.type.absence, e.value.type.element.absence, e.type.absence, this.expr(e.value));
+      }
+      case 'coalesce':
+        return renderOptionalCoalescing('Rocq', e.left.type.absence, this.expr(e.left), '', this.expr(e.right));
+      case 'optionalField': {
+        const count = e.object.type.element.fields.length;
+        let field = 'ml_record';
+        for (let index = count - 1; index > e.index; index -= 1) field = `(fst ${field})`;
+        if (e.index > 0) field = `(snd ${field})`;
+        return renderOptionalProjection('Rocq', e.object.type.absence, this.expr(e.object), '', 'ml_record', field, '');
+      }
+      case 'optionalProject': {
+        this.floats();
+        const length = e.object.type.element.kind === 'string' ? renderStringLengthExpression('Rocq', 'ml_value') : '(PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (List.length ml_value))))';
+        return renderOptionalProjection('Rocq', e.object.type.absence, this.expr(e.object), '', 'ml_value', length, '');
+      }
+      case 'optionalIndex': {
+        const index = this.expr(e.index);
+        if (e.index.type.kind === 'float') this.helpers.add('floatIndex');
+        return renderOptionalArrayRead('Rocq', e.index.type.kind, this.expr(e.array), index);
+      }
+      case 'method':
+        return this.method(e);
+      case 'stringPoints':
+        throw unsupported('string iteration', 'this target needs a Unicode code-point iterator over its UTF-8 string encoding', e.span);
+      case 'set':
+      case 'map': {
+        const set = e.k === 'set';
+        const keyType = set ? e.type.element : e.type.key;
+        const value = readCollectionConstructionBinding('Rocq', e.k, 'value');
+        const previous = readCollectionConstructionBinding('Rocq', e.k, 'previous');
+        const equal = this.comparison('eq', keyType, previous, value);
+        const values = this.expr(set ? e.items : e.entries);
+        const element = set ? this.type(e.type.element) : `(${this.type(e.type.key)} * ${this.type(e.type.value)})%type`;
+        return renderCollectionConstruction('Rocq', e.k, keyType.kind, values, '', element, equal);
+      }
+      case 'collectionSize':
+        this.floats();
+        return `(PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (List.length ${this.expr(e.object)}))))`;
+      case 'collectionRead': {
+        const keyType = e.object.type.kind === 'map' ? e.object.type.key : e.object.type.element;
+        const key = e.object.type.kind === 'map' ? '(fst ml_value)' : 'ml_value';
+        let equal = this.comparison('eq', keyType, key, 'ml_search');
+        if (keyType.kind === 'float') equal = `(orb ${equal} (andb (PrimFloat.is_nan ${key}) (PrimFloat.is_nan ml_search)))`;
+        const result = e.op === 'get' ? `(option_map (@snd ${this.type(e.object.type.key)} ${this.type(e.object.type.value)}) (List.find (fun ml_value => ${equal}) ml_values))` : `(List.existsb (fun ml_value => ${equal}) ml_values)`;
+        return `(let ml_values := ${this.expr(e.object)} in let ml_search := ${this.expr(e.key)} in ${result})`;
+      }
+      case 'collectionItems': {
+        const map = e.object.type.kind === 'map';
+        const project = map && e.op !== 'entries';
+        return renderCollectionIteration('Rocq', map, e.op, this.expr(e.object), project ? this.type(e.object.type.key) : '', project ? this.type(e.object.type.value) : '');
+      }
       case 'ctor': {
         const head = this.state.ctorRef(e.data, e.ctor);
         return e.args.length ? `(${head} ${e.args.map((arg) => this.expr(arg)).join(' ')})` : head;
@@ -661,11 +792,11 @@ class RocqEmitter {
       case 'toString':
         return this.toText(e.arg, e.console);
       case 'stringMap':
-        throw unsupported(`.${e.op}()`, e.op.startsWith('trim') ? 'JavaScript whitespace trimming has no Rocq library counterpart; Rocq trims ASCII whitespace only' : 'Unicode case mapping has no Rocq library counterpart; Rocq maps ASCII letters only', e.span);
+        throw unsupported(`.${e.op}()`, readStringMapRefusal('Rocq', e.op), e.span);
       case 'stringTest': {
-        const helper = { startsWith: 'stringStartsWith', endsWith: 'stringEndsWith', includes: 'stringIncludes' }[e.op];
+        const helper = readStringTestHelper('Rocq', e.op);
         this.helpers.add(helper);
-        return `(${ROCQ_STRING_TESTS[e.op]} ${this.expr(e.string)} ${this.expr(e.search)})`;
+        return renderStringTestExpression('Rocq', e.op, this.expr(e.string), this.expr(e.search));
       }
       case 'cast':
         return this.cast(e);
@@ -676,7 +807,7 @@ class RocqEmitter {
       case 'append':
         return `(List.app ${this.expr(e.left)} ${this.expr(e.right)})`;
       case 'index': {
-        this.state.arrayRead();
+        if (!e.provenInBounds) this.state.arrayRead();
         this.helpers.add('listAt');
         let index = this.expr(e.index);
         if (e.index.type.kind === 'float') {
@@ -686,6 +817,10 @@ class RocqEmitter {
         return `(ml_list_at ${this.expr(e.array)} ${index} ${this.inhabitant(e.type)})`;
       }
       case 'length': {
+        if (e.array.type.kind === 'string') {
+          this.floats();
+          return renderStringLengthExpression('Rocq', this.expr(e.array));
+        }
         const length = `(Z.of_nat (List.length ${this.expr(e.array)}))`;
         if (e.type.kind !== 'float') return length;
         this.floats();
@@ -699,6 +834,53 @@ class RocqEmitter {
   }
 
   /** Math and Number functions: PrimFloat's where they agree with JavaScript, the math helpers otherwise. */
+  method(e) {
+    if (e.object.type.kind !== 'array') throw unsupported(`.${e.op}()`, readPrimitiveMethodRenderingRefusal('Rocq', e.object.type.kind, e.op), e.span);
+    if (e.op === 'join') {
+      const text = (name, type) => {
+        if (type.kind === 'unit') return 'EmptyString';
+        if (type.kind === 'option') return `(match ${name} with | ${type.absence === 'both' ? 'Some (Some ml_present)' : 'Some ml_present'} => ${text('ml_present', type.element)} | _ => EmptyString end)`;
+        return type.kind === 'string' ? name : this.toText({ k: 'var', name, type }, false);
+      };
+      return `(let ml_values := ${this.expr(e.object)} in let ml_separator := ${this.expr(e.args[0])} in match ml_values with nil => EmptyString | ml_first :: ml_rest => List.fold_left (fun ml_accumulator ml_value => String.append ml_accumulator (String.append ml_separator ${text('ml_value', e.object.type.element)})) ml_rest ${text('ml_first', e.object.type.element)} end)`;
+    }
+    if (e.op === 'reduce' && e.args.length === 1) throw unsupported('array reduce without an initial value', 'the empty-array TypeError needs an operational abort encoding in Rocq', e.span);
+    if (!['map', 'filter', 'find', 'findIndex', 'some', 'every', 'flatMap', 'reduce'].includes(e.op)) throw unsupported(`.${e.op}()`, readPrimitiveMethodRenderingRefusal('Rocq', 'array', e.op) || 'this array operation needs an operational encoding in Rocq', e.span);
+    const callback = e.args[0];
+    const number = '(PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (snd ml_pair))))';
+    const args = e.op === 'reduce' ? ['ml_accumulator', '(fst ml_pair)', number, 'ml_values'] : ['(fst ml_pair)', number, 'ml_values'];
+    const call = callback.type.params.length ? `(ml_callback ${args.slice(0, callback.type.params.length).join(' ')})` : 'ml_callback';
+    if (callback.type.params.length > (e.op === 'reduce' ? 2 : 1)) this.floats();
+    if (e.op === 'map') return renderArrayFromMapping('Rocq', this.expr(e.object), this.expr(callback), callback.type.params.length, '');
+    const head = `(let ml_values := ${this.expr(e.object)} in let ml_callback := ${this.expr(callback)} in `;
+    const pairs = '(List.combine ml_values (List.seq 0 (List.length ml_values)))';
+    const lambda = `(fun ml_pair => ${call})`;
+    if (e.op === 'flatMap') return `${head} List.flat_map ${lambda} ${pairs})`;
+    if (e.op === 'some' || e.op === 'every') return `${head} List.${e.op === 'some' ? 'existsb' : 'forallb'} ${lambda} ${pairs})`;
+    if (e.op === 'filter') return `${head} List.map (@fst ${this.type(e.object.type.element)} nat) (List.filter ${lambda} ${pairs}))`;
+    if (e.op === 'find') return `${head} option_map (@fst ${this.type(e.object.type.element)} nat) (List.find ${lambda} ${pairs}))`;
+    if (e.op === 'findIndex') { this.floats(); return `${head} match List.find ${lambda} ${pairs} with Some ml_pair => ${number} | None => (PrimFloat.opp 1%float) end)`; }
+    return `${head} List.fold_left (fun ml_accumulator ml_pair => ${call}) ${pairs} ${this.expr(e.args[1])})`;
+  }
+
+  optionalMatch(arg, binder, present, nullCase, undefinedCase) {
+    return renderOptionalMatch('Rocq', arg.type.absence, this.expr(arg), binder, present, nullCase, undefinedCase);
+  }
+
+  truthy(arg) {
+    if (arg.type.kind === 'option') return this.optionalMatch(arg, 'ml_present', this.truthy({ k: 'var', name: 'ml_present', type: arg.type.element }), 'false', 'false');
+    const value = this.expr(arg);
+    if (arg.type.kind === 'float') this.floats();
+    return renderOptionalPrimitiveTruth('Rocq', arg.type.kind, value, '', false, Boolean(arg.type.signed));
+  }
+
+  strictEqual(e) {
+    const a = e.left.type.kind === 'option' ? e.left.type.element : e.left.type;
+    const b = e.right.type.kind === 'option' ? e.right.type.element : e.right.type;
+    const compare = JSON.stringify(a) === JSON.stringify(b) ? a.kind === 'unit' ? 'true' : this.comparison('eq', a, 'ml_left', 'ml_right') : 'false';
+    return renderOptionalStrictEquality('Rocq', e.left.type.kind, e.left.type.absence ?? '', e.right.type.kind, e.right.type.absence ?? '', compare, this.expr(e.left), this.expr(e.right), e.negate);
+  }
+
   math(e) {
     this.floats();
     const args = e.args.map((arg) => this.expr(arg));
@@ -763,6 +945,14 @@ class RocqEmitter {
         return '(@nil string)';
       case 'array':
         return `(@nil ${this.type(type.element)})`;
+      case 'option':
+        return `(@None ${type.absence === 'both' ? `(option ${this.type(type.element)})` : this.type(type.element)})`;
+      case 'tuple':
+        return type.elements.length ? `(${type.elements.map((element) => this.inhabitant(element)).join(', ')})` : 'tt';
+      case 'record':
+        return type.fields.length ? `(${type.fields.map((field) => this.inhabitant(field.type)).join(', ')})` : 'tt';
+      case 'function':
+        return `(fun ${type.params.map((param, index) => `(ml_arg${index} : ${this.type(param)})`).join(' ')} => ${this.inhabitant(type.ret)})`;
       case 'data': {
         const entry = this.program.declarations.get(type.name);
         const ctor = entry.ctors.find((candidate) => candidate.fields.every((field) => field.type.kind !== 'data'))

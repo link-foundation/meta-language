@@ -1,13 +1,16 @@
 import { DecoratorError, decoratorSet } from './decorators.js';
 import { carryRuleDocs, Grammar } from './grammar.js';
 import { renameGrammarRule } from './grammar-rename.js';
+import { checkGrammarCompositionRuleData, composeGrammarRuleExpression } from './grammar-composition.js';
 
 /**
  * The grammar the `importer` or `grammar-rule` decorators of `decorators`
- * make of `grammar`. Each rule is shown as `{ name, kind, concept }`, with
+ * make of `grammar`. Each rule is shown as `{ name, kind, concept, composition }`, with
  * `format` (the grammar's source format) added at the `importer` level.
  * Setting `name` renames the rule and every reference to it, setting `kind`
- * or `concept` changes the rule, and `drop` removes it. The rules are
+ * or `concept` changes the rule, and `drop` removes it. A nonempty
+ * `composition` is one closed any/all Links template with an empty insertion
+ * slot for the original expression. The rules are
  * decorated in grammar order; a grammar without decorators of the level is
  * returned unchanged.
  */
@@ -17,17 +20,27 @@ export function decorateGrammar(grammar, decorators, level = 'grammar-rule') {
   const renames = [];
   const dropped = new Set();
   const changed = new Map();
+  const composition = set.forLevel(level).some(entry => entry.actions.some(action => action.field === 'composition'));
+  const treeDecorators = set.has('executor') || set.has('recovery');
   for (const rule of grammar.rules.values()) {
-    const record = { name: rule.name, kind: rule.kind, concept: rule.concept ?? '' };
+    if (composition) checkGrammarCompositionRuleData(rule);
+    const record = { name: rule.name, kind: rule.kind, concept: rule.concept ?? '', composition: '' };
     if (level === 'importer') record.format = grammar.sourceFormat ?? '';
     const decorated = set.decorate(level, record);
     if (decorated === null) {
       dropped.add(rule.name);
       continue;
     }
+    const patch = {};
     if (decorated.kind !== rule.kind || decorated.concept !== (rule.concept ?? '')) {
-      changed.set(rule.name, { kind: decorated.kind, concept: decorated.concept === '' ? null : decorated.concept });
+      patch.kind = decorated.kind;
+      patch.concept = decorated.concept === '' ? null : decorated.concept;
     }
+    if (decorated.composition !== '') {
+      const expression = composeGrammarRuleExpression(rule, decorated.composition, decorated.kind, treeDecorators);
+      if (expression !== rule.expression) patch.expression = expression;
+    }
+    if (Object.keys(patch).length > 0) changed.set(rule.name, patch);
     if (decorated.name !== rule.name) renames.push([rule.name, decorated.name]);
   }
   let result = grammar;
@@ -90,8 +103,20 @@ export function decorateSyntaxTree(tree, decorators) {
         return decorated === null ? [] : [{ ...node, kind: decorated.kind }];
       }
       case 'embed': {
-        const [root] = visit(node.root);
-        return [{ ...node, root }];
+        const roots = visit(node.root);
+        if (node.sourceChildren && roots.length !== 1) throw new DecoratorError('a mapped grammar keeps one complete decoded CST root');
+        const [root] = roots;
+        const copy = { ...node, root };
+        if (node.sourceChildren) {
+          copy.sourceChildren = node.sourceChildren.flatMap(visit);
+          copy.selection = { ...node.selection, alternatives: node.selection.alternatives.map(alternative => {
+            const alternativeRoots = visit(alternative.root);
+            if (alternativeRoots.length !== 1) throw new DecoratorError('a mapped grammar witness keeps one complete decoded CST root');
+            const [alternativeRoot] = alternativeRoots;
+            return { ...alternative, root: alternativeRoot };
+          }) };
+        }
+        return [copy];
       }
       default: return [node];
     }

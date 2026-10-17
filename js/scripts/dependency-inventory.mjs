@@ -1,6 +1,6 @@
 // The dependency inventory of docs/vision.md#dependencies: every retained
 // runtime, development, build and optional dependency, lockfile resolution,
-// vendored grammar asset, generator, toolchain, workflow action, build image
+// downloaded grammar asset, generator, toolchain, workflow action, build image
 // and published artifact entry, each with its current stable release on the
 // recorded audit date (requirement I195-DEPENDENCY-INVENTORY).
 //
@@ -16,6 +16,8 @@ import path from 'node:path';
 
 import { compareVersions, isPrerelease, newestStable, satisfies, versionParts } from './semver-range.mjs';
 import { grammarFile } from './grammar-files.mjs';
+import { readProjectData, resolveProjectDataPath } from './project-data.mjs';
+import { collectGrammarAssetDependencies, relocatedGrammarDependency } from './dependency-grammar-assets.mjs';
 
 export const INVENTORY_FILE = 'parity/dependency-inventory.json';
 export const AUDIT_DOCUMENT = 'docs/dependency-audit.md';
@@ -27,9 +29,9 @@ export const CATEGORIES = [
   { id: 'setting', title: 'Rust package settings' },
   { id: 'crate', title: 'Rust crates' },
   { id: 'experiment', title: 'Experiment manifests' },
-  { id: 'vendored-parser', title: 'Vendored generated parsers' },
+  { id: 'downloaded-parser', title: 'Downloaded generated parser sources' },
   { id: 'vendored-runtime', title: 'Vendored runtime' },
-  { id: 'vendored-grammar', title: 'Vendored WebAssembly grammars' },
+  { id: 'downloaded-grammar', title: 'Downloaded WebAssembly grammars' },
   { id: 'generator', title: 'Generators' },
   { id: 'toolchain', title: 'Toolchains and tools' },
   { id: 'action', title: 'GitHub Actions' },
@@ -54,7 +56,8 @@ const WORKFLOWS = '.github/workflows';
 const PLACEHOLDER_REASON = /no recorded compatibility reason|must be updated|\bTODO\b|\bTBD\b|^\s*$/iu;
 
 const readText = (root, file) => readFileSync(path.join(root, file), 'utf8');
-const readJson = (root, file) => JSON.parse(readText(root, file));
+const readJson = (root, file) => readProjectData(path.join(root, file),
+  /(?:^|\/)(?:package|package-lock)\.json$/u.test(file) ? { format: 'json' } : undefined);
 const unique = (values) => [...new Set(values)].sort();
 
 function itemId({ category, scope, name, pinned }) {
@@ -71,7 +74,14 @@ function makeItem(fields) {
 function addItem(items, fields) {
   const item = makeItem(fields);
   const existing = items.get(item.id);
-  if (existing) existing.declaredIn = unique([...existing.declaredIn, ...item.declaredIn]);
+  if (existing) {
+    existing.declaredIn = unique([...existing.declaredIn, ...item.declaredIn]);
+    if (item.category === 'crate' && item.requirement) {
+      existing.requirement = unique([existing.requirement, item.requirement].filter(Boolean).flatMap((value) => value.split('; '))).join('; ');
+      existing.kind = unique([existing.kind, item.kind].filter(Boolean).flatMap((value) => value.split(', '))).join(', ');
+      existing.role = 'direct';
+    }
+  }
   else items.set(item.id, item);
   return item;
 }
@@ -116,7 +126,8 @@ export function parseCargoManifest(text) {
       const requirement = value.match(/^"([^"]+)"/u)?.[1] ?? value.match(/version\s*=\s*"([^"]+)"/u)?.[1] ?? null;
       const renamed = value.match(/package\s*=\s*"([^"]+)"/u)?.[1];
       const kind = section.endsWith('dev-dependencies') ? 'development' : section.endsWith('build-dependencies') ? 'build' : 'runtime';
-      dependencies.push({ name: renamed ?? key, requirement, kind, optional: /optional\s*=\s*true/u.test(value) });
+      const localPath = value.match(/path\s*=\s*"([^"]+)"/u)?.[1];
+      dependencies.push({ name: renamed ?? key, requirement, kind, optional: /optional\s*=\s*true/u.test(value), ...(localPath ? { path: localPath } : {}) });
     }
   }
   return { settings, dependencies };
@@ -189,9 +200,15 @@ function collectNpm(root, items) {
   }
 }
 
-function collectCargo(root, items, manifestFile) {
-  const lockFile = manifestFile.replace(/Cargo\.toml$/u, 'Cargo.lock');
+function collectCargo(root, items, manifestFile, lockFile = manifestFile.replace(/Cargo\.toml$/u, 'Cargo.lock')) {
   const { settings, dependencies } = parseCargoManifest(readText(root, manifestFile));
+  for (const dependency of dependencies.filter(({ path: localPath }) => localPath)) {
+    addItem(items, {
+      category: 'crate', scope: manifestFile, name: dependency.name,
+      declaredIn: manifestFile, pinned: dependency.path, compare: 'unversioned',
+      source: { type: 'none' }, role: 'direct', kind: dependency.kind,
+    });
+  }
   for (const setting of ['edition', 'rust-version']) {
     if (!settings[setting]) continue;
     addItem(items, {
@@ -285,64 +302,22 @@ const leanItem = (file, pinned) => ({
   source: { type: 'github-release', repository: 'leanprover/lean4' },
 });
 
-function collectVendored(root, items) {
-  const grammarLockFile = 'js/src/vendor/grammars/grammar-lock.json';
-  const runtimeLockFile = 'js/src/vendor/web-tree-sitter/runtime-lock.json';
-  const grammarLock = readJson(root, grammarLockFile);
-  const cli = versionParts(grammarLock.treeSitterCli) ? grammarLock.treeSitterCli.match(/\d+\.\d+\.\d+/u)[0] : grammarLock.treeSitterCli;
-  const cliItem = addItem(items, {
-    category: 'toolchain',
-    name: 'tree-sitter-cli',
-    declaredIn: [grammarLockFile, 'rust/src/data/grammar-lock.json'],
-    pinned: cli,
-    compare: 'version',
-    source: { type: 'npm', package: 'tree-sitter-cli' },
-  });
+function collectExternalGrammarDependencies(root, items) {
+  const resolved = (file) => path.relative(root, resolveProjectDataPath(path.join(root, file))).split(path.sep).join('/');
+  const grammarLockLogicalFile = 'js/src/vendor/grammars/grammar-lock.json';
+  const runtimeLockLogicalFile = 'js/src/vendor/web-tree-sitter/runtime-lock.json';
+  const grammarLockFile = resolved(grammarLockLogicalFile);
+  const runtimeLockFile = resolved(runtimeLockLogicalFile);
   const crateItems = [...items.values()].filter((item) => item.category === 'crate' && item.scope === 'rust/Cargo.lock');
-  for (const [id, grammar] of Object.entries(grammarLock.grammars).sort(([a], [b]) => a.localeCompare(b))) {
-    let parent;
-    if (grammar.vendored) {
-      parent = addItem(items, {
-        category: 'vendored-parser',
-        name: grammar.vendored,
-        declaredIn: [grammarLockFile, `${grammar.vendored}/NOTICE.md`],
-        pinned: grammar.version,
-        compare: 'revision',
-        source: { type: 'github-revision', repository: grammar.upstream },
-        ...(grammar.patch ? { patch: grammar.patch } : {}),
-      });
-    } else {
-      parent = crateItems.find((item) => item.name === grammar.crate && item.pinned === grammar.version);
-      if (!parent) throw new Error(`grammar ${id} names ${grammar.crate} ${grammar.version}, which rust/Cargo.lock does not lock`);
-    }
-    addItem(items, {
-      category: 'vendored-grammar',
-      name: grammarFile(grammar, `${id}.wasm.gz`),
-      declaredIn: grammarLockFile,
-      pinned: grammar.version,
-      compare: 'derived',
-      source: { type: 'none' },
-      dependsOn: [parent.id, cliItem.id],
-    });
-  }
-  const runtimeLock = readJson(root, runtimeLockFile);
-  const image = addItem(items, {
-    category: 'image',
-    name: 'emscripten/emsdk',
-    declaredIn: [runtimeLockFile, 'js/scripts/build-web-tree-sitter-runtime.mjs'],
-    pinned: runtimeLock.emscripten,
-    compare: 'version',
-    source: { type: 'docker-hub', repository: 'emscripten/emsdk' },
-  });
-  addItem(items, {
-    category: 'vendored-runtime',
-    name: 'js/src/vendor/web-tree-sitter/web-tree-sitter.wasm.gz',
-    declaredIn: runtimeLockFile,
-    pinned: runtimeLock.version,
-    compare: 'version',
-    source: { type: 'github-release', repository: runtimeLock.upstream },
-    dependsOn: [image.id],
-    ...(runtimeLock.patch ? { patch: runtimeLock.patch } : {}),
+  collectGrammarAssetDependencies({
+    grammarLock: readJson(root, grammarLockLogicalFile),
+    runtimeLock: readJson(root, runtimeLockLogicalFile),
+    grammarLockFile,
+    rustGrammarLockFile: resolved('rust/src/data/grammar-lock.json'),
+    runtimeLockFile,
+    crateItems,
+    grammarFile,
+    addItem: (fields) => addItem(items, fields),
   });
 }
 
@@ -357,11 +332,12 @@ function collectGenerators(root, items) {
 }
 
 function actionSource(action, ref) {
+  const repository = action.split('/').slice(0, 2).join('/');
   if (action === 'dtolnay/rust-toolchain' && versionParts(ref) && /^\d/u.test(ref)) {
     return { compare: 'version', source: { type: 'github-release', repository: 'rust-lang/rust' } };
   }
-  if (/^v\d+$/u.test(ref)) return { compare: 'major', source: { type: 'github-release', repository: action } };
-  if (/^v?\d+\.\d+/u.test(ref)) return { compare: 'version', source: { type: 'github-release', repository: action } };
+  if (/^v\d+$/u.test(ref)) return { compare: 'major', source: { type: 'github-release', repository } };
+  if (/^v?\d+\.\d+/u.test(ref)) return { compare: 'version', source: { type: 'github-release', repository } };
   return { compare: 'floating', source: { type: 'none' } };
 }
 
@@ -387,6 +363,9 @@ function collectWorkflows(root, items) {
     }
     for (const match of text.matchAll(/npm install -g npm@(\S+)/gu)) {
       addItem(items, { category: 'toolchain', name: 'npm', declaredIn: file, pinned: match[1], compare: 'major', source: { type: 'npm', package: 'npm' } });
+    }
+    for (const { name, pinned } of pinnedPipPackages(text)) {
+      addItem(items, { category: 'toolchain', scope: 'pypi', name, declaredIn: file, pinned, compare: 'version', source: { type: 'pypi', package: name } });
     }
     for (const match of text.matchAll(/^\s*ocaml-compiler:\s*['"]?([^'"\s#]+)/gmu)) {
       addItem(items, { category: 'toolchain', name: 'ocaml', declaredIn: file, pinned: match[1], compare: 'minor', source: { type: 'github-release', repository: 'ocaml/ocaml' } });
@@ -423,6 +402,37 @@ function collectWorkflows(root, items) {
       addItem(items, { category: 'image', name: match[1], declaredIn: file, pinned: match[2], compare: 'version', source: { type: 'docker-hub', repository: match[1] } });
     }
   }
+}
+
+/** Exact package pins in pip install commands; PEP 503 normalizes project names. */
+export function pinnedPipPackages(text) {
+  const source = text.replace(/^\s*#.*$/gmu, '').replace(/\\\r?\n\s*/gu, ' ');
+  const packages = [];
+  for (const command of source.matchAll(/\b(?:python(?:[0-9.]+)?\s+-m\s+)?pip(?:[0-9.]+)?\s+install\b([^\n]*)/gu)) {
+    const argumentsText = command[1].split(/\s+#/u)[0];
+    for (const match of argumentsText.matchAll(/(?:^|\s)['"]?([A-Za-z0-9][A-Za-z0-9._-]*)(?:\[[A-Za-z0-9_,.-]+\])?==([0-9][A-Za-z0-9.!+-]*)['"]?(?=\s|$)/gu)) {
+      const name = match[1].toLowerCase().replace(/[-_.]+/gu, '-');
+      packages.push({ name, pinned: match[2] });
+    }
+  }
+  return packages;
+}
+
+/** Compare normalized stable public PyPI versions, including epochs and post releases. */
+export function comparePypiVersions(left, right) {
+  const parts = (value) => {
+    const match = /^(?:(\d+)!)?(\d+(?:\.\d+)*)(?:\.post(\d+))?$/u.exec(value);
+    if (!match) throw new Error(`unsupported stable PyPI version ${JSON.stringify(value)}`);
+    return { epoch: BigInt(match[1] ?? 0), release: match[2].split('.').map((component) => BigInt(component)), post: match[3] === undefined ? -1n : BigInt(match[3]) };
+  };
+  const orderOf = (first, second) => first > second ? 1 : first < second ? -1 : 0;
+  const [first, second] = [parts(left), parts(right)];
+  if (first.epoch !== second.epoch) return orderOf(first.epoch, second.epoch);
+  for (let index = 0; index < Math.max(first.release.length, second.release.length); index += 1) {
+    const order = orderOf(first.release[index] ?? 0n, second.release[index] ?? 0n);
+    if (order !== 0) return Math.sign(order);
+  }
+  return orderOf(first.post, second.post);
 }
 
 function collectFloatingTools(items, file, text) {
@@ -477,9 +487,10 @@ export function collectDependencies(root) {
   collectNpm(root, items);
   collectCargo(root, items, 'rust/Cargo.toml');
   collectCargo(root, items, 'rust/web/Cargo.toml');
+  for (const manifest of trackedFiles(root, 'rust/oracles', /^Cargo\.toml$/u)) collectCargo(root, items, manifest, 'rust/Cargo.lock');
   collectExperiments(root, items);
   collectLeanToolchains(root, items);
-  collectVendored(root, items);
+  collectExternalGrammarDependencies(root, items);
   collectGenerators(root, items);
   collectWorkflows(root, items);
   collectPreCommit(root, items);
@@ -512,6 +523,7 @@ export function ownStatus(item) {
       return compareVersions(item.pinned, item.current, 2) >= 0 ? 'current' : 'behind';
     case 'version':
     case 'floor':
+      if (item.source?.type === 'pypi') return comparePypiVersions(item.pinned, item.current) >= 0 ? 'current' : 'behind';
       return compareVersions(item.pinned, item.current) >= 0 ? 'current' : 'behind';
     default:
       throw new Error(`${item.id}: unknown comparison ${item.compare}`);
@@ -628,7 +640,38 @@ export function deliveredStatuses(items) {
 
 // --- Check ----------------------------------------------------------------
 
-const COLLECTED_FIELDS = ['category', 'name', 'scope', 'declaredIn', 'pinned', 'compare', 'source', 'role', 'kind', 'requirement', 'patch'];
+const COLLECTED_FIELDS = ['category', 'name', 'scope', 'declaredIn', 'pinned', 'compare', 'source', 'role', 'kind', 'requirement', 'patch', 'aliases', 'provenance'];
+
+/** Reconcile repository-owned declarations without changing registry audit evidence. */
+export function reconcileLocalDeclarations(inventory, collected) {
+  const previous = new Map(inventory.items.map((item) => [item.id, item]));
+  const relocated = new Map(collected.map((item) => [item.id, previous.get(item.id) ?? relocatedGrammarDependency(item, previous)]));
+  const identities = new Map([...relocated].filter(([, old]) => old).map(([id, old]) => [old.id, id]));
+  const items = collected.map((item) => {
+    const old = relocated.get(item.id);
+    if (old && JSON.stringify(old.source) !== JSON.stringify(item.source)) {
+      throw new Error(`${item.id}: the release source changed; run a live dependency refresh`);
+    }
+    if (!old && !['none', 'rust-edition'].includes(item.source.type)) {
+      throw new Error(`${item.id}: a new external release needs a live dependency refresh`);
+    }
+    const entry = { ...old };
+    for (const field of COLLECTED_FIELDS) {
+      if (item[field] === undefined) delete entry[field];
+      else entry[field] = item[field];
+    }
+    entry.id = item.id;
+    if (item.dependsOn) entry.dependsOn = item.dependsOn;
+    else if (entry.dependsOn) entry.dependsOn = entry.dependsOn.map((id) => identities.get(id) ?? id);
+    if (!old && item.source.type === 'rust-edition') {
+      entry.current = RUST_EDITIONS.at(-1);
+      entry.evidence = 'Rust editions, the newest stable edition';
+    }
+    if (item.category === 'generator') entry.dependsOn ??= [];
+    return entry;
+  });
+  return { ...inventory, items };
+}
 
 /**
  * The problems of an inventory against the collected items: missing,
@@ -885,6 +928,22 @@ export function releaseResolvers({ http, github, today }) {
         const versions = Object.entries(document.versions ?? {}).filter(([, entry]) => !entry.deprecated).map(([version]) => version);
         return { current: document['dist-tags'].latest, evidence: `npm registry, ${name} latest`, versions };
       }),
+    pypi: ({ package: name }) =>
+      once(`pypi ${name}`, async () => {
+        const normalized = name.toLowerCase().replace(/[-_.]+/gu, '-');
+        const document = JSON.parse(await http(`https://pypi.org/pypi/${encodeURIComponent(normalized)}/json`, { accept: 'application/json' }));
+        if (document.info?.name?.toLowerCase().replace(/[-_.]+/gu, '-') !== normalized) throw new Error(`PyPI returned inconsistent project metadata for ${name}`);
+        const versions = Object.entries(document.releases ?? {})
+          .filter(([version, files]) => !isPrerelease(version) && !/(?:a|b|rc)\d+(?:\.post\d+)?(?:\.dev\d+)?$|\.dev\d*$/iu.test(version)
+            && Array.isArray(files) && files.some((file) => file.yanked === false))
+          .map(([version]) => version);
+        // Compare public stable PEP 440 release numbers and post releases;
+        // unsupported version spellings fail rather than concealing a newer release.
+        for (const version of versions) comparePypiVersions(version, version);
+        const current = versions.sort((first, second) => comparePypiVersions(second, first))[0];
+        if (!current) throw new Error(`PyPI lists no available stable release for ${name}`);
+        return { current, evidence: `PyPI JSON registry, ${normalized} newest non-yanked stable release`, versions };
+      }),
     crate: ({ crate }) =>
       once(`crate ${crate}`, async () => {
         const lines = (await http(`https://index.crates.io/${crateIndexPath(crate)}`)).trim().split('\n').map((line) => JSON.parse(line));
@@ -1080,15 +1139,19 @@ export function cargoDependents(metadata) {
  */
 export async function refreshInventory({ root, previous, collected, resolvers, cargoMetadata, today, onProgress = () => {} }) {
   const prior = new Map((previous?.items ?? []).map((item) => [item.id, item]));
+  const relocations = new Map(collected.flatMap((item) => {
+    const old = relocatedGrammarDependency(item, prior);
+    return old ? [[old.id, item.id]] : [];
+  }));
   const nameKey = (item) => `${item.category} ${item.scope ?? ''} ${item.name}`;
   const priorByName = new Map((previous?.items ?? []).map((item) => [nameKey(item), item]));
   // A generator names the tools it runs by id, and an id carries the pin: follow a tool to its new pin.
   const collectedByName = new Map(collected.map((item) => [nameKey(item), item]));
-  const followPin = (id) => (prior.has(id) ? (collectedByName.get(nameKey(prior.get(id)))?.id ?? id) : id);
+  const followPin = (id) => relocations.get(id) ?? (prior.has(id) ? (collectedByName.get(nameKey(prior.get(id)))?.id ?? id) : id);
   let done = 0;
   const releases = new Map();
   const items = await mapLimit(collected, 16, async (item) => {
-    const before = prior.get(item.id) ?? priorByName.get(nameKey(item));
+    const before = prior.get(item.id) ?? priorByName.get(nameKey(item)) ?? relocatedGrammarDependency(item, prior);
     const resolver = resolvers[item.source.type];
     if (!resolver && item.source.type !== 'rust-required') throw new Error(`${item.id}: no resolver for ${item.source.type}`);
     const { versions, ...resolved } = item.source.type === 'rust-required' ? requiredRustVersion(cargoMetadata(item.source.manifest)) : await resolver(item.source, item);
@@ -1194,13 +1257,15 @@ export function renderAuditDocument(inventory) {
     'resolution, the experiment manifests, the vendored grammar assets, the',
     'generators, the toolchains, the GitHub Actions, the build images, the runners',
     'and the published artifact contents, each with the current stable release its',
-    'source reported on the audit date.',
+    'source reported on the audit date or a later item-specific registry receipt.',
+    'A receipt with `checkedAt` updates only that item; the full audit date and',
+    'the previously recorded releases of every other item stay unchanged.',
     '',
     '## Method',
     '',
     '`node js/scripts/check-dependencies.mjs --refresh` (`npm run dependencies:refresh`)',
     'reads every pin from the repository, queries the npm registry, the crates.io',
-    'index, GitHub releases, nodejs.org and Docker Hub for the current stable',
+    'index, PyPI JSON registry, GitHub releases, nodejs.org and Docker Hub for the current stable',
     'release, derives the reason of a locked package that a dependent\'s requirement',
     'holds from `js/package-lock.json` and `cargo metadata`, and rewrites',
     '`parity/dependency-inventory.json` and this document. Every other reason is',

@@ -8,7 +8,9 @@
 //! pair of languages. This is the port of `js/src/grammar-concepts.js`.
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::sync::{Mutex, OnceLock};
 
+use crate::concept_records::concept_records_for_source_name;
 use crate::decorators::{
     DecoratorError, DecoratorLevel, DecoratorSet, decorator_record, record_field,
 };
@@ -100,8 +102,19 @@ pub fn native_grammar_source(id: &str) -> Option<String> {
 /// grammar order; empty for an id that names no native grammar.
 #[must_use]
 pub fn native_grammar_rule_concepts(id: &str) -> Vec<NativeRuleConcept> {
-    native_grammar_text(id)
-        .and_then(|text| parse_grammar_links(text).ok())
+    static RULES: OnceLock<Mutex<BTreeMap<String, Vec<NativeRuleConcept>>>> = OnceLock::new();
+    let Some(text) = native_grammar_text(id) else {
+        return Vec::new();
+    };
+    let rules = RULES.get_or_init(|| Mutex::new(BTreeMap::new()));
+    if let Some(found) = rules
+        .lock()
+        .expect("the rule summary cache is available")
+        .get(id)
+    {
+        return found.clone();
+    }
+    let found = parse_grammar_links(text)
         .map(|grammar| {
             grammar
                 .rules()
@@ -110,9 +123,14 @@ pub fn native_grammar_rule_concepts(id: &str) -> Vec<NativeRuleConcept> {
                     rule: rule.name.clone(),
                     concept: rule.concept.clone(),
                 })
-                .collect()
+                .collect::<Vec<_>>()
         })
-        .unwrap_or_default()
+        .unwrap_or_default();
+    rules
+        .lock()
+        .expect("the rule summary cache is available")
+        .insert(id.to_owned(), found.clone());
+    found
 }
 
 // The language a concept identity is specific to by its namespace:
@@ -418,15 +436,19 @@ pub fn translate_native_construct_in(
     else {
         return unknown;
     };
-    let meanings: Vec<&ConceptRecord> = records
-        .iter()
-        .filter(|record| {
-            record
-                .source_aliases
-                .iter()
-                .any(|alias| alias.source == source && alias.name == rule)
-        })
-        .collect();
+    let meanings: Vec<&ConceptRecord> = if std::ptr::eq(records, concept_records()) {
+        concept_records_for_source_name(&source, rule)
+    } else {
+        records
+            .iter()
+            .filter(|record| {
+                record
+                    .source_aliases
+                    .iter()
+                    .any(|alias| alias.source == source && alias.name == rule)
+            })
+            .collect()
+    };
     let record = match meanings.as_slice() {
         [] => return unknown,
         [record] => record,
