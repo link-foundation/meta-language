@@ -7,7 +7,7 @@ export function publicGrammarSourcePlaneConsumers(moduleSpecifier) {
       name: 'valid-mapped-grammar-source-planes', expectedDiagnostics: [],
       source: `import {parseGrammarLinks,percentEncodeLinksText,compileGrammar,
   checkGrammarSelectionMappedTree,type GrammarSourcePlane,type GrammarSourceMapping,
-  type GrammarIncludedRangeSourceMapping,type GrammarMappedTreeBundle} from ${module};
+  type GrammarIncludedRangeSourceMapping,type GrammarMappedTreeBundle,type GrammarSelection} from ${module};
 const raw = JSON.stringify('π');
 const child = parseGrammarLinks('(grammar (start decoded))\\n(rule decoded normal (literal '
   + percentEncodeLinksText('π') + '))\\n');
@@ -21,7 +21,7 @@ const checked:GrammarMappedTreeBundle = checkGrammarSelectionMappedTree(unknownB
 const sources:GrammarSourcePlane[] = checked.sourcePlanes;
 if(checked.tree.type!=='node' || checked.tree.children[0]?.type!=='embed') throw new Error('embed is absent');
 const embedded = checked.tree.children[0];
-const mapping:GrammarSourceMapping|GrammarIncludedRangeSourceMapping|undefined = embedded.selection?.sourceMapping;
+const mapping:GrammarSelection['sourceMapping'] = embedded.selection?.sourceMapping;
 if(!mapping || !embedded.sourceChildren) throw new Error('mapped source roles are absent');
 if(mapping.operation!=='json-string') throw new Error('JSON mapping is absent');
 const jsonMapping:GrammarSourceMapping = mapping;
@@ -33,7 +33,7 @@ export const contractEvidence = {sourceCount:sources.length,physicalChildren:emb
       name: 'valid-included-range-grammar-source-planes', expectedDiagnostics: [],
       source: `import {parseGrammarLinks,percentEncodeLinksText,compileGrammar,
   checkGrammarSelectionMappedTree,type GrammarSourcePlane,type GrammarSourceMapping,
-  type GrammarIncludedRangeSourceMapping,type GrammarMappedTreeBundle} from ${module};
+  type GrammarIncludedRangeSourceMapping,type GrammarMappedTreeBundle,type GrammarSelection} from ${module};
 const raw = '*é\\n> β*';
 const child = parseGrammarLinks('(grammar (start decoded))\\n(rule decoded normal (literal '
   + percentEncodeLinksText('*é\\nβ*') + '))\\n');
@@ -45,7 +45,7 @@ const checked:GrammarMappedTreeBundle = checkGrammarSelectionMappedTree({tree:ou
 const sources:GrammarSourcePlane[] = checked.sourcePlanes;
 if(checked.tree.type!=='node' || checked.tree.children[0]?.type!=='embed') throw new Error('included range embed is absent');
 const embedded = checked.tree.children[0];
-const mapping:GrammarSourceMapping|GrammarIncludedRangeSourceMapping|undefined = embedded.selection?.sourceMapping;
+const mapping:GrammarSelection['sourceMapping'] = embedded.selection?.sourceMapping;
 if(!mapping || mapping.operation!=='included-ranges' || !embedded.sourceChildren) throw new Error('included range source roles are absent');
 const ranged:GrammarIncludedRangeSourceMapping = mapping;
 const derivation = sources[1].derivation;
@@ -64,6 +64,52 @@ const ranged:GrammarIncludedRangeSourceMapping = {kind:'source-mapping',operatio
   input:0,output:1,ranges:[[0,4],[6,9]],intervals:[[0,0,0,0],[0,1,0,1],[1,3,1,3],[3,4,3,4],
     [4,6,4,4],[6,8,4,6],[8,9,6,7],[9,9,7,7]]};
 const jsonOnly:GrammarSourceMapping = ranged;
+export const contractEvidence = {mapping:jsonOnly};
+`,
+    },
+    {
+      name: 'valid-field-range-grammar-source-planes', expectedDiagnostics: [],
+      source: `import {parseGrammarLinks,percentEncodeLinksText,compileGrammar,
+  checkGrammarSelectionMappedTree,type GrammarSelection,type GrammarMappedTreeBundle,
+  type GrammarSourcePlane,type GrammarSourceFieldSelector,type GrammarFieldRangeSourceMapping,
+  type GrammarFieldRangeOccurrence,type GrammarFieldRangeSourceDerivation,
+  type GrammarFieldRangeWitness} from ${module};
+const raw = '<π>';
+const child = parseGrammarLinks('(grammar (start decoded))\\n(rule decoded normal (literal '
+  + percentEncodeLinksText('π') + '))\\n');
+const host = parseGrammarLinks('(grammar (start document))\\n(rule document normal (any-grammar '
+  + '(seq (literal %3C) (capture labeled body (literal ' + percentEncodeLinksText('π') + ')) (literal %3E)) '
+  + '(grammar-field-candidate Child field-ranges (source-field-selector body include 0 1))))\\n');
+const outcome = compileGrammar(host,{resolveGrammar:name=>name==='Child'?child:undefined}).parseTree(raw);
+if(!outcome.ok || !outcome.tree || !outcome.sourcePlanes) throw new Error('field range result is absent');
+const checked:GrammarMappedTreeBundle = checkGrammarSelectionMappedTree({tree:outcome.tree,sourcePlanes:outcome.sourcePlanes});
+const sources:GrammarSourcePlane[] = checked.sourcePlanes;
+if(checked.tree.type!=='node' || checked.tree.children[0]?.type!=='embed') throw new Error('field range embed is absent');
+const embedded = checked.tree.children[0];
+const mapping:GrammarSelection['sourceMapping'] = embedded.selection?.sourceMapping;
+if(!mapping || mapping.operation!=='field-ranges' || !embedded.sourceChildren) throw new Error('field range source roles are absent');
+const fielded:GrammarFieldRangeSourceMapping = mapping;
+const selector:GrammarSourceFieldSelector = fielded.selector;
+const occurrences:GrammarFieldRangeOccurrence[] = fielded.occurrences;
+const derivation = sources[1].derivation;
+if(!derivation || derivation.operation!=='field-ranges') throw new Error('field range derivation is absent');
+const origin:GrammarFieldRangeSourceDerivation = derivation;
+const witness:GrammarFieldRangeWitness = origin.witness;
+export const contractEvidence = {sourceCount:sources.length,physicalChildren:embedded.sourceChildren.length,
+  input:fielded.input,output:fielded.output,operation:fielded.operation,firstRange:fielded.ranges[0],
+  selectorLabel:selector.label,selectorMode:selector.mode,occurrencePath:occurrences[0].path,
+  occurrenceStart:occurrences[0].start,occurrenceEnd:occurrences[0].end,originLabel:origin.selector.label,
+  witnessStart:witness.start,witnessEnd:witness.end,witnessChildren:witness.children.length,byteLength:sources[1].byteLength};
+`,
+    },
+    {
+      name: 'reject-field-range-mapping-as-json-only', expectedDiagnostics: ['TS2322'],
+      source: `import type {GrammarSourceMapping,GrammarFieldRangeSourceMapping} from ${module};
+const fielded:GrammarFieldRangeSourceMapping = {kind:'source-mapping',operation:'field-ranges',input:0,output:1,
+  selector:{kind:'source-field-selector',label:'body',mode:'include',first:0,count:1},
+  occurrences:[{path:['children',1],start:1,end:3}],ranges:[[1,3]],
+  intervals:[[0,0,0,0],[0,1,0,0],[1,3,0,2],[3,4,2,2],[4,4,2,2]]};
+const jsonOnly:GrammarSourceMapping = fielded;
 export const contractEvidence = {mapping:jsonOnly};
 `,
     },
