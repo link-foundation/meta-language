@@ -15,6 +15,7 @@ import {SOURCE_NATIVE_RUNNER_ADDITIONS,SOURCE_NATIVE_RUNNER_VERIFIER_FILES,verif
 import {createCompleteRustSourceArchives, replayCompleteRustSourceArchives, readCanonicalArchiveTransportSource, requireSuccessfulSourceArchive} from './archive-transport.mjs';
 import {prepareCurrentOriginalLinkRawEmission} from './generate-raw-current-emission.mjs';
 import {ORIGINAL_LINK_RAW_CURRENT_ARTIFACT, ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT, readOriginalLinkRawEmissionProducerSources, readOriginalLinkRawEmissionProfile} from './raw-emission-profiles.mjs';
+import {generateOriginalLinkRawConsumingEmission,readOriginalLinkRawConsumingProfile} from './raw-consuming-emission.mjs';
 const {Link: CarrierLink, StreamParser: CarrierLinksParser} = await import(pathToFileURL(createRequire(new URL('../../js/package.json', import.meta.url)).resolve('links-notation')).href);
 
 // Actual immutable producer and source closure; no capability declaration substitutes for execution.
@@ -425,10 +426,11 @@ function readOriginalLinkRawSelectedEmissionProfile(profile) {
   const historicalArtifact = readStructuredDataLino(readFileSync(ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT, 'utf8'));
   const currentArtifact = readStructuredDataLino(readFileSync(ORIGINAL_LINK_RAW_CURRENT_ARTIFACT, 'utf8'));
   const source = readFileSync(new URL('./raw-rules.mjs', import.meta.url), 'utf8');
-  const selected = readOriginalLinkRawEmissionProfile(profile, {historicalArtifact, currentArtifact, source,
+  const selected = readOriginalLinkRawEmissionProfile(profile === 'consuming' ? 'current' : profile, {historicalArtifact, currentArtifact, source,
     producerSources: readOriginalLinkRawEmissionProducerSources()});
   const {source: selectedSource, ...descriptor} = selected;
   assert.equal(sha256(selectedSource), descriptor.sourceSha256);
+  if (profile === 'consuming') return readOriginalLinkRawConsumingProfile(descriptor);
   return descriptor;
 }
 
@@ -545,6 +547,51 @@ export async function planOriginalLinkRawNative(environment = process.env, {emis
   });
 }
 
+function originalLinkRawRecordDigest(records) {
+  const hash=createHash('sha256');
+  for(const record of records){const text=JSON.stringify(record);hash.update(String(Buffer.byteLength(text))+':');hash.update(text);}
+  return hash.digest('hex');
+}
+
+/** Reuse the exact checked fixture matrix; only the automatically emitted library changes. */
+export async function planOriginalLinkRawConsumingNative(currentPlan,environment=process.env) {
+  requireOriginalLinkRawPlanning(environment);
+  assert.ok(checkedPlans.has(currentPlan),'the consuming successor requires the exact checked current plan');
+  assert.equal(currentPlan.emissionProfile.profile,'current');assert.equal(currentPlan.entries.length,1);
+  assert.deepEqual(currentPlan.modelSources,verifyOriginalLinkRawNativeModel());
+  assert.deepEqual(currentPlan.transportSources,[readCanonicalArchiveTransportSource()]);
+  const previous=currentPlan.entries[0], carrierSha256=sha256(JSON.stringify(previous.carrier));
+  assert.equal(carrierSha256,previous.carrierSha256);
+  const premiseSha256=originalLinkRawRecordDigest(previous.premises), observationSha256=originalLinkRawRecordDigest(previous.observations);
+  const generated=await generateOriginalLinkRawConsumingEmission(true);
+  assert.equal(generated.artifact.javaScriptSha256,previous.javaScriptSha256,
+    'the same complete checked source reproduces the original JavaScript decision module');
+  assert.deepEqual(generated.profile.declarationNames,previous.declarationNames);
+  assert.equal(generated.rust.preludes.length,previous.preludeCount);
+  const [{LinkNetwork},{encodeLinkNetworkBinary,decodeLinkNetworkBinary},{tokenize}]=await Promise.all([
+    import('../../js/src/network.js'),import('../../js/src/link-network-binary.js'),import('../../js/src/translation/lexer.js'),
+  ]);
+  assert.deepEqual(nativeInterface(generated.rust.text,tokenize),Object.fromEntries(
+    ['functionName','parameterOrder','parameterModes','resultMode','interfaceSha256'].map(key=>[key,previous[key]])));
+  const originalReceipt=archiveCompleteRustSource(generated.rust.text,LinkNetwork,encodeLinkNetworkBinary,decodeLinkNetworkBinary);
+  const entry={...previous,fixtureId:'experiments/original-link-complete-table-projection/'+generated.profile.sourceArtifact,
+    source:generated.rust.text,sourceBytes:generated.profile.sourceBytes,sourceSha256:generated.profile.sourceSha256,
+    emissionProfile:generated.profile,replaySha256:originalReceipt.binaryReplaySha256,originalReceipt,
+    sizes:{...previous.sizes,sourceBytes:generated.profile.sourceBytes}};
+  const replaced=new Set(['fixtureId','source','sourceBytes','sourceSha256','emissionProfile','replaySha256','originalReceipt','sizes']);
+  assert.deepEqual(Reflect.ownKeys(entry),Reflect.ownKeys(previous));
+  for(const key of Reflect.ownKeys(previous))if(!replaced.has(key))assert.equal(entry[key],previous[key],
+    'the complete inherited observation/process field retains its original identity: '+key);
+  assert.equal(sha256(JSON.stringify(entry.carrier)),carrierSha256);
+  assert.equal(originalLinkRawRecordDigest(entry.premises),premiseSha256);
+  assert.equal(originalLinkRawRecordDigest(entry.observations),observationSha256);
+  const plan=freeze({...currentPlan,emissionProfile:generated.profile,entries:[entry],
+    consumingPlanProof:{predecessorSourceSha256:previous.sourceSha256,carrierSha256,premiseSha256,observationSha256,
+      observations:entry.observations.length,premises:entry.premises.length,
+      scope:'Exact checked current carrier, premise, observation, consumer and input inventories reused by identity and hash; no fixture matrix is rebuilt or omitted.'}});
+  checkedPlans.add(plan);return plan;
+}
+
 function parseObservations(output, expected, carrier) {
   assert.ok(Buffer.byteLength(output) <= maximumProtocolBytes);
   const lines = output.split('\n'); assert.equal(lines.pop(), ''); assert.equal(lines.length, expected.length);
@@ -568,5 +615,6 @@ export function runOriginalLinkRawNative(plan, options) {
   const receipt = runChecked(plan, {...options, environment});
   assert.deepEqual(plan.emissionProfile, readOriginalLinkRawSelectedEmissionProfile(plan.emissionProfile.profile), 'the selected emission profile changed during execution');
   assert.deepEqual(plan.transportSources, [readCanonicalArchiveTransportSource()], 'the raw archive transport source changed during execution');
-  return {...receipt, transportSources: plan.transportSources, emissionProfile: plan.emissionProfile};
+  return {...receipt, transportSources: plan.transportSources, emissionProfile: plan.emissionProfile,
+    ...(plan.consumingPlanProof?{consumingPlanProof:plan.consumingPlanProof}:{})};
 }
