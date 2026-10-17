@@ -45960,7 +45960,1059 @@ const AUXILIARY_GRAMMAR_SOURCE_NAME_BINDINGS=[
 ];
 const AUXILIARY_GRAMMAR_SOURCE_NAME_INVENTORIES=[...new Set(AUXILIARY_GRAMMAR_SOURCE_NAME_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B56 auxiliary grammar source acquisition and metadata names for "+source,files:[source],extract:text=>AUXILIARY_GRAMMAR_SOURCE_NAME_BINDINGS.filter(row=>row.source===source&&text.split("\n").includes(row.sourceText)).map(row=>row.inventoryName),recordOf:name=>AUXILIARY_GRAMMAR_SOURCE_NAME_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));
 // END B56 auxiliary grammar source acquisition names.
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory).map(reconcileBulkFortySevenNativeInventory).map(reconcileBulkFiftyHistoricalInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES, ...BULK_FORTY_SEVEN_NAME_INVENTORIES, ...BULK_FORTY_EIGHT_NAME_INVENTORIES, ...BULK_FORTY_NINE_NAME_INVENTORIES, ...BULK_FIFTY_NAME_INVENTORIES, ...BULK_FIFTY_ONE_NAME_INVENTORIES, ...VERSION_RANGE_EVIDENCE_NAME_INVENTORIES, ...FORMAT_RETRY_SOURCE_NAME_INVENTORIES, ...DISCOVERY_CERTIFICATE_NAME_INVENTORIES, ...SELECTED_NATIVE_GRAMMAR_PROJECTION_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_WITNESS_INVENTORIES, ...BULK_FIFTY_FIVE_CONST_ARCHIVE_ERROR_NAME_INVENTORIES, ...AUXILIARY_GRAMMAR_SOURCE_NAME_INVENTORIES]);
+// BEGIN B57 portable string code-unit and reviewed repair source names.
+import {createHash as createB57MovedSourceHash} from 'node:crypto';
+const STRING_CODE_UNIT_SOURCE_BINDINGS=[
+  {
+    "id": "translation.read-string-code-unit",
+    "source": "js/src/translation/string-code-unit-rules.js",
+    "name": "readStringCodeUnit",
+    "inventoryName": "read string code unit",
+    "sourceText": "export function readStringCodeUnit(text, position) {\n  const index = Number.isNaN(position) ? 0 : Math.trunc(position);\n  if (index < 0 || index >= text.length) return NaN;\n  return text.slice(index, index + 1).codePointAt(0) ?? NaN;\n}"
+  },
+  {
+    "id": "translation.read-string-code-unit",
+    "source": "js/src/translation/data/string-code-unit-template.lino",
+    "name": "readStringCodeUnit",
+    "inventoryName": "read string code unit",
+    "sourceText": "export function readStringCodeUnit(text, position) {\n  const index = Number.isNaN(position) ? 0 : Math.trunc(position);\n  if (index < 0 || index >= text.length) return NaN;\n  return text.slice(index, index + 1).codePointAt(0) ?? NaN;\n}",
+    "sourceField": "source"
+  },
+  {
+    "id": "translation.read-string-code-unit",
+    "source": "rust/src/data/string-code-unit-template.lino",
+    "name": "readStringCodeUnit",
+    "inventoryName": "read string code unit",
+    "sourceText": "export function readStringCodeUnit(text, position) {\n  const index = Number.isNaN(position) ? 0 : Math.trunc(position);\n  if (index < 0 || index >= text.length) return NaN;\n  return text.slice(index, index + 1).codePointAt(0) ?? NaN;\n}",
+    "sourceField": "source"
+  },
+  {
+    "id": "translation.create-string-code-unit-template-expression",
+    "source": "js/src/translation/string-code-unit-template.js",
+    "name": "createStringCodeUnitTemplateExpression",
+    "inventoryName": "create string code unit template expression",
+    "sourceText": "export function createStringCodeUnitTemplateExpression(span) {\n  const policy = stringCodeUnitTemplatePolicy ??= readRuntimeProjectData(new URL('./data/string-code-unit-template.lino', import.meta.url));\n  if (policy.schemaVersion !== 1 || policy.model !== 'portable UTF16 code unit lambda 1' || policy.template?.k !== 'lambda') {\n    throw new TypeError('the generated UTF-16 code unit template is malformed');\n  }\n  const instantiate = value => {\n    if (Array.isArray(value)) return value.map(instantiate);\n    if (value && typeof value === 'object') {\n      const result = Object.fromEntries(Object.entries(value).map(([key, child]) => [key, instantiate(child)]));\n      if (result.k || Object.hasOwn(result, 'span')) result.span = span;\n      return result;\n    }\n    return value;\n  };\n  return instantiate(policy.template);\n}"
+  },
+  {
+    "id": "translation.create-string-code-unit-template-expression",
+    "source": "rust/src/translation/check/string_code_unit_template.rs",
+    "name": "expression",
+    "inventoryName": "create string code unit template expression",
+    "sourceText": "pub(super) fn expression(span: Option<Span>) -> Result<SExpr> {"
+  },
+  {
+    "id": "translation.read-primitive-method-lowering-form",
+    "source": "js/src/translation/primitive-method-rules.js",
+    "name": "readPrimitiveMethodLoweringForm",
+    "inventoryName": "read primitive method lowering form",
+    "sourceText": "export function readPrimitiveMethodLoweringForm(receiver, operation) {\n  return receiver === 'string' && operation === 'charCodeAt' ? 'code-unit-template' : 'method';\n}"
+  },
+  {
+    "id": "translation.read-primitive-method-lowering-form",
+    "source": "rust/src/translation/primitive_method_rules.rs",
+    "name": "read_primitive_method_lowering_form",
+    "inventoryName": "read primitive method lowering form",
+    "sourceText": "pub fn read_primitive_method_lowering_form(receiver: &str, operation: &str) -> String {"
+  },
+  {
+    "id": "repository.hash-generated-portable-source-content",
+    "source": "js/scripts/generate-string-code-unit-template.mjs",
+    "name": "digest",
+    "inventoryName": "hash generated portable source content",
+    "sourceText": "const digest = value => createHash('sha256').update(value).digest('hex');"
+  },
+  {
+    "id": "repository.hash-generated-portable-source-content",
+    "source": "js/scripts/generate-parameter-default-rules.mjs",
+    "name": "digest",
+    "inventoryName": "hash generated portable source content",
+    "sourceText": "const digest = value => createHash('sha256').update(value).digest('hex');"
+  },
+  {
+    "id": "repository.read-string-code-unit-template-generation",
+    "source": "js/scripts/generate-string-code-unit-template.mjs",
+    "name": "readStringCodeUnitTemplateGeneration",
+    "inventoryName": "read string code unit template generation",
+    "sourceText": "export function readStringCodeUnitTemplateGeneration() {\n  const source = readFileSync(sourcePath, 'utf8');\n  const surface = parseJavaScript(source, { referenceSemantics: false });\n  const checked = checkProgram(surface);\n  assert.equal(surface.items.length, 1, 'the whole kernel contains one actual original declaration');\n  assert.equal(checked.items.length, surface.items.length, 'checking retains every source declaration');\n  assert.equal(checked.declarations.size, 1, 'the complete kernel has no hidden helper dependency');\n  const originalDeclaration = surface.items[0];\n  const checkedDeclaration = checked.items[0];\n  assert.equal(originalDeclaration.k, 'fn');\n  assert.equal(checkedDeclaration.k, 'fn');\n  assert.equal(originalDeclaration.name, 'readStringCodeUnit');\n  assert.equal(originalDeclaration.params.length, 2);\n  assert.deepEqual(originalDeclaration.params.map(parameter => parameter.type.kind), ['string', 'float']);\n  assert.equal(originalDeclaration.ret.kind, 'float');\n  assert.equal(readCallableCapturedBindings(checkedDeclaration.body, checkedDeclaration.params.map(parameter => parameter.name)).size, 0,\n    'the actual checked kernel is closed over precisely its two formal parameters');\n  const template = { k: 'lambda', params: structuredClone(originalDeclaration.params),\n    body: structuredClone(originalDeclaration.body), ret: structuredClone(originalDeclaration.ret), span: originalDeclaration.span };\n  return {\n    schemaVersion: 1,\n    model: 'portable UTF16 code unit lambda 1',\n    sourcePath: 'js/src/translation/string-code-unit-rules.js',\n    source,\n    sourceSha256: digest(source),\n    inventory: surface.items.map(declaration => ({ kind: declaration.k, name: declaration.name, span: declaration.span })),\n    originalDeclaration: structuredClone(originalDeclaration),\n    checkedDeclaration: structuredClone(checkedDeclaration),\n    template,\n    basePreludeSha256: digest(STRING_PRELUDE),\n    inputDomain: 'A primitive string and evaluated Number index; method checking supplies omitted zero and represented nullable numeric conversion. Boolean, String and object conversion require a separate ToNumber interpretation.',\n    evaluation: 'Check this closed lambda under only its two formal binders, then apply it to the separately checked receiver and index once in original order. No actual operand is substituted into the template body.',\n    reverseBoundary: 'The resulting checked graph uses existing Lambda, Apply, Let, Math, Slice and CodePointAt operations. Generated Rust runtime source still requires its own source interpretation and is never admitted by a helper name.',\n  };\n}"
+  },
+  {
+    "id": "repository.generate-string-code-unit-template",
+    "source": "js/scripts/generate-string-code-unit-template.mjs",
+    "name": "generateStringCodeUnitTemplate",
+    "inventoryName": "generate string code unit template",
+    "sourceText": "export function generateStringCodeUnitTemplate(check = false) {\n  const policy = readStringCodeUnitTemplateGeneration();\n  for (const path of [javascriptPath, nativePath]) {\n    if (check) checkProjectData(path, policy);\n    else writeProjectData(path, policy);\n    assert.deepEqual(readProjectData(path), policy, 'the complete generated callable template rereads exactly');\n  }\n  return policy;\n}"
+  },
+  {
+    "id": "repository.observe-string-code-unit-program-output",
+    "source": "js/tests/translation-string-code-unit.test.js",
+    "name": "observe",
+    "inventoryName": "observe string code unit program output",
+    "sourceText": "function observe(source) {\n  const lines = [];\n  vm.runInNewContext(source, { console: { log: (...values) => lines.push(values.map(String).join(' ')) } }, { timeout: 1000 });\n  return lines;\n}"
+  },
+  {
+    "id": "repository.check-portable-string-code-unit-numeric-boundaries",
+    "source": "js/tests/translation-string-code-unit.test.js",
+    "name": "portable code unit source preserves numeric ToIntegerOrInfinity and individual UTF-16 surrogates",
+    "inventoryName": "check portable string code unit numeric boundaries",
+    "sourceText": "test('portable code unit source preserves numeric ToIntegerOrInfinity and individual UTF-16 surrogates', () => {\n  const texts = ['', 'ABC', '\\u0000\\uffff', 'A😀B', '\\ud800x\\udfff', '\\ud800\\udfff'];\n  const positions = [-Infinity, -9007199254740992, -2, -1, -0.9, -Number.MIN_VALUE, -0,\n    0, Number.MIN_VALUE, 0.9, 1, 1.9, 2, 3, 4, 9007199254740992, Infinity, NaN];\n  for (const text of texts) for (const position of positions) {\n    assert.equal(readStringCodeUnit(text, position), text.charCodeAt(position), `${JSON.stringify(text)} at ${String(position)}`);\n  }\n  assert.equal(readStringCodeUnit('😀', 0), 0xd83d);\n  assert.equal(readStringCodeUnit('😀', 1), 0xde00);\n  assert.notEqual(readStringCodeUnit('😀', 0), '😀'.codePointAt(0));\n})"
+  },
+  {
+    "id": "repository.check-string-code-unit-method-argument-contracts",
+    "source": "js/tests/translation-string-code-unit.test.js",
+    "name": "charCodeAt checking preserves numeric defaults and surrogate parameters while source escapes remain explicit refusals",
+    "inventoryName": "check string code unit method argument contracts",
+    "sourceText": "test('charCodeAt checking preserves numeric defaults and surrogate parameters while source escapes remain explicit refusals', () => {\n  assert.equal(readPrimitiveMethodMinimumArguments('string', 'charCodeAt'), 0);\n  assert.equal(readPrimitiveMethodMaximumArguments('string', 'charCodeAt'), 1);\n  assert.equal(readPrimitiveMethodDefaultForm('string', 'charCodeAt', 0), 'float');\n  assert.equal(readPrimitiveMethodDefaultValue('string', 'charCodeAt', 0), '0');\n  assert.equal(readPrimitiveMethodCheckedArgumentKind('string', 'charCodeAt', 0), 'number-value');\n  assert.equal(readPrimitiveMethodCheckedResultForm('string', 'charCodeAt'), 'float');\n  assert.equal(readPrimitiveMethodMinimumArguments('string', 'codePointAt'), 1);\n  assert.equal(readPrimitiveMethodCheckedResultForm('string', 'codePointAt'), 'optional-float');\n  for (const receiver of ['string', 'array', '', 'record']) for (const operation of ['charCodeAt', 'codePointAt', 'slice', '']) {\n    assert.equal(readPrimitiveMethodLoweringForm(receiver, operation), receiver === 'string' && operation === 'charCodeAt' ? 'code-unit-template' : 'method');\n  }\n  assert.deepEqual(observe(escapedSource), escapedExpected);\n  assert.throws(() => parseJavaScript(escapedSource), error => error.kind === 'unsupported'\n    && error.reason.includes('not a scalar value') && error.span.start === escapedSource.indexOf('\\\\ud800'));\n  const program = checkProgram(parseJavaScript(source));\n  assert.deepEqual(observe(source), expected);\n  assert.deepEqual(observe(emitJavaScript(program).text), expected);\n  assert.ok(!emitJavaScript(program).text.includes('.charCodeAt('), 'checked emission uses the actual portable lambda operations');\n  const original = vm.runInNewContext(source + ';unit;');\n  const translated = vm.runInNewContext(emitJavaScript(program).text + ';unit;');\n  for (const text of ['\\ud800x\\udfff', '\\ud800', '\\udfff', '\\ud800\\udfff', 'A😀B']) for (const position of [0, 1, 2, -0.9, Infinity, NaN]) {\n    assert.equal(original(text, position), text.charCodeAt(position));\n    assert.equal(translated(text, position), text.charCodeAt(position));\n  }\n})"
+  },
+  {
+    "id": "repository.check-string-code-unit-operand-evaluation-order",
+    "source": "js/tests/translation-string-code-unit.test.js",
+    "name": "charCodeAt preserves receiver and index call order while standalone absence annotations remain explicit refusals",
+    "inventoryName": "check string code unit operand evaluation order",
+    "sourceText": "test('charCodeAt preserves receiver and index call order while standalone absence annotations remain explicit refusals', () => {\n  const annotated = `/** @returns {string} */function receiver(){console.log('receiver');return 'A😀B';}\n/** @returns {number} */function index(){console.log('index');return 1.9;}\n/** @returns {undefined} */function absent(){console.log('absent');return undefined;}\nconsole.log(receiver().charCodeAt(index()));\nconsole.log(receiver().charCodeAt(absent()));\nconsole.log(receiver().charCodeAt());`;\n  const lines = ['receiver', 'index', '55357', 'receiver', 'absent', '65', 'receiver', '65'];\n  assert.deepEqual(observe(annotated), lines);\n  assert.throws(() => checkProgram(parseJavaScript(annotated)), error => error.kind === 'type' && error.reason.includes('absence'));\n  const ordered = annotated.replace('/** @returns {undefined} */', '');\n  assert.deepEqual(observe(ordered), lines);\n  assert.deepEqual(observe(emitJavaScript(checkProgram(parseJavaScript(ordered))).text), lines);\n  const shadowed = `/** @param {string} text @param {number} position @param {number} index @param {number} Math @param {number} Number @returns {number} */\nfunction collision(text,position,index,Math,Number){const readStringCodeUnit=999;return text.charCodeAt(position)+index+readStringCodeUnit+Math+Number;}\nconsole.log(collision('A😀B',1,7,4,5));`;\n  assert.deepEqual(observe(shadowed), ['56372']);\n  assert.deepEqual(observe(emitJavaScript(checkProgram(parseJavaScript(shadowed))).text), ['56372']);\n})"
+  },
+  {
+    "id": "repository.check-string-code-unit-conversion-domain-refusals",
+    "source": "js/tests/translation-string-code-unit.test.js",
+    "name": "charCodeAt retains explicit conversion refusals outside the represented numeric domain",
+    "inventoryName": "check string code unit conversion domain refusals",
+    "sourceText": "test('charCodeAt retains explicit conversion refusals outside the represented numeric domain', () => {\n  for (const index of ['true', 'false', \"'1'\", '{}', '[1]']) {\n    assert.throws(() => checkProgram(parseJavaScript(\"console.log('ABC'.charCodeAt(\" + index + '));')),\n      error => error.kind === 'type' || error.kind === 'unsupported');\n  }\n  assert.throws(() => checkProgram(parseJavaScript(\"console.log('ABC'.charCodeAt(0,1));\")),\n    error => error.kind === 'unsupported' && error.reason.includes('0 to 1 arguments'));\n  const program = checkProgram(parseJavaScript(\"console.log('ABC'.charCodeAt(0));\"));\n  for (const target of ['Lean', 'Rocq']) {\n    const result = translateProgram(\"console.log('ABC'.charCodeAt(0));\", 'JavaScript', target);\n    assert.match(result.diagnostic.message, /UTF-16 operational string encoding/u);\n  }\n  assert.equal(program.sourceLanguage, 'JavaScript');\n})"
+  },
+  {
+    "id": "repository.check-source-free-string-code-unit-archive-replay",
+    "source": "js/tests/translation-string-code-unit.test.js",
+    "name": "charCodeAt source-free Links reload retains defaults, absence conversion and numeric observations",
+    "inventoryName": "check source free string code unit archive replay",
+    "sourceText": "test('charCodeAt source-free Links reload retains defaults, absence conversion and numeric observations', () => {\n  const archive = createTypedProgramLinks(source, 'JavaScript');\n  for (const network of [LinkNetwork.fromLino(archive.network.toLino()), decodeLinkNetworkBinary(encodeLinkNetworkBinary(archive.network))]) {\n    const program = decodeTypedProgramLinks(network, archive.root);\n    recheckLinkedTypedProgram(program, { wholeProgram: true });\n    const emitted = emitTypedProgramLinks(network, archive.root, 'JavaScript').code;\n    assert.deepEqual(observe(emitted), expected);\n    const replayed = vm.runInNewContext(emitted + ';unit;');\n    for (const text of ['\\ud800x\\udfff', '\\ud800', '\\udfff', '\\ud800\\udfff', 'A😀B']) for (const position of [0, 1, 2, -0.9, Infinity, NaN]) {\n      assert.equal(replayed(text, position), text.charCodeAt(position));\n    }\n    assert.ok(!JSON.stringify(program.items).includes('\"op\":\"charCodeAt\"'), 'the existing graph operations retain the expanded kernel without a new operation enum');\n    assert.ok(network.links().every(link => !link.metadata().definition?.includes(source)), 'semantic replay stores no source program');\n  }\n  const numericSurface = parseJavaScript('/** @returns {number} */function converted(){return 0;}');\n  for (const arg of [{ k: 'str', value: '1' }, { k: 'bool', value: true }, { k: 'unit' },\n    { k: 'some', value: { k: 'str', value: '1' }, type: { kind: 'option', element: { kind: 'string' }, absence: 'undefined' } }]) {\n    const invalid = structuredClone(numericSurface);\n    invalid.items[0].body = { k: 'numberValue', arg };\n    assert.throws(() => checkProgram(invalid), error => error.kind === 'type' || error.kind === 'unsupported',\n      'the internal numeric projection retains the existing represented coercion domain');\n  }\n  const malformed = structuredClone(numericSurface);\n  malformed.items[0].body = { k: 'numberValue' };\n  assert.throws(() => checkProgram(malformed), TypeError, 'an internal numeric projection requires its actual argument');\n})"
+  },
+  {
+    "id": "repository.check-complete-string-code-unit-kernel-translation",
+    "source": "js/tests/translation-string-code-unit.test.js",
+    "name": "the complete code unit kernel translates using only the retained UTF-16 runtime",
+    "inventoryName": "check complete string code unit kernel translation",
+    "sourceText": "test('the complete code unit kernel translates using only the retained UTF-16 runtime', () => {\n  const complete = readFileSync(new URL('../src/translation/string-code-unit-rules.js', import.meta.url), 'utf8');\n  const surface = parseJavaScript(complete, { referenceSemantics: false });\n  const program = checkProgram(surface);\n  const emitted = emitRust(program, { arrayConsumption: true });\n  assert.deepEqual(emitted.preludes, [STRING_PRELUDE]);\n  assert.equal(surface.items.length, 1);\n  assert.equal(emitted.definitions.length, surface.items.length);\n  assert.match(emitted.definitions[0], /pub fn read_string_code_unit/u);\n  assert.match(emitted.definitions[0], /\\.slice\\(/u);\n  assert.match(emitted.definitions[0], /\\.code_point_at\\(/u);\n  const original = vm.runInNewContext(complete.replace('export function', 'function') + ';readStringCodeUnit;');\n  const translated = vm.runInNewContext(emitJavaScript(program).text + ';readStringCodeUnit;');\n  for (const text of ['', 'A😀B', '\\ud800x\\udfff']) for (const position of [-Infinity, -0.5, 0, 1.9, 2, Infinity, NaN]) {\n    assert.equal(translated(text, position), original(text, position));\n  }\n})"
+  },
+  {
+    "id": "repository.check-generated-string-code-unit-template-source-closure",
+    "source": "js/tests/translation-string-code-unit.test.js",
+    "name": "generated code unit template pins its whole source, declarations, binders and unchanged base runtime",
+    "inventoryName": "check generated string code unit template source closure",
+    "sourceText": "test('generated code unit template pins its whole source, declarations, binders and unchanged base runtime', () => {\n  const policy = readStringCodeUnitTemplateGeneration();\n  const stored = readProjectData(new URL('../src/translation/data/string-code-unit-template.lino', import.meta.url));\n  assert.deepEqual(stored, policy);\n  assert.equal(readFileSync(new URL('../src/translation/data/string-code-unit-template.lino', import.meta.url), 'utf8'),\n    readFileSync(new URL('../../rust/src/data/string-code-unit-template.lino', import.meta.url), 'utf8'));\n  assert.match(readFileSync(new URL('../../rust/Cargo.toml', import.meta.url), 'utf8'),\n    /^    \"src\\/data\\/string-code-unit-template\\.lino\",$/mu);\n  const digest = text => createHash('sha256').update(text).digest('hex');\n  assert.equal(policy.sourceSha256, digest(policy.source));\n  assert.equal(policy.basePreludeSha256, digest(STRING_PRELUDE));\n  assert.deepEqual(policy.template.params, policy.originalDeclaration.params);\n  assert.deepEqual(policy.template.body, policy.originalDeclaration.body);\n  assert.deepEqual(policy.template.ret, policy.originalDeclaration.ret);\n  assert.deepEqual(policy.checkedDeclaration.params.map(parameter => parameter.type.kind), ['string', 'float']);\n  assert.equal(policy.checkedDeclaration.ret.kind, 'float');\n  assert.equal(policy.inventory.length, 1);\n})"
+  },
+  {
+    "id": "repository.check-string-code-unit-emission-and-reverse-boundaries",
+    "source": "js/tests/translation-string-code-unit.test.js",
+    "name": "charCodeAt Rust emission reuses only existing operations and refuses unproved reverse runtime interpretation",
+    "inventoryName": "check string code unit emission and reverse boundaries",
+    "sourceText": "test('charCodeAt Rust emission reuses only existing operations and refuses unproved reverse runtime interpretation', () => {\n  const emitted = emitRust(checkProgram(parseJavaScript(source)));\n  assert.ok(emitted.preludes.includes(STRING_PRELUDE));\n  assert.ok(!emitted.text.includes('ml_string_code_unit'));\n  assert.match(emitted.definitions.join('\\n'), /\\.code_point_at\\(/u);\n  assert.match(emitted.definitions.join('\\n'), /\\.slice\\(/u);\n  const ordinary = emitRust(checkProgram(parseJavaScript(\"console.log('ABC'.slice(1));\")));\n  assert.ok(ordinary.preludes.includes(STRING_PRELUDE));\n  assert.ok(!ordinary.text.includes('ml_string_code_unit'));\n  const archive = createTypedProgramLinks(source, 'JavaScript');\n  const network = LinkNetwork.fromLino(archive.network.toLino());\n  const linked = emitTypedProgramLinks(network, archive.root, 'Rust');\n  const translated = translateProgram(source, 'JavaScript', 'Rust');\n  assert.equal(translated.diagnostic, null);\n  assert.equal(readTranslationProvenance(translated.code, 'Rust').sourceLanguage, 'JavaScript');\n  assert.equal(linked.code, translated.code.slice(translated.code.indexOf('\\n') + 1), 'only the authenticated provenance header differs');\n  assert.match(linked.code, /\\.code_point_at\\(/u);\n  for (const rust of [emitted.text,\n    'fn forged(text: String, position: f64)->f64 { ml_string_code_unit::read_string_code_unit(text, position) } fn main(){}']) {\n    assert.throws(() => checkProgram(parseRust(rust)), error => error.kind === 'type' || error.kind === 'unsupported');\n    assert.ok(translateProgram(rust, 'Rust', 'JavaScript').diagnostic, 'a helper name never substitutes for its actual Rust semantics');\n  }\n})"
+  },
+  {
+    "id": "translation.read-packaged-string-code-unit-template-policy",
+    "source": "rust/src/translation/check/string_code_unit_template.rs",
+    "name": "policy",
+    "inventoryName": "read packaged string code unit template policy",
+    "sourceText": "fn policy() -> &'static Value {"
+  },
+  {
+    "id": "translation.instantiate-string-code-unit-template-value",
+    "source": "js/src/translation/string-code-unit-template.js",
+    "name": "instantiate",
+    "inventoryName": "instantiate string code unit template value",
+    "sourceText": "  const instantiate = value => {",
+    "sourceContext": "export function createStringCodeUnitTemplateExpression(span) {\n  const policy = stringCodeUnitTemplatePolicy ??= readRuntimeProjectData(new URL('./data/string-code-unit-template.lino', import.meta.url));\n  if (policy.schemaVersion !== 1 || policy.model !== 'portable UTF16 code unit lambda 1' || policy.template?.k !== 'lambda') {\n    throw new TypeError('the generated UTF-16 code unit template is malformed');\n  }\n  const instantiate = value => {\n    if (Array.isArray(value)) return value.map(instantiate);\n    if (value && typeof value === 'object') {\n      const result = Object.fromEntries(Object.entries(value).map(([key, child]) => [key, instantiate(child)]));\n      if (result.k || Object.hasOwn(result, 'span')) result.span = span;\n      return result;\n    }\n    return value;\n  };\n  return instantiate(policy.template);\n}"
+  },
+  {
+    "id": "translation.instantiate-string-code-unit-template-value",
+    "source": "rust/src/translation/check/string_code_unit_template.rs",
+    "name": "instantiate",
+    "inventoryName": "instantiate string code unit template value",
+    "sourceText": "fn instantiate(template: &Value, span: Option<Span>) -> Value {"
+  },
+  {
+    "id": "repository.read-string-code-unit-emission-oracle",
+    "source": "rust/tests/unit/translation_primitive_methods.rs",
+    "name": "char_code_unit_oracle",
+    "inventoryName": "read string code unit emission oracle",
+    "sourceText": "fn char_code_unit_oracle(source: &str, self_translation: bool) -> serde_json::Value {"
+  },
+  {
+    "id": "repository.check-native-string-code-unit-defaults-and-archives",
+    "source": "rust/tests/unit/translation_primitive_methods.rs",
+    "name": "code_unit_template_keeps_numeric_defaults_absences_order_and_both_semantic_archives",
+    "inventoryName": "check native string code unit defaults and archives",
+    "sourceText": "fn code_unit_template_keeps_numeric_defaults_absences_order_and_both_semantic_archives() {"
+  },
+  {
+    "id": "repository.check-native-string-code-unit-parameter-observations",
+    "source": "rust/tests/unit/translation_primitive_methods.rs",
+    "name": "code_unit_parameters_keep_lone_surrogates_pair_halves_and_unusual_positions_in_native_rust",
+    "inventoryName": "check native string code unit parameter observations",
+    "sourceText": "fn code_unit_parameters_keep_lone_surrogates_pair_halves_and_unusual_positions_in_native_rust() {"
+  },
+  {
+    "id": "repository.check-native-string-code-unit-domain-refusals",
+    "source": "rust/tests/unit/translation_primitive_methods.rs",
+    "name": "code_unit_conversion_keeps_unrepresented_source_and_internal_domains_explicit",
+    "inventoryName": "check native string code unit domain refusals",
+    "sourceText": "fn code_unit_conversion_keeps_unrepresented_source_and_internal_domains_explicit() {"
+  },
+  {
+    "id": "repository.check-code-unit-sibling-representation-selection",
+    "source": "js/tests/translation-self-representation.test.js",
+    "name": "additional code unit selection gives sibling callers the same Text representation without changing the original selector",
+    "inventoryName": "check code unit sibling representation selection",
+    "sourceText": "test('additional code unit selection gives sibling callers the same Text representation without changing the original selector', () => {\n  assert.deepEqual(policy.additionalMemberNames, ['charCodeAt']);\n  assert.equal(acceptSelfTranslationUtf16Member('charCodeAt'), true);\n  for (const name of ['CharCodeAt', 'charCodeAt ', 'char_code_at']) assert.equal(acceptSelfTranslationUtf16Member(name), false);\n  assert.deepEqual([...policy.originalSelector.source.matchAll(/'([^']+)'/gu)].map(match => match[1]), policy.memberNames);\n  assert.ok(!policy.memberNames.includes('charCodeAt'));\n  assert.equal(digest(policy.originalSelector.source), policy.originalSelector.sha256);\n  const source = '/** @param {string} text @param {number} position @returns {number} */\\n'\n    + 'export function codeUnit(text,position){return text.charCodeAt(position);}\\n'\n    + '/** @returns {number} */\\nexport function choose(){return codeUnit(\"A😀B\",1);}\\n';\n  const emitted = selfTranslate(source, 'JavaScript', 'Rust');\n  const sourceBytes = Buffer.from(source, 'utf8');\n  const functions = emitted.items.map(item => ({ item,\n    declaration: /^export function ([A-Za-z_][A-Za-z_0-9]*)\\(/u.exec(sourceBytes.subarray(item.start, item.end).toString('utf8')),\n  })).filter(entry => entry.declaration);\n  assert.equal(functions.length, 2);\n  assert.deepEqual(functions.map(entry => entry.declaration[1]), ['codeUnit', 'choose']);\n  assert.ok(functions.every(({ item }) => item.status === 'translated'));\n  assert.ok(emitted.items.every(item => item.status !== 'carried'), 'both actual sibling function bodies translate');\n  assert.match(emitted.code, /pub fn code_unit\\(text: crate::ml_string::Text, position: f64\\) -> f64/u);\n  assert.match(emitted.code, /code_unit\\(crate::ml_string::Text::from_units\\(vec!\\[65, 55357, 56832, 66\\]\\), 1f64\\)/u);\n  assert.ok(emitted.code.includes(STRING_PRELUDE));\n  assert.equal(selfTranslate(emitted.code, 'Rust', 'JavaScript').code, source);\n})"
+  },
+  {
+    "id": "repository.check-complete-family-alternative-branch-flattening",
+    "source": "js/tests/translation-recorded-family-library-style.test.js",
+    "name": "family else-if flattening handles more than one hundred independent branches",
+    "inventoryName": "check complete family alternative branch flattening",
+    "sourceText": "test('family else-if flattening handles more than one hundred independent branches', () => {\n  const names = Array.from({length: 128}, (_, index) => `decide_${index}`);\n  const before = names.map(name => `pub fn ${name}(first:bool,second:bool)->bool{if first{true}else{if second{true}else{false}}}`).join('\\n');\n  const expected = names.map(name => `pub fn ${name}(first:bool,second:bool)->bool{if first{true}else if second{true}else{false}}`).join('\\n');\n  const after = flattenFamilyLibraryElseIf(before);\n  assert.equal(after, expected, 'every independent complete nested branch is flattened');\n  assert.equal(flattenFamilyLibraryElseIf(after), after, 'the complete output is a fixed point');\n  const execute = source => {\n    const context = {};\n    vm.runInNewContext(emitJavaScript(checkProgram(parseRust(source + '\\nfn main() {}'))).text, context, {timeout: 1000});\n    return context;\n  };\n  const original = execute(before), transformed = execute(after);\n  for (const name of names) for (const first of [false, true]) for (const second of [false, true]) {\n    assert.equal(transformed[name](first, second), original[name](first, second), `${name}(${first}, ${second})`);\n  }\n})"
+  },
+  {
+    "id": "repository.additional-self-translation-member-names",
+    "source": "js/src/data/self-translation-representation.lino",
+    "name": "additionalMemberNames",
+    "inventoryName": "additional self translation member names",
+    "dataField": "additionalMemberNames"
+  },
+  {
+    "id": "repository.additional-self-translation-member-names",
+    "source": "rust/src/data/self-translation-representation.lino",
+    "name": "additionalMemberNames",
+    "inventoryName": "additional self translation member names",
+    "dataField": "additionalMemberNames"
+  },
+  {
+    "id": "repository.remove-family-library-alternative-keyword-after-branch-transfer",
+    "source": "js/scripts/portable-conditional-source-style.mjs",
+    "name": "removeFamilyLibraryDivergentElse",
+    "inventoryName": "remove family library alternative keyword after branch transfer",
+    "sourceText": "export function removeFamilyLibraryDivergentElse(source) {\n  const {tokens, matching, opaque} = readFamilyLibraryTokens(source), edits = [];\n  const diverges = initial => {\n    let open = initial;\n    for (;;) {\n      const close = matching.get(open);\n      if (close === undefined || opaque.has(open)) return false;\n      let end = close - 1;\n      while (end > open && tokens[end].value === ';') end -= 1;\n      if (end <= open) return false;\n      let start = end;\n      for (;;) {\n        const paired = matching.get(start);\n        if (paired !== undefined && paired < start) start = paired;\n        if (start === open + 1 || tokens[start - 1]?.value === ';') break;\n        start -= 1;\n        if (start <= open) return false;\n      }\n      // Only a complete plain tail block inherits its final transfer. A loop,\n      // closure, label, conditional or macro cannot supply this proof.\n      if (tokens[start].value === '{' && matching.get(start) === end) {\n        open = start;\n        continue;\n      }\n      if (opaque.has(start) || tokens[start].kind !== 'identifier') return false;\n      if (tokens[start].value === 'return') return true;\n      if (tokens[start].value === 'continue') return start === end;\n      return tokens[start].value === 'break' && tokens[start + 1]?.value !== \"'\";\n    }\n  };\n  for (let index = 0; index < tokens.length; index += 1) {\n    if (opaque.has(index) || tokens[index].kind !== 'identifier' || tokens[index].value !== 'if'\n      || !['{', ';'].includes(tokens[index - 1]?.value)) continue;\n    const branch = readFamilyLibraryIf(tokens, matching, index);\n    if (!branch || tokens[branch.close + 1]?.value !== 'else'\n      || tokens[branch.close + 2]?.value !== '{' || tokens[branch.end + 1]?.value !== '}') continue;\n    // Preserve binding scopes and temporary lifetimes rather than treating an\n    // if-let condition or a condition block as an ordinary Boolean operand.\n    if (tokens.slice(index + 1, branch.open).some(token => token.kind === 'identifier' && token.value === 'let'\n      || token.kind === 'punct' && ['{', '}'].includes(token.value))) continue;\n    if (diverges(branch.open)) edits.push(tokens[branch.close + 1]);\n  }\n  for (const token of edits.reverse()) {\n    // Equal-width whitespace preserves every original body, comment and source\n    // position, including line!/column! in either retained block.\n    source = source.slice(0, token.start) + ' '.repeat(token.end - token.start) + source.slice(token.end);\n  }\n  return source;\n}"
+  },
+  {
+    "id": "repository.check-family-library-branch-transfer-alternative-style",
+    "source": "js/tests/translation-recorded-family-library-style.test.js",
+    "name": "family divergent then retains complete tail blocks, effects, opaque syntax and outer result branches",
+    "inventoryName": "check family library branch transfer alternative style",
+    "sourceText": "test('family divergent then retains complete tail blocks, effects, opaque syntax and outer result branches', () => {\n  const nested = 'pub fn decide(available:bool,letter:bool,mut index:f64)->State{loop{return if available{{let character=index;{if letter{{let next=character+1f64;{index=next;continue;}}}/* branch */else/* fallback */{State::Return(false)}}}}else{State::Done};}}';\n  const innerElse = nested.indexOf('else');\n  const expected = nested.slice(0, innerElse) + '    ' + nested.slice(innerElse + 4);\n  const transformed = removeFamilyLibraryDivergentElse(nested);\n  assert.equal(transformed, expected, 'only the actual nested continue branch loses its else keyword');\n  assert.ok(transformed.includes('}else{State::Done};'), 'the outer return-if retains its value-producing else');\n  for (const original of ['/* branch */', '/* fallback */', 'index=next;continue;', 'State::Return(false)', 'State::Done']) {\n    assert.equal(transformed.indexOf(original), nested.indexOf(original), original);\n  }\n  assert.equal(removeFamilyLibraryDivergentElse(transformed), transformed);\n  for (const before of [\n    'pub fn decide(flag:bool)->State{if flag{return State::Return(observe());}else{State::Done}}',\n    'pub fn decide(flag:bool)->State{if flag{{let value=observe();{return State::Return(value);}}}else{State::Done}}',\n    'pub fn decide(flag:bool)->State{loop{if flag{break State::Return(observe());}else{break State::Done;}}}',\n    'pub fn decide(flag:bool){loop{if flag{{continue;}}else{break;}}}',\n    'pub fn decide(flag:bool)->u32{if flag{observe();return line!();}/* retained */else/* retained */{column!()}}',\n  ]) {\n    const start = before.indexOf('else');\n    const after = removeFamilyLibraryDivergentElse(before);\n    assert.equal(after, before.slice(0, start) + '    ' + before.slice(start + 4));\n    assert.equal(after.length, before.length, 'every original source position is retained');\n    assert.equal(removeFamilyLibraryDivergentElse(after), after);\n  }\n  for (const before of [\n    'pub fn decide(flag:bool)->bool{if flag{loop{break;}}else{observe()}}',\n    'pub fn decide(flag:bool)->bool{if flag{while flag{return true;}}else{false}}',\n    'pub fn decide(flag:bool)->bool{if flag{let callback=||{return true;};}else{false}}',\n    'pub fn decide(flag:bool){if flag{||{return true;}}else{||false}}',\n    \"pub fn decide(flag:bool)->bool{if flag{'done:{break 'done true;}}else{false}}\",\n    \"pub fn decide(flag:bool)->bool{'outer:loop{if flag{break 'outer true;}else{false}}}\",\n    'pub fn decide(flag:bool)->bool{if flag{custom!({return true;})}else{false}}',\n    'custom!(if flag{return true;}else{false});',\n    'macro_rules! custom{()=>{if flag{return true;}else{false}};}',\n    '#[custom(if flag{return true;}else{false})]pub fn decide()->bool{false}',\n    'pub fn decide(flag:bool,other:bool)->bool{if flag{return true;}else if other{return false;}else{true}}',\n    'pub fn decide(flag:bool)->bool{if flag{{true}}else{false}}',\n    'pub fn decide(flag:bool,other:bool)->bool{if flag{if other{return true;}false}else{false}}',\n    'pub fn decide(flag:bool)->bool{return if flag{return true;}else{false};}',\n    'pub fn decide(flag:bool)->bool{let value=if flag{return true;}else{false};value}',\n    'pub fn decide(flag:bool)->bool{consume(if flag{return true;}else{false})}',\n    'pub fn decide(value:Option<bool>)->bool{if let Some(found)=value{return found;}else{false}}',\n    'pub fn decide(flag:bool)->bool{if {observe();flag}{return true;}else{false}}',\n    'pub fn decide()->String{String::from(\"if flag{return true;}else{false}\")}',\n    '/* if flag{return true;}else{false} */pub fn decide()->bool{false}',\n  ]) assert.equal(removeFamilyLibraryDivergentElse(before), before, before);\n\n  // This statement syntax is common to JavaScript and Rust. Execute its\n  // condition and branch callbacks independently of the Rust reader, whose\n  // value-if profile deliberately requires an else on every parsed if.\n  const helpers = 'function observe_condition(value){events.push(\"condition\");return value;}function observe_then(value){events.push(\"then\");return value;}function observe_else(value){events.push(\"else\");return value;}';\n  const before = 'function decide(value){if(observe_condition(value)){let result=observe_then(true);{return result;}}else{return observe_else(false);}}';\n  const after = removeFamilyLibraryDivergentElse(before);\n  assert.notEqual(after, before);\n  const execute = source => {\n    const context = {events: []};\n    vm.runInNewContext(helpers + source, context, {timeout: 1000});\n    return context;\n  };\n  for (const value of [false, true]) {\n    const original = execute(before), styled = execute(after);\n    assert.equal(styled.decide(value), original.decide(value));\n    assert.deepEqual(styled.events, original.events);\n    assert.deepEqual(styled.events, ['condition', value ? 'then' : 'else']);\n  }\n  for (const before of [\n    'function decide(stop){let index=0;while(index<3){if(index<stop){{index+=1;continue;}}else{return index;}}return index;}',\n    'function decide(stop){let index=0;while(index<3){if(index>=stop){break;}else{index+=1;}}return index;}',\n  ]) {\n    const after = removeFamilyLibraryDivergentElse(before);\n    assert.notEqual(after, before);\n    for (const stop of [-1, 0, 1, 3, 4]) assert.equal(execute(after).decide(stop), execute(before).decide(stop));\n  }\n  const many = Array.from({length: 128}, (_, index) => `pub fn decide_${index}(flag:bool)->bool{if flag{return true;}else{false}}`).join('\\n');\n  const all = removeFamilyLibraryDivergentElse(many);\n  assert.equal(all, many.replaceAll('else', '    '), 'all independent proven transfers are handled without a pass limit');\n  assert.equal(removeFamilyLibraryDivergentElse(all), all);\n})"
+  },
+  {
+    "id": "repository.decode-original-raw-carrier-links-data",
+    "source": "experiments/original-link-complete-table-projection/raw-native-observations.mjs",
+    "name": "decodeOriginalLinkRawCarrierData",
+    "inventoryName": "decode original raw carrier links data",
+    "sourceText": "export function decodeOriginalLinkRawCarrierData(source) {\n  assert.ok(typeof source === 'string' && source.isWellFormed(), 'carrier data must be primitive scalar text');\n  assert.ok(Buffer.byteLength(source) <= maximumConsumerBytes, 'carrier data exceeds the unchanged consumer budget');\n  const scalar = link => { assert.equal(link.values.length, 0, 'carrier scalar references cannot contain groups'); assert.equal(typeof link.id, 'string'); return link.id; };\n  const fields = (link, name) => { assert.equal(link.id, name, 'carrier Links groups retain their exact identities and order'); return link.values; };\n  const count = field => {\n    assert.match(field, /^(?:0|[1-9][0-9]*)$/u, 'carrier indices use canonical decimal text');\n    const value = Number(field); assert.ok(Number.isSafeInteger(value) && value <= source.length, 'carrier counts and indices are bounded exact integers'); return value;\n  };\n  const word = value => { assert.match(value, /^[0-9a-f]{16}$/u, 'carrier words retain every u64 bit'); return value; };\n  const counted = (link, name) => { const values = fields(link, name).map(scalar); assert.ok(values.length > 0, 'carrier groups declare their complete count'); const length = count(values[0]); assert.equal(values.length, length + 1, 'carrier group count differs'); return values.slice(1); };\n  const group = (link, name, prefix) => { const values = counted(link, name); values.forEach((value, index) => assert.equal(value, `${prefix}-${index}`, 'carrier groups retain every declared row identity')); return values.length; };\n  let words = [], blockCount = 0, vectorCount = 0, invocationCount = 0, position = 0;\n  const blocks = [], vectors = [], invocations = [];\n  const parser = new CarrierLinksParser({comments: false, collect: false, maxInputSize: maximumConsumerBytes, maxBufferSize: maximumConsumerBytes, maxDepth: 4});\n  parser.on('error', error => assert.fail('invalid carrier Links Notation: ' + error.message));\n  parser.on('link', link => {\n    if (position === 0) {\n      const root = fields(link, 'carrier'); assert.equal(root.length, 5, 'one carrier root declares all four groups and its schema');\n      assert.deepEqual(fields(root[0], 'schema').map(scalar), ['original-link-raw-carrier', '1']);\n      assert.deepEqual(root.slice(1).map(scalar), ['words', 'blocks', 'vectors', 'invocations']);\n    } else if (position === 1) words = counted(link, 'words').map(word);\n    else if (position === 2) blockCount = group(link, 'blocks', 'block');\n    else if (position < 3 + blockCount) blocks.push(counted(link, `block-${position - 3}`).map(count));\n    else if (position === 3 + blockCount) vectorCount = group(link, 'vectors', 'vector');\n    else if (position < 4 + blockCount + vectorCount) vectors.push(counted(link, `vector-${position - 4 - blockCount}`).map(count));\n    else if (position === 4 + blockCount + vectorCount) invocationCount = group(link, 'invocations', 'invocation');\n    else if (position < 5 + blockCount + vectorCount + invocationCount) {\n      const values = fields(link, `invocation-${position - 5 - blockCount - vectorCount}`); assert.equal(values.length, 3);\n      const roots = fields(values[0], 'roots').map(scalar).map(word), result = fields(values[1], 'result').map(scalar); assert.equal(roots.length, 2); assert.equal(result.length, 1);\n      invocations.push({rootBits: roots, result: count(result[0]), columns: counted(values[2], 'columns').map(count)});\n    } else assert.fail('carrier data cannot contain extra Links groups');\n    position += 1;\n  });\n  for (let offset = 0; offset < source.length; offset += 65536) parser.write(source.slice(offset, offset + 65536));\n  parser.end();\n  assert.equal(position, 5 + blockCount + vectorCount + invocationCount, 'carrier data is incomplete');\n  assert.ok(blocks.every(row => row.every(index => index < words.length)), 'carrier block word indices must exist');\n  assert.ok(vectors.every(row => row.every(index => index < blocks.length)), 'carrier vector block indices must exist');\n  assert.ok(invocations.every(row => row.result < vectors.length && row.columns.every(index => index < vectors.length)), 'carrier invocation vectors must exist');\n  return {words, blocks, vectors, invocations};\n}"
+  },
+  {
+    "id": "repository.render-original-raw-carrier-links-data",
+    "source": "experiments/original-link-complete-table-projection/raw-native-observations.mjs",
+    "name": "writeOriginalLinkRawCarrierData",
+    "inventoryName": "render original raw carrier links data",
+    "sourceText": "function writeOriginalLinkRawCarrierData(carrier, invocations) {\n  const scalar = value => new CarrierLink(String(value));\n  const link = (name, values) => new CarrierLink(name, values);\n  const counted = (name, values) => link(name, [scalar(values.length), ...values.map(scalar)]);\n  const declarations = [link('carrier', [link('schema', [scalar('original-link-raw-carrier'), scalar(1)]), ...['words', 'blocks', 'vectors', 'invocations'].map(scalar)]).format(false),\n    counted('words', carrier.words).format(false)];\n  for (const [name, prefix, rows] of [['blocks', 'block', carrier.blocks], ['vectors', 'vector', carrier.vectors]]) {\n    declarations.push(counted(name, rows.map((_, index) => `${prefix}-${index}`)).format(false));\n    rows.forEach((row, index) => declarations.push(counted(`${prefix}-${index}`, row).format(false)));\n  }\n  declarations.push(counted('invocations', invocations.map((_, index) => `invocation-${index}`)).format(false));\n  invocations.forEach((row, index) => declarations.push(link(`invocation-${index}`, [link('roots', row.rootBits.map(scalar)), link('result', [scalar(row.result)]), counted('columns', row.columns)]).format(false)));\n  return declarations.join('\\n') + '\\n';\n}"
+  },
+  {
+    "id": "repository.create-original-raw-consumer-data-packet",
+    "source": "experiments/original-link-complete-table-projection/raw-native-observations.mjs",
+    "name": "createOriginalLinkRawConsumerPacket",
+    "inventoryName": "create original raw consumer data packet",
+    "sourceText": "export function createOriginalLinkRawConsumerPacket(observations, carrier, header) {\n  assert.equal(observations.length, carrier.invocations.length, 'every observation has one complete carrier invocation');\n  assert.match(header.functionName, /^[A-Za-z_][A-Za-z_0-9]*$/u, 'the consumer uses the inspected native function name');\n  const invocations = carrier.invocations.map((invocation, index) => ({rootBits: observations[index].inputBits.slice(0, 2), result: invocation.result, columns: invocation.columns}));\n  const data = writeOriginalLinkRawCarrierData(carrier, invocations);\n  assert.deepEqual(decodeOriginalLinkRawCarrierData(data), {words: carrier.words, blocks: carrier.blocks, vectors: carrier.vectors, invocations},\n    'the data inverse restores every old carrier word, block, vector and invocation in order');\n  const consumer = consumerSource(header), consumerSourceBytes = textBytes(consumer).length, consumerDataBytes = textBytes(data).length;\n  assert.ok(consumerSourceBytes + consumerDataBytes <= maximumConsumerBytes, 'complete consumer and data exceed the unchanged budget');\n  return {consumerSource: consumer, consumerSourceBytes, consumerDataBytes, consumerBytes: consumerSourceBytes + consumerDataBytes,\n    additionalSources: [{relativePath: 'carrier.lino', source: data, sourceBytes: consumerDataBytes, sourceSha256: sha256(textBytes(data))}]};\n}"
+  },
+  {
+    "id": "repository.read-original-raw-consumer-data-fixture",
+    "source": "experiments/original-link-complete-table-projection/raw-native-observations.test.mjs",
+    "name": "rawConsumerDataFixture",
+    "inventoryName": "read original raw consumer data fixture",
+    "sourceText": "function rawConsumerDataFixture() {\n  const carrier = {words: ['0000000000000000', '8000000000000000', '7ff0000000000000', 'fff0000000000000', '7ff8000000000001', 'ffffffffffffffff'],\n    blocks: [[0, 1, 4], [2, 3, 5], []], vectors: [[0, 1], [2], [1, 0]], invocations: [{columns: [0, 1], result: 2}, {columns: [2, 0], result: 1}]};\n  const vectorBits = index => carrier.vectors[index].flatMap(block => carrier.blocks[block].map(word => carrier.words[word]));\n  const roots = [['0000000000000000', '8000000000000000'], ['7ff8000000000001', '7ff0000000000000']];\n  const observations = carrier.invocations.map((row, index) => ({inputBits: [...roots[index], row.columns.map(vectorBits)], resultBits: vectorBits(row.result)}));\n  return {carrier, observations, header: {functionName: 'check_original_link_raw_shape'}};\n}"
+  },
+  {
+    "id": "repository.check-original-raw-carrier-data-inverse",
+    "source": "experiments/original-link-complete-table-projection/raw-native-observations.test.mjs",
+    "name": "raw consumer data restores every exact original carrier cell and keeps compiled source independent of data size",
+    "inventoryName": "check original raw carrier data inverse",
+    "sourceText": "test('raw consumer data restores every exact original carrier cell and keeps compiled source independent of data size', () => {\n  const {carrier, observations, header} = rawConsumerDataFixture(), packet = createOriginalLinkRawConsumerPacket(observations, carrier, header);\n  const data = packet.additionalSources[0], restored = decodeOriginalLinkRawCarrierData(data.source);\n  assert.deepEqual(restored, {...carrier, invocations: carrier.invocations.map((row, index) => ({rootBits: observations[index].inputBits.slice(0, 2), ...row}))});\n  assert.equal(data.relativePath, 'carrier.lino');assert.equal(data.sourceBytes, Buffer.byteLength(data.source));\n  assert.equal(data.sourceSha256, createHash('sha256').update(data.source).digest('hex'));\n  const statements = parseLinoStatements(data.source);\n  assert.equal(statements[0].id, 'carrier');assert.equal(statements[0].values[0].id, 'schema');\n  assert.deepEqual(statements[0].values.slice(1).map(row => row.id), ['words', 'blocks', 'vectors', 'invocations']);\n  const reading = row => row.values.length ? [row.id, ...row.values.map(reading)] : row.id;\n  assert.equal(formatLinoReadings(statements.map(reading)), data.source, 'the actual Links parser and existing Links writer restore the complete packet text');\n  assert.equal(packet.consumerBytes, Buffer.byteLength(packet.consumerSource) + data.sourceBytes);\n  assert.ok(packet.consumerBytes <= 4 * 1024 * 1024);assert.ok(packet.consumerSourceBytes < 8192);\n  assert.match(packet.consumerSource, /std::fs::read_to_string\\(\"carrier\\.lino\"\\)/u);\n  assert.match(packet.consumerSource, /for index in 0\\.\\.invocation_count/u);\n  assert.match(packet.consumerSource, /oracle_source::check_original_link_raw_shape\\(root_high,root_low,columns\\.clone\\(\\)\\)/u);\n  assert.doesNotMatch(packet.consumerSource, /vec!\\[/u);\n  const larger = structuredClone(carrier);larger.blocks.push(Array.from({length: 4096}, (_, index) => index % carrier.words.length));\n  const expanded = createOriginalLinkRawConsumerPacket(observations, larger, header);\n  assert.equal(expanded.consumerSource, packet.consumerSource, 'complete data growth cannot duplicate compiled Rust expressions');\n  assert.ok(expanded.consumerDataBytes > packet.consumerDataBytes);\n  assert.deepEqual(decodeOriginalLinkRawCarrierData(expanded.additionalSources[0].source).blocks, larger.blocks);\n  for (const invalid of [\n    '', data.source.trimEnd().slice(0, -1), data.source + '(extra: 0)\\n',\n    data.source.replace('(words: 6 ', '(words: 06 '), data.source.replace('(words: 6 ', '(words: 9007199254740992 '),\n    data.source.replace('7ff8000000000001', '7ff800000000000x'),\n    data.source.replace('(schema: original-link-raw-carrier 1)', '(schema: original-link-raw-carrier 2)'),\n    data.source.replace('block-1', 'block-0'), data.source.replace('(vectors:', '(foreign:'),\n  ]) assert.throws(() => decodeOriginalLinkRawCarrierData(invalid), assert.AssertionError);\n  const foreign = structuredClone(carrier);foreign.blocks[0][0] = 99;\n  assert.throws(() => createOriginalLinkRawConsumerPacket(observations, foreign, header), /word indices must exist/u);\n})"
+  },
+  {
+    "id": "repository.check-original-raw-consumer-packet-validation",
+    "source": "experiments/original-link-complete-table-projection/raw-native-observations.test.mjs",
+    "name": "raw consumer data uses the existing complete packet preflight and detects edits around every injected phase",
+    "inventoryName": "check original raw consumer packet validation",
+    "sourceText": "test('raw consumer data uses the existing complete packet preflight and detects edits around every injected phase', () => {\n  const {carrier, observations, header} = rawConsumerDataFixture(), packet = createOriginalLinkRawConsumerPacket(observations, carrier, header);\n  const source = 'pub fn check_original_link_raw_shape()->Vec<f64>{Vec::new()}\\n', sha256 = value => createHash('sha256').update(value).digest('hex');\n  for (const mutation of ['none', 'preflight', 'library', 'consumer', 'execute']) {\n    const entry = {id: 'injected raw carrier transport only', kind: 'injected transport contract', source, sourceBytes: Buffer.byteLength(source), sourceSha256: sha256(source),\n      consumerSource: packet.consumerSource, consumerSha256: sha256(packet.consumerSource), additionalSources: structuredClone(packet.additionalSources), observations: []};\n    if (mutation === 'preflight') entry.additionalSources[0].source += 'changed';\n    const plan = {entries: [entry]}, calls = [], environment = {CI: 'true', ORIGINAL_LINK_RAW_NATIVE: '1'};\n    const run = createSourceNativeObservationRunner({nativeMode: env => env === environment, checkedPlan: candidate => candidate === plan,\n      textBytes: value => Buffer.from(value), parseObservations: output => {assert.equal(output, 'injected transport only\\n');return [];}, entryReceipt: () => ({}),\n      temporaryPrefix: 'raw-data-contract-', failureLabel: 'injected raw data contract', compilerProfile: 'checkedOptimized'});\n    const execute = () => run(plan, {environment, spawn(command, args, options) {\n      const phase = args.includes('--crate-type=rlib') ? 'library' : args.includes('--extern') ? 'consumer' : 'execute';calls.push({phase, options});\n      const file = join(options.cwd, 'carrier.lino');assert.equal(readFileSync(file, 'utf8'), packet.additionalSources[0].source);\n      assert.equal(options.timeout, phase === 'execute' ? 10000 : 30000);assert.equal(options.maxBuffer, 1024 * 1024);\n      if (phase !== 'execute') {\n        assert.deepEqual(args.slice(1, 5), ['--error-format=short', '-Copt-level=2', '-Cdebug-assertions=on', '-Coverflow-checks=on']);\n        writeFileSync(args[args.indexOf('-o') + 1], 'injected artifact only');\n      }\n      if (phase === mutation) writeFileSync(file, 'changed during injected phase');\n      return {status: 0, signal: null, stdout: phase === 'execute' ? 'injected transport only\\n' : '', stderr: ''};\n    }});\n    if (mutation === 'none') {\n      const receipt = execute();assert.equal(receipt.processMode, 'injected process contract');\n      assert.deepEqual(receipt.processCounts, {libraryCompilations: 1, consumerCompilations: 1, executions: 1});\n      assert.deepEqual(receipt.observations[0].additionalSources, packet.additionalSources.map(({relativePath, sourceBytes, sourceSha256}) => ({relativePath, sourceBytes, sourceSha256})));\n    } else {\n      assert.throws(execute, error => {assert.ok(error instanceof AggregateError);assert.match(error.message, /byte count differs|additional source bytes changed/u);return true;});\n      assert.equal(calls.length, mutation === 'preflight' ? 0 : ['library', 'consumer', 'execute'].indexOf(mutation) + 1);\n    }\n    assert.ok(calls.every(call => !existsSync(call.options.cwd)), 'all injected packet scratch is removed');\n  }\n})"
+  },
+  {
+    "id": "repository.verify-committed-second-schema-provenance",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-second-extension-closure.test.mjs",
+    "name": "verifyCommittedSecondSchemaProvenance",
+    "inventoryName": "verify committed second schema provenance",
+    "sourceText": "function verifyCommittedSecondSchemaProvenance(historical, value) {\n  assert.equal(historical.version, 1);\n  assert.equal(historical.sourceCommit, '0112b8e364f3f2f5945dc738552cd75af0111866');\n  assert.equal(Object.hasOwn(historical, 'publishedCommit'), false);\n  assert.equal(historical.originalReceiptSha256, ORIGINAL_LINK_RAW_SCHEMA_PREDECESSOR_RECEIPT);\n  assert.equal(historical.firstExtensionReceiptSha256, ORIGINAL_LINK_RAW_SCHEMA_FIRST_EXTENSION_RECEIPT);\n  const schemaBytes = Buffer.from(historical.schema.source, 'utf8'), receiptBytes = Buffer.from(historical.receipt.source, 'utf8');\n  assert.equal(historical.schema.file, 'js/src/data/typed-program-links-schema.lino');\n  assert.equal(historical.receipt.file, 'experiments/original-link-complete-table-projection/data/raw-schema-second-extension-closure.lino');\n  assert.equal(schemaBytes.length, 135107);assert.equal(historical.schema.bytes, schemaBytes.length);\n  assert.equal(receiptBytes.length, 216801);assert.equal(historical.receipt.bytes, receiptBytes.length);\n  assert.equal(sha256(schemaBytes), '0f25aad3f91f511144dc3a1f974027d10d13446e15b4bd1cb86aa61a50197ece');\n  assert.equal(sha256(receiptBytes), 'e8312a7334e1a8642386e7e0bc370689879c789a33064076090e1b4872472c2b');\n  assert.equal(historical.schema.sha256, sha256(schemaBytes));assert.equal(historical.receipt.sha256, sha256(receiptBytes));\n  const second = readStructuredDataLino(historical.receipt.source);\n  assert.equal(second.current.sha256, historical.schema.sha256);assert.equal(second.current.bytes, schemaBytes.length);\n  assert.deepEqual(second.consumedSchemaProperties, ['language', 'root', 'schemaVersion', 'containers', 'scalars', 'fields', 'references', 'referenceAliases']);\n  assert.equal(Object.keys(value.sources).length, 47);\n  verifyOriginalLinkRawSchemaSecondDraftPredecessor(value.receipt, value.first, schemaBytes, value.sources, second);\n  return {schemaBytes, receiptBytes, second};\n}"
+  },
+  {
+    "id": "repository.check-committed-schema-provenance-before-text-projections",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-second-extension-closure.test.mjs",
+    "name": "committed stage-two provenance preserves the exact 0112 schema and receipt before optional text projections",
+    "inventoryName": "check committed schema provenance before text projections",
+    "sourceText": "test('committed stage-two provenance preserves the exact 0112 schema and receipt before optional text projections', () => {\n  const value = fixture(), file = new URL('./data/raw-schema-second-extension-provenance-0112b8e3.lino', import.meta.url);\n  const bytes = readFileSync(file);\n  assert.equal(bytes.length, 527360);\n  assert.equal(sha256(bytes), '28635e6c1c02acc5878ff38d610ceba432082901461c2801ebcf2c410fa10710');\n  const historical = readStructuredDataLino(bytes.toString('utf8'));\n  assert.equal(structuredDataToLino(historical), bytes.toString('utf8'), 'every historical source byte survives actual Links reading and writing');\n  const {schemaBytes, second} = verifyCommittedSecondSchemaProvenance(historical, value);\n  const previous = readStructuredDataLino(schemaBytes.toString('utf8')), current = readStructuredDataLino(value.bytes.toString('utf8'));\n  assert.deepEqual(previous.expressionProjections.nullishNumber, {construct: 'numberValue', fields: [['arg', 'expression', 'arg']]});\n  for (const name of ['optionalText', 'optionalText:false', 'optionalText:true']) {\n    assert.equal(Object.hasOwn(previous.expressionProjections, name), false);\n    assert.equal(Object.hasOwn(second.appendedSchemaEntries.expressionProjections, name), false);\n    assert.equal(Object.hasOwn(current.expressionProjections, name), true);\n  }\n  for (const key of second.consumedSchemaProperties) assert.deepEqual(current[key], previous[key], 'a raw producer input remains exact: ' + key);\n  assert.throws(() => verifyOriginalLinkRawSchemaSecondExtensionClosure(value.receipt, value.first, schemaBytes, value.sources, second), assert.AssertionError,\n    'the narrower historical predecessor cannot replace the complete current second-stage gate');\n  const oldBytes = readFileSync(new URL('./data/raw-schema-second-extension-provenance.lino', import.meta.url));\n  assert.equal(oldBytes.length, 524605);\n  assert.equal(sha256(oldBytes), 'e11957cb88af9d80fda7a4ce97f40ffb81434fa8e684a2f697a55f3f35c3fb03');\n  assert.equal(sha256(value.receiptBytes), ORIGINAL_LINK_RAW_SCHEMA_PREDECESSOR_RECEIPT);\n  assert.equal(sha256(value.firstBytes), ORIGINAL_LINK_RAW_SCHEMA_FIRST_EXTENSION_RECEIPT);\n})"
+  },
+  {
+    "id": "repository.check-committed-schema-provenance-forgery-refusals",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-second-extension-closure.test.mjs",
+    "name": "committed stage-two provenance rejects publication relabeling and coherently changed predecessor bytes",
+    "inventoryName": "check committed schema provenance forgery refusals",
+    "sourceText": "test('committed stage-two provenance rejects publication relabeling and coherently changed predecessor bytes', () => {\n  const value = fixture(), original = readStructuredDataLino(readFileSync(new URL('./data/raw-schema-second-extension-provenance-0112b8e3.lino', import.meta.url), 'utf8'));\n  for (const mutate of [\n    historical => {historical.sourceCommit = '0'.repeat(40);},\n    historical => {historical.publishedCommit = historical.sourceCommit;},\n    historical => {historical.originalReceiptSha256 = '0'.repeat(64);},\n    historical => {historical.receipt.file = historical.schema.file;},\n    historical => {historical.schema.source += '\\n';historical.schema.bytes = Buffer.byteLength(historical.schema.source);historical.schema.sha256 = sha256(historical.schema.source);},\n    historical => {historical.receipt.source += '\\n';historical.receipt.bytes = Buffer.byteLength(historical.receipt.source);historical.receipt.sha256 = sha256(historical.receipt.source);},\n  ]) {\n    const changed = structuredClone(original);mutate(changed);\n    assert.throws(() => verifyCommittedSecondSchemaProvenance(changed, value), assert.AssertionError);\n  }\n  const foreign = {...value, sources: {...value.sources, 'policy.mjs': '0'.repeat(64)}};\n  assert.throws(() => verifyCommittedSecondSchemaProvenance(original, foreign), assert.AssertionError);\n})"
+  },
+  {
+    "id": "repository.read-windows-link-editor-preparation-source",
+    "source": "js/tests/ci-workflow-structure.test.js",
+    "name": "readWindowsLinkerPreflight",
+    "inventoryName": "read windows link editor preparation source",
+    "sourceText": "function readWindowsLinkerPreflight(job) {\n  const steps = job.steps.filter(step => step.name === 'Verify Windows native linker resolution');\n  assert.equal(steps.length, 1, 'each Windows native job executes one independent linker resolution check');\n  const source = /node --input-type=commonjs <<'NODE'\\n([\\s\\S]*?)\\n {10}NODE(?:\\n|$)/u.exec(steps[0].text)?.[1];\n  assert.ok(source, 'execute the actual Node child resolution check under Bash');\n  return source.replace(/^ {10}/gmu, '');\n}"
+  },
+  {
+    "id": "repository.check-windows-native-link-editor-environment",
+    "source": "js/tests/ci-workflow-structure.test.js",
+    "name": "checkWindowsLinkerEnvironment",
+    "inventoryName": "check windows native link editor environment",
+    "sourceText": "function checkWindowsLinkerEnvironment(job, observationStepName) {\n  const setup = job.steps.filter(step => step.name === 'Setup MSVC environment');\n  assert.equal(setup.length, 1);\n  const preflight = job.steps.filter(step => step.name === 'Verify Windows native linker resolution');\n  assert.equal(preflight.length, 1);\n  for (const step of [setup[0], preflight[0]]) {\n    assert.doesNotMatch(step.text, /continue-on-error:/u);\n  }\n  assert.match(setup[0].text, /^ {8}if: runner.os == 'Windows'$/mu);\n  assert.match(preflight[0].text, /^ {8}if: \\$\\{\\{ !cancelled\\(\\) && runner.os == 'Windows' \\}\\}$/mu);\n  assert.match(setup[0].text, /^ {8}shell: pwsh$/mu);\n  for (const fragment of [\n    'MSVC link.exe not found at $msvcLinker',\n    '\"CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER=$msvcLinker\" | Out-File -FilePath $env:GITHUB_ENV -Append',\n    'Split-Path -Parent $msvcLinker | Out-File -FilePath $env:GITHUB_PATH -Append',\n    '$bashEnvironment = Join-Path $env:RUNNER_TEMP \"meta-language-msvc-bash-env.sh\"',\n    'export PATH=\"',\n    'cygpath -u \"$CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER\"',\n    ' + \"`n\" |',\n    'Set-Content -LiteralPath $bashEnvironment -Encoding utf8 -NoNewline',\n    \"\\\"BASH_ENV=$($bashEnvironment.Replace('\\\\', '/'))\\\" | Out-File -FilePath $env:GITHUB_ENV -Append\",\n  ]) assert.ok(setup[0].text.includes(fragment), `the job preserves validated Windows linker setup: ${fragment}`);\n  assert.ok(setup[0].text.indexOf('MSVC link.exe not found at $msvcLinker') < setup[0].text.indexOf('\"BASH_ENV='));\n  assert.doesNotMatch(setup[0].text, /^\\s*\"(?:PATH|Path)=.*GITHUB_ENV/mu, 'do not introduce competing Windows Path and PATH variables');\n  assert.match(preflight[0].text, /^ {8}shell: bash$/mu);\n  const observation = job.steps.find(step => step.name === observationStepName);\n  assert.ok(observation);\n  assert.ok(job.steps.indexOf(setup[0]) < job.steps.indexOf(preflight[0]));\n  assert.equal(job.steps.indexOf(preflight[0]), job.steps.indexOf(observation) - 1, 'verify after dependency setup and immediately before native observations');\n  assert.ok(observation.afterFailure, 'native observations still report failures after the resolution check');\n  assert.ok(job.steps.indexOf(preflight[0]) < job.steps.indexOf(observation), 'resolve the linker before native observations');\n  readWindowsLinkerPreflight(job);\n}"
+  },
+  {
+    "id": "repository.check-failed-raw-native-diagnostic-retention",
+    "source": "js/tests/ci-workflow-structure.test.js",
+    "name": "raw native diagnostics survive failed tests and a missing successful observation report",
+    "inventoryName": "check failed raw native diagnostic retention",
+    "sourceText": "test('raw native diagnostics survive failed tests and a missing successful observation report', () => {\n  checkOriginalLinkRawNativeJob(jobs('rust.yml'));\n  for (const [before, after] of [\n    ['always()', 'success()'], ['always()', '!cancelled()'],\n    ['source-native-observations/', 'original-link-raw-native-observations.lino'],\n    ['if-no-files-found: warn', 'if-no-files-found: ignore'], ['retention-days: 30', 'retention-days: 0'],\n  ]) {\n    const parsed = jobs('rust.yml');\n    const step = parsed.get(ORIGINAL_LINK_RAW_NATIVE_JOB).steps.find(step => step.name === ORIGINAL_LINK_RAW_DIAGNOSTICS);\n    assert.ok(step.text.includes(before));step.text = step.text.replace(before, after);\n    assert.throws(() => checkOriginalLinkRawNativeJob(parsed), assert.AssertionError);\n  }\n})"
+  },
+  {
+    "id": "repository.check-windows-native-link-editor-restoration",
+    "source": "js/tests/ci-workflow-structure.test.js",
+    "name": "Windows native jobs restore the validated MSVC linker after the Git Bash launcher",
+    "inventoryName": "check windows native link editor restoration",
+    "sourceText": "test('Windows native jobs restore the validated MSVC linker after the Git Bash launcher', () => {\n  for (const [file, identifier, observation] of [\n    ['rust.yml', 'test', 'Run tests'],\n    ['ci.yml', 'consumers', 'Install and parse the exact artifacts in clean consumers'],\n  ]) {\n    checkWindowsLinkerEnvironment(jobs(file).get(identifier), observation);\n    const mutate = change => {\n      const job = jobs(file).get(identifier);\n      change(job);\n      assert.throws(() => checkWindowsLinkerEnvironment(job, observation), assert.AssertionError);\n    };\n    mutate(job => job.steps.splice(job.steps.findIndex(step => step.name === 'Verify Windows native linker resolution'), 1));\n    mutate(job => job.steps.push({ ...job.steps.find(step => step.name === 'Verify Windows native linker resolution') }));\n    mutate(job => job.steps.push(job.steps.splice(job.steps.findIndex(step => step.name === 'Verify Windows native linker resolution'), 1)[0]));\n    for (const [name, before, after] of [\n      ['Setup MSVC environment', '\"BASH_ENV=', '\"UNUSED_BASH_ENV='],\n      ['Setup MSVC environment', ' -NoNewline', ''],\n      ['Setup MSVC environment', '\"`n\"', '\"`r`n\"'],\n      ['Setup MSVC environment', 'cygpath -u \"$CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER\"', 'cygpath -u \"C:/Program Files/Git/usr/bin/link.exe\"'],\n      ['Verify Windows native linker resolution', \"runner.os == 'Windows'\", \"runner.os == 'Linux'\"],\n      ['Verify Windows native linker resolution', '!cancelled() && ', ''],\n      ['Verify Windows native linker resolution', 'shell: bash', 'shell: pwsh'],\n      ['Verify Windows native linker resolution', 'shell: bash', 'continue-on-error: true\\n        shell: bash'],\n    ]) mutate(job => {\n      const step = job.steps.find(step => step.name === name);\n      assert.ok(step.text.includes(before));step.text = step.text.replace(before, after);\n    });\n  }\n  assert.equal(readWindowsLinkerPreflight(jobs('rust.yml').get('test')), readWindowsLinkerPreflight(jobs('ci.yml').get('consumers')));\n})"
+  },
+  {
+    "id": "repository.check-windows-native-child-link-editor-resolution",
+    "source": "js/tests/ci-workflow-structure.test.js",
+    "name": "Windows linker preflight checks the first native child resolution and refuses lookup failures",
+    "inventoryName": "check windows native child link editor resolution",
+    "sourceText": "test('Windows linker preflight checks the first native child resolution and refuses lookup failures', () => {\n  const source = readWindowsLinkerPreflight(jobs('rust.yml').get('test'));\n  const expected = \"C:\\\\Program Files\\\\Microsoft Visual Studio\\\\18\\\\Enterprise\\\\VC\\\\Tools\\\\MSVC\\\\14.51\\\\bin\\\\Hostx64\\\\x64\\\\link.exe\";\n  const other = \"C:\\\\Program Files\\\\Git\\\\usr\\\\bin\\\\link.exe\";\n  const success = {status: 0, signal: null, stdout: `${expected}\\r\\n${other}\\r\\n`, stderr: ''};\n  const invoke = (resolved, selected = expected) => {\n    const calls = [], output = [];\n    let error;\n    try {\n      runInNewContext(source, {\n        require: name => {\n          if (name === 'node:path') return path;\n          assert.equal(name, 'node:child_process');\n          return {spawnSync: (command, arguments_, options) => {\n            calls.push({command, arguments: [...arguments_], options: {...options}});\n            return resolved;\n          }};\n        },\n        process: {env: {CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER: selected}},\n        console: {log: value => output.push(value)},\n      });\n    } catch (caught) {error = caught;}\n    return {error, calls, output};\n  };\n  for (const stdout of [success.stdout, `${expected.toUpperCase().split(path.win32.sep).join('/')}\\n${other}\\n`]) {\n    const result = invoke({...success, stdout});\n    assert.equal(result.error, undefined);\n    assert.equal(result.calls.length, 1);\n    assert.deepEqual(result.calls[0], {command: 'where.exe', arguments: ['link.exe'], options: {encoding: 'utf8', timeout: 10000, maxBuffer: 65536, windowsHide: true}});\n    assert.equal(result.output.length, 1);\n    assert.match(result.output[0], /^Validated Windows native child linker: /u);\n  }\n  for (const resolved of [\n    {...success, stdout: `${other}\\r\\n${expected}\\r\\n`},\n    {...success, stdout: ''},\n    {...success, stdout: 'link.exe\\n'},\n    {...success, status: 1, stderr: 'lookup failed'},\n    {...success, signal: 'SIGTERM'},\n    {...success, error: new Error('lookup timeout')},\n    {...success, stdout: null},\n  ]) {\n    const result = invoke(resolved);\n    assert.match(result.error?.message ?? '', /Windows (?:linker lookup failed|native child resolves)/u);\n    assert.equal(result.calls.length, 1);\n    assert.deepEqual(result.output, [], 'failed resolution cannot produce a successful native observation');\n  }\n  for (const selected of ['', 'relative/link.exe']) {\n    const result = invoke(success, selected);\n    assert.match(result.error?.message ?? '', /validated absolute MSVC linker path/u);\n    assert.deepEqual(result.calls, [], 'an unvalidated linker never starts a process');\n    assert.deepEqual(result.output, []);\n  }\n})"
+  },
+  {
+    "id": "translation.binding-type-annotation-input-visitor",
+    "source": "rust/src/translation/surface/binding_type_annotation.rs",
+    "name": "BindingTypeAnnotationVisitor",
+    "inventoryName": "binding type annotation input visitor",
+    "sourceText": "struct BindingTypeAnnotationVisitor;"
+  },
+  {
+    "id": "translation.binding-type-annotation-map-adapter",
+    "source": "rust/src/translation/surface/binding_type_annotation.rs",
+    "name": "BindingTypeAnnotationMap",
+    "inventoryName": "binding type annotation map adapter",
+    "sourceText": "struct BindingTypeAnnotationMap<A> {"
+  },
+  {
+    "id": "translation.read-binding-type-annotation-value",
+    "source": "rust/src/translation/surface/binding_type_annotation.rs",
+    "name": "SurfaceBindingTypeAnnotation::deserialize",
+    "inventoryName": "read binding type annotation value",
+    "sourceText": "    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {",
+    "sourceContext": "impl<'de> Deserialize<'de> for SurfaceBindingTypeAnnotation {"
+  },
+  {
+    "id": "translation.describe-binding-type-annotation-input",
+    "source": "rust/src/translation/surface/binding_type_annotation.rs",
+    "name": "BindingTypeAnnotationVisitor::expecting",
+    "inventoryName": "describe binding type annotation input",
+    "sourceText": "    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {",
+    "sourceContext": "impl<'de> Visitor<'de> for BindingTypeAnnotationVisitor {"
+  },
+  {
+    "id": "translation.read-null-binding-type-annotation",
+    "source": "rust/src/translation/surface/binding_type_annotation.rs",
+    "name": "BindingTypeAnnotationVisitor::visit_none",
+    "inventoryName": "read null binding type annotation",
+    "sourceText": "    fn visit_none<E: de::Error>(self) -> Result<Self::Value, E> {",
+    "sourceContext": "impl<'de> Visitor<'de> for BindingTypeAnnotationVisitor {"
+  },
+  {
+    "id": "translation.read-null-binding-type-annotation",
+    "source": "rust/src/translation/surface/binding_type_annotation.rs",
+    "name": "BindingTypeAnnotationVisitor::visit_unit",
+    "inventoryName": "read null binding type annotation",
+    "sourceText": "    fn visit_unit<E: de::Error>(self) -> Result<Self::Value, E> {",
+    "sourceContext": "impl<'de> Visitor<'de> for BindingTypeAnnotationVisitor {"
+  },
+  {
+    "id": "translation.read-present-binding-annotation-map",
+    "source": "rust/src/translation/surface/binding_type_annotation.rs",
+    "name": "BindingTypeAnnotationVisitor::visit_some",
+    "inventoryName": "read present binding annotation map",
+    "sourceText": "    fn visit_some<D: Deserializer<'de>>(self, deserializer: D) -> Result<Self::Value, D::Error> {",
+    "sourceContext": "impl<'de> Visitor<'de> for BindingTypeAnnotationVisitor {"
+  },
+  {
+    "id": "translation.read-binding-annotation-type-map",
+    "source": "rust/src/translation/surface/binding_type_annotation.rs",
+    "name": "BindingTypeAnnotationVisitor::visit_map",
+    "inventoryName": "read binding annotation type map",
+    "sourceText": "    fn visit_map<A: MapAccess<'de>>(self, map: A) -> Result<Self::Value, A::Error> {",
+    "sourceContext": "impl<'de> Visitor<'de> for BindingTypeAnnotationVisitor {"
+  },
+  {
+    "id": "translation.read-binding-annotation-map-key-seed",
+    "source": "rust/src/translation/surface/binding_type_annotation.rs",
+    "name": "BindingTypeAnnotationMap::next_key_seed",
+    "inventoryName": "read binding annotation map key seed",
+    "sourceText": "    fn next_key_seed<K: DeserializeSeed<'de>>(",
+    "sourceContext": "impl<'de, A: MapAccess<'de>> MapAccess<'de> for BindingTypeAnnotationMap<A> {"
+  },
+  {
+    "id": "translation.read-binding-annotation-map-value-seed",
+    "source": "rust/src/translation/surface/binding_type_annotation.rs",
+    "name": "BindingTypeAnnotationMap::next_value_seed",
+    "inventoryName": "read binding annotation map value seed",
+    "sourceText": "    fn next_value_seed<V: DeserializeSeed<'de>>(",
+    "sourceContext": "impl<'de, A: MapAccess<'de>> MapAccess<'de> for BindingTypeAnnotationMap<A> {"
+  },
+  {
+    "id": "translation.detect-namespace-object-method-headers",
+    "source": "js/src/translation/javascript.js",
+    "name": "namespaceObjectHasMethods",
+    "inventoryName": "detect namespace object method headers",
+    "sourceText": "  namespaceObjectHasMethods(index) {",
+    "sourceContext": "class JavaScriptParser {"
+  },
+  {
+    "id": "translation.detect-namespace-object-method-headers",
+    "source": "rust/src/translation/javascript/declarations/file.rs",
+    "name": "namespace_object_has_methods",
+    "inventoryName": "detect namespace object method headers",
+    "sourceText": "    fn namespace_object_has_methods(&self, index: usize) -> bool {"
+  },
+  {
+    "id": "repository.check-native-javascript-translation-observations",
+    "source": "rust/tests/unit/translation_javascript_frontend.rs",
+    "name": "preserves_javascript_translation_behavior",
+    "inventoryName": "check native javascript translation observations",
+    "sourceText": "pub(super) fn preserves_javascript_translation_behavior(source: &str, expected: &str) {"
+  },
+  {
+    "id": "repository.read-documented-optional-parameter-fixture",
+    "source": "rust/tests/unit/translation_javascript_optional_parameters.rs",
+    "name": "fixture",
+    "inventoryName": "read documented optional parameter fixture",
+    "sourceText": "fn fixture() -> Value {"
+  },
+  {
+    "id": "repository.observe-optional-parameter-javascript-output",
+    "source": "rust/tests/unit/translation_javascript_optional_parameters.rs",
+    "name": "javascript_output",
+    "inventoryName": "observe optional parameter javascript output",
+    "sourceText": "fn javascript_output(source: &str) -> String {"
+  },
+  {
+    "id": "repository.check-native-documented-optional-parameter-metadata",
+    "source": "rust/tests/unit/translation_javascript_optional_parameters.rs",
+    "name": "documented_optional_string_retains_its_type_default_and_presence_metadata",
+    "inventoryName": "check native documented optional parameter metadata",
+    "sourceText": "fn documented_optional_string_retains_its_type_default_and_presence_metadata() {"
+  },
+  {
+    "id": "repository.check-native-optional-parameter-semantic-archive-replay",
+    "source": "rust/tests/unit/translation_javascript_optional_parameters.rs",
+    "name": "javascript_authored_optional_parameters_reload_without_source_and_keep_every_observation",
+    "inventoryName": "check native optional parameter semantic archive replay",
+    "sourceText": "fn javascript_authored_optional_parameters_reload_without_source_and_keep_every_observation() {"
+  },
+  {
+    "id": "repository.check-native-optional-parameter-default-precedence",
+    "source": "rust/tests/unit/translation_javascript_optional_parameters.rs",
+    "name": "runtime_defaults_keep_precedence_and_required_parameter_metadata_stays_absent",
+    "inventoryName": "check native optional parameter default precedence",
+    "sourceText": "fn runtime_defaults_keep_precedence_and_required_parameter_metadata_stays_absent() {"
+  },
+  {
+    "id": "repository.observe-parameter-default-program-calls",
+    "source": "js/tests/translation-defaults.test.js",
+    "name": "observeParameterDefaultCalls",
+    "inventoryName": "observe parameter default program calls",
+    "sourceText": "function observeParameterDefaultCalls(source) {\n  const lines = [];\n  let error = null;\n  try {\n    runInNewContext(source, { console: { log: (...values) => lines.push(format(...values)) } }, { timeout: 1000 });\n  } catch (failure) {\n    error = failure.message;\n  }\n  return { output: lines.length ? lines.join('\\n') + '\\n' : '', error };\n}"
+  },
+  {
+    "id": "repository.check-parameter-default-program-calls",
+    "source": "js/tests/translation-defaults.test.js",
+    "name": "assertParameterDefaultCalls",
+    "inventoryName": "check parameter default program calls",
+    "sourceText": "function assertParameterDefaultCalls(source, output, error = null) {\n  const expected = { output, error };\n  assert.deepEqual(observeParameterDefaultCalls(source), expected, 'the original complete source supplies the oracle');\n  const checked = checkProgram(parseJavaScript(source));\n  const archive = encodeTypedProgramLinks(checked);\n  const rust = emitRust(checked, { arrayConsumption: true }).text;\n  for (const program of [checked,\n    decodeTypedProgramLinks(LinkNetwork.fromLino(archive.network.toLino()), archive.root),\n    decodeTypedProgramLinks(decodeLinkNetworkBinary(encodeLinkNetworkBinary(archive.network)), archive.root),\n  ]) {\n    assert.deepEqual(program, checked, 'text and binary archives retain the actual checked bindings');\n    recheckLinkedTypedProgram(program, { wholeProgram: true });\n    assert.deepEqual(observeParameterDefaultCalls(emitJavaScript(program).text), expected, 'checked and source-free execution retain caller/default order');\n    assert.equal(emitRust(program, { arrayConsumption: true }).text, rust, 'source-free Rust uses the same checked initializer bindings');\n  }\n  return checked;\n}"
+  },
+  {
+    "id": "repository.check-complete-shared-parameter-default-decisions",
+    "source": "js/tests/translation-defaults.test.js",
+    "name": "shared parameter default decisions retain exact checked children and translate the complete module",
+    "inventoryName": "check complete shared parameter default decisions",
+    "sourceText": "test('shared parameter default decisions retain exact checked children and translate the complete module', () => {\n  for (const kind of ['lit', 'none', 'unit', 'var']) assert.equal(readParameterDefaultValueStep(kind, ''), 'pure');\n  assert.equal(readParameterDefaultValueStep('cast', 'exact'), 'arg');\n  assert.equal(readParameterDefaultValueStep('some', ''), 'value');\n  for (const [kind, flavor] of [['call', ''], ['abort', ''], ['cast', 'checked'], ['cast', 'clamp'], ['array', ''], ['', '']]) {\n    assert.equal(readParameterDefaultValueStep(kind, flavor), 'effect');\n  }\n  for (const index of [-1, 0, 1, 2, 3]) for (const provided of [0, 1, 2, 3]) for (const pure of [false, true]) {\n    assert.equal(requireParameterDefaultArgumentBindings(index, provided, pure), index >= 0 && index < provided - 1 && !pure);\n  }\n  for (const defaulted of [false, true]) for (const optional of [false, true]) {\n    for (const kind of ['var', 'option', 'float', 'int', 'unit']) for (const absence of ['', 'null', 'undefined', 'both']) {\n      const expected = !defaulted || optional ? 'identity' : kind === 'var' ? 'defer' : kind === 'option' && absence === 'undefined' ? 'element' : 'value';\n      assert.equal(readParameterDefaultArgumentInference(defaulted, optional, kind, absence), expected);\n    }\n  }\n  const source = readFileSync(new URL('../src/translation/parameter-default-rules.js', import.meta.url), 'utf8');\n  const checked = checkProgram(parseJavaScript(source, { referenceSemantics: false }));\n  assert.deepEqual([...checked.declarations.values()].filter(entry => entry.k === 'fn').map(entry => entry.name), [\n    'readParameterDefaultValueStep', 'requireParameterDefaultArgumentBindings', 'readParameterDefaultArgumentInference',\n  ]);\n  const rust = emitRust(checked, { arrayConsumption: true }).text;\n  assert.match(rust, /pub fn read_parameter_default_value_step\\(/u);\n  assert.match(rust, /pub fn require_parameter_default_argument_bindings\\(/u);\n  assert.match(rust, /pub fn read_parameter_default_argument_inference\\(/u);\n})"
+  },
+  {
+    "id": "repository.check-parameter-initializer-order-after-provided-arguments",
+    "source": "js/tests/translation-defaults.test.js",
+    "name": "an effectful parameter initializer follows every provided argument after source-free reload",
+    "inventoryName": "check parameter initializer order after provided arguments",
+    "sourceText": "test('an effectful parameter initializer follows every provided argument after source-free reload', () => {\n  const source = '/** @returns {number} */function fallback(){console.log(\"default\");return 2;}\\n'\n    + '/** @returns {number} */function later(){console.log(\"later\");return 7;}\\n'\n    + 'function chosen(value=fallback(),other=0){return value+other;}\\n'\n    + 'console.log(chosen(undefined,later()));\\n';\n  assertParameterDefaultCalls(source, 'later\\ndefault\\n9\\n');\n})"
+  },
+  {
+    "id": "repository.check-optional-argument-once-before-lazy-defaults",
+    "source": "js/tests/translation-defaults.test.js",
+    "name": "provided optional values evaluate once before lazy defaults in their callee scope",
+    "inventoryName": "check optional argument once before lazy defaults",
+    "sourceText": "test('provided optional values evaluate once before lazy defaults in their callee scope', () => {\n  const source = '/** @returns {number} */function fallback(){console.log(\"default\");return 2;}\\n'\n    + '/** @param {boolean} present @returns {number} */function maybe(present){console.log(\"maybe\");if(present)return 7;}\\n'\n    + '/** @returns {number} */function later(){console.log(\"later\");return 3;}\\n'\n    + '/** @param {number} value @param {number} other @returns {number} */function chosen(value=fallback(),other=0){return value+other;}\\n'\n    + 'function caller(fallback){return chosen(maybe(false),later());}\\n'\n    + 'console.log(chosen(maybe(true),later()));console.log(caller(99));console.log(chosen());\\n';\n  const checked = assertParameterDefaultCalls(source, 'maybe\\nlater\\n10\\nmaybe\\nlater\\ndefault\\n5\\ndefault\\n2\\n');\n  const declaration = checked.declarations.get('fallback');\n  const call = { k: 'call', fn: declaration.fullName, args: [], type: declaration.ret };\n  assert.deepEqual(projectLinkedProgramExpression(call, checked.declarations).fn.path, ['crate', 'fallback']);\n  const nested = { ...declaration, modulePath: ['Tools'], fullName: 'Tools.fallback' };\n  assert.deepEqual(projectLinkedProgramExpression({ ...call, fn: nested.fullName }, new Map([[nested.fullName, nested]])).fn.path, ['crate', 'Tools', 'fallback']);\n  for (const forged of [{ ...declaration, fullName: 'other' }, { ...declaration, modulePath: ['Other'] }, { ...declaration, name: 'other' }]) {\n    assert.throws(() => projectLinkedProgramExpression(call, new Map([[call.fn, forged]])), /actual declaration|actual declaration binding/u);\n  }\n  assert.deepEqual(projectLinkedProgramExpression({ ...call, fn: 'external' }, checked.declarations).fn.path, ['external']);\n  const deferred = 'function chosen(value=2,other=0){return value+other;}\\n'\n    + 'function caller(){return chosen(maybe(false),later());}\\n'\n    + 'function maybe(present){console.log(\"maybe\");if(present)return 7;}\\n'\n    + 'function later(){console.log(\"later\");return 3;}\\nconsole.log(caller());\\n';\n  assertParameterDefaultCalls(deferred, 'maybe\\nlater\\n5\\n');\n})"
+  },
+  {
+    "id": "repository.check-argument-and-default-abort-order",
+    "source": "js/tests/translation-defaults.test.js",
+    "name": "aborting provided arguments precede defaults and aborting defaults stop later initializers",
+    "inventoryName": "check argument and default abort order",
+    "sourceText": "test('aborting provided arguments precede defaults and aborting defaults stop later initializers', () => {\n  const declarations = '/** @returns {number} */function fallback(){console.log(\"default\");return 2;}\\n'\n    + '/** @returns {number} */function stopped(){console.log(\"argument\");throw new Error(\"argument stopped\");}\\n'\n    + 'function chosen(value=fallback(),other=0){return value+other;}\\n';\n  assertParameterDefaultCalls(declarations + 'console.log(chosen(undefined,stopped()));\\n', 'argument\\n', 'argument stopped');\n  const source = '/** @returns {number} */function first(){console.log(\"first default\");throw new Error(\"default stopped\");}\\n'\n    + '/** @returns {number} */function second(){console.log(\"second default\");return 3;}\\n'\n    + '/** @returns {number} */function later(){console.log(\"later\");return 7;}\\n'\n    + 'function chosen(value=first(),other=second(),last=0){return value+other+last;}\\n'\n    + 'console.log(chosen(undefined,undefined,later()));\\n';\n  assertParameterDefaultCalls(source, 'later\\nfirst default\\n', 'default stopped');\n})"
+  },
+  {
+    "id": "repository.check-parameter-guards-after-arguments-and-defaults",
+    "source": "js/tests/translation-defaults.test.js",
+    "name": "source guards run after actual arguments and parameter initializers",
+    "inventoryName": "check parameter guards after arguments and defaults",
+    "sourceText": "test('source guards run after actual arguments and parameter initializers', () => {\n  const source = 'function fallback(){console.log(\"default\");return 2n;}\\n'\n    + 'function later(){console.log(\"later\");return -1n;}\\n'\n    + 'function chosen(value=fallback(),other=0n){if(other<0n)throw new RangeError(\"negative\");return value+other;}\\n'\n    + 'console.log(chosen(undefined,later()));\\n';\n  assertParameterDefaultCalls(source, 'later\\ndefault\\n', 'negative');\n})"
+  },
+  {
+    "id": "repository.check-pure-default-call-byte-and-scope-preservation",
+    "source": "js/tests/translation-defaults.test.js",
+    "name": "pure and omitted parameter defaults keep their existing call bytes and scope refusals",
+    "inventoryName": "check pure default call byte and scope preservation",
+    "sourceText": "test('pure and omitted parameter defaults keep their existing call bytes and scope refusals', () => {\n  const pure = '/** @returns {number} */function later(){console.log(\"later\");return 7;}\\n'\n    + 'function chosen(value=2,other=0){return value+other;}\\nconsole.log(chosen(undefined,later()));\\n';\n  assertParameterDefaultCalls(pure, 'later\\n9\\n');\n  const rust = emitRust(checkProgram(parseJavaScript(pure))).text;\n  assert.ok(rust.includes('crate::chosen('), rust);\n  assert.ok(!rust.includes('let ml_a'), 'a primitive literal fallback does not add argument bindings');\n  const omitted = 'function base(){return 7;}function chosen(value=base()){return value;}console.log(chosen());';\n  assertParameterDefaultCalls(omitted, '7\\n');\n  assert.ok(emitRust(checkProgram(parseJavaScript(omitted))).text.includes('crate::chosen(crate::base())'));\n  assert.match(refusal('function f(a,b=a){return b;}console.log(f(1));'), /default reading parameter a/u);\n  assert.match(refusal('function f(a=1,b){return b;}'), /parameter b after a default/u);\n})"
+  },
+  {
+    "id": "translation.read-parameter-default-value-step",
+    "source": "js/src/translation/parameter-default-rules.js",
+    "name": "readParameterDefaultValueStep",
+    "inventoryName": "read parameter default value step",
+    "sourceText": "export function readParameterDefaultValueStep(kind, flavor) {\n  if (kind === 'lit' || kind === 'none' || kind === 'unit' || kind === 'var') return 'pure';\n  if (kind === 'cast' && flavor === 'exact') return 'arg';\n  return kind === 'some' ? 'value' : 'effect';\n}"
+  },
+  {
+    "id": "translation.read-parameter-default-value-step",
+    "source": "js/src/translation/data/parameter-default-rules.lino",
+    "name": "readParameterDefaultValueStep",
+    "inventoryName": "read parameter default value step",
+    "sourceText": "export function readParameterDefaultValueStep(kind, flavor) {\n  if (kind === 'lit' || kind === 'none' || kind === 'unit' || kind === 'var') return 'pure';\n  if (kind === 'cast' && flavor === 'exact') return 'arg';\n  return kind === 'some' ? 'value' : 'effect';\n}",
+    "sourceField": "source"
+  },
+  {
+    "id": "translation.read-parameter-default-value-step",
+    "source": "rust/src/data/parameter-default-rules.lino",
+    "name": "readParameterDefaultValueStep",
+    "inventoryName": "read parameter default value step",
+    "sourceText": "export function readParameterDefaultValueStep(kind, flavor) {\n  if (kind === 'lit' || kind === 'none' || kind === 'unit' || kind === 'var') return 'pure';\n  if (kind === 'cast' && flavor === 'exact') return 'arg';\n  return kind === 'some' ? 'value' : 'effect';\n}",
+    "sourceField": "source"
+  },
+  {
+    "id": "translation.read-parameter-default-value-step",
+    "source": "rust/src/translation/parameter_default_rules/part_1.rs",
+    "name": "read_parameter_default_value_step",
+    "inventoryName": "read parameter default value step",
+    "sourceText": "pub fn read_parameter_default_value_step(kind: &str, flavor: &str) -> String {"
+  },
+  {
+    "id": "translation.read-parameter-default-value-step",
+    "source": "parity/self-translation/parameter-default-rules-native.lino",
+    "name": "read_parameter_default_value_step",
+    "inventoryName": "read parameter default value step",
+    "sourceText": "pub fn read_parameter_default_value_step(kind: String, flavor: String) -> String {",
+    "sourceField": "rustSource"
+  },
+  {
+    "id": "translation.require-parameter-default-argument-bindings",
+    "source": "js/src/translation/parameter-default-rules.js",
+    "name": "requireParameterDefaultArgumentBindings",
+    "inventoryName": "require parameter default argument bindings",
+    "sourceText": "export function requireParameterDefaultArgumentBindings(index, provided, pure) {\n  return index >= 0 && index + 1 < provided && !pure;\n}"
+  },
+  {
+    "id": "translation.require-parameter-default-argument-bindings",
+    "source": "js/src/translation/data/parameter-default-rules.lino",
+    "name": "requireParameterDefaultArgumentBindings",
+    "inventoryName": "require parameter default argument bindings",
+    "sourceText": "export function requireParameterDefaultArgumentBindings(index, provided, pure) {\n  return index >= 0 && index + 1 < provided && !pure;\n}",
+    "sourceField": "source"
+  },
+  {
+    "id": "translation.require-parameter-default-argument-bindings",
+    "source": "rust/src/data/parameter-default-rules.lino",
+    "name": "requireParameterDefaultArgumentBindings",
+    "inventoryName": "require parameter default argument bindings",
+    "sourceText": "export function requireParameterDefaultArgumentBindings(index, provided, pure) {\n  return index >= 0 && index + 1 < provided && !pure;\n}",
+    "sourceField": "source"
+  },
+  {
+    "id": "translation.require-parameter-default-argument-bindings",
+    "source": "rust/src/translation/parameter_default_rules/part_1.rs",
+    "name": "require_parameter_default_argument_bindings",
+    "inventoryName": "require parameter default argument bindings",
+    "sourceText": "pub fn require_parameter_default_argument_bindings(index: f64, provided: f64, pure: bool) -> bool {"
+  },
+  {
+    "id": "translation.require-parameter-default-argument-bindings",
+    "source": "parity/self-translation/parameter-default-rules-native.lino",
+    "name": "require_parameter_default_argument_bindings",
+    "inventoryName": "require parameter default argument bindings",
+    "sourceText": "pub fn require_parameter_default_argument_bindings(index: f64, provided: f64, pure: bool) -> bool {",
+    "sourceField": "rustSource"
+  },
+  {
+    "id": "translation.read-parameter-default-argument-inference",
+    "source": "js/src/translation/parameter-default-rules.js",
+    "name": "readParameterDefaultArgumentInference",
+    "inventoryName": "read parameter default argument inference",
+    "sourceText": "export function readParameterDefaultArgumentInference(defaulted, optional, kind, absence) {\n  if (!defaulted || optional) return 'identity';\n  if (kind === 'var') return 'defer';\n  return kind === 'option' && absence === 'undefined' ? 'element' : 'value';\n}"
+  },
+  {
+    "id": "translation.read-parameter-default-argument-inference",
+    "source": "js/src/translation/data/parameter-default-rules.lino",
+    "name": "readParameterDefaultArgumentInference",
+    "inventoryName": "read parameter default argument inference",
+    "sourceText": "export function readParameterDefaultArgumentInference(defaulted, optional, kind, absence) {\n  if (!defaulted || optional) return 'identity';\n  if (kind === 'var') return 'defer';\n  return kind === 'option' && absence === 'undefined' ? 'element' : 'value';\n}",
+    "sourceField": "source"
+  },
+  {
+    "id": "translation.read-parameter-default-argument-inference",
+    "source": "rust/src/data/parameter-default-rules.lino",
+    "name": "readParameterDefaultArgumentInference",
+    "inventoryName": "read parameter default argument inference",
+    "sourceText": "export function readParameterDefaultArgumentInference(defaulted, optional, kind, absence) {\n  if (!defaulted || optional) return 'identity';\n  if (kind === 'var') return 'defer';\n  return kind === 'option' && absence === 'undefined' ? 'element' : 'value';\n}",
+    "sourceField": "source"
+  },
+  {
+    "id": "translation.read-parameter-default-argument-inference",
+    "source": "rust/src/translation/parameter_default_rules/part_1.rs",
+    "name": "read_parameter_default_argument_inference",
+    "inventoryName": "read parameter default argument inference",
+    "sourceText": "pub fn read_parameter_default_argument_inference("
+  },
+  {
+    "id": "translation.read-parameter-default-argument-inference",
+    "source": "parity/self-translation/parameter-default-rules-native.lino",
+    "name": "read_parameter_default_argument_inference",
+    "inventoryName": "read parameter default argument inference",
+    "sourceText": "pub fn read_parameter_default_argument_inference(defaulted: bool, optional: bool, kind: String, absence: String) -> String {",
+    "sourceField": "rustSource"
+  },
+  {
+    "id": "repository.generate-parameter-default-rules",
+    "source": "js/scripts/generate-parameter-default-rules.mjs",
+    "name": "generateParameterDefaultRules",
+    "inventoryName": "generate parameter default rules",
+    "sourceText": "export async function generateParameterDefaultRules({ check = false, native = false } = {}) {\n  const source = readFileSync(sourceFile, 'utf8');\n  const policy = { schemaVersion: 1, model: 'parameter default argument order 1', source,\n    sourceSha256: digest(source), decisions: [...source.matchAll(/^export function (\\w+)\\(/gmu)].map(match => match[1]),\n    boundary: 'Hosts retain the actual checked children selected by the shared traversal, bind caller inputs before effectful early defaults, and keep initializer scope, laziness and argument guards in the existing checker.' };\n  for (const file of policyFiles) {\n    if (check) assert.ok(isDeepStrictEqual(readProjectData(file), policy), 'the complete parameter default decision source is fresh');\n    else writeProjectData(file, policy);\n  }\n  if (native) {\n    const { parseJavaScript } = await import('../src/translation/javascript.js');\n    const { checkProgram } = await import('../src/translation/check.js');\n    const { emitRust } = await import('../src/translation/emit-rust.js');\n    const { writeRecordRuleLibrary } = await import('./record-rule-library.mjs');\n    const emitted = emitRust(checkProgram(parseJavaScript(source, { referenceSemantics: false })), { arrayConsumption: true });\n    const artifact = { schemaVersion: 1, model: policy.model, sourceSha256: policy.sourceSha256,\n      definitions: emitted.definitions, rustSource: emitted.text, rustSha256: digest(emitted.text),\n      assumptions: emitted.assumptions, encodings: emitted.encodings };\n    if (check) assert.ok(isDeepStrictEqual(readProjectData(artifactFile), artifact), 'the actual translated parameter default module is fresh');\n    else writeProjectData(artifactFile, artifact);\n    writeRecordRuleLibrary(emitted, 'parameter_default_rules', { check });\n  }\n  return policy;\n}"
+  },
+  {
+    "id": "translation.checked-parameter-default-argument-plan",
+    "source": "rust/src/translation/check/expressions/calls.rs",
+    "name": "CheckedCallArgument",
+    "inventoryName": "checked parameter default argument plan",
+    "sourceText": "struct CheckedCallArgument<'a> {"
+  },
+  {
+    "id": "translation.check-parameter-default-value-purity",
+    "source": "rust/src/translation/check/expressions/calls.rs",
+    "name": "pure_parameter_default",
+    "inventoryName": "check parameter default value purity",
+    "sourceText": "fn pure_parameter_default(mut value: &Expr) -> bool {"
+  },
+  {
+    "id": "translation.check-parameter-default-value-purity",
+    "source": "js/src/translation/check.js",
+    "name": "pureDefault",
+    "inventoryName": "check parameter default value purity",
+    "sourceText": "    const pureDefault = (value) => {",
+    "sourceContext": "class Checker {"
+  },
+  {
+    "id": "translation.select-parameter-default-inference-endpoint",
+    "source": "rust/src/translation/javascript/infer/optional_values.rs",
+    "name": "parameter_default_argument_inference",
+    "inventoryName": "select parameter default inference endpoint",
+    "sourceText": "    pub(super) fn parameter_default_argument_inference("
+  },
+  {
+    "id": "repository.read-parameter-default-native-comparison-contract",
+    "source": "rust/tests/unit/translation_defaults.rs",
+    "name": "parameter_default_contract",
+    "inventoryName": "read parameter default native comparison contract",
+    "sourceText": "fn parameter_default_contract(source: &str, native_javascript: &str) -> serde_json::Value {"
+  },
+  {
+    "id": "repository.check-native-parameter-default-behavior",
+    "source": "rust/tests/unit/translation_defaults.rs",
+    "name": "assert_parameter_default_behavior",
+    "inventoryName": "check native parameter default behavior",
+    "sourceText": "fn assert_parameter_default_behavior(source: &str, output: &str, error: Option<&str>, name: &str) {"
+  },
+  {
+    "id": "repository.check-native-parameter-default-order-and-archives",
+    "source": "rust/tests/unit/translation_defaults.rs",
+    "name": "parameter_defaults_preserve_actual_argument_order_lazy_scope_and_source_free_links",
+    "inventoryName": "check native parameter default order and archives",
+    "sourceText": "fn parameter_defaults_preserve_actual_argument_order_lazy_scope_and_source_free_links() {"
+  },
+  {
+    "id": "repository.check-native-parameter-default-abort-and-guard-order",
+    "source": "rust/tests/unit/translation_defaults.rs",
+    "name": "parameter_default_aborts_and_guards_follow_original_execution_order",
+    "inventoryName": "check native parameter default abort and guard order",
+    "sourceText": "fn parameter_default_aborts_and_guards_follow_original_execution_order() {"
+  },
+  {
+    "id": "repository.read-optional-text-projection-nodes",
+    "source": "js/tests/translation-schema-second-projections.test.js",
+    "name": "readOptionalTextNodes",
+    "inventoryName": "read optional text projection nodes",
+    "sourceText": "function readOptionalTextNodes(program) {\n  const found = [], visited = new WeakSet();\n  function visit(value) {\n    if (!value || typeof value !== 'object' || visited.has(value)) return;\n    visited.add(value);\n    if (value.k === 'optionalText') found.push(value);\n    for (const child of value instanceof Map ? value.values() : Object.values(value)) visit(child);\n  }\n  visit(program);return found;\n}"
+  },
+  {
+    "id": "repository.check-source-free-optional-text-observation-projections",
+    "source": "js/tests/translation-schema-second-projections.test.js",
+    "name": "source-free optional text projections retain distinct String and console observations through both archives",
+    "inventoryName": "check source free optional text observation projections",
+    "sourceText": "test('source-free optional text projections retain distinct String and console observations through both archives', () => {\n  const plans = TYPED_PROGRAM_LINKS_SCHEMA.expressionProjections;\n  assert.deepEqual(plans.optionalText, {variant: ['console']});\n  assert.deepEqual(plans['optionalText:false'], {construct: 'toString', fields: [['arg', 'expression', 'arg']]});\n  assert.deepEqual(plans['optionalText:true'], {construct: 'show', fields: [['arg', 'expression', 'arg'], ['style', 'constant', 'js-console']]});\n  const observe = source => {\n    const lines = [];runInNewContext(source, {console: {log: (...values) => lines.push(format(...values))}}, {timeout: 1000});return lines;\n  };\n  const expected = ['7n', '7', 'undefined', 'undefined'];\n  assert.deepEqual(observe(optionalTextSource), expected);\n  const packet = createTypedProgramLinks(optionalTextSource, 'JavaScript');\n  for (const [encoding, network] of [\n    ['text', LinkNetwork.fromLino(packet.network.toLino())],\n    ['binary', decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))],\n  ]) {\n    const restored = decodeTypedProgramLinks(network, packet.root), nodes = readOptionalTextNodes(restored);\n    assert.equal(nodes.length, 4, encoding + ': every actual optional conversion is retained');\n    assert.deepEqual(nodes.map(node => node.console).sort(), [false, false, true, true]);\n    for (const node of nodes) {\n      const surface = projectLinkedProgramExpression(node, restored.declarations);\n      assert.equal(surface.k, node.console ? 'show' : 'toString');\n      if (node.console) assert.equal(surface.style, 'js-console');\n      else assert.equal(Object.hasOwn(surface, 'style'), false);\n    }\n    assert.strictEqual(recheckLinkedTypedProgram(restored, {wholeProgram: true}), restored);\n    assert.deepEqual(observe(emitJavaScript(restored).text), expected, encoding + ': complete rechecked program behavior');\n  }\n})"
+  },
+  {
+    "id": "repository.check-optional-text-projection-forgery-refusals",
+    "source": "js/tests/translation-schema-second-projections.test.js",
+    "name": "optional text whole-program rechecking rejects missing malformed and coerced variants and forged types",
+    "inventoryName": "check optional text projection forgery refusals",
+    "sourceText": "test('optional text whole-program rechecking rejects missing malformed and coerced variants and forged types', () => {\n  const packet = createTypedProgramLinks(optionalTextSource, 'JavaScript');\n  const original = decodeTypedProgramLinks(LinkNetwork.fromLino(packet.network.toLino()), packet.root);\n  for (const invalid of [undefined, null, 0, 1, '', 'false', 'true', [], {}]) {\n    const forged = structuredClone(original);readOptionalTextNodes(forged)[0].console = invalid;\n    assert.throws(() => recheckLinkedTypedProgram(forged, {wholeProgram: true}), TypeError, 'the final typed boundary cannot coerce a discriminator: ' + String(invalid));\n  }\n  for (const mutate of [\n    node => {delete node.console;}, node => {delete node.arg;}, node => {node.type = {kind: 'bool'};},\n    node => {node.arg.type = {kind: 'bool'};}, node => {node.unrecognizedProjectionField = true;},\n  ]) {\n    const forged = structuredClone(original);mutate(readOptionalTextNodes(forged)[0]);\n    assert.throws(() => recheckLinkedTypedProgram(forged, {wholeProgram: true}), TypeError);\n  }\n})"
+  },
+  {
+    "id": "translation.check-literal-expression",
+    "source": "rust/src/translation/check/expressions/branches.rs",
+    "name": "check_literal_expression",
+    "inventoryName": "check literal expression",
+    "sourceText": "    pub(super) fn check_literal_expression("
+  },
+  {
+    "id": "translation.check-conditional-expression",
+    "source": "rust/src/translation/check/expressions/branches.rs",
+    "name": "check_conditional_expression",
+    "inventoryName": "check conditional expression",
+    "sourceText": "    pub(super) fn check_conditional_expression("
+  },
+  {
+    "id": "translation.check-binding-expression",
+    "source": "rust/src/translation/check/expressions/branches.rs",
+    "name": "check_binding_expression",
+    "inventoryName": "check binding expression",
+    "sourceText": "    pub(super) fn check_binding_expression("
+  },
+  {
+    "id": "translation.infer-conditional-expression",
+    "source": "rust/src/translation/javascript/infer/expressions.rs",
+    "name": "infer_conditional_expression",
+    "inventoryName": "infer conditional expression",
+    "sourceText": "    pub(super) fn infer_conditional_expression(&mut self, expr: &SExpr, env: &Env) -> Result<Term> {"
+  },
+  {
+    "id": "translation.infer-binding-expression",
+    "source": "rust/src/translation/javascript/infer/expressions.rs",
+    "name": "infer_binding_expression",
+    "inventoryName": "infer binding expression",
+    "sourceText": "    pub(super) fn infer_binding_expression(&mut self, expr: &SExpr, env: &Env) -> Result<Term> {"
+  },
+  {
+    "id": "translation.infer-match-expression",
+    "source": "rust/src/translation/javascript/infer/expressions.rs",
+    "name": "infer_match_expression",
+    "inventoryName": "infer match expression",
+    "sourceText": "    pub(super) fn infer_match_expression(&mut self, expr: &SExpr, env: &Env) -> Result<Term> {"
+  },
+  {
+    "id": "grammar.encode-lexical-declaration-links",
+    "source": "rust/src/grammar/links.rs",
+    "name": "encode_lexer",
+    "inventoryName": "encode lexical declaration links",
+    "sourceText": "fn encode_lexer(network: &mut LinkNetwork, lexer: &GrammarLexer) -> LinkId {"
+  },
+  {
+    "id": "grammar.decode-lexical-declaration-links",
+    "source": "rust/src/grammar/links.rs",
+    "name": "decode_lexer",
+    "inventoryName": "decode lexical declaration links",
+    "sourceText": "fn decode_lexer(network: &LinkNetwork, link: LinkId) -> Result<GrammarLexer, LinksCodecError> {"
+  },
+  {
+    "id": "repository.check-ordered-grammar-lexical-declaration-link-replay",
+    "source": "rust/tests/unit/grammar_ir.rs",
+    "name": "grammar_links_retain_ordered_unicode_lexer_feature_plans_without_source",
+    "inventoryName": "check ordered grammar lexical declaration link replay",
+    "sourceText": "fn grammar_links_retain_ordered_unicode_lexer_feature_plans_without_source() {"
+  },
+  {
+    "id": "repository.check-grammar-lexical-declaration-link-forgery-refusals",
+    "source": "rust/tests/unit/grammar_ir.rs",
+    "name": "grammar_lexer_links_refuse_wrong_arities_names_and_expressions",
+    "inventoryName": "check grammar lexical declaration link forgery refusals",
+    "sourceText": "fn grammar_lexer_links_refuse_wrong_arities_names_and_expressions() {"
+  },
+  {
+    "id": "repository.check-covering-grammar-lexical-source-free-replay",
+    "source": "js/tests/grammar-antlr.test.js",
+    "name": "covering ANTLR Links round trip retains every ordered lexer clause without its source",
+    "inventoryName": "check covering grammar lexical source free replay",
+    "sourceText": "test('covering ANTLR Links round trip retains every ordered lexer clause without its source', () => {\n  const grammar = importAntlr(fixture('covering.g4'));\n  const links = renderGrammarLinks(grammar);\n  const restored = parseGrammarLinks(links);\n  assert.deepEqual(JSON.parse(serializeGrammar(restored)), JSON.parse(serializeGrammar(grammar)));\n  assert.deepEqual(restored.ruleNames(), grammar.ruleNames());\n  assert.deepEqual(restored.declarations.lexers, grammar.declarations.lexers);\n  assert.equal(restored.declarations.lexers.length, 1);\n  assert.equal(restored.declarations.lexers[0].name, 'Covering');\n  assert.deepEqual(restored.declarations.lexers[0].expression.items.map(({kind}) => kind), [\n    'lexicalType', 'lexicalType', 'lexicalMode',\n    'lexicalOwner', 'lexicalOwner', 'lexicalOwner', 'lexicalObligation',\n    'lexicalRule', 'lexicalFragment', 'lexicalRule',\n    'lexicalObligation', 'lexicalObligation', 'lexicalRule',\n    'lexicalBinding', 'lexicalBinding', 'lexicalBinding', 'lexicalBinding',\n  ]);\n  assert.equal(renderGrammarLinks(restored), links);\n  assert.equal(renderGrammarLinks(parseGrammarLinks(renderGrammarLinks(restored))), links);\n})"
+  },
+  {
+    "id": "translation.execute-generated-parameter-default-module-main",
+    "source": "parity/self-translation/parameter-default-rules-native.lino",
+    "name": "ml_main",
+    "inventoryName": "execute generated parameter default module main",
+    "sourceText": "fn ml_main() {",
+    "sourceField": "rustSource"
+  },
+  {
+    "id": "translation.execute-generated-parameter-default-program-main",
+    "source": "parity/self-translation/parameter-default-rules-native.lino",
+    "name": "main",
+    "inventoryName": "execute generated parameter default program main",
+    "sourceText": "fn main() {",
+    "sourceField": "rustSource"
+  },
+  {
+    "id": "repository.check-native-documented-collection-type-arguments",
+    "source": "rust/tests/unit/translation_javascript_frontend.rs",
+    "name": "documented_collections_preserve_nested_type_arguments_and_exact_arities",
+    "inventoryName": "check native documented collection type arguments",
+    "sourceText": "fn documented_collections_preserve_nested_type_arguments_and_exact_arities() {"
+  },
+  {
+    "id": "repository.check-retained-inferred-surface-return-metadata",
+    "source": "rust/tests/unit/translation_stages.rs",
+    "name": "checked_additional_absence_retains_the_original_surface_return_metadata",
+    "inventoryName": "check retained inferred surface return metadata",
+    "sourceText": "fn checked_additional_absence_retains_the_original_surface_return_metadata() {"
+  },
+  {
+    "id": "repository.check-owned-append-reserved-name-refusals-and-temporary-collisions",
+    "source": "js/tests/translation-owned-array-append.test.js",
+    "name": "reserved append locals retain the exact refusal while legal source names exercise real Rust temporary collisions",
+    "inventoryName": "check owned append reserved name refusals and temporary collisions",
+    "sourceText": "test('reserved append locals retain the exact refusal while legal source names exercise real Rust temporary collisions', () => {\n  const original = '/** @param {number} count @returns {number[]} */ function build(count) { const values=[]; for(let index=0;index<count;index+=1) { if(index%2===0) values.push(index,index+1); } return values; }\\n/** @returns {number} */ function hygiene(){const ml_append_right=[1];const ml_append_left=2;ml_append_right.push(ml_append_left);return ml_append_right.length;}\\n/** @returns {number} */function preserve(){const original=[1];const alias=original;const updated=[...original,2];return alias.length*10+updated.length;}\\n/** @returns {number} */function readAfter(){const original=[1];const updated=[...original,2];return original.length*10+updated.length;}\\nconst values=build(100001);console.log(values.length,values[0]??-1,values[100001]??-1);console.log(hygiene(),preserve(),readAfter());';\n  assert.equal(createHash('sha256').update(original).digest('hex'), '83e09c13448b22e6d48879c61bb462dfe2b9915081f302f91ff063f6588ad17b', 'the complete original native fixture remains an unchanged refusal input');\n  assert.throws(() => parseJavaScript(original), error => {\n    assert.deepEqual({kind:error.kind,reason:error.reason,span:error.span}, {\n      kind:'unsupported',reason:\"reserved identifier: ml_append_right uses the translator's reserved ml_ prefix\",span:{start:243,end:258},\n    });\n    return true;\n  });\n  // These admitted source spellings become the actual append temporary names\n  // under the existing Rust snake-case binder transform, preserving collision coverage.\n  const source = original.replaceAll('ml_append_right', 'mlAppendRight').replaceAll('ml_append_left', 'mlAppendLeft');\n  const observe = code => {\n    const lines = [];\n    vm.runInNewContext(code, {console:{log:(...values) => lines.push(values.map(String).join(' '))}}, {timeout:1000});\n    return lines.join('\\n') + '\\n';\n  };\n  assert.equal(observe(original), '100002 0 100001\\n2 12 12\\n', 'the independent original source retains every large-loop and alias observation');\n  const program = checkProgram(parseJavaScript(source));\n  recheckLinkedTypedProgram(program, {wholeProgram:true});\n  const emitted = emitRust(program, {arrayConsumption:true});\n  assert.match(emitted.text, /let \\(ml_append_right, ml_append_left\\) = \\(vec!\\[[^\\]]+\\], [A-Za-z_][A-Za-z_0-9]*\\); crate::ml_array::append/u);\n  const hygiene = emitted.definitions.find(text => text.startsWith('pub fn hygiene('));\n  assert.ok(hygiene);\n  assert.ok(hygiene.includes('let ml_append_right ='), 'the legal source array name really collides with the append temporary spelling');\n  assert.ok(hygiene.includes('let ml_append_left ='), 'the legal source argument name really collides with the other append temporary spelling');\n  assert.ok(hygiene.includes('let (ml_append_right, ml_append_left)'), 'the simultaneous initializer retains both actual collision sites');\n  const readAfter = emitted.definitions.find(text => text.startsWith('pub fn read_after('));\n  assert.ok(readAfter.includes('original.clone()'));\n  assert.equal(readAfter.includes('let (ml_append_right, ml_append_left)'), false);\n  const javascript = emitJavaScript(program);\n  // The native CI test executes all 100001 iterations. Its immutable JavaScript\n  // append lowering is checked here with bounded inputs to avoid quadratic work.\n  const declarations = [...javascript.preludes, ...javascript.definitions].join('\\n\\n');\n  assert.equal(observe(declarations + '\\nconst values=build(8);console.log(values.length,values[0]??-1,values[7]??-1);console.log(hygiene(),preserve(),readAfter());'), '8 0 7\\n2 12 12\\n');\n  assert.ok(javascript.text.includes('100001'), 'the complete emitted program retains the original large-loop input');\n})"
+  },
+  {
+    "id": "translation.inferred-source-function-return-type",
+    "source": "js/src/translation/javascript-infer.js",
+    "name": "semanticRet",
+    "inventoryName": "inferred source function return type",
+    "sourceText": "      if (observed?.signature.declaredRet && this.additionalAbsence(observed.body, observed.signature.declaredRet)) fn.semanticRet = this.surface(observed.body, fn.span);",
+    "sourceContext": "  run(functions, main, externals) {\n    // The other items of the module keep the types their own translation checked.\n    for (const external of externals) {\n      this.signatures.set(`${ROOT}.${external.name}`, external.k === 'fn'\n        ? { params: external.params.map((param) => this.declared(param.type)), defaults: external.params.map(() => false), optionalParams: external.params.map(() => false), ret: this.declared(external.ret) }\n        : { params: [], defaults: [], optionalParams: [], ret: this.declared(external.type) });\n    }\n    for (const { path, fn } of functions) {\n      const ret = this.fresh();\n      const declaredRet = fn.ret ? this.declared(fn.ret) : null;\n      if (declaredRet) this.unify(ret, declaredRet, fn.span);\n      this.signatures.set(path.join('.'), {\n        params: fn.params.map((param) => this.declared(param.type)),\n        defaults: fn.params.map((param) => Boolean(param.default || param.optional)),\n        optionalParams: fn.params.map((param) => Boolean(param.optional)),\n        ret,\n        declaredRet,\n      });\n    }\n    for (const { path, fn } of functions) {\n      const signature = this.signatures.get(path.join('.'));\n      this.context = path.slice(0, -1);\n      fn.params.forEach((param, index) => {\n        if (param.default) this.unify(this.expr(param.default, new Map()), signature.params[index], param.span);\n      });\n    }\n    for (const { path, fn } of functions) {\n      const signature = this.signatures.get(path.join('.'));\n      const env = new Map(fn.params.map((param, index) => [param.name, signature.params[index]]));\n      this.context = path.slice(0, -1);\n      const body = this.expr(fn.body, env, signature.ret);\n      this.unify(body, signature.ret, fn.span);\n      this.results.push({ fn, signature, body });\n      if (!fn.ret && signature.ret.kind === 'var' && this.resolve(body).kind === 'option') this.bindings[signature.ret.id] = body;\n    }\n    this.context = [ROOT];\n    const env = new Map();\n    for (const effect of main?.effects ?? []) {\n      if (effect.k === 'print') this.expr(effect.expr, env);\n      else if (effect.k === 'let') env.set(effect.name, this.expr(effect.value, env));\n      else if (effect.k === 'assert') this.prop(effect.prop, env);\n    }\n    this.solve();\n    for (const [node, term] of this.expressionTerms) this.expressionTypes.set(node, this.surface(term, node.span));\n    for (const { path, fn } of functions) {\n      const signature = this.signatures.get(path.join('.'));\n      fn.params.forEach((param, index) => {\n        if (!param.type) param.type = this.surface(signature.params[index], fn.span);\n      });\n      if (!fn.ret) fn.ret = this.surface(signature.ret, fn.span);\n      const observed = this.results.find((result) => result.fn === fn);\n      if (observed?.signature.declaredRet && this.additionalAbsence(observed.body, observed.signature.declaredRet)) fn.semanticRet = this.surface(observed.body, fn.span);"
+  },
+  {
+    "id": "translation.inferred-source-function-return-type",
+    "source": "rust/src/translation/surface.rs",
+    "name": "SFn::semantic_ret",
+    "inventoryName": "inferred source function return type",
+    "sourceText": "    pub semantic_ret: Option<Type>,",
+    "sourceContext": "pub struct SFn {\n    /// Actual complete pure Unit header and body sites under the selected model.\n    #[serde(\n        default,\n        rename = \"sourcePureUnit\",\n        skip_serializing_if = \"Option::is_none\"\n    )]\n    pub source_pure_unit: Option<Box<serde_json::Value>>,\n    pub name: String,\n    pub params: Vec<SParam>,\n    #[serde(default, skip_serializing_if = \"Option::is_none\")]\n    pub ret: Option<Type>,\n    /// Actual inferred return when source annotations omit an absence case.\n    #[serde(\n        default,\n        rename = \"semanticRet\",\n        skip_serializing_if = \"Option::is_none\",\n        deserialize_with = \"crate::translation::present_type::read_present_type\"\n    )]\n    pub semantic_ret: Option<Type>,"
+  },
+  {
+    "id": "translation.inferred-source-function-return-type",
+    "source": "rust/src/translation/ir/declarations.rs",
+    "name": "FnDecl::semantic_ret",
+    "inventoryName": "inferred source function return type",
+    "sourceText": "    pub semantic_ret: Option<Type>,",
+    "sourceContext": "pub struct FnDecl {\n    /// Actual complete pure Unit header and body sites under the selected model.\n    #[serde(default, skip_serializing_if = \"Option::is_none\")]\n    pub source_pure_unit: Option<serde_json::Value>,\n    pub name: String,\n    pub params: Vec<Param>,\n    pub ret: Type,\n    /// The original inferred Surface return type, before checked resolution.\n    #[serde(\n        default,\n        skip_serializing_if = \"Option::is_none\",\n        deserialize_with = \"crate::translation::present_type::read_present_type\"\n    )]\n    pub semantic_ret: Option<Type>,"
+  },
+  {
+    "id": "repository.read-optional-translation-stage-history-source-bytes",
+    "source": "js/scripts/generate-translation-stage-refresh-receipt.mjs",
+    "name": "optionalBlob",
+    "inventoryName": "read optional translation stage history source bytes",
+    "sourceText": "const optionalBlob = (revision, path) => {\n  const listing = execFileSync('git', ['ls-tree', revision, '--', path], {\n    cwd: root, maxBuffer: 1024 * 1024, timeout: 30000, stdio: ['ignore', 'pipe', 'pipe'],\n  });\n  return listing.length ? blob(revision, path) : null;\n};"
+  },
+  {
+    "id": "repository.validate-translation-stage-refresh-history",
+    "source": "js/scripts/generate-translation-stage-refresh-receipt.mjs",
+    "name": "validateTranslationStageRefreshHistory",
+    "inventoryName": "validate translation stage refresh history",
+    "sourceText": "export function validateTranslationStageRefreshHistory(history, loadBlob = optionalBlob, snapshotRevision) {\n  if (!history || history.schemaVersion !== 1 || !Array.isArray(history.receipts) || !history.receipts.length\n      || !isDeepStrictEqual(Object.keys(history).sort(), ['receipts', 'schemaVersion'])) {\n    throw new Error('stage refresh history requires a nonempty ordered receipt archive');\n  }\n  const identities = new Set();\n  const receipts = [];\n  for (let index = 0; index < history.receipts.length; index += 1) {\n    const entry = history.receipts[index];\n    if (!entry || !isDeepStrictEqual(Object.keys(entry).sort(), ['receipt', 'sourceCommit', 'sourcePath', 'sourceSha256'])\n        || typeof entry.sourceCommit !== 'string' || !/^[0-9a-f]{40}$/u.test(entry.sourceCommit) || entry.sourcePath !== receiptPath\n        || typeof entry.sourceSha256 !== 'string' || !/^[0-9a-f]{64}$/u.test(entry.sourceSha256) || identities.has(entry.sourceCommit)) {\n      throw new Error('stage refresh history has an invalid or duplicate source identity');\n    }\n    identities.add(entry.sourceCommit);\n    const receiptBytes = loadBlob(entry.sourceCommit, entry.sourcePath);\n    if (!receiptBytes || hash(receiptBytes) !== entry.sourceSha256\n        || !isDeepStrictEqual(readStructuredDataLino(receiptBytes.toString('utf8')), entry.receipt)) {\n      throw new Error('stage refresh history receipt differs from its immutable Git bytes');\n    }\n    const previousBytes = loadBlob(entry.sourceCommit, historyPath);\n    const previous = { schemaVersion: 1, receipts: history.receipts.slice(0, index) };\n    if (previousBytes ? !isDeepStrictEqual(readStructuredDataLino(previousBytes.toString('utf8')), previous) : index !== 0) {\n      throw new Error('stage refresh history does not preserve its complete preceding archive');\n    }\n    const receipt = entry.receipt;\n    if (!receipt || receipt.schemaVersion !== 1 || receipt.originalRevision !== originalRevision || receipt.originalPath !== originalPath\n        || typeof receipt.refreshRevision !== 'string' || !/^[0-9a-f]{40}$/u.test(receipt.refreshRevision) || receipt.refreshPath !== refreshPath) {\n      throw new Error('stage refresh history changed the original source or snapshot identity');\n    }\n    const originalBytes = loadBlob(receipt.originalRevision, receipt.originalPath);\n    const snapshotBytes = loadBlob(receipt.refreshRevision, receipt.refreshPath);\n    if (!originalBytes || hash(originalBytes) !== receipt.originalSha256\n        || !snapshotBytes || hash(snapshotBytes) !== receipt.refreshSha256) {\n      throw new Error('stage refresh history snapshot differs from its immutable Git bytes');\n    }\n    const historical = JSON.parse(originalBytes.toString('utf8'));\n    normalizeMigrationTranslationStages(historical, readStructuredDataLino(snapshotBytes.toString('utf8')), receipt.refreshes);\n    receipts.push(receipt);\n  }\n  if (snapshotRevision !== undefined) {\n    if (typeof snapshotRevision !== 'string' || !/^[0-9a-f]{40}$/u.test(snapshotRevision)) {\n      throw new Error('stage refresh history needs an immutable snapshot revision');\n    }\n    const latest = history.receipts.at(-1);\n    const priorReceiptBytes = loadBlob(snapshotRevision, receiptPath);\n    if (!priorReceiptBytes || hash(priorReceiptBytes) !== latest.sourceSha256\n        || !isDeepStrictEqual(readStructuredDataLino(priorReceiptBytes.toString('utf8')), latest.receipt)) {\n      throw new Error('stage refresh history omitted or changed the snapshot revision\\'s latest prior receipt');\n    }\n    const priorHistoryBytes = loadBlob(snapshotRevision, historyPath);\n    const prefix = { schemaVersion: 1, receipts: history.receipts.slice(0, -1) };\n    const priorHistory = priorHistoryBytes ? readStructuredDataLino(priorHistoryBytes.toString('utf8')) : null;\n    if (priorHistory ? !isDeepStrictEqual(priorHistory, prefix) && !isDeepStrictEqual(priorHistory, history) : prefix.receipts.length !== 0) {\n      throw new Error('stage refresh history omitted or changed the snapshot revision\\'s committed archive');\n    }\n  }\n  return receipts;\n}"
+  },
+  {
+    "id": "repository.retain-translation-stage-refresh-scopes",
+    "source": "js/scripts/generate-translation-stage-refresh-receipt.mjs",
+    "name": "retainTranslationStageRefreshScopes",
+    "inventoryName": "retain translation stage refresh scopes",
+    "sourceText": "export function retainTranslationStageRefreshScopes(receipts, refreshes) {\n  const retained = new Map();\n  for (const receipt of [...receipts, { refreshes }]) {\n    for (const { program, stages } of receipt.refreshes) {\n      if (!retained.has(program)) retained.set(program, []);\n      for (const stage of stages) if (!retained.get(program).includes(stage)) retained.get(program).push(stage);\n    }\n  }\n  return [...retained].map(([program, stages]) => ({ program, stages }));\n}"
+  },
+  {
+    "id": "repository.read-archived-translation-stage-test-source-bytes",
+    "source": "js/tests/project-data-fixture-links-storage.test.js",
+    "name": "archivedBlob",
+    "inventoryName": "read archived translation stage test source bytes",
+    "sourceText": "  const archivedBlob = (revision, path) => {\n    const options = { cwd: fileURLToPath(root), maxBuffer: 16 * 1024 * 1024 };\n    return execFileSync('git', ['ls-tree', revision, '--', path], options).length\n      ? execFileSync('git', ['show', `${revision}:${path}`], options) : null;\n  };",
+    "sourceContext": "test('the stage refresh receipt authenticates the current immutable snapshot and every selected change', () => {"
+  },
+  {
+    "id": "structured-data.measure-completed-container-reference-height",
+    "source": "rust/src/structured_data_links.rs",
+    "name": "Encoder::reference_height",
+    "inventoryName": "measure completed container reference height",
+    "sourceText": "    fn reference_height(&self, references: &[LinkId]) -> usize {",
+    "sourceContext": "impl Encoder {"
+  },
+  {
+    "id": "structured-data.complete-owned-container-link",
+    "source": "rust/src/structured_data_links.rs",
+    "name": "Encoder::complete_container",
+    "inventoryName": "complete owned container link",
+    "sourceText": "    fn complete_container(",
+    "sourceContext": "impl Encoder {"
+  },
+  {
+    "id": "structured-data.encode-ordered-values-with-explicit-container-aliases",
+    "source": "rust/src/structured_data_links.rs",
+    "name": "encode_structured_data_links_ordered_with_container_aliases",
+    "inventoryName": "encode ordered values with explicit container aliases",
+    "sourceText": "pub(crate) fn encode_structured_data_links_ordered_with_container_aliases("
+  },
+  {
+    "id": "grammar.read-discovery-ordered-container-member",
+    "source": "rust/src/discovered_concept_links.rs",
+    "name": "structured_member",
+    "inventoryName": "read discovery ordered container member",
+    "sourceText": "fn structured_member<'a>("
+  },
+  {
+    "id": "grammar.encode-discovery-owned-primary-definition-aliases",
+    "source": "rust/src/discovered_concept_links.rs",
+    "name": "encode_discovery_data",
+    "inventoryName": "encode discovery owned primary definition aliases",
+    "sourceText": "fn encode_discovery_data(network: &mut LinkNetwork, value: &Value) -> Result<LinkId, String> {"
+  },
+  {
+    "id": "repository.check-explicit-container-alias-identity-retention",
+    "source": "rust/src/structured_data_links.rs",
+    "name": "explicit_container_aliases_preserve_owned_sharing_without_merging_equal_values",
+    "inventoryName": "check explicit container alias identity retention",
+    "sourceText": "    fn explicit_container_aliases_preserve_owned_sharing_without_merging_equal_values() {"
+  },
+  {
+    "id": "repository.check-explicit-container-alias-forgery-and-depth-refusals",
+    "source": "rust/src/structured_data_links.rs",
+    "name": "container_aliases_refuse_unowned_changed_or_incomplete_targets",
+    "inventoryName": "check explicit container alias forgery and depth refusals",
+    "sourceText": "    fn container_aliases_refuse_unowned_changed_or_incomplete_targets() {"
+  },
+  {
+    "id": "structured-data.read-native-interchange-value",
+    "source": "rust/src/structured_data_links.rs",
+    "name": "from_json",
+    "inventoryName": "read native interchange value",
+    "sourceText": "pub(crate) fn from_json(value: &Value, depth: usize) -> Result<StructuredDataValue, String> {"
+  },
+  {
+    "id": "repository.check-source-free-discovery-owned-container-identities",
+    "source": "js/tests/discovered-concept-links.test.js",
+    "name": "copying and source-free revalidation are deterministic for all explicit candidates",
+    "inventoryName": "check source free discovery owned container identities",
+    "sourceText": "test('copying and source-free revalidation are deterministic for all explicit candidates', () => {\n  const sources = fixture.sources.map(({ grammar, ...source }) => ({ ...source, grammar: deserializeGrammar(grammar) }));\n  const packet = createDiscoveredConceptLinks(sources, fixture);\n  assert.equal(packet.root.asU64(), fixture.root);\n  assert.equal(packet.network.toLino(), fixture.links);\n  assert.deepEqual(readDiscoveredConceptLinks(packet.network, packet.root).space, fixture.expectedSpace);\n  assert.equal(createHash('sha256').update(readFileSync(legacyFile)).digest('hex'),\n    '69daf66d8a97bedf33b84dcfe1dc5ca40718e86ba8c71034f7f3a1596b78e84e', 'the original fixture is a byte-for-byte retained input');\n  for (const field of ['sources', 'records', 'equivalences', 'formalDefinitions', 'parseSource', 'expectedTrees']) {\n    assert.deepEqual(fixture[field], legacyFixture[field], `${field} is unchanged by automatic certificate regeneration`);\n  }\n  for (const source of packet.space.sources) {\n    assert.equal(source.sourceFormat, fixture.sources.find(original => original.id === source.id).grammar.sourceFormat);\n  }\n  const legacy = reload(legacyFixture);\n  const restored = readDiscoveredConceptLinks(legacy.network, legacy.root);\n  const current = createDiscoveredConceptLinks(restored.sources, { ...legacyFixture, formalDefinitions: restored.formalDefinitions });\n  assert.equal(current.network.toLino(), fixture.links, 'a retained archive produces the exact current certificate without original Grammar objects');\n  assert.equal(current.root.asU64(), fixture.root);\n  const dataRoot = current.network.link(current.root).references()[0];\n  const island = new LinkNetwork(), seen = new Set(), pending = [dataRoot];\n  for (let at = 0; at < pending.length; at += 1) {\n    const id = pending[at];\n    if (seen.has(id.asU64())) continue;\n    seen.add(id.asU64());\n    const link = current.network.link(id);\n    island.insertLinkWithOptionalId(id, link.references(), link.metadata().clone());\n    pending.push(...link.references());\n  }\n  const envelope = decodeStructuredDataLinks(island, dataRoot);\n  for (const concept of envelope.space.concepts) assert.strictEqual(concept.definition, concept.definitions[0].definition,\n    'the primary definition and its first owned entry retain one actual container identity');\n  const encoded = encodeStructuredDataLinks(envelope);\n  assert.equal(encoded.network.links().length, island.links().length);\n  const copied = { ...envelope, space: { ...envelope.space, concepts: envelope.space.concepts.map(concept => ({\n    ...concept, definition: JSON.parse(JSON.stringify(concept.definition)),\n  })) } };\n  assert.deepEqual(copied, envelope, 'copying primary definitions preserves values but changes their owned identities');\n  assert.equal(encodeStructuredDataLinks(copied).network.links().length, encoded.network.links().length + 56,\n    'four literal definitions and two recursive definitions expand by exactly 56 container and entry nodes');\n  for (const [first, second] of [[{ value: 'same' }, { value: 'same' }], [['same'], ['same']]]) {\n    const distinct = encodeStructuredDataLinks([first, second, first]);\n    const references = distinct.network.link(distinct.network.link(distinct.root).references()[0]).references();\n    assert.notEqual(references[0].asU64(), references[1].asU64(), 'equal but separately owned containers remain separate');\n    assert.equal(references[0].asU64(), references[2].asU64(), 'repeated ownership retains the actual shared container');\n    const decoded = decodeStructuredDataLinks(distinct.network, distinct.root);\n    assert.deepEqual(decoded[0], decoded[1]);assert.notStrictEqual(decoded[0], decoded[1]);assert.strictEqual(decoded[0], decoded[2]);\n    assert.ok(distinct.network.links().length > encodeStructuredDataLinks([first, first, first]).network.links().length);\n  }\n  const facets = encodeStructuredDataLinks([{ value: -0 }, { value: 0 }, { first: 1, second: 2 }, { second: 2, first: 1 }]);\n  const decoded = decodeStructuredDataLinks(facets.network, facets.root);\n  assert.equal(Object.is(decoded[0].value, -0), true);assert.equal(Object.is(decoded[1].value, 0), true);\n  assert.notStrictEqual(decoded[0], decoded[1]);assert.notStrictEqual(decoded[2], decoded[3]);\n  assert.deepEqual(Object.keys(decoded[2]), ['first', 'second']);assert.deepEqual(Object.keys(decoded[3]), ['second', 'first']);\n  const zeros = facets.network.links().filter(link => link.metadata().term === 'number value'\n    && ['-0', '0'].includes(link.metadata().definition));\n  assert.equal(zeros.length, 2);assert.notEqual(zeros[0].id().asU64(), zeros[1].id().asU64());\n})"
+  },
+  {
+    "id": "structured-data.explicit-structured-container-alias-targets",
+    "source": "rust/src/structured_data_links.rs",
+    "name": "Encoder::container_aliases",
+    "inventoryName": "explicit structured container alias targets",
+    "sourceText": "    container_aliases: HashMap<*const StructuredDataValue, *const StructuredDataValue>,",
+    "sourceContext": "struct Encoder {\n    network: LinkNetwork,\n    limits: StructuredDataLinksLimits,\n    bytes: usize,\n    scalars: HashMap<(String, Option<String>), LinkId>,\n    container_aliases: HashMap<*const StructuredDataValue, *const StructuredDataValue>,"
+  },
+  {
+    "id": "structured-data.completed-structured-container-identities",
+    "source": "rust/src/structured_data_links.rs",
+    "name": "Encoder::containers",
+    "inventoryName": "completed structured container identities",
+    "sourceText": "    containers: HashMap<*const StructuredDataValue, LinkId>,",
+    "sourceContext": "struct Encoder {\n    network: LinkNetwork,\n    limits: StructuredDataLinksLimits,\n    bytes: usize,\n    scalars: HashMap<(String, Option<String>), LinkId>,\n    container_aliases: HashMap<*const StructuredDataValue, *const StructuredDataValue>,\n    containers: HashMap<*const StructuredDataValue, LinkId>,"
+  },
+  {
+    "id": "structured-data.consumed-structured-container-alias-identities",
+    "source": "rust/src/structured_data_links.rs",
+    "name": "Encoder::consumed_aliases",
+    "inventoryName": "consumed structured container alias identities",
+    "sourceText": "    consumed_aliases: HashSet<*const StructuredDataValue>,",
+    "sourceContext": "struct Encoder {\n    network: LinkNetwork,\n    limits: StructuredDataLinksLimits,\n    bytes: usize,\n    scalars: HashMap<(String, Option<String>), LinkId>,\n    container_aliases: HashMap<*const StructuredDataValue, *const StructuredDataValue>,\n    containers: HashMap<*const StructuredDataValue, LinkId>,\n    consumed_aliases: HashSet<*const StructuredDataValue>,"
+  },
+  {
+    "id": "structured-data.completed-structured-reference-heights",
+    "source": "rust/src/structured_data_links.rs",
+    "name": "Encoder::heights",
+    "inventoryName": "completed structured reference heights",
+    "sourceText": "    heights: HashMap<LinkId, usize>,",
+    "sourceContext": "struct Encoder {\n    network: LinkNetwork,\n    limits: StructuredDataLinksLimits,\n    bytes: usize,\n    scalars: HashMap<(String, Option<String>), LinkId>,\n    container_aliases: HashMap<*const StructuredDataValue, *const StructuredDataValue>,\n    containers: HashMap<*const StructuredDataValue, LinkId>,\n    consumed_aliases: HashSet<*const StructuredDataValue>,\n    heights: HashMap<LinkId, usize>,"
+  },
+  {
+    "id": "repository.check-global-concept-archive-root-identity",
+    "source": "rust/tests/unit/global_concept_archive_parser_roots.rs",
+    "name": "archived_roots_retain_start_and_rule_order_and_allow_ordinary_start_overrides",
+    "inventoryName": "check global concept archive root identity",
+    "sourceText": "fn archived_roots_retain_start_and_rule_order_and_allow_ordinary_start_overrides() {"
+  },
+  {
+    "id": "repository.native-source-lexical-analyser-declaration",
+    "source": "rust/src/grammar/links.rs",
+    "name": "LEXER",
+    "inventoryName": "native source lexical analyser declaration",
+    "sourceText": "const LEXER: &str = \"grammar::lexer\";"
+  },
+  {
+    "id": "repository.native-source-lexical-analyser-declaration",
+    "source": "rust/src/grammar/links.rs",
+    "name": "grammar::lexer",
+    "inventoryName": "native source lexical analyser declaration",
+    "sourceText": "const LEXER: &str = \"grammar::lexer\";"
+  }
+];
+const STRING_CODE_UNIT_CURRENT_WITNESSES=[
+  {
+    "id": "repository.flatten-sole-nested-family-library-alternative-conditions",
+    "source": "js/scripts/portable-conditional-source-style.mjs",
+    "name": "flattenFamilyLibraryElseIf",
+    "inventory": "B50 reviewed library and source oracle contracts for js/scripts/portable-conditional-source-style.mjs",
+    "inventoryName": "flatten-family-library-else-if",
+    "sourceText": "export function flattenFamilyLibraryElseIf(source) {\n  // Every edit removes a closing brace and replaces the opening brace with\n  // one space, so the source strictly shrinks. Allow a final unchanged pass\n  // after every possible removal instead of limiting the number of branches.\n  const maximumRemovals = source.length;\n  for (let pass = 0; pass <= maximumRemovals; pass += 1) {\n    const {tokens, matching, opaque} = readFamilyLibraryTokens(source);\n    let selected;\n    for (let index = 0; index < tokens.length; index += 1) {\n      if (opaque.has(index) || tokens[index].kind !== 'identifier' || tokens[index].value !== 'else' || tokens[index + 1]?.value !== '{') continue;\n      const open = index + 1, close = matching.get(open);\n      const nested = readFamilyLibraryIf(tokens, matching, open + 1);\n      if (nested && nested.end === close - 1) { selected = {open, close}; break; }\n    }\n    if (!selected) return source;\n    const previousLength = source.length;\n    source = source.slice(0, tokens[selected.close].start) + source.slice(tokens[selected.close].end);\n    source = source.slice(0, tokens[selected.open].start) + ' ' + source.slice(tokens[selected.open].end);\n    assert.ok(source.length < previousLength, 'a library else-if removal strictly shrinks its source');\n  }\n  throw new Error('the finite library else-if syntax must converge');\n}"
+  },
+  {
+    "id": "repository.simplify-known-generated-empty-string-comparisons",
+    "source": "js/scripts/portable-source-lint-style.mjs",
+    "name": "simplifyPortableEmptyStringComparisons",
+    "inventory": "B50 reviewed library and source oracle contracts for js/scripts/portable-source-lint-style.mjs",
+    "inventoryName": "simplify-portable-empty-string-comparisons",
+    "sourceText": "function simplifyPortableEmptyStringComparisons(source, stringFunctions, modulePath) {\n  const {tokens, comments, matching, opaque} = readPortableLintTokens(source), edits = [];\n  const strings = new Set(), declarations = new Map(), counts = new Map();\n  const header = /^pub fn \\w+\\(([^)]*)\\)/u.exec(source)?.[1] ?? '';\n  for (const [, name] of header.matchAll(/(?:^|,)\\s*(?:mut\\s+)?(\\w+):\\s*(?:String|&str)(?=\\s*(?:,|$))/gu)) strings.add(name);\n  const known = expression => {\n    const bare = stripRustSourceHeaderStyleParentheses(expression);\n    if (strings.has(bare) || /^String::(?:from|new)\\(/u.test(bare)) return true;\n    const call = /^((?:[A-Za-z_][A-Za-z_0-9]*::)*)([A-Za-z_][A-Za-z_0-9]*)\\(/u.exec(bare);\n    const local = call && ['', 'self::', 'crate::', ...(modulePath ? [modulePath + '::'] : [])].includes(call[1]);\n    if (local && stringFunctions.has(call[2])) return true;\n    const copied = /^(\\w+)\\.(?:clone|to_owned)\\(\\)$/u.exec(bare);\n    return copied !== null && strings.has(copied[1]);\n  };\n  for (let index = 0; index < tokens.length; index += 1) {\n    if (opaque.has(index) || tokens[index].value !== 'let') continue;\n    const name = tokens[index + 1]?.value === 'mut' ? index + 2 : index + 1;\n    if (tokens[name]?.kind !== 'identifier') continue;\n    counts.set(tokens[name].value, (counts.get(tokens[name].value) ?? 0) + 1);\n    if (tokens[name + 1]?.value !== '=') continue;\n    let end = name + 2;\n    while (end < tokens.length && ![';', ')', ']', '}'].includes(tokens[end].value)) end = matching.get(end) > end ? matching.get(end) + 1 : end + 1;\n    if (tokens[end]?.value !== ';') continue;\n    declarations.set(tokens[name].value, source.slice(tokens[name + 2].start, tokens[end]?.start).trim());\n  }\n  for (const [name, count] of counts) if (count !== 1) strings.delete(name);\n  for (let pass = 0; pass < declarations.size; pass += 1) {\n    let changed = false;\n    for (const [name, expression] of declarations) if (counts.get(name) === 1 && !strings.has(name) && known(expression)) {\n      strings.add(name); changed = true;\n    }\n    if (!changed) break;\n  }\n  for (let index = 1; index + 1 < tokens.length; index += 1) {\n    if (opaque.has(index) || tokens[index].kind !== 'punct' || !['==', '!='].includes(tokens[index].value)\n      || tokens[index + 1]?.kind !== 'string' || tokens[index + 1].value !== '') continue;\n    let start = index - 1;\n    if (tokens[start].value === ')') {\n      start = matching.get(start);\n      if (tokens[start - 1]?.kind === 'identifier') {\n        start -= 1;\n        while (tokens[start - 1]?.value === '::' && tokens[start - 2]?.kind === 'identifier') start -= 2;\n      }\n    }\n    const expression = source.slice(tokens[start].start, tokens[index].start).trim();\n    if (!known(expression)) continue;\n    if (comments.some(comment => comment.start >= tokens[start].start && comment.end <= tokens[index + 1].end)) continue;\n    const receiver = tokens[start].kind === 'punct' && tokens[start].value === '(' && matching.get(start) === index - 1\n      ? expression : '(' + expression + ')';\n    edits.push([tokens[start].start, tokens[index + 1].end, (tokens[index].value === '!=' ? '!' : '') + receiver + '.is_empty()']);\n    index += 1;\n  }\n  for (const [start, end, text] of edits.reverse()) source = source.slice(0, start) + text + source.slice(end);\n  return source;\n}"
+  },
+  {
+    "id": "repository.check-local-module-string-return-proofs",
+    "source": "js/tests/translation-portable-library-style.test.js",
+    "name": "qualified String return proofs require the declared local module namespace",
+    "inventory": "B55 current library style operation names for js/tests/translation-portable-library-style.test.js",
+    "inventoryName": "check local module string return proofs",
+    "sourceText": "test('qualified String return proofs require the declared local module namespace', () => {\n  const source = readFileSync(new URL('../src/translation/fact-column-rules.js', import.meta.url), 'utf8')\n    + '/** @param {string[]} columns @param {number} size @param {number} node @returns {boolean} */ function present(columns,size,node){return readRequiredTextFact(columns,size+node)!==\"\";}';\n  const checked = checkProgram(parseJavaScript(source, {referenceSemantics: false}));\n  const modulePath = 'crate::translation::surface_reference_analysis_rules';\n  const raw = emitRust(checked, {arrayConsumption: true}).definitions.join('\\n\\n')\n    .replaceAll('crate::read_required_text_fact', modulePath + '::read_required_text_fact');\n  const loaned = readPortableSourceParameterStyles(raw).source;\n  const defaultResult = readPortableSourceLintStyles(loaned).source;\n  assert.equal(readSourceTextRustBlock(defaultResult, 'fn', 'present').includes('.is_empty()'), false);\n  const reviewed = readPortableSourceLintStyles(loaned, {modulePath});\n  const present = readSourceTextRustBlock(reviewed.source, 'fn', 'present');\n  assert.ok(present.includes('.is_empty()'));\n  assert.ok(present.includes('!(' + modulePath + '::read_required_text_fact('));\n  assert.equal(present.includes('!((' + modulePath + '::read_required_text_fact('), false, 'the actual qualified fact read does not reproduce the Clippy double_parens receiver');\n  assert.equal((present.match(/::read_required_text_fact\\(/gu) ?? []).length, 1, 'the effectful call and its arithmetic argument remain single evaluations');\n  assert.ok(present.includes('size + node'));\n  const unrelated = loaned.replaceAll(modulePath + '::read_required_text_fact', 'crate::unrelated::read_required_text_fact');\n  assert.equal(readSourceTextRustBlock(readPortableSourceLintStyles(unrelated, {modulePath}).source, 'fn', 'present').includes('.is_empty()'), false);\n  const unknown = 'pub fn value() -> Custom { self::make() }\\npub fn present() -> bool { (' + modulePath + '::value()) != \"\" }';\n  assert.equal(readPortableSourceLintStyles(unknown, {modulePath}).source.includes('.is_empty()'), false);\n  const styles = new DecoratorSet([{id: 'qualified-string-return-control', level: 'emitter', order: 0,\n    when: [['format', 'Rust']], actions: reviewed.actions}]);\n  assert.equal(styles.decorate('emitter', {format: 'Rust', source: loaned}).source, reviewed.source);\n  const call = modulePath + '::value()';\n  for (const receiver of [call, '(' + call + ')']) for (const comparison of ['==', '!=']) {\n    const candidate = 'pub fn value() -> String { String::from(\"text\") }\\npub fn present() -> bool { ' + receiver + ' ' + comparison + ' \"\" }';\n    const styled = readPortableSourceLintStyles(candidate, {modulePath});\n    const body = readSourceTextRustBlock(styled.source, 'fn', 'present');\n    assert.ok(body.includes((comparison === '!=' ? '!' : '') + '(' + call + ').is_empty()'), 'both grouped and ungrouped receivers keep one complete method-receiver group');\n    assert.equal(body.includes('((' + call + '))'), false);\n    assert.equal((body.match(/::value\\(/gu) ?? []).length, 1, 'String comparison styling preserves one receiver evaluation');\n    assert.equal(readPortableSourceLintStyles(styled.source, {modulePath}).source, styled.source, 'receiver grouping is idempotent');\n    const receiverStyles = new DecoratorSet([{id: 'grouped-empty-string-control', level: 'emitter', order: 0,\n      when: [['format', 'Rust']], actions: styled.actions}]);\n    assert.equal(receiverStyles.decorate('emitter', {format: 'Rust', source: candidate}).source, styled.source);\n  }\n})"
+  }
+];
+const B57_MOVED_SOURCE={
+  "id": "repository.check-global-concept-archive-root-identity",
+  "oldSource": "rust/tests/unit/global_concept_archive_parser.rs",
+  "newSource": "rust/tests/unit/global_concept_archive_parser_roots.rs",
+  "name": "archived_roots_retain_start_and_rule_order_and_allow_ordinary_start_overrides",
+  "baseline": "0e120757",
+  "oldSourceSha256": "a3badb8755a3d2fbe635be07835c53e56b598b28ec1ffffbf362950b9c46eb1d",
+  "oldSourceBytes": 35662,
+  "archivePath": "parity/naming/bulk-fifty-seven-moved-source-inventories.lino",
+  "plan": "Preserve the actual baseline whole owning source as authenticated Links data. Keep original source alias and original B51 binding bytes, append current include-child alias to the same record, and reconcile only the moved historical extraction while all still-present current declarations retain their ordinary source extraction. Old/current test bodies are not asserted identical: original assertions remain and new schema-version assertions were added."
+};
+const reconcileB57MovedSourceInventory=entry=>{if(entry.inventory!=="B51 archive parser, Boolean constant tree and public declaration names for "+B57_MOVED_SOURCE.oldSource||entry.files.length!==1||entry.files[0]!==B57_MOVED_SOURCE.oldSource)return entry;return{...entry,files:[...entry.files,B57_MOVED_SOURCE.archivePath],extract:(raw,file)=>{if(file!==B57_MOVED_SOURCE.archivePath)return entry.extract(raw,file);const archive=readStructuredDataLino(raw);const source=archive.sources?.find(row=>row.file===B57_MOVED_SOURCE.oldSource);if(archive.version!==1||!source||source.commit!==B57_MOVED_SOURCE.baseline||source.bytes!==B57_MOVED_SOURCE.oldSourceBytes||source.sha256!==B57_MOVED_SOURCE.oldSourceSha256||Buffer.byteLength(source.source)!==source.bytes||createB57MovedSourceHash("sha256").update(source.source).digest("hex")!==source.sha256)throw new Error("the moved original source archive differs");return entry.extract(source.source,B57_MOVED_SOURCE.oldSource).filter(name=>entry.recordOf(name)===B57_MOVED_SOURCE.id);}};};
+const STRING_CODE_UNIT_SOURCE_NAME_INVENTORIES=[...new Set(STRING_CODE_UNIT_SOURCE_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B57 portable string code unit and reviewed repair names for "+source,files:[source],extract:raw=>STRING_CODE_UNIT_SOURCE_BINDINGS.filter(row=>{if(row.source!==source)return false;const data=row.dataField||row.sourceField?readStructuredDataLino(raw):null;const text=row.sourceField?data[row.sourceField]:raw;return row.dataField?Object.hasOwn(data,row.dataField):typeof text==="string"&&text.includes(row.sourceText)&&(!row.sourceContext||text.includes(row.sourceContext));}).map(row=>row.inventoryName),recordOf:name=>STRING_CODE_UNIT_SOURCE_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));
+const STRING_CODE_UNIT_CURRENT_WITNESS_INVENTORIES=STRING_CODE_UNIT_CURRENT_WITNESSES.map(row=>({inventory:row.inventory,files:[row.source],extract:text=>text.includes(row.sourceText)?[row.inventoryName]:[],recordOf:()=>row.id}));
+// END B57 portable string code-unit and reviewed repair source names.
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory).map(reconcileBulkFortySevenNativeInventory).map(reconcileBulkFiftyHistoricalInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES, ...BULK_FORTY_SEVEN_NAME_INVENTORIES, ...BULK_FORTY_EIGHT_NAME_INVENTORIES, ...BULK_FORTY_NINE_NAME_INVENTORIES, ...BULK_FIFTY_NAME_INVENTORIES, ...BULK_FIFTY_ONE_NAME_INVENTORIES.map(reconcileB57MovedSourceInventory), ...VERSION_RANGE_EVIDENCE_NAME_INVENTORIES, ...FORMAT_RETRY_SOURCE_NAME_INVENTORIES, ...DISCOVERY_CERTIFICATE_NAME_INVENTORIES, ...SELECTED_NATIVE_GRAMMAR_PROJECTION_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_WITNESS_INVENTORIES, ...BULK_FIFTY_FIVE_CONST_ARCHIVE_ERROR_NAME_INVENTORIES, ...AUXILIARY_GRAMMAR_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_CURRENT_WITNESS_INVENTORIES].map(entry=>entry.inventory!=="grammar link terms"?entry:{...entry,extract:(text,file)=>entry.extract(text,file).map(name=>file==="rust/src/grammar/links.rs"&&name==="grammar::lexer"?"grammar::native-source-lexical-analyser-declaration":name),recordOf:name=>name==="grammar::native-source-lexical-analyser-declaration"?"repository.native-source-lexical-analyser-declaration":entry.recordOf(name)}));
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
