@@ -694,12 +694,10 @@ impl Inference {
             }
             SNode::Array { items, .. } => {
                 let element = self.fresh(false);
-                if items.iter().all(|item| item.spread) {
-                    self.empty_arrays.insert(
-                        std::ptr::from_ref::<SExpr>(expr),
-                        (element.clone(), expr.span),
-                    );
-                }
+                self.empty_arrays.insert(
+                    std::ptr::from_ref::<SExpr>(expr),
+                    (element.clone(), expr.span),
+                );
                 for item in items {
                     let value = self.expr(&item.value, env)?;
                     let want = if item.spread {
