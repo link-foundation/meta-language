@@ -2154,7 +2154,7 @@ function flattenChain(chain) {
 
 // One accessor also lets lazy owners share their property descriptors. The
 // chain belongs to the receiver, rather than a closure retained by each owner.
-function readChainChildren() {
+export function readChainChildren() {
   return flattenChain(this[CHAIN]);
 }
 
