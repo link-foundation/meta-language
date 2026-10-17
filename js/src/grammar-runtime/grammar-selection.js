@@ -3,11 +3,10 @@
 import { acceptGrammarSelectionCount, acceptGrammarSelectionMapping,
   acceptGrammarSelectionMode, reportGrammarSelectionAmbiguity,
   readGrammarSourceDefaultMatching } from '../translation/grammar-selection-rules.js';
-import { DEFAULT_SETTLING } from '../grammar-feature-forms.js';
+import { DEFAULT_SETTLING, checkGrammarSelectionIncludedRangeForm } from '../grammar-feature-forms.js';
 import { readGrammarSelectionMappingContext } from '../translation/grammar-selection-mapping-rules.js';
-import { acceptGrammarSelectionIncludedRangeCandidate, acceptGrammarSelectionIncludedRangeSourceRange,
-  acceptGrammarSelectionIncludedRangeAgreement, readGrammarSelectionIncludedRangeContext,
-  readGrammarSelectionIncludedRangeFieldOrder } from '../translation/grammar-selection-included-range-rules.js';
+import { acceptGrammarSelectionIncludedRangeCandidate,
+  acceptGrammarSelectionIncludedRangeAgreement, readGrammarSelectionIncludedRangeContext } from '../translation/grammar-selection-included-range-rules.js';
 import { mapGrammarSelectionSource, mapGrammarSelectionIncludedRangeSource, projectGrammarSelectionSpan,
   projectGrammarSelectionDiagnostic, rememberGrammarSelectionMappingFailure } from './selection-source-mapping.js';
 import { KeywordLexing } from './executor.js';
@@ -18,19 +17,8 @@ export function checkGrammarSelection(expression, fail) {
   if (!Array.isArray(expression.items) || expression.items.length === 0) fail('a grammar selection needs at least one candidate');
   const names = new Set();
   for (const candidate of expression.items) {
-    const ranged = acceptGrammarSelectionIncludedRangeCandidate(candidate?.kind ?? '', candidate?.mapping ?? '');
+    const ranged = checkGrammarSelectionIncludedRangeForm(candidate, fail);
     if (candidate?.kind !== 'grammar-candidate' && !ranged || typeof candidate.name !== 'string' || candidate.name === '' || typeof candidate.mapping !== 'string') fail('a grammar selection needs named grammar-candidate definitions and an explicit mapping');
-    if (ranged) {
-      const fields = readGrammarSelectionIncludedRangeFieldOrder('candidate').split('|');
-      if (Object.keys(candidate).length !== fields.length || fields.some(field => !Object.hasOwn(candidate, field))
-          || !Array.isArray(candidate.ranges) || candidate.ranges.length === 0) fail('an included range candidate needs its complete ordered range definitions');
-      const rangeFields = readGrammarSelectionIncludedRangeFieldOrder('range').split('|');
-      for (const range of candidate.ranges) {
-        if (!range || Array.isArray(range) || Object.keys(range).length !== rangeFields.length
-            || rangeFields.some(field => !Object.hasOwn(range, field))
-            || !acceptGrammarSelectionIncludedRangeSourceRange(range.kind, range.start, range.end)) fail('an included source range needs its kind and nonempty integer byte bounds');
-      }
-    }
     if (names.has(candidate.name)) fail(`duplicate selected grammar ${candidate.name}`);
     names.add(candidate.name);
   }

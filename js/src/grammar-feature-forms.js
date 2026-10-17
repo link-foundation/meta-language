@@ -7,6 +7,8 @@
 // stay in step. docs/grammar/feature-union.md is the specification.
 import { GRAMMAR_LEXER_FORMS } from './grammar-lexer-forms.js';
 import { GRAMMAR_SELECTION_FORMS } from './grammar-selection-forms.js';
+import { acceptGrammarSelectionIncludedRangeCandidate, acceptGrammarSelectionIncludedRangeSourceRange,
+  readGrammarSelectionIncludedRangeFieldOrder } from './translation/grammar-selection-included-range-rules.js';
 
 /** The expression kinds the feature union adds, with their fields in listing order. */
 export const FEATURE_EXPRESSION_FORMS = Object.freeze({
@@ -154,6 +156,87 @@ export function compactDeclarations(declarations) {
   return compact;
 }
 
+function includedRangeDataFields(value, role, fail) {
+  const fields = readGrammarSelectionIncludedRangeFieldOrder(role).split('|');
+  if (!value || typeof value !== 'object' || Array.isArray(value)
+      || ![Object.prototype, null].includes(Object.getPrototypeOf(value))) fail('an included source view needs ordinary data records');
+  const keys = Reflect.ownKeys(value);
+  if (keys.length !== fields.length || keys.some(key => !fields.includes(key))) fail('an included source view needs exactly its declared fields');
+  const data = Object.create(null);
+  for (const key of fields) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (!descriptor || !Object.hasOwn(descriptor, 'value') || !descriptor.enumerable) fail('an included source view needs enumerable own data fields');
+    data[key] = descriptor.value;
+  }
+  return data;
+}
+
+function includedRangeDataItems(value, fail) {
+  if (!Array.isArray(value) || Object.getPrototypeOf(value) !== Array.prototype) fail('an included range candidate needs an ordinary range array');
+  const length = Object.getOwnPropertyDescriptor(value, 'length').value;
+  const keys = Reflect.ownKeys(value);
+  if (length === 0 || keys.length !== length + 1 || keys[keys.length - 1] !== 'length') fail('an included range candidate needs a nonempty dense range array');
+  for (let index = 0; index < length; index += 1) {
+    const key = String(index), descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (keys[index] !== key || !descriptor || !Object.hasOwn(descriptor, 'value') || !descriptor.enumerable) fail('an included range candidate needs indexed own data fields');
+  }
+  return value;
+}
+
+/** Validate the two closed included-range forms before a codec can omit fields
+ * or coerce coordinates. Other expression forms retain their existing reader.
+ */
+export function checkGrammarSelectionIncludedRangeForm(expression, fail = message => { throw new TypeError(message); }) {
+  if (!expression || typeof expression !== 'object') return false;
+  let owner = expression, descriptor;
+  while (owner !== null && !(descriptor = Object.getOwnPropertyDescriptor(owner, 'kind'))) owner = Object.getPrototypeOf(owner);
+  if (!descriptor) return false;
+  if (!Object.hasOwn(descriptor, 'value')) fail('a grammar expression kind needs a data field');
+  const kind = descriptor.value;
+  if (kind !== 'grammar-range-candidate' && kind !== 'source-range') return false;
+  const data = includedRangeDataFields(expression, kind === 'source-range' ? 'range' : 'candidate', fail);
+  if (kind === 'source-range') {
+    if (!acceptGrammarSelectionIncludedRangeSourceRange(data.kind, data.start, data.end)) fail('an included source range needs its kind and nonempty integer byte bounds');
+  } else {
+    if (typeof data.name !== 'string' || data.name === '' || typeof data.mapping !== 'string'
+        || !acceptGrammarSelectionIncludedRangeCandidate(data.kind, data.mapping)) fail('an included range candidate needs its name and explicit included-ranges mapping');
+    for (const range of includedRangeDataItems(data.ranges, fail)) {
+      const row = includedRangeDataFields(range, 'range', fail);
+      if (!acceptGrammarSelectionIncludedRangeSourceRange(row.kind, row.start, row.end)) fail('an included source range needs its kind and nonempty integer byte bounds');
+    }
+  }
+  return true;
+}
+
+/** Inspect original grammar data before expansion or archive copying can hide
+ * a malformed included-range form. Descriptors prevent invoking host getters
+ * or serialization hooks while walking the actual definitions.
+ */
+export function checkGrammarSelectionIncludedRangeData(value, fail = message => { throw new TypeError(message); }) {
+  const pending = [[value, false]], active = new Set(), checked = new Set();
+  while (pending.length > 0) {
+    const [item, leaving] = pending.pop();
+    if (item === null || typeof item !== 'object') {
+      if (typeof item === 'function') fail('grammar definitions need inspectable data, not serialization hooks');
+      continue;
+    }
+    if (leaving) { active.delete(item); checked.add(item); continue; }
+    if (active.has(item)) fail('grammar definitions cannot contain cyclic host data');
+    if (checked.has(item)) continue;
+    const prototype = Object.getPrototypeOf(item);
+    if (Array.isArray(item) ? prototype !== Array.prototype
+      : prototype !== Object.prototype && prototype !== null) fail('grammar definitions need ordinary data containers');
+    checkGrammarSelectionIncludedRangeForm(item, fail);
+    active.add(item);
+    pending.push([item, true]);
+    for (const key of Reflect.ownKeys(item)) {
+      const descriptor = Object.getOwnPropertyDescriptor(item, key);
+      if (!Object.hasOwn(descriptor, 'value')) fail('grammar definitions need own data fields, not accessors');
+      pending.push([descriptor.value, false]);
+    }
+  }
+}
+
 // A codec turns field values into the text of one serialization.
 function renderFields(fields, object, codec) {
   const parts = [];
@@ -187,6 +270,7 @@ export function renderOperation(operation, codec) {
 
 /** Renders a feature union expression, or returns `null` for an expression kind it does not add. */
 export function renderFeatureExpression(expression, codec) {
+  checkGrammarSelectionIncludedRangeForm(expression);
   if (expression.kind === 'byteClass') {
     const items = expression.items.map((item) => (item.kind === 'byteRange'
       ? codec.call('byteRange', [String(item.start), String(item.end)])

@@ -4,7 +4,7 @@
 // checked against the context it runs in, and the terminals are compiled to
 // byte matchers. The result is the immutable program executor.js runs.
 // docs/grammar/feature-union.md specifies each step.
-import { DEFAULT_SETTLING, settlingProblem } from '../grammar-feature-forms.js';
+import { DEFAULT_SETTLING, settlingProblem, checkGrammarSelectionIncludedRangeData } from '../grammar-feature-forms.js';
 import { OPERATION_CONTEXTS } from './operations.js';
 import { decodeAt, encodeText, foldCase, unicodePropertyMatcher } from './text.js';
 import { readLexerDeclaration } from './lexer-election.js';
@@ -39,10 +39,14 @@ function grammarParts(value) {
   if (!grammar || typeof grammar !== 'object') loadError('import', 'a resolved grammar is a Grammar or its serialized document');
   const rules = grammar.rules instanceof Map ? [...grammar.rules.values()] : grammar.rules;
   if (!Array.isArray(rules)) loadError('import', 'a resolved grammar has no rules');
+  const declarations = grammar.declarations ?? {};
+  const fail = message => loadError('selection', message);
+  checkGrammarSelectionIncludedRangeData(rules, fail);
+  checkGrammarSelectionIncludedRangeData(declarations, fail);
   return {
     start: grammar.start ?? rules[0]?.name ?? null,
     sourceFormat: grammar.sourceFormat ?? null,
-    declarations: grammar.declarations ?? {},
+    declarations,
     rules,
   };
 }

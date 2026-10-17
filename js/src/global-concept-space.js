@@ -6,7 +6,7 @@ import { Parser } from 'links-notation';
 import { CONCEPT_RECORDS } from './concept-records.js';
 import { Grammar, compileGrammar } from './grammar.js';
 import { GrammarRuntimeError } from './grammar-runtime.js';
-import { DEFAULT_SETTLING, grammarDeclarations } from './grammar-feature-forms.js';
+import { DEFAULT_SETTLING, grammarDeclarations, checkGrammarSelectionIncludedRangeData } from './grammar-feature-forms.js';
 import { parseGrammarLinks, percentDecodeLinksText, percentEncodeLinksText, renderDeclarationLinks, renderLinksExpression, renderRuleFieldLinks } from './grammar-links.js';
 import { compareText } from './grammar-merge-normalize.js';
 import { verifyGlobalConceptCorrespondence, acceptGlobalConceptHistory, containsGlobalConceptIdentity, selectGlobalConceptIdentity } from './global-concept-rules.js';
@@ -47,6 +47,8 @@ function prepare(sources, records, formalDefinitions = {}) {
   const ordered = [...sources].sort((first, second) => compareText(first.id ?? '', second.id ?? ''));
   for (const source of ordered) {
     if (typeof source.id !== 'string' || source.id === '' || typeof source.language !== 'string' || source.language === '' || (source.edition !== undefined && typeof source.edition !== 'string') || !(source.grammar instanceof Grammar)) throw new TypeError('a global concept source needs an identity, language, edition and imported grammar');
+    checkGrammarSelectionIncludedRangeData(source.grammar.declarations);
+    for (const rule of source.grammar.rules.values()) checkGrammarSelectionIncludedRangeData(rule);
     if (source.grammar.sourceFormat != null) {
       if (typeof source.grammar.sourceFormat !== 'string') throw new TypeError('a global grammar source format must be known text');
       // Reuse the existing source-format grammar and its closed tag validation.
@@ -268,6 +270,8 @@ export function translateGlobalConstruct(space, alias, language, options = {}) {
 
 /** Serialize the copied productions, qualified origins and proof witnesses as links. */
 export function globalConceptSpaceToLinks(space) {
+  for (const source of space.sources) checkGrammarSelectionIncludedRangeData(source.context);
+  for (const concept of space.concepts) for (const { definition } of concept.definitions) checkGrammarSelectionIncludedRangeData(definition);
   const word = percentEncodeLinksText;
   const lines = ['(global-concept-space (schema-version 1))'];
   for (const source of space.sources) {
