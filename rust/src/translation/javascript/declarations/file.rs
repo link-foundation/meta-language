@@ -5,6 +5,7 @@ use super::{
     TokenCursor, TokenKind, describe, has_javascript_products, infer_javascript_product_types,
     infer_javascript_types, span, unsupported, validate_javascript_products,
 };
+use crate::translation::surface::SEffect;
 
 impl JavaScriptParser {
     pub(in super::super) fn file(mut self) -> Result<SProgram> {
@@ -134,7 +135,17 @@ impl JavaScriptParser {
                 continue;
             }
             self.flush(&mut pending, &mut effects)?;
-            effects.extend(self.main_statement()?);
+            let entries = self.main_statement()?;
+            if exported {
+                for entry in &entries {
+                    if let SEffect::Let { name, .. } = entry
+                        && !name.starts_with("ml_")
+                    {
+                        self.exported_names.insert(name.clone());
+                    }
+                }
+            }
+            effects.extend(entries);
         }
         self.flush(&mut pending, &mut effects)?;
         self.lexical.validate()?;

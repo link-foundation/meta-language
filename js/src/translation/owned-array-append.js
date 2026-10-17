@@ -1,9 +1,10 @@
 // Source occurrence transport for the shared fresh-local construction proof.
 // Every accepted reader refers to an inspected declaration, never its spelling.
 import {
-  acceptOwnedArrayAppendShape, acceptOwnedArrayAppendUses, acceptOwnedArrayRead,
+  acceptOwnedArrayAppendShape, acceptOwnedArrayRemovalShape, readOwnedArrayRemovalSliceBounds, acceptOwnedArrayAppendUses, acceptOwnedArrayRead,
   acceptOwnedArrayReaderResult,
 } from './owned-array-append-rules.js';
+import { FLOAT } from './types.js';
 
 export function readOwnedArrayReaderParameters(declaration, readers, statements = null) {
   if (!acceptOwnedArrayReaderResult(declaration.ret?.kind ?? '')) return new Set();
@@ -92,9 +93,14 @@ export function lowerOwnedArrayAppends(statements, parameters, readers) {
     if (expression.object.span && expression.args[0]?.span) proof.operationSpan = {
       start: expression.object.span.end, end: expression.args[0].span.start,
     };
+    if (expression.op === 'pop' && expression.object.span && expression.span) proof.operationSpan = {
+      start: expression.object.span.end, end: expression.span.end,
+    };
     statement.s = 'assign';
     statement.name = name;
-    statement.value = { k: 'array', items: [
+    statement.value = expression.op === 'pop' ? { k: 'method', op: 'slice', object: expression.object,
+      args: readOwnedArrayRemovalSliceBounds().map(value => ({ k: 'num', value: String(Math.abs(value)),
+        ...(value < 0 ? { negative: true } : {}), type: FLOAT, span: expression.span })), span: expression.span } : { k: 'array', items: [
       { spread: true, value: expression.object },
       ...expression.args.map(value => ({ value })),
     ], span: expression.span };
@@ -145,7 +151,8 @@ export function readOwnedArrayAppendProofs(statements, parameters = [], readers 
           const allocation = { id: allocations.length, name: statement.name, literal: statement.value, loops: [...loops], position: advance(), escapes: [] };
           allocations.push(allocation); scope.set(statement.name, allocation);
         } else scope.set(statement.name, null);
-      } else if (statement.s === 'expr' && acceptOwnedArrayAppendShape(statement.s, statement.expr.k, statement.expr.op ?? '', statement.expr.object?.k ?? '', statement.expr.object?.path?.length ?? 0, statement.expr.args?.length ?? 0)) {
+      } else if (statement.s === 'expr' && (acceptOwnedArrayAppendShape(statement.s, statement.expr.k, statement.expr.op ?? '', statement.expr.object?.k ?? '', statement.expr.object?.path?.length ?? 0, statement.expr.args?.length ?? 0)
+        || acceptOwnedArrayRemovalShape(statement.s, statement.expr.k, statement.expr.op ?? '', statement.expr.object?.k ?? '', statement.expr.object?.path?.length ?? 0, statement.expr.args?.length ?? 0))) {
         const allocation = scope.get(statement.expr.object.path[0]);
         statement.expr.args.forEach(argument => read(argument, scope, loops));
         if (allocation) appends.push({ statement, allocation, loops: [...loops], position: advance() });

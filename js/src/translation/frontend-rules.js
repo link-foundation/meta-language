@@ -672,3 +672,31 @@ export function readJavaScriptTemporalBindingRead(parents, bounds, names, ends, 
   }
   return [];
 }
+
+/**
+ * Lexical declaration discovery over actual cursor tokens. The host carries
+ * depth and declaration state: -1 stops, 1 opens, 2 closes, 3 begins a
+ * declaration, 4 selects its next binding, 5 clears declaration state.
+ * No token arrays or initializer trees are copied for this scan.
+ * @param {string} kind @param {string} value @param {number} depth
+ * @param {boolean} declaration @returns {number}
+ */
+export function readJavaScriptLexicalDeclarationStep(kind, value, depth, declaration) {
+  if (kind === 'eof' || depth === 0 && kind === 'punct' && value === '}') return -1;
+  if (depth === 0) {
+    if (kind === 'identifier' && (value === 'const' || value === 'let')) return 3;
+    if (kind === 'punct' && value === ',' && declaration) return 4;
+    if (kind === 'punct' && value === ';') return 5;
+    if (kind === 'identifier' && (value === 'return' || value === 'throw' || value === 'function'
+      || value === 'if' || value === 'while' || value === 'for' || value === 'switch' || value === 'class'
+      || value === 'break' || value === 'continue' || value === 'try' || value === 'import' || value === 'export')) return 5;
+  }
+  if (kind === 'punct' && (value === '{' || value === '(' || value === '[')) return 1;
+  if (kind === 'punct' && (value === '}' || value === ')' || value === ']')) return 2;
+  return 0;
+}
+
+/** @param {boolean} thenTerminates @param {boolean} hasOtherwise @param {boolean} otherwiseTerminates @returns {boolean} */
+export function requireJavaScriptBranchContinuation(thenTerminates, hasOtherwise, otherwiseTerminates) {
+  return !thenTerminates || hasOtherwise && !otherwiseTerminates;
+}

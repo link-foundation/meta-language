@@ -15,6 +15,7 @@ import { TranslationError, unsupported } from './diagnostics.js';
 import { mutableClosureCells } from './javascript-cells.js';
 import { readCallableCellLowering, renderCallableCellParameterName } from './callable-source-rules.js';
 import { renameCallableSourceExpression } from './callable-source.js';
+import { requireJavaScriptBranchContinuation } from './frontend-rules.js';
 import { acceptJavaScriptValueSwitch, readJavaScriptValueSwitchInstruction,
   readJavaScriptValueSwitchPosition } from './javascript-surface-rules.js';
 
@@ -22,12 +23,14 @@ const ROOT = 'crate';
 const IMPERATIVE = new Set(['let', 'assign', 'assignReference', 'while', 'doWhile', 'for', 'break', 'continue', 'print', 'expr']);
 
 /** Whether statements use `let`, assignments, loops, `break`, `continue`, print or discard a value. */
-export function imperative(statements) {
+export function imperative(statements, parser) {
   if (mutableClosureCells(statements).size) return true;
   return statements.some(function visit(statement) {
     if (IMPERATIVE.has(statement.s)) return true;
-    if (statement.s === 'block') return statement.body.some(visit);
-    if (statement.s === 'if') return statement.then.some(visit) || Boolean(statement.else?.some(visit));
+    if (statement.s === 'block') return !statement.inline && !parser.terminates(statement.body) || statement.body.some(visit);
+    if (statement.s === 'if') return requireJavaScriptBranchContinuation(parser.terminates(statement.then),
+      Boolean(statement.else), Boolean(statement.else && parser.terminates(statement.else)))
+      || statement.then.some(visit) || Boolean(statement.else?.some(visit));
     if (statement.s === 'switch') return statement.clauses.some((clause) => clause.body.some(visit));
     return false;
   });

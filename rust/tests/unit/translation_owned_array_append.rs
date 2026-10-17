@@ -4,7 +4,10 @@ use meta_language::translation::check::check_program;
 use meta_language::translation::emit_javascript::emit_javascript;
 use meta_language::translation::emit_rust::emit_rust;
 use meta_language::translation::javascript::parse_javascript;
-use meta_language::{LinkNetwork, decode_typed_program_links, encode_typed_program_links};
+use meta_language::{
+    BinaryLinksOptions, LinkNetwork, decode_link_network_binary, decode_typed_program_links,
+    encode_link_network_binary, encode_typed_program_links,
+};
 use std::process::Command;
 
 fn observe(source: &str) -> String {
@@ -23,18 +26,27 @@ fn observe(source: &str) -> String {
 fn replay(source: &str, expected: &str) {
     assert_eq!(observe(source), expected);
     let program = check_program(&parse_javascript(source).unwrap()).unwrap();
-    assert_eq!(observe(&emit_javascript(&program).unwrap().text), expected);
+    let javascript = emit_javascript(&program).unwrap().text;
+    let rust = emit_rust(&program).unwrap().text;
+    assert_eq!(observe(&javascript), expected);
     let packet = encode_typed_program_links(&program).unwrap();
-    let network = LinkNetwork::from_lino(&packet.network.to_lino()).unwrap();
-    let restored = decode_typed_program_links(&network, packet.root).unwrap();
-    assert_eq!(restored, program);
-    assert_eq!(observe(&emit_javascript(&restored).unwrap().text), expected);
-    assert!(
-        emit_rust(&restored)
-            .unwrap()
-            .text
-            .contains("crate::ml_array::append(")
-    );
+    for network in [
+        LinkNetwork::from_lino(&packet.network.to_lino()).unwrap(),
+        decode_link_network_binary(
+            &encode_link_network_binary(&packet.network, BinaryLinksOptions::default()).unwrap(),
+            BinaryLinksOptions::default(),
+        )
+        .unwrap(),
+    ] {
+        let restored = decode_typed_program_links(&network, packet.root).unwrap();
+        assert_eq!(restored, program);
+        let replayed_javascript = emit_javascript(&restored).unwrap().text;
+        let replayed_rust = emit_rust(&restored).unwrap().text;
+        assert_eq!(replayed_javascript, javascript);
+        assert_eq!(replayed_rust, rust);
+        assert_eq!(observe(&replayed_javascript), expected);
+        assert!(replayed_rust.contains("crate::ml_array::append("));
+    }
 }
 
 fn refuses(source: &str) {
@@ -51,6 +63,33 @@ fn fresh_variadic_constructions_replay_as_ordinary_immutable_values() {
     replay(source, "0 1 1 2 2 3\n6 0\n");
     let local = "/** @returns {number} */ function build() { let count=0; for(let index=0;index<3;index+=1) { const values=[]; values.push(index); const finished=values; count+=finished.length; } return count; }\nconsole.log(build());";
     replay(local, "3\n");
+}
+
+#[test]
+fn discarded_private_removals_preserve_empty_arrays_and_loop_state() {
+    replay(
+        "/** @returns {number[]} */ function build() { const values=[2,3]; values.pop(); values.pop(); values.pop(); values.push(5); for(let index=0;index<3;index+=1){values.push(index);values.pop();} return values; }\nconsole.log(build().join(','));",
+        "5\n",
+    );
+    replay(
+        "/** @returns {number[]} */ function build() { const values=[];values.pop();values.pop();values.push(7);return values;}\nconsole.log(build().join(','));",
+        "7\n",
+    );
+}
+
+#[test]
+fn observed_removal_results_arguments_and_escaped_arrays_remain_refused() {
+    for body in [
+        "const alias=values;values.pop();return alias;",
+        "const selected=values.pop();return [selected];",
+        "values.pop(effect());return values;",
+        "const read=()=>values;values.pop();return read();",
+        "for(let index=0;index<2;index+=1){values.pop();const alias=values;}return values;",
+    ] {
+        refuses(&format!(
+            "function effect(){{console.log('effect');return 1;}}function build(){{const values=[2,3];{body}}}"
+        ));
+    }
 }
 
 #[test]

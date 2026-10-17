@@ -12,6 +12,24 @@ export const frontendRuleNativeStyleId='reviewed-frontend-native-styles-11701529
 export const frontendTypeQueryNativeStyleId='reviewed-frontend-type-query-and-optional-tuple-styles';
 export const frontendCurrentBooleanNativeStyleId='reviewed-frontend-current-boolean-binding-style';
 export const frontendTemporalBindingNativeStyleId='reviewed-frontend-temporal-binding-styles';
+export const frontendLexicalDeclarationNativeStyleId='reviewed-frontend-lexical-declaration-styles';
+
+/** Borrow the scalar token columns without changing the generated scan decisions. */
+export function readFrontendLexicalDeclarationStyleCorrections(source) {
+  const names=['read_java_script_lexical_declaration_step','require_java_script_branch_continuation'];
+  const inventory=readRustLibraryItems(source).items;
+  assert.ok(!inventory.some(item=>item.kind==='use'||['f64','bool','Option','Vec','String'].includes(item.name)),
+    'the generated lexical declaration source retains primitive type ownership');
+  return names.flatMap(name=>{
+    const selected=inventory.filter(item=>item.kind==='fn'&&item.name===name);
+    assert.equal(selected.length,1,'one complete generated scalar decision is retained for '+name);
+    const from=selected[0].source;
+    const loans=readPortableSourceParameterStyles(from).source;
+    const to=readPortableSourceLintStyles(loans).source;
+    assert.doesNotMatch(to,/#\[allow\(/u,'a lexical declaration style introduces no lint allowance');
+    return from===to?[]:[{op:'replace',field:'source',from,to}];
+  });
+}
 
 /** Derive exact, bounded contexts from the actual checked source library. */
 export function readFrontendRuleStyleCorrections(source) {

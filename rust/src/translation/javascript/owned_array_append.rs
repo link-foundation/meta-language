@@ -407,7 +407,7 @@ impl Occurrences {
                     scope.insert(name.clone(), allocation);
                 }
                 Stmt::Expr { expr, .. } if append_shape(expr) => {
-                    let SNode::Method { object, args, .. } = &expr.node else {
+                    let SNode::Method { object, args, op } = &expr.node else {
                         unreachable!("the generated shape names an actual source method")
                     };
                     let allocation = object
@@ -427,12 +427,23 @@ impl Occurrences {
                             position,
                             operation_span: object
                                 .span
-                                .zip(
+                                .zip(if op == "pop" {
+                                    expr.span
+                                } else {
                                     args.first()
                                         .and_then(|argument| argument.as_ref())
-                                        .and_then(|argument| argument.span),
-                                )
-                                .map(|(object, argument)| Span::new(object.end, argument.start)),
+                                        .and_then(|argument| argument.span)
+                                })
+                                .map(|(object, argument)| {
+                                    Span::new(
+                                        object.end,
+                                        if op == "pop" {
+                                            argument.end
+                                        } else {
+                                            argument.start
+                                        },
+                                    )
+                                }),
                         });
                     }
                 }
@@ -527,6 +538,13 @@ fn append_shape(expression: &SExpr) -> bool {
         object.map_or("", |object| object.node.kind()),
         number(path),
         number(count),
+    ) || rules::accept_owned_array_removal_shape(
+        "expr",
+        expression.node.kind(),
+        operation,
+        object.map_or("", |object| object.node.kind()),
+        number(path),
+        number(count),
     )
 }
 
@@ -581,24 +599,43 @@ fn replace(statements: &mut [Stmt], selected: &HashMap<*const Stmt, String>) {
                 unreachable!("an append owner is an expression statement")
             };
             let place = expr.span;
-            let SNode::Method { object, args, .. } = expr.node else {
+            let SNode::Method { object, args, op } = expr.node else {
                 unreachable!("the admitted owner retains its method")
             };
-            let mut items = vec![SArrayItem::new(*object, true)];
-            items.extend(args.into_iter().map(|argument| {
-                SArrayItem::without_spread(
-                    argument.expect("parsed source arguments retain their actual expressions"),
-                )
-            }));
+            let value = if op == "pop" {
+                SNode::Method {
+                    object,
+                    op: "slice".to_owned(),
+                    args: rules::read_owned_array_removal_slice_bounds()
+                        .into_iter()
+                        .map(|bound| {
+                            Some(SExpr::new(
+                                SNode::Num {
+                                    value: bound.abs().to_string(),
+                                    ty: Some(super::FLOAT),
+                                    negative: bound < 0.0,
+                                    unit: false,
+                                },
+                                place,
+                            ))
+                        })
+                        .collect(),
+                }
+            } else {
+                let mut items = vec![SArrayItem::new(*object, true)];
+                items.extend(args.into_iter().map(|argument| {
+                    SArrayItem::without_spread(
+                        argument.expect("parsed source arguments retain their actual expressions"),
+                    )
+                }));
+                SNode::Array {
+                    items,
+                    element: None,
+                }
+            };
             *statement = Stmt::Assign {
                 name: name.clone(),
-                value: SExpr::new(
-                    SNode::Array {
-                        items,
-                        element: None,
-                    },
-                    place,
-                ),
+                value: SExpr::new(value, place),
                 span,
             };
             continue;

@@ -27,7 +27,7 @@ export async function generateOwnedArrayAppendRules({ check = false, native = fa
     model: 'fresh local array construction and final binding consumption 1',
     source: 'js/src/translation/owned-array-append-rules.js',
     sourceSha256: hash(source),
-    decisions: ['acceptOwnedArrayAppendShape', 'acceptOwnedArrayRead', 'acceptOwnedArrayReaderResult',
+    decisions: ['acceptOwnedArrayAppendShape', 'acceptOwnedArrayRemovalShape', 'readOwnedArrayRemovalSliceBounds', 'acceptOwnedArrayRead', 'acceptOwnedArrayReaderResult',
       'acceptOwnedArrayAppendUses', 'acceptOwnedArrayFinalUse'],
     sourceClosure: { source: closure, sourceSha256: hash(closure), removedImport: requiredImport,
       inputs: [{ path: 'js/src/translation/owned-array-append-rules.js', sourceSha256: hash(source) },

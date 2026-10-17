@@ -198,6 +198,28 @@ pub fn accept_owned_array_append_shape(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn accept_owned_array_removal_shape(
+    statement: &str,
+    expression: &str,
+    operation: &str,
+    receiver: &str,
+    path_length: f64,
+    arguments_count: f64,
+) -> bool {
+    (((((statement == "expr") && (expression == "method")) && (operation == "pop"))
+        && (receiver == "name"))
+        && (path_length == 1f64))
+        && (arguments_count == 0f64)
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_owned_array_removal_slice_bounds() -> Vec<f64> {
+    vec![0f64, -1f64]
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn accept_owned_array_read(context: &str, operation: &str, reader: bool) -> bool {
     if (context == "index-receiver") || (context == "length-receiver") {
         true

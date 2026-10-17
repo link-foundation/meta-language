@@ -392,3 +392,70 @@ pub fn read_java_script_temporal_binding_read(
         }
     }
 }
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+pub fn read_java_script_lexical_declaration_step(
+    kind: &str,
+    value: &str,
+    depth: f64,
+    declaration: bool,
+) -> f64 {
+    if (kind == "eof") || (((depth == 0f64) && (kind == "punct")) && (value == "}")) {
+        -1f64
+    } else {
+        {
+            let ml_s19 = if depth == 0f64 {
+                if (kind == "identifier") && ((value == "const") || (value == "let")) {
+                    crate::translation::frontend_rules::MlReadJavaScriptLexicalDeclarationStepJoin33::MlReadJavaScriptLexicalDeclarationStepJoin33Return(3f64)
+                } else if ((kind == "punct") && (value == ",")) && declaration {
+                    crate::translation::frontend_rules::MlReadJavaScriptLexicalDeclarationStepJoin33::MlReadJavaScriptLexicalDeclarationStepJoin33Return(4f64)
+                } else if ((kind == "punct") && (value == ";"))
+                    || ((kind == "identifier")
+                        && (((((((((((((value == "return") || (value == "throw"))
+                            || (value == "function"))
+                            || (value == "if"))
+                            || (value == "while"))
+                            || (value == "for"))
+                            || (value == "switch"))
+                            || (value == "class"))
+                            || (value == "break"))
+                            || (value == "continue"))
+                            || (value == "try"))
+                            || (value == "import"))
+                            || (value == "export")))
+                {
+                    crate::translation::frontend_rules::MlReadJavaScriptLexicalDeclarationStepJoin33::MlReadJavaScriptLexicalDeclarationStepJoin33Return(5f64)
+                } else {
+                    crate::translation::frontend_rules::MlReadJavaScriptLexicalDeclarationStepJoin33::MlReadJavaScriptLexicalDeclarationStepJoin33Next
+                }
+            } else {
+                crate::translation::frontend_rules::MlReadJavaScriptLexicalDeclarationStepJoin33::MlReadJavaScriptLexicalDeclarationStepJoin33Next
+            };
+            match ml_s19 {
+                crate::translation::frontend_rules::MlReadJavaScriptLexicalDeclarationStepJoin33::MlReadJavaScriptLexicalDeclarationStepJoin33Next => {
+                    if (kind == "punct") && (((value == "{") || (value == "(")) || (value == "[")) {
+                        1f64
+                    } else if (kind == "punct") && (((value == "}") || (value == ")")) || (value == "]")) {
+                            2f64
+                        } else {
+                            0f64
+                        }
+                }
+                crate::translation::frontend_rules::MlReadJavaScriptLexicalDeclarationStepJoin33::MlReadJavaScriptLexicalDeclarationStepJoin33Return(ml_result33) => {
+                    ml_result33
+                }
+            }
+        }
+    }
+}
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+pub const fn require_java_script_branch_continuation(
+    then_terminates: bool,
+    has_otherwise: bool,
+    otherwise_terminates: bool,
+) -> bool {
+    !then_terminates || (has_otherwise && !otherwise_terminates)
+}

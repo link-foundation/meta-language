@@ -217,7 +217,7 @@ impl JavaScriptParser {
             {
                 return Err(unsupported(
                     &format!("global binding {}", token.value),
-                    "a delayed function read needs an owned module binding; it cannot be replaced with the built-in constant",
+                    "a delayed function read needs an owned module binding; a mutable module binding requires module-capture representation, and neither can be replaced with the built-in constant",
                     Some(span(&token, &token)),
                 ));
             }
@@ -416,6 +416,9 @@ impl JavaScriptParser {
         let here = span(token, token);
         self.lexical.read(token, false, here);
         let temporal = self.scope.tdz.contains(&token.value);
+        if temporal {
+            self.lexical.validate_temporal(token)?;
+        }
         let reason = crate::translation::callable_source_rules::read_callable_reference_obligation(
             temporal,
             self.scope.locals.contains(&token.value),

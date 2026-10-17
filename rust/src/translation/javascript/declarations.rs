@@ -12,7 +12,9 @@ use super::{
     guarded_parameter, imperative, is_identifier_name, is_js_space, js_trim, jsdoc_tags, lower,
     lower_imperative, non_empty, span, statement_uses, tokenize, type_error, unsupported,
 };
-use crate::translation::frontend_rules::find_default_parameter_reference;
+use crate::translation::frontend_rules::{
+    find_default_parameter_reference, read_java_script_lexical_declaration_step,
+};
 use crate::translation::primitive_value_rules::accept_object_property_definition;
 use crate::translation::surface::SExpr;
 
@@ -787,48 +789,56 @@ impl JavaScriptParser {
     }
 
     /// Names a block declares with `const` or `let`, which are in their temporal dead zone until declared.
-    pub(super) fn block_declarations(&mut self, from: usize, end: ScanEnd) -> HashSet<String> {
+    pub(super) fn block_declarations(&mut self, from: usize, _end: ScanEnd) -> HashSet<String> {
         let mut names = HashSet::new();
         let saved = self.cursor.index;
         self.cursor.index = from;
-        let mut depth = 0_i64;
+        // Signed Number depth retains the shared parser's malformed-delimiter
+        // behavior without unsigned underflow. No token columns are copied.
+        let mut depth = 0.0;
+        let mut declaration = false;
         loop {
-            let done = match end {
-                ScanEnd::File => self.cursor.at_end(),
-                ScanEnd::Brace => self.cursor.is("}"),
-            };
-            if self.cursor.at_end() || (depth == 0 && done) {
-                break;
-            }
             let token = self.cursor.advance();
-            let punct = token.kind == TokenKind::Punct;
-            if punct && ["{", "(", "["].contains(&token.value.as_str()) {
-                depth += 1;
-            } else if punct && ["}", ")", "]"].contains(&token.value.as_str()) {
-                depth -= 1;
-            } else if depth == 0
-                && token.kind == TokenKind::Identifier
-                && (token.value == "const" || token.value == "let")
-            {
-                let c = &self.cursor;
-                if c.peek().kind == TokenKind::Identifier {
-                    names.insert(c.peek().value.clone());
-                } else if c.is("{") {
-                    let mut offset = 1;
-                    while !c.is_at("}", offset) && !c.is_kind_at(TokenKind::Eof, offset) {
-                        if c.peek_at(offset).kind == TokenKind::Identifier
-                            && (c.is_at(",", offset + 1) || c.is_at("}", offset + 1))
-                        {
-                            names.insert(c.peek_at(offset).value.clone());
-                        }
-                        offset += 1;
+            let kind = match token.kind {
+                TokenKind::Punct => "punct",
+                TokenKind::Identifier => "identifier",
+                TokenKind::Eof => "eof",
+                _ => "other",
+            };
+            let step = crate::translation::frontend_rules::ml_array::number_index(
+                read_java_script_lexical_declaration_step(kind, &token.value, depth, declaration),
+            );
+            match step {
+                None => break,
+                Some(1) => depth += 1.0,
+                Some(2) => depth -= 1.0,
+                Some(3 | 4) => declaration = true,
+                Some(5) => declaration = false,
+                _ => {}
+            }
+            if !matches!(step, Some(3 | 4)) {
+                continue;
+            }
+            let binding_start = self.cursor.index;
+            let c = &self.cursor;
+            if c.peek().kind == TokenKind::Identifier {
+                names.insert(c.peek().value.clone());
+            } else if c.is("{") {
+                let mut offset = 1;
+                while !c.is_at("}", offset) && !c.is_kind_at(TokenKind::Eof, offset) {
+                    if c.peek_at(offset).kind == TokenKind::Identifier
+                        && (c.is_at(",", offset + 1) || c.is_at("}", offset + 1))
+                    {
+                        names.insert(c.peek_at(offset).value.clone());
                     }
-                } else if c.is("[") {
-                    for token in self.array_binding_names(c.index) {
-                        names.insert(token.value);
-                    }
+                    offset += 1;
+                }
+            } else if c.is("[") {
+                for token in self.array_binding_names(c.index) {
+                    names.insert(token.value);
                 }
             }
+            self.cursor.index = binding_start;
         }
         self.cursor.index = saved;
         names

@@ -233,9 +233,15 @@ impl JavaScriptParser {
 
     pub(super) fn array_destructuring(&mut self, start: &Token) -> Result<Stmt> {
         let bindings = self.read_array_binding()?;
+        if bindings.is_empty() {
+            return Err(unsupported(
+                "empty array binding",
+                "the iterator and destructibility need a checked representation",
+                Some(self.to_here(start)),
+            ));
+        }
         self.cursor.expect("=", Some("array binding"))?;
         let value = self.array_binding_initializer(&bindings)?;
-        self.cursor.eat(";");
         let whole = self.to_here(start);
         self.generated_count += 1;
         let name = format!("ml_binding{}", self.generated_count);

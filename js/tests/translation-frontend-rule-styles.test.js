@@ -12,11 +12,49 @@ import {tokenize} from '../src/translation/lexer.js';
 import {frontendRuleNativeStyleId,readFrontendRuleStyleCorrections,
   frontendTypeQueryNativeStyleId,readFrontendTypeQueryStyleCorrections,
   frontendCurrentBooleanNativeStyleId,readFrontendCurrentBooleanStyleCorrections,
-  frontendTemporalBindingNativeStyleId,readFrontendTemporalBindingStyleCorrections} from '../scripts/frontend-rule-style-corrections.mjs';
+  frontendTemporalBindingNativeStyleId,readFrontendTemporalBindingStyleCorrections,
+  frontendLexicalDeclarationNativeStyleId,readFrontendLexicalDeclarationStyleCorrections} from '../scripts/frontend-rule-style-corrections.mjs';
 import {formatProductRuleSource} from '../scripts/product-rule-style-corrections.mjs';
 import {simplifyRustOptionIdentityMatches} from '../scripts/reviewed-rust-branch-styles.mjs';
 import {readRustLibraryItems} from '../scripts/rust-library-packaging.mjs';
 import {readSourceTextRustBlock} from '../scripts/source-text-byte-library-style.mjs';
+
+test('scalar declaration styles borrow actual token strings and preserve all other source owners',()=>{
+  const input=readFileSync(new URL('../src/translation/frontend-rules.js',import.meta.url),'utf8');
+  const emitted=emitRust(checkProgram(parseJavaScript(input)));
+  const decorators=DecoratorSet.fromLino(readFileSync(new URL('../../parity/self-translation/frontend-rules-decorators.lino',import.meta.url),'utf8'));
+  const base=new DecoratorSet(decorators.decorators.filter(definition=>definition.id!==frontendLexicalDeclarationNativeStyleId));
+  let raw=formatProductRuleSource(decorateEmitted('Rust',{source:emitted.text},base).source);
+  for(let round=0;round<10;round++){
+    const next=formatProductRuleSource(base.decorate('emitter',{format:'Rust',scope:'formatted-module',source:raw}).source);
+    if(next===raw)break;
+    raw=next;assert.ok(round<9);
+  }
+  const actions=readFrontendLexicalDeclarationStyleCorrections(raw);
+  assert.equal(actions.length,2);
+  const recorded=decorators.decorators.find(definition=>definition.id===frontendLexicalDeclarationNativeStyleId);
+  assert.deepEqual(recorded.actions,actions);
+  const replay=new DecoratorSet([recorded]).decorate('emitter',{format:'Rust',scope:'formatted-module',source:raw}).source;
+  const before=readRustLibraryItems(raw).items,after=new Map(readRustLibraryItems(replay).items.map(item=>[item.name,item]));
+  for(const item of before){
+    const updated=after.get(item.name);assert.equal(updated.kind,item.kind);
+    if(!['read_java_script_lexical_declaration_step','require_java_script_branch_continuation'].includes(item.name)) {
+      assert.equal(updated.source,item.source);continue;
+    }
+    const literals=(source,kind)=>tokenize(source,'Rust').tokens.filter(token=>token.kind===kind).map(token=>token.value);
+    assert.deepEqual(literals(updated.source,'string'),literals(item.source,'string'));
+    // Two guards returning the same reset code may share that return. Every
+    // distinct scalar code and the complete ordered token comparisons remain.
+    assert.deepEqual([...new Set(literals(updated.source,'number'))].sort(),[...new Set(literals(item.source,'number'))].sort());
+    assert.doesNotMatch(updated.source,/#\[(?:allow|expect)\(/u);
+    if(item.name==='read_java_script_lexical_declaration_step') {
+      assert.match(updated.source,/kind: &str/u);assert.match(updated.source,/value: &str/u);
+      assert.doesNotMatch(updated.source,/\b(?:kind|value)\.(?:clone|to_owned|to_vec)\(/u);
+    }
+  }
+  assert.deepEqual(readFrontendLexicalDeclarationStyleCorrections(replay),[]);
+  assert.throws(()=>readFrontendLexicalDeclarationStyleCorrections('type String=Other;\n'+raw),/primitive type ownership/u);
+});
 
 test('reviewed frontend styles repair all fifteen CI diagnostics in their three complete source owners',()=>{
   const producer=readFileSync(new URL('../scripts/product-rule-style-corrections.mjs',import.meta.url));

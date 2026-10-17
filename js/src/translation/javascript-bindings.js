@@ -38,7 +38,7 @@ export function readClosure(parser, method = false) {
     const where = { start: start.start, end: c.peek().start };
     const { assignedCaptures, captures } = readCallableStatementCaptures(statements, names, outer.locals);
     if (assignedCaptures.length && !parser.referenceSemantics) throw unsupported('mutable closure capture', 'captured assignments require a shared cell across calls', where);
-    const body = imperative(statements) ? lowerImperative(parser, `closure${++parser.generatedCount}`, params, statements, where, new Set(assignedCaptures), new Set(captures)) : parser.lower(statements, where);
+    const body = imperative(statements, parser) ? lowerImperative(parser, `closure${++parser.generatedCount}`, params, statements, where, new Set(assignedCaptures), new Set(captures)) : parser.lower(statements, where);
     return { k: readCallableSurfaceConstructor('closure', false), params, ret: null, captures, ...(requireCallableAssignedCaptureField(assignedCaptures.length) ? { assignedCaptures } : {}), body, span: where };
   } finally {
     parser.scope = outer;

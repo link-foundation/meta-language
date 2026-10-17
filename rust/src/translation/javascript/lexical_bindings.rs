@@ -83,6 +83,24 @@ impl Trace {
     }
 
     pub(super) fn validate(&self) -> Result<()> {
+        self.validate_reads(None)
+    }
+
+    pub(super) fn validate_temporal(&self, token: &Token) -> Result<()> {
+        self.validate_reads(Some(token))
+    }
+
+    fn validate_reads(&self, temporal: Option<&Token>) -> Result<()> {
+        let selected = temporal.map(|token| Read {
+            scope: self.current,
+            name: token.value.clone(),
+            start: token.start,
+            span: super::span(token, token),
+            assignment: false,
+        });
+        let reads = selected
+            .as_ref()
+            .map_or(self.reads.as_slice(), std::slice::from_ref);
         let mut parents = Vec::new();
         let mut bounds = Vec::new();
         let mut names = Vec::new();
@@ -96,21 +114,22 @@ impl Trace {
             ]);
             for (name, end) in &frame.bindings {
                 names.push(name.clone());
-                ends.push(end.map_or(-1.0, number));
+                ends.push(
+                    temporal
+                        .filter(|token| token.value == *name)
+                        .map_or_else(|| end.map_or(-1.0, number), |token| number(token.start + 1)),
+                );
             }
         }
-        let scopes = self
-            .reads
+        let scopes = reads
             .iter()
             .map(|read| number(read.scope))
             .collect::<Vec<_>>();
-        let read_names = self
-            .reads
+        let read_names = reads
             .iter()
             .map(|read| read.name.clone())
             .collect::<Vec<_>>();
-        let starts = self
-            .reads
+        let starts = reads
             .iter()
             .map(|read| number(read.start))
             .collect::<Vec<_>>();
@@ -126,7 +145,7 @@ impl Trace {
         let Some(index) = plan.first() else {
             return Ok(());
         };
-        let read = &self.reads[position(*index)];
+        let read = &reads[position(*index)];
         let issue = frontend_rules::ml_array::number_index(plan[1]);
         if issue == Some(2) {
             return Err(unsupported(

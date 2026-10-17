@@ -26,10 +26,21 @@ fn ordinary_imperative(statements: &[Stmt]) -> bool {
         | Stmt::Continue { .. }
         | Stmt::Print { .. }
         | Stmt::Expr { .. } => true,
-        Stmt::Block { body, .. } => ordinary_imperative(body),
+        Stmt::Block { body, inline, .. } => {
+            !inline && !super::lowering::terminates(body) || ordinary_imperative(body)
+        }
         Stmt::If {
             then, otherwise, ..
-        } => ordinary_imperative(then) || otherwise.as_deref().is_some_and(ordinary_imperative),
+        } => {
+            crate::translation::frontend_rules::require_java_script_branch_continuation(
+                super::lowering::terminates(then),
+                otherwise.is_some(),
+                otherwise
+                    .as_deref()
+                    .is_some_and(super::lowering::terminates),
+            ) || ordinary_imperative(then)
+                || otherwise.as_deref().is_some_and(ordinary_imperative)
+        }
         Stmt::Switch(node) => node
             .clauses
             .iter()

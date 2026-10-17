@@ -8,6 +8,17 @@ export function acceptOwnedArrayAppendShape(statement, expression, operation, re
     && receiver === 'name' && pathLength === 1 && argumentsCount > 0;
 }
 
+/** @param {string} statement @param {string} expression @param {string} operation @param {string} receiver @param {number} pathLength @param {number} argumentsCount @returns {boolean} */
+export function acceptOwnedArrayRemovalShape(statement, expression, operation, receiver, pathLength, argumentsCount) {
+  return statement === 'expr' && expression === 'method' && operation === 'pop'
+    && receiver === 'name' && pathLength === 1 && argumentsCount === 0;
+}
+
+/** @returns {number[]} */
+export function readOwnedArrayRemovalSliceBounds() {
+  return [0, -1];
+}
+
 /** @param {string} context @param {string} operation @param {boolean} reader @returns {boolean} */
 export function acceptOwnedArrayRead(context, operation, reader) {
   if (context === 'index-receiver' || context === 'length-receiver') return true;

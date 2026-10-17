@@ -62,17 +62,17 @@ pub fn ml_accept_precedence_operand_context_loop28(
             && (index < (child_contexts.len() as f64)))
         {
             if ({
-                let ml_logical23 = crate::translation::frontend_rules::ml_array::optional_at(
+                let ml_logical24 = crate::translation::frontend_rules::ml_array::optional_at(
                     &owner_contexts,
                     crate::translation::frontend_rules::ml_array::number_index(index),
                 );
-                if ml_logical23.unwrap_or_default() {
+                if ml_logical24.unwrap_or_default() {
                     crate::translation::frontend_rules::ml_array::optional_at(
                         &child_contexts,
                         crate::translation::frontend_rules::ml_array::number_index(index),
                     )
                 } else {
-                    ml_logical23
+                    ml_logical24
                 }
             })
             .unwrap_or_default()
@@ -305,8 +305,8 @@ pub fn ml_read_java_script_temporal_binding_read_loop31(
                     ),
                 );
                 {
-                    let ml_s24 = crate::translation::frontend_rules::ml_read_java_script_temporal_binding_read_loop32(bounds, names, ends, read_names, read_starts, read, scope, bound, captured, module_read, at);
-                    match ml_s24 {
+                    let ml_s25 = crate::translation::frontend_rules::ml_read_java_script_temporal_binding_read_loop32(bounds, names, ends, read_names, read_starts, read, scope, bound, captured, module_read, at);
+                    match ml_s25 {
                         crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop32Result::MlReadJavaScriptTemporalBindingReadLoop32Done(bound_2) => {
                             {
                                 let captured_3 = if !bound_2 && match (crate::translation::frontend_rules::ml_array::optional_at(bounds, crate::translation::frontend_rules::ml_array::number_index(((scope).unwrap_or(f64::NAN) * 3f64) + 2f64)), 1f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false } {
@@ -377,8 +377,8 @@ pub fn ml_read_java_script_temporal_binding_read_loop30(
                         {
                             let module_read = false;
                             {
-                                let ml_s25 = crate::translation::frontend_rules::ml_read_java_script_temporal_binding_read_loop31(parents, bounds, names, ends, read_names, read_starts, read, scope, bound, captured, module_read);
-                                match ml_s25 {
+                                let ml_s26 = crate::translation::frontend_rules::ml_read_java_script_temporal_binding_read_loop31(parents, bounds, names, ends, read_names, read_starts, read, scope, bound, captured, module_read);
+                                match ml_s26 {
                                     crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop31Result::MlReadJavaScriptTemporalBindingReadLoop31Done => {
                                         {
                                             let read_2 = read + 1f64;
@@ -401,6 +401,12 @@ pub fn ml_read_java_script_temporal_binding_read_loop30(
             crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop30Result::MlReadJavaScriptTemporalBindingReadLoop30Done
         };
     }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlReadJavaScriptLexicalDeclarationStepJoin33 {
+    MlReadJavaScriptLexicalDeclarationStepJoin33Next,
+    MlReadJavaScriptLexicalDeclarationStepJoin33Return(f64),
 }
 
 const fn ml_main() {}

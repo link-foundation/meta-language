@@ -33,6 +33,32 @@ test('fresh local pushes become pure checked array values and survive source-fre
   assert.equal(run(variadic, 'build(3).join(",");'), '0,1,1,2,2,3');
 });
 
+test('discarded private pops preserve empty arrays and loop state through Links replay', () => {
+  const source = '/** @returns {number[]} */ function build() { const values=[2,3]; values.pop(); values.pop(); values.pop(); values.push(5); for(let index=0;index<3;index+=1){values.push(index);values.pop();} return values; }';
+  const program = check(source);
+  const archive = encodeTypedProgramLinks(program);
+  for (const value of [program, decodeTypedProgramLinks(archive.network, archive.root)]) {
+    recheckLinkedTypedProgram(value, { wholeProgram: true });
+    assert.equal(run(value, 'build().join(",");'), '5');
+    assert.equal(emitRust(value).text, emitRust(program).text);
+  }
+  assert.equal(program.referenceSemantics, undefined);
+  assert.equal(run(checkProgram(parseJavaScript(source)), 'build().join(",");'), '5');
+});
+
+test('observed pop results, argument effects and alias escapes retain their obligations', () => {
+  for (const body of [
+    'const alias=values;values.pop();return alias;',
+    'const selected=values.pop();return [selected];',
+    'values.pop(effect());return values;',
+    'const read=()=>values;values.pop();return read();',
+    'for(let index=0;index<2;index+=1){values.pop();const alias=values;}return values;',
+  ]) {
+    const source = 'function effect(){console.log("effect");return 1;}function build(){const values=[2,3];'+body+'}';
+    assert.throws(() => check(source), /method call \.pop\(\)|mutable|capture|type/u, body);
+  }
+});
+
 test('construction refuses preexisting aliases, unknown calls, captures and loop-carried escapes', () => {
   const cases = [
     'const alias=values; values.push(1); return alias;',

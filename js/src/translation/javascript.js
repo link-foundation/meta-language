@@ -11,7 +11,7 @@
 // obligation.
 
 import { TranslationError, typeError, unsupported } from './diagnostics.js';
-import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation, readJavaScriptTemporalBindingRead } from './frontend-rules.js';
+import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation, readJavaScriptTemporalBindingRead, readJavaScriptLexicalDeclarationStep } from './frontend-rules.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
 import { readJavaScriptTagOwnerPosition, readJavaScriptTagReceiverForm, readJavaScriptTagBindingStep, acceptJavaScriptTagHeaderFact, readJavaScriptTagDeclaredOwner } from './javascript-tag-context-rules.js';
 import { readCallableReferenceConstruct, readCallableReferenceObligation, readCallableSurfaceConstructor } from './callable-source-rules.js';
@@ -157,7 +157,7 @@ class JavaScriptParser {
       c.next();
       c.eat(';');
     }
-    this.scope = { locals: new Set(), tdz: this.blockDeclarations(c.index, () => c.atEnd()), mutable: new Set() };
+    this.scope = { locals: new Set(), tdz: this.blockDeclarations(c.index), mutable: new Set() };
     for (const name of this.scope.tdz) this.lexicalBinding(name);
     this.asyncNames = this.asyncDeclarations(c.index);
     let depth = 0;
@@ -209,7 +209,8 @@ class JavaScriptParser {
         this.importDeclaration();
         continue;
       }
-      if (c.eat('export')) {
+      const exported = Boolean(c.eat('export'));
+      if (exported) {
         if (!c.is('function') && !c.is('const') && !(c.is('async') && c.is('function', 1))) {
           throw unsupported(`export ${describe(c.peek())}`, 'only function and const declarations are exported', span(start, c.peek()));
         }
@@ -254,7 +255,11 @@ class JavaScriptParser {
       }
       flush();
       const effect = this.mainStatement();
-      effects.push(...(Array.isArray(effect) ? effect : [effect]));
+      const entries = Array.isArray(effect) ? effect : [effect];
+      if (exported) for (const entry of entries) {
+        if (entry.k === 'let' && !entry.name.startsWith('ml_')) this.exportedNames.add(entry.name);
+      }
+      effects.push(...entries);
     }
     flush();
     this.validateLexicalBindings();
@@ -661,7 +666,7 @@ class JavaScriptParser {
     }
     const where = span(nameToken, c.peek());
     const rest = statements.slice(index);
-    const body = imperative(rest) ? lowerImperative(this, name, params, rest, where) : this.lower(rest, where);
+    const body = imperative(rest, this) ? lowerImperative(this, name, params, rest, where) : this.lower(rest, where);
     const declaration = { k: 'fn', name, params, ret, body, span: span(docToken, c.peek()) };
     if (!this.ownedArrayReaderNamespace) this.ownedArrayReaders.set(name, readOwnedArrayReaderParameters(declaration, this.ownedArrayReaders, statements));
     return declaration;
@@ -744,26 +749,30 @@ class JavaScriptParser {
     return { k: 'module', name, items, span: span(start, c.peek()) };
   }
 
-  /** Names a block declares with `const`, which are in their temporal dead zone until declared. */
-  blockDeclarations(from, done) {
+  /** Every lexical declaration's names remain in their temporal dead zone until initialized. */
+  blockDeclarations(from) {
     const c = this.cursor;
     const names = new Set();
     const saved = c.index;
     c.index = from;
     let depth = 0;
-    while (!c.atEnd() && !(depth === 0 && done())) {
+    let declaration = false;
+    while (!c.atEnd()) {
       const token = c.next();
-      if (['{', '(', '['].includes(token.value) && token.kind === 'punct') depth += 1;
-      else if (['}', ')', ']'].includes(token.value) && token.kind === 'punct') depth -= 1;
-      else if (depth === 0 && token.kind === 'identifier' && (token.value === 'const' || token.value === 'let')) {
-        if (c.peek().kind === 'identifier') names.add(c.peek().value);
-        else if (c.is('[')) {
-          for (const binding of arrayBindingNames(this, c.index)) names.add(binding.value);
-        }
-        else if (c.is('{')) {
-          for (let offset = 1; !c.is('}', offset) && !c.isKind('eof', offset); offset += 1) {
-            if (c.peek(offset).kind === 'identifier' && (c.is(',', offset + 1) || c.is('}', offset + 1))) names.add(c.peek(offset).value);
-          }
+      const step = readJavaScriptLexicalDeclarationStep(token.kind, token.value, depth, declaration);
+      if (step === -1) break;
+      if (step === 1) depth += 1;
+      else if (step === 2) depth -= 1;
+      else if (step === 5) declaration = false;
+      if (step !== 3 && step !== 4) continue;
+      declaration = true;
+      if (c.peek().kind === 'identifier') names.add(c.peek().value);
+      else if (c.is('[')) {
+        for (const binding of arrayBindingNames(this, c.index)) names.add(binding.value);
+      }
+      else if (c.is('{')) {
+        for (let offset = 1; !c.is('}', offset) && !c.isKind('eof', offset); offset += 1) {
+          if (c.peek(offset).kind === 'identifier' && (c.is(',', offset + 1) || c.is('}', offset + 1))) names.add(c.peek(offset).value);
         }
       }
     }
@@ -775,7 +784,7 @@ class JavaScriptParser {
     const c = this.cursor;
     const outer = this.scope;
     const tdz = new Set(outer.tdz);
-    const names = this.blockDeclarations(c.index, () => c.is('}'));
+    const names = this.blockDeclarations(c.index);
     for (const name of names) tdz.add(name);
     this.scope = { locals: new Set(outer.locals), tdz, mutable: new Set(outer.mutable) };
     try {
@@ -913,12 +922,29 @@ class JavaScriptParser {
   constStatement(readonly = false) {
     const c = this.cursor;
     const start = c.next();
+    const statements = [];
+    const names = new Set();
+    do {
+      const binding = this.constDeclarator(start, readonly);
+      const entries = binding.s === 'block' && binding.inline ? binding.body : [binding];
+      for (const entry of entries) {
+        if (names.has(entry.name)) throw new TranslationError('syntax', `duplicate lexical binding ${entry.name}`, entry.span);
+        names.add(entry.name);
+      }
+      statements.push(...entries);
+    } while (c.eat(','));
+    c.eat(';');
+    return statements.length === 1 ? statements[0] : { s: 'block', inline: true, body: statements, span: span(start, c.peek()) };
+  }
+
+  constDeclarator(start, readonly) {
+    const c = this.cursor;
     if (c.is('{')) return this.destructuring(start);
     if (c.is('[')) {
       const bindings = readArrayBinding(this);
+      if (!bindings.length) throw unsupported('empty array binding', 'the iterator and destructibility need a checked representation', span(start, c.peek()));
       c.expect('=', 'array binding');
       const value = readArrayBindingInitializer(this, bindings, () => this.expr());
-      c.eat(';');
       const where = span(start, c.peek());
       const name = `ml_binding${++this.generatedCount}`;
       const object = { k: 'name', path: [name], span: where };
@@ -927,13 +953,12 @@ class JavaScriptParser {
     }
     const name = c.identifier('const');
     reserved(name);
+    this.scope.tdz.add(name.value);
     if (!c.eat('=')) throw this.fail('expected = in const');
     const previous = this.readonlyConstantInitializer;
     this.readonlyConstantInitializer = readonly;
     let value;
     try { value = this.expr(); } finally { this.readonlyConstantInitializer = previous; }
-    if (c.is(',')) throw unsupported('several declarators', 'declare one binding per const', span(start, c.peek()));
-    c.eat(';');
     const receiverFact = this.readTagReceiverFact(value);
     this.declareLocal(name.value);
     if (receiverFact) this.rememberTagBinding(name.value, receiverFact);
@@ -955,9 +980,12 @@ class JavaScriptParser {
       if (!c.eat(',')) break;
     }
     c.expect('}', 'destructuring');
+    if (!pairs.length) throw unsupported('empty object binding', 'object destructibility needs a checked representation', span(start, c.peek()));
     c.expect('=', 'destructuring');
-    const object = this.expr();
-    c.eat(';');
+    const value = this.expr();
+    const where = span(start, c.peek());
+    const name = `ml_binding${++this.generatedCount}`;
+    const object = { k: 'name', path: [name], span: where };
     const statements = pairs.map((pair) => ({
       s: 'const',
       name: pair.name,
@@ -965,7 +993,7 @@ class JavaScriptParser {
       span: span(start, c.peek()),
     }));
     for (const pair of pairs) this.declareLocal(pair.name);
-    return { s: 'block', body: statements, inline: true, span: span(start, c.peek()) };
+    return { s: 'block', body: [{ s: 'const', name, value, span: where }, ...statements], inline: true, span: where };
   }
 
   /** `let a = 1n, b = a;` declares assignable locals; each needs a value, since undefined is not portable. */
@@ -1381,7 +1409,10 @@ class JavaScriptParser {
     if (c.is('const')) {
       if (c.is('{', 1)) throw unsupported('top-level destructuring', 'bind each value with const', span(token, c.peek(1)));
       const binding = this.constStatement(this.readonlyModuleConstants);
-      if (binding.s === 'block' && binding.inline) return binding.body.map(entry => ({ k: 'let', name: entry.name, value: entry.value, constant: true, span: entry.span }));
+      if (binding.s === 'block' && binding.inline) return binding.body.map(entry => {
+        if (isLiteralBinding(entry.value)) this.literalBindings.set(entry.name, entry.value);
+        return { k: 'let', name: entry.name, value: entry.value, constant: true, span: entry.span };
+      });
       if (isLiteralBinding(binding.value)) this.literalBindings.set(binding.name, binding.value);
       return { k: 'let', name: binding.name, value: binding.value, constant: true, span: binding.span };
     }
@@ -2220,7 +2251,7 @@ class JavaScriptParser {
       return this.reference(token);
     }
     const boundGlobal = this.moduleBindings.has(token.value) || this.externals.has(token.value) || this.literalBindings.has(token.value) || this.functionNames.has(token.value);
-    if (['NaN', 'Infinity', 'undefined'].includes(token.value) && boundGlobal && !this.externals.has(token.value) && !this.literalBindings.has(token.value) && !this.functionNames.has(token.value)) throw unsupported(`global binding ${token.value}`, 'a delayed function read needs an owned module binding; it cannot be replaced with the built-in constant', span(token, token));
+    if (['NaN', 'Infinity', 'undefined'].includes(token.value) && boundGlobal && !this.externals.has(token.value) && !this.literalBindings.has(token.value) && !this.functionNames.has(token.value)) throw unsupported(`global binding ${token.value}`, 'a delayed function read needs an owned module binding; a mutable module binding requires module-capture representation, and neither can be replaced with the built-in constant', span(token, token));
     if (!boundGlobal && (token.value === 'NaN' || token.value === 'Infinity')) {
       c.next();
       return { k: 'num', value: token.value, type: FLOAT, span: span(token, token) };
@@ -2307,6 +2338,24 @@ class JavaScriptParser {
   reference(token) {
     this.lexicalRead(token);
     const temporal = this.scope.tdz.has(token.value);
+    if (temporal) {
+      const bounds = [], names = [], ends = [];
+      for (const scope of this.lexicalScopes) {
+        bounds.push(names.length, scope.bindings.size, scope.boundary);
+        for (const [name, end] of scope.bindings) {
+          names.push(name);
+          // Only this already-established TDZ read is checked. Its actual
+          // lexical owner and closure boundaries select the diagnostic.
+          ends.push(name === token.value ? token.start + 1 : end);
+        }
+      }
+      const plan = readJavaScriptTemporalBindingRead(this.lexicalScopes.map(scope => scope.parent), bounds, names, ends,
+        [this.lexicalScope], [token.value], [token.start]);
+      if (plan[1] === 2) throw unsupported(`function reading ${token.value}`,
+        'a mutable module binding requires module-capture representation', span(token, token));
+      if (plan[1] === 1) throw unsupported(`closure reading ${token.value} before its declaration`,
+        'the captured binding may still be in its temporal dead zone; invoking the closure after initialization needs an invocation-order proof', span(token, token));
+    }
     const obligation = readCallableReferenceObligation(temporal, this.scope.locals.has(token.value));
     if (obligation) throw unsupported(readCallableReferenceConstruct(token.value, temporal), obligation, span(token, token));
     return { k: 'name', path: [token.value], span: span(token, token) };

@@ -161,3 +161,166 @@ fn raw_binding_transport_preserves_presence_and_only_validates_the_selected_lite
         );
     }
 }
+
+fn declaration_list_contract(source: &str, emitted: &str) -> Value {
+    let script = r#"
+import {runInNewContext} from 'node:vm';
+import {parseJavaScript} from './js/src/translation/javascript.js';
+import {checkProgram} from './js/src/translation/check.js';
+import {emitRust} from './js/src/translation/emit-rust.js';
+function observe(source){const lines=[];try{runInNewContext(source,{console:{log:(...values)=>lines.push(values.map(String).join(' '))}},{timeout:1000});return{lines,error:null};}catch(error){return{lines,error:{name:error.name,message:error.message}};}}
+const source=process.argv[1];
+try{const surface=parseJavaScript(source);process.stdout.write(JSON.stringify({surface,rust:emitRust(checkProgram(surface)).text,original:observe(source),emitted:observe(process.argv[2])}));}
+catch(error){process.stdout.write(JSON.stringify({diagnostic:{kind:error.kind,reason:error.reason,span:error.span}}));}
+"#;
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+    let output = Command::new("node")
+        .current_dir(root)
+        .args(["--input-type=module", "-e", script, source, emitted])
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    serde_json::from_slice(&output.stdout).unwrap()
+}
+
+#[test]
+fn const_declaration_lists_keep_mixed_binding_order_and_complete_source_free_replays() {
+    for (source, expected) in [
+        (
+            "function selected(first, second) { if(first) { if(second) return 3; } return 7; }\nfunction closed(first,second){const read=()=>{if(first){if(second)return 5;}return 9;};return read();}\nconsole.log(selected(true,true),selected(true,false),selected(false,true),closed(true,true),closed(true,false));",
+            json!({"lines":["3 7 7 5 9"],"error":null}),
+        ),
+        (
+            "function step(value) { console.log(value); return value + 1; }\nfunction selected() { const first = step(1), second = step(first), third = second + first; return third; }\nconsole.log(selected());",
+            json!({"lines":["1","2","5"],"error":null}),
+        ),
+        (
+            "const first = 2, second = 3;\nfunction selected() { return first + second; }\nconsole.log(selected());",
+            json!({"lines":["5"],"error":null}),
+        ),
+        (
+            "function values() { console.log('array'); return [2]; }\nfunction record() { console.log('record'); return {left: 3, right: 5}; }\nfunction selected() { const [first, next = first + 1] = values(), {left, right: last} = record(), total = first + next + left + last; return total; }\nconsole.log(selected());",
+            json!({"lines":["array","record","13"],"error":null}),
+        ),
+        (
+            "/** @returns {number} */ function stop() { console.log('stop'); throw new Error('halt'); }\nfunction later() { console.log('later'); return 9; }\nfunction selected() { const first = stop(), second = later(); return first + second; }\nconsole.log(selected());",
+            json!({"lines":["stop"],"error":{"name":"Error","message":"halt"}}),
+        ),
+        (
+            "function selected() { const first = [1, 2], text = ',const fake', {left, right: last} = {left: 3, right: 4}, total = first[0] + left + last; return total; }console.log(selected());",
+            json!({"lines":["8"],"error":null}),
+        ),
+        (
+            "function selected() {\nconst first = 2, second = first + 1\n{ const first = 7, second = first + 1; console.log(first, second); }\nconst third = second + 1, fourth = third + 1\nreturn fourth\n}\nconsole.log(selected());",
+            json!({"lines":["7 8","5"],"error":null}),
+        ),
+        (
+            "function selected(){const first=2, read=()=>first;return read();}console.log(selected());",
+            json!({"lines":["2"],"error":null}),
+        ),
+        (
+            "function selected(){const read=(later)=>later, later=3;return read(later);}console.log(selected());",
+            json!({"lines":["3"],"error":null}),
+        ),
+    ] {
+        let surface = parse_javascript(source)
+            .unwrap_or_else(|error| panic!("{source}: {}", error.message()));
+        let program = check_program(&surface).unwrap();
+        let javascript = emit_javascript(&program).unwrap().text;
+        let rust = emit_rust(&program).unwrap().text;
+        let original = declaration_list_contract(source, &javascript);
+        assert_eq!(
+            serde_json::to_value(&surface).unwrap(),
+            original["surface"],
+            "{source}"
+        );
+        assert_eq!(rust, original["rust"].as_str().unwrap(), "{source}");
+        assert_eq!(
+            original["original"], expected,
+            "unchanged independent source: {source}"
+        );
+        assert_eq!(original["emitted"], expected, "{source}");
+        let saved = encode_typed_program_links(&program).unwrap();
+        for network in [
+            LinkNetwork::from_lino(&saved.network.to_lino()).unwrap(),
+            decode_link_network_binary(
+                &encode_link_network_binary(&saved.network, BinaryLinksOptions::default()).unwrap(),
+                BinaryLinksOptions::default(),
+            )
+            .unwrap(),
+        ] {
+            let restored = decode_typed_program_links(&network, saved.root).unwrap();
+            encode_typed_program_links(&restored).unwrap();
+            assert_eq!(restored, program);
+            assert_eq!(emit_javascript(&restored).unwrap().text, javascript);
+            assert_eq!(emit_rust(&restored).unwrap().text, rust);
+        }
+    }
+}
+
+fn require_declaration_list_refusal(source: &str, reason: &str) {
+    let error = parse_javascript(source)
+        .and_then(|program| check_program(&program))
+        .unwrap_err();
+    assert!(
+        error.reason.contains(reason),
+        "{source}: {}",
+        error.message()
+    );
+    let original = declaration_list_contract(source, "");
+    assert_eq!(
+        json!({"kind":error.kind,"reason":error.reason,"span":error.span}),
+        original["diagnostic"],
+        "{source}"
+    );
+}
+
+#[test]
+fn const_lists_preserve_temporal_dead_zones_duplicate_and_empty_pattern_refusals() {
+    for declaration in ["const", "let"] {
+        for body in [
+            format!("{declaration} first = later, later = 2; return first;"),
+            format!("{declaration} first = 1, later = later; return first;"),
+            format!("console.log(later); {declaration} first = 1, later = 2; return first;"),
+            format!("{declaration} first = 1, Math = Math.floor(2); return first;"),
+        ] {
+            let source = format!(
+                "function selected() {{ const later = 7; {{ {body} }} }} console.log(selected());"
+            );
+            require_declaration_list_refusal(&source, "temporal dead zone");
+        }
+    }
+    for source in [
+        "function selected(){const read=()=>later,later=2;return read();}",
+        "function selected(){const read=()=>read,next=2;return next;}",
+        "function selected(){const [first=later,later=2]=[],next=first;return next;}",
+    ] {
+        require_declaration_list_refusal(source, "temporal dead zone");
+    }
+    for declaration in [
+        "first=1,first=2",
+        "first=1,[first]=[2]",
+        "first=1,{value:first}={value:2}",
+    ] {
+        require_declaration_list_refusal(
+            &format!("function selected(){{const {declaration};return first;}}"),
+            "duplicate lexical binding",
+        );
+    }
+    for (pattern, reason) in [
+        ("[]", "empty array binding"),
+        ("[,]", "empty array binding"),
+        ("{}", "empty object binding"),
+    ] {
+        require_declaration_list_refusal(
+            &format!(
+                "function selected(){{const {pattern}=null,next=1;return next;}}console.log(selected());"
+            ),
+            reason,
+        );
+    }
+}

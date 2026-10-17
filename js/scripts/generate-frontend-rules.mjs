@@ -13,7 +13,8 @@ import { tokenize } from '../src/translation/lexer.js';
 import { frontendRuleNativeStyleId, readFrontendRuleStyleCorrections,
   frontendTypeQueryNativeStyleId, readFrontendTypeQueryStyleCorrections,
   frontendCurrentBooleanNativeStyleId, readFrontendCurrentBooleanStyleCorrections,
-  frontendTemporalBindingNativeStyleId, readFrontendTemporalBindingStyleCorrections } from './frontend-rule-style-corrections.mjs';
+  frontendTemporalBindingNativeStyleId, readFrontendTemporalBindingStyleCorrections,
+  frontendLexicalDeclarationNativeStyleId, readFrontendLexicalDeclarationStyleCorrections } from './frontend-rule-style-corrections.mjs';
 import { formatProductRuleSource } from './product-rule-style-corrections.mjs';
 
 const sourcePath = new URL('../src/translation/frontend-rules.js', import.meta.url);
@@ -25,11 +26,13 @@ const updateArrayResults = process.argv.includes('--update-array-result-styles')
 const updateNativeStyles = process.argv.includes('--update-reviewed-native-styles');
 const updateTypeQueryStyles = process.argv.includes('--update-type-query-styles');
 const updateTemporalBindingStyles = process.argv.includes('--update-temporal-binding-styles');
+const updateLexicalDeclarationStyles = process.argv.includes('--update-lexical-declaration-styles');
 let decorators = DecoratorSet.fromLino(readFileSync(decoratorsPath, 'utf8'));
 if (updateArrayResults) decorators = new DecoratorSet(decorators.decorators.filter(({ id }) => id !== resultStyleId));
 if (updateNativeStyles) decorators = new DecoratorSet(decorators.decorators.filter(({ id }) => id !== frontendRuleNativeStyleId));
 if (updateTypeQueryStyles) decorators = new DecoratorSet(decorators.decorators.filter(({ id }) => id !== frontendTypeQueryNativeStyleId));
 if (updateTemporalBindingStyles) decorators = new DecoratorSet(decorators.decorators.filter(({ id }) => ![frontendTemporalBindingNativeStyleId, frontendCurrentBooleanNativeStyleId].includes(id)));
+if (updateLexicalDeclarationStyles) decorators = new DecoratorSet(decorators.decorators.filter(({ id }) => id !== frontendLexicalDeclarationNativeStyleId));
 const emitted = emitRust(checkProgram(parseJavaScript(source)));
 const decorated = decorateEmitted('Rust', { source: emitted.text }, decorators).source;
 const formatted = { stdout: formatProductRuleSource(decorated) };
@@ -90,6 +93,19 @@ if (updateTemporalBindingStyles) {
   final = { stdout: formatProductRuleSource(decorators.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source: final.stdout }).source) };
   if (decorators.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source: final.stdout }).source !== final.stdout) {
     throw new Error('frontend temporal-binding styles do not converge');
+  }
+}
+if (updateLexicalDeclarationStyles) {
+  const styles = { id: frontendLexicalDeclarationNativeStyleId, level: 'emitter', order: 3300,
+    when: [['format', 'Rust'], ['scope', 'formatted-module']],
+    actions: readFrontendLexicalDeclarationStyleCorrections(final.stdout) };
+  decorators = new DecoratorSet([...decorators.decorators, styles]);
+  const previous = readFileSync(decoratorsPath, 'utf8').split('\n')
+    .filter(line => !line.startsWith('(decorator ' + frontendLexicalDeclarationNativeStyleId + ' ')).join('\n');
+  writeFileSync(decoratorsPath, previous + (previous.endsWith('\n') ? '\n' : '\n\n') + new DecoratorSet([styles]).toLino());
+  final = { stdout: formatProductRuleSource(decorators.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source: final.stdout }).source) };
+  if (decorators.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source: final.stdout }).source !== final.stdout) {
+    throw new Error('lexical declaration styles do not converge');
   }
 }
 if (updateArrayResults) {
