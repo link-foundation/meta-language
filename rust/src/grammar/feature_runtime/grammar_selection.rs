@@ -463,8 +463,6 @@ impl Executor<'_> {
         state: &super::operations::State,
         in_token: bool,
     ) -> Run<Vec<Res>> {
-        let skipped = self.terminal_start(position, state, in_token)?;
-        let start = skipped.end;
         let mappings = descriptor
             .candidates
             .iter()
@@ -473,6 +471,8 @@ impl Executor<'_> {
         let field_context = number_index(read_grammar_selection_field_range_context(
             &mappings, in_token,
         ));
+        let skipped = self.terminal_start(position, state, in_token || field_context == Some(1))?;
+        let start = skipped.end;
         let range_context = if field_context == Some(0) {
             number_index(read_grammar_selection_included_range_context(
                 &mappings, in_token,

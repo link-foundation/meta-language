@@ -185,6 +185,169 @@ fn actual_json_fields_select_varying_topmost_values_and_utf8_bytes_through_every
             }
         }
     }
+    // Preserve the complete original grammar and the CST that owns leading
+    // UTF-8 trivia and the padding before each actual value capture.
+    let quoted = serde_json::to_string(r#"{"é":"β"}"#).unwrap();
+    for (document, source) in [
+        (
+            include_str!("../../src/data/native-grammars/javascript.lino"),
+            format!("// 前\nconst data = {quoted};"),
+        ),
+        (
+            include_str!("../../src/data/native-grammars/typescript.lino"),
+            format!("// 前\nconst data: string = {quoted};"),
+        ),
+        (
+            include_str!("../../src/data/native-grammars/rust.lino"),
+            format!("// 前\nfn main(){{let data = {quoted};}}"),
+        ),
+    ] {
+        let grammar = parse_grammar_links(document).unwrap();
+        let listing = render_grammar_links(&grammar);
+        let baseline = included_range_parse(&grammar, &HashMap::new(), &source);
+        assert!(baseline.ok, "{:?}", baseline.rejection);
+        let baseline = included_range_tree_data(baseline.tree.as_ref().unwrap());
+        let mut pending = vec![String::new()];
+        let capture = loop {
+            let path = pending
+                .pop()
+                .expect("the original grammar retains a value capture");
+            let node = baseline.pointer(&path).unwrap();
+            if node["field"] == "value" && node["trivia"] != true {
+                break path;
+            }
+            if let Some(children) = node["children"].as_array() {
+                for index in (0..children.len()).rev() {
+                    pending.push(format!("{path}/children/{index}"));
+                }
+            }
+        };
+        let node = baseline.pointer(&capture).unwrap();
+        let start = usize::try_from(node["start"].as_u64().unwrap()).unwrap();
+        let end = usize::try_from(node["end"].as_u64().unwrap()).unwrap();
+        let quote_start = source
+            .as_bytes()
+            .windows(quoted.len())
+            .position(|bytes| bytes == quoted.as_bytes())
+            .unwrap();
+        assert_eq!(&source.as_bytes()[start..quote_start], b" ");
+        assert_eq!(end, quote_start + quoted.len());
+        let selected = &source[start..end];
+        let expected = included_range_parse(&json, &HashMap::new(), selected);
+        assert!(expected.ok, "{:?}", expected.rejection);
+        let capture_path = capture
+            .trim_start_matches('/')
+            .split('/')
+            .map(|part| {
+                if part == "children" {
+                    json!(part)
+                } else {
+                    json!(part.parse::<usize>().unwrap())
+                }
+            })
+            .collect::<Vec<_>>();
+        let host = field_range_host(&grammar, &["Json"], 0, 1, "include", "any-grammar");
+        let links = render_grammar_links(&host);
+        let native = render_native_grammar(&host);
+        assert_eq!(
+            render_grammar_links(&parse_grammar_links(&links).unwrap()),
+            links
+        );
+        assert_eq!(
+            render_native_grammar(&parse_native_grammar(&native).unwrap()),
+            native
+        );
+        for restored in [
+            host.clone(),
+            parse_grammar_links(&links).unwrap(),
+            parse_native_grammar(&native).unwrap(),
+            deserialize_grammar(&serialize_grammar(&host)).unwrap(),
+        ] {
+            assert_eq!(
+                restored.start_rule().unwrap().expr,
+                host.start_rule().unwrap().expr
+            );
+            let outcome = included_range_parse(
+                &restored,
+                &HashMap::from([("Json".to_owned(), json.clone())]),
+                &source,
+            );
+            assert!(outcome.ok, "{:?}", outcome.rejection);
+            let bundle = included_range_bundle(&outcome);
+            let embedded = field_range_embedding(&bundle["tree"]);
+            let children = bundle["tree"]["children"].as_array().unwrap();
+            assert!(
+                children.iter().any(|child| std::ptr::eq(child, embedded)),
+                "the embedding is an original direct child"
+            );
+            let restored_children = children
+                .iter()
+                .flat_map(|child| {
+                    if std::ptr::eq(child, embedded) {
+                        child["sourceChildren"].as_array().unwrap().clone()
+                    } else {
+                        vec![child.clone()]
+                    }
+                })
+                .collect::<Vec<_>>();
+            let mut hierarchy = bundle["tree"].clone();
+            hierarchy["children"] = json!(restored_children);
+            assert_eq!(hierarchy, baseline);
+            let mapping = &embedded["selection"]["sourceMapping"];
+            assert_eq!(mapping["ranges"], json!([[start, end]]));
+            assert_eq!(
+                mapping["occurrences"],
+                json!([{"path":capture_path,"start":start,"end":end}])
+            );
+            assert_eq!(bundle["sourcePlanes"].as_array().unwrap().len(), 2);
+            let origin = &bundle["sourcePlanes"][1]["derivation"];
+            assert_eq!(origin["start"], 0);
+            assert_eq!(origin["end"], source.len());
+            assert_eq!(origin["occurrences"], mapping["occurrences"]);
+            assert_eq!(origin["witness"]["start"], 0);
+            assert_eq!(origin["witness"]["end"], source.len());
+            assert_eq!(
+                origin["witness"]["children"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .flat_map(included_range_physical)
+                    .collect::<Vec<_>>(),
+                source.as_bytes()
+            );
+            assert_eq!(included_range_physical(&bundle["tree"]), source.as_bytes());
+            assert_eq!(
+                included_range_physical(&embedded["root"]),
+                selected.as_bytes()
+            );
+            assert_eq!(
+                embedded["root"],
+                included_range_tree_data(expected.tree.as_ref().unwrap())
+            );
+            for stored in included_range_stored(&bundle) {
+                assert_eq!(stored, bundle);
+                check_grammar_selection_mapped_tree(&stored, &FeatureParseOptions::default())
+                    .unwrap();
+                let embedded = field_range_embedding(&stored["tree"]);
+                let restored_children = stored["tree"]["children"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .flat_map(|child| {
+                        if std::ptr::eq(child, embedded) {
+                            child["sourceChildren"].as_array().unwrap().clone()
+                        } else {
+                            vec![child.clone()]
+                        }
+                    })
+                    .collect::<Vec<_>>();
+                let mut hierarchy = stored["tree"].clone();
+                hierarchy["children"] = json!(restored_children);
+                assert_eq!(hierarchy, baseline);
+            }
+        }
+        assert_eq!(render_grammar_links(&grammar), listing);
+    }
 }
 
 #[test]
