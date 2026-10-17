@@ -1,4 +1,4 @@
-import { compactDeclarations, RULE_ATTRIBUTES } from './grammar-feature-forms.js';
+import { compactDeclarations, RULE_ATTRIBUTES, checkGrammarSelectionIncludedRangeData } from './grammar-feature-forms.js';
 import { createGrammarParser } from './grammar-runtime.js';
 import { readGrammarLexerEntryForm } from './translation/grammar-lexer-rules.js';
 
@@ -278,6 +278,8 @@ export function emitJavascriptParser(grammar) {
 }
 
 export function serializeGrammar(grammar) {
+  checkGrammarSelectionIncludedRangeData(grammar.declarations);
+  for (const rule of grammar.rules.values()) checkGrammarSelectionIncludedRangeData(rule);
   return `${JSON.stringify(grammar.normalized(), null, 2)}\n`;
 }
 
@@ -288,6 +290,7 @@ export function deserializeGrammar(source) {
   } catch (error) {
     throw new TypeError(`invalid serialized grammar JSON: ${error.message}`, { cause: error });
   }
+  checkGrammarSelectionIncludedRangeData(value);
   if (!value || value.schemaVersion !== 1 || !Array.isArray(value.rules)) {
     throw new TypeError('invalid serialized grammar document');
   }

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { compileGrammar } from '../src/grammar.js';
+import { compileGrammar, serializeGrammar, deserializeGrammar } from '../src/grammar.js';
 import { parseGrammarLinks, renderGrammarLinks, percentEncodeLinksText } from '../src/grammar-links.js';
 import { parseNativeGrammar, renderNativeGrammar } from '../src/grammar-interchange.js';
 import { checkGrammarSelectionMappedTree } from '../src/grammar-runtime.js';
@@ -9,6 +9,8 @@ import { nativeGrammarText } from '../src/native-grammar-parser.js';
 import { LinkNetwork } from '../src/network.js';
 import { encodeLinkNetworkBinary, decodeLinkNetworkBinary } from '../src/link-network-binary.js';
 import { encodeStructuredDataLinks, decodeStructuredDataLinks, readStructuredDataLino } from '../src/structured-data-links.js';
+import { createGlobalConceptSpace, globalConceptSpaceToLinks,
+  createGlobalConceptSpaceParser } from '../src/global-concept-space.js';
 import {
   acceptGrammarSelectionIncludedRangeMapping,
   readGrammarSelectionIncludedRangeContext,
@@ -59,6 +61,108 @@ function includedRangeGrammarDocument(grammar) {
   return Object.fromEntries(Object.entries(grammar).map(([key, value]) =>
     [key, key === 'rules' ? [...value.values()] : value]));
 }
+
+test('source-free global archives execute the original included range grammar and physical CST', () => {
+  for (const mode of ['any-grammar', 'all-grammar']) {
+    const host = includedRangeGrammar('a+b', [[0, 1], [2, 3]], ['Inline'], mode, '', '');
+    const child = includedRangeLiteralGrammar('ab');
+    assert.equal(renderGrammarLinks(deserializeGrammar(serializeGrammar(host))), renderGrammarLinks(host));
+    const sources = [{ id: 'Outer', language: 'Outer', grammar: host },
+      { id: 'Inline', language: 'Inline', grammar: child }];
+    const space = createGlobalConceptSpace(sources, { records: [] });
+    const expected = compileGrammar(host, { grammarName: 'Outer', globalConceptSpace: space,
+      resolveGrammar: name => sources.find(source => source.id === name)?.grammar }).parseTree('a+b');
+    assert.equal(expected.ok, true);
+    const archive = globalConceptSpaceToLinks(space);
+    host.rules.clear();
+    child.rules.clear();
+    sources.length = 0;
+    for (const { archive: stored } of includedRangeStoredVariants({ archive })) {
+      const actual = createGlobalConceptSpaceParser(stored, 'Outer', { records: [] }).parseTree('a+b');
+      assert.deepEqual(actual, expected);
+      assert.deepEqual(includedRangePhysicalBytes(actual.tree), [97, 43, 98]);
+      assert.deepEqual(includedRangePhysicalBytes(includedRangeEmbedding(actual.tree).root), [97, 98]);
+      assert.equal(checkGrammarSelectionMappedTree(actual), actual);
+    }
+  }
+});
+
+test('closed source view forms refuse lossy serialization before coercions or property reads', () => {
+  const mutations = [
+    candidate => { candidate.opaqueBinding = true; },
+    candidate => { candidate.opaqueBinding = undefined; },
+    candidate => { candidate[Symbol('opaqueBinding')] = true; },
+    candidate => { Object.defineProperty(candidate, 'opaqueBinding', { value: true }); },
+    candidate => { candidate.ranges[0].opaqueBinding = true; },
+    candidate => { candidate.ranges[0].opaqueBinding = undefined; },
+    candidate => { candidate.ranges[0][Symbol('opaqueBinding')] = true; },
+    candidate => { candidate.ranges[0].start = '0'; },
+    candidate => { candidate.ranges[0].end = '1'; },
+    candidate => { candidate.ranges[0].start = NaN; },
+    candidate => { candidate.ranges[0].end = Infinity; },
+    candidate => { candidate.ranges[0].end = 4294967296; },
+    candidate => { candidate.name = 7; },
+    candidate => { candidate.mapping = new String('included-ranges'); },
+    candidate => { delete candidate.ranges[0]; },
+    candidate => { candidate.ranges.opaqueBinding = true; },
+    candidate => { candidate.ranges[Symbol('opaqueBinding')] = true; },
+    candidate => { Object.setPrototypeOf(candidate.ranges[0], { inheritedBinding: true }); },
+    candidate => { candidate.toJSON = () => ({ kind: candidate.kind, name: candidate.name,
+      mapping: candidate.mapping, ranges: candidate.ranges }); },
+  ];
+  for (const mutate of mutations) {
+    const host = includedRangeGrammar('a+b', [[0, 1], [2, 3]], ['Inline'], 'any-grammar', '', '');
+    mutate(host.rules.get('document').expression.items[1].items[0]);
+    assert.throws(() => compileGrammar(host));
+    assert.throws(() => renderGrammarLinks(host));
+    assert.throws(() => renderNativeGrammar(host));
+    assert.throws(() => serializeGrammar(host));
+    assert.throws(() => deserializeGrammar(includedRangeGrammarDocument(host)));
+    assert.throws(() => createGlobalConceptSpace([{ id: 'Outer', language: 'Outer', grammar: host }], { records: [] }));
+  }
+  for (const location of ['range', 'array']) {
+    for (const operation of ['compile', 'links', 'listing', 'structured', 'read', 'global']) {
+      let reads = 0;
+      const host = includedRangeGrammar('a+b', [[0, 1], [2, 3]], ['Inline'], 'any-grammar', '', '');
+      const candidate = host.rules.get('document').expression.items[1].items[0];
+      Object.defineProperty(location === 'range' ? candidate.ranges[0] : candidate.ranges,
+        location === 'range' ? 'start' : '0', { enumerable: true, get() { reads += 1; return location === 'range' ? 0 : { kind: 'source-range', start: 0, end: 1 }; } });
+      assert.throws(() => ({ compile: () => compileGrammar(host), links: () => renderGrammarLinks(host),
+        listing: () => renderNativeGrammar(host), structured: () => serializeGrammar(host),
+        read: () => deserializeGrammar(includedRangeGrammarDocument(host)), global: () => createGlobalConceptSpace([
+          { id: 'Outer', language: 'Outer', grammar: host }], { records: [] }) })[operation]());
+      assert.equal(reads, 0, location + ':' + operation);
+    }
+  }
+  for (const transformation of ['accessor', 'toJSON']) {
+    let reads = 0;
+    const host = includedRangeGrammar('a+b', [[0, 1], [2, 3]], ['Inline'], 'any-grammar', '', '');
+    const rule = { ...host.rules.get('document') }, expression = rule.expression;
+    host.rules.set('document', rule);
+    if (transformation === 'accessor') Object.defineProperty(rule, 'expression', {
+      enumerable: true, get() { reads += 1; return expression; },
+    });
+    else rule.toJSON = () => { reads += 1; return { ...rule, expression }; };
+    assert.throws(() => compileGrammar(host));
+    assert.throws(() => serializeGrammar(host));
+    assert.throws(() => deserializeGrammar(includedRangeGrammarDocument(host)));
+    assert.throws(() => createGlobalConceptSpace([{ id: 'Outer', language: 'Outer', grammar: host }], { records: [] }));
+    assert.equal(reads, 0, transformation);
+  }
+});
+
+test('global archive writers refuse malformed source view definitions changed after construction', () => {
+  for (const mutate of [candidate => { candidate.opaqueBinding = true; },
+    candidate => { candidate.ranges[0].end = '1'; },
+    candidate => { candidate.ranges.opaqueBinding = undefined; }]) {
+    const host = includedRangeGrammar('a+b', [[0, 1], [2, 3]], ['Inline'], 'any-grammar', '', '');
+    const space = createGlobalConceptSpace([{ id: 'Outer', language: 'Outer', grammar: host }], { records: [] });
+    const definition = space.concepts.flatMap(concept => concept.definitions)
+      .find(entry => entry.origin === 'Outer:document').definition;
+    mutate(definition.expression.items[1].items[0]);
+    assert.throws(() => globalConceptSpaceToLinks(space));
+  }
+});
 
 test('included range plans retain every kept byte, excluded gap and final boundary without rewriting inputs', () => {
   for (const [ranges, length, expected] of [

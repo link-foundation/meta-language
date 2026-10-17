@@ -1472,6 +1472,13 @@ scalar copies. Nested composition with `json-string` keeps each actual source
 plane and its derivation. After text/binary Links reload, the mapped-CST checker
 validates declared ranges and rederives bytes, intervals and child coverage
 from the physical source.
+The closed candidate and range forms admit exactly their declared data fields
+and actual integer coordinates. Compilation, grammar serialization and global
+concept archives refuse malformed records before copying, coercion or field
+projection can discard their meaning. Archive definitions use inspectable data;
+accessors and custom serialization cannot replace those definitions during
+validation or export. Valid source-free archives retain the same concrete trees
+and source mappings as their original grammars.
 Mapping work uses existing shared parse budgets. Ranges are explicit grammar
 data: dynamic discovery from CST fields and complete Markdown block/inline
 scanning remain gaps. The native compiler prepares its owned grammar closure

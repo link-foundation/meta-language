@@ -33,6 +33,9 @@ use included_range_rules::{
     read_grammar_selection_included_range_plan, read_grammar_selection_included_range_reservation,
 };
 
+#[path = "grammar_included_range_archive.rs"]
+mod included_range_archive;
+
 fn included_range_grammar(
     region: &str,
     ranges: &[[i64; 2]],
