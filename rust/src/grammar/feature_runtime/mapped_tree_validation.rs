@@ -404,6 +404,7 @@ impl Validator<'_> {
 }
 
 /// Validate source correspondence in a complete mapped CST plain-data bundle.
+///
 /// Returns the same borrowed value; grammar membership still requires parsing
 /// with its actual grammar. No generic decoding or numeric ID proves ownership.
 ///
@@ -424,14 +425,14 @@ pub fn check_grammar_selection_mapped_tree<'a>(
     let budget = ValidationBudget {
         steps: Cell::new(0),
         cells: Cell::new(0),
-        step_limit: options.step_limit.unwrap_or(
+        step_limit: options.step_limit.unwrap_or_else(|| {
             (100_000 + 1000 * end)
                 * if options.error_recovery == Some(true) {
                     2
                 } else {
                     1
-                },
-        ),
+                }
+        }),
         memory_limit: options.memory_limit.unwrap_or(DEFAULT_MEMORY_LIMIT),
         max_depth: options.max_depth.unwrap_or(DEFAULT_MAX_DEPTH),
     };

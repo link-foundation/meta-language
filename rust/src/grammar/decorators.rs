@@ -225,7 +225,7 @@ fn visit(
                                 "a mapped grammar witness keeps one complete decoded CST root",
                             ));
                         }
-                        alternative.root = Box::new(roots.remove(0));
+                        *alternative.root = roots.remove(0);
                     }
                 }
             }
