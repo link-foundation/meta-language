@@ -1,115 +1,9 @@
 // Generated from the complete checked JavaScript source and recorded dependencies.
 // Do not edit by hand.
 use super::UnicodeEscape;
-use super::decode_unicode_escape;
 use super::ml;
 use super::ml_array;
 use super::ml_math;
-use super::read_grammar_selection_json_short_escape;
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_grammar_selection_json_string_part(codes: &[f64], index: f64) -> Vec<f64> {
-    {
-        let last = (codes.len() as f64) - 1f64;
-        if ((((((codes.len() as f64) < 2f64)
-            || !(match (
-                self::ml_array::optional_at(codes, self::ml_array::number_index(0f64)),
-                34f64,
-            ) {
-                (Some(ml_left), ml_right) => ml_left == ml_right,
-                _ => false,
-            }))
-            || !(match (
-                self::ml_array::optional_at(codes, self::ml_array::number_index(last)),
-                34f64,
-            ) {
-                (Some(ml_left), ml_right) => ml_left == ml_right,
-                _ => false,
-            }))
-            || !(self::ml_math::is_integer(index)))
-            || (index < 1f64))
-            || (index > last)
-        {
-            vec![1f64, 0f64]
-        } else if index == last {
-            vec![3f64, index]
-        } else {
-            {
-                let code =
-                    (self::ml_array::optional_at(codes, self::ml_array::number_index(index)))
-                        .unwrap_or_else(|| -1f64);
-                if (((!(self::ml_math::is_integer(code)) || (code < 32f64))
-                    || (code > 1_114_111f64))
-                    || ((55_296f64..=57_343f64).contains(&code)))
-                    || (code == 34f64)
-                {
-                    vec![1f64, index]
-                } else {
-                    let ml_library_inequality_2 = code != 92f64;
-                    if ml_library_inequality_2 {
-                        vec![0f64, code, (index + 1f64)]
-                    } else {
-                        {
-                            let escaped = (self::ml_array::optional_at(
-                                codes,
-                                self::ml_array::number_index(index + 1f64),
-                            ))
-                            .unwrap_or_else(|| -1f64);
-                            {
-                                let ml_library_inequality_1 = escaped != 117f64;
-                                if ml_library_inequality_1 {
-                                    {
-                                        let value =
-                                            self::read_grammar_selection_json_short_escape(escaped);
-                                        if (value < 0f64) || ((index + 2f64) > last) {
-                                            vec![1f64, index]
-                                        } else {
-                                            vec![0f64, value, (index + 2f64)]
-                                        }
-                                    }
-                                } else if match (
-                                    self::ml_array::optional_at(
-                                        codes,
-                                        self::ml_array::number_index(index + 2f64),
-                                    ),
-                                    123f64,
-                                ) {
-                                    (Some(ml_left), ml_right) => ml_left == ml_right,
-                                    _ => false,
-                                } {
-                                    vec![1f64, index]
-                                } else {
-                                    {
-                                        let decoded = self::decode_unicode_escape(
-                                            &(self::ml_array::slice(codes, index, (index + 12f64))),
-                                            true,
-                                        );
-                                        match decoded {
-                                            self::UnicodeEscape::Scalar(code_2, end) => {
-                                                if (index + end) > last {
-                                                    vec![1f64, index]
-                                                } else {
-                                                    vec![0f64, code_2, (index + end)]
-                                                }
-                                            }
-                                            self::UnicodeEscape::Malformed => {
-                                                vec![1f64, index]
-                                            }
-                                            self::UnicodeEscape::Unsupported(ml_f9, ml_f10) => {
-                                                vec![2f64, index]
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -174,7 +68,7 @@ pub fn read_grammar_selection_mapped_cover(
                 intervals,
                 self::ml_array::number_index((intervals.len() as f64) - 1f64),
             ))
-            .unwrap_or_else(|| Vec::<f64>::new());
+            .unwrap_or_else(Vec::<f64>::new);
             if ((closing.len() as f64) != 4f64)
                 || (end
                     > ((self::ml_array::optional_at(&closing, self::ml_array::number_index(3f64)))
@@ -210,7 +104,7 @@ pub fn read_grammar_selection_mapped_cover(
                             match ml_s12 {
                                     self::MlReadGrammarSelectionMappedCoverLoop12Result::MlReadGrammarSelectionMappedCoverLoop12Done(low_2, high_2) => {
                                         {
-                                            let first = (self::ml_array::optional_at(intervals, self::ml_array::number_index(low_2))).unwrap_or_else(|| Vec::<f64>::new());
+                                            let first = (self::ml_array::optional_at(intervals, self::ml_array::number_index(low_2))).unwrap_or_else(Vec::<f64>::new);
                                             if (((first.len() as f64) != 4f64) || (((self::ml_array::optional_at(&first, self::ml_array::number_index(2f64))).unwrap_or_else(|| -1f64)) > start)) || (start >= ((self::ml_array::optional_at(&first, self::ml_array::number_index(3f64))).unwrap_or_else(|| -1f64))) {
                                                 Vec::<f64>::new()
                                             } else if start == end {
@@ -221,7 +115,7 @@ pub fn read_grammar_selection_mapped_cover(
                                                         {
                                                             let low_3 = self::ml_read_grammar_selection_mapped_cover_loop13(intervals, end, low_2, high_3);
                                                             {
-                                                                let last = (self::ml_array::optional_at(intervals, self::ml_array::number_index(low_3))).unwrap_or_else(|| Vec::<f64>::new());
+                                                                let last = (self::ml_array::optional_at(intervals, self::ml_array::number_index(low_3))).unwrap_or_else(Vec::<f64>::new);
                                                                 if ((last.len() as f64) != 4f64) || (end > ((self::ml_array::optional_at(&last, self::ml_array::number_index(3f64))).unwrap_or_else(|| -1f64))) {
                                                                     Vec::<f64>::new()
                                                                 } else {
@@ -716,13 +610,14 @@ pub fn ml_read_grammar_selection_mapped_cover_loop13(
     loop {
         if low < high {
             {
-                let middle = ((low + high) / 2f64).floor();
+                let ml_mapping_sum = low + high;
+                let middle = (ml_mapping_sum / 2f64).floor();
                 {
                     let row = (self::ml_array::optional_at(
                         intervals,
                         self::ml_array::number_index(middle),
                     ))
-                    .unwrap_or_else(|| Vec::<f64>::new());
+                    .unwrap_or_else(Vec::<f64>::new);
                     if ((self::ml_array::optional_at(&row, self::ml_array::number_index(3f64)))
                         .unwrap_or_else(|| -1f64))
                         < end
@@ -767,13 +662,14 @@ pub fn ml_read_grammar_selection_mapped_cover_loop12(
     loop {
         if low < high {
             {
-                let middle = ((low + high) / 2f64).floor();
+                let ml_mapping_sum = low + high;
+                let middle = (ml_mapping_sum / 2f64).floor();
                 {
                     let row = (self::ml_array::optional_at(
                         intervals,
                         self::ml_array::number_index(middle),
                     ))
-                    .unwrap_or_else(|| Vec::<f64>::new());
+                    .unwrap_or_else(Vec::<f64>::new);
                     if ((self::ml_array::optional_at(&row, self::ml_array::number_index(3f64)))
                         .unwrap_or_else(|| -1f64))
                         <= start

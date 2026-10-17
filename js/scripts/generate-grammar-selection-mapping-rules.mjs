@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { tokenize } from '../src/translation/lexer.js';
 import { checkProjectData, writeProjectData } from './project-data.mjs';
 import { writeRecordRuleLibrary } from './record-rule-library.mjs';
+import { readGrammarSelectionMappingLibraryStyles } from './grammar-selection-mapping-library-style.mjs';
 
 const sourceFile = new URL('../src/translation/grammar-selection-mapping-rules.js', import.meta.url);
 const dependencyFile = new URL('../src/translation/frontend-rules.js', import.meta.url);
@@ -96,7 +97,7 @@ export async function generateGrammarSelectionMappingRules({ check = false, nati
     const output = new URL('../../parity/self-translation/grammar-selection-mapping-rules-native.lino', import.meta.url);
     if (check) checkProjectData(output, artifact);
     else writeProjectData(output, artifact);
-    writeRecordRuleLibrary(emitted, 'grammar_selection_mapping_rules', { check });
+    writeRecordRuleLibrary(emitted, 'grammar_selection_mapping_rules', { check, sourceStyles: readGrammarSelectionMappingLibraryStyles });
   }
   return policy;
 }

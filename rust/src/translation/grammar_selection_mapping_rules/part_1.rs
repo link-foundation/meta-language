@@ -709,8 +709,7 @@ if ml_library_inequality_1 {
                                                                             }
                                                                         }
                                                                         self::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Return(ml_result6) => {
-                                                                            let ml_result6 = *ml_result6;
-                                                                            ml_result6.clone()
+                                                                            *ml_result6
                                                                         }
                                                                     }
                                                                 }
@@ -719,8 +718,7 @@ if ml_library_inequality_1 {
                                                     }
                                                 }
                                                 self::MlDecodeUnicodeEscapeJoin2::MlDecodeUnicodeEscapeJoin2Return(ml_result6_2) => {
-                                                    let ml_result6_2 = *ml_result6_2;
-                                                    ml_result6_2.clone()
+                                                    *ml_result6_2
                                                 }
                                             }
                                     }
@@ -730,10 +728,7 @@ if ml_library_inequality_1 {
                     }
                     self::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Return(
                         ml_result6_3,
-                    ) => {
-                        let ml_result6_3 = *ml_result6_3;
-                        ml_result6_3.clone()
-                    }
+                    ) => *ml_result6_3,
                 }
             }
         }
@@ -807,5 +802,109 @@ pub fn read_grammar_selection_json_short_escape(code: f64) -> f64 {
         9f64
     } else {
         -1f64
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_grammar_selection_json_string_part(codes: &[f64], index: f64) -> Vec<f64> {
+    {
+        let last = (codes.len() as f64) - 1f64;
+        if ((((((codes.len() as f64) < 2f64)
+            || !(match (
+                self::ml_array::optional_at(codes, self::ml_array::number_index(0f64)),
+                34f64,
+            ) {
+                (Some(ml_left), ml_right) => ml_left == ml_right,
+                _ => false,
+            }))
+            || !(match (
+                self::ml_array::optional_at(codes, self::ml_array::number_index(last)),
+                34f64,
+            ) {
+                (Some(ml_left), ml_right) => ml_left == ml_right,
+                _ => false,
+            }))
+            || !(self::ml_math::is_integer(index)))
+            || (index < 1f64))
+            || (index > last)
+        {
+            vec![1f64, 0f64]
+        } else if index == last {
+            vec![3f64, index]
+        } else {
+            {
+                let code =
+                    (self::ml_array::optional_at(codes, self::ml_array::number_index(index)))
+                        .unwrap_or_else(|| -1f64);
+                if (((!(self::ml_math::is_integer(code)) || (code < 32f64))
+                    || (code > 1_114_111f64))
+                    || ((55_296f64..=57_343f64).contains(&code)))
+                    || (code == 34f64)
+                {
+                    vec![1f64, index]
+                } else {
+                    let ml_library_inequality_2 = code != 92f64;
+                    if ml_library_inequality_2 {
+                        vec![0f64, code, (index + 1f64)]
+                    } else {
+                        {
+                            let escaped = (self::ml_array::optional_at(
+                                codes,
+                                self::ml_array::number_index(index + 1f64),
+                            ))
+                            .unwrap_or_else(|| -1f64);
+                            {
+                                let ml_library_inequality_1 = escaped != 117f64;
+                                if ml_library_inequality_1 {
+                                    {
+                                        let value =
+                                            self::read_grammar_selection_json_short_escape(escaped);
+                                        if (value < 0f64) || ((index + 2f64) > last) {
+                                            vec![1f64, index]
+                                        } else {
+                                            vec![0f64, value, (index + 2f64)]
+                                        }
+                                    }
+                                } else if match (
+                                    self::ml_array::optional_at(
+                                        codes,
+                                        self::ml_array::number_index(index + 2f64),
+                                    ),
+                                    123f64,
+                                ) {
+                                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                                    _ => false,
+                                } {
+                                    vec![1f64, index]
+                                } else {
+                                    {
+                                        let decoded = self::decode_unicode_escape(
+                                            &(self::ml_array::slice(codes, index, (index + 12f64))),
+                                            true,
+                                        );
+                                        match decoded {
+                                            self::UnicodeEscape::Scalar(code_2, end) => {
+                                                if (index + end) > last {
+                                                    vec![1f64, index]
+                                                } else {
+                                                    vec![0f64, code_2, (index + end)]
+                                                }
+                                            }
+                                            self::UnicodeEscape::Malformed => {
+                                                vec![1f64, index]
+                                            }
+                                            self::UnicodeEscape::Unsupported(ml_f9, ml_f10) => {
+                                                vec![2f64, index]
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

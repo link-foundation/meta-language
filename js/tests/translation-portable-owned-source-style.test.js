@@ -8,6 +8,7 @@ import {emitJavaScript} from '../src/translation/emit-javascript.js';
 import {emitRust} from '../src/translation/emit-rust.js';
 import {STRING_PRELUDE} from '../src/translation/string-runtime.js';
 import {readPortableOwnedSourceStyles} from '../scripts/portable-owned-source-style.mjs';
+import {readGrammarSelectionMappingLibraryStyles} from '../scripts/grammar-selection-mapping-library-style.mjs';
 import {readPortableSourceParameterStyles, readPortableSourceLintStyles} from '../scripts/portable-source-library-style.mjs';
 
 const copies = source => (source.match(/\.clone\(\)/gu) ?? []).length;
@@ -262,4 +263,89 @@ test('explicitly selected owned functions transfer final copies only after authe
     'pub fn inspected(value: &String) -> bool { value.is_empty() }\npub fn selected(value: String) -> String { let copied = value.clone(); self::inspected(&value); copied }',
   ];
   for (const source of refused) assert.equal(review(source, options), source);
+});
+
+function reviewMappingLibraryStyle(source) {
+  const reviewed = readGrammarSelectionMappingLibraryStyles(source);
+  const styles = new DecoratorSet(reviewed.actions.length ? [{id: 'mapping-library-style-control', level: 'emitter', order: 0,
+    when: [['format', 'Rust']], actions: reviewed.actions}] : []);
+  assert.equal(styles.decorate('emitter', {format: 'Rust', source}).source, reviewed.source);
+  const inverse = reviewed.actions.slice().reverse().map(action => ({...action, from: action.to, to: action.from}));
+  const restored = new DecoratorSet(inverse.length ? [{id: 'mapping-library-inverse-control', level: 'emitter', order: 0,
+    when: [['format', 'Rust']], actions: inverse}] : []);
+  assert.equal(restored.decorate('emitter', {format: 'Rust', source: reviewed.source}).source, source,
+    'the exact original complete source is recoverable from the recorded actions');
+  assert.deepEqual(readGrammarSelectionMappingLibraryStyles(reviewed.source), {source: reviewed.source, actions: []});
+  return reviewed.source;
+}
+
+test('mapping library terminal copies require the actual owned boxed primitive enum and sole tail use', () => {
+  const result = '#[derive(Clone, Debug, PartialEq)] pub enum UnicodeEscape { Scalar(f64, f64), Malformed, Unsupported(f64, f64), }\n';
+  const owner = '#[derive(Clone, Debug, PartialEq)] pub enum MlDecodeUnicodeEscapeJoin1 { MlDecodeUnicodeEscapeJoin1Next(f64), MlDecodeUnicodeEscapeJoin1Return(Box<self::UnicodeEscape>), }\n';
+  const body = 'pub fn decode_unicode_escape(flag: bool) -> self::UnicodeEscape { '
+    + 'let state = if flag { self::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Return(Box::new(self::UnicodeEscape::Malformed)) } '
+    + 'else { { let number = 1f64; self::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Next(number) } }; '
+    + 'match state { self::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Return(payload) => { let payload = *payload; payload.clone() } '
+    + 'self::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Next(number) => { self::UnicodeEscape::Scalar(number, number) } } }';
+  const source = result + owner + body;
+  assert.equal(reviewMappingLibraryStyle(source), source.replace('let payload = *payload; payload.clone()', '*payload'));
+  for (const refused of [
+    source.replace('let state = if', 'let state = &if'),
+    source.replace('Box<self::UnicodeEscape>', '&self::UnicodeEscape'),
+    source.replace('Scalar(f64, f64)', 'Scalar(String, f64)'),
+    source.replace('let payload = *payload; payload.clone()', 'let payload = *payload; let copied = payload.clone(); self::observe(payload); copied'),
+    source.replace('payload.clone()', 'payload./* preserve */clone()'),
+    'pub struct Box;\n' + source,
+    source.replace('match state', 'self::observe(state); match state'),
+  ]) assert.equal(reviewMappingLibraryStyle(refused), refused);
+  assert.equal(reviewMappingLibraryStyle('pub fn unrelated(value: String) -> String { value.clone() }'),
+    'pub fn unrelated(value: String) -> String { value.clone() }');
+});
+
+test('mapping library empty-vector thunks become only the identical standard constructor function item', () => {
+  const provider = 'pub mod ml_array { pub fn optional_at<T: Clone>(values: &[T], index: Option<usize>) -> Option<T> { index.and_then(|index| values.get(index)).cloned() } }\n';
+  const body = 'pub fn read_grammar_selection_mapped_cover(intervals: &[Vec<f64>], index: f64) -> Vec<f64> { '
+    + '(self::ml_array::optional_at(intervals, self::ml_array::number_index(index))).unwrap_or_else(|| Vec::<f64>::new()) }';
+  const source = provider + body;
+  assert.equal(reviewMappingLibraryStyle(source), source.replace('|| Vec::<f64>::new()', 'Vec::<f64>::new'));
+  for (const refused of [
+    source.replace('values.get(index)', 'values.custom(index)'),
+    source.replace('|| Vec::<f64>::new()', '|| { self::observe(); Vec::<f64>::new() }'),
+    source.replace('|| Vec::<f64>::new()', '|| /* preserve */ Vec::<f64>::new()'),
+    source.replace('optional_at(intervals,', 'optional_at(other,') .replace('index: f64)', 'index: f64, other: &[Vec<f64>])'),
+    'pub struct Vec;\n' + source,
+    source.replace('optional_at(intervals,', 'unknown(intervals,'),
+  ]) assert.equal(reviewMappingLibraryStyle(refused), refused);
+});
+
+test('mapping library midpoint styles retain exact Number rounding with a fresh invertible sum binding', () => {
+  const provider = 'pub mod ml_array { pub fn optional_at<T: Clone>(values: &[T], index: Option<usize>) -> Option<T> { index.and_then(|index| values.get(index)).cloned() } }\n';
+  const body = 'pub fn ml_read_grammar_selection_mapped_cover_loop13(intervals: &[Vec<f64>], mut low: f64, high: f64) -> f64 { '
+    + 'loop { if low < high { let middle = ((low + high) / 2f64).floor(); if middle < high { low = middle + 1f64; } else { return middle; } } else { return low; } } }';
+  const source = provider + body;
+  const replacement = 'let ml_mapping_sum = low + high;\nlet middle = (ml_mapping_sum / 2f64).floor();';
+  assert.equal(reviewMappingLibraryStyle(source), source.replace('let middle = ((low + high) / 2f64).floor();', replacement));
+  const collision = source.replace('loop {', 'let ml_mapping_sum = low; loop {');
+  assert.ok(reviewMappingLibraryStyle(collision).includes('let ml_mapping_sum_1 = low + high;'));
+  for (const refused of [
+    source.replace('low: f64', 'low: Custom'),
+    source.replace('let middle =', 'let low = custom(); let middle ='),
+    source.replace('let middle =', 'let (low, other) = custom(); let middle ='),
+    source.replace('(low + high)', '(high - low)'),
+    source.replace('/ 2f64', '/ 2f32'),
+    source.replace('/ 2f64', '/ 3f64'),
+    source.replace('(low + high)', '(low /* preserve */ + high)'),
+    source.replace('let middle =', 'unknown!(); let middle ='),
+    source.replace('let middle =', 'match custom() { low => { self::observe(low); } } let middle ='),
+  ]) assert.equal(reviewMappingLibraryStyle(refused), refused);
+  for (const [low, high] of [[Number.MAX_VALUE, Number.MAX_VALUE], [Number.MIN_VALUE, Number.MIN_VALUE],
+    [-0, -0], [0, -0], [Infinity, -Infinity], [NaN, 1], [3, 4], [-3, 4]]) {
+    const original = Math.floor((low + high) / 2);
+    const sum = low + high;
+    assert.ok(Object.is(Math.floor(sum / 2), original), 'the original add, divide and floor preserve every Number observation');
+  }
+  assert.equal(Math.floor((Number.MAX_VALUE + Number.MAX_VALUE) / 2), Infinity);
+  assert.equal(Math.floor(Number.MAX_VALUE / 2 + Number.MAX_VALUE / 2), Number.MAX_VALUE,
+    'a midpoint-style overflow repair would change the original JavaScript result');
+  assert.ok(!reviewMappingLibraryStyle(source).includes('expect(clippy::manual_midpoint'));
 });
