@@ -328,15 +328,15 @@ fn coordinated_valid_child_and_range_forgeries_cannot_retarget_the_selected_json
         match mutation {
             0 => {
                 forged["sourcePlanes"][1]["derivation"]["witness"]["children"][0]["attributes"] =
-                    json!({"note":"forged"})
+                    json!({"note":"forged"});
             }
             1 => {
                 forged["tree"].pointer_mut(&path).unwrap()["sourceChildren"][0]["attributes"] =
-                    json!({"note":"forged"})
+                    json!({"note":"forged"});
             }
             _ => {
                 forged["sourcePlanes"][1]["derivation"]["witness"]["children"][0]["unrepresented"] =
-                    json!(true)
+                    json!(true);
             }
         }
         for stored in included_range_stored(&forged) {

@@ -12,6 +12,7 @@
 mod compile;
 mod executor;
 mod expectation_requests;
+mod field_range_source;
 mod forking;
 mod grammar_selection;
 mod joins;

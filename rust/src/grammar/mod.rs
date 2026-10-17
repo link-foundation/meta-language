@@ -30,6 +30,7 @@ pub mod emit;
 pub mod feature;
 pub mod feature_runtime;
 pub mod fidelity;
+mod field_range_forms;
 pub mod import;
 pub mod inference;
 pub mod interchange;
