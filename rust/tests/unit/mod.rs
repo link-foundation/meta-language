@@ -212,6 +212,7 @@ mod translation_rust_anchored_type_owners;
 mod translation_rust_array_results;
 mod translation_rust_arrays;
 mod translation_rust_borrowed_call_interface;
+mod translation_rust_byte_character_expressions;
 mod translation_rust_character_fixtures;
 mod translation_rust_completions;
 mod translation_rust_const_functions;

@@ -8,6 +8,36 @@ const SHARED_CHARACTER_FIXTURES: &str =
     include_str!("../../../parity/fixtures/rust-character-literals.lino");
 const NATIVE_CHARACTER_FIXTURES: &str = include_str!("../../src/data/rust-character-literals.lino");
 
+#[test]
+fn byte_expression_type_and_negation_decisions_preserve_their_source_domains() {
+    assert_eq!(rules::read_rust_character_expression_type("byteChar"), "u8");
+    for kind in [
+        "char",
+        "number",
+        "identifier",
+        "",
+        "unknown",
+        "byteCharSuffix",
+    ] {
+        assert_eq!(rules::read_rust_character_expression_type(kind), "");
+    }
+    for (language, kind, signed, expected) in [
+        ("Rust", "fixed", false, false),
+        ("Rust", "fixed", true, true),
+        ("Rust", "", false, true),
+        ("Rust", "int", false, true),
+        ("Rust", "float", false, true),
+        ("JavaScript", "fixed", false, true),
+        ("Lean", "fixed", false, true),
+        ("Rocq", "fixed", false, true),
+    ] {
+        assert_eq!(
+            rules::accept_rust_numeric_literal_negation(language, kind, signed),
+            expected
+        );
+    }
+}
+
 fn character_fixture_member<'a>(
     value: &'a StructuredDataValue,
     name: &str,

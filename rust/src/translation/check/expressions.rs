@@ -9,6 +9,7 @@ use super::{
     text_lit, type_error, unsupported,
 };
 use crate::translation::frontend_rules::accept_java_script_optional_tuple_context;
+use crate::translation::rust_character_rules::accept_rust_numeric_literal_negation;
 use crate::translation::surface::SurfaceBindingTypeAnnotation;
 use crate::translation::typed_program_link_rules::accept_program_tuple_product_model;
 
@@ -182,6 +183,16 @@ impl Checker {
                     ..
                 } = &arg.node
                 {
+                    if !accept_rust_numeric_literal_negation(
+                        self.language.as_str(),
+                        ty.as_ref().map_or("", Type::kind),
+                        matches!(ty, Some(Type::Fixed { signed: true, .. })),
+                    ) {
+                        let name = ty
+                            .as_ref()
+                            .map_or_else(|| "untyped literal".to_owned(), Type::key);
+                        return Err(type_error(format!("negation of {name}"), span));
+                    }
                     let flipped = SExpr {
                         node: SNode::Num {
                             value: value.clone(),
@@ -194,7 +205,18 @@ impl Checker {
                         block: arg.block,
                         tag_test: None,
                     };
-                    return self.expr(&flipped, env, path, expected, allow_literal);
+                    let literal = self.expr(&flipped, env, path, expected, allow_literal)?;
+                    if !accept_rust_numeric_literal_negation(
+                        self.language.as_str(),
+                        literal.ty.kind(),
+                        matches!(literal.ty, Type::Fixed { signed: true, .. }),
+                    ) {
+                        return Err(type_error(
+                            format!("negation of {}", literal.ty.key()),
+                            span,
+                        ));
+                    }
+                    return Ok(literal);
                 }
                 let numeric = expected.filter(|ty| ty.is_numeric());
                 let arg = self.expr(arg, env, path, numeric, false)?;

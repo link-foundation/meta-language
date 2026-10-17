@@ -13,6 +13,8 @@ use super::{
     method_call, multiplicative_op, operator, pattern_value, rust_fixed_type, rust_macro_message,
     span, type_error, unsupported,
 };
+use crate::translation::rust_character_rules::read_rust_character_expression_type;
+use crate::translation::source_diagnostic_attributes::token_kind;
 
 impl RustParser {
     /// Expressions, by Rust precedence.
@@ -648,6 +650,26 @@ impl RustParser {
         if token.kind == TokenKind::Macro {
             self.cursor.advance();
             return self.expression_macro(&token, path);
+        }
+        let character_type = read_rust_character_expression_type(token_kind(&token));
+        if !character_type.is_empty() {
+            let ty = rust_fixed_type(&character_type).ok_or_else(|| {
+                unsupported(
+                    &format!("character literal type {character_type}"),
+                    "a character expression needs its represented fixed type",
+                    span(&token, &token),
+                )
+            })?;
+            self.cursor.advance();
+            return Ok(SExpr::new(
+                SNode::Num {
+                    value: token.value.clone(),
+                    ty: Some(ty),
+                    negative: false,
+                    unit: false,
+                },
+                span(&token, &token),
+            ));
         }
         let c = &self.cursor;
         if matches!(token.kind, TokenKind::Character | TokenKind::ByteCharacter) || c.is("'") {

@@ -956,18 +956,25 @@ fn rust_character_suffixes_and_typed_semantics_remain_explicitly_unsupported() {
     for literal in ["'{'", "b'}'", r"'\u{1F600}'", r"b'\xFF'"] {
         let source = format!("fn value()->u32{{{literal}}}");
         let error = meta_language::translation::rust::parse_rust(&source).unwrap_err();
-        assert_eq!(error.kind, ErrorKind::Unsupported);
-        assert_eq!(
-            error.reason,
-            "character literal: characters are outside the portable core"
-        );
-        assert_eq!(
-            error.span,
-            Some(Span::new(
-                offset(&source, literal),
-                offset(&source, literal) + literal.encode_utf16().count()
-            ))
-        );
+        if literal.starts_with('b') {
+            assert_eq!(error.kind, ErrorKind::Syntax);
+            assert_eq!(error.reason, "a Rust program needs fn main");
+            let end = source.encode_utf16().count();
+            assert_eq!(error.span, Some(Span::new(end, end)));
+        } else {
+            assert_eq!(error.kind, ErrorKind::Unsupported);
+            assert_eq!(
+                error.reason,
+                "character literal: characters are outside the portable core"
+            );
+            assert_eq!(
+                error.span,
+                Some(Span::new(
+                    offset(&source, literal),
+                    offset(&source, literal) + literal.encode_utf16().count()
+                ))
+            );
+        }
         let source = format!("fn choose(x:u8)->u8{{match x{{{literal}=>1,_=>0}}}}");
         let error = meta_language::translation::rust::parse_rust(&source).unwrap_err();
         assert_eq!(error.kind, ErrorKind::Unsupported);
