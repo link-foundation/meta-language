@@ -317,6 +317,132 @@ export function readGrammarLexerCommandPlan(command, name) {
   return [type, channel, disposition, ...actions];
 }
 
+/**
+ * A canonical command singleton, or no result when the actual declaration
+ * cannot replay its final token fields and ordered actions exactly. An empty
+ * singleton is the admitted default command, not a refusal. Superseded type
+ * and channel spellings are not present in lexical declarations.
+ * @param {string} name @param {string} type @param {string} channel
+ * @param {string} disposition @param {string[]} operations @param {string[]} modes
+ * @returns {string[]}
+ */
+export function readGrammarLexerCommandEmission(name, type, channel, disposition, operations, modes) {
+  if (operations.length !== modes.length) return [];
+  const pieces = [];
+  if (disposition === 'skip') {
+    if (type !== 'SKIP') return [];
+    pieces.push('skip');
+  } else if (disposition === 'emit') {
+    if (type !== name) {
+      if (!acceptGrammarLexerIdentifier(type) && !acceptGrammarLexerDecimal(type)) return [];
+      pieces.push('type(' + type + ')');
+    }
+  } else return [];
+  if (channel !== 'default') {
+    if (!acceptGrammarLexerIdentifier(channel) && !acceptGrammarLexerDecimal(channel)) return [];
+    pieces.push('channel(' + channel + ')');
+  }
+  const expected = [type, channel, disposition];
+  let index = 0;
+  while (index < operations.length) {
+    const operation = readRequiredTextFact(operations, index);
+    const mode = readRequiredTextFact(modes, index);
+    if (operation === 'popMode') {
+      if (mode !== '') return [];
+      pieces.push('popMode');
+    } else if (operation === 'pushMode' || operation === 'setMode') {
+      if (!acceptGrammarLexerIdentifier(mode)) return [];
+      const argument = mode === 'default' ? 'DEFAULT_MODE' : mode;
+      pieces.push((operation === 'setMode' ? 'mode' : 'pushMode') + '(' + argument + ')');
+    } else return [];
+    expected.push(operation, mode);
+    index += 1;
+  }
+  const command = pieces.length === 0 ? '' : '-> ' + pieces.join(', ');
+  const replayed = readGrammarLexerCommandPlan(command, name);
+  if (replayed.length !== expected.length) return [];
+  index = 0;
+  while (index < expected.length) {
+    if (readRequiredTextFact(replayed, index) !== readRequiredTextFact(expected, index)) return [];
+    index += 1;
+  }
+  return [command];
+}
+
+/**
+ * Admission for materializing one complete source-local lexer in the current
+ * combined-grammar emitter. Hosts project actual declarations and public name
+ * lookups; this policy does not infer sections or select an ambiguous owner.
+ * @param {number} families @param {number} obligations @param {string[]} modes
+ * @param {string[]} channels @param {number} types @param {string[]} kinds
+ * @param {string[]} names @param {string[]} entryModes @param {string[]} targets
+ * @param {string[]} publicKinds @param {string[]} publicNames
+ * @param {string[]} ruleNames @param {string[]} ruleKinds @param {string[]} references
+ * @returns {string}
+ */
+export function readGrammarLexerEmissionIssue(families, obligations, modes, channels, types, kinds, names, entryModes, targets, publicKinds, publicNames, ruleNames, ruleKinds, references) {
+  if (families !== 1) return 'one uniquely owned lexer family is required';
+  if (obligations !== 0) return 'unresolved lexical obligations remain';
+  if (types !== 0) return 'token declaration sections are not supported';
+  const count = kinds.length;
+  if (names.length !== count || entryModes.length !== count || targets.length !== count
+    || publicKinds.length !== count || publicNames.length !== count || ruleNames.length !== ruleKinds.length) return 'invalid lexical emission fact columns';
+  let index = 0;
+  while (index < modes.length) {
+    if (readRequiredTextFact(modes, index) !== 'default') return 'only the default lexer mode is supported';
+    index += 1;
+  }
+  index = 0;
+  while (index < channels.length) {
+    const channel = readRequiredTextFact(channels, index);
+    if (channel !== 'default' && channel !== 'HIDDEN') return 'custom channel sections are not supported';
+    index += 1;
+  }
+  const locals = [];
+  const owners = [];
+  index = 0;
+  while (index < count) {
+    const kind = readRequiredTextFact(kinds, index);
+    const name = readRequiredTextFact(names, index);
+    const actual = readRequiredTextFact(publicKinds, index);
+    if (kind === 'lexicalOwner' || kind === 'lexicalBinding') {
+      if (readRequiredTextFact(targets, index) !== name || actual === '') return 'public lexical bindings must retain their unique source names';
+      if (kind === 'lexicalOwner') owners.push(name);
+    }
+    if (kind === 'lexicalRule' || kind === 'lexicalFragment') {
+      if (containsGrammarLexerText(locals, name) || readRequiredTextFact(publicNames, index) !== name
+        || kind === 'lexicalRule' && actual !== 'token' || kind === 'lexicalFragment' && actual !== 'silent') return 'each lexical declaration needs one unchanged public token or fragment';
+      if (kind === 'lexicalRule' && readRequiredTextFact(entryModes, index) !== 'default') return 'only default-mode lexical rules are supported';
+      locals.push(name);
+    }
+    index += 1;
+  }
+  index = 0;
+  while (index < ruleNames.length) {
+    const name = readRequiredTextFact(ruleNames, index);
+    const kind = readRequiredTextFact(ruleKinds, index);
+    if (kind !== 'normal' && !containsGrammarLexerText(locals, name)) return 'implicit or declared-only tokens need an unsupported lexer section';
+    if (kind === 'normal' && !containsGrammarLexerText(owners, name)) return 'every parser rule needs the same unique lexer owner';
+    index += 1;
+  }
+  index = 0;
+  while (index < references.length) {
+    if (!containsGrammarLexerText(locals, readRequiredTextFact(references, index))) return 'an unresolved source-local lexical reference remains';
+    index += 1;
+  }
+  return '';
+}
+
+/**
+ * 0 retains the existing documented lossy path, 1 materializes the admitted
+ * local lexer, and 2 refuses unsupported recovery of an absent command.
+ * @param {boolean} commandRecovery @param {string} issue @returns {number}
+ */
+export function readGrammarLexerEmissionDisposition(commandRecovery, issue) {
+  if (issue === '') return 1;
+  return commandRecovery ? 2 : 0;
+}
+
 /** @param {string} candidate @param {string} active @returns {boolean} */
 export function acceptGrammarLexerMode(candidate, active) {
   return candidate === active;
@@ -485,4 +611,21 @@ export function readGrammarLexerLazyNormalization(kinds, labels, texts, inner, e
     index += 1;
   }
   return captures;
+}
+
+// Parser exclusions refer to complete original token identities. The host
+// projects the complete immediate operand set, never an inferred FIRST set.
+/** @param {boolean} parserProduction @param {string[]} kinds
+ * @param {string[]} values @returns {boolean} */
+export function acceptGrammarParserTokenNegation(parserProduction, kinds, values) {
+  if (!parserProduction || kinds.length === 0 || kinds.length !== values.length) return false;
+  for (let index = 0; index < kinds.length; index += 1) {
+    const kind = readRequiredTextFact(kinds, index);
+    const value = readRequiredTextFact(values, index);
+    if (kind === 'literal' && value.length > 0) continue;
+    if (kind === 'ref' && value.length > 0 && 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.includes(value.slice(0, 1))) continue;
+    if (kind === 'not' && value === 'any') continue;
+    return false;
+  }
+  return true;
 }

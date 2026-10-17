@@ -6,7 +6,7 @@ import { importAntlr } from '../src/grammar-importers/antlr.js';
 import { compileGrammar } from '../src/grammar.js';
 import { readLexerDeclaration } from '../src/grammar-runtime/lexer-election.js';
 import {
-  acceptGrammarLexerDecimal, acceptGrammarLexerIdentifier, acceptGrammarLexerMode, acceptGrammarLexerTrivia, acceptGrammarLexerExpectedToken, readGrammarLexerTriviaIdentity, readGrammarLexerCommandPlan,
+  acceptGrammarLexerDecimal, acceptGrammarLexerIdentifier, acceptGrammarLexerMode, acceptGrammarLexerTrivia, acceptGrammarLexerExpectedToken, readGrammarLexerTriviaIdentity, readGrammarLexerCommandPlan, readGrammarLexerCommandEmission, readGrammarLexerEmissionIssue, readGrammarLexerEmissionDisposition,
   readGrammarLexerDeclarationIssue, readGrammarLexerEntryForm,
   readGrammarLexerLazyNormalization, readGrammarLexerObligationPositions,
   readGrammarLexerSectionRulePositions, readGrammarLexerLiteralRulePosition, readGrammarLexerBindingNames,
@@ -29,6 +29,43 @@ test('portable lexer command plans preserve ordering, aliases and unsupported so
   for (const value of ['', '1A', 'é', 'A B', '@', '[', '`', '{', 'A/', 'A:', '𝒜']) assert.equal(acceptGrammarLexerIdentifier(value), false);
   for (const value of ['0', '004']) assert.equal(acceptGrammarLexerDecimal(value), true);
   for (const value of ['', '-1', '1a', '/', ':', '𝟙']) assert.equal(acceptGrammarLexerDecimal(value), false);
+});
+
+test('portable lexer command emission replays complete final fields and ordered actions', () => {
+  for (const source of ['', '-> type(WORD), channel(HIDDEN)', '-> skip, channel(HIDDEN)',
+    '-> skip, type(WORD)', '-> type(WORD), skip',
+    '-> pushMode(STRING), type(TEXT), type(WORD), channel(0), popMode, mode(DEFAULT_MODE)']) {
+    const plan = readGrammarLexerCommandPlan(source, 'RAW');
+    const operations = [], modes = [];
+    for (let index = 3; index < plan.length; index += 2) {
+      operations.push(plan[index]); modes.push(plan[index + 1]);
+    }
+    const command = readGrammarLexerCommandEmission('RAW', ...plan.slice(0, 3), operations, modes);
+    assert.equal(command.length, 1, source);
+    assert.deepEqual(readGrammarLexerCommandPlan(command[0], 'RAW'), plan);
+  }
+  assert.deepEqual(readGrammarLexerCommandEmission('RAW', 'RAW', 'default', 'emit', [], []), ['']);
+  assert.deepEqual(readGrammarLexerCommandEmission('RAW', 'WORD', 'HIDDEN', 'emit', ['pushMode','popMode','setMode'], ['STRING','','default']),
+    ['-> type(WORD), channel(HIDDEN), pushMode(STRING), popMode, mode(DEFAULT_MODE)']);
+  for (const fields of [
+    ['RAW','default','skip',[],[]], ['RAW','default','more',[],[]],
+    ['WORD)','default','emit',[],[]], ['RAW','DEFAULT_TOKEN_CHANNEL','emit',[],[]],
+    ['RAW','default','emit',['more'],['']], ['RAW','default','emit',['popMode'],['OTHER']],
+    ['RAW','default','emit',['pushMode'],[]], ['RAW','default','emit',['setMode'],['DEFAULT_MODE']],
+  ]) assert.deepEqual(readGrammarLexerCommandEmission('RAW', ...fields), [], JSON.stringify(fields));
+  const facts = [1, 0, ['default'], ['default','HIDDEN'], 0,
+    ['lexicalOwner','lexicalRule','lexicalBinding'], ['start','RAW','RAW'], ['','default',''], ['start','','RAW'],
+    ['normal','token','token'], ['start','RAW','RAW'], ['start','RAW'], ['normal','token'], []];
+  assert.equal(readGrammarLexerEmissionIssue(...facts), '');
+  for (const [at, value] of [[0,2], [1,1], [2,['default','OTHER']], [3,['CUSTOM']], [4,1],
+    [7,['other','','RAW']], [9,['start','RENAMED','RAW']], [8,['normal','silent','token']], [13,['missing']]]) {
+    const changed = structuredClone(facts); changed[at] = value;
+    assert.notEqual(readGrammarLexerEmissionIssue(...changed), '', String(at));
+  }
+  assert.equal(readGrammarLexerEmissionDisposition(false, ''), 1);
+  assert.equal(readGrammarLexerEmissionDisposition(true, ''), 1);
+  assert.equal(readGrammarLexerEmissionDisposition(false, 'unsupported scope'), 0);
+  assert.equal(readGrammarLexerEmissionDisposition(true, 'unsupported scope'), 2);
 });
 
 test('portable lexer mode, channel, disposition and expected type decisions are independent', () => {
