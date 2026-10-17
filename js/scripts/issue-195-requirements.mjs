@@ -107,6 +107,8 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'https://github.com/link-foundation/meta-language/issues/224',
   localResourceReminderRequest:
     'parity/sources/local-resource-reminder-2026-10-17.txt',
+  minimalDiskContinuationRequest:
+    'parity/sources/minimal-disk-continuation-2026-10-18.txt',
 });
 
 // The rows the audit of c39470d0 lists as open work.
