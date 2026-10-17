@@ -296,6 +296,13 @@ impl RustParser {
                 span: span(&token, &token),
             });
         }
+        if matches!(token.kind, TokenKind::Character | TokenKind::ByteCharacter) {
+            return Err(unsupported(
+                "character pattern",
+                "characters are outside the portable core",
+                span(&token, &token),
+            ));
+        }
         if token.kind == TokenKind::String {
             return Err(unsupported(
                 "string pattern",

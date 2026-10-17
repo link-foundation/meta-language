@@ -9,6 +9,7 @@ import { readRustSourceLineBreakEnd, readRustStringContinuationEnd } from './rus
 import { acceptRustCookedStringEscapePrefix, readRustAsciiEscapeValue } from './rust-cooked-string-rules.js';
 import { decodeRustUnicodeEscape } from './rust-unicode-escape-rules.js';
 import { decodeRustRawString } from './rust-raw-string-rules.js';
+import { decodeRustCharacterLiteral } from './rust-character-rules.js';
 import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
 import { acceptRustSourceWhitespace, acceptRustSourceByteOrderMark, acceptRustSourceNumberDigitBoundary } from './rust-source-whitespace-rules.js';
 
@@ -106,6 +107,25 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
           else { value += source[cursor]; cursor += 1; }
         }
         tokens.push({ kind: 'string', value, start, end: literal.end, raw: source.slice(start, literal.end) });
+        index = literal.end;
+        continue;
+      }
+    }
+    // Select only Rust apostrophe/byte-apostrophe prefixes. A notCharacter
+    // result consumes nothing, so existing lifetime and label paths stay exact.
+    if (language === 'Rust' && (char === "'" || (char === 'b' && source[index + 1] === "'"))) {
+      encoding.units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
+      const literal = decodeRustCharacterLiteral(encoding.units, index);
+      if (literal.$ === 'malformed') throw new TranslationError('syntax', 'malformed Rust character literal', { start: literal.at, end: literal.end });
+      if (literal.$ === 'unterminated') throw new TranslationError('syntax', 'unterminated Rust character literal', { start: literal.at, end: literal.end });
+      if (literal.$ === 'nonScalar') throw new TranslationError('unsupported', 'Rust character literal is not a Unicode scalar value', { start: literal.at, end: literal.end });
+      if (literal.$ === 'nonAscii') throw new TranslationError('syntax', 'non-ASCII source in a Rust byte character literal', { start: literal.at, end: literal.end });
+      if (literal.$ === 'unicodeByteEscape') throw new TranslationError('syntax', 'Unicode escape in a Rust byte character literal', { start: literal.at, end: literal.end });
+      if (literal.$ === 'unsupportedSuffix') throw new TranslationError('unsupported', 'Rust character literal suffix is outside the supported lexical profile', { start: literal.at, end: literal.end });
+      if (literal.$ === 'char' || literal.$ === 'byteChar') {
+        // Token.value is text in both runtimes. Distinct opaque kinds never
+        // enter the existing String or Number semantic admission branches.
+        tokens.push({ kind: literal.$, value: String(literal.value), start, end: literal.end, raw: source.slice(start, literal.end) });
         index = literal.end;
         continue;
       }

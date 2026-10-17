@@ -250,6 +250,80 @@ fn raw_string_token(
     }
 }
 
+// Thin host projection of the actual automatically emitted result enum.
+// Recorded source parameter loans borrow the original unit vector as &[f64].
+fn rust_character_token(
+    source: &Source,
+    index: usize,
+    units: &mut Option<Vec<f64>>,
+) -> Result<Option<Token>> {
+    use super::rust_character_rules::RustCharacterLiteral;
+
+    let encoded =
+        units.get_or_insert_with(|| source.units().iter().map(|unit| f64::from(*unit)).collect());
+    let start = serde_json::Number::from(index)
+        .as_f64()
+        .expect("UTF-16 source offset");
+    let position = |value| {
+        super::frontend_rules::ml_array::number_index(value)
+            .expect("generated character token source offset")
+    };
+    let (kind, value, end) =
+        match super::rust_character_rules::decode_rust_character_literal(encoded, start) {
+            RustCharacterLiteral::NotCharacter => return Ok(None),
+            RustCharacterLiteral::Char(value, _, _, end) => (TokenKind::Character, value, end),
+            RustCharacterLiteral::ByteChar(value, _, _, end) => {
+                (TokenKind::ByteCharacter, value, end)
+            }
+            RustCharacterLiteral::Malformed(at, end) => {
+                return Err(TranslationError::syntax(
+                    "malformed Rust character literal",
+                    Some(span(position(at), position(end))),
+                ));
+            }
+            RustCharacterLiteral::Unterminated(at, end) => {
+                return Err(TranslationError::syntax(
+                    "unterminated Rust character literal",
+                    Some(span(position(at), position(end))),
+                ));
+            }
+            RustCharacterLiteral::NonScalar(at, end) => {
+                return Err(TranslationError::new(
+                    ErrorKind::Unsupported,
+                    "Rust character literal is not a Unicode scalar value",
+                    Some(span(position(at), position(end))),
+                ));
+            }
+            RustCharacterLiteral::NonAscii(at, end) => {
+                return Err(TranslationError::syntax(
+                    "non-ASCII source in a Rust byte character literal",
+                    Some(span(position(at), position(end))),
+                ));
+            }
+            RustCharacterLiteral::UnicodeByteEscape(at, end) => {
+                return Err(TranslationError::syntax(
+                    "Unicode escape in a Rust byte character literal",
+                    Some(span(position(at), position(end))),
+                ));
+            }
+            RustCharacterLiteral::UnsupportedSuffix(at, end) => {
+                return Err(TranslationError::new(
+                    ErrorKind::Unsupported,
+                    "Rust character literal suffix is outside the supported lexical profile",
+                    Some(span(position(at), position(end))),
+                ));
+            }
+        };
+    let end = position(end);
+    Ok(Some(Token::new(
+        kind,
+        super::js_number::js_number(value),
+        source.slice(index, end),
+        index,
+        end,
+    )))
+}
+
 fn string_token(
     source: &Source,
     index: usize,

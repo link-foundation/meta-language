@@ -41,6 +41,8 @@ fn kind(token: Option<&Token>) -> &'static str {
         Some(TokenKind::Identifier) => "identifier",
         Some(TokenKind::Number) => "number",
         Some(TokenKind::String) => "string",
+        Some(TokenKind::Character) => "char",
+        Some(TokenKind::ByteCharacter) => "byteChar",
         Some(TokenKind::Eof) => "eof",
         Some(TokenKind::Macro) => "macro",
         Some(TokenKind::RegularExpression) => "regularExpression",

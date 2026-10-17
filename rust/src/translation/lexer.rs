@@ -120,6 +120,8 @@ pub enum TokenKind {
     Punct,
     RegularExpression,
     String,
+    Character,
+    ByteCharacter,
     Interpolation,
     Template,
     Eof,
@@ -471,6 +473,14 @@ fn tokenize_region(
         if language == Language::Rust
             && ch == Some('r')
             && let Some(token) = raw_string_token(source, index, units)?
+        {
+            index = token.end;
+            tokens.push(token);
+            continue;
+        }
+        if language == Language::Rust
+            && (ch == Some('\'') || (ch == Some('b') && source.is_char(index + 1, '\'')))
+            && let Some(token) = rust_character_token(source, index, units)?
         {
             index = token.end;
             tokens.push(token);

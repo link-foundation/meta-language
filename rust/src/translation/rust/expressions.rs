@@ -650,7 +650,7 @@ impl RustParser {
             return self.expression_macro(&token, path);
         }
         let c = &self.cursor;
-        if c.is("'") {
+        if matches!(token.kind, TokenKind::Character | TokenKind::ByteCharacter) || c.is("'") {
             return Err(unsupported(
                 "character literal",
                 "characters are outside the portable core",

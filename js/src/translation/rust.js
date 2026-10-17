@@ -1182,7 +1182,7 @@ class RustParser {
       c.next();
       return this.expressionMacro(token, path);
     }
-    if (c.is('\'')) throw unsupported('character literal', 'characters are outside the portable core', span(token, token));
+    if (token.kind === 'char' || token.kind === 'byteChar' || c.is('\'')) throw unsupported('character literal', 'characters are outside the portable core', span(token, token));
     if (c.is('(')) {
       c.next();
       if (c.eat(')')) return { k: 'unit', span: span(token, token) };
@@ -1387,6 +1387,7 @@ class RustParser {
       if (c.is('..') || c.is('..=')) throw unsupported('range pattern', 'ranges are outside the portable pattern language', span(token, c.peek()));
       return { k: 'numLit', value: token.value, span: span(token, token) };
     }
+    if (token.kind === 'char' || token.kind === 'byteChar') throw unsupported('character pattern', 'characters are outside the portable core', span(token, token));
     if (token.kind === 'string') throw unsupported('string pattern', 'match on &str is outside the Rust frontend', span(token, token));
     if (c.is('true') || c.is('false')) {
       c.next();
