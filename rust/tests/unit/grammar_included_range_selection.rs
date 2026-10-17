@@ -36,6 +36,9 @@ use included_range_rules::{
 #[path = "grammar_included_range_archive.rs"]
 mod included_range_archive;
 
+#[path = "grammar_field_range_selection.rs"]
+mod field_range_selection;
+
 fn included_range_grammar(
     region: &str,
     ranges: &[[i64; 2]],
