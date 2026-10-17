@@ -8,6 +8,7 @@ use super::source_signatures::{SourceTypeSignature, validate_source_signature};
 use super::type_namespace_rules::{
     accept_rust_type_namespace_declaration, accept_rust_type_namespace_fields,
     accept_rust_type_namespace_model, accept_rust_type_namespace_position,
+    accept_rust_type_namespace_record_value,
 };
 use serde_json::Value;
 use std::sync::LazyLock;
@@ -36,6 +37,63 @@ fn unrepresented(value: &Value, fields: &str) -> bool {
     })
 }
 
+fn validate_namespace_value_shapes(value: &Value, context: &str) -> Result<()> {
+    match value {
+        Value::Array(items) => {
+            for item in items {
+                let context = item["k"].as_str().unwrap_or_default();
+                validate_namespace_value_shapes(item, context)?;
+            }
+        }
+        Value::Object(record) => {
+            for (field, child) in record {
+                let boolean_required = policy()["recordBooleanFields"][context]
+                    .as_array()
+                    .is_some_and(|fields| {
+                        fields
+                            .iter()
+                            .any(|name| name.as_str() == Some(field.as_str()))
+                    });
+                if !accept_rust_type_namespace_record_value(
+                    boolean_required,
+                    child.is_boolean(),
+                    true,
+                ) {
+                    if context == "fn" && field == "generated" {
+                        return Err(fail(
+                            "requires original declarations with absent or false generated facts",
+                        ));
+                    }
+                    return Err(fail("contains a non-Boolean contextual flag"));
+                }
+                if field == "span" && !child.is_null() {
+                    let valid = child.as_object().is_some_and(|span| {
+                        span.len() == 2
+                            && child["start"]
+                                .as_u64()
+                                .zip(child["end"].as_u64())
+                                .is_some_and(|(start, end)| {
+                                    start <= end
+                                        && end <= policy()["sourceOffsetMaximum"].as_u64().unwrap()
+                                })
+                    });
+                    if !valid {
+                        return Err(fail("contains an invalid owned source span"));
+                    }
+                }
+                let child_context = if context == "program" && field == "main" {
+                    "main"
+                } else {
+                    child["k"].as_str().unwrap_or_default()
+                };
+                validate_namespace_value_shapes(child, child_context)?;
+            }
+        }
+        _ => {}
+    }
+    Ok(())
+}
+
 /// Inspect present fields before serde can discard or normalize their values.
 pub fn validate_type_namespace_records(value: &Value) -> Result<()> {
     let Some(declarations) = value["declarations"].as_array() else {
@@ -47,6 +105,7 @@ pub fn validate_type_namespace_records(value: &Value) -> Result<()> {
     }) {
         return Ok(());
     }
+    validate_namespace_value_shapes(value, "program")?;
     if value["sourceLanguage"] != "Rust"
         || value
             .get("imports")

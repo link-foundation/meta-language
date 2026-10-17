@@ -4,7 +4,17 @@ import { TYPED_PROGRAM_LINKS_SCHEMA } from './typed-program-links.js';
 import { acceptProgramExpressionField, acceptProgramExpressionOperation, readProgramExpressionProjection } from './typed-program-link-rules.js';
 import { checkRustScalarLoopProof } from './translation/rust-scalar-loops.js';
 
-export function projectLinkedProgramExpression(value, declarations = new Map()) {
+/** Restore identities from actual declarations after independent namespace validation. */
+export function projectLinkedProgramDeclarationPath(name, declarations, rooted = false) {
+  if (!rooted) return name.split('.');
+  const declaration = declarations.get(name);
+  if (!declaration) throw new TypeError('an owned namespace projection has no actual declaration target');
+  const actual = [...declaration.modulePath, declaration.name];
+  if (actual.join('.') !== name) throw new TypeError('an owned namespace projection disagrees with its actual declaration binding');
+  return ['crate', ...actual];
+}
+
+export function projectLinkedProgramExpression(value, declarations = new Map(), {rootedNamespace = false} = {}) {
   const plans = TYPED_PROGRAM_LINKS_SCHEMA.expressionProjections;
   if (['tuple', 'tupleIndex'].includes(value?.k)
     && Object.keys(value).some(field => !acceptProgramExpressionField(value.k, field))) throw new TypeError('a linked tuple expression has an unrecognized projection field');
@@ -20,7 +30,7 @@ export function projectLinkedProgramExpression(value, declarations = new Map()) 
   if (!readProgramExpressionProjection(key ?? '') || !plans[key].construct) throw new TypeError(`the linked expression ${value?.k} has no surface projection`);
   const plan = plans[key];
   const result = { k: plan.construct, ...(value.span !== undefined ? { span: value.span } : {}) };
-  const project = child => projectLinkedProgramExpression(child, declarations);
+  const project = child => projectLinkedProgramExpression(child, declarations, {rootedNamespace});
   const operation = plan.renames?.[value.op] ?? value.op;
   for (const [target, mode, source, right] of plan.fields) {
     const child = value[source];
@@ -29,7 +39,7 @@ export function projectLinkedProgramExpression(value, declarations = new Map()) 
     else if (mode === 'expressions') result[target] = child.map(project);
     else if (mode === 'name-path') result[target] = [child];
     else if (mode === 'function-path') {
-      let path=[child];
+      let path=rootedNamespace ? projectLinkedProgramDeclarationPath(child, declarations, true) : [child];
       const declaration=declarations.get(child);
       if(declaration?.sourceLoop?.continuation!==undefined){
         if(declaration.k!=='fn'||declaration.fullName!==child)throw new TypeError('a projected continuation must target its actual declaration identity');
@@ -40,7 +50,7 @@ export function projectLinkedProgramExpression(value, declarations = new Map()) 
     }
     else if (mode === 'array-items') result[target] = child.map((item) => ({ value: project(item), spread: plan.spreadOperations?.includes(value.op) ?? false }));
     else if (mode === 'spread-pair') result[target] = [child, value[right]].map((item) => ({ value: project(item), spread: true }));
-    else if (mode === 'constructor-path') result[target] = { k: 'name', path: [...value.data.split('.'), child] };
+    else if (mode === 'constructor-path') result[target] = { k: 'name', path: [...projectLinkedProgramDeclarationPath(value.data, declarations, rootedNamespace), child] };
     else if (mode === 'constructor-fields') {
       const declaration = declarations.get(value.data);
       const constructor = declaration?.k === 'data' && declaration.ctors.find(constructor => constructor.name === value.ctor);
@@ -48,7 +58,7 @@ export function projectLinkedProgramExpression(value, declarations = new Map()) 
       result[target] = Object.fromEntries(constructor.fields.map((field, index) => [field.name, project(child[index])]));
     } else if (mode === 'match-cases') result[target] = child.map(kase => ({
       pattern: kase.pattern.k === 'ctor'
-        ? { k: 'ctor', path: [...kase.pattern.data.split('.'), kase.pattern.ctor], binds: kase.pattern.binds }
+        ? { k: 'ctor', path: [...projectLinkedProgramDeclarationPath(kase.pattern.data, declarations, rootedNamespace), kase.pattern.ctor], binds: kase.pattern.binds }
         : { ...kase.pattern },
       body: project(kase.body), ...(kase.span !== undefined ? { span: kase.span } : {}),
     }));

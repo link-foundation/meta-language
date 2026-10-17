@@ -82,6 +82,16 @@ pub fn accept_rust_type_namespace_container(kind: &str, dense: bool, unrepresent
 
 /// Apply the shared resolved type namespace policy.
 #[must_use]
+pub const fn accept_rust_type_namespace_record_value(
+    boolean_required: bool,
+    boolean_value: bool,
+    defined_value: bool,
+) -> bool {
+    defined_value && (!boolean_required || boolean_value)
+}
+
+/// Apply the shared resolved type namespace policy.
+#[must_use]
 pub fn accept_rust_type_namespace_discovery_type(discovery: bool, type_name: &str) -> bool {
     discovery && type_name == "str"
 }
