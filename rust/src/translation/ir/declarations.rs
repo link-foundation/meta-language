@@ -120,6 +120,13 @@ pub struct FnDecl {
     /// Owned actual const qualification of a closed primitive predicate.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_const_function: Option<serde_json::Value>,
+    /// Ordered original diagnostic-only attributes attached to this const function.
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::translation::source_diagnostic_attributes::read_present_facet"
+    )]
+    pub source_diagnostic_attributes: Option<serde_json::Value>,
     /// Optional owned scalar loop state and checked continuation interpretation.
     #[serde(
         default,

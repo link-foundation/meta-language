@@ -354,6 +354,17 @@ impl<'p> JavaScriptEmitter<'p> {
             }
             lines.extend(self.parameter_guard(param));
         }
+        if function.source_diagnostic_attributes.is_some() {
+            let normalization = &super::source_diagnostic_attributes::policy()["normalization"];
+            self.state.encode(
+                normalization["id"]
+                    .as_str()
+                    .expect("a shared normalization identifier"),
+                normalization["statement"]
+                    .as_str()
+                    .expect("a shared normalization statement"),
+            );
+        }
         if function.source_const_function.is_some() {
             for param in &params {
                 let kind = if param.ty.kind() == "bool" {

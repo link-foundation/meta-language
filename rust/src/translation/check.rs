@@ -50,6 +50,7 @@ pub use self::recursion::*;
 /// # Errors
 /// On name, type and exhaustiveness errors, and on constructs outside the portable core.
 pub fn check_program(surface: &SProgram) -> Result<Program> {
+    super::source_diagnostic_attributes::validate_surface(surface)?;
     super::source_unit_clone_derivations::validate_surface_unit_clone_derivations(surface)?;
     Checker::new(surface.language, surface.externals.clone()).program(surface)
 }

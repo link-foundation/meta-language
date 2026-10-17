@@ -636,6 +636,14 @@ pub struct SFn {
         skip_serializing_if = "Option::is_none"
     )]
     pub source_const_function: Option<Box<serde_json::Value>>,
+    /// Ordered original diagnostic-only attributes attached to this const function.
+    #[serde(
+        default,
+        rename = "sourceDiagnosticAttributes",
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::translation::source_diagnostic_attributes::read_present_surface_facet"
+    )]
+    pub source_diagnostic_attributes: Option<Box<serde_json::Value>>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

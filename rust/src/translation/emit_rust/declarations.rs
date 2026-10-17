@@ -339,7 +339,8 @@ impl<'p> RustEmitter<'p> {
         let ret = self.ty(&function.ret)?;
         let body = self.expr(&body)?;
         self.array_final_uses.clear();
-        Ok(
+        crate::translation::source_diagnostic_attributes::render_prefix(
+            function,
             crate::translation::rust::const_functions::render_const_function_header(
                 function,
                 format!(

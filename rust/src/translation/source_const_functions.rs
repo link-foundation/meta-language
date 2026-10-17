@@ -133,7 +133,8 @@ fn selected(value: &Value) -> Result<bool> {
             continue;
         }
         if let Some(record) = value.as_object() {
-            selected |= record.contains_key("sourceConstFunction");
+            selected |= record.contains_key("sourceConstFunction")
+                || record.contains_key("sourceDiagnosticAttributes");
             pending.extend(record.values().map(|child| (child, depth + 1)));
         } else if let Some(items) = value.as_array() {
             pending.extend(items.iter().map(|child| (child, depth + 1)));
@@ -221,7 +222,14 @@ fn validate_interface(entry: &Value, branching: bool) -> Result<HashMap<String, 
 }
 
 fn validate_declaration(entry: &Value) -> Result<()> {
-    fields(entry, &policy()["fields"]["declaration"], false)?;
+    let mut declaration_fields = policy()["fields"]["declaration"].clone();
+    if entry.get("sourceDiagnosticAttributes").is_some() {
+        declaration_fields
+            .as_array_mut()
+            .expect("shared declaration field names")
+            .push(Value::String("sourceDiagnosticAttributes".to_owned()));
+    }
+    fields(entry, &declaration_fields, false)?;
     let proof = &entry["sourceConstFunction"];
     fields(proof, &policy()["fields"]["proof"], true)?;
     if entry["k"] != "fn"
@@ -290,6 +298,7 @@ pub fn validate_const_function_records(value: &Value) -> Result<()> {
     if !selected(value)? {
         return Ok(());
     }
+    super::source_diagnostic_attributes::validate_records(value)?;
     let entries = array(
         &value["declarations"],
         "the model requires a complete flat Rust predicate program and an empty main",

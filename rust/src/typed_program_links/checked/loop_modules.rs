@@ -38,6 +38,7 @@ pub(super) fn project_function(function: &FnDecl, program: &Program) -> Result<S
         source_pure_unit: function.source_pure_unit.clone().map(Box::new),
         source_local_state: function.source_local_state.clone().map(Box::new),
         source_const_function: function.source_const_function.clone().map(Box::new),
+        source_diagnostic_attributes: function.source_diagnostic_attributes.clone().map(Box::new),
     }))
 }
 

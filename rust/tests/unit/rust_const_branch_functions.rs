@@ -20,6 +20,8 @@ use std::fs;
 use std::process::Command;
 use std::sync::OnceLock;
 
+mod diagnostic_attributes;
+
 fn fixture() -> &'static Value {
     static FIXTURE: OnceLock<Value> = OnceLock::new();
     FIXTURE.get_or_init(|| {
@@ -452,4 +454,233 @@ fn actual_original_and_whole_emitted_rust_execute_all_truth_rows_and_const_invoc
     let observed = run(&mut Command::new(binary));
     assert!(observed.ok, "{}", observed.stderr);
     assert_eq!(observed.stdout, "");
+}
+
+#[test]
+fn diagnostic_facet_present_null_and_owned_metadata_forgeries_refuse_before_emission() {
+    let source = "#[expect(clippy::fn_params_excessive_bools, reason = \"why\")] pub    const fn keep(value:bool)->bool{value}fn main(){}";
+    for selected_model in [
+        "closed pure Rust const predicates 1",
+        "closed Boolean Rust const decision trees 1",
+    ] {
+        let surface = parse_rust_with_const_function_model(source, selected_model, "").unwrap();
+        let mut surface_value = serde_json::to_value(&surface).unwrap();
+        surface_value["items"][0]["sourceDiagnosticAttributes"] = Value::Null;
+        let surface: meta_language::translation::surface::SProgram =
+            serde_json::from_value(surface_value).unwrap();
+        let meta_language::translation::surface::SItem::Fn(function) = &surface.items[0] else {
+            unreachable!()
+        };
+        assert_eq!(
+            function.source_diagnostic_attributes.as_deref(),
+            Some(&Value::Null),
+            "present null must survive serde for rejection"
+        );
+        let failure = check_program(&surface).unwrap_err();
+        assert_eq!(
+            failure.reason,
+            "Rust diagnostic source attributes: an owned descriptor has missing or unrepresented fields"
+        );
+
+        let original = check_program(
+            &parse_rust_with_const_function_model(source, selected_model, "").unwrap(),
+        )
+        .unwrap();
+        for edit in 0..9 {
+            let mut value = serde_json::to_value(&original).unwrap();
+            let function = &mut value["declarations"][0];
+            match edit {
+                0 => function["sourceDiagnosticAttributes"] = Value::Null,
+                1 => function["sourceDiagnosticAttributes"]["model"] = json!("unknown"),
+                2 => function["sourceDiagnosticAttributes"]["edition"] = json!(2024),
+                3 => {
+                    function["sourceDiagnosticAttributes"]["attachment"]["sourceName"] =
+                        json!("foreign")
+                }
+                4 => {
+                    function["sourceDiagnosticAttributes"]["attachment"]["modulePath"] =
+                        json!(["foreign"])
+                }
+                5 => {
+                    function["sourceDiagnosticAttributes"]["tokens"][0]["kind"] =
+                        json!("identifier")
+                }
+                6 => function["sourceDiagnosticAttributes"]["tokens"][0]["raw"] = json!("@"),
+                7 => {
+                    function["sourceDiagnosticAttributes"]["tokens"][0]["span"]["start"] = json!(1)
+                }
+                _ => {
+                    function
+                        .as_object_mut()
+                        .unwrap()
+                        .remove("sourceConstFunction");
+                }
+            }
+            let changed: Program = serde_json::from_value(value).unwrap();
+            if edit == 0 {
+                let Decl::Fn(function) = &changed.declarations[0] else {
+                    unreachable!()
+                };
+                assert_eq!(
+                    function.source_diagnostic_attributes.as_ref(),
+                    Some(&Value::Null)
+                );
+            }
+            for failure in [
+                emit_rust(&changed).unwrap_err(),
+                emit_javascript(&changed).unwrap_err(),
+            ] {
+                assert!(
+                    failure
+                        .reason
+                        .starts_with("Rust diagnostic source attributes:"),
+                    "{selected_model}/{edit}: {}",
+                    failure.reason
+                );
+            }
+            assert!(
+                encode_typed_program_links(&changed).is_err(),
+                "{selected_model}/{edit}"
+            );
+        }
+    }
+}
+
+#[test]
+fn diagnostic_raw_archive_null_misplacement_and_const_boundary_forgeries_refuse() {
+    let attribute = "#[expect(clippy::fn_params_excessive_bools, reason = \"why\")]";
+    let source =
+        format!("{attribute} pub    const fn keep(value:bool)->bool{{value}}fn main(){{}}");
+    for selected_model in [
+        "closed pure Rust const predicates 1",
+        "closed Boolean Rust const decision trees 1",
+    ] {
+        let original = check_program(
+            &parse_rust_with_const_function_model(&source, selected_model, "").unwrap(),
+        )
+        .unwrap();
+        let original = encode_typed_program_links(&original).unwrap();
+        for edit in 0..7 {
+            let mut packet = original.clone();
+            let body = packet.network.link(packet.root).unwrap().references()[0];
+            let directory = relation(&packet.network, body, "declarations")[2];
+            let pair = packet.network.link(directory).unwrap().references()[0];
+            let function = packet.network.link(pair).unwrap().references()[1];
+            let field = relation(&packet.network, function, "sourceDiagnosticAttributes");
+            let facet = field[2];
+            let expected = if edit >= 5 {
+                let raw = if edit == 5 {
+                    format!("{attribute}     pub")
+                } else {
+                    format!("{attribute} pub // ")
+                };
+                let old_raw = relation(&packet.network, facet, "raw")[2];
+                assert_eq!(
+                    packet
+                        .network
+                        .link(old_raw)
+                        .unwrap()
+                        .metadata()
+                        .definition()
+                        .unwrap()
+                        .encode_utf16()
+                        .count(),
+                    raw.encode_utf16().count()
+                );
+                replace(&mut packet.network, facet, "raw", "string value", &raw);
+                let list = relation(&packet.network, facet, "tokens")[2];
+                let ids = packet.network.link(list).unwrap().references().to_vec();
+                let actual = meta_language::translation::lexer::tokenize(
+                    &raw,
+                    meta_language::translation::Language::Rust,
+                )
+                .unwrap()
+                .tokens;
+                let actual = actual
+                    .iter()
+                    .filter(|token| token.kind != meta_language::translation::lexer::TokenKind::Eof)
+                    .collect::<Vec<_>>();
+                assert_eq!(ids.len(), actual.len());
+                assert_eq!(actual.last().unwrap().value, "pub");
+                for (id, token) in ids.iter().zip(actual) {
+                    let span = relation(&packet.network, *id, "span")[2];
+                    for (name, position) in [("start", token.start), ("end", token.end)] {
+                        let old = relation(&packet.network, span, name)[2];
+                        let scalar = packet.network.link(old).unwrap().metadata();
+                        let term = scalar.term().unwrap().to_owned();
+                        let definition = position.to_string();
+                        if scalar.definition() != Some(definition.as_str()) {
+                            replace(&mut packet.network, span, name, &term, &definition);
+                        }
+                    }
+                }
+                "Rust diagnostic source attributes: the retained prefix absorbs or changes the actual following const token"
+            } else if edit == 0 {
+                let schema = meta_language::typed_program_links_schema();
+                let null = packet.network.insert_link(
+                    [],
+                    LinkMetadata::new()
+                        .with_link_type(LinkType::Semantic)
+                        .with_named(true)
+                        .with_language(schema["language"].as_str().unwrap())
+                        .with_term(schema["scalars"]["null"].as_str().unwrap()),
+                );
+                assert_eq!(
+                    packet
+                        .network
+                        .apply_substitution(&SubstitutionRule::new(
+                            field,
+                            [field[0], field[1], null]
+                        ))
+                        .updated()
+                        .len(),
+                    1
+                );
+                "Rust diagnostic source attributes: an owned descriptor has missing or unrepresented fields"
+            } else {
+                let target = match edit {
+                    1 => relation(&packet.network, body, "main")[2],
+                    2 => relation(&packet.network, function, "body")[2],
+                    3 => {
+                        let parameters = relation(&packet.network, function, "params")[2];
+                        packet.network.link(parameters).unwrap().references()[0]
+                    }
+                    _ => body,
+                };
+                let label = packet
+                    .network
+                    .link(field[1])
+                    .unwrap()
+                    .metadata()
+                    .term()
+                    .unwrap()
+                    .to_owned();
+                assert_eq!(
+                    packet
+                        .network
+                        .apply_substitution(&SubstitutionRule::delete(field))
+                        .deleted()
+                        .len(),
+                    1
+                );
+                packet.network.insert_field(target, &label, facet);
+                "Rust diagnostic source attributes: a source facet is not attached to an actual function item"
+            };
+            for network in archives(&packet) {
+                let failure = decode_typed_program_links(&network, packet.root).unwrap_err();
+                assert!(
+                    failure.to_string().contains(expected),
+                    "{selected_model}/{edit}: {failure}"
+                );
+                for target in ["Rust", "JavaScript"] {
+                    let failure =
+                        emit_typed_program_links(&network, packet.root, target).unwrap_err();
+                    assert!(
+                        failure.to_string().contains(expected),
+                        "{selected_model}/{edit}/{target}: {failure}"
+                    );
+                }
+            }
+        }
+    }
 }
