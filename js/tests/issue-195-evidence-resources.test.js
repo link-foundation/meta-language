@@ -107,7 +107,7 @@ test('CI splits the Rust and JavaScript tests into matrix jobs with their own ti
   assert.match(aggregate, /\[ "\$REPORTS_RESULT" = failure \] \|\| \[ "\$REPORTS_RESULT" = cancelled \]/u);
   assert.deepEqual(partitionProblems(partitionTests(testFiles())), []);
   assert.match(javascript, /\n {4}timeout-minutes: \d+\n/u);
-  assert.match(rust, /timeout-minutes: \$\{\{ matrix\.os == 'windows-latest' && matrix\.suite == 'grammar' && 30 \|\| 15 \}\}/u);
+  assert.match(rust, /timeout-minutes: \$\{\{ matrix\.os == 'windows-latest' && \(matrix\.logical_suite \|\| matrix\.suite\) == 'grammar' && 30 \|\| 15 \}\}/u);
   observe('I195-RESOURCE-CI-TEST-MATRIX',
     ['rustTestsSplitBySuite', 'javascriptTestsSplitByGroup', 'everyTestFileInExactlyOneGroup', 'matrixJobsHaveTimeouts'],
     'CI splits the Rust and JavaScript tests into matrix jobs with their own timeouts');
