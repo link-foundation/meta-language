@@ -18,7 +18,7 @@
 (kind dedent (source-names (tree-sitter _dedent)))
 (kind string_fragment (source-names (tree-sitter _string_content)))
 (rule module normal (repeat0 (ref statement)) (concept grammar.module))
-(rule statement silent (choice unordered (ref simple_statement_sequence) (ref compound_statement)) (concept grammar.statement) (source-names (tree-sitter _statement)))
+(rule statement silent (seq (not (immediateToken (and (alias unnamed_token (immediateToken (ref dedent)))))) (choice unordered (ref simple_statement_sequence) (ref compound_statement))) (concept grammar.statement) (source-names (tree-sitter _statement)))
 (rule simple_statement_sequence silent (seq (seq (ref simple_statement) (repeat0 (seq (literal %3B) (ref simple_statement)))) (optional (literal %3B)) (alias unnamed_token (immediateToken (ref newline)))) (concept grammar.simple-statement-sequence) (source-names (tree-sitter _simple_statements)))
 (rule simple_statement silent (choice unordered (ref future_import_statement) (ref import_statement) (ref import_from_statement) (ref print_statement) (ref assert_statement) (ref expression_statement) (ref return_statement) (ref delete_statement) (ref raise_statement) (ref pass_keyword_statement) (ref break_statement) (ref continue_statement) (ref global_statement) (ref non_local_statement) (ref exec_statement) (ref type_alias_statement)) (concept grammar.simple-statement) (source-names (tree-sitter _simple_statement)))
 (rule import_statement normal (seq (token (seq (literal import) (not (ref word_characters)))) (ref import_list)) (concept grammar.import-statement))
