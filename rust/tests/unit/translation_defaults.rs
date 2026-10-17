@@ -408,14 +408,35 @@ fn type_queries_preserve_bound_value_names_without_discarding_evaluation() {
             "function fail() { throw new Error('preserve'); } console.log(typeof fail());",
             "typeof operand",
         ),
-        (
-            "function answer() { return 7; } console.log(typeof answer);",
-            "function value",
-        ),
         ("console.log(typeof [1]);", "typeof operand"),
     ] {
-        let translated = translate_program(source, "JavaScript", "Rust").unwrap();
-        assert!(translated.diagnostic().unwrap().message.contains(reason));
+        for target in ["Rust", "Lean", "Rocq"] {
+            let translated = translate_program(source, "JavaScript", target).unwrap();
+            let Some(diagnostic) = translated.diagnostic() else {
+                panic!("{target}: expected {reason} rejection for {source}")
+            };
+            assert!(
+                diagnostic.message.contains(reason),
+                "{target}: {source}: {}",
+                diagnostic.message
+            );
+        }
+    }
+    let source = "function answer() { return 7; } console.log(typeof answer);";
+    let program = check_program(&parse_javascript(source).unwrap()).unwrap();
+    assert_eq!(javascript_output(source), "function\n");
+    assert_eq!(
+        javascript_output(&emit_javascript(&program).unwrap().text),
+        "function\n"
+    );
+    for target in ["Rust", "Lean", "Rocq"] {
+        assert_eq!(
+            translate_program(source, "JavaScript", target)
+                .unwrap()
+                .diagnostic(),
+            None,
+            "{target}: the exact original function reference type query"
+        );
     }
 }
 
