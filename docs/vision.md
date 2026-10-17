@@ -2154,6 +2154,16 @@ braces inside strings, comments, regex bodies and nested templates cannot end
 a substitution. String and template escapes use the shared scalar decoder;
 template cooking preserves line continuations and normalizes line endings.
 
+The portable Rust tokenizer keeps unsuffixed character and byte character
+literals as opaque whole tokens, retaining their original text and absolute
+offsets. Shared source rules handle scalar and byte escape boundaries without
+consuming lifetimes or labels; typed character expressions and patterns still
+refuse explicitly. JavaScript constructor selection uses the actual receiver
+datatype and nearest lexical binding to resolve repeated tag names, while
+unknown, optional or shadowed owners retain their existing refusals. Both rule
+families are translated from complete JavaScript source closures and shipped
+as shared Links data. Native execution remains subject to CI verification.
+
 TypeScript compile-time erasure selects native concrete-tree spans through
 shared linked erasure definitions. Its source annotations and type-only
 declarations remain provenance, including when no executable definitions remain.

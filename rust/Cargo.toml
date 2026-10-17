@@ -89,6 +89,9 @@ include = [
     "README.md",
     "/LICENSE",
     "CHANGELOG.md",
+    "src/data/rust-character-rules.lino",
+    "src/data/rust-character-literals.lino",
+    "src/data/javascript-tag-context-rules.lino",
 ]
 
 [lib]

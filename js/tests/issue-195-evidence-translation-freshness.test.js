@@ -41,10 +41,16 @@ test('bulk translation freshness includes every new native family without repeat
   assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(20, 21), [
     { script: 'js/scripts/extend-typed-program-schema-third-stage.mjs', arguments: ['--check'] },
   ], 'the strict equality schema successor appends after every retained twenty-command scope');
-  assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(21), [
+  assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(21, 23), [
     { script: 'js/scripts/generate-grammar-selection-mapping-rules.mjs', arguments: ['--native', '--check'] },
     { script: 'js/scripts/generate-grammar-selection-mapping-fixtures.mjs', arguments: ['--check'] },
   ], 'mapped selection appends source and fixture checks after every retained predecessor scope');
+  assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(23), [
+    { script: 'js/scripts/generate-rust-character-rules.mjs', arguments: ['--native', '--check'] },
+    { script: 'js/scripts/generate-javascript-tag-context-rules.mjs', arguments: ['--native', '--check'] },
+    { script: 'js/scripts/generate-rust-character-literal-fixtures.mjs', arguments: ['--check'] },
+  ], 'character and constructor-context checks append after the complete retained twenty-three-command prefix');
+  assert.equal(BULK_TRANSLATION_RULE_CHECKS.length, 26, 'the complete source freshness gate retains exactly its reviewed scope');
   for (const family of defaultNative) assert.deepEqual(checks.get(`generate-${family}-rules.mjs`), ['--check']);
   for (const family of explicitNative) assert.deepEqual(checks.get(`generate-${family}-rules.mjs`), ['--native', '--check']);
   for (const name of ['generate-grammar-selection-fixtures.mjs', 'generate-private-output-test-model.mjs', 'extend-typed-program-schema-second-stage.mjs']) {
@@ -61,7 +67,10 @@ test('bulk translation freshness includes every new native family without repeat
   for (const check of BULK_TRANSLATION_RULE_CHECKS) {
     const source = readFileSync(path.join(repository, check.script), 'utf8');
     assert.equal(source.includes('--check'), true, `${check.script} actually implements check mode`);
-    if (check.arguments.includes('--native')) assert.equal(source.includes("process.argv.includes('--native')"), true, check.script);
+    if (check.script === 'js/scripts/generate-javascript-tag-context-rules.mjs') {
+      assert.equal(source.includes('const args = process.argv.slice(2);'), true, check.script);
+      assert.equal(source.includes("check: args.includes('--check'), native: args.includes('--native')"), true, check.script);
+    } else if (check.arguments.includes('--native')) assert.equal(source.includes("process.argv.includes('--native')"), true, check.script);
   }
 });
 

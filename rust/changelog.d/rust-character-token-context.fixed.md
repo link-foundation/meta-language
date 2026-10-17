@@ -1,0 +1,1 @@
+Recognize unsuffixed Rust character and byte character literals as complete lexical tokens, keeping their punctuation inside the original source token. Resolve repeated JavaScript constructor names from actual receiver ownership when available. Typed character expressions and patterns retain explicit refusals; native runtime parity remains for CI verification.
