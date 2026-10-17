@@ -39,7 +39,7 @@ test('bounded complete results cover both profiles, all twenty-two exact errors 
 });
 
 test('every pinned source, model, policy, style, builder, provider and fixture refuses byte changes',()=>{
- const receipts=verifyBinaryMetadataBufferNativeModel();assert.equal(receipts.length,13);
+ const receipts=verifyBinaryMetadataBufferNativeModel(file=>new URL(file).pathname.endsWith('/rust/src/translation/frontend_rules.rs')?Buffer.from(readProjectData(new URL('./frontend-owner-revision.lino',import.meta.url)).current.source):readFileSync(file));assert.equal(receipts.length,13);
  for(const row of receipts)assert.throws(()=>verifyBinaryMetadataBufferNativeModel(file=>new URL(file).pathname.endsWith('/'+row.file)?Buffer.concat([readFileSync(file),Buffer.from('changed')]):readFileSync(file)),/frozen binary candidate model changed/u);
  const revisionAddress=new URL('./frontend-owner-revision.lino',import.meta.url),revision=readProjectData(revisionAddress);
  assert.equal(digest(readFileSync(revisionAddress)),'95f86b39d65d4b2faa57ceb942bc77feab2086184b239ed3f4210c8be6a4720c');
@@ -63,6 +63,28 @@ test('every pinned source, model, policy, style, builder, provider and fixture r
   const bytes=change==='append'?Buffer.concat([readFileSync(revisionAddress),Buffer.from('changed')]):Buffer.from(serializeProjectData(changed,'owner-revision.lino'));
   assert.throws(()=>verifyBinaryMetadataBufferNativeModel(file=>new URL(file).href===revisionAddress.href?bytes:readFileSync(file)),/frozen binary candidate model changed/u);
  }
+ const live=verifyBinaryMetadataBufferNativeModel(),liveOwner=live.find(row=>row.file===owner.file);
+ assert.equal(live.length,13);assert.equal(liveOwner.ownerRevision.actualSourceSha256,'bbf032af0422fd7252da32e090c065d3e4c9c4c8d88a284a4a15c02c1884a71d');
+ assert.deepEqual(live.map(({file,sha256})=>({file,sha256})),receipts.map(({file,sha256})=>({file,sha256})));
+ assert.deepEqual(liveOwner.ownerRevision.predecessor,owner.ownerRevision,'the accepted37033 source and immutable95f86 provenance remain exact');
+ const successorAddress=new URL('./frontend-owner-string-construction-revision.lino',import.meta.url),successor=readProjectData(successorAddress);
+ assert.equal(digest(readFileSync(successorAddress)),'434c61e21c16876f6ea5910a146fee3bfeaa019a79ba95005f2e83490bbcdcac');assert.equal(digest(readFileSync(revisionAddress)),'95f86b39d65d4b2faa57ceb942bc77feab2086184b239ed3f4210c8be6a4720c');
+ assert.equal(successor.current.commit,'2bd4d4f6ad6e2a06398199d50ab93171a5f4b799');assert.equal(successor.predecessor.sha256,'95f86b39d65d4b2faa57ceb942bc77feab2086184b239ed3f4210c8be6a4720c');
+ assert.equal(successor.current.source.replace(successor.change.current,()=>successor.change.original),revision.current.source);
+ for(const changed of [successor.current.source+'\n',successor.current.source.replace('String::new()','String::from("unreviewed")'),successor.current.source.replace('(present_kind == "tuple")','(present_kind == "array")'),successor.current.source.replace('array index out of range','changed provider refusal')]){
+  assert.notEqual(changed,successor.current.source);
+  assert.throws(()=>verifyBinaryMetadataBufferNativeModel(file=>new URL(file).pathname.endsWith('/'+owner.file)?Buffer.from(changed):readFileSync(file)),/frozen binary candidate model changed/u);
+ }
+ for(const change of ['predecessor','coherent-current-pin','third-context']){
+  const changed=structuredClone(successor);
+  if(change==='predecessor')changed.predecessor.sha256='0'.repeat(64);
+  if(change==='coherent-current-pin'){changed.current.source+='\n';changed.current.sourceBytes++;changed.current.sha256=digest(changed.current.source);}
+  if(change==='third-context')changed.change.current+='\n';
+  const bytes=Buffer.from(serializeProjectData(changed,'successor.lino'));
+  assert.throws(()=>verifyBinaryMetadataBufferNativeModel(file=>new URL(file).href===successorAddress.href?bytes:readFileSync(file)),/frozen binary candidate model changed/u);
+ }
+ assert.throws(()=>verifyBinaryMetadataBufferNativeModel(file=>new URL(file).href===revisionAddress.href?Buffer.concat([readFileSync(file),Buffer.from('changed')]):readFileSync(file)),/frozen binary candidate model changed/u);
+
 });
 
 test('injected source-bundle process contracts stay distinct from actual native evidence',()=>{
