@@ -562,7 +562,11 @@ fn included_range_nested_json_source_planes_replay_from_text_and_binary_grammar_
 
 #[test]
 fn included_range_views_isolate_child_memos_and_keep_failed_source_definitions() {
-    let host = parse_grammar_links("(grammar (start document))\n(rule document normal (choice ordered (any-grammar (ref physical) (grammar-range-candidate Letter included-ranges (source-range 0 1))) (any-grammar (ref physical) (grammar-range-candidate Letter included-ranges (source-range 1 2)))))\n(rule physical normal (literal xy!))\n").unwrap();
+    let host = parse_grammar_links(&format!("(grammar (start document))\n(rule document normal (choice ordered (any-grammar (ref physical) (grammar-range-candidate Letter included-ranges (source-range 0 1))) (any-grammar (ref physical) (grammar-range-candidate Letter included-ranges (source-range 1 2)))))\n(rule physical normal (literal {}))\n", percent_encode_links_text("xy!"))).unwrap();
+    assert_eq!(
+        host.rule("physical").unwrap().expr,
+        GrammarExpr::Terminal("xy!".to_owned())
+    );
     let outcome = included_range_parse(
         &host,
         &HashMap::from([("Letter".to_owned(), included_range_literal("y"))]),

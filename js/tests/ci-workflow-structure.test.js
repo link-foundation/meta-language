@@ -1173,6 +1173,9 @@ const NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS = [
   ['Check generated grammar selection field range rules against JavaScript',
     'node js/scripts/generate-grammar-selection-field-range-rules.mjs --native --check',
     'ab1060c3befeaf68317967286471424987545c1929c96605665b572cbaa5b412', 'generated'],
+  ['Check generated collection construction rules against JavaScript',
+    'node js/scripts/generate-collection-construction-rules.mjs --native --check',
+    'cd57bc07523d3acd98c4e19b52f9cb1550f585ac9a154848dadf1b68a63db906', 'generated'],
 ];
 
 // Parameter-default generation adds one exact gate without changing an earlier freeze.

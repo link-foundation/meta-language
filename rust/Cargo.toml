@@ -95,6 +95,7 @@ include = [
     "src/data/rust-character-rules.lino",
     "src/data/rust-character-literals.lino",
     "src/data/javascript-tag-context-rules.lino",
+    "src/data/collection-construction-rules.lino",
 ]
 
 [lib]
