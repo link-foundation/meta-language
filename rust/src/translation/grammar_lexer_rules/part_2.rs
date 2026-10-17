@@ -1,39 +1,56 @@
 // Generated from the complete shared grammar-lexer-rules.js and recorded source closure.
 // Do not edit by hand.
+use super::MlAcceptGrammarParserTokenNegationLoop56Result;
 use super::MlReadGrammarLexerBindingNamesLoop22Result;
+use super::MlReadGrammarLexerCommandEmissionJoin28;
+use super::MlReadGrammarLexerCommandEmissionJoin29;
+use super::MlReadGrammarLexerCommandEmissionLoop30Result;
+use super::MlReadGrammarLexerCommandEmissionLoop31Result;
 use super::MlReadGrammarLexerCommandPlanLoop24Result;
-use super::MlReadGrammarLexerDeclarationIssueLoop28Result;
-use super::MlReadGrammarLexerDeclarationIssueLoop29Result;
+use super::MlReadGrammarLexerDeclarationIssueLoop40Result;
+use super::MlReadGrammarLexerDeclarationIssueLoop41Result;
+use super::MlReadGrammarLexerEmissionIssueLoop33Result;
+use super::MlReadGrammarLexerEmissionIssueLoop34Result;
+use super::MlReadGrammarLexerEmissionIssueLoop35Result;
+use super::MlReadGrammarLexerEmissionIssueLoop36Result;
+use super::MlReadGrammarLexerEmissionIssueLoop37Result;
 use super::MlReadGrammarLexerLiteralExtensionLoop10Result;
 use super::MlReadGrammarLexerLiteralExtensionLoop11Result;
 use super::MlReadGrammarLexerLiteralExtensionLoop12Result;
 use super::MlReadGrammarLexerLiteralExtensionLoop13Result;
-use super::MlReadGrammarLexerObligationPositionsLoop37Result;
+use super::MlReadGrammarLexerObligationPositionsLoop49Result;
 use super::MlReadGrammarLexerOwnerComparisonLoop19Result;
 use super::MlReadGrammarLexerOwnerComparisonLoop20Result;
+use super::accept_grammar_lexer_decimal;
+use super::accept_grammar_lexer_identifier;
+use super::ml_accept_grammar_parser_token_negation_loop56;
 use super::ml_array;
 use super::ml_math;
 use super::ml_read_grammar_lexer_binding_names_loop22;
 use super::ml_read_grammar_lexer_binding_names_loop23;
+use super::ml_read_grammar_lexer_command_emission_loop30;
+use super::ml_read_grammar_lexer_command_emission_loop31;
 use super::ml_read_grammar_lexer_command_plan_loop24;
-use super::ml_read_grammar_lexer_declaration_issue_loop28;
-use super::ml_read_grammar_lexer_declaration_issue_loop29;
-use super::ml_read_grammar_lexer_lazy_normalization_loop41;
+use super::ml_read_grammar_lexer_declaration_issue_loop40;
+use super::ml_read_grammar_lexer_declaration_issue_loop41;
+use super::ml_read_grammar_lexer_emission_issue_loop33;
+use super::ml_read_grammar_lexer_emission_issue_loop34;
+use super::ml_read_grammar_lexer_emission_issue_loop35;
+use super::ml_read_grammar_lexer_emission_issue_loop36;
+use super::ml_read_grammar_lexer_emission_issue_loop37;
+use super::ml_read_grammar_lexer_lazy_normalization_loop53;
 use super::ml_read_grammar_lexer_literal_extension_loop10;
 use super::ml_read_grammar_lexer_literal_extension_loop11;
 use super::ml_read_grammar_lexer_literal_extension_loop12;
 use super::ml_read_grammar_lexer_literal_extension_loop13;
 use super::ml_read_grammar_lexer_literal_extension_loop14;
-use super::ml_read_grammar_lexer_obligation_positions_loop37;
-use super::ml_read_grammar_lexer_obligation_positions_loop38;
+use super::ml_read_grammar_lexer_obligation_positions_loop49;
+use super::ml_read_grammar_lexer_obligation_positions_loop50;
 use super::ml_read_grammar_lexer_owner_comparison_loop19;
 use super::ml_read_grammar_lexer_owner_comparison_loop20;
 use super::ml_string;
 use super::read_grammar_lexer_literal_rule_position;
 use super::read_grammar_lexer_text_position;
-use super::read_required_boolean_fact;
-use super::read_required_number_fact;
-use super::read_required_text_fact;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -327,6 +344,331 @@ pub fn read_grammar_lexer_command_plan(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_grammar_lexer_command_emission(
+    name: &self::ml_string::Text,
+    type_: &self::ml_string::Text,
+    channel: &self::ml_string::Text,
+    disposition: &self::ml_string::Text,
+    operations: &[self::ml_string::Text],
+    modes: &[self::ml_string::Text],
+) -> Vec<self::ml_string::Text> {
+    {
+        let ml_library_inequality_5 = (operations.len() as f64) != (modes.len() as f64);
+        if ml_library_inequality_5 {
+            Vec::<self::ml_string::Text>::new()
+        } else {
+            {
+                let pieces = Vec::<self::ml_string::Text>::new();
+                {
+                    let ml_s16 = if (*disposition)
+                        == (self::ml_string::Text::from_units(vec![115, 107, 105, 112]))
+                    {
+                        {
+                            let ml_library_inequality_4 = (*type_)
+                                != (self::ml_string::Text::from_units(vec![83, 75, 73, 80]));
+                            if ml_library_inequality_4 {
+                                self::MlReadGrammarLexerCommandEmissionJoin28::MlReadGrammarLexerCommandEmissionJoin28Return(Vec::<self::ml_string::Text>::new())
+                            } else {
+                                {
+                                    let pieces_2 = {
+                                        let (ml_append_right, ml_append_left) = (
+                                            vec![self::ml_string::Text::from_units(vec![
+                                                115, 107, 105, 112,
+                                            ])],
+                                            pieces,
+                                        );
+                                        self::ml_array::append(ml_append_left, ml_append_right)
+                                    };
+                                    self::MlReadGrammarLexerCommandEmissionJoin28::MlReadGrammarLexerCommandEmissionJoin28Next(pieces_2)
+                                }
+                            }
+                        }
+                    } else if (*disposition)
+                        == (self::ml_string::Text::from_units(vec![101, 109, 105, 116]))
+                    {
+                        {
+                            let ml_library_inequality_3 = (*type_) != (*name);
+                            if ml_library_inequality_3 {
+                                if ((self::accept_grammar_lexer_identifier(type_))
+                                    || (self::accept_grammar_lexer_decimal(type_)))
+                                {
+                                    {
+                                        let pieces_3 = {
+                                            let (ml_append_right, ml_append_left) = (
+                                                vec![
+                                                    ((self::ml_string::Text::from_units(vec![
+                                                        116, 121, 112, 101, 40,
+                                                    ]))
+                                                    .concat(type_))
+                                                    .concat(&self::ml_string::Text::from_units(
+                                                        vec![41],
+                                                    )),
+                                                ],
+                                                pieces,
+                                            );
+                                            self::ml_array::append(ml_append_left, ml_append_right)
+                                        };
+                                        self::MlReadGrammarLexerCommandEmissionJoin28::MlReadGrammarLexerCommandEmissionJoin28Next(pieces_3)
+                                    }
+                                } else {
+                                    self::MlReadGrammarLexerCommandEmissionJoin28::MlReadGrammarLexerCommandEmissionJoin28Return(Vec::<self::ml_string::Text>::new())
+                                }
+                            } else {
+                                self::MlReadGrammarLexerCommandEmissionJoin28::MlReadGrammarLexerCommandEmissionJoin28Next(pieces)
+                            }
+                        }
+                    } else {
+                        self::MlReadGrammarLexerCommandEmissionJoin28::MlReadGrammarLexerCommandEmissionJoin28Return(Vec::<self::ml_string::Text>::new())
+                    };
+                    match ml_s16 {
+                    self::MlReadGrammarLexerCommandEmissionJoin28::MlReadGrammarLexerCommandEmissionJoin28Next(pieces_4) => {
+                        {
+                            let ml_s17 = {
+let ml_library_inequality_2 = (*channel) != (self::ml_string::Text::from_units(vec![100, 101, 102, 97, 117, 108, 116])) ;
+if ml_library_inequality_2 {
+                                {
+                                    let valid_channel = self::accept_grammar_lexer_identifier(channel) || self::accept_grammar_lexer_decimal(channel);
+                                    if valid_channel {
+                                        {
+                                            let pieces_5 = { let (ml_append_right, ml_append_left) = (vec![((self::ml_string::Text::from_units(vec![99, 104, 97, 110, 110, 101, 108, 40])).concat(channel)).concat(&self::ml_string::Text::from_units(vec![41]))], pieces_4); self::ml_array::append(ml_append_left, ml_append_right) };
+                                            self::MlReadGrammarLexerCommandEmissionJoin29::MlReadGrammarLexerCommandEmissionJoin29Next(pieces_5)
+                                        }
+                                    } else {
+                                        self::MlReadGrammarLexerCommandEmissionJoin29::MlReadGrammarLexerCommandEmissionJoin29Return(Vec::<self::ml_string::Text>::new())
+                                    }
+                                }
+                            } else {
+                                self::MlReadGrammarLexerCommandEmissionJoin29::MlReadGrammarLexerCommandEmissionJoin29Next(pieces_4)
+                            }
+};
+                            match ml_s17 {
+                                self::MlReadGrammarLexerCommandEmissionJoin29::MlReadGrammarLexerCommandEmissionJoin29Next(pieces_6) => {
+                                    {
+                                        let expected = vec![type_.clone(), channel.clone(), disposition.clone()];
+                                        {
+                                            let index = 0f64;
+                                            {
+                                                let ml_s18 = self::ml_read_grammar_lexer_command_emission_loop30(operations, modes, pieces_6, expected, index);
+                                                match ml_s18 {
+                                                    self::MlReadGrammarLexerCommandEmissionLoop30Result::MlReadGrammarLexerCommandEmissionLoop30Done(pieces_7, expected_2, index_2) => {
+                                                        {
+                                                            let command = if (pieces_7.len() as f64) == 0f64 {
+                                                                self::ml_string::Text::from_units(vec![])
+                                                            } else {
+                                                                (self::ml_string::Text::from_units(vec![45, 62, 32])).concat(&self::ml_string::join(&pieces_7, &self::ml_string::Text::from_units(vec![44, 32])))
+                                                            };
+                                                            {
+                                                                let replayed = self::read_grammar_lexer_command_plan(&(command), name);
+                                                                {
+let ml_library_inequality_1 = (replayed.len() as f64) != (expected_2.len() as f64) ;
+if ml_library_inequality_1 {
+                                                                    Vec::<self::ml_string::Text>::new()
+                                                                } else {
+                                                                    {
+                                                                        let index_3 = 0f64;
+                                                                        {
+                                                                            let ml_s19 = self::ml_read_grammar_lexer_command_emission_loop31(&(expected_2), index_3, &(replayed));
+                                                                            match ml_s19 {
+                                                                                self::MlReadGrammarLexerCommandEmissionLoop31Result::MlReadGrammarLexerCommandEmissionLoop31Done => {
+                                                                                    vec![command]
+                                                                                }
+                                                                                self::MlReadGrammarLexerCommandEmissionLoop31Result::MlReadGrammarLexerCommandEmissionLoop31Return(ml_result31) => {
+                                                                                    ml_result31
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+}
+                                                            }
+                                                        }
+                                                    }
+                                                    self::MlReadGrammarLexerCommandEmissionLoop30Result::MlReadGrammarLexerCommandEmissionLoop30Return(ml_result31_2) => {
+                                                        ml_result31_2
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                self::MlReadGrammarLexerCommandEmissionJoin29::MlReadGrammarLexerCommandEmissionJoin29Return(ml_result32) => {
+                                    ml_result32
+                                }
+                            }
+                        }
+                    }
+                    self::MlReadGrammarLexerCommandEmissionJoin28::MlReadGrammarLexerCommandEmissionJoin28Return(ml_result32_2) => {
+                        ml_result32_2
+                    }
+                }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn read_grammar_lexer_emission_issue(
+    families: f64,
+    obligations: f64,
+    modes: &[self::ml_string::Text],
+    channels: &[self::ml_string::Text],
+    types: f64,
+    kinds: &[self::ml_string::Text],
+    names: &[self::ml_string::Text],
+    entry_modes: &[self::ml_string::Text],
+    targets: &[self::ml_string::Text],
+    public_kinds: &[self::ml_string::Text],
+    public_names: &[self::ml_string::Text],
+    rule_names: &[self::ml_string::Text],
+    rule_kinds: &[self::ml_string::Text],
+    references: &[self::ml_string::Text],
+) -> self::ml_string::Text {
+    {
+        let ml_library_inequality_3 = families != 1f64;
+        if ml_library_inequality_3 {
+            self::ml_string::Text::from_units(vec![
+                111, 110, 101, 32, 117, 110, 105, 113, 117, 101, 108, 121, 32, 111, 119, 110, 101,
+                100, 32, 108, 101, 120, 101, 114, 32, 102, 97, 109, 105, 108, 121, 32, 105, 115,
+                32, 114, 101, 113, 117, 105, 114, 101, 100,
+            ])
+        } else {
+            let ml_library_inequality_2 = obligations != 0f64;
+            if ml_library_inequality_2 {
+                self::ml_string::Text::from_units(vec![
+                    117, 110, 114, 101, 115, 111, 108, 118, 101, 100, 32, 108, 101, 120, 105, 99,
+                    97, 108, 32, 111, 98, 108, 105, 103, 97, 116, 105, 111, 110, 115, 32, 114, 101,
+                    109, 97, 105, 110,
+                ])
+            } else {
+                let ml_library_inequality_1 = types != 0f64;
+                if ml_library_inequality_1 {
+                    self::ml_string::Text::from_units(vec![
+                        116, 111, 107, 101, 110, 32, 100, 101, 99, 108, 97, 114, 97, 116, 105, 111,
+                        110, 32, 115, 101, 99, 116, 105, 111, 110, 115, 32, 97, 114, 101, 32, 110,
+                        111, 116, 32, 115, 117, 112, 112, 111, 114, 116, 101, 100,
+                    ])
+                } else {
+                    {
+                        let count = kinds.len() as f64;
+                        if ((((((names.len() as f64) != count)
+                            || ((entry_modes.len() as f64) != count))
+                            || ((targets.len() as f64) != count))
+                            || ((public_kinds.len() as f64) != count))
+                            || ((public_names.len() as f64) != count))
+                            || ((rule_names.len() as f64) != (rule_kinds.len() as f64))
+                        {
+                            self::ml_string::Text::from_units(vec![
+                                105, 110, 118, 97, 108, 105, 100, 32, 108, 101, 120, 105, 99, 97,
+                                108, 32, 101, 109, 105, 115, 115, 105, 111, 110, 32, 102, 97, 99,
+                                116, 32, 99, 111, 108, 117, 109, 110, 115,
+                            ])
+                        } else {
+                            {
+                                let index = 0f64;
+                                {
+                                    let ml_s20 = self::ml_read_grammar_lexer_emission_issue_loop33(
+                                        modes, index,
+                                    );
+                                    match ml_s20 {
+                                    self::MlReadGrammarLexerEmissionIssueLoop33Result::MlReadGrammarLexerEmissionIssueLoop33Done(index_2) => {
+                                        {
+                                            let index_3 = 0f64;
+                                            {
+                                                let ml_s21 = self::ml_read_grammar_lexer_emission_issue_loop34(channels, index_3);
+                                                match ml_s21 {
+                                                    self::MlReadGrammarLexerEmissionIssueLoop34Result::MlReadGrammarLexerEmissionIssueLoop34Done(index_4) => {
+                                                        {
+                                                            let locals = Vec::<self::ml_string::Text>::new();
+                                                            {
+                                                                let owners = Vec::<self::ml_string::Text>::new();
+                                                                {
+                                                                    let index_5 = 0f64;
+                                                                    {
+                                                                        let ml_s22 = self::ml_read_grammar_lexer_emission_issue_loop35(kinds, names, entry_modes, targets, public_kinds, public_names, count, index_5, locals, owners);
+                                                                        match ml_s22 {
+                                                                            self::MlReadGrammarLexerEmissionIssueLoop35Result::MlReadGrammarLexerEmissionIssueLoop35Done(index_6, locals_2, owners_2) => {
+                                                                                {
+                                                                                    let index_7 = 0f64;
+                                                                                    {
+                                                                                        let ml_s23 = self::ml_read_grammar_lexer_emission_issue_loop36(rule_names, rule_kinds, index_7, &(locals_2), &(owners_2));
+                                                                                        match ml_s23 {
+                                                                                            self::MlReadGrammarLexerEmissionIssueLoop36Result::MlReadGrammarLexerEmissionIssueLoop36Done(index_8) => {
+                                                                                                {
+                                                                                                    let index_9 = 0f64;
+                                                                                                    {
+                                                                                                        let ml_s24 = self::ml_read_grammar_lexer_emission_issue_loop37(references, index_9, &(locals_2));
+                                                                                                        match ml_s24 {
+                                                                                                            self::MlReadGrammarLexerEmissionIssueLoop37Result::MlReadGrammarLexerEmissionIssueLoop37Done => {
+                                                                                                                self::ml_string::Text::from_units(vec![])
+                                                                                                            }
+                                                                                                            self::MlReadGrammarLexerEmissionIssueLoop37Result::MlReadGrammarLexerEmissionIssueLoop37Return(ml_result37) => {
+                                                                                                                ml_result37
+                                                                                                            }
+                                                                                                        }
+                                                                                                    }
+                                                                                                }
+                                                                                            }
+                                                                                            self::MlReadGrammarLexerEmissionIssueLoop36Result::MlReadGrammarLexerEmissionIssueLoop36Return(ml_result37_2) => {
+                                                                                                ml_result37_2
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                            self::MlReadGrammarLexerEmissionIssueLoop35Result::MlReadGrammarLexerEmissionIssueLoop35Return(ml_result37_3) => {
+                                                                                ml_result37_3
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                    self::MlReadGrammarLexerEmissionIssueLoop34Result::MlReadGrammarLexerEmissionIssueLoop34Return(ml_result39) => {
+                                                        ml_result39
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    self::MlReadGrammarLexerEmissionIssueLoop33Result::MlReadGrammarLexerEmissionIssueLoop33Return(ml_result39_2) => {
+                                        ml_result39_2
+                                    }
+                                }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_grammar_lexer_emission_disposition(
+    command_recovery: bool,
+    issue: &self::ml_string::Text,
+) -> f64 {
+    if (*issue) == (self::ml_string::Text::from_units(vec![])) {
+        1f64
+    } else if command_recovery {
+        2f64
+    } else {
+        0f64
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn accept_grammar_lexer_mode(
     candidate: &self::ml_string::Text,
     active: &self::ml_string::Text,
@@ -424,26 +766,26 @@ pub fn read_grammar_lexer_declaration_issue(
                                     {
                                         let index = 0f64;
                                         {
-                                            let ml_s16 = self::ml_read_grammar_lexer_declaration_issue_loop28(kinds, names, items, values, count, binding_names, owner_names, literal_values, local_names, declared_modes, declared_channels, index);
-                                            match ml_s16 {
-                                                self::MlReadGrammarLexerDeclarationIssueLoop28Result::MlReadGrammarLexerDeclarationIssueLoop28Done(declared_modes_2, declared_channels_2, index_2) => {
+                                            let ml_s25 = self::ml_read_grammar_lexer_declaration_issue_loop40(kinds, names, items, values, count, binding_names, owner_names, literal_values, local_names, declared_modes, declared_channels, index);
+                                            match ml_s25 {
+                                                self::MlReadGrammarLexerDeclarationIssueLoop40Result::MlReadGrammarLexerDeclarationIssueLoop40Done(declared_modes_2, declared_channels_2, index_2) => {
                                                     {
                                                         let index_3 = 0f64;
                                                         {
-                                                            let ml_s17 = self::ml_read_grammar_lexer_declaration_issue_loop29(kinds, modes, channels, dispositions, action_owners, actions, action_modes, count, &(declared_modes_2), &(declared_channels_2), index_3);
-                                                            match ml_s17 {
-                                                                self::MlReadGrammarLexerDeclarationIssueLoop29Result::MlReadGrammarLexerDeclarationIssueLoop29Done => {
+                                                            let ml_s26 = self::ml_read_grammar_lexer_declaration_issue_loop41(kinds, modes, channels, dispositions, action_owners, actions, action_modes, count, &(declared_modes_2), &(declared_channels_2), index_3);
+                                                            match ml_s26 {
+                                                                self::MlReadGrammarLexerDeclarationIssueLoop41Result::MlReadGrammarLexerDeclarationIssueLoop41Done => {
                                                                     vec![0f64, -1f64, -1f64]
                                                                 }
-                                                                self::MlReadGrammarLexerDeclarationIssueLoop29Result::MlReadGrammarLexerDeclarationIssueLoop29Return(ml_result29) => {
-                                                                    ml_result29
+                                                                self::MlReadGrammarLexerDeclarationIssueLoop41Result::MlReadGrammarLexerDeclarationIssueLoop41Return(ml_result41) => {
+                                                                    ml_result41
                                                                 }
                                                             }
                                                         }
                                                     }
                                                 }
-                                                self::MlReadGrammarLexerDeclarationIssueLoop28Result::MlReadGrammarLexerDeclarationIssueLoop28Return(ml_result32) => {
-                                                    ml_result32
+                                                self::MlReadGrammarLexerDeclarationIssueLoop40Result::MlReadGrammarLexerDeclarationIssueLoop40Return(ml_result44) => {
+                                                    ml_result44
                                                 }
                                             }
                                         }
@@ -486,7 +828,7 @@ pub fn read_grammar_lexer_obligation_positions(
                     {
                         let cursor = 0f64;
                         {
-                            let ml_s18 = self::ml_read_grammar_lexer_obligation_positions_loop37(
+                            let ml_s27 = self::ml_read_grammar_lexer_obligation_positions_loop49(
                                 count,
                                 edge_sources,
                                 edge_targets,
@@ -495,20 +837,20 @@ pub fn read_grammar_lexer_obligation_positions(
                                 pending,
                                 cursor,
                             );
-                            match ml_s18 {
-                                self::MlReadGrammarLexerObligationPositionsLoop37Result::MlReadGrammarLexerObligationPositionsLoop37Done(reached_2, index_2) => {
+                            match ml_s27 {
+                                self::MlReadGrammarLexerObligationPositionsLoop49Result::MlReadGrammarLexerObligationPositionsLoop49Done(reached_2, index_2) => {
                                     {
                                         let selected = Vec::<f64>::new();
                                         {
                                             let index_3 = 0f64;
                                             {
-                                                self::ml_read_grammar_lexer_obligation_positions_loop38(count, root, owners, categories, &(reached_2), index_3, selected)
+                                                self::ml_read_grammar_lexer_obligation_positions_loop50(count, root, owners, categories, &(reached_2), index_3, selected)
                                             }
                                         }
                                     }
                                 }
-                                self::MlReadGrammarLexerObligationPositionsLoop37Result::MlReadGrammarLexerObligationPositionsLoop37Return(ml_result38) => {
-                                    ml_result38
+                                self::MlReadGrammarLexerObligationPositionsLoop49Result::MlReadGrammarLexerObligationPositionsLoop49Return(ml_result50) => {
+                                    ml_result50
                                 }
                             }
                         }
@@ -542,7 +884,7 @@ pub fn read_grammar_lexer_lazy_normalization(
                 {
                     let index = 0f64;
                     {
-                        self::ml_read_grammar_lexer_lazy_normalization_loop41(
+                        self::ml_read_grammar_lexer_lazy_normalization_loop53(
                             kinds,
                             labels,
                             texts,
@@ -560,359 +902,38 @@ pub fn read_grammar_lexer_lazy_normalization(
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_grammar_parser_token_negation(
+    parser_production: bool,
+    kinds: &[self::ml_string::Text],
+    values: &[self::ml_string::Text],
+) -> bool {
+    if (!parser_production || ((kinds.len() as f64) == 0f64))
+        || ((kinds.len() as f64) != (values.len() as f64))
+    {
+        false
+    } else {
+        {
+            let index = 0f64;
+            {
+                let ml_s28 =
+                    self::ml_accept_grammar_parser_token_negation_loop56(kinds, values, index);
+                match ml_s28 {
+                    self::MlAcceptGrammarParserTokenNegationLoop56Result::MlAcceptGrammarParserTokenNegationLoop56Done => {
+                        true
+                    }
+                    self::MlAcceptGrammarParserTokenNegationLoop56Result::MlAcceptGrammarParserTokenNegationLoop56Return(ml_result56) => {
+                        ml_result56
+                    }
+                }
+            }
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MlAcceptGrammarLexerIdentifierLoop1Result {
     MlAcceptGrammarLexerIdentifierLoop1Done,
     MlAcceptGrammarLexerIdentifierLoop1Return(bool),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_accept_grammar_lexer_identifier_loop1(
-    text: &self::ml_string::Text,
-    mut index: f64,
-) -> self::MlAcceptGrammarLexerIdentifierLoop1Result {
-    loop {
-        return if index < (text.length()) {
-            {
-                let character = text.slice(index, (index + 1f64));
-                {
-                    let letter = (self::ml_string::Text::from_units(vec![
-                        65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83,
-                        84, 85, 86, 87, 88, 89, 90, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106,
-                        107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121,
-                        122, 95,
-                    ]))
-                    .contains(&character);
-                    if ((letter)
-                        || ((index > 0f64)
-                            && (self::ml_string::Text::from_units(vec![
-                                48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
-                            ]))
-                            .contains(&character)))
-                    {
-                        {
-                            let index_2 = index + 1f64;
-                            {
-                                index = index_2;
-                                continue;
-                            }
-                        }
-                    }
-                    {
-                        self::MlAcceptGrammarLexerIdentifierLoop1Result::MlAcceptGrammarLexerIdentifierLoop1Return(false)
-                    }
-                }
-            }
-        } else {
-            self::MlAcceptGrammarLexerIdentifierLoop1Result::MlAcceptGrammarLexerIdentifierLoop1Done
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlAcceptGrammarLexerDecimalLoop2Result {
-    MlAcceptGrammarLexerDecimalLoop2Done,
-    MlAcceptGrammarLexerDecimalLoop2Return(bool),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_accept_grammar_lexer_decimal_loop2(
-    text: &self::ml_string::Text,
-    mut index: f64,
-) -> self::MlAcceptGrammarLexerDecimalLoop2Result {
-    loop {
-        return if index < (text.length()) {
-            {
-                let character = text.slice(index, (index + 1f64));
-                if ((self::ml_string::Text::from_units(vec![
-                    48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
-                ]))
-                .contains(&character))
-                {
-                    {
-                        let index_2 = index + 1f64;
-                        {
-                            index = index_2;
-                            continue;
-                        }
-                    }
-                }
-                {
-                    self::MlAcceptGrammarLexerDecimalLoop2Result::MlAcceptGrammarLexerDecimalLoop2Return(false)
-                }
-            }
-        } else {
-            self::MlAcceptGrammarLexerDecimalLoop2Result::MlAcceptGrammarLexerDecimalLoop2Done
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlContainsGrammarLexerTextLoop3Result {
-    MlContainsGrammarLexerTextLoop3Done,
-    MlContainsGrammarLexerTextLoop3Return(bool),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_contains_grammar_lexer_text_loop3(
-    values: &[self::ml_string::Text],
-    value: &self::ml_string::Text,
-    mut index: f64,
-) -> self::MlContainsGrammarLexerTextLoop3Result {
-    loop {
-        return if index < (values.len() as f64) {
-            if (self::read_required_text_fact(values, index)) == (*value) {
-                self::MlContainsGrammarLexerTextLoop3Result::MlContainsGrammarLexerTextLoop3Return(
-                    true,
-                )
-            } else {
-                {
-                    let index_2 = index + 1f64;
-                    {
-                        index = index_2;
-                        continue;
-                    }
-                }
-            }
-        } else {
-            self::MlContainsGrammarLexerTextLoop3Result::MlContainsGrammarLexerTextLoop3Done
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlContainsGrammarLexerPositionLoop4Result {
-    MlContainsGrammarLexerPositionLoop4Done,
-    MlContainsGrammarLexerPositionLoop4Return(bool),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_contains_grammar_lexer_position_loop4(
-    values: &[f64],
-    mut value: f64,
-    mut index: f64,
-) -> self::MlContainsGrammarLexerPositionLoop4Result {
-    loop {
-        return if index < (values.len() as f64) {
-            if (self::read_required_number_fact(values, index)) == value {
-                self::MlContainsGrammarLexerPositionLoop4Result::MlContainsGrammarLexerPositionLoop4Return(true)
-            } else {
-                {
-                    let index_2 = index + 1f64;
-                    {
-                        index = index_2;
-                        continue;
-                    }
-                }
-            }
-        } else {
-            self::MlContainsGrammarLexerPositionLoop4Result::MlContainsGrammarLexerPositionLoop4Done
-        };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn ml_read_grammar_lexer_section_rule_positions_loop6(
-    mut section: f64,
-    section_kinds: &[self::ml_string::Text],
-    section_names: &[self::ml_string::Text],
-    token_vocabularies: &[self::ml_string::Text],
-    rule_sections: &[f64],
-    rule_kinds: &[self::ml_string::Text],
-    mut selected: Vec<f64>,
-    mut index: f64,
-) -> Vec<f64> {
-    loop {
-        if index < (rule_sections.len() as f64) {
-            {
-                let owner_section = self::read_required_number_fact(rule_sections, index);
-                {
-                    let selected_3 = if ((self::read_required_text_fact(rule_kinds, index))
-                        == (self::ml_string::Text::from_units(vec![110, 111, 114, 109, 97, 108])))
-                        && (((owner_section).partial_cmp(&(section))
-                            == Some(std::cmp::Ordering::Equal))
-                            || (((owner_section >= 0f64)
-                                && ((self::read_required_text_fact(
-                                    section_kinds,
-                                    owner_section,
-                                )) == (self::ml_string::Text::from_units(vec![
-                                    112, 97, 114, 115, 101, 114,
-                                ]))))
-                                && ((self::read_required_text_fact(
-                                    token_vocabularies,
-                                    owner_section,
-                                )) == (self::read_required_text_fact(section_names, section)))))
-                    {
-                        {
-                            {
-                                let (ml_append_right, ml_append_left) = (vec![index], selected);
-                                self::ml_array::append(ml_append_left, ml_append_right)
-                            }
-                        }
-                    } else {
-                        selected
-                    };
-                    {
-                        let index_2 = index + 1f64;
-                        {
-                            (selected, index) = (selected_3, index_2);
-                            continue;
-                        }
-                    }
-                }
-            }
-        }
-        return { selected };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlReadGrammarLexerSectionRulePositionsLoop5Result {
-    MlReadGrammarLexerSectionRulePositionsLoop5Done(Vec<f64>, f64),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_read_grammar_lexer_section_rule_positions_loop5(
-    mut section: f64,
-    rule_sections: &[f64],
-    rule_kinds: &[self::ml_string::Text],
-    mut selected: Vec<f64>,
-    mut index: f64,
-) -> self::MlReadGrammarLexerSectionRulePositionsLoop5Result {
-    loop {
-        if index < (rule_sections.len() as f64) {
-            {
-                let kind = self::read_required_text_fact(rule_kinds, index);
-                {
-                    let selected_3 = if ((self::read_required_number_fact(rule_sections, index))
-                        == section)
-                        && ((kind
-                            == (self::ml_string::Text::from_units(vec![116, 111, 107, 101, 110])))
-                            || (kind
-                                == (self::ml_string::Text::from_units(vec![
-                                    115, 105, 108, 101, 110, 116,
-                                ])))) {
-                        {
-                            {
-                                let (ml_append_right, ml_append_left) = (vec![index], selected);
-                                self::ml_array::append(ml_append_left, ml_append_right)
-                            }
-                        }
-                    } else {
-                        selected
-                    };
-                    {
-                        let index_2 = index + 1f64;
-                        {
-                            (selected, index) = (selected_3, index_2);
-                            continue;
-                        }
-                    }
-                }
-            }
-        }
-        return {
-            self::MlReadGrammarLexerSectionRulePositionsLoop5Result::MlReadGrammarLexerSectionRulePositionsLoop5Done(selected, index)
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlReadGrammarLexerLiteralRulePositionLoop7Result {
-    MlReadGrammarLexerLiteralRulePositionLoop7Done(f64, f64),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlReadGrammarLexerLiteralRulePositionJoin8 {
-    MlReadGrammarLexerLiteralRulePositionJoin8Next(f64, f64),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_read_grammar_lexer_literal_rule_position_loop7(
-    value: &self::ml_string::Text,
-    kinds: &[self::ml_string::Text],
-    values: &[self::ml_string::Text],
-    literals: &[bool],
-    mut selected: f64,
-    mut count: f64,
-    mut index: f64,
-) -> self::MlReadGrammarLexerLiteralRulePositionLoop7Result {
-    loop {
-        return if index < (kinds.len() as f64) {
-            {
-                let ml_s19 = if (((self::read_required_text_fact(kinds, index))
-                    == (self::ml_string::Text::from_units(vec![116, 111, 107, 101, 110])))
-                    && self::read_required_boolean_fact(literals, index))
-                    && ((self::read_required_text_fact(values, index)) == (*value))
-                {
-                    {
-                        let selected_2 = index;
-                        {
-                            let count_2 = count + 1f64;
-                            self::MlReadGrammarLexerLiteralRulePositionJoin8::MlReadGrammarLexerLiteralRulePositionJoin8Next(selected_2, count_2)
-                        }
-                    }
-                } else {
-                    self::MlReadGrammarLexerLiteralRulePositionJoin8::MlReadGrammarLexerLiteralRulePositionJoin8Next(selected, count)
-                };
-                match ml_s19 {
-                    self::MlReadGrammarLexerLiteralRulePositionJoin8::MlReadGrammarLexerLiteralRulePositionJoin8Next(selected_3, count_3) => {
-                        {
-                            let index_2 = index + 1f64;
-                            {
-                                (selected, count, index) = (selected_3, count_3, index_2);
-                                continue;
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlReadGrammarLexerLiteralRulePositionLoop7Result::MlReadGrammarLexerLiteralRulePositionLoop7Done(selected, count)
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlReadGrammarLexerTextPositionLoop9Result {
-    MlReadGrammarLexerTextPositionLoop9Done,
-    MlReadGrammarLexerTextPositionLoop9Return(f64),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_read_grammar_lexer_text_position_loop9(
-    values: &[self::ml_string::Text],
-    value: &self::ml_string::Text,
-    mut index: f64,
-) -> self::MlReadGrammarLexerTextPositionLoop9Result {
-    loop {
-        return if index < (values.len() as f64) {
-            if (self::read_required_text_fact(values, index)) == (*value) {
-                self::MlReadGrammarLexerTextPositionLoop9Result::MlReadGrammarLexerTextPositionLoop9Return(index)
-            } else {
-                {
-                    let index_2 = index + 1f64;
-                    {
-                        index = index_2;
-                        continue;
-                    }
-                }
-            }
-        } else {
-            self::MlReadGrammarLexerTextPositionLoop9Result::MlReadGrammarLexerTextPositionLoop9Done
-        };
-    }
 }
