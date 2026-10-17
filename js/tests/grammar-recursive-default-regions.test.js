@@ -153,6 +153,13 @@ test('default recursive attachment shares adapter counters across siblings and p
   constructed.insertSourceToken('fragment', 'first');
   constructed.insertSourceToken('fragment', 'second');
   assert.equal(constructed.renderSource('fragment'), 'firstsecond', 'unspanned constructed tokens retain their existing order');
+  const mixed = new LinkNetwork();
+  mixed.insertSourceToken('fragment', 'B', new SourceSpan(new ByteRange(1, 2), new Point(0, 1), new Point(0, 2)));
+  mixed.insertSourceToken('fragment', 'tail');
+  mixed.insertSourceToken('fragment', 'A', new SourceSpan(new ByteRange(0, 1), new Point(0, 0), new Point(0, 1)));
+  for (const current of [mixed, LinkNetwork.fromLino(mixed.toLino())]) {
+    assert.equal(current.renderSource('fragment'), 'ABtail', 'physical source precedes unspanned fragments regardless of allocated identities');
+  }
 });
 
 test('synthetic adapter cycle diagnostics preserve actual ancestry and remain verification failures after reload', () => {

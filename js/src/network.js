@@ -730,7 +730,8 @@ export class LinkNetwork {
     let coveredUntil = 0;
     const tokens = this._sourceTokenLinks()
       .filter((link) => link.metadata().language === language && !link.metadata().flags.isMissing)
-      .sort(sourceOrder);
+      .sort((left, right) => Number(!left.metadata().span) - Number(!right.metadata().span)
+        || sourceOrder(left, right));
     for (const token of tokens) {
       const metadata = token.metadata();
       const range = metadata.span?.byteRange;
