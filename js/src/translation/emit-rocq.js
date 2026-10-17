@@ -7,7 +7,7 @@ import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExp
 // A JavaScript Number is a primitive `float`, which the kernel computes with,
 // so assertions about Numbers are still theorems closed by computation.
 
-import { unsupported } from './diagnostics.js';
+import { typeError, unsupported } from './diagnostics.js';
 import { renderOptionalAbsentValue, renderOptionalCoalescing, renderOptionalConsoleText, renderOptionalFlattening, renderOptionalMatch, renderOptionalNumericPresent, renderOptionalPresentValue, renderOptionalPrimitiveTruth, renderOptionalProjection, renderOptionalStrictEquality, renderOptionalTypeQueryPresent, renderOptionalUnwrapping, requireOptionalNumericPredicate } from './optional-value-rules.js';
 import { renderCollectionIteration, renderOptionalArrayRead } from './array-value-rules.js';
 import { renderArrayFromMapping } from './array-from-rules.js';
@@ -379,7 +379,7 @@ class RocqEmitter {
       case 'map':
         return `(list (${this.type(type.key)} * ${this.type(type.value)}))%type`;
       case 'union':
-        throw new Error(readUnionTargetRefusal('Rocq'));
+        throw typeError(readUnionTargetRefusal('Rocq'));
       default:
         throw new Error(`no Rocq type for ${type.kind}`);
     }

@@ -15,6 +15,8 @@ import { emitLean } from '../src/translation/emit-lean.js';
 import { emitRocq } from '../src/translation/emit-rocq.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { checkProgram } from '../src/translation/check.js';
+import { TranslationError } from '../src/translation/diagnostics.js';
+import cases from './fixtures/translation-cases/frontend-javascript.mjs';
 
 const units = text => Array.from({ length: text.length }, (_, index) => text.charCodeAt(index));
 const observe = source => {
@@ -83,13 +85,31 @@ test('unused union parameters retain source-free ordered type alternatives and e
     assert.deepEqual(program.declarations.get('ignore').params[0].type, { kind: 'union', alternatives: [{ kind: 'int' }, { kind: 'string' }] });
     assert.deepEqual(observe(emitJavaScript(program).text), ['ready']);
     for (const [target, emit] of [['Rust', emitRust], ['Lean', emitLean], ['Rocq', emitRocq]]) {
-      assert.throws(() => emit(program), error => error.message === `no ${target} type for union`);
+      assert.throws(() => emit(program), error => {
+        assert.ok(error instanceof TranslationError);
+        assert.equal(error.kind, 'type');
+        assert.equal(error.reason, `no ${target} type for union`);
+        assert.equal(error.span, null);
+        return error.message === `no ${target} type for union`;
+      });
     }
     program.declarations.get('ignore').params[0].type.alternatives[1] = { kind: 'bool' };
     const edited = encodeTypedProgramLinks(program);
     const reloaded = decodeTypedProgramLinks(decodeLinkNetworkBinary(encodeLinkNetworkBinary(edited.network)), edited.root);
     assert.equal(typeKey(reloaded.declarations.get('ignore').params[0].type), 'union:[int,bool]');
     assert.deepEqual(observe(emitJavaScript(reloaded).text), ['ready']);
+  }
+  const [extension, original] = cases['frontend-javascript-error-param-union-type'];
+  assert.equal(extension, 'mjs');
+  const program = checkProgram(parseJavaScript(original));
+  for (const [target, emit] of [['Rust', emitRust], ['Lean', emitLean], ['Rocq', emitRocq]]) {
+    assert.throws(() => emit(program), error => {
+      assert.ok(error instanceof TranslationError);
+      assert.deepEqual({kind: error.kind, reason: error.reason, span: error.span}, {
+        kind: 'type', reason: `no ${target} type for union`, span: null,
+      });
+      return error.message === `no ${target} type for union`;
+    });
   }
 });
 
@@ -101,7 +121,13 @@ test('union header refusal retains its actual ordering before an independently u
     const program = decodeTypedProgramLinks(network, saved.root);
     assert.deepEqual(observe(emitJavaScript(program).text), ['ready']);
     for (const [target, emit] of [['Rust', emitRust], ['Lean', emitLean], ['Rocq', emitRocq]]) {
-      assert.throws(() => emit(program), error => error.message === `no ${target} type for union`);
+      assert.throws(() => emit(program), error => {
+        assert.ok(error instanceof TranslationError);
+        assert.equal(error.kind, 'type');
+        assert.equal(error.reason, `no ${target} type for union`);
+        assert.equal(error.span, null);
+        return error.message === `no ${target} type for union`;
+      });
     }
   }
   const withoutUnion = createTypedProgramLinks(source.replace('@param {bigint | string}', '@param {bigint}'), 'JavaScript');

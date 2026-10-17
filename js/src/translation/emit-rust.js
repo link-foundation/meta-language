@@ -25,7 +25,7 @@ import {checkRustConstFunctionProof,renderRustConstFunctionHeader} from './rust-
 import {checkRustOwnedLocalStateProof} from './rust-owned-local-state.js';
 import { readOwnedArrayFinalUses } from './owned-array-moves.js';
 import {validateRustTypeNamespace} from './rust-type-namespace.js';
-import { unsupported } from './diagnostics.js';
+import { typeError, unsupported } from './diagnostics.js';
 import { typeKey } from './types.js';
 import { Scope, renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
 import { EmitState, typeContains, withParts } from './emit-common.js';
@@ -854,7 +854,7 @@ class RustEmitter {
         this.state.encode('arrays', 'a JavaScript array, which the portable core never mutates, is a Rust Vec; a read outside it panics');
         return renderRustCompoundType('array', '', [this.type(type.element)]);
       case 'union':
-        throw new Error(readUnionTargetRefusal('Rust'));
+        throw typeError(readUnionTargetRefusal('Rust'));
       default:
         throw new Error(`no Rust type for ${type.kind}`);
     }

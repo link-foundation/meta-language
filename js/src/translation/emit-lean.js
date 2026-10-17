@@ -7,7 +7,7 @@ import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExp
 // JavaScript Number is a `Float`; the kernel cannot compute with `Float`,
 // so an assertion about Numbers is checked when `main` runs, as in the source.
 
-import { unsupported } from './diagnostics.js';
+import { typeError, unsupported } from './diagnostics.js';
 import { renderOptionalAbsentValue, renderOptionalCoalescing, renderOptionalConsoleText, renderOptionalFlattening, renderOptionalMatch, renderOptionalNumericPresent, renderOptionalPresentValue, renderOptionalPrimitiveTruth, renderOptionalProjection, renderOptionalStrictEquality, renderOptionalTypeQueryPresent, renderOptionalUnwrapping, requireOptionalNumericPredicate } from './optional-value-rules.js';
 import { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';
 import { renderArrayFromMapping } from './array-from-rules.js';
@@ -285,7 +285,7 @@ class LeanEmitter {
       case 'map':
         return `(Array (${this.type(type.key)} × ${this.type(type.value)}))`;
       case 'union':
-        throw new Error(readUnionTargetRefusal('Lean'));
+        throw typeError(readUnionTargetRefusal('Lean'));
       default:
         throw new Error(`no Lean type for ${type.kind}`);
     }
