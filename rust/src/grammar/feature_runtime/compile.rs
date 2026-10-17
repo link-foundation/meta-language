@@ -15,6 +15,7 @@ use super::text::{fold_case, unicode_property_matcher};
 use crate::grammar::{
     CharClassItem, FeatureExpr, FeatureForm, FieldValue, GrammarExpr, Operation, UnicodeClassItem,
 };
+use crate::translation::grammar_selection_field_range_rules::accept_grammar_selection_field_range_candidate;
 use crate::translation::grammar_selection_included_range_rules::{
     accept_grammar_selection_included_range_candidate,
     accept_grammar_selection_included_range_source_range,
@@ -442,6 +443,7 @@ impl<'a> Compiler<'a> {
                 for candidate in form.expressions("items") {
                     let Some(candidate) = super::load::form_of(candidate, "grammar-candidate")
                         .or_else(|| super::load::form_of(candidate, "grammar-range-candidate"))
+                        .or_else(|| super::load::form_of(candidate, "grammar-field-candidate"))
                     else {
                         return refuse(
                             "selection",
@@ -457,9 +459,11 @@ impl<'a> Compiler<'a> {
                             format!("a grammar selection needs an explicit mapping in {owner}"),
                         );
                     };
-                    let ranged =
+                    let has_included_ranges =
                         accept_grammar_selection_included_range_candidate(&candidate.head, mapping);
-                    if candidate.head != "grammar-candidate" && !ranged {
+                    let fielded =
+                        accept_grammar_selection_field_range_candidate(&candidate.head, mapping);
+                    if candidate.head != "grammar-candidate" && !has_included_ranges && !fielded {
                         return refuse(
                             "selection",
                             format!(
@@ -467,10 +471,22 @@ impl<'a> Compiler<'a> {
                             ),
                         );
                     }
-                    let ranges = if ranged {
+                    let ranges = if has_included_ranges {
                         Self::read_selection_ranges(candidate, owner)?
                     } else {
                         Vec::new()
+                    };
+                    let selector = if fielded {
+                        match crate::grammar::field_range_forms::read_selection_field_selector(
+                            candidate,
+                        ) {
+                            Ok(selector) => Some(selector),
+                            Err(message) => {
+                                return refuse("selection", format!("{message} in {owner}"));
+                            }
+                        }
+                    } else {
+                        None
                     };
                     if name.is_empty() {
                         return refuse(
@@ -494,6 +510,7 @@ impl<'a> Compiler<'a> {
                         name: Arc::from(name),
                         mapping: Arc::from(mapping),
                         ranges,
+                        selector,
                     });
                 }
                 if candidates.is_empty() {

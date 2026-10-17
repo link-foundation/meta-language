@@ -18,6 +18,9 @@ use super::tree::{SyntaxTree, public_tree};
 use crate::grammar::interchange::serialize_grammar;
 use crate::grammar::{Grammar, default_settling};
 use crate::translation::frontend_rules::ml_array::number_index;
+use crate::translation::grammar_selection_field_range_rules::{
+    accept_grammar_selection_field_range_candidate, read_grammar_selection_field_range_context,
+};
 use crate::translation::grammar_selection_included_range_rules::{
     accept_grammar_selection_included_range_agreement,
     accept_grammar_selection_included_range_candidate,
@@ -467,22 +470,65 @@ impl Executor<'_> {
             .iter()
             .map(|candidate| candidate.mapping.to_string())
             .collect::<Vec<_>>();
-        let range_context = number_index(read_grammar_selection_included_range_context(
+        let field_context = number_index(read_grammar_selection_field_range_context(
             &mappings, in_token,
         ));
-        let context = if range_context == Some(0) {
+        let range_context = if field_context == Some(0) {
+            number_index(read_grammar_selection_included_range_context(
+                &mappings, in_token,
+            ))
+        } else {
+            Some(0)
+        };
+        let context = if field_context != Some(0) {
+            field_context
+        } else if range_context == Some(0) {
             number_index(read_grammar_selection_mapping_context(&mappings, in_token))
         } else {
             range_context
         };
         if context == Some(2) {
             self.report_selection_diagnostic(json!({"reason":"unsupportedEmbeddingMapping","start":start,"end":start,
-                "mapping":if range_context == Some(2) {"included-ranges"} else {"json-string"},"detail":"mapped selection requires syntactic context and one common source mapping"}))?;
+                "mapping":if field_context == Some(2) {"field-ranges"} else if range_context == Some(2) {"included-ranges"} else {"json-string"},"detail":"mapped selection requires syntactic context and one common source mapping"}))?;
             return Ok(Vec::new());
         }
-        let ranged = range_context == Some(1);
+        let fielded = field_context == Some(1);
+        let mut selector: Option<&Value> = None;
+        if fielded {
+            for candidate in &descriptor.candidates {
+                if !accept_grammar_selection_field_range_candidate(
+                    &candidate.kind,
+                    &candidate.mapping,
+                ) {
+                    self.report_selection_diagnostic(json!({"reason":"unsupportedEmbeddingMapping","start":start,"end":start,
+                        "mapping":"field-ranges","detail":"field ranges require an explicit grammar-field-candidate"}))?;
+                    return Ok(Vec::new());
+                }
+                self.step()?;
+                self.retain(5)?;
+                // Feature integer transport has one zero representation.
+                // These are the original validated primitive selector fields.
+                let parameters = candidate
+                    .selector
+                    .as_ref()
+                    .expect("a validated field candidate retains its selector");
+                if selector.is_some_and(|first| {
+                    ["kind", "label", "mode", "first", "count"]
+                        .iter()
+                        .any(|key| first[*key] != parameters[*key])
+                }) {
+                    self.report_selection_diagnostic(json!({"reason":"unsupportedEmbeddingMapping","start":start,"end":start,
+                        "mapping":"field-ranges","detail":"field range candidates require one common selector"}))?;
+                    return Ok(Vec::new());
+                }
+                if selector.is_none() {
+                    selector = Some(parameters);
+                }
+            }
+        }
+        let has_included_ranges = range_context == Some(1);
         let mut ranges: Option<&[[f64; 2]]> = None;
-        if ranged {
+        if has_included_ranges {
             if descriptor.candidates.iter().any(|candidate| {
                 !accept_grammar_selection_included_range_candidate(
                     &candidate.kind,
@@ -513,11 +559,27 @@ impl Executor<'_> {
             }
         }
         let mapped = context == Some(1);
+        let mapping_profile = if fielded {
+            "field-ranges"
+        } else if has_included_ranges {
+            "included-ranges"
+        } else {
+            "json-string"
+        };
         let regions = self.evaluate(item, start, &skipped.state, !mapped)?;
         let mut results = Vec::new();
         for region in regions {
             let derived = if mapped {
-                let result = if let Some(ranges) = ranges {
+                let result = if let Some(selector) = selector {
+                    self.shared.selection_sources.borrow_mut().map_field(
+                        self.bytes,
+                        (start, region.end),
+                        selector,
+                        &region.children,
+                        self,
+                        self.max_depth.saturating_sub(self.depth),
+                    )?
+                } else if let Some(ranges) = ranges {
                     self.shared
                         .selection_sources
                         .borrow_mut()
@@ -533,11 +595,13 @@ impl Executor<'_> {
                     Err(failed) => {
                         self.remember_mapping_failure(
                             json!({"reason":failed.reason,"start":failed.offset,"end":failed.offset,
-                            "mapping":if ranged {"included-ranges"} else {"json-string"}}),
+                            "mapping":mapping_profile}),
                         )?;
                         self.fail(
                             failed.offset,
-                            &Name::from(if ranged {
+                            &Name::from(if fielded {
+                                "a scalar-aligned field-selected source range view"
+                            } else if has_included_ranges {
                                 "an ordered scalar-aligned source range view"
                             } else {
                                 "a Unicode scalar JSON string source"
@@ -556,7 +620,7 @@ impl Executor<'_> {
                 let mapping = &candidate.mapping;
                 self.step()?;
                 self.retain(1)?;
-                if !ranged && !accept_grammar_selection_mapping(mapping) {
+                if !fielded && !has_included_ranges && !accept_grammar_selection_mapping(mapping) {
                     self.report_selection_diagnostic(json!({"reason":"unsupportedEmbeddingMapping","language":&**language,"start":start,"end":region.end,"mapping":&**mapping}))?;
                     candidates.push(json!({"language":&**language,"relation":"unknown","reason":"unsupportedEmbeddingMapping","mapping":&**mapping}));
                     continue;
@@ -566,19 +630,26 @@ impl Executor<'_> {
                     candidates.push(json!({"language":&**language,"relation":"unknown","reason":"unknownGrammar"}));
                     continue;
                 };
-                let parameters = if ranged {
-                    json!([
-                        "selection",
-                        &**mapping,
-                        &**language,
-                        start,
-                        region.end,
-                        ranges
-                    ])
-                } else {
-                    json!(["selection", &**mapping, &**language, start, region.end])
-                };
-                let key = (Name::from(parameters.to_string()), start, region.end);
+                let mut parameters = vec![
+                    json!("selection"),
+                    json!(&**mapping),
+                    json!(&**language),
+                    json!(start),
+                    json!(region.end),
+                ];
+                if let Some(selector) = selector {
+                    parameters.push(selector.clone());
+                } else if has_included_ranges {
+                    parameters.push(json!(ranges));
+                }
+                if let Some(derived) = &derived {
+                    parameters.push(derived.mapping["output"].clone());
+                }
+                let key = (
+                    Name::from(Value::Array(parameters).to_string()),
+                    start,
+                    region.end,
+                );
                 let outcome = if let Some(outcome) = self.embed_memo.get(&key) {
                     Some(outcome.clone())
                 } else {
@@ -609,7 +680,7 @@ impl Executor<'_> {
                             let Some(cover) = mapped_cover(&derived.mapping, *farthest, *farthest)
                             else {
                                 self.report_selection_diagnostic(json!({"reason":"unsupportedEmbeddingMapping","start":start,"end":region.end,
-                                    "mapping":if ranged {"included-ranges"} else {"json-string"}}))?;
+                                    "mapping":mapping_profile}))?;
                                 continue;
                             };
                             candidates.push(json!({"language":&**language,"relation":"rejected","offset":cover[0],"expected":expected,

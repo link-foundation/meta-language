@@ -760,10 +760,13 @@ impl GrammarDeclarations {
     }
 }
 
-/// Check the two new closed forms before a positional codec can omit fields.
+/// Check closed source-view forms before a positional codec can omit fields.
 pub(crate) fn check_grammar_selection_included_range_form(
     form: &FeatureForm,
 ) -> Result<bool, String> {
+    if super::field_range_forms::check_grammar_selection_field_range_form(form)? {
+        return Ok(true);
+    }
     let role = match form.head.as_str() {
         "grammar-range-candidate" => "candidate",
         "source-range" => "range",
@@ -839,74 +842,7 @@ pub(crate) fn check_grammar_selection_included_range_form(
 
 /// Inspect every original raw value before a reader can omit unknown fields.
 pub(crate) fn check_grammar_selection_included_range_data(root: &Value) -> Result<(), String> {
-    let exact = |value: &Value, role| {
-        let names = read_grammar_selection_included_range_field_order(role);
-        value.as_object().is_some_and(|fields| {
-            fields.len() == names.split('|').count()
-                && fields
-                    .keys()
-                    .all(|name| names.split('|').any(|expected| expected == name))
-        })
-    };
-    let range = |value: &Value| -> Result<(), String> {
-        if !value.is_object() {
-            return Err("an included source view needs ordinary data records".to_owned());
-        }
-        if !exact(value, "range") {
-            return Err("an included source view needs exactly its declared fields".to_owned());
-        }
-        if !accept_grammar_selection_included_range_source_range(
-            value["kind"].as_str().unwrap_or_default(),
-            value["start"].as_f64().unwrap_or(f64::NAN),
-            value["end"].as_f64().unwrap_or(f64::NAN),
-        ) {
-            return Err(
-                "an included source range needs its kind and nonempty integer byte bounds"
-                    .to_owned(),
-            );
-        }
-        Ok(())
-    };
-    let mut pending = vec![root];
-    while let Some(value) = pending.pop() {
-        if let Some(fields) = value.as_object() {
-            match value["kind"].as_str().unwrap_or_default() {
-                "source-range" => range(value)?,
-                "grammar-range-candidate" => {
-                    if !exact(value, "candidate") {
-                        return Err(
-                            "an included source view needs exactly its declared fields".to_owned()
-                        );
-                    }
-                    if value["name"].as_str().is_none_or(str::is_empty)
-                        || !accept_grammar_selection_included_range_candidate(
-                            "grammar-range-candidate",
-                            value["mapping"].as_str().unwrap_or_default(),
-                        )
-                    {
-                        return Err("an included range candidate needs its name and explicit included-ranges mapping".to_owned());
-                    }
-                    let ranges = value["ranges"]
-                        .as_array()
-                        .ok_or("an included range candidate needs an ordinary range array")?;
-                    if ranges.is_empty() {
-                        return Err(
-                            "an included range candidate needs a nonempty dense range array"
-                                .to_owned(),
-                        );
-                    }
-                    for row in ranges {
-                        range(row)?;
-                    }
-                }
-                _ => {}
-            }
-            pending.extend(fields.values());
-        } else if let Some(items) = value.as_array() {
-            pending.extend(items);
-        }
-    }
-    Ok(())
+    super::field_range_forms::check_grammar_selection_included_range_data(root)
 }
 
 fn check_included_range_fields(form: &FeatureForm) -> Result<(), String> {
@@ -914,7 +850,7 @@ fn check_included_range_fields(form: &FeatureForm) -> Result<(), String> {
     for value in &form.fields {
         match value {
             FieldValue::Expression(expr) => {
-                check_grammar_selection_included_range_expression(expr)?
+                check_grammar_selection_included_range_expression(expr)?;
             }
             FieldValue::Expressions(items) => {
                 for expr in items {
@@ -962,7 +898,7 @@ pub(crate) fn check_grammar_selection_included_range_expression(
         | GrammarExpr::Not(item)
         | GrammarExpr::Repeat { expr: item, .. }
         | GrammarExpr::Capture { expr: item, .. } => {
-            check_grammar_selection_included_range_expression(item)?
+            check_grammar_selection_included_range_expression(item)?;
         }
         _ => {}
     }

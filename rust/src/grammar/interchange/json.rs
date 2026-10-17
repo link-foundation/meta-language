@@ -589,7 +589,7 @@ fn read_form(
                 }
                 FieldValue::Word(word)
             }
-            FieldType::Integer if head == "source-range" => {
+            FieldType::Integer if head == "source-range" || head == "source-field-selector" => {
                 let coordinate = field(value, key, what)?.as_f64().unwrap_or(f64::NAN);
                 let integer =
                     crate::translation::frontend_rules::ml_array::number_index(coordinate)

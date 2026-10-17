@@ -298,13 +298,14 @@ pub(super) struct SelectionDescriptor {
     pub(super) candidates: Vec<SelectionCandidate>,
 }
 
-/// One actual candidate form and its validated relative source byte pairs.
+/// One actual candidate form and its validated source-view parameters.
 #[derive(Clone, Debug)]
 pub(super) struct SelectionCandidate {
     pub(super) kind: Name,
     pub(super) name: Name,
     pub(super) mapping: Name,
     pub(super) ranges: Vec<[f64; 2]>,
+    pub(super) selector: Option<serde_json::Value>,
 }
 
 /// One loaded rule; an instance of a parameterized rule keeps its kind.
