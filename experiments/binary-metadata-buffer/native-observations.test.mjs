@@ -41,6 +41,28 @@ test('bounded complete results cover both profiles, all twenty-two exact errors 
 test('every pinned source, model, policy, style, builder, provider and fixture refuses byte changes',()=>{
  const receipts=verifyBinaryMetadataBufferNativeModel();assert.equal(receipts.length,13);
  for(const row of receipts)assert.throws(()=>verifyBinaryMetadataBufferNativeModel(file=>new URL(file).pathname.endsWith('/'+row.file)?Buffer.concat([readFileSync(file),Buffer.from('changed')]):readFileSync(file)),/frozen binary candidate model changed/u);
+ const revisionAddress=new URL('./frontend-owner-revision.lino',import.meta.url),revision=readProjectData(revisionAddress);
+ assert.equal(digest(readFileSync(revisionAddress)),'95f86b39d65d4b2faa57ceb942bc77feab2086184b239ed3f4210c8be6a4720c');
+ const owner=receipts.find(row=>row.file==='rust/src/translation/frontend_rules.rs');
+ assert.equal(owner.sha256,'017c049132b271f5c219736086ac04b2cfb349d88de767478edcad46f05d597f');
+ assert.equal(owner.ownerRevision.actualSourceSha256,'37033e27b97bc145b0d51b89016606e141d5962c0f423ee131202432a301dad3');
+ assert.equal(owner.ownerRevision.originalCommit,BINARY_METADATA_BUFFER_MODEL_COMMIT);
+ const original=verifyBinaryMetadataBufferNativeModel(file=>new URL(file).pathname.endsWith('/'+owner.file)?Buffer.from(revision.original.source):readFileSync(file));
+ assert.deepEqual(original.map(({file,sha256})=>({file,sha256})),receipts.map(({file,sha256})=>({file,sha256})),'every original model binding remains exact');
+ assert.equal(revision.provider.source,entry.additionalSources.at(-1).source);
+ assert.equal(revision.provider.sourceBytes,3648);assert.equal(revision.provider.sha256,'c2a535a8fbc2ab09deca3f7c92cad278b0a08a526f5f87a54e2aebb822c8b76a');
+ for(const changed of [revision.current.source+'\n',revision.current.source.replace('kind == "record"','kind == "counterfeit"'),revision.current.source.replace('(present_kind == "tuple")','(present_kind == "array")'),revision.current.source.replace('array index out of range','changed provider refusal')]){
+  assert.notEqual(changed,revision.current.source);
+  assert.throws(()=>verifyBinaryMetadataBufferNativeModel(file=>new URL(file).pathname.endsWith('/'+owner.file)?Buffer.from(changed):readFileSync(file)),/frozen binary candidate model changed/u);
+ }
+ for(const change of ['append','coherent-current-pin','changed-original','third-context']){
+  const changed=structuredClone(revision);
+  if(change==='coherent-current-pin'){changed.current.source+='\n';changed.current.sourceBytes++;changed.current.sha256=digest(changed.current.source);}
+  if(change==='changed-original')changed.original.source+='\n';
+  if(change==='third-context')changed.changes.push({kind:'addition',owner:'unreviewed',original:'',current:'\n'});
+  const bytes=change==='append'?Buffer.concat([readFileSync(revisionAddress),Buffer.from('changed')]):Buffer.from(serializeProjectData(changed,'owner-revision.lino'));
+  assert.throws(()=>verifyBinaryMetadataBufferNativeModel(file=>new URL(file).href===revisionAddress.href?bytes:readFileSync(file)),/frozen binary candidate model changed/u);
+ }
 });
 
 test('injected source-bundle process contracts stay distinct from actual native evidence',()=>{

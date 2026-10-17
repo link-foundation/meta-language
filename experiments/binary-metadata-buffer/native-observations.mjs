@@ -38,7 +38,40 @@ function textBytes(value){if(typeof value!=='string'||!value.isWellFormed())thro
 function freeze(value){if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;}
 function numberBits(value){assert.equal(typeof value,'number');const bytes=Buffer.alloc(8);bytes.writeDoubleBE(value);return bytes.toString('hex');}
 function bitsNumber(value){assert.match(value,/^[0-9a-f]{16}$/u);return Buffer.from(value,'hex').readDoubleBE();}
-export function verifyBinaryMetadataBufferNativeModel(read=readFileSync){return Object.entries(digests).map(([file,expected])=>{const actual=sha256(read(new URL(file,root)));assert.equal(actual,expected,'the frozen binary candidate model changed: '+file);return{file,sha256:actual};});}
+export function verifyBinaryMetadataBufferNativeModel(read=readFileSync){
+ return Object.entries(digests).map(([file,expected])=>{
+  const actualBytes=read(new URL(file,root)),actualSha256=sha256(actualBytes);let modelBytes=actualBytes,ownerRevision;
+  const refusal='the frozen binary candidate model changed: '+file;
+  if(file==='rust/src/translation/frontend_rules.rs'&&actualSha256!==expected){
+   const receiptFile='experiments/binary-metadata-buffer/frontend-owner-revision.lino';
+   const receiptBytes=read(new URL(receiptFile,root));assert.equal(sha256(receiptBytes),'95f86b39d65d4b2faa57ceb942bc77feab2086184b239ed3f4210c8be6a4720c',refusal+' owner receipt');
+   const revision=readStructuredDataLino(receiptBytes.toString('utf8'));
+   assert.equal(revision.schemaVersion,1,refusal);assert.equal(revision.original.commit,BINARY_METADATA_BUFFER_MODEL_COMMIT,refusal);
+   assert.equal(revision.original.path,file,refusal);assert.equal(revision.original.sha256,expected,refusal);
+   assert.equal(revision.current.commit,'5fd3fb6ec8d15331bd59c67dac55c6d8d258e10a',refusal);
+   assert.equal(revision.current.path,file,refusal);assert.equal(revision.current.sha256,actualSha256,refusal);
+   assert.equal(revision.current.sourceBytes,actualBytes.length,refusal);assert.equal(revision.current.source,actualBytes.toString('utf8'),refusal);
+   assert.equal(sha256(revision.original.source),expected,refusal);assert.equal(Buffer.byteLength(revision.original.source),revision.original.sourceBytes,refusal);
+   assert.deepEqual(revision.changes.map(row=>[row.kind,row.owner]),[['replacement','read_type_query_result'],['addition','accept_java_script_optional_tuple_context']],refusal);
+   assert.equal(revision.changes[0].current,readSourceTextRustBlock(revision.current.source,'fn','read_type_query_result')+'\n',refusal);
+   assert.equal(revision.changes[0].original,readSourceTextRustBlock(revision.original.source,'fn','read_type_query_result')+'\n',refusal);
+   assert.equal(revision.changes[1].current,'\n'+readSourceTextRustBlock(revision.current.source,'fn','accept_java_script_optional_tuple_context')+'\n',refusal);
+   assert.equal(revision.changes[1].original,'',refusal);
+   let restored=actualBytes.toString('utf8');
+   for(const change of revision.changes){assert.equal(restored.split(change.current).length,2,refusal);restored=restored.replace(change.current,()=>change.original);}
+   assert.equal(restored,revision.original.source,refusal);assert.equal(sha256(restored),expected,refusal);
+   const provider=readSourceTextRustBlock(actualBytes.toString('utf8'),'mod','ml_array');
+   assert.equal(provider,readSourceTextRustBlock(restored,'mod','ml_array'),refusal);assert.equal(provider,revision.provider.source,refusal);
+   assert.equal(Buffer.byteLength(provider),3648,refusal);assert.equal(sha256(provider),'c2a535a8fbc2ab09deca3f7c92cad278b0a08a526f5f87a54e2aebb822c8b76a',refusal);
+   assert.deepEqual(revision.frozenBindings,Object.entries(digests).map(([file,sha256])=>({file,sha256})),refusal);
+   modelBytes=Buffer.from(restored,'utf8');
+   ownerRevision={file:receiptFile,sha256:sha256(receiptBytes),originalCommit:revision.original.commit,currentCommit:revision.current.commit,
+    actualSourceSha256:actualSha256,actualSourceBytes:actualBytes.length,providerSha256:sha256(provider)};
+  }
+  const actual=sha256(modelBytes);assert.equal(actual,expected,refusal);
+  return{file,sha256:actual,...(ownerRevision?{ownerRevision}:{})};
+ });
+}
 export function binaryMetadataBufferNativeMode(environment=process.env){if(environment.BINARY_METADATA_BUFFER_NATIVE!=='1')return false;if(environment.CI!=='true')throw new TypeError('BINARY_METADATA_BUFFER_NATIVE=1 requires CI=true; native compilation is forbidden locally');return true;}
 function inventory(source,path){
  const tokens=tokenize(source,'Rust').tokens,rows=[];let depth=0;
