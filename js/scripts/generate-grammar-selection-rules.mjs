@@ -52,6 +52,11 @@ export function renderGrammarSelectionNativeForms(forms) {
     + 'use super::feature::{FieldType, FormFields};\n\n'
     + 'pub const SELECTION_EXPRESSION_FORMS: &[(&str, FormFields)] = &[\n'
     + Object.entries(forms).map(([head, columns]) => `    (${JSON.stringify(head)}, &[${columns.map(([name, type]) => {
+      if (Array.isArray(type)) {
+        if (type.length === 0 || type.some(word => typeof word !== 'string' || word === '')
+            || new Set(type).size !== type.length) throw new TypeError('a grammar selection choice needs distinct nonempty words');
+        return `(${JSON.stringify(name)}, FieldType::Choice(&[${type.map(word => JSON.stringify(word)).join(', ')}]))`;
+      }
       if (!fields[type]) throw new TypeError(`unsupported grammar selection field ${type}`);
       return `(${JSON.stringify(name)}, ${fields[type]})`;
     }).join(', ')}]),`).join('\n') + '\n];\n';

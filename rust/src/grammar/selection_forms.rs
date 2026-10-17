@@ -32,4 +32,21 @@ pub const SELECTION_EXPRESSION_FORMS: &[(&str, FormFields)] = &[
         "source-range",
         &[("start", FieldType::Integer), ("end", FieldType::Integer)],
     ),
+    (
+        "grammar-field-candidate",
+        &[
+            ("name", FieldType::Name),
+            ("mapping", FieldType::Name),
+            ("selector", FieldType::Expression),
+        ],
+    ),
+    (
+        "source-field-selector",
+        &[
+            ("label", FieldType::Name),
+            ("mode", FieldType::Choice(&["include", "exclude"])),
+            ("first", FieldType::Integer),
+            ("count", FieldType::Integer),
+        ],
+    ),
 ];
