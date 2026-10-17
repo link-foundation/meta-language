@@ -218,8 +218,7 @@ class JavaScriptParser {
             span(start, c.peek(1)),
           );
         }
-        const close = this.matching(c.index + 3);
-        const methods = c.tokens.slice(c.index + 4, close).some((token, offset) => acceptJavaScriptNamespaceMethod(token.kind, c.tokens[c.index + 5 + offset]?.value ?? ''));
+        const methods = this.namespaceObjectHasMethods(c.index + 3);
         if (readJavaScriptObjectStatementForm(false, methods, false) === 'namespace') { items.push(this.namespace(start)); continue; }
       }
       if (this.startsTopLevelImperative()) {
@@ -635,6 +634,34 @@ class JavaScriptParser {
     const declaration = { k: 'fn', name, params, ret, body, span: span(docToken, c.peek()) };
     if (!this.ownedArrayReaderNamespace) this.ownedArrayReaders.set(name, readOwnedArrayReaderParameters(declaration, this.ownedArrayReaders, statements));
     return declaration;
+  }
+
+  /** Inspect property headers, not calls or closures inside their values. */
+  namespaceObjectHasMethods(index) {
+    const tokens = this.cursor.tokens;
+    const close = this.matching(index);
+    let member = index + 1;
+    while (member < close) {
+      // Identifier modifiers retain the namespace parser's existing accessor
+      // and asynchronous-method diagnostics; neither a colon nor a value is
+      // part of this header. Generator prefixes retain their refusal there too.
+      let header = member;
+      while (header < close && (tokens[header].kind === 'identifier' || tokens[header].kind === 'punct' && tokens[header].value === '*')) {
+        if (acceptJavaScriptNamespaceMethod(tokens[header].kind, tokens[header + 1]?.value ?? '')) return true;
+        header += 1;
+      }
+      if (tokens[member].kind === 'identifier' && tokens[member + 1]?.value === ':' && tokens[member + 2]?.value === '{'
+        && this.namespaceObjectHasMethods(member + 2)) return true;
+      // Balanced groups belong to this one property's value (or computed key).
+      // Opaque string, template and regex tokens cannot introduce boundaries.
+      while (member < close) {
+        const token = tokens[member];
+        if (token.kind === 'punct' && token.value === ',') { member += 1; break; }
+        if (token.kind === 'punct' && ['(', '[', '{'].includes(token.value)) member = this.matching(member) + 1;
+        else member += 1;
+      }
+    }
+    return false;
   }
 
   /** `const Name = { method(…) { … }, Nested: { … } };` is a module. */

@@ -113,21 +113,7 @@ impl JavaScriptParser {
                         Some(span(&start, &name)),
                     ));
                 }
-                let close = self.matching(self.cursor.index + 3);
-                let methods = (self.cursor.index + 4..close).any(|index| {
-                    let token = &self.cursor.tokens[index];
-                    super::super::surface_rules::accept_java_script_namespace_method(
-                        if token.kind == TokenKind::Identifier {
-                            "identifier"
-                        } else {
-                            ""
-                        },
-                        self.cursor
-                            .tokens
-                            .get(index + 1)
-                            .map_or("", |next| next.value.as_str()),
-                    )
-                });
+                let methods = self.namespace_object_has_methods(self.cursor.index + 3);
                 if super::super::surface_rules::read_java_script_object_statement_form(
                     false, methods, false,
                 ) == "namespace"
@@ -195,5 +181,61 @@ impl JavaScriptParser {
             super::super::reference_analysis::select_structural_reference_semantics(&mut program)?;
             Ok(program)
         }
+    }
+
+    /// Inspect property headers, not calls or closures inside their values.
+    fn namespace_object_has_methods(&self, index: usize) -> bool {
+        let tokens = &self.cursor.tokens;
+        let close = self.matching(index);
+        let mut member = index + 1;
+        while member < close {
+            // Preserve the namespace parser's existing modifier diagnostics.
+            let mut header = member;
+            while header < close
+                && (tokens[header].kind == TokenKind::Identifier
+                    || tokens[header].kind == TokenKind::Punct && tokens[header].value == "*")
+            {
+                if super::super::surface_rules::accept_java_script_namespace_method(
+                    if tokens[header].kind == TokenKind::Identifier {
+                        "identifier"
+                    } else {
+                        ""
+                    },
+                    tokens
+                        .get(header + 1)
+                        .map_or("", |next| next.value.as_str()),
+                ) {
+                    return true;
+                }
+                header += 1;
+            }
+            if tokens[member].kind == TokenKind::Identifier
+                && tokens
+                    .get(member + 1)
+                    .is_some_and(|token| token.value == ":")
+                && tokens
+                    .get(member + 2)
+                    .is_some_and(|token| token.value == "{")
+                && self.namespace_object_has_methods(member + 2)
+            {
+                return true;
+            }
+            // Balanced groups belong to this one property's value or key;
+            // opaque string, template and regex tokens cannot add boundaries.
+            while member < close {
+                let token = &tokens[member];
+                if token.kind == TokenKind::Punct && token.value == "," {
+                    member += 1;
+                    break;
+                }
+                if token.kind == TokenKind::Punct && matches!(token.value.as_str(), "(" | "[" | "{")
+                {
+                    member = self.matching(member) + 1;
+                } else {
+                    member += 1;
+                }
+            }
+        }
+        false
     }
 }

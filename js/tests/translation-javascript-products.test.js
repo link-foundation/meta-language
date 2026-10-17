@@ -66,6 +66,10 @@ test('product ownership requires every caller and refuses mutable arrays despite
     pair + '\nconsole.log(value===value);',
     pair + '\nfunction read(index){return value[index];}console.log(read(0));',
   ]) assert.throws(() => checkProgram(parseJavaScript(source)), /immutable tuple|unsupported|function value|unknown name/u);
+  const record = 'const record={value:Object.freeze([5,true])};console.log(record.value[0]);';
+  assert.throws(() => parseJavaScript(record), error => error.kind === 'unsupported'
+    && error.details.construct === 'immutable tuple product use'
+    && error.reason === 'immutable tuple product use: a product only supports owned bindings, direct calls, and fixed positional reads');
 });
 
 test('fresh freeze admission refuses shallow mutable children, zero products and shadowed built-ins', () => {
