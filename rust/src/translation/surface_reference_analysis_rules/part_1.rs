@@ -267,7 +267,7 @@ pub fn accept_surface_reference_truthy_value(columns: &[String], size: f64, node
             } else if form == "number" {
                 (((crate::translation::surface_reference_analysis_rules::read_required_text_fact(columns, (size + node))) != "0") && ((crate::translation::surface_reference_analysis_rules::read_required_text_fact(columns, (size + node))) != "-0")) && ((crate::translation::surface_reference_analysis_rules::read_required_text_fact(columns, (size + node))) != "NaN")
             } else {
-                (form == "string") && (!((crate::translation::surface_reference_analysis_rules::read_required_text_fact(columns, (size + node)))).is_empty())
+                (form == "string") && (!(crate::translation::surface_reference_analysis_rules::read_required_text_fact(columns, (size + node))).is_empty())
             }
         }
     }

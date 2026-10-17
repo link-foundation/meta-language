@@ -8,7 +8,8 @@ import {simplifyPortableProductLibraryStyles, simplifyRustOptionIdentityMatches}
 import {flattenRustSourceHeaderStyleFormat, stripRustSourceHeaderStyleParentheses} from './rust-source-header-library-style.mjs';
 import {flattenFamilyLibraryElseIf, mergeFamilyLibraryIdenticalBranches, qualifyFamilyLibraryBooleanFunctions,
   invertFamilyLibraryInequalityBranches, bindFamilyLibraryInequalityConditions,
-  simplifyFamilyLibraryNegatedConjunctions, liftFamilyLibraryTruthinessConditions} from './portable-conditional-source-style.mjs';
+  simplifyFamilyLibraryNegatedConjunctions, liftFamilyLibraryTruthinessConditions,
+  removeFamilyLibraryDivergentElse} from './portable-conditional-source-style.mjs';
 import {readPortableRuntimeSourceStyles} from './portable-runtime-source-style.mjs';
 import {readPortableNumberSourceStyles} from './portable-number-source-style.mjs';
 import {readPortableOwnedSourceStyles} from './portable-owned-source-style.mjs';
@@ -474,6 +475,7 @@ export function readPortableSourceLintStyles(source, {modulePath} = {}) {
     styled = simplifyFamilyLibraryNegatedConjunctions(styled);
     styled = invertFamilyLibraryInequalityBranches(styled, {context: adapted});
     styled = bindFamilyLibraryInequalityConditions(styled, {context: adapted});
+    styled = removeFamilyLibraryDivergentElse(styled);
     const codeStarts = new Set(readPortableLintTokens(styled).tokens.map(token => token.start));
     styled = styled.replace(/\(([A-Za-z_][A-Za-z_0-9]*)\s*>=\s*(-?[0-9]+(?:\.[0-9]+)?f64)\)\s*&&\s*\(\1\s*(<=|<)\s*(-?[0-9]+(?:\.[0-9]+)?f64)\)/gu,
       (match, value, lower, upperOperation, upper, offset) => codeStarts.has(offset)

@@ -598,7 +598,8 @@ pub fn ml_accept_grammar_lexer_identifier_loop1(
                                 continue;
                             }
                         }
-                    } else {
+                    }
+                    {
                         self::MlAcceptGrammarLexerIdentifierLoop1Result::MlAcceptGrammarLexerIdentifierLoop1Return(false)
                     }
                 }
