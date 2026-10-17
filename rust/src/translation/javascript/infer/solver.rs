@@ -18,6 +18,7 @@ impl Inference {
             let (params, ret) = external.signature();
             let signature = Signature {
                 defaults: vec![false; params.len()],
+                optional_params: vec![false; params.len()],
                 params: params
                     .into_iter()
                     .map(|ty| self.declared(Some(ty)))
@@ -42,13 +43,14 @@ impl Inference {
             let defaults = function
                 .params
                 .iter()
-                .map(|param| param.default_value.is_some())
+                .map(|param| param.default_value.is_some() || param.optional)
                 .collect();
             self.signatures.insert(
                 path.join("."),
                 Signature {
                     params,
                     defaults,
+                    optional_params: function.params.iter().map(|param| param.optional).collect(),
                     ret,
                     declared_ret,
                 },

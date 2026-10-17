@@ -5,6 +5,46 @@ use super::super::{
     Type, coerce, data, type_error, unsupported,
 };
 use crate::translation::frontend_rules::accept_argument_count;
+use crate::translation::parameter_default_rules::{
+    read_parameter_default_value_step, require_parameter_default_argument_bindings,
+};
+
+struct CheckedCallArgument<'a> {
+    parameter: &'a Param,
+    value: Expr,
+    actual_input: bool,
+    fallback_pure: Option<bool>,
+    coalesced: bool,
+    span: Option<Span>,
+}
+
+fn pure_parameter_default(mut value: &Expr) -> bool {
+    loop {
+        let flavor = match &value.node {
+            Node::Cast {
+                flavor: Flavor::Exact,
+                ..
+            } => "exact",
+            _ => "",
+        };
+        match read_parameter_default_value_step(value.node.kind(), flavor).as_str() {
+            "arg" => {
+                let Node::Cast { arg, .. } = &value.node else {
+                    unreachable!("the shared default traversal selects the actual cast child");
+                };
+                value = arg;
+            }
+            "value" => {
+                let Node::Some { value: child } = &value.node else {
+                    unreachable!("the shared default traversal selects the actual present child");
+                };
+                value = child;
+            }
+            "pure" => return true,
+            _ => return false,
+        }
+    }
+}
 
 impl Checker {
     pub(in crate::translation::check) fn application(
@@ -126,6 +166,12 @@ impl Checker {
         path: &[String],
         span: Option<Span>,
     ) -> Result<Expr> {
+        let absent = SExpr::new(
+            SNode::None {
+                absence: "undefined".to_owned(),
+            },
+            None,
+        );
         let mut arguments: Vec<(&SExpr, bool)> = args.iter().map(|arg| (arg, false)).collect();
         #[allow(clippy::cast_precision_loss)]
         let argument_count = args.len() as f64;
@@ -133,20 +179,16 @@ impl Checker {
             && accept_argument_count(
                 params
                     .iter()
-                    .map(|param| param.default_value.is_some())
+                    .map(|param| param.default_value.is_some() || param.optional)
                     .collect(),
                 argument_count,
             )
         {
-            arguments.extend(params[args.len()..].iter().map(|param| {
-                (
-                    param
-                        .default_value
-                        .as_ref()
-                        .expect("omitted parameter has a default"),
-                    true,
-                )
-            }));
+            arguments.extend(
+                params[args.len()..]
+                    .iter()
+                    .map(|param| (param.default_value.as_ref().unwrap_or(&absent), true)),
+            );
         }
         if arguments.len() != params.len() {
             if args.len() < params.len() {
@@ -165,24 +207,96 @@ impl Checker {
                 span,
             ));
         }
-        let mut checked = Vec::new();
+        let mut plans = Vec::new();
         let closed_env = Env::default();
-        for ((arg, closed_default), param) in arguments.iter().zip(params) {
+        for (index, ((arg, closed_default), param)) in arguments.iter().zip(params).enumerate() {
+            let replaced = param.default_value.is_some()
+                && matches!(&arg.node, SNode::None { absence } if absence == "undefined");
+            let (arg, closed_default) = if matches!(&arg.node, SNode::None { absence } if absence == "undefined")
+            {
+                param
+                    .default_value
+                    .as_ref()
+                    .map_or((*arg, *closed_default), |default| (default, true))
+            } else {
+                (*arg, *closed_default)
+            };
             // A guarded argument is an integer the guard checks, wherever in it a negative value arises.
             let expected = if param.guard.is_some() && !matches!(arg.node, SNode::Num { .. }) {
                 &INT
             } else {
                 &param.ty
             };
-            let value = self.expr(
+            let mut value = self.expr(
                 arg,
-                if *closed_default { &closed_env } else { env },
-                if *closed_default { module_path } else { path },
+                if closed_default { &closed_env } else { env },
+                if closed_default { module_path } else { path },
                 Some(expected),
                 false,
             )?;
+            let actual_input = index < args.len() && !replaced;
+            let mut fallback_pure = replaced.then(|| pure_parameter_default(&value));
+            let mut coalesced = false;
+            if let Some(default) = &param.default_value
+                && matches!(&value.ty, Type::Option { element, absence } if absence == "undefined" && element.same(&param.ty))
+            {
+                let fallback =
+                    self.expr(default, &closed_env, module_path, Some(&param.ty), false)?;
+                let fallback = coerce(fallback, &param.ty, self.language, span, None)?;
+                fallback_pure = Some(pure_parameter_default(&fallback));
+                value = Expr::new(
+                    Node::Coalesce {
+                        left: Box::new(value),
+                        right: Box::new(fallback),
+                    },
+                    param.ty.clone(),
+                );
+                coalesced = true;
+            }
+            plans.push(CheckedCallArgument {
+                parameter: param,
+                value,
+                actual_input,
+                fallback_pure,
+                coalesced,
+                span: arg.span.or(span),
+            });
+        }
+        let bind_arguments = plans.iter().enumerate().any(|(index, plan)| {
+            plan.fallback_pure.is_some_and(|pure| {
+                let index = serde_json::Number::from(index)
+                    .as_f64()
+                    .expect("a parameter index has a Number representation");
+                require_parameter_default_argument_bindings(index, argument_count, pure)
+            })
+        });
+        let mut bindings = Vec::new();
+        if bind_arguments {
+            for plan in &mut plans {
+                if !plan.actual_input {
+                    continue;
+                }
+                let name = self.fresh_name("ml_a");
+                let input = if plan.coalesced {
+                    let Node::Coalesce { left, .. } = &mut plan.value.node else {
+                        unreachable!(
+                            "the actual planned optional input retains its coalescing node"
+                        );
+                    };
+                    let variable = Expr::var(name.clone(), left.ty.clone());
+                    std::mem::replace(left.as_mut(), variable)
+                } else {
+                    let variable = Expr::var(name.clone(), plan.value.ty.clone());
+                    std::mem::replace(&mut plan.value, variable)
+                };
+                bindings.push((name, input));
+            }
+        }
+        let mut checked = Vec::new();
+        for plan in plans {
+            let param = plan.parameter;
             let flavor = param.guard.is_some().then_some(Flavor::Checked);
-            let mut value = coerce(value, &param.ty, self.language, arg.span.or(span), flavor)?;
+            let mut value = coerce(plan.value, &param.ty, self.language, plan.span, flavor)?;
             if let (
                 Node::Cast {
                     flavor: Flavor::Checked,
@@ -198,7 +312,19 @@ impl Checker {
             }
             checked.push(value);
         }
-        Ok(self.guard_order(full_name, checked, ret))
+        let mut call = self.guard_order(full_name, checked, ret);
+        for (name, value) in bindings.into_iter().rev() {
+            let ty = call.ty.clone();
+            call = Expr::new(
+                Node::Let {
+                    name,
+                    value: Box::new(value),
+                    body: Box::new(call),
+                },
+                ty,
+            );
+        }
+        Ok(call)
     }
 
     /// A JavaScript call evaluates every argument, then the callee's guards run

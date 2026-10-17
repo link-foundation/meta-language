@@ -25,6 +25,7 @@ import {prepareRustPrimitiveOwnerProof,checkRustPrimitiveOwnerProof} from './rus
 import {prepareRustOwnedLocalStateProof,checkRustOwnedLocalStateProof,checkRustOwnedLocalStateContainers} from './rust-owned-local-state.js';
 import {checkRustConstFunctionProof,checkRustConstFunctionContainers} from './rust-const-functions.js';
 import { acceptArgumentCount, acceptCheckedTypeQueryOperand, acceptTypeQueryOperand, readTypeQueryResult } from './frontend-rules.js';
+import { readParameterDefaultValueStep, requireParameterDefaultArgumentBindings } from './parameter-default-rules.js';
 import { normaliseProof } from './proof.js';
 import { referenceOperation } from './reference-model.js';
 import { readSurfaceReferenceResultField, selectSurfaceReferenceAllocation, selectSurfaceReferenceRead } from './surface-reference-analysis-rules.js';
@@ -1257,6 +1258,7 @@ class Checker {
     }
     if (entry.k !== 'fn') throw typeError(`${head.path.join('.')} is not a function`, span);
     if (!entry.params) throw typeError(`${entry.fullName} is used before its signature is known`, span);
+    const provided = args.length;
     // A call that leaves out trailing parameters with defaults passes the defaults.
     if (args.length < entry.params.length && acceptArgumentCount(entry.params.map((param) => Boolean(param.default || param.optional)), args.length)) {
       args = [...args, ...entry.params.slice(args.length).map((param) => ({ ...(param.default ?? { k: 'none', absence: 'undefined' }), closedDefault: true }))];
@@ -1267,19 +1269,51 @@ class Checker {
       }
       throw typeError(`${entry.fullName} expects ${entry.params.length} arguments but got ${args.length}`, span);
     }
-    const checkedArgs = args.map((arg, index) => {
+    const plans = args.map((arg, index) => {
       const param = entry.params[index];
-      if (param.default && arg.k === 'none' && arg.absence === 'undefined') arg = { ...param.default, closedDefault: true };
+      const replaced = Boolean(param.default && arg.k === 'none' && arg.absence === 'undefined');
+      if (replaced) arg = { ...param.default, closedDefault: true };
       // A guarded argument is an integer the guard checks, wherever in it a negative value arises.
       let value = this.expr(arg, arg.closedDefault ? new Map() : env, arg.closedDefault ? entry.modulePath : path, param.guard && arg.k !== 'num' ? INT : param.type);
+      const input = index < provided && !replaced ? value : null;
+      let fallback = replaced ? value : null;
+      let coalesced = false;
       if (param.default && value.type.kind === 'option' && value.type.absence === 'undefined' && sameType(value.type.element, param.type)) {
-        const fallback = coerce(this.expr(param.default, new Map(), entry.modulePath, param.type), param.type, this.language, span);
+        fallback = coerce(this.expr(param.default, new Map(), entry.modulePath, param.type), param.type, this.language, span);
         value = { k: 'coalesce', left: value, right: fallback, type: param.type };
+        coalesced = true;
       }
-      const checked = coerce(value, param.type, this.language, arg.span ?? span, param.guard ? 'checked' : undefined);
+      return { param, value, input, fallback, coalesced, span: arg.span ?? span };
+    });
+    const pureDefault = (value) => {
+      for (;;) {
+        const step = readParameterDefaultValueStep(value.k, value.flavor ?? '');
+        if (step === 'arg') value = value.arg;
+        else if (step === 'value') value = value.value;
+        else return step === 'pure';
+      }
+    };
+    const bindArguments = plans.some((plan, index) => plan.fallback
+      && requireParameterDefaultArgumentBindings(index, provided, pureDefault(plan.fallback)));
+    const bindings = [];
+    if (bindArguments) {
+      // Literal undefined has no effects. Every other actual input is bound
+      // once, before any initializer; defaults remain in their callee scope.
+      for (const plan of plans) {
+        if (!plan.input) continue;
+        const name = this.freshName('ml_a');
+        bindings.push({ name, value: plan.input });
+        const value = { k: 'var', name, type: plan.input.type };
+        plan.value = plan.coalesced ? { ...plan.value, left: value } : value;
+      }
+    }
+    const checkedArgs = plans.map(({ param, value, span: where }) => {
+      const checked = coerce(value, param.type, this.language, where, param.guard ? 'checked' : undefined);
       return checked.k === 'cast' && checked.flavor === 'checked' ? { ...checked, message: param.guard.message, order: param.guard.order } : checked;
     });
-    return this.guardOrder({ k: 'call', fn: entry.fullName, args: checkedArgs, type: entry.ret });
+    let call = this.guardOrder({ k: 'call', fn: entry.fullName, args: checkedArgs, type: entry.ret });
+    for (const binding of bindings.reverse()) call = { k: 'let', name: binding.name, value: binding.value, body: call, type: call.type };
+    return call;
   }
 
   /**

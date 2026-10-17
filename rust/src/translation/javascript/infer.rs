@@ -149,6 +149,7 @@ struct RecordTerm {
 struct Signature {
     params: Vec<Term>,
     defaults: Vec<bool>,
+    optional_params: Vec<bool>,
     ret: Term,
     declared_ret: Option<Term>,
 }
@@ -163,6 +164,8 @@ struct FunctionResult {
 struct CallArguments {
     parameters: Vec<Term>,
     arguments: Vec<Term>,
+    defaults: Vec<bool>,
+    optional_params: Vec<bool>,
     place: Option<Span>,
 }
 struct Coalescing {

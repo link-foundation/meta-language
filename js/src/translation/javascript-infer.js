@@ -18,6 +18,7 @@ import { containsRecordTypeOwner } from './record-type-facts.js';
 import { constructCallableFunctionType, readCallableApplicationConstraints, readCallableCellOptionBinding, readCallableCellReadInference, readCallableFunctionConstraints, readCallableLambdaInference, readCallableTypeChildren } from './callable-source.js';
 import { acceptCallableApplicationInferenceResult, requireCallableNamedInference, requireCallableStructuralInference } from './callable-source-rules.js';
 import { acceptArgumentCount } from './frontend-rules.js';
+import { readParameterDefaultArgumentInference } from './parameter-default-rules.js';
 import { BOOL, FLOAT, INT, STRING, UNIT, option } from './types.js';
 import { markSharedReferenceTypes } from './javascript-cells.js';
 import { readJavaScriptProductIndex, requiresJavaScriptProductProof } from './javascript-products.js';
@@ -274,8 +275,8 @@ class Inference {
     // The other items of the module keep the types their own translation checked.
     for (const external of externals) {
       this.signatures.set(`${ROOT}.${external.name}`, external.k === 'fn'
-        ? { params: external.params.map((param) => this.declared(param.type)), defaults: external.params.map(() => false), ret: this.declared(external.ret) }
-        : { params: [], defaults: [], ret: this.declared(external.type) });
+        ? { params: external.params.map((param) => this.declared(param.type)), defaults: external.params.map(() => false), optionalParams: external.params.map(() => false), ret: this.declared(external.ret) }
+        : { params: [], defaults: [], optionalParams: [], ret: this.declared(external.type) });
     }
     for (const { path, fn } of functions) {
       const ret = this.fresh();
@@ -284,6 +285,7 @@ class Inference {
       this.signatures.set(path.join('.'), {
         params: fn.params.map((param) => this.declared(param.type)),
         defaults: fn.params.map((param) => Boolean(param.default || param.optional)),
+        optionalParams: fn.params.map((param) => Boolean(param.optional)),
         ret,
         declaredRet,
       });
@@ -425,7 +427,15 @@ class Inference {
       for (const { signature, args, where } of this.calls) {
         args.forEach((arg, index) => {
           const param = signature.params[index];
-          const actual = this.resolve(arg);
+          let actual = this.resolve(arg);
+          const defaultInference = readParameterDefaultArgumentInference(signature.defaults[index], signature.optionalParams[index], actual.kind, actual.absence ?? '');
+          if (defaultInference === 'defer') return;
+          if (defaultInference === 'element') actual = this.resolve(actual.element);
+          if (defaultInference !== 'identity') {
+            const changes = this.unificationChanges;
+            this.unify(actual, param, where);
+            if (changes !== this.unificationChanges) progress = true;
+          }
           const eligible = param?.kind === 'var' && actual.kind === 'option';
           const current = eligible ? this.resolve(param) : undefined;
           const recursive = eligible && current.kind !== 'option' ? this.contains(actual, param.id) : false;
@@ -933,8 +943,12 @@ class Inference {
     this.calls.push({ signature, args: argTypes, where });
     argTypes.forEach((type, index) => {
       const param = signature.params[index];
-      this.unify(type, param, args[index].span ?? where);
-      if (param.kind === 'var' && this.resolve(type).kind === 'option') this.bindings[param.id] = this.resolve(type);
+      const actual = this.resolve(type);
+      const operation = readParameterDefaultArgumentInference(signature.defaults[index], signature.optionalParams[index], actual.kind, actual.absence ?? '');
+      if (operation === 'defer') return;
+      const value = operation === 'element' ? actual.element : type;
+      this.unify(value, param, args[index].span ?? where);
+      if (param.kind === 'var' && this.resolve(value).kind === 'option') this.bindings[param.id] = this.resolve(value);
     });
     return signature.ret;
   }

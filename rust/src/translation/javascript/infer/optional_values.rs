@@ -7,6 +7,7 @@ use super::{
 use crate::translation::frontend_rules::ml_array::number_index;
 use crate::translation::optional_inference_rules as plans;
 use crate::translation::optional_value_rules as values;
+use crate::translation::parameter_default_rules::read_parameter_default_argument_inference;
 use crate::translation::structured_type_rules::merge_optional_absence;
 
 fn endpoint(facts: &TermFacts, identity: f64) -> Term {
@@ -39,6 +40,39 @@ const fn kind(term: &Term) -> &str {
 }
 
 impl Inference {
+    pub(super) fn parameter_default_argument_inference(
+        &self,
+        defaulted: bool,
+        optional_parameter: bool,
+        argument: &Term,
+    ) -> Option<(Term, bool)> {
+        let actual = self.resolve(argument);
+        let absence = match &actual {
+            Term::Option { absence, .. } => absence.borrow().clone(),
+            _ => String::new(),
+        };
+        match read_parameter_default_argument_inference(
+            defaulted,
+            optional_parameter,
+            kind(&actual),
+            &absence,
+        )
+        .as_str()
+        {
+            "defer" => None,
+            "element" => {
+                let Term::Option { element, .. } = actual else {
+                    unreachable!(
+                        "the generated default inference selects the actual optional child"
+                    );
+                };
+                Some((*element, true))
+            }
+            "value" => Some((actual, true)),
+            _ => Some((argument.clone(), false)),
+        }
+    }
+
     pub(super) fn same_term(&self, left: &Term, right: &Term) -> bool {
         let a = self.resolve(left);
         let b = self.resolve(right);
@@ -332,8 +366,22 @@ impl Inference {
             }
         }
         for call in self.calls.clone() {
-            for (argument, parameter) in call.arguments.iter().zip(&call.parameters) {
-                let actual = self.resolve(argument);
+            for (index, (argument, parameter)) in
+                call.arguments.iter().zip(&call.parameters).enumerate()
+            {
+                let Some((argument, selected)) = self.parameter_default_argument_inference(
+                    call.defaults[index],
+                    call.optional_params[index],
+                    argument,
+                ) else {
+                    continue;
+                };
+                let actual = self.resolve(&argument);
+                if selected {
+                    let changes = self.unification_changes;
+                    self.unify(&actual, parameter, call.place)?;
+                    progress |= changes != self.unification_changes;
+                }
                 let current = self.resolve(parameter);
                 let recursive = matches!(parameter, Term::Var(id) if kind(&actual) == "option" && kind(&current) != "option" && self.contains(&actual, *id, &mut HashSet::new()));
                 let current_absence = match &current {

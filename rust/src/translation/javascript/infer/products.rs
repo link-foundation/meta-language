@@ -248,14 +248,28 @@ impl Inference {
         self.calls.push(super::CallArguments {
             parameters: signature.params.clone(),
             arguments: arg_terms.clone(),
+            defaults: signature.defaults.clone(),
+            optional_params: signature.optional_params.clone(),
             place,
         });
-        for ((term, param), arg) in arg_terms.iter().zip(&signature.params).zip(args) {
-            self.unify(term, param, arg.span.or(place))?;
+        for (index, ((term, param), arg)) in arg_terms
+            .iter()
+            .zip(&signature.params)
+            .zip(args)
+            .enumerate()
+        {
+            let Some((value, _)) = self.parameter_default_argument_inference(
+                signature.defaults[index],
+                signature.optional_params[index],
+                term,
+            ) else {
+                continue;
+            };
+            self.unify(&value, param, arg.span.or(place))?;
             if let Term::Var(variable) = param
-                && matches!(self.resolve(term), Term::Option { .. })
+                && matches!(self.resolve(&value), Term::Option { .. })
             {
-                self.bindings[*variable] = Some(self.resolve(term));
+                self.bindings[*variable] = Some(self.resolve(&value));
             }
         }
         Ok(signature.ret)
