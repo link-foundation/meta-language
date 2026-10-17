@@ -14,6 +14,7 @@ mod array_bindings;
 mod array_from;
 mod arrays;
 mod callables;
+mod expressions;
 mod methods;
 mod numbers;
 mod optional_values;
@@ -358,16 +359,7 @@ impl Inference {
                 .bigints
                 .contains(variable)
                 .then(|| "a bigint".to_owned()),
-            Some(Term::Known(ty)) => Some(describe(ty)),
-            Some(Term::Array(_)) => Some("an array".to_owned()),
-            Some(Term::Option { .. }) => Some("option".to_owned()),
-            Some(Term::Tuple(_)) => Some("a tuple".to_owned()),
-            Some(Term::Union(_)) => Some("union".to_owned()),
-            Some(Term::Map { .. }) => Some("a map".to_owned()),
-            Some(Term::Set { .. }) => Some("a set".to_owned()),
-            Some(Term::Record(_)) => Some("an object".to_owned()),
-            Some(Term::Function { .. }) => Some("a function".to_owned()),
-            Some(Term::Cell(_)) => Some("a captured binding".to_owned()),
+            Some(term) => Some(describe_term(term)),
         };
         if let Some(described) = described {
             return Err(type_error(
@@ -660,45 +652,9 @@ impl Inference {
             SNode::Binary {
                 op, left, right, ..
             } => self.binary(*op, left, right, expr.span, env),
-            SNode::If {
-                cond,
-                then,
-                otherwise,
-            } => {
-                let condition = self.expr(cond, env)?;
-                self.product_condition(&condition, cond.span.or(expr.span));
-                let then = self.expr(then, env)?;
-                let otherwise = self.expr(otherwise, env)?;
-                Ok(self.join(then, otherwise, expr.span))
-            }
-            SNode::Let {
-                name, value, body, ..
-            } => {
-                let value = self.expr(value, env)?;
-                let mut scope = env.clone();
-                scope.insert(name.clone(), value);
-                self.expr(body, &scope)
-            }
-            SNode::Match { scrutinees, rows } => {
-                let scrutinees = scrutinees
-                    .iter()
-                    .map(|scrutinee| self.expr(scrutinee, env))
-                    .collect::<Result<Vec<_>>>()?;
-                let mut result: Option<Term> = None;
-                for row in rows {
-                    let place = row.span.or(expr.span);
-                    let mut scope = env.clone();
-                    for (pattern, scrutinee) in row.patterns.iter().zip(&scrutinees) {
-                        self.pattern(pattern, scrutinee, &mut scope, place)?;
-                    }
-                    let body = self.expr(&row.body, &scope)?;
-                    match &result {
-                        Some(previous) => result = Some(self.join(body, previous.clone(), place)),
-                        None => result = Some(body),
-                    }
-                }
-                Ok(result.unwrap_or_else(|| self.fresh(false)))
-            }
+            SNode::If { .. } => self.infer_conditional_expression(expr, env),
+            SNode::Let { .. } => self.infer_binding_expression(expr, env),
+            SNode::Match { .. } => self.infer_match_expression(expr, env),
             SNode::StringMap { object, .. } => {
                 let value = self.expr(object, env)?;
                 self.unify(&value, &Term::Known(STRING), object.span)?;
@@ -967,14 +923,14 @@ fn describe_term(term: &Term) -> String {
         Term::Known(ty) => describe(ty),
         Term::Array(_) => "an array".to_owned(),
         Term::Option { .. } => "option".to_owned(),
-        Term::Tuple(_) => "a tuple".to_owned(),
+        Term::Tuple(_) => "tuple".to_owned(),
         Term::Union(_) => "union".to_owned(),
-        Term::Map { .. } => "a map".to_owned(),
-        Term::Set { .. } => "a set".to_owned(),
-        Term::Record(_) => "an object".to_owned(),
-        Term::Function { .. } => "a function".to_owned(),
-        Term::Cell(_) => "a captured binding".to_owned(),
-        Term::Var(_) => "an unknown type".to_owned(),
+        Term::Map { .. } => "map".to_owned(),
+        Term::Set { .. } => "set".to_owned(),
+        Term::Record(_) => "record".to_owned(),
+        Term::Function { .. } => "function".to_owned(),
+        Term::Cell(_) => "cell".to_owned(),
+        Term::Var(_) => "var".to_owned(),
     }
 }
 

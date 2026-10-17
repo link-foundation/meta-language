@@ -6,6 +6,7 @@
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
 use std::fs;
+use std::io::Write as _;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -84,6 +85,13 @@ fn sibling_binding_runs_match_javascript_and_restore_their_source() {
             },
             str::to_owned,
         );
+        let _ = std::io::stderr().write_all(
+            format!(
+                "self-translation phase: sibling case={} forward start\n",
+                entry["name"]
+            )
+            .as_bytes(),
+        );
         let translated = self_translate(&source, "JavaScript", "Rust").unwrap();
         assert!(
             translated
@@ -97,6 +105,13 @@ fn sibling_binding_runs_match_javascript_and_restore_their_source() {
             &expected[index],
         );
         assert_eq!(translated.code, expected[index], "{}", entry["name"]);
+        let _ = std::io::stderr().write_all(
+            format!(
+                "self-translation phase: sibling case={} reverse start\n",
+                entry["name"]
+            )
+            .as_bytes(),
+        );
         assert_eq!(
             self_translate(&translated.code, "Rust", "JavaScript")
                 .unwrap()

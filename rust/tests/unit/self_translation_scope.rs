@@ -6,6 +6,7 @@ use meta_language::{
 };
 use std::collections::BTreeMap;
 use std::fs;
+use std::io::Write as _;
 use std::path::Path;
 use std::process::Command;
 
@@ -68,9 +69,11 @@ fn scope_retry_exports_signatures_to_importing_modules() {
         .map(|tail| tail.split('(').next().unwrap())
         .filter(|name| *name != "decodeUnicodeEscape")
         .collect();
+    let _ = std::io::stderr().write_all(b"self-translation phase: frontend signatures start\n");
     let signatures =
         self_translation_signatures(source, "JavaScript", &SelfTranslationOptions::default())
             .unwrap();
+    let _ = std::io::stderr().write_all(b"self-translation phase: frontend signatures returned\n");
     let names: Vec<_> = signatures
         .iter()
         .map(meta_language::SelfTranslationSignature::name)
@@ -80,7 +83,11 @@ fn scope_retry_exports_signatures_to_importing_modules() {
         imports: BTreeMap::from([("./frontend-rules.js".to_owned(), signatures)]),
         ..SelfTranslationOptions::default()
     };
+    let _ =
+        std::io::stderr().write_all(b"self-translation phase: frontend importing module start\n");
     let imported = self_translate_with("import { readArrayMethodForm as form } from './frontend-rules.js';\n/** @returns {string} */\nexport function select() { return form('concat'); }\n", "JavaScript", "Rust", &options).unwrap();
+    let _ = std::io::stderr()
+        .write_all(b"self-translation phase: frontend importing module returned\n");
     assert!(
         imported
             .items
