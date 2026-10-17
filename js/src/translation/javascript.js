@@ -33,7 +33,8 @@ import { acceptJavaScriptFunctionStart, acceptJavaScriptNamespaceMethod,
   acceptJavaScriptValueSwitch, readJavaScriptValueSwitchInstruction,
   readJavaScriptValueSwitchPosition, readJavaScriptObjectStatementForm,
   readJavaScriptObjectPropertyForm, readJavaScriptObjectValueForm,
-  readJavaScriptArrayMethodSurfaceForm } from './javascript-surface-rules.js';
+  readJavaScriptArrayMethodSurfaceForm, acceptJavaScriptTerminalTagGuard,
+  acceptJavaScriptTagGuardSequence } from './javascript-surface-rules.js';
 
 // The string predicates of the portable core: each reads the whole string,
 // so it means the same over UTF-16, UTF-8 and code points.
@@ -1454,6 +1455,8 @@ class JavaScriptParser {
       // A function that finishes without returning returns undefined, the unit value.
       if (index === list.length) return { k: 'unit', span: where };
       const statement = list[index];
+      const guards = this.tagGuardSequence(list, index);
+      if (guards) return this.lowerSwitch(guards, null, () => {});
       switch (statement.s) {
         case 'const':
           return { k: 'let', name: statement.name, value: statement.value, body: at(index + 1), span: statement.span };
@@ -1592,6 +1595,40 @@ class JavaScriptParser {
     const covered = new Set(node.clauses.flatMap((clause) => clause.tests.filter((test) => test.k === 'tag').map((test) => test.tag)));
     if (!readsFields(body, subject)) return [{ patterns: [{ k: 'wild', span: where }], body, span: where }];
     return node.data.ctors.filter((ctor) => !covered.has(ctor.name)).map((ctor) => this.tagRow(node, { k: 'tag', tag: ctor.name, span: where }, body, where));
+  }
+
+  /** Consecutive returning tag guards are one existing exhaustive switch.
+   * Keeping their common default together lets its fields use every preceding
+   * exclusion before any constructor row is projected. No condition, binding,
+   * assignment or effect between guards is skipped.
+   */
+  tagGuardSequence(statements, index) {
+    const first = statements[index];
+    const subject = first?.s === 'if' ? this.tagCondition(first.cond) : null;
+    if (!subject) return null;
+    const clauses = [], covered = new Set();
+    let next = index;
+    while (next < statements.length) {
+      const statement = statements[next];
+      const test = statement.s === 'if' ? this.tagCondition(statement.cond) : null;
+      if (!test) break;
+      const sameBinding = test.object.path[0] === subject.object.path[0]
+        && test.data.name === subject.data.name && test.data.ctors === subject.data.ctors;
+      if (!acceptJavaScriptTerminalTagGuard(!test.negated, Boolean(statement.else),
+        this.terminates(statement.then), sameBinding, covered.has(test.tag))) break;
+      covered.add(test.tag);
+      clauses.push({ tests: [{ k: 'tag', tag: test.tag, span: statement.cond.span }],
+        body: statement.then, span: statement.span });
+      next += 1;
+    }
+    const remainder = statements.slice(next);
+    if (!acceptJavaScriptTagGuardSequence(clauses.length > 1, this.terminates(remainder))) return null;
+    const last = statements.at(-1);
+    const span = { start: first.span.start, end: last.span.end };
+    const tail = { start: remainder[0].span.start, end: last.span.end };
+    clauses.push({ tests: [{ k: 'default', span: tail }], body: remainder, span: tail });
+    return { s: 'switch', tagged: true, data: subject.data,
+      discriminant: { k: 'field', object: subject.object, field: '$', span: first.cond.span }, clauses, span };
   }
 
   /** `x.$ === 'tag'` on a local `x`: the data type and the tag, when it narrows `x`. */

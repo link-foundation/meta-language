@@ -131,3 +131,18 @@ export function readJavaScriptStringMethodResultForm(operation) {
   if (operation === 'split') return 'array-string';
   return 'string';
 }
+
+
+/** A terminal direct tag guard may share its existing exhaustive match with
+ * the following guards only while the same binding/data declaration remains.
+ * @param {boolean} positive @param {boolean} alternate @param {boolean} terminal
+ * @param {boolean} sameBinding @param {boolean} duplicate @returns {boolean}
+ */
+export function acceptJavaScriptTerminalTagGuard(positive, alternate, terminal, sameBinding, duplicate) {
+  return positive && !alternate && terminal && sameBinding && !duplicate;
+}
+
+/** @param {boolean} multiple @param {boolean} terminalRemainder @returns {boolean} */
+export function acceptJavaScriptTagGuardSequence(multiple, terminalRemainder) {
+  return multiple && terminalRemainder;
+}

@@ -67,3 +67,59 @@ test('constructor descriptors retain their declared source model and explicit im
   assert.equal(checkProgram(parseJavaScript(frozenSource)).declarations.get('make').body.frozen, true);
   for (const target of ['Rust', 'Lean', 'Rocq']) assert.match(translateProgram(frozenSource, 'JavaScript', target).diagnostic?.message ?? '', /^explicit data object freeze:/u, target);
 });
+
+
+test('terminal tag guard sequences preserve constructor fields scope and ordered effects through both semantic archives', async () => {
+  const { encodeTypedProgramLinks, decodeTypedProgramLinks } = await import('../src/typed-program-links.js');
+  const { recheckLinkedTypedProgram } = await import('../src/typed-program-checked-projection.js');
+  const { LinkNetwork } = await import('../src/network.js');
+  const { encodeLinkNetworkBinary, decodeLinkNetworkBinary } = await import('../src/link-network-binary.js');
+  const { emitRust } = await import('../src/translation/emit-rust.js');
+  const declarations = "/** @typedef {{ $: 'missing' } | { $: 'bad' } | { $: 'value', code: number, end: number }} GuardState */\n"
+    + "/** @param {number} n @returns {GuardState} */function make(n){if(n===0)return {$:'missing'};if(n===1)return {$:'bad'};return {$:'value',code:3,end:4};}\n";
+  const observe = text => {
+    const output = [];
+    runInNewContext(text, { console: { log: (...values) => output.push(values.map(String).join(' ')) } }, { timeout: 1000 });
+    return output;
+  };
+  const variants = [
+    ["if(value.$==='missing')return -1;if(value.$==='bad')return -2;return value.code+value.end;", ['-1', '-2', '7']],
+    ["if(value.$==='bad')return -2;if(value.$==='missing')return -1;return value.end+value.code;", ['-1', '-2', '7']],
+    ["if(value.$==='missing'){const value=99;return value;}if(value.$==='bad')return -2;return value.code+value.end;", ['99', '-2', '7']],
+    ["let count=0;if(value.$==='missing'){console.log('missing');return -1;}if(value.$==='bad'){console.log('bad');return -2;}count+=value.code;return count+value.end;", ['missing', '-1', 'bad', '-2', '7']],
+    ["if(value.$!=='value')return -1;return value.code+value.end;", ['-1', '-1', '7']],
+  ];
+  for (const [body, expected] of variants) for (const options of [{}, { referenceSemantics: false }]) {
+    const original = declarations + '/** @param {GuardState} value @returns {number} */function read(value){' + body + '}\n'
+      + 'console.log(read(make(0)));console.log(read(make(1)));console.log(read(make(2)));';
+    assert.deepEqual(observe(original), expected);
+    const checked = checkProgram(parseJavaScript(original, options));
+    assert.deepEqual(observe(emitJavaScript(checked).text), expected);
+    const rust = emitRust(checked, { arrayConsumption: true }).text;
+    const saved = encodeTypedProgramLinks(checked);
+    for (const network of [LinkNetwork.fromLino(saved.network.toLino()), decodeLinkNetworkBinary(encodeLinkNetworkBinary(saved.network))]) {
+      const rechecked = recheckLinkedTypedProgram(decodeTypedProgramLinks(network, saved.root), { wholeProgram: true });
+      assert.deepEqual(observe(emitJavaScript(rechecked).text), expected);
+      assert.equal(emitRust(rechecked, { arrayConsumption: true }).text, rust);
+    }
+  }
+  const ordered = declarations.replace('function make(n){', "function make(n){console.log('make',n);")
+    + "/** @param {GuardState} value @returns {number} */function read(value){if(value.$==='missing'){console.log('missing');return -1;}if(value.$==='bad'){console.log('bad');return -2;}return value.code+value.end;}\n"
+    + 'console.log(read(make(0)));console.log(read(make(1)));console.log(read(make(2)));';
+  const expected = ['make 0', 'missing', '-1', 'make 1', 'bad', '-2', 'make 2', '7'];
+  assert.deepEqual(observe(ordered), expected);
+  assert.deepEqual(observe(emitJavaScript(checkProgram(parseJavaScript(ordered))).text), expected);
+  for (const body of [
+    "if(value.$==='missing')return -1;return value.code;",
+    "if(value.$==='missing')return -1;if(value.$==='missing')return -2;return value.code;",
+    "if(value.$==='missing'){const ignored=0;}if(value.$==='bad')return -2;return value.code;",
+    "if(value.$==='missing')return -1;value=make(0);if(value.$==='bad')return -2;return value.code;",
+  ]) {
+    const original = declarations + '/** @param {GuardState} value @returns {number} */function read(value){' + body + '}';
+    assert.throws(() => checkProgram(parseJavaScript(original)), error => ['type', 'unsupported'].includes(error.kind),
+      'uncovered constructors, duplicate guards, nonterminal branches and intervening writes gain no false field proof');
+  }
+  const different = declarations + "/** @param {GuardState} left @param {GuardState} right @returns {number} */function read(left,right){if(left.$==='missing')return -1;if(right.$==='bad')return -2;return left.code;}";
+  assert.throws(() => checkProgram(parseJavaScript(different)), error => ['type', 'unsupported'].includes(error.kind),
+    'separate bindings of the same data type cannot share exclusions');
+});

@@ -276,6 +276,8 @@ class Lowering {
    */
   seq(list, index, ctx, scope) {
     if (index === list.length) return ctx.fall(scope);
+    const guards = this.parser.tagGuardSequence(list, index);
+    if (guards) return this.compound(guards, ctx, scope);
     const statement = list[index];
     const last = index === list.length - 1;
     const exits = this.exits(statement);
