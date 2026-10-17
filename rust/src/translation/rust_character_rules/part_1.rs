@@ -398,7 +398,7 @@ pub fn accept_source_text_unit_count(count: f64) -> bool {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn accept_rust_cooked_string_escape_prefix(unit: f64) -> bool {
+pub const fn accept_rust_cooked_string_escape_prefix(unit: f64) -> bool {
     ((((((((unit == 34f64) || (unit == 39f64)) || (unit == 48f64)) || (unit == 92f64))
         || (unit == 110f64))
         || (unit == 114f64))
@@ -409,7 +409,7 @@ pub fn accept_rust_cooked_string_escape_prefix(unit: f64) -> bool {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_rust_ascii_escape_digit(unit: f64) -> f64 {
+pub const fn read_rust_ascii_escape_digit(unit: f64) -> f64 {
     if unit == 48f64 {
         0f64
     } else if unit == 49f64 {
@@ -449,7 +449,7 @@ pub fn read_rust_ascii_escape_digit(unit: f64) -> f64 {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_rust_ascii_escape_value(high_unit: f64, low_unit: f64) -> f64 {
+pub const fn read_rust_ascii_escape_value(high_unit: f64, low_unit: f64) -> f64 {
     {
         let high = self::read_rust_ascii_escape_digit(high_unit);
         {
@@ -506,8 +506,7 @@ pub fn decode_rust_unicode_escape(units: &[f64], start: f64) -> self::RustUnicod
                                 self::RustUnicodeEscape::Malformed
                             }
                             self::MlDecodeRustUnicodeEscapeLoop4Result::MlDecodeRustUnicodeEscapeLoop4Return(ml_result4) => {
-                                let ml_result4 = *ml_result4;
-                                ml_result4.clone()
+                                *ml_result4
                             }
                         }
                     }
@@ -639,34 +638,34 @@ pub fn read_rust_source_header_primitive(kind: &str) -> String {
 #[must_use]
 pub fn render_rust_source_header_reference(lifetime: &str, inner: &str) -> String {
     if (lifetime).is_empty() {
-        format!("&{}", inner.to_owned())
+        format!("&{inner}")
     } else {
-        format!("&'{} {}", lifetime.to_owned(), inner.to_owned())
+        format!("&'{lifetime} {inner}")
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn render_rust_source_header_parameter(name: &str, type_: &str) -> String {
-    format!("{}: {}", name.to_owned(), type_.to_owned())
+    format!("{name}: {type_}")
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn render_rust_source_header_lifetime(name: &str) -> String {
-    format!("'{}", name.to_owned())
+    format!("'{name}")
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn render_rust_source_header_dereference(inner: &str) -> String {
-    format!("*{}", inner.to_owned())
+    format!("*{inner}")
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn render_rust_source_header_copy(name: &str, dereferenced: &str) -> String {
-    format!("let {} = {};", name.to_owned(), dereferenced.to_owned())
+    format!("let {name} = {dereferenced};")
 }
 
 /// Execute the checked shared source algorithm.
@@ -679,20 +678,12 @@ pub fn render_rust_source_header_function(
     body: &str,
 ) -> String {
     format!(
-        "pub fn {}{}({}) -> {} {{\n{}\n}}",
-        name.to_owned(),
+        "pub fn {name}{}({parameters}) -> {result} {{\n{body}\n}}",
         if (lifetimes).is_empty() {
             String::new()
         } else {
-            format!(
-                "{}{}",
-                (format!("{}{}", (String::from("<")), lifetimes.to_owned())),
-                (String::from(">"))
-            )
-        },
-        parameters.to_owned(),
-        result.to_owned(),
-        body.to_owned()
+            format!("<{lifetimes}>")
+        }
     )
 }
 
@@ -721,7 +712,7 @@ pub fn accept_rust_number_digit_boundary(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn accept_rust_source_whitespace(unit: f64) -> bool {
+pub const fn accept_rust_source_whitespace(unit: f64) -> bool {
     ((((((((((unit == 9f64) || (unit == 10f64)) || (unit == 11f64)) || (unit == 12f64))
         || (unit == 13f64))
         || (unit == 32f64))
@@ -734,7 +725,7 @@ pub fn accept_rust_source_whitespace(unit: f64) -> bool {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn accept_rust_source_byte_order_mark(unit: f64, first_position: bool) -> bool {
+pub const fn accept_rust_source_byte_order_mark(unit: f64, first_position: bool) -> bool {
     first_position && (unit == 65_279f64)
 }
 
@@ -765,7 +756,7 @@ pub fn accept_rust_source_number_digit_boundary(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_rust_character_byte_escape_value(high_unit: f64, low_unit: f64) -> f64 {
+pub const fn read_rust_character_byte_escape_value(high_unit: f64, low_unit: f64) -> f64 {
     {
         let high = self::read_rust_ascii_escape_digit(high_unit);
         {
@@ -781,7 +772,7 @@ pub fn read_rust_character_byte_escape_value(high_unit: f64, low_unit: f64) -> f
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_rust_character_simple_escape_value(unit: f64) -> f64 {
+pub const fn read_rust_character_simple_escape_value(unit: f64) -> f64 {
     if unit == 110f64 {
         10f64
     } else if unit == 114f64 {
