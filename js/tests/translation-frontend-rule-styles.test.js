@@ -260,3 +260,57 @@ test('current Boolean styles transport only the historical uniquely bound tempor
   ])assert.throws(()=>readFrontendCurrentBooleanStyleCorrections(changed,historical),/complete function|top-level source function/u,
     'changed meaning, shadowing, comments, macros, nested functions and duplicate owners refuse historical proof reuse');
 });
+
+
+test('authentic frontend empty-string compiler styles preserve every other owner and the array provider',async()=>{
+  const {readCompilerFeedbackCorrections}=await import('../scripts/compiler-style-feedback.mjs');
+  const {readProjectData}=await import('../scripts/project-data.mjs');
+  const address=new URL('../../parity/self-translation/frontend-rules-empty-string-compiler-feedback.lino',import.meta.url);
+  const bytes=readFileSync(address);
+  assert.equal(bytes.length,286635);
+  assert.equal(createHash('sha256').update(bytes).digest('hex'),
+    'd57157156e96da3230ec32e772221698111effbfb3b06dc8d46a7ca7fb4d8642');
+  const feedback=readProjectData(address),original=structuredClone(feedback);
+  assert.equal(feedback.runId,'39010575046');
+  assert.equal(feedback.head,'373827ad822a03c6566e71a5ff429582ef7703a4');
+  assert.equal(feedback.compiler,'clippy-driver');
+  const diagnostics=feedback.diagnostics.map(row=>row.reason==='compiler-message'?row.message:row);
+  assert.equal(diagnostics.filter(row=>row.code?.code==='clippy::manual_string_new').length,1);
+  const relativePath='rust/src/translation/frontend_rules.rs';
+  const correction=readCompilerFeedbackCorrections({feedback,allowedPaths:[relativePath]});
+  assert.equal(correction.spans,1);assert.equal(correction.deferred,0);
+  assert.equal(correction.actions.length,1);
+  assert.equal(correction.inputs.size,1);assert.equal(correction.outputs.size,1);
+  const [[path,source]]=correction.inputs;
+  assert.equal(feedback.sources[path].relativePath,relativePath);
+  assert.equal(createHash('sha256').update(source).digest('hex'),
+    '37033e27b97bc145b0d51b89016606e141d5962c0f423ee131202432a301dad3');
+  const changed=correction.outputs.get(path),before=source.toString('utf8'),after=changed.toString('utf8');
+  assert.deepEqual(changed,readFileSync(new URL('../../'+relativePath,import.meta.url)),
+    'the complete actual generated module equals the authentic offline transaction output');
+  const oldOwner=readSourceTextRustBlock(before,'fn','read_type_query_result');
+  const newOwner=readSourceTextRustBlock(after,'fn','read_type_query_result');
+  assert.equal(oldOwner.split('String::from("")').length,2);
+  assert.equal(newOwner,oldOwner.replace('String::from("")','String::new()'));
+  assert.equal(after,before.replace(oldOwner,newOwner),'every unrelated owner and surrounding byte remains exact');
+  const provider=readSourceTextRustBlock(before,'mod','ml_array');
+  assert.equal(readSourceTextRustBlock(after,'mod','ml_array'),provider);
+  assert.equal(Buffer.byteLength(provider),3648);
+  assert.equal(createHash('sha256').update(provider).digest('hex'),
+    'c2a535a8fbc2ab09deca3f7c92cad278b0a08a526f5f87a54e2aebb822c8b76a');
+  const document=readFileSync(new URL('../../parity/self-translation/frontend-rules-decorators.lino',import.meta.url),'utf8');
+  const recorded=DecoratorSet.fromLino(document).decorators.find(row=>row.id==='reviewed-ci-39010575046-frontend-empty-string-style');
+  assert.ok(recorded,'the authentic correction has a separate append-only style record');
+  assert.deepEqual(recorded.actions,correction.actions);
+  const styles=new DecoratorSet([recorded]);
+  assert.equal(styles.decorate('emitter',{format:'Rust',scope:'formatted-module',source:before}).source,after);
+  assert.equal(styles.decorate('emitter',{format:'Rust',scope:'formatted-module',source:after}).source,after,
+    'the exact recorded correction is idempotent');
+  assert.deepEqual(feedback,original,'every raw diagnostic, source snapshot and applicability field remains immutable');
+  for(const field of['text','sha256']){
+    const stale=structuredClone(feedback);
+    stale.sources[path][field]+=field==='text'?'\n':'changed';
+    assert.throws(()=>readCompilerFeedbackCorrections({feedback:stale,allowedPaths:[relativePath]}),/stale/u,
+      'an edited source snapshot cannot reuse the authentic machine suggestion');
+  }
+});

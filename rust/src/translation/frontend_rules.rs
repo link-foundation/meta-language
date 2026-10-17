@@ -703,7 +703,7 @@ pub fn read_type_query_result(kind: &str) -> String {
     {
         String::from("object")
     } else {
-        String::from("")
+        String::new()
     }
 }
 
