@@ -145,6 +145,46 @@ test('unrepresented embed error and missing capture metadata refuses instead of 
     assert.equal(readGrammarSelectionFieldRangeView(fieldRangeSourceControl(source), 0, 13,
       fieldRangeSourceSelector(), children, 32).reason, 'invalidEmbeddingMapping');
   }
+  const input = '{"k":1}', key = fieldRangeSourceTree(input).children;
+  for (const reason of [1, true, [], {}]) {
+    const children = structuredClone(key);
+    children[0].children[1].children[0] = { type: 'error', start: 1, end: 4, text: '"k"', reason };
+    assert.deepEqual(readGrammarSelectionFieldRangeView(fieldRangeSourceControl(input), 0, 7,
+      fieldRangeSourceSelector(), children, 32), { reason: 'invalidEmbeddingMapping', offset: 0 });
+  }
+  for (const reason of ['parser', false, null, 0, -0, '']) {
+    const children = structuredClone(key);
+    children[0].children[1].children[0] = { type: 'error', start: 1, end: 4, text: '"k"', reason };
+    const view = readGrammarSelectionFieldRangeView(fieldRangeSourceControl(input), 0, 7,
+      fieldRangeSourceSelector(), children, 32);
+    assert.deepEqual(view.ranges, [[5, 6]]);
+    const error = view.witness.children[0].children[1].children[0];
+    assert.equal(Object.hasOwn(error, 'reason'), reason === 'parser');
+    if (reason === 'parser') assert.equal(error.reason, 'parser');
+  }
+  for (const flag of [1, 'yes', [], {}, false, null, 0, '']) {
+    const children = structuredClone(key);
+    children.unshift({ type: 'missing', kind: 'omitted', start: 0, end: 0, literal: flag });
+    const missing = readGrammarSelectionFieldRangeView(fieldRangeSourceControl(input), 0, 7,
+      fieldRangeSourceSelector(), children, 32).witness.children[0];
+    assert.equal(Object.hasOwn(missing, 'literal'), Boolean(flag));
+    const projected = structuredClone(key);
+    const selected = projected[0].children[1].children[2];
+    const tokenIndex = selected.type === 'token' ? -1 : selected.children.findIndex(child => child.type === 'token');
+    const token = tokenIndex === -1 ? selected : selected.children[tokenIndex];
+    assert.equal(token.type, 'token');
+    token.projectionAnonymous = flag;
+    const value = readGrammarSelectionFieldRangeView(fieldRangeSourceControl(input), 0, 7,
+      fieldRangeSourceSelector(), projected, 32).witness.children[0].children[1].children[2];
+    const stored = tokenIndex === -1 ? value : value.children[tokenIndex];
+    assert.equal(stored.kind, flag ? null : token.kind);
+  }
+  for (const trivia of [0, 1, '', 'yes', null, [], {}]) {
+    const children = structuredClone(key);
+    children[0].children[1].children[2].trivia = trivia;
+    assert.equal(readGrammarSelectionFieldRangeView(fieldRangeSourceControl(input), 0, 7,
+      fieldRangeSourceSelector(), children, 32).reason, 'invalidEmbeddingMapping');
+  }
 });
 
 test('field views admit the real executor lazy children owner and refuse arbitrary getters without invocation', () => {

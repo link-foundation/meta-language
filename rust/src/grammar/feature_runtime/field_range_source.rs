@@ -50,6 +50,22 @@ fn text(value: Option<&Value>) -> Option<&str> {
     value.and_then(Value::as_str)
 }
 
+// Ordinary JSON values retain JavaScript's primitive truthiness here. This
+// only transports existing public-tree flags; it never coerces a value to text.
+fn metadata_truthy(value: Option<&Value>) -> bool {
+    match value {
+        None | Some(Value::Null) => false,
+        Some(Value::Bool(value)) => *value,
+        Some(Value::String(value)) => !value.is_empty(),
+        Some(Value::Number(value)) => value.as_f64().is_some_and(|value| {
+            value
+                .partial_cmp(&0.0)
+                .is_some_and(|order| order != std::cmp::Ordering::Equal)
+        }),
+        Some(Value::Array(_) | Value::Object(_)) => true,
+    }
+}
+
 fn depth(budget: &impl MappingBudget, level: usize, remaining: usize) -> ViewResult<()> {
     budget.mapping_step()?;
     if level > remaining {
@@ -105,6 +121,7 @@ fn copy_metadata(
 struct View<'a, B> {
     bytes: &'a [u8],
     budget: &'a B,
+    start: usize,
     end: usize,
     cursor: usize,
     remaining: usize,
@@ -248,22 +265,24 @@ impl<B: MappingBudget> View<'_, B> {
         self.budget.mapping_retain(6)?;
         let copy = match kind {
             "node" | "token" => {
-                let projected = node
-                    .get("projectionName")
-                    .filter(|value| !value.is_null())
-                    .or_else(|| node.get("kind"))
-                    .ok_or(ViewFailure::Invalid(begin))?;
-                let projected = if kind == "token"
-                    && node.get("projectionAnonymous").and_then(Value::as_bool) == Some(true)
-                    || projected.is_null()
-                {
-                    Value::Null
-                } else {
-                    Value::String(copy_string(
-                        projected.as_str().ok_or(ViewFailure::Invalid(begin))?,
-                        self.budget,
-                    )?)
-                };
+                let projected =
+                    if kind == "token" && metadata_truthy(node.get("projectionAnonymous")) {
+                        Value::Null
+                    } else {
+                        let projected = node
+                            .get("projectionName")
+                            .filter(|value| !value.is_null())
+                            .or_else(|| node.get("kind"))
+                            .ok_or(ViewFailure::Invalid(begin))?;
+                        if projected.is_null() {
+                            Value::Null
+                        } else {
+                            Value::String(copy_string(
+                                projected.as_str().ok_or(ViewFailure::Invalid(begin))?,
+                                self.budget,
+                            )?)
+                        }
+                    };
                 let mut copy = json!({"type":kind,"kind":projected});
                 if let Some(field) = node.get("field") {
                     if !field.is_null() && !field.is_string() {
@@ -304,7 +323,9 @@ impl<B: MappingBudget> View<'_, B> {
             "error" => {
                 let mut copy = json!({"type":kind,"start":begin,"end":end});
                 self.leaf(node, &mut copy, begin, end)?;
-                if let Some(reason) = text(node.get("reason")).filter(|reason| !reason.is_empty()) {
+                if metadata_truthy(node.get("reason")) {
+                    let reason =
+                        text(node.get("reason")).ok_or(ViewFailure::Invalid(self.start))?;
                     self.budget.mapping_retain(1)?;
                     copy["reason"] = Value::String(copy_string(reason, self.budget)?);
                 }
@@ -314,7 +335,7 @@ impl<B: MappingBudget> View<'_, B> {
             "missing" => {
                 let name = text(node.get("kind")).ok_or(ViewFailure::Invalid(begin))?;
                 let mut copy = json!({"type":kind,"kind":copy_string(name,self.budget)?,"start":begin,"end":end});
-                if node.get("literal").and_then(Value::as_bool) == Some(true) {
+                if metadata_truthy(node.get("literal")) {
                     self.budget.mapping_retain(1)?;
                     copy["literal"] = Value::Bool(true);
                 }
@@ -385,6 +406,7 @@ pub(super) fn read_field_range_view(
         let mut view = View {
             bytes,
             budget,
+            start,
             end,
             cursor: start,
             remaining: remaining_depth,
