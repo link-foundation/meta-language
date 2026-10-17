@@ -4,9 +4,10 @@
 import assert from 'node:assert/strict';
 import {readPortableSourceParameterStyles} from './portable-source-library-style.mjs';
 import {simplifyPortableProductLibraryStyles,simplifyRustOptionIdentityMatches} from './reviewed-rust-branch-styles.mjs';
-import {readSourceTextRustBlock} from './source-text-byte-library-style.mjs';
+import {readSourceTextRustBlock,simplifySourceTextRustParentheses} from './source-text-byte-library-style.mjs';
 
 export const frontendRuleNativeStyleId='reviewed-frontend-native-styles-117015296223';
+export const frontendTypeQueryNativeStyleId='reviewed-frontend-type-query-and-optional-tuple-styles';
 
 /** Derive exact, bounded contexts from the actual checked source library. */
 export function readFrontendRuleStyleCorrections(source) {
@@ -20,6 +21,19 @@ export function readFrontendRuleStyleCorrections(source) {
     const borrowed=readSourceTextRustBlock(loans,'fn',name);
     const to=simplifyPortableProductLibraryStyles(simplifyRustOptionIdentityMatches(borrowed));
     assert.doesNotMatch(to,/#\[(?:allow|expect)\(/u,'a reviewed frontend style needs no lint suppression');
+    return to===blocks[index]?[]:[{op:'replace',field:'source',from:blocks[index],to}];
+  });
+}
+
+/** Derive current type-query and optional-tuple styles without rewriting older records. */
+export function readFrontendTypeQueryStyleCorrections(source) {
+  const names=['read_type_query_result','accept_java_script_optional_tuple_context'];
+  const blocks=names.map(name=>readSourceTextRustBlock(source,'fn',name));
+  const loans=readPortableSourceParameterStyles(blocks.join('\n\n')).source;
+  return names.flatMap((name,index)=>{
+    const borrowed=readSourceTextRustBlock(loans,'fn',name);
+    const to=simplifySourceTextRustParentheses(simplifyPortableProductLibraryStyles(borrowed));
+    assert.doesNotMatch(to,/#\[(?:allow|expect)\(/u,'a current frontend style needs no lint suppression');
     return to===blocks[index]?[]:[{op:'replace',field:'source',from:blocks[index],to}];
   });
 }

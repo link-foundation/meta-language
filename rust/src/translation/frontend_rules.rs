@@ -686,16 +686,35 @@ pub fn accept_type_query_operand(kind: &str) -> bool {
 }
 
 pub fn read_type_query_result(kind: &str) -> String {
-    match kind {
-        "float" => "number",
-        "nat" | "int" => "bigint",
-        "bool" => "boolean",
-        "string" => "string",
-        "function" => "function",
-        "array" | "data" => "object",
-        _ => "",
+    if kind == "float" {
+        String::from("number")
+    } else if (kind == "nat") || (kind == "int") {
+        String::from("bigint")
+    } else if kind == "bool" {
+        String::from("boolean")
+    } else if kind == "string" {
+        String::from("string")
+    } else if kind == "function" {
+        String::from("function")
+    } else if (((((kind == "array") || (kind == "data")) || (kind == "record"))
+        || (kind == "tuple"))
+        || (kind == "map"))
+        || (kind == "set")
+    {
+        String::from("object")
+    } else {
+        String::from("")
     }
-    .to_owned()
+}
+
+pub fn accept_java_script_optional_tuple_context(
+    language: &str,
+    source_kind: &str,
+    expected_kind: &str,
+    present_kind: &str,
+) -> bool {
+    (((language == "JavaScript") && (source_kind == "array")) && (expected_kind == "option"))
+        && (present_kind == "tuple")
 }
 
 pub fn read_array_method_form(method: &str) -> String {

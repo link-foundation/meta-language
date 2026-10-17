@@ -2,7 +2,6 @@
 // Translate the JavaScript frontend decisions into the Rust module that the
 // lexer, parser and checker use. Only the shared emitter decorators and
 // rustfmt adapt generated output to its place in the crate.
-import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
 import { DecoratorSet } from '../src/decorators.js';
@@ -11,7 +10,9 @@ import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { tokenize } from '../src/translation/lexer.js';
-import { frontendRuleNativeStyleId, readFrontendRuleStyleCorrections } from './frontend-rule-style-corrections.mjs';
+import { frontendRuleNativeStyleId, readFrontendRuleStyleCorrections,
+  frontendTypeQueryNativeStyleId, readFrontendTypeQueryStyleCorrections } from './frontend-rule-style-corrections.mjs';
+import { formatProductRuleSource } from './product-rule-style-corrections.mjs';
 
 const sourcePath = new URL('../src/translation/frontend-rules.js', import.meta.url);
 const outputPath = new URL('../../rust/src/translation/frontend_rules.rs', import.meta.url);
@@ -20,20 +21,20 @@ const source = readFileSync(sourcePath, 'utf8');
 const resultStyleId = 'reviewed-public-array-helper-results';
 const updateArrayResults = process.argv.includes('--update-array-result-styles');
 const updateNativeStyles = process.argv.includes('--update-reviewed-native-styles');
+const updateTypeQueryStyles = process.argv.includes('--update-type-query-styles');
 let decorators = DecoratorSet.fromLino(readFileSync(decoratorsPath, 'utf8'));
 if (updateArrayResults) decorators = new DecoratorSet(decorators.decorators.filter(({ id }) => id !== resultStyleId));
 if (updateNativeStyles) decorators = new DecoratorSet(decorators.decorators.filter(({ id }) => id !== frontendRuleNativeStyleId));
+if (updateTypeQueryStyles) decorators = new DecoratorSet(decorators.decorators.filter(({ id }) => id !== frontendTypeQueryNativeStyleId));
 const emitted = emitRust(checkProgram(parseJavaScript(source)));
 const decorated = decorateEmitted('Rust', { source: emitted.text }, decorators).source;
-const formatted = spawnSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], { input: decorated, encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 });
-if (formatted.error || formatted.status !== 0) throw formatted.error ?? new Error(formatted.stderr);
+const formatted = { stdout: formatProductRuleSource(decorated) };
 // Module-level style rules can replace a formatted expression spanning lines.
 // The decorator engine and its Links Notation data are shared by both runtimes.
 let final = formatted;
 for (let round = 0; round < 10; round += 1) {
   const styled = decorators.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source: final.stdout });
-  const next = spawnSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], { input: styled.source, encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 });
-  if (next.error || next.status !== 0) throw next.error ?? new Error(next.stderr);
+  const next = { stdout: formatProductRuleSource(styled.source) };
   // Formatting a simplified block can expose another style replacement.
   // Require a fixed point so regeneration never depends on how many times
   // the command happened to run.
@@ -50,10 +51,23 @@ if (updateNativeStyles) {
     .filter(line => !line.startsWith('(decorator ' + frontendRuleNativeStyleId + ' ')).join('\n');
   writeFileSync(decoratorsPath, previous + (previous.endsWith('\n') ? '\n' : '\n\n') + new DecoratorSet([nativeStyles]).toLino());
   const styled = decorators.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source: final.stdout }).source;
-  final = spawnSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], { input: styled, encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 });
-  if (final.error || final.status !== 0) throw final.error ?? new Error(final.stderr);
+  final = { stdout: formatProductRuleSource(styled) };
   if (decorators.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source: final.stdout }).source !== final.stdout) {
     throw new Error('reviewed frontend native styles do not converge');
+  }
+}
+if (updateTypeQueryStyles) {
+  const actions = readFrontendTypeQueryStyleCorrections(final.stdout);
+  const typeQueryStyles = { id: frontendTypeQueryNativeStyleId, level: 'emitter', order: 3100,
+    when: [['format', 'Rust'], ['scope', 'formatted-module']], actions };
+  decorators = new DecoratorSet([...decorators.decorators, typeQueryStyles]);
+  const previous = readFileSync(decoratorsPath, 'utf8').split('\n')
+    .filter(line => !line.startsWith('(decorator ' + frontendTypeQueryNativeStyleId + ' ')).join('\n');
+  writeFileSync(decoratorsPath, previous + (previous.endsWith('\n') ? '\n' : '\n\n') + new DecoratorSet([typeQueryStyles]).toLino());
+  const styled = decorators.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source: final.stdout }).source;
+  final = { stdout: formatProductRuleSource(styled) };
+  if (decorators.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source: final.stdout }).source !== final.stdout) {
+    throw new Error('current frontend type-query styles do not converge');
   }
 }
 if (updateArrayResults) {
@@ -85,8 +99,7 @@ if (updateArrayResults) {
     .filter(line => !line.startsWith('(decorator ' + resultStyleId + ' ')).join('\n').trimEnd();
   writeFileSync(decoratorsPath, previous + '\n\n' + new DecoratorSet([resultStyle]).toLino());
   const styled = decorators.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source: final.stdout }).source;
-  final = spawnSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], { input: styled, encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 });
-  if (final.error || final.status !== 0) throw final.error ?? new Error(final.stderr);
+  final = { stdout: formatProductRuleSource(styled) };
   if (decorators.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source: final.stdout }).source !== final.stdout) {
     throw new Error('array helper result styles do not converge');
   }

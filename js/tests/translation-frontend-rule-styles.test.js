@@ -9,7 +9,8 @@ import {emitRust} from '../src/translation/emit-rust.js';
 import {readLexicalWinnerIndex,readUnitAlternativeExpressionForm} from '../src/translation/frontend-rules.js';
 import {parseJavaScript} from '../src/translation/javascript.js';
 import {tokenize} from '../src/translation/lexer.js';
-import {frontendRuleNativeStyleId,readFrontendRuleStyleCorrections} from '../scripts/frontend-rule-style-corrections.mjs';
+import {frontendRuleNativeStyleId,readFrontendRuleStyleCorrections,
+  frontendTypeQueryNativeStyleId,readFrontendTypeQueryStyleCorrections} from '../scripts/frontend-rule-style-corrections.mjs';
 import {formatProductRuleSource} from '../scripts/product-rule-style-corrections.mjs';
 import {simplifyRustOptionIdentityMatches} from '../scripts/reviewed-rust-branch-styles.mjs';
 
@@ -86,4 +87,41 @@ test('frontend lexical election retains declaration order, bounded columns, spar
     assert.equal(readLexicalWinnerIndex(ends,eligible),expected);
     assert.deepEqual(ends,originalEnds);assert.deepEqual(eligible,originalEligible);
   }
+});
+
+test('current frontend type-query styles append two source-derived owners while retaining the original three style actions',()=>{
+  const input=readFileSync(new URL('../src/translation/frontend-rules.js',import.meta.url),'utf8');
+  const emitted=emitRust(checkProgram(parseJavaScript(input)));
+  const decorators=DecoratorSet.fromLino(readFileSync(new URL('../../parity/self-translation/frontend-rules-decorators.lino',import.meta.url),'utf8'));
+  const historical=decorators.decorators.find(definition=>definition.id===frontendRuleNativeStyleId);
+  assert.ok(historical,'the original reviewed style row remains registered');
+  assert.equal(historical.actions.length,3,'all three original complete source owners remain in their original row');
+  const base=new DecoratorSet(decorators.decorators.filter(definition=>definition.id!==frontendTypeQueryNativeStyleId));
+  let raw=formatProductRuleSource(decorateEmitted('Rust',{source:emitted.text},base).source);
+  for(let round=0;round<10;round++){
+    const next=formatProductRuleSource(base.decorate('emitter',{format:'Rust',scope:'formatted-module',source:raw}).source);
+    if(next===raw)break;
+    raw=next;
+    assert.ok(round<9,'every historical frontend row retains its existing fixed point');
+  }
+  const actions=readFrontendTypeQueryStyleCorrections(raw);
+  assert.equal(actions.length,2);
+  const names=['read_type_query_result','accept_java_script_optional_tuple_context'];
+  const literals=source=>tokenize(source,'Rust').tokens.filter(token=>['string','number'].includes(token.kind)).map(token=>source.slice(token.start,token.end));
+  for(const[action,name]of actions.map((action,index)=>[action,names[index]])){
+    assert.ok(action.from.startsWith('pub fn '+name+'('));
+    assert.ok(action.to.startsWith('pub fn '+name+'('));
+    assert.deepEqual(literals(action.to),literals(action.from),'ordered comparison and result literals remain unchanged');
+    assert.doesNotMatch(action.to,/#\[(?:allow|expect)\(/u);
+  }
+  assert.match(actions[0].to,/kind: &str/u);
+  assert.doesNotMatch(actions[0].to,/else\s*\{\s*if\b/u);
+  for(const name of['language','source_kind','expected_kind','present_kind'])assert.match(actions[1].to,new RegExp(name+': &str','u'));
+  const styled=new DecoratorSet([{id:frontendTypeQueryNativeStyleId,level:'emitter',order:3100,
+    when:[['format','Rust'],['scope','formatted-module']],actions}]);
+  const replay=styled.decorate('emitter',{format:'Rust',scope:'formatted-module',source:raw}).source;
+  assert.deepEqual(readFrontendTypeQueryStyleCorrections(replay),[]);
+  const recorded=decorators.decorators.find(definition=>definition.id===frontendTypeQueryNativeStyleId);
+  assert.ok(recorded,'the dedicated updater records the additive styles separately from every historical row');
+  assert.deepEqual(recorded.actions,actions);
 });

@@ -1,14 +1,18 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
+import { runInNewContext } from 'node:vm';
 
-import { acceptArgumentCount, acceptPrecedenceOperandContext, acceptScannerPreemptionBoundary, decodeUnicodeEscape, findDocumentationParameterRange, findDefaultParameterReference } from '../src/translation/frontend-rules.js';
+import { acceptArgumentCount, acceptJavaScriptOptionalTupleContext, acceptPrecedenceOperandContext, acceptScannerPreemptionBoundary, decodeUnicodeEscape, findDocumentationParameterRange, findDefaultParameterReference, readTypeQueryResult } from '../src/translation/frontend-rules.js';
 import { checkProgram } from '../src/translation/check.js';
+import { emitJavaScript } from '../src/translation/emit-javascript.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
+import { parseRust } from '../src/translation/rust.js';
 import { DecoratorSet } from '../src/decorators.js';
 import { decorateEmitted } from '../src/grammar-emitters/common.js';
 import { readSourceTextRustBlock } from '../scripts/source-text-byte-library-style.mjs';
+import { readFrontendTypeQueryStyleCorrections } from '../scripts/frontend-rule-style-corrections.mjs';
 
 const units = (text) => Array.from({ length: text.length }, (_, index) => text.charCodeAt(index));
 
@@ -127,4 +131,50 @@ test('reviewed Boolean helper styles preserve boundary flags, bounded context ov
   const winner = readSourceTextRustBlock(continuations, 'fn', 'ml_read_lexical_winner_index_loop29');
   assert.equal((winner.match(/\.unwrap_or_default\(\)/gu) ?? []).length, 1, 'the independent lexical eligibility value defaults to false');
   assert.equal((winner.match(/\.unwrap_or\(f64::NAN\)/gu) ?? []).length, 2, 'both independent lexical match ends preserve missing-number NaN');
+});
+
+test('current frontend decisions derive borrowed type queries and optional tuple guards without changing their observations', () => {
+  const source = readFileSync(new URL('../src/translation/frontend-rules.js', import.meta.url), 'utf8');
+  const raw = emitRust(checkProgram(parseJavaScript(source))).text;
+  const actions = readFrontendTypeQueryStyleCorrections(raw);
+  const decorators = new DecoratorSet([{ id: 'current-frontend-decision-controls', level: 'emitter', order: 0,
+    when: [['format', 'Rust']], actions }]);
+  const styled = decorators.decorate('emitter', { format: 'Rust', source: raw }).source;
+  assert.deepEqual(readFrontendTypeQueryStyleCorrections(styled), [], 'every complete source-derived replacement is idempotent');
+  const names = ['read_type_query_result', 'accept_java_script_optional_tuple_context'];
+  const blocks = names.map(name => readSourceTextRustBlock(styled, 'fn', name));
+  assert.match(blocks[0], /^pub fn read_type_query_result\(kind: &str\) -> String/u);
+  assert.doesNotMatch(blocks[0], /else\s*\{\s*if\b/u, 'the complete lookup keeps its original ordered tests in one else-if chain');
+  for (const name of ['language', 'source_kind', 'expected_kind', 'present_kind']) {
+    assert.match(blocks[1], new RegExp(name + ': &str', 'u'));
+  }
+  for (const block of blocks) assert.doesNotMatch(block, /#\[(?:allow|expect)\(/u);
+  const generated = readFileSync(new URL('../../rust/src/translation/frontend_rules.rs', import.meta.url), 'utf8');
+  assert.match(readSourceTextRustBlock(generated, 'fn', names[0]), /^pub fn read_type_query_result\(kind: &str\) -> String/u);
+  const generatedGuard = readSourceTextRustBlock(generated, 'fn', names[1]);
+  for (const name of ['language', 'source_kind', 'expected_kind', 'present_kind']) {
+    assert.match(generatedGuard, new RegExp(name + ': &str', 'u'));
+  }
+  const observations = [
+    ['float', 'number'], ['nat', 'bigint'], ['int', 'bigint'], ['bool', 'boolean'],
+    ['string', 'string'], ['function', 'function'], ['array', 'object'], ['data', 'object'],
+    ['record', 'object'], ['tuple', 'object'], ['map', 'object'], ['set', 'object'],
+    ['', ''], ['unknown', ''], ['option', ''], ['undefined', ''],
+  ];
+  for (const candidate of [names.map(name => readSourceTextRustBlock(raw, 'fn', name)), blocks]) {
+    const context = {};
+    runInNewContext(emitJavaScript(checkProgram(parseRust(candidate.join('\n\n') + '\nfn main() {}'))).text,
+      context, { timeout: 1000 });
+    for (const [kind, expected] of observations) {
+      assert.equal(readTypeQueryResult(kind), expected, kind);
+      assert.equal(context.read_type_query_result(kind), expected, kind);
+    }
+    for (const language of ['JavaScript', 'Rust', 'unknown']) for (const sourceKind of ['array', 'tuple', 'unknown']) {
+      for (const expectedKind of ['option', 'tuple', 'unknown']) for (const presentKind of ['tuple', 'array', 'unknown']) {
+        const expected = language === 'JavaScript' && sourceKind === 'array' && expectedKind === 'option' && presentKind === 'tuple';
+        assert.equal(acceptJavaScriptOptionalTupleContext(language, sourceKind, expectedKind, presentKind), expected);
+        assert.equal(context.accept_java_script_optional_tuple_context(language, sourceKind, expectedKind, presentKind), expected);
+      }
+    }
+  }
 });
