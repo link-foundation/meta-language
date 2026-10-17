@@ -671,6 +671,10 @@ jobs:
         working-directory: js
         run: node scripts/generate-assertion-version-policy.mjs --check
 
+      - name: Check generated embedded region rules against JavaScript
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        run: node js/scripts/generate-embedded-region-rules.mjs --native --check
+
       - name: Check the generated Rust source indirection rules against JavaScript
         if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-indirection-rules.mjs --check

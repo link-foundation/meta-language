@@ -1116,6 +1116,9 @@ const NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS = [
   ['Check explicit assertion version ranges',
     'node scripts/generate-assertion-version-policy.mjs --check',
     '01500ebbbb6c7be69806154faf0d1e6d5a9ad414ce24b99d6f8f05339659c09a', 'generated'],
+  ['Check generated embedded region rules against JavaScript',
+    'node js/scripts/generate-embedded-region-rules.mjs --native --check',
+    '10ee7b85b60d89b5ab2977e6a84f8dbe04ebff0208e66e10da6e364f9f1def8e', 'generated'],
 ];
 
 // Parameter-default generation adds one exact gate without changing an earlier freeze.
