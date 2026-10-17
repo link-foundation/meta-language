@@ -8,6 +8,7 @@ import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExp
 // so assertions about Numbers are still theorems closed by computation.
 
 import { typeError, unsupported } from './diagnostics.js';
+import { readCollectionConstructionBinding, renderCollectionConstruction, renderCollectionConstructionType } from './collection-construction-rules.js';
 import { renderOptionalAbsentValue, renderOptionalCoalescing, renderOptionalConsoleText, renderOptionalFlattening, renderOptionalMatch, renderOptionalNumericPresent, renderOptionalPresentValue, renderOptionalPrimitiveTruth, renderOptionalProjection, renderOptionalStrictEquality, renderOptionalTypeQueryPresent, renderOptionalUnwrapping, requireOptionalNumericPredicate } from './optional-value-rules.js';
 import { renderCollectionIteration, renderOptionalArrayRead } from './array-value-rules.js';
 import { renderArrayFromMapping } from './array-from-rules.js';
@@ -375,9 +376,9 @@ class RocqEmitter {
       case 'function':
         return renderCallableFunctionType('Rocq', type.params.map(param => this.type(param)), this.type(type.ret));
       case 'set':
-        return `(list ${this.type(type.element)})`;
+        return renderCollectionConstructionType('Rocq', type.kind, this.type(type.element), '');
       case 'map':
-        return `(list (${this.type(type.key)} * ${this.type(type.value)}))%type`;
+        return renderCollectionConstructionType('Rocq', type.kind, this.type(type.key), this.type(type.value));
       case 'union':
         throw typeError(readUnionTargetRefusal('Rocq'));
       default:
@@ -748,15 +749,12 @@ class RocqEmitter {
       case 'map': {
         const set = e.k === 'set';
         const keyType = set ? e.type.element : e.type.key;
-        const value = set ? 'ml_value' : '(fst ml_value)';
-        const previous = set ? 'ml_previous' : '(fst ml_previous)';
-        let equal = this.comparison('eq', keyType, previous, value);
-        if (keyType.kind === 'float') equal = `(orb ${equal} (andb (PrimFloat.is_nan ${previous}) (PrimFloat.is_nan ${value})))`;
-        const normalized = keyType.kind === 'float' ? set ? '(if PrimFloat.eqb ml_original 0%float then 0%float else ml_original)' : '((if PrimFloat.eqb (fst ml_original) 0%float then 0%float else fst ml_original), snd ml_original)' : 'ml_original';
+        const value = readCollectionConstructionBinding('Rocq', e.k, 'value');
+        const previous = readCollectionConstructionBinding('Rocq', e.k, 'previous');
+        const equal = this.comparison('eq', keyType, previous, value);
         const values = this.expr(set ? e.items : e.entries);
-        const existing = set ? 'ml_accumulator' : `(List.map (fun ml_previous => if ${equal} then (fst ml_previous, snd ml_value) else ml_previous) ml_accumulator)`;
         const element = set ? this.type(e.type.element) : `(${this.type(e.type.key)} * ${this.type(e.type.value)})%type`;
-        return `(List.fold_left (fun ml_accumulator ml_original => let ml_value := ${normalized} in if List.existsb (fun ml_previous => ${equal}) ml_accumulator then ${existing} else List.app ml_accumulator (ml_value :: nil)) ${values} (@nil ${element}))`;
+        return renderCollectionConstruction('Rocq', e.k, keyType.kind, values, '', element, equal);
       }
       case 'collectionSize':
         this.floats();

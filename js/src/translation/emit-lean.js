@@ -8,6 +8,7 @@ import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExp
 // so an assertion about Numbers is checked when `main` runs, as in the source.
 
 import { typeError, unsupported } from './diagnostics.js';
+import { renderCollectionConstruction, renderCollectionConstructionType } from './collection-construction-rules.js';
 import { renderOptionalAbsentValue, renderOptionalCoalescing, renderOptionalConsoleText, renderOptionalFlattening, renderOptionalMatch, renderOptionalNumericPresent, renderOptionalPresentValue, renderOptionalPrimitiveTruth, renderOptionalProjection, renderOptionalStrictEquality, renderOptionalTypeQueryPresent, renderOptionalUnwrapping, requireOptionalNumericPredicate } from './optional-value-rules.js';
 import { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';
 import { renderArrayFromMapping } from './array-from-rules.js';
@@ -281,9 +282,9 @@ class LeanEmitter {
       case 'function':
         return renderCallableFunctionType('Lean', type.params.map(param => this.type(param)), this.type(type.ret));
       case 'set':
-        return `(Array ${this.type(type.element)})`;
+        return renderCollectionConstructionType('Lean', type.kind, this.type(type.element), '');
       case 'map':
-        return `(Array (${this.type(type.key)} × ${this.type(type.value)}))`;
+        return renderCollectionConstructionType('Lean', type.kind, this.type(type.key), this.type(type.value));
       case 'union':
         throw typeError(readUnionTargetRefusal('Lean'));
       default:
@@ -509,13 +510,8 @@ class LeanEmitter {
       case 'map': {
         const set = e.k === 'set';
         const keyType = set ? e.type.element : e.type.key;
-        const value = set ? 'ml_value' : 'ml_value.1';
-        const previous = set ? 'ml_previous' : 'ml_previous.1';
-        const equal = keyType.kind === 'float' ? `(${previous} == ${value} || (${previous}.isNaN && ${value}.isNaN))` : `(${previous} == ${value})`;
-        const normalized = keyType.kind === 'float' ? set ? '(if ml_value == (0 : Float) then (0 : Float) else ml_value)' : '((if ml_value.1 == (0 : Float) then (0 : Float) else ml_value.1), ml_value.2)' : 'ml_value';
         const values = this.expr(set ? e.items : e.entries, depth);
-        const existing = set ? 'ml_accumulator' : `(ml_accumulator.map (fun ml_previous => if ${equal} then (ml_previous.1, ml_value.2) else ml_previous))`;
-        return `(${values}.foldl (fun ml_accumulator ml_original => let ml_value := ${normalized.replaceAll('ml_value', 'ml_original')}; if ml_accumulator.any (fun ml_previous => ${equal}) then ${existing} else ml_accumulator.push ml_value) (#[] : ${this.type(e.type)}))`;
+        return renderCollectionConstruction('Lean', e.k, keyType.kind, values, this.type(e.type), '', '');
       }
       case 'collectionSize':
         return `(Float.ofNat ${this.expr(e.object, depth)}.size)`;

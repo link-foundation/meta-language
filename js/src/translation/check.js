@@ -10,6 +10,7 @@ import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 // `Int` division for JavaScript's truncating BigInt division).
 
 import { typeError, unsupported } from './diagnostics.js';
+import { checkCollectionConstruction } from './collection-construction.js';
 import { readArrayIterableForm, readReferenceMutationDiagnostic, selectOptionalArrayIndexNumber, selectOptionalArrayRead } from './array-value-rules.js';
 import { readArrayFromArgumentError, readArrayFromMapCallbackError, readArrayFromReceiverError } from './array-from-rules.js';
 import { readArrayFromExpectedElement, readArrayFromIterableType, readArrayFromMapCallback } from './array-from.js';
@@ -619,22 +620,9 @@ class Checker {
       }
       case 'referenceWrite':
         throw unsupported(readReferenceMutationDiagnostic('feature'), readReferenceMutationDiagnostic('reason'), node.span);
-      case 'set': {
-        const want = node.type ? this.resolveType(node.type, path, node.span) : expected;
-        const items = this.expr(node.items, env, path, want?.kind === 'set' ? array(want.element) : undefined);
-        if (items.type.kind !== 'array') throw typeError('Set constructor needs an iterable array', node.span);
-        if (!primitiveKey(items.type.element)) throw unsupported('Set object identity', 'set keys need explicit reference identities for structured values', node.span);
-        return { k: 'set', items, type: { kind: 'set', element: items.type.element } };
-      }
-      case 'map': {
-        const want = node.type ? this.resolveType(node.type, path, node.span) : expected;
-        const pair = want?.kind === 'map' ? { kind: 'tuple', elements: [want.key, want.value] } : undefined;
-        const entries = this.expr(node.entries, env, path, pair ? array(pair) : undefined);
-        if (entries.type.kind !== 'array' || entries.type.element.kind !== 'tuple' || entries.type.element.elements.length !== 2) throw typeError('Map constructor needs an iterable of key/value pairs', node.span);
-        const [key, value] = entries.type.element.elements;
-        if (!primitiveKey(key)) throw unsupported('Map object identity', 'map keys need explicit reference identities for structured values', node.span);
-        return { k: 'map', entries, type: { kind: 'map', key, value } };
-      }
+      case 'set':
+      case 'map':
+        return checkCollectionConstruction(this, node, env, path, expected);
       case 'arrayFrom': {
         const argumentError = readArrayFromArgumentError(node.args.length);
         if (argumentError) throw typeError(argumentError, node.span);

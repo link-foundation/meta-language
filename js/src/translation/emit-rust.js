@@ -26,6 +26,7 @@ import {checkRustOwnedLocalStateProof} from './rust-owned-local-state.js';
 import { readOwnedArrayFinalUses } from './owned-array-moves.js';
 import {validateRustTypeNamespace} from './rust-type-namespace.js';
 import { typeError, unsupported } from './diagnostics.js';
+import { renderCollectionConstruction } from './collection-construction-rules.js';
 import { typeKey } from './types.js';
 import { Scope, renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
 import { EmitState, typeContains, withParts } from './emit-common.js';
@@ -1287,10 +1288,8 @@ class RustEmitter {
         this.usesArray = true;
         this.usesStandardArray = true;
         const key = e.k === 'set' ? e.type.element : e.type.key;
-        const comparator = key.kind === 'float' ? '|a: &f64, b: &f64| a == b || (a.is_nan() && b.is_nan())' : '|a, b| a == b';
-        let values = this.expr(e.k === 'set' ? e.items : e.entries);
-        if (key.kind === 'float') values = `(${values}).into_iter().map(|ml_value| ${e.k === 'set' ? 'if ml_value == 0f64 { 0f64 } else { ml_value }' : '(if ml_value.0 == 0f64 { 0f64 } else { ml_value.0 }, ml_value.1)'}).collect::<Vec<_>>()`;
-        return `crate::ml_array::${e.k}(${values}, ${comparator})`;
+        const values = this.expr(e.k === 'set' ? e.items : e.entries);
+        return renderCollectionConstruction('Rust', e.k, key.kind, values, '', '', '');
       }
       case 'collectionSize':
         return `(${this.receiver(e.object)}.len() as f64)`;

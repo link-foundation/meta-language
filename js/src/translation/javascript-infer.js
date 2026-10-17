@@ -7,6 +7,7 @@
 // type error: the function would need a declared type for each use.
 
 import { typeError } from './diagnostics.js';
+import { inferCollectionConstruction } from './collection-construction.js';
 import { readArrayFromCallbackConstraints, readArrayFromInferenceInputs, readArrayFromIterableType } from './array-from.js';
 import { readJavaScriptArrayDefaultConstraints } from './array-binding-inference.js';
 import { checkJavaScriptArrayBindingWrapper } from './array-binding-validation.js';
@@ -887,22 +888,9 @@ class Inference {
       }
       case 'record':
         return this.record(node, env, expected);
-      case 'set': {
-        const element = expected?.kind === 'set' ? expected.element : this.fresh();
-        if (node.items) this.unify(this.expr(node.items, env, { kind: 'array', element }), { kind: 'array', element }, node.span);
-        const term = { kind: 'set', element };
-        this.collections.set(node, term);
-        return term;
-      }
-      case 'map': {
-        const key = expected?.kind === 'map' ? expected.key : this.fresh();
-        const value = expected?.kind === 'map' ? expected.value : this.fresh();
-        const pair = { kind: 'tuple', elements: [key, value] };
-        if (node.entries) this.unify(this.expr(node.entries, env, { kind: 'array', element: pair }), { kind: 'array', element: pair }, node.span);
-        const term = { kind: 'map', key, value };
-        this.collections.set(node, term);
-        return term;
-      }
+      case 'set':
+      case 'map':
+        return inferCollectionConstruction(this, node, env, expected);
       case 'method': {
         const object = this.expr(node.object, env);
         const args = node.args.map((arg) => this.expr(arg, env));

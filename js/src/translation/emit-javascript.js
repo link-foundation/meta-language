@@ -9,6 +9,7 @@ import { renderStringMapExpression, renderStringTestExpression } from './fronten
 // proof obligation stays discharged by the source language's kernel.
 
 import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
+import { renderCollectionConstruction } from './collection-construction-rules.js';
 import { renderSurfaceReferenceOperation } from './surface-reference-analysis-rules.js';
 import { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';
 import { renderArrayFromMapping } from './array-from-rules.js';
@@ -504,9 +505,8 @@ class JavaScriptEmitter {
       case 'stringPoints':
         return renderStringPointIteration('JavaScript', false, this.expr(e.object));
       case 'set':
-        return `new Set(${this.expr(e.items)})`;
       case 'map':
-        return `new Map(${this.expr(e.entries)})`;
+        return renderCollectionConstruction('JavaScript', e.k, '', this.expr(e.k === 'set' ? e.items : e.entries), '', '', '');
       case 'collectionSize':
         return `(${this.expr(e.object)}).size`;
       case 'collectionRead':
