@@ -201,6 +201,14 @@ undefined absence through surface, checked and linked representations.
 Documentation defaults do not supply runtime initializers. Provided arguments
 evaluate once in source order before applicable lazy defaults, which retain
 their callee scope and initializer order through source-free rechecking.
+Known record, tuple, Map and Set bindings have JavaScript `typeof` tag `object`.
+An optional query requires a known nonempty present-value tag and retains its
+null and undefined alternatives without discarding operand effects or
+exceptions. A raw JavaScript mixed array in an actual `Option<Tuple>` context
+checks against the ordered tuple elements before optional wrapping. This
+context supplies neither an immutable-product proof nor a new union
+interpretation. Native execution of the expanded contract remains a CI
+obligation.
 Inferred element annotations are written back for both empty and nonempty
 arrays. Native `semanticRet` metadata retains the source's semantic return
 alongside its original annotation and checked result. Nested JSDoc Map and Set
@@ -1405,6 +1413,19 @@ trivia, host spans and translation provenance. Serialization and reload preserve
 the same hierarchy. Non-consuming cycles and resource limits report diagnostics
 instead of silently truncating embedded trees. Existing Markdown and HTML
 region discovery alone does not establish this generic recursive behavior.
+
+The default CST adapter follows supported discovered child regions through a
+FIFO queue, retaining direct-region order, actual parent Region links and
+once-composed absolute UTF-8 spans. `ParseConfiguration` bounds child depth,
+count and physical bytes at 128, 4,096 and 16,777,216 by default. Root parsing
+is excluded; every admitted child parse attempt is charged, including
+overlapping bytes. Legacy root aliases with a different source spelling retain
+their one existing same-range parse; inner same-host, same-range views reuse
+the attached CST without another boundary. Earlier-ancestor repetitions and
+limit refusals retain the region boundary and a flagged diagnostic. These
+adapter limits do not replace parser evaluation, recovery or memory budgets,
+or establish generic any/all grammar selection, global concept-sharing proofs
+or full grammar coverage. Native execution remains a CI obligation.
 
 ## Language catalog and default parsing
 
