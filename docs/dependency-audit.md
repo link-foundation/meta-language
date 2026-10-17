@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 166 | 165 | 1 | 0 |
+| Generators | 169 | 168 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 75 | 0 | 0 | 75 |
+| Published artifact contents | 78 | 0 | 0 | 78 |
 
 ## JavaScript engines
 
@@ -604,6 +604,7 @@ they are.
 | `js/scripts/generate-javascript-scoped-binding-emission-fixtures.mjs` | `js/scripts/generate-javascript-scoped-binding-emission-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-javascript-scoped-binding-emission-rules.mjs` | `js/scripts/generate-javascript-scoped-binding-emission-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-javascript-surface-rules.mjs` | `js/scripts/generate-javascript-surface-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-tag-context-rules.mjs` | `js/scripts/generate-javascript-tag-context-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-link-network-binary-fixtures.mjs` | `js/scripts/generate-link-network-binary-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-link-network-binary-record-rules.mjs` | `js/scripts/generate-link-network-binary-record-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-link-network-binary-rules.mjs` | `js/scripts/generate-link-network-binary-rules.mjs` | `script` |  | derived | current |  |
@@ -647,6 +648,8 @@ they are.
 | `js/scripts/generate-rust-borrowed-call-interface-fixtures.mjs` | `js/scripts/generate-rust-borrowed-call-interface-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-borrowed-call-interface-rules.mjs` | `js/scripts/generate-rust-borrowed-call-interface-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-cast-syntax-rules.mjs` | `js/scripts/generate-rust-cast-syntax-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-character-literal-fixtures.mjs` | `js/scripts/generate-rust-character-literal-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-character-rules.mjs` | `js/scripts/generate-rust-character-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-completion-fixtures.mjs` | `js/scripts/generate-rust-completion-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-completion-panic-fixtures.mjs` | `js/scripts/generate-rust-completion-panic-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-completion-rules.mjs` | `js/scripts/generate-rust-completion-rules.mjs` | `script` |  | derived | current |  |
@@ -800,6 +803,7 @@ they are.
 | `src/data/grammar-selection-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-line-terminators.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-scoped-binding-emission.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-tag-context-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/language-catalog.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/language-trigrams.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/link-network-binary-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
@@ -822,6 +826,8 @@ they are.
 | `src/data/resource-description-schema.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-borrowed-call-interface.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-cast-syntax.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-character-literals.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-character-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-const-branches.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-const-functions.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-cooked-string-escapes.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
