@@ -6,9 +6,18 @@ use std::rc::Rc;
 
 use serde_json::{Value, json};
 
+use crate::structured_data_links::into_json_number;
+
 use super::executor::{Executor, Run};
 use super::text::decode_at;
 use crate::translation::frontend_rules::ml_array::number_index;
+use crate::translation::grammar_selection_included_range_rules::{
+    accept_grammar_selection_included_range_byte_boundary,
+    accept_grammar_selection_included_range_derivation,
+    accept_grammar_selection_included_range_source_range,
+    read_grammar_selection_included_range_part, read_grammar_selection_included_range_plan,
+    read_grammar_selection_included_range_reservation,
+};
 use crate::translation::grammar_selection_mapping_rules::{
     read_grammar_selection_json_string_part, read_grammar_selection_mapped_cover,
     read_grammar_selection_mapping_reservation,
@@ -46,6 +55,8 @@ pub(super) struct MappedSource {
     pub(super) mapping: Value,
 }
 
+type IncludedRangeKey = (usize, usize, Vec<[usize; 2]>);
+
 #[derive(Debug)]
 struct SourceRecord {
     definition: Value,
@@ -54,6 +65,7 @@ struct SourceRecord {
     parent: Option<usize>,
     mapping: Option<Value>,
     mappings: HashMap<(usize, usize), Result<MappedSource, MappingFailure>>,
+    included_mappings: HashMap<IncludedRangeKey, Result<MappedSource, MappingFailure>>,
 }
 
 #[derive(Debug, Default)]
@@ -111,6 +123,7 @@ impl SourceRegistry {
             parent: None,
             mapping: None,
             mappings: HashMap::new(),
+            included_mappings: HashMap::new(),
         });
         self.by_buffer.insert(key, source);
         Ok(Ok(source))
@@ -239,11 +252,200 @@ impl SourceRegistry {
         };
         self.records.push(SourceRecord { definition: json!({"kind":"grammar-source","identity":source,
             "encoding":"UTF-8","byteLength":bytes.len(),"derivation":{"operation":"json-string","input":input,"start":start,"end":end}}),
-            parent: Some(input), mapping: Some(mapping), mappings: HashMap::new() });
+            parent: Some(input), mapping: Some(mapping), mappings: HashMap::new(),
+            included_mappings: HashMap::new() });
         self.by_buffer.insert(buffer_key(&bytes), source);
         self.records[input]
             .mappings
             .insert((start, end), Ok(mapped.clone()));
+        Ok(Ok(mapped))
+    }
+
+    /// Execute one explicit relative-range view on the actual parent source.
+    /// Generated plans own validation, scalar copies, gaps and contraction.
+    pub(super) fn map_included(
+        &mut self,
+        bytes: &[u8],
+        start: usize,
+        end: usize,
+        ranges: &[[f64; 2]],
+        budget: &impl MappingBudget,
+    ) -> Run<Result<MappedSource, MappingFailure>> {
+        let input = match self.source(bytes, budget)? {
+            Ok(source) => source,
+            Err(failed) => return Ok(Err(failed)),
+        };
+        let failed = |offset| MappingFailure {
+            reason: "invalidEmbeddingMapping",
+            offset,
+        };
+        if !accept_grammar_selection_included_range_derivation(
+            "included-ranges",
+            numeric(input),
+            numeric(self.records.len()),
+            numeric(start),
+            numeric(end),
+            numeric(bytes.len()),
+        ) {
+            return Ok(Err(failed(start)));
+        }
+        let Some(cells) = ranges.len().checked_mul(2) else {
+            return Ok(Err(failed(start)));
+        };
+        let length = end - start;
+        let cell_count = serde_json::Number::from(cells).as_f64().unwrap_or(f64::NAN);
+        let Some(reservation) = number_index(read_grammar_selection_included_range_reservation(
+            numeric(length),
+            cell_count,
+            false,
+        )) else {
+            return Ok(Err(failed(start)));
+        };
+        let mut parameters = Vec::with_capacity(ranges.len());
+        for range in ranges {
+            budget.mapping_step()?;
+            if !accept_grammar_selection_included_range_source_range(
+                "source-range",
+                range[0],
+                range[1],
+            ) {
+                return Ok(Err(failed(start)));
+            }
+            let (Some(from), Some(to)) = (number_index(range[0]), number_index(range[1])) else {
+                return Ok(Err(failed(start)));
+            };
+            parameters.push([from, to]);
+        }
+        // JSON.stringify, used by the JavaScript cache, gives both signed
+        // zeros the same coordinate key. Parameters in the output keep the
+        // original finite Number values independently of this private key.
+        let key = (start, end, parameters);
+        if let Some(cached) = self.records[input].included_mappings.get(&key) {
+            return Ok(cached.clone());
+        }
+        budget.mapping_retain(reservation)?;
+        let Some(steps) = number_index(read_grammar_selection_included_range_reservation(
+            numeric(length),
+            cell_count,
+            true,
+        )) else {
+            return Ok(Err(failed(start)));
+        };
+        for _ in 0..steps {
+            budget.mapping_step()?;
+        }
+        let columns = ranges.iter().flatten().copied().collect::<Vec<_>>();
+        let plan = read_grammar_selection_included_range_plan(&columns, numeric(length));
+        let refuse = |registry: &mut Self, offset| {
+            let failure = failed(offset);
+            registry.records[input]
+                .included_mappings
+                .insert(key.clone(), Err(failure.clone()));
+            Ok(Err(failure))
+        };
+        if plan.is_empty() {
+            return refuse(self, start);
+        }
+        for relative in std::iter::once(0)
+            .chain(std::iter::once(length))
+            .chain(key.2.iter().flatten().copied())
+        {
+            let position = start + relative;
+            let byte = bytes.get(position).map_or(-1.0, |byte| f64::from(*byte));
+            if !accept_grammar_selection_included_range_byte_boundary(byte, position == bytes.len())
+            {
+                return refuse(self, position);
+            }
+        }
+        let Some(output_length) = plan.last().copied().and_then(number_index) else {
+            return refuse(self, start);
+        };
+        let mut output_bytes = vec![0; output_length];
+        let mut intervals = Vec::new();
+        let (mut row, mut position, mut output) = (0, 0, 0);
+        loop {
+            let at = start + position;
+            // decodeAt reports one invalid unit at EOF; the shared part plan
+            // ignores that width for a final point or excluded gap.
+            let width = if at < bytes.len() {
+                decode_at(bytes, at, end).1
+            } else {
+                1
+            };
+            let part = read_grammar_selection_included_range_part(
+                &plan,
+                numeric(row),
+                numeric(position),
+                numeric(output),
+                numeric(width),
+            );
+            let opcode = part.first().copied().and_then(number_index);
+            if opcode == Some(1) {
+                break;
+            }
+            if part.len() != 8 || opcode != Some(0) {
+                return refuse(self, at);
+            }
+            let mut cells = [0; 8];
+            for (cell, value) in cells.iter_mut().zip(part) {
+                let Some(value) = number_index(value) else {
+                    return refuse(self, at);
+                };
+                *cell = value;
+            }
+            let [
+                _,
+                next_row,
+                next_position,
+                next_output,
+                input_start,
+                input_end,
+                output_start,
+                output_end,
+            ] = cells;
+            intervals.push(json!([
+                start + input_start,
+                start + input_end,
+                output_start,
+                output_end
+            ]));
+            if output_end > output_start {
+                output_bytes[output_start..output_end]
+                    .copy_from_slice(&bytes[start + input_start..start + input_end]);
+            }
+            (row, position, output) = (next_row, next_position, next_output);
+        }
+        let bytes: Rc<[u8]> = Rc::from(output_bytes);
+        let source = self.records.len();
+        let parameters = ranges
+            .iter()
+            .map(|range| {
+                range
+                    .iter()
+                    .map(|coordinate| into_json_number(*coordinate).map(Value::Number))
+                    .collect::<Result<Vec<_>, _>>()
+                    .map(Value::Array)
+            })
+            .collect::<Result<Vec<_>, _>>();
+        let Ok(parameters) = parameters else {
+            return refuse(self, start);
+        };
+        let parameters = Value::Array(parameters);
+        let mapping = json!({"kind":"source-mapping","operation":"included-ranges","input":input,
+            "output":source,"ranges":parameters,"intervals":intervals});
+        let mapped = MappedSource {
+            bytes: bytes.clone(),
+            mapping: mapping.clone(),
+        };
+        self.records.push(SourceRecord {
+            definition: json!({"kind":"grammar-source","identity":source,"encoding":"UTF-8","byteLength":bytes.len(),
+                "derivation":{"operation":"included-ranges","input":input,"start":start,"end":end,"ranges":parameters}}),
+            parent: Some(input), mapping: Some(mapping), mappings: HashMap::new(), included_mappings: HashMap::new(),
+        });
+        self.by_buffer.insert(buffer_key(&bytes), source);
+        self.records[input]
+            .included_mappings
+            .insert(key, Ok(mapped.clone()));
         Ok(Ok(mapped))
     }
 

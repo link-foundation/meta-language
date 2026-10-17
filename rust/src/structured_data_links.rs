@@ -623,7 +623,7 @@ fn into_json(value: StructuredDataValue) -> Result<Value, String> {
     })
 }
 
-fn into_json_number(value: f64) -> Result<Number, String> {
+pub(crate) fn into_json_number(value: f64) -> Result<Number, String> {
     let text = write_number(value)?;
     if text != "-0" {
         if let Ok(integer) = text.parse::<i64>() {
