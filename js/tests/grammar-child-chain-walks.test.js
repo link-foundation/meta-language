@@ -5,7 +5,6 @@ import test from 'node:test';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {createGrammarParser} from '../src/grammar-runtime.js';
 import {parseGrammarLinks} from '../src/grammar-links.js';
-import {acceptScannerPreemptionBoundary,readScannerContinuationAction} from '../src/translation/frontend-rules.js';
 
 const controls=readProjectData(new URL('../../parity/fixtures/keyword-parse-context-controls.lino',import.meta.url));
 const pins={
@@ -28,14 +27,16 @@ function readChildWalkOperations(source){
     const start=source.indexOf('function '+name+'('),end=source.indexOf('\n}',start)+2;
     assert.ok(start>=0&&end>start);return source.slice(start,end);
   }).join('\n');
-  return new Function('acceptScannerPreemptionBoundary','readScannerContinuationAction','NO_CHILDREN',
-    scalar+'\n'+source.slice(chainStart,chainEnd)+'\n'+source.slice(walkStart,walkEnd)+'\n'+source.slice(firstStart,firstEnd)
-    +'\nreturn {CHAIN,partOf,childCount,shareChildren,flattenChain,leavesBackward,lastRepaired,startsWidthless,lexedPast,preempted,firstLeafStart};')(
-      acceptScannerPreemptionBoundary,readScannerContinuationAction,Object.freeze([]));
+  const rules=new URL('../src/translation/frontend-rules.js',import.meta.url);
+  const moduleSource='import {acceptScannerPreemptionBoundary,readScannerContinuationAction} from '+JSON.stringify(rules.href)+';\n'
+    +'const NO_CHILDREN=Object.freeze([]);\n'
+    +scalar+'\n'+source.slice(chainStart,chainEnd)+'\n'+source.slice(walkStart,walkEnd)+'\n'+source.slice(firstStart,firstEnd)
+    +'\nexport {CHAIN,partOf,childCount,shareChildren,flattenChain,leavesBackward,lastRepaired,startsWidthless,lexedPast,preempted,firstLeafStart};';
+  return import('data:text/javascript;base64,'+Buffer.from(moduleSource).toString('base64'));
 }
 
-const original=readChildWalkOperations(controls.baseline.modules[0].source);
-const current=readChildWalkOperations(readFileSync(new URL('../src/grammar-runtime/executor.js',import.meta.url),'utf8'));
+const original=await readChildWalkOperations(controls.baseline.modules[0].source);
+const current=await readChildWalkOperations(readFileSync(new URL('../src/grammar-runtime/executor.js',import.meta.url),'utf8'));
 
 function createChildWalkOwner(operations,children,form,chains=[],header={}){
   const values=children.map(child=>child.type==='node'
