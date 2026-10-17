@@ -7736,7 +7736,7 @@
 (7736: 7737 7738 7740 (meta: (t: semantic) (n: 1) (term: object%20value) (lang: meta-language%20structured%20data)))
 (7737: 7059 6115 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (7738: 7217 7301 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(7739: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 6c639c53ec4f1ea95d9a3033563e5142075fcb6d24bca47a06db6f50cf7437e6) (lang: meta-language%20structured%20data)))
+(7739: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 71325e2ab685a5f21d3171c459566a064e9cf868cf03b5b153aeb8f76c36bbc0) (lang: meta-language%20structured%20data)))
 (7740: 7220 7739 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (7741: 7212 7735 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (7742: 7743 (meta: (t: semantic) (n: 1) (term: array%20value) (lang: meta-language%20structured%20data)))

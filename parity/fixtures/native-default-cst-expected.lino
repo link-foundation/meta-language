@@ -1220,7 +1220,7 @@
 (1220: (meta: (t: semantic) (n: 1) (term: string%20value) (def: native-python) (lang: meta-language%20structured%20data)))
 (1221: 1222 1224 (meta: (t: semantic) (n: 1) (term: object%20value) (lang: meta-language%20structured%20data)))
 (1222: 19 20 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(1223: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 6c639c53ec4f1ea95d9a3033563e5142075fcb6d24bca47a06db6f50cf7437e6) (lang: meta-language%20structured%20data)))
+(1223: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 71325e2ab685a5f21d3171c459566a064e9cf868cf03b5b153aeb8f76c36bbc0) (lang: meta-language%20structured%20data)))
 (1224: 22 1223 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (1225: 1220 1221 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (1226: 15 1219 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
