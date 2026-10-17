@@ -87,6 +87,40 @@ const sourceToolingVerificationCells = {
     }],
     assertions: ['peggyOptimizedCharacterSetsHaveApplicableVersionContext', 'peggyCharacterSetRefusalsHaveApplicableVersionContext'],
   }],
+  // These finite runtime cells preserve the original full-scope capture cells.
+  'I195-CST-EXPLICIT-AST-SELECTION': [{
+    runtime: 'javascript', suffix: 'priority-projection-replay',
+    fixtures: [{
+      id: 'cst-projection-priority-javascript',
+      path: 'parity/language-grammar-inventory.lino',
+      selector: 'Only the original source and recoverySource of the JavaScript, TypeScript, Rust and Markdown entries; ordinary public parsing, explicit abstract selection and source-free text and binary network replay against the existing independent CST rows. This finite selection does not cover the whole catalog, aliases, editions or grammar formats.',
+    }],
+    assertions: ['abstractSyntaxRequiresExplicitSelection', 'concreteSyntaxRemainsDefault', 'abstractProjectionRetainsConcreteProvenance'],
+  }, {
+    runtime: 'rust', suffix: 'priority-projection-replay',
+    fixtures: [{
+      id: 'cst-projection-priority-rust',
+      path: 'parity/language-grammar-inventory.lino',
+      selector: 'Only the original source and recoverySource of the JavaScript, TypeScript, Rust and Markdown entries; ordinary public parsing, explicit abstract selection and source-free text and binary network replay against the existing independent CST rows. This finite selection does not cover the whole catalog, aliases, editions or grammar formats.',
+    }],
+    assertions: ['abstractSyntaxRequiresExplicitSelection', 'concreteSyntaxRemainsDefault', 'abstractProjectionRetainsConcreteProvenance'],
+  }, {
+    runtime: 'javascript', suffix: 'embedded-projection-replay',
+    fixtures: [{
+      id: 'cst-projection-embedded-javascript',
+      path: 'parity/fixtures/issue-195-evidence.lino',
+      selector: 'Only the original source and recoverySource of the embedded fixture with host Markdown and target language-selected fenced code, retaining its Rust child grammar, exact host boundaries and independent existing host and child CST rows through explicit abstract selection and source-free text and binary network replay. This finite boundary is not deep recursive or global-concept coverage.',
+    }],
+    assertions: ['abstractSyntaxRequiresExplicitSelection', 'concreteSyntaxRemainsDefault', 'abstractProjectionRetainsConcreteProvenance'],
+  }, {
+    runtime: 'rust', suffix: 'embedded-projection-replay',
+    fixtures: [{
+      id: 'cst-projection-embedded-rust',
+      path: 'parity/fixtures/issue-195-evidence.lino',
+      selector: 'Only the original source and recoverySource of the embedded fixture with host Markdown and target language-selected fenced code, retaining its Rust child grammar, exact host boundaries and independent existing host and child CST rows through explicit abstract selection and source-free text and binary network replay. This finite boundary is not deep recursive or global-concept coverage.',
+    }],
+    assertions: ['abstractSyntaxRequiresExplicitSelection', 'concreteSyntaxRemainsDefault', 'abstractProjectionRetainsConcreteProvenance'],
+  }],
 };
 
 // Entry points identify executable implementations. Their presence is not an
@@ -132,6 +166,11 @@ const dataToolingFixtures = {
 };
 
 const runtimeEntryPoints = {
+  'I195-CST-EXPLICIT-AST-SELECTION': {
+    javascript: ['js/src/network.js', 'js/src/network-projection-rules.js'],
+    rust: ['rust/src/link_network.rs', 'rust/src/network_projection.rs',
+      'rust/src/translation/network_projection_rules.rs'],
+  },
   'I195-GRAMMAR-INFERENCE-FORMAL-CONCEPT-INTEGRATION': {
     javascript: ['js/src/discovered-concept-links.js'],
     rust: ['rust/src/discovered_concept_links.rs'],

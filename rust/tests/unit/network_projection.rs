@@ -1,12 +1,14 @@
 //! Finite public projection API and original-link provenance parity.
 //! These controls do not establish complete parsing for the language catalog.
+use std::collections::HashMap;
 use std::io::Write;
 use std::path::Path;
 use std::process::{Command, Stdio};
 
 use meta_language::{
-    ByteRange, LinkFlags, LinkMetadata, LinkNetwork, LinkType, NetworkProjection,
-    ParseConfiguration, Point, SourceSpan,
+    BinaryLinksOptions, ByteRange, LinkFlags, LinkId, LinkMetadata, LinkNetwork, LinkType,
+    NetworkProjection, ParseConfiguration, Point, SourceSpan, decode_link_network_binary,
+    encode_link_network_binary,
 };
 use serde_json::{Value, json};
 
@@ -302,4 +304,370 @@ process.stdout.write(JSON.stringify({
     assert_eq!(observed["abstractHasConcreteProvenance"], true);
     assert_eq!(network.reconstruct_text(), source);
     assert_eq!(network.to_lino(), before);
+}
+
+fn projection_data(name: &str) -> Value {
+    meta_language::project_data::read_project_data_file(
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../parity")
+            .join(name),
+    )
+    .expect("the existing independent projection source or CST fixture loads")
+}
+
+fn projection_document_root(network: &LinkNetwork) -> LinkId {
+    let document = network
+        .links()
+        .find(|link| link.metadata().link_type() == Some(LinkType::Document))
+        .expect("ordinary parsing retains its document")
+        .id();
+    network
+        .links()
+        .find(|link| {
+            link.metadata().link_type() == Some(LinkType::Syntax) && link.references() == [document]
+        })
+        .expect("ordinary parsing exposes its actual grammar root")
+        .id()
+}
+
+fn projection_syntax_rows(network: &LinkNetwork, root: LinkId, base: usize) -> Vec<Value> {
+    let mut children: HashMap<LinkId, Vec<LinkId>> = HashMap::new();
+    let mut fields: HashMap<(LinkId, LinkId), String> = HashMap::new();
+    for link in network.links() {
+        match link.metadata().link_type() {
+            Some(LinkType::Syntax) => {
+                if let [parent] = link.references() {
+                    children.entry(*parent).or_default().push(link.id());
+                }
+            }
+            Some(LinkType::Field) if link.metadata().term().is_none() => {
+                if let [parent, label, child] = link.references() {
+                    fields.insert(
+                        (*parent, *child),
+                        network
+                            .link(*label)
+                            .unwrap()
+                            .metadata()
+                            .term()
+                            .unwrap()
+                            .to_owned(),
+                    );
+                }
+            }
+            _ => {}
+        }
+    }
+    let mut rows = Vec::new();
+    let mut stack = vec![(root, 0_usize, None::<String>)];
+    while let Some((id, depth, field)) = stack.pop() {
+        let metadata = network.link(id).unwrap().metadata();
+        let flags = metadata.flags();
+        let range = metadata
+            .span()
+            .expect("a CST node keeps its exact byte span")
+            .byte_range();
+        rows.push(json!([
+            depth,
+            field,
+            metadata.term(),
+            i32::from(metadata.is_named()),
+            range.start() - base,
+            range.end() - base,
+            format!(
+                "{}{}{}",
+                if flags.is_error() { "E" } else { "" },
+                if flags.is_missing() { "M" } else { "" },
+                if flags.is_extra() { "X" } else { "" }
+            )
+        ]));
+        for child in children.get(&id).into_iter().flatten().rev() {
+            stack.push((*child, depth + 1, fields.get(&(id, *child)).cloned()));
+        }
+    }
+    rows
+}
+
+fn assert_projection_replay(
+    network: &LinkNetwork,
+    source: &str,
+    trees: &[(LinkId, usize, &Value)],
+    label: &str,
+) {
+    // Ordinary parsing must retain the full concrete graph before view selection.
+    assert_eq!(
+        network.reconstruct_text(),
+        source,
+        "{label}: original source bytes"
+    );
+    for role in [LinkType::Syntax, LinkType::Token, LinkType::Trivia] {
+        assert!(
+            network
+                .links()
+                .any(|link| link.metadata().link_type() == Some(role)),
+            "{label}: original CST role {role:?}"
+        );
+    }
+    for (root, base, expected) in trees {
+        assert_eq!(
+            json!(projection_syntax_rows(network, *root, *base)),
+            **expected,
+            "{label}: original independent CST rows"
+        );
+    }
+    let before = network.to_lino();
+    let concrete_ids = network
+        .projected_links(NetworkProjection::default())
+        .map(|link| link.id())
+        .collect::<Vec<_>>();
+    assert_eq!(
+        concrete_ids,
+        network
+            .projected_links(NetworkProjection::ConcreteSyntax)
+            .map(|link| link.id())
+            .collect::<Vec<_>>()
+    );
+    for role in [LinkType::Syntax, LinkType::Token, LinkType::Trivia] {
+        assert!(
+            network
+                .projected_links(NetworkProjection::default())
+                .any(|link| link.metadata().link_type() == Some(role)),
+            "{label}: default concrete role {role:?}"
+        );
+    }
+    let abstract_ids = network
+        .projected_links(NetworkProjection::AbstractSyntax)
+        .map(|link| link.id())
+        .collect::<Vec<_>>();
+    assert!(!abstract_ids.is_empty());
+    assert_ne!(
+        abstract_ids, concrete_ids,
+        "abstract syntax requires a distinct explicit selection"
+    );
+    assert_eq!(
+        network.to_lino(),
+        before,
+        "{label}: selection leaves every original link unchanged"
+    );
+    let binary = encode_link_network_binary(network, BinaryLinksOptions::default()).unwrap();
+    for (encoding, restored) in [
+        ("text", LinkNetwork::from_lino(&before).unwrap()),
+        (
+            "binary",
+            decode_link_network_binary(&binary, BinaryLinksOptions::default()).unwrap(),
+        ),
+    ] {
+        assert_eq!(
+            restored.to_lino(),
+            before,
+            "{label}: {encoding} complete graph"
+        );
+        assert_eq!(
+            restored.reconstruct_text(),
+            source,
+            "{label}: {encoding} exact UTF-8 source"
+        );
+        assert_eq!(
+            restored.links().collect::<Vec<_>>(),
+            network.links().collect::<Vec<_>>(),
+            "all original references, metadata, spans and recovery flags remain identical"
+        );
+        assert_eq!(
+            restored
+                .projected_links(NetworkProjection::default())
+                .map(|link| link.id())
+                .collect::<Vec<_>>(),
+            concrete_ids
+        );
+        let abstract_links = restored
+            .projected_links(NetworkProjection::AbstractSyntax)
+            .collect::<Vec<_>>();
+        assert_eq!(
+            abstract_links
+                .iter()
+                .map(|link| link.id())
+                .collect::<Vec<_>>(),
+            abstract_ids
+        );
+        for link in &abstract_links {
+            assert!(std::ptr::eq(*link, restored.link(link.id()).unwrap()));
+            assert!(!matches!(
+                link.metadata().link_type(),
+                Some(LinkType::Token | LinkType::Trivia)
+            ));
+            for reference in link.references() {
+                assert!(
+                    restored.link(*reference).is_some(),
+                    "concrete provenance remains resolvable"
+                );
+            }
+        }
+        for link in restored.links().filter(|link| {
+            matches!(
+                link.metadata().link_type(),
+                Some(LinkType::Syntax | LinkType::Field | LinkType::Region)
+            )
+        }) {
+            assert!(
+                abstract_links
+                    .iter()
+                    .any(|selected| selected.id() == link.id()),
+                "all syntax, field and region links remain in the explicit view"
+            );
+        }
+        for (root, base, expected) in trees {
+            assert_eq!(
+                json!(projection_syntax_rows(&restored, *root, *base)),
+                **expected,
+                "{label}: {encoding} independent CST rows"
+            );
+        }
+        assert_eq!(
+            restored
+                .projected_links(NetworkProjection::ConcreteSyntax)
+                .map(|link| link.id())
+                .collect::<Vec<_>>(),
+            concrete_ids,
+            "AST selection cannot change the concrete view"
+        );
+        assert_eq!(restored.to_lino(), before);
+    }
+}
+
+#[test]
+fn four_priority_language_csts_keep_original_abstract_provenance_through_both_saved_formats() {
+    let inventory = projection_data("language-grammar-inventory.lino");
+    let oracle = projection_data("fixtures/default-cst-expected.lino");
+    let native = projection_data("fixtures/native-default-cst-expected.lino");
+    for name in ["JavaScript", "TypeScript", "Rust", "Markdown"] {
+        let language = inventory["languages"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|entry| entry["name"] == name)
+            .unwrap();
+        let expected = native["languages"]
+            .get(name)
+            .unwrap_or(&oracle["languages"][name]);
+        assert!(
+            !expected.is_null(),
+            "{name}: independent CST expectations exist"
+        );
+        for (part, key) in [("positive", "source"), ("recovery", "recoverySource")] {
+            let source = language[key].as_str().unwrap();
+            let network = LinkNetwork::parse(source, name, ParseConfiguration::default());
+            assert_projection_replay(
+                &network,
+                source,
+                &[(projection_document_root(&network), 0, &expected[part])],
+                &format!("{name} {part}"),
+            );
+        }
+    }
+    super::issue_195_observations::record(&super::issue_195_observations::Observation {
+        requirement_id: "I195-CST-EXPLICIT-AST-SELECTION",
+        suffix: "priority-projection-replay",
+        fixture_id: "cst-projection-priority-rust",
+        fixture_file: "parity/language-grammar-inventory.lino",
+        assertions: &[
+            "abstractSyntaxRequiresExplicitSelection",
+            "concreteSyntaxRemainsDefault",
+            "abstractProjectionRetainsConcreteProvenance",
+        ],
+        test_name: "four_priority_language_csts_keep_original_abstract_provenance_through_both_saved_formats",
+    });
+}
+
+#[test]
+fn the_original_markdown_rust_region_keeps_host_and_child_cst_provenance_in_abstract_views() {
+    let evidence = projection_data("fixtures/issue-195-evidence.lino");
+    let original = evidence["embedded"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|entry| {
+            entry["host"] == "Markdown" && entry["target"] == "language-selected fenced code"
+        })
+        .unwrap();
+    let oracle = projection_data("fixtures/default-cst-expected.lino");
+    let native = projection_data("fixtures/native-default-cst-expected.lino");
+    let label = format!(
+        "{} -> {}",
+        original["host"].as_str().unwrap(),
+        original["target"].as_str().unwrap()
+    );
+    let language = original["parseLanguage"].as_str().unwrap();
+    for (part, key) in [("positive", "source"), ("recovery", "recoverySource")] {
+        let source = original[key].as_str().unwrap();
+        let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
+        let expected = &oracle["embeddedFixtures"][label.as_str()][part];
+        let embedded = native["embeddedFixtures"]
+            .get(label.as_str())
+            .map_or(&expected["embedded"], |entry| &entry[part]["embedded"])
+            .as_array()
+            .unwrap();
+        let regions = network
+            .links()
+            .filter(|link| {
+                link.metadata().link_type() == Some(LinkType::Region)
+                    && link.references().len() == 2
+            })
+            .filter(|link| {
+                link.metadata().span().is_some_and(|span| {
+                    let range = span.byte_range();
+                    !(link.metadata().language() == Some(language)
+                        && range.start() == 0
+                        && range.end() == source.len())
+                })
+            })
+            .collect::<Vec<_>>();
+        let boundaries = regions
+            .iter()
+            .map(|region| {
+                let range = region.metadata().span().unwrap().byte_range();
+                json!([region.metadata().language(), range.start(), range.end()])
+            })
+            .collect::<Vec<_>>();
+        let wanted = embedded
+            .iter()
+            .map(|region| json!([region["language"], region["startByte"], region["endByte"]]))
+            .collect::<Vec<_>>();
+        assert_eq!(boundaries, wanted);
+        let mut trees = vec![(projection_document_root(&network), 0, &expected["rows"])];
+        for (region, wanted) in regions.iter().zip(embedded) {
+            let root = network
+                .links()
+                .find(|link| {
+                    link.metadata().link_type() == Some(LinkType::Syntax)
+                        && link.references() == [region.id()]
+                })
+                .expect("the region owns its actual child grammar root");
+            assert!(
+                network.link(region.references()[0]).is_some(),
+                "the actual host document reference remains present"
+            );
+            trees.push((
+                root.id(),
+                region.metadata().span().unwrap().byte_range().start(),
+                &wanted["rows"],
+            ));
+        }
+        assert!(
+            regions
+                .iter()
+                .any(|region| region.metadata().language() == original["regionLanguage"].as_str())
+        );
+        assert_projection_replay(&network, source, &trees, &format!("{label} {part}"));
+    }
+    super::issue_195_observations::record(&super::issue_195_observations::Observation {
+        requirement_id: "I195-CST-EXPLICIT-AST-SELECTION",
+        suffix: "embedded-projection-replay",
+        fixture_id: "cst-projection-embedded-rust",
+        fixture_file: "parity/fixtures/issue-195-evidence.lino",
+        assertions: &[
+            "abstractSyntaxRequiresExplicitSelection",
+            "concreteSyntaxRemainsDefault",
+            "abstractProjectionRetainsConcreteProvenance",
+        ],
+        test_name: "the_original_markdown_rust_region_keeps_host_and_child_cst_provenance_in_abstract_views",
+    });
 }

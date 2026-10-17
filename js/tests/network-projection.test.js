@@ -2,10 +2,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import vm from 'node:vm';
 import { readProjectData } from '../scripts/project-data.mjs';
+import { recordIssue195Observations } from './support/issue-195-observations.js';
 import { readNetworkProjectionSourceModule } from '../scripts/generate-network-projection-rules.mjs';
 import {
   ByteRange, LinkFlags, LinkMetadata, LinkNetwork, LinkType,
-  NetworkProjection, Point, SourceSpan,
+  NetworkProjection, Point, SourceSpan, encodeLinkNetworkBinary, decodeLinkNetworkBinary,
 } from '../src/index.js';
 import { acceptNetworkProjection, acceptNetworkProjectionLink } from '../src/network-projection-rules.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
@@ -142,4 +143,146 @@ test('both complete projection decisions self-translate to all four targets and 
     assert.equal(translated.acceptNetworkProjection(invalid), false);
     for (const role of fixture().linkTypes) assert.equal(translated.acceptNetworkProjectionLink(invalid, role ?? ''), false);
   }
+});
+
+// These bounded controls reuse existing source bytes and independent CST rows;
+// they do not establish parsing or AST coverage for the whole catalog.
+function projectionSyntaxRows(network, root, base = 0) {
+  const fields = new Map();
+  for (const link of network.links()) {
+    if (link.metadata().linkType !== LinkType.Field || link.references().length !== 3) continue;
+    const [parent, label, child] = link.references();
+    fields.set(`${parent.asU64()}:${child.asU64()}`, network.link(label).metadata().term);
+  }
+  const rows = [];
+  const visit = (link, depth, field) => {
+    const { term, named, span, flags } = link.metadata();
+    rows.push([depth, field ?? null, term, named ? 1 : 0, span.byteRange.start - base,
+      span.byteRange.end - base, `${flags.isError ? 'E' : ''}${flags.isMissing ? 'M' : ''}${flags.isExtra ? 'X' : ''}`]);
+    for (const reference of link.references()) {
+      const child = network.link(reference);
+      if (child.metadata().linkType === LinkType.Syntax) {
+        visit(child, depth + 1, fields.get(`${link.id().asU64()}:${reference.asU64()}`));
+      }
+    }
+  };
+  visit(network.link(root), 0);
+  return rows;
+}
+
+function projectionDocumentRoot(network) {
+  const syntax = network.links().filter(link => link.metadata().linkType === LinkType.Syntax);
+  const children = new Set(syntax.flatMap(link => link.references().map(reference => reference.asU64())));
+  const root = syntax.find(link => !children.has(link.id().asU64()));
+  assert.ok(root, 'ordinary parsing exposes an actual grammar root');
+  return root.id();
+}
+
+function assertProjectionReplay(network, source, trees, label) {
+  // Verify the ordinary parse before invoking either view selector.
+  assert.equal(network.reconstructText(), source, label + ': original source bytes');
+  for (const role of [LinkType.Syntax, LinkType.Token, LinkType.Trivia]) {
+    assert.ok(network.links().some(link => link.metadata().linkType === role), label + ': original CST role ' + role);
+  }
+  for (const [root, base, expected] of trees) {
+    assert.deepEqual(projectionSyntaxRows(network, root, base), expected, label + ': original independent CST rows');
+  }
+  const before = network.toLino();
+  const concreteIds = identifiers(network.projectedLinks());
+  assert.deepEqual(concreteIds, identifiers(network.projectedLinks(NetworkProjection.ConcreteSyntax)));
+  for (const role of [LinkType.Syntax, LinkType.Token, LinkType.Trivia]) {
+    assert.ok(network.projectedLinks().some(link => link.metadata().linkType === role), label + ': default concrete role ' + role);
+  }
+  const abstractIds = identifiers(network.projectedLinks(NetworkProjection.AbstractSyntax));
+  assert.ok(abstractIds.length > 0);
+  assert.notDeepEqual(abstractIds, concreteIds, 'abstract syntax requires a distinct explicit selection');
+  assert.equal(network.toLino(), before, label + ': selection leaves every original link unchanged');
+  const binary = encodeLinkNetworkBinary(network);
+  for (const [encoding, restored] of [
+    ['text', LinkNetwork.fromLino(before)],
+    ['binary', decodeLinkNetworkBinary(binary)],
+  ]) {
+    assert.equal(restored.toLino(), before, label + ': ' + encoding + ' complete graph');
+    assert.equal(restored.reconstructText(), source, label + ': ' + encoding + ' exact source');
+    assert.deepEqual([...new TextEncoder().encode(restored.reconstructText())], [...new TextEncoder().encode(source)], label + ': ' + encoding + ' UTF-8 bytes');
+    assert.deepEqual(identifiers(restored.projectedLinks()), concreteIds, label + ': ' + encoding + ' omitted projection remains concrete');
+    const abstract = restored.projectedLinks(NetworkProjection.AbstractSyntax);
+    assert.deepEqual(identifiers(abstract), abstractIds, label + ': ' + encoding + ' saved abstract IDs');
+    for (const link of abstract) {
+      assert.equal(link, restored.link(link.id()), 'a view returns its actual restored Link');
+      assert.equal(link.metadata(), restored.link(link.id()).metadata());
+      assert.ok(![LinkType.Token, LinkType.Trivia].includes(link.metadata().linkType));
+      assert.deepEqual(link.references(), network.link(link.id()).references());
+      assert.deepEqual(link.metadata(), network.link(link.id()).metadata(), 'spans, fields and recovery flags survive');
+      for (const reference of link.references()) assert.ok(restored.link(reference), 'concrete provenance remains resolvable');
+    }
+    for (const link of restored.links().filter(link => [LinkType.Syntax, LinkType.Field, LinkType.Region].includes(link.metadata().linkType))) {
+      assert.ok(abstract.includes(link), 'all original syntax, field and region links remain in the explicit view');
+    }
+    for (const [root, base, expected] of trees) {
+      assert.deepEqual(projectionSyntaxRows(restored, root, base), expected, label + ': ' + encoding + ' independent CST rows');
+    }
+    assert.deepEqual(identifiers(restored.projectedLinks()), concreteIds, 'AST selection cannot change the default view');
+    assert.equal(restored.toLino(), before);
+  }
+}
+
+test('four priority language CSTs retain original abstract provenance through text and binary replay', () => {
+  const inventory = readProjectData(new URL('../../parity/language-grammar-inventory.lino', import.meta.url));
+  const oracle = readProjectData(new URL('../../parity/fixtures/default-cst-expected.lino', import.meta.url));
+  const native = readProjectData(new URL('../../parity/fixtures/native-default-cst-expected.lino', import.meta.url));
+  for (const name of ['JavaScript', 'TypeScript', 'Rust', 'Markdown']) {
+    const language = inventory.languages.find(entry => entry.name === name);
+    assert.ok(language, name + ': the original inventory source exists');
+    const expected = native.languages[name] ?? oracle.languages[name];
+    assert.ok(expected, name + ': independently recorded CST expectations exist');
+    for (const [part, key] of [['positive', 'source'], ['recovery', 'recoverySource']]) {
+      const source = language[key], network = LinkNetwork.parse(source, name);
+      assertProjectionReplay(network, source, [[projectionDocumentRoot(network), 0, expected[part]]], name + ' ' + part);
+    }
+  }
+  recordIssue195Observations({
+    requirementId: 'I195-CST-EXPLICIT-AST-SELECTION',
+    suffix: 'priority-projection-replay',
+    fixtureId: 'cst-projection-priority-javascript',
+    fixtureFile: 'parity/language-grammar-inventory.lino',
+    assertions: ['abstractSyntaxRequiresExplicitSelection', 'concreteSyntaxRemainsDefault', 'abstractProjectionRetainsConcreteProvenance'],
+    testName: 'four priority language CSTs retain original abstract provenance through text and binary replay',
+  });
+});
+
+test('the original Markdown fenced Rust region keeps host and child CST provenance in explicit abstract views', () => {
+  const evidence = readProjectData(new URL('../../parity/fixtures/issue-195-evidence.lino', import.meta.url));
+  const original = evidence.embedded.find(entry => entry.host === 'Markdown' && entry.target === 'language-selected fenced code');
+  assert.ok(original);
+  const oracle = readProjectData(new URL('../../parity/fixtures/default-cst-expected.lino', import.meta.url));
+  const native = readProjectData(new URL('../../parity/fixtures/native-default-cst-expected.lino', import.meta.url));
+  const label = original.host + ' -> ' + original.target;
+  for (const [part, key] of [['positive', 'source'], ['recovery', 'recoverySource']]) {
+    const source = original[key], network = LinkNetwork.parse(source, original.parseLanguage);
+    const expected = oracle.embeddedFixtures[label][part];
+    const embedded = native.embeddedFixtures[label]?.[part].embedded ?? expected.embedded;
+    const regions = network.links().filter(link => link.metadata().linkType === LinkType.Region && link.metadata().span)
+      .filter(link => !(link.metadata().language === original.parseLanguage && link.metadata().span.byteRange.start === 0
+        && link.metadata().span.byteRange.end === new TextEncoder().encode(source).length));
+    assert.deepEqual(regions.map(link => [link.metadata().language, link.metadata().span.byteRange.start, link.metadata().span.byteRange.end]),
+      embedded.map(region => [region.language, region.startByte, region.endByte]));
+    const trees = [[projectionDocumentRoot(network), 0, expected.rows]];
+    regions.forEach((region, index) => {
+      const root = region.references().slice(2).map(id => network.link(id)).find(link => link.metadata().linkType === LinkType.Syntax);
+      assert.ok(root, 'the original region owns its actual child grammar root');
+      assert.ok(network.link(region.references()[0]), 'the host document reference remains present');
+      trees.push([root.id(), embedded[index].startByte, embedded[index].rows]);
+    });
+    assert.ok(regions.some(region => region.metadata().language === original.regionLanguage));
+    assertProjectionReplay(network, source, trees, label + ' ' + part);
+  }
+  recordIssue195Observations({
+    requirementId: 'I195-CST-EXPLICIT-AST-SELECTION',
+    suffix: 'embedded-projection-replay',
+    fixtureId: 'cst-projection-embedded-javascript',
+    fixtureFile: 'parity/fixtures/issue-195-evidence.lino',
+    assertions: ['abstractSyntaxRequiresExplicitSelection', 'concreteSyntaxRemainsDefault', 'abstractProjectionRetainsConcreteProvenance'],
+    testName: 'the original Markdown fenced Rust region keeps host and child CST provenance in explicit abstract views',
+  });
 });
