@@ -55,7 +55,6 @@ pub enum Node {
     StrictEqual {
         left: Box<Expr>,
         right: Box<Expr>,
-        #[serde(default)]
         negate: bool,
     },
     UnwrapOption {

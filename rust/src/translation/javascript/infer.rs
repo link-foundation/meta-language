@@ -187,6 +187,13 @@ struct Arithmetic {
     place: Option<Span>,
 }
 
+struct Equality {
+    operation: BinaryOp,
+    left: Term,
+    right: Term,
+    place: Option<Span>,
+}
+
 struct Plus {
     left: Term,
     right: Term,
@@ -232,6 +239,7 @@ struct Inference {
     calls: Vec<CallArguments>,
     conditions: Vec<(Term, Option<Span>)>,
     arithmetic: Vec<Arithmetic>,
+    equalities: Vec<Equality>,
     methods: Vec<methods::Method>,
     includes: Vec<methods::Includes>,
     array_includes: HashSet<*const SExpr>,
@@ -280,6 +288,7 @@ impl Inference {
             calls: Vec::new(),
             conditions: Vec::new(),
             arithmetic: Vec::new(),
+            equalities: Vec::new(),
             methods: Vec::new(),
             includes: Vec::new(),
             array_includes: HashSet::new(),

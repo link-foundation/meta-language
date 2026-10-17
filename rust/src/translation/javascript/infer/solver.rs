@@ -162,6 +162,7 @@ impl Inference {
             progress |= self.solve_arithmetic(false)?;
             progress |= self.solve_joins_and_results()?;
             progress |= self.solve_record_spreads()?;
+            progress |= self.solve_equalities(false)?;
             if !progress && !self.includes.is_empty() {
                 progress |= self.solve_includes(true)?;
             }
@@ -214,6 +215,9 @@ impl Inference {
             }
             if !progress && !self.arithmetic.is_empty() {
                 progress |= self.solve_arithmetic(true)?;
+            }
+            if !progress && !self.equalities.is_empty() {
+                progress |= self.solve_equalities(true)?;
             }
             if !progress
                 && let Some((term, place)) = self

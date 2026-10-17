@@ -8,6 +8,8 @@ use super::{
 
 mod traversal;
 pub(super) use traversal::{children, children_mut};
+mod tag_guards;
+pub(super) use tag_guards::tag_guard_sequence;
 
 /// What `assert.method` asserts: the lookup is in plain objects, so the names
 /// of `Object.prototype` find an inherited function and read as `notDeep`.
@@ -90,6 +92,9 @@ pub(super) fn lower_at(
     let Some(statement) = list.get(index) else {
         return Ok(node(SNode::Unit, place));
     };
+    if let Some(guards) = tag_guard_sequence(list[index..].iter().copied()) {
+        return lower(&[guards], place, generated_count);
+    }
     match statement {
         Stmt::Const { name, value, span } => Ok(node(
             SNode::Let {

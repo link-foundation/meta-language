@@ -146,3 +146,14 @@ export function acceptJavaScriptTerminalTagGuard(positive, alternate, terminal, 
 export function acceptJavaScriptTagGuardSequence(multiple, terminalRemainder) {
   return multiple && terminalRemainder;
 }
+
+/** Keep equality operands independent until actual optional roots are known.
+ * The checker retains strict primitive semantics and reference refusals.
+ * @param {string} operation @param {string} left @param {string} right
+ * @param {boolean} force @returns {string}
+ */
+export function readJavaScriptEqualityInferenceStep(operation, left, right, force) {
+  if (operation !== 'eq' && operation !== 'ne') return 'unify';
+  if (left === 'var' || right === 'var') return force ? 'unify' : 'defer';
+  return left === 'option' || right === 'option' ? 'independent' : 'unify';
+}

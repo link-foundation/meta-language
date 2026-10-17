@@ -101,3 +101,53 @@ test('the entire JavaScript frontend decision module remains checked scalar self
   assert.match(styled, /^pub const fn accept_java_script_value_switch\(/mu);
   assert.match(styled, /pub fn read_java_script_method_receiver_kind\(operation: &str\)/u);
 });
+
+test('terminal tag guard source styles append exact new Boolean functions without rewriting the historical library row', async () => {
+  const { createHash } = await import('node:crypto');
+  const { readPortableSourceParameterStyles, readPortableSourceLintStyles } = await import('../scripts/portable-source-library-style.mjs');
+  const { readSourceTextRustBlock } = await import('../scripts/source-text-byte-library-style.mjs');
+  const source = readFileSync(new URL('../src/translation/javascript-surface-rules.js', import.meta.url), 'utf8');
+  const checked = checkProgram(parseJavaScript(source, { referenceSemantics: false }));
+  const emitted = emitRust(checked, { arrayConsumption: true });
+  assert.deepEqual(emitted.preludes, []);
+  const header = emitted.text.split('\n').find(line => line.startsWith('#![allow('));
+  assert.ok(header);
+  const raw = header + '\n\n' + emitted.definitions.join('\n\n').replace(/^pub fn /gmu, '#[must_use]\npub fn ');
+  const document = readFileSync(new URL('../../parity/self-translation/javascript-surface-rules-decorators.lino', import.meta.url), 'utf8');
+  const lines = document.match(/[^\n]*\n|[^\n]+$/gu) ?? [];
+  assert.equal(Buffer.byteLength(lines[0]), 106060);
+  assert.equal(createHash('sha256').update(lines[0]).digest('hex'), 'ac9cf3ef2a0a4a4b16e59b9c2d33a2619fd8cbe44bf4042913f52419cc275e6a');
+  const id = 'javascript-terminal-tag-guard-library-style';
+  assert.equal(lines.filter(line => line.startsWith('(decorator ' + id + ' ')).length, 1);
+  const baseDocument = lines.filter(line => !line.startsWith('(decorator ' + id + ' ')).join('');
+  const base = DecoratorSet.fromLino(baseDocument).decorate('emitter', { format: 'Rust', source: raw }).source;
+  const names = ['accept_java_script_terminal_tag_guard', 'accept_java_script_tag_guard_sequence'];
+  let expected = base;
+  for (const name of names) {
+    const from = '#[must_use]\n' + readSourceTextRustBlock(base, 'fn', name);
+    assert.equal(base.split(from).length, 2);
+    const to = readPortableSourceLintStyles(readPortableSourceParameterStyles(from).source).source;
+    assert.match(to, new RegExp('^pub const fn ' + name + '\\(', 'mu'));
+    assert.equal((to.match(/^#\[must_use\]$/gmu) ?? []).length, 1);
+    assert.equal(readPortableSourceLintStyles(to).source, to);
+    expected = expected.replace(from, to);
+  }
+  const styled = DecoratorSet.fromLino(document).decorate('emitter', { format: 'Rust', source: raw }).source;
+  assert.equal(styled, expected);
+  const additional = new DecoratorSet(DecoratorSet.fromLino(document).decorators.filter(row => row.id === id));
+  assert.equal(additional.decorate('emitter', { format: 'Rust', source: styled }).source, styled);
+  for (const name of [...raw.matchAll(/^pub fn ([A-Za-z_][A-Za-z_0-9]*)\(/gmu)].map(match => match[1]).filter(name => !names.includes(name))) {
+    assert.equal(readSourceTextRustBlock(styled, 'fn', name), readSourceTextRustBlock(base, 'fn', name), name + ': unchanged complete historical declaration');
+  }
+  const original = vm.runInNewContext(source.replace(/^export /gmu, '') + '\n({acceptJavaScriptTerminalTagGuard,acceptJavaScriptTagGuardSequence})');
+  const generated = vm.runInNewContext(emitJavaScript(checked).text + '\n({acceptJavaScriptTerminalTagGuard,acceptJavaScriptTagGuardSequence})');
+  for (const positive of [false, true]) for (const alternate of [false, true]) for (const terminal of [false, true]) for (const same of [false, true]) for (const duplicate of [false, true]) {
+    const args = [positive, alternate, terminal, same, duplicate], expected = positive && !alternate && terminal && same && !duplicate;
+    assert.equal(original.acceptJavaScriptTerminalTagGuard(...args), expected);
+    assert.equal(generated.acceptJavaScriptTerminalTagGuard(...args), expected);
+  }
+  for (const multiple of [false, true]) for (const terminal of [false, true]) {
+    assert.equal(original.acceptJavaScriptTagGuardSequence(multiple, terminal), multiple && terminal);
+    assert.equal(generated.acceptJavaScriptTagGuardSequence(multiple, terminal), multiple && terminal);
+  }
+});

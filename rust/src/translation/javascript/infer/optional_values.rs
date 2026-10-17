@@ -23,7 +23,7 @@ pub(super) fn optional(element: Term, absence: &str) -> Term {
     }
 }
 
-const fn kind(term: &Term) -> &str {
+pub(super) const fn kind(term: &Term) -> &str {
     match term {
         Term::Var(_) => "var",
         Term::Known(ty) => ty.kind(),

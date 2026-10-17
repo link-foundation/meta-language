@@ -23,7 +23,7 @@ use super::flow::{
 use super::lowering::{
     TagSwitch, default_rows, lower_tag_if, read_value_case_expression,
     read_value_switch_instruction, read_value_switch_position, statement_span, switch_tags,
-    tag_condition, tag_row,
+    tag_condition, tag_guard_sequence, tag_row,
 };
 use super::{
     BinaryOp, CaseTest, JavaScriptParser, ROOT, Result, SCtor, SData, SExpr, SField, SFn, SItem,
@@ -310,6 +310,9 @@ impl Lowering {
         let Some(statement) = list.get(index) else {
             return (ctx.fall)(self, scope);
         };
+        if let Some(guards) = tag_guard_sequence(list[index..].iter()) {
+            return self.compound(&guards, ctx, scope);
+        }
         let at_end = index + 1 == list.len();
         let exits = exits(statement);
         if !at_end && exits.fall == 0 {

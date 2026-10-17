@@ -1,8 +1,11 @@
 // Translate the complete JavaScript source-decision module without a native implementation copy.
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { DecoratorSet } from '../src/decorators.js';
 import { readPortableSourceParameterStyles, readPortableSourceLintStyles } from './portable-source-library-style.mjs';
 import { formatProductRuleSource } from './product-rule-style-corrections.mjs';
+import { readSourceTextRustBlock } from './source-text-byte-library-style.mjs';
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
@@ -15,15 +18,51 @@ const header = translated.text.split('\n').find(line => line.startsWith('#![allo
 if (!header) throw new Error('the checked emitter omitted its generated module header');
 const definitions = translated.definitions.join('\n\n').replace(/^pub fn /gmu, '#[must_use]\npub fn ');
 const raw = header + '\n\n' + definitions;
-const loans = readPortableSourceParameterStyles(raw);
-const reviewed = readPortableSourceLintStyles(loans.source);
-const styles = new DecoratorSet([{ id: 'javascript-surface-library-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions: [...loans.actions, ...reviewed.actions] }]);
 const styleFile = new URL('../../parity/self-translation/javascript-surface-rules-decorators.lino', import.meta.url);
-if (process.argv.includes('--check')) {
-  if (readFileSync(styleFile, 'utf8') !== styles.toLino()) throw new Error('JavaScript surface library styles are stale');
-} else writeFileSync(styleFile, styles.toLino());
+const args = process.argv.slice(2);
+const groups = [
+  {id: 'javascript-terminal-tag-guard-library-style', order: 100,
+    names: ['accept_java_script_terminal_tag_guard', 'accept_java_script_tag_guard_sequence'], flag: '--update-terminal-tag-guard-styles'},
+  {id: 'javascript-equality-inference-library-style', order: 110,
+    names: ['read_java_script_equality_inference_step'], flag: '--update-equality-inference-styles'},
+];
+assert.ok(args.length === 0 || args.length === 1 && ['--check', ...groups.map(group => group.flag)].includes(args[0]),
+  'use no arguments, --check, --update-terminal-tag-guard-styles, or --update-equality-inference-styles');
+const document = readFileSync(styleFile, 'utf8');
+const lines = document.match(/[^\n]*\n|[^\n]+$/gu) ?? [];
+assert.equal(Buffer.byteLength(lines[0]), 106060, 'the entire historical JavaScript surface style row retains its bytes');
+assert.equal(createHash('sha256').update(lines[0]).digest('hex'), 'ac9cf3ef2a0a4a4b16e59b9c2d33a2619fd8cbe44bf4042913f52419cc275e6a');
+assert.equal(Buffer.byteLength(lines[1]), 1287, 'the reviewed terminal guard pair remains byte exact');
+assert.equal(createHash('sha256').update(lines[1]).digest('hex'), '61cbbe05766356d057df68a3d53fcf20bfb257f42b9ea3a45430d9d0a0112650');
+const baseDocument = lines.filter(line => !groups.some(group => line.startsWith('(decorator ' + group.id + ' '))).join('');
+const base = DecoratorSet.fromLino(baseDocument).decorate('emitter', { format: 'Rust', source: raw }).source;
+let reviewed = base;
+let expectedDocument = baseDocument;
+for (const group of groups) {
+  const actions = [];
+  for (const name of group.names) {
+    const from = '#[must_use]\n' + readSourceTextRustBlock(base, 'fn', name);
+    assert.equal(base.split(from).length, 2, 'the source-owned function has one complete attribute and declaration context');
+    const loans = readPortableSourceParameterStyles(from);
+    const to = readPortableSourceLintStyles(loans.source).source;
+    if (from !== to) {
+      actions.push({op: 'replace', field: 'source', from, to});
+      reviewed = reviewed.replace(from, to);
+    }
+  }
+  const additional = new DecoratorSet([{id: group.id, level: 'emitter', order: group.order,
+    when: [['format', 'Rust']], actions}]).toLino();
+  const actual = lines.filter(line => line.startsWith('(decorator ' + group.id + ' '));
+  assert.ok(actual.length <= 1, 'each scoped source style has one exact row');
+  if (actual[0] !== additional) assert.equal(args[0], group.flag, 'scoped JavaScript source styles are stale; run ' + group.flag);
+  expectedDocument += (expectedDocument.endsWith('\n') ? '' : '\n') + additional;
+  assert.equal(DecoratorSet.fromLino(additional).decorate('emitter', {format: 'Rust', source: reviewed}).source,
+    reviewed, 'the additional source styles are idempotent');
+}
+if (groups.some(group => group.flag === args[0])) writeFileSync(styleFile, expectedDocument);
+else assert.equal(document, expectedDocument, 'all recorded JavaScript source style rows retain their exact order and bytes');
 const decorated = DecoratorSet.fromLino(readFileSync(styleFile, 'utf8')).decorate('emitter', { format: 'Rust', source: raw }).source;
-if (decorated !== reviewed.source) throw new Error('recorded JavaScript surface styles must reproduce the complete reviewed source');
+assert.equal(decorated, reviewed, 'recorded source styles reproduce only the actual scoped declarations');
 const text = '// Generated from js/src/translation/javascript-surface-rules.js by\n'
   + '// js/scripts/generate-javascript-surface-rules.mjs. Do not edit by hand.\n'
   + formatProductRuleSource(decorated);

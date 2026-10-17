@@ -24,7 +24,8 @@ import { markSharedReferenceTypes } from './javascript-cells.js';
 import { readJavaScriptProductIndex, requiresJavaScriptProductProof } from './javascript-products.js';
 import { acceptJavaScriptArrayTupleContext } from './product-source-rules.js';
 import { readJavaScriptMethodReceiverKind, readJavaScriptMethodArgumentKind,
-  readJavaScriptStringMethodResultForm, readJavaScriptIncludesReceiverForm } from './javascript-surface-rules.js';
+  readJavaScriptStringMethodResultForm, readJavaScriptIncludesReceiverForm,
+  readJavaScriptEqualityInferenceStep } from './javascript-surface-rules.js';
 
 const ROOT = 'crate';
 const LOGICAL = new Set(['and', 'or']);
@@ -88,6 +89,7 @@ class Inference {
     this.indices = [];
     this.cells = new Map();
     this.arithmetic = [];
+    this.equalities = [];
     this.conditions = [];
     this.joins = [];
     this.results = [];
@@ -468,6 +470,12 @@ class Inference {
         this.recordSpreads.splice(this.recordSpreads.indexOf(constraint), 1);
         progress = true;
       }
+      for (const constraint of [...this.equalities]) {
+        if (this.equalityStep(constraint, false)) {
+          this.equalities.splice(this.equalities.indexOf(constraint), 1);
+          progress = true;
+        }
+      }
       // Preserve the original string default only after actual call arguments,
       // annotations and other constraints have selected the receiver.
       if (!progress && this.includes.length) {
@@ -512,6 +520,10 @@ class Inference {
         this.arithmeticStep(this.arithmetic.shift(), true);
         progress = true;
       }
+      if (!progress && this.equalities.length) {
+        this.equalityStep(this.equalities.shift(), true);
+        progress = true;
+      }
       if (!progress) {
         const condition = this.conditions.find(({ term }) => this.resolve(term).kind === 'var');
         if (condition) {
@@ -554,6 +566,13 @@ class Inference {
     if (!force && (this.resolve(a).kind === 'var' || this.resolve(b).kind === 'var')) return false;
     this.unify(a, b, where);
     this.unify(result, a, where);
+    return true;
+  }
+
+  equalityStep({ operation, left, right, where }, force) {
+    const step = readJavaScriptEqualityInferenceStep(operation, this.resolve(left).kind, this.resolve(right).kind, force);
+    if (step === 'defer') return false;
+    if (step === 'unify') this.unify(left, right, where);
     return true;
   }
 
@@ -963,7 +982,8 @@ class Inference {
       return this.join(left, right, node.span);
     }
     if (ORDER.has(node.op)) {
-      this.unify(left, right, node.span);
+      if (node.op === 'eq' || node.op === 'ne') this.equalities.push({ operation: node.op, left, right, where: node.span });
+      else this.unify(left, right, node.span);
       return BOOL;
     }
     if (ARITHMETIC.has(node.op)) {

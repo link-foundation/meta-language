@@ -326,3 +326,44 @@ pub fn read_java_script_string_method_result_form(operation: &str) -> String {
         String::from("string")
     }
 }
+
+#[must_use]
+pub const fn accept_java_script_terminal_tag_guard(
+    positive: bool,
+    alternate: bool,
+    terminal: bool,
+    same_binding: bool,
+    duplicate: bool,
+) -> bool {
+    (((positive && !alternate) && terminal) && same_binding) && !duplicate
+}
+
+#[must_use]
+pub const fn accept_java_script_tag_guard_sequence(
+    multiple: bool,
+    terminal_remainder: bool,
+) -> bool {
+    multiple && terminal_remainder
+}
+
+#[must_use]
+pub fn read_java_script_equality_inference_step(
+    operation: &str,
+    left: &str,
+    right: &str,
+    force: bool,
+) -> String {
+    if (operation != "eq") && (operation != "ne") {
+        String::from("unify")
+    } else if (left == "var") || (right == "var") {
+        if force {
+            String::from("unify")
+        } else {
+            String::from("defer")
+        }
+    } else if (left == "option") || (right == "option") {
+        String::from("independent")
+    } else {
+        String::from("unify")
+    }
+}
