@@ -49,6 +49,15 @@ export const reviewedOverlayProviderPolicy = {
         { module: 'translation/emit-javascript.js', sourceSha256: 'ef5e10a72d358f7c98fe3ac0dbfc9699a5b2499a86911c851a1300693e84b5f6' },
         { module: 'translation/emit-rust.js', sourceSha256: 'c43c340c38769be58bc25b7c5ff806cab041a08600eef34bcf2154c1a9fdd7fe' },
       ] },
+    { sourceCommit: 'b87d3499746d56e8f303464343c8edfecef84a8a',
+      review: "Reviewed the complete B66 provider diff against fcad9384b8760e15ab7b065cb91d2423c5e1b561: typed-program-checked-projection.js retains the authenticated sourceDiagnosticAttributes field on actual function projections; translation/emit-javascript.js imports the shared normalization getter and records its unchanged diagnostic-only statement only for functions carrying that validated facet. Removing exactly that projection line and the emitter import plus conditional report block restores both complete preceding provider sources byte for byte. The other three providers, all exact overlay hooks and every certificate, raw-owner, descriptor and saved-LinkId requirement remain unchanged.",
+      providers: [
+        { module: 'typed-program-links.js', sourceSha256: 'a0f46c4fdca3ed9bb729da7a701266bf8d7609ba142bc3009cd6eafe39983458' },
+        { module: 'typed-program-links-validation.js', sourceSha256: '0d6e3b6a2b9883ac4f50b4383fe07823cda091961e72922d21a8821ba86226e3' },
+        { module: 'typed-program-checked-projection.js', sourceSha256: '14523d23866117a0a39157430ed84d64ad525f07214c0b44810280db526d69a1' },
+        { module: 'translation/emit-javascript.js', sourceSha256: '5e630d46409f11624bc1def8025beb9870cd2f8e51059e83a7cda8ad9deda351' },
+        { module: 'translation/emit-rust.js', sourceSha256: 'c43c340c38769be58bc25b7c5ff806cab041a08600eef34bcf2154c1a9fdd7fe' },
+      ] },
   ],
 };
 
