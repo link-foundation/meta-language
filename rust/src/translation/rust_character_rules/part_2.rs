@@ -231,6 +231,22 @@ pub fn decode_rust_character_literal(units: &[f64], start: f64) -> self::RustCha
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_character_expression_type(kind: &str) -> String {
+    if kind == "byteChar" {
+        String::from("u8")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_numeric_literal_negation(language: &str, type_kind: &str, signed: bool) -> bool {
+    ((language != "Rust") || (type_kind != "fixed")) || signed
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum MlReadSourceTextByteLengthLoop1Result {
     MlReadSourceTextByteLengthLoop1Done(f64),

@@ -25,6 +25,7 @@ import {prepareRustPrimitiveOwnerProof,checkRustPrimitiveOwnerProof} from './rus
 import {prepareRustOwnedLocalStateProof,checkRustOwnedLocalStateProof,checkRustOwnedLocalStateContainers} from './rust-owned-local-state.js';
 import {checkRustConstFunctionProof,checkRustConstFunctionContainers} from './rust-const-functions.js';
 import {checkRustDiagnosticAttributePlacement} from './rust-diagnostic-attributes.js';
+import { acceptRustNumericLiteralNegation } from './rust-character-rules.js';
 import { acceptArgumentCount, acceptCheckedTypeQueryOperand, acceptTypeQueryOperand, readTypeQueryResult, acceptJavaScriptOptionalTupleContext } from './frontend-rules.js';
 import { readParameterDefaultValueStep, requireParameterDefaultArgumentBindings } from './parameter-default-rules.js';
 import { normaliseProof } from './proof.js';
@@ -753,7 +754,16 @@ class Checker {
           return { k: 'unary', op: 'not', arg: this.booleanValue(this.expr(node.arg, env, path, undefined), node.span), type: BOOL };
         }
         if (node.op === 'neg') {
-          if (node.arg.k === 'num') return this.expr({ ...node.arg, negative: !node.arg.negative, span: node.span }, env, path, expected, allowLiteral);
+          if (node.arg.k === 'num') {
+            if (!acceptRustNumericLiteralNegation(this.language, node.arg.type?.kind ?? '', node.arg.type?.signed === true)) {
+              throw typeError(`negation of ${typeKey(node.arg.type)}`, node.span);
+            }
+            const literal = this.expr({ ...node.arg, negative: !node.arg.negative, span: node.span }, env, path, expected, allowLiteral);
+            if (!acceptRustNumericLiteralNegation(this.language, literal.type.kind, literal.type.signed === true)) {
+              throw typeError(`negation of ${typeKey(literal.type)}`, node.span);
+            }
+            return literal;
+          }
           const arg = this.numberValue(this.expr(node.arg, env, path, expected && isNumeric(expected) ? expected : undefined), node.span);
           if (isFloat(arg.type)) return { k: 'unary', op: 'neg', arg, type: FLOAT, semantics: 'ieee' };
           if (arg.type.kind === 'nat' && this.language === 'JavaScript') {

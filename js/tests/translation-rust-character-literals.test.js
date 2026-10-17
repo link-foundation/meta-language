@@ -123,9 +123,18 @@ test('unsupported suffixes and character semantics refuse without scalar or Stri
   }
   for (const literal of ["'{'", "b'}'", String.raw`'\u{1F600}'`, String.raw`b'\xFF'`]) {
     const source = 'fn value()->u32{' + literal + '}';
-    assert.throws(() => parseRust(source), error => error.kind === 'unsupported'
-      && error.reason === 'character literal: characters are outside the portable core'
-      && error.span.start === source.indexOf(literal) && error.span.end === source.indexOf(literal) + literal.length);
+    if (literal.startsWith('b')) {
+      // Preserve the original library-only input. Admitted byte expressions now
+      // reach the existing required-main boundary; complete type checks follow
+      // in the paired byte-expression controls.
+      assert.throws(() => parseRust(source), error => error.kind === 'syntax'
+        && error.reason === 'a Rust program needs fn main'
+        && error.span.start === source.length && error.span.end === source.length);
+    } else {
+      assert.throws(() => parseRust(source), error => error.kind === 'unsupported'
+        && error.reason === 'character literal: characters are outside the portable core'
+        && error.span.start === source.indexOf(literal) && error.span.end === source.indexOf(literal) + literal.length);
+    }
     const pattern = 'fn choose(x:u8)->u8{match x{' + literal + '=>1,_=>0}}';
     assert.throws(() => parseRust(pattern), error => error.kind === 'unsupported'
       && error.reason === 'character pattern: characters are outside the portable core');

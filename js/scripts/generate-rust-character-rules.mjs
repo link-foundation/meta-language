@@ -300,7 +300,16 @@ export async function generateRustCharacterRules({ check = false, native = false
     sourceClosure: { source: closed.closure, sourceSha256: digest(closed.closure), inputs: closed.captures },
     input: 'Original dense primitive Number UTF16 source units and an absolute integral Number offset.',
     output: 'Closed character or byte-character token/refusal plans with absolute source boundaries; not typed char or byte admission.',
-    boundary: 'Nonliteral apostrophes remain on the original lifetime/label path. Suffixes remain explicitly unsupported in this bounded profile. Character-to-String, character-to-number and byte-to-fixed semantic coercions are not admitted.' };
+    boundary: 'Nonliteral apostrophes remain on the original lifetime/label path. Suffixes remain explicitly unsupported in this bounded profile. Character-to-String, character-to-number and byte-to-fixed semantic coercions are not admitted.',
+    expressionInterpretation: {
+      model: 'Rust byte literal expressions 1',
+      lexicalContractFields: ['input', 'output', 'boundary'],
+      decisions: ['readRustCharacterExpressionType', 'acceptRustNumericLiteralNegation'],
+      sourceType: 'u8',
+      boundary: 'An elected byte literal already has the fixed unsigned eight bit source type. Unicode character expressions and all character patterns remain outside this interpretation. Numeric negation rejects Rust unsigned fixed types before and after direct literal folding; other language and signed literal rules remain unchanged.',
+      references: ['https://doc.rust-lang.org/reference/expressions/literal-expr.html#byte-literal-expressions',
+        'https://doc.rust-lang.org/reference/expressions/operator-expr.html#negation-operators'],
+    } };
   for (const relative of ['js/src/translation/data/rust-character-rules.lino', 'rust/src/data/rust-character-rules.lino']) {
     const file = new URL(relative, root);
     if (check) checkProjectData(file, policy);

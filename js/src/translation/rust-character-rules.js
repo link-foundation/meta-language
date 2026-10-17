@@ -101,3 +101,13 @@ export function decodeRustCharacterLiteral(units, start) {
   if (value < 0) return { $: 'malformed', at: contentStart, end: Math.min(contentStart + 2, units.length) };
   return finishRustCharacterLiteral(units, byte, value, contentStart, contentStart + 2);
 }
+
+/** @param {string} kind @returns {string} */
+export function readRustCharacterExpressionType(kind) {
+  return kind === 'byteChar' ? 'u8' : '';
+}
+
+/** @param {string} language @param {string} typeKind @param {boolean} signed @returns {boolean} */
+export function acceptRustNumericLiteralNegation(language, typeKind, signed) {
+  return language !== 'Rust' || typeKind !== 'fixed' || signed;
+}

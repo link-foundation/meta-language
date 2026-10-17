@@ -48,6 +48,7 @@ import {createRustConstFunctionProof} from './rust-const-functions.js';
 import {planRustDiagnosticAttribute} from './rust-diagnostic-attribute-rules.js';
 import {createRustDiagnosticAttributeFacet} from './rust-diagnostic-attributes.js';
 import { acceptRustCastFollowingToken, readRustCastSyntaxMessage } from './rust-cast-syntax-rules.js';
+import { readRustCharacterExpressionType } from './rust-character-rules.js';
 
 const ACCEPTED_DERIVES = new Set(['Clone', 'Copy', 'Debug', 'PartialEq', 'Eq', 'Hash', 'PartialOrd', 'Ord']);
 const ACCEPTED_LINTS = new Set(['allow', 'warn', 'deny', 'expect', 'must_use', 'inline']);
@@ -1200,6 +1201,13 @@ class RustParser {
     if (token.kind === 'macro') {
       c.next();
       return this.expressionMacro(token, path);
+    }
+    const characterTypeName = readRustCharacterExpressionType(token.kind);
+    if (characterTypeName) {
+      const type = rustFixedType(characterTypeName);
+      if (!type) throw unsupported(`character literal type ${characterTypeName}`, 'a character expression needs its represented fixed type', span(token, token));
+      c.next();
+      return { k: 'num', value: token.value, type, span: span(token, token) };
     }
     if (token.kind === 'char' || token.kind === 'byteChar' || c.is('\'')) throw unsupported('character literal', 'characters are outside the portable core', span(token, token));
     if (c.is('(')) {
