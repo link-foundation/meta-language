@@ -42,6 +42,35 @@ pub fn read_surface_reference_emission_refusal(operation: &str) -> String {
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn require_surface_reference_token_after_elimination(
+    window: &[String],
+    closure: bool,
+    mutating_method: bool,
+    eliminated: bool,
+) -> bool {
+    {
+        let required =
+            crate::translation::surface_reference_analysis_rules::require_surface_reference_token(
+                window,
+                closure,
+                mutating_method,
+            );
+        (required
+            && !(((eliminated
+                && ((crate::translation::surface_reference_analysis_rules::read_required_text_fact(
+                    window, 0f64,
+                )) == "punct"))
+                && ((crate::translation::surface_reference_analysis_rules::read_required_text_fact(
+                    window, 1f64,
+                )) == "="))
+                && ((crate::translation::surface_reference_analysis_rules::read_required_text_fact(
+                    window, 3f64,
+                )) == "]")))
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MlAcceptSurfaceReferenceMutatingMethodLoop1Result {
     MlAcceptSurfaceReferenceMutatingMethodLoop1Done,

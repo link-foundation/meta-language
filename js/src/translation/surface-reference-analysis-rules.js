@@ -448,3 +448,14 @@ export function readSurfaceReferenceEmissionRefusal(operation) {
   if (operation === 'reference allocation') return 'this allocation needs the shared reference and slot runtime before target emission';
   return '';
 }
+
+/** A proved source interval can remove an indexed plain assignment. All eight
+ * original token facts are still validated; other reference triggers survive.
+ * @param {string[]} window @param {boolean} closure
+ * @param {boolean} mutatingMethod @param {boolean} eliminated
+ * @returns {boolean} */
+export function requireSurfaceReferenceTokenAfterElimination(window, closure, mutatingMethod, eliminated) {
+  const required = requireSurfaceReferenceToken(window, closure, mutatingMethod);
+  return required && !(eliminated && readRequiredTextFact(window, 0) === 'punct'
+    && readRequiredTextFact(window, 1) === '=' && readRequiredTextFact(window, 3) === ']');
+}

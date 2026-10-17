@@ -2218,6 +2218,9 @@ rebinding. Both statement representations preserve the selected source owners.
 The whole planner translates automatically, ships as an inspectable linked
 program, and rechecks after text and binary reload. Native execution remains a
 CI obligation; sparse writes and loop-carried mutation remain required gaps.
+Reference selection discards only the indexed plain-assignment token inside its
+proved removed-source interval. Other writes, nested argument mutations,
+captured state and identity observations retain their existing triggers.
 
 The port is done by meta-language itself. A self-translation tool, a library
 API and a CLI command in both packages, reads JavaScript or TypeScript into

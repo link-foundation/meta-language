@@ -10,7 +10,7 @@ use super::{Result, SEffect, SExpr, SItem, SProgram, Span, Token, TokenKind, Typ
 use crate::translation::surface_raw_metadata_rules::accept_shared_surface_reference_kind;
 use crate::translation::surface_reference_analysis_rules::{
     accept_surface_reference_closure_token, accept_surface_reference_mutating_method,
-    has_surface_structural_identity, require_surface_reference_token,
+    has_surface_structural_identity, require_surface_reference_token_after_elimination,
 };
 use crate::translation::surface_reference_facts::create_surface_reference_facts;
 
@@ -86,11 +86,12 @@ pub(super) fn requires_reference_semantics(
             text(tokens.get(position + 2)),
         ]
         .map(str::to_owned);
-        require_surface_reference_token(
+        require_surface_reference_token_after_elimination(
             &window,
             closure,
             !eliminated_method
                 && accept_surface_reference_mutating_method(&token.value, mutating_methods()),
+            eliminated_method,
         )
     })
 }

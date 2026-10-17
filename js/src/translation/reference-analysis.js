@@ -7,7 +7,7 @@ import {
   acceptSurfaceReferenceClosureToken,
   acceptSurfaceReferenceMutatingMethod,
   hasSurfaceStructuralIdentity,
-  requireSurfaceReferenceToken,
+  requireSurfaceReferenceTokenAfterElimination,
 } from './surface-reference-analysis-rules.js';
 
 /** Actual source-method aliases of the existing linked mutating operations. */
@@ -29,13 +29,14 @@ export function requiresReferenceSemantics(source, eliminatedOperations = []) {
     const value = token.value ?? '';
     // An accepted source rewrite supplies only its removed method syntax,
     // ending before the first argument. Every other token observation stays
-    // intact, including nested mutation, assignment and closure triggers.
+    // intact, including nested mutations and closure triggers. The shared
+    // selector also removes a plain indexed assignment inside its proved span.
     const eliminatedMethod = eliminatedOperations.some(operation => operation.start <= token.start && token.end <= operation.end);
-    if (requireSurfaceReferenceToken([
+    if (requireSurfaceReferenceTokenAfterElimination([
       token.kind, value,
       tokens[index - 1]?.kind ?? '', tokens[index - 1]?.value ?? '', tokens[index - 2]?.value ?? '',
       tokens[index + 1]?.kind ?? '', tokens[index + 1]?.value ?? '', tokens[index + 2]?.value ?? '',
-    ], closure, !eliminatedMethod && acceptSurfaceReferenceMutatingMethod(value, mutatingMethods),
+    ], closure, !eliminatedMethod && acceptSurfaceReferenceMutatingMethod(value, mutatingMethods), eliminatedMethod,
     )) return true;
   }
   return false;

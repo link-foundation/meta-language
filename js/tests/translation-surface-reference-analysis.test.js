@@ -11,7 +11,8 @@ import { checkProgram } from '../src/translation/check.js';
 import { emitJavaScript } from '../src/translation/emit-javascript.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { createSurfaceReferenceColumns, createSurfaceReferenceFacts } from '../src/translation/surface-reference-facts.js';
-import { createTypedProgramLinks, decodeTypedProgramLinks } from '../src/typed-program-links.js';
+import { createTypedProgramLinks, decodeTypedProgramLinks, encodeTypedProgramLinks } from '../src/typed-program-links.js';
+import { encodeLinkNetworkBinary, decodeLinkNetworkBinary } from '../src/link-network-binary.js';
 import { LinkNetwork } from '../src/network.js';
 import { recheckLinkedTypedProgram } from '../src/typed-program-checked-projection.js';
 import frontendCases from './fixtures/translation-cases/frontend-javascript.mjs';
@@ -177,11 +178,16 @@ test('selected allocation and member reads survive complete checked surface rech
 test('the entire reference rule module checks and emits every declaration with executable original-oracle controls', () => {
   const source = readFileSync(new URL('../src/translation/surface-reference-analysis-rules.js', import.meta.url), 'utf8');
   const names = [...source.matchAll(/^(?:export )?function (\w+)\(/gmu)].map(match => match[1]);
-  assert.equal(names.slice(0, -2).length, 21, 'all prior reference declarations remain before the two appended emission guards');
-  assert.equal(names.length, 23);
+  const priorNames = names.slice(0, -1);
+  assert.equal(priorNames.slice(0, -2).length, 21, 'all prior reference declarations remain before the two appended emission guards');
+  assert.equal(priorNames.length, 23);
+  assert.deepEqual(priorNames.slice(-2), ['readSurfaceReferenceEmissionOperation', 'readSurfaceReferenceEmissionRefusal']);
+  assert.deepEqual(names.slice(-1), ['requireSurfaceReferenceTokenAfterElimination']);
+  assert.equal(names.length, 24);
   const closed = readSurfaceReferenceSourceModule(source);
   const allNames = [...closed.matchAll(/^(?:export )?function (\w+)\(/gmu)].map(match => match[1]);
-  assert.equal(allNames.length, 29, 'all23 reference functions and the complete actual6 required-column functions are retained');
+  assert.equal(allNames.slice(0, -1).length, 29, 'all23 reference functions and the complete actual6 required-column functions are retained');
+  assert.equal(allNames.length, 30);
   const surface = parseJavaScript(closed, {referenceSemantics: false});
   assert.equal(Object.hasOwn(surface, 'referenceSemantics'), false);
   const checked = checkProgram(surface);
@@ -208,6 +214,20 @@ test('the entire reference rule module checks and emits every declaration with e
     const operation = readSurfaceReferenceEmissionOperation(kind, receiver, allocation);
     assert.equal(context.readSurfaceReferenceEmissionOperation(kind, receiver, allocation), operation);
     assert.equal(context.readSurfaceReferenceEmissionRefusal(operation), readSurfaceReferenceEmissionRefusal(operation));
+  }
+  const packet = encodeTypedProgramLinks(checked), javascript = emitJavaScript(checked);
+  for (const network of [LinkNetwork.fromLino(packet.network.toLino()), decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))]) {
+    const restored = recheckLinkedTypedProgram(decodeTypedProgramLinks(network, packet.root), {wholeProgram: true});
+    assert.deepEqual([...restored.declarations.keys()], [...checked.declarations.keys()]);
+    const replay = emitRust(restored, {arrayConsumption: true});
+    for (const field of ['text', 'definitions', 'preludes', 'mappings', 'assumptions', 'encodings']) assert.deepEqual(replay[field], rust[field]);
+    assert.deepEqual(emitJavaScript(restored), javascript);
+    const context = {};
+    runInNewContext(javascript.text, context, {timeout: 1000});
+    const window = ['punct', '=', 'punct', ']', 'position', 'identifier', 'value', ';'];
+    assert.equal(context.requireSurfaceReferenceToken(window, false, false), true);
+    assert.equal(context.requireSurfaceReferenceTokenAfterElimination(window, false, false, false), true);
+    assert.equal(context.requireSurfaceReferenceTokenAfterElimination(window, false, false, true), false);
   }
 });
 
