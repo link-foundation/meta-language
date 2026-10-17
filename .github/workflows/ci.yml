@@ -586,7 +586,7 @@ jobs:
     name: Formal AI Workloads
     needs: candidates
     runs-on: ubuntu-latest
-    # The Rust workloads build formal-ai and its dependencies from scratch.
+    # Every candidate runs fresh consumers; the optional target cache reuses build outputs only.
     timeout-minutes: 120
     concurrency:
       group: issue-195-formal-ai-workloads-${{ github.ref }}
@@ -638,6 +638,38 @@ jobs:
           name: issue-195-candidates-${{ github.sha }}
           path: .issue-195-work/candidates
 
+      # Candidate identity is independently checked before selecting a build
+      # cache. The runner repeats checksum and installed-path validation.
+      - name: Identify the exact Formal AI build cache
+        id: formal-ai-cache-key
+        shell: bash
+        env:
+          CACHE_CONTEXT: formal-ai-target-v1-${{ runner.os }}-${{ runner.arch }}-rust1.99.0-opt3-debug0-incremental0-${{ hashFiles('parity/fixtures/formal-ai-workloads.lino', 'js/scripts/run-formal-ai-workloads.mjs', 'js/scripts/issue-195-formal-ai-rust-probe.mjs') }}
+        run: |
+          set -euo pipefail
+          candidate_crates=(.issue-195-work/candidates/*.crate)
+          [ "${#candidate_crates[@]}" -eq 1 ]
+          candidate_crate="${candidate_crates[0]}"
+          (cd "$(dirname "$candidate_crate")" && sha256sum --check "$(basename "$candidate_crate").sha256")
+          candidate_digest="$(sha256sum "$candidate_crate" | cut -d ' ' -f 1)"
+          compiler_identity="$(rustc -vV)"
+          printf '%s\n' "$compiler_identity" | grep -Fx 'release: 1.99.0'
+          compiler_digest="$(printf '%s\n' "$compiler_identity" | sha256sum | cut -d ' ' -f 1)"
+          dependency_key="$CACHE_CONTEXT-$compiler_digest"
+          printf 'dependency_key=%s\nkey=%s\n' "$dependency_key" "$dependency_key-$candidate_digest" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Formal AI build outputs
+        id: formal-ai-target-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            ${{ runner.temp }}/issue-195-formal-ai-build/target/debug
+            ${{ runner.temp }}/issue-195-formal-ai-build/target/.rustc_info.json
+            ${{ runner.temp }}/issue-195-formal-ai-build/target/CACHEDIR.TAG
+          key: ${{ steps.formal-ai-cache-key.outputs.key }}
+          restore-keys: |
+            ${{ steps.formal-ai-cache-key.outputs.dependency_key }}-
+
       - name: Run the link-assistant/formal-ai workloads on the exact artifacts
         shell: bash
         run: >-
@@ -645,6 +677,7 @@ jobs:
           --npm-tarball "$(ls .issue-195-work/candidates/*.tgz)"
           --crate "$(ls .issue-195-work/candidates/*.crate)"
           --work-dir "$RUNNER_TEMP/issue-195-formal-ai-workloads"
+          --cargo-target-dir "$RUNNER_TEMP/issue-195-formal-ai-build/target"
           --out issue-195-artifacts/formal-ai-workloads/report.lino
 
       # The report is uploaded even when a workload fails: the aggregate validates it and
@@ -670,11 +703,23 @@ jobs:
           if-no-files-found: ignore
           retention-days: 30
 
+      # Save before teardown can prune build products. Every workload above
+      # still executes on a hit; neither consumers nor results enter this cache.
+      - name: Save Formal AI build outputs
+        if: ${{ !cancelled() && steps.formal-ai-cache-key.outcome == 'success' && steps.formal-ai-target-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            ${{ runner.temp }}/issue-195-formal-ai-build/target/debug
+            ${{ runner.temp }}/issue-195-formal-ai-build/target/.rustc_info.json
+            ${{ runner.temp }}/issue-195-formal-ai-build/target/CACHEDIR.TAG
+          key: ${{ steps.formal-ai-cache-key.outputs.key }}
+
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
         working-directory: ${{ github.workspace }}
         shell: bash
-        run: node scripts/clean-caches.mjs --event ci-teardown --target-dir "$RUNNER_TEMP/issue-195-formal-ai-workloads/formal-ai-target"
+        run: env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/clean-caches.mjs --event ci-teardown --target-dir "$RUNNER_TEMP/issue-195-formal-ai-workloads/formal-ai-target" --target-dir "$RUNNER_TEMP/issue-195-formal-ai-build/target"
 
   # The checkpoint evidence runs as separate stage jobs (js/scripts/issue-195-evidence-stages.mjs),
   # each on its own runner with only the toolchains it uses, and each uploading

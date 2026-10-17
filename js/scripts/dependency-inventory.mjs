@@ -332,11 +332,12 @@ function collectGenerators(root, items) {
 }
 
 function actionSource(action, ref) {
+  const repository = action.split('/').slice(0, 2).join('/');
   if (action === 'dtolnay/rust-toolchain' && versionParts(ref) && /^\d/u.test(ref)) {
     return { compare: 'version', source: { type: 'github-release', repository: 'rust-lang/rust' } };
   }
-  if (/^v\d+$/u.test(ref)) return { compare: 'major', source: { type: 'github-release', repository: action } };
-  if (/^v?\d+\.\d+/u.test(ref)) return { compare: 'version', source: { type: 'github-release', repository: action } };
+  if (/^v\d+$/u.test(ref)) return { compare: 'major', source: { type: 'github-release', repository } };
+  if (/^v?\d+\.\d+/u.test(ref)) return { compare: 'version', source: { type: 'github-release', repository } };
   return { compare: 'floating', source: { type: 'none' } };
 }
 

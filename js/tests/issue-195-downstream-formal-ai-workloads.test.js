@@ -6,7 +6,10 @@
 // part and records the JavaScript observations. The Rust suite
 // (rust/tests/unit/issue_195_downstream_formal_ai_workloads.rs) reads the crate part.
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+import { tmpdir } from 'node:os';
+import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
 import { test } from 'node:test';
 import { readProjectData } from '../scripts/project-data.mjs';
 
@@ -312,6 +315,82 @@ test('the workload runner bounds the formal-ai cargo build and reports its progr
   assert.match(runner, /\] running for .*resources\(\).*last output/u);
   assert.match(runner, /os\.freemem\(\) >= MEMORY_FLOOR_BYTES/u);
   assert.match(runner, /process\.kill\(-child\.pid, 'SIGKILL'\)/u);
+
+  const selectorSource = /\nfunction formalAiCargoTargetDirectory\([^]*?\n\}\n/u.exec(runner)?.[0];
+  assert.ok(selectorSource, 'the explicit target selector is inspectable without starting workloads');
+  const selectTarget = new Function('path', 'lstatSync', 'realpathSync', `${selectorSource}\nreturn formalAiCargoTargetDirectory;`)(path, lstatSync, realpathSync);
+  const scratch = realpathSync(mkdtempSync(path.join(tmpdir(), 'meta-language-formal-ai-cache-control-')));
+  try {
+    const temporary = path.join(scratch, 'runner-temp'); mkdirSync(temporary);
+    const work = path.join(temporary, 'issue-195-formal-ai-workloads');
+    const owner = path.join(temporary, 'issue-195-formal-ai-build');
+    const target = path.join(owner, 'target');
+    const environment = { CI: 'true', GITHUB_ACTIONS: 'true', RUNNER_TEMP: temporary, CARGO_TARGET_DIR: '/unrelated', CARGO_BUILD_TARGET_DIR: '/also-unrelated' };
+    assert.equal(selectTarget(work, null, {}), path.join(work, 'formal-ai-target'));
+    assert.equal(selectTarget(work, null, environment), path.join(work, 'formal-ai-target'), 'ambient Cargo storage never selects a cache');
+    assert.equal(selectTarget(work, target, environment), target);
+    for (const changed of [ { CI: 'false' }, { GITHUB_ACTIONS: 'false' }, { RUNNER_TEMP: '' }, { RUNNER_TEMP: 'relative' }, { RUNNER_TEMP: temporary + path.sep + '.' } ]) {
+      assert.throws(() => selectTarget(work, target, { ...environment, ...changed }), /RUNNER_TEMP/u);
+    }
+    for (const requested of [undefined, '', 'relative', temporary, owner, target + path.sep + '..', path.join(scratch, 'other-target')]) {
+      assert.throws(() => selectTarget(work, requested, environment), /exact task-owned/u);
+    }
+    for (const overlapping of [temporary, owner, target, path.join(target, 'work')]) {
+      assert.throws(() => selectTarget(overlapping, target, environment), /must not contain/u);
+    }
+    const outside = path.join(scratch, 'outside'); mkdirSync(outside);
+    symlinkSync(outside, owner, process.platform === 'win32' ? 'junction' : 'dir');
+    assert.throws(() => selectTarget(work, target, environment), /symlink/u);
+    rmSync(owner); mkdirSync(owner);
+    symlinkSync(outside, target, process.platform === 'win32' ? 'junction' : 'dir');
+    assert.throws(() => selectTarget(work, target, environment), /symlink/u);
+    rmSync(target); writeFileSync(target, 'not a target directory');
+    assert.throws(() => selectTarget(work, target, environment), /non-directory/u);
+    rmSync(target); mkdirSync(target);
+    assert.equal(selectTarget(work, target, environment), target);
+  } finally { rmSync(scratch, { recursive: true, force: true }); }
+  assert.match(runner, /const cargoTargetDirectory = formalAiCargoTargetDirectory\(workDirectory, option\('--cargo-target-dir', null\)\);/u);
+  assert.match(runner, /const target = cargoTargetDirectory;/u);
+  assert.match(runner, /await rm\(workDirectory, \{ recursive: true, force: true \}\);/u);
+  assert.match(runner, /const cache = path\.join\(workDirectory, 'npm-cache'\);/u);
+  assert.match(runner, /const freshCache = !existsSync\(cache\);/u);
+  assert.match(runner, /'update', '-p', 'meta-language'/u);
+  assert.match(runner, /'metadata', '--format-version', '1'/u);
+  assert.match(runner, /await refreshSelfAstCensus\(formalAiDirectory, directory, configuration, environment\)/u);
+  assert.match(runner, /'test', '--no-fail-fast'/u);
+  assert.match(runner, /metaLanguagePackages\.length === 1/u);
+  assert.match(runner, /resolution\.manifestPath\?\.startsWith\(resolution\.unpackedDirectory\)/u);
+
+  const job = parseWorkflow(readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8'))
+    .find(entry => entry.id === 'formal-ai-workloads');
+  const names = job.steps.map(step => step.name);
+  const identify = job.steps.find(step => step.name === 'Identify the exact Formal AI build cache');
+  const restore = job.steps.find(step => step.name === 'Restore Formal AI build outputs');
+  const execute = job.steps.find(step => step.name === 'Run the link-assistant/formal-ai workloads on the exact artifacts');
+  const save = job.steps.find(step => step.name === 'Save Formal AI build outputs');
+  const cleanup = job.steps.find(step => step.name === 'Clean regenerable caches');
+  for (const step of [identify, restore, execute, save, cleanup]) assert.ok(step);
+  assert.ok(names.indexOf(identify.name) < names.indexOf(restore.name));
+  assert.ok(names.indexOf(restore.name) < names.indexOf(execute.name));
+  assert.ok(names.indexOf(execute.name) < names.indexOf(save.name));
+  assert.ok(names.indexOf(save.name) < names.indexOf(cleanup.name));
+  assert.match(identify.text, /runner\.os.*runner\.arch.*rust1\.99\.0-opt3-debug0-incremental0/u);
+  assert.match(identify.text, /hashFiles\('parity\/fixtures\/formal-ai-workloads\.lino'/u);
+  assert.match(identify.run, /sha256sum --check/u);
+  assert.match(identify.run, /compiler_identity="\$\(rustc -vV\)"/u);
+  assert.ok(identify.run.includes('$dependency_key-$candidate_digest'));
+  for (const step of [restore, save]) {
+    assert.match(step.text, /path: \|\n\s+\$\{\{ runner\.temp \}\}\/issue-195-formal-ai-build\/target\/debug\n/u);
+    assert.match(step.text, /target\/\.rustc_info\.json/u);
+    assert.match(step.text, /target\/CACHEDIR\.TAG/u);
+    assert.match(step.text, /key: \$\{\{ steps\.formal-ai-cache-key\.outputs\.key \}\}/u);
+    assert.doesNotMatch(step.text, /npm-cache|node_modules|crate-source|report\.lino|outputs\.lino|probe/u);
+  }
+  assert.match(restore.text, /restore-keys: \|\n\s+\$\{\{ steps\.formal-ai-cache-key\.outputs\.dependency_key \}\}-/u);
+  assert.doesNotMatch(execute.text, /cache-hit|\n\s+if:/u, 'cache hits can never skip exact candidate workloads');
+  assert.ok(execute.run.includes('--cargo-target-dir "$RUNNER_TEMP/issue-195-formal-ai-build/target"'));
+  assert.ok(cleanup.run.includes('--target-dir "$RUNNER_TEMP/issue-195-formal-ai-build/target"'));
+  assert.ok(cleanup.run.startsWith('env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/clean-caches.mjs --event ci-teardown '));
 });
 
 // The memory guard killed the Rust workloads in grammar_projection_corpus_ratchet

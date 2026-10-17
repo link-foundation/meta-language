@@ -67,9 +67,9 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 163 | 162 | 1 | 0 |
+| Generators | 164 | 163 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
-| GitHub Actions | 20 | 20 | 0 | 0 |
+| GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
 | Published artifact contents | 75 | 0 | 0 | 75 |
@@ -710,6 +710,7 @@ they are.
 | `js/scripts/generate-typescript-erasure-fixtures.mjs` | `js/scripts/generate-typescript-erasure-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-erasure-rules.mjs` | `js/scripts/generate-typescript-erasure-rules.mjs` | `script` |  | derived | current |  |
 | `rust/scripts/build-site.rs` | `rust/scripts/build-site.rs` | `script` |  | derived | current |  |
+| `js/scripts/generate-embedded-region-rules.mjs` | `js/scripts/generate-embedded-region-rules.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 
@@ -757,6 +758,8 @@ they are.
 | `peter-evans/create-pull-request` | `.github/workflows/rust.yml` | `v8` | v8.1.1 (GitHub release, peter-evans/create-pull-request) | major | current |  |
 | `taiki-e/install-action` | `.github/workflows/rust.yml` | `cargo-llvm-cov` |  | floating | current |  |
 | `taiki-e/install-action` | `.github/workflows/rust.yml` | `v2` | v2.87.25 (GitHub release, taiki-e/install-action) | major | current |  |
+| `actions/cache/restore` | `.github/workflows/ci.yml` | `v6` | v6.1.0 (GitHub release, actions/cache) | major | current |  |
+| `actions/cache/save` | `.github/workflows/ci.yml` | `v6` | v6.1.0 (GitHub release, actions/cache) | major | current |  |
 
 ## Build images
 

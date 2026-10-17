@@ -26,6 +26,9 @@
 //     [--formal-ai-checkout <git checkout holding the pinned revision>] [--skip-rust]
 // The tarball and the crate are each expected next to a `<artifact>.sha256`
 // file ("<digest>  <name>"), as the delivery candidates are published.
+// --cargo-target-dir is a CI-only build cache location: exactly
+// $RUNNER_TEMP/issue-195-formal-ai-build/target on GitHub Actions. It never
+// retains a consumer, candidate source, probe output or evidence document.
 // --skip-rust is for local runs only: the report then has no Rust run, the Rust
 // assertions stay unobserved and the comparison fails for want of Rust outputs.
 // CI runs both runtimes.
@@ -44,7 +47,7 @@
 import { createHash } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, lstatSync, realpathSync } from 'node:fs';
 import { mkdir, readFile, readdir, rm, statfs, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -108,6 +111,7 @@ const skipRust = process.argv.includes('--skip-rust');
 const tarball = path.resolve(required('--npm-tarball'));
 const crate = skipRust ? null : path.resolve(required('--crate'));
 const workDirectory = path.resolve(required('--work-dir'));
+const cargoTargetDirectory = formalAiCargoTargetDirectory(workDirectory, option('--cargo-target-dir', null));
 const output = path.resolve(required('--out'));
 const inputsWirePath = path.join(workDirectory, 'formal-ai-inputs.wire.json');
 const formalAiCheckout = option('--formal-ai-checkout', null);
@@ -337,7 +341,7 @@ async function javascriptWorkloads(formalAiDirectory, inputsPath, outputs) {
 async function rustWorkloads(formalAiDirectory, inputsPath, outputs) {
   const directory = path.join(formalAiDirectory, 'rust');
   const extracted = path.join(workDirectory, 'crate-source');
-  const target = path.join(workDirectory, 'formal-ai-target');
+  const target = cargoTargetDirectory;
   const probeDirectory = path.join(workDirectory, 'rust-probe');
   const bytes = await readFile(crate);
   const checksum = {
@@ -620,6 +624,37 @@ async function expectedChecksum(artifact) {
     throw new Error(`checksum file names ${name}, expected ${path.basename(artifact)}`);
   }
   return digest;
+}
+
+// An external build cache is admitted only by an explicit CI argument in the
+// fixed task namespace. An ambient Cargo target or a cache marker is not proof
+// of ownership. Inspect existing path components without following symlinks.
+function formalAiCargoTargetDirectory(workDirectory, requested, environment = process.env) {
+  if (requested === null) return path.join(workDirectory, 'formal-ai-target');
+  const temporary = environment.RUNNER_TEMP;
+  if (!['true', '1'].includes(environment.CI) || environment.GITHUB_ACTIONS !== 'true'
+    || typeof temporary !== 'string' || !path.isAbsolute(temporary)
+    || path.resolve(temporary) !== temporary || realpathSync(temporary) !== temporary) {
+    throw new Error('--cargo-target-dir requires the canonical GitHub Actions RUNNER_TEMP directory');
+  }
+  const owner = path.join(temporary, 'issue-195-formal-ai-build');
+  const target = path.join(owner, 'target');
+  if (requested !== target) throw new Error('--cargo-target-dir must name the exact task-owned build target');
+  for (const [parent, child] of [[workDirectory, target], [target, workDirectory]]) {
+    const relative = path.relative(parent, child);
+    if (relative === '' || relative !== '..' && !relative.startsWith('..' + path.sep) && !path.isAbsolute(relative)) {
+      throw new Error('the cached target and fresh workload directory must not contain one another');
+    }
+  }
+  for (const directory of [temporary, owner, target]) {
+    let status;
+    try { status = lstatSync(directory); }
+    catch (error) { if (error.code === 'ENOENT' && directory !== temporary) continue; throw error; }
+    if (status.isSymbolicLink() || !status.isDirectory()) {
+      throw new Error('the task-owned build target cannot traverse a symlink or non-directory');
+    }
+  }
+  return target;
 }
 
 // The parent environment with a single PATH entry on Windows (as in run-issue-195-consumer.mjs).
