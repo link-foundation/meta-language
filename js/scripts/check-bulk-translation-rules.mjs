@@ -36,6 +36,7 @@ export const BULK_TRANSLATION_RULE_CHECKS = Object.freeze([
   ['generate-rust-character-rules.mjs', '--native'],
   ['generate-javascript-tag-context-rules.mjs', '--native'],
   ['generate-rust-character-literal-fixtures.mjs'],
+  ['generate-rust-diagnostic-attribute-rules.mjs', '--native'],
 ].map(([name, ...arguments_]) => Object.freeze({ script: `js/scripts/${name}`, arguments: Object.freeze([...arguments_, '--check']) })));
 
 function invokeTranslationRuleCheck(command, arguments_, options) {

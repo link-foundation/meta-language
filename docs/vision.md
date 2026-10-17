@@ -883,6 +883,17 @@ require separate interpretations. Four complete qualified definitions have
 independent truth tables and source-free condition and branch edits checked in
 JavaScript. Native compilation and execution remain CI checks. The same limits
 on compile-time evaluation, diagnostics, visibility, linkage and ABI apply.
+The separate `Rust const diagnostic attributes 1` facet retains complete outer
+`expect` attributes on those selected Rust 2024 const profiles, including ordered
+lint paths, a string reason, stacked `must_use`, comments and public visibility.
+The source prefix, actual tokens, absolute UTF16 intervals and function attachment
+remain checked after source-free text or binary reload. Shared Links policy and
+four whole-module JavaScript decisions generate the native predicate library;
+neither adapter substitutes a handwritten attribute recognizer. Rust emission
+retains the prefix, while JavaScript records its diagnostic normalization from
+the same policy. This source interpretation makes no compiler or Clippy diagnostic
+equivalence claim. Native compilation and parity remain CI obligations, and
+diagnostic expectations require separately bounded actual tool versions.
 The typed-program adapter's shared schema gives abbreviated host fields readable
 English relation names, including the Unicode code unit string model. The finite formal
 definition adapter checks closed recursive correspondences under supported
