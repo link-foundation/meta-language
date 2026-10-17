@@ -51520,7 +51520,2898 @@ const EMPTY_STRING_COMPILER_CURRENT_TYPE_QUERY_WITNESS={
 };
 const EMPTY_STRING_COMPILER_CURRENT_TYPE_QUERY_WITNESS_INVENTORIES=[{inventory:"B60 recursive default region source names for rust/src/translation/frontend_rules.rs",files:["rust/src/translation/frontend_rules.rs"],extract:text=>text.includes(EMPTY_STRING_COMPILER_CURRENT_TYPE_QUERY_WITNESS.sourceText)?[EMPTY_STRING_COMPILER_CURRENT_TYPE_QUERY_WITNESS.inventoryName]:[],recordOf:()=>EMPTY_STRING_COMPILER_CURRENT_TYPE_QUERY_WITNESS.id}];
 // END B62 authentic empty String compiler style control name.
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory).map(reconcileBulkFortySevenNativeInventory).map(reconcileBulkFiftyHistoricalInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES, ...BULK_FORTY_SEVEN_NAME_INVENTORIES, ...BULK_FORTY_EIGHT_NAME_INVENTORIES, ...BULK_FORTY_NINE_NAME_INVENTORIES, ...BULK_FIFTY_NAME_INVENTORIES, ...BULK_FIFTY_ONE_NAME_INVENTORIES.map(reconcileB57MovedSourceInventory), ...VERSION_RANGE_EVIDENCE_NAME_INVENTORIES, ...FORMAT_RETRY_SOURCE_NAME_INVENTORIES, ...DISCOVERY_CERTIFICATE_NAME_INVENTORIES, ...SELECTED_NATIVE_GRAMMAR_PROJECTION_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_WITNESS_INVENTORIES, ...BULK_FIFTY_FIVE_CONST_ARCHIVE_ERROR_NAME_INVENTORIES, ...AUXILIARY_GRAMMAR_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_CURRENT_WITNESS_INVENTORIES, ...CHILD_CHAIN_NAME_INVENTORIES, ...PARSER_TOKEN_EXCLUSION_NAME_INVENTORIES, ...PARSER_TOKEN_EXCLUSION_CURRENT_WITNESS_INVENTORIES, ...PARSER_TOKEN_COVERING_CURRENT_WITNESS_INVENTORIES, ...EMBEDDED_REGION_NAME_INVENTORIES, ...EMBEDDED_REGION_CURRENT_WITNESS_INVENTORIES, ...B60_NATIVE_TOKEN_EXCLUSION_CURRENT_WITNESS_INVENTORIES, ...FORMAL_ARTIFICIAL_INTELLIGENCE_CACHE_NAME_INVENTORIES, ...TEMPORAL_BINDING_NAME_INVENTORIES, ...TEMPORAL_BINDING_CURRENT_WITNESS_INVENTORIES, ...B61_CURRENT_REFERENCE_STATE_WITNESS_INVENTORIES, ...SAVED_PROJECTION_CONTROL_NAME_INVENTORIES, ...EMPTY_STRING_COMPILER_STYLE_CONTROL_NAME_INVENTORIES, ...EMPTY_STRING_COMPILER_CURRENT_TYPE_QUERY_WITNESS_INVENTORIES].map(entry=>entry.inventory!=="grammar link terms"?entry:{...entry,extract:(text,file)=>entry.extract(text,file).map(name=>file==="rust/src/grammar/links.rs"&&name==="grammar::lexer"?"grammar::native-source-lexical-analyser-declaration":name),recordOf:name=>name==="grammar::native-source-lexical-analyser-declaration"?"repository.native-source-lexical-analyser-declaration":entry.recordOf(name)}));
+// BEGIN B63 mapped source, strict equality and partition source names.
+const B63_SOURCE_BINDINGS=[
+  {
+    "id": "translation.read-grammar-selection-mapping-context",
+    "source": "js/src/translation/grammar-selection-mapping-rules.js",
+    "name": "readGrammarSelectionMappingContext",
+    "inventoryName": "read grammar selection mapping context",
+    "sourceText": "export function readGrammarSelectionMappingContext(mappings, inToken) {\n  let mapped = false;\n  for (const mapping of mappings) if (mapping === 'json-string') mapped = true;\n  if (!mapped) return 0;\n  if (inToken) return 2;\n  for (const mapping of mappings) if (mapping !== 'json-string') return 2;\n  return 1;\n}"
+  },
+  {
+    "id": "translation.read-grammar-selection-mapping-context",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "read_grammar_selection_mapping_context",
+    "inventoryName": "read grammar selection mapping context",
+    "sourceText": "pub fn read_grammar_selection_mapping_context(mappings: &[String], in_token: bool) -> f64 {\n    {\n        let mapped = false;\n        {\n            let ml_values7 = mappings.to_vec();\n            {\n                let ml_index7 = self::ml::Big::from_i128(0);\n                {\n                    let mapped_2 = self::ml_read_grammar_selection_mapping_context_loop9(\n                        mapped,\n                        &(ml_values7),\n                        ml_index7,\n                    );\n                    if mapped_2 {\n                        if in_token {\n                            2f64\n                        } else {\n                            {\n                                let ml_values8 = mappings.to_vec();\n                                {\n                                    let ml_index8 = self::ml::Big::from_i128(0);\n                                    {\n                                        let ml_s8 =\n                                            self::ml_read_grammar_selection_mapping_context_loop10(\n                                                &(ml_values8),\n                                                ml_index8,\n                                            );\n                                        match ml_s8 {\n                                            self::MlReadGrammarSelectionMappingContextLoop10Result::MlReadGrammarSelectionMappingContextLoop10Done => {\n                                                1f64\n                                            }\n                                            self::MlReadGrammarSelectionMappingContextLoop10Result::MlReadGrammarSelectionMappingContextLoop10Return(ml_result10) => {\n                                                ml_result10\n                                            }\n                                        }\n                                    }\n                                }\n                            }\n                        }\n                    } else {\n                        0f64\n                    }\n                }\n            }\n        }\n    }\n}"
+  },
+  {
+    "id": "translation.read-grammar-selection-string-short-escape",
+    "source": "js/src/translation/grammar-selection-mapping-rules.js",
+    "name": "readGrammarSelectionJsonShortEscape",
+    "inventoryName": "read grammar selection string short escape",
+    "sourceText": "export function readGrammarSelectionJsonShortEscape(code) {\n  if (code === 34 || code === 47 || code === 92) return code;\n  if (code === 98) return 8;\n  if (code === 102) return 12;\n  if (code === 110) return 10;\n  if (code === 114) return 13;\n  if (code === 116) return 9;\n  return -1;\n}"
+  },
+  {
+    "id": "translation.read-grammar-selection-string-short-escape",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "read_grammar_selection_json_short_escape",
+    "inventoryName": "read grammar selection string short escape",
+    "sourceText": "pub fn read_grammar_selection_json_short_escape(code: f64) -> f64 {\n    if ((code == 34f64) || (code == 47f64)) || (code == 92f64) {\n        code\n    } else if code == 98f64 {\n        8f64\n    } else if code == 102f64 {\n        12f64\n    } else if code == 110f64 {\n        10f64\n    } else if code == 114f64 {\n        13f64\n    } else if code == 116f64 {\n        9f64\n    } else {\n        -1f64\n    }\n}"
+  },
+  {
+    "id": "translation.read-grammar-selection-string-part",
+    "source": "js/src/translation/grammar-selection-mapping-rules.js",
+    "name": "readGrammarSelectionJsonStringPart",
+    "inventoryName": "read grammar selection string part",
+    "sourceText": "export function readGrammarSelectionJsonStringPart(codes, index) {\n  const last = codes.length - 1;\n  if (codes.length < 2 || codes[0] !== 34 || codes[last] !== 34\n      || !Number.isInteger(index) || index < 1 || index > last) return [1, 0];\n  if (index === last) return [3, index];\n  const code = codes[index] ?? -1;\n  if (!Number.isInteger(code) || code < 32 || code > 1114111\n      || code >= 55296 && code <= 57343 || code === 34) return [1, index];\n  if (code !== 92) return [0, code, index + 1];\n  const escaped = codes[index + 1] ?? -1;\n  if (escaped !== 117) {\n    const value = readGrammarSelectionJsonShortEscape(escaped);\n    if (value < 0 || index + 2 > last) return [1, index];\n    return [0, value, index + 2];\n  }\n  // JSON has fixed \\uXXXX escapes, not JavaScript's \\u{...} or \\xNN.\n  if (codes[index + 2] === 123) return [1, index];\n  const decoded = decodeUnicodeEscape(codes.slice(index, index + 12), true);\n  if (decoded.$ === 'malformed') return [1, index];\n  if (decoded.$ === 'unsupported') return [2, index];\n  if (index + decoded.end > last) return [1, index];\n  return [0, decoded.code, index + decoded.end];\n}"
+  },
+  {
+    "id": "translation.read-grammar-selection-string-part",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "read_grammar_selection_json_string_part",
+    "inventoryName": "read grammar selection string part",
+    "sourceText": "pub fn read_grammar_selection_json_string_part(codes: &[f64], index: f64) -> Vec<f64> {\n    {\n        let last = (codes.len() as f64) - 1f64;\n        if ((((((codes.len() as f64) < 2f64)\n            || !(match (\n                self::ml_array::optional_at(codes, self::ml_array::number_index(0f64)),\n                34f64,\n            ) {\n                (Some(ml_left), ml_right) => ml_left == ml_right,\n                _ => false,\n            }))\n            || !(match (\n                self::ml_array::optional_at(codes, self::ml_array::number_index(last)),\n                34f64,\n            ) {\n                (Some(ml_left), ml_right) => ml_left == ml_right,\n                _ => false,\n            }))\n            || !(self::ml_math::is_integer(index)))\n            || (index < 1f64))\n            || (index > last)\n        {\n            vec![1f64, 0f64]\n        } else if index == last {\n            vec![3f64, index]\n        } else {\n            {\n                let code =\n                    (self::ml_array::optional_at(codes, self::ml_array::number_index(index)))\n                        .unwrap_or_else(|| -1f64);\n                if (((!(self::ml_math::is_integer(code)) || (code < 32f64))\n                    || (code > 1_114_111f64))\n                    || ((55_296f64..=57_343f64).contains(&code)))\n                    || (code == 34f64)\n                {\n                    vec![1f64, index]\n                } else {\n                    let ml_library_inequality_2 = code != 92f64;\n                    if ml_library_inequality_2 {\n                        vec![0f64, code, (index + 1f64)]\n                    } else {\n                        {\n                            let escaped = (self::ml_array::optional_at(\n                                codes,\n                                self::ml_array::number_index(index + 1f64),\n                            ))\n                            .unwrap_or_else(|| -1f64);\n                            {\n                                let ml_library_inequality_1 = escaped != 117f64;\n                                if ml_library_inequality_1 {\n                                    {\n                                        let value =\n                                            self::read_grammar_selection_json_short_escape(escaped);\n                                        if (value < 0f64) || ((index + 2f64) > last) {\n                                            vec![1f64, index]\n                                        } else {\n                                            vec![0f64, value, (index + 2f64)]\n                                        }\n                                    }\n                                } else if match (\n                                    self::ml_array::optional_at(\n                                        codes,\n                                        self::ml_array::number_index(index + 2f64),\n                                    ),\n                                    123f64,\n                                ) {\n                                    (Some(ml_left), ml_right) => ml_left == ml_right,\n                                    _ => false,\n                                } {\n                                    vec![1f64, index]\n                                } else {\n                                    {\n                                        let decoded = self::decode_unicode_escape(\n                                            &(self::ml_array::slice(codes, index, (index + 12f64))),\n                                            true,\n                                        );\n                                        match decoded {\n                                            self::UnicodeEscape::Scalar(code_2, end) => {\n                                                if (index + end) > last {\n                                                    vec![1f64, index]\n                                                } else {\n                                                    vec![0f64, code_2, (index + end)]\n                                                }\n                                            }\n                                            self::UnicodeEscape::Malformed => {\n                                                vec![1f64, index]\n                                            }\n                                            self::UnicodeEscape::Unsupported(ml_f9, ml_f10) => {\n                                                vec![2f64, index]\n                                            }\n                                        }\n                                    }\n                                }\n                            }\n                        }\n                    }\n                }\n            }\n        }\n    }\n}"
+  },
+  {
+    "id": "translation.read-grammar-selection-mapping-reservation",
+    "source": "js/src/translation/grammar-selection-mapping-rules.js",
+    "name": "readGrammarSelectionMappingReservation",
+    "inventoryName": "read grammar selection mapping reservation",
+    "sourceText": "export function readGrammarSelectionMappingReservation(bytes, steps) {\n  if (!Number.isInteger(bytes) || bytes < 0 || bytes > 4294967295) return -1;\n  return (steps ? 32 : 12) * bytes + 32;\n}"
+  },
+  {
+    "id": "translation.read-grammar-selection-mapping-reservation",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "read_grammar_selection_mapping_reservation",
+    "inventoryName": "read grammar selection mapping reservation",
+    "sourceText": "pub fn read_grammar_selection_mapping_reservation(bytes: f64, steps: bool) -> f64 {\n    if (!(self::ml_math::is_integer(bytes)) || (bytes < 0f64)) || (bytes > 4_294_967_295f64) {\n        -1f64\n    } else {\n        (if steps { 32f64 } else { 12f64 } * bytes) + 32f64\n    }\n}"
+  },
+  {
+    "id": "translation.read-grammar-selection-mapped-offset",
+    "source": "js/src/translation/grammar-selection-mapping-rules.js",
+    "name": "readGrammarSelectionMappedOffset",
+    "inventoryName": "read grammar selection mapped offset",
+    "sourceText": "export function readGrammarSelectionMappedOffset(intervals, offset) {\n  if (intervals.length < 8 || intervals.length % 4 !== 0\n      || !Number.isInteger(offset) || offset < 0) return -1;\n  let index = 0;\n  while (index + 3 < intervals.length) {\n    const start = intervals[index + 2] ?? -1;\n    const end = intervals[index + 3] ?? -1;\n    if (start <= offset && offset < end) return intervals[index] ?? -1;\n    index += 4;\n  }\n  const last = intervals.length - 4;\n  return offset === intervals[last + 2] ? intervals[last] ?? -1 : -1;\n}"
+  },
+  {
+    "id": "translation.read-grammar-selection-mapped-offset",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "read_grammar_selection_mapped_offset",
+    "inventoryName": "read grammar selection mapped offset",
+    "sourceText": "pub fn read_grammar_selection_mapped_offset(intervals: &[f64], offset: f64) -> f64 {\n    if ((((intervals.len() as f64) < 8f64) || (((intervals.len() as f64) % 4f64) != 0f64))\n        || !(self::ml_math::is_integer(offset)))\n        || (offset < 0f64)\n    {\n        -1f64\n    } else {\n        {\n            let index = 0f64;\n            {\n                let ml_s11 =\n                    self::ml_read_grammar_selection_mapped_offset_loop11(intervals, offset, index);\n                match ml_s11 {\n                    self::MlReadGrammarSelectionMappedOffsetLoop11Result::MlReadGrammarSelectionMappedOffsetLoop11Done => {\n                        {\n                            let last = (intervals.len() as f64) - 4f64;\n                            if match (offset, self::ml_array::optional_at(intervals, self::ml_array::number_index(last + 2f64))) { (ml_left, Some(ml_right)) => ml_left == ml_right, _ => false } {\n                                (self::ml_array::optional_at(intervals, self::ml_array::number_index(last))).unwrap_or_else(|| -1f64)\n                            } else {\n                                -1f64\n                            }\n                        }\n                    }\n                    self::MlReadGrammarSelectionMappedOffsetLoop11Result::MlReadGrammarSelectionMappedOffsetLoop11Return(ml_result11) => {\n                        ml_result11\n                    }\n                }\n            }\n        }\n    }\n}"
+  },
+  {
+    "id": "translation.read-grammar-selection-mapped-cover",
+    "source": "js/src/translation/grammar-selection-mapping-rules.js",
+    "name": "readGrammarSelectionMappedCover",
+    "inventoryName": "read grammar selection mapped cover",
+    "sourceText": "export function readGrammarSelectionMappedCover(intervals, start, end) {\n  if (intervals.length < 2 || !Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end < start) return [];\n  const closing = intervals[intervals.length - 1] ?? [];\n  if (closing.length !== 4 || end > (closing[3] ?? -1)) return [];\n  if (start === end && end === closing[3]) return [closing[0] ?? -1, closing[0] ?? -1, closing[1] ?? -1];\n  let low = 0, high = intervals.length - 1;\n  while (low < high) {\n    const middle = Math.floor((low + high) / 2);\n    const row = intervals[middle] ?? [];\n    if ((row[3] ?? -1) <= start) low = middle + 1;\n    else high = middle;\n  }\n  const first = intervals[low] ?? [];\n  if (first.length !== 4 || (first[2] ?? -1) > start || start >= (first[3] ?? -1)) return [];\n  if (start === end) return [first[0] ?? -1, first[0] ?? -1, first[1] ?? -1];\n  high = intervals.length - 1;\n  while (low < high) {\n    const middle = Math.floor((low + high) / 2);\n    const row = intervals[middle] ?? [];\n    if ((row[3] ?? -1) < end) low = middle + 1;\n    else high = middle;\n  }\n  const last = intervals[low] ?? [];\n  if (last.length !== 4 || end > (last[3] ?? -1)) return [];\n  return [first[0] ?? -1, first[0] ?? -1, last[1] ?? -1];\n}"
+  },
+  {
+    "id": "translation.read-grammar-selection-mapped-cover",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "read_grammar_selection_mapped_cover",
+    "inventoryName": "read grammar selection mapped cover",
+    "sourceText": "pub fn read_grammar_selection_mapped_cover(\n    intervals: &[Vec<f64>],\n    start: f64,\n    end: f64,\n) -> Vec<f64> {\n    if (((((intervals.len() as f64) < 2f64) || !(self::ml_math::is_integer(start)))\n        || !(self::ml_math::is_integer(end)))\n        || (start < 0f64))\n        || (end < start)\n    {\n        Vec::<f64>::new()\n    } else {\n        {\n            let closing = (self::ml_array::optional_at(\n                intervals,\n                self::ml_array::number_index((intervals.len() as f64) - 1f64),\n            ))\n            .unwrap_or_else(|| Vec::<f64>::new());\n            if ((closing.len() as f64) != 4f64)\n                || (end\n                    > ((self::ml_array::optional_at(&closing, self::ml_array::number_index(3f64)))\n                        .unwrap_or_else(|| -1f64)))\n            {\n                Vec::<f64>::new()\n            } else if (start == end)\n                && match (\n                    end,\n                    self::ml_array::optional_at(&closing, self::ml_array::number_index(3f64)),\n                ) {\n                    (ml_left, Some(ml_right)) => ml_left == ml_right,\n                    _ => false,\n                }\n            {\n                vec![\n                    (self::ml_array::optional_at(&closing, self::ml_array::number_index(0f64)))\n                        .unwrap_or_else(|| -1f64),\n                    (self::ml_array::optional_at(&closing, self::ml_array::number_index(0f64)))\n                        .unwrap_or_else(|| -1f64),\n                    (self::ml_array::optional_at(&closing, self::ml_array::number_index(1f64)))\n                        .unwrap_or_else(|| -1f64),\n                ]\n            } else {\n                {\n                    let low = 0f64;\n                    {\n                        let high = (intervals.len() as f64) - 1f64;\n                        {\n                            let ml_s12 = self::ml_read_grammar_selection_mapped_cover_loop12(\n                                intervals, start, low, high,\n                            );\n                            match ml_s12 {\n                                    self::MlReadGrammarSelectionMappedCoverLoop12Result::MlReadGrammarSelectionMappedCoverLoop12Done(low_2, high_2) => {\n                                        {\n                                            let first = (self::ml_array::optional_at(intervals, self::ml_array::number_index(low_2))).unwrap_or_else(|| Vec::<f64>::new());\n                                            if (((first.len() as f64) != 4f64) || (((self::ml_array::optional_at(&first, self::ml_array::number_index(2f64))).unwrap_or_else(|| -1f64)) > start)) || (start >= ((self::ml_array::optional_at(&first, self::ml_array::number_index(3f64))).unwrap_or_else(|| -1f64))) {\n                                                Vec::<f64>::new()\n                                            } else  if start == end {\n                                                    vec![(self::ml_array::optional_at(&first, self::ml_array::number_index(0f64))).unwrap_or_else(|| -1f64), (self::ml_array::optional_at(&first, self::ml_array::number_index(0f64))).unwrap_or_else(|| -1f64), (self::ml_array::optional_at(&first, self::ml_array::number_index(1f64))).unwrap_or_else(|| -1f64)]\n                                                } else {\n                                                    {\n                                                        let high_3 = (intervals.len() as f64) - 1f64;\n                                                        {\n                                                            let low_3 = self::ml_read_grammar_selection_mapped_cover_loop13(intervals, end, low_2, high_3);\n                                                            {\n                                                                let last = (self::ml_array::optional_at(intervals, self::ml_array::number_index(low_3))).unwrap_or_else(|| Vec::<f64>::new());\n                                                                if ((last.len() as f64) != 4f64) || (end > ((self::ml_array::optional_at(&last, self::ml_array::number_index(3f64))).unwrap_or_else(|| -1f64))) {\n                                                                    Vec::<f64>::new()\n                                                                } else {\n                                                                    vec![(self::ml_array::optional_at(&first, self::ml_array::number_index(0f64))).unwrap_or_else(|| -1f64), (self::ml_array::optional_at(&first, self::ml_array::number_index(0f64))).unwrap_or_else(|| -1f64), (self::ml_array::optional_at(&last, self::ml_array::number_index(1f64))).unwrap_or_else(|| -1f64)]\n                                                                }\n                                                            }\n                                                        }\n                                                    }\n                                                }\n                                        }\n                                    }\n                                }\n                        }\n                    }\n                }\n            }\n        }\n    }\n}"
+  },
+  {
+    "id": "translation.read-grammar-selection-mapping-field-order",
+    "source": "js/src/translation/grammar-selection-mapping-rules.js",
+    "name": "readGrammarSelectionMappingFieldOrder",
+    "inventoryName": "read grammar selection mapping field order",
+    "sourceText": "export function readGrammarSelectionMappingFieldOrder(role) {\n  if (role === 'source') return 'kind|identity|encoding|byteLength|derivation';\n  if (role === 'derivation') return 'operation|input|start|end';\n  if (role === 'mapping') return 'kind|operation|input|output|intervals';\n  return '';\n}"
+  },
+  {
+    "id": "translation.read-grammar-selection-mapping-field-order",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "read_grammar_selection_mapping_field_order",
+    "inventoryName": "read grammar selection mapping field order",
+    "sourceText": "pub fn read_grammar_selection_mapping_field_order(role: &str) -> String {\n    if role == \"source\" {\n        String::from(\"kind|identity|encoding|byteLength|derivation\")\n    } else if role == \"derivation\" {\n        String::from(\"operation|input|start|end\")\n    } else if role == \"mapping\" {\n        String::from(\"kind|operation|input|output|intervals\")\n    } else {\n        String::new()\n    }\n}"
+  },
+  {
+    "id": "translation.accept-grammar-selection-source-definition",
+    "source": "js/src/translation/grammar-selection-mapping-rules.js",
+    "name": "acceptGrammarSelectionSourceDefinition",
+    "inventoryName": "accept grammar selection source definition",
+    "sourceText": "export function acceptGrammarSelectionSourceDefinition(kind, identity, position, encoding, length, actualLength) {\n  return kind === 'grammar-source' && identity === position && encoding === 'UTF-8'\n    && Number.isInteger(length) && length >= 0 && length <= 4294967295 && length === actualLength;\n}"
+  },
+  {
+    "id": "translation.accept-grammar-selection-source-definition",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "accept_grammar_selection_source_definition",
+    "inventoryName": "accept grammar selection source definition",
+    "sourceText": "pub fn accept_grammar_selection_source_definition(\n    kind: &str,\n    identity: f64,\n    position: f64,\n    encoding: &str,\n    length: f64,\n    actual_length: f64,\n) -> bool {\n    ((((((kind == \"grammar-source\")\n        && ((identity).partial_cmp(&(position)) == Some(std::cmp::Ordering::Equal)))\n        && (encoding == \"UTF-8\"))\n        && self::ml_math::is_integer(length))\n        && (length >= 0f64))\n        && (length <= 4_294_967_295f64))\n        && ((length).partial_cmp(&(actual_length)) == Some(std::cmp::Ordering::Equal))\n}"
+  },
+  {
+    "id": "translation.accept-grammar-selection-source-derivation",
+    "source": "js/src/translation/grammar-selection-mapping-rules.js",
+    "name": "acceptGrammarSelectionSourceDerivation",
+    "inventoryName": "accept grammar selection source derivation",
+    "sourceText": "export function acceptGrammarSelectionSourceDerivation(operation, input, output, start, end, inputLength) {\n  return operation === 'json-string' && Number.isInteger(input) && input >= 0 && input < output\n    && Number.isInteger(start) && Number.isInteger(end) && start >= 0 && start <= end && end <= inputLength;\n}"
+  },
+  {
+    "id": "translation.accept-grammar-selection-source-derivation",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "accept_grammar_selection_source_derivation",
+    "inventoryName": "accept grammar selection source derivation",
+    "sourceText": "pub fn accept_grammar_selection_source_derivation(\n    operation: &str,\n    input: f64,\n    output: f64,\n    start: f64,\n    end: f64,\n    input_length: f64,\n) -> bool {\n    ((((((((operation == \"json-string\") && self::ml_math::is_integer(input))\n        && (input >= 0f64))\n        && (input < output))\n        && self::ml_math::is_integer(start))\n        && self::ml_math::is_integer(end))\n        && (start >= 0f64))\n        && (start <= end))\n        && (end <= input_length)\n}"
+  },
+  {
+    "id": "translation.accept-grammar-selection-source-interval",
+    "source": "js/src/translation/grammar-selection-mapping-rules.js",
+    "name": "acceptGrammarSelectionSourceInterval",
+    "inventoryName": "accept grammar selection source interval",
+    "sourceText": "export function acceptGrammarSelectionSourceInterval(actual, expected) {\n  return actual.length === 4 && expected.length === 4 && actual[0] === expected[0]\n    && actual[1] === expected[1] && actual[2] === expected[2] && actual[3] === expected[3];\n}"
+  },
+  {
+    "id": "translation.accept-grammar-selection-source-interval",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "accept_grammar_selection_source_interval",
+    "inventoryName": "accept grammar selection source interval",
+    "sourceText": "pub fn accept_grammar_selection_source_interval(actual: &[f64], expected: &[f64]) -> bool {\n    ((((((actual.len() as f64) == 4f64) && ((expected.len() as f64) == 4f64))\n        && match (\n            self::ml_array::optional_at(actual, self::ml_array::number_index(0f64)),\n            self::ml_array::optional_at(expected, self::ml_array::number_index(0f64)),\n        ) {\n            (Some(ml_left), Some(ml_right)) => ml_left == ml_right,\n            (None, None) => true,\n            _ => false,\n        })\n        && match (\n            self::ml_array::optional_at(actual, self::ml_array::number_index(1f64)),\n            self::ml_array::optional_at(expected, self::ml_array::number_index(1f64)),\n        ) {\n            (Some(ml_left), Some(ml_right)) => ml_left == ml_right,\n            (None, None) => true,\n            _ => false,\n        })\n        && match (\n            self::ml_array::optional_at(actual, self::ml_array::number_index(2f64)),\n            self::ml_array::optional_at(expected, self::ml_array::number_index(2f64)),\n        ) {\n            (Some(ml_left), Some(ml_right)) => ml_left == ml_right,\n            (None, None) => true,\n            _ => false,\n        })\n        && match (\n            self::ml_array::optional_at(actual, self::ml_array::number_index(3f64)),\n            self::ml_array::optional_at(expected, self::ml_array::number_index(3f64)),\n        ) {\n            (Some(ml_left), Some(ml_right)) => ml_left == ml_right,\n            (None, None) => true,\n            _ => false,\n        }\n}"
+  },
+  {
+    "id": "translation.accept-grammar-selection-source-root",
+    "source": "js/src/translation/grammar-selection-mapping-rules.js",
+    "name": "acceptGrammarSelectionSourceRoot",
+    "inventoryName": "accept grammar selection source root",
+    "sourceText": "export function acceptGrammarSelectionSourceRoot(position, absentDerivation) {\n  return position === 0 ? absentDerivation : !absentDerivation;\n}"
+  },
+  {
+    "id": "translation.accept-grammar-selection-source-root",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "accept_grammar_selection_source_root",
+    "inventoryName": "accept grammar selection source root",
+    "sourceText": "pub fn accept_grammar_selection_source_root(position: f64, absent_derivation: bool) -> bool {\n    if position == 0f64 {\n        absent_derivation\n    } else {\n        !absent_derivation\n    }\n}"
+  },
+  {
+    "id": "translation.accept-grammar-selection-mapping-reference",
+    "source": "js/src/translation/grammar-selection-mapping-rules.js",
+    "name": "acceptGrammarSelectionMappingReference",
+    "inventoryName": "accept grammar selection mapping reference",
+    "sourceText": "export function acceptGrammarSelectionMappingReference(input, actualInput, output, count) {\n  return input === actualInput && Number.isInteger(output) && output > input && output < count;\n}"
+  },
+  {
+    "id": "translation.accept-grammar-selection-mapping-reference",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "accept_grammar_selection_mapping_reference",
+    "inventoryName": "accept grammar selection mapping reference",
+    "sourceText": "pub fn accept_grammar_selection_mapping_reference(\n    input: f64,\n    actual_input: f64,\n    output: f64,\n    count: f64,\n) -> bool {\n    ((((input).partial_cmp(&(actual_input)) == Some(std::cmp::Ordering::Equal))\n        && self::ml_math::is_integer(output))\n        && (output > input))\n        && (output < count)\n}"
+  },
+  {
+    "id": "translation.accept-grammar-selection-mapping-occurrence",
+    "source": "js/src/translation/grammar-selection-mapping-rules.js",
+    "name": "acceptGrammarSelectionMappingOccurrence",
+    "inventoryName": "accept grammar selection mapping occurrence",
+    "sourceText": "export function acceptGrammarSelectionMappingOccurrence(input, actualInput, start, actualStart, end, actualEnd) {\n  return input === actualInput && start === actualStart && end === actualEnd;\n}"
+  },
+  {
+    "id": "translation.accept-grammar-selection-mapping-occurrence",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "accept_grammar_selection_mapping_occurrence",
+    "inventoryName": "accept grammar selection mapping occurrence",
+    "sourceText": "pub fn accept_grammar_selection_mapping_occurrence(\n    input: f64,\n    actual_input: f64,\n    start: f64,\n    actual_start: f64,\n    end: f64,\n    actual_end: f64,\n) -> bool {\n    (((input).partial_cmp(&(actual_input)) == Some(std::cmp::Ordering::Equal))\n        && ((start).partial_cmp(&(actual_start)) == Some(std::cmp::Ordering::Equal)))\n        && ((end).partial_cmp(&(actual_end)) == Some(std::cmp::Ordering::Equal))\n}"
+  },
+  {
+    "id": "translation.accept-grammar-selection-physical-span",
+    "source": "js/src/translation/grammar-selection-mapping-rules.js",
+    "name": "acceptGrammarSelectionPhysicalSpan",
+    "inventoryName": "accept grammar selection physical span",
+    "sourceText": "export function acceptGrammarSelectionPhysicalSpan(start, end, cursor, byteLength, missing) {\n  return Number.isInteger(start) && Number.isInteger(end) && start >= 0 && end <= 4294967295\n    && start === cursor && (missing ? end === cursor : end >= start && end - start === byteLength);\n}"
+  },
+  {
+    "id": "translation.accept-grammar-selection-physical-span",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "accept_grammar_selection_physical_span",
+    "inventoryName": "accept grammar selection physical span",
+    "sourceText": "pub fn accept_grammar_selection_physical_span(\n    start: f64,\n    end: f64,\n    cursor: f64,\n    byte_length: f64,\n    missing: bool,\n) -> bool {\n    ((((self::ml_math::is_integer(start) && self::ml_math::is_integer(end)) && (start >= 0f64))\n        && (end <= 4_294_967_295f64))\n        && ((start).partial_cmp(&(cursor)) == Some(std::cmp::Ordering::Equal)))\n        && if missing {\n            (end).partial_cmp(&(cursor)) == Some(std::cmp::Ordering::Equal)\n        } else {\n            (end >= start) && ((end - start) == byte_length)\n        }\n}"
+  },
+  {
+    "id": "translation.read-grammar-selection-tree-children",
+    "source": "js/src/translation/grammar-selection-mapping-rules.js",
+    "name": "readGrammarSelectionTreeChildren",
+    "inventoryName": "read grammar selection tree children",
+    "sourceText": "export function readGrammarSelectionTreeChildren(kind, mapped) {\n  if (kind === 'node') return 'children';\n  if (kind === 'embed') return mapped ? 'sourceChildren' : 'root';\n  if (kind === 'token' || kind === 'error') return 'leaf';\n  if (kind === 'missing') return 'missing';\n  return 'unsupported';\n}"
+  },
+  {
+    "id": "translation.read-grammar-selection-tree-children",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "read_grammar_selection_tree_children",
+    "inventoryName": "read grammar selection tree children",
+    "sourceText": "pub fn read_grammar_selection_tree_children(kind: &str, mapped: bool) -> String {\n    if kind == \"node\" {\n        String::from(\"children\")\n    } else if kind == \"embed\" {\n        if mapped {\n            String::from(\"sourceChildren\")\n        } else {\n            String::from(\"root\")\n        }\n    } else if (kind == \"token\") || (kind == \"error\") {\n        String::from(\"leaf\")\n    } else if kind == \"missing\" {\n        String::from(\"missing\")\n    } else {\n        String::from(\"unsupported\")\n    }\n}"
+  },
+  {
+    "id": "translation.accept-grammar-selection-mapping-profile",
+    "source": "js/src/translation/grammar-selection-mapping-rules.js",
+    "name": "acceptGrammarSelectionMappingProfile",
+    "inventoryName": "accept grammar selection mapping profile",
+    "sourceText": "export function acceptGrammarSelectionMappingProfile(mapping, physicalChildren, sourceMapping) {\n  if (mapping === 'identity') return !physicalChildren && !sourceMapping;\n  return mapping === 'json-string' && physicalChildren && sourceMapping;\n}"
+  },
+  {
+    "id": "translation.accept-grammar-selection-mapping-profile",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "accept_grammar_selection_mapping_profile",
+    "inventoryName": "accept grammar selection mapping profile",
+    "sourceText": "pub fn accept_grammar_selection_mapping_profile(\n    mapping: &str,\n    physical_children: bool,\n    source_mapping: bool,\n) -> bool {\n    if mapping == \"identity\" {\n        !physical_children && !source_mapping\n    } else {\n        ((mapping == \"json-string\") && physical_children) && source_mapping\n    }\n}"
+  },
+  {
+    "id": "translation.accept-grammar-selection-mapping-descriptor",
+    "source": "js/src/translation/grammar-selection-mapping-rules.js",
+    "name": "acceptGrammarSelectionMappingDescriptor",
+    "inventoryName": "accept grammar selection mapping descriptor",
+    "sourceText": "export function acceptGrammarSelectionMappingDescriptor(kind, operation) {\n  return kind === 'source-mapping' && operation === 'json-string';\n}"
+  },
+  {
+    "id": "translation.accept-grammar-selection-mapping-descriptor",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "accept_grammar_selection_mapping_descriptor",
+    "inventoryName": "accept grammar selection mapping descriptor",
+    "sourceText": "pub fn accept_grammar_selection_mapping_descriptor(kind: &str, operation: &str) -> bool {\n    (kind == \"source-mapping\") && (operation == \"json-string\")\n}"
+  },
+  {
+    "id": "grammar.read-grammar-selection-source-registry",
+    "source": "js/src/grammar-runtime/selection-source-mapping.js",
+    "name": "sourceRegistry",
+    "inventoryName": "read grammar selection source registry",
+    "sourceText": "function sourceRegistry(executor) {\n  return executor.budget.memory.selectionSources ??= { byBytes: new WeakMap(), records: [] };\n}"
+  },
+  {
+    "id": "grammar.retain-grammar-selection-source-record",
+    "source": "js/src/grammar-runtime/selection-source-mapping.js",
+    "name": "sourceRecord",
+    "inventoryName": "retain grammar selection source record",
+    "sourceText": "function sourceRecord(executor) {\n  const registry = sourceRegistry(executor);\n  let record = registry.byBytes.get(executor.bytes);\n  if (!record) {\n    executor.retain(1);\n    // The declaration describes the entire concrete source plane, including\n    // bytes outside the selected string. Identity-only byte parsing does not\n    // enter this bounded UTF-8 mapping profile.\n    for (let position = 0; position < executor.bytes.length;) {\n      executor.step();\n      const scalar = decodeAt(executor.bytes, position);\n      if (scalar.codePoint < 0) {\n        record = { reason: 'unsupportedEmbeddingMapping', offset: position };\n        registry.byBytes.set(executor.bytes, record);\n        return record;\n      }\n      position += scalar.length;\n    }\n    record = { bytes: executor.bytes, parent: null, mapping: null, mappings: new Map(),\n      source: registry.records.length };\n    record.definition = Object.freeze({ kind: 'grammar-source', identity: record.source,\n      encoding: 'UTF-8', byteLength: executor.bytes.length, derivation: null });\n    registry.records.push(record);\n    registry.byBytes.set(executor.bytes, record);\n  }\n  return record;\n}"
+  },
+  {
+    "id": "grammar.map-grammar-selection-source",
+    "source": "js/src/grammar-runtime/selection-source-mapping.js",
+    "name": "mapGrammarSelectionSource",
+    "inventoryName": "map grammar selection source",
+    "sourceText": "export function mapGrammarSelectionSource(executor, start, end) {\n  const input = sourceRecord(executor);\n  if (input.reason) return input;\n  const key = `json-string|${start}|${end}`;\n  if (input.mappings.has(key)) return input.mappings.get(key);\n  const length = end - start;\n  executor.retain(readGrammarSelectionMappingReservation(length, false));\n  const steps = readGrammarSelectionMappingReservation(length, true);\n  for (let index = 0; index < steps; index += 1) executor.step();\n  const codes = [], positions = [];\n  for (let position = start; position < end;) {\n    const next = decodeAt(executor.bytes, position, end);\n    if (next.codePoint < 0) {\n      const failed = { reason: 'invalidEmbeddingMapping', offset: position };\n      input.mappings.set(key, failed);\n      return failed;\n    }\n    positions.push(position);\n    codes.push(next.codePoint);\n    position += next.length;\n  }\n  positions.push(end);\n  const pieces = [], intervals = [[start, start + 1, 0, 0]];\n  let index = 1, outputEnd = 0;\n  for (;;) {\n    const part = readGrammarSelectionJsonStringPart(codes, index);\n    if (part[0] === 3) break;\n    if (part[0] !== 0) {\n      const failed = { reason: part[0] === 2 ? 'unsupportedEmbeddingMapping' : 'invalidEmbeddingMapping',\n        offset: positions[part[1]] ?? start };\n      input.mappings.set(key, failed);\n      return failed;\n    }\n    const next = part[2], width = readSourceTextScalarByteWidth(part[1]);\n    pieces.push(String.fromCodePoint(part[1]));\n    intervals.push([positions[index], positions[next], outputEnd, outputEnd + width]);\n    index = next;\n    outputEnd += width;\n  }\n  intervals.push([end - 1, end, outputEnd, outputEnd]);\n  const registry = sourceRegistry(executor), bytes = encodeText(pieces.join(''));\n  const source = registry.records.length;\n  const mapping = Object.freeze({ kind: 'source-mapping', operation: 'json-string', input: input.source,\n    output: source, intervals: Object.freeze(intervals.map(row => Object.freeze(row))) });\n  const record = { bytes, source, parent: input, mapping, mappings: new Map(),\n    definition: Object.freeze({ kind: 'grammar-source', identity: source, encoding: 'UTF-8', byteLength: bytes.length,\n      derivation: Object.freeze({ operation: 'json-string', input: input.source, start, end }) }) };\n  registry.records.push(record);\n  registry.byBytes.set(bytes, record);\n  const result = { bytes, mapping };\n  input.mappings.set(key, result);\n  return result;\n}"
+  },
+  {
+    "id": "grammar.retain-grammar-selection-source-table",
+    "source": "js/src/grammar-runtime/selection-source-mapping.js",
+    "name": "withGrammarSelectionSources",
+    "inventoryName": "retain grammar selection source table",
+    "sourceText": "export function withGrammarSelectionSources(outcome, memory) {\n  if (!memory.selectionSources?.records.length) return outcome;\n  return { ...outcome, sourcePlanes: memory.selectionSources.records.map(record => record.definition) };\n}"
+  },
+  {
+    "id": "grammar.retain-grammar-selection-mapping-failure",
+    "source": "js/src/grammar-runtime/selection-source-mapping.js",
+    "name": "rememberGrammarSelectionMappingFailure",
+    "inventoryName": "retain grammar selection mapping failure",
+    "sourceText": "export function rememberGrammarSelectionMappingFailure(executor, diagnostic) {\n  const origin = sourceRecord(executor);\n  const qualified = origin.reason ? diagnostic : projectGrammarSelectionDiagnostic(executor, { source: origin.source,\n    sourceStart: diagnostic.start, sourceEnd: diagnostic.end, ...diagnostic });\n  executor.retain(1);\n  (executor.budget.memory.selectionMappingFailures ??= []).push(qualified);\n}"
+  },
+  {
+    "id": "grammar.project-grammar-selection-source-span",
+    "source": "js/src/grammar-runtime/selection-source-mapping.js",
+    "name": "projectGrammarSelectionSpan",
+    "inventoryName": "project grammar selection source span",
+    "sourceText": "export function projectGrammarSelectionSpan(mapping, start, end) {\n  const cover = readGrammarSelectionMappedCover(mapping.intervals, start, end);\n  if (cover.length !== 3) throw new TypeError('a grammar mapping has no source cover for this decoded range');\n  return { displayAnchor: cover[0], start: cover[1], end: cover[2] };\n}"
+  },
+  {
+    "id": "grammar.project-grammar-selection-source-diagnostic",
+    "source": "js/src/grammar-runtime/selection-source-mapping.js",
+    "name": "projectGrammarSelectionDiagnostic",
+    "inventoryName": "project grammar selection source diagnostic",
+    "sourceText": "export function projectGrammarSelectionDiagnostic(executor, diagnostic) {\n  let record = executor.budget.memory.selectionSources?.byBytes.get(executor.bytes);\n  if (!record?.parent) return diagnostic;\n  const source = diagnostic.source ?? record.source;\n  const sourceStart = diagnostic.sourceStart ?? diagnostic.start, sourceEnd = diagnostic.sourceEnd ?? diagnostic.end;\n  let start = sourceStart, end = sourceEnd;\n  // A supplied diagnostic may already be anchored in the current plane after\n  // one child transform, while preserving its deeper original coordinates.\n  start = diagnostic.start; end = diagnostic.end;\n  const sourceRoute = [...(diagnostic.sourceRoute ?? [])];\n  while (record.parent) {\n    const cover = projectGrammarSelectionSpan(record.mapping, start, end);\n    sourceRoute.push({ output: record.source, outputStart: start, outputEnd: end,\n      input: record.parent.source, inputStart: cover.start, inputEnd: cover.end, displayAnchor: cover.displayAnchor });\n    start = cover.start; end = cover.end;\n    record = record.parent;\n  }\n  return { ...diagnostic, start, end, source, sourceStart, sourceEnd, sourceRoute,\n    offsetSemantics: 'covering-source-spelling' };\n}"
+  },
+  {
+    "id": "grammar.check-selection-mapped-tree",
+    "source": "js/src/grammar-runtime/mapped-tree-validation.js",
+    "name": "checkGrammarSelectionMappedTree",
+    "inventoryName": "check selection mapped tree",
+    "sourceText": "export function checkGrammarSelectionMappedTree(bundle, options = {}) {\n  if (Array.isArray(bundle) || Array.isArray(options)) fail('ordinary plain records are required');\n  const header = new Map(dataEntries(bundle)), originalTree = header.get('tree');\n  if (!originalTree || Array.isArray(originalTree)) fail('a complete physical root CST is required');\n  const rootHeader = new Map(dataEntries(originalTree)), end = rootHeader.get('end');\n  if (!Number.isSafeInteger(end) || end < 0 || end > 4294967295) fail('a complete physical root CST is required');\n  const settings = Object.create(null);\n  for (const [key, value] of dataEntries(options)) settings[key] = value;\n  for (const key of ['memoryLimit', 'stepLimit', 'maxDepth']) if (Object.hasOwn(settings, key)\n    && (!Number.isSafeInteger(settings[key]) || settings[key] < 0)) fail('invalid resource option');\n  if (Object.hasOwn(settings, 'errorRecovery') && typeof settings.errorRecovery !== 'boolean') fail('invalid resource option');\n  const memory = memoryBudget(settings), maximumDepth = settings.maxDepth ?? DEFAULT_MAX_DEPTH;\n  const control = { bytes: null, budget: stepBudget(settings, end, memory),\n    step: Executor.prototype.step, retain: Executor.prototype.retain };\n  const depth = level => {\n    control.step();\n    if (level > maximumDepth) throw new NestingTooDeep();\n  };\n  const active = new Set(), copies = new Map();\n  const snapshot = (value, level) => {\n    depth(level);\n    if (value === null || typeof value === 'string' || typeof value === 'boolean'\n        || typeof value === 'number' && Number.isFinite(value)) return value;\n    if (!value || typeof value !== 'object') fail('unsupported host data');\n    if (active.has(value)) fail('cyclic host data');\n    if (copies.has(value)) return copies.get(value);\n    const entries = dataEntries(value), copy = Array.isArray(value) ? [] : Object.create(null);\n    control.retain(entries.length + 1);\n    copies.set(value, copy);\n    active.add(value);\n    for (const [key, child] of entries) {\n      control.step();\n      if (Array.isArray(value) && key === 'length') continue;\n      Object.defineProperty(copy, key, { value: snapshot(child, level + 1), enumerable: true });\n    }\n    active.delete(value);\n    return copy;\n  };\n  const { tree, sourcePlanes } = snapshot(bundle, 0);\n  if (!Array.isArray(sourcePlanes) || sourcePlanes.length === 0) fail('the source-plane table is required');\n  const physical = (nodes, begin, end, level) => {\n    const bytes = [];\n    let cursor = begin;\n    const visit = (node, nesting) => {\n      depth(nesting);\n      control.retain(1);\n      if (!node || typeof node !== 'object') fail('invalid physical tree');\n      const begin = cursor;\n      const role = readGrammarSelectionTreeChildren(node.type, node.sourceChildren !== undefined);\n      if (role === 'leaf') {\n        let count;\n        if (typeof node.text === 'string') count = Buffer.byteLength(node.text, 'utf8');\n        else if (node.text === null && typeof node.hex === 'string' && /^(?:[0-9a-f]{2})*$/u.test(node.hex)) count = node.hex.length / 2;\n        else fail('invalid physical leaf bytes');\n        if (!acceptGrammarSelectionPhysicalSpan(node.start, node.end, cursor, count, false)) fail('physical leaf span differs');\n        control.retain(count + 1);\n        const stored = typeof node.text === 'string' ? encodeText(node.text)\n          : Uint8Array.from(node.hex.match(/../gu) ?? [], word => Number.parseInt(word, 16));\n        if (typeof node.text === 'string' && textOf(stored, 0, stored.length) !== node.text) fail('non-scalar physical leaf text');\n        for (const byte of stored) { control.step(); bytes.push(byte); }\n        cursor = node.end;\n      } else if (role === 'missing') {\n        if (!acceptGrammarSelectionPhysicalSpan(node.start, node.end, cursor, 0, true)) fail('invalid missing span');\n      } else if (role === 'children') {\n        if (!Array.isArray(node.children)) fail('missing concrete children');\n        for (const child of node.children) visit(child, nesting + 1);\n      } else if (role === 'root' || role === 'sourceChildren') {\n        if (role === 'sourceChildren') {\n          if (!Array.isArray(node.sourceChildren)) fail('invalid physical source children');\n          for (const child of node.sourceChildren) visit(child, nesting + 1);\n        } else visit(node.root, nesting + 1);\n      } else fail('unknown concrete node kind');\n      if (role !== 'leaf' && role !== 'missing' && !acceptGrammarSelectionPhysicalSpan(node.start,\n        node.end, begin, cursor - begin, false)) fail('physical container span differs');\n    };\n    for (const node of nodes) visit(node, level);\n    if (cursor !== end) fail('incomplete physical source plane');\n    return Uint8Array.from(bytes);\n  };\n  // Parsing root invocations consume the entire source. Embedded roots have\n  // their own explicit plane; their byte offsets are never added to a parent.\n  const rootBytes = physical([tree], 0, tree?.end, 0);\n  for (let position = 0; position < rootBytes.length;) {\n    control.step();\n    const scalar = decodeAt(rootBytes, position);\n    if (scalar.codePoint < 0) fail('the root source plane is not UTF-8');\n    position += scalar.length;\n  }\n  const planes = [];\n  for (let identity = 0; identity < sourcePlanes.length; identity += 1) {\n    control.step();\n    control.retain(1);\n    const definition = sourcePlanes[identity];\n    if (!exactKeys(definition, readGrammarSelectionMappingFieldOrder('source').split('|'))) fail('invalid ordered source definition');\n    if (!acceptGrammarSelectionSourceRoot(identity, definition.derivation === null)) fail('invalid source derivation presence');\n    if (identity === 0) {\n      if (!acceptGrammarSelectionSourceDefinition(definition.kind, definition.identity,\n        identity, definition.encoding, definition.byteLength, rootBytes.length)) fail('invalid root source definition');\n      planes.push({ identity, bytes: rootBytes });\n      continue;\n    }\n    const origin = definition.derivation;\n    if (!exactKeys(origin, readGrammarSelectionMappingFieldOrder('derivation').split('|'))) fail('unowned source derivation');\n    const parent = typeof origin.input === 'number' ? planes[origin.input] : null;\n    if (!parent || !acceptGrammarSelectionSourceDerivation(origin.operation, origin.input, identity,\n      origin.start, origin.end, parent.bytes.length)) fail('unowned source derivation');\n    control.bytes = parent.bytes;\n    const derived = mapGrammarSelectionSource(control, origin.start, origin.end);\n    if (derived.reason || derived.mapping.output !== identity || !acceptGrammarSelectionSourceDefinition(definition.kind,\n      definition.identity, identity, definition.encoding, definition.byteLength, derived.bytes.length)) fail('invalid source derivation');\n    planes.push({ identity, bytes: derived.bytes });\n  }\n  const walk = (node, plane, level) => {\n    depth(level);\n    if (node.type === 'node') {\n      for (const child of node.children) walk(child, plane, level + 1);\n      return;\n    }\n    if (node.type !== 'embed') return;\n    const mapped = node.selection?.mapping === 'json-string';\n    if (!acceptGrammarSelectionMappingProfile(node.selection?.mapping ?? 'identity',\n      node.sourceChildren !== undefined, node.selection?.sourceMapping !== undefined)) fail('unknown mapping profile');\n    if (!mapped) {\n      walk(node.root, plane, level + 1);\n      for (const alternative of node.selection?.alternatives ?? []) walk(alternative.root, plane, level + 1);\n      return;\n    }\n    const mapping = node.selection.sourceMapping;\n    if (!exactKeys(mapping, readGrammarSelectionMappingFieldOrder('mapping').split('|'))\n        || !acceptGrammarSelectionMappingDescriptor(mapping.kind, mapping.operation)\n        || !Array.isArray(node.sourceChildren) || mapping.input === mapping.output\n        || !acceptGrammarSelectionMappingOccurrence(mapping.input, plane.identity,\n          node.selection.start, node.start, node.selection.end, node.end)) fail('invalid mapped boundary');\n    if (!acceptGrammarSelectionMappingReference(mapping.input, plane.identity, mapping.output, planes.length)) fail('unowned source-plane reference');\n    const output = sourcePlanes[mapping.output], origin = output.derivation;\n    if (!acceptGrammarSelectionMappingOccurrence(origin.input, mapping.input, origin.start, node.start,\n      origin.end, node.end)) fail('mapping belongs to another source occurrence');\n    control.bytes = plane.bytes;\n    const derived = mapGrammarSelectionSource(control, node.start, node.end);\n    if (derived.reason) fail(derived.reason);\n    if (!Array.isArray(mapping.intervals) || mapping.intervals.length !== derived.mapping.intervals.length\n        || !mapping.intervals.every((row, index) => Array.isArray(row)\n          && acceptGrammarSelectionSourceInterval(row, derived.mapping.intervals[index]))) fail('ordered source intervals differ');\n    if (derived.mapping.output !== mapping.output) fail('source reference differs from its actual derivation');\n    const childPlane = planes[mapping.output];\n    for (const child of node.sourceChildren) walk(child, plane, level + 1);\n    for (const root of [node.root, ...node.selection.alternatives.map(alternative => alternative.root)]) {\n      const stored = physical([root], 0, derived.bytes.length, level + 1);\n      if (stored.length !== derived.bytes.length || stored.some((byte, index) => byte !== derived.bytes[index])) fail('decoded tree bytes differ');\n      walk(root, childPlane, level + 1);\n    }\n  };\n  walk(tree, planes[0], 0);\n  return bundle;\n}"
+  },
+  {
+    "id": "grammar.check-selection-mapped-tree",
+    "source": "rust/src/grammar/feature_runtime/mapped_tree_validation.rs",
+    "name": "check_grammar_selection_mapped_tree",
+    "inventoryName": "check selection mapped tree",
+    "sourceText": "pub fn check_grammar_selection_mapped_tree<'a>(\n    bundle: &'a Value,\n    options: &FeatureParseOptions,\n) -> Result<&'a Value, GrammarRuntimeError> {\n    let tree = bundle\n        .get(\"tree\")\n        .filter(|tree| tree.is_object())\n        .ok_or_else(|| invalid(\"a complete physical root CST is required\"))?;\n    let end = offset(&tree[\"end\"])\n        .filter(|end| u32::try_from(*end).is_ok())\n        .ok_or_else(|| invalid(\"a complete physical root CST is required\"))?;\n    let budget = ValidationBudget {\n        steps: Cell::new(0),\n        cells: Cell::new(0),\n        step_limit: options.step_limit.unwrap_or(\n            (100_000 + 1000 * end)\n                * if options.error_recovery == Some(true) {\n                    2\n                } else {\n                    1\n                },\n        ),\n        memory_limit: options.memory_limit.unwrap_or(DEFAULT_MEMORY_LIMIT),\n        max_depth: options.max_depth.unwrap_or(DEFAULT_MAX_DEPTH),\n    };\n    budget.plain(bundle, 0)?;\n    let definitions = bundle[\"sourcePlanes\"]\n        .as_array()\n        .filter(|rows| !rows.is_empty())\n        .ok_or_else(|| invalid(\"the source-plane table is required\"))?;\n    let bytes = physical(std::slice::from_ref(tree), 0, end, 0, &budget)?;\n    let mut position = 0;\n    while position < bytes.len() {\n        budget.step()?;\n        let (scalar, width) = super::text::decode_at(&bytes, position, bytes.len());\n        if scalar.is_none() {\n            return Err(invalid(\"the root source plane is not UTF-8\"));\n        }\n        position += width;\n    }\n    let mut validator = Validator {\n        definitions,\n        planes: Vec::new(),\n        registry: SourceRegistry::default(),\n        budget,\n    };\n    let root: Rc<[u8]> = Rc::from(bytes);\n    for (identity, definition) in definitions.iter().enumerate() {\n        validator.budget.step()?;\n        validator.budget.retain(1)?;\n        if !exact_keys(definition, \"source\") {\n            return Err(invalid(\"invalid ordered source definition\"));\n        }\n        if !accept_grammar_selection_source_root(\n            numeric(identity),\n            definition[\"derivation\"].is_null(),\n        ) {\n            return Err(invalid(\"invalid source derivation presence\"));\n        }\n        let bytes = if identity == 0 {\n            root.clone()\n        } else {\n            let origin = &definition[\"derivation\"];\n            if !exact_keys(origin, \"derivation\") {\n                return Err(invalid(\"unowned source derivation\"));\n            }\n            let input = offset(&origin[\"input\"])\n                .and_then(|index| validator.planes.get(index))\n                .ok_or_else(|| invalid(\"unowned source derivation\"))?;\n            if !accept_grammar_selection_source_derivation(\n                origin[\"operation\"].as_str().unwrap_or_default(),\n                number(&origin[\"input\"]),\n                numeric(identity),\n                number(&origin[\"start\"]),\n                number(&origin[\"end\"]),\n                numeric(input.len()),\n            ) {\n                return Err(invalid(\"unowned source derivation\"));\n            }\n            let start =\n                offset(&origin[\"start\"]).ok_or_else(|| invalid(\"unowned source derivation\"))?;\n            let end = offset(&origin[\"end\"]).ok_or_else(|| invalid(\"unowned source derivation\"))?;\n            let derived = validator\n                .registry\n                .map(input, start, end, &validator.budget)\n                .map_err(aborted)?\n                .map_err(|_| invalid(\"invalid source derivation\"))?;\n            if offset(&derived.mapping[\"output\"]) != Some(identity) {\n                return Err(invalid(\"invalid source derivation\"));\n            }\n            derived.bytes\n        };\n        if !accept_grammar_selection_source_definition(\n            definition[\"kind\"].as_str().unwrap_or_default(),\n            number(&definition[\"identity\"]),\n            numeric(identity),\n            definition[\"encoding\"].as_str().unwrap_or_default(),\n            number(&definition[\"byteLength\"]),\n            numeric(bytes.len()),\n        ) {\n            return Err(invalid(\"invalid source definition\"));\n        }\n        validator.planes.push(bytes);\n    }\n    validator.walk(tree, 0, 0)?;\n    Ok(bundle)\n}"
+  },
+  {
+    "id": "grammar.check-selection-mapped-tree",
+    "source": "js/src/index.d.ts",
+    "name": "checkGrammarSelectionMappedTree",
+    "inventoryName": "check selection mapped tree",
+    "sourceText": "export function checkGrammarSelectionMappedTree<T>(bundle: T,\n  options?: Pick<GrammarParserOptions, 'memoryLimit' | 'stepLimit' | 'maxDepth' | 'errorRecovery'>,\n): T & GrammarMappedTreeBundle;"
+  },
+  {
+    "id": "grammar.accept-mapped-tree-record-field-order",
+    "source": "js/src/grammar-runtime/mapped-tree-validation.js",
+    "name": "exactKeys",
+    "inventoryName": "accept mapped tree record field order",
+    "sourceText": "function exactKeys(value, keys) {\n  return value && typeof value === 'object' && !Array.isArray(value)\n    && Object.keys(value).length === keys.length && keys.every((key, index) => Object.keys(value)[index] === key);\n}"
+  },
+  {
+    "id": "grammar.read-mapped-tree-plain-data-descriptors",
+    "source": "js/src/grammar-runtime/mapped-tree-validation.js",
+    "name": "dataEntries",
+    "inventoryName": "read mapped tree plain data descriptors",
+    "sourceText": "function dataEntries(value) {\n  if (!value || typeof value !== 'object') fail('ordinary plain data is required');\n  const array = Array.isArray(value), prototype = Object.getPrototypeOf(value);\n  if (array ? prototype !== Array.prototype && prototype !== null\n    : prototype !== Object.prototype && prototype !== null) fail('unsupported host prototype');\n  const names = Reflect.ownKeys(value), entries = [];\n  for (const name of names) {\n    if (typeof name !== 'string') fail('symbol data field');\n    const descriptor = Object.getOwnPropertyDescriptor(value, name);\n    if (!Object.hasOwn(descriptor, 'value') || (!descriptor.enumerable && !(array && name === 'length'))) fail('non-data field');\n    entries.push([name, descriptor.value]);\n  }\n  if (array) {\n    const length = entries.find(([name]) => name === 'length')?.[1];\n    if (names.length !== length + 1 || !names.slice(0, -1).every((name, index) => name === String(index))\n        || names[names.length - 1] !== 'length') fail('sparse array or array field');\n  }\n  return entries;\n}"
+  },
+  {
+    "id": "grammar.refuse-invalid-mapped-tree-data",
+    "source": "js/src/grammar-runtime/mapped-tree-validation.js",
+    "name": "fail",
+    "inventoryName": "refuse invalid mapped tree data",
+    "sourceText": "const fail = detail => { throw new TypeError(`mapped grammar CST: ${detail}`); };"
+  },
+  {
+    "id": "grammar.charge-mapped-tree-snapshot-depth",
+    "source": "js/src/grammar-runtime/mapped-tree-validation.js",
+    "name": "depth",
+    "inventoryName": "charge mapped tree snapshot depth",
+    "sourceText": "const depth = level => {\n    control.step();\n    if (level > maximumDepth) throw new NestingTooDeep();\n  };",
+    "ownerContexts": [
+      "export function checkGrammarSelectionMappedTree(bundle, options = {}) {"
+    ]
+  },
+  {
+    "id": "grammar.copy-mapped-tree-plain-data",
+    "source": "js/src/grammar-runtime/mapped-tree-validation.js",
+    "name": "snapshot",
+    "inventoryName": "copy mapped tree plain data",
+    "sourceText": "const snapshot = (value, level) => {\n    depth(level);\n    if (value === null || typeof value === 'string' || typeof value === 'boolean'\n        || typeof value === 'number' && Number.isFinite(value)) return value;\n    if (!value || typeof value !== 'object') fail('unsupported host data');\n    if (active.has(value)) fail('cyclic host data');\n    if (copies.has(value)) return copies.get(value);\n    const entries = dataEntries(value), copy = Array.isArray(value) ? [] : Object.create(null);\n    control.retain(entries.length + 1);\n    copies.set(value, copy);\n    active.add(value);\n    for (const [key, child] of entries) {\n      control.step();\n      if (Array.isArray(value) && key === 'length') continue;\n      Object.defineProperty(copy, key, { value: snapshot(child, level + 1), enumerable: true });\n    }\n    active.delete(value);\n    return copy;\n  };",
+    "ownerContexts": [
+      "export function checkGrammarSelectionMappedTree(bundle, options = {}) {"
+    ]
+  },
+  {
+    "id": "grammar.read-mapped-tree-physical-bytes",
+    "source": "js/src/grammar-runtime/mapped-tree-validation.js",
+    "name": "physical",
+    "inventoryName": "read mapped tree physical bytes",
+    "sourceText": "const physical = (nodes, begin, end, level) => {\n    const bytes = [];\n    let cursor = begin;\n    const visit = (node, nesting) => {\n      depth(nesting);\n      control.retain(1);\n      if (!node || typeof node !== 'object') fail('invalid physical tree');\n      const begin = cursor;\n      const role = readGrammarSelectionTreeChildren(node.type, node.sourceChildren !== undefined);\n      if (role === 'leaf') {\n        let count;\n        if (typeof node.text === 'string') count = Buffer.byteLength(node.text, 'utf8');\n        else if (node.text === null && typeof node.hex === 'string' && /^(?:[0-9a-f]{2})*$/u.test(node.hex)) count = node.hex.length / 2;\n        else fail('invalid physical leaf bytes');\n        if (!acceptGrammarSelectionPhysicalSpan(node.start, node.end, cursor, count, false)) fail('physical leaf span differs');\n        control.retain(count + 1);\n        const stored = typeof node.text === 'string' ? encodeText(node.text)\n          : Uint8Array.from(node.hex.match(/../gu) ?? [], word => Number.parseInt(word, 16));\n        if (typeof node.text === 'string' && textOf(stored, 0, stored.length) !== node.text) fail('non-scalar physical leaf text');\n        for (const byte of stored) { control.step(); bytes.push(byte); }\n        cursor = node.end;\n      } else if (role === 'missing') {\n        if (!acceptGrammarSelectionPhysicalSpan(node.start, node.end, cursor, 0, true)) fail('invalid missing span');\n      } else if (role === 'children') {\n        if (!Array.isArray(node.children)) fail('missing concrete children');\n        for (const child of node.children) visit(child, nesting + 1);\n      } else if (role === 'root' || role === 'sourceChildren') {\n        if (role === 'sourceChildren') {\n          if (!Array.isArray(node.sourceChildren)) fail('invalid physical source children');\n          for (const child of node.sourceChildren) visit(child, nesting + 1);\n        } else visit(node.root, nesting + 1);\n      } else fail('unknown concrete node kind');\n      if (role !== 'leaf' && role !== 'missing' && !acceptGrammarSelectionPhysicalSpan(node.start,\n        node.end, begin, cursor - begin, false)) fail('physical container span differs');\n    };\n    for (const node of nodes) visit(node, level);\n    if (cursor !== end) fail('incomplete physical source plane');\n    return Uint8Array.from(bytes);\n  };",
+    "ownerContexts": [
+      "export function checkGrammarSelectionMappedTree(bundle, options = {}) {"
+    ]
+  },
+  {
+    "id": "grammar.visit-mapped-tree-physical-node",
+    "source": "js/src/grammar-runtime/mapped-tree-validation.js",
+    "name": "visit",
+    "inventoryName": "visit mapped tree physical node",
+    "sourceText": "const visit = (node, nesting) => {\n      depth(nesting);\n      control.retain(1);\n      if (!node || typeof node !== 'object') fail('invalid physical tree');\n      const begin = cursor;\n      const role = readGrammarSelectionTreeChildren(node.type, node.sourceChildren !== undefined);\n      if (role === 'leaf') {\n        let count;\n        if (typeof node.text === 'string') count = Buffer.byteLength(node.text, 'utf8');\n        else if (node.text === null && typeof node.hex === 'string' && /^(?:[0-9a-f]{2})*$/u.test(node.hex)) count = node.hex.length / 2;\n        else fail('invalid physical leaf bytes');\n        if (!acceptGrammarSelectionPhysicalSpan(node.start, node.end, cursor, count, false)) fail('physical leaf span differs');\n        control.retain(count + 1);\n        const stored = typeof node.text === 'string' ? encodeText(node.text)\n          : Uint8Array.from(node.hex.match(/../gu) ?? [], word => Number.parseInt(word, 16));\n        if (typeof node.text === 'string' && textOf(stored, 0, stored.length) !== node.text) fail('non-scalar physical leaf text');\n        for (const byte of stored) { control.step(); bytes.push(byte); }\n        cursor = node.end;\n      } else if (role === 'missing') {\n        if (!acceptGrammarSelectionPhysicalSpan(node.start, node.end, cursor, 0, true)) fail('invalid missing span');\n      } else if (role === 'children') {\n        if (!Array.isArray(node.children)) fail('missing concrete children');\n        for (const child of node.children) visit(child, nesting + 1);\n      } else if (role === 'root' || role === 'sourceChildren') {\n        if (role === 'sourceChildren') {\n          if (!Array.isArray(node.sourceChildren)) fail('invalid physical source children');\n          for (const child of node.sourceChildren) visit(child, nesting + 1);\n        } else visit(node.root, nesting + 1);\n      } else fail('unknown concrete node kind');\n      if (role !== 'leaf' && role !== 'missing' && !acceptGrammarSelectionPhysicalSpan(node.start,\n        node.end, begin, cursor - begin, false)) fail('physical container span differs');\n    };",
+    "ownerContexts": [
+      "export function checkGrammarSelectionMappedTree(bundle, options = {}) {",
+      "const physical = (nodes, begin, end, level) => {"
+    ]
+  },
+  {
+    "id": "grammar.check-mapped-tree-source-ownership",
+    "source": "js/src/grammar-runtime/mapped-tree-validation.js",
+    "name": "walk",
+    "inventoryName": "check mapped tree source ownership",
+    "sourceText": "const walk = (node, plane, level) => {\n    depth(level);\n    if (node.type === 'node') {\n      for (const child of node.children) walk(child, plane, level + 1);\n      return;\n    }\n    if (node.type !== 'embed') return;\n    const mapped = node.selection?.mapping === 'json-string';\n    if (!acceptGrammarSelectionMappingProfile(node.selection?.mapping ?? 'identity',\n      node.sourceChildren !== undefined, node.selection?.sourceMapping !== undefined)) fail('unknown mapping profile');\n    if (!mapped) {\n      walk(node.root, plane, level + 1);\n      for (const alternative of node.selection?.alternatives ?? []) walk(alternative.root, plane, level + 1);\n      return;\n    }\n    const mapping = node.selection.sourceMapping;\n    if (!exactKeys(mapping, readGrammarSelectionMappingFieldOrder('mapping').split('|'))\n        || !acceptGrammarSelectionMappingDescriptor(mapping.kind, mapping.operation)\n        || !Array.isArray(node.sourceChildren) || mapping.input === mapping.output\n        || !acceptGrammarSelectionMappingOccurrence(mapping.input, plane.identity,\n          node.selection.start, node.start, node.selection.end, node.end)) fail('invalid mapped boundary');\n    if (!acceptGrammarSelectionMappingReference(mapping.input, plane.identity, mapping.output, planes.length)) fail('unowned source-plane reference');\n    const output = sourcePlanes[mapping.output], origin = output.derivation;\n    if (!acceptGrammarSelectionMappingOccurrence(origin.input, mapping.input, origin.start, node.start,\n      origin.end, node.end)) fail('mapping belongs to another source occurrence');\n    control.bytes = plane.bytes;\n    const derived = mapGrammarSelectionSource(control, node.start, node.end);\n    if (derived.reason) fail(derived.reason);\n    if (!Array.isArray(mapping.intervals) || mapping.intervals.length !== derived.mapping.intervals.length\n        || !mapping.intervals.every((row, index) => Array.isArray(row)\n          && acceptGrammarSelectionSourceInterval(row, derived.mapping.intervals[index]))) fail('ordered source intervals differ');\n    if (derived.mapping.output !== mapping.output) fail('source reference differs from its actual derivation');\n    const childPlane = planes[mapping.output];\n    for (const child of node.sourceChildren) walk(child, plane, level + 1);\n    for (const root of [node.root, ...node.selection.alternatives.map(alternative => alternative.root)]) {\n      const stored = physical([root], 0, derived.bytes.length, level + 1);\n      if (stored.length !== derived.bytes.length || stored.some((byte, index) => byte !== derived.bytes[index])) fail('decoded tree bytes differ');\n      walk(root, childPlane, level + 1);\n    }\n  };",
+    "ownerContexts": [
+      "export function checkGrammarSelectionMappedTree(bundle, options = {}) {"
+    ]
+  },
+  {
+    "id": "grammar.grammar-source-mapping-budget",
+    "source": "rust/src/grammar/feature_runtime/selection_source_mapping.rs",
+    "name": "MappingBudget",
+    "inventoryName": "grammar source mapping budget",
+    "sourceText": "pub(super) trait MappingBudget {\n    fn mapping_step(&self) -> Run<()>;\n    fn mapping_retain(&self, count: usize) -> Run<()>;\n}"
+  },
+  {
+    "id": "grammar.grammar-source-mapping-failure",
+    "source": "rust/src/grammar/feature_runtime/selection_source_mapping.rs",
+    "name": "MappingFailure",
+    "inventoryName": "grammar source mapping failure",
+    "sourceText": "pub(super) struct MappingFailure {\n    pub(super) reason: &'static str,\n    pub(super) offset: usize,\n}"
+  },
+  {
+    "id": "grammar.grammar-mapped-source",
+    "source": "rust/src/grammar/feature_runtime/selection_source_mapping.rs",
+    "name": "MappedSource",
+    "inventoryName": "grammar mapped source",
+    "sourceText": "pub(super) struct MappedSource {\n    pub(super) bytes: Rc<[u8]>,\n    pub(super) mapping: Value,\n}"
+  },
+  {
+    "id": "grammar.grammar-source-mapping-record",
+    "source": "rust/src/grammar/feature_runtime/selection_source_mapping.rs",
+    "name": "SourceRecord",
+    "inventoryName": "grammar source mapping record",
+    "sourceText": "struct SourceRecord {\n    definition: Value,\n    // Successful parent caches retain every derived buffer. Private buffer\n    // keys cannot be reused during this parse; no public identity uses them.\n    parent: Option<usize>,\n    mapping: Option<Value>,\n    mappings: HashMap<(usize, usize), Result<MappedSource, MappingFailure>>,\n}"
+  },
+  {
+    "id": "grammar.grammar-selection-source-registry",
+    "source": "rust/src/grammar/feature_runtime/selection_source_mapping.rs",
+    "name": "SourceRegistry",
+    "inventoryName": "grammar selection source registry",
+    "sourceText": "pub(super) struct SourceRegistry {\n    records: Vec<SourceRecord>,\n    by_buffer: HashMap<(usize, usize), usize>,\n    invalid: HashMap<(usize, usize), MappingFailure>,\n}"
+  },
+  {
+    "id": "grammar.convert-grammar-source-byte-count",
+    "source": "rust/src/grammar/feature_runtime/selection_source_mapping.rs",
+    "name": "numeric",
+    "inventoryName": "convert grammar source byte count",
+    "sourceText": "pub(super) fn numeric(value: usize) -> f64 {\n    u32::try_from(value).map_or(f64::NAN, f64::from)\n}"
+  },
+  {
+    "id": "grammar.read-grammar-source-buffer-key",
+    "source": "rust/src/grammar/feature_runtime/selection_source_mapping.rs",
+    "name": "buffer_key",
+    "inventoryName": "read grammar source buffer key",
+    "sourceText": "fn buffer_key(bytes: &[u8]) -> (usize, usize) {\n    (bytes.as_ptr().addr(), bytes.len())\n}"
+  },
+  {
+    "id": "grammar.read-native-grammar-source-cover",
+    "source": "rust/src/grammar/feature_runtime/selection_source_mapping.rs",
+    "name": "mapped_cover",
+    "inventoryName": "read native grammar source cover",
+    "sourceText": "pub(super) fn mapped_cover(mapping: &Value, start: usize, end: usize) -> Option<[usize; 3]> {\n    let intervals = mapping[\"intervals\"]\n        .as_array()?\n        .iter()\n        .map(|row| {\n            row.as_array().map(|cells| {\n                cells\n                    .iter()\n                    .map(|cell| cell.as_f64().unwrap_or(f64::NAN))\n                    .collect()\n            })\n        })\n        .collect::<Option<Vec<Vec<f64>>>>()?;\n    let cover = read_grammar_selection_mapped_cover(&intervals, numeric(start), numeric(end));\n    if cover.len() != 3 {\n        return None;\n    }\n    Some([\n        number_index(cover[0])?,\n        number_index(cover[1])?,\n        number_index(cover[2])?,\n    ])\n}"
+  },
+  {
+    "id": "grammar.read-native-grammar-source-definitions",
+    "source": "rust/src/grammar/feature_runtime/selection_source_mapping.rs",
+    "name": "SourceRegistry::definitions",
+    "inventoryName": "read native grammar source definitions",
+    "sourceText": "    pub(super) fn definitions(&self) -> Option<Vec<Value>> {\n        (!self.records.is_empty()).then(|| {\n            self.records\n                .iter()\n                .map(|row| row.definition.clone())\n                .collect()\n        })\n    }",
+    "ownerContexts": [
+      "impl SourceRegistry {"
+    ]
+  },
+  {
+    "id": "grammar.retain-native-grammar-source-definition",
+    "source": "rust/src/grammar/feature_runtime/selection_source_mapping.rs",
+    "name": "SourceRegistry::source",
+    "inventoryName": "retain native grammar source definition",
+    "sourceText": "    fn source(\n        &mut self,\n        bytes: &[u8],\n        budget: &impl MappingBudget,\n    ) -> Run<Result<usize, MappingFailure>> {\n        let key = buffer_key(bytes);\n        if let Some(source) = self.by_buffer.get(&key) {\n            return Ok(Ok(*source));\n        }\n        if let Some(failed) = self.invalid.get(&key) {\n            return Ok(Err(failed.clone()));\n        }\n        budget.mapping_retain(1)?;\n        let mut position = 0;\n        while position < bytes.len() {\n            budget.mapping_step()?;\n            let (scalar, width) = decode_at(bytes, position, bytes.len());\n            if scalar.is_none() {\n                let failed = MappingFailure {\n                    reason: \"unsupportedEmbeddingMapping\",\n                    offset: position,\n                };\n                self.invalid.insert(key, failed.clone());\n                return Ok(Err(failed));\n            }\n            position += width;\n        }\n        let source = self.records.len();\n        self.records.push(SourceRecord {\n            definition: json!({\"kind\":\"grammar-source\",\"identity\":source,\n            \"encoding\":\"UTF-8\",\"byteLength\":bytes.len(),\"derivation\":null}),\n            parent: None,\n            mapping: None,\n            mappings: HashMap::new(),\n        });\n        self.by_buffer.insert(key, source);\n        Ok(Ok(source))\n    }",
+    "ownerContexts": [
+      "impl SourceRegistry {"
+    ]
+  },
+  {
+    "id": "grammar.map-native-grammar-selection-source",
+    "source": "rust/src/grammar/feature_runtime/selection_source_mapping.rs",
+    "name": "SourceRegistry::map",
+    "inventoryName": "map native grammar selection source",
+    "sourceText": "    pub(super) fn map(\n        &mut self,\n        bytes: &[u8],\n        start: usize,\n        end: usize,\n        budget: &impl MappingBudget,\n    ) -> Run<Result<MappedSource, MappingFailure>> {\n        let input = match self.source(bytes, budget)? {\n            Ok(source) => source,\n            Err(failed) => return Ok(Err(failed)),\n        };\n        if let Some(cached) = self.records[input].mappings.get(&(start, end)) {\n            return Ok(cached.clone());\n        }\n        let failed = |offset| MappingFailure {\n            reason: \"invalidEmbeddingMapping\",\n            offset,\n        };\n        if start > end || end > bytes.len() {\n            return Ok(Err(failed(start.min(bytes.len()))));\n        }\n        let length = end - start;\n        let Some(cells) = number_index(read_grammar_selection_mapping_reservation(\n            numeric(length),\n            false,\n        )) else {\n            return Ok(Err(failed(start)));\n        };\n        budget.mapping_retain(cells)?;\n        let Some(steps) = number_index(read_grammar_selection_mapping_reservation(\n            numeric(length),\n            true,\n        )) else {\n            return Ok(Err(failed(start)));\n        };\n        for _ in 0..steps {\n            budget.mapping_step()?;\n        }\n        let mut codes = Vec::new();\n        let mut positions = Vec::new();\n        let mut position = start;\n        while position < end {\n            let (scalar, width) = decode_at(bytes, position, end);\n            let Some(scalar) = scalar else {\n                let failed = failed(position);\n                self.records[input]\n                    .mappings\n                    .insert((start, end), Err(failed.clone()));\n                return Ok(Err(failed));\n            };\n            positions.push(position);\n            codes.push(f64::from(scalar));\n            position += width;\n        }\n        positions.push(end);\n        let mut text = String::new();\n        let mut intervals = vec![json!([start, start + 1, 0, 0])];\n        let mut index = 1;\n        let mut output_end = 0;\n        loop {\n            let part = read_grammar_selection_json_string_part(&codes, numeric(index));\n            let opcode = part.first().copied().and_then(number_index);\n            if opcode == Some(3) {\n                break;\n            }\n            if opcode != Some(0) {\n                let at = part\n                    .get(1)\n                    .copied()\n                    .and_then(number_index)\n                    .and_then(|at| positions.get(at))\n                    .copied()\n                    .unwrap_or(start);\n                let failed = MappingFailure {\n                    reason: if opcode == Some(2) {\n                        \"unsupportedEmbeddingMapping\"\n                    } else {\n                        \"invalidEmbeddingMapping\"\n                    },\n                    offset: at,\n                };\n                self.records[input]\n                    .mappings\n                    .insert((start, end), Err(failed.clone()));\n                return Ok(Err(failed));\n            }\n            let Some(code) = part\n                .get(1)\n                .copied()\n                .and_then(number_index)\n                .and_then(|code| u32::try_from(code).ok())\n            else {\n                return Ok(Err(failed(start)));\n            };\n            let Some(scalar) = char::from_u32(code) else {\n                return Ok(Err(failed(start)));\n            };\n            let Some(next) = part.get(2).copied().and_then(number_index) else {\n                return Ok(Err(failed(start)));\n            };\n            let Some(width) = number_index(read_source_text_scalar_byte_width(f64::from(code)))\n            else {\n                return Ok(Err(failed(start)));\n            };\n            let (Some(&from), Some(&to)) = (positions.get(index), positions.get(next)) else {\n                return Ok(Err(failed(start)));\n            };\n            text.push(scalar);\n            intervals.push(json!([from, to, output_end, output_end + width]));\n            index = next;\n            output_end += width;\n        }\n        intervals.push(json!([end - 1, end, output_end, output_end]));\n        let bytes: Rc<[u8]> = Rc::from(text.into_bytes());\n        let source = self.records.len();\n        let mapping = json!({\"kind\":\"source-mapping\",\"operation\":\"json-string\",\"input\":input,\n            \"output\":source,\"intervals\":intervals});\n        let mapped = MappedSource {\n            bytes: bytes.clone(),\n            mapping: mapping.clone(),\n        };\n        self.records.push(SourceRecord { definition: json!({\"kind\":\"grammar-source\",\"identity\":source,\n            \"encoding\":\"UTF-8\",\"byteLength\":bytes.len(),\"derivation\":{\"operation\":\"json-string\",\"input\":input,\"start\":start,\"end\":end}}),\n            parent: Some(input), mapping: Some(mapping), mappings: HashMap::new() });\n        self.by_buffer.insert(buffer_key(&bytes), source);\n        self.records[input]\n            .mappings\n            .insert((start, end), Ok(mapped.clone()));\n        Ok(Ok(mapped))\n    }",
+    "ownerContexts": [
+      "impl SourceRegistry {"
+    ]
+  },
+  {
+    "id": "grammar.qualify-native-grammar-source-diagnostic",
+    "source": "rust/src/grammar/feature_runtime/selection_source_mapping.rs",
+    "name": "SourceRegistry::qualify",
+    "inventoryName": "qualify native grammar source diagnostic",
+    "sourceText": "    pub(super) fn qualify(&self, bytes: &[u8], mut diagnostic: Value) -> Value {\n        let Some(mut source) = self.by_buffer.get(&buffer_key(bytes)).copied() else {\n            return diagnostic;\n        };\n        if self.records[source].parent.is_none() {\n            return diagnostic;\n        }\n        let mut start = diagnostic[\"start\"]\n            .as_u64()\n            .and_then(|value| usize::try_from(value).ok())\n            .unwrap_or_default();\n        let mut end = diagnostic[\"end\"]\n            .as_u64()\n            .and_then(|value| usize::try_from(value).ok())\n            .unwrap_or(start);\n        if diagnostic.get(\"source\").is_none() {\n            diagnostic[\"source\"] = json!(source);\n        }\n        if diagnostic.get(\"sourceStart\").is_none() {\n            diagnostic[\"sourceStart\"] = json!(start);\n        }\n        if diagnostic.get(\"sourceEnd\").is_none() {\n            diagnostic[\"sourceEnd\"] = json!(end);\n        }\n        let mut route = diagnostic[\"sourceRoute\"]\n            .as_array()\n            .cloned()\n            .unwrap_or_default();\n        while let Some(parent) = self.records[source].parent {\n            let Some(mapping) = &self.records[source].mapping else {\n                break;\n            };\n            let Some(cover) = mapped_cover(mapping, start, end) else {\n                break;\n            };\n            route.push(\n                json!({\"output\":source,\"outputStart\":start,\"outputEnd\":end,\"input\":parent,\n                \"inputStart\":cover[1],\"inputEnd\":cover[2],\"displayAnchor\":cover[0]}),\n            );\n            start = cover[1];\n            end = cover[2];\n            source = parent;\n        }\n        diagnostic[\"start\"] = json!(start);\n        diagnostic[\"end\"] = json!(end);\n        diagnostic[\"sourceRoute\"] = json!(route);\n        diagnostic[\"offsetSemantics\"] = json!(\"covering-source-spelling\");\n        diagnostic\n    }",
+    "ownerContexts": [
+      "impl SourceRegistry {"
+    ]
+  },
+  {
+    "id": "grammar.retain-native-grammar-source-mapping-failure",
+    "source": "rust/src/grammar/feature_runtime/selection_source_mapping.rs",
+    "name": "SourceRegistry::remember",
+    "inventoryName": "retain native grammar source mapping failure",
+    "sourceText": "    pub(super) fn remember(\n        &mut self,\n        bytes: &[u8],\n        mut diagnostic: Value,\n        budget: &impl MappingBudget,\n    ) -> Run<Value> {\n        if let Ok(source) = self.source(bytes, budget)? {\n            if diagnostic.get(\"source\").is_none() {\n                diagnostic[\"source\"] = json!(source);\n            }\n            if diagnostic.get(\"sourceStart\").is_none() {\n                diagnostic[\"sourceStart\"] = diagnostic[\"start\"].clone();\n            }\n            if diagnostic.get(\"sourceEnd\").is_none() {\n                diagnostic[\"sourceEnd\"] = diagnostic[\"end\"].clone();\n            }\n            diagnostic = self.qualify(bytes, diagnostic);\n        }\n        budget.mapping_retain(1)?;\n        Ok(diagnostic)\n    }",
+    "ownerContexts": [
+      "impl SourceRegistry {"
+    ]
+  },
+  {
+    "id": "grammar.charge-grammar-source-mapping-step",
+    "source": "rust/src/grammar/feature_runtime/selection_source_mapping.rs",
+    "name": "MappingBudget::mapping_step",
+    "inventoryName": "charge grammar source mapping step",
+    "sourceText": "    fn mapping_step(&self) -> Run<()>;",
+    "ownerContexts": [
+      "pub(super) trait MappingBudget {"
+    ]
+  },
+  {
+    "id": "grammar.charge-grammar-source-mapping-step",
+    "source": "rust/src/grammar/feature_runtime/selection_source_mapping.rs",
+    "name": "Executor::mapping_step",
+    "inventoryName": "charge grammar source mapping step",
+    "sourceText": "    fn mapping_step(&self) -> Run<()> {\n        self.step()\n    }",
+    "ownerContexts": [
+      "impl MappingBudget for Executor<'_> {"
+    ]
+  },
+  {
+    "id": "grammar.charge-grammar-source-mapping-cells",
+    "source": "rust/src/grammar/feature_runtime/selection_source_mapping.rs",
+    "name": "MappingBudget::mapping_retain",
+    "inventoryName": "charge grammar source mapping cells",
+    "sourceText": "    fn mapping_retain(&self, count: usize) -> Run<()>;",
+    "ownerContexts": [
+      "pub(super) trait MappingBudget {"
+    ]
+  },
+  {
+    "id": "grammar.charge-grammar-source-mapping-cells",
+    "source": "rust/src/grammar/feature_runtime/selection_source_mapping.rs",
+    "name": "Executor::mapping_retain",
+    "inventoryName": "charge grammar source mapping cells",
+    "sourceText": "    fn mapping_retain(&self, count: usize) -> Run<()> {\n        self.retain(count)\n    }",
+    "ownerContexts": [
+      "impl MappingBudget for Executor<'_> {"
+    ]
+  },
+  {
+    "id": "grammar.mapped-tree-validation-budget",
+    "source": "rust/src/grammar/feature_runtime/mapped_tree_validation.rs",
+    "name": "ValidationBudget",
+    "inventoryName": "mapped tree validation budget",
+    "sourceText": "struct ValidationBudget {\n    steps: Cell<usize>,\n    cells: Cell<usize>,\n    step_limit: usize,\n    memory_limit: usize,\n    max_depth: usize,\n}"
+  },
+  {
+    "id": "grammar.mapped-tree-source-validation-state",
+    "source": "rust/src/grammar/feature_runtime/mapped_tree_validation.rs",
+    "name": "Validator",
+    "inventoryName": "mapped tree source validation state",
+    "sourceText": "struct Validator<'a> {\n    definitions: &'a [Value],\n    planes: Vec<Rc<[u8]>>,\n    registry: SourceRegistry,\n    budget: ValidationBudget,\n}"
+  },
+  {
+    "id": "grammar.refuse-invalid-native-mapped-tree",
+    "source": "rust/src/grammar/feature_runtime/mapped_tree_validation.rs",
+    "name": "invalid",
+    "inventoryName": "refuse invalid native mapped tree",
+    "sourceText": "fn invalid(detail: &str) -> GrammarRuntimeError {\n    GrammarRuntimeError {\n        reason: \"selection\",\n        message: format!(\"mapped grammar CST: {detail}\"),\n    }\n}"
+  },
+  {
+    "id": "grammar.report-mapped-tree-resource-refusal",
+    "source": "rust/src/grammar/feature_runtime/mapped_tree_validation.rs",
+    "name": "aborted",
+    "inventoryName": "report mapped tree resource refusal",
+    "sourceText": "fn aborted(abort: Abort) -> GrammarRuntimeError {\n    let reason = match abort {\n        Abort::StepLimit => \"stepLimit\",\n        Abort::MemoryBudget => \"memoryBudget\",\n        Abort::NestingTooDeep => \"nestingDepth\",\n        Abort::Operation => \"operation\",\n    };\n    GrammarRuntimeError {\n        reason,\n        message: format!(\"mapped grammar CST: {reason} resource refusal\"),\n    }\n}"
+  },
+  {
+    "id": "grammar.read-mapped-tree-number",
+    "source": "rust/src/grammar/feature_runtime/mapped_tree_validation.rs",
+    "name": "number",
+    "inventoryName": "read mapped tree number",
+    "sourceText": "fn number(value: &Value) -> f64 {\n    value.as_f64().unwrap_or(f64::NAN)\n}"
+  },
+  {
+    "id": "grammar.read-mapped-tree-byte-offset",
+    "source": "rust/src/grammar/feature_runtime/mapped_tree_validation.rs",
+    "name": "offset",
+    "inventoryName": "read mapped tree byte offset",
+    "sourceText": "fn offset(value: &Value) -> Option<usize> {\n    number_index(number(value))\n}"
+  },
+  {
+    "id": "grammar.accept-native-mapped-record-field-order",
+    "source": "rust/src/grammar/feature_runtime/mapped_tree_validation.rs",
+    "name": "exact_keys",
+    "inventoryName": "accept native mapped record field order",
+    "sourceText": "fn exact_keys(value: &Value, role: &str) -> bool {\n    let Some(fields) = value.as_object() else {\n        return false;\n    };\n    let plan = read_grammar_selection_mapping_field_order(role);\n    fields.keys().map(String::as_str).eq(plan.split('|'))\n}"
+  },
+  {
+    "id": "grammar.read-native-mapped-physical-bytes",
+    "source": "rust/src/grammar/feature_runtime/mapped_tree_validation.rs",
+    "name": "physical",
+    "inventoryName": "read native mapped physical bytes",
+    "sourceText": "fn physical(\n    nodes: &[Value],\n    begin: usize,\n    end: usize,\n    depth: usize,\n    budget: &ValidationBudget,\n) -> Result<Vec<u8>, GrammarRuntimeError> {\n    let mut bytes = Vec::new();\n    let mut cursor = begin;\n    for node in nodes {\n        physical_node(node, &mut cursor, &mut bytes, depth, budget)?;\n    }\n    if cursor != end {\n        return Err(invalid(\"incomplete physical source plane\"));\n    }\n    Ok(bytes)\n}"
+  },
+  {
+    "id": "grammar.visit-native-mapped-physical-node",
+    "source": "rust/src/grammar/feature_runtime/mapped_tree_validation.rs",
+    "name": "physical_node",
+    "inventoryName": "visit native mapped physical node",
+    "sourceText": "fn physical_node(\n    node: &Value,\n    cursor: &mut usize,\n    bytes: &mut Vec<u8>,\n    depth: usize,\n    budget: &ValidationBudget,\n) -> Result<(), GrammarRuntimeError> {\n    budget.depth(depth)?;\n    budget.retain(1)?;\n    if !node.is_object() {\n        return Err(invalid(\"invalid physical tree\"));\n    }\n    let begin = *cursor;\n    let role = read_grammar_selection_tree_children(\n        node[\"type\"].as_str().unwrap_or_default(),\n        node.get(\"sourceChildren\").is_some(),\n    );\n    match role.as_str() {\n        \"leaf\" => {\n            let count = if let Some(text) = node[\"text\"].as_str() {\n                text.len()\n            } else if node.get(\"text\").is_some_and(Value::is_null) {\n                let Some(hex) = node[\"hex\"].as_str().filter(|hex| {\n                    hex.len().is_multiple_of(2)\n                        && hex\n                            .bytes()\n                            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))\n                }) else {\n                    return Err(invalid(\"invalid physical leaf bytes\"));\n                };\n                hex.len() / 2\n            } else {\n                return Err(invalid(\"invalid physical leaf bytes\"));\n            };\n            if !accept_grammar_selection_physical_span(\n                number(&node[\"start\"]),\n                number(&node[\"end\"]),\n                numeric(*cursor),\n                numeric(count),\n                false,\n            ) {\n                return Err(invalid(\"physical leaf span differs\"));\n            }\n            budget.retain(count + 1)?;\n            if let Some(text) = node[\"text\"].as_str() {\n                for byte in text.as_bytes() {\n                    budget.step()?;\n                    bytes.push(*byte);\n                }\n            } else {\n                let hex = node[\"hex\"]\n                    .as_str()\n                    .ok_or_else(|| invalid(\"invalid physical leaf bytes\"))?;\n                for word in hex.as_bytes().as_chunks::<2>().0 {\n                    budget.step()?;\n                    let word = std::str::from_utf8(word)\n                        .map_err(|_| invalid(\"invalid physical leaf bytes\"))?;\n                    bytes.push(\n                        u8::from_str_radix(word, 16)\n                            .map_err(|_| invalid(\"invalid physical leaf bytes\"))?,\n                    );\n                }\n            }\n            *cursor = offset(&node[\"end\"]).ok_or_else(|| invalid(\"physical leaf span differs\"))?;\n        }\n        \"missing\" => {\n            if !accept_grammar_selection_physical_span(\n                number(&node[\"start\"]),\n                number(&node[\"end\"]),\n                numeric(*cursor),\n                0.0,\n                true,\n            ) {\n                return Err(invalid(\"invalid missing span\"));\n            }\n        }\n        \"children\" | \"sourceChildren\" => {\n            let field = if role == \"children\" {\n                \"children\"\n            } else {\n                \"sourceChildren\"\n            };\n            let children = node[field]\n                .as_array()\n                .ok_or_else(|| invalid(\"missing concrete children\"))?;\n            for child in children {\n                physical_node(child, cursor, bytes, depth + 1, budget)?;\n            }\n        }\n        \"root\" => physical_node(&node[\"root\"], cursor, bytes, depth + 1, budget)?,\n        _ => return Err(invalid(\"unknown concrete node kind\")),\n    }\n    if role != \"leaf\"\n        && role != \"missing\"\n        && !accept_grammar_selection_physical_span(\n            number(&node[\"start\"]),\n            number(&node[\"end\"]),\n            numeric(begin),\n            numeric(*cursor - begin),\n            false,\n        )\n    {\n        return Err(invalid(\"physical container span differs\"));\n    }\n    Ok(())\n}"
+  },
+  {
+    "id": "grammar.charge-mapped-tree-validation-step",
+    "source": "rust/src/grammar/feature_runtime/mapped_tree_validation.rs",
+    "name": "ValidationBudget::mapping_step",
+    "inventoryName": "charge mapped tree validation step",
+    "sourceText": "    fn mapping_step(&self) -> Result<(), Abort> {\n        let steps = self.steps.get().checked_add(1).ok_or(Abort::StepLimit)?;\n        self.steps.set(steps);\n        if steps > self.step_limit {\n            Err(Abort::StepLimit)\n        } else {\n            Ok(())\n        }\n    }",
+    "ownerContexts": [
+      "impl MappingBudget for ValidationBudget {"
+    ]
+  },
+  {
+    "id": "grammar.charge-mapped-tree-validation-cells",
+    "source": "rust/src/grammar/feature_runtime/mapped_tree_validation.rs",
+    "name": "ValidationBudget::mapping_retain",
+    "inventoryName": "charge mapped tree validation cells",
+    "sourceText": "    fn mapping_retain(&self, count: usize) -> Result<(), Abort> {\n        let cells = self\n            .cells\n            .get()\n            .checked_add(count)\n            .ok_or(Abort::MemoryBudget)?;\n        self.cells.set(cells);\n        if cells > self.memory_limit {\n            Err(Abort::MemoryBudget)\n        } else {\n            Ok(())\n        }\n    }",
+    "ownerContexts": [
+      "impl MappingBudget for ValidationBudget {"
+    ]
+  },
+  {
+    "id": "grammar.check-native-mapped-tree-depth",
+    "source": "rust/src/grammar/feature_runtime/mapped_tree_validation.rs",
+    "name": "ValidationBudget::depth",
+    "inventoryName": "check native mapped tree depth",
+    "sourceText": "    fn depth(&self, depth: usize) -> Result<(), GrammarRuntimeError> {\n        self.mapping_step().map_err(aborted)?;\n        if depth > self.max_depth {\n            Err(aborted(Abort::NestingTooDeep))\n        } else {\n            Ok(())\n        }\n    }",
+    "ownerContexts": [
+      "impl ValidationBudget {"
+    ]
+  },
+  {
+    "id": "grammar.retain-native-mapped-tree-cells",
+    "source": "rust/src/grammar/feature_runtime/mapped_tree_validation.rs",
+    "name": "ValidationBudget::retain",
+    "inventoryName": "retain native mapped tree cells",
+    "sourceText": "    fn retain(&self, count: usize) -> Result<(), GrammarRuntimeError> {\n        self.mapping_retain(count).map_err(aborted)\n    }",
+    "ownerContexts": [
+      "impl ValidationBudget {"
+    ]
+  },
+  {
+    "id": "grammar.advance-native-mapped-tree-validation",
+    "source": "rust/src/grammar/feature_runtime/mapped_tree_validation.rs",
+    "name": "ValidationBudget::step",
+    "inventoryName": "advance native mapped tree validation",
+    "sourceText": "    fn step(&self) -> Result<(), GrammarRuntimeError> {\n        self.mapping_step().map_err(aborted)\n    }",
+    "ownerContexts": [
+      "impl ValidationBudget {"
+    ]
+  },
+  {
+    "id": "grammar.check-native-mapped-tree-plain-data",
+    "source": "rust/src/grammar/feature_runtime/mapped_tree_validation.rs",
+    "name": "ValidationBudget::plain",
+    "inventoryName": "check native mapped tree plain data",
+    "sourceText": "    fn plain(&self, value: &Value, depth: usize) -> Result<(), GrammarRuntimeError> {\n        self.depth(depth)?;\n        match value {\n            Value::Array(items) => {\n                self.retain(items.len() + 2)?;\n                for item in items {\n                    self.step()?;\n                    self.plain(item, depth + 1)?;\n                }\n                // The JS ordinary-data snapshot visits the own length\n                // descriptor after its dense array elements.\n                self.step()?;\n            }\n            Value::Object(fields) => {\n                self.retain(fields.len() + 1)?;\n                for item in fields.values() {\n                    self.step()?;\n                    self.plain(item, depth + 1)?;\n                }\n            }\n            _ => {}\n        }\n        Ok(())\n    }",
+    "ownerContexts": [
+      "impl ValidationBudget {"
+    ]
+  },
+  {
+    "id": "grammar.check-native-mapped-tree-ownership",
+    "source": "rust/src/grammar/feature_runtime/mapped_tree_validation.rs",
+    "name": "Validator::walk",
+    "inventoryName": "check native mapped tree ownership",
+    "sourceText": "    fn walk(\n        &mut self,\n        node: &Value,\n        plane: usize,\n        depth: usize,\n    ) -> Result<(), GrammarRuntimeError> {\n        self.budget.depth(depth)?;\n        if node[\"type\"] == \"node\" {\n            let children = node[\"children\"]\n                .as_array()\n                .ok_or_else(|| invalid(\"missing concrete children\"))?;\n            for child in children {\n                self.walk(child, plane, depth + 1)?;\n            }\n            return Ok(());\n        }\n        if node[\"type\"] != \"embed\" {\n            return Ok(());\n        }\n        let selection = &node[\"selection\"];\n        let profile = match selection.get(\"mapping\") {\n            None | Some(Value::Null) => \"identity\",\n            Some(Value::String(profile)) => profile,\n            _ => return Err(invalid(\"unknown mapping profile\")),\n        };\n        if !accept_grammar_selection_mapping_profile(\n            profile,\n            node.get(\"sourceChildren\").is_some(),\n            selection.get(\"sourceMapping\").is_some(),\n        ) {\n            return Err(invalid(\"unknown mapping profile\"));\n        }\n        let alternatives = selection[\"alternatives\"].as_array();\n        if profile != \"json-string\" {\n            self.walk(&node[\"root\"], plane, depth + 1)?;\n            if let Some(alternatives) = alternatives {\n                for alternative in alternatives {\n                    self.walk(&alternative[\"root\"], plane, depth + 1)?;\n                }\n            }\n            return Ok(());\n        }\n        let mapping = &selection[\"sourceMapping\"];\n        if !exact_keys(mapping, \"mapping\")\n            || !accept_grammar_selection_mapping_descriptor(\n                mapping[\"kind\"].as_str().unwrap_or_default(),\n                mapping[\"operation\"].as_str().unwrap_or_default(),\n            )\n            || !node[\"sourceChildren\"].is_array()\n            || mapping[\"input\"] == mapping[\"output\"]\n            || !accept_grammar_selection_mapping_occurrence(\n                number(&mapping[\"input\"]),\n                numeric(plane),\n                number(&selection[\"start\"]),\n                number(&node[\"start\"]),\n                number(&selection[\"end\"]),\n                number(&node[\"end\"]),\n            )\n        {\n            return Err(invalid(\"invalid mapped boundary\"));\n        }\n        if !accept_grammar_selection_mapping_reference(\n            number(&mapping[\"input\"]),\n            numeric(plane),\n            number(&mapping[\"output\"]),\n            numeric(self.planes.len()),\n        ) {\n            return Err(invalid(\"unowned source-plane reference\"));\n        }\n        let output =\n            offset(&mapping[\"output\"]).ok_or_else(|| invalid(\"unowned source-plane reference\"))?;\n        let origin = &self.definitions[output][\"derivation\"];\n        if !accept_grammar_selection_mapping_occurrence(\n            number(&origin[\"input\"]),\n            number(&mapping[\"input\"]),\n            number(&origin[\"start\"]),\n            number(&node[\"start\"]),\n            number(&origin[\"end\"]),\n            number(&node[\"end\"]),\n        ) {\n            return Err(invalid(\"mapping belongs to another source occurrence\"));\n        }\n        let start = offset(&node[\"start\"]).ok_or_else(|| invalid(\"invalid mapped boundary\"))?;\n        let end = offset(&node[\"end\"]).ok_or_else(|| invalid(\"invalid mapped boundary\"))?;\n        let derived = self\n            .registry\n            .map(&self.planes[plane], start, end, &self.budget)\n            .map_err(aborted)?\n            .map_err(|failed| invalid(failed.reason))?;\n        let actual = mapping[\"intervals\"]\n            .as_array()\n            .ok_or_else(|| invalid(\"ordered source intervals differ\"))?;\n        let expected = derived.mapping[\"intervals\"]\n            .as_array()\n            .ok_or_else(|| invalid(\"ordered source intervals differ\"))?;\n        if actual.len() != expected.len() {\n            return Err(invalid(\"ordered source intervals differ\"));\n        }\n        for (row, expected) in actual.iter().zip(expected) {\n            let Some(row) = row.as_array() else {\n                return Err(invalid(\"ordered source intervals differ\"));\n            };\n            let Some(expected) = expected.as_array() else {\n                return Err(invalid(\"ordered source intervals differ\"));\n            };\n            let row = row.iter().map(number).collect::<Vec<_>>();\n            let expected = expected.iter().map(number).collect::<Vec<_>>();\n            if !accept_grammar_selection_source_interval(&row, &expected) {\n                return Err(invalid(\"ordered source intervals differ\"));\n            }\n        }\n        if offset(&derived.mapping[\"output\"]) != offset(&mapping[\"output\"]) {\n            return Err(invalid(\n                \"source reference differs from its actual derivation\",\n            ));\n        }\n        for child in node[\"sourceChildren\"]\n            .as_array()\n            .ok_or_else(|| invalid(\"invalid physical source children\"))?\n        {\n            self.walk(child, plane, depth + 1)?;\n        }\n        let alternatives = alternatives.ok_or_else(|| invalid(\"invalid selection witnesses\"))?;\n        for root in std::iter::once(&node[\"root\"])\n            .chain(alternatives.iter().map(|alternative| &alternative[\"root\"]))\n        {\n            let stored = physical(\n                std::slice::from_ref(root),\n                0,\n                derived.bytes.len(),\n                depth + 1,\n                &self.budget,\n            )?;\n            if stored.as_slice() != &*derived.bytes {\n                return Err(invalid(\"decoded tree bytes differ\"));\n            }\n            self.walk(root, output, depth + 1)?;\n        }\n        Ok(())\n    }",
+    "ownerContexts": [
+      "impl Validator<'_> {"
+    ]
+  },
+  {
+    "id": "grammar.read-native-grammar-mapping-rejection",
+    "source": "rust/src/grammar/feature_runtime/grammar_selection.rs",
+    "name": "mapping_rejection",
+    "inventoryName": "read native grammar mapping rejection",
+    "sourceText": "pub(super) fn mapping_rejection(\n    diagnostics: &[Value],\n    bytes: &[u8],\n) -> Option<super::ParseRejection> {\n    let primary = diagnostics\n        .iter()\n        .max_by_key(|diagnostic| diagnostic[\"start\"].as_u64().unwrap_or_default())?;\n    let reason = match primary[\"reason\"].as_str()? {\n        \"mappedSyntax\" => \"syntax\",\n        \"invalidEmbeddingMapping\" => \"invalidEmbeddingMapping\",\n        _ => \"unsupportedEmbeddingMapping\",\n    };\n    let offset = primary[\"start\"]\n        .as_u64()\n        .and_then(|value| usize::try_from(value).ok())?;\n    let mut rejection = super::ParseRejection::positioned(reason, bytes, offset);\n    rejection.diagnostics = Some(diagnostics.to_vec());\n    rejection.offset_semantics = Some(\"covering-source-spelling\".to_owned());\n    Some(rejection)\n}"
+  },
+  {
+    "id": "grammar.run-native-grammar-source-plane",
+    "source": "rust/src/grammar/feature_runtime/grammar_selection.rs",
+    "name": "run_embedded_source",
+    "inventoryName": "run native grammar source plane",
+    "sourceText": "    fn run_embedded_source(\n        &self,\n        program: usize,\n        range: (usize, usize),\n        language: &Name,\n        bytes: &[u8],\n    ) -> Run<Option<Rc<Outcome>>> {\n        let (start, end) = range;\n        let key = (program, bytes.as_ptr().addr(), start, end);\n        if !self.shared.active_embedded.borrow_mut().insert(key) {\n            self.report_selection_diagnostic(json!({\"reason\":\"nonConsumingEmbeddingCycle\",\"language\":&**language,\"start\":start,\"end\":end}))?;\n            return Ok(None);\n        }\n        let nested_program = &self.compiled.programs[program];\n        let start_rule = nested_program\n            .start\n            .as_deref()\n            .and_then(|name| nested_program.rule_index.get(name))\n            .copied()\n            .unwrap_or_default();\n        let result = (|| {\n            if std::ptr::eq(bytes, self.bytes) {\n                let mut nested = Executor::new(\n                    self.compiled,\n                    program,\n                    bytes,\n                    start,\n                    end,\n                    self.shared,\n                    self.max_depth.saturating_sub(self.depth),\n                );\n                return nested.run(start_rule);\n            }\n            // Only scanner offset context is local to this new source plane.\n            // Step/frame/memory counters and active source guards stay shared.\n            let local = Shared {\n                runtime_error: self.shared.runtime_error.clone(),\n                global_concept_space: self.shared.global_concept_space.clone(),\n                selection_diagnostics: self.shared.selection_diagnostics.clone(),\n                active_embedded: self.shared.active_embedded.clone(),\n                selection_sources: self.shared.selection_sources.clone(),\n                selection_mapping_failures: self.shared.selection_mapping_failures.clone(),\n                steps: self.shared.steps.clone(),\n                limit: self.shared.limit,\n                frames: self.shared.frames.clone(),\n                memo_limit: self.shared.memo_limit,\n                cells: self.shared.cells.clone(),\n                lexical_caches: self.shared.lexical_caches.clone(),\n                memory_limit: self.shared.memory_limit,\n                expectations: RefCell::new(Expectations::default()),\n            };\n            let tokens = nested_program\n                .token_ranks\n                .as_ref()\n                .filter(|_| {\n                    nested_program\n                        .settling\n                        .has(super::program::SettlingStep::Tokens)\n                })\n                .map(|ranks| TokenOrder {\n                    ranks,\n                    bytes,\n                    orders: &nested_program.precedence_orders,\n                    grammar: &nested_program.grammar,\n                    trivia: &nested_program.trivia,\n                });\n            let keywords = tokens.map(|_| RefCell::new(KeywordLexing::default()));\n            loop {\n                local.expectations.borrow_mut().restart();\n                let mut nested = Executor::new(\n                    self.compiled,\n                    program,\n                    bytes,\n                    start,\n                    end,\n                    &local,\n                    self.max_depth.saturating_sub(self.depth),\n                );\n                nested.keywords = keywords.as_ref();\n                let outcome = nested.run(start_rule)?;\n                if local.expectations.borrow().stale {\n                    continue;\n                }\n                if let (Outcome::Parsed(root), Some(keywords), Some(tokens)) =\n                    (&outcome, &keywords, tokens)\n                    && keywords\n                        .borrow_mut()\n                        .conflicts(root, tokens, &nested_program.rules)\n                {\n                    continue;\n                }\n                return Ok(outcome);\n            }\n        })();\n        self.shared.active_embedded.borrow_mut().remove(&key);\n        result.map(|outcome| Some(Rc::new(outcome)))\n    }",
+    "ownerContexts": [
+      "impl Executor<'_> {"
+    ]
+  },
+  {
+    "id": "grammar.retain-native-selected-mapping-failure",
+    "source": "rust/src/grammar/feature_runtime/grammar_selection.rs",
+    "name": "remember_mapping_failure",
+    "inventoryName": "retain native selected mapping failure",
+    "sourceText": "    fn remember_mapping_failure(&self, diagnostic: Value) -> Run<()> {\n        let diagnostic = self\n            .shared\n            .selection_sources\n            .borrow_mut()\n            .remember(self.bytes, diagnostic, self)?;\n        self.shared\n            .selection_mapping_failures\n            .borrow_mut()\n            .push(diagnostic);\n        Ok(())\n    }",
+    "ownerContexts": [
+      "impl Executor<'_> {"
+    ]
+  },
+  {
+    "id": "grammar.read-source-qualified-recovery-diagnostic",
+    "source": "rust/src/grammar/feature_runtime/tree.rs",
+    "name": "recovery_diagnostic",
+    "inventoryName": "read source qualified recovery diagnostic",
+    "sourceText": "    pub(super) fn recovery_diagnostic(\n        &self,\n    ) -> Result<Option<serde_json::Value>, super::GrammarRuntimeError> {\n        use serde_json::json;\n        let data = match self {\n            Self::Error {\n                start,\n                end,\n                text,\n                reason,\n            } => {\n                let mut value = json!({\"type\":\"error\",\"start\":start,\"end\":end});\n                match text {\n                    LeafText::Text(text) => value[\"text\"] = json!(text),\n                    LeafText::Hex(hex) => {\n                        value[\"text\"] = serde_json::Value::Null;\n                        value[\"hex\"] = json!(hex);\n                    }\n                }\n                if let Some(reason) = reason {\n                    value[\"reason\"] = json!(reason);\n                }\n                return Ok(Some(value));\n            }\n            Self::Missing {\n                start,\n                end,\n                kind,\n                literal,\n            } => {\n                let mut value = json!({\"type\":\"missing\",\"kind\":kind,\"start\":start,\"end\":end});\n                if *literal {\n                    value[\"literal\"] = json!(true);\n                }\n                return Ok(Some(value));\n            }\n            Self::Node { children, .. } => {\n                for child in children {\n                    if let Some(recovery) = child.recovery_diagnostic()? {\n                        return Ok(Some(recovery));\n                    }\n                }\n                return Ok(None);\n            }\n            Self::Token { .. } => return Ok(None),\n            Self::Embed {\n                root,\n                source_children,\n                selection,\n                ..\n            } => {\n                if let Some(children) = source_children {\n                    for child in children {\n                        if let Some(recovery) = child.recovery_diagnostic()? {\n                            return Ok(Some(recovery));\n                        }\n                    }\n                }\n                let Some(recovery) = root.recovery_diagnostic()? else {\n                    return Ok(None);\n                };\n                if source_children.is_none() {\n                    return Ok(Some(recovery));\n                }\n                let mapping = selection\n                    .as_ref()\n                    .and_then(|selection| selection.source_mapping.as_ref())\n                    .ok_or_else(|| super::GrammarRuntimeError {\n                        reason: \"selection\",\n                        message: \"a mapped grammar has no source correspondence\".to_owned(),\n                    })?;\n                (recovery, mapping)\n            }\n        };\n        let (mut recovery, mapping) = data;\n        let start = recovery[\"start\"]\n            .as_u64()\n            .and_then(|value| usize::try_from(value).ok());\n        let end = recovery[\"end\"]\n            .as_u64()\n            .and_then(|value| usize::try_from(value).ok());\n        let cover = start\n            .zip(end)\n            .and_then(|(start, end)| {\n                super::selection_source_mapping::mapped_cover(mapping, start, end)\n            })\n            .ok_or_else(|| super::GrammarRuntimeError {\n                reason: \"selection\",\n                message: \"a grammar mapping has no source cover for this decoded range\".to_owned(),\n            })?;\n        if recovery.get(\"source\").is_none() {\n            recovery[\"source\"] = mapping[\"output\"].clone();\n        }\n        if recovery.get(\"sourceStart\").is_none() {\n            recovery[\"sourceStart\"] = recovery[\"start\"].clone();\n        }\n        if recovery.get(\"sourceEnd\").is_none() {\n            recovery[\"sourceEnd\"] = recovery[\"end\"].clone();\n        }\n        let mut route = recovery[\"sourceRoute\"]\n            .as_array()\n            .cloned()\n            .unwrap_or_default();\n        route.push(json!({\"output\":mapping[\"output\"],\"outputStart\":start,\"outputEnd\":end,\n            \"input\":mapping[\"input\"],\"inputStart\":cover[1],\"inputEnd\":cover[2],\"displayAnchor\":cover[0]}));\n        recovery[\"start\"] = json!(cover[1]);\n        recovery[\"end\"] = json!(cover[2]);\n        recovery[\"sourceRoute\"] = json!(route);\n        recovery[\"offsetSemantics\"] = json!(\"covering-source-spelling\");\n        Ok(Some(recovery))\n    }",
+    "ownerContexts": [
+      "impl SyntaxTree {"
+    ]
+  },
+  {
+    "id": "grammar.grammar-source-plane",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarSourcePlane",
+    "inventoryName": "grammar source plane",
+    "sourceText": "export interface GrammarSourcePlane {\n  kind: 'grammar-source';\n  identity: number;\n  encoding: 'UTF-8';\n  byteLength: number;\n  derivation: null | { operation: 'json-string'; input: number; start: number; end: number };\n}"
+  },
+  {
+    "id": "grammar.grammar-source-mapping",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarSourceMapping",
+    "inventoryName": "grammar source mapping",
+    "sourceText": "export interface GrammarSourceMapping {\n  kind: 'source-mapping';\n  operation: 'json-string';\n  input: number;\n  output: number;\n  /** Ordered [physicalStart, physicalEnd, decodedStart, decodedEnd] byte intervals. */\n  intervals: Array<[number, number, number, number]>;\n}"
+  },
+  {
+    "id": "grammar.grammar-source-route",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarSourceRoute",
+    "inventoryName": "grammar source route",
+    "sourceText": "export interface GrammarSourceRoute {\n  output: number;\n  outputStart: number;\n  outputEnd: number;\n  input: number;\n  inputStart: number;\n  inputEnd: number;\n  displayAnchor: number;\n}"
+  },
+  {
+    "id": "grammar.grammar-mapped-tree-bundle",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarMappedTreeBundle",
+    "inventoryName": "grammar mapped tree bundle",
+    "sourceText": "export interface GrammarMappedTreeBundle {\n  tree: SyntaxTreeNode;\n  sourcePlanes: GrammarSourcePlane[];\n}"
+  },
+  {
+    "id": "grammar.grammar-parse-source-plane-table",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarParseOutcome.sourcePlanes",
+    "inventoryName": "grammar parse source plane table",
+    "sourceText": "sourcePlanes?: GrammarSourcePlane[];"
+  },
+  {
+    "id": "grammar.grammar-parse-source-plane-table",
+    "source": "rust/src/grammar/feature_runtime/mod.rs",
+    "name": "ParseOutcome::source_planes",
+    "inventoryName": "grammar parse source plane table",
+    "sourceText": "pub source_planes: Option<Vec<serde_json::Value>>,",
+    "ownerContexts": [
+      "pub struct ParseOutcome {"
+    ]
+  },
+  {
+    "id": "grammar.grammar-selection-source-mapping",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarSelection.sourceMapping",
+    "inventoryName": "grammar selection source mapping",
+    "sourceText": "sourceMapping?: GrammarSourceMapping;"
+  },
+  {
+    "id": "grammar.grammar-selection-source-mapping",
+    "source": "rust/src/grammar/feature_runtime/grammar_selection.rs",
+    "name": "GrammarSelection::source_mapping",
+    "inventoryName": "grammar selection source mapping",
+    "sourceText": "pub source_mapping: Option<Value>,",
+    "ownerContexts": [
+      "pub struct GrammarSelection {"
+    ]
+  },
+  {
+    "id": "grammar.physical-embedded-source-children",
+    "source": "js/src/index.d.ts",
+    "name": "SyntaxTreeNode.sourceChildren",
+    "inventoryName": "physical embedded source children",
+    "sourceText": "sourceChildren?: SyntaxTreeNode[]; selection?: GrammarSelection"
+  },
+  {
+    "id": "grammar.physical-embedded-source-children",
+    "source": "rust/src/grammar/feature_runtime/tree.rs",
+    "name": "SyntaxTree::Embed::source_children",
+    "inventoryName": "physical embedded source children",
+    "sourceText": "source_children: Option<Vec<Self>>,",
+    "ownerContexts": [
+      "pub enum SyntaxTree {"
+    ]
+  },
+  {
+    "id": "translation.accept-java-script-terminal-tag-guard",
+    "source": "js/src/translation/javascript-surface-rules.js",
+    "name": "acceptJavaScriptTerminalTagGuard",
+    "inventoryName": "accept java script terminal tag guard",
+    "sourceText": "export function acceptJavaScriptTerminalTagGuard(positive, alternate, terminal, sameBinding, duplicate) {\n  return positive && !alternate && terminal && sameBinding && !duplicate;\n}"
+  },
+  {
+    "id": "translation.accept-java-script-terminal-tag-guard",
+    "source": "rust/src/translation/javascript/surface_rules.rs",
+    "name": "accept_java_script_terminal_tag_guard",
+    "inventoryName": "accept java script terminal tag guard",
+    "sourceText": "pub const fn accept_java_script_terminal_tag_guard(\n    positive: bool,\n    alternate: bool,\n    terminal: bool,\n    same_binding: bool,\n    duplicate: bool,\n) -> bool {\n    (((positive && !alternate) && terminal) && same_binding) && !duplicate\n}"
+  },
+  {
+    "id": "translation.accept-java-script-tag-guard-sequence",
+    "source": "js/src/translation/javascript-surface-rules.js",
+    "name": "acceptJavaScriptTagGuardSequence",
+    "inventoryName": "accept java script tag guard sequence",
+    "sourceText": "export function acceptJavaScriptTagGuardSequence(multiple, terminalRemainder) {\n  return multiple && terminalRemainder;\n}"
+  },
+  {
+    "id": "translation.accept-java-script-tag-guard-sequence",
+    "source": "rust/src/translation/javascript/surface_rules.rs",
+    "name": "accept_java_script_tag_guard_sequence",
+    "inventoryName": "accept java script tag guard sequence",
+    "sourceText": "pub const fn accept_java_script_tag_guard_sequence(\n    multiple: bool,\n    terminal_remainder: bool,\n) -> bool {\n    multiple && terminal_remainder\n}"
+  },
+  {
+    "id": "translation.read-java-script-equality-inference-step",
+    "source": "js/src/translation/javascript-surface-rules.js",
+    "name": "readJavaScriptEqualityInferenceStep",
+    "inventoryName": "read java script equality inference step",
+    "sourceText": "export function readJavaScriptEqualityInferenceStep(operation, left, right, force) {\n  if (operation !== 'eq' && operation !== 'ne') return 'unify';\n  if (left === 'var' || right === 'var') return force ? 'unify' : 'defer';\n  return left === 'option' || right === 'option' ? 'independent' : 'unify';\n}"
+  },
+  {
+    "id": "translation.read-java-script-equality-inference-step",
+    "source": "rust/src/translation/javascript/surface_rules.rs",
+    "name": "read_java_script_equality_inference_step",
+    "inventoryName": "read java script equality inference step",
+    "sourceText": "pub fn read_java_script_equality_inference_step(\n    operation: &str,\n    left: &str,\n    right: &str,\n    force: bool,\n) -> String {\n    if (operation != \"eq\") && (operation != \"ne\") {\n        String::from(\"unify\")\n    } else if (left == \"var\") || (right == \"var\") {\n        if force {\n            String::from(\"unify\")\n        } else {\n            String::from(\"defer\")\n        }\n    } else if (left == \"option\") || (right == \"option\") {\n        String::from(\"independent\")\n    } else {\n        String::from(\"unify\")\n    }\n}"
+  },
+  {
+    "id": "translation.lower-cumulative-terminal-tag-guards",
+    "source": "js/src/translation/javascript.js",
+    "name": "tagGuardSequence",
+    "inventoryName": "lower cumulative terminal tag guards",
+    "sourceText": "tagGuardSequence(statements, index) {\n    const first = statements[index];\n    const subject = first?.s === 'if' ? this.tagCondition(first.cond) : null;\n    if (!subject) return null;\n    const clauses = [], covered = new Set();\n    let next = index;\n    while (next < statements.length) {\n      const statement = statements[next];\n      const test = statement.s === 'if' ? this.tagCondition(statement.cond) : null;\n      if (!test) break;\n      const sameBinding = test.object.path[0] === subject.object.path[0]\n        && test.data.name === subject.data.name && test.data.ctors === subject.data.ctors;\n      if (!acceptJavaScriptTerminalTagGuard(!test.negated, Boolean(statement.else),\n        this.terminates(statement.then), sameBinding, covered.has(test.tag))) break;\n      covered.add(test.tag);\n      clauses.push({ tests: [{ k: 'tag', tag: test.tag, span: statement.cond.span }],\n        body: statement.then, span: statement.span });\n      next += 1;\n    }\n    const remainder = statements.slice(next);\n    if (!acceptJavaScriptTagGuardSequence(clauses.length > 1, this.terminates(remainder))) return null;\n    const last = statements.at(-1);\n    const span = { start: first.span.start, end: last.span.end };\n    const tail = { start: remainder[0].span.start, end: last.span.end };\n    clauses.push({ tests: [{ k: 'default', span: tail }], body: remainder, span: tail });\n    return { s: 'switch', tagged: true, data: subject.data,\n      discriminant: { k: 'field', object: subject.object, field: '$', span: first.cond.span }, clauses, span };\n  }",
+    "ownerContexts": [
+      "class JavaScriptParser {"
+    ]
+  },
+  {
+    "id": "translation.lower-cumulative-terminal-tag-guards",
+    "source": "rust/src/translation/javascript/lowering/tag_guards.rs",
+    "name": "tag_guard_sequence",
+    "inventoryName": "lower cumulative terminal tag guards",
+    "sourceText": "pub(in crate::translation::javascript) fn tag_guard_sequence<'a>(\n    statements: impl DoubleEndedIterator<Item = &'a Stmt> + Clone,\n) -> Option<Stmt> {\n    let first = statements.clone().next()?;\n    let Stmt::If { cond, .. } = first else {\n        return None;\n    };\n    let subject = tag_condition(cond)?;\n    let last = statements.clone().next_back()?;\n    let first_span = statement_span(first)?;\n    let last_span = statement_span(last)?;\n    let mut statements = statements.peekable();\n    let mut clauses = Vec::new();\n    let mut covered = std::collections::HashSet::new();\n    while let Some(Stmt::If {\n        cond,\n        then,\n        otherwise,\n        span,\n    }) = statements.peek().copied()\n    {\n        let Some(test) = tag_condition(cond) else {\n            break;\n        };\n        // Parsed tag tests clone their actual declaration, including its\n        // source span and constructor fields. Equal spellings alone cannot\n        // let a different declaration or source binding borrow exclusions.\n        let same_binding =\n            test.object.simple_name() == subject.object.simple_name() && test.data == subject.data;\n        if !accept_java_script_terminal_tag_guard(\n            !test.negated,\n            otherwise.is_some(),\n            terminates(then),\n            same_binding,\n            covered.contains(test.tag.as_str()),\n        ) {\n            break;\n        }\n        covered.insert(test.tag.as_str());\n        clauses.push(Clause {\n            tests: vec![CaseTest::Tag {\n                tag: test.tag.clone(),\n                span: cond.span?,\n            }],\n            body: then.clone(),\n            span: *span,\n        });\n        statements.next();\n    }\n    let remainder: Vec<Stmt> = statements.cloned().collect();\n    if !accept_java_script_tag_guard_sequence(clauses.len() > 1, terminates(&remainder)) {\n        return None;\n    }\n    let tail = Span {\n        start: statement_span(remainder.first()?)?.start,\n        end: last_span.end,\n    };\n    clauses.push(Clause {\n        tests: vec![CaseTest::Default { span: tail }],\n        body: remainder,\n        span: tail,\n    });\n    Some(Stmt::Switch(Switch {\n        scrutinee: subject.object.clone(),\n        tag: Some((\n            subject.object.simple_name()?.to_owned(),\n            subject.data.clone(),\n        )),\n        clauses,\n        span: Span {\n            start: first_span.start,\n            end: last_span.end,\n        },\n    }))\n}"
+  },
+  {
+    "id": "translation.advance-java-script-equality-constraint",
+    "source": "js/src/translation/javascript-infer.js",
+    "name": "equalityStep",
+    "inventoryName": "advance java script equality constraint",
+    "sourceText": "equalityStep({ operation, left, right, where }, force) {\n    const step = readJavaScriptEqualityInferenceStep(operation, this.resolve(left).kind, this.resolve(right).kind, force);\n    if (step === 'defer') return false;\n    if (step === 'unify') this.unify(left, right, where);\n    return true;\n  }",
+    "ownerContexts": [
+      "class Inference {"
+    ]
+  },
+  {
+    "id": "translation.advance-java-script-equality-constraint",
+    "source": "rust/src/translation/javascript/infer/numbers.rs",
+    "name": "Inference::equality_step",
+    "inventoryName": "advance java script equality constraint",
+    "sourceText": "    fn equality_step(&mut self, constraint: &Equality, force: bool) -> Result<bool> {\n        let left = self.resolve(&constraint.left);\n        let right = self.resolve(&constraint.right);\n        let step = read_java_script_equality_inference_step(\n            constraint.operation.name(),\n            super::optional_values::kind(&left),\n            super::optional_values::kind(&right),\n            force,\n        );\n        if step == \"defer\" {\n            return Ok(false);\n        }\n        if step == \"unify\" {\n            self.unify(&constraint.left, &constraint.right, constraint.place)?;\n        }\n        Ok(true)\n    }",
+    "ownerContexts": [
+      "impl Inference {"
+    ]
+  },
+  {
+    "id": "translation.solve-java-script-equality-constraints",
+    "source": "rust/src/translation/javascript/infer/numbers.rs",
+    "name": "Inference::solve_equalities",
+    "inventoryName": "solve java script equality constraints",
+    "sourceText": "    pub(super) fn solve_equalities(&mut self, force: bool) -> Result<bool> {\n        if force {\n            let first = self.equalities.remove(0);\n            return self.equality_step(&first, true);\n        }\n        let mut progress = false;\n        let mut waiting = Vec::new();\n        for constraint in std::mem::take(&mut self.equalities) {\n            if self.equality_step(&constraint, false)? {\n                progress = true;\n            } else {\n                waiting.push(constraint);\n            }\n        }\n        self.equalities = waiting;\n        Ok(progress)\n    }",
+    "ownerContexts": [
+      "impl Inference {"
+    ]
+  },
+  {
+    "id": "translation.java-script-equality-inference-constraint",
+    "source": "rust/src/translation/javascript/infer.rs",
+    "name": "Equality",
+    "inventoryName": "java script equality inference constraint",
+    "sourceText": "struct Equality {\n    operation: BinaryOp,\n    left: Term,\n    right: Term,\n    place: Option<Span>,\n}"
+  },
+  {
+    "id": "repository.verify-third-schema-source-extension",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-third-extension-closure.mjs",
+    "name": "verifyOriginalLinkRawSchemaThirdExtensionClosure",
+    "inventoryName": "verify third schema source extension",
+    "sourceText": "export function verifyOriginalLinkRawSchemaThirdExtensionClosure(receipt, first, currentBytes, historicalSources, second, third, authoredSources) {\n  assert.deepEqual(Object.keys(third), ['version', 'predecessorReceiptSha256', 'previous', 'current', 'consumedSchemaProperties', 'appendedSchemaEntries', 'authoring', 'scope']);\n  assert.equal(third.version, 1);\n  assert.equal(third.predecessorReceiptSha256, ORIGINAL_LINK_RAW_SCHEMA_SECOND_EXTENSION_RECEIPT);\n  assert.equal(sha256(structuredDataToLino(second)), ORIGINAL_LINK_RAW_SCHEMA_SECOND_EXTENSION_RECEIPT, 'the whole published stage-two receipt stays byte exact');\n  assert.deepEqual(Object.keys(third.previous), ['file', 'bytes', 'sha256', 'source']);\n  assert.equal(typeof third.previous.source, 'string');\n  assert.ok(third.previous.source.isWellFormed());\n  const previousBytes = Buffer.from(third.previous.source, 'utf8');\n  assert.equal(third.previous.file, second.current.file);\n  assert.equal(third.previous.bytes, previousBytes.length);\n  assert.equal(third.previous.bytes, second.current.bytes);\n  assert.equal(third.previous.sha256, sha256(previousBytes));\n  assert.equal(third.previous.sha256, second.current.sha256);\n  const previous = verifyOriginalLinkRawSchemaSecondExtensionClosure(receipt, first, previousBytes, historicalSources, second);\n  assert.deepEqual(third.appendedSchemaEntries, ORIGINAL_LINK_RAW_SCHEMA_THIRD_EXTENSIONS);\n  assert.deepEqual(third.consumedSchemaProperties, [...ORIGINAL_LINK_RAW_SCHEMA_PROPERTIES]);\n  assert.deepEqual(Object.keys(third.current), ['file', 'bytes', 'sha256']);\n  assert.equal(third.current.file, second.current.file);\n  assert.ok(Buffer.isBuffer(currentBytes));\n  assert.equal(third.current.bytes, currentBytes.length);\n  assert.equal(third.current.sha256, sha256(currentBytes), 'the whole live successor schema is pinned');\n  const before = readStructuredDataLino(third.previous.source), after = readStructuredDataLino(currentBytes.toString('utf8'));\n  compareOriginalLinkRawSchemaExtension(before, after, ORIGINAL_LINK_RAW_SCHEMA_THIRD_EXTENSIONS);\n  for (const property of ORIGINAL_LINK_RAW_SCHEMA_PROPERTIES) assert.deepEqual(after[property], before[property], 'an original raw producer input changed: ' + property);\n  assert.deepEqual(Object.keys(third.authoring), ['command', 'sourceFiles']);\n  assert.equal(third.authoring.command, ORIGINAL_LINK_RAW_SCHEMA_THIRD_COMMAND);\n  assert.deepEqual(Object.keys(authoredSources), [...ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES]);\n  assert.deepEqual(third.authoring.sourceFiles.map(row => row.file), [...ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES]);\n  for (const row of third.authoring.sourceFiles) {\n    assert.deepEqual(Object.keys(row), ['file', 'bytes', 'sha256']);\n    const bytes = authoredSources[row.file];\n    assert.ok(Buffer.isBuffer(bytes));\n    assert.equal(row.bytes, bytes.length);\n    assert.equal(row.sha256, sha256(bytes), 'the actual successor authoring source is pinned: ' + row.file);\n  }\n  assert.equal(third.scope, ORIGINAL_LINK_RAW_SCHEMA_THIRD_EXTENSION_SCOPE);\n  return {...previous, sha256: third.current.sha256,\n    secondExtensionSha256: second.current.sha256,\n    secondExtensionReceiptSha256: third.predecessorReceiptSha256,\n    appendedThirdSchemaEntries: third.appendedSchemaEntries};\n}"
+  },
+  {
+    "id": "repository.extend-third-typed-program-schema",
+    "source": "js/scripts/extend-typed-program-schema-third-stage.mjs",
+    "name": "extendTypedProgramSchemaThirdStage",
+    "inventoryName": "extend third typed program schema",
+    "sourceText": "export function extendTypedProgramSchemaThirdStage({check = false} = {}) {\n  const receiptBytes = readFileSync(receiptFile), firstBytes = readFileSync(firstFile), secondBytes = readFileSync(secondFile);\n  assert.equal(sha256(receiptBytes), ORIGINAL_LINK_RAW_SCHEMA_PREDECESSOR_RECEIPT);\n  assert.equal(sha256(firstBytes), ORIGINAL_LINK_RAW_SCHEMA_FIRST_EXTENSION_RECEIPT);\n  assert.equal(sha256(secondBytes), ORIGINAL_LINK_RAW_SCHEMA_SECOND_EXTENSION_RECEIPT);\n  const receipt = readStructuredDataLino(receiptBytes.toString('utf8')), first = readStructuredDataLino(firstBytes.toString('utf8')), second = readStructuredDataLino(secondBytes.toString('utf8'));\n  const oracle = readFileSync(oracleFile, 'utf8'), historicalSources = readOriginalLinkRawHistoricalSources(oracle);\n  const authoredSources = Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES.map(file => [file, readFileSync(new URL(file, root))]));\n  const actualBytes = readFileSync(schemaFile);\n  let third, currentBytes = actualBytes, thirdBytes;\n  if (existsSync(thirdFile)) {\n    thirdBytes = readFileSync(thirdFile); third = readStructuredDataLino(thirdBytes.toString('utf8'));\n    verifyOriginalLinkRawSchemaThirdExtensionClosure(receipt, first, actualBytes, historicalSources, second, third, authoredSources);\n    checkProjectData(thirdFile, third);\n  } else {\n    assert.equal(check, false, 'the third schema successor has not been authored');\n    verifyOriginalLinkRawSchemaSecondExtensionClosure(receipt, first, actualBytes, historicalSources, second);\n    const before = readStructuredDataLino(actualBytes.toString('utf8')), after = readStructuredDataLino(actualBytes.toString('utf8'));\n    for (const [map, entries] of Object.entries(ORIGINAL_LINK_RAW_SCHEMA_THIRD_EXTENSIONS)) {\n      assert.ok(Object.hasOwn(after, map), 'the declared append uses an existing map');\n      for (const [key, value] of Object.entries(entries)) {\n        assert.equal(Object.hasOwn(after[map], key), false, 'the immutable successor cannot redefine an existing key');\n        after[map][key] = value;\n      }\n    }\n    compareOriginalLinkRawSchemaExtension(before, after, ORIGINAL_LINK_RAW_SCHEMA_THIRD_EXTENSIONS);\n    currentBytes = Buffer.from(serializeProjectData(after, schemaFile));\n    third = {version: 1, predecessorReceiptSha256: ORIGINAL_LINK_RAW_SCHEMA_SECOND_EXTENSION_RECEIPT,\n      previous: {...second.current, source: actualBytes.toString('utf8')},\n      current: {file: ORIGINAL_LINK_RAW_SCHEMA_FILE, bytes: currentBytes.length, sha256: sha256(currentBytes)},\n      consumedSchemaProperties: [...ORIGINAL_LINK_RAW_SCHEMA_PROPERTIES], appendedSchemaEntries: ORIGINAL_LINK_RAW_SCHEMA_THIRD_EXTENSIONS,\n      authoring: {command: ORIGINAL_LINK_RAW_SCHEMA_THIRD_COMMAND,\n        sourceFiles: ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES.map(file => ({file, bytes: authoredSources[file].length, sha256: sha256(authoredSources[file])}))},\n      scope: ORIGINAL_LINK_RAW_SCHEMA_THIRD_EXTENSION_SCOPE};\n    verifyOriginalLinkRawSchemaThirdExtensionClosure(receipt, first, currentBytes, historicalSources, second, third, authoredSources);\n    thirdBytes = Buffer.from(serializeProjectData(third, thirdFile));\n  }\n  const pattern = /^const schemaThirdExtensionReceiptSha256 = '(?:PENDING|[0-9a-f]{64})';$/mu;\n  assert.equal([...oracle.matchAll(new RegExp(pattern.source, 'gmu'))].length, 1, 'one separate third-receipt pin is required');\n  const pin = \"const schemaThirdExtensionReceiptSha256 = '\" + sha256(thirdBytes) + \"';\";\n  if (check || existsSync(thirdFile)) assert.equal(oracle.match(pattern)[0], pin, 'the immutable whole third receipt pin remains exact');\n  else {\n    const changedOracle = oracle.replace(pattern, pin);\n    assert.equal(changedOracle.replace(pin, oracle.match(pattern)[0]), oracle, 'all producer source bytes except the new pin stay exact');\n    let created = false;\n    try {\n      writeFileSync(thirdFile, thirdBytes, {flag: 'wx'}); created = true;\n      writeFileSync(schemaFile, currentBytes); writeFileSync(oracleFile, changedOracle);\n    } catch (error) {\n      if (created) { writeFileSync(schemaFile, actualBytes); writeFileSync(oracleFile, oracle); unlinkSync(thirdFile); }\n      throw error;\n    }\n  }\n  assert.deepEqual(readFileSync(receiptFile), receiptBytes);assert.deepEqual(readFileSync(firstFile), firstBytes);assert.deepEqual(readFileSync(secondFile), secondBytes);\n  return {schemaSha256: third.current.sha256, predecessorSchemaSha256: third.previous.sha256,\n    predecessorReceiptSha256: third.predecessorReceiptSha256, appendedProjectionKeys: 3, appendedAlternativeKeys: 1,\n    preservedProducerBindings: Object.keys(historicalSources).length, sourceClosureOnly: true, check};\n}"
+  },
+  {
+    "id": "repository.third-typed-schema-extension-packet",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-third-extension-policy.mjs",
+    "name": "ORIGINAL_LINK_RAW_SCHEMA_THIRD_EXTENSIONS",
+    "inventoryName": "third typed schema extension packet",
+    "sourceText": "export const ORIGINAL_LINK_RAW_SCHEMA_THIRD_EXTENSIONS = {\n  expressionProjections: {\n    strictEqual: {},\n    'strictEqual:false': {\n      construct: 'binary',\n      fields: [['op', 'constant', 'eq'], ['left', 'expression', 'left'], ['right', 'expression', 'right']],\n    },\n    'strictEqual:true': {\n      construct: 'binary',\n      fields: [['op', 'constant', 'ne'], ['left', 'expression', 'left'], ['right', 'expression', 'right']],\n    },\n  },\n  expressionProjectionAlternatives: {\n    strictEqual: [\n      { path: ['negate'], value: false, projection: 'strictEqual:false' },\n      { path: ['negate'], value: true, projection: 'strictEqual:true' },\n    ],\n  },\n};"
+  },
+  {
+    "id": "repository.third-typed-schema-source-scope",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-third-extension-policy.mjs",
+    "name": "ORIGINAL_LINK_RAW_SCHEMA_THIRD_EXTENSION_SCOPE",
+    "inventoryName": "third typed schema source scope",
+    "sourceText": "export const ORIGINAL_LINK_RAW_SCHEMA_THIRD_EXTENSION_SCOPE = 'Third append-only strict equality projection source closure only; no native execution, raw producer replacement or whole-language coverage claim.';"
+  },
+  {
+    "id": "repository.second-typed-schema-receipt-hash",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-third-extension-closure.mjs",
+    "name": "ORIGINAL_LINK_RAW_SCHEMA_SECOND_EXTENSION_RECEIPT",
+    "inventoryName": "second typed schema receipt hash",
+    "sourceText": "export const ORIGINAL_LINK_RAW_SCHEMA_SECOND_EXTENSION_RECEIPT = 'c42beef3515ce9f2e2a030c07879630a1ef55acbfde0684f6ff25ea5d394c21f';"
+  },
+  {
+    "id": "repository.third-typed-schema-author-source-files",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-third-extension-closure.mjs",
+    "name": "ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES",
+    "inventoryName": "third typed schema author source files",
+    "sourceText": "export const ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES = Object.freeze([\n  'experiments/original-link-complete-table-projection/raw-schema-third-extension-policy.mjs',\n  'experiments/original-link-complete-table-projection/raw-schema-third-extension-closure.mjs',\n  'js/scripts/extend-typed-program-schema-third-stage.mjs',\n]);"
+  },
+  {
+    "id": "repository.third-typed-schema-author-command",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-third-extension-closure.mjs",
+    "name": "ORIGINAL_LINK_RAW_SCHEMA_THIRD_COMMAND",
+    "inventoryName": "third typed schema author command",
+    "sourceText": "export const ORIGINAL_LINK_RAW_SCHEMA_THIRD_COMMAND = 'node js/scripts/extend-typed-program-schema-third-stage.mjs';"
+  },
+  {
+    "id": "repository.read-grammar-selection-mapping-source-module",
+    "source": "js/scripts/generate-grammar-selection-mapping-rules.mjs",
+    "name": "readGrammarSelectionMappingSourceModule",
+    "inventoryName": "read grammar selection mapping source module",
+    "sourceText": "export function readGrammarSelectionMappingSourceModule() {\n  const source = readFileSync(sourceFile, 'utf8'), dependency = readFileSync(dependencyFile, 'utf8');\n  assert.equal(source.split(boundary).length, 2, 'the mapping module owns exactly its recorded decoder import');\n  const body = source.replace(boundary, '');\n  assert.doesNotMatch(body, /^\\s*import\\b/mu, 'an unknown source dependency must refuse');\n  const { tokens, comments } = tokenize(dependency, 'JavaScript');\n  const matches = [];\n  let depth = 0;\n  for (let index = 0; index < tokens.length; index += 1) {\n    const token = tokens[index];\n    if (depth === 0 && token.kind === 'identifier' && token.value === 'export'\n        && tokens[index + 1]?.value === 'function' && tokens[index + 2]?.value === 'decodeUnicodeEscape') matches.push(index);\n    if (token.kind === 'punct' && token.value === '{') depth += 1;\n    if (token.kind === 'punct' && token.value === '}') depth -= 1;\n  }\n  assert.equal(matches.length, 1, 'one actual exported source declaration owns the imported decoder');\n  const first = matches[0], start = tokens[first].start;\n  let opening = first + 3;\n  while (opening < tokens.length && !(tokens[opening].kind === 'punct' && tokens[opening].value === '{')) opening += 1;\n  assert.ok(opening < tokens.length, 'the original function body is present');\n  let end = opening, braces = 1;\n  while (braces > 0 && ++end < tokens.length) {\n    if (tokens[end].kind === 'punct' && tokens[end].value === '{') braces += 1;\n    if (tokens[end].kind === 'punct' && tokens[end].value === '}') braces -= 1;\n  }\n  assert.equal(braces, 0, 'the original complete function body is enclosed');\n  const documentation = comments.filter(comment => comment.text.startsWith('/**')\n    && comment.end <= start && dependency.slice(comment.end, start).trim() === '');\n  const types = comments.filter(comment => /@typedef\\b/u.test(comment.text) && /\\bUnicodeEscape\\s*\\*\\/$/u.test(comment.text));\n  assert.equal(documentation.length, 1, 'the actual original function annotation is retained');\n  assert.equal(types.length, 1, 'the actual decoder return type has one source declaration');\n  const functionRange = { start, end: tokens[end].end };\n  const closure = types[0].text + '\\n' + documentation[0].text + '\\n'\n    + dependency.slice(functionRange.start, functionRange.end) + '\\n' + body;\n  return { source, closure, sourceClosure: { removedImport: boundary,\n    inputs: [{ path: 'js/src/translation/grammar-selection-mapping-rules.js', sourceSha256: hash(source) },\n      { path: 'js/src/translation/frontend-rules.js', source: dependency, sourceSha256: hash(dependency),\n        function: { name: 'decodeUnicodeEscape', ...functionRange },\n        documentation: { start: documentation[0].start, end: documentation[0].end },\n        type: { name: 'UnicodeEscape', start: types[0].start, end: types[0].end } }] } };\n}"
+  },
+  {
+    "id": "repository.generate-grammar-selection-mapping-rules",
+    "source": "js/scripts/generate-grammar-selection-mapping-rules.mjs",
+    "name": "generateGrammarSelectionMappingRules",
+    "inventoryName": "generate grammar selection mapping rules",
+    "sourceText": "export async function generateGrammarSelectionMappingRules({ check = false, native = false } = {}) {\n  const closed = readGrammarSelectionMappingSourceModule();\n  const policy = { schemaVersion: 1, model: 'Unicode scalar JSON string source mapping 1',\n    source: closed.source, sourceSha256: hash(closed.source), closedSource: closed.closure,\n    closedSourceSha256: hash(closed.closure), sourceClosure: closed.sourceClosure,\n    sourcePlanes: 'once-owned ordered source definitions with explicit local positional references; these are not LinkNetwork identifiers or global concept equivalence proofs',\n    semantics: 'one complete quoted JSON string; fixed Unicode escapes reuse the actual imported decoder, while JavaScript hexadecimal/braced escapes and non-scalar decoded text refuse',\n    physicalOwnership: 'the complete matched syntactic source children remain the physical CST; each accepted child and witness is a complete CST on its separately declared decoded plane',\n    boundary: 'Only source mapping correspondence is checked after generic Links decode. Language-CST validity requires parsing with the actual grammar; no priority grammar or arbitrary escape profile is thereby declared complete.' };\n  for (const file of [new URL('../src/translation/data/grammar-selection-mapping-rules.lino', import.meta.url),\n    new URL('../../rust/src/data/grammar-selection-mapping-rules.lino', import.meta.url)]) {\n    if (check) checkProjectData(file, policy);\n    else writeProjectData(file, policy);\n  }\n  if (native) {\n    const { parseJavaScript } = await import('../src/translation/javascript.js');\n    const { checkProgram } = await import('../src/translation/check.js');\n    const { emitRust } = await import('../src/translation/emit-rust.js');\n    const { encodeTypedProgramLinks, decodeTypedProgramLinks } = await import('../src/typed-program-links.js');\n    const { recheckLinkedTypedProgram } = await import('../src/typed-program-checked-projection.js');\n    const { LinkNetwork } = await import('../src/network.js');\n    const { encodeLinkNetworkBinary, decodeLinkNetworkBinary } = await import('../src/link-network-binary.js');\n    const checked = checkProgram(parseJavaScript(closed.closure, { referenceSemantics: false }));\n    const packet = encodeTypedProgramLinks(checked);\n    const text = recheckLinkedTypedProgram(\n      decodeTypedProgramLinks(LinkNetwork.fromLino(packet.network.toLino()), packet.root), { wholeProgram: true });\n    const binary = recheckLinkedTypedProgram(\n      decodeTypedProgramLinks(decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network)), packet.root), { wholeProgram: true });\n    const emitted = emitRust(checked, { arrayConsumption: true });\n    assert.equal(emitRust(text, { arrayConsumption: true }).text, emitted.text, 'complete text reload preserves every mapping decision');\n    assert.equal(emitRust(binary, { arrayConsumption: true }).text, emitted.text, 'complete binary reload preserves every mapping decision');\n    const artifact = { schemaVersion: 1, model: policy.model, sourceSha256: policy.sourceSha256,\n      sourceClosure: closed.sourceClosure, closedSourceSha256: policy.closedSourceSha256,\n      definitions: emitted.definitions, rustSource: emitted.text, rustSha256: hash(emitted.text),\n      assumptions: emitted.assumptions, encodings: emitted.encodings };\n    const output = new URL('../../parity/self-translation/grammar-selection-mapping-rules-native.lino', import.meta.url);\n    if (check) checkProjectData(output, artifact);\n    else writeProjectData(output, artifact);\n    writeRecordRuleLibrary(emitted, 'grammar_selection_mapping_rules', { check });\n  }\n  return policy;\n}"
+  },
+  {
+    "id": "repository.generate-grammar-selection-mapping-fixture",
+    "source": "js/scripts/generate-grammar-selection-mapping-fixtures.mjs",
+    "name": "generateGrammarSelectionMappingFixtures",
+    "inventoryName": "generate grammar selection mapping fixture",
+    "sourceText": "export function generateGrammarSelectionMappingFixtures({ check = false } = {}) {\n  const bytes = new Map(sourceFiles.map(([, relative]) =>\n    [relative, readProjectFileBytes(new URL(relative, root))]));\n  for (const language of ['json', 'python']) assert.deepEqual(\n    bytes.get(`js/src/data/native-grammars/${language}.lino`),\n    bytes.get(`rust/src/data/native-grammars/${language}.lino`),\n    'the two runtime controls must use the same actual shipped grammar bytes');\n  const inventory = readProjectData(new URL(sourceFiles[0][1], root));\n  const python = inventory.languages.find(language => language.name === 'Python');\n  assert.ok(python, 'the actual original Python inventory entry is required');\n  const originalOracle = readProjectData(new URL(sourceFiles[1][1], root));\n  const nativeOracle = readProjectData(new URL(sourceFiles[2][1], root));\n  const expected = nativeOracle.languages.Python ?? originalOracle.languages.Python;\n  assert.ok(expected?.positive, 'the existing independent concrete rows are required');\n  const fixture = grammarSelectionMappingFixture({\n    captures: sourceFiles.map(([id, relative]) => ({ id, path: relative,\n      bytes: bytes.get(relative).length,\n      sha256: createHash('sha256').update(bytes.get(relative)).digest('hex') })),\n    python: { source: python.source, recoverySource: python.recoverySource,\n      positiveRows: expected.positive },\n  });\n  if (check) {\n    assert.ok(isDeepStrictEqual(readProjectData(fixtureFile), fixture),\n      'the authored mapped-selection source inputs and independent expectations are stale');\n  } else writeProjectData(fixtureFile, fixture);\n  return fixture;\n}"
+  },
+  {
+    "id": "repository.read-grammar-selection-mapping-observation-sections",
+    "source": "js/tests/support/grammar-selection-mapping-cases.js",
+    "name": "grammarSelectionMappingObservationSections",
+    "inventoryName": "read grammar selection mapping observation sections",
+    "sourceText": "export function grammarSelectionMappingObservationSections() {\n  return Object.fromEntries([\n    ['selection', 'I195-CST-ANY-GRAMMAR-RECURSIVE-RULE', [\n      'jsonStringAnyAllCandidateWitnessesPreserved',\n      'jsonStringUnsupportedAndNonScalarProfilesRefused',\n      'mappedProfileMemoKeysKeepExactGrammarNames',\n      'jsonStringLexicalAndMalformedInputsRefused',\n      'invalidUtf8RootCannotClaimUtf8SourcePlane',\n    ]],\n    ['boundaries', 'I195-CST-RECURSIVE-BOUNDARIES-LOSSLESS', [\n      'shippedJsonPythonConcreteTreesRemainExact',\n      'jsonStringUtf8IntervalsAndQuoteOwnershipExact',\n      'mappedSourceRegistryAndGrammarReplayTextAndBinary',\n      'serializableMappingForgeriesRefusedAfterReload',\n    ]],\n    ['recursion', 'I195-CST-DEEPLY-RECURSIVE-MIXED-LANGUAGES', [\n      'nestedMappedSourcesRetainActualDerivationOrder',\n      'mappedParsersRetainExistingLimitRefusals',\n      'mappedCycleAndSyntaxFailuresRetainSourceRoutes',\n      'failedMappedParseCannotAuthenticateMissingRoot',\n    ]],\n  ].map(([section, requirementId, assertions]) => [section, {\n    requirementId, suffix: 'json-string-profile', assertions,\n    fixtureIds: Object.fromEntries(['javascript', 'rust'].map(runtime =>\n      [runtime, `grammar-selection-json-string-${section}-${runtime}`])),\n  }]));\n}"
+  },
+  {
+    "id": "repository.create-grammar-selection-mapping-fixture",
+    "source": "js/tests/support/grammar-selection-mapping-cases.js",
+    "name": "grammarSelectionMappingFixture",
+    "inventoryName": "create grammar selection mapping fixture",
+    "sourceText": "export function grammarSelectionMappingFixture({ captures, python }) {\n  return {\n    schemaVersion: 1, id: 'grammar-selection-json-string',\n    boundary: 'Only the listed Unicode-scalar json-string inputs and source-qualified tests. Physical and decoded CSTs, exact UTF-8 intervals, two nested derivations, any/all witnesses, original refusal tables and existing limits are finite controls. The runtime mutation tables differ and are preserved separately. Local source-plane references are not Links identifiers, global concept equivalence, arbitrary mapping support or full language coverage. No observation is stored in this fixture.',\n    captures, inputs: {\n      python,\n      escape: {\n        raw: '\"a\\\\n\\\\u03C0\\\\uD83D\\\\uDE00\"', decoded: 'a\\nπ😀',\n        physicalBytes: [34, 97, 92, 110, 92, 117, 48, 51, 67, 48, 92, 117, 68, 56, 51, 68, 92, 117, 68, 69, 48, 48, 34],\n        decodedBytes: [97, 10, 207, 128, 240, 159, 152, 128], prefixes: ['', 'λ<'],\n        intervals: [[0, 1, 0, 0], [1, 2, 0, 1], [2, 4, 1, 2],\n          [4, 10, 2, 4], [10, 22, 4, 8], [22, 23, 8, 8]],\n      },\n      nesting: { smallDecoded: 'x', oneLevel: '\"x\"', twoLevels: '\"\\\\\"x\\\\\"\"' },\n      selection: { modes: ['any-grammar', 'all-grammar'],\n        siblings: { firstProgram: 'x=1\\n', secondProgram: 'x=2\\n' } },\n      refusals: {\n        invalidBytes: [255, 34, 120, 34],\n        loneSurrogateEscapes: ['\"\\\\uD800\"', '\"\\\\uDC00\"'],\n        invalidEscapes: ['\"\\\\q\"', '\"\\\\u{41}\"', '\"\\\\u12\"', '\"line\\nbreak\"'],\n        unsupportedMapping: 'quoted-escape', mixedMappings: ['json-string', 'identity'],\n        limitOptions: [\n          { options: { stepLimit: 0 }, reason: 'stepLimit' },\n          { options: { memoryLimit: 0 }, reason: 'memoryBudget' },\n          { options: { maxDepth: 0 }, reason: 'nestingDepth' },\n        ],\n      },\n      memo: { decoded: 'x', identityName: 'json-string|decoded', warmMappings: ['identity', 'json-string'] },\n    },\n    runtimeCases: {\n      javascript: { serializableForgeries: [\n        'changed physical container start', 'changed physical container end',\n        'changed decoded container start', 'changed decoded container end',\n        'changed mapped embed start', 'changed mapped embed end',\n        'absent registry', 'empty registry', 'null root', 'unknown source kind',\n        'foreign encoding', 'duplicate source identity', 'fractional source identity',\n        'changed root length', 'changed derived length', 'reordered definitions',\n        'missing derivation', 'forward derivation', 'unknown derivation', 'different occurrence',\n        'unknown definition field', 'unknown derivation field', 'unknown mapping profile',\n        'missing physical CST', 'wrong input plane', 'foreign output plane',\n        'unknown mapping operation', 'unknown mapping field', 'interval gap', 'interval overlap',\n        'interval reversal', 'missing closing quote', 'fractional interval', 'negative interval',\n        'fifth interval column', 'surrogate width', 'edited physical bytes', 'edited decoded bytes',\n      ], invalidUtf8Prefix: true },\n      rust: { serializableForgeries: {\n        replacements: [\n          { path: '/tree/start', value: 1 }, { path: '/tree/end', value: 22 },\n          { path: '/tree/children/0/start', value: 1 }, { path: '/tree/children/0/end', value: 22 },\n          { path: '/tree/children/0/root/start', value: 1 }, { path: '/tree/children/0/root/end', value: 7 },\n          { path: '/sourcePlanes', value: null },\n          { path: '/sourcePlanes/0/kind', value: 'unowned-source' },\n          { path: '/sourcePlanes/0/encoding', value: 'UTF-16' },\n          { path: '/sourcePlanes/0/identity', value: 1 },\n          { path: '/sourcePlanes/0/byteLength', value: 24 },\n          { path: '/sourcePlanes/1/identity', value: 0 },\n          { path: '/sourcePlanes/1/identity', value: 0.5 },\n          { path: '/sourcePlanes/1/byteLength', value: 9 },\n          { path: '/sourcePlanes/1/derivation', value: null },\n          { path: '/sourcePlanes/1/derivation/input', value: 1 },\n          { path: '/sourcePlanes/1/derivation/operation', value: 'identity' },\n          { path: '/sourcePlanes/1/derivation/start', value: 1 },\n          { path: '/tree/children/0/selection/mapping', value: 'guessed-string' },\n          { path: '/tree/children/0/sourceChildren', value: null },\n          { path: '/tree/children/0/selection/sourceMapping/input', value: 1 },\n          { path: '/tree/children/0/selection/sourceMapping/output', value: 2 },\n          { path: '/tree/children/0/selection/sourceMapping/operation', value: 'identity' },\n          { path: '/tree/children/0/selection/sourceMapping/intervals/1/0', value: 2 },\n          { path: '/tree/children/0/selection/sourceMapping/intervals/1/1', value: 3 },\n          { path: '/tree/children/0/selection/sourceMapping/intervals/1/2', value: 0.5 },\n          { path: '/tree/children/0/selection/sourceMapping/intervals/0/0', value: -1 },\n          { path: '/tree/children/0/selection/sourceMapping/intervals/4/3', value: 7 },\n          { path: '/tree/children/0/root/children/0/text', value: 'b\\nπ😀' },\n        ],\n        extraFields: ['/sourcePlanes/0', '/sourcePlanes/1/derivation',\n          '/tree/children/0/selection/sourceMapping'], missingRegistry: true,\n      } },\n    },\n    observations: grammarSelectionMappingObservationSections(),\n  };\n}"
+  },
+  {
+    "id": "repository.read-formal-artificial-intelligence-logical-filters",
+    "source": "js/scripts/formal-ai-workload-partitions.mjs",
+    "name": "formalAiWorkloadLogicalFilters",
+    "inventoryName": "read formal artificial intelligence logical filters",
+    "sourceText": "export function formalAiWorkloadLogicalFilters(fixture) {\n  return ['--include-ignored', ...new Set([\n    ...fixture.workloads.filter(({ kind, file }) => kind === 'test' && file.startsWith('rust/')).map(({ filter }) => filter),\n    'issue_195_probe_',\n  ])];\n}"
+  },
+  {
+    "id": "repository.read-formal-artificial-intelligence-compiler-profile",
+    "source": "js/scripts/formal-ai-workload-partitions.mjs",
+    "name": "formalAiRustProfileEnvironment",
+    "inventoryName": "read formal artificial intelligence compiler profile",
+    "sourceText": "export function formalAiRustProfileEnvironment(environment) {\n  if (!environment || typeof environment !== 'object' || Array.isArray(environment)) fail('missing actual Rust profile environment');\n  const selected = Object.entries(environment).filter(([name]) => /^CARGO_PROFILE_/u.test(name) ||\n    /^CARGO_TARGET_.+_(?:RUSTFLAGS|LINKER|RUNNER)$/u.test(name) ||\n    ['RUSTFLAGS', 'CARGO_ENCODED_RUSTFLAGS', 'RUSTDOCFLAGS', 'CARGO_ENCODED_RUSTDOCFLAGS',\n      'CARGO_BUILD_RUSTFLAGS', 'RUSTC', 'RUSTC_WRAPPER', 'RUSTC_WORKSPACE_WRAPPER', 'RUSTUP_TOOLCHAIN'].includes(name));\n  if (selected.some(([, value]) => typeof value !== 'string')) fail('invalid actual Rust profile environment value');\n  return Object.fromEntries(selected.sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0));\n}"
+  },
+  {
+    "id": "repository.read-formal-artificial-intelligence-workload-owner",
+    "source": "js/scripts/formal-ai-workload-partitions.mjs",
+    "name": "workloadOwner",
+    "inventoryName": "read formal artificial intelligence workload owner",
+    "sourceText": "function workloadOwner(target, name, fixture) {\n  if (target === RUST_PROBE_TARGET && PROBES.includes(name)) {\n    return { target, name, file: `rust/tests/${RUST_PROBE_TARGET}.rs`, probe: true };\n  }\n  const owners = fixture.workloads.filter((entry) => entry.kind === 'test' && entry.target === target &&\n    typeof entry.filter === 'string' && name.startsWith(entry.filter));\n  if (owners.length !== 1) fail(`native identity ${key({ target, name })} has ${owners.length} fixture owners`);\n  return { target, name, file: owners[0].file, probe: false };\n}"
+  },
+  {
+    "id": "repository.read-formal-artificial-intelligence-plain-transcript",
+    "source": "js/scripts/formal-ai-workload-partitions.mjs",
+    "name": "unstyled",
+    "inventoryName": "read formal artificial intelligence plain transcript",
+    "sourceText": "function unstyled(text) {\n  if (typeof text !== 'string') fail('a retained native transcript must be text');\n  return text.replace(/\\u001b\\[[0-9;]*m/gu, '');\n}"
+  },
+  {
+    "id": "repository.read-formal-artificial-intelligence-native-inventory",
+    "source": "js/scripts/formal-ai-workload-partitions.mjs",
+    "name": "readFormalAiNativeInventory",
+    "inventoryName": "read formal artificial intelligence native inventory",
+    "sourceText": "export function readFormalAiNativeInventory(runs, fixture) {\n  if (!Array.isArray(runs) || runs.length !== TARGETS.length) fail('the complete inventory requires every original target once');\n  const identities = [];\n  const seen = new Set();\n  for (const target of TARGETS) {\n    const matches = runs.filter((entry) => entry.target === target);\n    if (matches.length !== 1) fail(`inventory target ${target} is missing or repeated`);\n    const run = matches[0];\n    if (run.exit !== 0) fail(`inventory target ${target} did not finish successfully`);\n    equal(run.harnessArguments, [...formalAiWorkloadLogicalFilters(fixture), '--list'], `inventory scope changed for ${target}`);\n    const lines = unstyled(run.transcript).split(/\\r?\\n/u);\n    let listed = 0;\n    for (const line of lines) {\n      const entry = /^(.+): (test|benchmark)$/u.exec(line);\n      if (!entry) continue;\n      if (entry[2] !== 'test') fail('benchmarks are outside the original native workload scope');\n      const identity = workloadOwner(target, entry[1], fixture);\n      if (seen.has(key(identity))) fail(`duplicate listed native identity ${key(identity)}`);\n      seen.add(key(identity));\n      identities.push(identity);\n      listed += 1;\n    }\n    const summaries = lines.map((line) => /^(\\d+) tests?, (\\d+) benchmarks?$/u.exec(line)).filter(Boolean);\n    if (summaries.length !== 1 || Number(summaries[0][1]) !== listed || Number(summaries[0][2]) !== 0) {\n      fail(`inventory summary does not match actual listed identities for ${target}`);\n    }\n  }\n  for (const name of PROBES) {\n    if (!identities.some((entry) => entry.target === RUST_PROBE_TARGET && entry.name === name)) fail(`missing native probe ${name}`);\n  }\n  if (identities.filter((entry) => entry.target === RATCHET.target && entry.name === RATCHET.name).length !== 1) {\n    fail('the corpus ratchet must select exactly one target-qualified original identity');\n  }\n  for (const file of workloadFiles(fixture, 'rust')) {\n    if (!identities.some((entry) => !entry.probe && entry.file === file)) fail(`no listed native workload owns ${file}`);\n  }\n  return identities;\n}"
+  },
+  {
+    "id": "repository.select-formal-artificial-intelligence-workload-partition",
+    "source": "js/scripts/formal-ai-workload-partitions.mjs",
+    "name": "selectFormalAiWorkloadPartition",
+    "inventoryName": "select formal artificial intelligence workload partition",
+    "sourceText": "export function selectFormalAiWorkloadPartition(inventory, partition) {\n  if (!FORMAL_AI_WORKLOAD_PARTITIONS.includes(partition)) fail(`unknown native partition ${partition}`);\n  return inventory.filter((entry) => entry.probe ||\n    ((entry.target === RATCHET.target && entry.name === RATCHET.name) === (partition === 'corpus-ratchet')));\n}"
+  },
+  {
+    "id": "repository.read-formal-artificial-intelligence-partition-commands",
+    "source": "js/scripts/formal-ai-workload-partitions.mjs",
+    "name": "formalAiWorkloadPartitionCommands",
+    "inventoryName": "read formal artificial intelligence partition commands",
+    "sourceText": "export function formalAiWorkloadPartitionCommands(inventory, partition) {\n  const selected = selectFormalAiWorkloadPartition(inventory, partition);\n  return TARGETS.flatMap((target) => {\n    const names = selected.filter((entry) => entry.target === target).map(({ name }) => name);\n    return names.length === 0 ? [] : [{\n      target,\n      harnessArguments: ['--test-threads=1', '--include-ignored', '--exact', ...names],\n    }];\n  });\n}"
+  },
+  {
+    "id": "repository.read-formal-artificial-intelligence-native-execution",
+    "source": "js/scripts/formal-ai-workload-partitions.mjs",
+    "name": "readFormalAiNativeExecution",
+    "inventoryName": "read formal artificial intelligence native execution",
+    "sourceText": "export function readFormalAiNativeExecution(runs, inventory, partition) {\n  const commands = formalAiWorkloadPartitionCommands(inventory, partition);\n  if (!Array.isArray(runs) || runs.length !== commands.length) fail('native execution target set is incomplete or repeated');\n  const selected = selectFormalAiWorkloadPartition(inventory, partition);\n  const rows = [];\n  const seen = new Set();\n  for (const command of commands) {\n    const matches = runs.filter((entry) => entry.target === command.target);\n    if (matches.length !== 1) fail(`execution target ${command.target} is missing or repeated`);\n    const run = matches[0];\n    equal(run.harnessArguments, command.harnessArguments, `native execution argv changed for ${command.target}`);\n    if (run.exit !== 0) fail(`native target ${command.target} exited with ${run.exit}`);\n    for (const line of unstyled(run.transcript).split(/\\r?\\n/u)) {\n      const match = /^test (.+?) \\.\\.\\. (ok|FAILED|ignored)(?:\\s.*)?$/u.exec(line);\n      if (!match) continue;\n      // libtest's annotation is removed only after the exact selected identity\n      // lookup fails; a genuine name ending in that text remains an exact name.\n      let name = match[1];\n      let entry = selected.find((item) => item.target === command.target && item.name === name);\n      if (!entry && name.endsWith(' - should panic')) {\n        name = name.slice(0, -' - should panic'.length);\n        entry = selected.find((item) => item.target === command.target && item.name === name);\n      }\n      if (!entry) fail(`unknown executed native identity ${key({ target: command.target, name })}`);\n      if (seen.has(key(entry))) fail(`duplicate executed native identity ${key(entry)}`);\n      seen.add(key(entry));\n      if (match[2] !== 'ok') fail(`native identity ${key(entry)} did not pass`);\n      rows.push({ ...entry, outcome: 'passed' });\n    }\n  }\n  for (const entry of selected) if (!seen.has(key(entry))) fail(`missing executed native identity ${key(entry)}`);\n  return rows;\n}"
+  },
+  {
+    "id": "repository.accept-formal-artificial-intelligence-evidence-path",
+    "source": "js/scripts/formal-ai-workload-partitions.mjs",
+    "name": "relativeFile",
+    "inventoryName": "accept formal artificial intelligence evidence path",
+    "sourceText": "function relativeFile(file) {\n  return typeof file === 'string' && file.length > 0 && !file.includes('\\\\') && !file.includes('\\0') &&\n    !path.posix.isAbsolute(file) && path.posix.normalize(file) === file &&\n    !file.split('/').some((part) => part === '.' || part === '..' || part === '');\n}"
+  },
+  {
+    "id": "repository.create-formal-artificial-intelligence-evidence-reader",
+    "source": "js/scripts/formal-ai-workload-partitions.mjs",
+    "name": "evidenceReader",
+    "inventoryName": "create formal artificial intelligence evidence reader",
+    "sourceText": "function evidenceReader(files) {\n  if (!(files instanceof Map)) fail('a producer bundle requires independently read regular-file bytes');\n  const used = new Set();\n  return {\n    bytes(descriptor) {\n      if (!descriptor || !relativeFile(descriptor.file) || !Number.isSafeInteger(descriptor.bytes) || descriptor.bytes < 0 ||\n          !/^[0-9a-f]{64}$/u.test(descriptor.sha256 ?? '')) fail('invalid producer-scoped evidence descriptor');\n      const bytes = files.get(descriptor.file);\n      if (!(bytes instanceof Uint8Array) || bytes.length !== descriptor.bytes || sha256(bytes) !== descriptor.sha256) {\n        fail(`missing or tampered producer evidence ${descriptor.file}`);\n      }\n      used.add(descriptor.file);\n      return bytes;\n    },\n    text(descriptor) { return new TextDecoder('utf-8', { fatal: true }).decode(this.bytes(descriptor)); },\n    data(descriptor) { return readStructuredDataLino(this.text(descriptor)); },\n    complete() {\n      if (used.size !== files.size) fail('the producer bundle contains undeclared or unvalidated files');\n    },\n  };\n}"
+  },
+  {
+    "id": "repository.read-formal-artificial-intelligence-report-rows",
+    "source": "js/scripts/formal-ai-workload-partitions.mjs",
+    "name": "reportRows",
+    "inventoryName": "read formal artificial intelligence report rows",
+    "sourceText": "function reportRows(rows) {\n  return rows.map(({ file, name, outcome }) => ({ file, name, outcome }));\n}"
+  },
+  {
+    "id": "repository.read-formal-artificial-intelligence-retained-runs",
+    "source": "js/scripts/formal-ai-workload-partitions.mjs",
+    "name": "nativeRuns",
+    "inventoryName": "read formal artificial intelligence retained runs",
+    "sourceText": "function nativeRuns(entries, reader) {\n  if (!Array.isArray(entries)) fail('missing native process receipts');\n  return entries.map((entry) => ({ ...entry, transcript: reader.text(entry.transcript) }));\n}"
+  },
+  {
+    "id": "repository.check-formal-artificial-intelligence-probe-assertion",
+    "source": "js/scripts/formal-ai-workload-partitions.mjs",
+    "name": "probeHolds",
+    "inventoryName": "check formal artificial intelligence probe assertion",
+    "sourceText": "function probeHolds(probe, label) {\n  for (const assertion of ['sharedConceptsReused', 'distinctionsPreserved']) {\n    const checks = probe?.[assertion]?.checks;\n    if (probe?.[assertion]?.holds !== true || !Array.isArray(checks) || checks.length === 0 || checks.some((check) => check.holds !== true)) {\n      fail(`${label} did not execute all original ${assertion} checks successfully`);\n    }\n  }\n}"
+  },
+  {
+    "id": "repository.check-formal-artificial-intelligence-file-descriptor",
+    "source": "js/scripts/formal-ai-workload-partitions.mjs",
+    "name": "exactFileDescriptor",
+    "inventoryName": "check formal artificial intelligence file descriptor",
+    "sourceText": "function exactFileDescriptor(actual, retained, label) {\n  if (actual?.file !== retained.file || actual?.sha256 !== retained.sha256) fail(`${label} report names different retained bytes`);\n}"
+  },
+  {
+    "id": "repository.validate-formal-artificial-intelligence-workload-partition",
+    "source": "js/scripts/formal-ai-workload-partitions.mjs",
+    "name": "validateFormalAiWorkloadPartition",
+    "inventoryName": "validate formal artificial intelligence workload partition",
+    "sourceText": "export function validateFormalAiWorkloadPartition(envelope, fixture, expected, files) {\n  try {\n    if (envelope?.kind !== 'formal-ai-workload-partition' || envelope.partitionSchemaVersion !== 1 ||\n        'schemaVersion' in envelope || 'npm' in envelope || 'crate' in envelope) fail('not a genuine partial envelope');\n    if (!Array.isArray(envelope.captureErrors) || envelope.captureErrors.length) fail('the producer could not retain all original evidence');\n    const partition = envelope.identity?.partition;\n    if (!FORMAL_AI_WORKLOAD_PARTITIONS.includes(partition)) fail('unknown producer partition');\n    equal(envelope.identity, { ...expected.identity, partition, artifact: expected.artifacts[partition] }, 'foreign commit/run/attempt/source/candidate/producer identity');\n    if (!expected.identity || !expected.artifacts || expected.nativeWorkloads !== 134 || expected.javascriptWorkloads !== 148) {\n      fail('missing independently pinned full workload expectations');\n    }\n    const report = envelope.result;\n    const grounding = formalAiWorkloadPartitionGroundingProblems(report, fixture);\n    if (grounding.length) fail(grounding.join('\\n'));\n    equal(report.fixtureSha256, expected.identity.fixtureSha256, 'report fixture differs from the actual pinned bytes');\n    equal(report.fixture, FORMAL_AI_WORKLOAD_FIXTURE, 'report logical fixture identity changed');\n    equal(report.platform, expected.platform, 'producer platform changed');\n    equal(envelope.build.platform, expected.platform, 'build platform changed');\n    equal(envelope.build.profile, expected.profile, 'actual compiler profile differs from the original settings');\n    equal(envelope.build.profileEnvironment, formalAiRustProfileEnvironment(envelope.build.profileEnvironment), 'unknown or malformed actual compiler profile environment');\n    for (const name of ['CARGO_PROFILE_DEV_DEBUG', 'CARGO_PROFILE_TEST_DEBUG']) {\n      equal(envelope.build.profileEnvironment[name], expected.profile[name] ?? '0', `actual ${name} differs from the original bounded profile`);\n    }\n    if (typeof envelope.build.compiler !== 'string' ||\n        envelope.build.compiler.split(/\\r?\\n/u).filter((line) => line === 'release: 1.99.0').length !== 1) fail('missing actual pinned rustc -vV identity');\n    for (const [runtime, part] of [['npm', report.npm], ['crate', report.crate]]) {\n      const candidate = expected.candidates[runtime];\n      equal({ file: part.checksum.artifact, sha256: part.checksum.sha256 },\n        { file: candidate.file, sha256: candidate.sha256 }, `${runtime} is not the exact independently downloaded candidate`);\n      if (runtime === 'npm') equal(part.checksum.expectedIntegrity, candidate.integrity, 'npm candidate SHA512 differs');\n    }\n    const root = report.crate.resolution.unpackedDirectory;\n    const manifest = report.crate.resolution.manifestPath;\n    if (typeof root !== 'string' || !root.endsWith('/') || manifest !== `${root}Cargo.toml`) fail('native package manifest is outside its own unpacked root');\n    const reader = evidenceReader(files);\n    const evidence = envelope.evidence;\n    equal(reader.text(evidence.compiler), envelope.build.compiler, 'actual compiler stdout differs from the build identity');\n    const compilerProfile = reader.data(evidence.compilerProfile);\n    equal(compilerProfile.profile, envelope.build.profile, 'actual recorded profile differs from the build identity');\n    equal(compilerProfile.environment, envelope.build.profileEnvironment, 'actual compiler environment differs from the build identity');\n    equal(compilerProfile.configuration, ['--config', `patch.crates-io.meta-language.path=${JSON.stringify(root.slice(0, -1))}`,\n      '--config', 'profile.dev.package.meta-language.opt-level=3'], 'actual Cargo configuration changed the candidate/profile');\n    equal(report.crate.resolution.patch, compilerProfile.configuration.join(' '), 'reported Cargo patch differs from actual invocations');\n    const inventory = readFormalAiNativeInventory(nativeRuns(evidence.nativeInventory, reader), fixture);\n    if (inventory.filter((entry) => !entry.probe).length !== expected.nativeWorkloads) fail('the complete native identity count changed');\n    equal(envelope.inventory, inventory, 'declared inventory differs from the actual retained --list');\n    const executed = readFormalAiNativeExecution(nativeRuns(evidence.nativeExecution, reader), inventory, partition);\n    equal(report.crate.filters, formalAiWorkloadLogicalFilters(fixture), 'original native logical scope changed');\n    equal(report.crate.workloadFiles, workloadFiles(fixture, 'rust'), 'original native workload files changed');\n    const workloads = reportRows(executed.filter((entry) => !entry.probe));\n    const probes = reportRows(executed.filter((entry) => entry.probe));\n    equal(report.crate.tests, workloads, 'native report differs from actual selected terminal outcomes');\n    equal(report.crate.probeTests, probes, 'native probe report differs from actual terminal outcomes');\n    equal(report.crate.counts, countOutcomes(workloads), 'native partial counts disagree');\n    equal(report.crate.exit, 0, 'native partial process failed');\n    // The existing reporter retains independently framed LiNo records, rather\n    // than one array document. Preserve its actual storage/wire contract.\n    const events = readStructuredDataRecords(reader.text(evidence.javascriptEvents));\n    if (!Array.isArray(events)) fail('missing actual JavaScript terminal event stream');\n    const dataFiles = new Set(workloadFiles(fixture, 'javascript'));\n    const javascriptTests = events.filter(({ kind }) => kind === 'test').map(({ name, outcome, error, process: child }) => {\n      if (typeof name !== 'string') fail('invalid JavaScript event identity');\n      const [prefix, ...rest] = name.split(TEST_NAME_SEPARATOR);\n      return {\n        file: dataFiles.has(prefix) ? prefix : null,\n        name: dataFiles.has(prefix) ? rest.join(TEST_NAME_SEPARATOR) : name,\n        outcome, ...(error ? { error } : {}), ...(child ? { process: child } : {}),\n      };\n    });\n    equal(javascriptTests, report.npm.tests, 'JavaScript report differs from actual terminal events');\n    if (javascriptTests.length !== expected.javascriptWorkloads || javascriptTests.some((entry) => entry.file === null || entry.outcome !== 'passed') ||\n        new Set(javascriptTests.map(({ file, name }) => JSON.stringify([file, name]))).size !== javascriptTests.length) fail('JavaScript workload identities are missing, duplicate or unsuccessful');\n    equal(report.npm.workloadFiles, workloadFiles(fixture, 'javascript'), 'JavaScript workload scope changed');\n    const javascriptProbe = reader.data(evidence.javascriptProbe.file);\n    if (evidence.javascriptProbe.exit !== 0) fail('the JavaScript probe process failed');\n    probeHolds(javascriptProbe, 'the retained JavaScript probe');\n    for (const assertion of ['sharedConceptsReused', 'distinctionsPreserved']) {\n      const original = javascriptProbe[assertion];\n      equal(report.npm.probe[assertion].checks.slice(0, original.checks.length), original.checks,\n        `report omitted actual JavaScript ${assertion} checks`);\n    }\n    equal(report.npm.semanticProjectionObservations, javascriptProbe.semanticProjectionObservations ?? [],\n      'report changed the actual semantic projection observations');\n    const javascriptOutputs = reader.data(evidence.javascriptOutputs);\n    const rustOutputs = reader.data(evidence.rustOutputs);\n    equal(javascriptProbe.outputs, javascriptOutputs, 'JavaScript probe output differs from the retained output');\n    exactFileDescriptor(report.npm.outputs, evidence.javascriptOutputs, 'JavaScript output');\n    exactFileDescriptor(report.crate.outputs, evidence.rustOutputs, 'Rust output');\n    const runtimeComparison = compareRuntimeOutputs(javascriptOutputs, rustOutputs);\n    if (runtimeComparison.some(({ holds }) => holds !== true)) fail('actual JavaScript/Rust output comparison failed');\n    equal(report.comparison, runtimeComparison, 'the report changed the actual runtime comparison');\n    for (const part of [report.npm, report.crate]) {\n      const comparisons = part.probe.sharedConceptsReused.checks.slice(-runtimeComparison.length);\n      equal(comparisons, runtimeComparison, 'report omitted or changed the actual runtime comparison');\n    }\n    const rustDistinctions = reader.data(evidence.rustDistinctions);\n    if (!Array.isArray(rustDistinctions?.checks) || rustDistinctions.checks.length === 0 || rustDistinctions.checks.some(({ holds }) => holds !== true)) fail('retained Rust distinction checks did not hold');\n    equal(report.crate.probe.distinctionsPreserved.checks.slice(0, rustDistinctions.checks.length), rustDistinctions.checks,\n      'report omitted actual Rust distinction checks');\n    for (const [assertion, name] of Object.entries(RUST_PROBE_TESTS)) {\n      const observed = report.crate.probe[assertion === 'outputs' ? 'sharedConceptsReused' : assertion];\n      if (observed?.test !== name || observed.outcome !== 'passed') fail('native probe assertion has no exact passing identity');\n    }\n    const inputs = reader.data(evidence.inputs);\n    exactFileDescriptor(report.inputs, evidence.inputs, 'logical input');\n    equal({ documents: report.inputs.documents, labels: report.inputs.labels, rules: report.inputs.rules,\n      linkEdits: report.inputs.linkEdits, projections: report.inputs.projections,\n      semanticProjections: report.inputs.semanticProjections,\n      semanticProjectionFixtureSha256: report.inputs.semanticProjectionFixtureSha256 }, {\n      documents: inputs.documents.length, labels: inputs.labels, rules: inputs.rules.length,\n      linkEdits: inputs.linkEdits.length, projections: inputs.projections.length,\n      semanticProjections: inputs.semanticProjections.length,\n      semanticProjectionFixtureSha256: expected.identity.semanticProjectionFixtureSha256,\n    }, 'the logical input summary differs from retained bytes and the pinned semantic projection fixture');\n    const lock = reader.bytes(evidence.cargoLock);\n    equal(envelope.build.cargoLockSha256, sha256(lock), 'post-update Cargo.lock bytes differ from the build identity');\n    if (report.crate.resolution.lockRefresh?.exit !== 0) fail('candidate dependency lock update failed');\n    const before = reader.data(evidence.selfAstBefore);\n    const after = reader.data(evidence.selfAstAfter);\n    if (!Array.isArray(before) || !Array.isArray(after) || before.some((entry) => !Array.isArray(entry) || entry.length !== 2 || typeof entry[0] !== 'string' || typeof entry[1] !== 'string') ||\n        after.some((entry) => !Array.isArray(entry) || entry.length !== 2 || typeof entry[0] !== 'string' || typeof entry[1] !== 'string') ||\n        new Set(before.map(([file]) => file)).size !== before.length || new Set(after.map(([file]) => file)).size !== after.length) fail('invalid retained census document maps');\n    const census = compareSelfAstCensus(new Map(before), new Map(after));\n    if (census.documents === 0 || census.otherChanges.length !== 0 || report.crate.selfAstCensus.exit !== 0) fail('actual self-AST census changed outside link totals');\n    equal({ documents: report.crate.selfAstCensus.documents, linkTotals: report.crate.selfAstCensus.linkTotals,\n      otherChanges: report.crate.selfAstCensus.otherChanges }, census, 'self-AST census report differs from actual before/after maps');\n    reader.complete();\n    return { problems: [], value: { partition, envelope, report, inventory, executed, javascriptTests,\n      build: envelope.build, inputs, javascriptOutputs, rustOutputs, before, after } };\n  } catch (error) {\n    return { problems: [error instanceof Error ? error.message : String(error)], value: null };\n  }\n}"
+  },
+  {
+    "id": "repository.merge-formal-artificial-intelligence-workload-partitions",
+    "source": "js/scripts/formal-ai-workload-partitions.mjs",
+    "name": "mergeFormalAiWorkloadPartitions",
+    "inventoryName": "merge formal artificial intelligence workload partitions",
+    "sourceText": "export function mergeFormalAiWorkloadPartitions(parts, fixture, expected) {\n  const problems = [];\n  if (expected.producerResult !== 'success') problems.push('the actual matrix producer did not succeed');\n  if (!Array.isArray(parts) || parts.length !== 2) problems.push('exactly two independently scoped producer bundles are required');\n  const validated = [];\n  for (const partition of FORMAL_AI_WORKLOAD_PARTITIONS) {\n    const matches = (Array.isArray(parts) ? parts : []).filter(({ envelope }) => envelope?.identity?.partition === partition);\n    if (matches.length !== 1) { problems.push(`missing or duplicate producer ${partition}`); continue; }\n    const result = validateFormalAiWorkloadPartition(matches[0].envelope, fixture, expected, matches[0].files);\n    problems.push(...result.problems.map((problem) => `${partition}: ${problem}`));\n    if (result.value) validated.push(result.value);\n  }\n  if (problems.length) return { problems, report: null, provenance: null };\n  try {\n    const [first, second] = validated;\n    for (const field of ['inventory', 'build', 'inputs', 'javascriptTests', 'javascriptOutputs', 'rustOutputs', 'before', 'after']) {\n      equal(first[field], second[field], `producer ${field} values differ`);\n    }\n    equal(first.report.node, second.report.node, 'the actual JavaScript runtime versions differ');\n    const all = first.inventory.filter((entry) => !entry.probe);\n    const union = validated.flatMap(({ executed }) => executed.filter((entry) => !entry.probe));\n    if (new Set(union.map(key)).size !== union.length) fail('workload partitions overlap');\n    equal([...union.map(key)].sort(), [...all.map(key)].sort(), 'workload partitions omit or add actual listed identities');\n    const byIdentity = new Map(union.map((entry) => [key(entry), entry]));\n    const report = structuredClone(second.report);\n    report.crate.tests = reportRows(all.map((entry) => byIdentity.get(key(entry))));\n    report.crate.counts = countOutcomes(report.crate.tests);\n    report.crate.exit = 0;\n    for (const runtime of ['javascript', 'rust']) {\n      const result = validateFormalAiWorkloadReport(report, fixture, runtime);\n      equal(result.observed, [...FORMAL_AI_WORKLOAD_ASSERTIONS], `unchanged complete ${runtime} validator refused the merged report`);\n    }\n    return { problems: [], report, provenance: {\n      kind: 'formal-ai-workload-partition-union', schemaVersion: 1,\n      identity: expected.identity, candidates: expected.candidates, build: first.build,\n      producers: validated.map(({ partition, envelope }) => ({ partition, artifact: envelope.identity.artifact })),\n      nativeInventory: first.inventory, workloadCount: report.crate.tests.length,\n      javascriptCount: report.npm.tests.length, sharedProbeIdentities: PROBES.map((name) => ({ target: RUST_PROBE_TARGET, name })),\n    } };\n  } catch (error) {\n    return { problems: [error instanceof Error ? error.message : String(error)], report: null, provenance: null };\n  }\n}"
+  },
+  {
+    "id": "repository.accept-formal-artificial-intelligence-bundle-path",
+    "source": "js/scripts/formal-ai-partition-bundles.mjs",
+    "name": "relativeFile",
+    "inventoryName": "accept formal artificial intelligence bundle path",
+    "sourceText": "function relativeFile(file) {\n  return typeof file === 'string' && file.length > 0 && !/[\\\\\\0:*?\\[\\]{}]/u.test(file) &&\n    !path.posix.isAbsolute(file) && path.posix.normalize(file) === file &&\n    !file.split('/').some((part) => part === '.' || part === '..' || part === '');\n}"
+  },
+  {
+    "id": "repository.read-formal-artificial-intelligence-regular-file",
+    "source": "js/scripts/formal-ai-partition-bundles.mjs",
+    "name": "regularBytes",
+    "inventoryName": "read formal artificial intelligence regular file",
+    "sourceText": "async function regularBytes(file, limit) {\n  const status = await lstat(file);\n  requireValue(status.isFile() && !status.isSymbolicLink() && status.size <= limit, `unsafe or oversized regular file ${file}`);\n  const handle = await open(file, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));\n  try {\n    const opened = await handle.stat();\n    requireValue(opened.isFile() && opened.size === status.size && opened.size <= limit &&\n      opened.dev === status.dev && opened.ino === status.ino, `file identity changed during read ${file}`);\n    const bytes = await handle.readFile();\n    requireValue(bytes.length === opened.size && bytes.length <= limit, `file size changed during read ${file}`);\n    return bytes;\n  } finally { await handle.close(); }\n}"
+  },
+  {
+    "id": "repository.read-formal-artificial-intelligence-partition-expectations",
+    "source": "js/scripts/formal-ai-partition-bundles.mjs",
+    "name": "formalAiPartitionExpectations",
+    "inventoryName": "read formal artificial intelligence partition expectations",
+    "sourceText": "export async function formalAiPartitionExpectations({ root, tarball, crate, fixture, environment = process.env, producerResult = 'success' }) {\n  requireValue(environment.CI === 'true' && environment.GITHUB_ACTIONS === 'true', 'partitions require the actual GitHub Actions context');\n  requireValue(/^[0-9a-f]{40}$/u.test(environment.GITHUB_SHA ?? '') && /^\\d+$/u.test(environment.GITHUB_RUN_ID ?? '') &&\n    /^[1-9]\\d*$/u.test(environment.GITHUB_RUN_ATTEMPT ?? '') && environment.GITHUB_REPOSITORY === 'link-foundation/meta-language', 'invalid same-run repository/commit/attempt identity');\n  const candidate = async (file, npm) => {\n    const bytes = await regularBytes(file, FORMAL_AI_PARTITION_BUNDLE_LIMITS.fileBytes);\n    const checksum = (await regularBytes(`${file}.sha256`, 1024)).toString('utf8').trim().split(/\\s+/u);\n    requireValue(checksum.length === 2 && checksum[0] === digest(bytes) && checksum[1] === path.basename(file), 'candidate checksum or exact filename differs');\n    return { file: path.basename(file), sha256: digest(bytes), ...(npm ? { integrity: `sha512-${createHash('sha512').update(bytes).digest('base64')}` } : {}) };\n  };\n  const identity = {\n    repository: environment.GITHUB_REPOSITORY, commit: environment.GITHUB_SHA,\n    run: environment.GITHUB_RUN_ID, attempt: environment.GITHUB_RUN_ATTEMPT,\n    formalAiRepository: fixture.repository, formalAiRevision: fixture.revision,\n    fixtureSha256: digest(readProjectFileBytes(path.join(root, FORMAL_AI_WORKLOAD_FIXTURE))),\n    semanticProjectionFixtureSha256: digest(readProjectFileBytes(path.join(root, 'parity/fixtures/formal-ai-semantic-projections.json'))),\n    sourceSha256: Object.fromEntries(await Promise.all(sourcePaths.map(async (file) =>\n      [file, digest(await regularBytes(path.join(root, file), FORMAL_AI_PARTITION_BUNDLE_LIMITS.fileBytes))]))),\n  };\n  return {\n    identity,\n    artifacts: Object.fromEntries(FORMAL_AI_WORKLOAD_PARTITIONS.map((partition) => [partition,\n      `issue-195-formal-ai-partition-${partition}-${identity.commit}-${identity.run}-${identity.attempt}`])),\n    candidates: { npm: await candidate(tarball, true), crate: await candidate(crate, false) },\n    platform: `${process.platform}-${process.arch}`, profile: FORMAL_AI_PARTITION_PROFILE,\n    nativeWorkloads: 134, javascriptWorkloads: 148, producerResult,\n  };\n}"
+  },
+  {
+    "id": "repository.run-formal-artificial-intelligence-native-partition",
+    "source": "js/scripts/formal-ai-partition-bundles.mjs",
+    "name": "runFormalAiNativePartition",
+    "inventoryName": "run formal artificial intelligence native partition",
+    "sourceText": "export async function runFormalAiNativePartition({ partition, fixture, configuration, directory, environment, run, workDirectory, state }) {\n  const filters = formalAiWorkloadLogicalFilters(fixture);\n  state.nativeInventory = [];\n  state.nativeExecution = [];\n  for (const target of targets) {\n    const harnessArguments = [...filters, '--list'];\n    const result = await run(`rust-list-${target}`, 'cargo', [\n      ...configuration, 'test', '--no-fail-fast', '--test', target, '--', ...harnessArguments,\n    ], { cwd: directory, env: { ...environment, RUST_TEST_THREADS: '1' }, allowFailure: true });\n    state.nativeInventory.push({ target, harnessArguments, exit: result.code, transcript: result.combined, log: result.log });\n  }\n  state.inventory = readFormalAiNativeInventory(state.nativeInventory, fixture);\n  const completed = [];\n  for (const { target, harnessArguments } of formalAiWorkloadPartitionCommands(state.inventory, partition)) {\n    const result = await run(`rust-workloads-${target}`, 'cargo', [\n      ...configuration, 'test', '--no-fail-fast', '--test', target, '--', ...harnessArguments,\n    ], { cwd: directory, env: { ...environment, RUST_TEST_THREADS: '1' }, allowFailure: true, traceTests: true });\n    state.nativeExecution.push({ target, harnessArguments, exit: result.code, transcript: result.combined, log: result.log });\n    completed.push(result);\n  }\n  const combined = completed.map(({ combined }) => combined).join('\\n');\n  const log = path.join(workDirectory, 'rust-workloads.log');\n  // Keep each unchanged run() command/exit log as well as this complete aggregate.\n  await writeFile(log, completed.map((result) => `log: ${result.log}\\n${result.combined}\\nexit: ${result.code}\\n`).join('\\n'));\n  let outcomes = null;\n  try { outcomes = readFormalAiNativeExecution(state.nativeExecution, state.inventory, partition); }\n  catch (error) { state.executionProblems = [error.message]; }\n  return { code: completed.every(({ code }) => code === 0) ? 0 : completed.find(({ code }) => code !== 0)?.code ?? 1, combined, log, outcomes };\n}"
+  },
+  {
+    "id": "repository.write-formal-artificial-intelligence-partition-bundle",
+    "source": "js/scripts/formal-ai-partition-bundles.mjs",
+    "name": "writeFormalAiPartitionBundle",
+    "inventoryName": "write formal artificial intelligence partition bundle",
+    "sourceText": "export async function writeFormalAiPartitionBundle({ partition, expected, report, state, workDirectory, output }) {\n  requireValue(FORMAL_AI_WORKLOAD_PARTITIONS.includes(partition), 'unknown producer partition');\n  requireValue(path.basename(output) === 'partition.lino', 'a partial must use its distinct partition.lino identity');\n  const destination = path.dirname(output);\n  await mkdir(destination, { recursive: true });\n  const retained = new Map();\n  let totalBytes = 0;\n  const retain = async (file, source) => {\n    requireValue(relativeFile(file) && file !== path.basename(output), 'unsafe or conflicting evidence filename');\n    const bytes = await regularBytes(source, FORMAL_AI_PARTITION_BUNDLE_LIMITS.fileBytes);\n    if (retained.has(file)) {\n      requireValue(retained.get(file).sha256 === digest(bytes), 'two evidence sources collide');\n      return retained.get(file);\n    }\n    totalBytes += bytes.length;\n    requireValue(retained.size < FORMAL_AI_PARTITION_BUNDLE_LIMITS.files - 1 && totalBytes <= FORMAL_AI_PARTITION_BUNDLE_LIMITS.totalBytes, 'producer evidence bundle exceeds its bounded transport');\n    const descriptor = { file, bytes: bytes.length, sha256: digest(bytes) };\n    await writeFile(path.join(destination, file), bytes, { flag: 'wx' });\n    retained.set(file, descriptor);\n    return descriptor;\n  };\n  const evidence = {};\n  const errors = [...(state.executionProblems ?? [])];\n  const attempt = async (name, body) => { try { evidence[name] = await body(); } catch (error) { errors.push(`${name}: ${error.message}`); } };\n  await attempt('nativeInventory', async () => Promise.all((state.nativeInventory ?? []).map(async (entry) => ({\n    target: entry.target, harnessArguments: entry.harnessArguments, exit: entry.exit,\n    // Original run() log includes its command, cwd and complete output. The\n    // independent parser tolerates those non-outcome lines, never using them as outcomes.\n    transcript: await retain(path.basename(entry.log), entry.log),\n  }))));\n  await attempt('nativeExecution', async () => Promise.all((state.nativeExecution ?? []).map(async (entry) => ({\n    target: entry.target, harnessArguments: entry.harnessArguments, exit: entry.exit,\n    transcript: await retain(path.basename(entry.log), entry.log),\n  }))));\n  for (const [name, file] of Object.entries({ javascriptEvents: 'javascript-test-events.lino', javascriptOutputs: 'javascript-outputs.lino',\n    rustOutputs: 'rust-outputs.lino', inputs: 'formal-ai-inputs.lino', selfAstBefore: 'self-ast-before.lino', selfAstAfter: 'self-ast-after.lino', cargoLock: 'post-update-Cargo.lock' })) {\n    await attempt(name, () => retain(file, path.join(workDirectory, file)));\n  }\n  await attempt('compiler', () => retain('rust-compiler-identity.txt', path.join(workDirectory, 'rust-compiler-identity.txt')));\n  await attempt('compilerProfile', () => retain('compiler-profile.lino', path.join(workDirectory, 'compiler-profile.lino')));\n  await attempt('javascriptProbe', async () => ({ file: await retain('javascript-probe.lino', path.join(workDirectory, 'javascript-probe.lino')), exit: state.javascriptProbeExit ?? null }));\n  await attempt('rustDistinctions', () => retain('distinctionsPreserved.lino', path.join(workDirectory, 'rust-probe', 'distinctionsPreserved.lino')));\n  const envelope = {\n    kind: 'formal-ai-workload-partition', partitionSchemaVersion: 1,\n    identity: { ...expected.identity, partition, artifact: expected.artifacts[partition] },\n    build: { platform: report.platform, profile: state.profile ?? null,\n      profileEnvironment: state.profileEnvironment ?? null, compiler: state.compiler ?? null,\n      cargoLockSha256: evidence.cargoLock?.sha256 ?? null },\n    inventory: state.inventory ?? [], evidence, result: report, captureErrors: errors,\n  };\n  writeProjectData(output, envelope, { format: 'lino' });\n  return envelope;\n}"
+  },
+  {
+    "id": "repository.read-formal-artificial-intelligence-partition-bundle",
+    "source": "js/scripts/formal-ai-partition-bundles.mjs",
+    "name": "readFormalAiPartitionBundle",
+    "inventoryName": "read formal artificial intelligence partition bundle",
+    "sourceText": "export async function readFormalAiPartitionBundle(directory, limits = FORMAL_AI_PARTITION_BUNDLE_LIMITS) {\n  const root = path.resolve(directory);\n  const rootStatus = await lstat(root);\n  requireValue(rootStatus.isDirectory() && !rootStatus.isSymbolicLink(), 'bundle root is not an ordinary directory');\n  const files = new Map();\n  const directories = [];\n  let entries = 0;\n  let totalBytes = 0;\n  const pending = [{ relative: '', depth: 0 }];\n  while (pending.length) {\n    const current = pending.pop();\n    requireValue(current.depth <= limits.depth, 'bundle directory nesting exceeds the bound');\n    for await (const entry of await opendir(path.join(root, current.relative))) {\n      entries += 1;\n      requireValue(entries <= limits.files * 2, 'bundle directory entry count exceeds the bound');\n      const file = current.relative ? `${current.relative}/${entry.name}` : entry.name;\n      requireValue(relativeFile(file), 'unsafe bundle path');\n      const status = await lstat(path.join(root, file));\n      requireValue(!status.isSymbolicLink(), 'symbolic links are not evidence files');\n      if (status.isDirectory()) { directories.push(file); pending.push({ relative: file, depth: current.depth + 1 }); continue; }\n      requireValue(status.isFile() && !files.has(file) && files.size < limits.files, 'unknown, duplicate or excessive bundle file');\n      const bytes = await regularBytes(path.join(root, file), limits.fileBytes);\n      totalBytes += bytes.length;\n      requireValue(totalBytes <= limits.totalBytes, 'bundle byte limit exceeded');\n      files.set(file, bytes);\n    }\n  }\n  for (const directory of directories) requireValue([...files.keys()].some((file) => file.startsWith(`${directory}/`)), 'unknown empty evidence directory');\n  const bytes = files.get('partition.lino');\n  requireValue(bytes, 'missing authentic partial envelope');\n  files.delete('partition.lino');\n  return { envelope: readStructuredDataLino(new TextDecoder('utf-8', { fatal: true }).decode(bytes)), files,\n    receipt: { file: 'partition.lino', bytes: bytes.length, sha256: digest(bytes) } };\n}"
+  },
+  {
+    "id": "repository.merge-formal-artificial-intelligence-partition-bundles",
+    "source": "js/scripts/formal-ai-partition-bundles.mjs",
+    "name": "mergeFormalAiPartitionBundles",
+    "inventoryName": "merge formal artificial intelligence partition bundles",
+    "sourceText": "export async function mergeFormalAiPartitionBundles({ directories, root, tarball, crate, fixture, workDirectory, output, producerResult, environment = process.env }) {\n  await mkdir(workDirectory, { recursive: true });\n  await mkdir(path.dirname(output), { recursive: true });\n  let expected;\n  let parts = [];\n  let result;\n  try {\n    expected = await formalAiPartitionExpectations({ root, tarball, crate, fixture, environment, producerResult });\n    requireValue(directories.length === 2, 'two disjoint producer directories are required');\n    for (const [parent, child] of [[directories[0], directories[1]], [directories[1], directories[0]]]) {\n      const relative = path.relative(path.resolve(parent), path.resolve(child));\n      requireValue(relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative), 'two disjoint producer directories are required');\n    }\n    // Read both even when one refuses, preserving all per-producer diagnostics.\n    const reads = await Promise.allSettled(directories.map((directory) => readFormalAiPartitionBundle(directory)));\n    const errors = reads.flatMap((entry, index) => entry.status === 'rejected' ? [`${directories[index]}: ${entry.reason.message}`] : []);\n    parts = reads.filter((entry) => entry.status === 'fulfilled').map(({ value }) => value);\n    if (errors.length) result = { report: null, provenance: null, problems: errors };\n    else result = mergeFormalAiWorkloadPartitions(parts, fixture, expected);\n    if (result.report) {\n      // Keep the old public diagnostic/input/output paths. Equal validated bytes\n      // are copied only after the complete two-producer proof succeeds.\n      const selected = parts.find(({ envelope }) => envelope.identity.partition === 'remaining');\n      for (const field of ['inputs', 'javascriptOutputs', 'rustOutputs']) {\n        const descriptor = selected.envelope.evidence[field];\n        await writeFile(path.join(workDirectory, descriptor.file), selected.files.get(descriptor.file));\n      }\n      result.provenance.producers = parts.map(({ envelope, receipt }) => ({\n        partition: envelope.identity.partition, artifact: envelope.identity.artifact, envelope: receipt,\n      }));\n      writeProjectData(path.join(workDirectory, 'partition-provenance.lino'), result.provenance, { format: 'lino' });\n    }\n  } catch (error) { result = { report: null, provenance: null, problems: [error.message] }; }\n  const report = result.report ?? {\n    schemaVersion: 1, requirementId: FORMAL_AI_WORKLOAD_REQUIREMENT, fixture: FORMAL_AI_WORKLOAD_FIXTURE,\n    fixtureSha256: expected?.identity.fixtureSha256 ?? null,\n    partitionFailure: { problems: result.problems, producerResult, identity: expected?.identity ?? null },\n  };\n  writeProjectData(output, report, { format: 'lino' });\n  return { ...result, output };\n}"
+  },
+  {
+    "id": "repository.check-formal-artificial-intelligence-partition-grounding",
+    "source": "js/scripts/issue-195-formal-ai-workloads.mjs",
+    "name": "formalAiWorkloadPartitionGroundingProblems",
+    "inventoryName": "check formal artificial intelligence partition grounding",
+    "sourceText": "export function formalAiWorkloadPartitionGroundingProblems(report, fixture) {\n  const problems = [];\n  const javascript = validateFormalAiWorkloadReport(report, fixture, 'javascript');\n  for (const [assertion, entries] of Object.entries(javascript.problems)) {\n    problems.push(...entries.map((entry) => `javascript ${assertion}: ${entry}`));\n  }\n  if (report?.schemaVersion !== FORMAL_AI_WORKLOAD_SCHEMA_VERSION || !report?.crate || report.crate.skipped) {\n    problems.push('a native partition requires the original report schema and a real crate run');\n    return problems;\n  }\n  problems.push(...checkoutProblems(report, fixture), ...artifactProblems('rust', report.crate));\n  for (const assertion of FORMAL_AI_PROBE_ASSERTIONS) {\n    problems.push(...probeProblems('rust', report.crate, assertion));\n  }\n  return problems;\n}"
+  },
+  {
+    "id": "repository.formal-artificial-intelligence-workload-partitions",
+    "source": "js/scripts/formal-ai-workload-partitions.mjs",
+    "name": "FORMAL_AI_WORKLOAD_PARTITIONS",
+    "inventoryName": "formal artificial intelligence workload partitions",
+    "sourceText": "export const FORMAL_AI_WORKLOAD_PARTITIONS = Object.freeze(['corpus-ratchet', 'remaining']);"
+  },
+  {
+    "id": "repository.formal-artificial-intelligence-partition-build-profile",
+    "source": "js/scripts/formal-ai-partition-bundles.mjs",
+    "name": "FORMAL_AI_PARTITION_PROFILE",
+    "inventoryName": "formal artificial intelligence partition build profile",
+    "sourceText": "export const FORMAL_AI_PARTITION_PROFILE = Object.freeze({\n  CARGO_BUILD_JOBS: '2', CARGO_INCREMENTAL: '0', CARGO_PROFILE_DEV_DEBUG: '0',\n  CARGO_PROFILE_TEST_DEBUG: '0', RUST_TEST_THREADS: '1', patchedCrateOptLevel: 3,\n});"
+  },
+  {
+    "id": "repository.formal-artificial-intelligence-partition-bundle-limits",
+    "source": "js/scripts/formal-ai-partition-bundles.mjs",
+    "name": "FORMAL_AI_PARTITION_BUNDLE_LIMITS",
+    "inventoryName": "formal artificial intelligence partition bundle limits",
+    "sourceText": "export const FORMAL_AI_PARTITION_BUNDLE_LIMITS = Object.freeze({ files: 64, fileBytes: 128 * 2 ** 20, totalBytes: 256 * 2 ** 20, depth: 4 });"
+  },
+  {
+    "id": "repository.read-mapped-test-text-byte-length",
+    "source": "js/tests/grammar-selection-json-string.test.js",
+    "name": "byteLength",
+    "inventoryName": "read mapped test text byte length",
+    "sourceText": "const byteLength = source => encoder.encode(source).length;"
+  },
+  {
+    "id": "repository.read-mapped-grammar-control-data",
+    "source": "js/tests/grammar-selection-json-string.test.js",
+    "name": "fixtureData",
+    "inventoryName": "read mapped grammar control data",
+    "sourceText": "const fixtureData = name => readProjectData(new URL(`../../parity/${name}`, import.meta.url));"
+  },
+  {
+    "id": "repository.record-mapped-grammar-control-assertions",
+    "source": "js/tests/grammar-selection-json-string.test.js",
+    "name": "observeMappedProfile",
+    "inventoryName": "record mapped grammar control assertions",
+    "sourceText": "function observeMappedProfile(section, assertions, testName) {\n  const cell = mappedFixture.observations[section];\n  assert.ok(assertions.length > 0 && assertions.every(assertion => cell.assertions.includes(assertion)));\n  recordIssue195Observations({ requirementId: cell.requirementId, suffix: cell.suffix,\n    fixtureId: cell.fixtureIds.javascript, fixtureFile: mappedFixturePath, assertions, testName });\n}"
+  },
+  {
+    "id": "repository.create-mapped-grammar-test-host",
+    "source": "js/tests/grammar-selection-json-string.test.js",
+    "name": "mappedJsonHost",
+    "inventoryName": "create mapped grammar test host",
+    "sourceText": "function mappedJsonHost(names, mode = 'any-grammar', mappings = names.map(() => 'json-string'), prefix = '') {\n  const grammar = parseGrammarLinks(shippedJsonListing);\n  const originalStart = grammar.startRule().name;\n  const root = 'mapped_document';\n  assert.equal(grammar.rules.has(root), false, 'the authored wrapper must not hide a shipped rule');\n  const selection = { kind: mode, item: { kind: 'ref', name: originalStart },\n    items: names.map((name, index) => ({ kind: 'grammar-candidate', name, mapping: mappings[index] })) };\n  grammar.rules.set(root, Object.freeze({ name: root, kind: 'normal',\n    expression: prefix ? { kind: 'seq', items: [{ kind: 'literal', value: prefix }, selection] } : selection,\n    sourceNames: [{ source: 'authored', name: root }] }));\n  grammar.start = root;\n  return grammar;\n}"
+  },
+  {
+    "id": "repository.create-mapped-literal-test-grammar",
+    "source": "js/tests/grammar-selection-json-string.test.js",
+    "name": "literalChild",
+    "inventoryName": "create mapped literal test grammar",
+    "sourceText": "function literalChild(source) {\n  return parseGrammarLinks(`(grammar (start decoded))\\n(rule decoded normal (literal ${percentEncodeLinksText(source)}))\\n`);\n}"
+  },
+  {
+    "id": "repository.read-mapped-test-embedded-trees",
+    "source": "js/tests/grammar-selection-json-string.test.js",
+    "name": "mappedEmbeddings",
+    "inventoryName": "read mapped test embedded trees",
+    "sourceText": "function mappedEmbeddings(tree, found = []) {\n  if (tree.type === 'embed' && tree.selection?.mapping === 'json-string') found.push(tree);\n  for (const child of tree.children ?? []) mappedEmbeddings(child, found);\n  for (const child of tree.sourceChildren ?? []) mappedEmbeddings(child, found);\n  if (tree.root) mappedEmbeddings(tree.root, found);\n  for (const witness of tree.selection?.alternatives ?? []) mappedEmbeddings(witness.root, found);\n  return found;\n}"
+  },
+  {
+    "id": "repository.read-mapped-test-physical-bytes",
+    "source": "js/tests/grammar-selection-json-string.test.js",
+    "name": "physicalBytes",
+    "inventoryName": "read mapped test physical bytes",
+    "sourceText": "function physicalBytes(tree) {\n  if (tree.type === 'missing') return [];\n  if (tree.type === 'token' || tree.type === 'error') return tree.text === null\n    ? [...(tree.hex.match(/../gu) ?? [])].map(word => Number.parseInt(word, 16)) : [...encoder.encode(tree.text)];\n  const children = tree.sourceChildren ?? tree.children ?? (tree.root ? [tree.root] : []);\n  return children.flatMap(physicalBytes);\n}"
+  },
+  {
+    "id": "repository.check-mapped-test-concrete-coverage",
+    "source": "js/tests/grammar-selection-json-string.test.js",
+    "name": "assertConcreteLeaves",
+    "inventoryName": "check mapped test concrete coverage",
+    "sourceText": "function assertConcreteLeaves(tree, source) {\n  const bytes = encoder.encode(source);\n  const visit = node => {\n    if (node.type === 'token' || node.type === 'error') {\n      assert.deepEqual(physicalBytes(node), [...bytes.subarray(node.start, node.end)], 'leaf text belongs to its actual source plane');\n    }\n    for (const child of node.sourceChildren ?? node.children ?? (node.root ? [node.root] : [])) visit(child);\n  };\n  visit(tree);\n  assert.deepEqual(physicalBytes(tree), [...bytes], 'physical reconstruction owns every byte exactly once');\n}"
+  },
+  {
+    "id": "repository.create-mapped-test-grammar-document",
+    "source": "js/tests/grammar-selection-json-string.test.js",
+    "name": "grammarDocument",
+    "inventoryName": "create mapped test grammar document",
+    "sourceText": "function grammarDocument(grammar) {\n  // Preserve every own source field. The existing loader accepts rules arrays;\n  // normalized() intentionally omits some source/concept provenance.\n  return Object.fromEntries(Object.entries(grammar).map(([key, value]) =>\n    [key, key === 'rules' ? [...value.values()] : value]));\n}"
+  },
+  {
+    "id": "repository.read-mapped-control-archive-variants",
+    "source": "js/tests/grammar-selection-json-string.test.js",
+    "name": "storedVariants",
+    "inventoryName": "read mapped control archive variants",
+    "sourceText": "function storedVariants(value) {\n  const encoded = encodeStructuredDataLinks(value);\n  const text = encoded.network.toLino();\n  const network = LinkNetwork.fromLino(text);\n  const binary = decodeLinkNetworkBinary(encodeLinkNetworkBinary(network));\n  assert.equal(binary.toLino(), network.toLino(), 'binary transport keeps every actual graph identity and metadata field');\n  return [['text', readStructuredDataLino(text)], ['binary', decodeStructuredDataLinks(binary, encoded.root)]];\n}"
+  },
+  {
+    "id": "repository.read-mapped-control-source-bundle",
+    "source": "js/tests/grammar-selection-json-string.test.js",
+    "name": "mappingBundle",
+    "inventoryName": "read mapped control source bundle",
+    "sourceText": "function mappingBundle(outcome) {\n  return { tree: outcome.tree, sourcePlanes: outcome.sourcePlanes };\n}"
+  },
+  {
+    "id": "repository.read-mapped-control-first-text-leaf",
+    "source": "js/tests/grammar-selection-json-string.test.js",
+    "name": "firstTextLeaf",
+    "inventoryName": "read mapped control first text leaf",
+    "sourceText": "function firstTextLeaf(tree) {\n  if ((tree.type === 'token' || tree.type === 'error') && typeof tree.text === 'string' && tree.text) return tree;\n  for (const child of tree.sourceChildren ?? tree.children ?? (tree.root ? [tree.root] : [])) {\n    const found = firstTextLeaf(child);\n    if (found) return found;\n  }\n  return null;\n}"
+  },
+  {
+    "id": "repository.read-native-mapped-grammar-control-data",
+    "source": "rust/tests/unit/grammar_recursive_selection_mapping.rs",
+    "name": "mapped_fixture",
+    "inventoryName": "read native mapped grammar control data",
+    "sourceText": "pub fn mapped_fixture(path: &str) -> Value {\n    meta_language::project_data::read_project_data_file(\n        std::path::Path::new(env!(\"CARGO_MANIFEST_DIR\"))\n            .join(\"../parity\")\n            .join(path),\n    )\n    .unwrap()\n}"
+  },
+  {
+    "id": "repository.read-native-mapped-object-notation-grammar",
+    "source": "rust/tests/unit/grammar_recursive_selection_mapping.rs",
+    "name": "mapped_json_grammar",
+    "inventoryName": "read native mapped object notation grammar",
+    "sourceText": "pub fn mapped_json_grammar() -> Grammar {\n    parse_grammar_links(include_str!(\"../../src/data/native-grammars/json.lino\")).unwrap()\n}"
+  },
+  {
+    "id": "repository.read-native-mapped-python-grammar",
+    "source": "rust/tests/unit/grammar_recursive_selection_mapping.rs",
+    "name": "mapped_python_grammar",
+    "inventoryName": "read native mapped python grammar",
+    "sourceText": "pub fn mapped_python_grammar() -> Grammar {\n    parse_grammar_links(include_str!(\"../../src/data/native-grammars/python.lino\")).unwrap()\n}"
+  },
+  {
+    "id": "repository.create-native-mapped-grammar-test-host",
+    "source": "rust/tests/unit/grammar_recursive_selection_mapping.rs",
+    "name": "mapped_json_host",
+    "inventoryName": "create native mapped grammar test host",
+    "sourceText": "pub fn mapped_json_host(names: &[(&str, &str)], mode: &str, prefix: &str) -> Grammar {\n    let mut grammar = mapped_json_grammar();\n    assert!(grammar.rule(\"mapped_document\").is_none());\n    let candidates = names\n        .iter()\n        .map(|(name, mapping)| {\n            format!(\n                \"(grammar-candidate {} {mapping})\",\n                percent_encode_links_text(name),\n            )\n        })\n        .collect::<Vec<_>>()\n        .join(\" \");\n    let selection = parse_links_expression(&format!(\n        \"({mode} (ref {}) {candidates})\",\n        grammar.start().unwrap(),\n    ))\n    .unwrap();\n    let expression = if prefix.is_empty() {\n        selection\n    } else {\n        GrammarExpr::Sequence(vec![GrammarExpr::Terminal(prefix.to_owned()), selection])\n    };\n    let rule = GrammarRule::new(\"mapped_document\", expression).with_source_names(vec![\n        meta_language::GrammarSourceName {\n            source: \"authored\".to_owned(),\n            name: \"mapped_document\".to_owned(),\n        },\n    ]);\n    grammar.add_rule(rule);\n    grammar.set_start(\"mapped_document\");\n    grammar\n}"
+  },
+  {
+    "id": "repository.create-native-mapped-literal-grammar",
+    "source": "rust/tests/unit/grammar_recursive_selection_mapping.rs",
+    "name": "mapped_literal",
+    "inventoryName": "create native mapped literal grammar",
+    "sourceText": "pub fn mapped_literal(source: &str) -> Grammar {\n    Grammar::new()\n        .with_start(\"decoded\")\n        .with_rule(GrammarRule::new(\n            \"decoded\",\n            GrammarExpr::Terminal(source.to_owned()),\n        ))\n}"
+  },
+  {
+    "id": "repository.parse-native-mapped-grammar-control",
+    "source": "rust/tests/unit/grammar_recursive_selection_mapping.rs",
+    "name": "mapped_parse",
+    "inventoryName": "parse native mapped grammar control",
+    "sourceText": "pub fn mapped_parse(\n    grammar: &Grammar,\n    grammars: &HashMap<String, Grammar>,\n    source: &str,\n) -> ParseOutcome {\n    let resolve = |name: &str| grammars.get(name).cloned();\n    compile_feature_grammar(grammar, Some(&resolve), FeatureParseOptions::default())\n        .unwrap()\n        .parse_tree(source.as_bytes(), &FeatureParseOptions::default())\n        .unwrap()\n}"
+  },
+  {
+    "id": "repository.read-native-mapped-control-attributes",
+    "source": "rust/tests/unit/grammar_recursive_selection_mapping.rs",
+    "name": "mapped_attributes",
+    "inventoryName": "read native mapped control attributes",
+    "sourceText": "fn mapped_attributes(attributes: Option<&SyntaxAttributes>) -> Value {\n    attributes.map_or(Value::Null, |fields| {\n        Value::Object(\n            fields\n                .iter()\n                .map(|(key, value)| {\n                    let value = match value {\n                        OperationValue::Integer(value) => json!(value),\n                        OperationValue::Text(value) => json!(value),\n                    };\n                    (key.clone(), value)\n                })\n                .collect(),\n        )\n    })\n}"
+  },
+  {
+    "id": "repository.read-native-mapped-concrete-data",
+    "source": "rust/tests/unit/grammar_recursive_selection_mapping.rs",
+    "name": "mapped_tree_data",
+    "inventoryName": "read native mapped concrete data",
+    "sourceText": "pub fn mapped_tree_data(tree: &SyntaxTree) -> Value {\n    let mut value = json!({\"start\":tree.start(),\"end\":tree.end()});\n    match tree {\n        SyntaxTree::Node {\n            kind,\n            field,\n            trivia,\n            children,\n            attributes,\n            ..\n        } => {\n            value[\"type\"] = json!(\"node\");\n            value[\"kind\"] = json!(kind);\n            value[\"field\"] = json!(field);\n            value[\"trivia\"] = json!(trivia);\n            value[\"attributes\"] = mapped_attributes(attributes.as_ref());\n            value[\"children\"] = json!(children.iter().map(mapped_tree_data).collect::<Vec<_>>());\n        }\n        SyntaxTree::Token {\n            kind,\n            field,\n            trivia,\n            attributes,\n            lexical,\n            ..\n        } => {\n            value[\"type\"] = json!(\"token\");\n            value[\"kind\"] = json!(kind);\n            value[\"field\"] = json!(field);\n            value[\"trivia\"] = json!(trivia);\n            value[\"attributes\"] = mapped_attributes(attributes.as_ref());\n            value[\"lexical\"] = json!(lexical);\n        }\n        SyntaxTree::Error { reason, .. } => {\n            value[\"type\"] = json!(\"error\");\n            value[\"reason\"] = json!(reason);\n        }\n        SyntaxTree::Missing { kind, literal, .. } => {\n            value[\"type\"] = json!(\"missing\");\n            value[\"kind\"] = json!(kind);\n            value[\"literal\"] = json!(literal);\n        }\n        SyntaxTree::Embed {\n            language,\n            root,\n            source_children,\n            selection,\n            ..\n        } => {\n            value[\"type\"] = json!(\"embed\");\n            value[\"language\"] = json!(language);\n            value[\"root\"] = mapped_tree_data(root);\n            if let Some(children) = source_children {\n                value[\"sourceChildren\"] =\n                    json!(children.iter().map(mapped_tree_data).collect::<Vec<_>>());\n            }\n            value[\"selection\"] = selection.as_ref().map_or(Value::Null, |selected| {\n                let mut data = json!({\"mode\":selected.mode,\"mapping\":selected.mapping,\n                    \"start\":selected.start,\"end\":selected.end,\"candidates\":selected.candidates,\n                    \"provenance\":selected.provenance,\"ambiguous\":selected.ambiguous,\n                    \"alternatives\":selected.alternatives.iter().map(|item| json!({\n                        \"language\":item.language,\"root\":mapped_tree_data(&item.root),\"provenance\":item.provenance,\n                    })).collect::<Vec<_>>()});\n                if let Some(mapping) = &selected.source_mapping { data[\"sourceMapping\"].clone_from(mapping); }\n                data\n            });\n        }\n    }\n    if let SyntaxTree::Token { text, .. } | SyntaxTree::Error { text, .. } = tree {\n        match text {\n            LeafText::Text(text) => value[\"text\"] = json!(text),\n            LeafText::Hex(hex) => {\n                value[\"text\"] = Value::Null;\n                value[\"hex\"] = json!(hex);\n            }\n        }\n    }\n    value\n}"
+  },
+  {
+    "id": "repository.read-native-mapped-control-bundle",
+    "source": "rust/tests/unit/grammar_recursive_selection_mapping.rs",
+    "name": "mapped_bundle",
+    "inventoryName": "read native mapped control bundle",
+    "sourceText": "pub fn mapped_bundle(outcome: &ParseOutcome) -> Value {\n    json!({\"tree\":outcome.tree.as_ref().map(mapped_tree_data),\"sourcePlanes\":outcome.source_planes})\n}"
+  },
+  {
+    "id": "repository.read-native-mapped-control-embedded-trees",
+    "source": "rust/tests/unit/grammar_recursive_selection_mapping.rs",
+    "name": "mapped_embeds",
+    "inventoryName": "read native mapped control embedded trees",
+    "sourceText": "pub fn mapped_embeds<'a>(tree: &'a Value, found: &mut Vec<&'a Value>) {\n    if tree[\"type\"] == \"embed\" && tree[\"selection\"][\"mapping\"] == \"json-string\" {\n        found.push(tree);\n    }\n    for field in [\"children\", \"sourceChildren\"] {\n        if let Some(children) = tree[field].as_array() {\n            for child in children {\n                mapped_embeds(child, found);\n            }\n        }\n    }\n    if tree.get(\"root\").is_some() {\n        mapped_embeds(&tree[\"root\"], found);\n    }\n    if let Some(witnesses) = tree[\"selection\"][\"alternatives\"].as_array() {\n        for witness in witnesses {\n            mapped_embeds(&witness[\"root\"], found);\n        }\n    }\n}"
+  },
+  {
+    "id": "repository.read-native-mapped-control-first-leaf",
+    "source": "rust/tests/unit/grammar_recursive_selection_mapping.rs",
+    "name": "mapped_first",
+    "inventoryName": "read native mapped control first leaf",
+    "sourceText": "pub fn mapped_first(tree: &Value) -> &Value {\n    let mut found = Vec::new();\n    mapped_embeds(tree, &mut found);\n    found[0]\n}"
+  },
+  {
+    "id": "repository.read-native-mapped-control-physical-bytes",
+    "source": "rust/tests/unit/grammar_recursive_selection_mapping.rs",
+    "name": "mapped_physical",
+    "inventoryName": "read native mapped control physical bytes",
+    "sourceText": "pub fn mapped_physical(tree: &Value) -> Vec<u8> {\n    match tree[\"type\"].as_str().unwrap() {\n        \"missing\" => Vec::new(),\n        \"token\" | \"error\" => tree[\"text\"].as_str().map_or_else(\n            || {\n                tree[\"hex\"]\n                    .as_str()\n                    .unwrap()\n                    .as_bytes()\n                    .as_chunks::<2>()\n                    .0\n                    .iter()\n                    .map(|word| u8::from_str_radix(std::str::from_utf8(word).unwrap(), 16).unwrap())\n                    .collect()\n            },\n            |text| text.as_bytes().to_vec(),\n        ),\n        _ => tree\n            .get(\"sourceChildren\")\n            .or_else(|| tree.get(\"children\"))\n            .map_or_else(\n                || mapped_physical(&tree[\"root\"]),\n                |children| {\n                    children\n                        .as_array()\n                        .unwrap()\n                        .iter()\n                        .flat_map(mapped_physical)\n                        .collect()\n                },\n            ),\n    }\n}"
+  },
+  {
+    "id": "repository.read-native-mapped-control-archives",
+    "source": "rust/tests/unit/grammar_recursive_selection_mapping.rs",
+    "name": "mapped_stored_variants",
+    "inventoryName": "read native mapped control archives",
+    "sourceText": "pub fn mapped_stored_variants(value: &Value) -> [Value; 2] {\n    let graph = encode_structured_data_links(value).unwrap();\n    let text = graph.network.to_lino();\n    let restored = LinkNetwork::from_lino(&text).unwrap();\n    let binary = encode_link_network_binary(&restored, BinaryLinksOptions::default()).unwrap();\n    let binary = decode_link_network_binary(&binary, BinaryLinksOptions::default()).unwrap();\n    assert_eq!(\n        binary.to_lino(),\n        text,\n        \"all actual link identities and metadata survive\"\n    );\n    [\n        decode_structured_data_links(&restored, graph.root).unwrap(),\n        decode_structured_data_links(&binary, graph.root).unwrap(),\n    ]\n}"
+  },
+  {
+    "id": "repository.read-native-mapped-control-link-data",
+    "source": "rust/tests/unit/grammar_recursive_selection_mapping.rs",
+    "name": "mapped_link_data",
+    "inventoryName": "read native mapped control link data",
+    "sourceText": "pub fn mapped_link_data(node: &LiNo<String>) -> Value {\n    match node {\n        LiNo::Ref(word) => json!(word),\n        LiNo::Link { id, values } => {\n            json!({\"id\":id,\"values\":values.iter().map(mapped_link_data).collect::<Vec<_>>()})\n        }\n    }\n}"
+  },
+  {
+    "id": "repository.render-native-mapped-control-link-text",
+    "source": "rust/tests/unit/grammar_recursive_selection_mapping.rs",
+    "name": "mapped_link_text",
+    "inventoryName": "render native mapped control link text",
+    "sourceText": "pub fn mapped_link_text(node: &Value) -> String {\n    node.as_str().map_or_else(\n        || {\n            let prefix = node[\"id\"]\n                .as_str()\n                .map_or(String::new(), |id| format!(\"{id}: \"));\n            format!(\n                \"({prefix}{})\",\n                node[\"values\"]\n                    .as_array()\n                    .unwrap()\n                    .iter()\n                    .map(mapped_link_text)\n                    .collect::<Vec<_>>()\n                    .join(\" \")\n            )\n        },\n        str::to_owned,\n    )\n}"
+  },
+  {
+    "id": "repository.retain-native-mapped-control-root-expression",
+    "source": "rust/tests/unit/grammar_recursive_selection_mapping.rs",
+    "name": "mapped_root_expression",
+    "inventoryName": "retain native mapped control root expression",
+    "sourceText": "pub fn mapped_root_expression(grammar: &Grammar, expression: GrammarExpr) -> Grammar {\n    let mut restored = Grammar::new();\n    let root = grammar.start().unwrap();\n    restored.set_start(root);\n    if let Some(format) = grammar.source_format() {\n        restored.set_source_format(format);\n    }\n    restored.set_declarations(grammar.declarations().clone());\n    restored.set_kinds(grammar.kinds().to_vec());\n    for mut rule in grammar.rules().iter().cloned() {\n        if rule.name == root {\n            rule.expr.clone_from(&expression);\n        }\n        restored.add_rule(rule);\n    }\n    restored\n}"
+  },
+  {
+    "id": "repository.read-native-mapped-profile-fixture",
+    "source": "rust/tests/unit/grammar_recursive_selection_mapping.rs",
+    "name": "mapped_profile_fixture",
+    "inventoryName": "read native mapped profile fixture",
+    "sourceText": "fn mapped_profile_fixture() -> Value {\n    use sha2::{Digest, Sha256};\n    use std::fmt::Write as _;\n    let fixture = mapped_fixture(\"fixtures/grammar-selection-json-string.lino\");\n    assert_eq!(fixture[\"schemaVersion\"], 1);\n    assert_eq!(fixture[\"id\"], \"grammar-selection-json-string\");\n    let expected_captures = [\n        (\"inventory\", \"parity/language-grammar-inventory.lino\"),\n        (\n            \"originalConcreteOracle\",\n            \"parity/fixtures/default-cst-expected.lino\",\n        ),\n        (\n            \"nativeConcreteOracle\",\n            \"parity/fixtures/native-default-cst-expected.lino\",\n        ),\n        (\n            \"javascriptJsonGrammar\",\n            \"js/src/data/native-grammars/json.lino\",\n        ),\n        (\n            \"javascriptPythonGrammar\",\n            \"js/src/data/native-grammars/python.lino\",\n        ),\n        (\"rustJsonGrammar\", \"rust/src/data/native-grammars/json.lino\"),\n        (\n            \"rustPythonGrammar\",\n            \"rust/src/data/native-grammars/python.lino\",\n        ),\n        (\n            \"javascriptTests\",\n            \"js/tests/grammar-selection-json-string.test.js\",\n        ),\n        (\n            \"rustTests\",\n            \"rust/tests/unit/grammar_recursive_selection.rs\",\n        ),\n        (\n            \"rustTestTransport\",\n            \"rust/tests/unit/grammar_recursive_selection_mapping.rs\",\n        ),\n        (\n            \"fixtureAuthor\",\n            \"js/tests/support/grammar-selection-mapping-cases.js\",\n        ),\n        (\n            \"fixtureGenerator\",\n            \"js/scripts/generate-grammar-selection-mapping-fixtures.mjs\",\n        ),\n    ];\n    let captures = fixture[\"captures\"].as_array().unwrap();\n    assert_eq!(captures.len(), expected_captures.len());\n    for (capture, (id, relative)) in captures.iter().zip(expected_captures) {\n        assert_eq!(capture[\"id\"], id);\n        assert_eq!(capture[\"path\"], relative);\n        let path = std::path::Path::new(env!(\"CARGO_MANIFEST_DIR\"))\n            .join(\"..\")\n            .join(relative);\n        let bytes =\n            std::fs::read(&path).unwrap_or_else(|error| panic!(\"{}: {error}\", path.display()));\n        assert_eq!(json!(bytes.len()), capture[\"bytes\"], \"{}\", path.display());\n        let digest =\n            Sha256::digest(bytes)\n                .iter()\n                .fold(String::with_capacity(64), |mut text, byte| {\n                    write!(text, \"{byte:02x}\").unwrap();\n                    text\n                });\n        assert_eq!(\n            digest,\n            capture[\"sha256\"].as_str().unwrap(),\n            \"{}\",\n            path.display()\n        );\n    }\n    fixture\n}"
+  },
+  {
+    "id": "repository.record-native-mapped-profile-assertions",
+    "source": "rust/tests/unit/grammar_recursive_selection_mapping.rs",
+    "name": "record_mapped_profile",
+    "inventoryName": "record native mapped profile assertions",
+    "sourceText": "fn record_mapped_profile(\n    fixture: &Value,\n    section: &str,\n    requirement: &str,\n    fixture_id: &str,\n    assertions: &[&str],\n    test_name: &str,\n) {\n    let declared = &fixture[\"observations\"][section];\n    assert_eq!(declared[\"requirementId\"], requirement);\n    assert_eq!(declared[\"suffix\"], \"json-string-profile\");\n    assert_eq!(declared[\"fixtureIds\"][\"rust\"], fixture_id);\n    for assertion in assertions {\n        assert_eq!(\n            declared[\"assertions\"]\n                .as_array()\n                .unwrap()\n                .iter()\n                .filter(|candidate| candidate.as_str() == Some(*assertion))\n                .count(),\n            1\n        );\n    }\n    super::super::issue_195_observations::record(\n        &super::super::issue_195_observations::Observation {\n            requirement_id: requirement,\n            suffix: \"json-string-profile\",\n            fixture_id,\n            fixture_file: \"parity/fixtures/grammar-selection-json-string.lino\",\n            assertions,\n            test_name,\n        },\n    );\n}"
+  },
+  {
+    "id": "repository.check-native-mapped-primary-observations",
+    "source": "rust/tests/unit/grammar_recursive_selection_mapping.rs",
+    "name": "record_mapped_primary",
+    "inventoryName": "check native mapped primary observations",
+    "sourceText": "pub fn record_mapped_primary(source: &str, raw: &str, decoded: &str, intervals: &[[usize; 4]]) {\n    let fixture = mapped_profile_fixture();\n    assert_eq!(fixture[\"inputs\"][\"python\"][\"source\"], source);\n    let native = mapped_fixture(\"fixtures/native-default-cst-expected.lino\");\n    let original = mapped_fixture(\"fixtures/default-cst-expected.lino\");\n    let expected = native[\"languages\"]\n        .get(\"Python\")\n        .unwrap_or_else(|| &original[\"languages\"][\"Python\"]);\n    assert_eq!(\n        fixture[\"inputs\"][\"python\"][\"positiveRows\"],\n        expected[\"positive\"]\n    );\n    let escape = &fixture[\"inputs\"][\"escape\"];\n    assert_eq!(escape[\"raw\"], raw);\n    assert_eq!(escape[\"decoded\"], decoded);\n    assert_eq!(escape[\"physicalBytes\"], json!(raw.as_bytes()));\n    assert_eq!(escape[\"decodedBytes\"], json!(decoded.as_bytes()));\n    assert_eq!(escape[\"prefixes\"], json!([\"\", \"λ<\"]));\n    assert_eq!(escape[\"intervals\"], json!(intervals));\n    record_mapped_profile(\n        &fixture,\n        \"boundaries\",\n        \"I195-CST-RECURSIVE-BOUNDARIES-LOSSLESS\",\n        \"grammar-selection-json-string-boundaries-rust\",\n        &[\n            \"shippedJsonPythonConcreteTreesRemainExact\",\n            \"jsonStringUtf8IntervalsAndQuoteOwnershipExact\",\n        ],\n        \"mapped_json_retains_shipped_python_cst_original_oracle_rows_and_exact_escape_intervals\",\n    );\n}"
+  },
+  {
+    "id": "repository.check-native-mapped-archive-observations",
+    "source": "rust/tests/unit/grammar_recursive_selection_mapping.rs",
+    "name": "record_mapped_archives",
+    "inventoryName": "check native mapped archive observations",
+    "sourceText": "pub fn record_mapped_archives(source: &str, inner: &str, physical: &str) {\n    let fixture = mapped_profile_fixture();\n    assert_eq!(fixture[\"inputs\"][\"python\"][\"source\"], source);\n    assert_eq!(serde_json::to_string(source).unwrap(), inner);\n    assert_eq!(serde_json::to_string(inner).unwrap(), physical);\n    let test_name =\n        \"nested_mapped_registry_and_complete_grammars_replay_from_text_and_binary_links\";\n    record_mapped_profile(\n        &fixture,\n        \"boundaries\",\n        \"I195-CST-RECURSIVE-BOUNDARIES-LOSSLESS\",\n        \"grammar-selection-json-string-boundaries-rust\",\n        &[\"mappedSourceRegistryAndGrammarReplayTextAndBinary\"],\n        test_name,\n    );\n    record_mapped_profile(\n        &fixture,\n        \"recursion\",\n        \"I195-CST-DEEPLY-RECURSIVE-MIXED-LANGUAGES\",\n        \"grammar-selection-json-string-recursion-rust\",\n        &[\"nestedMappedSourcesRetainActualDerivationOrder\"],\n        test_name,\n    );\n}"
+  },
+  {
+    "id": "repository.check-native-mapped-forgery-observations",
+    "source": "rust/tests/unit/grammar_recursive_selection_mapping.rs",
+    "name": "record_mapped_forgeries",
+    "inventoryName": "check native mapped forgery observations",
+    "sourceText": "pub fn record_mapped_forgeries(replacements: &[Value], absent: &Value) {\n    let fixture = mapped_profile_fixture();\n    let cases = &fixture[\"runtimeCases\"][\"rust\"][\"serializableForgeries\"];\n    assert_eq!(cases[\"replacements\"], json!(replacements));\n    assert_eq!(\n        cases[\"extraFields\"],\n        json!([\n            \"/sourcePlanes/0\",\n            \"/sourcePlanes/1/derivation\",\n            \"/tree/children/0/selection/sourceMapping\",\n        ])\n    );\n    assert_eq!(cases[\"missingRegistry\"], true);\n    for restored in mapped_stored_variants(absent) {\n        assert_eq!(&restored, absent);\n        assert_eq!(\n            meta_language::check_grammar_selection_mapped_tree(\n                &restored,\n                &FeatureParseOptions::default()\n            )\n            .unwrap_err()\n            .reason,\n            \"selection\"\n        );\n    }\n    record_mapped_profile(\n        &fixture,\n        \"boundaries\",\n        \"I195-CST-RECURSIVE-BOUNDARIES-LOSSLESS\",\n        \"grammar-selection-json-string-boundaries-rust\",\n        &[\"serializableMappingForgeriesRefusedAfterReload\"],\n        \"mapped_source_forgeries_survive_generic_archives_but_fail_the_correspondence_checker\",\n    );\n}"
+  },
+  {
+    "id": "repository.check-native-mapped-profile-observations",
+    "source": "rust/tests/unit/grammar_recursive_selection_mapping.rs",
+    "name": "record_mapped_profiles",
+    "inventoryName": "check native mapped profile observations",
+    "sourceText": "pub fn record_mapped_profiles(recovery_source: &str) {\n    let fixture = mapped_profile_fixture();\n    assert_eq!(\n        fixture[\"inputs\"][\"python\"][\"recoverySource\"],\n        recovery_source\n    );\n    assert_eq!(\n        fixture[\"inputs\"][\"selection\"][\"modes\"],\n        json!([\"any-grammar\", \"all-grammar\"])\n    );\n    let refusals = &fixture[\"inputs\"][\"refusals\"];\n    assert_eq!(\n        refusals[\"loneSurrogateEscapes\"],\n        json!([r#\"\"\\uD800\"\"#, r#\"\"\\uDC00\"\"#])\n    );\n    assert_eq!(refusals[\"unsupportedMapping\"], \"quoted-escape\");\n    assert_eq!(\n        refusals[\"mixedMappings\"],\n        json!([\"json-string\", \"identity\"])\n    );\n    assert_eq!(\n        refusals[\"limitOptions\"],\n        json!([\n            {\"options\":{\"stepLimit\":0},\"reason\":\"stepLimit\"},\n            {\"options\":{\"memoryLimit\":0},\"reason\":\"memoryBudget\"},\n            {\"options\":{\"maxDepth\":0},\"reason\":\"nestingDepth\"},\n        ])\n    );\n    let test_name =\n        \"mapped_profiles_keep_witnesses_and_existing_limits_while_failed_derivations_are_not_csts\";\n    record_mapped_profile(\n        &fixture,\n        \"selection\",\n        \"I195-CST-ANY-GRAMMAR-RECURSIVE-RULE\",\n        \"grammar-selection-json-string-selection-rust\",\n        &[\n            \"jsonStringAnyAllCandidateWitnessesPreserved\",\n            \"jsonStringUnsupportedAndNonScalarProfilesRefused\",\n        ],\n        test_name,\n    );\n    record_mapped_profile(\n        &fixture,\n        \"recursion\",\n        \"I195-CST-DEEPLY-RECURSIVE-MIXED-LANGUAGES\",\n        \"grammar-selection-json-string-recursion-rust\",\n        &[\n            \"mappedParsersRetainExistingLimitRefusals\",\n            \"mappedCycleAndSyntaxFailuresRetainSourceRoutes\",\n            \"failedMappedParseCannotAuthenticateMissingRoot\",\n        ],\n        test_name,\n    );\n}"
+  },
+  {
+    "id": "repository.check-native-mapped-memo-observations",
+    "source": "rust/tests/unit/grammar_recursive_selection_mapping.rs",
+    "name": "record_mapped_memo",
+    "inventoryName": "check native mapped memo observations",
+    "sourceText": "pub fn record_mapped_memo() {\n    let fixture = mapped_profile_fixture();\n    let memo = &fixture[\"inputs\"][\"memo\"];\n    assert_eq!(memo[\"decoded\"], \"x\");\n    assert_eq!(memo[\"identityName\"], \"json-string|decoded\");\n    assert_eq!(memo[\"warmMappings\"], json!([\"identity\", \"json-string\"]));\n    record_mapped_profile(\n        &fixture,\n        \"selection\",\n        \"I195-CST-ANY-GRAMMAR-RECURSIVE-RULE\",\n        \"grammar-selection-json-string-selection-rust\",\n        &[\"mappedProfileMemoKeysKeepExactGrammarNames\"],\n        \"mapped_selection_memo_keys_keep_delimiter_bearing_names_separate_from_profiles\",\n    );\n}"
+  },
+  {
+    "id": "repository.check-native-mapped-lexical-observations",
+    "source": "rust/tests/unit/grammar_recursive_selection_mapping.rs",
+    "name": "record_mapped_lexical_inputs",
+    "inventoryName": "check native mapped lexical observations",
+    "sourceText": "fn record_mapped_lexical_inputs() {\n    let fixture = mapped_profile_fixture();\n    let refusals = &fixture[\"inputs\"][\"refusals\"];\n    assert_eq!(refusals[\"invalidBytes\"], json!([255, 34, 120, 34]));\n    assert_eq!(\n        refusals[\"invalidEscapes\"],\n        json!([r#\"\"\\q\"\"#, r#\"\"\\u{41}\"\"#, r#\"\"\\u12\"\"#, \"\\\"line\\nbreak\\\"\",])\n    );\n    assert_eq!(fixture[\"inputs\"][\"nesting\"][\"oneLevel\"], \"\\\"x\\\"\");\n    record_mapped_profile(\n        &fixture,\n        \"selection\",\n        \"I195-CST-ANY-GRAMMAR-RECURSIVE-RULE\",\n        \"grammar-selection-json-string-selection-rust\",\n        &[\n            \"jsonStringLexicalAndMalformedInputsRefused\",\n            \"invalidUtf8RootCannotClaimUtf8SourcePlane\",\n        ],\n        \"mapped_scalar_profile_does_not_relabel_invalid_utf8_or_admit_lexical_escapes\",\n    );\n}"
+  },
+  {
+    "id": "repository.observe-strict-equality-control-program",
+    "source": "js/tests/typed-program-strict-equality-projection.test.js",
+    "name": "observeStrictEqualityProgram",
+    "inventoryName": "observe strict equality control program",
+    "sourceText": "function observeStrictEqualityProgram(source) {\n  const lines = [];\n  let error = null;\n  try {\n    vm.runInNewContext(source, { console: { log: value => lines.push(String(value)) } }, { timeout: 1000 });\n  } catch (caught) {\n    error = caught.message;\n  }\n  return { lines, error };\n}"
+  },
+  {
+    "id": "repository.read-strict-equality-control-expressions",
+    "source": "js/tests/typed-program-strict-equality-projection.test.js",
+    "name": "readStrictEqualityExpressions",
+    "inventoryName": "read strict equality control expressions",
+    "sourceText": "function readStrictEqualityExpressions(program) {\n  const seen = new WeakSet(), result = [];\n  function visit(value) {\n    if (!value || typeof value !== 'object' || seen.has(value)) return;\n    seen.add(value);\n    if (value.k === 'strictEqual') result.push(value);\n    for (const child of value instanceof Map ? value.values() : Object.values(value)) visit(child);\n  }\n  visit(program);\n  return result;\n}"
+  },
+  {
+    "id": "repository.read-strict-equality-control-archives",
+    "source": "js/tests/typed-program-strict-equality-projection.test.js",
+    "name": "strictEqualityArchiveForms",
+    "inventoryName": "read strict equality control archives",
+    "sourceText": "const strictEqualityArchiveForms = packet => [\n  LinkNetwork.fromLino(packet.network.toLino()),\n  decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network)),\n];"
+  },
+  {
+    "id": "repository.visit-strict-equality-control-node",
+    "source": "js/tests/typed-program-strict-equality-projection.test.js",
+    "name": "visit",
+    "inventoryName": "visit strict equality control node",
+    "sourceText": "function visit(value) {\n    if (!value || typeof value !== 'object' || seen.has(value)) return;\n    seen.add(value);\n    if (value.k === 'strictEqual') result.push(value);\n    for (const child of value instanceof Map ? value.values() : Object.values(value)) visit(child);\n  }",
+    "ownerContexts": [
+      "function readStrictEqualityExpressions(program) {"
+    ]
+  },
+  {
+    "id": "repository.read-native-optional-equality-contracts",
+    "source": "rust/tests/unit/translation_optional_values.rs",
+    "name": "optional_equality_contracts",
+    "inventoryName": "read native optional equality contracts",
+    "sourceText": "fn optional_equality_contracts() -> serde_json::Value {\n    use super::issue_195_translation_pairs::run;\n    let script = r#\"\nimport assert from 'node:assert/strict';\nimport {readFileSync} from 'node:fs';\nimport vm from 'node:vm';\nimport {parseJavaScript} from './js/src/translation/javascript.js';\nimport {checkProgram} from './js/src/translation/check.js';\nimport {emitJavaScript} from './js/src/translation/emit-javascript.js';\nimport {emitRust} from './js/src/translation/emit-rust.js';\nimport {encodeTypedProgramLinks,decodeTypedProgramLinks} from './js/src/typed-program-links.js';\nimport {recheckLinkedTypedProgram} from './js/src/typed-program-checked-projection.js';\nimport {LinkNetwork} from './js/src/network.js';\nimport {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from './js/src/link-network-binary.js';\nconst source=readFileSync('./js/tests/typed-program-strict-equality-projection.test.js','utf8');\nfunction literal(name){\n const marker='const '+name+' = [';\n assert.equal(source.split(marker).length,2,'the actual JavaScript control has one literal '+name);\n const start=source.indexOf(marker),boundary=name==='cases'?'\\n  ];':'\\n  for (const declarations of [readers';\n const closing=source.indexOf(boundary,start);\n assert.ok(closing>start,'the complete original declaration is retained');\n const end=closing+(name==='cases'?boundary.length:0);\n return vm.runInNewContext(source.slice(start,end)+'\\n'+name+';');\n}\nconst cases=literal('cases'),readers=literal('readers');\nassert.equal(cases.length,6);assert.equal(readers.length,2);\nfor(const [index,declarations]of [readers,[...readers].reverse()].entries())cases.push(['deferred-'+index,\n '/** @param {number[]} numbers @param {string[]} texts @returns {boolean} */function compare(numbers,texts){return readNumber(numbers)===readText(texts);}'\n +declarations.join('\\n')+'console.log(compare([],[]));console.log(compare([0],[\\'0\\']));',\n ['left','right','true','left','right','false']]);\nfunction observe(source){const lines=[];vm.runInNewContext(source,{console:{log:value=>lines.push(String(value))}},{timeout:1000});return lines;}\nconst contracts=[];\nfor(const [name,source,expected]of cases){\n assert.deepEqual(observe(source),Array.from(expected));\n const surface=parseJavaScript(source),program=checkProgram(surface),javascript=emitJavaScript(program).text,rust=emitRust(program,{arrayConsumption:true}).text;\n assert.deepEqual(observe(javascript),Array.from(expected));\n const packet=encodeTypedProgramLinks(program);\n for(const network of [LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))]){\n  const restored=decodeTypedProgramLinks(network,packet.root);recheckLinkedTypedProgram(restored,{wholeProgram:true});\n  assert.equal(emitJavaScript(restored).text,javascript);assert.equal(emitRust(restored,{arrayConsumption:true}).text,rust);\n }\n const changed=source.includes('!==')?source.replace('!==','==='):source.replace('===','!==');\n const edited=checkProgram(parseJavaScript(changed)),editedExpected=Array.from(expected,line=>line==='true'?'false':line==='false'?'true':line);\n assert.deepEqual(observe(changed),editedExpected);assert.deepEqual(observe(emitJavaScript(edited).text),editedExpected);\n contracts.push({name,source,expected:Array.from(expected),surface,javascript,rust,links:packet.network.toLino(),root:packet.root.asU64(),\n  editedExpected,editedJavaScript:emitJavaScript(edited).text,editedRust:emitRust(edited,{arrayConsumption:true}).text});\n}\nconsole.log(JSON.stringify(contracts));\n\"#;\n    let output = run(Command::new(\"node\")\n        .current_dir(\n            std::path::Path::new(env!(\"CARGO_MANIFEST_DIR\"))\n                .parent()\n                .unwrap(),\n        )\n        .args([\"--input-type=module\", \"-e\", script]));\n    assert!(output.ok, \"{}\", output.stderr);\n    serde_json::from_str(&output.stdout).unwrap()\n}"
+  },
+  {
+    "id": "repository.read-native-terminal-tag-control-contract",
+    "source": "rust/tests/unit/translation_constructor_tags.rs",
+    "name": "terminal_tag_guard_contract",
+    "inventoryName": "read native terminal tag control contract",
+    "sourceText": "fn terminal_tag_guard_contract(source: &str, native_javascript: &str) -> Value {\n    let script = r#\"\nimport {format} from 'node:util';\nimport vm from 'node:vm';\nimport {parseJavaScript} from './js/src/translation/javascript.js';\nimport {checkProgram} from './js/src/translation/check.js';\nimport {emitJavaScript} from './js/src/translation/emit-javascript.js';\nimport {emitRust} from './js/src/translation/emit-rust.js';\nimport {encodeTypedProgramLinks,decodeTypedProgramLinks} from './js/src/typed-program-links.js';\nimport {recheckLinkedTypedProgram} from './js/src/typed-program-checked-projection.js';\nimport {LinkNetwork} from './js/src/network.js';\nimport {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from './js/src/link-network-binary.js';\nfunction observe(source){const output=[];vm.runInNewContext(source,{console:{log:(...values)=>output.push(format(...values))}},{timeout:1000});return output.join('\\n')+'\\n';}\nconst surface=parseJavaScript(process.argv[1]),checked=checkProgram(surface);\nconst javascript=emitJavaScript(checked).text,rust=emitRust(checked,{arrayConsumption:true}).text;\nconst packet=encodeTypedProgramLinks(checked),archives=[];\nfor(const network of [LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))]){\n const program=decodeTypedProgramLinks(network,packet.root);\n recheckLinkedTypedProgram(program,{wholeProgram:true});\n archives.push({javascript:emitJavaScript(program).text,rust:emitRust(program,{arrayConsumption:true}).text,output:observe(emitJavaScript(program).text)});\n}\nconsole.log(JSON.stringify({surface,javascript,rust,archives,observations:[observe(process.argv[1]),observe(process.argv[2]),observe(javascript)]}));\n\"#;\n    let output = run(Command::new(\"node\")\n        .current_dir(\n            std::path::Path::new(env!(\"CARGO_MANIFEST_DIR\"))\n                .parent()\n                .unwrap(),\n        )\n        .args([\n            \"--input-type=module\",\n            \"-e\",\n            script,\n            source,\n            native_javascript,\n        ]));\n    assert!(output.ok, \"{}\", output.stderr);\n    serde_json::from_str(&output.stdout).unwrap()\n}"
+  },
+  {
+    "id": "repository.check-native-mapped-package-concrete-boundaries",
+    "source": "rust/tests/unit/grammar_recursive_selection.rs",
+    "name": "mapped_json_retains_shipped_python_cst_original_oracle_rows_and_exact_escape_intervals",
+    "inventoryName": "check native mapped package concrete boundaries",
+    "sourceText": "fn mapped_json_retains_shipped_python_cst_original_oracle_rows_and_exact_escape_intervals() {\n    let inventory = mapped_fixture(\"language-grammar-inventory.lino\");\n    let python = inventory[\"languages\"]\n        .as_array()\n        .unwrap()\n        .iter()\n        .find(|item| item[\"name\"] == \"Python\")\n        .unwrap();\n    let source = python[\"source\"].as_str().unwrap();\n    let grammars = HashMap::from([(\"Python\".to_owned(), mapped_python_grammar())]);\n    let host = mapped_json_host(&[(\"Python\", \"json-string\")], \"any-grammar\", \"\");\n    let physical = serde_json::to_string(source).unwrap();\n    let outcome = mapped_parse(&host, &grammars, &physical);\n    assert!(outcome.ok, \"{:?}\", outcome.rejection);\n    let direct = mapped_parse(&grammars[\"Python\"], &HashMap::new(), source);\n    let direct_json = mapped_parse(&mapped_json_grammar(), &HashMap::new(), &physical);\n    assert!(direct.ok && direct_json.ok);\n    let bundle = mapped_bundle(&outcome);\n    let embedded = mapped_first(&bundle[\"tree\"]);\n    assert_eq!(\n        embedded[\"sourceChildren\"],\n        json!([mapped_tree_data(direct_json.tree.as_ref().unwrap())])\n    );\n    assert_eq!(\n        embedded[\"root\"],\n        mapped_tree_data(direct.tree.as_ref().unwrap())\n    );\n    assert_eq!(mapped_physical(&bundle[\"tree\"]), physical.as_bytes());\n    assert_eq!(mapped_physical(&embedded[\"root\"]), source.as_bytes());\n    let entry = meta_language::native_grammar(\"native-python\").unwrap();\n    let configuration = json!({\"hidden\":entry.hidden,\"anonymous\":entry.anonymous,\"extras\":entry.extras,\n        \"rootIncludesLeadingTrivia\":entry.root_includes_leading_trivia,\"oracleKinds\":entry.oracle_kinds});\n    let current = mapped_fixture(\"fixtures/native-default-cst-expected.lino\");\n    let original = mapped_fixture(\"fixtures/default-cst-expected.lino\");\n    let expected = current[\"languages\"]\n        .get(\"Python\")\n        .unwrap_or_else(|| &original[\"languages\"][\"Python\"]);\n    assert_eq!(\n        json!(\n            super::issue_195_native_grammar_rows::Rows::new(&configuration)\n                .rows(direct.tree.as_ref().unwrap(), source)\n        ),\n        expected[\"positive\"]\n    );\n    assert!(std::ptr::eq(\n        check_grammar_selection_mapped_tree(&bundle, &FeatureParseOptions::default()).unwrap(),\n        &bundle\n    ));\n    let resolve = |name: &str| grammars.get(name).cloned();\n    let parser =\n        compile_feature_grammar(&host, Some(&resolve), FeatureParseOptions::default()).unwrap();\n    let error = parser\n        .parse(physical.as_bytes(), &FeatureParseOptions::default())\n        .unwrap_err();\n    assert_eq!(error.rejection.reason, \"selection\");\n    assert!(\n        error.rejection.diagnostics.unwrap()[0][\"detail\"]\n            .as_str()\n            .unwrap()\n            .contains(\"sourcePlanes\")\n    );\n    let raw = r#\"\"a\\n\\u03C0\\uD83D\\uDE00\"\"#;\n    let decoded = \"a\\nπ😀\";\n    assert_eq!((raw.len(), decoded.len()), (23, 8));\n    let expected = [\n        [0, 1, 0, 0],\n        [1, 2, 0, 1],\n        [2, 4, 1, 2],\n        [4, 10, 2, 4],\n        [10, 22, 4, 8],\n        [22, 23, 8, 8],\n    ];\n    for prefix in [\"\", \"λ<\"] {\n        let grammars = HashMap::from([(\"decoded\".to_owned(), mapped_literal(decoded))]);\n        let host = mapped_json_host(&[(\"decoded\", \"json-string\")], \"any-grammar\", prefix);\n        let result = mapped_parse(&host, &grammars, &format!(\"{prefix}{raw}\"));\n        assert!(result.ok, \"{:?}\", result.rejection);\n        let bundle = mapped_bundle(&result);\n        let embedded = mapped_first(&bundle[\"tree\"]);\n        let intervals = expected.map(|[a, b, c, d]| [a + prefix.len(), b + prefix.len(), c, d]);\n        assert_eq!(\n            embedded[\"selection\"][\"sourceMapping\"][\"intervals\"],\n            json!(intervals)\n        );\n        assert_eq!(\n            bundle[\"sourcePlanes\"],\n            json!([\n                {\"kind\":\"grammar-source\",\"identity\":0,\"encoding\":\"UTF-8\",\"byteLength\":prefix.len()+23,\"derivation\":null},\n                {\"kind\":\"grammar-source\",\"identity\":1,\"encoding\":\"UTF-8\",\"byteLength\":8,\n                    \"derivation\":{\"operation\":\"json-string\",\"input\":0,\"start\":prefix.len(),\"end\":prefix.len()+23}},\n            ])\n        );\n        assert_eq!(embedded[\"selection\"][\"sourceMapping\"][\"input\"], 0);\n        assert_eq!(embedded[\"selection\"][\"sourceMapping\"][\"output\"], 1);\n        assert_eq!(\n            mapped_physical(&bundle[\"tree\"]),\n            format!(\"{prefix}{raw}\").as_bytes()\n        );\n        assert_eq!(mapped_physical(&embedded[\"root\"]), decoded.as_bytes());\n        assert_eq!(\n            (\n                embedded[\"root\"][\"start\"].as_u64(),\n                embedded[\"root\"][\"end\"].as_u64()\n            ),\n            (Some(0), Some(8))\n        );\n        check_grammar_selection_mapped_tree(&bundle, &FeatureParseOptions::default()).unwrap();\n    }\n    mapping_transport::record_mapped_primary(source, raw, decoded, &expected);\n}"
+  },
+  {
+    "id": "repository.check-native-nested-mapped-archives",
+    "source": "rust/tests/unit/grammar_recursive_selection.rs",
+    "name": "nested_mapped_registry_and_complete_grammars_replay_from_text_and_binary_links",
+    "inventoryName": "check native nested mapped archives",
+    "sourceText": "fn nested_mapped_registry_and_complete_grammars_replay_from_text_and_binary_links() {\n    let inventory = mapped_fixture(\"language-grammar-inventory.lino\");\n    let source = inventory[\"languages\"]\n        .as_array()\n        .unwrap()\n        .iter()\n        .find(|item| item[\"name\"] == \"Python\")\n        .unwrap()[\"source\"]\n        .as_str()\n        .unwrap();\n    let middle = mapped_json_host(&[(\"Python\", \"json-string\")], \"any-grammar\", \"\");\n    let outer = mapped_json_host(&[(\"Middle\", \"json-string\")], \"any-grammar\", \"\");\n    let grammars = HashMap::from([\n        (\"outer\".to_owned(), outer),\n        (\"Middle\".to_owned(), middle),\n        (\"Python\".to_owned(), mapped_python_grammar()),\n    ]);\n    let inner_source = serde_json::to_string(source).unwrap();\n    let physical = serde_json::to_string(&inner_source).unwrap();\n    let outcome = mapped_parse(&grammars[\"outer\"], &grammars, &physical);\n    assert!(outcome.ok, \"{:?}\", outcome.rejection);\n    let bundle = mapped_bundle(&outcome);\n    let mut embeds = Vec::new();\n    mapped_embeds(&bundle[\"tree\"], &mut embeds);\n    assert_eq!(embeds.len(), 2);\n    assert_eq!(bundle[\"sourcePlanes\"].as_array().unwrap().len(), 3);\n    assert_eq!(\n        bundle[\"sourcePlanes\"][2][\"derivation\"],\n        json!({\"operation\":\"json-string\",\"input\":1,\"start\":0,\"end\":inner_source.len()})\n    );\n    assert_eq!(\n        embeds[0][\"selection\"][\"sourceMapping\"][\"output\"],\n        embeds[1][\"selection\"][\"sourceMapping\"][\"input\"]\n    );\n    assert_eq!(embeds[1][\"selection\"][\"sourceMapping\"][\"output\"], 2);\n    for (embedded, physical) in embeds\n        .iter()\n        .zip([physical.as_str(), inner_source.as_str()])\n    {\n        let direct_json = mapped_parse(&mapped_json_grammar(), &HashMap::new(), physical);\n        assert!(direct_json.ok);\n        assert_eq!(\n            embedded[\"sourceChildren\"],\n            json!([mapped_tree_data(direct_json.tree.as_ref().unwrap())])\n        );\n        assert_eq!(mapped_physical(embedded), physical.as_bytes());\n    }\n    assert_eq!(\n        embeds[1][\"root\"],\n        mapped_tree_data(\n            mapped_parse(&grammars[\"Python\"], &HashMap::new(), source)\n                .tree\n                .as_ref()\n                .unwrap()\n        )\n    );\n    let documents = [\"outer\", \"Middle\", \"Python\"].map(|name| {\n        let syntax = parse_lino_to_links_with_config(\n            &render_grammar_links(&grammars[name]),\n            &ParserConfig::without_comments(),\n        )\n        .unwrap();\n        json!({\"name\":name,\"syntax\":syntax.iter().map(mapped_link_data).collect::<Vec<_>>()})\n    });\n    let archive = json!({\"grammars\":documents,\"bundle\":bundle});\n    for stored in mapped_stored_variants(&archive) {\n        assert_eq!(stored, archive);\n        check_grammar_selection_mapped_tree(&stored[\"bundle\"], &FeatureParseOptions::default())\n            .unwrap();\n        let restored: HashMap<_, _> = stored[\"grammars\"]\n            .as_array()\n            .unwrap()\n            .iter()\n            .map(|document| {\n                let listing = document[\"syntax\"]\n                    .as_array()\n                    .unwrap()\n                    .iter()\n                    .map(mapped_link_text)\n                    .collect::<Vec<_>>()\n                    .join(\"\\n\");\n                let grammar = parse_grammar_links(&listing).unwrap();\n                let name = document[\"name\"].as_str().unwrap();\n                assert_eq!(\n                    grammar, grammars[name],\n                    \"full rule/context/source/meaning metadata, not only listing syntax\"\n                );\n                assert_eq!(\n                    render_grammar_links(&grammar),\n                    render_grammar_links(&grammars[name])\n                );\n                (name.to_owned(), grammar)\n            })\n            .collect();\n        let replay = mapped_parse(&restored[\"outer\"], &restored, &physical);\n        assert_eq!(\n            replay, outcome,\n            \"all CST, registry, ambiguity and rejection fields replay\"\n        );\n        assert_eq!(mapped_bundle(&replay), stored[\"bundle\"]);\n    }\n    mapping_transport::record_mapped_archives(source, &inner_source, &physical);\n}"
+  },
+  {
+    "id": "repository.check-native-mapped-correspondence-forgeries",
+    "source": "rust/tests/unit/grammar_recursive_selection.rs",
+    "name": "mapped_source_forgeries_survive_generic_archives_but_fail_the_correspondence_checker",
+    "inventoryName": "check native mapped correspondence forgeries",
+    "sourceText": "fn mapped_source_forgeries_survive_generic_archives_but_fail_the_correspondence_checker() {\n    let raw = r#\"\"a\\n\\u03C0\\uD83D\\uDE00\"\"#;\n    let decoded = \"a\\nπ😀\";\n    let grammars = HashMap::from([(\"decoded\".to_owned(), mapped_literal(decoded))]);\n    let host = mapped_json_host(&[(\"decoded\", \"json-string\")], \"any-grammar\", \"\");\n    let outcome = mapped_parse(&host, &grammars, raw);\n    assert!(outcome.ok, \"{:?}\", outcome.rejection);\n    let genuine = mapped_bundle(&outcome);\n    let boundary = \"/tree/children/0\";\n    assert_eq!(\n        genuine\n            .pointer(&format!(\"{boundary}/selection/mapping\"))\n            .unwrap(),\n        \"json-string\"\n    );\n    assert_eq!(\n        genuine\n            .pointer(&format!(\"{boundary}/root/children/0/text\"))\n            .unwrap(),\n        decoded\n    );\n    check_grammar_selection_mapped_tree(&genuine, &FeatureParseOptions::default()).unwrap();\n    let mut replacements = Vec::new();\n    for (path, replacement) in [\n        (\"/tree/start\", json!(1)),\n        (\"/tree/end\", json!(22)),\n        (\"/tree/children/0/start\", json!(1)),\n        (\"/tree/children/0/end\", json!(22)),\n        (\"/tree/children/0/root/start\", json!(1)),\n        (\"/tree/children/0/root/end\", json!(7)),\n        (\"/sourcePlanes\", Value::Null),\n        (\"/sourcePlanes/0/kind\", json!(\"unowned-source\")),\n        (\"/sourcePlanes/0/encoding\", json!(\"UTF-16\")),\n        (\"/sourcePlanes/0/identity\", json!(1)),\n        (\"/sourcePlanes/0/byteLength\", json!(24)),\n        (\"/sourcePlanes/1/identity\", json!(0)),\n        (\"/sourcePlanes/1/identity\", json!(0.5)),\n        (\"/sourcePlanes/1/byteLength\", json!(9)),\n        (\"/sourcePlanes/1/derivation\", Value::Null),\n        (\"/sourcePlanes/1/derivation/input\", json!(1)),\n        (\"/sourcePlanes/1/derivation/operation\", json!(\"identity\")),\n        (\"/sourcePlanes/1/derivation/start\", json!(1)),\n        (\n            \"/tree/children/0/selection/mapping\",\n            json!(\"guessed-string\"),\n        ),\n        (\"/tree/children/0/sourceChildren\", Value::Null),\n        (\"/tree/children/0/selection/sourceMapping/input\", json!(1)),\n        (\"/tree/children/0/selection/sourceMapping/output\", json!(2)),\n        (\n            \"/tree/children/0/selection/sourceMapping/operation\",\n            json!(\"identity\"),\n        ),\n        (\n            \"/tree/children/0/selection/sourceMapping/intervals/1/0\",\n            json!(2),\n        ),\n        (\n            \"/tree/children/0/selection/sourceMapping/intervals/1/1\",\n            json!(3),\n        ),\n        (\n            \"/tree/children/0/selection/sourceMapping/intervals/1/2\",\n            json!(0.5),\n        ),\n        (\n            \"/tree/children/0/selection/sourceMapping/intervals/0/0\",\n            json!(-1),\n        ),\n        (\n            \"/tree/children/0/selection/sourceMapping/intervals/4/3\",\n            json!(7),\n        ),\n        (\"/tree/children/0/root/children/0/text\", json!(\"b\\nπ😀\")),\n    ] {\n        replacements.push(json!({\"path\":path,\"value\":replacement.clone()}));\n        let mut forged = genuine.clone();\n        *forged\n            .pointer_mut(path)\n            .unwrap_or_else(|| panic!(\"the genuine source owns {path}\")) = replacement;\n        for restored in mapped_stored_variants(&forged) {\n            assert_eq!(\n                restored, forged,\n                \"generic decoding does not silently repair {path}\"\n            );\n            let error =\n                check_grammar_selection_mapped_tree(&restored, &FeatureParseOptions::default())\n                    .unwrap_err();\n            assert_eq!(error.reason, \"selection\", \"{path}: {error}\");\n            assert!(\n                error.message.starts_with(\"mapped grammar CST:\"),\n                \"{path}: {error}\"\n            );\n        }\n    }\n    for path in [\n        \"/sourcePlanes/0\",\n        \"/sourcePlanes/1/derivation\",\n        \"/tree/children/0/selection/sourceMapping\",\n    ] {\n        let mut forged = genuine.clone();\n        forged.pointer_mut(path).unwrap()[\"opaqueBinding\"] = json!(true);\n        for restored in mapped_stored_variants(&forged) {\n            assert_eq!(restored, forged);\n            assert_eq!(\n                check_grammar_selection_mapped_tree(&restored, &FeatureParseOptions::default())\n                    .unwrap_err()\n                    .reason,\n                \"selection\"\n            );\n        }\n    }\n    let mut absent = genuine;\n    absent.as_object_mut().unwrap().remove(\"sourcePlanes\");\n    assert_eq!(\n        check_grammar_selection_mapped_tree(&absent, &FeatureParseOptions::default())\n            .unwrap_err()\n            .reason,\n        \"selection\"\n    );\n    mapping_transport::record_mapped_forgeries(&replacements, &absent);\n}"
+  },
+  {
+    "id": "repository.check-native-mapped-profile-boundaries",
+    "source": "rust/tests/unit/grammar_recursive_selection.rs",
+    "name": "mapped_profiles_keep_witnesses_and_existing_limits_while_failed_derivations_are_not_csts",
+    "inventoryName": "check native mapped profile boundaries",
+    "sourceText": "fn mapped_profiles_keep_witnesses_and_existing_limits_while_failed_derivations_are_not_csts() {\n    let child = mapped_literal(\"x\");\n    let grammars = HashMap::from([\n        (\"decoded\".to_owned(), child.clone()),\n        (\"twin\".to_owned(), child),\n    ]);\n    let source = \"\\\"x\\\"\";\n    for mode in [\"any-grammar\", \"all-grammar\"] {\n        let host = mapped_json_host(\n            &[(\"decoded\", \"json-string\"), (\"twin\", \"json-string\")],\n            mode,\n            \"\",\n        );\n        let outcome = mapped_parse(&host, &grammars, source);\n        assert!(outcome.ok, \"{:?}\", outcome.rejection);\n        let bundle = mapped_bundle(&outcome);\n        let selected = &mapped_first(&bundle[\"tree\"])[\"selection\"];\n        assert_eq!(selected[\"ambiguous\"], mode == \"any-grammar\");\n        assert_eq!(\n            selected[\"candidates\"]\n                .as_array()\n                .unwrap()\n                .iter()\n                .map(|item| item[\"relation\"].clone())\n                .collect::<Vec<_>>(),\n            vec![json!(\"accepted\"), json!(\"accepted\")]\n        );\n        assert_eq!(selected[\"alternatives\"].as_array().unwrap().len(), 1);\n        assert_eq!(selected[\"alternatives\"][0][\"language\"], \"twin\");\n        assert_eq!(\n            selected[\"alternatives\"][0][\"root\"],\n            mapped_first(&bundle[\"tree\"])[\"root\"]\n        );\n        assert_eq!(bundle[\"sourcePlanes\"].as_array().unwrap().len(), 2);\n        check_grammar_selection_mapped_tree(&bundle, &FeatureParseOptions::default()).unwrap();\n    }\n    let host = mapped_json_host(&[(\"decoded\", \"json-string\")], \"any-grammar\", \"\");\n    let outcome = mapped_parse(&host, &grammars, source);\n    let bundle = mapped_bundle(&outcome);\n    let resolve = |name: &str| grammars.get(name).cloned();\n    let parser =\n        compile_feature_grammar(&host, Some(&resolve), FeatureParseOptions::default()).unwrap();\n    for (options, reason) in [\n        (\n            FeatureParseOptions {\n                step_limit: Some(0),\n                ..FeatureParseOptions::default()\n            },\n            \"stepLimit\",\n        ),\n        (\n            FeatureParseOptions {\n                memory_limit: Some(0),\n                ..FeatureParseOptions::default()\n            },\n            \"memoryBudget\",\n        ),\n        (\n            FeatureParseOptions {\n                max_depth: Some(0),\n                ..FeatureParseOptions::default()\n            },\n            \"nestingDepth\",\n        ),\n    ] {\n        let limited = parser.parse_tree(source.as_bytes(), &options).unwrap();\n        let rejection = limited.rejection.unwrap();\n        assert_eq!(rejection.reason, reason);\n        assert_eq!(rejection.limit, Some(0));\n        assert_eq!(\n            check_grammar_selection_mapped_tree(&bundle, &options)\n                .unwrap_err()\n                .reason,\n            reason\n        );\n    }\n    for (names, reason) in [\n        (vec![(\"missing\", \"json-string\")], \"unknownGrammar\"),\n        (\n            vec![(\"decoded\", \"quoted-escape\")],\n            \"unsupportedEmbeddingMapping\",\n        ),\n        (\n            vec![(\"decoded\", \"json-string\"), (\"twin\", \"identity\")],\n            \"unsupportedEmbeddingMapping\",\n        ),\n    ] {\n        let rejected = mapped_parse(\n            &mapped_json_host(&names, \"any-grammar\", \"\"),\n            &grammars,\n            source,\n        );\n        assert!(!rejected.ok);\n        assert_eq!(rejected.rejection.unwrap().reason, reason);\n    }\n    for raw in [r#\"\"\\uD800\"\"#, r#\"\"\\uDC00\"\"#] {\n        assert!(mapped_parse(&mapped_json_grammar(), &HashMap::new(), raw).ok);\n        let rejected = mapped_parse(&host, &grammars, raw);\n        assert!(!rejected.ok);\n        assert_eq!(\n            rejected.rejection.unwrap().reason,\n            \"unsupportedEmbeddingMapping\"\n        );\n    }\n    let cycle = parse_grammar_links(\"(grammar (start document))\\n(rule document normal (any-grammar (literal x) (grammar-candidate cycle identity)))\\n\").unwrap();\n    let rejected = mapped_parse(\n        &mapped_json_host(&[(\"cycle\", \"json-string\")], \"any-grammar\", \"\"),\n        &HashMap::from([(\"cycle\".to_owned(), cycle)]),\n        source,\n    );\n    let rejection = rejected.rejection.unwrap();\n    assert_eq!(rejection.reason, \"nonConsumingEmbeddingCycle\");\n    let diagnostics = rejection.diagnostics.unwrap();\n    let cycle = diagnostics\n        .iter()\n        .find(|item| item[\"reason\"] == \"nonConsumingEmbeddingCycle\")\n        .unwrap();\n    assert_eq!(\n        (\n            cycle[\"source\"].as_u64(),\n            cycle[\"sourceStart\"].as_u64(),\n            cycle[\"sourceEnd\"].as_u64()\n        ),\n        (Some(1), Some(0), Some(1))\n    );\n    assert_eq!(cycle[\"offsetSemantics\"], \"covering-source-spelling\");\n    assert_eq!(\n        cycle[\"sourceRoute\"].as_array().unwrap().last().unwrap(),\n        &json!({\"output\":1,\"outputStart\":0,\"outputEnd\":1,\"input\":0,\"inputStart\":1,\"inputEnd\":2,\"displayAnchor\":1})\n    );\n    let inventory = mapped_fixture(\"language-grammar-inventory.lino\");\n    let invalid = inventory[\"languages\"]\n        .as_array()\n        .unwrap()\n        .iter()\n        .find(|item| item[\"name\"] == \"Python\")\n        .unwrap()[\"recoverySource\"]\n        .as_str()\n        .unwrap();\n    let python = HashMap::from([(\"Python\".to_owned(), mapped_python_grammar())]);\n    assert!(!mapped_parse(&python[\"Python\"], &HashMap::new(), invalid).ok);\n    let rejected = mapped_parse(\n        &mapped_json_host(&[(\"Python\", \"json-string\")], \"any-grammar\", \"\"),\n        &python,\n        &serde_json::to_string(invalid).unwrap(),\n    );\n    assert!(!rejected.ok);\n    assert!(rejected.tree.is_none());\n    assert_eq!(rejected.source_planes.as_ref().unwrap().len(), 2);\n    let rejection = rejected.rejection.as_ref().unwrap();\n    assert_eq!(rejection.reason, \"syntax\");\n    let diagnostic = rejection\n        .diagnostics\n        .as_ref()\n        .unwrap()\n        .iter()\n        .find(|item| item[\"reason\"] == \"mappedSyntax\" && item[\"language\"] == \"Python\")\n        .unwrap();\n    assert_eq!(diagnostic[\"source\"], 1);\n    assert_eq!(diagnostic[\"offsetSemantics\"], \"covering-source-spelling\");\n    assert_eq!(\n        diagnostic[\"sourceRoute\"]\n            .as_array()\n            .unwrap()\n            .last()\n            .unwrap()[\"input\"],\n        0\n    );\n    assert!(\n        check_grammar_selection_mapped_tree(\n            &mapped_bundle(&rejected),\n            &FeatureParseOptions::default()\n        )\n        .unwrap_err()\n        .message\n        .contains(\"complete physical root CST\")\n    );\n    mapping_transport::record_mapped_profiles(invalid);\n}"
+  },
+  {
+    "id": "repository.check-native-mapped-memo-ownership",
+    "source": "rust/tests/unit/grammar_recursive_selection.rs",
+    "name": "mapped_selection_memo_keys_keep_delimiter_bearing_names_separate_from_profiles",
+    "inventoryName": "check native mapped memo ownership",
+    "sourceText": "fn mapped_selection_memo_keys_keep_delimiter_bearing_names_separate_from_profiles() {\n    let source = \"\\\"x\\\"\";\n    let identity_name = \"json-string|decoded\";\n    let grammars = HashMap::from([\n        (identity_name.to_owned(), mapped_literal(source)),\n        (\"decoded\".to_owned(), mapped_literal(\"x\")),\n    ]);\n    let mapped = mapped_json_host(&[(\"decoded\", \"json-string\")], \"any-grammar\", \"\");\n    let identity = mapped_json_host(&[(identity_name, \"identity\")], \"any-grammar\", \"\");\n    for warm_mapping in [\"identity\", \"json-string\"] {\n        let (warm, selected, mapping, name, child_source) = if warm_mapping == \"identity\" {\n            (&identity, &mapped, \"json-string\", \"decoded\", \"x\")\n        } else {\n            (&mapped, &identity, \"identity\", identity_name, source)\n        };\n        let expression = GrammarExpr::Sequence(vec![\n            GrammarExpr::And(Box::new(warm.rule(\"mapped_document\").unwrap().expr.clone())),\n            selected.rule(\"mapped_document\").unwrap().expr.clone(),\n        ]);\n        let host = mapping_transport::mapped_root_expression(&mapped, expression);\n        let outcome = mapped_parse(&host, &grammars, source);\n        assert!(outcome.ok, \"{:?}\", outcome.rejection);\n        let bundle = mapped_bundle(&outcome);\n        let children = bundle[\"tree\"][\"children\"].as_array().unwrap();\n        assert_eq!(\n            children.len(),\n            1,\n            \"warming lookahead retains no selected CST\"\n        );\n        let selected = &children[0];\n        assert_eq!(selected[\"language\"], name);\n        assert_eq!(selected[\"selection\"][\"mapping\"], mapping);\n        assert_eq!(\n            selected[\"root\"],\n            mapped_tree_data(\n                mapped_parse(&grammars[name], &HashMap::new(), child_source)\n                    .tree\n                    .as_ref()\n                    .unwrap()\n            )\n        );\n        assert_eq!(bundle[\"sourcePlanes\"].as_array().unwrap().len(), 2);\n        assert_eq!(mapped_physical(&bundle[\"tree\"]), source.as_bytes());\n        check_grammar_selection_mapped_tree(&bundle, &FeatureParseOptions::default()).unwrap();\n    }\n    mapping_transport::record_mapped_memo();\n}"
+  },
+  {
+    "id": "repository.check-native-mapped-scalar-input-boundaries",
+    "source": "rust/tests/unit/grammar_recursive_selection_mapping.rs",
+    "name": "mapped_scalar_profile_does_not_relabel_invalid_utf8_or_admit_lexical_escapes",
+    "inventoryName": "check native mapped scalar input boundaries",
+    "sourceText": "fn mapped_scalar_profile_does_not_relabel_invalid_utf8_or_admit_lexical_escapes() {\n    let bytes = [255, 34, 120, 34];\n    let grammars = HashMap::from([\n        (\"decoded\".to_owned(), mapped_literal(\"x\")),\n        (\"raw\".to_owned(), mapped_literal(\"\\\"x\\\"\")),\n    ]);\n    let resolve = |name: &str| grammars.get(name).cloned();\n    for (name, mapping, accepted) in [(\"decoded\", \"json-string\", false), (\"raw\", \"identity\", true)]\n    {\n        let host = mapped_json_host(&[(name, mapping)], \"any-grammar\", \"\");\n        let expression = GrammarExpr::Sequence(vec![\n            GrammarExpr::AnyChar,\n            host.rule(\"mapped_document\").unwrap().expr.clone(),\n        ]);\n        let host = mapped_root_expression(&host, expression);\n        let result = compile_feature_grammar(&host, Some(&resolve), FeatureParseOptions::default())\n            .unwrap()\n            .parse_tree(&bytes, &FeatureParseOptions::default())\n            .unwrap();\n        assert_eq!(result.ok, accepted, \"{mapping}: {:?}\", result.rejection);\n        assert!(\n            result.source_planes.is_none(),\n            \"no invalid UTF-8 plane is declared\"\n        );\n        if accepted {\n            let tree = mapped_tree_data(result.tree.as_ref().unwrap());\n            assert_eq!(mapped_physical(&tree), bytes);\n            let forged = json!({\"tree\":tree,\"sourcePlanes\":[{\n                \"kind\":\"grammar-source\",\"identity\":0,\"encoding\":\"UTF-8\",\"byteLength\":4,\"derivation\":null,\n            }]});\n            let error = meta_language::check_grammar_selection_mapped_tree(\n                &forged,\n                &FeatureParseOptions::default(),\n            )\n            .unwrap_err();\n            assert_eq!(error.reason, \"selection\");\n            assert!(error.message.contains(\"UTF-8\"));\n        } else {\n            assert_eq!(\n                result.rejection.unwrap().reason,\n                \"unsupportedEmbeddingMapping\"\n            );\n        }\n    }\n    let expression = parse_links_expression(\n        \"(any-grammar (literal %22x%22) (grammar-candidate decoded json-string))\",\n    )\n    .unwrap();\n    let lexical = Grammar::new().with_start(\"lexical\").with_rule(\n        GrammarRule::new(\"lexical\", expression).with_kind(meta_language::RuleKind::Token),\n    );\n    let result = mapped_parse(&lexical, &grammars, \"\\\"x\\\"\");\n    assert!(!result.ok);\n    assert_eq!(\n        result.rejection.unwrap().reason,\n        \"unsupportedEmbeddingMapping\"\n    );\n    for raw in [r#\"\"\\q\"\"#, r#\"\"\\u{41}\"\"#, r#\"\"\\u12\"\"#, \"\\\"line\\nbreak\\\"\"] {\n        // Authored literal admission isolates the mapping's syntax refusal;\n        // the shipped JSON/Python comparisons live in the parent suite.\n        let expression = parse_links_expression(&format!(\n            \"(any-grammar (literal {}) (grammar-candidate decoded json-string))\",\n            percent_encode_links_text(raw),\n        ))\n        .unwrap();\n        let host = Grammar::new()\n            .with_start(\"document\")\n            .with_rule(GrammarRule::new(\"document\", expression));\n        let result = mapped_parse(&host, &grammars, raw);\n        assert!(!result.ok, \"{raw}\");\n        assert_eq!(\n            result.rejection.unwrap().reason,\n            \"invalidEmbeddingMapping\",\n            \"{raw}\"\n        );\n    }\n    record_mapped_lexical_inputs();\n}"
+  },
+  {
+    "id": "repository.check-native-optional-equality-archives",
+    "source": "rust/tests/unit/translation_optional_values.rs",
+    "name": "optional_strict_equality_keeps_primitive_domains_deferred_constraints_and_both_archives",
+    "inventoryName": "check native optional equality archives",
+    "sourceText": "fn optional_strict_equality_keeps_primitive_domains_deferred_constraints_and_both_archives() {\n    use super::issue_195_translation_pairs::{TemporaryDirectory, run};\n    use meta_language::translation::emit_rust::{\n        RustEmissionOptions, emit_rust_with_array_consumption,\n    };\n    use meta_language::{\n        BinaryLinksOptions, LinkId, LinkNetwork, decode_link_network_binary,\n        decode_typed_program_links, encode_link_network_binary, encode_typed_program_links,\n    };\n    let contracts = optional_equality_contracts();\n    assert_eq!(contracts.as_array().unwrap().len(), 8);\n    for contract in contracts.as_array().unwrap() {\n        let name = contract[\"name\"].as_str().unwrap();\n        let source = contract[\"source\"].as_str().unwrap();\n        let surface = parse_javascript(source).unwrap();\n        let program = check_program(&surface).unwrap();\n        let javascript = emit_javascript(&program).unwrap().text;\n        let rust = emit_rust_with_array_consumption(&program, RustEmissionOptions::default())\n            .unwrap()\n            .text;\n        let expected = contract[\"expected\"]\n            .as_array()\n            .unwrap()\n            .iter()\n            .map(|value| value.as_str().unwrap())\n            .collect::<Vec<_>>()\n            .join(\"\\n\")\n            + \"\\n\";\n        assert_eq!(\n            serde_json::to_value(surface).unwrap(),\n            contract[\"surface\"],\n            \"{name}: independently parsed JavaScript source\"\n        );\n        assert_eq!(\n            javascript,\n            contract[\"javascript\"].as_str().unwrap(),\n            \"{name}: JavaScript bytes\"\n        );\n        assert_eq!(\n            rust,\n            contract[\"rust\"].as_str().unwrap(),\n            \"{name}: Rust bytes\"\n        );\n        let observed = observe(&javascript);\n        assert!(\n            observed.status.success(),\n            \"{name}: {}\",\n            String::from_utf8_lossy(&observed.stderr)\n        );\n        assert_eq!(\n            observed.stdout,\n            expected.as_bytes(),\n            \"{name}: actual native-checker JavaScript observations\"\n        );\n        let authored = LinkNetwork::from_lino(contract[\"links\"].as_str().unwrap()).unwrap();\n        let root = LinkId::from_u64(contract[\"root\"].as_u64().unwrap());\n        let from_javascript = decode_typed_program_links(&authored, root).unwrap();\n        assert_eq!(\n            from_javascript, program,\n            \"{name}: actual JavaScript-authored checked graph\"\n        );\n        let packet = encode_typed_program_links(&program).unwrap();\n        for (network, root) in [\n            (authored, root),\n            (\n                LinkNetwork::from_lino(&packet.network.to_lino()).unwrap(),\n                packet.root,\n            ),\n            (\n                decode_link_network_binary(\n                    &encode_link_network_binary(&packet.network, BinaryLinksOptions::default())\n                        .unwrap(),\n                    BinaryLinksOptions::default(),\n                )\n                .unwrap(),\n                packet.root,\n            ),\n        ] {\n            let mut restored = decode_typed_program_links(&network, root).unwrap();\n            assert_eq!(restored, program, \"{name}: complete source-free graph\");\n            assert_eq!(emit_javascript(&restored).unwrap().text, javascript);\n            assert_eq!(\n                emit_rust_with_array_consumption(&restored, RustEmissionOptions::default())\n                    .unwrap()\n                    .text,\n                rust\n            );\n            let Some(Decl::Fn(compare)) = restored.declarations.iter_mut().find(\n                |declaration| matches!(declaration, Decl::Fn(function) if function.name==\"compare\"),\n            ) else {\n                panic!(\"the real comparison declaration remains present\")\n            };\n            let Node::StrictEqual { negate, .. } = &mut compare.body.node else {\n                panic!(\"the actual optional comparison retains strict semantics\")\n            };\n            *negate = !*negate;\n            let edited = encode_typed_program_links(&restored).unwrap();\n            for saved in [\n                LinkNetwork::from_lino(&edited.network.to_lino()).unwrap(),\n                decode_link_network_binary(\n                    &encode_link_network_binary(&edited.network, BinaryLinksOptions::default())\n                        .unwrap(),\n                    BinaryLinksOptions::default(),\n                )\n                .unwrap(),\n            ] {\n                let edited = decode_typed_program_links(&saved, edited.root).unwrap();\n                let emitted = emit_javascript(&edited).unwrap().text;\n                assert_eq!(\n                    emitted,\n                    contract[\"editedJavaScript\"].as_str().unwrap(),\n                    \"{name}: independently rechecked source edit\"\n                );\n                assert_eq!(\n                    emit_rust_with_array_consumption(&edited, RustEmissionOptions::default())\n                        .unwrap()\n                        .text,\n                    contract[\"editedRust\"].as_str().unwrap()\n                );\n                let output = observe(&emitted);\n                assert!(output.status.success());\n                let expected = contract[\"editedExpected\"]\n                    .as_array()\n                    .unwrap()\n                    .iter()\n                    .map(|value| value.as_str().unwrap())\n                    .collect::<Vec<_>>()\n                    .join(\"\\n\")\n                    + \"\\n\";\n                assert_eq!(output.stdout, expected.as_bytes());\n            }\n        }\n        let directory = TemporaryDirectory::new(name);\n        let file = directory.0.join(\"program.rs\");\n        let executable = directory\n            .0\n            .join(format!(\"program{}\", std::env::consts::EXE_SUFFIX));\n        std::fs::write(&file, rust).unwrap();\n        let compiled = run(Command::new(\"rustc\")\n            .arg(\"--edition=2024\")\n            .arg(&file)\n            .arg(\"-o\")\n            .arg(&executable));\n        assert!(compiled.ok, \"{name}: {}\", compiled.stderr);\n        let output = run(&mut Command::new(&executable));\n        assert!(output.ok, \"{name}: {}\", output.stderr);\n        assert_eq!(\n            output.stdout, expected,\n            \"{name}: actual emitted Rust execution in CI\"\n        );\n    }\n    let unknown = check_program(\n        &parse_javascript(\"function compare(left,right){return left===right;}\").unwrap(),\n    )\n    .unwrap();\n    let Some(Decl::Fn(compare)) = unknown.declaration(\"compare\") else {\n        panic!(\"the actual unknown function remains present\")\n    };\n    assert!(\n        compare\n            .params\n            .iter()\n            .all(|parameter| parameter.ty == Type::Float)\n    );\n    let optional = check_program(&parse_javascript(\"/** @param {number[]} values @returns {number|undefined} */function read(values){return values[0];}function compare(value){return value===read([1]);}\").unwrap()).unwrap();\n    let Some(Decl::Fn(compare)) = optional.declaration(\"compare\") else {\n        panic!(\"the actual optional constraint owner remains present\")\n    };\n    assert!(\n        matches!(&compare.params[0].ty, Type::Option{element,absence} if element.as_ref()==&Type::Float&&absence==\"undefined\")\n    );\n    for source in [\n        \"/** @param {number} left @param {string} right @returns {boolean} */function compare(left,right){return left===right;}console.log(compare(0,'0'));\",\n        \"/** @param {number[]} left @param {string[]} right @returns {boolean} */function compare(left,right){return left[0]<right[0];}console.log(compare([0],['0']));\",\n        \"function maybe(present){if(present)return [1];}function compare(present){return maybe(present)===maybe(present);}console.log(compare(false));\",\n    ] {\n        assert!(\n            parse_javascript(source)\n                .and_then(|surface| check_program(&surface))\n                .is_err(),\n            \"{source}: existing nonoptional, relational and reference identity boundaries remain enforced\"\n        );\n    }\n}"
+  },
+  {
+    "id": "repository.check-native-strict-equality-boolean-flags",
+    "source": "rust/tests/unit/translation_optional_values.rs",
+    "name": "strict_equality_raw_flags_are_mandatory_booleans_in_both_graph_archives",
+    "inventoryName": "check native strict equality boolean flags",
+    "sourceText": "fn strict_equality_raw_flags_are_mandatory_booleans_in_both_graph_archives() {\n    use meta_language::{\n        BinaryLinksOptions, LinkMetadata, LinkNetwork, LinkType, SubstitutionRule,\n        decode_link_network_binary, decode_typed_program_links, emit_typed_program_links,\n        encode_link_network_binary, encode_typed_program_links, typed_program_links_schema,\n    };\n    let source = \"/** @param {number[]} left @param {number[]} right @returns {boolean} */function compare(left,right){return left[0]===right[0];}console.log(compare([],[]));console.log(compare([1],[]));\";\n    let original = observe(source);\n    assert!(original.status.success());\n    assert_eq!(original.stdout, b\"true\\nfalse\\n\");\n    let program = check_program(&parse_javascript(source).unwrap()).unwrap();\n    let packet = encode_typed_program_links(&program).unwrap();\n    let schema = typed_program_links_schema();\n    let construct_label = schema[\"fields\"][\"k\"].as_str().unwrap_or(\"k\");\n    let owner = packet\n        .network\n        .links()\n        .find_map(|link| match link.references() {\n            [owner, label, value]\n                if link.metadata().link_type() == Some(LinkType::Field)\n                    && packet\n                        .network\n                        .link(*label)\n                        .and_then(|link| link.metadata().term())\n                        == Some(construct_label)\n                    && packet\n                        .network\n                        .link(*value)\n                        .and_then(|link| link.metadata().definition())\n                        == Some(\"strictEqual\") =>\n            {\n                Some(*owner)\n            }\n            _ => None,\n        })\n        .unwrap();\n    let negate_label = schema[\"fields\"][\"negate\"].as_str().unwrap_or(\"negate\");\n    let field = packet\n        .network\n        .links()\n        .find_map(|link| match link.references() {\n            [parent, label, value]\n                if link.metadata().link_type() == Some(LinkType::Field)\n                    && *parent == owner\n                    && packet\n                        .network\n                        .link(*label)\n                        .and_then(|link| link.metadata().term())\n                        == Some(negate_label) =>\n            {\n                Some([*parent, *label, *value])\n            }\n            _ => None,\n        })\n        .unwrap();\n    for (kind, definition, expected) in [\n        (\"boolean\", Some(\"false\"), Some(b\"true\\nfalse\\n\".as_slice())),\n        (\"boolean\", Some(\"true\"), Some(b\"false\\ntrue\\n\".as_slice())),\n        (\"missing\", None, None),\n        (\"null\", None, None),\n        (\"string\", Some(\"false\"), None),\n        (\"string\", Some(\"true\"), None),\n    ] {\n        let mut network = packet.network.clone();\n        if kind == \"missing\" {\n            let result = network.apply_substitution(&SubstitutionRule::delete(field));\n            assert_eq!(\n                result.deleted.len(),\n                1,\n                \"only the actual negate relation is removed\"\n            );\n        } else {\n            let mut metadata = LinkMetadata::new()\n                .with_link_type(LinkType::Semantic)\n                .with_named(true)\n                .with_language(schema[\"language\"].as_str().unwrap())\n                .with_term(schema[\"scalars\"][kind].as_str().unwrap());\n            if let Some(definition) = definition {\n                metadata = metadata.with_definition(definition);\n            }\n            let scalar = network.insert_link([], metadata);\n            let result = network\n                .apply_substitution(&SubstitutionRule::new(field, [field[0], field[1], scalar]));\n            assert_eq!(\n                result.updated.len(),\n                1,\n                \"only the actual negate relation is retargeted\"\n            );\n        }\n        for saved in [\n            LinkNetwork::from_lino(&network.to_lino()).unwrap(),\n            decode_link_network_binary(\n                &encode_link_network_binary(&network, BinaryLinksOptions::default()).unwrap(),\n                BinaryLinksOptions::default(),\n            )\n            .unwrap(),\n        ] {\n            if let Some(expected) = expected {\n                let restored = decode_typed_program_links(&saved, packet.root).unwrap();\n                let Some(Decl::Fn(compare)) = restored.declaration(\"compare\") else {\n                    panic!(\"the actual comparison remains present\")\n                };\n                assert!(\n                    matches!(&compare.body.node, Node::StrictEqual{negate,..} if *negate==(definition==Some(\"true\")))\n                );\n                let rechecked = encode_typed_program_links(&restored).unwrap();\n                assert_eq!(\n                    decode_typed_program_links(&rechecked.network, rechecked.root).unwrap(),\n                    restored\n                );\n                let emitted = emit_typed_program_links(&saved, packet.root, \"JavaScript\").unwrap();\n                let observed = observe(&emitted.code);\n                assert!(observed.status.success());\n                assert_eq!(observed.stdout, expected);\n                assert!(emit_typed_program_links(&saved, packet.root, \"Rust\").is_ok());\n            } else {\n                assert!(\n                    decode_typed_program_links(&saved, packet.root).is_err(),\n                    \"{kind}/{definition:?}: malformed flags are refused before whole-program recheck\"\n                );\n                for target in [\"JavaScript\", \"Rust\"] {\n                    assert!(\n                        emit_typed_program_links(&saved, packet.root, target).is_err(),\n                        \"{kind}/{definition:?}/{target}\"\n                    );\n                }\n            }\n        }\n    }\n}"
+  },
+  {
+    "id": "repository.check-native-cumulative-tag-guard-archives",
+    "source": "rust/tests/unit/translation_constructor_tags.rs",
+    "name": "terminal_tag_guard_sequences_retain_all_exclusions_scopes_effects_and_source_free_archives",
+    "inventoryName": "check native cumulative tag guard archives",
+    "sourceText": "fn terminal_tag_guard_sequences_retain_all_exclusions_scopes_effects_and_source_free_archives() {\n    use meta_language::translation::emit_rust::{\n        RustEmissionOptions, emit_rust_with_array_consumption,\n    };\n    use meta_language::{\n        BinaryLinksOptions, LinkNetwork, decode_link_network_binary, decode_typed_program_links,\n        encode_link_network_binary, encode_typed_program_links,\n    };\n    let declarations = \"/** @typedef {{ $: 'missing' } | { $: 'bad' } | { $: 'value', code: number, end: number }} GuardState */\\n/** @param {number} n @returns {GuardState} */function make(n){if(n===0)return {$:'missing'};if(n===1)return {$:'bad'};return {$:'value',code:3,end:4};}\\n\";\n    for (index, (body, expected)) in [\n        (\"if(value.$==='missing')return -1;if(value.$==='bad')return -2;return value.code+value.end;\", \"-1\\n-2\\n7\\n\"),\n        (\"if(value.$==='bad')return -2;if(value.$==='missing')return -1;return value.end+value.code;\", \"-1\\n-2\\n7\\n\"),\n        (\"if(value.$==='missing'){const value=99;return value;}if(value.$==='bad')return -2;return value.code+value.end;\", \"99\\n-2\\n7\\n\"),\n        (\"let count=0;if(value.$==='missing'){console.log('missing');return -1;}if(value.$==='bad'){console.log('bad');return -2;}count+=value.code;return count+value.end;\", \"missing\\n-1\\nbad\\n-2\\n7\\n\"),\n        (\"if(value.$!=='value')return -1;return value.code+value.end;\", \"-1\\n-1\\n7\\n\"),\n        (\"if(value.$==='missing'){console.log('missing');return -1;}if(value.$==='bad'){console.log('bad');return -2;}return value.code+value.end;\", \"make 0\\nmissing\\n-1\\nmake 1\\nbad\\n-2\\nmake 2\\n7\\n\"),\n    ].into_iter().enumerate() {\n        let declarations = if index == 5 {\n            declarations.replace(\"function make(n){\", \"function make(n){console.log('make',n);\")\n        } else {\n            declarations.to_owned()\n        };\n        let source = format!(\"{declarations}/** @param {{GuardState}} value @returns {{number}} */function read(value){{{body}}}\\nconsole.log(read(make(0)));console.log(read(make(1)));console.log(read(make(2)));\");\n        let surface = parse_javascript(&source).unwrap();\n        let program = check_program(&surface).unwrap();\n        let javascript = emit_javascript(&program).unwrap().text;\n        let rust = emit_rust_with_array_consumption(&program, RustEmissionOptions::default()).unwrap().text;\n        let oracle = terminal_tag_guard_contract(&source, &javascript);\n        assert_eq!(serde_json::to_value(&surface).unwrap(), oracle[\"surface\"], \"case {index}: actual JavaScript source surface\");\n        assert_eq!(javascript, oracle[\"javascript\"].as_str().unwrap(), \"case {index}: JavaScript bytes\");\n        assert_eq!(rust, oracle[\"rust\"].as_str().unwrap(), \"case {index}: Rust bytes\");\n        for actual in oracle[\"observations\"].as_array().unwrap() {\n            assert_eq!(actual.as_str().unwrap(), expected, \"case {index}: independent original and both JavaScript checkers\");\n        }\n        for actual in oracle[\"archives\"].as_array().unwrap() {\n            assert_eq!(actual[\"javascript\"].as_str().unwrap(), javascript);\n            assert_eq!(actual[\"rust\"].as_str().unwrap(), rust);\n            assert_eq!(actual[\"output\"].as_str().unwrap(), expected);\n        }\n        let packet = encode_typed_program_links(&program).unwrap();\n        for network in [\n            LinkNetwork::from_lino(&packet.network.to_lino()).unwrap(),\n            decode_link_network_binary(&encode_link_network_binary(&packet.network, BinaryLinksOptions::default()).unwrap(), BinaryLinksOptions::default()).unwrap(),\n        ] {\n            let restored = decode_typed_program_links(&network, packet.root).unwrap();\n            assert_eq!(restored, program, \"case {index}: complete source-free graph\");\n            assert_eq!(emit_javascript(&restored).unwrap().text, javascript);\n            assert_eq!(emit_rust_with_array_consumption(&restored, RustEmissionOptions::default()).unwrap().text, rust);\n        }\n        let directory = TemporaryDirectory::new(&format!(\"terminal-tag-guard-{index}\"));\n        let file = directory.0.join(\"program.rs\");\n        let executable = directory.0.join(format!(\"program{}\", std::env::consts::EXE_SUFFIX));\n        std::fs::write(&file, &rust).unwrap();\n        let compiled = run(Command::new(\"rustc\").arg(\"--edition=2024\").arg(&file).arg(\"-o\").arg(&executable));\n        assert!(compiled.ok, \"case {index}: {}\", compiled.stderr);\n        let actual = run(&mut Command::new(&executable));\n        assert!(actual.ok, \"case {index}: {}\", actual.stderr);\n        assert_eq!(actual.stdout, expected, \"case {index}: actual generated Rust execution in CI\");\n    }\n    for body in [\n        \"if(value.$==='missing')return -1;return value.code;\",\n        \"if(value.$==='missing')return -1;if(value.$==='missing')return -2;return value.code;\",\n        \"if(value.$==='missing'){const ignored=0;}if(value.$==='bad')return -2;return value.code;\",\n        \"if(value.$==='missing')return -1;value=make(0);if(value.$==='bad')return -2;return value.code;\",\n    ] {\n        let source = format!(\n            \"{declarations}/** @param {{GuardState}} value @returns {{number}} */function read(value){{{body}}}\"\n        );\n        let failure = parse_javascript(&source)\n            .and_then(|surface| check_program(&surface))\n            .unwrap_err();\n        assert!(\n            matches!(failure.kind.as_str(), \"type\" | \"unsupported\"),\n            \"{body}: {failure}\"\n        );\n    }\n    let different = format!(\n        \"{declarations}/** @param {{GuardState}} left @param {{GuardState}} right @returns {{number}} */function read(left,right){{if(left.$==='missing')return -1;if(right.$==='bad')return -2;return left.code;}}\"\n    );\n    assert!(\n        parse_javascript(&different)\n            .and_then(|surface| check_program(&surface))\n            .is_err(),\n        \"separate source bindings cannot share exclusions\"\n    );\n}"
+  },
+  {
+    "id": "repository.check-third-schema-source-predecessors",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-third-extension-closure.test.mjs",
+    "name": "the third schema successor authenticates the complete published stage two and all original source inputs",
+    "inventoryName": "check third schema source predecessors",
+    "sourceText": "test('the third schema successor authenticates the complete published stage two and all original source inputs', () => {\n  const value = fixture(), result = verify(value);\n  assert.equal(sha256(value.receiptBytes), ORIGINAL_LINK_RAW_SCHEMA_PREDECESSOR_RECEIPT);\n  assert.equal(sha256(value.firstBytes), ORIGINAL_LINK_RAW_SCHEMA_FIRST_EXTENSION_RECEIPT);\n  assert.equal(sha256(value.secondBytes), ORIGINAL_LINK_RAW_SCHEMA_SECOND_EXTENSION_RECEIPT);\n  assert.equal(value.third.previous.bytes, 137291);\n  assert.equal(value.third.previous.sha256, '4c80d479c0b04a7c1edae33bd9bc26a5ea82e3044ab9303ee157db74dfa14414');\n  assert.equal(Object.keys(value.sources).length, 47);\n  assert.equal(value.receipt.generation.definitionCount, 106);\n  assert.equal(value.receipt.generation.completeRustBytes, 351746);\n  const before = readStructuredDataLino(value.third.previous.source), after = readStructuredDataLino(value.bytes.toString('utf8'));\n  for (const property of ORIGINAL_LINK_RAW_SCHEMA_PROPERTIES) assert.deepEqual(after[property], before[property]);\n  for (const [map, entries] of Object.entries(ORIGINAL_LINK_RAW_SCHEMA_THIRD_EXTENSIONS)) {\n    assert.deepEqual(Object.keys(after[map]), [...Object.keys(before[map]), ...Object.keys(entries)]);\n    for (const [key, entry] of Object.entries(entries)) assert.deepEqual(after[map][key], entry);\n  }\n  assert.deepEqual(after.expressionProjections.strictEqual, {});\n  assert.equal(after.expressionProjectionAlternatives.strictEqual[0].value, false);\n  assert.equal(after.expressionProjectionAlternatives.strictEqual[1].value, true);\n  assert.equal(result.sha256, sha256(value.bytes));\n  assert.equal(result.secondExtensionReceiptSha256, ORIGINAL_LINK_RAW_SCHEMA_SECOND_EXTENSION_RECEIPT);\n  const archived = Buffer.from(value.third.previous.source, 'utf8');\n  assert.doesNotThrow(() => verifyOriginalLinkRawSchemaSecondExtensionClosure(value.receipt, value.first, archived, value.sources, value.second));\n  assert.throws(() => verifyOriginalLinkRawSchemaSecondExtensionClosure(value.receipt, value.first, value.bytes, value.sources, value.second), assert.AssertionError);\n})"
+  },
+  {
+    "id": "repository.check-third-schema-coherent-forgery-refusals",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-third-extension-closure.test.mjs",
+    "name": "coherent third-stage hashes cannot change old schema data or the exact Boolean projection alternatives",
+    "inventoryName": "check third schema coherent forgery refusals",
+    "sourceText": "test('coherent third-stage hashes cannot change old schema data or the exact Boolean projection alternatives', () => {\n  const original = fixture();\n  for (const mutate of [\n    schema => {schema.fields.k = 'counterfeit';},\n    schema => {schema.expressionOperands.referenceRead = ['value'];},\n    schema => {delete schema.expressionProjections.lambda;},\n    schema => {schema.expressionProjections.strictEqual.construct = 'binary';},\n    schema => {schema.expressionProjections['strictEqual:false'].fields[0][2] = 'ne';},\n    schema => {schema.expressionProjectionAlternatives.strictEqual[0].value = 'false';},\n    schema => {schema.expressionProjectionAlternatives.strictEqual[1].value = 'true';},\n    schema => {schema.expressionProjectionAlternatives.strictEqual.reverse();},\n    schema => {schema.expressionProjections = Object.fromEntries(Object.entries(schema.expressionProjections).reverse());},\n    schema => {schema.expressionProjections.extra = {};},\n    schema => {schema.unexpected = {};},\n  ]) {\n    const value = {...original, third: structuredClone(original.third)};\n    const schema = readStructuredDataLino(original.bytes.toString('utf8')); mutate(schema);\n    value.bytes = Buffer.from(structuredDataToLino(schema));\n    value.third.current.bytes = value.bytes.length; value.third.current.sha256 = sha256(value.bytes);\n    assert.throws(() => verify(value), assert.AssertionError);\n  }\n})"
+  },
+  {
+    "id": "repository.check-third-schema-provenance-refusals",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-third-extension-closure.test.mjs",
+    "name": "third-stage receipts cannot replace predecessor bindings source provenance or scope",
+    "inventoryName": "check third schema provenance refusals",
+    "sourceText": "test('third-stage receipts cannot replace predecessor bindings source provenance or scope', () => {\n  const original = fixture();\n  for (const mutate of [\n    value => {value.receipt.generation.definitionCount--;},\n    value => {value.first.current.sha256 = '0'.repeat(64);},\n    value => {value.second.current.sha256 = '0'.repeat(64);},\n    value => {value.third.previous.source += '\\n';},\n    value => {value.third.previous.bytes--;},\n    value => {value.third.previous.sha256 = '0'.repeat(64);},\n    value => {value.third.predecessorReceiptSha256 = '0'.repeat(64);},\n    value => {value.third.consumedSchemaProperties.reverse();},\n    value => {delete value.third.appendedSchemaEntries.expressionProjections.strictEqual;},\n    value => {value.third.authoring.command += ' --repair';},\n    value => {value.third.authoring.sourceFiles.reverse();},\n    value => {value.third.authoring.sourceFiles[0].bytes--;},\n    value => {value.third.authoring.sourceFiles[0].sha256 = '0'.repeat(64);},\n    value => {value.third.scope = 'native execution';},\n    value => {value.sources['policy.mjs'] = '0'.repeat(64);},\n    value => {const file = ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES[0]; value.authoredSources[file] = Buffer.concat([value.authoredSources[file], Buffer.from('\\n')]);},\n  ]) {\n    const value = {...original, receipt: structuredClone(original.receipt), first: structuredClone(original.first), second: structuredClone(original.second),\n      third: structuredClone(original.third), sources: {...original.sources}, authoredSources: {...original.authoredSources}};\n    mutate(value); assert.throws(() => verify(value), assert.AssertionError);\n  }\n})"
+  },
+  {
+    "id": "repository.check-third-schema-immutable-check-command",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-third-extension-closure.test.mjs",
+    "name": "the actual immutable third-stage check leaves every schema receipt and producer byte unchanged",
+    "inventoryName": "check third schema immutable check command",
+    "sourceText": "test('the actual immutable third-stage check leaves every schema receipt and producer byte unchanged', () => {\n  const files = ['../../js/src/data/typed-program-links-schema.lino', './data/raw-schema-source-closure.lino',\n    './data/raw-schema-extension-closure.lino', './data/raw-schema-second-extension-closure.lino',\n    './data/raw-schema-third-extension-closure.lino', './data/raw-schema-second-extension-provenance.lino',\n    './data/raw-schema-second-extension-provenance-0112b8e3.lino', './raw-native-observations.mjs'];\n  const before = files.map(file => readFileSync(new URL(file, import.meta.url)));\n  const result = extendTypedProgramSchemaThirdStage({check: true});\n  assert.equal(result.check, true); assert.equal(result.sourceClosureOnly, true);\n  assert.equal(result.appendedProjectionKeys, 3); assert.equal(result.appendedAlternativeKeys, 1);\n  assert.equal(result.preservedProducerBindings, 47);\n  files.forEach((file, index) => assert.deepEqual(readFileSync(new URL(file, import.meta.url)), before[index]));\n})"
+  },
+  {
+    "id": "repository.check-strict-equality-boolean-projection",
+    "source": "js/tests/typed-program-strict-equality-projection.test.js",
+    "name": "strict equality projection selects only exact Boolean flags and retains operand order and spans",
+    "inventoryName": "check strict equality boolean projection",
+    "sourceText": "test('strict equality projection selects only exact Boolean flags and retains operand order and spans', () => {\n  const plans = TYPED_PROGRAM_LINKS_SCHEMA.expressionProjections;\n  assert.deepEqual(plans.strictEqual, {});\n  assert.deepEqual(TYPED_PROGRAM_LINKS_SCHEMA.expressionProjectionAlternatives.strictEqual, [\n    { path: ['negate'], value: false, projection: 'strictEqual:false' },\n    { path: ['negate'], value: true, projection: 'strictEqual:true' },\n  ]);\n  const left = { k: 'var', name: 'left', type: { kind: 'option', element: { kind: 'float' }, absence: 'undefined' }, span: { start: 5, end: 9 } };\n  const right = { k: 'var', name: 'right', type: { kind: 'option', element: { kind: 'float' }, absence: 'undefined' }, span: { start: 14, end: 19 } };\n  const span = { start: 5, end: 19 };\n  for (const [negate, op] of [[false, 'eq'], [true, 'ne']]) {\n    assert.deepEqual(plans[`strictEqual:${negate}`], { construct: 'binary', fields: [['op', 'constant', op], ['left', 'expression', 'left'], ['right', 'expression', 'right']] });\n    const original = { k: 'strictEqual', left, right, negate, type: { kind: 'bool' }, span };\n    const before = structuredClone(original);\n    assert.deepEqual(projectLinkedProgramExpression(original), {\n      k: 'binary', span, op,\n      left: { k: 'name', span: left.span, path: ['left'] },\n      right: { k: 'name', span: right.span, path: ['right'] },\n    });\n    assert.deepEqual(original, before);\n  }\n  for (const negate of [null, undefined, 'true', 'false', 0, 1, [], {}]) {\n    assert.throws(() => projectLinkedProgramExpression({ k: 'strictEqual', left, right, negate, type: { kind: 'bool' }, span }), /strictEqual has no surface projection/u);\n  }\n  assert.throws(() => projectLinkedProgramExpression({ k: 'strictEqual', left, right, type: { kind: 'bool' }, span }), /strictEqual has no surface projection/u);\n})"
+  },
+  {
+    "id": "repository.check-optional-primitive-equality-archives",
+    "source": "js/tests/typed-program-strict-equality-projection.test.js",
+    "name": "strict equality semantics survive whole-program text and binary rechecks for every optional primitive domain",
+    "inventoryName": "check optional primitive equality archives",
+    "sourceText": "test('strict equality semantics survive whole-program text and binary rechecks for every optional primitive domain', () => {\n  const cases = [\n    ['numbers', '/** @param {number[]} left @param {number[]} right @returns {boolean} */ function compare(left,right){return left[0]===right[0];} console.log(compare([],[]));console.log(compare([0],[-0]));console.log(compare([NaN],[NaN]));console.log(compare([Infinity],[Infinity]));console.log(compare([1],[]));console.log(compare([],[1]));', ['true', 'true', 'false', 'true', 'false', 'false']],\n    ['inequality', '/** @param {number[]} left @param {number[]} right @returns {boolean} */ function compare(left,right){return left[0]!==right[0];} console.log(compare([],[]));console.log(compare([0],[-0]));console.log(compare([NaN],[NaN]));console.log(compare([Infinity],[Infinity]));console.log(compare([1],[]));console.log(compare([],[1]));', ['false', 'false', 'true', 'false', 'true', 'true']],\n    ['strings', '/** @param {string[]} left @param {string[]} right @returns {boolean} */ function compare(left,right){return left[0]===right[0];} console.log(compare([],[]));console.log(compare([\\'\\'],[\\'\\']));console.log(compare([\\'kept\\'],[\\'kept\\']));console.log(compare([\\'\\'],[]));console.log(compare([],[\\'\\']));', ['true', 'true', 'true', 'false', 'false']],\n    ['booleans', '/** @param {boolean[]} left @param {boolean[]} right @returns {boolean} */ function compare(left,right){return left[0]===right[0];} console.log(compare([],[]));console.log(compare([false],[false]));console.log(compare([true],[false]));console.log(compare([false],[]));console.log(compare([],[false]));', ['true', 'true', 'false', 'false', 'false']],\n    ['distinct primitive kinds', '/** @param {number[]} left @param {string[]} right @returns {boolean} */ function compare(left,right){return left[0]===right[0];} console.log(compare([],[]));console.log(compare([0],[\\'0\\']));console.log(compare([0],[\\'\\']));console.log(compare([1],[]));', ['true', 'false', 'false', 'false']],\n    ['both absence tags', '/** @param {number|null|undefined} left @param {number|null|undefined} right @returns {boolean} */ function compare(left,right){return left===right;} console.log(compare(null,null));console.log(compare(undefined,undefined));console.log(compare(null,undefined));console.log(compare(undefined,null));console.log(compare(0,-0));console.log(compare(NaN,NaN));console.log(compare(null,0));', ['true', 'true', 'false', 'false', 'true', 'false', 'false']],\n  ];\n  for (const [label, source, lines] of cases) {\n    const expected = { lines, error: null };\n    assert.deepEqual(observeStrictEqualityProgram(source), expected, label + ': independent original JavaScript');\n    const checked = checkProgram(parseJavaScript(source, { referenceSemantics: false }));\n    const equality = readStrictEqualityExpressions(checked);\n    assert.equal(equality.length, 1, label);\n    assert.equal(equality[0].negate, label === 'inequality');\n    const javascript = emitJavaScript(checked).text;\n    const rust = emitRust(checked, { arrayConsumption: true }).text;\n    assert.deepEqual(observeStrictEqualityProgram(javascript), expected, label + ': direct checked JavaScript');\n    const packet = encodeTypedProgramLinks(checked);\n    for (const network of strictEqualityArchiveForms(packet)) {\n      const program = decodeTypedProgramLinks(network, packet.root), before = structuredClone(program);\n      for (let repeat = 0; repeat < 2; repeat += 1) {\n        assert.strictEqual(recheckLinkedTypedProgram(program, { wholeProgram: true }), program);\n        assert.deepEqual(program, before);\n      }\n      assert.deepEqual(readStrictEqualityExpressions(program), equality);\n      assert.equal(emitTypedProgramLinks(network, packet.root, 'JavaScript').code, javascript);\n      assert.equal(emitTypedProgramLinks(network, packet.root, 'Rust').code, rust);\n      assert.deepEqual(observeStrictEqualityProgram(emitJavaScript(program).text), expected, label + ': source-free checked JavaScript');\n    }\n  }\n})"
+  },
+  {
+    "id": "repository.check-strict-equality-ordered-effects",
+    "source": "js/tests/typed-program-strict-equality-projection.test.js",
+    "name": "strict equality archives retain once-only left-to-right calls and abort boundaries without short circuiting",
+    "inventoryName": "check strict equality ordered effects",
+    "sourceText": "test('strict equality archives retain once-only left-to-right calls and abort boundaries without short circuiting', () => {\n  for (const stopped of [null, 'left', 'right']) {\n    const source = '/** @returns {number[]} */ function left(){console.log(\\'left\\');' + (stopped === 'left' ? 'throw new Error(\\'left stopped\\');' : 'return [];') + '}'\n      + '/** @returns {number[]} */ function right(){console.log(\\'right\\');' + (stopped === 'right' ? 'throw new Error(\\'right stopped\\');' : 'return [];') + '}'\n      + 'console.log(left()[0]===right()[0]);';\n    const expected = { lines: stopped === 'left' ? ['left'] : stopped === 'right' ? ['left', 'right'] : ['left', 'right', 'true'], error: stopped === null ? null : stopped + ' stopped' };\n    assert.deepEqual(observeStrictEqualityProgram(source), expected);\n    const checked = checkProgram(parseJavaScript(source, { referenceSemantics: false }));\n    assert.equal(readStrictEqualityExpressions(checked).length, 1);\n    assert.deepEqual(observeStrictEqualityProgram(emitJavaScript(checked).text), expected);\n    const packet = encodeTypedProgramLinks(checked);\n    for (const network of strictEqualityArchiveForms(packet)) {\n      const program = decodeTypedProgramLinks(network, packet.root);\n      recheckLinkedTypedProgram(program, { wholeProgram: true });\n      assert.deepEqual(observeStrictEqualityProgram(emitTypedProgramLinks(network, packet.root, 'JavaScript').code), expected);\n      assert.equal(emitTypedProgramLinks(network, packet.root, 'Rust').code, emitRust(checked, { arrayConsumption: true }).text);\n    }\n  }\n})"
+  },
+  {
+    "id": "repository.check-strict-equality-edits-and-refusals",
+    "source": "js/tests/typed-program-strict-equality-projection.test.js",
+    "name": "strict equality graphs permit genuine Boolean edits and refuse forged flags types operands and reference identity",
+    "inventoryName": "check strict equality edits and refusals",
+    "sourceText": "test('strict equality graphs permit genuine Boolean edits and refuse forged flags types operands and reference identity', () => {\n  const source = '/** @param {number[]} left @param {number[]} right @returns {boolean} */ function compare(left,right){return left[0]===right[0];} console.log(compare([],[]));console.log(compare([1],[]));console.log(compare([0],[-0]));console.log(compare([NaN],[NaN]));';\n  const checked = checkProgram(parseJavaScript(source, { referenceSemantics: false }));\n  const packet = encodeTypedProgramLinks(checked);\n  assert.deepEqual(observeStrictEqualityProgram(source), { lines: ['true', 'false', 'true', 'false'], error: null });\n  for (const network of strictEqualityArchiveForms(packet)) {\n    const edited = decodeTypedProgramLinks(network, packet.root);\n    readStrictEqualityExpressions(edited)[0].negate = true;\n    recheckLinkedTypedProgram(edited, { wholeProgram: true });\n    const saved = encodeTypedProgramLinks(edited);\n    for (const roundtrip of strictEqualityArchiveForms(saved)) {\n      const restored = decodeTypedProgramLinks(roundtrip, saved.root);\n      assert.strictEqual(recheckLinkedTypedProgram(restored, { wholeProgram: true }), restored);\n      assert.deepEqual(observeStrictEqualityProgram(emitTypedProgramLinks(roundtrip, saved.root, 'JavaScript').code), { lines: ['false', 'true', 'false', 'true'], error: null });\n      assert.equal(readStrictEqualityExpressions(restored)[0].negate, true);\n    }\n  }\n  const mutations = [\n    (_program, expression) => { delete expression.negate; },\n    ...[undefined, null, 'false', 'true', 0, 1, [], {}].map(negate => (_program, expression) => { expression.negate = negate; }),\n    (_program, expression) => { expression.type = { kind: 'float' }; },\n    (_program, expression) => { expression.left = null; },\n    (_program, expression) => { expression.left.type = { kind: 'option', element: { kind: 'string' }, absence: 'undefined' }; },\n    (_program, expression) => { expression.loose = true; },\n    (_program, expression) => { expression.domain = { kind: 'float' }; },\n    (program, _expression) => { program.schemaVersion = 2; },\n  ];\n  for (const mutate of mutations) {\n    const program = decodeTypedProgramLinks(LinkNetwork.fromLino(packet.network.toLino()), packet.root);\n    mutate(program, readStrictEqualityExpressions(program)[0]);\n    assert.throws(() => recheckLinkedTypedProgram(program, { wholeProgram: true }));\n  }\n  const referenceSource = '/** @param {number[]|null} value @returns {boolean} */ function compare(value){return value===value;}console.log(compare(null));';\n  assert.deepEqual(observeStrictEqualityProgram(referenceSource), { lines: ['true'], error: null });\n  assert.throws(() => checkProgram(parseJavaScript(referenceSource, { referenceSemantics: false })), /nullable object equality/u);\n})"
+  },
+  {
+    "id": "repository.check-delayed-optional-equality-inference",
+    "source": "js/tests/typed-program-strict-equality-projection.test.js",
+    "name": "deferred equality inference preserves independent optional results and historical unknown constraints",
+    "inventoryName": "check delayed optional equality inference",
+    "sourceText": "test('deferred equality inference preserves independent optional results and historical unknown constraints', async () => {\n  const { readJavaScriptEqualityInferenceStep } = await import('../src/translation/javascript-surface-rules.js');\n  const { readFileSync } = await import('node:fs');\n  const { createHash } = await import('node:crypto');\n  const { DecoratorSet } = await import('../src/decorators.js');\n  const { readSourceTextRustBlock } = await import('../scripts/source-text-byte-library-style.mjs');\n  const { readPortableSourceParameterStyles, readPortableSourceLintStyles } = await import('../scripts/portable-source-library-style.mjs');\n  const source = readFileSync(new URL('../src/translation/javascript-surface-rules.js', import.meta.url), 'utf8');\n  const rules = checkProgram(parseJavaScript(source, { referenceSemantics: false }));\n  const emitted = emitRust(rules, { arrayConsumption: true });\n  assert.deepEqual(emitted.preludes, []);\n  const header = emitted.text.split('\\n').find(line => line.startsWith('#![allow('));\n  assert.ok(header);\n  const raw = header + '\\n\\n' + emitted.definitions.join('\\n\\n').replace(/^pub fn /gmu, '#[must_use]\\npub fn ');\n  const document = readFileSync(new URL('../../parity/self-translation/javascript-surface-rules-decorators.lino', import.meta.url), 'utf8');\n  const lines = document.match(/[^\\n]*\\n|[^\\n]+$/gu) ?? [];\n  for (const [index, bytes, digest] of [[0, 106060, 'ac9cf3ef2a0a4a4b16e59b9c2d33a2619fd8cbe44bf4042913f52419cc275e6a'],\n    [1, 1287, '61cbbe05766356d057df68a3d53fcf20bfb257f42b9ea3a45430d9d0a0112650']]) {\n    assert.equal(Buffer.byteLength(lines[index]), bytes);\n    assert.equal(createHash('sha256').update(lines[index]).digest('hex'), digest);\n  }\n  const id = 'javascript-equality-inference-library-style';\n  assert.equal(lines.filter(line => line.startsWith('(decorator ' + id + ' ')).length, 1);\n  const base = DecoratorSet.fromLino(lines.filter(line => !line.startsWith('(decorator ' + id + ' ')).join(''))\n    .decorate('emitter', { format: 'Rust', source: raw }).source;\n  const from = '#[must_use]\\n' + readSourceTextRustBlock(base, 'fn', 'read_java_script_equality_inference_step');\n  assert.equal(base.split(from).length, 2);\n  const to = readPortableSourceLintStyles(readPortableSourceParameterStyles(from).source).source;\n  assert.match(to, /pub fn read_java_script_equality_inference_step\\(\\s*operation: &str,\\s*left: &str,\\s*right: &str,\\s*force: bool\\s*\\)/u);\n  assert.equal((to.match(/^#\\[must_use\\]$/gmu) ?? []).length, 1);\n  assert.equal(readPortableSourceLintStyles(to).source, to);\n  assert.equal(DecoratorSet.fromLino(document).decorate('emitter', { format: 'Rust', source: raw }).source, base.replace(from, to));\n  const translated = vm.runInNewContext(emitJavaScript(rules).text + '\\nreadJavaScriptEqualityInferenceStep;');\n  for (const operation of ['eq', 'ne', 'lt', 'le', 'gt', 'ge']) for (const left of ['var', 'option', 'float', 'string', 'array']) for (const right of ['var', 'option', 'float', 'string', 'array']) for (const force of [false, true]) {\n    const expected = operation !== 'eq' && operation !== 'ne' ? 'unify'\n      : left === 'var' || right === 'var' ? force ? 'unify' : 'defer'\n        : left === 'option' || right === 'option' ? 'independent' : 'unify';\n    assert.equal(readJavaScriptEqualityInferenceStep(operation, left, right, force), expected);\n    assert.equal(translated(operation, left, right, force), expected);\n  }\n  const readers = [\"function readNumber(values){console.log('left');return values[0];}\",\n    \"function readText(values){console.log('right');return values[0];}\"];\n  for (const declarations of [readers, [...readers].reverse()]) {\n    const source = '/** @param {number[]} numbers @param {string[]} texts @returns {boolean} */function compare(numbers,texts){return readNumber(numbers)===readText(texts);}'\n      + declarations.join('\\n') + 'console.log(compare([],[]));console.log(compare([0],[\\'0\\']));';\n    const expected = { lines: ['left', 'right', 'true', 'left', 'right', 'false'], error: null };\n    assert.deepEqual(observeStrictEqualityProgram(source), expected);\n    const checked = checkProgram(parseJavaScript(source, { referenceSemantics: false }));\n    assert.equal(readStrictEqualityExpressions(checked).length, 1);\n    const packet = encodeTypedProgramLinks(checked);\n    for (const network of strictEqualityArchiveForms(packet)) {\n      const program = decodeTypedProgramLinks(network, packet.root);\n      assert.strictEqual(recheckLinkedTypedProgram(program, { wholeProgram: true }), program);\n      assert.deepEqual(observeStrictEqualityProgram(emitJavaScript(program).text), expected);\n      assert.equal(emitRust(program, { arrayConsumption: true }).text, emitRust(checked, { arrayConsumption: true }).text);\n    }\n  }\n  const unknown = checkProgram(parseJavaScript('function compare(left,right){return left===right;}', { referenceSemantics: false }));\n  assert.deepEqual(unknown.declarations.get('compare').params.map(parameter => parameter.type.kind), ['float', 'float']);\n  const optionalUnknown = checkProgram(parseJavaScript('/** @param {number[]} values @returns {number|undefined} */function read(values){return values[0];}function compare(value){return value===read([1]);}', { referenceSemantics: false }));\n  assert.equal(optionalUnknown.declarations.get('compare').params[0].type.kind, 'option');\n  assert.equal(optionalUnknown.declarations.get('compare').params[0].type.absence, 'undefined');\n  for (const source of [\n    '/** @param {number} left @param {string} right @returns {boolean} */function compare(left,right){return left===right;}console.log(compare(0,\\'0\\'));',\n    '/** @param {number[]} left @param {string[]} right @returns {boolean} */function compare(left,right){return left[0]<right[0];}console.log(compare([0],[\\'0\\']));',\n  ]) {\n    assert.deepEqual(observeStrictEqualityProgram(source), { lines: ['false'], error: null });\n    assert.throws(() => checkProgram(parseJavaScript(source, { referenceSemantics: false })), error => error.kind === 'type');\n  }\n  const referenceSource = 'function maybe(present){if(present)return [1];}function compare(present){return maybe(present)===maybe(present);}console.log(compare(false));';\n  assert.deepEqual(observeStrictEqualityProgram(referenceSource), { lines: ['true'], error: null });\n  assert.throws(() => checkProgram(parseJavaScript(referenceSource, { referenceSemantics: false })), /nullable object equality/u);\n})"
+  },
+  {
+    "id": "repository.check-library-match-condition-boundaries",
+    "source": "js/tests/translation-recorded-family-library-style.test.js",
+    "name": "family match conditions retain complete arm blocks before conditional bodies",
+    "inventoryName": "check library match condition boundaries",
+    "sourceText": "test('family match conditions retain complete arm blocks before conditional bodies', () => {\n  const matched = 'match (Some(value),123f64){(Some(ml_left),ml_right)=>ml_left==ml_right,_=>false}';\n  for (const condition of [matched, '(' + matched + ')']) {\n    const before = 'pub fn decide(first:f64,second:f64,value:f64)->f64{if first!=second{11f64}else{if ' + condition + '{22f64}else{33f64}}}';\n    const flattened = flattenFamilyLibraryElseIf(before);\n    assert.equal(flattened, before.replace('else{if ', 'else if ').slice(0, -1), 'only the outer else wrapper is removed');\n    assert.equal(simplifyRustBranches(before), flattened.replace('else if ', 'elseif '), 'the original exported producer retains its frozen compact-source observation');\n    const portable = simplifyPortableProductLibraryStyles(before);\n    assert.equal(portable, flattened, 'the portable derivative separates the retained else and if tokens');\n    assert.equal(simplifyPortableProductLibraryStyles(portable), portable);\n    const bound = bindFamilyLibraryInequalityConditions(flattened);\n    assert.match(bound, /let ml_library_inequality_1 = first!=second;/u);\n    assert.ok(bound.includes('else if ' + condition + '{22f64}else{33f64}'), 'all match operands, arms and subsequent branches retain their exact bytes');\n    assert.equal(flattenFamilyLibraryElseIf(flattened), flattened);\n    assert.equal(bindFamilyLibraryInequalityConditions(bound), bound);\n    const reviewed = readPortableSourceLintStyles(before);\n    const styles = new DecoratorSet([{id: 'complete-match-condition-control', level: 'emitter', order: 0,\n      when: [['format', 'Rust']], actions: reviewed.actions}]);\n    assert.equal(styles.decorate('emitter', {format: 'Rust', source: before}).source, reviewed.source, 'the complete style sequence replays exactly');\n    for (const source of [before, portable, bound, reviewed.source]) {\n      const tree = parseNative('native-rust', source);\n      assert.equal(tree.term, 'source_file');\n      assert.equal(tree.hasError, false, source);\n      assert.equal(tree.start, 0);\n      assert.equal(tree.end, Buffer.byteLength(source), 'the whole source is parsed, including every closing scope');\n      assert.deepEqual(tokenize(source, 'Rust').tokens.filter(token => token.kind === 'number').map(token => token.raw),\n        tokenize(before, 'Rust').tokens.filter(token => token.kind === 'number').map(token => token.raw));\n    }\n  }\n})"
+  },
+  {
+    "id": "repository.check-library-match-boundary-source-preservation",
+    "source": "js/tests/translation-recorded-family-library-style.test.js",
+    "name": "family match boundary reading preserves parenthesized opaque and commented syntax",
+    "inventoryName": "check library match boundary source preservation",
+    "sourceText": "test('family match boundary reading preserves parenthesized opaque and commented syntax', () => {\n  const payload = 'if first!=second{11f64}else{if match (Some(value),123f64){(Some(left),right)=>left==right,_=>false}{22f64}else{33f64}}';\n  for (const source of [\n    'macro_rules! hidden{()=>{' + payload + '};}',\n    'hidden!(' + payload + ');',\n    '#[hidden(' + payload + ')]pub fn decide()->bool{false}',\n    'pub fn text()->&\\'static str{r#\"' + payload + '\"#}',\n    '/* ' + payload + ' */pub fn decide()->bool{false}',\n  ]) {\n    assert.equal(flattenFamilyLibraryElseIf(source), source);\n    assert.equal(bindFamilyLibraryInequalityConditions(source), source);\n  }\n  const before = 'pub fn decide(first:f64,second:f64,value:f64)->f64{if first!=second{11f64}else{if /* condition */ match (Some(value),123f64){/* arm */(Some(left),right)=>left==right,_=>false}/* body */{22f64}else{/* fallback */33f64}}}';\n  const after = bindFamilyLibraryInequalityConditions(flattenFamilyLibraryElseIf(before));\n  assert.notEqual(after, before);\n  assert.deepEqual(tokenize(after, 'Rust').comments.map(comment => comment.text), tokenize(before, 'Rust').comments.map(comment => comment.text));\n  assert.equal(bindFamilyLibraryInequalityConditions(flattenFamilyLibraryElseIf(after)), after);\n  const tree = parseNative('native-rust', after);\n  assert.equal(tree.term, 'source_file');\n  assert.equal(tree.hasError, false);\n  assert.equal(tree.end, Buffer.byteLength(after));\n})"
+  },
+  {
+    "id": "repository.check-terminal-tag-guard-source-styles",
+    "source": "js/tests/translation-javascript-method-inference.test.js",
+    "name": "terminal tag guard source styles append exact new Boolean functions without rewriting the historical library row",
+    "inventoryName": "check terminal tag guard source styles",
+    "sourceText": "test('terminal tag guard source styles append exact new Boolean functions without rewriting the historical library row', async () => {\n  const { createHash } = await import('node:crypto');\n  const { readPortableSourceParameterStyles, readPortableSourceLintStyles } = await import('../scripts/portable-source-library-style.mjs');\n  const { readSourceTextRustBlock } = await import('../scripts/source-text-byte-library-style.mjs');\n  const source = readFileSync(new URL('../src/translation/javascript-surface-rules.js', import.meta.url), 'utf8');\n  const checked = checkProgram(parseJavaScript(source, { referenceSemantics: false }));\n  const emitted = emitRust(checked, { arrayConsumption: true });\n  assert.deepEqual(emitted.preludes, []);\n  const header = emitted.text.split('\\n').find(line => line.startsWith('#![allow('));\n  assert.ok(header);\n  const raw = header + '\\n\\n' + emitted.definitions.join('\\n\\n').replace(/^pub fn /gmu, '#[must_use]\\npub fn ');\n  const document = readFileSync(new URL('../../parity/self-translation/javascript-surface-rules-decorators.lino', import.meta.url), 'utf8');\n  const lines = document.match(/[^\\n]*\\n|[^\\n]+$/gu) ?? [];\n  assert.equal(Buffer.byteLength(lines[0]), 106060);\n  assert.equal(createHash('sha256').update(lines[0]).digest('hex'), 'ac9cf3ef2a0a4a4b16e59b9c2d33a2619fd8cbe44bf4042913f52419cc275e6a');\n  const id = 'javascript-terminal-tag-guard-library-style';\n  assert.equal(lines.filter(line => line.startsWith('(decorator ' + id + ' ')).length, 1);\n  const baseDocument = lines.filter(line => !line.startsWith('(decorator ' + id + ' ')).join('');\n  const base = DecoratorSet.fromLino(baseDocument).decorate('emitter', { format: 'Rust', source: raw }).source;\n  const names = ['accept_java_script_terminal_tag_guard', 'accept_java_script_tag_guard_sequence'];\n  let expected = base;\n  for (const name of names) {\n    const from = '#[must_use]\\n' + readSourceTextRustBlock(base, 'fn', name);\n    assert.equal(base.split(from).length, 2);\n    const to = readPortableSourceLintStyles(readPortableSourceParameterStyles(from).source).source;\n    assert.match(to, new RegExp('^pub const fn ' + name + '\\\\(', 'mu'));\n    assert.equal((to.match(/^#\\[must_use\\]$/gmu) ?? []).length, 1);\n    assert.equal(readPortableSourceLintStyles(to).source, to);\n    expected = expected.replace(from, to);\n  }\n  const styled = DecoratorSet.fromLino(document).decorate('emitter', { format: 'Rust', source: raw }).source;\n  assert.equal(styled, expected);\n  const additional = new DecoratorSet(DecoratorSet.fromLino(document).decorators.filter(row => row.id === id));\n  assert.equal(additional.decorate('emitter', { format: 'Rust', source: styled }).source, styled);\n  for (const name of [...raw.matchAll(/^pub fn ([A-Za-z_][A-Za-z_0-9]*)\\(/gmu)].map(match => match[1]).filter(name => !names.includes(name))) {\n    assert.equal(readSourceTextRustBlock(styled, 'fn', name), readSourceTextRustBlock(base, 'fn', name), name + ': unchanged complete historical declaration');\n  }\n  const original = vm.runInNewContext(source.replace(/^export /gmu, '') + '\\n({acceptJavaScriptTerminalTagGuard,acceptJavaScriptTagGuardSequence})');\n  const generated = vm.runInNewContext(emitJavaScript(checked).text + '\\n({acceptJavaScriptTerminalTagGuard,acceptJavaScriptTagGuardSequence})');\n  for (const positive of [false, true]) for (const alternate of [false, true]) for (const terminal of [false, true]) for (const same of [false, true]) for (const duplicate of [false, true]) {\n    const args = [positive, alternate, terminal, same, duplicate], expected = positive && !alternate && terminal && same && !duplicate;\n    assert.equal(original.acceptJavaScriptTerminalTagGuard(...args), expected);\n    assert.equal(generated.acceptJavaScriptTerminalTagGuard(...args), expected);\n  }\n  for (const multiple of [false, true]) for (const terminal of [false, true]) {\n    assert.equal(original.acceptJavaScriptTagGuardSequence(multiple, terminal), multiple && terminal);\n    assert.equal(generated.acceptJavaScriptTagGuardSequence(multiple, terminal), multiple && terminal);\n  }\n})"
+  },
+  {
+    "id": "repository.check-cumulative-terminal-tag-guard-archives",
+    "source": "js/tests/translation-constructor-tags.test.js",
+    "name": "terminal tag guard sequences preserve constructor fields scope and ordered effects through both semantic archives",
+    "inventoryName": "check cumulative terminal tag guard archives",
+    "sourceText": "test('terminal tag guard sequences preserve constructor fields scope and ordered effects through both semantic archives', async () => {\n  const { encodeTypedProgramLinks, decodeTypedProgramLinks } = await import('../src/typed-program-links.js');\n  const { recheckLinkedTypedProgram } = await import('../src/typed-program-checked-projection.js');\n  const { LinkNetwork } = await import('../src/network.js');\n  const { encodeLinkNetworkBinary, decodeLinkNetworkBinary } = await import('../src/link-network-binary.js');\n  const { emitRust } = await import('../src/translation/emit-rust.js');\n  const declarations = \"/** @typedef {{ $: 'missing' } | { $: 'bad' } | { $: 'value', code: number, end: number }} GuardState */\\n\"\n    + \"/** @param {number} n @returns {GuardState} */function make(n){if(n===0)return {$:'missing'};if(n===1)return {$:'bad'};return {$:'value',code:3,end:4};}\\n\";\n  const observe = text => {\n    const output = [];\n    runInNewContext(text, { console: { log: (...values) => output.push(values.map(String).join(' ')) } }, { timeout: 1000 });\n    return output;\n  };\n  const variants = [\n    [\"if(value.$==='missing')return -1;if(value.$==='bad')return -2;return value.code+value.end;\", ['-1', '-2', '7']],\n    [\"if(value.$==='bad')return -2;if(value.$==='missing')return -1;return value.end+value.code;\", ['-1', '-2', '7']],\n    [\"if(value.$==='missing'){const value=99;return value;}if(value.$==='bad')return -2;return value.code+value.end;\", ['99', '-2', '7']],\n    [\"let count=0;if(value.$==='missing'){console.log('missing');return -1;}if(value.$==='bad'){console.log('bad');return -2;}count+=value.code;return count+value.end;\", ['missing', '-1', 'bad', '-2', '7']],\n    [\"if(value.$!=='value')return -1;return value.code+value.end;\", ['-1', '-1', '7']],\n  ];\n  for (const [body, expected] of variants) for (const options of [{}, { referenceSemantics: false }]) {\n    const original = declarations + '/** @param {GuardState} value @returns {number} */function read(value){' + body + '}\\n'\n      + 'console.log(read(make(0)));console.log(read(make(1)));console.log(read(make(2)));';\n    assert.deepEqual(observe(original), expected);\n    const checked = checkProgram(parseJavaScript(original, options));\n    assert.deepEqual(observe(emitJavaScript(checked).text), expected);\n    const rust = emitRust(checked, { arrayConsumption: true }).text;\n    const saved = encodeTypedProgramLinks(checked);\n    for (const network of [LinkNetwork.fromLino(saved.network.toLino()), decodeLinkNetworkBinary(encodeLinkNetworkBinary(saved.network))]) {\n      const rechecked = recheckLinkedTypedProgram(decodeTypedProgramLinks(network, saved.root), { wholeProgram: true });\n      assert.deepEqual(observe(emitJavaScript(rechecked).text), expected);\n      assert.equal(emitRust(rechecked, { arrayConsumption: true }).text, rust);\n    }\n  }\n  const ordered = declarations.replace('function make(n){', \"function make(n){console.log('make',n);\")\n    + \"/** @param {GuardState} value @returns {number} */function read(value){if(value.$==='missing'){console.log('missing');return -1;}if(value.$==='bad'){console.log('bad');return -2;}return value.code+value.end;}\\n\"\n    + 'console.log(read(make(0)));console.log(read(make(1)));console.log(read(make(2)));';\n  const expected = ['make 0', 'missing', '-1', 'make 1', 'bad', '-2', 'make 2', '7'];\n  assert.deepEqual(observe(ordered), expected);\n  assert.deepEqual(observe(emitJavaScript(checkProgram(parseJavaScript(ordered))).text), expected);\n  for (const body of [\n    \"if(value.$==='missing')return -1;return value.code;\",\n    \"if(value.$==='missing')return -1;if(value.$==='missing')return -2;return value.code;\",\n    \"if(value.$==='missing'){const ignored=0;}if(value.$==='bad')return -2;return value.code;\",\n    \"if(value.$==='missing')return -1;value=make(0);if(value.$==='bad')return -2;return value.code;\",\n  ]) {\n    const original = declarations + '/** @param {GuardState} value @returns {number} */function read(value){' + body + '}';\n    assert.throws(() => checkProgram(parseJavaScript(original)), error => ['type', 'unsupported'].includes(error.kind),\n      'uncovered constructors, duplicate guards, nonterminal branches and intervening writes gain no false field proof');\n  }\n  const different = declarations + \"/** @param {GuardState} left @param {GuardState} right @returns {number} */function read(left,right){if(left.$==='missing')return -1;if(right.$==='bad')return -2;return left.code;}\";\n  assert.throws(() => checkProgram(parseJavaScript(different)), error => ['type', 'unsupported'].includes(error.kind),\n    'separate bindings of the same data type cannot share exclusions');\n})"
+  },
+  {
+    "id": "repository.check-mapped-package-concrete-trees",
+    "source": "js/tests/grammar-selection-json-string.test.js",
+    "name": "a mapped shipped JSON string retains its full physical CST and the original Python concrete tree",
+    "inventoryName": "check mapped package concrete trees",
+    "sourceText": "test('a mapped shipped JSON string retains its full physical CST and the original Python concrete tree', () => {\n  const source = JSON.stringify(originalPython.source);\n  const host = mappedJsonHost(['Python']);\n  const parser = compileGrammar(host, { resolveGrammar: name => name === 'Python' ? shippedPython : undefined });\n  const outcome = parser.parseTree(source);\n  assert.equal(outcome.ok, true, JSON.stringify(outcome.rejection));\n  const directJson = standaloneJson.parseTree(source), directPython = standalonePython.parseTree(originalPython.source);\n  assert.equal(directJson.ok, true, JSON.stringify(directJson.rejection));\n  assert.equal(directPython.ok, true, JSON.stringify(directPython.rejection));\n  const [embedded] = mappedEmbeddings(outcome.tree);\n  assert.ok(embedded);\n  assert.equal(mappedEmbeddings(outcome.tree).length, 1);\n  assert.deepEqual(embedded.sourceChildren, [directJson.tree], 'the physical host is the real complete JSON grammar CST');\n  assert.deepEqual(embedded.root, directPython.tree, 'the decoded child is the real complete standalone Python CST');\n  assert.deepEqual(nativeRows(embedded.root, originalPython.source,\n    LANGUAGE_CATALOG.nativeGrammars['native-python']), expectedPython.positive, 'all independently pinned Python CST rows remain');\n  assertConcreteLeaves(outcome.tree, source);\n  assertConcreteLeaves(embedded.root, originalPython.source);\n  assert.equal(embedded.start, 0);\n  assert.equal(embedded.end, byteLength(source));\n  assert.equal(embedded.root.start, 0, 'decoded root positions are not physical host positions');\n  assert.equal(embedded.root.end, byteLength(originalPython.source));\n  assert.equal(outcome.sourcePlanes[0].byteLength, byteLength(source));\n  assert.equal(outcome.sourcePlanes[1].byteLength, byteLength(originalPython.source));\n  const bundle = { tree: outcome.tree, sourcePlanes: outcome.sourcePlanes };\n  assert.equal(checkGrammarSelectionMappedTree(bundle), bundle, 'mapping correspondence is checked separately from CST correctness');\n  assert.throws(() => parser.parse(source), /parseTree.*sourcePlanes/u, 'tree-only parsing must not discard the mapped registry');\n  assert.deepEqual(standaloneJson.parseTree(source), directJson, 'ordinary JSON parsing is unchanged');\n  observeMappedProfile('boundaries', [\"shippedJsonPythonConcreteTreesRemainExact\"],\n    'a mapped shipped JSON string retains its full physical CST and the original Python concrete tree');\n})"
+  },
+  {
+    "id": "repository.check-mapped-unicode-interval-boundaries",
+    "source": "js/tests/grammar-selection-json-string.test.js",
+    "name": "independent JSON escape intervals retain UTF-8 source planes and exact quote ownership",
+    "inventoryName": "check mapped unicode interval boundaries",
+    "sourceText": "test('independent JSON escape intervals retain UTF-8 source planes and exact quote ownership', () => {\n  const raw = '\"a\\\\n\\\\u03C0\\\\uD83D\\\\uDE00\"';\n  const decoded = 'a\\nπ😀';\n  assert.equal(byteLength(raw), 23);\n  assert.equal(byteLength(decoded), 8);\n  assert.equal(raw, mappedFixture.inputs.escape.raw);\n  assert.equal(decoded, mappedFixture.inputs.escape.decoded);\n  assert.deepEqual([...encoder.encode(raw)], mappedFixture.inputs.escape.physicalBytes);\n  assert.deepEqual([...encoder.encode(decoded)], mappedFixture.inputs.escape.decodedBytes);\n  const intervals = [[0, 1, 0, 0], [1, 2, 0, 1], [2, 4, 1, 2], [4, 10, 2, 4],\n    [10, 22, 4, 8], [22, 23, 8, 8]];\n  assert.deepEqual(intervals, mappedFixture.inputs.escape.intervals);\n  assert.deepEqual(['', 'λ<'], mappedFixture.inputs.escape.prefixes);\n  for (const prefix of ['', 'λ<']) {\n    const grammar = mappedJsonHost(['decoded'], 'any-grammar', ['json-string'], prefix);\n    const child = literalChild(decoded);\n    const outcome = compileGrammar(grammar, { resolveGrammar: () => child }).parseTree(prefix + raw);\n    assert.equal(outcome.ok, true, JSON.stringify(outcome.rejection));\n    const [embedded] = mappedEmbeddings(outcome.tree), mapping = embedded.selection.sourceMapping;\n    const offset = byteLength(prefix);\n    assert.deepEqual(mapping.intervals, intervals.map(([a, b, c, d]) => [a + offset, b + offset, c, d]));\n    assert.deepEqual(outcome.sourcePlanes, [\n      { kind: 'grammar-source', identity: 0, encoding: 'UTF-8', byteLength: offset + 23, derivation: null },\n      { kind: 'grammar-source', identity: 1, encoding: 'UTF-8', byteLength: 8,\n        derivation: { operation: 'json-string', input: 0, start: offset, end: offset + 23 } },\n    ]);\n    assert.deepEqual({ input: mapping.input, output: mapping.output }, { input: 0, output: 1 });\n    assertConcreteLeaves(outcome.tree, prefix + raw);\n    assertConcreteLeaves(embedded.root, decoded);\n    assert.equal(embedded.root.start, 0);\n    assert.equal(embedded.root.end, 8);\n    assert.equal(checkGrammarSelectionMappedTree({ tree: outcome.tree, sourcePlanes: outcome.sourcePlanes }).tree, outcome.tree);\n  }\n  for (const [raw, decoded] of [\n    ['\"\"', ''], ['\"é😀\"', 'é😀'], ['\"\\\\\\\"\\\\\\\\\\\\/\\\\b\\\\f\\\\n\\\\r\\\\t\"', '\"\\\\/\\b\\f\\n\\r\\t'],\n  ]) {\n    const child = literalChild(decoded);\n    const outcome = compileGrammar(mappedJsonHost(['decoded']), { resolveGrammar: () => child }).parseTree(raw);\n    assert.equal(outcome.ok, true, JSON.stringify(outcome.rejection));\n    assertConcreteLeaves(outcome.tree, raw);\n    assertConcreteLeaves(mappedEmbeddings(outcome.tree)[0].root, decoded);\n    checkGrammarSelectionMappedTree({ tree: outcome.tree, sourcePlanes: outcome.sourcePlanes });\n  }\n  observeMappedProfile('boundaries', [\"jsonStringUtf8IntervalsAndQuoteOwnershipExact\"],\n    'independent JSON escape intervals retain UTF-8 source planes and exact quote ownership');\n})"
+  },
+  {
+    "id": "repository.check-nested-mapped-source-archives",
+    "source": "js/tests/grammar-selection-json-string.test.js",
+    "name": "nested mapped registries survive inspectable text and binary archives and source-free shipped grammar replay",
+    "inventoryName": "check nested mapped source archives",
+    "sourceText": "test('nested mapped registries survive inspectable text and binary archives and source-free shipped grammar replay', () => {\n  const middle = mappedJsonHost(['Python']);\n  const outer = mappedJsonHost(['Middle']);\n  const grammars = new Map([['outer', outer], ['Middle', middle], ['Python', shippedPython]]);\n  const innerSource = JSON.stringify(originalPython.source), source = JSON.stringify(innerSource);\n  const outcome = compileGrammar(outer, { resolveGrammar: name => grammars.get(name) }).parseTree(source);\n  assert.equal(outcome.ok, true, JSON.stringify(outcome.rejection));\n  const [first, second] = mappedEmbeddings(outcome.tree);\n  assert.ok(first && second);\n  assert.equal(mappedEmbeddings(outcome.tree).length, 2);\n  assert.deepEqual(outcome.sourcePlanes.map(row => row.identity), [0, 1, 2]);\n  assert.deepEqual(outcome.sourcePlanes.map(row => row.derivation), [null,\n    { operation: 'json-string', input: 0, start: 0, end: byteLength(source) },\n    { operation: 'json-string', input: 1, start: 0, end: byteLength(innerSource) }]);\n  assert.equal(first.selection.sourceMapping.output, second.selection.sourceMapping.input, 'nested references resolve through one owned table');\n  assert.equal(second.selection.sourceMapping.output, 2);\n  assert.deepEqual(first.sourceChildren, [standaloneJson.parseTree(source).tree]);\n  assert.deepEqual(second.sourceChildren, [standaloneJson.parseTree(innerSource).tree]);\n  assert.deepEqual(second.root, standalonePython.parseTree(originalPython.source).tree);\n  assertConcreteLeaves(outcome.tree, source);\n  assertConcreteLeaves(first.root, innerSource);\n  assertConcreteLeaves(second.root, originalPython.source);\n  for (const grammar of grammars.values()) {\n    const listing = renderGrammarLinks(grammar);\n    assert.equal(renderGrammarLinks(parseGrammarLinks(listing)), listing, 'all original grammar source/provenance links roundtrip');\n  }\n  const archive = { grammars: [...grammars].map(([name, grammar]) => ({ name, document: grammarDocument(grammar) })), outcome };\n  for (const [encoding, restored] of storedVariants(archive)) {\n    assert.deepEqual(restored, archive, encoding + ': the entire inspectable grammar and CST registry bundle survives');\n    checkGrammarSelectionMappedTree({ tree: restored.outcome.tree, sourcePlanes: restored.outcome.sourcePlanes });\n    const decodedGrammars = new Map(restored.grammars.map(entry => [entry.name, entry.document]));\n    const replay = compileGrammar(decodedGrammars.get('outer'), { resolveGrammar: name => decodedGrammars.get(name) }).parseTree(source);\n    assert.deepEqual(replay, restored.outcome, encoding + ': recompile only actual source-free grammar documents');\n    assert.equal(mappedEmbeddings(replay.tree)[0].selection.sourceMapping.output,\n      mappedEmbeddings(replay.tree)[1].selection.sourceMapping.input);\n    assert.equal(decoder.decode(Uint8Array.from(physicalBytes(replay.tree))), source);\n  }\n  observeMappedProfile('boundaries', [\"mappedSourceRegistryAndGrammarReplayTextAndBinary\"],\n    'nested mapped registries survive inspectable text and binary archives and source-free shipped grammar replay');\n  observeMappedProfile('recursion', [\"nestedMappedSourcesRetainActualDerivationOrder\"],\n    'nested mapped registries survive inspectable text and binary archives and source-free shipped grammar replay');\n})"
+  },
+  {
+    "id": "repository.check-mapped-selection-witnesses-and-refusals",
+    "source": "js/tests/grammar-selection-json-string.test.js",
+    "name": "mapped any and all retain real witnesses while mixed lexical and non-scalar profiles refuse honestly",
+    "inventoryName": "check mapped selection witnesses and refusals",
+    "sourceText": "test('mapped any and all retain real witnesses while mixed lexical and non-scalar profiles refuse honestly', () => {\n  const source = JSON.stringify(originalPython.source);\n  const resolver = name => name === 'Python' || name === 'PythonTwin' ? shippedPython\n    : name === 'JSON' ? parseGrammarLinks(shippedJsonListing) : undefined;\n  for (const mode of ['any-grammar', 'all-grammar']) {\n    const parser = compileGrammar(mappedJsonHost(['Python', 'PythonTwin'], mode), { resolveGrammar: resolver });\n    const outcome = parser.parseTree(source);\n    assert.equal(outcome.ok, true, JSON.stringify(outcome.rejection));\n    const [embedded] = mappedEmbeddings(outcome.tree);\n    assert.deepEqual(embedded.selection.candidates.map(item => [item.language, item.relation]),\n      [['Python', 'accepted'], ['PythonTwin', 'accepted']]);\n    assert.deepEqual(embedded.selection.alternatives.map(item => item.language), ['PythonTwin']);\n    assert.deepEqual(embedded.selection.alternatives[0].root, embedded.root, 'parallel witnesses retain the actual complete child CST');\n    assert.equal(embedded.selection.provenance.rules[0].origin.split(':')[0], 'Python');\n    assert.equal(embedded.selection.alternatives[0].provenance.rules[0].origin.split(':')[0], 'PythonTwin');\n    assert.equal(embedded.selection.ambiguous, mode === 'any-grammar');\n    assert.equal(outcome.sourcePlanes.length, 2, 'candidates share one explicit derived plane, not duplicate source output');\n    assertConcreteLeaves(outcome.tree, source);\n    checkGrammarSelectionMappedTree(mappingBundle(outcome));\n    const strict = parser.parseTree(source, { ambiguity: 'reject' });\n    assert.equal(strict.ok, mode === 'all-grammar');\n    if (mode === 'any-grammar') assert.equal(strict.rejection.reason, 'ambiguity');\n  }\n  const siblings = mappedJsonHost(['Python']);\n  const selection = siblings.startRule().expression;\n  siblings.rules.set(siblings.start, Object.freeze({ ...siblings.startRule(),\n    expression: { kind: 'seq', items: [selection, selection] } }));\n  const firstProgram = 'x=1\\n', secondProgram = 'x=2\\n';\n  assert.deepEqual({ firstProgram, secondProgram }, mappedFixture.inputs.selection.siblings);\n  const siblingSource = JSON.stringify(firstProgram) + JSON.stringify(secondProgram);\n  const siblingOutcome = compileGrammar(siblings, { resolveGrammar: resolver }).parseTree(siblingSource);\n  assert.equal(siblingOutcome.ok, true, JSON.stringify(siblingOutcome.rejection));\n  const [firstSibling, secondSibling] = mappedEmbeddings(siblingOutcome.tree);\n  assert.deepEqual(firstSibling.root, standalonePython.parseTree(firstProgram).tree);\n  assert.deepEqual(secondSibling.root, standalonePython.parseTree(secondProgram).tree);\n  assert.notDeepEqual(firstSibling.root, secondSibling.root, 'equal local byte ranges never borrow another decoded source CST');\n  assert.notEqual(firstSibling.selection.sourceMapping.output, secondSibling.selection.sourceMapping.output);\n  assertConcreteLeaves(siblingOutcome.tree, siblingSource);\n  checkGrammarSelectionMappedTree(mappingBundle(siblingOutcome));\n  const any = compileGrammar(mappedJsonHost(['Python', 'JSON']), { resolveGrammar: resolver }).parseTree(source);\n  assert.equal(any.ok, true, 'a rejected JSON candidate cannot poison an accepted Python witness');\n  assert.deepEqual(mappedEmbeddings(any.tree)[0].selection.candidates.map(item => item.relation), ['accepted', 'rejected']);\n  const all = compileGrammar(mappedJsonHost(['Python', 'JSON'], 'all-grammar'), { resolveGrammar: resolver }).parseTree(source);\n  assert.equal(all.ok, false);\n  assert.equal(all.rejection.reason, 'syntax');\n  assert.equal(all.tree, null);\n  assert.equal(all.sourcePlanes.length, 2, 'a completed derivation remains inspectable without inventing a successful CST');\n  assert.throws(() => checkGrammarSelectionMappedTree(mappingBundle(all)), /mapped grammar CST: a complete physical root CST is required/u);\n  const mixed = compileGrammar(mappedJsonHost(['Python', 'PythonTwin'], 'any-grammar', ['json-string', 'identity']),\n    { resolveGrammar: resolver }).parseTree(source);\n  assert.equal(mixed.rejection.reason, 'unsupportedEmbeddingMapping');\n  assert.match(mixed.rejection.diagnostics[0].detail, /syntactic context and one common source mapping/u);\n  const lexicalGrammar = mappedJsonHost(['Python']);\n  lexicalGrammar.rules.set(lexicalGrammar.start, Object.freeze({ ...lexicalGrammar.startRule(), kind: 'token' }));\n  const lexical = compileGrammar(lexicalGrammar, { resolveGrammar: resolver }).parseTree(source);\n  assert.equal(lexical.ok, false);\n  assert.equal(lexical.rejection.reason, 'unsupportedEmbeddingMapping');\n  const unknown = compileGrammar(mappedJsonHost(['missing']), { resolveGrammar: resolver }).parseTree(source);\n  assert.equal(unknown.rejection.reason, 'unknownGrammar');\n  const unknownMapping = compileGrammar(mappedJsonHost(['Python'], 'any-grammar', ['quoted-escape']),\n    { resolveGrammar: resolver }).parseTree(source);\n  assert.equal(unknownMapping.rejection.reason, 'unsupportedEmbeddingMapping');\n  for (const raw of ['\"\\\\uD800\"', '\"\\\\uDC00\"']) {\n    assert.equal(standaloneJson.parseTree(raw).ok, true, 'lone surrogate spelling is valid JSON syntax');\n    const result = compileGrammar(mappedJsonHost(['Python']), { resolveGrammar: resolver }).parseTree(raw);\n    assert.equal(result.ok, false);\n    assert.equal(result.rejection.reason, 'unsupportedEmbeddingMapping', 'the finite scalar profile must not silently replace non-scalar contents');\n  }\n  for (const raw of ['\"\\\\q\"', '\"\\\\u{41}\"', '\"\\\\u12\"', '\"line\\nbreak\"']) {\n    // An authored literal deliberately admits malformed text to isolate the\n    // mapping refusal. This is not a substitute for the shipped JSON grammar.\n    const grammar = parseGrammarLinks(`(grammar (start document))\\n(rule document normal (any-grammar (literal ${percentEncodeLinksText(raw)}) (grammar-candidate decoded json-string)))\\n`);\n    const result = compileGrammar(grammar, { resolveGrammar: () => literalChild('unused') }).parseTree(raw);\n    assert.equal(result.ok, false);\n    assert.equal(result.rejection.reason, 'invalidEmbeddingMapping');\n  }\n  observeMappedProfile('selection', [\"jsonStringAnyAllCandidateWitnessesPreserved\", \"jsonStringUnsupportedAndNonScalarProfilesRefused\", \"jsonStringLexicalAndMalformedInputsRefused\"],\n    'mapped any and all retain real witnesses while mixed lexical and non-scalar profiles refuse honestly');\n})"
+  },
+  {
+    "id": "repository.check-mapped-source-correspondence-forgeries",
+    "source": "js/tests/grammar-selection-json-string.test.js",
+    "name": "generic data decoding preserves forgeries while the mapped-source checker rejects false correspondences",
+    "inventoryName": "check mapped source correspondence forgeries",
+    "sourceText": "test('generic data decoding preserves forgeries while the mapped-source checker rejects false correspondences', () => {\n  const raw = '\"a\\\\n\\\\u03C0\\\\uD83D\\\\uDE00\"', child = literalChild('a\\nπ😀');\n  const outcome = compileGrammar(mappedJsonHost(['decoded']), { resolveGrammar: () => child }).parseTree(raw);\n  assert.equal(outcome.ok, true, JSON.stringify(outcome.rejection));\n  const genuine = mappingBundle(outcome);\n  checkGrammarSelectionMappedTree(genuine);\n  const edits = [\n    ['changed physical container start', value => { value.tree.start = 1; }],\n    ['changed physical container end', value => { value.tree.end -= 1; }],\n    ['changed decoded container start', value => { mappedEmbeddings(value.tree)[0].root.start = 1; }],\n    ['changed decoded container end', value => { mappedEmbeddings(value.tree)[0].root.end -= 1; }],\n    ['changed mapped embed start', value => { mappedEmbeddings(value.tree)[0].start += 1; }],\n    ['changed mapped embed end', value => { mappedEmbeddings(value.tree)[0].end -= 1; }],\n    ['absent registry', value => { delete value.sourcePlanes; }],\n    ['empty registry', value => { value.sourcePlanes = []; }],\n    ['null root', value => { value.tree = null; }],\n    ['unknown source kind', value => { value.sourcePlanes[0].kind = 'unowned-source'; }],\n    ['foreign encoding', value => { value.sourcePlanes[0].encoding = 'UTF-16'; }],\n    ['duplicate source identity', value => { value.sourcePlanes[1].identity = 0; }],\n    ['fractional source identity', value => { value.sourcePlanes[1].identity = 0.5; }],\n    ['changed root length', value => { value.sourcePlanes[0].byteLength += 1; }],\n    ['changed derived length', value => { value.sourcePlanes[1].byteLength += 1; }],\n    ['reordered definitions', value => { value.sourcePlanes.reverse(); }],\n    ['missing derivation', value => { value.sourcePlanes[1].derivation = null; }],\n    ['forward derivation', value => { value.sourcePlanes[1].derivation.input = 1; }],\n    ['unknown derivation', value => { value.sourcePlanes[1].derivation.operation = 'identity'; }],\n    ['different occurrence', value => { value.sourcePlanes[1].derivation.start = 1; }],\n    ['unknown definition field', value => { value.sourcePlanes[0].opaqueBinding = true; }],\n    ['unknown derivation field', value => { value.sourcePlanes[1].derivation.opaqueBinding = true; }],\n    ['unknown mapping profile', value => { mappedEmbeddings(value.tree)[0].selection.mapping = 'guessed-string'; }],\n    ['missing physical CST', value => { delete mappedEmbeddings(value.tree)[0].sourceChildren; }],\n    ['wrong input plane', value => { mappedEmbeddings(value.tree)[0].selection.sourceMapping.input = 1; }],\n    ['foreign output plane', value => { mappedEmbeddings(value.tree)[0].selection.sourceMapping.output = 2; }],\n    ['unknown mapping operation', value => { mappedEmbeddings(value.tree)[0].selection.sourceMapping.operation = 'identity'; }],\n    ['unknown mapping field', value => { mappedEmbeddings(value.tree)[0].selection.sourceMapping.opaqueBinding = true; }],\n    ['interval gap', value => { mappedEmbeddings(value.tree)[0].selection.sourceMapping.intervals[1][0] += 1; }],\n    ['interval overlap', value => { mappedEmbeddings(value.tree)[0].selection.sourceMapping.intervals[1][1] += 1; }],\n    ['interval reversal', value => { mappedEmbeddings(value.tree)[0].selection.sourceMapping.intervals.reverse(); }],\n    ['missing closing quote', value => { mappedEmbeddings(value.tree)[0].selection.sourceMapping.intervals.pop(); }],\n    ['fractional interval', value => { mappedEmbeddings(value.tree)[0].selection.sourceMapping.intervals[1][2] = 0.5; }],\n    ['negative interval', value => { mappedEmbeddings(value.tree)[0].selection.sourceMapping.intervals[0][0] = -1; }],\n    ['fifth interval column', value => { mappedEmbeddings(value.tree)[0].selection.sourceMapping.intervals[0].push(0); }],\n    ['surrogate width', value => { mappedEmbeddings(value.tree)[0].selection.sourceMapping.intervals[4][3] -= 1; }],\n    ['edited physical bytes', value => {\n      const token = firstTextLeaf(mappedEmbeddings(value.tree)[0].sourceChildren[0]);\n      token.text = '!' + token.text.slice(1);\n    }],\n    ['edited decoded bytes', value => {\n      const token = firstTextLeaf(mappedEmbeddings(value.tree)[0].root);\n      token.text = 'b' + token.text.slice(1);\n    }],\n  ];\n  assert.deepEqual(edits.map(([label]) => label), mappedFixture.runtimeCases.javascript.serializableForgeries);\n  for (const [label, edit] of edits) {\n    const value = readStructuredDataLino(structuredDataToLino(genuine));\n    edit(value);\n    for (const [encoding, decoded] of storedVariants(value)) {\n      assert.deepEqual(decoded, value, label + ': generic ' + encoding + ' decoding preserves the edited data');\n      assert.throws(() => checkGrammarSelectionMappedTree(decoded), /mapped grammar CST:/u,\n        label + ': only the explicit domain checker authenticates source correspondence');\n    }\n  }\n  for (const [label, objectAt, field] of [\n    ['bundle tree', value => value, 'tree'],\n    ['tree endpoint', value => value.tree, 'end'],\n    ['tree children', value => value.tree, 'children'],\n    ['source definition', value => value.sourcePlanes, '0'],\n    ['source length', value => value.sourcePlanes[0], 'byteLength'],\n  ]) {\n    const value = readStructuredDataLino(structuredDataToLino(genuine));\n    const owner = objectAt(value), original = owner[field];\n    let reads = 0;\n    Object.defineProperty(owner, field, { enumerable: true, configurable: true,\n      get() { reads += 1; return original; } });\n    assert.throws(() => checkGrammarSelectionMappedTree(value), /^TypeError: mapped grammar CST:/u, label + ': accessors refuse before reads');\n    assert.equal(reads, 0, label + ': validation cannot execute an unowned getter');\n  }\n  for (const [label, edit] of [\n    ['foreign prototype', value => { Object.setPrototypeOf(value.tree, { inheritedBinding: true }); }],\n    ['sparse concrete children', value => { delete value.tree.children[0]; }],\n    ['cyclic concrete tree', value => { value.tree.children.push(value.tree); }],\n    ['extra array field', value => { value.sourcePlanes.opaqueBinding = true; }],\n  ]) {\n    const value = readStructuredDataLino(structuredDataToLino(genuine));\n    edit(value);\n    assert.throws(() => checkGrammarSelectionMappedTree(value), /^TypeError: mapped grammar CST:/u,\n      label + ': the direct host boundary refuses before source interpretation');\n  }\n  // This counterfactual preserves every leaf span and mapping relation, but\n  // prefixes a real invalid UTF-8 byte outside the quoted region. It must not\n  // authenticate a root definition falsely labeled UTF-8.\n  const invalidUtf8 = readStructuredDataLino(structuredDataToLino(genuine));\n  const shiftPhysical = node => {\n    node.start += 1; node.end += 1;\n    if (node.selection?.mapping === 'json-string') {\n      node.selection.start += 1; node.selection.end += 1;\n      for (const row of node.selection.sourceMapping.intervals) { row[0] += 1; row[1] += 1; }\n    }\n    for (const child of node.sourceChildren ?? node.children ?? (node.root ? [node.root] : [])) shiftPhysical(child);\n  };\n  shiftPhysical(invalidUtf8.tree);\n  invalidUtf8.tree = { type: 'node', kind: 'physical_prefix', start: 0, end: byteLength(raw) + 1,\n    children: [{ type: 'token', kind: null, start: 0, end: 1, text: null, hex: 'ff' }, invalidUtf8.tree] };\n  invalidUtf8.sourcePlanes[0].byteLength += 1;\n  invalidUtf8.sourcePlanes[1].derivation.start += 1;\n  invalidUtf8.sourcePlanes[1].derivation.end += 1;\n  for (const [encoding, decoded] of storedVariants(invalidUtf8)) {\n    assert.deepEqual(decoded, invalidUtf8, encoding + ': invalid bytes remain inspectable');\n    assert.throws(() => checkGrammarSelectionMappedTree(decoded), /^TypeError: mapped grammar CST:/u,\n      'a new UTF-8 plane cannot silently include an invalid byte outside the mapping');\n  }\n\n  observeMappedProfile('boundaries', [\"serializableMappingForgeriesRefusedAfterReload\"],\n    'generic data decoding preserves forgeries while the mapped-source checker rejects false correspondences');\n  observeMappedProfile('selection', [\"invalidUtf8RootCannotClaimUtf8SourcePlane\"],\n    'generic data decoding preserves forgeries while the mapped-source checker rejects false correspondences');\n})"
+  },
+  {
+    "id": "repository.check-mapped-source-resource-and-failure-routes",
+    "source": "js/tests/grammar-selection-json-string.test.js",
+    "name": "derived parses share existing budgets and retain explicit source-qualified cycle and syntax failures",
+    "inventoryName": "check mapped source resource and failure routes",
+    "sourceText": "test('derived parses share existing budgets and retain explicit source-qualified cycle and syntax failures', () => {\n  const middle = mappedJsonHost(['decoded']), outer = mappedJsonHost(['Middle']);\n  const child = literalChild('x');\n  const parser = compileGrammar(outer, { resolveGrammar: name => name === 'Middle' ? middle : child });\n  const source = JSON.stringify(JSON.stringify('x'));\n  assert.equal(source, mappedFixture.inputs.nesting.twoLevels);\n  const originalStep = Executor.prototype.step, budgets = new Set(), memories = new Set(), sources = new Map();\n  let outcome;\n  Executor.prototype.step = function () {\n    budgets.add(this.budget);\n    memories.add(this.budget.memory);\n    if (this.bytes instanceof Uint8Array && this.expectations) {\n      if (!sources.has(this.bytes)) sources.set(this.bytes, new Set());\n      sources.get(this.bytes).add(this.expectations);\n    }\n    return originalStep.call(this);\n  };\n  try { outcome = parser.parseTree(source); }\n  finally { Executor.prototype.step = originalStep; }\n  assert.equal(outcome.ok, true, JSON.stringify(outcome.rejection));\n  assert.equal(budgets.size, 1, 'derived sources never restart the shared step budget');\n  assert.equal(memories.size, 1, 'derived sources never restart memory accounting');\n  assert.equal(sources.size, 3, 'root and two decoded buffers are concrete separate planes');\n  const contexts = [...sources.values()];\n  for (let first = 0; first < contexts.length; first += 1) for (let second = first + 1; second < contexts.length; second += 1) {\n    assert.equal([...contexts[first]].some(value => contexts[second].has(value)), false,\n      'scanner expectations from different source buffers must remain independent');\n  }\n  for (const [options, reason] of [[{ stepLimit: 0 }, 'stepLimit'], [{ memoryLimit: 0 }, 'memoryBudget'], [{ maxDepth: 0 }, 'nestingDepth']]) {\n    const limited = parser.parseTree(source, options);\n    assert.equal(limited.ok, false);\n    assert.equal(limited.rejection.reason, reason);\n    assert.equal(limited.rejection.limit, 0);\n  }\n  for (const [options, kind] of [[{ stepLimit: 0 }, StepLimitReached], [{ memoryLimit: 0 }, MemoryBudgetReached], [{ maxDepth: 0 }, NestingTooDeep]]) {\n    assert.throws(() => checkGrammarSelectionMappedTree(mappingBundle(outcome), options), kind,\n      'the validator reuses the exact existing resource limits and error types');\n  }\n  const cyclic = parseGrammarLinks('(grammar (start document))\\n(rule document normal (any-grammar (literal x) (grammar-candidate cycle identity)))\\n');\n  const cycleResult = compileGrammar(mappedJsonHost(['cycle']), { resolveGrammar: () => cyclic }).parseTree('\"x\"');\n  assert.equal(cycleResult.ok, false);\n  assert.equal(cycleResult.rejection.reason, 'nonConsumingEmbeddingCycle');\n  const cycle = cycleResult.rejection.diagnostics.find(item => item.reason === 'nonConsumingEmbeddingCycle');\n  assert.equal(cycle.source, 1);\n  assert.equal(cycle.sourceStart, 0);\n  assert.equal(cycle.sourceEnd, 1);\n  assert.equal(cycle.offsetSemantics, 'covering-source-spelling');\n  assert.deepEqual(cycle.sourceRoute.at(-1), {\n    output: 1, outputStart: 0, outputEnd: 1, input: 0, inputStart: 1, inputEnd: 2, displayAnchor: 1,\n  });\n  const invalidBytes = Uint8Array.from([255, 34, 120, 34]);\n  const prefixedGrammar = mappedJsonHost(['decoded']);\n  prefixedGrammar.rules.set(prefixedGrammar.start, Object.freeze({ ...prefixedGrammar.startRule(),\n    expression: { kind: 'seq', items: [{ kind: 'any' }, prefixedGrammar.startRule().expression] } }));\n  const invalidPlane = compileGrammar(prefixedGrammar, { resolveGrammar: () => child }).parseTree(invalidBytes);\n  assert.equal(invalidPlane.ok, false);\n  assert.equal(invalidPlane.rejection.reason, 'unsupportedEmbeddingMapping');\n  assert.equal(Object.hasOwn(invalidPlane, 'sourcePlanes'), false, 'no invalid physical plane is declared UTF-8');\n  const identityGrammar = mappedJsonHost(['raw'], 'any-grammar', ['identity']);\n  identityGrammar.rules.set(identityGrammar.start, Object.freeze({ ...identityGrammar.startRule(),\n    expression: { kind: 'seq', items: [{ kind: 'any' }, identityGrammar.startRule().expression] } }));\n  const identity = compileGrammar(identityGrammar, { resolveGrammar: () => literalChild('\"x\"') }).parseTree(invalidBytes);\n  assert.equal(identity.ok, true, 'existing identity parsing still accepts and preserves byte input');\n  assert.deepEqual(Object.keys(identity), ['ok', 'tree', 'ambiguities', 'rejection']);\n  assert.deepEqual(physicalBytes(identity.tree), [...invalidBytes]);\n  const invalidSource = JSON.stringify(originalPython.recoverySource);\n  assert.equal(standalonePython.parseTree(originalPython.recoverySource).ok, false, 'retain the exact original invalid Python input');\n  const rejected = compileGrammar(mappedJsonHost(['Python']), { resolveGrammar: () => shippedPython }).parseTree(invalidSource);\n  assert.equal(rejected.ok, false);\n  assert.equal(rejected.rejection.reason, 'syntax');\n  assert.equal(rejected.tree, null, 'no fabricated token envelope claims a successful child CST');\n  assert.equal(rejected.sourcePlanes.length, 2);\n  const diagnostic = rejected.rejection.diagnostics.find(item => item.reason === 'mappedSyntax' && item.language === 'Python');\n  assert.ok(diagnostic);\n  assert.equal(diagnostic.source, 1);\n  assert.equal(diagnostic.offsetSemantics, 'covering-source-spelling');\n  assert.ok(diagnostic.sourceStart >= 0 && diagnostic.sourceStart <= byteLength(originalPython.recoverySource));\n  assert.equal(diagnostic.sourceRoute.at(-1).input, 0);\n  assert.ok(diagnostic.sourceRoute.at(-1).inputStart >= 0);\n  assert.ok(diagnostic.sourceRoute.at(-1).inputEnd <= byteLength(invalidSource));\n  assert.throws(() => checkGrammarSelectionMappedTree(mappingBundle(rejected)), /mapped grammar CST: a complete physical root CST is required/u,\n    'a failed result can retain source trace without authenticating unavailable CST bytes');\n  observeMappedProfile('recursion', [\"mappedParsersRetainExistingLimitRefusals\", \"mappedCycleAndSyntaxFailuresRetainSourceRoutes\", \"failedMappedParseCannotAuthenticateMissingRoot\"],\n    'derived parses share existing budgets and retain explicit source-qualified cycle and syntax failures');\n})"
+  },
+  {
+    "id": "repository.check-mapped-selection-memo-identities",
+    "source": "js/tests/grammar-selection-json-string.test.js",
+    "name": "selection memo keys distinguish mapping profiles from exact delimiter-bearing grammar names",
+    "inventoryName": "check mapped selection memo identities",
+    "sourceText": "test('selection memo keys distinguish mapping profiles from exact delimiter-bearing grammar names', () => {\n  const decodedSource = 'x', physicalSource = JSON.stringify(decodedSource);\n  const identityName = 'json-string|decoded';\n  assert.equal(decodedSource, mappedFixture.inputs.memo.decoded);\n  assert.equal(physicalSource, mappedFixture.inputs.nesting.oneLevel);\n  assert.equal(identityName, mappedFixture.inputs.memo.identityName);\n  for (const warmMapping of ['identity', 'json-string']) {\n    const selectedMapping = warmMapping === 'identity' ? 'json-string' : 'identity';\n    const host = mappedJsonHost(['decoded']);\n    const mapped = host.startRule().expression;\n    const identity = { ...mapped, items: [\n      { kind: 'grammar-candidate', name: identityName, mapping: 'identity' },\n    ] };\n    const selections = { identity, 'json-string': mapped };\n    host.rules.set(host.start, Object.freeze({ ...host.startRule(), expression: {\n      kind: 'seq', items: [\n        { kind: 'and', item: selections[warmMapping] }, selections[selectedMapping],\n      ],\n    } }));\n    const grammars = new Map([\n      [identityName, literalChild(physicalSource)], ['decoded', literalChild(decodedSource)],\n    ]);\n    const outcome = compileGrammar(host, { resolveGrammar: name => grammars.get(name) })\n      .parseTree(physicalSource);\n    assert.equal(outcome.ok, true, JSON.stringify(outcome.rejection));\n    const retained = outcome.tree.children.filter(node => node.type === 'embed');\n    assert.equal(retained.length, 1, 'the warming lookahead retains no selected CST');\n    const [selected] = retained;\n    assert.equal(selected.selection.mapping, selectedMapping);\n    assert.equal(selected.language, selectedMapping === 'identity' ? identityName : 'decoded');\n    const selectedSource = selectedMapping === 'identity' ? physicalSource : decodedSource;\n    assert.deepEqual(selected.root, compileGrammar(grammars.get(selected.language)).parseTree(selectedSource).tree,\n      'a completed memo entry belongs to its exact grammar name and mapping profile');\n    assert.equal(outcome.sourcePlanes.length, 2, 'both profiles share the one actual completed derivation');\n    assertConcreteLeaves(outcome.tree, physicalSource);\n    checkGrammarSelectionMappedTree(mappingBundle(outcome));\n  }\n  observeMappedProfile('selection', [\"mappedProfileMemoKeysKeepExactGrammarNames\"],\n    'selection memo keys distinguish mapping profiles from exact delimiter-bearing grammar names');\n})"
+  },
+  {
+    "id": "repository.read-third-schema-source-control",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-third-extension-closure.test.mjs",
+    "name": "fixture",
+    "inventoryName": "read third schema source control",
+    "sourceText": "function fixture() {\n  const read = file => readFileSync(new URL(file, import.meta.url));\n  const receiptBytes = read('./data/raw-schema-source-closure.lino');\n  const firstBytes = read('./data/raw-schema-extension-closure.lino');\n  const secondBytes = read('./data/raw-schema-second-extension-closure.lino');\n  const thirdBytes = read('./data/raw-schema-third-extension-closure.lino');\n  return {receiptBytes, firstBytes, secondBytes, thirdBytes,\n    receipt: readStructuredDataLino(receiptBytes.toString('utf8')),\n    first: readStructuredDataLino(firstBytes.toString('utf8')),\n    second: readStructuredDataLino(secondBytes.toString('utf8')),\n    third: readStructuredDataLino(thirdBytes.toString('utf8')),\n    bytes: read('../../js/src/data/typed-program-links-schema.lino'),\n    sources: readOriginalLinkRawHistoricalSources(read('./raw-native-observations.mjs').toString('utf8')),\n    authoredSources: Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES.map(file => [file, read('../../' + file)]))};\n}"
+  },
+  {
+    "id": "repository.check-third-schema-control-closure",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-third-extension-closure.test.mjs",
+    "name": "verify",
+    "inventoryName": "check third schema control closure",
+    "sourceText": "const verify = value => verifyOriginalLinkRawSchemaThirdExtensionClosure(value.receipt, value.first, value.bytes,\n  value.sources, value.second, value.third, value.authoredSources);"
+  },
+  {
+    "id": "repository.visit-mapped-test-concrete-leaf",
+    "source": "js/tests/grammar-selection-json-string.test.js",
+    "name": "visit",
+    "inventoryName": "visit mapped test concrete leaf",
+    "sourceText": "const visit = node => {\n    if (node.type === 'token' || node.type === 'error') {\n      assert.deepEqual(physicalBytes(node), [...bytes.subarray(node.start, node.end)], 'leaf text belongs to its actual source plane');\n    }\n    for (const child of node.sourceChildren ?? node.children ?? (node.root ? [node.root] : [])) visit(child);\n  };",
+    "ownerContexts": [
+      "function assertConcreteLeaves(tree, source) {"
+    ]
+  },
+  {
+    "id": "repository.resolve-mapped-control-grammar",
+    "source": "js/tests/grammar-selection-json-string.test.js",
+    "name": "resolver",
+    "inventoryName": "resolve mapped control grammar",
+    "sourceText": "const resolver = name => name === 'Python' || name === 'PythonTwin' ? shippedPython\n    : name === 'JSON' ? parseGrammarLinks(shippedJsonListing) : undefined;",
+    "ownerContexts": [
+      "test('mapped any and all retain real witnesses while mixed lexical and non-scalar profiles refuse honestly', () => {"
+    ]
+  },
+  {
+    "id": "repository.shift-mapped-forgery-physical-coordinates",
+    "source": "js/tests/grammar-selection-json-string.test.js",
+    "name": "shiftPhysical",
+    "inventoryName": "shift mapped forgery physical coordinates",
+    "sourceText": "const shiftPhysical = node => {\n    node.start += 1; node.end += 1;\n    if (node.selection?.mapping === 'json-string') {\n      node.selection.start += 1; node.selection.end += 1;\n      for (const row of node.selection.sourceMapping.intervals) { row[0] += 1; row[1] += 1; }\n    }\n    for (const child of node.sourceChildren ?? node.children ?? (node.root ? [node.root] : [])) shiftPhysical(child);\n  };",
+    "ownerContexts": [
+      "test('generic data decoding preserves forgeries while the mapped-source checker rejects false correspondences', () => {"
+    ]
+  },
+  {
+    "id": "repository.create-formal-partition-inventory-control",
+    "source": "js/tests/issue-195-formal-ai-partitions.test.js",
+    "name": "inventoryRuns",
+    "inventoryName": "create formal partition inventory control",
+    "sourceText": "function inventoryRuns() {\n  // The mock oracle is authored without the production partition selector.\n  const identities = [{ target: 'unit', name: ratchet }];\n  for (let index = 0; index < 133; index += 1) {\n    const owner = nativeFiles[index % nativeFiles.length];\n    identities.push({ target: owner.target, name: `${owner.filter}synthetic_${index}` });\n  }\n  identities.push(...probes.map((name) => ({ target: 'issue_195_meta_language_probe', name })));\n  return targets.map((target) => {\n    const names = identities.filter((entry) => entry.target === target).map(({ name }) => name);\n    return { target, exit: 0, harnessArguments: [...formalAiWorkloadLogicalFilters(fixture), '--list'],\n      transcript: `${names.map((name) => `${name}: test`).join('\\n')}\\n${names.length} tests, 0 benchmarks\\n` };\n  });\n}"
+  },
+  {
+    "id": "repository.create-formal-partition-execution-control",
+    "source": "js/tests/issue-195-formal-ai-partitions.test.js",
+    "name": "executionRuns",
+    "inventoryName": "create formal partition execution control",
+    "sourceText": "function executionRuns(inventory, partition) {\n  const assigned = inventory.filter((entry) => entry.probe ||\n    (partition === 'corpus-ratchet' ? entry.target === 'unit' && entry.name === ratchet : !(entry.target === 'unit' && entry.name === ratchet)));\n  return targets.flatMap((target) => {\n    const names = assigned.filter((entry) => entry.target === target).map(({ name }) => name);\n    return names.length ? [{ target, exit: 0,\n      harnessArguments: ['--test-threads=1', '--include-ignored', '--exact', ...names],\n      transcript: names.map((name) => `test ${name} ... ok`).join('\\n') + '\\n' }] : [];\n  });\n}"
+  },
+  {
+    "id": "repository.create-formal-partition-valid-control-pair",
+    "source": "js/tests/issue-195-formal-ai-partitions.test.js",
+    "name": "passingPair",
+    "inventoryName": "create formal partition valid control pair",
+    "sourceText": "function passingPair() {\n  const expected = {\n    identity: { repository: 'link-foundation/meta-language', commit: 'b'.repeat(40), run: '123', attempt: '2',\n      fixtureSha256: 'c'.repeat(64), semanticProjectionFixtureSha256: 'd'.repeat(64),\n      sourceSha256: { runner: 'e'.repeat(64), partition: 'f'.repeat(64), probe: 'a'.repeat(64) } },\n    artifacts: { 'corpus-ratchet': 'part-corpus-ratchet-bbb-run123-attempt2', remaining: 'part-remaining-bbb-run123-attempt2' },\n    candidates: { npm: { file: 'meta-language-1.2.3.tgz', sha256: '1'.repeat(64), integrity: 'sha512-exact' },\n      crate: { file: 'meta-language-1.2.3.crate', sha256: '2'.repeat(64) } },\n    profile: { CARGO_BUILD_JOBS: '2', CARGO_INCREMENTAL: '0', CARGO_PROFILE_DEV_DEBUG: '0',\n      CARGO_PROFILE_TEST_DEBUG: '0', RUST_TEST_THREADS: '1', patchedCrateOptLevel: 3 },\n    platform: 'linux-x64', nativeWorkloads: 134, javascriptWorkloads: 148, producerResult: 'success',\n  };\n  const listed = inventoryRuns();\n  const inventory = readFormalAiNativeInventory(listed, fixture);\n  const javascriptTests = Array.from({ length: 148 }, (_, index) => ({\n    file: dataFiles[index % dataFiles.length], name: `synthetic ${index}`, outcome: 'passed',\n  }));\n  const outputs = { documents: {}, queries: {}, linkEdits: {}, projections: {}, ruleSet: {}, seedNetwork: {} };\n  const comparison = compareRuntimeOutputs(outputs, outputs);\n  const checked = { name: 'actual synthetic process check', holds: true, detail: {} };\n  const assertion = () => ({ holds: true, checks: [structuredClone(checked)] });\n  const inputs = { documents: [], labels: ['lino'], rules: [], linkEdits: [], projections: [], semanticProjections: [] };\n  const pair = ['corpus-ratchet', 'remaining'].map((partition) => {\n    const files = new Map();\n    const retain = (file, text) => {\n      const bytes = Buffer.from(text);\n      files.set(file, bytes);\n      return { file, bytes: bytes.length, sha256: digest(bytes) };\n    };\n    const data = (file, value) => retain(file, structuredDataToLino(value));\n    const nativeExecution = executionRuns(inventory, partition);\n    const selected = inventory.filter((entry) => entry.probe ||\n      (partition === 'corpus-ratchet' ? entry.target === 'unit' && entry.name === ratchet : !(entry.target === 'unit' && entry.name === ratchet)));\n    const rows = (isProbe) => selected.filter(({ probe }) => probe === isProbe).map(({ file, name }) => ({ file, name, outcome: 'passed' }));\n    const javascriptProbe = { outputs, sharedConceptsReused: assertion(), distinctionsPreserved: assertion(), semanticProjectionObservations: [] };\n    const compiler = 'rustc 1.99.0\\nrelease: 1.99.0\\nhost: x86_64-unknown-linux-gnu\\n';\n    const profileEnvironment = { CARGO_PROFILE_DEV_DEBUG: '0', CARGO_PROFILE_TEST_DEBUG: '0' };\n    const configuration = ['--config', `patch.crates-io.meta-language.path=${JSON.stringify(`/different-${partition}/crate`)}`,\n      '--config', 'profile.dev.package.meta-language.opt-level=3'];\n    const evidence = {\n      nativeInventory: listed.map((run) => ({ ...run, transcript: retain(`list-${run.target}.log`, run.transcript) })),\n      nativeExecution: nativeExecution.map((run) => ({ ...run, transcript: retain(`execute-${run.target}.log`, run.transcript) })),\n      javascriptEvents: retain('javascript-test-events.lino', javascriptTests.map(({ file, name, outcome }) => ({\n        kind: 'test', name: `${file}${TEST_NAME_SEPARATOR}${name}`, outcome,\n      })).map((event) => structuredDataRecordToLino(event)).join('')),\n      javascriptProbe: { file: data('javascript-probe.lino', javascriptProbe), exit: 0 },\n      javascriptOutputs: data('javascript-outputs.lino', outputs),\n      rustOutputs: data('rust-outputs.lino', outputs),\n      rustDistinctions: data('distinctionsPreserved.lino', { checks: [checked] }),\n      inputs: data('formal-ai-inputs.lino', inputs),\n      cargoLock: retain('post-update-Cargo.lock', 'pinned actual Cargo.lock bytes\\n'),\n      compiler: retain('rust-compiler-identity.txt', compiler),\n      compilerProfile: data('compiler-profile.lino', { profile: expected.profile, environment: profileEnvironment, configuration }),\n      selfAstBefore: data('self-ast-before.lino', [['a.lino', 'source exact\\n    total_link_count 1\\n']]),\n      selfAstAfter: data('self-ast-after.lino', [['a.lino', 'source exact\\n    total_link_count 2\\n']]),\n    };\n    const result = {\n      schemaVersion: 1, fixture: FORMAL_AI_WORKLOAD_FIXTURE, fixtureSha256: expected.identity.fixtureSha256,\n      platform: expected.platform, node: 'v24.0.0',\n      formalAi: { repository: fixture.repository, revision: fixture.revision, checkedOutRevision: fixture.revision,\n        verifiedBlobs: fixture.workloads.map(({ file, blob }) => ({ file, actual: blob, expected: blob, matches: true })) },\n      comparison,\n      inputs: { file: evidence.inputs.file, sha256: evidence.inputs.sha256, documents: 0, labels: ['lino'], rules: 0,\n        linkEdits: 0, projections: 0, semanticProjections: 0, semanticProjectionFixtureSha256: expected.identity.semanticProjectionFixtureSha256 },\n      npm: { skipped: false, version: '1.2.3', checksum: { artifact: expected.candidates.npm.file,\n        sha256: expected.candidates.npm.sha256, expectedSha256: expected.candidates.npm.sha256,\n        expectedIntegrity: expected.candidates.npm.integrity, installedIntegrity: expected.candidates.npm.integrity },\n        resolution: { installedVersion: '1.2.3', lockResolved: `file:/consumer/${partition}/artifact.tgz`, freshCache: true, consumerHadNoModules: true },\n        tests: structuredClone(javascriptTests), counts: countOutcomes(javascriptTests), exit: 0,\n        workloadFiles: dataFiles, outputs: { file: evidence.javascriptOutputs.file, sha256: evidence.javascriptOutputs.sha256 },\n        semanticProjectionObservations: [], probe: {\n          sharedConceptsReused: { holds: true, checks: [checked, ...comparison] }, distinctionsPreserved: assertion(),\n        } },\n      crate: { skipped: false, version: '1.2.3', checksum: { artifact: expected.candidates.crate.file,\n        sha256: expected.candidates.crate.sha256, expectedSha256: expected.candidates.crate.sha256 },\n        resolution: { installedVersion: '1.2.3', unpackedDirectory: `/different-${partition}/crate/`,\n          manifestPath: `/different-${partition}/crate/Cargo.toml`, metadataSource: null, lockSource: null,\n          metaLanguagePackages: 1, lockRefresh: { exit: 0 }, patch: configuration.join(' ') },\n        filters: formalAiWorkloadLogicalFilters(fixture), workloadFiles: workloadFiles(fixture, 'rust'),\n        tests: rows(false), counts: countOutcomes(rows(false)), probeTests: rows(true), exit: 0,\n        outputs: { file: evidence.rustOutputs.file, sha256: evidence.rustOutputs.sha256 },\n        selfAstCensus: { exit: 0, documents: 1, linkTotals: [{ file: 'a.lino', before: 1, after: 2 }], otherChanges: [] },\n        probe: {\n          sharedConceptsReused: { holds: true, test: probes[0], outcome: 'passed', checks: [checked, ...comparison] },\n          distinctionsPreserved: { holds: true, test: probes[1], outcome: 'passed', checks: [checked] },\n        } },\n    };\n    return { envelope: { kind: 'formal-ai-workload-partition', partitionSchemaVersion: 1,\n      identity: { ...expected.identity, partition, artifact: expected.artifacts[partition] },\n      captureErrors: [], build: { platform: expected.platform, profile: expected.profile,\n        profileEnvironment, compiler,\n        cargoLockSha256: evidence.cargoLock.sha256 }, inventory, evidence, result }, files };\n  });\n  return { expected, pair };\n}"
+  },
+  {
+    "id": "repository.read-formal-partition-workflow-problems",
+    "source": "js/tests/issue-195-evidence-formal-ai-partitions.test.js",
+    "name": "partitionWorkflowProblems",
+    "inventoryName": "read formal partition workflow problems",
+    "sourceText": "function partitionWorkflowProblems(workflow, runner, transport) {\n  const jobs = new Map(parseWorkflow(workflow).map((job) => [job.id, job]));\n  const producer = jobs.get('formal-ai-workload-parts');\n  const merger = jobs.get('formal-ai-workloads');\n  const problems = [];\n  const requireValue = (condition, message) => { if (!condition) problems.push(message); };\n  requireValue(Boolean(producer && merger), 'both execution matrix and canonical merger are required');\n  if (!producer || !merger) return problems;\n  requireValue(JSON.stringify(needs(producer)) === JSON.stringify(['candidates']), 'both consumers retain the original upstream JavaScript barrier');\n  requireValue(JSON.stringify(needs(merger)) === JSON.stringify(['candidates', 'formal-ai-workload-parts']), 'the canonical merger must wait for both real matrix cells');\n  requireValue(/fail-fast: false/u.test(producer.header) && /partition: \\[corpus-ratchet, remaining\\]/u.test(producer.header), 'exactly two isolated execution cells collect all failures');\n  requireValue(/timeout-minutes: 120/u.test(producer.header), 'the original native deadline is unchanged');\n  requireValue(/group: issue-195-formal-ai-workloads-\\$\\{\\{ github\\.ref \\}\\}-\\$\\{\\{ matrix\\.partition \\}\\}/u.test(producer.header), 'producer concurrency cannot cancel its sibling');\n  requireValue(/!cancelled\\(\\) && needs\\.candidates\\.result == 'success'/u.test(merger.header), 'failed upstream JavaScript cannot start a source-only merger');\n  const execute = runStep(producer, 'run-formal-ai-workloads.mjs');\n  requireValue(Boolean(execute) && execute.run.includes('--partition \"${{ matrix.partition }}\"') &&\n    execute.run.includes('--cargo-target-dir \"$RUNNER_TEMP/issue-195-formal-ai-build/target\"') &&\n    execute.run.includes('--out \".issue-195-work/formal-ai-partitions/${{ matrix.partition }}/partition.lino\"'), 'native cells use genuine partial outputs and the original owned target');\n  requireValue(execute && !/cache-hit|\\n\\s+if:/u.test(execute.text), 'cache hits cannot skip either real consumer');\n  const save = producer.steps.find((step) => step.name === 'Save Formal AI build outputs');\n  requireValue(save?.text.includes(\"matrix.partition == 'remaining'\"), 'only the remaining cell saves the shared build cache');\n  const partialUpload = producer.steps.find((step) => step.text.includes('name: issue-195-formal-ai-partition-${{ matrix.partition }}-'));\n  requireValue(partialUpload?.text.includes('${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}') &&\n    partialUpload.text.includes('path: .issue-195-work/formal-ai-partitions/${{ matrix.partition }}/'), 'partials retain exact commit/run/attempt and producer-scoped directories');\n  const merged = runStep(merger, 'run-formal-ai-workloads.mjs');\n  requireValue(Boolean(merged) && merged.run.includes('--merge-partitions .issue-195-work/formal-ai-partitions/corpus-ratchet,.issue-195-work/formal-ai-partitions/remaining') &&\n    merged.run.includes('--producer-result \"${{ needs.formal-ai-workload-parts.result }}\"') &&\n    merged.run.includes('--out issue-195-artifacts/formal-ai-workloads/report.lino'), 'only the proven union writes the original canonical report');\n  requireValue(!merger.steps.some((step) => /rust-toolchain|\\brustc\\b|\\bcargo\\b|--partition \"/u.test(step.text)), 'the merge job does no native build or workload work');\n  const npm = merger.steps.findIndex((step) => /npm ci --ignore-scripts/u.test(step.run));\n  requireValue(npm >= 0 && npm < merger.steps.indexOf(merged), 'the canonical linked reader installs before merge');\n  for (const partition of ['corpus-ratchet', 'remaining']) {\n    const exact = `name: issue-195-formal-ai-partition-${partition}-${'${{ github.sha }}'}-${'${{ github.run_id }}'}-${'${{ github.run_attempt }}'}`;\n    const download = merger.steps.find((step) => step.text.includes(exact));\n    requireValue(download?.text.includes(`path: .issue-195-work/formal-ai-partitions/${partition}`), 'each exact partial downloads into a disjoint directory');\n  }\n  requireValue(merger.steps.some((step) => step.text.includes('name: issue-195-formal-ai-workloads-${{ github.sha }}') &&\n    step.text.includes('path: issue-195-artifacts/formal-ai-workloads/report.lino')), 'the public report artifact identity stays unchanged');\n  for (const job of ['javascript-suite', 'rust-suite', 'delivery', 'acceptance']) {\n    requireValue(needs(jobs.get(job)).includes('formal-ai-workloads'), `${job} still requires the canonical full-report job`);\n  }\n  const javascript = runner.indexOf('report.npm = await guarded');\n  const native = runner.indexOf('report.crate = skipRust');\n  requireValue(javascript >= 0 && native > javascript, 'every local complete JavaScript consumer runs before native work');\n  requireValue(/if \\(mergePartitions\\)[\\s\\S]*?mergeFormalAiPartitionBundles[\\s\\S]*?else await main\\(\\)/u.test(runner), 'merge mode never enters the workload main');\n  requireValue(runner.includes(\"const cargoTargetDirectory = formalAiCargoTargetDirectory(workDirectory, option('--cargo-target-dir', null));\") &&\n    runner.indexOf('async function rustWorkloads') < runner.indexOf('const cargoTargetDirectory ='), 'only actual native workloads initialize Cargo targets');\n  requireValue(transport.includes('readFormalAiNativeInventory(state.nativeInventory, fixture)') &&\n    transport.includes('formalAiWorkloadPartitionCommands(state.inventory, partition)'), 'actual full lists control exact execution');\n  requireValue(transport.includes('mergeFormalAiWorkloadPartitions(parts, fixture, expected)') &&\n    transport.includes('formalAiPartitionExpectations({ root, tarball, crate, fixture, environment, producerResult })'), 'the merger builds its own expected context rather than trusting envelopes');\n  requireValue(!/spawn|execFile|node:child_process/u.test(transport), 'bundle transport/merge cannot run native processes');\n  return problems;\n}"
+  },
+  {
+    "id": "repository.check-formal-partition-complete-meaning",
+    "source": "js/tests/issue-195-formal-ai-partitions.test.js",
+    "name": "formal AI partitions preserve 134 target-qualified workloads, both probes and one 148-test JavaScript meaning",
+    "inventoryName": "check formal partition complete meaning",
+    "sourceText": "test('formal AI partitions preserve 134 target-qualified workloads, both probes and one 148-test JavaScript meaning', () => {\n  const { expected, pair } = passingPair();\n  for (const part of pair) {\n    const result = validateFormalAiWorkloadPartition(part.envelope, fixture, expected, part.files);\n    assert.deepEqual(result.problems, []);\n    for (const runtime of ['javascript', 'rust']) assert.deepEqual(validateFormalAiWorkloadReport(part.envelope, fixture, runtime).observed, []);\n  }\n  const result = mergeFormalAiWorkloadPartitions(pair, fixture, expected);\n  assert.deepEqual(result.problems, []);\n  assert.equal(result.report.crate.tests.length, 134);\n  assert.equal(result.report.npm.tests.length, 148);\n  assert.equal(result.report.crate.probeTests.length, 2);\n  for (const runtime of ['javascript', 'rust']) assert.deepEqual(validateFormalAiWorkloadReport(result.report, fixture, runtime).observed, [...FORMAL_AI_WORKLOAD_ASSERTIONS]);\n  assert.deepEqual(pair.map(({ envelope }) => envelope.result.crate.tests.length), [1, 133]);\n})"
+  },
+  {
+    "id": "repository.check-formal-partition-exact-execution-refusals",
+    "source": "js/tests/issue-195-formal-ai-partitions.test.js",
+    "name": "formal AI exact-target execution refuses missing repeated unknown failed ignored and changed argv rows",
+    "inventoryName": "check formal partition exact execution refusals",
+    "sourceText": "test('formal AI exact-target execution refuses missing repeated unknown failed ignored and changed argv rows', () => {\n  const inventory = readFormalAiNativeInventory(inventoryRuns(), fixture);\n  const runs = executionRuns(inventory, 'remaining');\n  assert.equal(readFormalAiNativeExecution(runs, inventory, 'remaining').length, 135);\n  for (const mutate of [\n    (copy) => { copy[0].transcript = copy[0].transcript.split('\\n').slice(1).join('\\n'); },\n    (copy) => { copy[0].transcript += copy[0].transcript.split('\\n')[0] + '\\n'; },\n    (copy) => { copy[0].transcript += 'test unrelated::invented ... ok\\n'; },\n    (copy) => { copy[0].transcript = copy[0].transcript.replace(' ... ok', ' ... FAILED'); },\n    (copy) => { copy[0].transcript = copy[0].transcript.replace(' ... ok', ' ... ignored'); },\n    (copy) => { copy[0].exit = 1; },\n    (copy) => { copy[0].harnessArguments.pop(); },\n    (copy) => { copy.push(structuredClone(copy[0])); },\n  ]) {\n    const copy = structuredClone(runs); mutate(copy);\n    assert.throws(() => readFormalAiNativeExecution(copy, inventory, 'remaining'));\n  }\n  assert.ok(formalAiWorkloadPartitionCommands(inventory, 'corpus-ratchet').every(({ harnessArguments }) => harnessArguments.length > 3));\n  assert.equal(selectFormalAiWorkloadPartition(inventory, 'corpus-ratchet').filter(({ probe }) => !probe).length, 1);\n})"
+  },
+  {
+    "id": "repository.check-formal-partition-target-ownership",
+    "source": "js/tests/issue-195-formal-ai-partitions.test.js",
+    "name": "formal AI target-qualified inventories retain identical test names in different binaries and reject ambiguous owners",
+    "inventoryName": "check formal partition target ownership",
+    "sourceText": "test('formal AI target-qualified inventories retain identical test names in different binaries and reject ambiguous owners', () => {\n  const smallFixture = { workloads: [\n    { kind: 'test', file: 'rust/tests/unit/example.rs', target: 'unit', filter: 'shared::' },\n    { kind: 'test', file: 'rust/tests/unit/ratchet.rs', target: 'unit', filter: 'issue_1138_rust_projection::' },\n    { kind: 'test', file: 'rust/tests/source/example.rs', target: 'source', filter: 'shared::' },\n  ] };\n  const names = [[ratchet, 'shared::same'], ['shared::same'], probes];\n  const runs = targets.map((target, index) => ({ target, exit: 0,\n    harnessArguments: [...formalAiWorkloadLogicalFilters(smallFixture), '--list'],\n    transcript: names[index].map((name) => `${name}: test`).join('\\n') + `\\n${names[index].length} tests, 0 benchmarks\\n` }));\n  const inventory = readFormalAiNativeInventory(runs, smallFixture);\n  assert.equal(inventory.filter(({ name }) => name === 'shared::same').length, 2);\n  const duplicate = structuredClone(runs);\n  duplicate[0].transcript = duplicate[0].transcript.replace('2 tests, 0 benchmarks', 'shared::same: test\\n3 tests, 0 benchmarks');\n  assert.throws(() => readFormalAiNativeInventory(duplicate, smallFixture), /duplicate/u);\n  const ambiguous = structuredClone(smallFixture);\n  ambiguous.workloads.push({ ...ambiguous.workloads[0], file: 'rust/tests/unit/other.rs' });\n  const changed = structuredClone(runs);\n  for (const run of changed) run.harnessArguments = [...formalAiWorkloadLogicalFilters(ambiguous), '--list'];\n  assert.throws(() => readFormalAiNativeInventory(changed, ambiguous), /2 fixture owners/u);\n})"
+  },
+  {
+    "id": "repository.check-formal-partition-context-refusals",
+    "source": "js/tests/issue-195-formal-ai-partitions.test.js",
+    "name": "formal AI merger refuses absent duplicate stale foreign compiler profile lock and source facts",
+    "inventoryName": "check formal partition context refusals",
+    "sourceText": "test('formal AI merger refuses absent duplicate stale foreign compiler profile lock and source facts', () => {\n  const { expected, pair } = passingPair();\n  for (const parts of [[], [pair[0]], [pair[0], pair[0]], [...pair, pair[1]]]) {\n    const result = mergeFormalAiWorkloadPartitions(parts, fixture, expected);\n    assert.ok(result.problems.length); assert.equal(result.report, null);\n  }\n  for (const mutate of [\n    (copy) => { copy[0].envelope.identity.commit = '0'.repeat(40); },\n    (copy) => { copy[0].envelope.identity.run = 'old-run'; },\n    (copy) => { copy[0].envelope.identity.attempt = '1'; },\n    (copy) => { copy[0].envelope.identity.artifact = copy[1].envelope.identity.artifact; },\n    (copy) => { copy[0].envelope.identity.sourceSha256.runner = '0'.repeat(64); },\n    (copy) => { copy[0].envelope.build.compiler += 'different compiler identity\\n'; },\n    (copy) => { copy[0].envelope.build.profile.RUST_TEST_THREADS = '2'; },\n    (copy) => { copy[0].envelope.build.profileEnvironment.RUSTFLAGS = '--cfg another_profile'; },\n    (copy) => { copy[0].envelope.build.cargoLockSha256 = '0'.repeat(64); },\n    (copy) => { copy[0].envelope.result.crate.resolution.manifestPath += '-sibling'; },\n  ]) {\n    const copy = structuredClone(pair); mutate(copy);\n    const result = mergeFormalAiWorkloadPartitions(copy, fixture, expected);\n    assert.ok(result.problems.length); assert.equal(result.report, null);\n  }\n  assert.equal(mergeFormalAiWorkloadPartitions(pair, fixture, { ...expected, producerResult: 'failure' }).report, null);\n})"
+  },
+  {
+    "id": "repository.check-formal-partition-evidence-forgeries",
+    "source": "js/tests/issue-195-formal-ai-partitions.test.js",
+    "name": "formal AI independent bundle validation refuses tampered inputs outputs events and undeclared paths before publication",
+    "inventoryName": "check formal partition evidence forgeries",
+    "sourceText": "test('formal AI independent bundle validation refuses tampered inputs outputs events and undeclared paths before publication', () => {\n  for (const field of ['inputs', 'javascriptOutputs', 'rustOutputs', 'javascriptEvents', 'cargoLock', 'selfAstAfter']) {\n    const { expected, pair } = passingPair();\n    const descriptor = pair[0].envelope.evidence[field];\n    pair[0].files.set(descriptor.file, Buffer.from('changed bytes'));\n    const result = mergeFormalAiWorkloadPartitions(pair, fixture, expected);\n    assert.ok(result.problems.some((problem) => problem.includes('tampered'))); assert.equal(result.report, null);\n  }\n  // Re-signing a changed descriptor cannot substitute a different dependency\n  // graph, execution identity or semantic result for independently equal data.\n  for (const field of ['cargoLock', 'javascriptEvents', 'nativeExecution', 'selfAstAfter']) {\n    const { expected, pair } = passingPair();\n    const first = pair[0];\n    const descriptor = field === 'nativeExecution'\n      ? first.envelope.evidence.nativeExecution[0].transcript : first.envelope.evidence[field];\n    const text = Buffer.from(first.files.get(descriptor.file)).toString('utf8');\n    const changed = field === 'cargoLock' ? text + '# another dependency graph\\n'\n      : field === 'nativeExecution' ? text.replace(ratchet, 'unknown::invented')\n        : field === 'selfAstAfter' ? structuredDataToLino([['a.lino', 'source changed\\n    total_link_count 2\\n']])\n          : structuredDataRecordToLino({ kind: 'test', name: `${dataFiles[0]}${TEST_NAME_SEPARATOR}invented`, outcome: 'passed' });\n    const bytes = Buffer.from(changed);\n    first.files.set(descriptor.file, bytes);\n    descriptor.bytes = bytes.length; descriptor.sha256 = digest(bytes);\n    if (field === 'cargoLock') first.envelope.build.cargoLockSha256 = descriptor.sha256;\n    const result = mergeFormalAiWorkloadPartitions(pair, fixture, expected);\n    assert.ok(result.problems.length, field); assert.equal(result.report, null, field);\n  }\n  for (const file of ['../escape', '/absolute', 'nested/../escape', 'windows\\\\escape', 'unused.log']) {\n    const { expected, pair } = passingPair();\n    pair[0].files.set(file, Buffer.from('undeclared'));\n    assert.equal(mergeFormalAiWorkloadPartitions(pair, fixture, expected).report, null);\n  }\n})"
+  },
+  {
+    "id": "repository.check-formal-partition-connected-runner",
+    "source": "js/tests/issue-195-formal-ai-partitions.test.js",
+    "name": "formal AI connected partition transport lists every original target and collects all exact execution failures without native processes",
+    "inventoryName": "check formal partition connected runner",
+    "sourceText": "test('formal AI connected partition transport lists every original target and collects all exact execution failures without native processes', async () => {\n  const workDirectory = await mkdtemp(path.join(tmpdir(), 'meta-language-formal-ai-partition-'));\n  try {\n    for (const partition of ['corpus-ratchet', 'remaining']) {\n      const state = {};\n      const calls = [];\n      const listed = inventoryRuns();\n      const inventory = readFormalAiNativeInventory(listed, fixture);\n      const executions = executionRuns(inventory, partition);\n      const result = await runFormalAiNativePartition({\n        partition, fixture, configuration: ['--config', 'patch=exact'], directory: workDirectory,\n        environment: { RUST_TEST_THREADS: '2', CARGO_BUILD_JOBS: '2' }, workDirectory, state,\n        run: async (label, command, args, options) => {\n          calls.push({ command, args, options });\n          const target = args[args.indexOf('--test') + 1];\n          const listing = args.includes('--list');\n          const run = (listing ? listed : executions).find((entry) => entry.target === target);\n          const log = path.join(workDirectory, `${label}.log`);\n          await writeFile(log, run.transcript);\n          // Fail the first workload target; the selected probe target must still\n          // execute and all full logs/actual exit statuses must be retained.\n          return { code: listing || target === 'issue_195_meta_language_probe' ? 0 : 7, combined: run.transcript, log };\n        },\n      });\n      assert.equal(result.code, 7);\n      assert.equal(calls.filter(({ args }) => args.includes('--list')).length, 3);\n      assert.deepEqual(calls.slice(0, 3).map(({ args }) => args[args.indexOf('--test') + 1]), targets);\n      assert.ok(calls.at(-1).args.includes('issue_195_meta_language_probe'));\n      for (const call of calls) {\n        assert.equal(call.command, 'cargo');\n        assert.equal(call.args[call.args.indexOf('test') + 1], '--no-fail-fast');\n        assert.equal(call.options.env.RUST_TEST_THREADS, '1');\n        assert.equal(call.options.allowFailure, true);\n      }\n      assert.equal(state.nativeExecution.length, executions.length);\n      assert.ok(state.executionProblems.length);\n      assert.match(await readFile(result.log, 'utf8'), /exit: 7/u);\n      assert.equal(result.outcomes, null);\n    }\n  } finally { await rm(workDirectory, { recursive: true, force: true }); }\n})"
+  },
+  {
+    "id": "repository.check-formal-partition-bundle-resource-refusals",
+    "source": "js/tests/issue-195-formal-ai-partitions.test.js",
+    "name": "formal AI bundle reader refuses symlinks unknown paths and bounded file byte depth and count exhaustion",
+    "inventoryName": "check formal partition bundle resource refusals",
+    "sourceText": "test('formal AI bundle reader refuses symlinks unknown paths and bounded file byte depth and count exhaustion', async () => {\n  const temporary = await mkdtemp(path.join(tmpdir(), 'meta-language-formal-ai-bundle-'));\n  try {\n    const bundle = path.join(temporary, 'bundle');\n    const outside = path.join(temporary, 'outside');\n    await mkdir(bundle); await mkdir(outside);\n    await writeFile(path.join(outside, 'private'), 'unrelated bytes');\n    await symlink(outside, path.join(bundle, 'escape'), process.platform === 'win32' ? 'junction' : 'dir');\n    await assert.rejects(readFormalAiPartitionBundle(bundle), /symbolic links/u);\n    await rm(path.join(bundle, 'escape'));\n    await writeFile(path.join(bundle, 'too-large'), '123456789');\n    await assert.rejects(readFormalAiPartitionBundle(bundle, { files: 4, fileBytes: 8, totalBytes: 32, depth: 1 }), /oversized/u);\n    await assert.rejects(readFormalAiPartitionBundle(bundle, { files: 4, fileBytes: 16, totalBytes: 8, depth: 1 }), /byte limit/u);\n    await writeFile(path.join(bundle, 'second'), 'one');\n    await assert.rejects(readFormalAiPartitionBundle(bundle, { files: 1, fileBytes: 16, totalBytes: 32, depth: 1 }), /excessive/u);\n    await rm(path.join(bundle, 'too-large')); await rm(path.join(bundle, 'second'));\n    await mkdir(path.join(bundle, 'deep', 'deeper'), { recursive: true });\n    await assert.rejects(readFormalAiPartitionBundle(bundle, { files: 4, fileBytes: 16, totalBytes: 32, depth: 1 }), /nesting/u);\n  } finally { await rm(temporary, { recursive: true, force: true }); }\n})"
+  },
+  {
+    "id": "repository.check-formal-partition-connected-merger",
+    "source": "js/tests/issue-195-formal-ai-partitions.test.js",
+    "name": "formal AI source-only connected merger authenticates its own candidates and context before publishing the unchanged full report",
+    "inventoryName": "check formal partition connected merger",
+    "sourceText": "test('formal AI source-only connected merger authenticates its own candidates and context before publishing the unchanged full report', async () => {\n  const temporary = await mkdtemp(path.join(tmpdir(), 'meta-language-formal-ai-merge-'));\n  try {\n    const root = fileURLToPath(new URL('../../', import.meta.url));\n    const tarball = path.join(temporary, 'meta-language-1.2.3.tgz');\n    const crate = path.join(temporary, 'meta-language-1.2.3.crate');\n    for (const file of [tarball, crate]) {\n      await writeFile(file, `synthetic candidate ${path.basename(file)}`);\n      await writeFile(`${file}.sha256`, `${digest(await readFile(file))}  ${path.basename(file)}\\n`);\n    }\n    const environment = { CI: 'true', GITHUB_ACTIONS: 'true', GITHUB_REPOSITORY: 'link-foundation/meta-language',\n      GITHUB_SHA: 'b'.repeat(40), GITHUB_RUN_ID: '123', GITHUB_RUN_ATTEMPT: '2' };\n    const expected = await formalAiPartitionExpectations({ root, tarball, crate, fixture, environment });\n    const { pair } = passingPair();\n    const directories = [];\n    for (const part of pair) {\n      const { envelope } = part;\n      const partition = envelope.identity.partition;\n      envelope.identity = { ...expected.identity, partition, artifact: expected.artifacts[partition] };\n      envelope.build.profile = structuredClone(expected.profile);\n      envelope.build.platform = expected.platform;\n      envelope.result.platform = expected.platform;\n      envelope.result.fixtureSha256 = expected.identity.fixtureSha256;\n      envelope.result.inputs.semanticProjectionFixtureSha256 = expected.identity.semanticProjectionFixtureSha256;\n      for (const runtime of ['npm', 'crate']) {\n        envelope.result[runtime].checksum.artifact = expected.candidates[runtime].file;\n        envelope.result[runtime].checksum.sha256 = expected.candidates[runtime].sha256;\n        envelope.result[runtime].checksum.expectedSha256 = expected.candidates[runtime].sha256;\n      }\n      envelope.result.npm.checksum.installedIntegrity = expected.candidates.npm.integrity;\n      envelope.result.npm.checksum.expectedIntegrity = expected.candidates.npm.integrity;\n      const directory = path.join(temporary, partition);\n      await mkdir(directory); directories.push(directory);\n      for (const [file, bytes] of part.files) await writeFile(path.join(directory, file), bytes);\n      writeProjectData(path.join(directory, 'partition.lino'), envelope, { format: 'lino' });\n    }\n    const workDirectory = path.join(temporary, 'merged');\n    const output = path.join(temporary, 'public', 'report.lino');\n    const options = { directories, root, tarball, crate, fixture, workDirectory, output, producerResult: 'success', environment };\n    const result = await mergeFormalAiPartitionBundles(options);\n    assert.deepEqual(result.problems, []);\n    const report = readProjectData(output);\n    assert.equal(report.crate.counts.total, 134); assert.equal(report.npm.counts.total, 148);\n    for (const runtime of ['javascript', 'rust']) assert.deepEqual(validateFormalAiWorkloadReport(report, fixture, runtime).observed, [...FORMAL_AI_WORKLOAD_ASSERTIONS]);\n    const provenance = readProjectData(path.join(workDirectory, 'partition-provenance.lino'));\n    assert.equal(provenance.producers.length, 2);\n    for (const producer of provenance.producers) {\n      const directory = directories.find((value) => value.endsWith(producer.partition));\n      assert.equal(producer.envelope.sha256, digest(await readFile(path.join(directory, 'partition.lino'))));\n    }\n    for (const failure of [\n      { producerResult: 'failure' },\n      { directories: [directories[0], directories[0]] },\n      { directories: [directories[0], path.join(temporary, 'missing')] },\n      { environment: { ...environment, GITHUB_RUN_ATTEMPT: '1' } },\n    ]) {\n      const refused = await mergeFormalAiPartitionBundles({ ...options, ...failure });\n      assert.ok(refused.problems.length); assert.equal(refused.report, null);\n      const failedReport = readProjectData(output);\n      for (const runtime of ['javascript', 'rust']) assert.deepEqual(validateFormalAiWorkloadReport(failedReport, fixture, runtime).observed, []);\n    }\n    await writeFile(crate, 'changed candidate without changed checksum');\n    const refused = await mergeFormalAiPartitionBundles(options);\n    assert.ok(refused.problems.some((entry) => entry.includes('candidate checksum')));\n    assert.equal(refused.report, null);\n  } finally { await rm(temporary, { recursive: true, force: true }); }\n})"
+  },
+  {
+    "id": "repository.check-formal-partition-workflow-barriers",
+    "source": "js/tests/issue-195-evidence-formal-ai-partitions.test.js",
+    "name": "Formal AI execution partitions preserve source-only canonical merging all JavaScript barriers and exact public artifacts",
+    "inventoryName": "check formal partition workflow barriers",
+    "sourceText": "test('Formal AI execution partitions preserve source-only canonical merging all JavaScript barriers and exact public artifacts', () => {\n  assert.deepEqual(partitionWorkflowProblems(read('.github/workflows/ci.yml'), read('js/scripts/run-formal-ai-workloads.mjs'), read('js/scripts/formal-ai-partition-bundles.mjs')), []);\n})"
+  },
+  {
+    "id": "repository.check-formal-partition-workflow-forgeries",
+    "source": "js/tests/issue-195-evidence-formal-ai-partitions.test.js",
+    "name": "Formal AI workflow refuses lost producers mixed artifacts overwritten scopes cache skipping and early native execution",
+    "inventoryName": "check formal partition workflow forgeries",
+    "sourceText": "test('Formal AI workflow refuses lost producers mixed artifacts overwritten scopes cache skipping and early native execution', () => {\n  const workflow = read('.github/workflows/ci.yml');\n  const runner = read('js/scripts/run-formal-ai-workloads.mjs');\n  const transport = read('js/scripts/formal-ai-partition-bundles.mjs');\n  for (const [name, change] of [\n    ['lost matrix barrier', (value) => value.replace('needs: [candidates, formal-ai-workload-parts]', 'needs: candidates')],\n    ['early producer', (value) => value.replace('    name: Formal AI Workloads (${{ matrix.partition }})\\n    needs: candidates', '    name: Formal AI Workloads (${{ matrix.partition }})\\n    needs: changes')],\n    ['sibling cancellation', (value) => value.replace('group: issue-195-formal-ai-workloads-${{ github.ref }}-${{ matrix.partition }}', 'group: issue-195-formal-ai-workloads-${{ github.ref }}')],\n    ['weakened deadline', (value) => value.replace('    timeout-minutes: 120\\n', '    timeout-minutes: 180\\n')],\n    ['stale producer identity', (value) => value.replace('name: issue-195-formal-ai-partition-${{ matrix.partition }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}', 'name: issue-195-formal-ai-partition-${{ matrix.partition }}-${{ github.sha }}')],\n    ['overwritten evidence', (value) => value.replace('path: .issue-195-work/formal-ai-partitions/remaining', 'path: .issue-195-work/formal-ai-partitions/corpus-ratchet')],\n    ['fabricated producer success', (value) => value.replace('--producer-result \"${{ needs.formal-ai-workload-parts.result }}\"', '--producer-result success')],\n    ['partial public report', (value) => value.replace('--out issue-195-artifacts/formal-ai-workloads/report.lino', '--out .issue-195-work/remaining/partition.lino')],\n    ['parallel cache reservation', (value) => value.replace(\"matrix.partition == 'remaining' && \", '')],\n  ]) assert.ok(partitionWorkflowProblems(change(workflow), runner, transport).length, name);\n  assert.ok(partitionWorkflowProblems(workflow, runner.replace('report.npm = await guarded', 'removedNpm = await guarded'), transport).length);\n  assert.ok(partitionWorkflowProblems(workflow, runner, transport + \"\\nimport { spawn } from 'node:child_process';\\n\").length);\n})"
+  },
+  {
+    "id": "repository.check-formal-partition-validation-preservation",
+    "source": "js/tests/issue-195-evidence-formal-ai-partitions.test.js",
+    "name": "Formal AI partition adoption preserves every byte of the existing complete report validator",
+    "inventoryName": "check formal partition validation preservation",
+    "sourceText": "test('Formal AI partition adoption preserves every byte of the existing complete report validator', () => {\n  const source = readFileSync(new URL('../scripts/issue-195-formal-ai-workloads.mjs', import.meta.url));\n  // Exact original source bytes read before this additive export was drafted.\n  // This also protects all original private grounding/coverage/probe checks.\n  assert.equal(createHash('sha256').update(source.subarray(0, 12317)).digest('hex'),\n    '0a6d06b129255286be21e30be4d95a9f6bebe4cfbaca9fbc34f5bae4dadb3162');\n  assert.match(source.subarray(12317).toString('utf8'), /export function formalAiWorkloadPartitionGroundingProblems/u);\n})"
+  },
+  {
+    "id": "repository.hash-formal-partition-evidence",
+    "source": "js/scripts/formal-ai-workload-partitions.mjs",
+    "name": "sha256",
+    "inventoryName": "hash formal partition evidence",
+    "sourceText": "const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');"
+  },
+  {
+    "id": "repository.read-formal-partition-target-key",
+    "source": "js/scripts/formal-ai-workload-partitions.mjs",
+    "name": "key",
+    "inventoryName": "read formal partition target key",
+    "sourceText": "const key = ({ target, name }) => JSON.stringify([target, name]);"
+  },
+  {
+    "id": "repository.refuse-invalid-formal-partition",
+    "source": "js/scripts/formal-ai-workload-partitions.mjs",
+    "name": "fail",
+    "inventoryName": "refuse invalid formal partition",
+    "sourceText": "const fail = (message) => { throw new Error(message); };"
+  },
+  {
+    "id": "repository.check-formal-partition-exact-equality",
+    "source": "js/scripts/formal-ai-workload-partitions.mjs",
+    "name": "equal",
+    "inventoryName": "check formal partition exact equality",
+    "sourceText": "const equal = (actual, expected, message) => { if (!isDeepStrictEqual(actual, expected)) fail(message); };"
+  },
+  {
+    "id": "repository.hash-formal-partition-bundle-bytes",
+    "source": "js/scripts/formal-ai-partition-bundles.mjs",
+    "name": "digest",
+    "inventoryName": "hash formal partition bundle bytes",
+    "sourceText": "const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');"
+  },
+  {
+    "id": "repository.require-formal-partition-transport-premise",
+    "source": "js/scripts/formal-ai-partition-bundles.mjs",
+    "name": "requireValue",
+    "inventoryName": "require formal partition transport premise",
+    "sourceText": "const requireValue = (condition, message) => { if (!condition) throw new Error(`Formal AI partitions: ${message}`); };"
+  },
+  {
+    "id": "repository.read-formal-partition-candidate-receipt",
+    "source": "js/scripts/formal-ai-partition-bundles.mjs",
+    "name": "candidate",
+    "inventoryName": "read formal partition candidate receipt",
+    "sourceText": "const candidate = async (file, npm) => {\n    const bytes = await regularBytes(file, FORMAL_AI_PARTITION_BUNDLE_LIMITS.fileBytes);\n    const checksum = (await regularBytes(`${file}.sha256`, 1024)).toString('utf8').trim().split(/\\s+/u);\n    requireValue(checksum.length === 2 && checksum[0] === digest(bytes) && checksum[1] === path.basename(file), 'candidate checksum or exact filename differs');\n    return { file: path.basename(file), sha256: digest(bytes), ...(npm ? { integrity: `sha512-${createHash('sha512').update(bytes).digest('base64')}` } : {}) };\n  };",
+    "ownerContexts": [
+      "export async function formalAiPartitionExpectations({ root, tarball, crate, fixture, environment = process.env, producerResult = 'success' }) {"
+    ]
+  },
+  {
+    "id": "repository.retain-formal-partition-owner-file",
+    "source": "js/scripts/formal-ai-partition-bundles.mjs",
+    "name": "retain",
+    "inventoryName": "retain formal partition owner file",
+    "sourceText": "const retain = async (file, source) => {\n    requireValue(relativeFile(file) && file !== path.basename(output), 'unsafe or conflicting evidence filename');\n    const bytes = await regularBytes(source, FORMAL_AI_PARTITION_BUNDLE_LIMITS.fileBytes);\n    if (retained.has(file)) {\n      requireValue(retained.get(file).sha256 === digest(bytes), 'two evidence sources collide');\n      return retained.get(file);\n    }\n    totalBytes += bytes.length;\n    requireValue(retained.size < FORMAL_AI_PARTITION_BUNDLE_LIMITS.files - 1 && totalBytes <= FORMAL_AI_PARTITION_BUNDLE_LIMITS.totalBytes, 'producer evidence bundle exceeds its bounded transport');\n    const descriptor = { file, bytes: bytes.length, sha256: digest(bytes) };\n    await writeFile(path.join(destination, file), bytes, { flag: 'wx' });\n    retained.set(file, descriptor);\n    return descriptor;\n  };",
+    "ownerContexts": [
+      "export async function writeFormalAiPartitionBundle({ partition, expected, report, state, workDirectory, output }) {"
+    ]
+  },
+  {
+    "id": "repository.collect-formal-partition-capture-result",
+    "source": "js/scripts/formal-ai-partition-bundles.mjs",
+    "name": "attempt",
+    "inventoryName": "collect formal partition capture result",
+    "sourceText": "const attempt = async (name, body) => { try { evidence[name] = await body(); } catch (error) { errors.push(`${name}: ${error.message}`); } };",
+    "ownerContexts": [
+      "export async function writeFormalAiPartitionBundle({ partition, expected, report, state, workDirectory, output }) {"
+    ]
+  },
+  {
+    "id": "repository.hash-formal-partition-control-bytes",
+    "source": "js/tests/issue-195-formal-ai-partitions.test.js",
+    "name": "digest",
+    "inventoryName": "hash formal partition control bytes",
+    "sourceText": "const digest = (value) => createHash('sha256').update(value).digest('hex');"
+  },
+  {
+    "id": "repository.read-formal-partition-workflow-source",
+    "source": "js/tests/issue-195-evidence-formal-ai-partitions.test.js",
+    "name": "read",
+    "inventoryName": "read formal partition workflow source",
+    "sourceText": "const read = (file) => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');"
+  },
+  {
+    "id": "repository.read-formal-partition-workflow-dependencies",
+    "source": "js/tests/issue-195-evidence-formal-ai-partitions.test.js",
+    "name": "needs",
+    "inventoryName": "read formal partition workflow dependencies",
+    "sourceText": "const needs = (job) => (/^    needs: (.+)$/mu.exec(job?.header ?? '')?.[1] ?? '').replace(/[\\[\\]]/gu, '').split(',').map((value) => value.trim()).filter(Boolean);"
+  },
+  {
+    "id": "repository.read-formal-partition-workflow-step",
+    "source": "js/tests/issue-195-evidence-formal-ai-partitions.test.js",
+    "name": "runStep",
+    "inventoryName": "read formal partition workflow step",
+    "sourceText": "const runStep = (job, fragment) => job?.steps.find((step) => step.run.includes(fragment));"
+  },
+  {
+    "id": "repository.collect-formal-partition-workflow-problem",
+    "source": "js/tests/issue-195-evidence-formal-ai-partitions.test.js",
+    "name": "requireValue",
+    "inventoryName": "collect formal partition workflow problem",
+    "sourceText": "const requireValue = (condition, message) => { if (!condition) problems.push(message); };",
+    "ownerContexts": [
+      "function partitionWorkflowProblems(workflow, runner, transport) {"
+    ]
+  },
+  {
+    "id": "repository.hash-third-schema-verifier-bytes",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-third-extension-closure.mjs",
+    "name": "sha256",
+    "inventoryName": "hash third schema verifier bytes",
+    "sourceText": "const sha256 = value => createHash('sha256').update(value).digest('hex');"
+  },
+  {
+    "id": "repository.hash-third-schema-control-bytes",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-third-extension-closure.test.mjs",
+    "name": "sha256",
+    "inventoryName": "hash third schema control bytes",
+    "sourceText": "const sha256 = value => createHash('sha256').update(value).digest('hex');"
+  },
+  {
+    "id": "repository.hash-third-schema-author-bytes",
+    "source": "js/scripts/extend-typed-program-schema-third-stage.mjs",
+    "name": "sha256",
+    "inventoryName": "hash third schema author bytes",
+    "sourceText": "const sha256 = value => createHash('sha256').update(value).digest('hex');"
+  },
+  {
+    "id": "repository.hash-grammar-selection-mapping-source",
+    "source": "js/scripts/generate-grammar-selection-mapping-rules.mjs",
+    "name": "hash",
+    "inventoryName": "hash grammar selection mapping source",
+    "sourceText": "const hash = source => createHash('sha256').update(source).digest('hex');"
+  },
+  {
+    "id": "repository.read-third-schema-control-bytes",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-third-extension-closure.test.mjs",
+    "name": "read",
+    "inventoryName": "read third schema control bytes",
+    "sourceText": "const read = file => readFileSync(new URL(file, import.meta.url));",
+    "ownerContexts": [
+      "function fixture() {"
+    ]
+  },
+  {
+    "id": "repository.read-formal-partition-evidence-bytes",
+    "source": "js/scripts/formal-ai-workload-partitions.mjs",
+    "name": "bytes",
+    "inventoryName": "read formal partition evidence bytes",
+    "sourceText": "bytes(descriptor) {\n      if (!descriptor || !relativeFile(descriptor.file) || !Number.isSafeInteger(descriptor.bytes) || descriptor.bytes < 0 ||\n          !/^[0-9a-f]{64}$/u.test(descriptor.sha256 ?? '')) fail('invalid producer-scoped evidence descriptor');\n      const bytes = files.get(descriptor.file);\n      if (!(bytes instanceof Uint8Array) || bytes.length !== descriptor.bytes || sha256(bytes) !== descriptor.sha256) {\n        fail(`missing or tampered producer evidence ${descriptor.file}`);\n      }\n      used.add(descriptor.file);\n      return bytes;\n    }",
+    "ownerContexts": [
+      "function evidenceReader(files) {"
+    ]
+  },
+  {
+    "id": "repository.read-formal-partition-evidence-text",
+    "source": "js/scripts/formal-ai-workload-partitions.mjs",
+    "name": "text",
+    "inventoryName": "read formal partition evidence text",
+    "sourceText": "text(descriptor) { return new TextDecoder('utf-8', { fatal: true }).decode(this.bytes(descriptor)); }",
+    "ownerContexts": [
+      "function evidenceReader(files) {"
+    ]
+  },
+  {
+    "id": "repository.read-formal-partition-evidence-data",
+    "source": "js/scripts/formal-ai-workload-partitions.mjs",
+    "name": "data",
+    "inventoryName": "read formal partition evidence data",
+    "sourceText": "data(descriptor) { return readStructuredDataLino(this.text(descriptor)); }",
+    "ownerContexts": [
+      "function evidenceReader(files) {"
+    ]
+  },
+  {
+    "id": "repository.check-formal-partition-evidence-completeness",
+    "source": "js/scripts/formal-ai-workload-partitions.mjs",
+    "name": "complete",
+    "inventoryName": "check formal partition evidence completeness",
+    "sourceText": "complete() {\n      if (used.size !== files.size) fail('the producer bundle contains undeclared or unvalidated files');\n    }",
+    "ownerContexts": [
+      "function evidenceReader(files) {"
+    ]
+  },
+  {
+    "id": "repository.read-hostile-mapped-bundle-property",
+    "source": "js/tests/grammar-selection-json-string.test.js",
+    "name": "get",
+    "inventoryName": "read hostile mapped bundle property",
+    "sourceText": "get() { reads += 1; return original; }",
+    "ownerContexts": [
+      "test('generic data decoding preserves forgeries while the mapped-source checker rejects false correspondences', () => {"
+    ]
+  },
+  {
+    "id": "repository.create-formal-partition-control-assertion",
+    "source": "js/tests/issue-195-formal-ai-partitions.test.js",
+    "name": "assertion",
+    "inventoryName": "create formal partition control assertion",
+    "sourceText": "const assertion = () => ({ holds: true, checks: [structuredClone(checked)] });",
+    "ownerContexts": [
+      "function passingPair() {"
+    ]
+  },
+  {
+    "id": "repository.retain-formal-partition-control-file",
+    "source": "js/tests/issue-195-formal-ai-partitions.test.js",
+    "name": "retain",
+    "inventoryName": "retain formal partition control file",
+    "sourceText": "const retain = (file, text) => {\n      const bytes = Buffer.from(text);\n      files.set(file, bytes);\n      return { file, bytes: bytes.length, sha256: digest(bytes) };\n    };",
+    "ownerContexts": [
+      "function passingPair() {"
+    ]
+  },
+  {
+    "id": "repository.retain-formal-partition-control-data",
+    "source": "js/tests/issue-195-formal-ai-partitions.test.js",
+    "name": "data",
+    "inventoryName": "retain formal partition control data",
+    "sourceText": "const data = (file, value) => retain(file, structuredDataToLino(value));",
+    "ownerContexts": [
+      "function passingPair() {"
+    ]
+  },
+  {
+    "id": "repository.read-formal-partition-control-outcome-rows",
+    "source": "js/tests/issue-195-formal-ai-partitions.test.js",
+    "name": "rows",
+    "inventoryName": "read formal partition control outcome rows",
+    "sourceText": "const rows = (isProbe) => selected.filter(({ probe }) => probe === isProbe).map(({ file, name }) => ({ file, name, outcome: 'passed' }));",
+    "ownerContexts": [
+      "function passingPair() {"
+    ]
+  },
+  {
+    "id": "repository.observe-terminal-tag-guard-control",
+    "source": "js/tests/translation-constructor-tags.test.js",
+    "name": "observe",
+    "inventoryName": "observe terminal tag guard control",
+    "sourceText": "const observe = text => {\n    const output = [];\n    runInNewContext(text, { console: { log: (...values) => output.push(values.map(String).join(' ')) } }, { timeout: 1000 });\n    return output;\n  };",
+    "ownerContexts": [
+      "test('terminal tag guard sequences preserve constructor fields scope and ordered effects through both semantic archives', async () => {"
+    ]
+  },
+  {
+    "id": "repository.container-alias-test-network",
+    "source": "rust/tests/structured_data_container_aliases.rs",
+    "name": "LinkNetwork",
+    "inventoryName": "container alias test network",
+    "sourceText": "pub struct LinkNetwork(meta_language::LinkNetwork);"
+  },
+  {
+    "id": "repository.borrow-container-alias-test-network",
+    "source": "rust/tests/structured_data_container_aliases.rs",
+    "name": "LinkNetwork::deref",
+    "inventoryName": "borrow container alias test network",
+    "sourceText": "    fn deref(&self) -> &Self::Target {\n        &self.0\n    }",
+    "ownerContexts": [
+      "impl std::ops::Deref for LinkNetwork {"
+    ]
+  },
+  {
+    "id": "repository.borrow-mutable-container-alias-test-network",
+    "source": "rust/tests/structured_data_container_aliases.rs",
+    "name": "LinkNetwork::deref_mut",
+    "inventoryName": "borrow mutable container alias test network",
+    "sourceText": "    fn deref_mut(&mut self) -> &mut Self::Target {\n        &mut self.0\n    }",
+    "ownerContexts": [
+      "impl std::ops::DerefMut for LinkNetwork {"
+    ]
+  },
+  {
+    "id": "repository.create-container-alias-test-network",
+    "source": "rust/tests/structured_data_container_aliases.rs",
+    "name": "LinkNetwork::new",
+    "inventoryName": "create container alias test network",
+    "sourceText": "    const fn new() -> Self {\n        Self(meta_language::LinkNetwork::new())\n    }",
+    "ownerContexts": [
+      "impl LinkNetwork {"
+    ]
+  },
+  {
+    "id": "repository.read-container-alias-test-network",
+    "source": "rust/tests/structured_data_container_aliases.rs",
+    "name": "LinkNetwork::from_lino",
+    "inventoryName": "read container alias test network",
+    "sourceText": "    fn from_lino(\n        source: &str,\n    ) -> Result<Self, meta_language::lino_serialization::LinoSerializationError> {\n        meta_language::LinkNetwork::from_lino(source).map(Self)\n    }",
+    "ownerContexts": [
+      "impl LinkNetwork {"
+    ]
+  },
+  {
+    "id": "repository.set-container-alias-test-link-references",
+    "source": "rust/tests/structured_data_container_aliases.rs",
+    "name": "LinkNetwork::set_references",
+    "inventoryName": "set container alias test link references",
+    "sourceText": "    fn set_references(&mut self, id: LinkId, references: &[LinkId]) -> bool {\n        if self.0.link(id).is_none() {\n            return false;\n        }\n        let prefix = format!(\"({id}:\");\n        let references = references\n            .iter()\n            .map(ToString::to_string)\n            .collect::<Vec<_>>()\n            .join(\" \");\n        let mut selected = 0_usize;\n        let statements = self\n            .0\n            .to_lino()\n            .lines()\n            .map(|statement| {\n                let Some(body) = statement.strip_prefix(&prefix) else {\n                    return statement.to_owned();\n                };\n                selected += 1;\n                let (_, metadata) = body\n                    .split_once(\"(meta:\")\n                    .expect(\"an actual canonical network statement retains its metadata\");\n                format!(\"{prefix} {references} (meta:{metadata}\")\n            })\n            .collect::<Vec<_>>()\n            .join(\"\\n\");\n        assert_eq!(selected, 1, \"exactly one numeric statement owns the link\");\n        self.0 = meta_language::LinkNetwork::from_lino(&(statements + \"\\n\"))\n            .expect(\"the public Links reference edit preserves canonical metadata\");\n        true\n    }",
+    "ownerContexts": [
+      "impl LinkNetwork {"
+    ]
+  },
+  {
+    "id": "translation.unicode-escape-low-digit-join",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "MlDecodeUnicodeEscapeJoin5",
+    "inventoryName": "unicode escape low digit join",
+    "sourceText": "pub enum MlDecodeUnicodeEscapeJoin5 {\n    MlDecodeUnicodeEscapeJoin5Next(f64, f64),\n}"
+  },
+  {
+    "id": "translation.unicode-escape-low-digit-join",
+    "source": "rust/src/translation/frontend_rules/continuations.rs",
+    "name": "MlDecodeUnicodeEscapeJoin5",
+    "inventoryName": "unicode escape low digit join",
+    "sourceText": "pub enum MlDecodeUnicodeEscapeJoin5 {\n    MlDecodeUnicodeEscapeJoin5Next(f64, f64),\n}"
+  },
+  {
+    "id": "translation.unicode-escape-low-digit-result",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "MlDecodeUnicodeEscapeLoop6Result",
+    "inventoryName": "unicode escape low digit result",
+    "sourceText": "pub enum MlDecodeUnicodeEscapeLoop6Result {\n    MlDecodeUnicodeEscapeLoop6Done(f64, f64),\n}"
+  },
+  {
+    "id": "translation.unicode-escape-low-digit-result",
+    "source": "rust/src/translation/frontend_rules/continuations.rs",
+    "name": "MlDecodeUnicodeEscapeLoop6Result",
+    "inventoryName": "unicode escape low digit result",
+    "sourceText": "pub enum MlDecodeUnicodeEscapeLoop6Result {\n    MlDecodeUnicodeEscapeLoop6Done(f64, f64),\n}"
+  },
+  {
+    "id": "translation.scan-unicode-escape-low-digits",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "ml_decode_unicode_escape_loop6",
+    "inventoryName": "scan unicode escape low digits",
+    "sourceText": "pub fn ml_decode_unicode_escape_loop6(\n    units: &[f64],\n    mut index: f64,\n    mut low: f64,\n    mut offset: f64,\n) -> self::MlDecodeUnicodeEscapeLoop6Result {\n    loop {\n        return if offset < 6f64 {\n            {\n                let unit = self::ml_array::optional_at(\n                    units,\n                    self::ml_array::number_index(index + offset),\n                );\n                {\n                    let digit = -1f64;\n                    {\n                        let digit_5 = if (((unit).unwrap_or(f64::NAN)) >= 48f64)\n                            && (((unit).unwrap_or(f64::NAN)) <= 57f64)\n                        {\n                            { (unit).unwrap_or(f64::NAN) - 48f64 }\n                        } else if (((unit).unwrap_or(f64::NAN)) >= 65f64)\n                            && (((unit).unwrap_or(f64::NAN)) <= 70f64)\n                        {\n                            { (unit).unwrap_or(f64::NAN) - 55f64 }\n                        } else if (((unit).unwrap_or(f64::NAN)) >= 97f64)\n                            && (((unit).unwrap_or(f64::NAN)) <= 102f64)\n                        {\n                            { (unit).unwrap_or(f64::NAN) - 87f64 }\n                        } else {\n                            digit\n                        };\n                        if digit_5 < 0f64 {\n                            self::MlDecodeUnicodeEscapeLoop6Result::MlDecodeUnicodeEscapeLoop6Done(\n                                low, offset,\n                            )\n                        } else {\n                            {\n                                let low_2 = (low * 16f64) + digit_5;\n                                {\n                                    let offset_2 = offset + 1f64;\n                                    {\n                                        (low, offset) = (low_2, offset_2);\n                                        continue;\n                                    }\n                                }\n                            }\n                        }\n                    }\n                }\n            }\n        } else {\n            self::MlDecodeUnicodeEscapeLoop6Result::MlDecodeUnicodeEscapeLoop6Done(low, offset)\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.scan-unicode-escape-low-digits",
+    "source": "rust/src/translation/frontend_rules/continuations.rs",
+    "name": "ml_decode_unicode_escape_loop6",
+    "inventoryName": "scan unicode escape low digits",
+    "sourceText": "pub fn ml_decode_unicode_escape_loop6(\n    mut units: Vec<f64>,\n    mut index: f64,\n    mut low: f64,\n    mut offset: f64,\n) -> crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop6Result {\n    loop {\n        return if (offset < (6f64)) {\n            {\n                let unit = crate::translation::frontend_rules::ml_array::optional_at(\n                    &units,\n                    crate::translation::frontend_rules::ml_array::number_index(index + offset),\n                );\n                {\n                    let digit = (-1f64);\n                    {\n                        let digit_5 = if ((unit.unwrap_or(f64::NAN) >= (48f64))\n                            && (unit.unwrap_or(f64::NAN) <= (57f64)))\n                        {\n                            { (unit.unwrap_or(f64::NAN) - 48f64) }\n                        } else if ((unit.unwrap_or(f64::NAN) >= (65f64))\n                            && (unit.unwrap_or(f64::NAN) <= (70f64)))\n                        {\n                            { (unit.unwrap_or(f64::NAN) - 55f64) }\n                        } else if ((unit.unwrap_or(f64::NAN) >= (97f64))\n                            && (unit.unwrap_or(f64::NAN) <= (102f64)))\n                        {\n                            { (unit.unwrap_or(f64::NAN) - 87f64) }\n                        } else {\n                            digit\n                        };\n                        if (digit_5 < (0f64)) {\n                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop6Result::MlDecodeUnicodeEscapeLoop6Done(low, offset)\n                        } else {\n                            {\n                                let low_2 = ((low * 16f64) + digit_5);\n                                {\n                                    let offset_2 = (offset + 1f64);\n                                    {\n                                        (low, offset) = (low_2, offset_2);\n                                        continue;\n                                    }\n                                }\n                            }\n                        }\n                    }\n                }\n            }\n        } else {\n            crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop6Result::MlDecodeUnicodeEscapeLoop6Done(low, offset)\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.unicode-escape-scalar-join",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "MlDecodeUnicodeEscapeJoin4",
+    "inventoryName": "unicode escape scalar join",
+    "sourceText": "pub enum MlDecodeUnicodeEscapeJoin4 {\n    MlDecodeUnicodeEscapeJoin4Next(f64),\n    MlDecodeUnicodeEscapeJoin4Return(Box<self::UnicodeEscape>),\n}"
+  },
+  {
+    "id": "translation.unicode-escape-scalar-join",
+    "source": "rust/src/translation/frontend_rules/continuations.rs",
+    "name": "MlDecodeUnicodeEscapeJoin4",
+    "inventoryName": "unicode escape scalar join",
+    "sourceText": "pub enum MlDecodeUnicodeEscapeJoin4 {\n    MlDecodeUnicodeEscapeJoin4Next(f64),\n    MlDecodeUnicodeEscapeJoin4Return(Box<crate::translation::frontend_rules::UnicodeEscape>),\n}"
+  },
+  {
+    "id": "translation.unicode-escape-digit-scan-result",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "MlDecodeUnicodeEscapeLoop3Result",
+    "inventoryName": "unicode escape digit scan result",
+    "sourceText": "pub enum MlDecodeUnicodeEscapeLoop3Result {\n    MlDecodeUnicodeEscapeLoop3Done(f64, f64, f64),\n}"
+  },
+  {
+    "id": "translation.unicode-escape-digit-scan-result",
+    "source": "rust/src/translation/frontend_rules/continuations.rs",
+    "name": "MlDecodeUnicodeEscapeLoop3Result",
+    "inventoryName": "unicode escape digit scan result",
+    "sourceText": "pub enum MlDecodeUnicodeEscapeLoop3Result {\n    MlDecodeUnicodeEscapeLoop3Done(f64, f64, f64),\n}"
+  },
+  {
+    "id": "translation.scan-unicode-escape-digits",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "ml_decode_unicode_escape_loop3",
+    "inventoryName": "scan unicode escape digits",
+    "sourceText": "pub fn ml_decode_unicode_escape_loop3(\n    units: &[f64],\n    mut fixed: f64,\n    mut index: f64,\n    mut code: f64,\n    mut digits: f64,\n    mut braced: bool,\n) -> self::MlDecodeUnicodeEscapeLoop3Result {\n    loop {\n        return if (index < (units.len() as f64)) && (digits < (if braced { 6f64 } else { fixed })) {\n            {\n                let unit = self::ml_array::optional_at(units, self::ml_array::number_index(index));\n                {\n                    let digit = -1f64;\n                    {\n                        let digit_5 = if (((unit).unwrap_or(f64::NAN)) >= 48f64)\n                            && (((unit).unwrap_or(f64::NAN)) <= 57f64)\n                        {\n                            { (unit).unwrap_or(f64::NAN) - 48f64 }\n                        } else if (((unit).unwrap_or(f64::NAN)) >= 65f64)\n                            && (((unit).unwrap_or(f64::NAN)) <= 70f64)\n                        {\n                            { (unit).unwrap_or(f64::NAN) - 55f64 }\n                        } else if (((unit).unwrap_or(f64::NAN)) >= 97f64)\n                            && (((unit).unwrap_or(f64::NAN)) <= 102f64)\n                        {\n                            { (unit).unwrap_or(f64::NAN) - 87f64 }\n                        } else {\n                            digit\n                        };\n                        if digit_5 < 0f64 {\n                            self::MlDecodeUnicodeEscapeLoop3Result::MlDecodeUnicodeEscapeLoop3Done(\n                                index, code, digits,\n                            )\n                        } else {\n                            {\n                                let code_2 = (code * 16f64) + digit_5;\n                                {\n                                    let digits_2 = digits + 1f64;\n                                    {\n                                        let index_2 = index + 1f64;\n                                        {\n                                            (index, code, digits) = (index_2, code_2, digits_2);\n                                            continue;\n                                        }\n                                    }\n                                }\n                            }\n                        }\n                    }\n                }\n            }\n        } else {\n            self::MlDecodeUnicodeEscapeLoop3Result::MlDecodeUnicodeEscapeLoop3Done(\n                index, code, digits,\n            )\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.scan-unicode-escape-digits",
+    "source": "rust/src/translation/frontend_rules/continuations.rs",
+    "name": "ml_decode_unicode_escape_loop3",
+    "inventoryName": "scan unicode escape digits",
+    "sourceText": "pub fn ml_decode_unicode_escape_loop3(\n    mut units: Vec<f64>,\n    mut fixed: f64,\n    mut index: f64,\n    mut code: f64,\n    mut digits: f64,\n    mut braced: bool,\n) -> crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop3Result {\n    loop {\n        return if ((index < (units.len() as f64)) && (digits < (if braced { 6f64 } else { fixed })))\n        {\n            {\n                let unit = crate::translation::frontend_rules::ml_array::optional_at(\n                    &units,\n                    crate::translation::frontend_rules::ml_array::number_index(index),\n                );\n                {\n                    let digit = (-1f64);\n                    {\n                        let digit_5 = if ((unit.unwrap_or(f64::NAN) >= (48f64))\n                            && (unit.unwrap_or(f64::NAN) <= (57f64)))\n                        {\n                            { (unit.unwrap_or(f64::NAN) - 48f64) }\n                        } else if ((unit.unwrap_or(f64::NAN) >= (65f64))\n                            && (unit.unwrap_or(f64::NAN) <= (70f64)))\n                        {\n                            { (unit.unwrap_or(f64::NAN) - 55f64) }\n                        } else if ((unit.unwrap_or(f64::NAN) >= (97f64))\n                            && (unit.unwrap_or(f64::NAN) <= (102f64)))\n                        {\n                            { (unit.unwrap_or(f64::NAN) - 87f64) }\n                        } else {\n                            digit\n                        };\n                        if (digit_5 < (0f64)) {\n                            crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop3Result::MlDecodeUnicodeEscapeLoop3Done(index, code, digits)\n                        } else {\n                            {\n                                let code_2 = ((code * 16f64) + digit_5);\n                                {\n                                    let digits_2 = (digits + 1f64);\n                                    {\n                                        let index_2 = (index + 1f64);\n                                        {\n                                            (index, code, digits) = (index_2, code_2, digits_2);\n                                            continue;\n                                        }\n                                    }\n                                }\n                            }\n                        }\n                    }\n                }\n            }\n        } else {\n            crate::translation::frontend_rules::MlDecodeUnicodeEscapeLoop3Result::MlDecodeUnicodeEscapeLoop3Done(index, code, digits)\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.unicode-escape-digit-join",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "MlDecodeUnicodeEscapeJoin2",
+    "inventoryName": "unicode escape digit join",
+    "sourceText": "pub enum MlDecodeUnicodeEscapeJoin2 {\n    MlDecodeUnicodeEscapeJoin2Next(f64, bool),\n    MlDecodeUnicodeEscapeJoin2Return(Box<self::UnicodeEscape>),\n}"
+  },
+  {
+    "id": "translation.unicode-escape-digit-join",
+    "source": "rust/src/translation/frontend_rules/continuations.rs",
+    "name": "MlDecodeUnicodeEscapeJoin2",
+    "inventoryName": "unicode escape digit join",
+    "sourceText": "pub enum MlDecodeUnicodeEscapeJoin2 {\n    MlDecodeUnicodeEscapeJoin2Next(f64, bool),\n    MlDecodeUnicodeEscapeJoin2Return(Box<crate::translation::frontend_rules::UnicodeEscape>),\n}"
+  },
+  {
+    "id": "translation.unicode-escape-prefix-join",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "MlDecodeUnicodeEscapeJoin1",
+    "inventoryName": "unicode escape prefix join",
+    "sourceText": "pub enum MlDecodeUnicodeEscapeJoin1 {\n    MlDecodeUnicodeEscapeJoin1Next(f64),\n    MlDecodeUnicodeEscapeJoin1Return(Box<self::UnicodeEscape>),\n}"
+  },
+  {
+    "id": "translation.unicode-escape-prefix-join",
+    "source": "rust/src/translation/frontend_rules/continuations.rs",
+    "name": "MlDecodeUnicodeEscapeJoin1",
+    "inventoryName": "unicode escape prefix join",
+    "sourceText": "pub enum MlDecodeUnicodeEscapeJoin1 {\n    MlDecodeUnicodeEscapeJoin1Next(f64),\n    MlDecodeUnicodeEscapeJoin1Return(Box<crate::translation::frontend_rules::UnicodeEscape>),\n}"
+  },
+  {
+    "id": "translation.scan-grammar-selection-mapping-presence",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "ml_read_grammar_selection_mapping_context_loop9",
+    "inventoryName": "scan grammar selection mapping presence",
+    "sourceText": "pub fn ml_read_grammar_selection_mapping_context_loop9(\n    mut mapped: bool,\n    ml_values7: &[String],\n    mut ml_index7: self::ml::Big,\n) -> bool {\n    loop {\n        if ml_index7 < (self::ml::Big::from_u128(ml_values7.len() as u128)) {\n            {\n                let mapping = self::ml_array::at(ml_values7, ml_index7.to_index());\n                if mapping == \"json-string\" {\n                    {\n                        let mapped_2 = true;\n                        {\n                            let ml_index7_2 = ml_index7.add(&self::ml::Big::from_i128(1));\n                            {\n                                (mapped, ml_index7) = (mapped_2, ml_index7_2);\n                                continue;\n                            }\n                        }\n                    }\n                }\n                {\n                    {\n                        let ml_index7_3 = ml_index7.add(&self::ml::Big::from_i128(1));\n                        {\n                            ml_index7 = ml_index7_3;\n                            continue;\n                        }\n                    }\n                }\n            }\n        }\n        return { mapped };\n    }\n}"
+  },
+  {
+    "id": "translation.grammar-selection-mapping-compatibility-result",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "MlReadGrammarSelectionMappingContextLoop10Result",
+    "inventoryName": "grammar selection mapping compatibility result",
+    "sourceText": "pub enum MlReadGrammarSelectionMappingContextLoop10Result {\n    MlReadGrammarSelectionMappingContextLoop10Done,\n    MlReadGrammarSelectionMappingContextLoop10Return(f64),\n}"
+  },
+  {
+    "id": "translation.scan-grammar-selection-mapping-compatibility",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "ml_read_grammar_selection_mapping_context_loop10",
+    "inventoryName": "scan grammar selection mapping compatibility",
+    "sourceText": "pub fn ml_read_grammar_selection_mapping_context_loop10(\n    ml_values8: &[String],\n    mut ml_index8: self::ml::Big,\n) -> self::MlReadGrammarSelectionMappingContextLoop10Result {\n    loop {\n        return if ml_index8 < (self::ml::Big::from_u128(ml_values8.len() as u128)) {\n            {\n                let mapping = self::ml_array::at(ml_values8, ml_index8.to_index());\n                {\n                    let ml_library_inequality_1 = mapping != \"json-string\";\n                    if ml_library_inequality_1 {\n                        self::MlReadGrammarSelectionMappingContextLoop10Result::MlReadGrammarSelectionMappingContextLoop10Return(2f64)\n                    } else {\n                        {\n                            let ml_index8_2 = ml_index8.add(&self::ml::Big::from_i128(1));\n                            {\n                                ml_index8 = ml_index8_2;\n                                continue;\n                            }\n                        }\n                    }\n                }\n            }\n        } else {\n            self::MlReadGrammarSelectionMappingContextLoop10Result::MlReadGrammarSelectionMappingContextLoop10Done\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.grammar-selection-offset-scan-result",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "MlReadGrammarSelectionMappedOffsetLoop11Result",
+    "inventoryName": "grammar selection offset scan result",
+    "sourceText": "pub enum MlReadGrammarSelectionMappedOffsetLoop11Result {\n    MlReadGrammarSelectionMappedOffsetLoop11Done,\n    MlReadGrammarSelectionMappedOffsetLoop11Return(f64),\n}"
+  },
+  {
+    "id": "translation.continue-grammar-selection-offset-interval-search",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "ml_read_grammar_selection_mapped_offset_loop11",
+    "inventoryName": "continue grammar selection offset interval search",
+    "sourceText": "pub fn ml_read_grammar_selection_mapped_offset_loop11(\n    intervals: &[f64],\n    mut offset: f64,\n    mut index: f64,\n) -> self::MlReadGrammarSelectionMappedOffsetLoop11Result {\n    loop {\n        return if (index + 3f64) < (intervals.len() as f64) {\n            {\n                let start = (self::ml_array::optional_at(\n                    intervals,\n                    self::ml_array::number_index(index + 2f64),\n                ))\n                .unwrap_or_else(|| -1f64);\n                {\n                    let end = (self::ml_array::optional_at(\n                        intervals,\n                        self::ml_array::number_index(index + 3f64),\n                    ))\n                    .unwrap_or_else(|| -1f64);\n                    if (start <= offset) && (offset < end) {\n                        self::MlReadGrammarSelectionMappedOffsetLoop11Result::MlReadGrammarSelectionMappedOffsetLoop11Return((self::ml_array::optional_at(intervals, self::ml_array::number_index(index))).unwrap_or_else(|| -1f64))\n                    } else {\n                        {\n                            let index_2 = index + 4f64;\n                            {\n                                index = index_2;\n                                continue;\n                            }\n                        }\n                    }\n                }\n            }\n        } else {\n            self::MlReadGrammarSelectionMappedOffsetLoop11Result::MlReadGrammarSelectionMappedOffsetLoop11Done\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.search-grammar-selection-cover-end",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "ml_read_grammar_selection_mapped_cover_loop13",
+    "inventoryName": "search grammar selection cover end",
+    "sourceText": "pub fn ml_read_grammar_selection_mapped_cover_loop13(\n    intervals: &[Vec<f64>],\n    mut end: f64,\n    mut low: f64,\n    mut high: f64,\n) -> f64 {\n    loop {\n        if low < high {\n            {\n                let middle = ((low + high) / 2f64).floor();\n                {\n                    let row = (self::ml_array::optional_at(\n                        intervals,\n                        self::ml_array::number_index(middle),\n                    ))\n                    .unwrap_or_else(|| Vec::<f64>::new());\n                    if ((self::ml_array::optional_at(&row, self::ml_array::number_index(3f64)))\n                        .unwrap_or_else(|| -1f64))\n                        < end\n                    {\n                        {\n                            let low_2 = middle + 1f64;\n                            {\n                                low = low_2;\n                                continue;\n                            }\n                        }\n                    }\n                    {\n                        {\n                            let high_2 = middle;\n                            {\n                                high = high_2;\n                                continue;\n                            }\n                        }\n                    }\n                }\n            }\n        }\n        return { low };\n    }\n}"
+  },
+  {
+    "id": "translation.grammar-selection-cover-search-result",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "MlReadGrammarSelectionMappedCoverLoop12Result",
+    "inventoryName": "grammar selection cover search result",
+    "sourceText": "pub enum MlReadGrammarSelectionMappedCoverLoop12Result {\n    MlReadGrammarSelectionMappedCoverLoop12Done(f64, f64),\n}"
+  },
+  {
+    "id": "translation.search-grammar-selection-cover-start",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_2.rs",
+    "name": "ml_read_grammar_selection_mapped_cover_loop12",
+    "inventoryName": "search grammar selection cover start",
+    "sourceText": "pub fn ml_read_grammar_selection_mapped_cover_loop12(\n    intervals: &[Vec<f64>],\n    mut start: f64,\n    mut low: f64,\n    mut high: f64,\n) -> self::MlReadGrammarSelectionMappedCoverLoop12Result {\n    loop {\n        if low < high {\n            {\n                let middle = ((low + high) / 2f64).floor();\n                {\n                    let row = (self::ml_array::optional_at(\n                        intervals,\n                        self::ml_array::number_index(middle),\n                    ))\n                    .unwrap_or_else(|| Vec::<f64>::new());\n                    if ((self::ml_array::optional_at(&row, self::ml_array::number_index(3f64)))\n                        .unwrap_or_else(|| -1f64))\n                        <= start\n                    {\n                        {\n                            let low_2 = middle + 1f64;\n                            {\n                                low = low_2;\n                                continue;\n                            }\n                        }\n                    }\n                    {\n                        {\n                            let high_2 = middle;\n                            {\n                                high = high_2;\n                                continue;\n                            }\n                        }\n                    }\n                }\n            }\n        }\n        return {\n            self::MlReadGrammarSelectionMappedCoverLoop12Result::MlReadGrammarSelectionMappedCoverLoop12Done(low, high)\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.decode-unicode-escape",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "decode_unicode_escape",
+    "inventoryName": "decode unicode escape",
+    "sourceText": "pub fn decode_unicode_escape(units: &[f64], allow_fixed: bool) -> self::UnicodeEscape {\n    if (((units.len() as f64) < 2f64)\n        || !(match (\n            self::ml_array::optional_at(units, self::ml_array::number_index(0f64)),\n            92f64,\n        ) {\n            (Some(ml_left), ml_right) => ml_left == ml_right,\n            _ => false,\n        }))\n        || (!(match (\n            self::ml_array::optional_at(units, self::ml_array::number_index(1f64)),\n            117f64,\n        ) {\n            (Some(ml_left), ml_right) => ml_left == ml_right,\n            _ => false,\n        }) && !(match (\n            self::ml_array::optional_at(units, self::ml_array::number_index(1f64)),\n            120f64,\n        ) {\n            (Some(ml_left), ml_right) => ml_left == ml_right,\n            _ => false,\n        }))\n    {\n        self::UnicodeEscape::Malformed\n    } else {\n        {\n            let fixed = 4f64;\n            {\n                let ml_s1 = if match (\n                    self::ml_array::optional_at(units, self::ml_array::number_index(1f64)),\n                    120f64,\n                ) {\n                    (Some(ml_left), ml_right) => ml_left == ml_right,\n                    _ => false,\n                } {\n                    if allow_fixed {\n                        {\n                            let fixed_2 = 2f64;\n                            self::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Next(\n                                fixed_2,\n                            )\n                        }\n                    } else {\n                        self::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Return(\n                            Box::new(self::UnicodeEscape::Malformed),\n                        )\n                    }\n                } else {\n                    self::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Next(fixed)\n                };\n                match ml_s1 {\n                    self::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Next(fixed_3) => {\n                        let index = 2f64;\n                        {\n                            let code = 0f64;\n                            {\n                                let digits = 0f64;\n                                {\n                                    let braced = false;\n                                    {\n                                        let ml_s2 = if ((fixed_3 == 4f64)\n                                            && ((units.len() as f64) > 2f64))\n                                            && match (\n                                                self::ml_array::optional_at(\n                                                    units,\n                                                    self::ml_array::number_index(2f64),\n                                                ),\n                                                123f64,\n                                            ) {\n                                                (Some(ml_left), ml_right) => ml_left == ml_right,\n                                                _ => false,\n                                            } {\n                                            {\n                                                let braced_2 = true;\n                                                {\n                                                    let index_2 = 3f64;\n                                                    self::MlDecodeUnicodeEscapeJoin2::MlDecodeUnicodeEscapeJoin2Next(index_2, braced_2)\n                                                }\n                                            }\n                                        } else if allow_fixed {\n                                            self::MlDecodeUnicodeEscapeJoin2::MlDecodeUnicodeEscapeJoin2Next(index, braced)\n                                        } else {\n                                            self::MlDecodeUnicodeEscapeJoin2::MlDecodeUnicodeEscapeJoin2Return(Box::new(self::UnicodeEscape::Malformed))\n                                        };\n                                        match ml_s2 {\n                                                self::MlDecodeUnicodeEscapeJoin2::MlDecodeUnicodeEscapeJoin2Next(index_3, braced_3) => {\n                                                    {\n                                                        let ml_s3 = self::ml_decode_unicode_escape_loop3(units, fixed_3, index_3, code, digits, braced_3);\n                                                        match ml_s3 {\n                                                            self::MlDecodeUnicodeEscapeLoop3Result::MlDecodeUnicodeEscapeLoop3Done(index_4, code_2, digits_2) => {\n                                                                {\n                                                                    let ml_s4 = if braced_3 {\n                                                                        if ((digits_2 == 0f64) || (index_4 >= (units.len() as f64))) || !(match (self::ml_array::optional_at(units, self::ml_array::number_index(index_4)), 125f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }) {\n                                                                            self::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Return(Box::new(self::UnicodeEscape::Malformed))\n                                                                        } else {\n                                                                            {\n                                                                                let index_5 = index_4 + 1f64;\n                                                                                self::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Next(index_5)\n                                                                            }\n                                                                        }\n                                                                    } else  {\nlet ml_library_inequality_1 = digits_2 != fixed_3 ;\nif ml_library_inequality_1 {\n                                                                            self::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Return(Box::new(self::UnicodeEscape::Malformed))\n                                                                        } else {\n                                                                            self::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Next(index_4)\n                                                                        }\n};\n                                                                    match ml_s4 {\n                                                                        self::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Next(index_6) => {\n                                                                            {\n                                                                                let escape_length = index_6;\n                                                                                {\n                                                                                    let ml_s6 = if ((((!braced_3 && (code_2 >= 55_296f64)) && (code_2 <= 56_319f64)) && ((units.len() as f64) >= (index_6 + 6f64))) && match (self::ml_array::optional_at(units, self::ml_array::number_index(index_6)), 92f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }) && match (self::ml_array::optional_at(units, self::ml_array::number_index(index_6 + 1f64)), 117f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false } {\n                                                                                        {\n                                                                                            let low = 0f64;\n                                                                                            {\n                                                                                                let offset = 2f64;\n                                                                                                {\n                                                                                                    let ml_s7 = self::ml_decode_unicode_escape_loop6(units, index_6, low, offset);\n                                                                                                    match ml_s7 {\n                                                                                                        self::MlDecodeUnicodeEscapeLoop6Result::MlDecodeUnicodeEscapeLoop6Done(low_2, offset_2) => {\n                                                                                                            if ((offset_2 == 6f64) && (low_2 >= 56_320f64)) && (low_2 <= 57_343f64) {\n                                                                                                                {\n                                                                                                                    let code_3 = ((65_536f64 + ((code_2 - 55_296f64) * 1024f64)) + low_2) - 56_320f64;\n                                                                                                                    {\n                                                                                                                        let index_7 = index_6 + 6f64;\n                                                                                                                        self::MlDecodeUnicodeEscapeJoin5::MlDecodeUnicodeEscapeJoin5Next(index_7, code_3)\n                                                                                                                    }\n                                                                                                                }\n                                                                                                            } else {\n                                                                                                                self::MlDecodeUnicodeEscapeJoin5::MlDecodeUnicodeEscapeJoin5Next(index_6, code_2)\n                                                                                                            }\n                                                                                                        }\n                                                                                                    }\n                                                                                                }\n                                                                                            }\n                                                                                        }\n                                                                                    } else {\n                                                                                        self::MlDecodeUnicodeEscapeJoin5::MlDecodeUnicodeEscapeJoin5Next(index_6, code_2)\n                                                                                    };\n                                                                                    match ml_s6 {\n                                                                                        self::MlDecodeUnicodeEscapeJoin5::MlDecodeUnicodeEscapeJoin5Next(index_8, code_4) => {\n                                                                                            if (code_4 > 1_114_111f64) || ((55_296f64..=57_343f64).contains(&code_4)) {\n                                                                                                self::UnicodeEscape::Unsupported(index_8, escape_length)\n                                                                                            } else {\n                                                                                                self::UnicodeEscape::Scalar(code_4, index_8)\n                                                                                            }\n                                                                                        }\n                                                                                    }\n                                                                                }\n                                                                            }\n                                                                        }\n                                                                        self::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Return(ml_result6) => {\n                                                                            let ml_result6 = *ml_result6;\n                                                                            ml_result6.clone()\n                                                                        }\n                                                                    }\n                                                                }\n                                                            }\n                                                        }\n                                                    }\n                                                }\n                                                self::MlDecodeUnicodeEscapeJoin2::MlDecodeUnicodeEscapeJoin2Return(ml_result6_2) => {\n                                                    let ml_result6_2 = *ml_result6_2;\n                                                    ml_result6_2.clone()\n                                                }\n                                            }\n                                    }\n                                }\n                            }\n                        }\n                    }\n                    self::MlDecodeUnicodeEscapeJoin1::MlDecodeUnicodeEscapeJoin1Return(\n                        ml_result6_3,\n                    ) => {\n                        let ml_result6_3 = *ml_result6_3;\n                        ml_result6_3.clone()\n                    }\n                }\n            }\n        }\n    }\n}"
+  },
+  {
+    "id": "translation.unicode-escape",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "UnicodeEscape",
+    "inventoryName": "unicode escape",
+    "sourceText": "pub enum UnicodeEscape {\n    Scalar(f64, f64),\n    Malformed,\n    Unsupported(f64, f64),\n}"
+  },
+  {
+    "id": "translation.callable-emission-native-meta-language-large-integer",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::Big",
+    "inventoryName": "callable emission native meta language large integer",
+    "sourceText": "    pub struct Big {\n        negative: bool,\n        magnitude: Vec<u32>,\n    }",
+    "ownerContexts": [
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-trim",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::trim",
+    "inventoryName": "execute callable emission native meta language trim",
+    "sourceText": "    fn trim(mut magnitude: Vec<u32>) -> Vec<u32> {\n        while magnitude.last() == Some(&0) {\n            magnitude.pop();\n        }\n        magnitude\n    }",
+    "ownerContexts": [
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-compare-magnitude",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::compare_magnitude",
+    "inventoryName": "execute callable emission native meta language compare magnitude",
+    "sourceText": "    fn compare_magnitude(a: &[u32], b: &[u32]) -> Ordering {\n        a.len()\n            .cmp(&b.len())\n            .then_with(|| a.iter().rev().cmp(b.iter().rev()))\n    }",
+    "ownerContexts": [
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-add-magnitude",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::add_magnitude",
+    "inventoryName": "execute callable emission native meta language add magnitude",
+    "sourceText": "    fn add_magnitude(a: &[u32], b: &[u32]) -> Vec<u32> {\n        let mut out = Vec::with_capacity(a.len().max(b.len()) + 1);\n        let mut carry = 0u64;\n        for index in 0..a.len().max(b.len()) {\n            let sum = u64::from(*a.get(index).unwrap_or(&0))\n                + u64::from(*b.get(index).unwrap_or(&0))\n                + carry;\n            out.push(sum as u32);\n            carry = sum >> 32;\n        }\n        if carry > 0 {\n            out.push(carry as u32);\n        }\n        out\n    }",
+    "ownerContexts": [
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-subtract-magnitude",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::sub_magnitude",
+    "inventoryName": "execute callable emission native meta language subtract magnitude",
+    "sourceText": "    fn sub_magnitude(a: &[u32], b: &[u32]) -> Vec<u32> {\n        let mut out = Vec::with_capacity(a.len());\n        let mut borrow = 0i64;\n        for (index, limb) in a.iter().enumerate() {\n            let mut difference = i64::from(*limb) - i64::from(*b.get(index).unwrap_or(&0)) - borrow;\n            borrow = 0;\n            if difference < 0 {\n                difference += 1 << 32;\n                borrow = 1;\n            }\n            out.push(difference as u32);\n        }\n        trim(out)\n    }",
+    "ownerContexts": [
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-multiply-magnitude",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::mul_magnitude",
+    "inventoryName": "execute callable emission native meta language multiply magnitude",
+    "sourceText": "    fn mul_magnitude(a: &[u32], b: &[u32]) -> Vec<u32> {\n        let mut out = vec![0u32; a.len() + b.len()];\n        for (i, x) in a.iter().enumerate() {\n            let mut carry = 0u64;\n            for (j, y) in b.iter().enumerate() {\n                let product = u64::from(out[i + j]) + u64::from(*x) * u64::from(*y) + carry;\n                out[i + j] = product as u32;\n                carry = product >> 32;\n            }\n            let mut index = i + b.len();\n            while carry > 0 {\n                let sum = u64::from(out[index]) + carry;\n                out[index] = sum as u32;\n                carry = sum >> 32;\n                index += 1;\n            }\n        }\n        trim(out)\n    }",
+    "ownerContexts": [
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-division-and-remainder-magnitude",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::divmod_magnitude",
+    "inventoryName": "execute callable emission native meta language division and remainder magnitude",
+    "sourceText": "    fn divmod_magnitude(a: &[u32], b: &[u32]) -> (Vec<u32>, Vec<u32>) {\n        let mut quotient = vec![0u32; a.len()];\n        if b.len() == 1 {\n            let divisor = u64::from(b[0]);\n            let mut remainder = 0u64;\n            for index in (0..a.len()).rev() {\n                let current = (remainder << 32) | u64::from(a[index]);\n                quotient[index] = (current / divisor) as u32;\n                remainder = current % divisor;\n            }\n            return (trim(quotient), trim(vec![remainder as u32]));\n        }\n        let mut remainder: Vec<u32> = Vec::new();\n        for bit in (0..a.len() * 32).rev() {\n            let mut carry = (a[bit / 32] >> (bit % 32)) & 1;\n            for limb in &mut remainder {\n                let next = *limb >> 31;\n                *limb = (*limb << 1) | carry;\n                carry = next;\n            }\n            if carry != 0 {\n                remainder.push(carry);\n            }\n            if compare_magnitude(&remainder, b) != Ordering::Less {\n                remainder = sub_magnitude(&remainder, b);\n                quotient[bit / 32] |= 1 << (bit % 32);\n            }\n        }\n        (trim(quotient), remainder)\n    }",
+    "ownerContexts": [
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-from-parts",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::from_parts",
+    "inventoryName": "execute callable emission native meta language from parts",
+    "sourceText": "        fn from_parts(negative: bool, magnitude: Vec<u32>) -> Self {\n            let magnitude = trim(magnitude);\n            Self {\n                negative: negative && !magnitude.is_empty(),\n                magnitude,\n            }\n        }",
+    "ownerContexts": [
+      "    impl Big {",
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-zero",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::zero",
+    "inventoryName": "execute callable emission native meta language zero",
+    "sourceText": "        pub fn zero() -> Self {\n            Self::from_parts(false, Vec::new())\n        }",
+    "ownerContexts": [
+      "    impl Big {",
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-from-signed-integer-one-hundred-twenty-eight-bit",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::from_i128",
+    "inventoryName": "execute callable emission native meta language from signed integer one hundred twenty eight bit",
+    "sourceText": "        pub fn from_i128(value: i128) -> Self {\n            let mut big = Self::from_u128(value.unsigned_abs());\n            big.negative = value < 0;\n            big\n        }",
+    "ownerContexts": [
+      "    impl Big {",
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-from-unsigned-integer-one-hundred-twenty-eight-bit",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::from_u128",
+    "inventoryName": "execute callable emission native meta language from unsigned integer one hundred twenty eight bit",
+    "sourceText": "        pub fn from_u128(mut value: u128) -> Self {\n            let mut magnitude = Vec::new();\n            while value > 0 {\n                magnitude.push(value as u32);\n                value >>= 32;\n            }\n            Self::from_parts(false, magnitude)\n        }",
+    "ownerContexts": [
+      "    impl Big {",
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-parse",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::parse",
+    "inventoryName": "execute callable emission native meta language parse",
+    "sourceText": "        pub fn parse(text: &str) -> Self {\n            let (negative, digits) = text\n                .strip_prefix('-')\n                .map_or((false, text), |rest| (true, rest));\n            let ten = Self::from_i128(10);\n            let mut value = Self::zero();\n            for digit in digits.chars() {\n                let digit = digit.to_digit(10).expect(\"decimal literal\");\n                value = value.mul(&ten).add(&Self::from_i128(i128::from(digit)));\n            }\n            if negative { value.neg() } else { value }\n        }",
+    "ownerContexts": [
+      "    impl Big {",
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-is-zero",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::is_zero",
+    "inventoryName": "execute callable emission native meta language is zero",
+    "sourceText": "        pub const fn is_zero(&self) -> bool {\n            self.magnitude.is_empty()\n        }",
+    "ownerContexts": [
+      "    impl Big {",
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-is-negative",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::is_negative",
+    "inventoryName": "execute callable emission native meta language is negative",
+    "sourceText": "        pub const fn is_negative(&self) -> bool {\n            self.negative\n        }",
+    "ownerContexts": [
+      "    impl Big {",
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-to-index",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::to_index",
+    "inventoryName": "execute callable emission native meta language to index",
+    "sourceText": "        pub fn to_index(&self) -> Option<usize> {\n            if self.negative || self.magnitude.len() > 2 {\n                return None;\n            }\n            let value = self\n                .magnitude\n                .iter()\n                .rev()\n                .fold(0u64, |acc, &digit| (acc << 32) | u64::from(digit));\n            usize::try_from(value).ok()\n        }",
+    "ownerContexts": [
+      "    impl Big {",
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-negate",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::neg",
+    "inventoryName": "execute callable emission native meta language negate",
+    "sourceText": "        pub fn neg(&self) -> Self {\n            Self::from_parts(!self.negative, self.magnitude.clone())\n        }",
+    "ownerContexts": [
+      "    impl Big {",
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-add",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::add",
+    "inventoryName": "execute callable emission native meta language add",
+    "sourceText": "        pub fn add(&self, other: &Self) -> Self {\n            if self.negative == other.negative {\n                return Self::from_parts(\n                    self.negative,\n                    add_magnitude(&self.magnitude, &other.magnitude),\n                );\n            }\n            match compare_magnitude(&self.magnitude, &other.magnitude) {\n                Ordering::Less => Self::from_parts(\n                    other.negative,\n                    sub_magnitude(&other.magnitude, &self.magnitude),\n                ),\n                _ => Self::from_parts(\n                    self.negative,\n                    sub_magnitude(&self.magnitude, &other.magnitude),\n                ),\n            }\n        }",
+    "ownerContexts": [
+      "    impl Big {",
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-subtract",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::sub",
+    "inventoryName": "execute callable emission native meta language subtract",
+    "sourceText": "        pub fn sub(&self, other: &Self) -> Self {\n            self.add(&other.neg())\n        }",
+    "ownerContexts": [
+      "    impl Big {",
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-multiply",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::mul",
+    "inventoryName": "execute callable emission native meta language multiply",
+    "sourceText": "        pub fn mul(&self, other: &Self) -> Self {\n            Self::from_parts(\n                self.negative != other.negative,\n                mul_magnitude(&self.magnitude, &other.magnitude),\n            )\n        }",
+    "ownerContexts": [
+      "    impl Big {",
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-division-and-remainder-truncate",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::divmod_trunc",
+    "inventoryName": "execute callable emission native meta language division and remainder truncate",
+    "sourceText": "        pub fn divmod_trunc(&self, other: &Self) -> (Self, Self) {\n            let (quotient, remainder) = divmod_magnitude(&self.magnitude, &other.magnitude);\n            (\n                Self::from_parts(self.negative != other.negative, quotient),\n                Self::from_parts(self.negative, remainder),\n            )\n        }",
+    "ownerContexts": [
+      "    impl Big {",
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-compare",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::cmp",
+    "inventoryName": "execute callable emission native meta language compare",
+    "sourceText": "        fn cmp(&self, other: &Self) -> Ordering {\n            match (self.negative, other.negative) {\n                (false, true) => Ordering::Greater,\n                (true, false) => Ordering::Less,\n                (false, false) => compare_magnitude(&self.magnitude, &other.magnitude),\n                (true, true) => compare_magnitude(&other.magnitude, &self.magnitude),\n            }\n        }",
+    "ownerContexts": [
+      "    impl Ord for Big {",
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-partial-compare",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::partial_cmp",
+    "inventoryName": "execute callable emission native meta language partial compare",
+    "sourceText": "        fn partial_cmp(&self, other: &Self) -> Option<Ordering> {\n            Some(self.cmp(other))\n        }",
+    "ownerContexts": [
+      "    impl PartialOrd for Big {",
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-format",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::fmt",
+    "inventoryName": "execute callable emission native meta language format",
+    "sourceText": "        fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {\n            if self.is_zero() {\n                return formatter.write_str(\"0\");\n            }\n            let billion = [1_000_000_000u32];\n            let mut chunks = Vec::new();\n            let mut rest = self.magnitude.clone();\n            while !rest.is_empty() {\n                let (quotient, remainder) = divmod_magnitude(&rest, &billion);\n                chunks.push(remainder.first().copied().unwrap_or(0));\n                rest = quotient;\n            }\n            let mut text = String::new();\n            if self.negative {\n                text.push('-');\n            }\n            text.push_str(&chunks.pop().unwrap_or(0).to_string());\n            for chunk in chunks.iter().rev() {\n                std::fmt::Write::write_fmt(&mut text, format_args!(\"{chunk:09}\"))\n                    .expect(\"writing to a String cannot fail\");\n            }\n            formatter.write_str(&text)\n        }",
+    "ownerContexts": [
+      "    impl fmt::Display for Big {",
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-natural-number-subtract",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::nat_sub",
+    "inventoryName": "execute callable emission native meta language natural number subtract",
+    "sourceText": "    pub fn nat_sub(a: &Big, b: &Big) -> Big {\n        if a > b { a.sub(b) } else { Big::zero() }\n    }",
+    "ownerContexts": [
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-predecessor",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::pred",
+    "inventoryName": "execute callable emission native meta language predecessor",
+    "sourceText": "    pub fn pred(a: &Big) -> Big {\n        a.sub(&Big::from_i128(1))\n    }",
+    "ownerContexts": [
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-divide",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::divide",
+    "inventoryName": "execute callable emission native meta language divide",
+    "sourceText": "    pub fn divide(a: &Big, b: &Big, rounding: &str, by_zero: Option<&str>, remainder: bool) -> Big {\n        if b.is_zero() {\n            if let Some(message) = by_zero {\n                panic!(\"{message}\");\n            }\n            return if remainder { a.clone() } else { Big::zero() };\n        }\n        let one = Big::from_i128(1);\n        let (mut quotient, rest) = a.divmod_trunc(b);\n        if !rest.is_zero() {\n            if rounding == \"floor\" && rest.is_negative() != b.is_negative() {\n                quotient = quotient.sub(&one);\n            }\n            if rounding == \"euclid\" && rest.is_negative() {\n                quotient = if b.is_negative() {\n                    quotient.add(&one)\n                } else {\n                    quotient.sub(&one)\n                };\n            }\n        }\n        if remainder {\n            a.sub(&quotient.mul(b))\n        } else {\n            quotient\n        }\n    }",
+    "ownerContexts": [
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-to-natural-number-checked",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::to_nat_checked",
+    "inventoryName": "execute callable emission native meta language to natural number checked",
+    "sourceText": "    pub fn to_nat_checked(value: Big, message: &str) -> Big {\n        assert!(!value.is_negative(), \"{message}\");\n        value\n    }",
+    "ownerContexts": [
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-clamp-natural-number",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::clamp_nat",
+    "inventoryName": "execute callable emission native meta language clamp natural number",
+    "sourceText": "    pub fn clamp_nat(value: Big) -> Big {\n        if value.is_negative() {\n            Big::zero()\n        } else {\n            value\n        }\n    }",
+    "ownerContexts": [
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-emission-native-meta-language-range",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml::range",
+    "inventoryName": "execute callable emission native meta language range",
+    "sourceText": "    pub fn range(low: i128, high: i128) -> Vec<Big> {\n        (low..=high).map(Big::from_i128).collect()\n    }",
+    "ownerContexts": [
+      "pub mod ml {"
+    ]
+  },
+  {
+    "id": "translation.callable-emission-native-meta-language",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml",
+    "inventoryName": "callable emission native meta language",
+    "sourceText": "pub mod ml {\n    use std::cmp::Ordering;\n    use std::fmt;\n\n    /// Sign and magnitude; the magnitude is little-endian base 2^32 without\n    /// leading zero limbs, and zero is never negative.\n    #[derive(Clone, Debug, PartialEq, Eq, Hash)]\n    pub struct Big {\n        negative: bool,\n        magnitude: Vec<u32>,\n    }\n\n    fn trim(mut magnitude: Vec<u32>) -> Vec<u32> {\n        while magnitude.last() == Some(&0) {\n            magnitude.pop();\n        }\n        magnitude\n    }\n\n    fn compare_magnitude(a: &[u32], b: &[u32]) -> Ordering {\n        a.len()\n            .cmp(&b.len())\n            .then_with(|| a.iter().rev().cmp(b.iter().rev()))\n    }\n\n    fn add_magnitude(a: &[u32], b: &[u32]) -> Vec<u32> {\n        let mut out = Vec::with_capacity(a.len().max(b.len()) + 1);\n        let mut carry = 0u64;\n        for index in 0..a.len().max(b.len()) {\n            let sum = u64::from(*a.get(index).unwrap_or(&0))\n                + u64::from(*b.get(index).unwrap_or(&0))\n                + carry;\n            out.push(sum as u32);\n            carry = sum >> 32;\n        }\n        if carry > 0 {\n            out.push(carry as u32);\n        }\n        out\n    }\n\n    /// |a| - |b| where |a| >= |b|.\n    fn sub_magnitude(a: &[u32], b: &[u32]) -> Vec<u32> {\n        let mut out = Vec::with_capacity(a.len());\n        let mut borrow = 0i64;\n        for (index, limb) in a.iter().enumerate() {\n            let mut difference = i64::from(*limb) - i64::from(*b.get(index).unwrap_or(&0)) - borrow;\n            borrow = 0;\n            if difference < 0 {\n                difference += 1 << 32;\n                borrow = 1;\n            }\n            out.push(difference as u32);\n        }\n        trim(out)\n    }\n\n    fn mul_magnitude(a: &[u32], b: &[u32]) -> Vec<u32> {\n        let mut out = vec![0u32; a.len() + b.len()];\n        for (i, x) in a.iter().enumerate() {\n            let mut carry = 0u64;\n            for (j, y) in b.iter().enumerate() {\n                let product = u64::from(out[i + j]) + u64::from(*x) * u64::from(*y) + carry;\n                out[i + j] = product as u32;\n                carry = product >> 32;\n            }\n            let mut index = i + b.len();\n            while carry > 0 {\n                let sum = u64::from(out[index]) + carry;\n                out[index] = sum as u32;\n                carry = sum >> 32;\n                index += 1;\n            }\n        }\n        trim(out)\n    }\n\n    /// Quotient and remainder of magnitudes; the divisor is not zero.\n    fn divmod_magnitude(a: &[u32], b: &[u32]) -> (Vec<u32>, Vec<u32>) {\n        let mut quotient = vec![0u32; a.len()];\n        if b.len() == 1 {\n            let divisor = u64::from(b[0]);\n            let mut remainder = 0u64;\n            for index in (0..a.len()).rev() {\n                let current = (remainder << 32) | u64::from(a[index]);\n                quotient[index] = (current / divisor) as u32;\n                remainder = current % divisor;\n            }\n            return (trim(quotient), trim(vec![remainder as u32]));\n        }\n        let mut remainder: Vec<u32> = Vec::new();\n        for bit in (0..a.len() * 32).rev() {\n            let mut carry = (a[bit / 32] >> (bit % 32)) & 1;\n            for limb in &mut remainder {\n                let next = *limb >> 31;\n                *limb = (*limb << 1) | carry;\n                carry = next;\n            }\n            if carry != 0 {\n                remainder.push(carry);\n            }\n            if compare_magnitude(&remainder, b) != Ordering::Less {\n                remainder = sub_magnitude(&remainder, b);\n                quotient[bit / 32] |= 1 << (bit % 32);\n            }\n        }\n        (trim(quotient), remainder)\n    }\n\n    impl Big {\n        fn from_parts(negative: bool, magnitude: Vec<u32>) -> Self {\n            let magnitude = trim(magnitude);\n            Self {\n                negative: negative && !magnitude.is_empty(),\n                magnitude,\n            }\n        }\n\n        #[must_use]\n        pub fn zero() -> Self {\n            Self::from_parts(false, Vec::new())\n        }\n\n        #[must_use]\n        pub fn from_i128(value: i128) -> Self {\n            let mut big = Self::from_u128(value.unsigned_abs());\n            big.negative = value < 0;\n            big\n        }\n\n        #[must_use]\n        pub fn from_u128(mut value: u128) -> Self {\n            let mut magnitude = Vec::new();\n            while value > 0 {\n                magnitude.push(value as u32);\n                value >>= 32;\n            }\n            Self::from_parts(false, magnitude)\n        }\n\n        /// A decimal literal with an optional leading minus sign.\n        #[must_use]\n        pub fn parse(text: &str) -> Self {\n            let (negative, digits) = text\n                .strip_prefix('-')\n                .map_or((false, text), |rest| (true, rest));\n            let ten = Self::from_i128(10);\n            let mut value = Self::zero();\n            for digit in digits.chars() {\n                let digit = digit.to_digit(10).expect(\"decimal literal\");\n                value = value.mul(&ten).add(&Self::from_i128(i128::from(digit)));\n            }\n            if negative { value.neg() } else { value }\n        }\n\n        #[must_use]\n        pub const fn is_zero(&self) -> bool {\n            self.magnitude.is_empty()\n        }\n\n        #[must_use]\n        pub const fn is_negative(&self) -> bool {\n            self.negative\n        }\n\n        /// The array index this names, if it is one.\n        #[must_use]\n        pub fn to_index(&self) -> Option<usize> {\n            if self.negative || self.magnitude.len() > 2 {\n                return None;\n            }\n            let value = self\n                .magnitude\n                .iter()\n                .rev()\n                .fold(0u64, |acc, &digit| (acc << 32) | u64::from(digit));\n            usize::try_from(value).ok()\n        }\n\n        #[must_use]\n        pub fn neg(&self) -> Self {\n            Self::from_parts(!self.negative, self.magnitude.clone())\n        }\n\n        #[must_use]\n        pub fn add(&self, other: &Self) -> Self {\n            if self.negative == other.negative {\n                return Self::from_parts(\n                    self.negative,\n                    add_magnitude(&self.magnitude, &other.magnitude),\n                );\n            }\n            match compare_magnitude(&self.magnitude, &other.magnitude) {\n                Ordering::Less => Self::from_parts(\n                    other.negative,\n                    sub_magnitude(&other.magnitude, &self.magnitude),\n                ),\n                _ => Self::from_parts(\n                    self.negative,\n                    sub_magnitude(&self.magnitude, &other.magnitude),\n                ),\n            }\n        }\n\n        #[must_use]\n        pub fn sub(&self, other: &Self) -> Self {\n            self.add(&other.neg())\n        }\n\n        #[must_use]\n        pub fn mul(&self, other: &Self) -> Self {\n            Self::from_parts(\n                self.negative != other.negative,\n                mul_magnitude(&self.magnitude, &other.magnitude),\n            )\n        }\n\n        /// Division rounding toward zero; the divisor is not zero.\n        #[must_use]\n        pub fn divmod_trunc(&self, other: &Self) -> (Self, Self) {\n            let (quotient, remainder) = divmod_magnitude(&self.magnitude, &other.magnitude);\n            (\n                Self::from_parts(self.negative != other.negative, quotient),\n                Self::from_parts(self.negative, remainder),\n            )\n        }\n    }\n\n    impl Ord for Big {\n        fn cmp(&self, other: &Self) -> Ordering {\n            match (self.negative, other.negative) {\n                (false, true) => Ordering::Greater,\n                (true, false) => Ordering::Less,\n                (false, false) => compare_magnitude(&self.magnitude, &other.magnitude),\n                (true, true) => compare_magnitude(&other.magnitude, &self.magnitude),\n            }\n        }\n    }\n\n    impl PartialOrd for Big {\n        fn partial_cmp(&self, other: &Self) -> Option<Ordering> {\n            Some(self.cmp(other))\n        }\n    }\n\n    impl fmt::Display for Big {\n        fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {\n            if self.is_zero() {\n                return formatter.write_str(\"0\");\n            }\n            let billion = [1_000_000_000u32];\n            let mut chunks = Vec::new();\n            let mut rest = self.magnitude.clone();\n            while !rest.is_empty() {\n                let (quotient, remainder) = divmod_magnitude(&rest, &billion);\n                chunks.push(remainder.first().copied().unwrap_or(0));\n                rest = quotient;\n            }\n            let mut text = String::new();\n            if self.negative {\n                text.push('-');\n            }\n            text.push_str(&chunks.pop().unwrap_or(0).to_string());\n            for chunk in chunks.iter().rev() {\n                std::fmt::Write::write_fmt(&mut text, format_args!(\"{chunk:09}\"))\n                    .expect(\"writing to a String cannot fail\");\n            }\n            formatter.write_str(&text)\n        }\n    }\n\n    /// Natural subtraction: truncated at zero.\n    #[must_use]\n    pub fn nat_sub(a: &Big, b: &Big) -> Big {\n        if a > b { a.sub(b) } else { Big::zero() }\n    }\n\n    #[must_use]\n    pub fn pred(a: &Big) -> Big {\n        a.sub(&Big::from_i128(1))\n    }\n\n    /// Integer division with the source's rounding (\"trunc\", \"floor\" or\n    /// \"euclid\"); by zero it aborts with the source's message or is total\n    /// (x / 0 = 0, x % 0 = x).\n    #[must_use]\n    pub fn divide(a: &Big, b: &Big, rounding: &str, by_zero: Option<&str>, remainder: bool) -> Big {\n        if b.is_zero() {\n            if let Some(message) = by_zero {\n                panic!(\"{message}\");\n            }\n            return if remainder { a.clone() } else { Big::zero() };\n        }\n        let one = Big::from_i128(1);\n        let (mut quotient, rest) = a.divmod_trunc(b);\n        if !rest.is_zero() {\n            if rounding == \"floor\" && rest.is_negative() != b.is_negative() {\n                quotient = quotient.sub(&one);\n            }\n            if rounding == \"euclid\" && rest.is_negative() {\n                quotient = if b.is_negative() {\n                    quotient.add(&one)\n                } else {\n                    quotient.sub(&one)\n                };\n            }\n        }\n        if remainder {\n            a.sub(&quotient.mul(b))\n        } else {\n            quotient\n        }\n    }\n\n    #[must_use]\n    pub fn to_nat_checked(value: Big, message: &str) -> Big {\n        assert!(!value.is_negative(), \"{message}\");\n        value\n    }\n\n    #[must_use]\n    pub fn clamp_nat(value: Big) -> Big {\n        if value.is_negative() {\n            Big::zero()\n        } else {\n            value\n        }\n    }\n\n    /// Bounded domains for executable theorem checks.\n    #[must_use]\n    pub fn range(low: i128, high: i128) -> Vec<Big> {\n        (low..=high).map(Big::from_i128).collect()\n    }\n}"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-round",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml_math::round",
+    "inventoryName": "execute callable source native meta language mathematics round",
+    "sourceText": "    pub fn round(x: f64) -> f64 {\n        if !x.is_finite() || x == 0.0 {\n            return x;\n        }\n        if x > 0.0 && x < 0.5 {\n            return 0.0;\n        }\n        if (-0.5..0.0).contains(&x) {\n            return -0.0;\n        }\n        let floor = x.floor();\n        if x - floor >= 0.5 { floor + 1.0 } else { floor }\n    }",
+    "ownerContexts": [
+      "pub mod ml_math {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-sign",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml_math::sign",
+    "inventoryName": "execute callable source native meta language mathematics sign",
+    "sourceText": "    pub fn sign(x: f64) -> f64 {\n        if x > 0.0 {\n            1.0\n        } else if x < 0.0 {\n            -1.0\n        } else {\n            x\n        }\n    }",
+    "ownerContexts": [
+      "pub mod ml_math {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-maximum",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml_math::max",
+    "inventoryName": "execute callable source native meta language mathematics maximum",
+    "sourceText": "    pub fn max(a: f64, b: f64) -> f64 {\n        if a > b {\n            a\n        } else if b > a {\n            b\n        } else if a == b {\n            if a.is_sign_negative() { b } else { a }\n        } else {\n            f64::NAN\n        }\n    }",
+    "ownerContexts": [
+      "pub mod ml_math {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-minimum",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml_math::min",
+    "inventoryName": "execute callable source native meta language mathematics minimum",
+    "sourceText": "    pub fn min(a: f64, b: f64) -> f64 {\n        if a < b {\n            a\n        } else if b < a {\n            b\n        } else if a == b {\n            if a.is_sign_negative() { a } else { b }\n        } else {\n            f64::NAN\n        }\n    }",
+    "ownerContexts": [
+      "pub mod ml_math {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-maximum-of",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml_math::max_of",
+    "inventoryName": "execute callable source native meta language mathematics maximum of",
+    "sourceText": "    pub fn max_of(values: &[f64]) -> f64 {\n        values.iter().fold(f64::NEG_INFINITY, |a, &b| max(a, b))\n    }",
+    "ownerContexts": [
+      "pub mod ml_math {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-minimum-of",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml_math::min_of",
+    "inventoryName": "execute callable source native meta language mathematics minimum of",
+    "sourceText": "    pub fn min_of(values: &[f64]) -> f64 {\n        values.iter().fold(f64::INFINITY, |a, &b| min(a, b))\n    }",
+    "ownerContexts": [
+      "pub mod ml_math {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-is-integer",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml_math::is_integer",
+    "inventoryName": "execute callable source native meta language mathematics is integer",
+    "sourceText": "    pub fn is_integer(x: f64) -> bool {\n        x.is_finite() && x.trunc() == x\n    }",
+    "ownerContexts": [
+      "pub mod ml_math {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-is-safe-integer",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml_math::is_safe_integer",
+    "inventoryName": "execute callable source native meta language mathematics is safe integer",
+    "sourceText": "    pub fn is_safe_integer(x: f64) -> bool {\n        is_integer(x) && x.abs() <= 9_007_199_254_740_991.0\n    }",
+    "ownerContexts": [
+      "pub mod ml_math {"
+    ]
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-mathematics",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml_math",
+    "inventoryName": "callable source native meta language mathematics",
+    "sourceText": "pub mod ml_math {\n    /// Math.round: the nearest integer, the one towards +Infinity on a tie,\n    /// with the sign of a zero result from the argument.\n    #[must_use]\n    pub fn round(x: f64) -> f64 {\n        if !x.is_finite() || x == 0.0 {\n            return x;\n        }\n        if x > 0.0 && x < 0.5 {\n            return 0.0;\n        }\n        if (-0.5..0.0).contains(&x) {\n            return -0.0;\n        }\n        let floor = x.floor();\n        if x - floor >= 0.5 { floor + 1.0 } else { floor }\n    }\n\n    /// Math.sign, which keeps -0, 0 and NaN, where `f64::signum` does not.\n    #[must_use]\n    pub fn sign(x: f64) -> f64 {\n        if x > 0.0 {\n            1.0\n        } else if x < 0.0 {\n            -1.0\n        } else {\n            x\n        }\n    }\n\n    /// Math.max of two Numbers: NaN when either is, and 0 above -0.\n    #[must_use]\n    pub fn max(a: f64, b: f64) -> f64 {\n        if a > b {\n            a\n        } else if b > a {\n            b\n        } else if a == b {\n            if a.is_sign_negative() { b } else { a }\n        } else {\n            f64::NAN\n        }\n    }\n\n    /// Math.min of two Numbers: NaN when either is, and -0 below 0.\n    #[must_use]\n    pub fn min(a: f64, b: f64) -> f64 {\n        if a < b {\n            a\n        } else if b < a {\n            b\n        } else if a == b {\n            if a.is_sign_negative() { a } else { b }\n        } else {\n            f64::NAN\n        }\n    }\n\n    #[must_use]\n    pub fn max_of(values: &[f64]) -> f64 {\n        values.iter().fold(f64::NEG_INFINITY, |a, &b| max(a, b))\n    }\n\n    #[must_use]\n    pub fn min_of(values: &[f64]) -> f64 {\n        values.iter().fold(f64::INFINITY, |a, &b| min(a, b))\n    }\n\n    #[must_use]\n    pub fn is_integer(x: f64) -> bool {\n        x.is_finite() && x.trunc() == x\n    }\n\n    #[must_use]\n    pub fn is_safe_integer(x: f64) -> bool {\n        is_integer(x) && x.abs() <= 9_007_199_254_740_991.0\n    }\n}"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-optional-at",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml_array::optional_at",
+    "inventoryName": "execute callable source native meta language array optional at",
+    "sourceText": "    pub fn optional_at<T: Clone>(values: &[T], index: Option<usize>) -> Option<T> {\n        index.and_then(|index| values.get(index)).cloned()\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-at",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml_array::at",
+    "inventoryName": "execute callable source native meta language array at",
+    "sourceText": "    pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {\n        index\n            .and_then(|index| values.get(index))\n            .map_or_else(|| panic!(\"array index out of range\"), Clone::clone)\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-number-index",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml_array::number_index",
+    "inventoryName": "execute callable source native meta language array number index",
+    "sourceText": "    pub fn number_index(index: f64) -> Option<usize> {\n        if index >= 0.0 && index.fract() == 0.0 && index < 9_007_199_254_740_992.0 {\n            Some(index as usize)\n        } else {\n            None\n        }\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-append",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml_array::append",
+    "inventoryName": "execute callable source native meta language array append",
+    "sourceText": "    pub fn append<T>(mut left: Vec<T>, right: Vec<T>) -> Vec<T> {\n        left.extend(right);\n        left\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-integer",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml_array::integer",
+    "inventoryName": "execute callable source native meta language array integer",
+    "sourceText": "    const fn integer(value: f64) -> f64 {\n        if value.is_nan() { 0.0 } else { value.trunc() }\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-relative",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml_array::relative",
+    "inventoryName": "execute callable source native meta language array relative",
+    "sourceText": "    fn relative(value: f64, length: usize) -> usize {\n        let value = integer(value);\n        if value < 0.0 {\n            (length as f64 + value).max(0.0) as usize\n        } else {\n            value.min(length as f64) as usize\n        }\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-slice",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml_array::slice",
+    "inventoryName": "execute callable source native meta language array slice",
+    "sourceText": "    pub fn slice<T: Clone>(values: &[T], start: f64, end: f64) -> Vec<T> {\n        let start = relative(start, values.len());\n        let end = relative(end, values.len());\n        values[start..end.max(start)].to_vec()\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-index-of",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml_array::index_of",
+    "inventoryName": "execute callable source native meta language array index of",
+    "sourceText": "    pub fn index_of<T, F: Fn(&T, &T) -> bool>(\n        values: &[T],\n        search: &T,\n        from: f64,\n        reverse: bool,\n        equal: F,\n    ) -> f64 {\n        if values.is_empty() {\n            return -1.0;\n        }\n        let from = integer(from);\n        if reverse {\n            if from < -(values.len() as f64) {\n                return -1.0;\n            }\n            let start = if from < 0.0 {\n                (values.len() as f64 + from) as usize\n            } else {\n                from.min((values.len() - 1) as f64) as usize\n            };\n            (0..=start)\n                .rev()\n                .find(|&index| equal(&values[index], search))\n                .map_or(-1.0, |index| index as f64)\n        } else {\n            let start = if from < 0.0 {\n                (values.len() as f64 + from).max(0.0) as usize\n            } else {\n                from.min(values.len() as f64) as usize\n            };\n            (start..values.len())\n                .find(|&index| equal(&values[index], search))\n                .map_or(-1.0, |index| index as f64)\n        }\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-includes",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml_array::includes",
+    "inventoryName": "execute callable source native meta language array includes",
+    "sourceText": "    pub fn includes<T, F: Fn(&T, &T) -> bool>(\n        values: &[T],\n        search: &T,\n        from: f64,\n        reverse: bool,\n        equal: F,\n    ) -> bool {\n        index_of(values, search, from, reverse, equal) >= 0.0\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-set",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml_array::set",
+    "inventoryName": "execute callable source native meta language array set",
+    "sourceText": "    pub fn set<T, F: Fn(&T, &T) -> bool>(values: Vec<T>, equal: F) -> Vec<T> {\n        let mut out = Vec::new();\n        for value in values {\n            if !out.iter().any(|previous| equal(previous, &value)) {\n                out.push(value);\n            }\n        }\n        out\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-map",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml_array::map",
+    "inventoryName": "execute callable source native meta language array map",
+    "sourceText": "    pub fn map<K, V, F: Fn(&K, &K) -> bool>(values: Vec<(K, V)>, equal: F) -> Vec<(K, V)> {\n        let mut out: Vec<(K, V)> = Vec::new();\n        for (key, value) in values {\n            if let Some(index) = out.iter().position(|(previous, _)| equal(previous, &key)) {\n                out[index].1 = value;\n            } else {\n                out.push((key, value));\n            }\n        }\n        out\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-array",
+    "source": "rust/src/translation/grammar_selection_mapping_rules/part_1.rs",
+    "name": "ml_array",
+    "inventoryName": "callable source native meta language array",
+    "sourceText": "pub mod ml_array {\n    #[must_use]\n    pub fn optional_at<T: Clone>(values: &[T], index: Option<usize>) -> Option<T> {\n        index.and_then(|index| values.get(index)).cloned()\n    }\n    /// The element at an index; a read outside the array, undefined in\n    /// JavaScript, aborts.\n    #[must_use]\n    pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {\n        index\n            .and_then(|index| values.get(index))\n            .map_or_else(|| panic!(\"array index out of range\"), Clone::clone)\n    }\n\n    /// The index a Number names: a non-negative integer, -0 included.\n    #[must_use]\n    pub fn number_index(index: f64) -> Option<usize> {\n        if index >= 0.0 && index.fract() == 0.0 && index < 9_007_199_254_740_992.0 {\n            Some(index as usize)\n        } else {\n            None\n        }\n    }\n\n    #[must_use]\n    pub fn append<T>(mut left: Vec<T>, right: Vec<T>) -> Vec<T> {\n        left.extend(right);\n        left\n    }\n    const fn integer(value: f64) -> f64 {\n        if value.is_nan() { 0.0 } else { value.trunc() }\n    }\n    fn relative(value: f64, length: usize) -> usize {\n        let value = integer(value);\n        if value < 0.0 {\n            (length as f64 + value).max(0.0) as usize\n        } else {\n            value.min(length as f64) as usize\n        }\n    }\n    #[must_use]\n    pub fn slice<T: Clone>(values: &[T], start: f64, end: f64) -> Vec<T> {\n        let start = relative(start, values.len());\n        let end = relative(end, values.len());\n        values[start..end.max(start)].to_vec()\n    }\n    #[must_use]\n    pub fn index_of<T, F: Fn(&T, &T) -> bool>(\n        values: &[T],\n        search: &T,\n        from: f64,\n        reverse: bool,\n        equal: F,\n    ) -> f64 {\n        if values.is_empty() {\n            return -1.0;\n        }\n        let from = integer(from);\n        if reverse {\n            if from < -(values.len() as f64) {\n                return -1.0;\n            }\n            let start = if from < 0.0 {\n                (values.len() as f64 + from) as usize\n            } else {\n                from.min((values.len() - 1) as f64) as usize\n            };\n            (0..=start)\n                .rev()\n                .find(|&index| equal(&values[index], search))\n                .map_or(-1.0, |index| index as f64)\n        } else {\n            let start = if from < 0.0 {\n                (values.len() as f64 + from).max(0.0) as usize\n            } else {\n                from.min(values.len() as f64) as usize\n            };\n            (start..values.len())\n                .find(|&index| equal(&values[index], search))\n                .map_or(-1.0, |index| index as f64)\n        }\n    }\n    #[must_use]\n    pub fn includes<T, F: Fn(&T, &T) -> bool>(\n        values: &[T],\n        search: &T,\n        from: f64,\n        reverse: bool,\n        equal: F,\n    ) -> bool {\n        index_of(values, search, from, reverse, equal) >= 0.0\n    }\n    #[must_use]\n    pub fn set<T, F: Fn(&T, &T) -> bool>(values: Vec<T>, equal: F) -> Vec<T> {\n        let mut out = Vec::new();\n        for value in values {\n            if !out.iter().any(|previous| equal(previous, &value)) {\n                out.push(value);\n            }\n        }\n        out\n    }\n    #[must_use]\n    pub fn map<K, V, F: Fn(&K, &K) -> bool>(values: Vec<(K, V)>, equal: F) -> Vec<(K, V)> {\n        let mut out: Vec<(K, V)> = Vec::new();\n        for (key, value) in values {\n            if let Some(index) = out.iter().position(|(previous, _)| equal(previous, &key)) {\n                out[index].1 = value;\n            } else {\n                out.push((key, value));\n            }\n        }\n        out\n    }\n}"
+  }
+];
+const B63_SOURCE_BINDINGS_INVENTORIES=[...new Set(B63_SOURCE_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B63 actual source names for "+source,files:[source],extract:text=>B63_SOURCE_BINDINGS.filter(row=>row.source===source&&text.includes(row.sourceText)&&(!row.sourceContext||text.includes(row.sourceContext))&&(row.ownerContexts??[]).every(context=>text.includes(context))).map(row=>row.inventoryName),recordOf:name=>B63_SOURCE_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));
+const B63_CURRENT_WITNESS_BINDINGS=[
+  {
+    "id": "repository.guarded-rust-branch-algorithm-source",
+    "source": "js/scripts/reviewed-rust-branch-styles.mjs",
+    "name": "guardedSource",
+    "inventoryName": "guarded-source",
+    "sourceText": "const guardedSource=source.replace(originalNegationGuard,\"if (condition.startsWith('!') && acceptRustWholeConditionNegation(condition)) {\")\n  .replace(originalBranchJoin,\"+ ' ' + source.slice(tokens[inner].start, tokens[child.end].end)\")\n  +'\\n'+acceptRustWholeConditionNegation.toString()\n  +'\\nexport { simplifyBranches as simplifyRustBranches };\\n';"
+  },
+  {
+    "id": "repository.read-complete-family-library-conditional-boundaries",
+    "source": "js/scripts/portable-conditional-source-style.mjs",
+    "name": "readFamilyLibraryIf",
+    "inventoryName": "read-family-library-if",
+    "sourceText": "function readFamilyLibraryIf(tokens, matching, start) {\n  if (tokens[start]?.kind !== 'identifier' || tokens[start].value !== 'if') return undefined;\n  let open = start + 1;\n  if (tokens[open]?.value === '{' && matching.has(open)) open = matching.get(open) + 1;\n  while (open < tokens.length && tokens[open].value !== '{') {\n    // A match condition owns its arm block before the if owns its body.\n    // This is the same complete-condition boundary recognized by the frozen\n    // product style producer; retain every operand and arm unchanged.\n    if (tokens[open].kind === 'identifier' && tokens[open].value === 'match') {\n      open += 1;\n      while (open < tokens.length && tokens[open].value !== '{') {\n        if (matching.has(open)) open = matching.get(open);\n        open += 1;\n      }\n      if (!matching.has(open)) return undefined;\n      open = matching.get(open) + 1;\n      continue;\n    }\n    if (matching.has(open)) open = matching.get(open);\n    open += 1;\n  }\n  if (!matching.has(open)) return undefined;\n  const close = matching.get(open);\n  let end = close;\n  if (tokens[close + 1]?.value === 'else') {\n    const alternate = close + 2;\n    if (tokens[alternate]?.value === 'if') {\n      const nested = readFamilyLibraryIf(tokens, matching, alternate);\n      if (!nested) return undefined;\n      end = nested.end;\n    } else if (tokens[alternate]?.value === '{' && matching.has(alternate)) end = matching.get(alternate);\n    else return undefined;\n  }\n  return {start, open, close, end};\n}"
+  },
+  {
+    "id": "repository.render-embedded-region-native-default-data",
+    "source": "js/scripts/generate-embedded-region-rules.mjs",
+    "name": "renderEmbeddedRegionNativeDefaults",
+    "inventoryName": "render embedded region native default data",
+    "sourceText": "export function renderEmbeddedRegionNativeDefaults(defaults) {\n  const fields = [['DEPTH', 'depthLimit'], ['COUNT', 'countLimit'], ['BYTE', 'byteLimit']];\n  for (const [, field] of fields) {\n    if (!acceptEmbeddedRegionLimit(defaults[field])) throw new TypeError('native adapter defaults require nonnegative safe integers');\n  }\n  return '// Generated DATA from the shared embedded-region-rules.js defaults. Do not edit.\\n'\n    + fields.map(([name, field]) => {\n      const literal = String(defaults[field]).replace(/^[0-9]{5,}$/u,\n        digits => digits.replace(/\\B(?=(?:[0-9]{3})+$)/gu, '_'));\n      return `pub const DEFAULT_EMBEDDED_REGION_${name}_LIMIT: usize = ${literal};`;\n    }).join('\\n') + '\\n';\n}"
+  },
+  {
+    "id": "repository.check-shared-region-defaults-and-configuration",
+    "source": "js/tests/grammar-embedded-region-rules.test.js",
+    "name": "default embedded region limits remain shared constant data and preserve immutable configuration",
+    "inventoryName": "check shared region defaults and configuration",
+    "sourceText": "test('default embedded region limits remain shared constant data and preserve immutable configuration', () => {\n  const configuration = ParseConfiguration.default();\n  assert.deepEqual([configuration.embeddedRegionDepthLimit, configuration.embeddedRegionCountLimit,\n    configuration.embeddedRegionByteLimit], [128, 4096, 16 * 1024 * 1024]);\n  assert.equal(readEmbeddedRegionDefaultLimit('unknown'), -1);\n  const limited = configuration.withEmbeddedRegionLimits({ depthLimit: 3, countLimit: 4, byteLimit: 20 });\n  assert.equal(configuration.embeddedRegionDepthLimit, 128);\n  assert.deepEqual([limited.embeddedRegionDepthLimit, limited.embeddedRegionCountLimit,\n    limited.embeddedRegionByteLimit], [3, 4, 20]);\n  const changed = limited.withRegionDetectionPolicy('NameDriven')\n    .withTriviaAttachmentPolicy(TriviaAttachmentPolicy.TokenLink).withAccessMode('read-only');\n  assert.deepEqual([changed.embeddedRegionDepthLimit, changed.embeddedRegionCountLimit,\n    changed.embeddedRegionByteLimit], [3, 4, 20]);\n  assert.equal(changed.withEmbeddedRegionLimits({ byteLimit: 0 }).embeddedRegionCountLimit, 4);\n  assert.equal(new ParseConfiguration({ embeddedRegionDepthLimit: 0 }).embeddedRegionDepthLimit, 0);\n  const policy = embeddedRegionRulesPolicy();\n  assert.deepEqual(policy.defaults, { depthLimit: 128, countLimit: 4096, byteLimit: 16777216 });\n  assert.equal(policy.source, readFileSync(new URL('../src/translation/embedded-region-rules.js', import.meta.url), 'utf8'));\n  assert.equal(renderEmbeddedRegionNativeDefaults(policy.defaults),\n    '// Generated DATA from the shared embedded-region-rules.js defaults. Do not edit.\\n'\n    + 'pub const DEFAULT_EMBEDDED_REGION_DEPTH_LIMIT: usize = 128;\\n'\n    + 'pub const DEFAULT_EMBEDDED_REGION_COUNT_LIMIT: usize = 4096;\\n'\n    + 'pub const DEFAULT_EMBEDDED_REGION_BYTE_LIMIT: usize = 16_777_216;\\n');\n})"
+  },
+  {
+    "id": "grammar.default-embedded-region-byte-limit",
+    "source": "rust/src/data/embedded-region-defaults.rs",
+    "name": "DEFAULT_EMBEDDED_REGION_BYTE_LIMIT",
+    "inventoryName": "default embedded region byte limit",
+    "sourceText": "pub const DEFAULT_EMBEDDED_REGION_BYTE_LIMIT: usize = 16_777_216;"
+  },
+  {
+    "id": "grammar.render-original-source-token-coverage",
+    "source": "rust/src/source_generation.rs",
+    "name": "render_source_token_coverage",
+    "inventoryName": "render original source token coverage",
+    "sourceText": "    fn render_source_token_coverage(&self, language: &str) -> Option<String> {\n        let mut tokens: Vec<_> = self\n            .links()\n            .filter(|link| {\n                link.metadata().link_type() == Some(LinkType::Token)\n                    && language_matches(link.metadata().language(), language)\n                    && !link.metadata().flags().is_missing()\n            })\n            .collect();\n        if !tokens.iter().any(|token| token.metadata().span().is_some()) {\n            return None;\n        }\n        tokens.sort_by_key(|token| {\n            let span = token.metadata().span();\n            (\n                span.is_none(),\n                span.map_or(0, |span| span.byte_range().start()),\n                token.id(),\n            )\n        });\n        let mut rendered = String::new();\n        let mut covered_until = 0;\n        for token in tokens {\n            let range = token.metadata().span().map(SourceSpan::byte_range);\n            if let Some(range) = range\n                && !accept_embedded_region_source_coverage(\n                    embedded_region_number(range.start()),\n                    embedded_region_number(covered_until),\n                )\n            {\n                continue;\n            }\n            rendered.push_str(token.metadata().term().unwrap_or_default());\n            if let Some(range) = range {\n                covered_until = range.end();\n            }\n        }\n        Some(rendered)\n    }",
+    "ownerContexts": [
+      "impl LinkNetwork {"
+    ]
+  },
+  {
+    "id": "repository.check-explicit-container-alias-identity-retention",
+    "source": "rust/tests/structured_data_container_aliases.rs",
+    "name": "explicit_container_aliases_preserve_owned_sharing_without_merging_equal_values",
+    "inventoryName": "check explicit container alias identity retention",
+    "sourceText": "fn explicit_container_aliases_preserve_owned_sharing_without_merging_equal_values() {\n    let mut bridge = LinkNetwork::new();\n    let untouched = bridge.insert_link(\n        [],\n        LinkMetadata::new()\n            .with_link_type(LinkType::Semantic)\n            .with_term(\"untouched\")\n            .with_definition(\"metadata (meta: λ)\"),\n    );\n    let changed = bridge.insert_link(\n        [untouched],\n        LinkMetadata::new()\n            .with_link_type(LinkType::Semantic)\n            .with_named(true)\n            .with_term(\"changed\")\n            .with_language(\"fixture\"),\n    );\n    let original = bridge.0.clone();\n    assert!(bridge.set_references(changed, &[changed, untouched]));\n    assert_eq!(bridge.len(), original.len());\n    for link in original.links() {\n        let restored = bridge.link(link.id()).unwrap();\n        assert_eq!(restored.id(), link.id());\n        assert_eq!(restored.metadata(), link.metadata());\n        if link.id() == changed {\n            assert_eq!(restored.references(), [changed, untouched]);\n        } else {\n            assert_eq!(restored.references(), link.references());\n        }\n    }\n    let after = bridge.0.clone();\n    assert!(!bridge.set_references(LinkId::from_u64(u64::MAX), &[]));\n    assert_eq!(bridge.0, after);\n\n    let container = StructuredDataValue::Object(vec![\n        (\n            \"value\".encode_utf16().collect(),\n            StructuredDataValue::Number(-0.0),\n        ),\n        (\n            \"units\".encode_utf16().collect(),\n            StructuredDataValue::String(vec![0xd800]),\n        ),\n    ]);\n    let value = StructuredDataValue::Array(vec![container.clone(), container.clone(), container]);\n    let StructuredDataValue::Array(children) = &value else {\n        unreachable!();\n    };\n    let independent = encode_structured_data_links_ordered(&value).unwrap();\n    let unchanged =\n        encode_structured_data_links_ordered_with_container_aliases(&value, &[]).unwrap();\n    assert_eq!(independent.network.to_lino(), unchanged.network.to_lino());\n    let body = independent\n        .network\n        .link(independent.root)\n        .unwrap()\n        .references()[0];\n    let references = independent.network.link(body).unwrap().references();\n    assert_ne!(references[0], references[1]);\n    assert_ne!(references[0], references[2]);\n    let shared = encode_structured_data_links_ordered_with_container_aliases(\n        &value,\n        &[(&children[1], &children[0])],\n    )\n    .unwrap();\n    let body = shared.network.link(shared.root).unwrap().references()[0];\n    let references = shared.network.link(body).unwrap().references();\n    assert_eq!(references[0], references[1]);\n    assert_ne!(references[0], references[2]);\n    assert_eq!(shared.network.len() + 3, independent.network.len());\n\n    let arrays = StructuredDataValue::Array(vec![\n        StructuredDataValue::Array(vec![]),\n        StructuredDataValue::Array(vec![]),\n        StructuredDataValue::Array(vec![]),\n    ]);\n    let StructuredDataValue::Array(children) = &arrays else {\n        unreachable!();\n    };\n    let shared = encode_structured_data_links_ordered_with_container_aliases(\n        &arrays,\n        &[(&children[1], &children[0])],\n    )\n    .unwrap();\n    let body = shared.network.link(shared.root).unwrap().references()[0];\n    let references = shared.network.link(body).unwrap().references();\n    assert_eq!(references[0], references[1]);\n    assert_ne!(references[0], references[2]);\n}"
+  },
+  {
+    "id": "repository.check-saved-network-projection-replay",
+    "source": "rust/tests/unit/network_projection.rs",
+    "name": "assert_projection_replay",
+    "inventoryName": "check saved network projection replay",
+    "sourceText": "fn assert_projection_replay(\n    network: &LinkNetwork,\n    source: &str,\n    trees: &[(LinkId, usize, &Value)],\n    label: &str,\n) {\n    // Ordinary parsing must retain the full concrete graph before view selection.\n    assert_eq!(\n        network.reconstruct_text(),\n        source,\n        \"{label}: original source bytes\"\n    );\n    for role in [LinkType::Syntax, LinkType::Token, LinkType::Trivia] {\n        assert!(\n            network\n                .links()\n                .any(|link| link.metadata().link_type() == Some(role)),\n            \"{label}: original CST role {role:?}\"\n        );\n    }\n    for (root, base, expected) in trees {\n        assert_eq!(\n            json!(projection_syntax_rows(network, *root, *base)),\n            **expected,\n            \"{label}: original independent CST rows\"\n        );\n    }\n    let before = network.to_lino();\n    let concrete_ids = network\n        .projected_links(NetworkProjection::ConcreteSyntax)\n        .map(|link| link.id())\n        .collect::<Vec<_>>();\n    assert_eq!(\n        concrete_ids,\n        network\n            .projected_links(NetworkProjection::ConcreteSyntax)\n            .map(|link| link.id())\n            .collect::<Vec<_>>()\n    );\n    for role in [LinkType::Syntax, LinkType::Token, LinkType::Trivia] {\n        assert!(\n            network\n                .projected_links(NetworkProjection::ConcreteSyntax)\n                .any(|link| link.metadata().link_type() == Some(role)),\n            \"{label}: default concrete role {role:?}\"\n        );\n    }\n    let abstract_ids = network\n        .projected_links(NetworkProjection::AbstractSyntax)\n        .map(|link| link.id())\n        .collect::<Vec<_>>();\n    assert!(!abstract_ids.is_empty());\n    assert_ne!(\n        abstract_ids, concrete_ids,\n        \"abstract syntax requires a distinct explicit selection\"\n    );\n    assert_eq!(\n        network.to_lino(),\n        before,\n        \"{label}: selection leaves every original link unchanged\"\n    );\n    let binary = encode_link_network_binary(network, BinaryLinksOptions::default()).unwrap();\n    for (encoding, restored) in [\n        (\"text\", LinkNetwork::from_lino(&before).unwrap()),\n        (\n            \"binary\",\n            decode_link_network_binary(&binary, BinaryLinksOptions::default()).unwrap(),\n        ),\n    ] {\n        assert_eq!(\n            restored.to_lino(),\n            before,\n            \"{label}: {encoding} complete graph\"\n        );\n        assert_eq!(\n            restored.reconstruct_text(),\n            source,\n            \"{label}: {encoding} exact UTF-8 source\"\n        );\n        assert_eq!(\n            restored.links().collect::<Vec<_>>(),\n            network.links().collect::<Vec<_>>(),\n            \"all original references, metadata, spans and recovery flags remain identical\"\n        );\n        assert_eq!(\n            restored\n                .projected_links(NetworkProjection::ConcreteSyntax)\n                .map(|link| link.id())\n                .collect::<Vec<_>>(),\n            concrete_ids\n        );\n        let abstract_links = restored\n            .projected_links(NetworkProjection::AbstractSyntax)\n            .collect::<Vec<_>>();\n        assert_eq!(\n            abstract_links\n                .iter()\n                .map(|link| link.id())\n                .collect::<Vec<_>>(),\n            abstract_ids\n        );\n        for link in &abstract_links {\n            assert!(std::ptr::eq(*link, restored.link(link.id()).unwrap()));\n            assert!(!matches!(\n                link.metadata().link_type(),\n                Some(LinkType::Token | LinkType::Trivia)\n            ));\n            for reference in link.references() {\n                assert!(\n                    restored.link(*reference).is_some(),\n                    \"concrete provenance remains resolvable\"\n                );\n            }\n        }\n        for link in restored.links().filter(|link| {\n            matches!(\n                link.metadata().link_type(),\n                Some(LinkType::Syntax | LinkType::Field | LinkType::Region)\n            )\n        }) {\n            assert!(\n                abstract_links\n                    .iter()\n                    .any(|selected| selected.id() == link.id()),\n                \"all syntax, field and region links remain in the explicit view\"\n            );\n        }\n        for (root, base, expected) in trees {\n            assert_eq!(\n                json!(projection_syntax_rows(&restored, *root, *base)),\n                **expected,\n                \"{label}: {encoding} independent CST rows\"\n            );\n        }\n        assert_eq!(\n            restored\n                .projected_links(NetworkProjection::ConcreteSyntax)\n                .map(|link| link.id())\n                .collect::<Vec<_>>(),\n            concrete_ids,\n            \"AST selection cannot change the concrete view\"\n        );\n        assert_eq!(restored.to_lino(), before);\n    }\n}"
+  }
+];
+const B63_CURRENT_WITNESS_BINDINGS_INVENTORIES=[...new Set(B63_CURRENT_WITNESS_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B63 actual current source witnesses for "+source,files:[source],extract:text=>B63_CURRENT_WITNESS_BINDINGS.filter(row=>row.source===source&&text.includes(row.sourceText)&&(!row.sourceContext||text.includes(row.sourceContext))&&(row.ownerContexts??[]).every(context=>text.includes(context))).map(row=>row.inventoryName),recordOf:name=>B63_CURRENT_WITNESS_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));
+// END B63 mapped source, strict equality and partition source names.
+// BEGIN B63 current inventory witness reconciliation.
+const B63_CURRENT_INVENTORY_WITNESSES=[
+  {
+    "id": "repository.java-script-surface-library-style",
+    "source": "js/scripts/generate-javascript-surface-rules.mjs",
+    "name": "javascript-surface-library-style",
+    "inventoryName": "javascript-surface-library-style",
+    "inventory": "B45 exact source controls for js/scripts/generate-javascript-surface-rules.mjs",
+    "sourceText": "// Translate the complete JavaScript source-decision module without a native implementation copy.\nimport assert from 'node:assert/strict';\nimport { createHash } from 'node:crypto';\nimport { readFileSync, writeFileSync } from 'node:fs';\nimport { DecoratorSet } from '../src/decorators.js';\nimport { readPortableSourceParameterStyles, readPortableSourceLintStyles } from './portable-source-library-style.mjs';\nimport { formatProductRuleSource } from './product-rule-style-corrections.mjs';\nimport { readSourceTextRustBlock } from './source-text-byte-library-style.mjs';\nimport { parseJavaScript } from '../src/translation/javascript.js';\nimport { checkProgram } from '../src/translation/check.js';\nimport { emitRust } from '../src/translation/emit-rust.js';\n\nconst input = new URL('../src/translation/javascript-surface-rules.js', import.meta.url);\nconst output = new URL('../../rust/src/translation/javascript/surface_rules.rs', import.meta.url);\nconst translated = emitRust(checkProgram(parseJavaScript(readFileSync(input, 'utf8'), { referenceSemantics: false })), { arrayConsumption: true });\nif (translated.preludes.length !== 0) throw new Error('source decisions must remain closed scalar operations');\nconst header = translated.text.split('\\n').find(line => line.startsWith('#![allow('));\nif (!header) throw new Error('the checked emitter omitted its generated module header');\nconst definitions = translated.definitions.join('\\n\\n').replace(/^pub fn /gmu, '#[must_use]\\npub fn ');\nconst raw = header + '\\n\\n' + definitions;\nconst styleFile = new URL('../../parity/self-translation/javascript-surface-rules-decorators.lino', import.meta.url);\nconst args = process.argv.slice(2);\nconst groups = [\n  {id: 'javascript-terminal-tag-guard-library-style', order: 100,\n    names: ['accept_java_script_terminal_tag_guard', 'accept_java_script_tag_guard_sequence'], flag: '--update-terminal-tag-guard-styles'},\n  {id: 'javascript-equality-inference-library-style', order: 110,\n    names: ['read_java_script_equality_inference_step'], flag: '--update-equality-inference-styles'},\n];\nassert.ok(args.length === 0 || args.length === 1 && ['--check', ...groups.map(group => group.flag)].includes(args[0]),\n  'use no arguments, --check, --update-terminal-tag-guard-styles, or --update-equality-inference-styles');\nconst document = readFileSync(styleFile, 'utf8');\nconst lines = document.match(/[^\\n]*\\n|[^\\n]+$/gu) ?? [];\nassert.equal(Buffer.byteLength(lines[0]), 106060, 'the entire historical JavaScript surface style row retains its bytes');\nassert.equal(createHash('sha256').update(lines[0]).digest('hex'), 'ac9cf3ef2a0a4a4b16e59b9c2d33a2619fd8cbe44bf4042913f52419cc275e6a');\nassert.equal(Buffer.byteLength(lines[1]), 1287, 'the reviewed terminal guard pair remains byte exact');\nassert.equal(createHash('sha256').update(lines[1]).digest('hex'), '61cbbe05766356d057df68a3d53fcf20bfb257f42b9ea3a45430d9d0a0112650');\nconst baseDocument = lines.filter(line => !groups.some(group => line.startsWith('(decorator ' + group.id + ' '))).join('');\nconst base = DecoratorSet.fromLino(baseDocument).decorate('emitter', { format: 'Rust', source: raw }).source;\nlet reviewed = base;\nlet expectedDocument = baseDocument;\nfor (const group of groups) {\n  const actions = [];\n  for (const name of group.names) {\n    const from = '#[must_use]\\n' + readSourceTextRustBlock(base, 'fn', name);\n    assert.equal(base.split(from).length, 2, 'the source-owned function has one complete attribute and declaration context');\n    const loans = readPortableSourceParameterStyles(from);\n    const to = readPortableSourceLintStyles(loans.source).source;\n    if (from !== to) {\n      actions.push({op: 'replace', field: 'source', from, to});\n      reviewed = reviewed.replace(from, to);\n    }\n  }\n  const additional = new DecoratorSet([{id: group.id, level: 'emitter', order: group.order,\n    when: [['format', 'Rust']], actions}]).toLino();\n  const actual = lines.filter(line => line.startsWith('(decorator ' + group.id + ' '));\n  assert.ok(actual.length <= 1, 'each scoped source style has one exact row');\n  if (actual[0] !== additional) assert.equal(args[0], group.flag, 'scoped JavaScript source styles are stale; run ' + group.flag);\n  expectedDocument += (expectedDocument.endsWith('\\n') ? '' : '\\n') + additional;\n  assert.equal(DecoratorSet.fromLino(additional).decorate('emitter', {format: 'Rust', source: reviewed}).source,\n    reviewed, 'the additional source styles are idempotent');\n}\nif (groups.some(group => group.flag === args[0])) writeFileSync(styleFile, expectedDocument);\nelse assert.equal(document, expectedDocument, 'all recorded JavaScript source style rows retain their exact order and bytes');\nconst decorated = DecoratorSet.fromLino(readFileSync(styleFile, 'utf8')).decorate('emitter', { format: 'Rust', source: raw }).source;\nassert.equal(decorated, reviewed, 'recorded source styles reproduce only the actual scoped declarations');\nconst text = '// Generated from js/src/translation/javascript-surface-rules.js by\\n'\n  + '// js/scripts/generate-javascript-surface-rules.mjs. Do not edit by hand.\\n'\n  + formatProductRuleSource(decorated);\nif (process.argv.includes('--check')) {\n  if (readFileSync(output, 'utf8') !== text) throw new Error('native JavaScript source decisions are stale');\n} else writeFileSync(output, text);\n",
+    "styleSource": "parity/self-translation/javascript-surface-rules-decorators.lino",
+    "styleRowBytes": 106060,
+    "styleRowSha256": "ac9cf3ef2a0a4a4b16e59b9c2d33a2619fd8cbe44bf4042913f52419cc275e6a"
+  },
+  {
+    "id": "grammar.render-original-source-token-coverage",
+    "source": "rust/src/source_generation.rs",
+    "name": "render_source_token_coverage",
+    "inventoryName": "render original source token coverage",
+    "sourceText": "    fn render_source_token_coverage(&self, language: &str) -> Option<String> {\n        let mut tokens: Vec<_> = self\n            .links()\n            .filter(|link| {\n                link.metadata().link_type() == Some(LinkType::Token)\n                    && language_matches(link.metadata().language(), language)\n                    && !link.metadata().flags().is_missing()\n            })\n            .collect();\n        if !tokens.iter().any(|token| token.metadata().span().is_some()) {\n            return None;\n        }\n        tokens.sort_by_key(|token| {\n            let span = token.metadata().span();\n            (\n                span.is_none(),\n                span.map_or(0, |span| span.byte_range().start()),\n                token.id(),\n            )\n        });\n        let mut rendered = String::new();\n        let mut covered_until = 0;\n        for token in tokens {\n            let range = token.metadata().span().map(SourceSpan::byte_range);\n            if let Some(range) = range\n                && !accept_embedded_region_source_coverage(\n                    embedded_region_number(range.start()),\n                    embedded_region_number(covered_until),\n                )\n            {\n                continue;\n            }\n            rendered.push_str(token.metadata().term().unwrap_or_default());\n            if let Some(range) = range {\n                covered_until = range.end();\n            }\n        }\n        Some(rendered)\n    }",
+    "ownerContexts": [
+      "impl LinkNetwork {"
+    ],
+    "inventory": "B60 recursive default region source names for rust/src/source_generation.rs"
+  }
+];
+const reconcileCurrentWitnessInventory=entry=>{const rows=B63_CURRENT_INVENTORY_WITNESSES.filter(row=>entry.inventory===row.inventory&&entry.files.length===1&&entry.files[0]===row.source);if(rows.length===0)return entry;return{...entry,extract:(text,file)=>[...new Set([...entry.extract(text,file),...rows.filter(row=>{if(!text.includes(row.sourceText)||!(!row.sourceContext||text.includes(row.sourceContext))||!(row.ownerContexts??[]).every(context=>text.includes(context)))return false;if(!row.styleSource)return true;const style=inventoryText(repositoryRoot,row.styleSource),end=style.indexOf("\n"),first=end<0?"":style.slice(0,end+1);return Buffer.byteLength(first)===row.styleRowBytes&&createB57MovedSourceHash("sha256").update(first).digest("hex")===row.styleRowSha256&&first.startsWith("(decorator "+row.name+" ");}).map(row=>row.inventoryName)])],recordOf:name=>rows.find(row=>row.inventoryName===name)?.id??entry.recordOf(name)};};
+// END B63 current inventory witness reconciliation.
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory).map(reconcileBulkFortySevenNativeInventory).map(reconcileBulkFiftyHistoricalInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES, ...BULK_FORTY_SEVEN_NAME_INVENTORIES, ...BULK_FORTY_EIGHT_NAME_INVENTORIES, ...BULK_FORTY_NINE_NAME_INVENTORIES, ...BULK_FIFTY_NAME_INVENTORIES, ...BULK_FIFTY_ONE_NAME_INVENTORIES.map(reconcileB57MovedSourceInventory), ...VERSION_RANGE_EVIDENCE_NAME_INVENTORIES, ...FORMAT_RETRY_SOURCE_NAME_INVENTORIES, ...DISCOVERY_CERTIFICATE_NAME_INVENTORIES, ...SELECTED_NATIVE_GRAMMAR_PROJECTION_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_WITNESS_INVENTORIES, ...BULK_FIFTY_FIVE_CONST_ARCHIVE_ERROR_NAME_INVENTORIES, ...AUXILIARY_GRAMMAR_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_CURRENT_WITNESS_INVENTORIES, ...CHILD_CHAIN_NAME_INVENTORIES, ...PARSER_TOKEN_EXCLUSION_NAME_INVENTORIES, ...PARSER_TOKEN_EXCLUSION_CURRENT_WITNESS_INVENTORIES, ...PARSER_TOKEN_COVERING_CURRENT_WITNESS_INVENTORIES, ...EMBEDDED_REGION_NAME_INVENTORIES, ...EMBEDDED_REGION_CURRENT_WITNESS_INVENTORIES, ...B60_NATIVE_TOKEN_EXCLUSION_CURRENT_WITNESS_INVENTORIES, ...FORMAL_ARTIFICIAL_INTELLIGENCE_CACHE_NAME_INVENTORIES, ...TEMPORAL_BINDING_NAME_INVENTORIES, ...TEMPORAL_BINDING_CURRENT_WITNESS_INVENTORIES, ...B61_CURRENT_REFERENCE_STATE_WITNESS_INVENTORIES, ...SAVED_PROJECTION_CONTROL_NAME_INVENTORIES, ...EMPTY_STRING_COMPILER_STYLE_CONTROL_NAME_INVENTORIES, ...EMPTY_STRING_COMPILER_CURRENT_TYPE_QUERY_WITNESS_INVENTORIES, ...B63_SOURCE_BINDINGS_INVENTORIES, ...B63_CURRENT_WITNESS_BINDINGS_INVENTORIES].map(reconcileCurrentWitnessInventory).map(entry=>entry.inventory!=="grammar link terms"?entry:{...entry,extract:(text,file)=>entry.extract(text,file).map(name=>file==="rust/src/grammar/links.rs"&&name==="grammar::lexer"?"grammar::native-source-lexical-analyser-declaration":name),recordOf:name=>name==="grammar::native-source-lexical-analyser-declaration"?"repository.native-source-lexical-analyser-declaration":entry.recordOf(name)}));
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
