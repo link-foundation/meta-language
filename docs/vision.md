@@ -1506,6 +1506,22 @@ bindings alongside productions. Source-free reload preserves their complete
 declaration expressions, including unresolved action and predicate obligations;
 serialization alone does not discharge those executable meanings.
 
+ANTLR parser token exclusions consume one whole elected token; lexer
+complements retain their character-set semantics. Excluding EOF still requires
+consuming a non-EOF token. Lookahead does not commit lexer-mode changes;
+consumption applies the elected token's commands once. A pure shared JavaScript
+classifier supplies automatically translated native decisions. Text and binary
+replay retain these expressions and their unresolved foreign obligations;
+case-insensitive parser literals retain their existing refusal. Source-free
+emission for one default-mode lexer recovers commands while retaining original
+ordered local bodies; retyping aliases never replace actual lexer definitions.
+The shared inverse requires exact replay of final token fields and ordered
+actions. Generated policy refuses ambiguous ownership and unsupported modes or
+sections when command recovery is required; historical raw-document lossy paths
+remain when it is unnecessary. Native execution remains unverified. These
+bounded changes do not establish a full mode emitter or complete language
+support.
+
 - Every feature of every inventoried format has an explicit native
   representation, an operational meaning and executable tests. Imports follow
   included grammars, supporting lexer and scanner definitions, and action code;
