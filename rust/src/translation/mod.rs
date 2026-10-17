@@ -22,6 +22,7 @@ pub(crate) mod callable_source_rules;
 pub mod check;
 pub mod decimal;
 pub mod diagnostics;
+pub(crate) mod embedded_region_rules;
 pub mod emit_common;
 pub mod emit_javascript;
 pub mod emit_lean;
