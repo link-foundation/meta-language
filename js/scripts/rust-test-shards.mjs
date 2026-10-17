@@ -74,10 +74,20 @@ export function exactHarnessArguments(original, selected) {
   return [...controls, '--exact', ...(names.length ? names : ['__meta_language_empty_physical_partition__'])];
 }
 
-export function readHarnessOutcomes(output) {
+export function readHarnessOutcomes(output, selected = []) {
+  const names = new Set(selected.map(row => row.name));
   return output.split(/\r?\n/u).flatMap(line => {
     const match = /^test (.+) \.\.\. (ok|FAILED|ignored)(?:,.*)?$/u.exec(line);
-    return match ? [{name: match[1], outcome: match[2]}] : [];
+    if (!match) return [];
+    let name = match[1];
+    // Libtest annotates expected-panic outcomes, but not its inventory. An
+    // exact selected identity takes precedence over the display annotation.
+    const annotation = ' - should panic';
+    if (!names.has(name) && name.endsWith(annotation)) {
+      const original = name.slice(0, -annotation.length);
+      if (names.has(original)) name = original;
+    }
+    return [{name, outcome: match[2]}];
   });
 }
 
@@ -120,7 +130,7 @@ export async function executePhysicalHarness({binary, arguments: original, ident
     inventory, inventoryDigest: digest(JSON.stringify(inventory)), allInventory, allInventoryDigest: digest(JSON.stringify(allInventory)), selected, shard, count,
     listingDigest: digest(listed.stdout),
     allListingDigest: digest(allListed.stdout),
-    outcomes: readHarnessOutcomes(actual.stdout), exitCode: actual.exitCode, signal: actual.signal,
+    outcomes: readHarnessOutcomes(actual.stdout, selected), exitCode: actual.exitCode, signal: actual.signal,
     stdoutDigest: digest(actual.stdout), stderrDigest: digest(actual.stderr)};
 }
 
@@ -393,7 +403,7 @@ export function readPhysicalShardGroups(directory) {
             requireValue(digest(allListing) === receipt.allListingDigest, 'changed unfiltered native inventory output');
             requireValue(JSON.stringify(readHarnessInventory(allListing)) === JSON.stringify(receipt.allInventory), 'unfiltered native listing differs from declared inventory');
             const stdout = readFileSync(path.join(directory, row.file.replace(/\.lino$/u, '.stdout.log')), 'utf8');
-            requireValue(JSON.stringify(readHarnessOutcomes(stdout)) === JSON.stringify(receipt.outcomes), 'native output differs from declared outcomes');
+            requireValue(JSON.stringify(readHarnessOutcomes(stdout, receipt.selected)) === JSON.stringify(receipt.outcomes), 'native output differs from declared outcomes');
           }
           executions.push(receipt);
         }

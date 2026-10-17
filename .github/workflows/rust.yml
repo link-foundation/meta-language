@@ -804,6 +804,14 @@ jobs:
 
           "CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER=$msvcLinker" | Out-File -FilePath $env:GITHUB_ENV -Append
 
+          # Git's bin/bash.exe launcher prepends its own Unix tools, including link.exe.
+          # Restore only the validated MSVC directory after that launcher has run.
+          Split-Path -Parent $msvcLinker | Out-File -FilePath $env:GITHUB_PATH -Append
+          $bashEnvironment = Join-Path $env:RUNNER_TEMP "meta-language-msvc-bash-env.sh"
+          'export PATH="$(dirname "$(cygpath -u "$CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER")"):$PATH"' + "`n" |
+            Set-Content -LiteralPath $bashEnvironment -Encoding utf8 -NoNewline
+          "BASH_ENV=$($bashEnvironment.Replace('\', '/'))" | Out-File -FilePath $env:GITHUB_ENV -Append
+
       - name: Configure AWS-LC CMake on Windows
         if: runner.os == 'Windows'
         shell: pwsh
@@ -840,7 +848,28 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: node js/scripts/rust-test-shards.mjs --configure
 
+      - name: Verify Windows native linker resolution
+        if: ${{ !cancelled() && runner.os == 'Windows' }}
+        shell: bash
+        run: |
+          node --input-type=commonjs <<'NODE'
+          const path = require('node:path');
+          const {spawnSync} = require('node:child_process');
+          const expected = process.env.CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER;
+          if (!expected || !path.win32.isAbsolute(expected)) throw new Error('A validated absolute MSVC linker path is required');
+          const resolved = spawnSync('where.exe', ['link.exe'], {encoding: 'utf8', timeout: 10000, maxBuffer: 65536, windowsHide: true});
+          if (resolved.error || resolved.status !== 0 || resolved.signal !== null || typeof resolved.stdout !== 'string') {
+            throw new Error(`Windows linker lookup failed: status=${resolved.status}, signal=${resolved.signal}, ${resolved.error?.message ?? resolved.stderr}`, {cause: resolved.error});
+          }
+          const actual = resolved.stdout.split(/\r?\n/u)[0].trim();
+          if (!path.win32.isAbsolute(actual) || path.win32.normalize(actual).toLowerCase() !== path.win32.normalize(expected).toLowerCase()) {
+            throw new Error(`Windows native child resolves ${actual || '<no linker>'}; expected ${expected}`);
+          }
+          console.log(`Validated Windows native child linker: ${actual}`);
+          NODE
+
       - name: Run tests
+        if: ${{ !cancelled() }}
         shell: bash
         env:
           SUITE_FILTERS: ${{ matrix.filters }}
@@ -1104,6 +1133,15 @@ jobs:
           path: issue-195-artifacts/original-link-raw-native-observations.lino
           if-no-files-found: error
           retention-days: 7
+
+      - name: Retain raw source native process diagnostics
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: source-native-diagnostics-original-link-raw-${{ github.sha }}
+          path: issue-195-artifacts/source-native-observations/
+          if-no-files-found: warn
+          retention-days: 30
 
       - name: Clean raw source observation caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}

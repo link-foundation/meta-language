@@ -6,9 +6,9 @@ import path from 'node:path';
 import test from 'node:test';
 import {parseWorkflow} from '../../scripts/check-cache-policy.mjs';
 import {exactHarnessArguments, executePhysicalHarness, isRootHarness, matchesLogicalFilters,
-  readHarnessInventory, readPhysicalShardPolicy, readShardAdmission, renderCargoRunnerConfiguration, selectPhysicalTests,
+  readHarnessInventory, readHarnessOutcomes, readPhysicalShardPolicy, readShardAdmission, renderCargoRunnerConfiguration, selectPhysicalTests,
   verifyHarnessExecution, verifyPhysicalShardDirectory, verifyPhysicalShardUnion} from '../scripts/rust-test-shards.mjs';
-import {structuredDataToLino} from '../src/structured-data-links.js';
+import {readStructuredDataLino, structuredDataToLino} from '../src/structured-data-links.js';
 
 const policy = readPhysicalShardPolicy();
 const sha = value => createHash('sha256').update(value).digest('hex');
@@ -74,6 +74,24 @@ test('actual native inventories supply exact execution filters and preserve nati
   assert.equal(failed.stdoutDigest, sha(inventory.map(row => `test ${row.name} ... ${row.name === failure ? 'FAILED' : 'ok'}\n`).join('') + '\nfailures:\nfull native panic details\n'));
   assert.equal(failed.stderrDigest, sha('unaltered native stderr\n'));
   assert.throws(() => verifyHarnessExecution(failed), /native test execution failed/u);
+
+  // Exact successful libtest output retained from macOS grammar CI. The
+  // expected-panic annotation is display metadata, not an inventory name.
+  const name = 'issue_195_native_grammar_rows::recovery_projection_tests::accepted_reconstruction_remains_strict_about_missing_leaves';
+  const all = readHarnessInventory(`${name}: test\n`);
+  const stdout = `test ${name} - should panic ... ok\n`;
+  const annotated = await executePhysicalHarness({binary: '/project/unit-abcdef01', arguments: [], identity: {}, shard: 1, count: 1,
+    invoke: async (binary, arguments_, listingMode) => listingMode ? fakeNative(all)(binary, arguments_, listingMode)
+      : {stdout, stderr: 'unaltered native stderr\n', exitCode: 0, signal: null}});
+  assert.deepEqual(annotated.outcomes, [{name, outcome: 'ok'}]);
+  assert.equal(annotated.stdoutDigest, sha(stdout), 'normalization preserves complete original native output authentication');
+  verifyHarnessExecution(annotated);
+  for (const output of [stdout + stdout, stdout + `test ${name} ... ok\n`, stdout.replace(name, 'unselected'), stdout.replace(' - should panic', ' - should panic - should panic')]) {
+    const changed = {...annotated, outcomes: readHarnessOutcomes(output, annotated.selected)};
+    assert.throws(() => verifyHarnessExecution(changed), /missing or duplicate native test outcomes/u);
+  }
+  assert.throws(() => verifyHarnessExecution({...annotated, exitCode: 101,
+    outcomes: readHarnessOutcomes(stdout.replace('... ok', '... FAILED'), annotated.selected)}), /native test execution failed/u);
 });
 
 test('empty selections execute zero tests and exact names cannot admit longer neighboring names', async () => {
@@ -87,6 +105,18 @@ test('empty selections execute zero tests and exact names cannot admit longer ne
   assert.deepEqual(receipt.selected, []);assert.deepEqual(receipt.outcomes, []);verifyHarnessExecution(receipt);
   assert.throws(() => readHarnessInventory('duplicate: test\nduplicate: test\n'), /duplicate/u);
   assert.throws(() => readHarnessInventory('native crash diagnostics\n'), /invalid/u);
+  const selected = [{name: 'owned', kind: 'test'}];
+  for (const outcome of ['ok', 'FAILED', 'ignored']) {
+    assert.deepEqual(readHarnessOutcomes(`test owned - should panic ... ${outcome}\r\n`, selected), [{name: 'owned', outcome}]);
+  }
+  for (const name of ['unselected - should panic', 'owned - should panic - should panic', 'owned - should panicked']) {
+    assert.deepEqual(readHarnessOutcomes(`test ${name} ... ok\n`, selected), [{name, outcome: 'ok'}]);
+  }
+  const literal = [{name: 'owned - should panic', kind: 'test'}];
+  assert.deepEqual(readHarnessOutcomes('test owned - should panic ... ok\n', literal), [{name: literal[0].name, outcome: 'ok'}]);
+  assert.deepEqual(readHarnessOutcomes('test owned - should panic - should panic ... ok\n', literal), [{name: literal[0].name, outcome: 'ok'}]);
+  assert.deepEqual(readHarnessOutcomes('test owned - should panic ... ok\n', [...selected, ...literal]), [{name: literal[0].name, outcome: 'ok'}]);
+  assert.deepEqual(readHarnessOutcomes('test owned - should panic ... ok\n'), [{name: literal[0].name, outcome: 'ok'}]);
 });
 
 test('the full physical union authenticates every platform, source identity, test outcome and native inventory', async () => {
@@ -165,6 +195,28 @@ test('retained complete stdout, listings, configuration and receipt seals reject
     }
     const options = {...expected, profiles: ['test']};
     assert.deepEqual(verifyPhysicalShardDirectory(directory, options), {cells: 42, inventories: 15});
+    // The artifact reader must apply the same inventory-bound normalization as
+    // the live producer without modifying or discarding authenticated stdout.
+    const annotatedIndex = rows.findIndex(row => row.executions[0].outcomes.length > 0);
+    assert.ok(annotatedIndex >= 0);
+    const annotatedCell = path.join(directory, String(annotatedIndex));
+    const originals = ['execution.stdout.log', 'execution.lino', 'seal.lino'].map(file => [file, readFileSync(path.join(annotatedCell, file))]);
+    try {
+      const execution = readStructuredDataLino(originals[1][1].toString());
+      const name = execution.outcomes[0].name;
+      const stdout = originals[0][1].toString().replace(`test ${name} ...`, `test ${name} - should panic ...`);
+      assert.notEqual(stdout, originals[0][1].toString());
+      execution.stdoutDigest = sha(stdout);
+      const source = structuredDataToLino(execution);
+      const seal = readStructuredDataLino(originals[2][1].toString());
+      seal.receipts.find(row => row.file === 'execution.lino').sha256 = sha(source);
+      writeFileSync(path.join(annotatedCell, 'execution.stdout.log'), stdout);
+      writeFileSync(path.join(annotatedCell, 'execution.lino'), source);
+      writeFileSync(path.join(annotatedCell, 'seal.lino'), structuredDataToLino(seal));
+      assert.deepEqual(verifyPhysicalShardDirectory(directory, options), {cells: 42, inventories: 15});
+    } finally {
+      for (const [file, bytes] of originals) writeFileSync(path.join(annotatedCell, file), bytes);
+    }
     const stdout = path.join(directory, '0/execution.stdout.log'), original = readFileSync(stdout);
     appendFileSync(stdout, 'discarded failure details');
     assert.throws(() => verifyPhysicalShardDirectory(directory, options), /complete native output/u);

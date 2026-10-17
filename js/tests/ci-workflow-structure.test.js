@@ -11,6 +11,7 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { runInNewContext } from 'node:vm';
 import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
 import { lineCoverage, mergeLcov, renderLcov } from '../../scripts/merge-lcov.mjs';
 import { partitionGroupFiles, partitionTests, testFiles, TEST_GROUPS } from '../scripts/test-groups.mjs';
@@ -1897,6 +1898,15 @@ function checkCompleteTableNativeSteps(parsed) {
 }
 
 const ORIGINAL_LINK_RAW_NATIVE_JOB = 'original-link-raw-observations';
+const ORIGINAL_LINK_RAW_DIAGNOSTICS = 'Retain raw source native process diagnostics';
+const ORIGINAL_LINK_RAW_DIAGNOSTICS_STEP = `      - name: Retain raw source native process diagnostics
+        if: \${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: source-native-diagnostics-original-link-raw-\${{ github.sha }}
+          path: issue-195-artifacts/source-native-observations/
+          if-no-files-found: warn
+          retention-days: 30`;
 
 function checkOriginalLinkRawNativeJob(parsed) {
   const matching = [...parsed.values()].filter(job => job.id === ORIGINAL_LINK_RAW_NATIVE_JOB);
@@ -1904,11 +1914,33 @@ function checkOriginalLinkRawNativeJob(parsed) {
   const job = matching[0];
   assert.deepEqual(needs(job), needs(parsed.get('test')), 'the raw oracle retains every existing Cargo test prerequisite');
   assert.equal(nativeInputCondition(job), nativeInputCondition(parsed.get('test')), 'the complete existing test admission condition is unchanged');
-  assert.equal(packageStepSignature({text: job.header + job.steps.map(step => step.text).join('')}, true),
+  // The additive failure upload cannot change any byte of the old job's
+  // prerequisites, commands, success-report gate, bounds or cleanup.
+  const diagnostics = job.steps.filter(step => step.name === ORIGINAL_LINK_RAW_DIAGNOSTICS);
+  assert.equal(diagnostics.length, 1, 'the raw oracle retains one independent failure-diagnostic upload');
+  assert.equal(diagnostics[0].text.trimEnd(), ORIGINAL_LINK_RAW_DIAGNOSTICS_STEP);
+  assert.equal(job.steps.indexOf(diagnostics[0]), job.steps.findIndex(step => step.name === 'Retain complete original link raw observations') + 1);
+  assert.equal(job.steps.at(-1).name, 'Clean raw source observation caches');
+  const originalSteps = job.steps.filter(step => step.name !== ORIGINAL_LINK_RAW_DIAGNOSTICS);
+  assert.equal(packageStepSignature({text: job.header + originalSteps.map(step => step.text).join('')}, true),
     '35e9be5d27a7b6bdc0b730fb0a7b8c38a2485b491ccc2cd9eec4889e89889291',
     'the raw oracle retains its complete setup, bounds, source command, native switch, receipt and cleanup');
   return job;
 }
+
+test('raw native diagnostics survive failed tests and a missing successful observation report', () => {
+  checkOriginalLinkRawNativeJob(jobs('rust.yml'));
+  for (const [before, after] of [
+    ['always()', 'success()'], ['always()', '!cancelled()'],
+    ['source-native-observations/', 'original-link-raw-native-observations.lino'],
+    ['if-no-files-found: warn', 'if-no-files-found: ignore'], ['retention-days: 30', 'retention-days: 0'],
+  ]) {
+    const parsed = jobs('rust.yml');
+    const step = parsed.get(ORIGINAL_LINK_RAW_NATIVE_JOB).steps.find(step => step.name === ORIGINAL_LINK_RAW_DIAGNOSTICS);
+    assert.ok(step.text.includes(before));step.text = step.text.replace(before, after);
+    assert.throws(() => checkOriginalLinkRawNativeJob(parsed), assert.AssertionError);
+  }
+});
 
 test('the separate raw source cell conserves the previous nine cells and runs every new check once', () => {
   const parsed = jobs('js.yml'), cells = checkGeneratedPackageSlices(parsed);
@@ -2536,5 +2568,132 @@ test('every frozen text experiment addition retains its mandatory execution, wra
         steps[index].text = steps[index].text.replace(before, after);
       });
     }
+  }
+});
+
+function readWindowsLinkerPreflight(job) {
+  const steps = job.steps.filter(step => step.name === 'Verify Windows native linker resolution');
+  assert.equal(steps.length, 1, 'each Windows native job executes one independent linker resolution check');
+  const source = /node --input-type=commonjs <<'NODE'\n([\s\S]*?)\n {10}NODE(?:\n|$)/u.exec(steps[0].text)?.[1];
+  assert.ok(source, 'execute the actual Node child resolution check under Bash');
+  return source.replace(/^ {10}/gmu, '');
+}
+
+function checkWindowsLinkerEnvironment(job, observationStepName) {
+  const setup = job.steps.filter(step => step.name === 'Setup MSVC environment');
+  assert.equal(setup.length, 1);
+  const preflight = job.steps.filter(step => step.name === 'Verify Windows native linker resolution');
+  assert.equal(preflight.length, 1);
+  for (const step of [setup[0], preflight[0]]) {
+    assert.doesNotMatch(step.text, /continue-on-error:/u);
+  }
+  assert.match(setup[0].text, /^ {8}if: runner.os == 'Windows'$/mu);
+  assert.match(preflight[0].text, /^ {8}if: \$\{\{ !cancelled\(\) && runner.os == 'Windows' \}\}$/mu);
+  assert.match(setup[0].text, /^ {8}shell: pwsh$/mu);
+  for (const fragment of [
+    'MSVC link.exe not found at $msvcLinker',
+    '"CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER=$msvcLinker" | Out-File -FilePath $env:GITHUB_ENV -Append',
+    'Split-Path -Parent $msvcLinker | Out-File -FilePath $env:GITHUB_PATH -Append',
+    '$bashEnvironment = Join-Path $env:RUNNER_TEMP "meta-language-msvc-bash-env.sh"',
+    'export PATH="',
+    'cygpath -u "$CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER"',
+    ' + "`n" |',
+    'Set-Content -LiteralPath $bashEnvironment -Encoding utf8 -NoNewline',
+    "\"BASH_ENV=$($bashEnvironment.Replace('\\', '/'))\" | Out-File -FilePath $env:GITHUB_ENV -Append",
+  ]) assert.ok(setup[0].text.includes(fragment), `the job preserves validated Windows linker setup: ${fragment}`);
+  assert.ok(setup[0].text.indexOf('MSVC link.exe not found at $msvcLinker') < setup[0].text.indexOf('"BASH_ENV='));
+  assert.doesNotMatch(setup[0].text, /^\s*"(?:PATH|Path)=.*GITHUB_ENV/mu, 'do not introduce competing Windows Path and PATH variables');
+  assert.match(preflight[0].text, /^ {8}shell: bash$/mu);
+  const observation = job.steps.find(step => step.name === observationStepName);
+  assert.ok(observation);
+  assert.ok(job.steps.indexOf(setup[0]) < job.steps.indexOf(preflight[0]));
+  assert.equal(job.steps.indexOf(preflight[0]), job.steps.indexOf(observation) - 1, 'verify after dependency setup and immediately before native observations');
+  assert.ok(observation.afterFailure, 'native observations still report failures after the resolution check');
+  assert.ok(job.steps.indexOf(preflight[0]) < job.steps.indexOf(observation), 'resolve the linker before native observations');
+  readWindowsLinkerPreflight(job);
+}
+
+test('Windows native jobs restore the validated MSVC linker after the Git Bash launcher', () => {
+  for (const [file, identifier, observation] of [
+    ['rust.yml', 'test', 'Run tests'],
+    ['ci.yml', 'consumers', 'Install and parse the exact artifacts in clean consumers'],
+  ]) {
+    checkWindowsLinkerEnvironment(jobs(file).get(identifier), observation);
+    const mutate = change => {
+      const job = jobs(file).get(identifier);
+      change(job);
+      assert.throws(() => checkWindowsLinkerEnvironment(job, observation), assert.AssertionError);
+    };
+    mutate(job => job.steps.splice(job.steps.findIndex(step => step.name === 'Verify Windows native linker resolution'), 1));
+    mutate(job => job.steps.push({ ...job.steps.find(step => step.name === 'Verify Windows native linker resolution') }));
+    mutate(job => job.steps.push(job.steps.splice(job.steps.findIndex(step => step.name === 'Verify Windows native linker resolution'), 1)[0]));
+    for (const [name, before, after] of [
+      ['Setup MSVC environment', '"BASH_ENV=', '"UNUSED_BASH_ENV='],
+      ['Setup MSVC environment', ' -NoNewline', ''],
+      ['Setup MSVC environment', '"`n"', '"`r`n"'],
+      ['Setup MSVC environment', 'cygpath -u "$CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER"', 'cygpath -u "C:/Program Files/Git/usr/bin/link.exe"'],
+      ['Verify Windows native linker resolution', "runner.os == 'Windows'", "runner.os == 'Linux'"],
+      ['Verify Windows native linker resolution', '!cancelled() && ', ''],
+      ['Verify Windows native linker resolution', 'shell: bash', 'shell: pwsh'],
+      ['Verify Windows native linker resolution', 'shell: bash', 'continue-on-error: true\n        shell: bash'],
+    ]) mutate(job => {
+      const step = job.steps.find(step => step.name === name);
+      assert.ok(step.text.includes(before));step.text = step.text.replace(before, after);
+    });
+  }
+  assert.equal(readWindowsLinkerPreflight(jobs('rust.yml').get('test')), readWindowsLinkerPreflight(jobs('ci.yml').get('consumers')));
+});
+
+test('Windows linker preflight checks the first native child resolution and refuses lookup failures', () => {
+  const source = readWindowsLinkerPreflight(jobs('rust.yml').get('test'));
+  const expected = "C:\\Program Files\\Microsoft Visual Studio\\18\\Enterprise\\VC\\Tools\\MSVC\\14.51\\bin\\Hostx64\\x64\\link.exe";
+  const other = "C:\\Program Files\\Git\\usr\\bin\\link.exe";
+  const success = {status: 0, signal: null, stdout: `${expected}\r\n${other}\r\n`, stderr: ''};
+  const invoke = (resolved, selected = expected) => {
+    const calls = [], output = [];
+    let error;
+    try {
+      runInNewContext(source, {
+        require: name => {
+          if (name === 'node:path') return path;
+          assert.equal(name, 'node:child_process');
+          return {spawnSync: (command, arguments_, options) => {
+            calls.push({command, arguments: [...arguments_], options: {...options}});
+            return resolved;
+          }};
+        },
+        process: {env: {CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER: selected}},
+        console: {log: value => output.push(value)},
+      });
+    } catch (caught) {error = caught;}
+    return {error, calls, output};
+  };
+  for (const stdout of [success.stdout, `${expected.toUpperCase().split(path.win32.sep).join('/')}\n${other}\n`]) {
+    const result = invoke({...success, stdout});
+    assert.equal(result.error, undefined);
+    assert.equal(result.calls.length, 1);
+    assert.deepEqual(result.calls[0], {command: 'where.exe', arguments: ['link.exe'], options: {encoding: 'utf8', timeout: 10000, maxBuffer: 65536, windowsHide: true}});
+    assert.equal(result.output.length, 1);
+    assert.match(result.output[0], /^Validated Windows native child linker: /u);
+  }
+  for (const resolved of [
+    {...success, stdout: `${other}\r\n${expected}\r\n`},
+    {...success, stdout: ''},
+    {...success, stdout: 'link.exe\n'},
+    {...success, status: 1, stderr: 'lookup failed'},
+    {...success, signal: 'SIGTERM'},
+    {...success, error: new Error('lookup timeout')},
+    {...success, stdout: null},
+  ]) {
+    const result = invoke(resolved);
+    assert.match(result.error?.message ?? '', /Windows (?:linker lookup failed|native child resolves)/u);
+    assert.equal(result.calls.length, 1);
+    assert.deepEqual(result.output, [], 'failed resolution cannot produce a successful native observation');
+  }
+  for (const selected of ['', 'relative/link.exe']) {
+    const result = invoke(success, selected);
+    assert.match(result.error?.message ?? '', /validated absolute MSVC linker path/u);
+    assert.deepEqual(result.calls, [], 'an unvalidated linker never starts a process');
+    assert.deepEqual(result.output, []);
   }
 });

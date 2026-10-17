@@ -426,12 +426,41 @@ jobs:
           }
           "CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER=$msvcLinker" | Out-File -FilePath $env:GITHUB_ENV -Append
 
+          # Git's bin/bash.exe launcher prepends its own Unix tools, including link.exe.
+          # Restore only the validated MSVC directory after that launcher has run.
+          Split-Path -Parent $msvcLinker | Out-File -FilePath $env:GITHUB_PATH -Append
+          $bashEnvironment = Join-Path $env:RUNNER_TEMP "meta-language-msvc-bash-env.sh"
+          'export PATH="$(dirname "$(cygpath -u "$CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER")"):$PATH"' + "`n" |
+            Set-Content -LiteralPath $bashEnvironment -Encoding utf8 -NoNewline
+          "BASH_ENV=$($bashEnvironment.Replace('\', '/'))" | Out-File -FilePath $env:GITHUB_ENV -Append
+
       - uses: actions/download-artifact@v8
         with:
           name: issue-195-candidates-${{ github.sha }}
           path: .issue-195-work/candidates
 
+      - name: Verify Windows native linker resolution
+        if: ${{ !cancelled() && runner.os == 'Windows' }}
+        shell: bash
+        run: |
+          node --input-type=commonjs <<'NODE'
+          const path = require('node:path');
+          const {spawnSync} = require('node:child_process');
+          const expected = process.env.CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER;
+          if (!expected || !path.win32.isAbsolute(expected)) throw new Error('A validated absolute MSVC linker path is required');
+          const resolved = spawnSync('where.exe', ['link.exe'], {encoding: 'utf8', timeout: 10000, maxBuffer: 65536, windowsHide: true});
+          if (resolved.error || resolved.status !== 0 || resolved.signal !== null || typeof resolved.stdout !== 'string') {
+            throw new Error(`Windows linker lookup failed: status=${resolved.status}, signal=${resolved.signal}, ${resolved.error?.message ?? resolved.stderr}`, {cause: resolved.error});
+          }
+          const actual = resolved.stdout.split(/\r?\n/u)[0].trim();
+          if (!path.win32.isAbsolute(actual) || path.win32.normalize(actual).toLowerCase() !== path.win32.normalize(expected).toLowerCase()) {
+            throw new Error(`Windows native child resolves ${actual || '<no linker>'}; expected ${expected}`);
+          }
+          console.log(`Validated Windows native child linker: ${actual}`);
+          NODE
+
       - name: Install and parse the exact artifacts in clean consumers
+        if: ${{ !cancelled() }}
         shell: bash
         run: >-
           node js/scripts/run-issue-195-consumer.mjs
