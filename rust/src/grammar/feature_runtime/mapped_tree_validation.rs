@@ -2,14 +2,20 @@
 //! Generic Links decoding alone does not authenticate mapping or grammar CSTs.
 
 use std::cell::Cell;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use serde_json::Value;
 
+#[path = "mapped_tree_validation/field_ranges.rs"]
+mod field_ranges;
+
+use super::field_range_source::read_field_range_view;
 use super::operations::Abort;
-use super::selection_source_mapping::{MappingBudget, SourceRegistry, numeric};
+use super::selection_source_mapping::{MappedSource, MappingBudget, SourceRegistry, numeric};
 use super::{DEFAULT_MAX_DEPTH, DEFAULT_MEMORY_LIMIT, FeatureParseOptions, GrammarRuntimeError};
 use crate::translation::frontend_rules::ml_array::number_index;
+use crate::translation::grammar_selection_field_range_rules::accept_grammar_selection_field_range_mapping;
 use crate::translation::grammar_selection_included_range_rules::{
     accept_grammar_selection_included_range_agreement,
     accept_grammar_selection_included_range_derivation,
@@ -26,6 +32,10 @@ use crate::translation::grammar_selection_mapping_rules::{
     accept_grammar_selection_source_derivation, accept_grammar_selection_source_interval,
     accept_grammar_selection_source_root, read_grammar_selection_mapping_field_order,
     read_grammar_selection_tree_children,
+};
+use field_ranges::{
+    accept_field_range_keys, field_facts_agree, field_selector, field_view_agrees, same_bytes,
+    same_field_witness,
 };
 
 fn invalid(detail: &str) -> GrammarRuntimeError {
@@ -305,6 +315,7 @@ fn physical_node(
 struct Validator<'a> {
     definitions: &'a [Value],
     planes: Vec<Rc<[u8]>>,
+    field_sources: HashMap<usize, MappedSource>,
     registry: SourceRegistry,
     budget: ValidationBudget,
 }
@@ -335,10 +346,11 @@ impl Validator<'_> {
             Some(Value::String(profile)) => profile,
             _ => return Err(invalid("unknown mapping profile")),
         };
+        let field = accept_grammar_selection_field_range_mapping(profile);
         let included = accept_grammar_selection_included_range_mapping(profile);
-        let accepted_profile = if included {
+        let accepted_profile = if field || included {
             accept_grammar_selection_included_range_profile(
-                profile,
+                if field { "included-ranges" } else { profile },
                 node.get("sourceChildren").is_some(),
                 selection.get("sourceMapping").is_some(),
             )
@@ -353,7 +365,7 @@ impl Validator<'_> {
             return Err(invalid("unknown mapping profile"));
         }
         let alternatives = selection["alternatives"].as_array();
-        if profile != "json-string" && !included {
+        if profile != "json-string" && !included && !field {
             self.walk(&node["root"], plane, depth + 1)?;
             if let Some(alternatives) = alternatives {
                 for alternative in alternatives {
@@ -363,7 +375,17 @@ impl Validator<'_> {
             return Ok(());
         }
         let mapping = &selection["sourceMapping"];
-        let (ordered_fields, descriptor) = if included {
+        let (ordered_fields, descriptor) = if field {
+            (
+                accept_field_range_keys(mapping, "mapping"),
+                accept_grammar_selection_included_range_descriptor(
+                    mapping["kind"].as_str().unwrap_or_default(),
+                    "included-ranges",
+                ) && accept_grammar_selection_field_range_mapping(
+                    mapping["operation"].as_str().unwrap_or_default(),
+                ),
+            )
+        } else if included {
             (
                 accept_included_range_keys(mapping, "mapping"),
                 accept_grammar_selection_included_range_descriptor(
@@ -416,6 +438,13 @@ impl Validator<'_> {
         ) {
             return Err(invalid("mapping belongs to another source occurrence"));
         }
+        if field
+            && !accept_grammar_selection_field_range_mapping(
+                origin["operation"].as_str().unwrap_or_default(),
+            )
+        {
+            return Err(invalid("source field operation differs"));
+        }
         let ranges = if included {
             let actual = read_included_range_columns(&mapping["ranges"], &self.budget)?;
             let expected = read_included_range_columns(&origin["ranges"], &self.budget)?;
@@ -428,15 +457,41 @@ impl Validator<'_> {
         };
         let start = offset(&node["start"]).ok_or_else(|| invalid("invalid mapped boundary"))?;
         let end = offset(&node["end"]).ok_or_else(|| invalid("invalid mapped boundary"))?;
-        let derived = if let Some(ranges) = &ranges {
-            self.registry
-                .map_included(&self.planes[plane], start, end, ranges, &self.budget)
+        let repeated;
+        let derived = if field {
+            field_facts_agree(mapping, origin, &self.budget)?;
+            let view = read_field_range_view(
+                &self.planes[plane],
+                start,
+                end,
+                &mapping["selector"],
+                &node["sourceChildren"],
+                &self.budget,
+                self.budget.max_depth.saturating_sub(depth),
+            )
+            .map_err(aborted)?
+            .map_err(|failed| invalid(failed.reason))?;
+            field_view_agrees(&view, origin, &self.budget)?;
+            if !same_field_witness(&view.witness, &origin["witness"], 0, &self.budget)? {
+                return Err(invalid(
+                    "physical source witness differs from the accepted source view",
+                ));
+            }
+            self.field_sources
+                .get(&output)
+                .ok_or_else(|| invalid("source field definition was not verified"))?
         } else {
-            self.registry
-                .map(&self.planes[plane], start, end, &self.budget)
-        }
-        .map_err(aborted)?
-        .map_err(|failed| invalid(failed.reason))?;
+            repeated = if let Some(ranges) = &ranges {
+                self.registry
+                    .map_included(&self.planes[plane], start, end, ranges, &self.budget)
+            } else {
+                self.registry
+                    .map(&self.planes[plane], start, end, &self.budget)
+            }
+            .map_err(aborted)?
+            .map_err(|failed| invalid(failed.reason))?;
+            &repeated
+        };
         let actual = mapping["intervals"]
             .as_array()
             .ok_or_else(|| invalid("ordered source intervals differ"))?;
@@ -464,6 +519,7 @@ impl Validator<'_> {
                 "source reference differs from its actual derivation",
             ));
         }
+        let derived_bytes = derived.bytes.clone();
         for child in node["sourceChildren"]
             .as_array()
             .ok_or_else(|| invalid("invalid physical source children"))?
@@ -477,11 +533,11 @@ impl Validator<'_> {
             let stored = physical(
                 std::slice::from_ref(root),
                 0,
-                derived.bytes.len(),
+                derived_bytes.len(),
                 depth + 1,
                 &self.budget,
             )?;
-            if stored.as_slice() != &*derived.bytes {
+            if stored.as_slice() != &*derived_bytes {
                 return Err(invalid("decoded tree bytes differ"));
             }
             self.walk(root, output, depth + 1)?;
@@ -541,6 +597,7 @@ pub fn check_grammar_selection_mapped_tree<'a>(
     let mut validator = Validator {
         definitions,
         planes: Vec::new(),
+        field_sources: HashMap::new(),
         registry: SourceRegistry::default(),
         budget,
     };
@@ -557,14 +614,20 @@ pub fn check_grammar_selection_mapped_tree<'a>(
         ) {
             return Err(invalid("invalid source derivation presence"));
         }
+        let mut field_source = None;
         let bytes = if identity == 0 {
             root.clone()
         } else {
             let origin = &definition["derivation"];
+            let field = accept_grammar_selection_field_range_mapping(
+                origin["operation"].as_str().unwrap_or_default(),
+            );
             let included = accept_grammar_selection_included_range_mapping(
                 origin["operation"].as_str().unwrap_or_default(),
             );
-            let ordered = if included {
+            let ordered = if field {
+                accept_field_range_keys(origin, "derivation")
+            } else if included {
                 accept_included_range_keys(origin, "derivation")
             } else {
                 exact_keys(origin, "derivation")
@@ -575,9 +638,15 @@ pub fn check_grammar_selection_mapped_tree<'a>(
             let input = offset(&origin["input"])
                 .and_then(|index| validator.planes.get(index))
                 .ok_or_else(|| invalid("unowned source derivation"))?;
-            let accepted = if included {
+            // The separately admitted field operation uses the existing byte
+            // contraction protocol's coordinate invariant, just as JS does.
+            let accepted = if field || included {
                 accept_grammar_selection_included_range_derivation(
-                    origin["operation"].as_str().unwrap_or_default(),
+                    if field {
+                        "included-ranges"
+                    } else {
+                        origin["operation"].as_str().unwrap_or_default()
+                    },
                     number(&origin["input"]),
                     numeric(identity),
                     number(&origin["start"]),
@@ -600,7 +669,46 @@ pub fn check_grammar_selection_mapped_tree<'a>(
             let start =
                 offset(&origin["start"]).ok_or_else(|| invalid("unowned source derivation"))?;
             let end = offset(&origin["end"]).ok_or_else(|| invalid("unowned source derivation"))?;
-            let derived = if included {
+            let derived = if field {
+                read_included_range_columns(&origin["ranges"], &validator.budget)?;
+                field_selector(&origin["selector"], &validator.budget)?;
+                let witness = &origin["witness"];
+                let ordered_witness = witness.as_object().is_some_and(|fields| {
+                    fields
+                        .keys()
+                        .map(String::as_str)
+                        .eq(["start", "end", "children"])
+                });
+                let children = witness["children"]
+                    .as_array()
+                    .filter(|_| {
+                        ordered_witness
+                            && offset(&witness["start"]) == Some(start)
+                            && offset(&witness["end"]) == Some(end)
+                    })
+                    .ok_or_else(|| invalid("invalid physical source witness"))?;
+                let stored = physical(children, start, end, 0, &validator.budget)?;
+                if stored.len() != end - start
+                    || !same_bytes(&stored, input, start, &validator.budget)?
+                {
+                    return Err(invalid("physical source witness bytes differ"));
+                }
+                // A fresh replay owner for each actual definition replaces
+                // JS's fresh private children array. No archive pointer or
+                // structural deduplication can establish this owner identity.
+                validator.budget.retain(children.len() + 1)?;
+                for _ in children {
+                    validator.budget.step()?;
+                }
+                validator.registry.map_field_value(
+                    input,
+                    (start, end),
+                    &origin["selector"],
+                    (identity, &witness["children"]),
+                    &validator.budget,
+                    validator.budget.max_depth,
+                )
+            } else if included {
                 let ranges = read_included_range_columns(&origin["ranges"], &validator.budget)?
                     .as_chunks::<2>()
                     .0
@@ -613,10 +721,36 @@ pub fn check_grammar_selection_mapped_tree<'a>(
             }
             .map_err(aborted)?
             .map_err(|_| invalid("invalid source derivation"))?;
+            if field {
+                field_facts_agree(origin, &derived.mapping, &validator.budget)?;
+                let canonical = validator
+                    .registry
+                    .definition(
+                        offset(&derived.mapping["output"])
+                            .ok_or_else(|| invalid("invalid source derivation"))?,
+                    )
+                    .ok_or_else(|| invalid("invalid source derivation"))?;
+                if !same_field_witness(
+                    &origin["witness"],
+                    &canonical["derivation"]["witness"],
+                    0,
+                    &validator.budget,
+                )? {
+                    return Err(invalid(
+                        "physical source witness metadata differs from its replay",
+                    ));
+                }
+            }
             if offset(&derived.mapping["output"]) != Some(identity) {
                 return Err(invalid("invalid source derivation"));
             }
-            derived.bytes
+            if field {
+                let bytes = derived.bytes.clone();
+                field_source = Some(derived);
+                bytes
+            } else {
+                derived.bytes
+            }
         };
         if !accept_grammar_selection_source_definition(
             definition["kind"].as_str().unwrap_or_default(),
@@ -627,6 +761,9 @@ pub fn check_grammar_selection_mapped_tree<'a>(
             numeric(bytes.len()),
         ) {
             return Err(invalid("invalid source definition"));
+        }
+        if let Some(derived) = field_source {
+            validator.field_sources.insert(identity, derived);
         }
         validator.planes.push(bytes);
     }

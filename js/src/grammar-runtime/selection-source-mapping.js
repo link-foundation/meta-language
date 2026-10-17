@@ -4,6 +4,8 @@ import { readGrammarSelectionJsonStringPart,
   readGrammarSelectionMappingReservation, readGrammarSelectionMappedCover } from '../translation/grammar-selection-mapping-rules.js';
 import { readSourceTextScalarByteWidth } from '../translation/source-text-byte-rules.js';
 import { decodeAt, encodeText } from './text.js';
+import { DEFAULT_MAX_DEPTH, NestingTooDeep } from './executor.js';
+import { readGrammarSelectionFieldRangeView } from './field-range-source.js';
 import {
   acceptGrammarSelectionIncludedRangeSourceRange,
   readGrammarSelectionIncludedRangeReservation,
@@ -106,6 +108,81 @@ export function mapGrammarSelectionSource(executor, start, end) {
 export function mapGrammarSelectionIncludedRangeSource(executor, start, end, ranges) {
   const input = sourceRecord(executor);
   if (input.reason) return input;
+  return mapRangeSource(executor, input, start, end, ranges);
+}
+
+/** A physical witness owns its own view, even when another witness selects
+ * equal bytes. Rediscover before consulting the cache: callers can edit the
+ * actual children between uses, while retained definitions stay immutable.
+ */
+export function mapGrammarSelectionFieldRangeSource(executor, start, end, selector, children) {
+  const input = sourceRecord(executor);
+  if (input.reason) return input;
+  const view = readGrammarSelectionFieldRangeView(executor, start, end, selector, children,
+    (executor.maxDepth ?? DEFAULT_MAX_DEPTH) - (executor.depth ?? 0));
+  if (view.reason) return view;
+  executor.retain(6);
+  const parameters = Object.freeze({
+    kind: Object.getOwnPropertyDescriptor(selector, 'kind').value,
+    label: Object.getOwnPropertyDescriptor(selector, 'label').value,
+    mode: Object.getOwnPropertyDescriptor(selector, 'mode').value,
+    first: Object.getOwnPropertyDescriptor(selector, 'first').value,
+    count: Object.getOwnPropertyDescriptor(selector, 'count').value,
+  });
+  const key = fieldRangeCacheKey(executor, ['field-ranges', start, end, parameters,
+    view.occurrences, view.ranges, view.witness]);
+  if (!input.fieldMappings) { executor.retain(1); input.fieldMappings = new WeakMap(); }
+  const witnesses = input.fieldMappings;
+  let mappings = witnesses.get(children);
+  if (!mappings) {
+    executor.retain(1);
+    mappings = new Map();
+    witnesses.set(children, mappings);
+  }
+  if (!mappings.has(key)) executor.retain(Buffer.byteLength(key, 'utf8') + 1);
+  return mapRangeSource(executor, input, start, end, view.ranges,
+    { key, mappings, selector: parameters, occurrences: view.occurrences, witness: view.witness });
+}
+
+// These are already descriptor-checked, frozen plain facts. Type tags keep
+// container shapes distinct, and signed zero remains a real metadata value.
+function fieldRangeCacheKey(executor, value) {
+  const parts = [], maximumDepth = (executor.maxDepth ?? DEFAULT_MAX_DEPTH) - (executor.depth ?? 0);
+  const append = text => {
+    executor.retain(Buffer.byteLength(text, 'utf8') + 1);
+    for (let index = 0; index < text.length; index += 1) executor.step();
+    parts.push(text);
+  };
+  const visit = (item, level) => {
+    executor.step();
+    if (level > maximumDepth) throw new NestingTooDeep();
+    if (item === null) append('n');
+    else if (typeof item === 'boolean') append(item ? 'b1' : 'b0');
+    else if (typeof item === 'number') append(`d${Object.is(item, -0) ? '-0' : JSON.stringify(item)};`);
+    else if (typeof item === 'string') append(`s${JSON.stringify(item)}`);
+    else if (Array.isArray(item)) {
+      append('a[');
+      for (const child of item) visit(child, level + 1);
+      append(']');
+    } else {
+      append('o{');
+      for (const key of Object.keys(item)) {
+        append(JSON.stringify(key));
+        visit(item[key], level + 1);
+      }
+      append('}');
+    }
+  };
+  visit(value, 0);
+  const key = parts.join('');
+  executor.retain(Buffer.byteLength(key, 'utf8') + 1);
+  return key;
+}
+
+// Both explicit ranges and discovered fields execute the unchanged B68 byte
+// contraction protocol. Their cache ownership and recorded operations remain
+// separate; a field plane is never an included-range record with a new label.
+function mapRangeSource(executor, input, start, end, ranges, field = null) {
   const registry = sourceRegistry(executor);
   const failure = offset => ({ reason: 'invalidEmbeddingMapping', offset });
   if (!acceptGrammarSelectionIncludedRangeDerivation('included-ranges', input.source,
@@ -117,8 +194,9 @@ export function mapGrammarSelectionIncludedRangeSource(executor, start, end, ran
     if (!Array.isArray(range) || range.length !== 2
         || !acceptGrammarSelectionIncludedRangeSourceRange('source-range', range[0], range[1])) return failure(start);
   }
-  const key = JSON.stringify(['included-ranges', start, end, ranges]);
-  if (input.mappings.has(key)) return input.mappings.get(key);
+  const key = field ? field.key : JSON.stringify(['included-ranges', start, end, ranges]);
+  const mappings = field ? field.mappings : input.mappings;
+  if (mappings.has(key)) return mappings.get(key);
   executor.retain(reservation);
   const steps = readGrammarSelectionIncludedRangeReservation(end - start, ranges.length * 2, true);
   for (let index = 0; index < steps; index += 1) executor.step();
@@ -126,7 +204,7 @@ export function mapGrammarSelectionIncludedRangeSource(executor, start, end, ran
   const plan = readGrammarSelectionIncludedRangePlan(columns, end - start);
   const refuse = offset => {
     const result = failure(offset);
-    input.mappings.set(key, result);
+    mappings.set(key, result);
     return result;
   };
   if (plan.length === 0) return refuse(start);
@@ -150,15 +228,21 @@ export function mapGrammarSelectionIncludedRangeSource(executor, start, end, ran
   }
   const source = registry.records.length;
   const parameters = Object.freeze(ranges.map(range => Object.freeze([...range])));
-  const mapping = Object.freeze({ kind: 'source-mapping', operation: 'included-ranges', input: input.source,
-    output: source, ranges: parameters, intervals: Object.freeze(intervals) });
+  const mapping = Object.freeze(field
+    ? { kind: 'source-mapping', operation: 'field-ranges', input: input.source, output: source,
+      selector: field.selector, occurrences: field.occurrences, ranges: parameters, intervals: Object.freeze(intervals) }
+    : { kind: 'source-mapping', operation: 'included-ranges', input: input.source,
+      output: source, ranges: parameters, intervals: Object.freeze(intervals) });
   const record = { bytes, source, parent: input, mapping, mappings: new Map(),
     definition: Object.freeze({ kind: 'grammar-source', identity: source, encoding: 'UTF-8', byteLength: bytes.length,
-      derivation: Object.freeze({ operation: 'included-ranges', input: input.source, start, end, ranges: parameters }) }) };
+      derivation: Object.freeze(field
+        ? { operation: 'field-ranges', input: input.source, start, end, selector: field.selector,
+          occurrences: field.occurrences, ranges: parameters, witness: field.witness }
+        : { operation: 'included-ranges', input: input.source, start, end, ranges: parameters }) }) };
   registry.records.push(record);
   registry.byBytes.set(bytes, record);
   const result = { bytes, mapping };
-  input.mappings.set(key, result);
+  mappings.set(key, result);
   return result;
 }
 

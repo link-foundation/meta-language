@@ -2,7 +2,9 @@
 // mapping/ownership, not that either CST is licensed by a language grammar.
 import { Executor, DEFAULT_MAX_DEPTH, memoryBudget, stepBudget, NestingTooDeep } from './executor.js';
 import { decodeAt, encodeText, textOf } from './text.js';
-import { mapGrammarSelectionSource, mapGrammarSelectionIncludedRangeSource } from './selection-source-mapping.js';
+import { mapGrammarSelectionSource, mapGrammarSelectionIncludedRangeSource,
+  mapGrammarSelectionFieldRangeSource } from './selection-source-mapping.js';
+import { readGrammarSelectionFieldRangeView } from './field-range-source.js';
 import { readGrammarSelectionMappingFieldOrder, acceptGrammarSelectionSourceDefinition,
   acceptGrammarSelectionSourceDerivation, acceptGrammarSelectionSourceInterval,
   acceptGrammarSelectionSourceRoot, acceptGrammarSelectionMappingReference,
@@ -13,6 +15,8 @@ import { acceptGrammarSelectionIncludedRangeMapping, acceptGrammarSelectionInclu
   acceptGrammarSelectionIncludedRangeAgreement, readGrammarSelectionIncludedRangeFieldOrder,
   acceptGrammarSelectionIncludedRangeDerivation, acceptGrammarSelectionIncludedRangeProfile,
   acceptGrammarSelectionIncludedRangeDescriptor } from '../translation/grammar-selection-included-range-rules.js';
+import { acceptGrammarSelectionFieldRangeMapping, acceptGrammarSelectionFieldRangeSelector,
+  readGrammarSelectionFieldRangeFieldOrder } from '../translation/grammar-selection-field-range-rules.js';
 
 const fail = detail => { throw new TypeError(`mapped grammar CST: ${detail}`); };
 
@@ -62,7 +66,7 @@ export function checkGrammarSelectionMappedTree(bundle, options = {}) {
   if (Object.hasOwn(settings, 'errorRecovery') && typeof settings.errorRecovery !== 'boolean') fail('invalid resource option');
   const memory = memoryBudget(settings), maximumDepth = settings.maxDepth ?? DEFAULT_MAX_DEPTH;
   const control = { bytes: null, budget: stepBudget(settings, end, memory),
-    step: Executor.prototype.step, retain: Executor.prototype.retain };
+    maxDepth: maximumDepth, depth: 0, step: Executor.prototype.step, retain: Executor.prototype.retain };
   const depth = level => {
     control.step();
     if (level > maximumDepth) throw new NestingTooDeep();
@@ -149,6 +153,70 @@ export function checkGrammarSelectionMappedTree(bundle, options = {}) {
     }
     return columns;
   };
+  const fieldSelector = selector => {
+    control.step();
+    if (!exactKeys(selector, readGrammarSelectionFieldRangeFieldOrder('selector').split('|'))
+        || !acceptGrammarSelectionFieldRangeSelector(selector.kind, selector.label,
+          selector.mode, selector.first, selector.count)) fail('invalid source field selector');
+  };
+  const fieldFactsAgree = (actual, expected) => {
+    fieldSelector(actual.selector);
+    fieldSelector(expected.selector);
+    for (const key of readGrammarSelectionFieldRangeFieldOrder('selector').split('|')) {
+      control.step();
+      if (actual.selector[key] !== expected.selector[key]) fail('source field selectors differ');
+    }
+    if (!Array.isArray(actual.occurrences) || actual.occurrences.length !== expected.occurrences.length)
+      fail('ordered source field occurrences differ');
+    for (let index = 0; index < actual.occurrences.length; index += 1) {
+      control.step();
+      const occurrence = actual.occurrences[index], other = expected.occurrences[index];
+      if (!exactKeys(occurrence, readGrammarSelectionFieldRangeFieldOrder('occurrence').split('|'))
+          || occurrence.start !== other.start || occurrence.end !== other.end
+          || !Array.isArray(occurrence.path) || occurrence.path.length !== other.path.length)
+        fail('ordered source field occurrences differ');
+      for (let component = 0; component < occurrence.path.length; component += 1) {
+        control.step();
+        if (occurrence.path[component] !== other.path[component]) fail('ordered source field occurrences differ');
+      }
+    }
+    if (!acceptGrammarSelectionIncludedRangeAgreement(rangeColumns(actual.ranges), rangeColumns(expected.ranges)))
+      fail('ordered field source ranges differ');
+  };
+  const sameBytes = (actual, expected, begin = 0) => {
+    for (let index = 0; index < actual.length; index += 1) {
+      control.step();
+      if (actual[index] !== expected[begin + index]) return false;
+    }
+    return true;
+  };
+  // Both operands are already plain, descriptor-checked facts. Compare the
+  // entire retained witness, including metadata that field discovery does not
+  // interpret. Object.is preserves the archive's actual signed-zero values.
+  const sameFieldWitness = (actual, expected, level = 0) => {
+    depth(level);
+    if (typeof actual !== typeof expected) return false;
+    if (typeof actual === 'string') {
+      if (actual.length !== expected.length) return false;
+      for (let index = 0; index < actual.length; index += 1) {
+        control.step();
+        if (actual[index] !== expected[index]) return false;
+      }
+      return true;
+    }
+    if (actual === null || expected === null || typeof actual !== 'object') return Object.is(actual, expected);
+    if (Array.isArray(actual) !== Array.isArray(expected)
+        || Array.isArray(actual) && actual.length !== expected.length) return false;
+    const keys = Object.keys(actual), other = Object.keys(expected);
+    control.retain(keys.length + other.length + 2);
+    if (keys.length !== other.length) return false;
+    for (let index = 0; index < keys.length; index += 1) {
+      control.step();
+      const key = keys[index];
+      if (key !== other[index] || !sameFieldWitness(actual[key], expected[key], level + 1)) return false;
+    }
+    return true;
+  };
   const planes = [];
   for (let identity = 0; identity < sourcePlanes.length; identity += 1) {
     control.step();
@@ -163,21 +231,46 @@ export function checkGrammarSelectionMappedTree(bundle, options = {}) {
       continue;
     }
     const origin = definition.derivation;
+    const field = acceptGrammarSelectionFieldRangeMapping(origin?.operation ?? '');
     const included = acceptGrammarSelectionIncludedRangeMapping(origin?.operation ?? '');
-    const fields = included ? readGrammarSelectionIncludedRangeFieldOrder('derivation')
+    const fields = field ? readGrammarSelectionFieldRangeFieldOrder('derivation')
+      : included ? readGrammarSelectionIncludedRangeFieldOrder('derivation')
       : readGrammarSelectionMappingFieldOrder('derivation');
     if (!exactKeys(origin, fields.split('|'))) fail('unowned source derivation');
     const parent = typeof origin.input === 'number' ? planes[origin.input] : null;
-    const acceptDerivation = included ? acceptGrammarSelectionIncludedRangeDerivation : acceptGrammarSelectionSourceDerivation;
-    if (!parent || !acceptDerivation(origin.operation, origin.input, identity,
+    // The field operation is separately admitted above; both range profiles
+    // use the existing contraction protocol's source-coordinate invariant.
+    const acceptDerivation = field || included ? acceptGrammarSelectionIncludedRangeDerivation : acceptGrammarSelectionSourceDerivation;
+    if (!parent || !acceptDerivation(field ? 'included-ranges' : origin.operation, origin.input, identity,
       origin.start, origin.end, parent.bytes.length)) fail('unowned source derivation');
-    if (included) rangeColumns(origin.ranges);
+    if (field || included) rangeColumns(origin.ranges);
     control.bytes = parent.bytes;
-    const derived = included ? mapGrammarSelectionIncludedRangeSource(control, origin.start, origin.end, origin.ranges)
+    let derived;
+    if (field) {
+      fieldSelector(origin.selector);
+      const witness = origin.witness;
+      if (!exactKeys(witness, ['start', 'end', 'children']) || witness.start !== origin.start
+          || witness.end !== origin.end || !Array.isArray(witness.children)) fail('invalid physical source witness');
+      const stored = physical(witness.children, origin.start, origin.end, 0);
+      if (stored.length !== origin.end - origin.start || !sameBytes(stored, parent.bytes, origin.start))
+        fail('physical source witness bytes differ');
+      // Each declared definition is replayed once, independently of archive
+      // object deduplication. Actual matching facts, never this private array's
+      // identity, are the public source correspondence proof.
+      control.retain(witness.children.length + 1);
+      const replayChildren = [];
+      for (const child of witness.children) { control.step(); replayChildren.push(child); }
+      derived = mapGrammarSelectionFieldRangeSource(control, origin.start, origin.end, origin.selector, replayChildren);
+      if (!derived.reason) {
+        fieldFactsAgree(origin, derived.mapping);
+        const canonical = control.budget.memory.selectionSources.records[derived.mapping.output].definition.derivation.witness;
+        if (!sameFieldWitness(witness, canonical)) fail('physical source witness metadata differs from its replay');
+      }
+    } else derived = included ? mapGrammarSelectionIncludedRangeSource(control, origin.start, origin.end, origin.ranges)
       : mapGrammarSelectionSource(control, origin.start, origin.end);
     if (derived.reason || derived.mapping.output !== identity || !acceptGrammarSelectionSourceDefinition(definition.kind,
       definition.identity, identity, definition.encoding, definition.byteLength, derived.bytes.length)) fail('invalid source derivation');
-    planes.push({ identity, bytes: derived.bytes });
+    planes.push(field ? { identity, bytes: derived.bytes, derived } : { identity, bytes: derived.bytes });
   }
   const walk = (node, plane, level) => {
     depth(level);
@@ -186,10 +279,11 @@ export function checkGrammarSelectionMappedTree(bundle, options = {}) {
       return;
     }
     if (node.type !== 'embed') return;
+    const field = acceptGrammarSelectionFieldRangeMapping(node.selection?.mapping ?? '');
     const included = acceptGrammarSelectionIncludedRangeMapping(node.selection?.mapping ?? '');
-    const mapped = node.selection?.mapping === 'json-string' || included;
-    const acceptProfile = included ? acceptGrammarSelectionIncludedRangeProfile : acceptGrammarSelectionMappingProfile;
-    if (!acceptProfile(node.selection?.mapping ?? 'identity',
+    const mapped = node.selection?.mapping === 'json-string' || included || field;
+    const acceptProfile = field || included ? acceptGrammarSelectionIncludedRangeProfile : acceptGrammarSelectionMappingProfile;
+    if (!acceptProfile(field ? 'included-ranges' : node.selection?.mapping ?? 'identity',
       node.sourceChildren !== undefined, node.selection?.sourceMapping !== undefined)) fail('unknown mapping profile');
     if (!mapped) {
       walk(node.root, plane, level + 1);
@@ -197,11 +291,13 @@ export function checkGrammarSelectionMappedTree(bundle, options = {}) {
       return;
     }
     const mapping = node.selection.sourceMapping;
-    const fields = included ? readGrammarSelectionIncludedRangeFieldOrder('mapping')
+    const fields = field ? readGrammarSelectionFieldRangeFieldOrder('mapping')
+      : included ? readGrammarSelectionIncludedRangeFieldOrder('mapping')
       : readGrammarSelectionMappingFieldOrder('mapping');
-    const acceptDescriptor = included ? acceptGrammarSelectionIncludedRangeDescriptor : acceptGrammarSelectionMappingDescriptor;
+    const acceptDescriptor = field || included ? acceptGrammarSelectionIncludedRangeDescriptor : acceptGrammarSelectionMappingDescriptor;
     if (!exactKeys(mapping, fields.split('|'))
-        || !acceptDescriptor(mapping.kind, mapping.operation)
+        || !acceptDescriptor(mapping.kind, field ? 'included-ranges' : mapping.operation)
+        || field && !acceptGrammarSelectionFieldRangeMapping(mapping.operation)
         || !Array.isArray(node.sourceChildren) || mapping.input === mapping.output
         || !acceptGrammarSelectionMappingOccurrence(mapping.input, plane.identity,
           node.selection.start, node.start, node.selection.end, node.end)) fail('invalid mapped boundary');
@@ -209,10 +305,21 @@ export function checkGrammarSelectionMappedTree(bundle, options = {}) {
     const output = sourcePlanes[mapping.output], origin = output.derivation;
     if (!acceptGrammarSelectionMappingOccurrence(origin.input, mapping.input, origin.start, node.start,
       origin.end, node.end)) fail('mapping belongs to another source occurrence');
+    if (field && !acceptGrammarSelectionFieldRangeMapping(origin.operation)) fail('source field operation differs');
     if (included && !acceptGrammarSelectionIncludedRangeAgreement(rangeColumns(mapping.ranges),
       rangeColumns(origin.ranges))) fail('ordered included source ranges differ');
     control.bytes = plane.bytes;
-    const derived = included ? mapGrammarSelectionIncludedRangeSource(control, node.start, node.end, origin.ranges)
+    let derived;
+    if (field) {
+      fieldFactsAgree(mapping, origin);
+      const view = readGrammarSelectionFieldRangeView(control, node.start, node.end, mapping.selector,
+        node.sourceChildren, maximumDepth - level);
+      if (view.reason) fail(view.reason);
+      fieldFactsAgree({ selector: mapping.selector, occurrences: view.occurrences, ranges: view.ranges }, origin);
+      if (!sameFieldWitness(view.witness, origin.witness)) fail('physical source witness differs from the accepted source view');
+      derived = planes[mapping.output].derived;
+      if (!derived) fail('source field definition was not verified');
+    } else derived = included ? mapGrammarSelectionIncludedRangeSource(control, node.start, node.end, origin.ranges)
       : mapGrammarSelectionSource(control, node.start, node.end);
     if (derived.reason) fail(derived.reason);
     if (!Array.isArray(mapping.intervals) || mapping.intervals.length !== derived.mapping.intervals.length
