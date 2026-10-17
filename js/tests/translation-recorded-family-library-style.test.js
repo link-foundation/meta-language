@@ -8,6 +8,7 @@ import {checkProgram} from '../src/translation/check.js';
 import {emitJavaScript} from '../src/translation/emit-javascript.js';
 import {parseJavaScript} from '../src/translation/javascript.js';
 import {emitRust} from '../src/translation/emit-rust.js';
+import {removeFamilyLibraryDivergentElse} from '../scripts/portable-conditional-source-style.mjs';
 import {
   applyRecordedFamilyLibraryStyles, flattenFamilyLibraryElseIf,
   mergeFamilyLibraryIdenticalBranches, qualifyFamilyLibraryBooleanFunctions,
@@ -325,4 +326,83 @@ test('family numeric truthiness lifts the complete checked condition once with a
   assert.match(liftFamilyLibraryTruthinessConditions(collision), /let ml_library_condition_2 =/u);
   const unsafe = 'pub fn decide(value:bool)->bool{if {let ml_value=value;ml_value}{true}else{false}}';
   assert.equal(liftFamilyLibraryTruthinessConditions(unsafe), unsafe);
+});
+
+test('family divergent then retains complete tail blocks, effects, opaque syntax and outer result branches', () => {
+  const nested = 'pub fn decide(available:bool,letter:bool,mut index:f64)->State{loop{return if available{{let character=index;{if letter{{let next=character+1f64;{index=next;continue;}}}/* branch */else/* fallback */{State::Return(false)}}}}else{State::Done};}}';
+  const innerElse = nested.indexOf('else');
+  const expected = nested.slice(0, innerElse) + '    ' + nested.slice(innerElse + 4);
+  const transformed = removeFamilyLibraryDivergentElse(nested);
+  assert.equal(transformed, expected, 'only the actual nested continue branch loses its else keyword');
+  assert.ok(transformed.includes('}else{State::Done};'), 'the outer return-if retains its value-producing else');
+  for (const original of ['/* branch */', '/* fallback */', 'index=next;continue;', 'State::Return(false)', 'State::Done']) {
+    assert.equal(transformed.indexOf(original), nested.indexOf(original), original);
+  }
+  assert.equal(removeFamilyLibraryDivergentElse(transformed), transformed);
+  for (const before of [
+    'pub fn decide(flag:bool)->State{if flag{return State::Return(observe());}else{State::Done}}',
+    'pub fn decide(flag:bool)->State{if flag{{let value=observe();{return State::Return(value);}}}else{State::Done}}',
+    'pub fn decide(flag:bool)->State{loop{if flag{break State::Return(observe());}else{break State::Done;}}}',
+    'pub fn decide(flag:bool){loop{if flag{{continue;}}else{break;}}}',
+    'pub fn decide(flag:bool)->u32{if flag{observe();return line!();}/* retained */else/* retained */{column!()}}',
+  ]) {
+    const start = before.indexOf('else');
+    const after = removeFamilyLibraryDivergentElse(before);
+    assert.equal(after, before.slice(0, start) + '    ' + before.slice(start + 4));
+    assert.equal(after.length, before.length, 'every original source position is retained');
+    assert.equal(removeFamilyLibraryDivergentElse(after), after);
+  }
+  for (const before of [
+    'pub fn decide(flag:bool)->bool{if flag{loop{break;}}else{observe()}}',
+    'pub fn decide(flag:bool)->bool{if flag{while flag{return true;}}else{false}}',
+    'pub fn decide(flag:bool)->bool{if flag{let callback=||{return true;};}else{false}}',
+    'pub fn decide(flag:bool){if flag{||{return true;}}else{||false}}',
+    "pub fn decide(flag:bool)->bool{if flag{'done:{break 'done true;}}else{false}}",
+    "pub fn decide(flag:bool)->bool{'outer:loop{if flag{break 'outer true;}else{false}}}",
+    'pub fn decide(flag:bool)->bool{if flag{custom!({return true;})}else{false}}',
+    'custom!(if flag{return true;}else{false});',
+    'macro_rules! custom{()=>{if flag{return true;}else{false}};}',
+    '#[custom(if flag{return true;}else{false})]pub fn decide()->bool{false}',
+    'pub fn decide(flag:bool,other:bool)->bool{if flag{return true;}else if other{return false;}else{true}}',
+    'pub fn decide(flag:bool)->bool{if flag{{true}}else{false}}',
+    'pub fn decide(flag:bool,other:bool)->bool{if flag{if other{return true;}false}else{false}}',
+    'pub fn decide(flag:bool)->bool{return if flag{return true;}else{false};}',
+    'pub fn decide(flag:bool)->bool{let value=if flag{return true;}else{false};value}',
+    'pub fn decide(flag:bool)->bool{consume(if flag{return true;}else{false})}',
+    'pub fn decide(value:Option<bool>)->bool{if let Some(found)=value{return found;}else{false}}',
+    'pub fn decide(flag:bool)->bool{if {observe();flag}{return true;}else{false}}',
+    'pub fn decide()->String{String::from("if flag{return true;}else{false}")}',
+    '/* if flag{return true;}else{false} */pub fn decide()->bool{false}',
+  ]) assert.equal(removeFamilyLibraryDivergentElse(before), before, before);
+
+  // This statement syntax is common to JavaScript and Rust. Execute its
+  // condition and branch callbacks independently of the Rust reader, whose
+  // value-if profile deliberately requires an else on every parsed if.
+  const helpers = 'function observe_condition(value){events.push("condition");return value;}function observe_then(value){events.push("then");return value;}function observe_else(value){events.push("else");return value;}';
+  const before = 'function decide(value){if(observe_condition(value)){let result=observe_then(true);{return result;}}else{return observe_else(false);}}';
+  const after = removeFamilyLibraryDivergentElse(before);
+  assert.notEqual(after, before);
+  const execute = source => {
+    const context = {events: []};
+    vm.runInNewContext(helpers + source, context, {timeout: 1000});
+    return context;
+  };
+  for (const value of [false, true]) {
+    const original = execute(before), styled = execute(after);
+    assert.equal(styled.decide(value), original.decide(value));
+    assert.deepEqual(styled.events, original.events);
+    assert.deepEqual(styled.events, ['condition', value ? 'then' : 'else']);
+  }
+  for (const before of [
+    'function decide(stop){let index=0;while(index<3){if(index<stop){{index+=1;continue;}}else{return index;}}return index;}',
+    'function decide(stop){let index=0;while(index<3){if(index>=stop){break;}else{index+=1;}}return index;}',
+  ]) {
+    const after = removeFamilyLibraryDivergentElse(before);
+    assert.notEqual(after, before);
+    for (const stop of [-1, 0, 1, 3, 4]) assert.equal(execute(after).decide(stop), execute(before).decide(stop));
+  }
+  const many = Array.from({length: 128}, (_, index) => `pub fn decide_${index}(flag:bool)->bool{if flag{return true;}else{false}}`).join('\n');
+  const all = removeFamilyLibraryDivergentElse(many);
+  assert.equal(all, many.replaceAll('else', '    '), 'all independent proven transfers are handled without a pass limit');
+  assert.equal(removeFamilyLibraryDivergentElse(all), all);
 });

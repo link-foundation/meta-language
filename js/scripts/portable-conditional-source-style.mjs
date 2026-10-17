@@ -503,6 +503,57 @@ export function mergeFamilyLibraryIdenticalBranches(source, {context = source} =
   throw new Error('the finite library identical-branch syntax must converge');
 }
 
+/** Retain both blocks when a statement-position then cannot reach its else. */
+export function removeFamilyLibraryDivergentElse(source) {
+  const {tokens, matching, opaque} = readFamilyLibraryTokens(source), edits = [];
+  const diverges = initial => {
+    let open = initial;
+    for (;;) {
+      const close = matching.get(open);
+      if (close === undefined || opaque.has(open)) return false;
+      let end = close - 1;
+      while (end > open && tokens[end].value === ';') end -= 1;
+      if (end <= open) return false;
+      let start = end;
+      for (;;) {
+        const paired = matching.get(start);
+        if (paired !== undefined && paired < start) start = paired;
+        if (start === open + 1 || tokens[start - 1]?.value === ';') break;
+        start -= 1;
+        if (start <= open) return false;
+      }
+      // Only a complete plain tail block inherits its final transfer. A loop,
+      // closure, label, conditional or macro cannot supply this proof.
+      if (tokens[start].value === '{' && matching.get(start) === end) {
+        open = start;
+        continue;
+      }
+      if (opaque.has(start) || tokens[start].kind !== 'identifier') return false;
+      if (tokens[start].value === 'return') return true;
+      if (tokens[start].value === 'continue') return start === end;
+      return tokens[start].value === 'break' && tokens[start + 1]?.value !== "'";
+    }
+  };
+  for (let index = 0; index < tokens.length; index += 1) {
+    if (opaque.has(index) || tokens[index].kind !== 'identifier' || tokens[index].value !== 'if'
+      || !['{', ';'].includes(tokens[index - 1]?.value)) continue;
+    const branch = readFamilyLibraryIf(tokens, matching, index);
+    if (!branch || tokens[branch.close + 1]?.value !== 'else'
+      || tokens[branch.close + 2]?.value !== '{' || tokens[branch.end + 1]?.value !== '}') continue;
+    // Preserve binding scopes and temporary lifetimes rather than treating an
+    // if-let condition or a condition block as an ordinary Boolean operand.
+    if (tokens.slice(index + 1, branch.open).some(token => token.kind === 'identifier' && token.value === 'let'
+      || token.kind === 'punct' && ['{', '}'].includes(token.value))) continue;
+    if (diverges(branch.open)) edits.push(tokens[branch.close + 1]);
+  }
+  for (const token of edits.reverse()) {
+    // Equal-width whitespace preserves every original body, comment and source
+    // position, including line!/column! in either retained block.
+    source = source.slice(0, token.start) + ' '.repeat(token.end - token.start) + source.slice(token.end);
+  }
+  return source;
+}
+
 /** Admit const only when every parameter and body token proves Boolean syntax. */
 export function qualifyFamilyLibraryBooleanFunctions(source) {
   const {tokens, matching, opaque} = readFamilyLibraryTokens(source), edits = [];
