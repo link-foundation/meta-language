@@ -238,11 +238,7 @@ pub fn declaration_emission_facts(
                 super::lexical_plan::lower_expression(item, name, &mut obligations)
                     .map_err(|error| error.message)?;
             }
-            9 => {
-                if !types.iter().any(|token_type| token_type == name) {
-                    types.push(name.to_owned());
-                }
-            }
+            9 if !types.iter().any(|token_type| token_type == name) => types.push(name.to_owned()),
             _ => {}
         }
     }
