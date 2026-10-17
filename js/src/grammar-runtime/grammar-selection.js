@@ -115,9 +115,11 @@ function readSelectionProvenance(executor, program, language, start, end) {
  * alternative CSTs remain inspectable parallel witnesses, never concatenated.
  */
 export function evaluateGrammarSelection(executor, expression, position, state, inToken, Executor) {
-  const { end: start, leaves, state: afterTrivia } = executor.terminalStart(position, state, inToken);
   const mappings = expression.items.map(candidate => candidate.mapping);
   const fieldContext = readGrammarSelectionFieldRangeContext(mappings, inToken);
+  // Only the generated field profile leaves leading trivia to its actual
+  // syntactic item. This does not change that item to token context.
+  const { end: start, leaves, state: afterTrivia } = executor.terminalStart(position, state, inToken || fieldContext === 1);
   const rangeContext = fieldContext === 0 ? readGrammarSelectionIncludedRangeContext(mappings, inToken) : 0;
   const context = fieldContext !== 0 ? fieldContext
     : rangeContext === 0 ? readGrammarSelectionMappingContext(mappings, inToken) : rangeContext;

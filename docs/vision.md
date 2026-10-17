@@ -215,6 +215,15 @@ alongside its original annotation and checked result. Nested JSDoc Map and Set
 arguments reuse the existing recursive type-separator rules. Unsupported union
 target encodings produce typed diagnostics with their existing message and
 failure ordering; the historical diagnostic receipt remains separate.
+Map and Set constructors retain one evaluated iterable expression and their
+complete checked type through editable semantic links. Shared constructor
+decisions preserve the actual contextual type owners, primitive key admission,
+diagnostics and all four target templates, including insertion order, Map value
+replacement, NaN equality and positive-zero key normalization. The two projection
+plans append to the existing schema without changing its model, prior plans or
+historical source receipts. Complete JavaScript source and text and binary
+program replays drive automatic native generation; native behavior remains a CI
+verification obligation.
 Owned occurrence paths likewise compare the numeric value of an actual Number
 position, checking the actual array bounds through the shared tuple-index rule.
 Equivalent integral spellings retain their stored scalar, including negative

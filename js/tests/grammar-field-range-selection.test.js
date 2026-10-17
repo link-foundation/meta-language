@@ -87,6 +87,67 @@ test('field selections follow actual shipped JSON captures with varying values a
       assert.equal(checkGrammarSelectionMappedTree(stored), stored);
     }
   }
+  // A syntactic field view must leave all original trivia inside the nodes
+  // that own it. These are the actual complete shipped grammar definitions.
+  const quoted = JSON.stringify('{"é":"β"}');
+  for (const [id, source] of [
+    ['native-javascript', '// 前\nconst data = ' + quoted + ';'],
+    ['native-typescript', '// 前\nconst data: string = ' + quoted + ';'],
+    ['native-rust', '// 前\nfn main(){let data = ' + quoted + ';}'],
+  ]) {
+    const grammar = parseGrammarLinks(nativeGrammarText(id));
+    const listing = renderGrammarLinks(grammar), bytes = Buffer.from(source);
+    const original = compileGrammar(grammar).parseTree(source);
+    assert.equal(original.ok, true, id + ': ' + JSON.stringify(original.rejection));
+    // Read the first original capture independently from the baseline CST;
+    // its exact path and span include padding before the quoted literal.
+    const pending = [{ node: original.tree, path: [] }];
+    let capture = null;
+    while (pending.length > 0) {
+      const current = pending.pop();
+      if (current.node.field === 'value' && current.node.trivia !== true) {
+        capture = current;
+        break;
+      }
+      const children = current.node.children ?? [];
+      for (let index = children.length - 1; index >= 0; index -= 1) {
+        pending.push({ node: children[index], path: [...current.path, 'children', index] });
+      }
+    }
+    assert.ok(capture, id + ' original value capture');
+    const quoteStart = bytes.indexOf(Buffer.from(quoted));
+    assert.equal(bytes.subarray(capture.node.start, quoteStart).toString(), ' ', id + ' original capture padding');
+    assert.equal(capture.node.end, quoteStart + Buffer.byteLength(quoted));
+    const selected = bytes.subarray(capture.node.start, capture.node.end);
+    const outcome = compileGrammar(fieldRangeGrammar(grammar), { resolveGrammar: () => json }).parseTree(source);
+    assert.equal(outcome.ok, true, id + ': ' + JSON.stringify(outcome.rejection));
+    const embedded = fieldRangeEmbedding(outcome.tree), mapping = embedded.selection.sourceMapping;
+    assert.ok(outcome.tree.children.includes(embedded), id + ' direct outer embedding');
+    // Replace only this outer embedding, without recursively normalizing,
+    // moving, dropping or changing any original node, field, trivia or span.
+    assert.deepEqual({ ...outcome.tree, children: outcome.tree.children.flatMap(child =>
+      child === embedded ? embedded.sourceChildren : [child]) }, original.tree, id + ' original CST hierarchy');
+    assert.deepEqual(mapping.occurrences, [{ path: capture.path, start: capture.node.start, end: capture.node.end }]);
+    assert.equal(outcome.sourcePlanes.length, 2);
+    const origin = outcome.sourcePlanes[1].derivation;
+    assert.equal(origin.start, 0);
+    assert.equal(origin.end, bytes.length);
+    assert.deepEqual(mapping.ranges, [[capture.node.start, capture.node.end]]);
+    assert.deepEqual(origin.occurrences, mapping.occurrences);
+    assert.deepEqual(origin.witness.children, embedded.sourceChildren);
+    assert.deepEqual(fieldRangePhysical(outcome.tree), [...bytes]);
+    assert.deepEqual(fieldRangePhysical(embedded.root), [...selected]);
+    assert.deepEqual(embedded.root, compileGrammar(json).parseTree(selected.toString()).tree);
+    assert.equal(checkGrammarSelectionMappedTree(outcome), outcome);
+    for (const stored of fieldRangeStored({ tree: outcome.tree, sourcePlanes: outcome.sourcePlanes })) {
+      assert.deepEqual(stored, { tree: outcome.tree, sourcePlanes: outcome.sourcePlanes });
+      assert.equal(checkGrammarSelectionMappedTree(stored), stored);
+      const restored = fieldRangeEmbedding(stored.tree);
+      assert.deepEqual({ ...stored.tree, children: stored.tree.children.flatMap(child =>
+        child === restored ? restored.sourceChildren : [child]) }, original.tree, id + ' archived original CST hierarchy');
+    }
+    assert.equal(renderGrammarLinks(grammar), listing, id + ' complete source grammar retained');
+  }
 });
 
 test('any and all field candidates retain every witness and share one completed derivation', () => {
