@@ -1081,13 +1081,39 @@ jobs:
           ocaml-compiler: "5.4"
           opam-pin: false
 
-      - name: Install Rocq 9.3
+      - name: Identify the installed Rocq compiler cache
         if: ${{ matrix.target == 'rocq' }}
+        id: rocq-toolchain-cache
+        run: node scripts/ci-rocq-toolchain-cache.mjs --key
+
+      - name: Restore the installed Rocq compiler cache
+        if: ${{ matrix.target == 'rocq' && steps.rocq-toolchain-cache.outputs.enabled == 'true' }}
+        id: rocq-toolchain-restore
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ steps.rocq-toolchain-cache.outputs.path }}
+          key: ${{ steps.rocq-toolchain-cache.outputs.key }}
+
+      - name: Install Rocq 9.3
+        id: rocq-toolchain-install
+        if: ${{ matrix.target == 'rocq' }}
+        env:
+          ROCQ_TOOLCHAIN_CACHE_KEY: ${{ steps.rocq-toolchain-cache.outputs.key }}
+          ROCQ_TOOLCHAIN_CACHE_ENABLED: ${{ steps.rocq-toolchain-cache.outputs.enabled }}
+          ROCQ_TOOLCHAIN_CACHE_HIT: ${{ steps.rocq-toolchain-restore.outputs.cache-hit }}
         run: |
           opam repository add rocq-released https://rocq-prover.org/opam/released
           opam install --yes 'rocq-core=9.3.0' 'rocq-stdlib=9.2.0' 'rocq-prover=meta.1'
           opam var bin >> "$GITHUB_PATH"
           opam exec -- rocq --version
+          node scripts/ci-rocq-toolchain-cache.mjs --verify
+
+      - name: Save the verified Rocq compiler cache
+        if: ${{ matrix.target == 'rocq' && steps.rocq-toolchain-cache.outputs.enabled == 'true' && steps.rocq-toolchain-install.outputs.enabled == 'true' && steps.rocq-toolchain-install.outcome == 'success' && steps.rocq-toolchain-restore.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ steps.rocq-toolchain-cache.outputs.path }}
+          key: ${{ steps.rocq-toolchain-cache.outputs.key }}
 
       - name: Install JavaScript dependencies
         run: npm ci --ignore-scripts
@@ -1240,12 +1266,37 @@ jobs:
           ocaml-compiler: "5.4"
           opam-pin: false
 
+      - name: Identify the installed Rocq compiler cache
+        id: rocq-toolchain-cache
+        run: node scripts/ci-rocq-toolchain-cache.mjs --key
+
+      - name: Restore the installed Rocq compiler cache
+        if: ${{ steps.rocq-toolchain-cache.outputs.enabled == 'true' }}
+        id: rocq-toolchain-restore
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ steps.rocq-toolchain-cache.outputs.path }}
+          key: ${{ steps.rocq-toolchain-cache.outputs.key }}
+
       - name: Install Rocq 9.3
+        id: rocq-toolchain-install
+        env:
+          ROCQ_TOOLCHAIN_CACHE_KEY: ${{ steps.rocq-toolchain-cache.outputs.key }}
+          ROCQ_TOOLCHAIN_CACHE_ENABLED: ${{ steps.rocq-toolchain-cache.outputs.enabled }}
+          ROCQ_TOOLCHAIN_CACHE_HIT: ${{ steps.rocq-toolchain-restore.outputs.cache-hit }}
         run: |
           opam repository add rocq-released https://rocq-prover.org/opam/released
           opam install --yes 'rocq-core=9.3.0' 'rocq-stdlib=9.2.0' 'rocq-prover=meta.1'
           opam var bin >> "$GITHUB_PATH"
           opam exec -- rocq --version
+          node scripts/ci-rocq-toolchain-cache.mjs --verify
+
+      - name: Save the verified Rocq compiler cache
+        if: ${{ steps.rocq-toolchain-cache.outputs.enabled == 'true' && steps.rocq-toolchain-install.outputs.enabled == 'true' && steps.rocq-toolchain-install.outcome == 'success' && steps.rocq-toolchain-restore.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ steps.rocq-toolchain-cache.outputs.path }}
+          key: ${{ steps.rocq-toolchain-cache.outputs.key }}
 
       - name: Install JavaScript dependencies
         run: npm ci --ignore-scripts
@@ -1376,12 +1427,37 @@ jobs:
           ocaml-compiler: "5.4"
           opam-pin: false
 
+      - name: Identify the installed Rocq compiler cache
+        id: rocq-toolchain-cache
+        run: node scripts/ci-rocq-toolchain-cache.mjs --key
+
+      - name: Restore the installed Rocq compiler cache
+        if: ${{ steps.rocq-toolchain-cache.outputs.enabled == 'true' }}
+        id: rocq-toolchain-restore
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ steps.rocq-toolchain-cache.outputs.path }}
+          key: ${{ steps.rocq-toolchain-cache.outputs.key }}
+
       - name: Install Rocq 9.3
+        id: rocq-toolchain-install
+        env:
+          ROCQ_TOOLCHAIN_CACHE_KEY: ${{ steps.rocq-toolchain-cache.outputs.key }}
+          ROCQ_TOOLCHAIN_CACHE_ENABLED: ${{ steps.rocq-toolchain-cache.outputs.enabled }}
+          ROCQ_TOOLCHAIN_CACHE_HIT: ${{ steps.rocq-toolchain-restore.outputs.cache-hit }}
         run: |
           opam repository add rocq-released https://rocq-prover.org/opam/released
           opam install --yes 'rocq-core=9.3.0' 'rocq-stdlib=9.2.0' 'rocq-prover=meta.1'
           opam var bin >> "$GITHUB_PATH"
           opam exec -- rocq --version
+          node scripts/ci-rocq-toolchain-cache.mjs --verify
+
+      - name: Save the verified Rocq compiler cache
+        if: ${{ steps.rocq-toolchain-cache.outputs.enabled == 'true' && steps.rocq-toolchain-install.outputs.enabled == 'true' && steps.rocq-toolchain-install.outcome == 'success' && steps.rocq-toolchain-restore.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ steps.rocq-toolchain-cache.outputs.path }}
+          key: ${{ steps.rocq-toolchain-cache.outputs.key }}
 
       - name: Install JavaScript dependencies
         run: npm ci --ignore-scripts
@@ -1528,12 +1604,37 @@ jobs:
           ocaml-compiler: "5.4"
           opam-pin: false
 
+      - name: Identify the installed Rocq compiler cache
+        id: rocq-toolchain-cache
+        run: node scripts/ci-rocq-toolchain-cache.mjs --key
+
+      - name: Restore the installed Rocq compiler cache
+        if: ${{ steps.rocq-toolchain-cache.outputs.enabled == 'true' }}
+        id: rocq-toolchain-restore
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ steps.rocq-toolchain-cache.outputs.path }}
+          key: ${{ steps.rocq-toolchain-cache.outputs.key }}
+
       - name: Install Rocq 9.3
+        id: rocq-toolchain-install
+        env:
+          ROCQ_TOOLCHAIN_CACHE_KEY: ${{ steps.rocq-toolchain-cache.outputs.key }}
+          ROCQ_TOOLCHAIN_CACHE_ENABLED: ${{ steps.rocq-toolchain-cache.outputs.enabled }}
+          ROCQ_TOOLCHAIN_CACHE_HIT: ${{ steps.rocq-toolchain-restore.outputs.cache-hit }}
         run: |
           opam repository add rocq-released https://rocq-prover.org/opam/released
           opam install --yes 'rocq-core=9.3.0' 'rocq-stdlib=9.2.0' 'rocq-prover=meta.1'
           opam var bin >> "$GITHUB_PATH"
           opam exec -- rocq --version
+          node scripts/ci-rocq-toolchain-cache.mjs --verify
+
+      - name: Save the verified Rocq compiler cache
+        if: ${{ steps.rocq-toolchain-cache.outputs.enabled == 'true' && steps.rocq-toolchain-install.outputs.enabled == 'true' && steps.rocq-toolchain-install.outcome == 'success' && steps.rocq-toolchain-restore.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ steps.rocq-toolchain-cache.outputs.path }}
+          key: ${{ steps.rocq-toolchain-cache.outputs.key }}
 
       - name: Install JavaScript dependencies
         run: npm ci --ignore-scripts
