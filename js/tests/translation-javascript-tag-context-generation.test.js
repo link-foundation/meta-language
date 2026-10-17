@@ -9,6 +9,7 @@ import {
   JAVASCRIPT_TAG_CONTEXT_DECISIONS, readJavaScriptTagContextSource,
   readJavaScriptTagContextPolicy, readJavaScriptTagContextOwnerMappings,
   readJavaScriptTagContextNativeParameters, prepareJavaScriptTagContextTranslation,
+  readJavaScriptTagContextLibraryStyles,
 } from '../scripts/generate-javascript-tag-context-rules.mjs';
 
 test('the complete tag context generation input retains all five exports and the original selector bytes', () => {
@@ -32,6 +33,85 @@ test('the complete tag context generation input retains all five exports and the
     'readJavaScriptTagBindingStep', 'acceptJavaScriptTagHeaderFact', 'readJavaScriptTagDeclaredOwner']);
   assert.deepEqual(policy.decisions, [...JAVASCRIPT_TAG_CONTEXT_DECISIONS]);
   assert.match(policy.boundary, /not evidence of native execution/u);
+});
+
+test('tag context library styles retain both complete owners Number boundaries and lazy constructor identity', async () => {
+  const {DecoratorSet} = await import('../src/decorators.js');
+  const {readPortableSourceParameterStyles, readPortableSourceLintStyles} = await import('../scripts/portable-source-library-style.mjs');
+  const {readSourceTextRustBlock} = await import('../scripts/source-text-byte-library-style.mjs');
+  const {parseRust} = await import('../src/translation/rust.js');
+  const {checkProgram} = await import('../src/translation/check.js');
+  const {emitJavaScript} = await import('../src/translation/emit-javascript.js');
+  const {readJavaScriptTagBindingStep} = await import('../src/translation/javascript-tag-context-rules.js');
+  const prepared = await prepareJavaScriptTagContextTranslation(), emitted = prepared.emitted;
+  assert.equal(prepared.sourceOwners.length, 5);
+  assert.equal(prepared.checkedInventory.length, 7);
+  const header = emitted.text.split('\n').find(line => line.startsWith('#![allow('));
+  assert.ok(header);
+  const raw = [header, ...emitted.preludes, ...emitted.definitions].join('\n\n');
+  const declarations = new Set([...raw.matchAll(/^pub (?:fn|enum|struct|mod) (\w+)\b/gmu)].map(match => match[1]));
+  const relocation = [...declarations].filter(name => raw.includes('crate::' + name))
+    .map(name => ({op: 'replace', field: 'source', from: 'crate::' + name, to: 'self::' + name}));
+  const relocated = new DecoratorSet([{id: 'tag-context-owner-control', level: 'emitter', order: 0,
+    when: [['format', 'Rust']], actions: relocation}]).decorate('emitter', {format: 'Rust', source: raw}).source;
+  const publicNames = [...relocated.matchAll(/^pub fn (\w+)\(/gmu)].map(match => match[1]);
+  const reviewed = readPortableSourceLintStyles(readPortableSourceParameterStyles(relocated, {publicNames}).source).source;
+  const result = readJavaScriptTagContextLibraryStyles(reviewed);
+  assert.equal(result.actions.length, 2);
+  assert.deepEqual(result.actions.map(action => /^pub fn (\w+)/u.exec(action.from)[1]),
+    ['read_java_script_tag_binding_step', 'read_java_script_tag_declared_owner']);
+  const [binding, owner] = result.actions;
+  assert.equal(binding.to, binding.from.replace(/^pub fn /u, 'pub const fn '));
+  assert.equal(owner.to, owner.from.replace('.unwrap_or_else(|| String::new())', '.unwrap_or_else(String::new)'));
+  const recorded = new DecoratorSet([{id: 'tag-context-library-control', level: 'emitter', order: 0,
+    when: [['format', 'Rust']], actions: result.actions}]);
+  assert.equal(recorded.decorate('emitter', {format: 'Rust', source: reviewed}).source, result.source);
+  assert.deepEqual(readJavaScriptTagContextLibraryStyles(result.source), {source: result.source, actions: []});
+  let inverse = result.source;
+  for (const action of [...result.actions].reverse()) {
+    assert.equal(inverse.split(action.to).length, 2);
+    inverse = inverse.replace(action.to, action.from);
+  }
+  assert.equal(inverse, reviewed, 'the full library inverse retains all owners, bodies, order and runtime bytes');
+  for (const name of [...declarations].filter(name => !['read_java_script_tag_binding_step', 'read_java_script_tag_declared_owner'].includes(name))) {
+    const kind = /^Ml/u.test(name) ? 'enum' : name === 'ml_array' ? 'mod' : 'fn';
+    assert.equal(readSourceTextRustBlock(result.source, kind, name), readSourceTextRustBlock(reviewed, kind, name));
+  }
+  const contexts = [binding.from, binding.to].map(source => {
+    const ordinary = source.replace(/^pub const fn /u, 'pub fn ');
+    assert.equal(source.startsWith('pub const fn ') ? ordinary.replace(/^pub fn /u, 'pub const fn ') : ordinary, source);
+    const replay = {};
+    vm.runInNewContext(emitJavaScript(checkProgram(parseRust(ordinary + '\nfn main() {}'))).text, replay, {timeout: 1000});
+    return replay;
+  });
+  for (const boundary of [-Infinity, -Number.MAX_VALUE, -1, -Number.MIN_VALUE, -0, 0, Number.MIN_VALUE, 1, Number.MAX_VALUE, Infinity, NaN]) {
+    for (const owns of [false, true]) for (const context of contexts) {
+      const actual = context.read_java_script_tag_binding_step(owns, boundary);
+      assert.ok(Object.is(actual, readJavaScriptTagBindingStep(owns, boundary)), 'complete ordinary Rust body retains each primitive Number boundary');
+    }
+  }
+  for (const counterfeit of [
+    binding.from.replace('boundary: f64', 'boundary: &f64'),
+    binding.from.replace('boundary: f64', 'boundary: f32'),
+    binding.from.replace('0f64', '1f64'),
+    binding.from.replace('1f64', 'effect()'),
+    binding.from.replace('owns_binding: bool, boundary: f64', 'boundary: f64, owns_binding: bool'),
+    binding.from.replace('read_java_script_tag_binding_step', 'other_owner'),
+    owner.from.replace('path: &[String]', 'path: &[Other]'),
+    owner.from.replace('String::new()', 'effect()'),
+    owner.from.replace('|| String::new()', '|| { observe(); String::new() }'),
+    owner.from.replace('|| String::new()', '|| /* retained */ String::new()'),
+    'type f64=Custom;\n' + binding.from, 'type bool=Custom;\n' + binding.from,
+    'struct String;\n' + owner.from, 'use custom::*;\n' + owner.from,
+    'macro_rules! opaque { () => {' + binding.from + '} }',
+    '#[custom(' + binding.from + ')]\npub fn untouched() {}',
+    binding.from + '\n' + binding.from,
+    binding.from + '\npub fn hidden()->&\'static str{r#"' + binding.from + '"#}',
+  ]) {
+    assert.notEqual(counterfeit, binding.from);
+    assert.deepEqual(readJavaScriptTagContextLibraryStyles(counterfeit), {source: counterfeit, actions: []},
+      'custom types, captures, effects, duplicate owners and opaque copies cannot borrow a source proof');
+  }
 });
 
 test('tag context generation refuses original-selector edits dependencies omitted owners and extra declarations', () => {

@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { checkProjectData, writeProjectData } from './project-data.mjs';
 import { writeRecordRuleLibrary } from './record-rule-library.mjs';
 import { readSourceTextRustBlock } from './source-text-byte-library-style.mjs';
+import { tokenize } from '../src/translation/lexer.js';
 
 const root = new URL('../../', import.meta.url);
 const sourcePath = 'js/src/translation/javascript-tag-context-rules.js';
@@ -142,6 +143,84 @@ export function readJavaScriptTagContextNativeParameters(value) {
   return parts.map(part => part.replace(/\s+/gu, ''));
 }
 
+// These two complete generated owners admit only a keyword qualification and
+// the same lazy standard constructor as a function item. No body is rebuilt.
+export function readJavaScriptTagContextLibraryStyles(source) {
+  const {tokens, comments} = tokenize(source, 'Rust'), matching = new Map(), stack = [];
+  const unchanged = () => ({source, actions: []});
+  for (let at = 0; at < tokens.length; at += 1) {
+    const token = tokens[at];
+    if (token.kind === 'identifier' && ['use', 'extern', 'unsafe', 'impl'].includes(token.value)) return unchanged();
+    if (token.kind === 'identifier' && ['type', 'struct', 'enum', 'union', 'mod', 'trait', 'fn', 'const', 'static', 'let'].includes(token.value)) {
+      const next = tokens[at + 1]?.value === 'mut' ? at + 2 : at + 1;
+      if (['f64', 'bool', 'String', 'std', 'core'].includes(tokens[next]?.value)) return unchanged();
+    }
+    if (token.kind === 'macro' && !['vec', 'format', 'panic', 'assert', 'matches'].includes(token.value)) return unchanged();
+    if (token.kind !== 'punct') continue;
+    if (['(', '[', '{'].includes(token.value)) stack.push(at);
+    else if ([')', ']', '}'].includes(token.value)) {
+      const open = stack.pop();
+      assert.equal(tokens[open]?.value, {')': '(', ']': '[', '}': '{'}[token.value], 'tag context styles require complete delimiters');
+      matching.set(open, at); matching.set(at, open);
+    }
+  }
+  assert.equal(stack.length, 0, 'tag context styles retain every delimiter');
+  for (let at = 0; at < tokens.length; at += 1) if (tokens[at].value === '#' && tokens[at].kind === 'punct') {
+    const open = tokens[at + 1]?.value === '!' ? at + 2 : at + 1;
+    if (!['allow', 'warn', 'deny', 'expect', 'must_use', 'derive'].includes(tokens[open + 1]?.value)) return unchanged();
+    at = matching.get(open);
+  }
+  const functions = [];
+  for (let at = 0; at < tokens.length; at += 1) {
+    if (tokens[at].value === 'pub' && tokens[at].kind === 'identifier') {
+      const keyword = tokens[at + 1]?.value === 'const' ? at + 2 : at + 1;
+      if (tokens[keyword]?.value === 'fn' && tokens[keyword + 1]?.kind === 'identifier'
+        && tokens[keyword + 2]?.value === '(') {
+        let body = matching.get(keyword + 2) + 1;
+        while (body < tokens.length && !['{', ';'].includes(tokens[body].value)) body += 1;
+        const end = matching.get(body);
+        if (end !== undefined) {
+          functions.push({at, keyword, end, name: tokens[keyword + 1].value});
+          at = end; continue;
+        }
+      }
+    }
+    if (tokens[at].kind === 'punct' && ['(', '[', '{'].includes(tokens[at].value)) at = matching.get(at);
+  }
+  const expectedBinding = 'pub fn read_java_script_tag_binding_step(owns_binding:bool,boundary:f64)->f64{if owns_binding{1f64}else if boundary==0f64{0f64}else{2f64}}';
+  const expectedOwner = 'pub fn read_java_script_tag_declared_owner(kind:&str,path:&[String],name:&str,root:&str)->String{if kind=="data"{name.to_owned()}else if ((kind=="named")&&((path.len() as f64)==2f64))&&match(self::ml_array::optional_at(path,self::ml_array::number_index(0f64)),root.to_owned()){(Some(ml_left),ml_right)=>ml_left==ml_right,_=>false}{(self::ml_array::optional_at(path,self::ml_array::number_index(1f64))).unwrap_or_else(||String::new())}else{String::new()}}';
+  const tokenKey = text => JSON.stringify(tokenize(text, 'Rust').tokens.filter(token => token.kind !== 'eof').map(token => [token.kind, token.raw]));
+  let adapted = source;
+  const actions = [];
+  for (const [name, expected] of [['read_java_script_tag_binding_step', expectedBinding], ['read_java_script_tag_declared_owner', expectedOwner]]) {
+    const candidates = functions.filter(fn => fn.name === name);
+    if (candidates.length !== 1) continue;
+    const fn = candidates[0], start = tokens[fn.at].start, end = tokens[fn.end].end;
+    const from = source.slice(start, end);
+    if (source.split(from).length !== 2) continue;
+    const ordinary = fn.keyword === fn.at + 2 ? from.replace(/^pub\s+const\s+fn/u, 'pub fn') : from;
+    const expanded = name === 'read_java_script_tag_declared_owner'
+      ? ordinary.replace(/\.unwrap_or_else\(\s*String\s*::\s*new\s*\)/u, '.unwrap_or_else(||String::new())') : ordinary;
+    if (tokenKey(expanded) !== tokenKey(expected)) continue;
+    let to = from;
+    if (name === 'read_java_script_tag_binding_step' && fn.keyword === fn.at + 1) {
+      to = from.slice(0, tokens[fn.keyword].start - start) + 'const ' + from.slice(tokens[fn.keyword].start - start);
+    } else if (name === 'read_java_script_tag_declared_owner') {
+      for (let at = fn.keyword; at < fn.end; at += 1) {
+        if (tokens[at].value !== '||' || tokens.slice(at + 1, at + 6).map(token => token.value).join(' ') !== 'String :: new ( )') continue;
+        if (comments.some(comment => comment.start >= tokens[at].start && comment.end <= tokens[at + 5].end)) continue;
+        to = from.slice(0, tokens[at].start - start) + source.slice(tokens[at + 1].start, tokens[at + 3].end)
+          + from.slice(tokens[at + 5].end - start);
+      }
+    }
+    if (from !== to) {
+      actions.push({op: 'replace', field: 'source', from, to});
+      adapted = adapted.replace(from, to);
+    }
+  }
+  return {source: adapted, actions};
+}
+
 export function readJavaScriptTagContextLibraryInterfaces(files, emitted, sourceOwners, inventory = sourceOwners) {
   const source = files.map(file => file.source).join('\n\n');
   const allMappings = readJavaScriptTagContextOwnerMappings(emitted, inventory);
@@ -182,7 +261,12 @@ export async function generateJavaScriptTagContextRules({ check = false, native 
   let artifact = null;
   if (native) {
     const translated = await prepareJavaScriptTagContextTranslation(policy.source);
-    const files = writeRecordRuleLibrary(translated.emitted, 'javascript_tag_context_rules', { check });
+    const files = writeRecordRuleLibrary(translated.emitted, 'javascript_tag_context_rules', { check,
+      sourceStyles: source => {
+        const result = readJavaScriptTagContextLibraryStyles(source);
+        assert.equal(result.actions.length, 2, 'both exact tag context owner styles are recorded');
+        return result;
+      } });
     const library = readJavaScriptTagContextLibraryInterfaces(files, translated.emitted, translated.sourceOwners, translated.checkedInventory);
     artifact = { schemaVersion: 1, model: policy.model, source: policy.source, sourceSha256: policy.sourceSha256,
       parsedInventory: translated.parsedInventory, checkedInventory: translated.checkedInventory,

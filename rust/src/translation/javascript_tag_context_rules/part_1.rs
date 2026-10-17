@@ -189,7 +189,7 @@ pub fn read_java_script_tag_receiver_form(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_java_script_tag_binding_step(owns_binding: bool, boundary: f64) -> f64 {
+pub const fn read_java_script_tag_binding_step(owns_binding: bool, boundary: f64) -> f64 {
     if owns_binding {
         1f64
     } else if boundary == 0f64 {
@@ -229,7 +229,7 @@ pub fn read_java_script_tag_declared_owner(
         }
     {
         (self::ml_array::optional_at(path, self::ml_array::number_index(1f64)))
-            .unwrap_or_else(|| String::new())
+            .unwrap_or_else(String::new)
     } else {
         String::new()
     }
