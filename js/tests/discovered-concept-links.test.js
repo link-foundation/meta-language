@@ -131,6 +131,45 @@ test('copying and source-free revalidation are deterministic for all explicit ca
   const restored = readDiscoveredConceptLinks(legacy.network, legacy.root);
   const current = createDiscoveredConceptLinks(restored.sources, { ...legacyFixture, formalDefinitions: restored.formalDefinitions });
   assert.equal(current.network.toLino(), fixture.links, 'a retained archive produces the exact current certificate without original Grammar objects');
+  assert.equal(current.root.asU64(), fixture.root);
+  const dataRoot = current.network.link(current.root).references()[0];
+  const island = new LinkNetwork(), seen = new Set(), pending = [dataRoot];
+  for (let at = 0; at < pending.length; at += 1) {
+    const id = pending[at];
+    if (seen.has(id.asU64())) continue;
+    seen.add(id.asU64());
+    const link = current.network.link(id);
+    island.insertLinkWithOptionalId(id, link.references(), link.metadata().clone());
+    pending.push(...link.references());
+  }
+  const envelope = decodeStructuredDataLinks(island, dataRoot);
+  for (const concept of envelope.space.concepts) assert.strictEqual(concept.definition, concept.definitions[0].definition,
+    'the primary definition and its first owned entry retain one actual container identity');
+  const encoded = encodeStructuredDataLinks(envelope);
+  assert.equal(encoded.network.links().length, island.links().length);
+  const copied = { ...envelope, space: { ...envelope.space, concepts: envelope.space.concepts.map(concept => ({
+    ...concept, definition: JSON.parse(JSON.stringify(concept.definition)),
+  })) } };
+  assert.deepEqual(copied, envelope, 'copying primary definitions preserves values but changes their owned identities');
+  assert.equal(encodeStructuredDataLinks(copied).network.links().length, encoded.network.links().length + 56,
+    'four literal definitions and two recursive definitions expand by exactly 56 container and entry nodes');
+  for (const [first, second] of [[{ value: 'same' }, { value: 'same' }], [['same'], ['same']]]) {
+    const distinct = encodeStructuredDataLinks([first, second, first]);
+    const references = distinct.network.link(distinct.network.link(distinct.root).references()[0]).references();
+    assert.notEqual(references[0].asU64(), references[1].asU64(), 'equal but separately owned containers remain separate');
+    assert.equal(references[0].asU64(), references[2].asU64(), 'repeated ownership retains the actual shared container');
+    const decoded = decodeStructuredDataLinks(distinct.network, distinct.root);
+    assert.deepEqual(decoded[0], decoded[1]);assert.notStrictEqual(decoded[0], decoded[1]);assert.strictEqual(decoded[0], decoded[2]);
+    assert.ok(distinct.network.links().length > encodeStructuredDataLinks([first, first, first]).network.links().length);
+  }
+  const facets = encodeStructuredDataLinks([{ value: -0 }, { value: 0 }, { first: 1, second: 2 }, { second: 2, first: 1 }]);
+  const decoded = decodeStructuredDataLinks(facets.network, facets.root);
+  assert.equal(Object.is(decoded[0].value, -0), true);assert.equal(Object.is(decoded[1].value, 0), true);
+  assert.notStrictEqual(decoded[0], decoded[1]);assert.notStrictEqual(decoded[2], decoded[3]);
+  assert.deepEqual(Object.keys(decoded[2]), ['first', 'second']);assert.deepEqual(Object.keys(decoded[3]), ['second', 'first']);
+  const zeros = facets.network.links().filter(link => link.metadata().term === 'number value'
+    && ['-0', '0'].includes(link.metadata().definition));
+  assert.equal(zeros.length, 2);assert.notEqual(zeros[0].id().asU64(), zeros[1].id().asU64());
 });
 
 test('formal registrations remain owned and unambiguous after source-free reload', () => {
