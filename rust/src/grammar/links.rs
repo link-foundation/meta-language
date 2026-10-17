@@ -91,6 +91,8 @@ fn current_grammar_tag(term: &str) -> &str {
 
 impl ToLinks for Grammar {
     fn to_links(&self, encoder: &mut LinksEncoder) -> LinkId {
+        super::feature::check_grammar_selection_included_range_grammar(self)
+            .expect("a grammar retains every included-range definition");
         encode_grammar(encoder.network_mut(), self)
     }
 }

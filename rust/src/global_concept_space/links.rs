@@ -12,6 +12,7 @@ use super::{
 use crate::formal_concept_definition::read_formal_concept_definition;
 use crate::global_concept_rules::verify_global_concept_correspondence;
 use crate::grammar::Grammar;
+use crate::grammar::feature::check_grammar_selection_included_range_data;
 use crate::grammar::interchange::{
     deserialize_grammar, parse_grammar_links, percent_decode_links_text, percent_encode_links_text,
     render_declaration_links, render_links_expression, render_rule_fields, serialize_grammar,
@@ -33,6 +34,14 @@ fn definition_grammar(definition: &Value) -> Result<Grammar, String> {
 /// # Errors
 /// Returns a validation error for malformed concept space data.
 pub fn global_concept_space_to_links(space: &Value) -> Result<String, String> {
+    for source in array(&space["sources"])? {
+        check_grammar_selection_included_range_data(&source["context"])?;
+    }
+    for concept in array(&space["concepts"])? {
+        for definition in array(&concept["definitions"])? {
+            check_grammar_selection_included_range_data(&definition["definition"])?;
+        }
+    }
     let word = |value: &Value| string(value).map(percent_encode_links_text);
     let mut lines = vec!["(global-concept-space (schema-version 1))".to_owned()];
     for source in array(&space["sources"])? {

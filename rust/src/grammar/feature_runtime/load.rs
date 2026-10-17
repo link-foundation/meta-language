@@ -21,6 +21,7 @@ use super::program::{
     Compiled, Expr, Program, Rule, Scanner, Settling, SettlingStep, Target, Trivia,
 };
 use super::token_ranks::token_ranks;
+use crate::grammar::feature::check_grammar_selection_included_range_grammar;
 use crate::grammar::interchange::render_native_expression;
 use crate::grammar::{
     FeatureExpr, FeatureForm, FieldValue, Grammar, GrammarExpr, GrammarFormat, GrammarMacro,
@@ -223,6 +224,9 @@ fn resolve_imports(
     context: &Context<'_>,
     chain: &[String],
 ) -> LoadResult<Resolved> {
+    if let Err(message) = check_grammar_selection_included_range_grammar(grammar) {
+        return refuse("selection", message);
+    }
     let declarations = grammar.declarations();
     let mut resolved = Resolved {
         start: grammar

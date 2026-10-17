@@ -6,7 +6,11 @@
 
 use serde_json::Value;
 
-use super::super::feature::{class_expression, feature_expression_fields, operation_form};
+use super::super::feature::{
+    check_grammar_selection_included_range_data, check_grammar_selection_included_range_form,
+    check_grammar_selection_included_range_grammar, class_expression, feature_expression_fields,
+    operation_form,
+};
 use super::super::{
     ByteClassItem, CharClassItem, FeatureExpr, FeatureForm, FieldType, FieldValue, Grammar,
     GrammarDeclarations, GrammarExpr, GrammarFormat, GrammarImportError, GrammarLexer,
@@ -227,6 +231,8 @@ fn feature_json(feature: &FeatureExpr) -> Json {
 
 /// A feature form or an operation: its head under `head_key`, then its fields.
 fn form_json(head_key: &'static str, form: &FeatureForm) -> Json {
+    check_grammar_selection_included_range_form(form)
+        .expect("a grammar form retains every included-range field");
     let mut entries = vec![(head_key, Json::str(&form.head))];
     for ((key, _), value) in form.spec().iter().zip(&form.fields) {
         let value = match value {
@@ -353,6 +359,8 @@ fn declarations_json(declarations: &GrammarDeclarations) -> Json {
 /// followed by a newline, as `serializeGrammar` of `js/src/grammar.js` does.
 #[must_use]
 pub fn serialize_grammar(grammar: &Grammar) -> String {
+    check_grammar_selection_included_range_grammar(grammar)
+        .expect("a grammar retains every included-range definition");
     let mut entries = vec![
         ("schemaVersion", Json::Int(1)),
         ("start", grammar.start().map_or(Json::Null, Json::str)),
@@ -581,6 +589,14 @@ fn read_form(
                 }
                 FieldValue::Word(word)
             }
+            FieldType::Integer if head == "source-range" => {
+                let coordinate = field(value, key, what)?.as_f64().unwrap_or(f64::NAN);
+                let integer =
+                    crate::translation::frontend_rules::ml_array::number_index(coordinate)
+                        .and_then(|value| i64::try_from(value).ok())
+                        .ok_or_else(|| invalid(what))?;
+                FieldValue::Integer(integer)
+            }
             FieldType::Integer => FieldValue::Integer(integer(value, key, what)?),
             FieldType::Name => FieldValue::Name(string(value, key, what)?),
             FieldType::Text => FieldValue::Text(string(value, key, what)?),
@@ -757,6 +773,7 @@ fn read_rule(value: &Value) -> Result<GrammarRule, GrammarImportError> {
 pub fn deserialize_grammar(source: &str) -> Result<Grammar, GrammarImportError> {
     let value: Value = serde_json::from_str(source)
         .map_err(|error| json_error(format!("invalid serialized grammar JSON: {error}")))?;
+    check_grammar_selection_included_range_data(&value).map_err(json_error)?;
     let (Some(1), Some(Value::Array(rules))) = (
         value.get("schemaVersion").and_then(Value::as_i64),
         value.get("rules"),

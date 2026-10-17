@@ -13,6 +13,9 @@ use crate::global_concept_identity_rules::{
 use crate::global_concept_rules::verify_global_concept_correspondence;
 
 use crate::formal_concept_definition::read_formal_concept_definition;
+use crate::grammar::feature::{
+    check_grammar_selection_included_range_data, check_grammar_selection_included_range_grammar,
+};
 use crate::grammar::interchange::{deserialize_grammar, serialize_grammar};
 use crate::grammar::{Grammar, GrammarFormat, GrammarSourceName};
 use crate::link_network::LinkNetwork;
@@ -299,6 +302,7 @@ pub fn create_global_concept_space(
 ) -> Result<Value, String> {
     let mut source_values = Vec::new();
     for source in sources {
+        check_grammar_selection_included_range_grammar(&source.grammar)?;
         let mut grammar: Value = serde_json::from_str(&serialize_grammar(&source.grammar))
             .map_err(|error| error.to_string())?;
         for (definition, rule) in grammar["rules"]
@@ -376,6 +380,9 @@ fn create_global_concept_space_in(
     sources: &[Value],
     options: &GlobalConceptOptions,
 ) -> Result<(Value, Graph, BTreeMap<String, usize>), String> {
+    for source in sources {
+        check_grammar_selection_included_range_data(&source["grammar"])?;
+    }
     let default_records;
     let records = array(if let Some(records) = options.records.as_ref() {
         records

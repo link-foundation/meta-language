@@ -8,7 +8,13 @@
 
 use std::collections::BTreeSet;
 
-use super::{CharClassItem, GrammarExpr};
+use super::{CharClassItem, Grammar, GrammarExpr};
+use crate::translation::grammar_selection_included_range_rules::{
+    accept_grammar_selection_included_range_candidate,
+    accept_grammar_selection_included_range_source_range,
+    read_grammar_selection_included_range_field_order,
+};
+use serde_json::Value;
 
 /// The type of one field of a feature form or an operation.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -752,4 +758,241 @@ impl GrammarDeclarations {
         }
         present
     }
+}
+
+/// Check the two new closed forms before a positional codec can omit fields.
+pub(crate) fn check_grammar_selection_included_range_form(
+    form: &FeatureForm,
+) -> Result<bool, String> {
+    let role = match form.head.as_str() {
+        "grammar-range-candidate" => "candidate",
+        "source-range" => "range",
+        _ => return Ok(false),
+    };
+    if form.fields.len() + 1
+        != read_grammar_selection_included_range_field_order(role)
+            .split('|')
+            .count()
+    {
+        return Err("an included source view needs exactly its declared fields".to_owned());
+    }
+    if role == "range" {
+        let [FieldValue::Integer(start), FieldValue::Integer(end)] = form.fields.as_slice() else {
+            return Err(
+                "an included source range needs its kind and nonempty integer byte bounds"
+                    .to_owned(),
+            );
+        };
+        let number = |value| u32::try_from(value).map_or(f64::NAN, f64::from);
+        if !accept_grammar_selection_included_range_source_range(
+            &form.head,
+            number(*start),
+            number(*end),
+        ) {
+            return Err(
+                "an included source range needs its kind and nonempty integer byte bounds"
+                    .to_owned(),
+            );
+        }
+    } else {
+        let [FieldValue::Name(name), FieldValue::Name(mapping), ranges] = form.fields.as_slice()
+        else {
+            return Err(
+                "an included range candidate needs its name and explicit included-ranges mapping"
+                    .to_owned(),
+            );
+        };
+        if name.is_empty()
+            || !accept_grammar_selection_included_range_candidate(&form.head, mapping)
+        {
+            return Err(
+                "an included range candidate needs its name and explicit included-ranges mapping"
+                    .to_owned(),
+            );
+        }
+        let FieldValue::Expressions(ranges) = ranges else {
+            return Err("an included range candidate needs an ordinary range array".to_owned());
+        };
+        if ranges.is_empty() {
+            return Err(
+                "an included range candidate needs a nonempty dense range array".to_owned(),
+            );
+        }
+        for range in ranges {
+            let GrammarExpr::Feature(feature) = range else {
+                return Err("an included source view needs ordinary data records".to_owned());
+            };
+            let FeatureExpr::Form(range) = &**feature else {
+                return Err("an included source view needs exactly its declared fields".to_owned());
+            };
+            if range.head != "source-range" {
+                return Err(
+                    "an included source range needs its kind and nonempty integer byte bounds"
+                        .to_owned(),
+                );
+            }
+            check_grammar_selection_included_range_form(range)?;
+        }
+    }
+    Ok(true)
+}
+
+/// Inspect every original raw value before a reader can omit unknown fields.
+pub(crate) fn check_grammar_selection_included_range_data(root: &Value) -> Result<(), String> {
+    let exact = |value: &Value, role| {
+        let names = read_grammar_selection_included_range_field_order(role);
+        value.as_object().is_some_and(|fields| {
+            fields.len() == names.split('|').count()
+                && fields
+                    .keys()
+                    .all(|name| names.split('|').any(|expected| expected == name))
+        })
+    };
+    let range = |value: &Value| -> Result<(), String> {
+        if !value.is_object() {
+            return Err("an included source view needs ordinary data records".to_owned());
+        }
+        if !exact(value, "range") {
+            return Err("an included source view needs exactly its declared fields".to_owned());
+        }
+        if !accept_grammar_selection_included_range_source_range(
+            value["kind"].as_str().unwrap_or_default(),
+            value["start"].as_f64().unwrap_or(f64::NAN),
+            value["end"].as_f64().unwrap_or(f64::NAN),
+        ) {
+            return Err(
+                "an included source range needs its kind and nonempty integer byte bounds"
+                    .to_owned(),
+            );
+        }
+        Ok(())
+    };
+    let mut pending = vec![root];
+    while let Some(value) = pending.pop() {
+        if let Some(fields) = value.as_object() {
+            match value["kind"].as_str().unwrap_or_default() {
+                "source-range" => range(value)?,
+                "grammar-range-candidate" => {
+                    if !exact(value, "candidate") {
+                        return Err(
+                            "an included source view needs exactly its declared fields".to_owned()
+                        );
+                    }
+                    if value["name"].as_str().is_none_or(str::is_empty)
+                        || !accept_grammar_selection_included_range_candidate(
+                            "grammar-range-candidate",
+                            value["mapping"].as_str().unwrap_or_default(),
+                        )
+                    {
+                        return Err("an included range candidate needs its name and explicit included-ranges mapping".to_owned());
+                    }
+                    let ranges = value["ranges"]
+                        .as_array()
+                        .ok_or("an included range candidate needs an ordinary range array")?;
+                    if ranges.is_empty() {
+                        return Err(
+                            "an included range candidate needs a nonempty dense range array"
+                                .to_owned(),
+                        );
+                    }
+                    for row in ranges {
+                        range(row)?;
+                    }
+                }
+                _ => {}
+            }
+            pending.extend(fields.values());
+        } else if let Some(items) = value.as_array() {
+            pending.extend(items);
+        }
+    }
+    Ok(())
+}
+
+fn check_included_range_fields(form: &FeatureForm) -> Result<(), String> {
+    check_grammar_selection_included_range_form(form)?;
+    for value in &form.fields {
+        match value {
+            FieldValue::Expression(expr) => {
+                check_grammar_selection_included_range_expression(expr)?
+            }
+            FieldValue::Expressions(items) => {
+                for expr in items {
+                    check_grammar_selection_included_range_expression(expr)?;
+                }
+            }
+            FieldValue::Operation(form) => check_included_range_fields(form)?,
+            FieldValue::Operations(items) | FieldValue::Block(Some(items)) => {
+                for form in items {
+                    check_included_range_fields(form)?;
+                }
+            }
+            _ => {}
+        }
+    }
+    Ok(())
+}
+
+pub(crate) fn check_grammar_selection_included_range_expression(
+    expr: &GrammarExpr,
+) -> Result<(), String> {
+    match expr {
+        GrammarExpr::Feature(feature) => match &**feature {
+            FeatureExpr::Form(form) => check_included_range_fields(form)?,
+            FeatureExpr::Call { arguments, .. } => {
+                for item in arguments {
+                    check_grammar_selection_included_range_expression(item)?;
+                }
+            }
+            _ => {}
+        },
+        GrammarExpr::Choice {
+            alternatives: items,
+            ..
+        }
+        | GrammarExpr::Sequence(items) => {
+            for item in items {
+                check_grammar_selection_included_range_expression(item)?;
+            }
+        }
+        GrammarExpr::Optional(item)
+        | GrammarExpr::ZeroOrMore(item)
+        | GrammarExpr::OneOrMore(item)
+        | GrammarExpr::And(item)
+        | GrammarExpr::Not(item)
+        | GrammarExpr::Repeat { expr: item, .. }
+        | GrammarExpr::Capture { expr: item, .. } => {
+            check_grammar_selection_included_range_expression(item)?
+        }
+        _ => {}
+    }
+    Ok(())
+}
+
+/// Check rule/declaration payloads before expansion, cloning or String emission.
+pub(crate) fn check_grammar_selection_included_range_grammar(
+    grammar: &Grammar,
+) -> Result<(), String> {
+    for rule in grammar.rules() {
+        check_grammar_selection_included_range_expression(rule.expr())?;
+        for form in rule.attributes.action.as_deref().unwrap_or_default() {
+            check_included_range_fields(form)?;
+        }
+    }
+    let declarations = grammar.declarations();
+    for item in &declarations.extras {
+        check_grammar_selection_included_range_expression(item)?;
+    }
+    for item in &declarations.macros {
+        check_grammar_selection_included_range_expression(&item.expression)?;
+    }
+    for item in &declarations.lexers {
+        check_grammar_selection_included_range_expression(&item.expression)?;
+    }
+    for scanner in &declarations.scanners {
+        for form in &scanner.operations {
+            check_included_range_fields(form)?;
+        }
+    }
+    Ok(())
 }
