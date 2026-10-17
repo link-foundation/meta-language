@@ -311,7 +311,7 @@ function acceptFunction(fn, implicitReads) {
   return true;
 }
 
-function readBindingTypes(fn, flow, declarations) {
+function readBindingTypes(fn, flow, declarations, expressionMethods = false) {
   const {block, tokens, matching, parameterOpen, parameterClose, body, end} = fn;
   const bindings = new Map(), counts = new Map(), initializers = [], patterns = [];
   const definitions = new Map(), declarationTokens = new Set(), writeTokens = new Set();
@@ -440,6 +440,19 @@ function readBindingTypes(fn, flow, declarations) {
       const type = bindings.get(method[1]);
       if (textType(type) || type?.startsWith('&') && textType(type.slice(1))) return declarations.textMethods.get(method[2]);
     }
+    if (expressionMethods && declarations.textMethods) {
+      for (let at = from; at + 3 < to; at += 1) {
+        if (matching.get(at) > at) { at = matching.get(at); continue; }
+        if (tokens[at].value !== '.' || tokens[at + 1]?.kind !== 'identifier'
+          || tokens[at + 2]?.value !== '(' || matching.get(at + 2) !== to - 1) continue;
+        const receiver = infer(from, at);
+        // The complete authenticated provider fixes the method's return type,
+        // including a temporary Text receiver inside a conditional branch.
+        if (textType(receiver) || receiver?.startsWith('&') && textType(receiver.slice(1))) {
+          return declarations.textMethods.get(tokens[at + 1].value);
+        }
+      }
+    }
     const call = /^(?:self|crate)::([A-Za-z_][A-Za-z_0-9]*)\(/u.exec(expression);
     if (call && matching.get(from + 3) === to - 1) return declarations.returns.get(call[1]);
     let open = from;
@@ -511,7 +524,48 @@ function readBindingTypes(fn, flow, declarations) {
   return {bindings, definitions, declarationTokens, writeTokens};
 }
 
-function acceptUnborrowedBinding(fn, name, type, declarations) {
+function acceptCompletedPortableCallBorrow(fn, borrow, before, name, type, declarations) {
+  const {tokens, matching} = fn;
+  const valueType = type => ['bool', 'f64', 'u16', 'usize', 'i64', 'u64', '()'].includes(type)
+    || ownedType(type, Boolean(declarations.textMethods));
+  const parameterType = type => valueType(type) || type === '&str'
+    || type.startsWith('&') && (valueType(type.slice(1))
+      || type.startsWith('&[') && type.endsWith(']') && valueType(type.slice(2, -1)));
+  for (let open = fn.body + 1; open < borrow; open += 1) {
+    const close = matching.get(open);
+    if (tokens[open].value !== '(' || !(close > borrow && close < before)
+      || tokens[open - 1]?.kind !== 'identifier' || tokens[open - 2]?.value !== '::'
+      || !['self', 'crate'].includes(tokens[open - 3]?.value) || tokens[open - 4]?.value === '::') continue;
+    const called = declarations.functions.filter(candidate => candidate.name === tokens[open - 1].value);
+    if (called.length !== 1 || !valueType(declarations.returns.get(called[0].name))
+      || !acceptFunction(called[0], new Map())) continue;
+    const target = called[0], parameters = [];
+    let valid = true;
+    for (const [from, to] of splitTypes(target.tokens, target.matching, target.parameterOpen + 1, target.parameterClose)) {
+      const at = target.tokens[from]?.value === 'mut' ? from + 1 : from;
+      if (target.tokens[at]?.kind !== 'identifier' || target.tokens[at + 1]?.value !== ':') { valid = false; break; }
+      const parameter = normalizeType(target.block.slice(target.tokens[at + 2].start, target.tokens[to - 1].end));
+      if (!parameterType(parameter)) { valid = false; break; }
+      parameters.push(parameter);
+    }
+    const arguments_ = splitTypes(tokens, matching, open + 1, close);
+    if (!valid || arguments_.length !== parameters.length) continue;
+    for (const [[start, finish], index] of arguments_.map((range, index) => [range, index])) {
+      let from = start, to = finish;
+      while (tokens[from]?.value === '(' && matching.get(from) === to - 1) { from += 1; to -= 1; }
+      if (from !== borrow || tokens[from].value !== '&') continue;
+      from += 1;
+      while (tokens[from]?.value === '(' && matching.get(from) === to - 1) { from += 1; to -= 1; }
+      if (to !== from + 1 || tokens[from]?.kind !== 'identifier' || tokens[from].value !== name) continue;
+      const parameter = parameters[index];
+      if (parameter === '&' + type || type === 'String' && parameter === '&str'
+        || textType(type) && parameter.startsWith('&') && textType(parameter.slice(1))) return true;
+    }
+  }
+  return false;
+}
+
+function acceptUnborrowedBinding(fn, name, type, declarations, before) {
   const {tokens, matching, body, end} = fn;
   for (let at = body + 1; at < end; at += 1) {
     if (tokens[at].kind === 'punct' && tokens[at].value === '&') {
@@ -519,7 +573,8 @@ function acceptUnborrowedBinding(fn, name, type, declarations) {
       while (finish < end && ![';', ',', ')', ']', '}'].includes(tokens[finish].value)) {
         finish = matching.get(finish) > finish ? matching.get(finish) + 1 : finish + 1;
       }
-      if (tokens.slice(at + 1, finish).some(token => token.kind === 'identifier' && token.value === name)) return false;
+      if (tokens.slice(at + 1, finish).some(token => token.kind === 'identifier' && token.value === name)
+        && !(before !== undefined && acceptCompletedPortableCallBorrow(fn, at, before, name, type, declarations))) return false;
     }
     if (tokens[at].kind === 'identifier' && tokens[at].value === name && tokens[at + 1]?.value === '.') {
       const method = tokens[at + 2]?.value;
@@ -531,8 +586,9 @@ function acceptUnborrowedBinding(fn, name, type, declarations) {
 }
 
 /** Remove only proven dead owned leaf copies from complete checked functions. */
-export function readPortableOwnedSourceStyles(source) {
+export function readPortableOwnedSourceStyles(source, {scopedCallBorrows = false, functionNames = []} = {}) {
   const declarations = readDeclarations(source), actions = [];
+  const scopedFunctions = new Set(scopedCallBorrows ? functionNames : []);
   let adapted = source;
   for (const fn of declarations.functions) {
     const implicitReads = new Map();
@@ -542,7 +598,8 @@ export function readPortableOwnedSourceStyles(source) {
       if (error.message === 'unsupported owned source flow') continue;
       throw error;
     }
-    const {bindings, definitions, declarationTokens, writeTokens} = readBindingTypes(fn, flow, declarations), edits = [], safe = new Map();
+    const {bindings, definitions, declarationTokens, writeTokens} = readBindingTypes(fn, flow, declarations,
+      scopedFunctions.has(fn.name)), edits = [], safe = new Map();
     const {tokens, comments} = fn;
     for (let at = fn.body + 1; at + 4 < fn.end; at += 1) {
       const token = tokens[at];
@@ -550,8 +607,12 @@ export function readPortableOwnedSourceStyles(source) {
         || ['.', '::'].includes(tokens[at - 1]?.value)
         || tokens[at + 1]?.value !== '.' || tokens[at + 2]?.value !== 'clone'
         || tokens[at + 3]?.value !== '(' || tokens[at + 4]?.value !== ')') continue;
-      if (!safe.has(token.value)) safe.set(token.value, acceptUnborrowedBinding(fn, token.value, bindings.get(token.value), declarations));
-      if (!safe.get(token.value) || !flow.edges.has(at + 4)
+      // A scoped permission is per clone: its borrow's whole call must finish
+      // before this transfer, including every later argument evaluation.
+      const key = scopedFunctions.has(fn.name) ? at : token.value;
+      if (!safe.has(key)) safe.set(key, acceptUnborrowedBinding(fn, token.value, bindings.get(token.value), declarations,
+        scopedFunctions.has(fn.name) ? at : undefined));
+      if (!safe.get(key) || !flow.edges.has(at + 4)
         || comments.some(comment => comment.start >= tokens[at + 1].start && comment.end <= tokens[at + 4].end)) continue;
       const pending = [...flow.edges.get(at + 4)], seen = new Set();
       let live = false;

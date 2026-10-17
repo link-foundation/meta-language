@@ -107,7 +107,8 @@ export async function generateGrammarLexerRules({ check = false, native = false 
       .decorate('emitter', { format: 'Rust', source: raw }).source;
     const publicNames = [...relocated.matchAll(/^pub fn (\w+)\(/gmu)].map((match) => match[1]);
     const loans = readPortableSourceParameterStyles(relocated, { publicNames });
-    const reviewed = readPortableSourceLintStyles(loans.source);
+    const functionNames = publicNames.filter(name => /^(?:ml_)?read_grammar_lexer_command_emission(?:_|$)/u.test(name));
+    const reviewed = readPortableSourceLintStyles(loans.source, {scopedCallBorrows: true, functionNames});
     actions.push(...loans.actions, ...reviewed.actions);
     const styles = new DecoratorSet([{ id: 'grammar-lexer-rules-library-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }]);
     if (check) {

@@ -11,12 +11,12 @@ import {readPortableOwnedSourceStyles} from '../scripts/portable-owned-source-st
 import {readPortableSourceParameterStyles, readPortableSourceLintStyles} from '../scripts/portable-source-library-style.mjs';
 
 const copies = source => (source.match(/\.clone\(\)/gu) ?? []).length;
-function review(source) {
-  const result = readPortableOwnedSourceStyles(source);
+function review(source, options) {
+  const result = readPortableOwnedSourceStyles(source, options);
   const styles = new DecoratorSet(result.actions.length ? [{id: 'owned-source-control', level: 'emitter', order: 0,
     when: [['format', 'Rust']], actions: result.actions}] : []);
   assert.equal(styles.decorate('emitter', {format: 'Rust', source}).source, result.source);
-  assert.deepEqual(readPortableOwnedSourceStyles(result.source), {source: result.source, actions: []});
+  assert.deepEqual(readPortableOwnedSourceStyles(result.source, options), {source: result.source, actions: []});
   return result.source;
 }
 
@@ -198,4 +198,68 @@ test('actual checked JavaScript branches and changing string loops preserve valu
   }
   assert.equal(context.repeated(0), '');
   assert.equal(context.repeated(4), 'xxxx');
+});
+
+test('explicitly selected owned functions transfer final copies only after authenticated immutable calls finish', () => {
+  const options = {scopedCallBorrows: true, functionNames: ['selected']};
+  const string = 'pub fn inspected(value: &String) -> bool { value.is_empty() }\n'
+    + 'pub fn selected(value: String) -> Vec<String> { let empty = self::inspected(&(value)); if empty { Vec::<String>::new() } else { vec![value.clone()] } }';
+  assert.equal(review(string), string, 'the historical default still refuses every explicit borrow');
+  assert.equal(review(string, {scopedCallBorrows: true}), string, 'an explicit exact function-name selection is also required');
+  assert.equal(review(string, {...options, functionNames: ['other']}), string);
+  assert.equal(copies(review(string, options)), 0, 'a completed inspected immutable call cannot retain a String reference');
+  const text = 'pub fn inspected(value: &self::ml_string::Text) -> bool { value.is_empty() }\n'
+    + 'pub fn planned(value: &self::ml_string::Text, name: &self::ml_string::Text) -> Vec<self::ml_string::Text> { vec![value.clone(), name.clone()] }\n'
+    + 'pub fn selected(name: &self::ml_string::Text, flag: bool) -> Vec<self::ml_string::Text> { '
+    + 'let command = if flag { self::ml_string::Text::from_units(vec![97]) } else { self::ml_string::Text::from_units(vec![98]) }; '
+    + 'let replayed = self::planned(&(command), name); if replayed.len() == 0f64 { Vec::<self::ml_string::Text>::new() } else { vec![command.clone()] } }\n'
+    + 'pub fn selected_loop(mode: self::ml_string::Text) -> Vec<self::ml_string::Text> { '
+    + 'let accepted = self::inspected(&(mode)); let argument = if accepted { mode.clone() } else { self::ml_string::Text::from_units(vec![]) }; '
+    + 'let displayed = argument.length(); self::observe(displayed); vec![mode.clone()] }';
+  const actual = STRING_PRELUDE + '\n' + text;
+  const selected = {...options, functionNames: ['selected', 'selected_loop']};
+  const styled = review(actual, selected);
+  assert.ok(styled.includes('else { vec![command] }'), 'the replayed command call finishes before the final command transfer');
+  assert.ok(styled.includes('if accepted { mode.clone() }'), 'the earlier mode copy stays because the final vector still needs mode');
+  assert.ok(styled.includes('self::observe(displayed); vec![mode]'), 'the final mode copy becomes a transfer after the completed predicate call');
+  assert.ok(styled.includes('vec![value.clone(), name.clone()]'), 'borrowed callee parameters retain their actual owned copies');
+  const composed = readPortableSourceLintStyles(actual, selected).source;
+  assert.ok(composed.includes('vec![command]'));
+  assert.ok(composed.includes('vec![mode]'), 'the complete recorded composer carries the same narrow proof option');
+  const constructed = 'pub fn planned(value: &self::ml_string::Text, name: &self::ml_string::Text) -> Vec<self::ml_string::Text> { vec![value.clone(), name.clone()] }\n'
+    + 'pub fn selected(name: &self::ml_string::Text, pieces: &[self::ml_string::Text]) -> Vec<self::ml_string::Text> { '
+    + 'let command = if (pieces.len() as f64) == 0f64 { self::ml_string::Text::from_units(vec![]) } else { '
+    + '(self::ml_string::Text::from_units(vec![45, 62, 32])).concat(&self::ml_string::join(pieces, &self::ml_string::Text::from_units(vec![44, 32]))) }; '
+    + 'let replayed = self::planned(&(command), name); if replayed.len() == 0f64 { Vec::<self::ml_string::Text>::new() } else { vec![command.clone()] } }';
+  const constructedSource = STRING_PRELUDE + '\n' + constructed;
+  assert.equal(review(constructedSource), constructedSource, 'constructor-method branch inference remains disabled by default');
+  assert.ok(review(constructedSource, options).includes('else { vec![command] }'),
+    'the actual emitted constructor-concat-join branch yields owned Text before replay and the final transfer');
+  assert.ok(readPortableSourceLintStyles(constructedSource, options).source.includes('vec![command]'),
+    'the exact emitted command constructor shape survives complete recorded style composition');
+  const unknownMethod = STRING_PRELUDE + '\n' + constructed.replace(')).concat(', ')).unknown(');
+  assert.equal(review(unknownMethod, options), unknownMethod, 'only authenticated provider method signatures determine branch ownership');
+  const mismatched = constructedSource.replace('if (pieces.len() as f64) == 0f64 { self::ml_string::Text::from_units(vec![]) }',
+    'if (pieces.len() as f64) == 0f64 { name }');
+  assert.equal(review(mismatched, options), mismatched, 'a borrowed branch cannot join an owned temporary method result');
+  assert.equal(review(text, selected), text, 'a Text spelling without its complete authenticated provider proves no ownership');
+  const counterfeit = actual.replace('derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)', 'derive(Debug, PartialEq, Eq, PartialOrd, Ord)');
+  assert.equal(review(counterfeit, selected), counterfeit, 'an altered Text clone provider remains refused');
+  const refused = [
+    'pub fn selected(value: String) -> String { self::unknown(&value); value.clone() }',
+    'pub fn inspected(value: &String) -> bool { value.is_empty() }\npub fn selected(value: String) -> String { external::inspected(&value); value.clone() }',
+    'pub fn inspected(value: &String) -> &String { value }\npub fn selected(value: String) -> String { let alias = self::inspected(&value); let copied = value.clone(); self::observe(alias); copied }',
+    'pub fn inspected(value: &String) -> Custom { custom(value) }\npub fn selected(value: String) -> String { let alias = self::inspected(&value); value.clone() }',
+    'pub fn inspected(value: &mut String) -> bool { value.is_empty() }\npub fn selected(mut value: String) -> String { self::inspected(&mut value); value.clone() }',
+    'pub fn inspected(value: &String, target: &mut Vec<String>) -> bool { value.is_empty() }\npub fn selected(value: String, target: &mut Vec<String>) -> String { self::inspected(&value, target); value.clone() }',
+    'pub fn inspected(value: &String) -> bool { value.is_empty() }\npub fn selected(value: String) -> String { let alias = &value; self::inspected(alias); value.clone() }',
+    'pub fn inspected(value: &String) -> bool { value.is_empty() }\npub fn selected(value: String) -> String { self::inspected(&{ value }); value.clone() }',
+    'pub fn inspected(value: &String) -> bool { value.is_empty() }\npub fn selected(value: String) -> String { self::inspected(&value); let copied = value.clone(); self::observe(value); copied }',
+    'pub fn inspected(value: &String, next: String) -> bool { value.is_empty() }\npub fn selected(value: String) -> bool { self::inspected(&value, value.clone()) }',
+    'pub fn inspected(value: &String) -> bool { unknown!(value) }\npub fn selected(value: String) -> String { self::inspected(&value); value.clone() }',
+    'pub fn inspected(value: &String) -> bool { unsafe { custom(value) } }\npub fn selected(value: String) -> String { self::inspected(&value); value.clone() }',
+    'pub fn inspected(value: &String) -> bool { value.is_empty() }\npub fn inspected(value: &String) -> bool { false }\npub fn selected(value: String) -> String { self::inspected(&value); value.clone() }',
+    'pub fn inspected(value: &String) -> bool { value.is_empty() }\npub fn selected(value: String) -> String { let copied = value.clone(); self::inspected(&value); copied }',
+  ];
+  for (const source of refused) assert.equal(review(source, options), source);
 });

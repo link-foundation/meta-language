@@ -411,7 +411,7 @@ function acceptPortableMustUseAttribute(prefix) {
 
 /** Preserve IEEE equality, separate arithmetic rounding and existing guarded
  * index conversions; correct only mechanical styles of actual checked output. */
-export function readPortableSourceLintStyles(source, {modulePath} = {}) {
+export function readPortableSourceLintStyles(source, {modulePath, scopedCallBorrows = false, functionNames: scopedFunctionNames = []} = {}) {
   if (modulePath !== undefined) assert.match(modulePath, /^(?:crate|self)(?:::[A-Za-z_][A-Za-z_0-9]*)+$/u, 'a qualified local call needs its explicit module path');
   let adapted = source;
   const actions = [];
@@ -443,7 +443,7 @@ export function readPortableSourceLintStyles(source, {modulePath} = {}) {
   }
   // Inspect ownership once while emitted format arguments remain explicit.
   // Formatting styles may capture names inside opaque format-string tokens.
-  const ownedStyles = readPortableOwnedSourceStyles(adapted);
+  const ownedStyles = readPortableOwnedSourceStyles(adapted, {scopedCallBorrows, functionNames: scopedFunctionNames});
   for (const action of ownedStyles.actions) replace(action.from, action.to);
   assert.equal(adapted, ownedStyles.source, 'ownership styles replay their complete declared source actions');
   const stringFunctions = new Set([...adapted.matchAll(/^pub fn (\w+)\([^)]*\)\s*->\s*String\s*\{/gmu)].map(match => match[1]));
