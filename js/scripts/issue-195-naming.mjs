@@ -49208,7 +49208,1535 @@ const PARSER_TOKEN_COVERING_CURRENT_WITNESS={
 };
 const PARSER_TOKEN_COVERING_CURRENT_WITNESS_INVENTORIES=[{inventory:"B57 portable string code unit and reviewed repair names for js/tests/grammar-antlr.test.js",files:["js/tests/grammar-antlr.test.js"],extract:text=>text.includes(PARSER_TOKEN_COVERING_CURRENT_WITNESS.sourceText)?[PARSER_TOKEN_COVERING_CURRENT_WITNESS.inventoryName]:[],recordOf:()=>PARSER_TOKEN_COVERING_CURRENT_WITNESS.id}];
 // END B59 current covering grammar replay witness.
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory).map(reconcileBulkFortySevenNativeInventory).map(reconcileBulkFiftyHistoricalInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES, ...BULK_FORTY_SEVEN_NAME_INVENTORIES, ...BULK_FORTY_EIGHT_NAME_INVENTORIES, ...BULK_FORTY_NINE_NAME_INVENTORIES, ...BULK_FIFTY_NAME_INVENTORIES, ...BULK_FIFTY_ONE_NAME_INVENTORIES.map(reconcileB57MovedSourceInventory), ...VERSION_RANGE_EVIDENCE_NAME_INVENTORIES, ...FORMAT_RETRY_SOURCE_NAME_INVENTORIES, ...DISCOVERY_CERTIFICATE_NAME_INVENTORIES, ...SELECTED_NATIVE_GRAMMAR_PROJECTION_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_WITNESS_INVENTORIES, ...BULK_FIFTY_FIVE_CONST_ARCHIVE_ERROR_NAME_INVENTORIES, ...AUXILIARY_GRAMMAR_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_CURRENT_WITNESS_INVENTORIES, ...CHILD_CHAIN_NAME_INVENTORIES, ...PARSER_TOKEN_EXCLUSION_NAME_INVENTORIES, ...PARSER_TOKEN_EXCLUSION_CURRENT_WITNESS_INVENTORIES, ...PARSER_TOKEN_COVERING_CURRENT_WITNESS_INVENTORIES].map(entry=>entry.inventory!=="grammar link terms"?entry:{...entry,extract:(text,file)=>entry.extract(text,file).map(name=>file==="rust/src/grammar/links.rs"&&name==="grammar::lexer"?"grammar::native-source-lexical-analyser-declaration":name),recordOf:name=>name==="grammar::native-source-lexical-analyser-declaration"?"repository.native-source-lexical-analyser-declaration":entry.recordOf(name)}));
+// BEGIN B60 recursive default region source names.
+const EMBEDDED_REGION_SOURCE_BINDINGS=[
+  {
+    "id": "grammar.read-embedded-region-default-limit",
+    "source": "js/src/translation/embedded-region-rules.js",
+    "name": "readEmbeddedRegionDefaultLimit",
+    "inventoryName": "read embedded region default limit",
+    "sourceText": "export function readEmbeddedRegionDefaultLimit(kind) {\n  if (kind === 'depth') return 128;\n  if (kind === 'count') return 4096;\n  if (kind === 'bytes') return 16777216;\n  return -1;\n}"
+  },
+  {
+    "id": "grammar.read-embedded-region-default-limit",
+    "source": "rust/src/translation/embedded_region_rules/part_1.rs",
+    "name": "read_embedded_region_default_limit",
+    "inventoryName": "read embedded region default limit",
+    "sourceText": "pub fn read_embedded_region_default_limit(kind: &str) -> f64 {\n    if kind == \"depth\" {\n        128f64\n    } else if kind == \"count\" {\n        4096f64\n    } else if kind == \"bytes\" {\n        16_777_216f64\n    } else {\n        -1f64\n    }\n}"
+  },
+  {
+    "id": "grammar.read-embedded-region-default-limit",
+    "source": "js/src/translation/data/embedded-region-rules.lino",
+    "name": "readEmbeddedRegionDefaultLimit",
+    "inventoryName": "read embedded region default limit",
+    "sourceText": "export function readEmbeddedRegionDefaultLimit(kind) {\n  if (kind === 'depth') return 128;\n  if (kind === 'count') return 4096;\n  if (kind === 'bytes') return 16777216;\n  return -1;\n}",
+    "sourceField": "source"
+  },
+  {
+    "id": "grammar.read-embedded-region-default-limit",
+    "source": "rust/src/data/embedded-region-rules.lino",
+    "name": "readEmbeddedRegionDefaultLimit",
+    "inventoryName": "read embedded region default limit",
+    "sourceText": "export function readEmbeddedRegionDefaultLimit(kind) {\n  if (kind === 'depth') return 128;\n  if (kind === 'count') return 4096;\n  if (kind === 'bytes') return 16777216;\n  return -1;\n}",
+    "sourceField": "source"
+  },
+  {
+    "id": "grammar.read-embedded-region-default-limit",
+    "source": "parity/self-translation/embedded-region-rules-native.lino",
+    "name": "read_embedded_region_default_limit",
+    "inventoryName": "read embedded region default limit",
+    "sourceText": "pub fn read_embedded_region_default_limit(kind: String) -> f64 {\n    if (kind == \"depth\") {\n        128f64\n    } else {\n        if (kind == \"count\") {\n            4096f64\n        } else {\n            if (kind == \"bytes\") {\n                16777216f64\n            } else {\n                (-1f64)\n            }\n        }\n    }\n}",
+    "sourceField": "emittedSource"
+  },
+  {
+    "id": "grammar.accept-embedded-region-limit",
+    "source": "js/src/translation/embedded-region-rules.js",
+    "name": "acceptEmbeddedRegionLimit",
+    "inventoryName": "accept embedded region limit",
+    "sourceText": "export function acceptEmbeddedRegionLimit(value) {\n  return value >= 0 && value <= 9007199254740991 && value % 1 === 0;\n}"
+  },
+  {
+    "id": "grammar.accept-embedded-region-limit",
+    "source": "rust/src/translation/embedded_region_rules/part_1.rs",
+    "name": "accept_embedded_region_limit",
+    "inventoryName": "accept embedded region limit",
+    "sourceText": "pub fn accept_embedded_region_limit(value: f64) -> bool {\n    ((0f64..=9_007_199_254_740_991f64).contains(&value)) && ((value % 1f64) == 0f64)\n}"
+  },
+  {
+    "id": "grammar.accept-embedded-region-limit",
+    "source": "js/src/translation/data/embedded-region-rules.lino",
+    "name": "acceptEmbeddedRegionLimit",
+    "inventoryName": "accept embedded region limit",
+    "sourceText": "export function acceptEmbeddedRegionLimit(value) {\n  return value >= 0 && value <= 9007199254740991 && value % 1 === 0;\n}",
+    "sourceField": "source"
+  },
+  {
+    "id": "grammar.accept-embedded-region-limit",
+    "source": "rust/src/data/embedded-region-rules.lino",
+    "name": "acceptEmbeddedRegionLimit",
+    "inventoryName": "accept embedded region limit",
+    "sourceText": "export function acceptEmbeddedRegionLimit(value) {\n  return value >= 0 && value <= 9007199254740991 && value % 1 === 0;\n}",
+    "sourceField": "source"
+  },
+  {
+    "id": "grammar.accept-embedded-region-limit",
+    "source": "parity/self-translation/embedded-region-rules-native.lino",
+    "name": "accept_embedded_region_limit",
+    "inventoryName": "accept embedded region limit",
+    "sourceText": "pub fn accept_embedded_region_limit(value: f64) -> bool {\n    (((value >= (0f64)) && (value <= (9007199254740991f64))) && (((value % 1f64)) == (0f64)))\n}",
+    "sourceField": "emittedSource"
+  },
+  {
+    "id": "grammar.accept-embedded-region-containment",
+    "source": "js/src/translation/embedded-region-rules.js",
+    "name": "acceptEmbeddedRegionBounds",
+    "inventoryName": "accept embedded region containment",
+    "sourceText": "export function acceptEmbeddedRegionBounds(parentStart, parentEnd, start, end) {\n  return acceptEmbeddedRegionLimit(parentStart) && acceptEmbeddedRegionLimit(parentEnd)\n    && acceptEmbeddedRegionLimit(start) && acceptEmbeddedRegionLimit(end)\n    && parentStart <= start && start <= end && end <= parentEnd;\n}"
+  },
+  {
+    "id": "grammar.accept-embedded-region-containment",
+    "source": "rust/src/translation/embedded_region_rules/part_1.rs",
+    "name": "accept_embedded_region_bounds",
+    "inventoryName": "accept embedded region containment",
+    "sourceText": "pub fn accept_embedded_region_bounds(\n    parent_start: f64,\n    parent_end: f64,\n    start: f64,\n    end: f64,\n) -> bool {\n    (((((self::accept_embedded_region_limit(parent_start)\n        && self::accept_embedded_region_limit(parent_end))\n        && self::accept_embedded_region_limit(start))\n        && self::accept_embedded_region_limit(end))\n        && (parent_start <= start))\n        && (start <= end))\n        && (end <= parent_end)\n}"
+  },
+  {
+    "id": "grammar.accept-embedded-region-containment",
+    "source": "js/src/translation/data/embedded-region-rules.lino",
+    "name": "acceptEmbeddedRegionBounds",
+    "inventoryName": "accept embedded region containment",
+    "sourceText": "export function acceptEmbeddedRegionBounds(parentStart, parentEnd, start, end) {\n  return acceptEmbeddedRegionLimit(parentStart) && acceptEmbeddedRegionLimit(parentEnd)\n    && acceptEmbeddedRegionLimit(start) && acceptEmbeddedRegionLimit(end)\n    && parentStart <= start && start <= end && end <= parentEnd;\n}",
+    "sourceField": "source"
+  },
+  {
+    "id": "grammar.accept-embedded-region-containment",
+    "source": "rust/src/data/embedded-region-rules.lino",
+    "name": "acceptEmbeddedRegionBounds",
+    "inventoryName": "accept embedded region containment",
+    "sourceText": "export function acceptEmbeddedRegionBounds(parentStart, parentEnd, start, end) {\n  return acceptEmbeddedRegionLimit(parentStart) && acceptEmbeddedRegionLimit(parentEnd)\n    && acceptEmbeddedRegionLimit(start) && acceptEmbeddedRegionLimit(end)\n    && parentStart <= start && start <= end && end <= parentEnd;\n}",
+    "sourceField": "source"
+  },
+  {
+    "id": "grammar.accept-embedded-region-containment",
+    "source": "parity/self-translation/embedded-region-rules-native.lino",
+    "name": "accept_embedded_region_bounds",
+    "inventoryName": "accept embedded region containment",
+    "sourceText": "pub fn accept_embedded_region_bounds(parent_start: f64, parent_end: f64, start: f64, end: f64) -> bool {\n    ((((((crate::accept_embedded_region_limit(parent_start) && crate::accept_embedded_region_limit(parent_end)) && crate::accept_embedded_region_limit(start)) && crate::accept_embedded_region_limit(end)) && (parent_start <= start)) && (start <= end)) && (end <= parent_end))\n}",
+    "sourceField": "emittedSource"
+  },
+  {
+    "id": "grammar.read-embedded-region-ancestor",
+    "source": "js/src/translation/embedded-region-rules.js",
+    "name": "readEmbeddedRegionAncestor",
+    "inventoryName": "read embedded region ancestor",
+    "sourceText": "export function readEmbeddedRegionAncestor(parents, languages, starts, ends, parent, language, start, end) {\n  if (parents.length !== languages.length || starts.length !== parents.length || ends.length !== parents.length) return -2;\n  if (!acceptEmbeddedRegionLimit(language) || !acceptEmbeddedRegionBounds(0, 9007199254740991, start, end)) return -2;\n  let position = parent;\n  while (position >= 0) {\n    if (!acceptEmbeddedRegionLimit(position) || position >= parents.length) return -2;\n    const previous = parents[position] ?? NaN;\n    const selectedLanguage = languages[position] ?? NaN;\n    const selectedStart = starts[position] ?? NaN;\n    const selectedEnd = ends[position] ?? NaN;\n    if (previous !== -1 && (!acceptEmbeddedRegionLimit(previous) || previous >= position)) return -2;\n    if (!acceptEmbeddedRegionLimit(selectedLanguage) || !acceptEmbeddedRegionBounds(0, 9007199254740991, selectedStart, selectedEnd)) return -2;\n    if (selectedLanguage === language && selectedStart === start && selectedEnd === end) return position;\n    position = previous;\n  }\n  return position === -1 ? -1 : -2;\n}"
+  },
+  {
+    "id": "grammar.read-embedded-region-ancestor",
+    "source": "rust/src/translation/embedded_region_rules/part_1.rs",
+    "name": "read_embedded_region_ancestor",
+    "inventoryName": "read embedded region ancestor",
+    "sourceText": "pub fn read_embedded_region_ancestor(\n    parents: &[f64],\n    languages: &[f64],\n    starts: &[f64],\n    ends: &[f64],\n    parent: f64,\n    language: f64,\n    start: f64,\n    end: f64,\n) -> f64 {\n    if ((((parents.len() as f64) != (languages.len() as f64))\n        || ((starts.len() as f64) != (parents.len() as f64)))\n        || ((ends.len() as f64) != (parents.len() as f64)))\n        || (!(self::accept_embedded_region_limit(language))\n            || !(self::accept_embedded_region_bounds(0f64, 9_007_199_254_740_991f64, start, end)))\n    {\n        -2f64\n    } else {\n        {\n            let position = parent;\n            {\n                let ml_s1 = self::ml_read_embedded_region_ancestor_loop1(\n                    parents, languages, starts, ends, language, start, end, position,\n                );\n                match ml_s1 {\n                        self::MlReadEmbeddedRegionAncestorLoop1Result::MlReadEmbeddedRegionAncestorLoop1Done(position_2) => {\n                            if position_2 == -1f64 {\n                                -1f64\n                            } else {\n                                -2f64\n                            }\n                        }\n                        self::MlReadEmbeddedRegionAncestorLoop1Result::MlReadEmbeddedRegionAncestorLoop1Return(ml_result1) => {\n                            ml_result1\n                        }\n                    }\n            }\n        }\n    }\n}"
+  },
+  {
+    "id": "grammar.read-embedded-region-ancestor",
+    "source": "js/src/translation/data/embedded-region-rules.lino",
+    "name": "readEmbeddedRegionAncestor",
+    "inventoryName": "read embedded region ancestor",
+    "sourceText": "export function readEmbeddedRegionAncestor(parents, languages, starts, ends, parent, language, start, end) {\n  if (parents.length !== languages.length || starts.length !== parents.length || ends.length !== parents.length) return -2;\n  if (!acceptEmbeddedRegionLimit(language) || !acceptEmbeddedRegionBounds(0, 9007199254740991, start, end)) return -2;\n  let position = parent;\n  while (position >= 0) {\n    if (!acceptEmbeddedRegionLimit(position) || position >= parents.length) return -2;\n    const previous = parents[position] ?? NaN;\n    const selectedLanguage = languages[position] ?? NaN;\n    const selectedStart = starts[position] ?? NaN;\n    const selectedEnd = ends[position] ?? NaN;\n    if (previous !== -1 && (!acceptEmbeddedRegionLimit(previous) || previous >= position)) return -2;\n    if (!acceptEmbeddedRegionLimit(selectedLanguage) || !acceptEmbeddedRegionBounds(0, 9007199254740991, selectedStart, selectedEnd)) return -2;\n    if (selectedLanguage === language && selectedStart === start && selectedEnd === end) return position;\n    position = previous;\n  }\n  return position === -1 ? -1 : -2;\n}",
+    "sourceField": "source"
+  },
+  {
+    "id": "grammar.read-embedded-region-ancestor",
+    "source": "rust/src/data/embedded-region-rules.lino",
+    "name": "readEmbeddedRegionAncestor",
+    "inventoryName": "read embedded region ancestor",
+    "sourceText": "export function readEmbeddedRegionAncestor(parents, languages, starts, ends, parent, language, start, end) {\n  if (parents.length !== languages.length || starts.length !== parents.length || ends.length !== parents.length) return -2;\n  if (!acceptEmbeddedRegionLimit(language) || !acceptEmbeddedRegionBounds(0, 9007199254740991, start, end)) return -2;\n  let position = parent;\n  while (position >= 0) {\n    if (!acceptEmbeddedRegionLimit(position) || position >= parents.length) return -2;\n    const previous = parents[position] ?? NaN;\n    const selectedLanguage = languages[position] ?? NaN;\n    const selectedStart = starts[position] ?? NaN;\n    const selectedEnd = ends[position] ?? NaN;\n    if (previous !== -1 && (!acceptEmbeddedRegionLimit(previous) || previous >= position)) return -2;\n    if (!acceptEmbeddedRegionLimit(selectedLanguage) || !acceptEmbeddedRegionBounds(0, 9007199254740991, selectedStart, selectedEnd)) return -2;\n    if (selectedLanguage === language && selectedStart === start && selectedEnd === end) return position;\n    position = previous;\n  }\n  return position === -1 ? -1 : -2;\n}",
+    "sourceField": "source"
+  },
+  {
+    "id": "grammar.read-embedded-region-ancestor",
+    "source": "parity/self-translation/embedded-region-rules-native.lino",
+    "name": "read_embedded_region_ancestor",
+    "inventoryName": "read embedded region ancestor",
+    "sourceText": "pub fn read_embedded_region_ancestor(parents: Vec<f64>, languages: Vec<f64>, starts: Vec<f64>, ends: Vec<f64>, parent: f64, language: f64, start: f64, end: f64) -> f64 {\n    if (((((parents.len() as f64)) != ((languages.len() as f64))) || (((starts.len() as f64)) != ((parents.len() as f64)))) || (((ends.len() as f64)) != ((parents.len() as f64)))) {\n        (-2f64)\n    } else {\n        if (!(crate::accept_embedded_region_limit(language)) || !(crate::accept_embedded_region_bounds(0f64, 9007199254740991f64, start, end))) {\n            (-2f64)\n        } else {\n            {\n                let position = parent;\n                {\n                    let ml_s1 = crate::ml_read_embedded_region_ancestor_loop1(parents, languages, starts, ends, language, start, end, position);\n                    match ml_s1.clone() {\n                        crate::MlReadEmbeddedRegionAncestorLoop1Result::MlReadEmbeddedRegionAncestorLoop1Done(position_2) => {\n                            if (position_2 == ((-1f64))) {\n                                (-1f64)\n                            } else {\n                                (-2f64)\n                            }\n                        }\n                        crate::MlReadEmbeddedRegionAncestorLoop1Result::MlReadEmbeddedRegionAncestorLoop1Return(ml_result1) => {\n                            ml_result1\n                        }\n                    }\n                }\n            }\n        }\n    }\n}",
+    "sourceField": "emittedSource"
+  },
+  {
+    "id": "grammar.read-embedded-region-disposition",
+    "source": "js/src/translation/embedded-region-rules.js",
+    "name": "readEmbeddedRegionDisposition",
+    "inventoryName": "read embedded region disposition",
+    "sourceText": "export function readEmbeddedRegionDisposition(parentStart, parentEnd, parentLanguage, language,\n  start, end, ancestor, depth, count, bytes, depthLimit, countLimit, byteLimit, rootSpellingReuse) {\n  if (!acceptEmbeddedRegionBounds(parentStart, parentEnd, start, end)) return 'invalidEmbeddedRegionBounds';\n  if (ancestor === -2) return 'invalidEmbeddedRegionAncestry';\n  const sameHost = parentLanguage === language && start === parentStart && end === parentEnd;\n  if (sameHost && depth !== 1) return 'reuseAttached';\n  if (sameHost && rootSpellingReuse) return 'reuse';\n  // The original root adapter parsed a canonical whole-buffer region once\n  // when the requested alias had another spelling. Preserve that exact view.\n  const legacyRootAlias = sameHost && depth === 1 && !rootSpellingReuse;\n  if (ancestor >= 0 && !legacyRootAlias) return 'nonConsumingEmbeddingCycle';\n  if (!acceptEmbeddedRegionLimit(depth) || !acceptEmbeddedRegionLimit(count) || !acceptEmbeddedRegionLimit(bytes)\n    || !acceptEmbeddedRegionLimit(depthLimit) || !acceptEmbeddedRegionLimit(countLimit) || !acceptEmbeddedRegionLimit(byteLimit)) return 'invalidEmbeddedRegionLimits';\n  if (depth > depthLimit) return 'embeddedRegionDepthLimit';\n  if (count >= countLimit) return 'embeddedRegionCountLimit';\n  if (bytes > byteLimit || end - start > byteLimit - bytes) return 'embeddedRegionByteLimit';\n  return 'parse';\n}"
+  },
+  {
+    "id": "grammar.read-embedded-region-disposition",
+    "source": "rust/src/translation/embedded_region_rules/part_1.rs",
+    "name": "read_embedded_region_disposition",
+    "inventoryName": "read embedded region disposition",
+    "sourceText": "pub fn read_embedded_region_disposition(\n    parent_start: f64,\n    parent_end: f64,\n    parent_language: f64,\n    language: f64,\n    start: f64,\n    end: f64,\n    ancestor: f64,\n    depth: f64,\n    count: f64,\n    bytes: f64,\n    depth_limit: f64,\n    count_limit: f64,\n    byte_limit: f64,\n    root_spelling_reuse: bool,\n) -> String {\n    if (self::accept_embedded_region_bounds(parent_start, parent_end, start, end)) {\n        if ancestor == -2f64 {\n            String::from(\"invalidEmbeddedRegionAncestry\")\n        } else {\n            {\n                let same_host = (((parent_language).partial_cmp(&(language))\n                    == Some(std::cmp::Ordering::Equal))\n                    && ((start).partial_cmp(&(parent_start)) == Some(std::cmp::Ordering::Equal)))\n                    && ((end).partial_cmp(&(parent_end)) == Some(std::cmp::Ordering::Equal));\n                if same_host && (depth != 1f64) {\n                    String::from(\"reuseAttached\")\n                } else if same_host && root_spelling_reuse {\n                    String::from(\"reuse\")\n                } else {\n                    {\n                        let legacy_root_alias =\n                            (same_host && (depth == 1f64)) && !root_spelling_reuse;\n                        if (ancestor >= 0f64) && !legacy_root_alias {\n                            String::from(\"nonConsumingEmbeddingCycle\")\n                        } else if ((((!(self::accept_embedded_region_limit(depth))\n                            || !(self::accept_embedded_region_limit(count)))\n                            || !(self::accept_embedded_region_limit(bytes)))\n                            || !(self::accept_embedded_region_limit(depth_limit)))\n                            || !(self::accept_embedded_region_limit(count_limit)))\n                            || !(self::accept_embedded_region_limit(byte_limit))\n                        {\n                            String::from(\"invalidEmbeddedRegionLimits\")\n                        } else if depth > depth_limit {\n                            String::from(\"embeddedRegionDepthLimit\")\n                        } else if count >= count_limit {\n                            String::from(\"embeddedRegionCountLimit\")\n                        } else if (bytes > byte_limit) || ((end - start) > (byte_limit - bytes)) {\n                            String::from(\"embeddedRegionByteLimit\")\n                        } else {\n                            String::from(\"parse\")\n                        }\n                    }\n                }\n            }\n        }\n    } else {\n        String::from(\"invalidEmbeddedRegionBounds\")\n    }\n}"
+  },
+  {
+    "id": "grammar.read-embedded-region-disposition",
+    "source": "js/src/translation/data/embedded-region-rules.lino",
+    "name": "readEmbeddedRegionDisposition",
+    "inventoryName": "read embedded region disposition",
+    "sourceText": "export function readEmbeddedRegionDisposition(parentStart, parentEnd, parentLanguage, language,\n  start, end, ancestor, depth, count, bytes, depthLimit, countLimit, byteLimit, rootSpellingReuse) {\n  if (!acceptEmbeddedRegionBounds(parentStart, parentEnd, start, end)) return 'invalidEmbeddedRegionBounds';\n  if (ancestor === -2) return 'invalidEmbeddedRegionAncestry';\n  const sameHost = parentLanguage === language && start === parentStart && end === parentEnd;\n  if (sameHost && depth !== 1) return 'reuseAttached';\n  if (sameHost && rootSpellingReuse) return 'reuse';\n  // The original root adapter parsed a canonical whole-buffer region once\n  // when the requested alias had another spelling. Preserve that exact view.\n  const legacyRootAlias = sameHost && depth === 1 && !rootSpellingReuse;\n  if (ancestor >= 0 && !legacyRootAlias) return 'nonConsumingEmbeddingCycle';\n  if (!acceptEmbeddedRegionLimit(depth) || !acceptEmbeddedRegionLimit(count) || !acceptEmbeddedRegionLimit(bytes)\n    || !acceptEmbeddedRegionLimit(depthLimit) || !acceptEmbeddedRegionLimit(countLimit) || !acceptEmbeddedRegionLimit(byteLimit)) return 'invalidEmbeddedRegionLimits';\n  if (depth > depthLimit) return 'embeddedRegionDepthLimit';\n  if (count >= countLimit) return 'embeddedRegionCountLimit';\n  if (bytes > byteLimit || end - start > byteLimit - bytes) return 'embeddedRegionByteLimit';\n  return 'parse';\n}",
+    "sourceField": "source"
+  },
+  {
+    "id": "grammar.read-embedded-region-disposition",
+    "source": "rust/src/data/embedded-region-rules.lino",
+    "name": "readEmbeddedRegionDisposition",
+    "inventoryName": "read embedded region disposition",
+    "sourceText": "export function readEmbeddedRegionDisposition(parentStart, parentEnd, parentLanguage, language,\n  start, end, ancestor, depth, count, bytes, depthLimit, countLimit, byteLimit, rootSpellingReuse) {\n  if (!acceptEmbeddedRegionBounds(parentStart, parentEnd, start, end)) return 'invalidEmbeddedRegionBounds';\n  if (ancestor === -2) return 'invalidEmbeddedRegionAncestry';\n  const sameHost = parentLanguage === language && start === parentStart && end === parentEnd;\n  if (sameHost && depth !== 1) return 'reuseAttached';\n  if (sameHost && rootSpellingReuse) return 'reuse';\n  // The original root adapter parsed a canonical whole-buffer region once\n  // when the requested alias had another spelling. Preserve that exact view.\n  const legacyRootAlias = sameHost && depth === 1 && !rootSpellingReuse;\n  if (ancestor >= 0 && !legacyRootAlias) return 'nonConsumingEmbeddingCycle';\n  if (!acceptEmbeddedRegionLimit(depth) || !acceptEmbeddedRegionLimit(count) || !acceptEmbeddedRegionLimit(bytes)\n    || !acceptEmbeddedRegionLimit(depthLimit) || !acceptEmbeddedRegionLimit(countLimit) || !acceptEmbeddedRegionLimit(byteLimit)) return 'invalidEmbeddedRegionLimits';\n  if (depth > depthLimit) return 'embeddedRegionDepthLimit';\n  if (count >= countLimit) return 'embeddedRegionCountLimit';\n  if (bytes > byteLimit || end - start > byteLimit - bytes) return 'embeddedRegionByteLimit';\n  return 'parse';\n}",
+    "sourceField": "source"
+  },
+  {
+    "id": "grammar.read-embedded-region-disposition",
+    "source": "parity/self-translation/embedded-region-rules-native.lino",
+    "name": "read_embedded_region_disposition",
+    "inventoryName": "read embedded region disposition",
+    "sourceText": "pub fn read_embedded_region_disposition(parent_start: f64, parent_end: f64, parent_language: f64, language: f64, start: f64, end: f64, ancestor: f64, depth: f64, count: f64, bytes: f64, depth_limit: f64, count_limit: f64, byte_limit: f64, root_spelling_reuse: bool) -> String {\n    if !(crate::accept_embedded_region_bounds(parent_start, parent_end, start, end)) {\n        String::from(\"invalidEmbeddedRegionBounds\")\n    } else {\n        if (ancestor == ((-2f64))) {\n            String::from(\"invalidEmbeddedRegionAncestry\")\n        } else {\n            {\n                let same_host = (((parent_language == language) && (start == parent_start)) && (end == parent_end));\n                if (same_host && (depth != (1f64))) {\n                    String::from(\"reuseAttached\")\n                } else {\n                    if (same_host && root_spelling_reuse) {\n                        String::from(\"reuse\")\n                    } else {\n                        {\n                            let legacy_root_alias = ((same_host && (depth == (1f64))) && !root_spelling_reuse);\n                            if ((ancestor >= (0f64)) && !legacy_root_alias) {\n                                String::from(\"nonConsumingEmbeddingCycle\")\n                            } else {\n                                if (((((!(crate::accept_embedded_region_limit(depth)) || !(crate::accept_embedded_region_limit(count))) || !(crate::accept_embedded_region_limit(bytes))) || !(crate::accept_embedded_region_limit(depth_limit))) || !(crate::accept_embedded_region_limit(count_limit))) || !(crate::accept_embedded_region_limit(byte_limit))) {\n                                    String::from(\"invalidEmbeddedRegionLimits\")\n                                } else {\n                                    if (depth > depth_limit) {\n                                        String::from(\"embeddedRegionDepthLimit\")\n                                    } else {\n                                        if (count >= count_limit) {\n                                            String::from(\"embeddedRegionCountLimit\")\n                                        } else {\n                                            if ((bytes > byte_limit) || (((end - start)) > ((byte_limit - bytes)))) {\n                                                String::from(\"embeddedRegionByteLimit\")\n                                            } else {\n                                                String::from(\"parse\")\n                                            }\n                                        }\n                                    }\n                                }\n                            }\n                        }\n                    }\n                }\n            }\n        }\n    }\n}",
+    "sourceField": "emittedSource"
+  },
+  {
+    "id": "grammar.read-embedded-region-charge",
+    "source": "js/src/translation/embedded-region-rules.js",
+    "name": "readEmbeddedRegionCharge",
+    "inventoryName": "read embedded region charge",
+    "sourceText": "export function readEmbeddedRegionCharge(current, start, end, byteCharge) {\n  return current + (byteCharge ? end - start : 1);\n}"
+  },
+  {
+    "id": "grammar.read-embedded-region-charge",
+    "source": "rust/src/translation/embedded_region_rules/part_1.rs",
+    "name": "read_embedded_region_charge",
+    "inventoryName": "read embedded region charge",
+    "sourceText": "pub const fn read_embedded_region_charge(\n    current: f64,\n    start: f64,\n    end: f64,\n    byte_charge: bool,\n) -> f64 {\n    current + if byte_charge { end - start } else { 1f64 }\n}"
+  },
+  {
+    "id": "grammar.read-embedded-region-charge",
+    "source": "js/src/translation/data/embedded-region-rules.lino",
+    "name": "readEmbeddedRegionCharge",
+    "inventoryName": "read embedded region charge",
+    "sourceText": "export function readEmbeddedRegionCharge(current, start, end, byteCharge) {\n  return current + (byteCharge ? end - start : 1);\n}",
+    "sourceField": "source"
+  },
+  {
+    "id": "grammar.read-embedded-region-charge",
+    "source": "rust/src/data/embedded-region-rules.lino",
+    "name": "readEmbeddedRegionCharge",
+    "inventoryName": "read embedded region charge",
+    "sourceText": "export function readEmbeddedRegionCharge(current, start, end, byteCharge) {\n  return current + (byteCharge ? end - start : 1);\n}",
+    "sourceField": "source"
+  },
+  {
+    "id": "grammar.read-embedded-region-charge",
+    "source": "parity/self-translation/embedded-region-rules-native.lino",
+    "name": "read_embedded_region_charge",
+    "inventoryName": "read embedded region charge",
+    "sourceText": "pub fn read_embedded_region_charge(current: f64, start: f64, end: f64, byte_charge: bool) -> f64 {\n    (current + if byte_charge {\n        (end - start)\n    } else {\n        1f64\n    })\n}",
+    "sourceField": "emittedSource"
+  },
+  {
+    "id": "grammar.read-embedded-region-diagnostic-observed",
+    "source": "js/src/translation/embedded-region-rules.js",
+    "name": "readEmbeddedRegionDiagnosticObserved",
+    "inventoryName": "read embedded region diagnostic observed",
+    "sourceText": "export function readEmbeddedRegionDiagnosticObserved(reason, depth, count, bytes, start, end) {\n  if (reason === 'embeddedRegionDepthLimit') return depth;\n  if (reason === 'embeddedRegionCountLimit') {\n    const observed = readEmbeddedRegionCharge(count, start, end, false);\n    return acceptEmbeddedRegionLimit(observed) ? observed : -1;\n  }\n  if (reason === 'embeddedRegionByteLimit') {\n    const observed = readEmbeddedRegionCharge(bytes, start, end, true);\n    return acceptEmbeddedRegionLimit(observed) ? observed : -1;\n  }\n  return -1;\n}"
+  },
+  {
+    "id": "grammar.read-embedded-region-diagnostic-observed",
+    "source": "rust/src/translation/embedded_region_rules/part_1.rs",
+    "name": "read_embedded_region_diagnostic_observed",
+    "inventoryName": "read embedded region diagnostic observed",
+    "sourceText": "pub fn read_embedded_region_diagnostic_observed(\n    reason: &str,\n    depth: f64,\n    count: f64,\n    bytes: f64,\n    start: f64,\n    end: f64,\n) -> f64 {\n    if reason == \"embeddedRegionDepthLimit\" {\n        depth\n    } else if reason == \"embeddedRegionCountLimit\" {\n        {\n            let observed = self::read_embedded_region_charge(count, start, end, false);\n            if self::accept_embedded_region_limit(observed) {\n                observed\n            } else {\n                -1f64\n            }\n        }\n    } else if reason == \"embeddedRegionByteLimit\" {\n        {\n            let observed_2 = self::read_embedded_region_charge(bytes, start, end, true);\n            if self::accept_embedded_region_limit(observed_2) {\n                observed_2\n            } else {\n                -1f64\n            }\n        }\n    } else {\n        -1f64\n    }\n}"
+  },
+  {
+    "id": "grammar.read-embedded-region-diagnostic-observed",
+    "source": "js/src/translation/data/embedded-region-rules.lino",
+    "name": "readEmbeddedRegionDiagnosticObserved",
+    "inventoryName": "read embedded region diagnostic observed",
+    "sourceText": "export function readEmbeddedRegionDiagnosticObserved(reason, depth, count, bytes, start, end) {\n  if (reason === 'embeddedRegionDepthLimit') return depth;\n  if (reason === 'embeddedRegionCountLimit') {\n    const observed = readEmbeddedRegionCharge(count, start, end, false);\n    return acceptEmbeddedRegionLimit(observed) ? observed : -1;\n  }\n  if (reason === 'embeddedRegionByteLimit') {\n    const observed = readEmbeddedRegionCharge(bytes, start, end, true);\n    return acceptEmbeddedRegionLimit(observed) ? observed : -1;\n  }\n  return -1;\n}",
+    "sourceField": "source"
+  },
+  {
+    "id": "grammar.read-embedded-region-diagnostic-observed",
+    "source": "rust/src/data/embedded-region-rules.lino",
+    "name": "readEmbeddedRegionDiagnosticObserved",
+    "inventoryName": "read embedded region diagnostic observed",
+    "sourceText": "export function readEmbeddedRegionDiagnosticObserved(reason, depth, count, bytes, start, end) {\n  if (reason === 'embeddedRegionDepthLimit') return depth;\n  if (reason === 'embeddedRegionCountLimit') {\n    const observed = readEmbeddedRegionCharge(count, start, end, false);\n    return acceptEmbeddedRegionLimit(observed) ? observed : -1;\n  }\n  if (reason === 'embeddedRegionByteLimit') {\n    const observed = readEmbeddedRegionCharge(bytes, start, end, true);\n    return acceptEmbeddedRegionLimit(observed) ? observed : -1;\n  }\n  return -1;\n}",
+    "sourceField": "source"
+  },
+  {
+    "id": "grammar.read-embedded-region-diagnostic-observed",
+    "source": "parity/self-translation/embedded-region-rules-native.lino",
+    "name": "read_embedded_region_diagnostic_observed",
+    "inventoryName": "read embedded region diagnostic observed",
+    "sourceText": "pub fn read_embedded_region_diagnostic_observed(reason: String, depth: f64, count: f64, bytes: f64, start: f64, end: f64) -> f64 {\n    if (reason == \"embeddedRegionDepthLimit\") {\n        depth\n    } else {\n        if (reason == \"embeddedRegionCountLimit\") {\n            {\n                let observed = crate::read_embedded_region_charge(count, start, end, false);\n                if crate::accept_embedded_region_limit(observed) {\n                    observed\n                } else {\n                    (-1f64)\n                }\n            }\n        } else {\n            if (reason == \"embeddedRegionByteLimit\") {\n                {\n                    let observed_2 = crate::read_embedded_region_charge(bytes, start, end, true);\n                    if crate::accept_embedded_region_limit(observed_2) {\n                        observed_2\n                    } else {\n                        (-1f64)\n                    }\n                }\n            } else {\n                (-1f64)\n            }\n        }\n    }\n}",
+    "sourceField": "emittedSource"
+  },
+  {
+    "id": "grammar.read-embedded-region-diagnostic-limit",
+    "source": "js/src/translation/embedded-region-rules.js",
+    "name": "readEmbeddedRegionDiagnosticLimit",
+    "inventoryName": "read embedded region diagnostic limit",
+    "sourceText": "export function readEmbeddedRegionDiagnosticLimit(reason, depthLimit, countLimit, byteLimit) {\n  if (reason === 'embeddedRegionDepthLimit') return depthLimit;\n  if (reason === 'embeddedRegionCountLimit') return countLimit;\n  if (reason === 'embeddedRegionByteLimit') return byteLimit;\n  return -1;\n}"
+  },
+  {
+    "id": "grammar.read-embedded-region-diagnostic-limit",
+    "source": "rust/src/translation/embedded_region_rules/part_1.rs",
+    "name": "read_embedded_region_diagnostic_limit",
+    "inventoryName": "read embedded region diagnostic limit",
+    "sourceText": "pub fn read_embedded_region_diagnostic_limit(\n    reason: &str,\n    depth_limit: f64,\n    count_limit: f64,\n    byte_limit: f64,\n) -> f64 {\n    if reason == \"embeddedRegionDepthLimit\" {\n        depth_limit\n    } else if reason == \"embeddedRegionCountLimit\" {\n        count_limit\n    } else if reason == \"embeddedRegionByteLimit\" {\n        byte_limit\n    } else {\n        -1f64\n    }\n}"
+  },
+  {
+    "id": "grammar.read-embedded-region-diagnostic-limit",
+    "source": "js/src/translation/data/embedded-region-rules.lino",
+    "name": "readEmbeddedRegionDiagnosticLimit",
+    "inventoryName": "read embedded region diagnostic limit",
+    "sourceText": "export function readEmbeddedRegionDiagnosticLimit(reason, depthLimit, countLimit, byteLimit) {\n  if (reason === 'embeddedRegionDepthLimit') return depthLimit;\n  if (reason === 'embeddedRegionCountLimit') return countLimit;\n  if (reason === 'embeddedRegionByteLimit') return byteLimit;\n  return -1;\n}",
+    "sourceField": "source"
+  },
+  {
+    "id": "grammar.read-embedded-region-diagnostic-limit",
+    "source": "rust/src/data/embedded-region-rules.lino",
+    "name": "readEmbeddedRegionDiagnosticLimit",
+    "inventoryName": "read embedded region diagnostic limit",
+    "sourceText": "export function readEmbeddedRegionDiagnosticLimit(reason, depthLimit, countLimit, byteLimit) {\n  if (reason === 'embeddedRegionDepthLimit') return depthLimit;\n  if (reason === 'embeddedRegionCountLimit') return countLimit;\n  if (reason === 'embeddedRegionByteLimit') return byteLimit;\n  return -1;\n}",
+    "sourceField": "source"
+  },
+  {
+    "id": "grammar.read-embedded-region-diagnostic-limit",
+    "source": "parity/self-translation/embedded-region-rules-native.lino",
+    "name": "read_embedded_region_diagnostic_limit",
+    "inventoryName": "read embedded region diagnostic limit",
+    "sourceText": "pub fn read_embedded_region_diagnostic_limit(reason: String, depth_limit: f64, count_limit: f64, byte_limit: f64) -> f64 {\n    if (reason == \"embeddedRegionDepthLimit\") {\n        depth_limit\n    } else {\n        if (reason == \"embeddedRegionCountLimit\") {\n            count_limit\n        } else {\n            if (reason == \"embeddedRegionByteLimit\") {\n                byte_limit\n            } else {\n                (-1f64)\n            }\n        }\n    }\n}",
+    "sourceField": "emittedSource"
+  },
+  {
+    "id": "grammar.accept-embedded-region-source-coverage",
+    "source": "js/src/translation/embedded-region-rules.js",
+    "name": "acceptEmbeddedRegionSourceCoverage",
+    "inventoryName": "accept embedded region source coverage",
+    "sourceText": "export function acceptEmbeddedRegionSourceCoverage(start, coveredUntil) {\n  return start >= coveredUntil;\n}"
+  },
+  {
+    "id": "grammar.accept-embedded-region-source-coverage",
+    "source": "rust/src/translation/embedded_region_rules/part_1.rs",
+    "name": "accept_embedded_region_source_coverage",
+    "inventoryName": "accept embedded region source coverage",
+    "sourceText": "pub const fn accept_embedded_region_source_coverage(start: f64, covered_until: f64) -> bool {\n    start >= covered_until\n}"
+  },
+  {
+    "id": "grammar.accept-embedded-region-source-coverage",
+    "source": "js/src/translation/data/embedded-region-rules.lino",
+    "name": "acceptEmbeddedRegionSourceCoverage",
+    "inventoryName": "accept embedded region source coverage",
+    "sourceText": "export function acceptEmbeddedRegionSourceCoverage(start, coveredUntil) {\n  return start >= coveredUntil;\n}",
+    "sourceField": "source"
+  },
+  {
+    "id": "grammar.accept-embedded-region-source-coverage",
+    "source": "rust/src/data/embedded-region-rules.lino",
+    "name": "acceptEmbeddedRegionSourceCoverage",
+    "inventoryName": "accept embedded region source coverage",
+    "sourceText": "export function acceptEmbeddedRegionSourceCoverage(start, coveredUntil) {\n  return start >= coveredUntil;\n}",
+    "sourceField": "source"
+  },
+  {
+    "id": "grammar.accept-embedded-region-source-coverage",
+    "source": "parity/self-translation/embedded-region-rules-native.lino",
+    "name": "accept_embedded_region_source_coverage",
+    "inventoryName": "accept embedded region source coverage",
+    "sourceText": "pub fn accept_embedded_region_source_coverage(start: f64, covered_until: f64) -> bool {\n    (start >= covered_until)\n}",
+    "sourceField": "emittedSource"
+  },
+  {
+    "id": "translation.accept-java-script-optional-tuple-context",
+    "source": "js/src/translation/frontend-rules.js",
+    "name": "acceptJavaScriptOptionalTupleContext",
+    "inventoryName": "accept java script optional tuple context",
+    "sourceText": "export function acceptJavaScriptOptionalTupleContext(language, sourceKind, expectedKind, presentKind) {\n  return language === 'JavaScript' && sourceKind === 'array' && expectedKind === 'option' && presentKind === 'tuple';\n}"
+  },
+  {
+    "id": "translation.accept-java-script-optional-tuple-context",
+    "source": "rust/src/translation/frontend_rules.rs",
+    "name": "accept_java_script_optional_tuple_context",
+    "inventoryName": "accept java script optional tuple context",
+    "sourceText": "pub fn accept_java_script_optional_tuple_context(\n    language: &str,\n    source_kind: &str,\n    expected_kind: &str,\n    present_kind: &str,\n) -> bool {\n    (((language == \"JavaScript\") && (source_kind == \"array\")) && (expected_kind == \"option\"))\n        && (present_kind == \"tuple\")\n}"
+  },
+  {
+    "id": "repository.type-query-native-style-identity",
+    "source": "js/scripts/frontend-rule-style-corrections.mjs",
+    "name": "frontendTypeQueryNativeStyleId",
+    "inventoryName": "type query native style identity",
+    "sourceText": "export const frontendTypeQueryNativeStyleId='reviewed-frontend-type-query-and-optional-tuple-styles';"
+  },
+  {
+    "id": "repository.read-type-query-native-style-corrections",
+    "source": "js/scripts/frontend-rule-style-corrections.mjs",
+    "name": "readFrontendTypeQueryStyleCorrections",
+    "inventoryName": "read type query native style corrections",
+    "sourceText": "export function readFrontendTypeQueryStyleCorrections(source) {\n  const names=['read_type_query_result','accept_java_script_optional_tuple_context'];\n  const blocks=names.map(name=>readSourceTextRustBlock(source,'fn',name));\n  const loans=readPortableSourceParameterStyles(blocks.join('\\n\\n')).source;\n  return names.flatMap((name,index)=>{\n    const borrowed=readSourceTextRustBlock(loans,'fn',name);\n    const to=simplifySourceTextRustParentheses(simplifyPortableProductLibraryStyles(borrowed));\n    assert.doesNotMatch(to,/#\\[(?:allow|expect)\\(/u,'a current frontend style needs no lint suppression');\n    return to===blocks[index]?[]:[{op:'replace',field:'source',from:blocks[index],to}];\n  });\n}"
+  },
+  {
+    "id": "repository.check-structural-type-query-and-optional-tuple-decisions",
+    "source": "js/tests/translation-frontend-rules.test.js",
+    "name": "current frontend decisions derive borrowed type queries and optional tuple guards without changing their observations",
+    "inventoryName": "check structural type query and optional tuple decisions",
+    "sourceText": "test('current frontend decisions derive borrowed type queries and optional tuple guards without changing their observations', () => {\n  const source = readFileSync(new URL('../src/translation/frontend-rules.js', import.meta.url), 'utf8');\n  const raw = emitRust(checkProgram(parseJavaScript(source))).text;\n  const actions = readFrontendTypeQueryStyleCorrections(raw);\n  const decorators = new DecoratorSet([{ id: 'current-frontend-decision-controls', level: 'emitter', order: 0,\n    when: [['format', 'Rust']], actions }]);\n  const styled = decorators.decorate('emitter', { format: 'Rust', source: raw }).source;\n  assert.deepEqual(readFrontendTypeQueryStyleCorrections(styled), [], 'every complete source-derived replacement is idempotent');\n  const names = ['read_type_query_result', 'accept_java_script_optional_tuple_context'];\n  const blocks = names.map(name => readSourceTextRustBlock(styled, 'fn', name));\n  assert.match(blocks[0], /^pub fn read_type_query_result\\(kind: &str\\) -> String/u);\n  assert.doesNotMatch(blocks[0], /else\\s*\\{\\s*if\\b/u, 'the complete lookup keeps its original ordered tests in one else-if chain');\n  for (const name of ['language', 'source_kind', 'expected_kind', 'present_kind']) {\n    assert.match(blocks[1], new RegExp(name + ': &str', 'u'));\n  }\n  for (const block of blocks) assert.doesNotMatch(block, /#\\[(?:allow|expect)\\(/u);\n  const generated = readFileSync(new URL('../../rust/src/translation/frontend_rules.rs', import.meta.url), 'utf8');\n  assert.match(readSourceTextRustBlock(generated, 'fn', names[0]), /^pub fn read_type_query_result\\(kind: &str\\) -> String/u);\n  const generatedGuard = readSourceTextRustBlock(generated, 'fn', names[1]);\n  for (const name of ['language', 'source_kind', 'expected_kind', 'present_kind']) {\n    assert.match(generatedGuard, new RegExp(name + ': &str', 'u'));\n  }\n  const observations = [\n    ['float', 'number'], ['nat', 'bigint'], ['int', 'bigint'], ['bool', 'boolean'],\n    ['string', 'string'], ['function', 'function'], ['array', 'object'], ['data', 'object'],\n    ['record', 'object'], ['tuple', 'object'], ['map', 'object'], ['set', 'object'],\n    ['', ''], ['unknown', ''], ['option', ''], ['undefined', ''],\n  ];\n  for (const candidate of [names.map(name => readSourceTextRustBlock(raw, 'fn', name)), blocks]) {\n    const context = {};\n    runInNewContext(emitJavaScript(checkProgram(parseRust(candidate.join('\\n\\n') + '\\nfn main() {}'))).text,\n      context, { timeout: 1000 });\n    for (const [kind, expected] of observations) {\n      assert.equal(readTypeQueryResult(kind), expected, kind);\n      assert.equal(context.read_type_query_result(kind), expected, kind);\n    }\n    for (const language of ['JavaScript', 'Rust', 'unknown']) for (const sourceKind of ['array', 'tuple', 'unknown']) {\n      for (const expectedKind of ['option', 'tuple', 'unknown']) for (const presentKind of ['tuple', 'array', 'unknown']) {\n        const expected = language === 'JavaScript' && sourceKind === 'array' && expectedKind === 'option' && presentKind === 'tuple';\n        assert.equal(acceptJavaScriptOptionalTupleContext(language, sourceKind, expectedKind, presentKind), expected);\n        assert.equal(context.accept_java_script_optional_tuple_context(language, sourceKind, expectedKind, presentKind), expected);\n      }\n    }\n  }\n})"
+  },
+  {
+    "id": "repository.check-additive-type-query-native-styles",
+    "source": "js/tests/translation-frontend-rule-styles.test.js",
+    "name": "current frontend type-query styles append two source-derived owners while retaining the original three style actions",
+    "inventoryName": "check additive type query native styles",
+    "sourceText": "test('current frontend type-query styles append two source-derived owners while retaining the original three style actions',()=>{\n  const input=readFileSync(new URL('../src/translation/frontend-rules.js',import.meta.url),'utf8');\n  const emitted=emitRust(checkProgram(parseJavaScript(input)));\n  const decorators=DecoratorSet.fromLino(readFileSync(new URL('../../parity/self-translation/frontend-rules-decorators.lino',import.meta.url),'utf8'));\n  const historical=decorators.decorators.find(definition=>definition.id===frontendRuleNativeStyleId);\n  assert.ok(historical,'the original reviewed style row remains registered');\n  assert.equal(historical.actions.length,3,'all three original complete source owners remain in their original row');\n  const base=new DecoratorSet(decorators.decorators.filter(definition=>definition.id!==frontendTypeQueryNativeStyleId));\n  let raw=formatProductRuleSource(decorateEmitted('Rust',{source:emitted.text},base).source);\n  for(let round=0;round<10;round++){\n    const next=formatProductRuleSource(base.decorate('emitter',{format:'Rust',scope:'formatted-module',source:raw}).source);\n    if(next===raw)break;\n    raw=next;\n    assert.ok(round<9,'every historical frontend row retains its existing fixed point');\n  }\n  const actions=readFrontendTypeQueryStyleCorrections(raw);\n  assert.equal(actions.length,2);\n  const names=['read_type_query_result','accept_java_script_optional_tuple_context'];\n  const literals=source=>tokenize(source,'Rust').tokens.filter(token=>['string','number'].includes(token.kind)).map(token=>source.slice(token.start,token.end));\n  for(const[action,name]of actions.map((action,index)=>[action,names[index]])){\n    assert.ok(action.from.startsWith('pub fn '+name+'('));\n    assert.ok(action.to.startsWith('pub fn '+name+'('));\n    assert.deepEqual(literals(action.to),literals(action.from),'ordered comparison and result literals remain unchanged');\n    assert.doesNotMatch(action.to,/#\\[(?:allow|expect)\\(/u);\n  }\n  assert.match(actions[0].to,/kind: &str/u);\n  assert.doesNotMatch(actions[0].to,/else\\s*\\{\\s*if\\b/u);\n  for(const name of['language','source_kind','expected_kind','present_kind'])assert.match(actions[1].to,new RegExp(name+': &str','u'));\n  const styled=new DecoratorSet([{id:frontendTypeQueryNativeStyleId,level:'emitter',order:3100,\n    when:[['format','Rust'],['scope','formatted-module']],actions}]);\n  const replay=styled.decorate('emitter',{format:'Rust',scope:'formatted-module',source:raw}).source;\n  assert.deepEqual(readFrontendTypeQueryStyleCorrections(replay),[]);\n  const recorded=decorators.decorators.find(definition=>definition.id===frontendTypeQueryNativeStyleId);\n  assert.ok(recorded,'the dedicated updater records the additive styles separately from every historical row');\n  assert.deepEqual(recorded.actions,actions);\n})"
+  },
+  {
+    "id": "repository.hash-embedded-region-source-content",
+    "source": "js/scripts/generate-embedded-region-rules.mjs",
+    "name": "digest",
+    "inventoryName": "hash embedded region source content",
+    "sourceText": "const digest = source => createHash('sha256').update(source).digest('hex');"
+  },
+  {
+    "id": "repository.read-embedded-region-source-policy",
+    "source": "js/scripts/generate-embedded-region-rules.mjs",
+    "name": "embeddedRegionRulesPolicy",
+    "inventoryName": "read embedded region source policy",
+    "sourceText": "export function embeddedRegionRulesPolicy() {\n  const source = readFileSync(sourceFile, 'utf8');\n  return { schemaVersion: 1, model: 'bounded recursive default CST attachment 1', source, sourceSha256: digest(source),\n    defaults: { depthLimit: readEmbeddedRegionDefaultLimit('depth'),\n      countLimit: readEmbeddedRegionDefaultLimit('count'), byteLimit: readEmbeddedRegionDefaultLimit('bytes') },\n    primitiveBasis: {\n      coordinates: 'Every planner bound is an absolute UTF-8 byte offset in the original host source. Child bounds stay inside their immediate host.',\n      ancestry: 'A dense parent column names strictly earlier frames; canonical language identifiers and both byte bounds must agree for an ancestry match.',\n      reuse: 'The current whole host is not parsed again, except the original first-level alias view when the requested root spelling differs. Nested already-attached views add no duplicate self-boundary. A more distant identical invocation reports a non-consuming cycle.',\n      order: 'Hosts are processed in FIFO order; each original direct region is inserted before descendants and every descendant names its containing Region.',\n      charges: 'Every admitted child parse attempt charges one region and its complete physical byte length. The root parse is excluded; overlapping child bytes are charged again for each parse.',\n      diagnostics: 'A refused region retains its boundary and an error Relation with the reason, current counters and applicable observed value and limit.',\n      budgets: 'Adapter depth, attempted region count and total child parse bytes are separate from the registered parsers own evaluation, recovery, memory and nesting budgets.',\n      rendering: 'Overlapping source-token views of the same physical bytes render once; unspanned constructed fragments retain their original order.',\n    },\n    boundary: 'Default registered parser attachment only. This policy does not establish generic any/all grammar selection or proved global concept identity.',\n  };\n}"
+  },
+  {
+    "id": "repository.render-embedded-region-native-default-data",
+    "source": "js/scripts/generate-embedded-region-rules.mjs",
+    "name": "renderEmbeddedRegionNativeDefaults",
+    "inventoryName": "render embedded region native default data",
+    "sourceText": "export function renderEmbeddedRegionNativeDefaults(defaults) {\n  const fields = [['DEPTH', 'depthLimit'], ['COUNT', 'countLimit'], ['BYTE', 'byteLimit']];\n  for (const [, field] of fields) {\n    if (!acceptEmbeddedRegionLimit(defaults[field])) throw new TypeError('native adapter defaults require nonnegative safe integers');\n  }\n  return '// Generated DATA from the shared embedded-region-rules.js defaults. Do not edit.\\n'\n    + fields.map(([name, field]) => `pub const DEFAULT_EMBEDDED_REGION_${name}_LIMIT: usize = ${defaults[field]};`).join('\\n') + '\\n';\n}"
+  },
+  {
+    "id": "repository.generate-embedded-region-source-library",
+    "source": "js/scripts/generate-embedded-region-rules.mjs",
+    "name": "generateEmbeddedRegionRules",
+    "inventoryName": "generate embedded region source library",
+    "sourceText": "export async function generateEmbeddedRegionRules({ check = false, native = false } = {}) {\n  const policy = embeddedRegionRulesPolicy();\n  for (const file of policyFiles) {\n    if (check) {\n      if (!isDeepStrictEqual(readProjectData(file), policy)) throw new Error('embedded region source policy is stale');\n    } else writeProjectData(file, policy);\n  }\n  const defaults = renderEmbeddedRegionNativeDefaults(policy.defaults);\n  if (check) {\n    if (readFileSync(defaultsFile, 'utf8') !== defaults) throw new Error('native embedded region default DATA is stale');\n  } else writeFileSync(defaultsFile, defaults);\n  const fixture = recursiveEmbeddedRegionCases();\n  if (check) {\n    if (!isDeepStrictEqual(readProjectData(fixtureFile), fixture)) throw new Error('authored recursive default region fixtures are stale');\n  } else writeProjectData(fixtureFile, fixture);\n  if (native) {\n    const { parseJavaScript } = await import('../src/translation/javascript.js');\n    const { checkProgram } = await import('../src/translation/check.js');\n    const { emitRust } = await import('../src/translation/emit-rust.js');\n    const emitted = emitRust(checkProgram(parseJavaScript(policy.source, { referenceSemantics: false })), { arrayConsumption: true });\n    const nativeFiles = writeRecordRuleLibrary(emitted, 'embedded_region_rules', { check, sourceStyles: readEmbeddedRegionNativeStyles });\n    const artifact = { schemaVersion: 1, model: policy.model, sourceSha256: policy.sourceSha256,\n      assumptions: emitted.assumptions, encodings: emitted.encodings,\n      emittedSource: emitted.text, emittedSourceSha256: digest(emitted.text),\n      nativeDefaults: defaults, nativeDefaultsSha256: digest(defaults),\n      nativeFiles: nativeFiles.map(file => ({ path: file.path ?? 'embedded_region_rules.rs',\n        source: file.source, sha256: digest(file.source) })) };\n    if (check) {\n      if (!isDeepStrictEqual(readProjectData(artifactFile), artifact)) throw new Error('complete embedded region native translation is stale');\n    } else writeProjectData(artifactFile, artifact);\n  }\n  return policy;\n}"
+  },
+  {
+    "id": "repository.read-embedded-region-native-syntax",
+    "source": "js/scripts/embedded-region-native-styles.mjs",
+    "name": "readEmbeddedRegionNativeSyntax",
+    "inventoryName": "read embedded region native syntax",
+    "sourceText": "function readEmbeddedRegionNativeSyntax(source) {\n  const {tokens, comments} = tokenize(source, 'Rust'), matching = new Map(), stack = [];\n  for (let at = 0; at < tokens.length; at += 1) {\n    if (tokens[at].kind !== 'punct') continue;\n    if (['(', '[', '{'].includes(tokens[at].value)) stack.push(at);\n    else if ([')', ']', '}'].includes(tokens[at].value)) {\n      const open = stack.pop();\n      assert.equal(tokens[open]?.value, {')': '(', ']': '[', '}': '{'}[tokens[at].value],\n        'embedded-region styles retain complete balanced source');\n      matching.set(open, at); matching.set(at, open);\n    }\n  }\n  assert.equal(stack.length, 0, 'embedded-region styles retain every delimiter');\n  const functions = [];\n  for (let at = 0; at < tokens.length; at += 1) {\n    if (tokens[at].value === 'pub' && tokens[at + 1]?.value === 'fn'\n      && tokens[at + 2]?.kind === 'identifier' && tokens[at + 3]?.value === '(') {\n      const close = matching.get(at + 3);\n      let body = close + 1;\n      while (body < tokens.length && !['{', ';'].includes(tokens[body].value)) body += 1;\n      const end = matching.get(body);\n      if (end === undefined) continue;\n      functions.push({at, name: tokens[at + 2].value, open: at + 3, close, body, end});\n      at = end;\n    } else if (tokens[at].kind === 'punct' && ['{', '[', '('].includes(tokens[at].value)) at = matching.get(at);\n  }\n  return {tokens, comments, matching, functions};\n}"
+  },
+  {
+    "id": "repository.read-embedded-region-native-parameters",
+    "source": "js/scripts/embedded-region-native-styles.mjs",
+    "name": "readEmbeddedRegionNativeParameters",
+    "inventoryName": "read embedded region native parameters",
+    "sourceText": "function readEmbeddedRegionNativeParameters(source, syntax, fn) {\n  const {tokens, matching} = syntax, parameters = new Map();\n  let start = fn.open + 1;\n  for (let at = start; at <= fn.close; at += 1) {\n    if (at !== fn.close && matching.get(at) > at) { at = matching.get(at); continue; }\n    if (at !== fn.close && tokens[at].value !== ',') continue;\n    if (start !== at) {\n      const name = tokens[start]?.value === 'mut' ? start + 1 : start;\n      if (tokens[name]?.kind !== 'identifier' || tokens[name + 1]?.value !== ':'\n        || parameters.has(tokens[name].value) || name + 2 >= at) return undefined;\n      parameters.set(tokens[name].value, source.slice(tokens[name + 2].start, tokens[at - 1].end).replace(/\\s+/gu, ''));\n    }\n    start = at + 1;\n  }\n  return parameters;\n}"
+  },
+  {
+    "id": "repository.accept-embedded-region-primitive-body",
+    "source": "js/scripts/embedded-region-native-styles.mjs",
+    "name": "acceptEmbeddedRegionPrimitiveBody",
+    "inventoryName": "accept embedded region primitive body",
+    "sourceText": "function acceptEmbeddedRegionPrimitiveBody(syntax, fn, parameters) {\n  const {tokens, matching} = syntax;\n  if (!parameters || [...parameters.values()].some(type => !['f64', 'bool'].includes(type))\n    || tokens[fn.close + 1]?.value !== '->' || !['f64', 'bool'].includes(tokens[fn.close + 2]?.value)\n    || fn.body !== fn.close + 3) return false;\n  let at = fn.body + 1;\n  const precedence = new Map([['||', 1], ['&&', 2], ['==', 3], ['!=', 3], ['<', 3], ['<=', 3], ['>', 3], ['>=', 3],\n    ['+', 4], ['-', 4], ['*', 5], ['/', 5], ['%', 5]]);\n  const fail = () => { throw new Error('unsupported embedded-region primitive expression'); };\n  const primary = () => {\n    const token = tokens[at++];\n    if (token?.value === '(' || token?.value === '{') {\n      const end = matching.get(at - 1), type = expression(0);\n      if (at !== end) fail();\n      at += 1; return type;\n    }\n    if (token?.value === 'if') {\n      if (expression(0) !== 'bool' || tokens[at]?.value !== '{') fail();\n      const first = primary();\n      if (tokens[at++]?.value !== 'else' || !['{', 'if'].includes(tokens[at]?.value)) fail();\n      const second = primary();\n      if (first !== second) fail();\n      return first;\n    }\n    if (token?.value === '!' || token?.value === '-') {\n      const type = primary();\n      if (type !== (token.value === '!' ? 'bool' : 'f64')) fail();\n      return type;\n    }\n    if (token?.kind === 'number' && /f64$/u.test(token.raw)) return 'f64';\n    if (token?.kind === 'identifier' && ['true', 'false'].includes(token.value)) return 'bool';\n    if (token?.kind === 'identifier' && parameters.has(token.value)) return parameters.get(token.value);\n    fail();\n  };\n  const expression = minimum => {\n    let type = primary();\n    while (precedence.has(tokens[at]?.value) && precedence.get(tokens[at].value) >= minimum) {\n      const operation = tokens[at++].value, right = expression(precedence.get(operation) + 1);\n      if (['&&', '||'].includes(operation)) {\n        if (type !== 'bool' || right !== 'bool') fail();\n      } else if (['==', '!=', '<', '<=', '>', '>='].includes(operation)) {\n        if (type !== 'f64' || right !== 'f64') fail();\n        type = 'bool';\n      } else if (type !== 'f64' || right !== 'f64') fail();\n    }\n    return type;\n  };\n  try { return expression(0) === tokens[fn.close + 2].value && at === fn.end; }\n  catch (error) { if (error.message === 'unsupported embedded-region primitive expression') return false; throw error; }\n}"
+  },
+  {
+    "id": "repository.accept-embedded-region-native-context",
+    "source": "js/scripts/embedded-region-native-styles.mjs",
+    "name": "acceptEmbeddedRegionNativeContext",
+    "inventoryName": "accept embedded region native context",
+    "sourceText": "function acceptEmbeddedRegionNativeContext(syntax) {\n  const {tokens, matching} = syntax;\n  for (let at = 0; at < tokens.length; at += 1) {\n    const token = tokens[at];\n    if (token.kind === 'identifier' && ['use', 'extern', 'unsafe'].includes(token.value)) return false;\n    if (token.kind === 'identifier' && ['type', 'struct', 'enum', 'union', 'mod'].includes(token.value)\n      && ['f64', 'bool', 'Option', 'std', 'core'].includes(tokens[at + 1]?.value)) return false;\n    if (token.kind === 'macro' && (!['vec', 'format', 'panic', 'assert'].includes(token.value)\n      || tokens[at - 1]?.value === '::' && !(tokens[at - 2]?.value === 'std' && tokens[at - 3]?.value !== '::'))) return false;\n    if (token.value !== '#' || token.kind !== 'punct') continue;\n    const open = tokens[at + 1]?.value === '!' ? at + 2 : at + 1;\n    if (!['allow', 'expect', 'must_use', 'derive'].includes(tokens[open + 1]?.value)) return false;\n    if (tokens[open + 1]?.value === 'derive' && tokens.slice(open + 2, matching.get(open))\n      .some(item => item.kind === 'identifier' && !['Clone', 'Debug', 'PartialEq', 'Eq'].includes(item.value))) return false;\n    at = matching.get(open);\n  }\n  return true;\n}"
+  },
+  {
+    "id": "repository.accept-embedded-region-array-provider",
+    "source": "js/scripts/embedded-region-native-styles.mjs",
+    "name": "acceptEmbeddedRegionArrayProvider",
+    "inventoryName": "accept embedded region array provider",
+    "sourceText": "function acceptEmbeddedRegionArrayProvider(source, syntax) {\n  const {tokens} = syntax;\n  if (tokens.filter((token, at) => token.value === 'mod' && tokens[at + 1]?.value === 'ml_array').length !== 1) return false;\n  const key = source => JSON.stringify(tokenize(source, 'Rust').tokens.filter(token => token.kind !== 'eof')\n    .map(token => [token.kind, token.raw]));\n  const provider = readSourceTextRustBlock(source, 'mod', 'ml_array');\n  if (tokenize(provider, 'Rust').tokens.filter((token, at, all) => token.value === 'fn' && all[at + 1]?.value === 'optional_at').length !== 1) return false;\n  return key(readSourceTextRustBlock(provider, 'fn', 'optional_at'))\n    === key(readSourceTextRustBlock(readRustArrayPrelude(true), 'fn', 'optional_at'));\n}"
+  },
+  {
+    "id": "repository.read-embedded-region-numeric-fallback-edits",
+    "source": "js/scripts/embedded-region-native-styles.mjs",
+    "name": "readEmbeddedRegionNumericFallbackEdits",
+    "inventoryName": "read embedded region numeric fallback edits",
+    "sourceText": "function readEmbeddedRegionNumericFallbackEdits(syntax, fn, parameters) {\n  const {tokens, matching} = syntax, edits = [];\n  if (!parameters || [...parameters.values()].some(type => !['f64', '&[f64]'].includes(type))) return edits;\n  for (let at = fn.body + 1; at < fn.end; at += 1) {\n    if (tokens[at].kind === 'macro' || tokens[at].kind === 'identifier'\n      && ['fn', 'for', 'match', 'move', 'ref', 'unsafe', 'use'].includes(tokens[at].value)) return [];\n    if (tokens[at].value !== 'let' || tokens[at].kind !== 'identifier') continue;\n    let end = at + 1;\n    while (end < fn.end && !['=', ';', '{'].includes(tokens[end].value)) end += 1;\n    if (tokens.slice(at + 1, end).some(token => token.kind === 'identifier' && parameters.has(token.value))) return [];\n  }\n  const strip = (from, to) => {\n    while (tokens[from]?.value === '(' && matching.get(from) === to - 1) { from += 1; to -= 1; }\n    return [from, to];\n  };\n  for (let at = fn.body + 1; at + 7 < fn.end; at += 1) {\n    if (tokens[at].value !== '.' || tokens[at + 1]?.value !== 'unwrap_or_else' || tokens[at + 2]?.value !== '(') continue;\n    const end = matching.get(at + 2);\n    if (end !== at + 7 || tokens.slice(at + 3, end).map(token => token.value).join(' ') !== '|| f64 :: NAN'\n      || tokens[at - 1]?.value !== ')') continue;\n    let from = matching.get(at - 1), to = at;\n    if (tokens[from - 1]?.value === 'optional_at') from -= 5;\n    [from, to] = strip(from, to);\n    if (tokens.slice(from, from + 6).map(token => token.value).join(' ') !== 'self :: ml_array :: optional_at ('\n      || matching.get(from + 5) !== to - 1) continue;\n    let column = from + 6;\n    const comma = tokens.findIndex((token, index) => index >= column && index < to && token.value === ',');\n    if (comma < 0) continue;\n    const [columnStart, columnEnd] = strip(column, comma);\n    if (columnEnd !== columnStart + 1 || parameters.get(tokens[columnStart]?.value) !== '&[f64]') continue;\n    const index = comma + 1;\n    if (tokens.slice(index, index + 6).map(token => token.value).join(' ') !== 'self :: ml_array :: number_index ('\n      || matching.get(index + 5) !== to - 2 || to - 2 !== index + 7\n      || parameters.get(tokens[index + 6]?.value) !== 'f64') continue;\n    edits.push([tokens[at + 1].start, tokens[at + 1].end, 'unwrap_or'],\n      [tokens[at + 3].start, tokens[at + 3].end, '']);\n  }\n  return edits;\n}"
+  },
+  {
+    "id": "repository.read-embedded-region-native-styles",
+    "source": "js/scripts/embedded-region-native-styles.mjs",
+    "name": "readEmbeddedRegionNativeStyles",
+    "inventoryName": "read embedded region native styles",
+    "sourceText": "export function readEmbeddedRegionNativeStyles(source) {\n  const syntax = readEmbeddedRegionNativeSyntax(source), actions = [];\n  if (!acceptEmbeddedRegionNativeContext(syntax)) return {source, actions};\n  const qualified = new Set(['read_embedded_region_charge', 'accept_embedded_region_source_coverage']);\n  const arrayProvider = acceptEmbeddedRegionArrayProvider(source, syntax);\n  let adapted = source;\n  for (const fn of syntax.functions) {\n    if (syntax.functions.filter(other => other.name === fn.name).length !== 1) continue;\n    const start = syntax.tokens[fn.at].start, end = syntax.tokens[fn.end].end;\n    const from = source.slice(start, end);\n    if (source.split(from).length !== 2) continue;\n    const parameters = readEmbeddedRegionNativeParameters(source, syntax, fn), edits = [];\n    if (qualified.has(fn.name) && acceptEmbeddedRegionPrimitiveBody(syntax, fn, parameters)) {\n      edits.push([syntax.tokens[fn.at + 1].start, syntax.tokens[fn.at + 1].start, 'const ']);\n    }\n    if (arrayProvider && /^ml_read_embedded_region_ancestor_loop[0-9]+$/u.test(fn.name)) {\n      edits.push(...readEmbeddedRegionNumericFallbackEdits(syntax, fn, parameters));\n    }\n    let to = from;\n    for (const [begin, finish, text] of edits.sort((left, right) => right[0] - left[0])) {\n      to = to.slice(0, begin - start) + text + to.slice(finish - start);\n    }\n    if (to !== from) {\n      actions.push({op: 'replace', field: 'source', from, to});\n      adapted = adapted.split(from).join(to);\n    }\n  }\n  return {source: adapted, actions};\n}"
+  },
+  {
+    "id": "repository.refuse-unknown-region-primitive-expression",
+    "source": "js/scripts/embedded-region-native-styles.mjs",
+    "name": "acceptEmbeddedRegionPrimitiveBody::fail",
+    "inventoryName": "refuse unknown region primitive expression",
+    "sourceText": "const fail = () => { throw new Error('unsupported embedded-region primitive expression'); };",
+    "ownerContexts": [
+      "function acceptEmbeddedRegionPrimitiveBody(syntax, fn, parameters) {"
+    ]
+  },
+  {
+    "id": "repository.read-region-primitive-primary-type",
+    "source": "js/scripts/embedded-region-native-styles.mjs",
+    "name": "acceptEmbeddedRegionPrimitiveBody::primary",
+    "inventoryName": "read region primitive primary type",
+    "sourceText": "const primary = () => {\n    const token = tokens[at++];\n    if (token?.value === '(' || token?.value === '{') {\n      const end = matching.get(at - 1), type = expression(0);\n      if (at !== end) fail();\n      at += 1; return type;\n    }\n    if (token?.value === 'if') {\n      if (expression(0) !== 'bool' || tokens[at]?.value !== '{') fail();\n      const first = primary();\n      if (tokens[at++]?.value !== 'else' || !['{', 'if'].includes(tokens[at]?.value)) fail();\n      const second = primary();\n      if (first !== second) fail();\n      return first;\n    }\n    if (token?.value === '!' || token?.value === '-') {\n      const type = primary();\n      if (type !== (token.value === '!' ? 'bool' : 'f64')) fail();\n      return type;\n    }\n    if (token?.kind === 'number' && /f64$/u.test(token.raw)) return 'f64';\n    if (token?.kind === 'identifier' && ['true', 'false'].includes(token.value)) return 'bool';\n    if (token?.kind === 'identifier' && parameters.has(token.value)) return parameters.get(token.value);\n    fail();\n  };",
+    "ownerContexts": [
+      "function acceptEmbeddedRegionPrimitiveBody(syntax, fn, parameters) {"
+    ]
+  },
+  {
+    "id": "repository.read-region-primitive-expression-type",
+    "source": "js/scripts/embedded-region-native-styles.mjs",
+    "name": "acceptEmbeddedRegionPrimitiveBody::expression",
+    "inventoryName": "read region primitive expression type",
+    "sourceText": "const expression = minimum => {\n    let type = primary();\n    while (precedence.has(tokens[at]?.value) && precedence.get(tokens[at].value) >= minimum) {\n      const operation = tokens[at++].value, right = expression(precedence.get(operation) + 1);\n      if (['&&', '||'].includes(operation)) {\n        if (type !== 'bool' || right !== 'bool') fail();\n      } else if (['==', '!=', '<', '<=', '>', '>='].includes(operation)) {\n        if (type !== 'f64' || right !== 'f64') fail();\n        type = 'bool';\n      } else if (type !== 'f64' || right !== 'f64') fail();\n    }\n    return type;\n  };",
+    "ownerContexts": [
+      "function acceptEmbeddedRegionPrimitiveBody(syntax, fn, parameters) {"
+    ]
+  },
+  {
+    "id": "repository.read-region-provider-token-key",
+    "source": "js/scripts/embedded-region-native-styles.mjs",
+    "name": "acceptEmbeddedRegionArrayProvider::key",
+    "inventoryName": "read region provider token key",
+    "sourceText": "const key = source => JSON.stringify(tokenize(source, 'Rust').tokens.filter(token => token.kind !== 'eof')\n    .map(token => [token.kind, token.raw]));",
+    "ownerContexts": [
+      "function acceptEmbeddedRegionArrayProvider(source, syntax) {"
+    ]
+  },
+  {
+    "id": "repository.strip-region-fallback-grouping",
+    "source": "js/scripts/embedded-region-native-styles.mjs",
+    "name": "readEmbeddedRegionNumericFallbackEdits::strip",
+    "inventoryName": "strip region fallback grouping",
+    "sourceText": "const strip = (from, to) => {\n    while (tokens[from]?.value === '(' && matching.get(from) === to - 1) { from += 1; to -= 1; }\n    return [from, to];\n  };",
+    "ownerContexts": [
+      "function readEmbeddedRegionNumericFallbackEdits(syntax, fn, parameters) {"
+    ]
+  },
+  {
+    "id": "repository.review-embedded-region-native-style-replay",
+    "source": "js/tests/translation-embedded-region-native-styles.test.js",
+    "name": "reviewEmbeddedRegionStyles",
+    "inventoryName": "review embedded region native style replay",
+    "sourceText": "function reviewEmbeddedRegionStyles(source) {\n  const result = readEmbeddedRegionNativeStyles(source);\n  const decorators = new DecoratorSet(result.actions.length ? [{id: 'embedded-region-style-control', level: 'emitter', order: 0,\n    when: [['format', 'Rust']], actions: result.actions}] : []);\n  assert.equal(decorators.decorate('emitter', {format: 'Rust', source}).source, result.source);\n  assert.deepEqual(readEmbeddedRegionNativeStyles(result.source), {source: result.source, actions: []});\n  const original = tokenize(source, 'Rust'), styled = tokenize(result.source, 'Rust');\n  assert.deepEqual(styled.comments.map(comment => comment.text), original.comments.map(comment => comment.text));\n  assert.deepEqual(styled.tokens.filter(token => ['number', 'string'].includes(token.kind)).map(token => token.raw),\n    original.tokens.filter(token => ['number', 'string'].includes(token.kind)).map(token => token.raw));\n  return result;\n}"
+  },
+  {
+    "id": "repository.check-embedded-region-native-style-owners",
+    "source": "js/tests/translation-embedded-region-native-styles.test.js",
+    "name": "embedded-region native styles prove exactly two const bodies and four actual numeric ancestor defaults",
+    "inventoryName": "check embedded region native style owners",
+    "sourceText": "test('embedded-region native styles prove exactly two const bodies and four actual numeric ancestor defaults', () => {\n  const source = readFileSync(new URL('../src/translation/embedded-region-rules.js', import.meta.url), 'utf8');\n  const emitted = emitRust(checkProgram(parseJavaScript(source, {referenceSemantics: false})), {arrayConsumption: true});\n  const header = emitted.text.split('\\n').find(line => line.startsWith('#![allow('));\n  const raw = [header, ...emitted.preludes, ...emitted.definitions].join('\\n\\n');\n  const declarations = new Set([...raw.matchAll(/^pub (?:fn|enum|struct|mod) (\\w+)/gmu)].map(match => match[1]));\n  const actions = [...declarations].filter(name => raw.includes('crate::' + name))\n    .map(name => ({op: 'replace', field: 'source', from: 'crate::' + name, to: 'self::' + name}));\n  const owner = new DecoratorSet([{id: 'embedded-region-owner-control', level: 'emitter', order: 0,\n    when: [['format', 'Rust']], actions}]);\n  const relocated = owner.decorate('emitter', {format: 'Rust', source: raw}).source;\n  const reviewed = readPortableSourceLintStyles(readPortableSourceParameterStyles(relocated).source).source;\n  const result = reviewEmbeddedRegionStyles(reviewed);\n  assert.equal(result.actions.length, 3, 'two qualifiers and one complete ancestor owner are recorded');\n  assert.deepEqual(result.actions.map(action => /^pub fn (\\w+)/u.exec(action.from)[1]), [\n    'read_embedded_region_charge', 'accept_embedded_region_source_coverage', 'ml_read_embedded_region_ancestor_loop1',\n  ]);\n  for (const action of result.actions.slice(0, 2)) {\n    assert.equal(action.to, action.from.replace(/^pub fn /u, 'pub const fn '), 'qualification preserves every original body byte');\n  }\n  const ancestor = result.actions[2];\n  assert.equal((ancestor.from.match(/unwrap_or_else/gu) ?? []).length, 4);\n  assert.equal((ancestor.to.match(/unwrap_or\\(/gu) ?? []).length, 4);\n  assert.doesNotMatch(ancestor.to, /unwrap_or_else/u);\n  assert.equal((result.source.match(/^pub const fn /gmu) ?? []).length, 2);\n})"
+  },
+  {
+    "id": "repository.check-region-primitive-number-boundaries",
+    "source": "js/tests/translation-embedded-region-native-styles.test.js",
+    "name": "retained embedded-region primitive bodies preserve NaN infinity signed zero and every Boolean charge choice",
+    "inventoryName": "check region primitive number boundaries",
+    "sourceText": "test('retained embedded-region primitive bodies preserve NaN infinity signed zero and every Boolean charge choice', () => {\n  const source = 'pub fn read_embedded_region_charge(current:f64,start:f64,end:f64,byte_charge:bool)->f64{current+if byte_charge{end-start}else{1f64}}\\n'\n    + 'pub fn accept_embedded_region_source_coverage(start:f64,covered_until:f64)->bool{start>=covered_until}';\n  const result = reviewEmbeddedRegionStyles(source);\n  assert.equal(result.actions.length, 2);\n  const values = [-Infinity, -1, -0, 0, 1, Infinity, NaN];\n  for (const candidate of [source, result.source.replaceAll('pub const fn ', 'pub fn ')]) {\n    // Recheck the actual unchanged runtime bodies. Native const compilation is\n    // a CI concern; this control does not grant a wider const source model.\n    const context = {};\n    runInNewContext(emitJavaScript(checkProgram(parseRust(candidate + '\\nfn main() {}'))).text,\n      context, {timeout: 1000});\n    for (const current of values) for (const start of values) for (const end of values) for (const byteCharge of [false, true]) {\n      assert.ok(Object.is(context.read_embedded_region_charge(current, start, end, byteCharge),\n        readEmbeddedRegionCharge(current, start, end, byteCharge)));\n    }\n    for (const start of values) for (const covered of values) {\n      assert.equal(context.accept_embedded_region_source_coverage(start, covered), acceptEmbeddedRegionSourceCoverage(start, covered));\n    }\n  }\n})"
+  },
+  {
+    "id": "repository.check-region-primitive-proof-refusals",
+    "source": "js/tests/translation-embedded-region-native-styles.test.js",
+    "name": "primitive const proof leaves custom calls references shadowing effects and opaque copies unchanged",
+    "inventoryName": "check region primitive proof refusals",
+    "sourceText": "test('primitive const proof leaves custom calls references shadowing effects and opaque copies unchanged', () => {\n  for (const source of [\n    'pub fn read_embedded_region_charge(value:Custom)->f64{value+1f64}',\n    'pub fn read_embedded_region_charge(value:&f64)->f64{value+1f64}',\n    'pub fn read_embedded_region_charge(value:f64)->f64{other(value)}',\n    'pub fn read_embedded_region_charge(value:f64)->f64{value.abs()}',\n    'pub fn read_embedded_region_charge(value:f64)->f64{unknown!(value)}',\n    'pub fn read_embedded_region_charge(value:f64)->f64{let other=value;other}',\n    'pub fn read_embedded_region_charge(mut value:f64)->f64{value=1f64;value}',\n    'pub fn read_embedded_region_charge(value:f64)->f64{if value{1f64}else{2f64}}',\n    'pub fn read_embedded_region_charge(value:f64,flag:bool)->f64{if flag{value}else{false}}',\n    'pub fn read_embedded_region_charge(value:f64,flag:bool)->f64{if flag{value}else value}',\n    'pub fn unselected(value:f64)->f64{value+1f64}',\n    'type f64=Custom;pub fn read_embedded_region_charge(value:f64)->f64{value+1f64}',\n    'use custom::*;pub fn read_embedded_region_charge(value:f64)->f64{value+1f64}',\n    'custom::vec!();pub fn read_embedded_region_charge(value:f64)->f64{value+1f64}',\n    'pub mod std{}pub fn read_embedded_region_charge(value:f64)->f64{value+1f64}',\n    'pub mod core{}pub fn read_embedded_region_charge(value:f64)->f64{value+1f64}',\n    '#[custom]pub fn read_embedded_region_charge(value:f64)->f64{value+1f64}',\n    'pub unsafe fn read_embedded_region_charge(value:f64)->f64{value+1f64}',\n    'pub fn read_embedded_region_charge(value:f64)->f64{value}pub fn read_embedded_region_charge(value:f64)->f64{value}',\n  ]) assert.equal(reviewEmbeddedRegionStyles(source).source, source);\n  const complete = 'pub fn read_embedded_region_charge(value:f64)->f64{value+1f64}';\n  const opaque = complete + '\\npub fn literal()->&\\'static str{r#\"' + complete + '\"#}';\n  assert.equal(reviewEmbeddedRegionStyles(opaque).source, opaque, 'exact recorded replacements cannot also alter a literal copy');\n  assert.throws(() => readEmbeddedRegionNativeStyles(complete.slice(0, -1)), /delimiter/u);\n})"
+  },
+  {
+    "id": "repository.check-region-numeric-fallback-source-proof",
+    "source": "js/tests/translation-embedded-region-native-styles.test.js",
+    "name": "numeric ancestor defaults require the authentic array provider exact numeric columns and a pure NaN closure",
+    "inventoryName": "check region numeric fallback source proof",
+    "sourceText": "test('numeric ancestor defaults require the authentic array provider exact numeric columns and a pure NaN closure', () => {\n  const provider = readRustArrayPrelude(true);\n  const ancestor = 'pub fn ml_read_embedded_region_ancestor_loop1(values:&[f64],position:f64)->f64{'\n    + '(self::ml_array::optional_at(values,self::ml_array::number_index(position))).unwrap_or_else(|| /* keep fallback */ f64::NAN)}';\n  const source = provider + '\\n' + ancestor;\n  const result = reviewEmbeddedRegionStyles(source);\n  assert.equal(result.actions.length, 1);\n  assert.ok(result.source.includes('.unwrap_or( /* keep fallback */ f64::NAN)'));\n  for (const candidate of [\n    ancestor,\n    provider.replace('index.and_then(|index| values.get(index)).cloned()', 'custom(values,index)') + '\\n' + ancestor,\n    source.replace('values:&[f64]', 'values:&[bool]'),\n    source.replace('values:&[f64]', 'values:Vec<f64>'),\n    source.replace('number_index(position)', 'number_index(unknown)'),\n    source.replace('optional_at(values,', 'optional_at(unknown,'),\n    source.replace('f64::NAN)}', 'effect())}'),\n    source.replace('f64::NAN)}', 'other::NAN)}'),\n    source.replace('->f64{(', '->f64{let values=custom();('),\n    source.replace('ml_read_embedded_region_ancestor_loop1', 'unrelated_loop1'),\n    'type Option=Custom;\\n' + source,\n    'use custom::f64;\\n' + source,\n  ]) assert.equal(reviewEmbeddedRegionStyles(candidate).source, candidate);\n})"
+  },
+  {
+    "id": "repository.read-authored-region-source-point",
+    "source": "js/tests/support/recursive-embedded-region-cases.js",
+    "name": "recursiveRegionPoint",
+    "inventoryName": "read authored region source point",
+    "sourceText": "function recursiveRegionPoint(source, offset) {\n  const lines = source.slice(0, offset).split('\\n');\n  return { row: lines.length - 1, column: Buffer.byteLength(lines.at(-1)) };\n}"
+  },
+  {
+    "id": "repository.create-recursive-default-region-cases",
+    "source": "js/tests/support/recursive-embedded-region-cases.js",
+    "name": "recursiveEmbeddedRegionCases",
+    "inventoryName": "create recursive default region cases",
+    "sourceText": "export function recursiveEmbeddedRegionCases() {\n  const javascript = 'const value = \"café\";';\n  const css = '.x { color: red; }';\n  const html = `<section><script>${javascript}</script><style>${css}</style></section>\\r\\n`;\n  const rust = 'fn main() {}\\n';\n  const nestedJavascript = 'const answer = 42;\\n';\n  const markdown = `## Nested\\n\\n\\`\\`\\`JavaScript\\n${nestedJavascript}\\`\\`\\`\\n`;\n  const returnedMarkdown = `\\n\\`\\`\\`Rust\\n${rust}\\`\\`\\`\\n`;\n  const returnedHtml = `<script type=\"text/markdown\">${returnedMarkdown}</script>\\n`;\n  const plain = 'plain prose café\\n';\n  const cases = [\n    { name: 'Markdown HTML JavaScript and CSS descendants after original Rust sibling', host: 'Markdown', policy: 'Both',\n      source: `# Before π\\r\\n\\r\\n\\`\\`\\`\\`html\\r\\n${html}\\`\\`\\`\\`\\r\\n\\r\\n\\`\\`\\`Rust\\n${rust}\\`\\`\\`\\n`,\n      regions: [{ language: 'HTML', source: html, parent: -1 }, { language: 'Rust', source: rust, parent: -1 },\n        { language: 'JavaScript', source: javascript, parent: 0 }, { language: 'CSS', source: css, parent: 0 }] },\n    { name: 'Markdown within Markdown retains the complete outer source', host: 'Markdown', policy: 'Both',\n      source: `# Outer\\n\\n\\`\\`\\`\\`markdown\\n${markdown}\\`\\`\\`\\`\\n`,\n      regions: [{ language: 'Markdown', source: markdown, parent: -1 },\n        { language: 'JavaScript', source: nestedJavascript, parent: 0 }] },\n    { name: 'Markdown HTML Markdown Rust returns to an earlier language', host: 'Markdown', policy: 'Both',\n      source: `\\`\\`\\`\\`html\\n${returnedHtml}\\`\\`\\`\\`\\n`,\n      regions: [{ language: 'HTML', source: returnedHtml, parent: -1 },\n        { language: 'Markdown', source: returnedMarkdown, parent: 0 }, { language: 'Rust', source: rust, parent: 1 }] },\n    { name: 'plain content retains one existing txt boundary without a duplicate self-region', host: 'Markdown', policy: 'ContentDriven',\n      source: `# Notes\\n\\`\\`\\`\\n${plain}\\`\\`\\`\\n`, regions: [{ language: 'txt', source: plain, parent: -1 }] },\n  ];\n  for (const fixture of cases) {\n    fixture.regions = fixture.regions.map(region => {\n      const start = fixture.source.indexOf(region.source);\n      if (start < 0 || fixture.source.indexOf(region.source, start + 1) !== -1) throw new Error('an authored recursive region has one exact source occurrence');\n      const end = start + region.source.length;\n      return { ...region, startByte: Buffer.byteLength(fixture.source.slice(0, start)),\n        endByte: Buffer.byteLength(fixture.source.slice(0, end)),\n        startPoint: recursiveRegionPoint(fixture.source, start), endPoint: recursiveRegionPoint(fixture.source, end) };\n    });\n  }\n  return { schemaVersion: 1, id: 'recursive-default-embedded-regions',\n    boundary: 'Existing Markdown and HTML CST detectors and registered default parsers, identity byte mapping only; not generic any/all selection or global equivalence evidence.',\n    cases };\n}"
+  },
+  {
+    "id": "repository.read-recursive-default-region-links",
+    "source": "js/tests/grammar-recursive-default-regions.test.js",
+    "name": "recursiveDefaultRegionLinks",
+    "inventoryName": "read recursive default region links",
+    "sourceText": "function recursiveDefaultRegionLinks(network) {\n  return network.links().filter(link => link.metadata().linkType === LinkType.Region);\n}"
+  },
+  {
+    "id": "repository.read-recursive-default-region-links",
+    "source": "rust/tests/unit/recursive_embedded_regions.rs",
+    "name": "recursive_default_region_links",
+    "inventoryName": "read recursive default region links",
+    "sourceText": "fn recursive_default_region_links(network: &LinkNetwork) -> Vec<&Link> {\n    network\n        .links()\n        .filter(|link| link.metadata().link_type() == Some(LinkType::Region))\n        .collect()\n}"
+  },
+  {
+    "id": "repository.read-complete-recursive-concrete-projection",
+    "source": "js/tests/grammar-recursive-default-regions.test.js",
+    "name": "recursiveConcreteProjection",
+    "inventoryName": "read complete recursive concrete projection",
+    "sourceText": "function recursiveConcreteProjection(network, roots) {\n  const fields = new Map();\n  for (const field of network.fieldRelations()) {\n    const key = field.parent.asU64();\n    if (!fields.has(key)) fields.set(key, []);\n    fields.get(key).push(field);\n  }\n  const project = id => {\n    const link = network.link(id);\n    assert.ok(link, 'every retained CST reference resolves');\n    const metadata = link.metadata();\n    assert.ok([LinkType.Syntax, LinkType.SourceToken].includes(metadata.linkType));\n    const references = link.references();\n    const span = metadata.span;\n    return { type: metadata.linkType, term: metadata.term, language: metadata.language, named: metadata.named,\n      flags: { ...metadata.flags },\n      span: span ? { start: span.byteRange.start, end: span.byteRange.end,\n        startPoint: { row: span.start.row, column: span.start.column },\n        endPoint: { row: span.end.row, column: span.end.column } } : null,\n      fields: (fields.get(id.asU64()) ?? []).map(field => ({ label: field.label,\n        child: references.findIndex(reference => reference.equals(field.child)) })),\n      children: references.map(project) };\n  };\n  return roots.map(project);\n}"
+  },
+  {
+    "id": "repository.project-recursive-concrete-node",
+    "source": "js/tests/grammar-recursive-default-regions.test.js",
+    "name": "recursiveConcreteProjection::project",
+    "inventoryName": "project recursive concrete node",
+    "sourceText": "const project = id => {\n    const link = network.link(id);\n    assert.ok(link, 'every retained CST reference resolves');\n    const metadata = link.metadata();\n    assert.ok([LinkType.Syntax, LinkType.SourceToken].includes(metadata.linkType));\n    const references = link.references();\n    const span = metadata.span;\n    return { type: metadata.linkType, term: metadata.term, language: metadata.language, named: metadata.named,\n      flags: { ...metadata.flags },\n      span: span ? { start: span.byteRange.start, end: span.byteRange.end,\n        startPoint: { row: span.start.row, column: span.start.column },\n        endPoint: { row: span.end.row, column: span.end.column } } : null,\n      fields: (fields.get(id.asU64()) ?? []).map(field => ({ label: field.label,\n        child: references.findIndex(reference => reference.equals(field.child)) })),\n      children: references.map(project) };\n  };",
+    "ownerContexts": [
+      "function recursiveConcreteProjection(network, roots) {"
+    ]
+  },
+  {
+    "id": "repository.assert-complete-recursive-default-regions",
+    "source": "js/tests/grammar-recursive-default-regions.test.js",
+    "name": "assertRecursiveDefaultRegions",
+    "inventoryName": "assert complete recursive default regions",
+    "sourceText": "function assertRecursiveDefaultRegions(network, fixture) {\n  const regions = recursiveDefaultRegionLinks(network);\n  assert.equal(regions.length, fixture.regions.length, 'FIFO retains every authored region exactly once');\n  const root = regions[0].references()[0];\n  const configuration = ParseConfiguration.default().withRegionDetectionPolicy(fixture.policy);\n  for (const [index, expected] of fixture.regions.entries()) {\n    const region = regions[index];\n    const metadata = region.metadata();\n    assert.equal(metadata.language, expected.language);\n    assert.deepEqual({ start: metadata.span.byteRange.start, end: metadata.span.byteRange.end },\n      { start: expected.startByte, end: expected.endByte });\n    assert.deepEqual({ ...metadata.span.start }, expected.startPoint);\n    assert.deepEqual({ ...metadata.span.end }, expected.endPoint);\n    assert.equal(Buffer.from(fixture.source).subarray(expected.startByte, expected.endByte).toString('utf8'), expected.source);\n    const parent = expected.parent < 0 ? root : regions[expected.parent].id();\n    assert.equal(region.references()[0].asU64(), parent.asU64(), 'nested regions name their actual containing Region');\n    assert.ok(region.references().length > 2, 'each accepted region owns its complete registered-parser CST');\n    const direct = new LinkNetwork();\n    const parsed = parseEmbeddedProgrammingLanguage(expected.source, expected.language);\n    const { outer } = direct._insertProgrammingLanguage(parsed, expected.language, configuration, metadata.span);\n    assert.deepEqual(recursiveConcreteProjection(network, region.references().slice(2)),\n      recursiveConcreteProjection(direct, outer), 'the whole child CST survives attachment with one absolute offset');\n  }\n  const directHost = new LinkNetwork();\n  const { root: directRoot } = directHost._insertProgrammingLanguage(\n    parseProgrammingLanguage(fixture.source, fixture.host), fixture.host, configuration);\n  assert.deepEqual(recursiveConcreteProjection(network, [root]), recursiveConcreteProjection(directHost, [directRoot]),\n    'descendant Regions never replace or concatenate the original host CST children');\n  assert.equal(network.reconstructText(), fixture.source);\n  assert.equal(network.renderSource(fixture.host), fixture.source, 'same-language descendants do not duplicate host output');\n  assert.equal(network.verifyFullMatch().isClean(), true);\n}"
+  },
+  {
+    "id": "repository.read-embedded-region-diagnostic-fields",
+    "source": "js/tests/grammar-recursive-default-regions.test.js",
+    "name": "embeddedDiagnosticFields",
+    "inventoryName": "read embedded region diagnostic fields",
+    "sourceText": "function embeddedDiagnosticFields(network, diagnostic) {\n  return Object.fromEntries(network.fieldRelations().filter(field => field.parent.equals(diagnostic.id()))\n    .map(field => [field.label, network.link(field.child).metadata().term]));\n}"
+  },
+  {
+    "id": "repository.read-region-disposition-control-facts",
+    "source": "js/tests/grammar-embedded-region-rules.test.js",
+    "name": "embedded region dispositions reuse the current host and diagnose true cycles and exact resource boundaries::disposition",
+    "inventoryName": "read region disposition control facts",
+    "sourceText": "const disposition = (changes = {}) => {\n    const values = { parentStart: 0, parentEnd: 100, parentLanguage: 0, language: 1,\n      start: 10, end: 20, ancestor: -1, depth: 1, count: 0, bytes: 0,\n      depthLimit: 2, countLimit: 2, byteLimit: 10, rootSpellingReuse: true, ...changes };\n    return readEmbeddedRegionDisposition(...Object.values(values));\n  };",
+    "ownerContexts": [
+      "test('embedded region dispositions reuse the current host and diagnose true cycles and exact resource boundaries', () => {"
+    ]
+  },
+  {
+    "id": "repository.check-shared-region-defaults-and-configuration",
+    "source": "js/tests/grammar-embedded-region-rules.test.js",
+    "name": "default embedded region limits remain shared constant data and preserve immutable configuration",
+    "inventoryName": "check shared region defaults and configuration",
+    "sourceText": "test('default embedded region limits remain shared constant data and preserve immutable configuration', () => {\n  const configuration = ParseConfiguration.default();\n  assert.deepEqual([configuration.embeddedRegionDepthLimit, configuration.embeddedRegionCountLimit,\n    configuration.embeddedRegionByteLimit], [128, 4096, 16 * 1024 * 1024]);\n  assert.equal(readEmbeddedRegionDefaultLimit('unknown'), -1);\n  const limited = configuration.withEmbeddedRegionLimits({ depthLimit: 3, countLimit: 4, byteLimit: 20 });\n  assert.equal(configuration.embeddedRegionDepthLimit, 128);\n  assert.deepEqual([limited.embeddedRegionDepthLimit, limited.embeddedRegionCountLimit,\n    limited.embeddedRegionByteLimit], [3, 4, 20]);\n  const changed = limited.withRegionDetectionPolicy('NameDriven')\n    .withTriviaAttachmentPolicy(TriviaAttachmentPolicy.TokenLink).withAccessMode('read-only');\n  assert.deepEqual([changed.embeddedRegionDepthLimit, changed.embeddedRegionCountLimit,\n    changed.embeddedRegionByteLimit], [3, 4, 20]);\n  assert.equal(changed.withEmbeddedRegionLimits({ byteLimit: 0 }).embeddedRegionCountLimit, 4);\n  assert.equal(new ParseConfiguration({ embeddedRegionDepthLimit: 0 }).embeddedRegionDepthLimit, 0);\n  const policy = embeddedRegionRulesPolicy();\n  assert.deepEqual(policy.defaults, { depthLimit: 128, countLimit: 4096, byteLimit: 16777216 });\n  assert.equal(policy.source, readFileSync(new URL('../src/translation/embedded-region-rules.js', import.meta.url), 'utf8'));\n  assert.equal(renderEmbeddedRegionNativeDefaults(policy.defaults),\n    '// Generated DATA from the shared embedded-region-rules.js defaults. Do not edit.\\n'\n    + 'pub const DEFAULT_EMBEDDED_REGION_DEPTH_LIMIT: usize = 128;\\n'\n    + 'pub const DEFAULT_EMBEDDED_REGION_COUNT_LIMIT: usize = 4096;\\n'\n    + 'pub const DEFAULT_EMBEDDED_REGION_BYTE_LIMIT: usize = 16777216;\\n');\n})"
+  },
+  {
+    "id": "repository.check-region-configuration-limit-domain",
+    "source": "js/tests/grammar-embedded-region-rules.test.js",
+    "name": "embedded region configuration refuses fractional negative nonnumeric and unbounded limits",
+    "inventoryName": "check region configuration limit domain",
+    "sourceText": "test('embedded region configuration refuses fractional negative nonnumeric and unbounded limits', () => {\n  for (const value of [0, 1, Number.MAX_SAFE_INTEGER]) assert.equal(acceptEmbeddedRegionLimit(value), true);\n  for (const value of [-1, 0.5, Infinity, -Infinity, NaN, Number.MAX_SAFE_INTEGER + 1]) {\n    assert.equal(acceptEmbeddedRegionLimit(value), false);\n    for (const field of ['embeddedRegionDepthLimit', 'embeddedRegionCountLimit', 'embeddedRegionByteLimit']) {\n      assert.throws(() => new ParseConfiguration({ [field]: value }), /nonnegative safe integers/u);\n    }\n  }\n  for (const value of ['1', null, false]) assert.throws(() =>\n    ParseConfiguration.default().withEmbeddedRegionLimits({ byteLimit: value }), /nonnegative safe integers/u);\n  assert.throws(() => renderEmbeddedRegionNativeDefaults({ depthLimit: 1, countLimit: -1, byteLimit: 1 }), /nonnegative safe integers/u);\n})"
+  },
+  {
+    "id": "repository.check-region-parent-bound-containment",
+    "source": "js/tests/grammar-embedded-region-rules.test.js",
+    "name": "embedded region bounds retain zero width and refuse children outside their actual parent",
+    "inventoryName": "check region parent bound containment",
+    "sourceText": "test('embedded region bounds retain zero width and refuse children outside their actual parent', () => {\n  for (const [start, end] of [[10, 20], [10, 10], [15, 15], [20, 20], [11, 19]]) {\n    assert.equal(acceptEmbeddedRegionBounds(10, 20, start, end), true);\n  }\n  for (const [start, end] of [[9, 20], [10, 21], [19, 11], [-1, 0], [10.5, 20], [NaN, 20]]) {\n    assert.equal(acceptEmbeddedRegionBounds(10, 20, start, end), false);\n  }\n  assert.equal(acceptEmbeddedRegionSourceCoverage(10, 10), true);\n  assert.equal(acceptEmbeddedRegionSourceCoverage(9, 10), false);\n})"
+  },
+  {
+    "id": "repository.check-region-ancestor-fact-identity",
+    "source": "js/tests/grammar-embedded-region-rules.test.js",
+    "name": "embedded region ancestry compares canonical language and both absolute bounds without conflating siblings",
+    "inventoryName": "check region ancestor fact identity",
+    "sourceText": "test('embedded region ancestry compares canonical language and both absolute bounds without conflating siblings', () => {\n  const parents = [-1, 0, 1, 0], languages = [0, 1, 0, 1];\n  const starts = [0, 10, 20, 10], ends = [100, 90, 80, 90];\n  assert.equal(readEmbeddedRegionAncestor(parents, languages, starts, ends, 2, 0, 0, 100), 0);\n  assert.equal(readEmbeddedRegionAncestor(parents, languages, starts, ends, 2, 1, 10, 90), 1);\n  assert.equal(readEmbeddedRegionAncestor(parents, languages, starts, ends, 2, 0, 20, 80), 2);\n  assert.equal(readEmbeddedRegionAncestor(parents, languages, starts, ends, 3, 0, 20, 80), -1);\n  assert.equal(readEmbeddedRegionAncestor(parents, languages, starts, ends, 2, 0, 10, 90), -1);\n  assert.equal(readEmbeddedRegionAncestor(parents, languages, starts, ends, 2, 1, 10, 80), -1);\n  assert.equal(readEmbeddedRegionAncestor([], [], [], [], -1, 0, 0, 0), -1);\n  for (const malformed of [[-1, 2], [-1, 1], [-1, 0.5], [-1, -2]]) {\n    assert.equal(readEmbeddedRegionAncestor(malformed, [0, 1], [0, 0], [2, 2], 1, 2, 0, 2), -2);\n  }\n  assert.equal(readEmbeddedRegionAncestor([-1], [], [0], [1], 0, 0, 0, 1), -2);\n  assert.equal(readEmbeddedRegionAncestor([-1], [0], [0], [1], 5, 0, 0, 1), -2);\n  assert.equal(readEmbeddedRegionAncestor([-1], [-1], [0], [1], 0, -1, 0, 1), -2);\n  assert.equal(readEmbeddedRegionAncestor([-1], [0], [2], [1], 0, 0, 2, 1), -2);\n  for (let column = 0; column < 4; column += 1) {\n    const values = [[-1, 0], [0, 1], [0, 0], [2, 2]];\n    delete values[column][1];\n    assert.equal(readEmbeddedRegionAncestor(...values, 1, 2, 0, 2), -2,\n      'a missing numeric fact becomes NaN and fails validation, never an invented zero');\n  }\n})"
+  },
+  {
+    "id": "repository.check-region-reuse-cycle-and-resource-decisions",
+    "source": "js/tests/grammar-embedded-region-rules.test.js",
+    "name": "embedded region dispositions reuse the current host and diagnose true cycles and exact resource boundaries",
+    "inventoryName": "check region reuse cycle and resource decisions",
+    "sourceText": "test('embedded region dispositions reuse the current host and diagnose true cycles and exact resource boundaries', () => {\n  const disposition = (changes = {}) => {\n    const values = { parentStart: 0, parentEnd: 100, parentLanguage: 0, language: 1,\n      start: 10, end: 20, ancestor: -1, depth: 1, count: 0, bytes: 0,\n      depthLimit: 2, countLimit: 2, byteLimit: 10, rootSpellingReuse: true, ...changes };\n    return readEmbeddedRegionDisposition(...Object.values(values));\n  };\n  assert.equal(disposition(), 'parse');\n  assert.equal(disposition({ depth: 2, count: 1 }), 'parse');\n  assert.equal(disposition({ depth: 3 }), 'embeddedRegionDepthLimit');\n  assert.equal(disposition({ count: 2 }), 'embeddedRegionCountLimit');\n  assert.equal(disposition({ bytes: 1 }), 'embeddedRegionByteLimit');\n  assert.equal(disposition({ bytes: 11, start: 20, end: 20 }), 'embeddedRegionByteLimit');\n  assert.equal(disposition({ start: 20, end: 20, byteLimit: 0 }), 'parse');\n  assert.equal(disposition({ ancestor: 0 }), 'nonConsumingEmbeddingCycle');\n  assert.equal(disposition({ language: 0, start: 0, end: 100, ancestor: 0, depthLimit: 0 }), 'reuse');\n  assert.equal(disposition({ language: 0, start: 0, end: 100, ancestor: 0, depth: 2 }), 'reuseAttached');\n  assert.equal(disposition({ language: 0, start: 0, end: 100, ancestor: 0, rootSpellingReuse: false, byteLimit: 100 }), 'parse');\n  assert.equal(disposition({ start: -1 }), 'invalidEmbeddedRegionBounds');\n  assert.equal(disposition({ ancestor: -2 }), 'invalidEmbeddedRegionAncestry');\n  assert.equal(disposition({ countLimit: 0.5 }), 'invalidEmbeddedRegionLimits');\n  assert.equal(disposition({ byteLimit: Number.MAX_SAFE_INTEGER, bytes: Number.MAX_SAFE_INTEGER - 10 }), 'parse');\n  assert.equal(disposition({ byteLimit: Number.MAX_SAFE_INTEGER, bytes: Number.MAX_SAFE_INTEGER - 9 }), 'embeddedRegionByteLimit');\n})"
+  },
+  {
+    "id": "repository.check-region-diagnostic-counter-charges",
+    "source": "js/tests/grammar-embedded-region-rules.test.js",
+    "name": "embedded region diagnostics expose attempted counters while only admitted attempts charge the traversal",
+    "inventoryName": "check region diagnostic counter charges",
+    "sourceText": "test('embedded region diagnostics expose attempted counters while only admitted attempts charge the traversal', () => {\n  assert.equal(readEmbeddedRegionCharge(3, 10, 20, false), 4);\n  assert.equal(readEmbeddedRegionCharge(3, 10, 20, true), 13);\n  assert.equal(readEmbeddedRegionCharge(3, 10, 10, true), 3);\n  const reasons = ['embeddedRegionDepthLimit', 'embeddedRegionCountLimit', 'embeddedRegionByteLimit'];\n  assert.deepEqual(reasons.map(reason => readEmbeddedRegionDiagnosticObserved(reason, 4, 5, 6, 10, 20)), [4, 6, 16]);\n  assert.deepEqual(reasons.map(reason => readEmbeddedRegionDiagnosticLimit(reason, 3, 5, 15)), [3, 5, 15]);\n  for (const reason of ['nonConsumingEmbeddingCycle', 'invalidEmbeddedRegionBounds']) {\n    assert.equal(readEmbeddedRegionDiagnosticObserved(reason, 4, 5, 6, 10, 20), -1);\n    assert.equal(readEmbeddedRegionDiagnosticLimit(reason, 3, 5, 15), -1);\n  }\n  assert.equal(readEmbeddedRegionDiagnosticObserved('embeddedRegionCountLimit', 1, Number.MAX_SAFE_INTEGER, 0, 0, 1), -1);\n  assert.equal(readEmbeddedRegionDiagnosticObserved('embeddedRegionByteLimit', 1, 0, Number.MAX_SAFE_INTEGER, 0, 1), -1);\n})"
+  },
+  {
+    "id": "repository.check-complete-region-source-self-translation",
+    "source": "js/tests/grammar-embedded-region-rules.test.js",
+    "name": "complete embedded region kernels translate from their actual shared JavaScript source",
+    "inventoryName": "check complete region source self translation",
+    "sourceText": "test('complete embedded region kernels translate from their actual shared JavaScript source', async () => {\n  const { parseJavaScript } = await import('../src/translation/javascript.js');\n  const { checkProgram } = await import('../src/translation/check.js');\n  const { emitRust } = await import('../src/translation/emit-rust.js');\n  const { emitJavaScript } = await import('../src/translation/emit-javascript.js');\n  const checked = checkProgram(parseJavaScript(embeddedRegionRulesPolicy().source, { referenceSemantics: false }));\n  const rust = emitRust(checked, { arrayConsumption: true });\n  for (const name of ['read_embedded_region_ancestor', 'read_embedded_region_disposition',\n    'read_embedded_region_charge', 'read_embedded_region_diagnostic_limit']) assert.equal(rust.text.includes(name), true);\n  assert.equal(rust.assumptions?.some(value => /array reads are in bounds/u.test(value)), false);\n  const javascript = emitJavaScript(checked).text;\n  assert.equal(vm.runInNewContext(javascript + '\\nreadEmbeddedRegionAncestor([-1,0],[0,1],[0,0],[5,5],1,0,0,5);', {}, { timeout: 1000 }), 0);\n  assert.equal(vm.runInNewContext(javascript + '\\nreadEmbeddedRegionDisposition(0,5,1,0,0,5,0,2,1,5,128,4096,16777216,true);', {}, { timeout: 1000 }), 'nonConsumingEmbeddingCycle');\n})"
+  },
+  {
+    "id": "repository.check-recursive-limit-boundary-reload",
+    "source": "js/tests/grammar-recursive-default-regions.test.js",
+    "name": "default recursive adapter limits retain refused boundaries counters and exact source after reload",
+    "inventoryName": "check recursive limit boundary reload",
+    "sourceText": "test('default recursive adapter limits retain refused boundaries counters and exact source after reload', () => {\n  const child = 'const value = \"π\";';\n  const html = `<script>${child}</script>\\n`;\n  const source = `\\`\\`\\`html\\n${html}\\`\\`\\`\\n`;\n  const htmlBytes = Buffer.byteLength(html), childBytes = Buffer.byteLength(child);\n  for (const [limits, reason, observed, limit] of [\n    [{ depthLimit: 1 }, 'embeddedRegionDepthLimit', 2, 1],\n    [{ countLimit: 1 }, 'embeddedRegionCountLimit', 2, 1],\n    [{ byteLimit: htmlBytes }, 'embeddedRegionByteLimit', htmlBytes + childBytes, htmlBytes],\n  ]) {\n    const network = LinkNetwork.parse(source, 'Markdown', ParseConfiguration.default().withEmbeddedRegionLimits(limits));\n    for (const current of [network, LinkNetwork.fromLino(network.toLino())]) {\n      const regions = recursiveDefaultRegionLinks(current);\n      assert.deepEqual(regions.map(region => region.metadata().language), ['HTML', 'JavaScript']);\n      assert.ok(regions[0].references().length > 2);\n      assert.equal(regions[1].references().length, 2, 'refusal retains a boundary rather than inventing a CST');\n      assert.equal(regions[1].references()[0].asU64(), regions[0].id().asU64());\n      const diagnostics = current.links().filter(link => link.metadata().term === 'embedded region diagnostic');\n      assert.equal(diagnostics.length, 1);\n      assert.equal(diagnostics[0].metadata().definition, reason);\n      assert.equal(diagnostics[0].references()[0].asU64(), regions[1].id().asU64());\n      assert.deepEqual(embeddedDiagnosticFields(current, diagnostics[0]), {\n        depth: '2', 'region count': '1', 'child parse bytes': String(htmlBytes),\n        observed: String(observed), limit: String(limit),\n      });\n      assert.equal(current.verifyFullMatch().isClean(), false);\n      assert.equal(current.reconstructText(), source);\n      assert.equal(current.renderSource('Markdown'), source);\n    }\n  }\n  const admitted = LinkNetwork.parse(source, 'Markdown', ParseConfiguration.default()\n    .withEmbeddedRegionLimits({ depthLimit: 2, countLimit: 2, byteLimit: htmlBytes + childBytes }));\n  assert.equal(admitted.verifyFullMatch().isClean(), true);\n  assert.ok(recursiveDefaultRegionLinks(admitted)[1].references().length > 2);\n  const rootOnly = LinkNetwork.parse('plain café', 'txt', ParseConfiguration.default()\n    .withEmbeddedRegionLimits({ depthLimit: 0, countLimit: 0, byteLimit: 0 }));\n  assert.equal(recursiveDefaultRegionLinks(rootOnly).length, 1);\n  assert.equal(rootOnly.verifyFullMatch().isClean(), true, 'the pre-existing whole-root alias spends no child parse budget');\n  assert.equal(rootOnly.reconstructText(), 'plain café');\n})"
+  },
+  {
+    "id": "repository.check-recursive-sibling-counter-and-render-order",
+    "source": "js/tests/grammar-recursive-default-regions.test.js",
+    "name": "default recursive attachment shares adapter counters across siblings and preserves source rendering fragments",
+    "inventoryName": "check recursive sibling counter and render order",
+    "sourceText": "test('default recursive attachment shares adapter counters across siblings and preserves source rendering fragments', () => {\n  const child = 'const nested = 1;';\n  const sibling = 'const sibling = 2;\\n';\n  const source = `\\`\\`\\`html\\n<script>${child}</script>\\n\\`\\`\\`\\n\\n\\`\\`\\`JavaScript\\n${sibling}\\`\\`\\`\\n`;\n  const network = LinkNetwork.parse(source, 'Markdown', ParseConfiguration.default().withEmbeddedRegionLimits({ countLimit: 2 }));\n  const regions = recursiveDefaultRegionLinks(network);\n  assert.deepEqual(regions.map(region => region.metadata().language), ['HTML', 'JavaScript', 'JavaScript']);\n  assert.ok(regions[0].references().length > 2);\n  assert.ok(regions[1].references().length > 2, 'the original direct sibling is parsed before descendants');\n  assert.equal(regions[2].references().length, 2, 'a child does not get a fresh count budget');\n  const diagnostic = network.links().find(link => link.metadata().definition === 'embeddedRegionCountLimit');\n  assert.equal(embeddedDiagnosticFields(network, diagnostic).observed, '3');\n  assert.equal(network.renderSource('JavaScript'), sibling);\n  assert.equal(network.renderSource('Markdown'), source);\n  assert.equal(network.reconstructText(), source);\n  const constructed = new LinkNetwork();\n  constructed.insertSourceToken('fragment', 'first');\n  constructed.insertSourceToken('fragment', 'second');\n  assert.equal(constructed.renderSource('fragment'), 'firstsecond', 'unspanned constructed tokens retain their existing order');\n  const mixed = new LinkNetwork();\n  mixed.insertSourceToken('fragment', 'B', new SourceSpan(new ByteRange(1, 2), new Point(0, 1), new Point(0, 2)));\n  mixed.insertSourceToken('fragment', 'tail');\n  mixed.insertSourceToken('fragment', 'A', new SourceSpan(new ByteRange(0, 1), new Point(0, 0), new Point(0, 1)));\n  for (const current of [mixed, LinkNetwork.fromLino(mixed.toLino())]) {\n    assert.equal(current.renderSource('fragment'), 'ABtail', 'physical source precedes unspanned fragments regardless of allocated identities');\n  }\n})"
+  },
+  {
+    "id": "repository.check-recursive-cycle-ancestor-reload",
+    "source": "js/tests/grammar-recursive-default-regions.test.js",
+    "name": "synthetic adapter cycle diagnostics preserve actual ancestry and remain verification failures after reload",
+    "inventoryName": "check recursive cycle ancestor reload",
+    "sourceText": "test('synthetic adapter cycle diagnostics preserve actual ancestry and remain verification failures after reload', () => {\n  const network = new LinkNetwork();\n  const span = new SourceSpan(new ByteRange(0, 2), new Point(0, 0), new Point(0, 2));\n  const outer = network.insertLink([], LinkMetadata.new().withLinkType(LinkType.Region).withLanguage('Markdown').withSpan(span));\n  const inner = network.insertLink([outer], LinkMetadata.new().withLinkType(LinkType.Region).withLanguage('HTML').withSpan(span));\n  const rejected = network.insertLink([inner], LinkMetadata.new().withLinkType(LinkType.Region).withLanguage('Markdown').withSpan(span));\n  const ancestor = readEmbeddedRegionAncestor([-1, 0], [0, 1], [0, 0], [2, 2], 1, 0, 0, 2);\n  assert.equal(ancestor, 0);\n  const reason = readEmbeddedRegionDisposition(0, 2, 1, 0, 0, 2, ancestor, 2, 1, 2, 128, 4096, 16777216, true);\n  assert.equal(reason, 'nonConsumingEmbeddingCycle');\n  const diagnostic = network._insertEmbeddedRegionDiagnostic(rejected, 'Markdown', span, reason,\n    { depth: 2, count: 1, bytes: 2, observed: -1, limit: -1, ancestor: outer });\n  network.insertSourceToken('Markdown', 'π', span, LinkFlags.clean());\n  for (const current of [network, LinkNetwork.fromLino(network.toLino())]) {\n    assert.equal(current.verifyFullMatch().isClean(), false);\n    assert.equal(current.link(diagnostic).metadata().definition, reason);\n    const ancestorField = current.fieldRelations().find(field => field.parent.equals(diagnostic) && field.label === 'ancestor');\n    assert.equal(ancestorField.child.asU64(), outer.asU64());\n    assert.equal(Object.hasOwn(embeddedDiagnosticFields(current, current.link(diagnostic)), 'observed'), false);\n    assert.equal(current.reconstructText(), 'π');\n  }\n})"
+  },
+  {
+    "id": "repository.check-authored-recursive-region-fixture",
+    "source": "js/tests/grammar-recursive-default-regions.test.js",
+    "name": "shared recursive default region fixture retains every authored source and expected absolute boundary",
+    "inventoryName": "check authored recursive region fixture",
+    "sourceText": "test('shared recursive default region fixture retains every authored source and expected absolute boundary', () => {\n  assert.deepEqual(readProjectData(new URL('../../parity/fixtures/recursive-default-embedded-regions.lino', import.meta.url)), recursiveCases);\n})"
+  },
+  {
+    "id": "repository.check-original-root-language-alias-views",
+    "source": "js/tests/grammar-recursive-default-regions.test.js",
+    "name": "default root language aliases retain their original direct txt CST and token views",
+    "inventoryName": "check original root language alias views",
+    "sourceText": "test('default root language aliases retain their original direct txt CST and token views', () => {\n  const source = 'plain café\\n';\n  for (const language of ['txt', 'TXT', 'text', 'TeXt', 'plain text', 'PLAIN TEXT']) {\n    const configuration = ParseConfiguration.default();\n    const expected = new LinkNetwork();\n    const { root } = expected._insertProgrammingLanguage(parseProgrammingLanguage(source, language), language, configuration);\n    const languageLink = expected.insertTypedPoint(LinkType.Language, 'txt');\n    const span = new SourceSpan(new ByteRange(0, Buffer.byteLength(source)), new Point(0, 0), new Point(1, 0));\n    const boundary = expected.insertLink([root, languageLink], LinkMetadata.new()\n      .withLinkType(LinkType.Region).withNamed(true).withTerm('txt region').withLanguage('txt').withSpan(span));\n    if (language.toLowerCase() !== 'txt') {\n      expected._recordGrammars(languageLink, 'txt');\n      const { outer } = expected._insertProgrammingLanguage(parseEmbeddedProgrammingLanguage(source, 'txt'), 'txt', configuration, span);\n      expected.link(boundary).setReferences([root, languageLink, ...outer]);\n    }\n    const actual = LinkNetwork.parse(source, language, configuration);\n    assert.equal(actual.toLino(), expected.toLino(), 'every original alias link, token and direct CST remains byte-identical');\n    assert.equal(recursiveDefaultRegionLinks(actual).length, 1, 'the attached txt view never creates another self-region');\n    assert.equal(actual.reconstructText(), source);\n    assert.equal(actual.renderSource(language), source);\n    assert.equal(actual.verifyFullMatch().isClean(), true);\n  }\n})"
+  },
+  {
+    "id": "repository.check-markup-html-script-and-style-descendants",
+    "source": "js/tests/grammar-recursive-default-regions.test.js",
+    "name": "default recursive CST attachment preserves Markdown HTML JavaScript and CSS descendants after original Rust sibling",
+    "inventoryName": "check markup html script and style descendants",
+    "sourceText": "test(`default recursive CST attachment preserves ${fixture.name}`, () => {\n  const configuration = ParseConfiguration.default().withRegionDetectionPolicy(fixture.policy);\n  const direct = detectEmbeddedRegions(fixture.source, fixture.host, fixture.policy);\n  assert.deepEqual(direct.map(region => [region.language(), region.span().byteRange.start, region.span().byteRange.end]),\n    fixture.regions.filter(region => region.parent < 0).map(region => [region.language, region.startByte, region.endByte]),\n    'the original direct detector remains unchanged');\n  const network = LinkNetwork.parse(fixture.source, fixture.host, configuration);\n  assertRecursiveDefaultRegions(network, fixture);\n  const restored = LinkNetwork.fromLino(network.toLino());\n  assert.equal(restored.toLino(), network.toLino());\n  assertRecursiveDefaultRegions(restored, fixture);\n})",
+    "sourceContext": "for (const fixture of recursiveCases.cases)",
+    "caseSource": "js/tests/support/recursive-embedded-region-cases.js",
+    "caseSourceText": "{ name: 'Markdown HTML JavaScript and CSS descendants after original Rust sibling', host: 'Markdown', policy: 'Both',\n      source: `# Before π\\r\\n\\r\\n\\`\\`\\`\\`html\\r\\n${html}\\`\\`\\`\\`\\r\\n\\r\\n\\`\\`\\`Rust\\n${rust}\\`\\`\\`\\n`,\n      regions: [{ language: 'HTML', source: html, parent: -1 }, { language: 'Rust', source: rust, parent: -1 },\n        { language: 'JavaScript', source: javascript, parent: 0 }, { language: 'CSS', source: css, parent: 0 }] }"
+  },
+  {
+    "id": "repository.check-same-language-nested-markup-source",
+    "source": "js/tests/grammar-recursive-default-regions.test.js",
+    "name": "default recursive CST attachment preserves Markdown within Markdown retains the complete outer source",
+    "inventoryName": "check same language nested markup source",
+    "sourceText": "test(`default recursive CST attachment preserves ${fixture.name}`, () => {\n  const configuration = ParseConfiguration.default().withRegionDetectionPolicy(fixture.policy);\n  const direct = detectEmbeddedRegions(fixture.source, fixture.host, fixture.policy);\n  assert.deepEqual(direct.map(region => [region.language(), region.span().byteRange.start, region.span().byteRange.end]),\n    fixture.regions.filter(region => region.parent < 0).map(region => [region.language, region.startByte, region.endByte]),\n    'the original direct detector remains unchanged');\n  const network = LinkNetwork.parse(fixture.source, fixture.host, configuration);\n  assertRecursiveDefaultRegions(network, fixture);\n  const restored = LinkNetwork.fromLino(network.toLino());\n  assert.equal(restored.toLino(), network.toLino());\n  assertRecursiveDefaultRegions(restored, fixture);\n})",
+    "sourceContext": "for (const fixture of recursiveCases.cases)",
+    "caseSource": "js/tests/support/recursive-embedded-region-cases.js",
+    "caseSourceText": "{ name: 'Markdown within Markdown retains the complete outer source', host: 'Markdown', policy: 'Both',\n      source: `# Outer\\n\\n\\`\\`\\`\\`markdown\\n${markdown}\\`\\`\\`\\`\\n`,\n      regions: [{ language: 'Markdown', source: markdown, parent: -1 },\n        { language: 'JavaScript', source: nestedJavascript, parent: 0 }] }"
+  },
+  {
+    "id": "repository.check-returning-language-region-ancestry",
+    "source": "js/tests/grammar-recursive-default-regions.test.js",
+    "name": "default recursive CST attachment preserves Markdown HTML Markdown Rust returns to an earlier language",
+    "inventoryName": "check returning language region ancestry",
+    "sourceText": "test(`default recursive CST attachment preserves ${fixture.name}`, () => {\n  const configuration = ParseConfiguration.default().withRegionDetectionPolicy(fixture.policy);\n  const direct = detectEmbeddedRegions(fixture.source, fixture.host, fixture.policy);\n  assert.deepEqual(direct.map(region => [region.language(), region.span().byteRange.start, region.span().byteRange.end]),\n    fixture.regions.filter(region => region.parent < 0).map(region => [region.language, region.startByte, region.endByte]),\n    'the original direct detector remains unchanged');\n  const network = LinkNetwork.parse(fixture.source, fixture.host, configuration);\n  assertRecursiveDefaultRegions(network, fixture);\n  const restored = LinkNetwork.fromLino(network.toLino());\n  assert.equal(restored.toLino(), network.toLino());\n  assertRecursiveDefaultRegions(restored, fixture);\n})",
+    "sourceContext": "for (const fixture of recursiveCases.cases)",
+    "caseSource": "js/tests/support/recursive-embedded-region-cases.js",
+    "caseSourceText": "{ name: 'Markdown HTML Markdown Rust returns to an earlier language', host: 'Markdown', policy: 'Both',\n      source: `\\`\\`\\`\\`html\\n${returnedHtml}\\`\\`\\`\\`\\n`,\n      regions: [{ language: 'HTML', source: returnedHtml, parent: -1 },\n        { language: 'Markdown', source: returnedMarkdown, parent: 0 }, { language: 'Rust', source: rust, parent: 1 }] }"
+  },
+  {
+    "id": "repository.check-original-plain-content-child-boundary",
+    "source": "js/tests/grammar-recursive-default-regions.test.js",
+    "name": "default recursive CST attachment preserves plain content retains one existing txt boundary without a duplicate self-region",
+    "inventoryName": "check original plain content child boundary",
+    "sourceText": "test(`default recursive CST attachment preserves ${fixture.name}`, () => {\n  const configuration = ParseConfiguration.default().withRegionDetectionPolicy(fixture.policy);\n  const direct = detectEmbeddedRegions(fixture.source, fixture.host, fixture.policy);\n  assert.deepEqual(direct.map(region => [region.language(), region.span().byteRange.start, region.span().byteRange.end]),\n    fixture.regions.filter(region => region.parent < 0).map(region => [region.language, region.startByte, region.endByte]),\n    'the original direct detector remains unchanged');\n  const network = LinkNetwork.parse(fixture.source, fixture.host, configuration);\n  assertRecursiveDefaultRegions(network, fixture);\n  const restored = LinkNetwork.fromLino(network.toLino());\n  assert.equal(restored.toLino(), network.toLino());\n  assertRecursiveDefaultRegions(restored, fixture);\n})",
+    "sourceContext": "for (const fixture of recursiveCases.cases)",
+    "caseSource": "js/tests/support/recursive-embedded-region-cases.js",
+    "caseSourceText": "{ name: 'plain content retains one existing txt boundary without a duplicate self-region', host: 'Markdown', policy: 'ContentDriven',\n      source: `# Notes\\n\\`\\`\\`\\n${plain}\\`\\`\\`\\n`, regions: [{ language: 'txt', source: plain, parent: -1 }] }"
+  },
+  {
+    "id": "grammar.embedded-region-limit-options",
+    "source": "js/src/index.d.ts",
+    "name": "EmbeddedRegionLimits",
+    "inventoryName": "embedded region limit options",
+    "sourceText": "export interface EmbeddedRegionLimits {"
+  },
+  {
+    "id": "grammar.requested-embedded-region-depth-limit",
+    "source": "js/src/index.d.ts",
+    "name": "EmbeddedRegionLimits::depthLimit",
+    "inventoryName": "requested embedded region depth limit",
+    "sourceText": "  depthLimit?: number;",
+    "ownerContexts": [
+      "export interface EmbeddedRegionLimits {"
+    ]
+  },
+  {
+    "id": "grammar.configured-embedded-region-depth-limit",
+    "source": "js/src/primitives.js",
+    "name": "ParseConfiguration::embeddedRegionDepthLimit",
+    "inventoryName": "configured embedded region depth limit",
+    "sourceText": "    this.embeddedRegionDepthLimit = embeddedRegionDepthLimit;",
+    "ownerContexts": [
+      "export class ParseConfiguration {"
+    ]
+  },
+  {
+    "id": "grammar.configured-embedded-region-depth-limit",
+    "source": "js/src/index.d.ts",
+    "name": "ParseConfiguration::embeddedRegionDepthLimit",
+    "inventoryName": "configured embedded region depth limit",
+    "sourceText": "  readonly embeddedRegionDepthLimit: number;",
+    "ownerContexts": [
+      "export class ParseConfiguration {"
+    ]
+  },
+  {
+    "id": "grammar.configured-embedded-region-depth-limit",
+    "source": "rust/src/configuration.rs",
+    "name": "ParseConfiguration::embedded_region_depth_limit",
+    "inventoryName": "configured embedded region depth limit",
+    "sourceText": "    embedded_region_depth_limit: usize,",
+    "ownerContexts": [
+      "pub struct ParseConfiguration {"
+    ]
+  },
+  {
+    "id": "grammar.default-embedded-region-depth-limit",
+    "source": "rust/src/data/embedded-region-defaults.rs",
+    "name": "DEFAULT_EMBEDDED_REGION_DEPTH_LIMIT",
+    "inventoryName": "default embedded region depth limit",
+    "sourceText": "pub const DEFAULT_EMBEDDED_REGION_DEPTH_LIMIT: usize = 128;"
+  },
+  {
+    "id": "grammar.read-configured-embedded-region-depth-limit",
+    "source": "rust/src/configuration.rs",
+    "name": "ParseConfiguration::embedded_region_depth_limit()",
+    "inventoryName": "read configured embedded region depth limit",
+    "sourceText": "    pub const fn embedded_region_depth_limit(self) -> usize {\n        self.embedded_region_depth_limit\n    }",
+    "ownerContexts": [
+      "impl ParseConfiguration {"
+    ]
+  },
+  {
+    "id": "grammar.requested-embedded-region-count-limit",
+    "source": "js/src/index.d.ts",
+    "name": "EmbeddedRegionLimits::countLimit",
+    "inventoryName": "requested embedded region count limit",
+    "sourceText": "  countLimit?: number;",
+    "ownerContexts": [
+      "export interface EmbeddedRegionLimits {"
+    ]
+  },
+  {
+    "id": "grammar.configured-embedded-region-count-limit",
+    "source": "js/src/primitives.js",
+    "name": "ParseConfiguration::embeddedRegionCountLimit",
+    "inventoryName": "configured embedded region count limit",
+    "sourceText": "    this.embeddedRegionCountLimit = embeddedRegionCountLimit;",
+    "ownerContexts": [
+      "export class ParseConfiguration {"
+    ]
+  },
+  {
+    "id": "grammar.configured-embedded-region-count-limit",
+    "source": "js/src/index.d.ts",
+    "name": "ParseConfiguration::embeddedRegionCountLimit",
+    "inventoryName": "configured embedded region count limit",
+    "sourceText": "  readonly embeddedRegionCountLimit: number;",
+    "ownerContexts": [
+      "export class ParseConfiguration {"
+    ]
+  },
+  {
+    "id": "grammar.configured-embedded-region-count-limit",
+    "source": "rust/src/configuration.rs",
+    "name": "ParseConfiguration::embedded_region_count_limit",
+    "inventoryName": "configured embedded region count limit",
+    "sourceText": "    embedded_region_count_limit: usize,",
+    "ownerContexts": [
+      "pub struct ParseConfiguration {"
+    ]
+  },
+  {
+    "id": "grammar.default-embedded-region-count-limit",
+    "source": "rust/src/data/embedded-region-defaults.rs",
+    "name": "DEFAULT_EMBEDDED_REGION_COUNT_LIMIT",
+    "inventoryName": "default embedded region count limit",
+    "sourceText": "pub const DEFAULT_EMBEDDED_REGION_COUNT_LIMIT: usize = 4096;"
+  },
+  {
+    "id": "grammar.read-configured-embedded-region-count-limit",
+    "source": "rust/src/configuration.rs",
+    "name": "ParseConfiguration::embedded_region_count_limit()",
+    "inventoryName": "read configured embedded region count limit",
+    "sourceText": "    pub const fn embedded_region_count_limit(self) -> usize {\n        self.embedded_region_count_limit\n    }",
+    "ownerContexts": [
+      "impl ParseConfiguration {"
+    ]
+  },
+  {
+    "id": "grammar.requested-embedded-region-byte-limit",
+    "source": "js/src/index.d.ts",
+    "name": "EmbeddedRegionLimits::byteLimit",
+    "inventoryName": "requested embedded region byte limit",
+    "sourceText": "  byteLimit?: number;",
+    "ownerContexts": [
+      "export interface EmbeddedRegionLimits {"
+    ]
+  },
+  {
+    "id": "grammar.configured-embedded-region-byte-limit",
+    "source": "js/src/primitives.js",
+    "name": "ParseConfiguration::embeddedRegionByteLimit",
+    "inventoryName": "configured embedded region byte limit",
+    "sourceText": "    this.embeddedRegionByteLimit = embeddedRegionByteLimit;",
+    "ownerContexts": [
+      "export class ParseConfiguration {"
+    ]
+  },
+  {
+    "id": "grammar.configured-embedded-region-byte-limit",
+    "source": "js/src/index.d.ts",
+    "name": "ParseConfiguration::embeddedRegionByteLimit",
+    "inventoryName": "configured embedded region byte limit",
+    "sourceText": "  readonly embeddedRegionByteLimit: number;",
+    "ownerContexts": [
+      "export class ParseConfiguration {"
+    ]
+  },
+  {
+    "id": "grammar.configured-embedded-region-byte-limit",
+    "source": "rust/src/configuration.rs",
+    "name": "ParseConfiguration::embedded_region_byte_limit",
+    "inventoryName": "configured embedded region byte limit",
+    "sourceText": "    embedded_region_byte_limit: usize,",
+    "ownerContexts": [
+      "pub struct ParseConfiguration {"
+    ]
+  },
+  {
+    "id": "grammar.default-embedded-region-byte-limit",
+    "source": "rust/src/data/embedded-region-defaults.rs",
+    "name": "DEFAULT_EMBEDDED_REGION_BYTE_LIMIT",
+    "inventoryName": "default embedded region byte limit",
+    "sourceText": "pub const DEFAULT_EMBEDDED_REGION_BYTE_LIMIT: usize = 16777216;"
+  },
+  {
+    "id": "grammar.read-configured-embedded-region-byte-limit",
+    "source": "rust/src/configuration.rs",
+    "name": "ParseConfiguration::embedded_region_byte_limit()",
+    "inventoryName": "read configured embedded region byte limit",
+    "sourceText": "    pub const fn embedded_region_byte_limit(self) -> usize {\n        self.embedded_region_byte_limit\n    }",
+    "ownerContexts": [
+      "impl ParseConfiguration {"
+    ]
+  },
+  {
+    "id": "grammar.create-configuration-with-embedded-region-limits",
+    "source": "js/src/primitives.js",
+    "name": "ParseConfiguration::withEmbeddedRegionLimits",
+    "inventoryName": "create configuration with embedded region limits",
+    "sourceText": "withEmbeddedRegionLimits({\n    depthLimit = this.embeddedRegionDepthLimit,\n    countLimit = this.embeddedRegionCountLimit,\n    byteLimit = this.embeddedRegionByteLimit,\n  } = {}) {\n    return new ParseConfiguration({ ...this,\n      embeddedRegionDepthLimit: depthLimit,\n      embeddedRegionCountLimit: countLimit,\n      embeddedRegionByteLimit: byteLimit,\n    });\n  }",
+    "ownerContexts": [
+      "export class ParseConfiguration {"
+    ]
+  },
+  {
+    "id": "grammar.create-configuration-with-embedded-region-limits",
+    "source": "rust/src/configuration.rs",
+    "name": "ParseConfiguration::with_embedded_region_limits",
+    "inventoryName": "create configuration with embedded region limits",
+    "sourceText": "    pub fn with_embedded_region_limits(\n        mut self,\n        depth_limit: usize,\n        count_limit: usize,\n        byte_limit: usize,\n    ) -> Result<Self, &'static str> {\n        for value in [depth_limit, count_limit, byte_limit] {\n            if !u64::try_from(value).is_ok_and(|value| value <= 9_007_199_254_740_991)\n                || !accept_embedded_region_limit(embedded_region_number(value))\n            {\n                return Err(\"embedded region limits must be nonnegative safe integers\");\n            }\n        }\n        self.embedded_region_depth_limit = depth_limit;\n        self.embedded_region_count_limit = count_limit;\n        self.embedded_region_byte_limit = byte_limit;\n        Ok(self)\n    }",
+    "ownerContexts": [
+      "impl ParseConfiguration {"
+    ]
+  },
+  {
+    "id": "grammar.create-configuration-with-embedded-region-limits",
+    "source": "js/src/index.d.ts",
+    "name": "ParseConfiguration::withEmbeddedRegionLimits",
+    "inventoryName": "create configuration with embedded region limits",
+    "sourceText": "  withEmbeddedRegionLimits(limits?: EmbeddedRegionLimits): ParseConfiguration;"
+  },
+  {
+    "id": "grammar.embedded-region-default-data-module",
+    "source": "rust/src/configuration.rs",
+    "name": "embedded_region_defaults",
+    "inventoryName": "embedded region default data module",
+    "sourceText": "mod embedded_region_defaults {\n    include!(\"data/embedded-region-defaults.rs\");\n}"
+  },
+  {
+    "id": "grammar.convert-native-region-index-to-number",
+    "source": "rust/src/configuration.rs",
+    "name": "embedded_region_number",
+    "inventoryName": "convert native region index to number",
+    "sourceText": "pub(crate) fn embedded_region_number(value: usize) -> f64 {\n    serde_json::Number::from(value)\n        .as_f64()\n        .expect(\"a host index has a JavaScript Number representation\")\n}"
+  },
+  {
+    "id": "grammar.insert-embedded-region-diagnostic",
+    "source": "js/src/network.js",
+    "name": "LinkNetwork::_insertEmbeddedRegionDiagnostic",
+    "inventoryName": "insert embedded region diagnostic",
+    "sourceText": "_insertEmbeddedRegionDiagnostic(region, language, span, reason, counters) {\n    const diagnostic = this.insertLink([region], LinkMetadata.new()\n      .withLinkType(LinkType.Relation).withTerm('embedded region diagnostic')\n      .withLanguage(language).withDefinition(reason).withSpan(span).withFlags(LinkFlags.error()));\n    for (const [label, value] of Object.entries({\n      depth: counters.depth, 'region count': counters.count, 'child parse bytes': counters.bytes,\n      observed: counters.observed, limit: counters.limit,\n    })) {\n      if (value < 0) continue;\n      const scalar = this.insertLink([], LinkMetadata.new().withLinkType(LinkType.Object)\n        .withTerm(String(value)).withDefinition('nonnegative integer'));\n      this.insertFieldRelation(diagnostic, label, scalar);\n    }\n    if (counters.ancestor !== undefined) this.insertFieldRelation(diagnostic, 'ancestor', counters.ancestor);\n    return diagnostic;\n  }",
+    "ownerContexts": [
+      "export class LinkNetwork {"
+    ]
+  },
+  {
+    "id": "grammar.insert-embedded-region-diagnostic",
+    "source": "rust/src/embedded_region_parser/diagnostics.rs",
+    "name": "insert_embedded_region_diagnostic",
+    "inventoryName": "insert embedded region diagnostic",
+    "sourceText": "pub(super) fn insert_embedded_region_diagnostic(\n    network: &mut LinkNetwork,\n    region: LinkId,\n    language: &str,\n    span: SourceSpan,\n    counters: &EmbeddedRegionDiagnostic<'_>,\n) -> LinkId {\n    let diagnostic = network.insert_link(\n        [region],\n        LinkMetadata::new()\n            .with_link_type(LinkType::Relation)\n            .with_term(\"embedded region diagnostic\")\n            .with_language(language)\n            .with_definition(counters.reason)\n            .with_span(span)\n            .with_flags(LinkFlags::error()),\n    );\n    for (label, value) in [\n        (\"depth\", counters.depth),\n        (\"region count\", counters.count),\n        (\"child parse bytes\", counters.bytes),\n        (\"observed\", counters.observed),\n        (\"limit\", counters.limit),\n    ] {\n        if value < 0.0 {\n            continue;\n        }\n        let scalar = network.insert_link(\n            [],\n            LinkMetadata::new()\n                .with_link_type(LinkType::Object)\n                .with_term(value.to_string())\n                .with_definition(\"nonnegative integer\"),\n        );\n        network.insert_field(diagnostic, label, scalar);\n    }\n    if let Some(ancestor) = counters.ancestor {\n        network.insert_field(diagnostic, \"ancestor\", ancestor);\n    }\n    diagnostic\n}"
+  },
+  {
+    "id": "grammar.embedded-region-diagnostic-message",
+    "source": "js/src/network.js",
+    "name": "embedded region diagnostic",
+    "inventoryName": "embedded region diagnostic message",
+    "sourceText": "      .withLinkType(LinkType.Relation).withTerm('embedded region diagnostic')"
+  },
+  {
+    "id": "grammar.embedded-region-diagnostic-message",
+    "source": "rust/src/embedded_region_parser/diagnostics.rs",
+    "name": "embedded region diagnostic",
+    "inventoryName": "embedded region diagnostic message",
+    "sourceText": "            .with_term(\"embedded region diagnostic\")"
+  },
+  {
+    "id": "grammar.embedded-region-traversal-frame",
+    "source": "rust/src/embedded_region_parser.rs",
+    "name": "EmbeddedRegionFrame",
+    "inventoryName": "embedded region traversal frame",
+    "sourceText": "struct EmbeddedRegionFrame {\n    parent: LinkId,\n    language: String,\n    bounds: ByteRange,\n    depth: f64,\n}"
+  },
+  {
+    "id": "grammar.embedded-region-traversal-state",
+    "source": "rust/src/embedded_region_parser.rs",
+    "name": "EmbeddedRegionTraversal",
+    "inventoryName": "embedded region traversal state",
+    "sourceText": "struct EmbeddedRegionTraversal {\n    frames: Vec<EmbeddedRegionFrame>,\n    parents: Vec<f64>,\n    languages: Vec<f64>,\n    starts: Vec<f64>,\n    ends: Vec<f64>,\n    language_identifiers: HashMap<String, f64>,\n    recorded_languages: HashSet<LinkId>,\n    count: f64,\n    bytes: f64,\n    limits: [f64; 3],\n    index: HostTreeIndex,\n}"
+  },
+  {
+    "id": "grammar.embedded-region-diagnostic-data",
+    "source": "rust/src/embedded_region_parser/diagnostics.rs",
+    "name": "EmbeddedRegionDiagnostic",
+    "inventoryName": "embedded region diagnostic data",
+    "sourceText": "pub(super) struct EmbeddedRegionDiagnostic<'a> {\n    pub(super) reason: &'a str,\n    pub(super) depth: f64,\n    pub(super) count: f64,\n    pub(super) bytes: f64,\n    pub(super) observed: f64,\n    pub(super) limit: f64,\n    pub(super) ancestor: Option<LinkId>,\n}"
+  },
+  {
+    "id": "grammar.create-embedded-region-traversal",
+    "source": "rust/src/embedded_region_parser.rs",
+    "name": "EmbeddedRegionTraversal::new",
+    "inventoryName": "create embedded region traversal",
+    "sourceText": "    fn new(\n        document: LinkId,\n        text: &str,\n        language: &str,\n        configuration: ParseConfiguration,\n    ) -> Self {\n        Self {\n            frames: vec![EmbeddedRegionFrame {\n                parent: document,\n                language: language.to_owned(),\n                bounds: ByteRange::new(0, text.len()),\n                depth: 0.0,\n            }],\n            parents: vec![-1.0],\n            languages: vec![0.0],\n            starts: vec![0.0],\n            ends: vec![number(text.len())],\n            language_identifiers: HashMap::from([(\n                canonical_language_name(language)\n                    .unwrap_or(language)\n                    .to_owned(),\n                0.0,\n            )]),\n            recorded_languages: HashSet::new(),\n            count: 0.0,\n            bytes: 0.0,\n            limits: [\n                number(configuration.embedded_region_depth_limit()),\n                number(configuration.embedded_region_count_limit()),\n                number(configuration.embedded_region_byte_limit()),\n            ],\n            index: HostTreeIndex::new(text),\n        }\n    }",
+    "ownerContexts": [
+      "impl EmbeddedRegionTraversal {"
+    ]
+  },
+  {
+    "id": "grammar.run-embedded-region-traversal",
+    "source": "rust/src/embedded_region_parser.rs",
+    "name": "EmbeddedRegionTraversal::run",
+    "inventoryName": "run embedded region traversal",
+    "sourceText": "    fn run(&mut self, network: &mut LinkNetwork, text: &str, configuration: ParseConfiguration) {\n        let mut position = 0;\n        while position < self.frames.len() {\n            let frame = &self.frames[position];\n            let regions = detect_embedded_regions_in_scope(\n                network,\n                &mut self.index,\n                frame.parent,\n                text,\n                &frame.language,\n                configuration.region_detection_policy(),\n                frame.bounds,\n            );\n            for region in regions {\n                self.attach(network, text, configuration, position, &region);\n            }\n            position += 1;\n        }\n    }",
+    "ownerContexts": [
+      "impl EmbeddedRegionTraversal {"
+    ]
+  },
+  {
+    "id": "grammar.attach-default-child-region",
+    "source": "rust/src/embedded_region_parser.rs",
+    "name": "EmbeddedRegionTraversal::attach",
+    "inventoryName": "attach default child region",
+    "sourceText": "    fn attach(\n        &mut self,\n        network: &mut LinkNetwork,\n        text: &str,\n        configuration: ParseConfiguration,\n        position: usize,\n        region: &EmbeddedRegion,\n    ) {\n        let language = region.language();\n        let canonical = canonical_language_name(language).unwrap_or(language);\n        let next_language = number(self.language_identifiers.len());\n        let selected_language = *self\n            .language_identifiers\n            .entry(canonical.to_owned())\n            .or_insert(next_language);\n        let span = region.span();\n        let bounds = span.byte_range();\n        let start = number(bounds.start());\n        let end = number(bounds.end());\n        let frame = &self.frames[position];\n        let parent = frame.parent;\n        let depth = frame.depth + 1.0;\n        let ancestor = rules::read_embedded_region_ancestor(\n            &self.parents,\n            &self.languages,\n            &self.starts,\n            &self.ends,\n            number(position),\n            selected_language,\n            start,\n            end,\n        );\n        let disposition = rules::read_embedded_region_disposition(\n            self.starts[position],\n            self.ends[position],\n            self.languages[position],\n            selected_language,\n            start,\n            end,\n            ancestor,\n            depth,\n            self.count,\n            self.bytes,\n            self.limits[0],\n            self.limits[1],\n            self.limits[2],\n            language.eq_ignore_ascii_case(&frame.language),\n        );\n        if disposition == \"reuseAttached\" {\n            return;\n        }\n        let language_link = network.insert_typed_point(language, LinkType::Language, None);\n        let region_link = network.insert_link(\n            [parent, language_link],\n            LinkMetadata::new()\n                .with_link_type(LinkType::Region)\n                .with_named(true)\n                .with_term(format!(\"{language} region\"))\n                .with_language(language)\n                .with_span(span),\n        );\n        if disposition == \"reuse\" {\n            return;\n        }\n        if disposition != \"parse\" {\n            let ancestor_parent = rules::ml_array::number_index(ancestor)\n                .and_then(|position| self.frames.get(position))\n                .map(|frame| frame.parent);\n            insert_embedded_region_diagnostic(\n                network,\n                region_link,\n                language,\n                span,\n                &EmbeddedRegionDiagnostic {\n                    reason: &disposition,\n                    depth,\n                    count: self.count,\n                    bytes: self.bytes,\n                    observed: rules::read_embedded_region_diagnostic_observed(\n                        &disposition,\n                        depth,\n                        self.count,\n                        self.bytes,\n                        start,\n                        end,\n                    ),\n                    limit: rules::read_embedded_region_diagnostic_limit(\n                        &disposition,\n                        self.limits[0],\n                        self.limits[1],\n                        self.limits[2],\n                    ),\n                    ancestor: ancestor_parent,\n                },\n            );\n            return;\n        }\n        self.count = rules::read_embedded_region_charge(self.count, start, end, false);\n        self.bytes = rules::read_embedded_region_charge(self.bytes, start, end, true);\n        self.parse_child(\n            network,\n            text,\n            configuration,\n            position,\n            region,\n            [region_link, language_link],\n        );\n    }",
+    "ownerContexts": [
+      "impl EmbeddedRegionTraversal {"
+    ]
+  },
+  {
+    "id": "grammar.parse-default-child-region",
+    "source": "rust/src/embedded_region_parser.rs",
+    "name": "EmbeddedRegionTraversal::parse_child",
+    "inventoryName": "parse default child region",
+    "sourceText": "    fn parse_child(\n        &mut self,\n        network: &mut LinkNetwork,\n        text: &str,\n        configuration: ParseConfiguration,\n        position: usize,\n        region: &EmbeddedRegion,\n        [region_link, language_link]: [LinkId; 2],\n    ) {\n        let language = region.language();\n        let span = region.span();\n        let bounds = span.byte_range();\n        if self.recorded_languages.insert(language_link) {\n            network.record_grammars(language_link, language);\n        }\n        let region_text = &text[bounds.start()..bounds.end()];\n        let child = tree_sitter_adapter::parse_embedded_region_into(\n            network,\n            region_link,\n            region_text,\n            language,\n            span,\n            configuration,\n        )\n        .or_else(|| {\n            structured_text_parser::parse_embedded_region_into(\n                network,\n                region_link,\n                region_text,\n                language,\n                span,\n                configuration,\n            )\n        });\n        if child.is_some() {\n            let next_language = canonical_language_name(language).unwrap_or(language);\n            let selected_language = self.language_identifiers[next_language];\n            let depth = self.frames[position].depth + 1.0;\n            self.frames.push(EmbeddedRegionFrame {\n                parent: region_link,\n                language: language.to_owned(),\n                bounds,\n                depth,\n            });\n            self.parents.push(number(position));\n            self.languages.push(selected_language);\n            self.starts.push(number(bounds.start()));\n            self.ends.push(number(bounds.end()));\n        }\n    }",
+    "ownerContexts": [
+      "impl EmbeddedRegionTraversal {"
+    ]
+  },
+  {
+    "id": "grammar.host-concrete-tree-index",
+    "source": "rust/src/mixed_regions.rs",
+    "name": "HostTreeIndex",
+    "inventoryName": "host concrete tree index",
+    "sourceText": "pub(crate) struct HostTreeIndex {\n    children: HashMap<LinkId, Vec<LinkId>>,\n    last_link: Option<LinkId>,\n    lines: LineIndex,\n}"
+  },
+  {
+    "id": "grammar.create-host-concrete-tree-index",
+    "source": "rust/src/mixed_regions.rs",
+    "name": "HostTreeIndex::new",
+    "inventoryName": "create host concrete tree index",
+    "sourceText": "    pub(crate) fn new(text: &str) -> Self {\n        Self {\n            children: HashMap::new(),\n            last_link: None,\n            lines: LineIndex::new(text),\n        }\n    }",
+    "ownerContexts": [
+      "impl HostTreeIndex {"
+    ]
+  },
+  {
+    "id": "grammar.update-host-concrete-tree-index",
+    "source": "rust/src/mixed_regions.rs",
+    "name": "HostTreeIndex::update",
+    "inventoryName": "update host concrete tree index",
+    "sourceText": "    pub(crate) fn update(&mut self, network: &LinkNetwork) {\n        let lower = self.last_link.map_or(Unbounded, Excluded);\n        for (&id, link) in network.links.range((lower, Unbounded)) {\n            if link.metadata().link_type() == Some(LinkType::Syntax)\n                && let [parent] = link.references()\n            {\n                self.children.entry(*parent).or_default().push(id);\n            }\n            self.last_link = Some(id);\n        }\n    }",
+    "ownerContexts": [
+      "impl HostTreeIndex {"
+    ]
+  },
+  {
+    "id": "grammar.detect-embedded-regions-in-host-scope",
+    "source": "rust/src/mixed_regions.rs",
+    "name": "detect_embedded_regions_in_scope",
+    "inventoryName": "detect embedded regions in host scope",
+    "sourceText": "pub(crate) fn detect_embedded_regions_in_scope(\n    network: &LinkNetwork,\n    index: &mut HostTreeIndex,\n    parent: LinkId,\n    text: &str,\n    language: &str,\n    policy: RegionDetectionPolicy,\n    bounds: ByteRange,\n) -> Vec<EmbeddedRegion> {\n    let host = canonical_language_name(language);\n    if host == Some(TXT_LANGUAGE) {\n        return vec![region_for(\n            &index.lines,\n            TXT_LANGUAGE.to_string(),\n            bounds.start(),\n            bounds.end(),\n        )];\n    }\n    if !matches!(host, Some(\"HTML\" | \"Markdown\")) {\n        return Vec::new();\n    }\n    index.update(network);\n    let lines = &index.lines;\n    let tree = HostTree::new(network, text, index);\n    let mut found = Vec::new();\n    let mut stack = vec![parent];\n    while let Some(node) = stack.pop() {\n        if host == Some(\"HTML\") {\n            tree.visit_html(node, &mut found);\n        } else {\n            tree.visit_markdown(node, policy, &mut found);\n        }\n        stack.extend(tree.children(node).iter().rev());\n    }\n    found.sort_by_key(|(_, start, _)| *start);\n    found\n        .into_iter()\n        .map(|(language, start, end)| region_for(lines, language, start, end))\n        .collect()\n}"
+  },
+  {
+    "id": "grammar.render-original-source-token-coverage",
+    "source": "rust/src/source_generation.rs",
+    "name": "render_source_token_coverage",
+    "inventoryName": "render original source token coverage",
+    "sourceText": "    fn render_source_token_coverage(&self, language: &str) -> Option<String> {\n        let mut tokens: Vec<_> = self\n            .links()\n            .filter(|link| {\n                link.metadata().link_type() == Some(LinkType::Token)\n                    && language_matches(link.metadata().language(), language)\n                    && !link.metadata().flags().is_missing()\n            })\n            .collect();\n        if !tokens.iter().any(|token| token.metadata().span().is_some()) {\n            return None;\n        }\n        tokens.sort_by_key(|token| {\n            let span = token.metadata().span();\n            (\n                span.is_none(),\n                span.map_or(0, |span| span.byte_range().start()),\n                token.id(),\n            )\n        });\n        let mut rendered = String::new();\n        let mut covered_until = 0;\n        for token in tokens {\n            let range = token.metadata().span().map(|span| span.byte_range());\n            if let Some(range) = range\n                && !accept_embedded_region_source_coverage(\n                    embedded_region_number(range.start()),\n                    embedded_region_number(covered_until),\n                )\n            {\n                continue;\n            }\n            rendered.push_str(token.metadata().term().unwrap_or_default());\n            if let Some(range) = range {\n                covered_until = range.end();\n            }\n        }\n        Some(rendered)\n    }"
+  },
+  {
+    "id": "translation.embedded-region-ancestor-search-result",
+    "source": "rust/src/translation/embedded_region_rules/part_1.rs",
+    "name": "MlReadEmbeddedRegionAncestorLoop1Result",
+    "inventoryName": "embedded region ancestor search result",
+    "sourceText": "pub enum MlReadEmbeddedRegionAncestorLoop1Result {\n    MlReadEmbeddedRegionAncestorLoop1Done(f64),\n    MlReadEmbeddedRegionAncestorLoop1Return(f64),\n}"
+  },
+  {
+    "id": "translation.completed-embedded-region-ancestor-search",
+    "source": "rust/src/translation/embedded_region_rules/part_1.rs",
+    "name": "MlReadEmbeddedRegionAncestorLoop1Result::MlReadEmbeddedRegionAncestorLoop1Done",
+    "inventoryName": "completed embedded region ancestor search",
+    "sourceText": "MlReadEmbeddedRegionAncestorLoop1Done(f64),",
+    "ownerContexts": [
+      "pub enum MlReadEmbeddedRegionAncestorLoop1Result {"
+    ]
+  },
+  {
+    "id": "translation.returned-embedded-region-ancestor-search",
+    "source": "rust/src/translation/embedded_region_rules/part_1.rs",
+    "name": "MlReadEmbeddedRegionAncestorLoop1Result::MlReadEmbeddedRegionAncestorLoop1Return",
+    "inventoryName": "returned embedded region ancestor search",
+    "sourceText": "MlReadEmbeddedRegionAncestorLoop1Return(f64),",
+    "ownerContexts": [
+      "pub enum MlReadEmbeddedRegionAncestorLoop1Result {"
+    ]
+  },
+  {
+    "id": "translation.run-embedded-region-ancestor-search-continuation",
+    "source": "rust/src/translation/embedded_region_rules/part_1.rs",
+    "name": "ml_read_embedded_region_ancestor_loop1",
+    "inventoryName": "run embedded region ancestor search continuation",
+    "sourceText": "pub fn ml_read_embedded_region_ancestor_loop1(\n    parents: &[f64],\n    languages: &[f64],\n    starts: &[f64],\n    ends: &[f64],\n    mut language: f64,\n    mut start: f64,\n    mut end: f64,\n    mut position: f64,\n) -> self::MlReadEmbeddedRegionAncestorLoop1Result {\n    loop {\n        return if position >= 0f64 {\n            if !(self::accept_embedded_region_limit(position))\n                || (position >= (parents.len() as f64))\n            {\n                self::MlReadEmbeddedRegionAncestorLoop1Result::MlReadEmbeddedRegionAncestorLoop1Return(-2f64)\n            } else {\n                {\n                    let previous = (self::ml_array::optional_at(\n                        parents,\n                        self::ml_array::number_index(position),\n                    ))\n                    .unwrap_or(f64::NAN);\n                    {\n                        let selected_language = (self::ml_array::optional_at(\n                            languages,\n                            self::ml_array::number_index(position),\n                        ))\n                        .unwrap_or(f64::NAN);\n                        {\n                            let selected_start = (self::ml_array::optional_at(\n                                starts,\n                                self::ml_array::number_index(position),\n                            ))\n                            .unwrap_or(f64::NAN);\n                            {\n                                let selected_end = (self::ml_array::optional_at(\n                                    ends,\n                                    self::ml_array::number_index(position),\n                                ))\n                                .unwrap_or(f64::NAN);\n                                if ((previous != -1f64)\n                                    && (!(self::accept_embedded_region_limit(previous))\n                                        || (previous >= position)))\n                                    || (!(self::accept_embedded_region_limit(selected_language))\n                                        || !(self::accept_embedded_region_bounds(\n                                            0f64,\n                                            9_007_199_254_740_991f64,\n                                            selected_start,\n                                            selected_end,\n                                        )))\n                                {\n                                    self::MlReadEmbeddedRegionAncestorLoop1Result::MlReadEmbeddedRegionAncestorLoop1Return(-2f64)\n                                } else if ((selected_language == language)\n                                    && (selected_start == start))\n                                    && (selected_end == end)\n                                {\n                                    self::MlReadEmbeddedRegionAncestorLoop1Result::MlReadEmbeddedRegionAncestorLoop1Return(position)\n                                } else {\n                                    {\n                                        let position_2 = previous;\n                                        {\n                                            position = position_2;\n                                            continue;\n                                        }\n                                    }\n                                }\n                            }\n                        }\n                    }\n                }\n            }\n        } else {\n            self::MlReadEmbeddedRegionAncestorLoop1Result::MlReadEmbeddedRegionAncestorLoop1Done(\n                position,\n            )\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.embedded-region-array-provider",
+    "source": "rust/src/translation/embedded_region_rules/part_1.rs",
+    "name": "ml_array",
+    "inventoryName": "embedded region array provider",
+    "sourceText": "pub mod ml_array {\n    #[must_use]\n    pub fn optional_at<T: Clone>(values: &[T], index: Option<usize>) -> Option<T> {\n        index.and_then(|index| values.get(index)).cloned()\n    }\n    /// The element at an index; a read outside the array, undefined in\n    /// JavaScript, aborts.\n    #[must_use]\n    pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {\n        index\n            .and_then(|index| values.get(index))\n            .map_or_else(|| panic!(\"array index out of range\"), Clone::clone)\n    }\n\n    /// The index a Number names: a non-negative integer, -0 included.\n    #[must_use]\n    pub fn number_index(index: f64) -> Option<usize> {\n        if index >= 0.0 && index.fract() == 0.0 && index < 9_007_199_254_740_992.0 {\n            Some(index as usize)\n        } else {\n            None\n        }\n    }\n\n    #[must_use]\n    pub fn append<T>(mut left: Vec<T>, right: Vec<T>) -> Vec<T> {\n        left.extend(right);\n        left\n    }\n    const fn integer(value: f64) -> f64 {\n        if value.is_nan() { 0.0 } else { value.trunc() }\n    }\n    fn relative(value: f64, length: usize) -> usize {\n        let value = integer(value);\n        if value < 0.0 {\n            (length as f64 + value).max(0.0) as usize\n        } else {\n            value.min(length as f64) as usize\n        }\n    }\n    #[must_use]\n    pub fn slice<T: Clone>(values: &[T], start: f64, end: f64) -> Vec<T> {\n        let start = relative(start, values.len());\n        let end = relative(end, values.len());\n        values[start..end.max(start)].to_vec()\n    }\n    #[must_use]\n    pub fn index_of<T, F: Fn(&T, &T) -> bool>(\n        values: &[T],\n        search: &T,\n        from: f64,\n        reverse: bool,\n        equal: F,\n    ) -> f64 {\n        if values.is_empty() {\n            return -1.0;\n        }\n        let from = integer(from);\n        if reverse {\n            if from < -(values.len() as f64) {\n                return -1.0;\n            }\n            let start = if from < 0.0 {\n                (values.len() as f64 + from) as usize\n            } else {\n                from.min((values.len() - 1) as f64) as usize\n            };\n            (0..=start)\n                .rev()\n                .find(|&index| equal(&values[index], search))\n                .map_or(-1.0, |index| index as f64)\n        } else {\n            let start = if from < 0.0 {\n                (values.len() as f64 + from).max(0.0) as usize\n            } else {\n                from.min(values.len() as f64) as usize\n            };\n            (start..values.len())\n                .find(|&index| equal(&values[index], search))\n                .map_or(-1.0, |index| index as f64)\n        }\n    }\n    #[must_use]\n    pub fn includes<T, F: Fn(&T, &T) -> bool>(\n        values: &[T],\n        search: &T,\n        from: f64,\n        reverse: bool,\n        equal: F,\n    ) -> bool {\n        index_of(values, search, from, reverse, equal) >= 0.0\n    }\n    #[must_use]\n    pub fn set<T, F: Fn(&T, &T) -> bool>(values: Vec<T>, equal: F) -> Vec<T> {\n        let mut out = Vec::new();\n        for value in values {\n            if !out.iter().any(|previous| equal(previous, &value)) {\n                out.push(value);\n            }\n        }\n        out\n    }\n    #[must_use]\n    pub fn map<K, V, F: Fn(&K, &K) -> bool>(values: Vec<(K, V)>, equal: F) -> Vec<(K, V)> {\n        let mut out: Vec<(K, V)> = Vec::new();\n        for (key, value) in values {\n            if let Some(index) = out.iter().position(|(previous, _)| equal(previous, &key)) {\n                out[index].1 = value;\n            } else {\n                out.push((key, value));\n            }\n        }\n        out\n    }\n}"
+  },
+  {
+    "id": "translation.read-optional-region-array-element",
+    "source": "rust/src/translation/embedded_region_rules/part_1.rs",
+    "name": "ml_array::optional_at",
+    "inventoryName": "read optional region array element",
+    "sourceText": "    pub fn optional_at<T: Clone>(values: &[T], index: Option<usize>) -> Option<T> {\n        index.and_then(|index| values.get(index)).cloned()\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.read-required-region-array-element",
+    "source": "rust/src/translation/embedded_region_rules/part_1.rs",
+    "name": "ml_array::at",
+    "inventoryName": "read required region array element",
+    "sourceText": "    pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {\n        index\n            .and_then(|index| values.get(index))\n            .map_or_else(|| panic!(\"array index out of range\"), Clone::clone)\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.read-region-array-number-index",
+    "source": "rust/src/translation/embedded_region_rules/part_1.rs",
+    "name": "ml_array::number_index",
+    "inventoryName": "read region array number index",
+    "sourceText": "    pub fn number_index(index: f64) -> Option<usize> {\n        if index >= 0.0 && index.fract() == 0.0 && index < 9_007_199_254_740_992.0 {\n            Some(index as usize)\n        } else {\n            None\n        }\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.append-region-array-values",
+    "source": "rust/src/translation/embedded_region_rules/part_1.rs",
+    "name": "ml_array::append",
+    "inventoryName": "append region array values",
+    "sourceText": "    pub fn append<T>(mut left: Vec<T>, right: Vec<T>) -> Vec<T> {\n        left.extend(right);\n        left\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.read-region-array-integer",
+    "source": "rust/src/translation/embedded_region_rules/part_1.rs",
+    "name": "ml_array::integer",
+    "inventoryName": "read region array integer",
+    "sourceText": "    const fn integer(value: f64) -> f64 {\n        if value.is_nan() { 0.0 } else { value.trunc() }\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.read-region-array-relative-index",
+    "source": "rust/src/translation/embedded_region_rules/part_1.rs",
+    "name": "ml_array::relative",
+    "inventoryName": "read region array relative index",
+    "sourceText": "    fn relative(value: f64, length: usize) -> usize {\n        let value = integer(value);\n        if value < 0.0 {\n            (length as f64 + value).max(0.0) as usize\n        } else {\n            value.min(length as f64) as usize\n        }\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.slice-region-array-values",
+    "source": "rust/src/translation/embedded_region_rules/part_1.rs",
+    "name": "ml_array::slice",
+    "inventoryName": "slice region array values",
+    "sourceText": "    pub fn slice<T: Clone>(values: &[T], start: f64, end: f64) -> Vec<T> {\n        let start = relative(start, values.len());\n        let end = relative(end, values.len());\n        values[start..end.max(start)].to_vec()\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.find-region-array-value-position",
+    "source": "rust/src/translation/embedded_region_rules/part_1.rs",
+    "name": "ml_array::index_of",
+    "inventoryName": "find region array value position",
+    "sourceText": "    pub fn index_of<T, F: Fn(&T, &T) -> bool>(\n        values: &[T],\n        search: &T,\n        from: f64,\n        reverse: bool,\n        equal: F,\n    ) -> f64 {\n        if values.is_empty() {\n            return -1.0;\n        }\n        let from = integer(from);\n        if reverse {\n            if from < -(values.len() as f64) {\n                return -1.0;\n            }\n            let start = if from < 0.0 {\n                (values.len() as f64 + from) as usize\n            } else {\n                from.min((values.len() - 1) as f64) as usize\n            };\n            (0..=start)\n                .rev()\n                .find(|&index| equal(&values[index], search))\n                .map_or(-1.0, |index| index as f64)\n        } else {\n            let start = if from < 0.0 {\n                (values.len() as f64 + from).max(0.0) as usize\n            } else {\n                from.min(values.len() as f64) as usize\n            };\n            (start..values.len())\n                .find(|&index| equal(&values[index], search))\n                .map_or(-1.0, |index| index as f64)\n        }\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.accept-region-array-value-membership",
+    "source": "rust/src/translation/embedded_region_rules/part_1.rs",
+    "name": "ml_array::includes",
+    "inventoryName": "accept region array value membership",
+    "sourceText": "    pub fn includes<T, F: Fn(&T, &T) -> bool>(\n        values: &[T],\n        search: &T,\n        from: f64,\n        reverse: bool,\n        equal: F,\n    ) -> bool {\n        index_of(values, search, from, reverse, equal) >= 0.0\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.retain-unique-region-array-values",
+    "source": "rust/src/translation/embedded_region_rules/part_1.rs",
+    "name": "ml_array::set",
+    "inventoryName": "retain unique region array values",
+    "sourceText": "    pub fn set<T, F: Fn(&T, &T) -> bool>(values: Vec<T>, equal: F) -> Vec<T> {\n        let mut out = Vec::new();\n        for value in values {\n            if !out.iter().any(|previous| equal(previous, &value)) {\n                out.push(value);\n            }\n        }\n        out\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.retain-region-array-map-entries",
+    "source": "rust/src/translation/embedded_region_rules/part_1.rs",
+    "name": "ml_array::map",
+    "inventoryName": "retain region array map entries",
+    "sourceText": "    pub fn map<K, V, F: Fn(&K, &K) -> bool>(values: Vec<(K, V)>, equal: F) -> Vec<(K, V)> {\n        let mut out: Vec<(K, V)> = Vec::new();\n        for (key, value) in values {\n            if let Some(index) = out.iter().position(|(previous, _)| equal(previous, &key)) {\n                out[index].1 = value;\n            } else {\n                out.push((key, value));\n            }\n        }\n        out\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "repository.read-shared-native-recursive-region-fixture",
+    "source": "rust/tests/unit/recursive_embedded_regions.rs",
+    "name": "recursive_default_region_fixture",
+    "inventoryName": "read shared native recursive region fixture",
+    "sourceText": "fn recursive_default_region_fixture() -> Value {\n    super::project_data::read_project_data(include_str!(\n        \"../../../parity/fixtures/recursive-default-embedded-regions.lino\"\n    ))\n    .expect(\"the complete shared recursive default region fixture reads\")\n}"
+  },
+  {
+    "id": "repository.native-recursive-concrete-projection",
+    "source": "rust/tests/unit/recursive_embedded_regions.rs",
+    "name": "RecursiveConcreteProjection",
+    "inventoryName": "native recursive concrete projection",
+    "sourceText": "struct RecursiveConcreteProjection<'a> {\n    network: &'a LinkNetwork,\n    children: HashMap<LinkId, Vec<LinkId>>,\n    fields: HashMap<LinkId, Vec<(String, LinkId)>>,\n}"
+  },
+  {
+    "id": "repository.read-relative-region-source-point",
+    "source": "rust/tests/unit/recursive_embedded_regions.rs",
+    "name": "relative_region_point",
+    "inventoryName": "read relative region source point",
+    "sourceText": "fn relative_region_point(point: Point, origin: Point) -> Value {\n    json!({ \"row\": point.row() - origin.row(), \"column\": point.column()\n        - if point.row() == origin.row() { origin.column() } else { 0 } })\n}"
+  },
+  {
+    "id": "repository.read-recursive-region-test-configuration",
+    "source": "rust/tests/unit/recursive_embedded_regions.rs",
+    "name": "recursive_region_configuration",
+    "inventoryName": "read recursive region test configuration",
+    "sourceText": "fn recursive_region_configuration(policy: &str) -> ParseConfiguration {\n    ParseConfiguration::default().with_region_detection_policy(match policy {\n        \"NameDriven\" => RegionDetectionPolicy::NameDriven,\n        \"ContentDriven\" => RegionDetectionPolicy::ContentDriven,\n        \"Both\" => RegionDetectionPolicy::Both,\n        _ => panic!(\"the shared fixture names an existing region detection policy\"),\n    })\n}"
+  },
+  {
+    "id": "repository.read-original-region-document",
+    "source": "rust/tests/unit/recursive_embedded_regions.rs",
+    "name": "region_document",
+    "inventoryName": "read original region document",
+    "sourceText": "fn region_document(network: &LinkNetwork) -> &Link {\n    network\n        .links()\n        .find(|link| link.metadata().link_type() == Some(LinkType::Document))\n        .expect(\"the registered parser retains its document\")\n}"
+  },
+  {
+    "id": "repository.assert-native-complete-recursive-regions",
+    "source": "rust/tests/unit/recursive_embedded_regions.rs",
+    "name": "assert_recursive_default_regions",
+    "inventoryName": "assert native complete recursive regions",
+    "sourceText": "fn assert_recursive_default_regions(network: &LinkNetwork, fixture: &Value) {\n    let source = fixture[\"source\"].as_str().unwrap();\n    let host = fixture[\"host\"].as_str().unwrap();\n    let regions = recursive_default_region_links(network);\n    let expected = fixture[\"regions\"].as_array().unwrap();\n    assert_eq!(\n        regions.len(),\n        expected.len(),\n        \"FIFO retains every authored region exactly once\"\n    );\n    let configuration = recursive_region_configuration(fixture[\"policy\"].as_str().unwrap())\n        .with_embedded_region_limits(0, 0, 0)\n        .unwrap();\n    let projection = RecursiveConcreteProjection::new(network);\n    for (index, expected) in expected.iter().enumerate() {\n        let region = regions[index];\n        let metadata = region.metadata();\n        let language = expected[\"language\"].as_str().unwrap();\n        let span = metadata.span().unwrap();\n        let range = span.byte_range();\n        assert_eq!(metadata.language(), Some(language));\n        assert_eq!(\n            u64::try_from(range.start()).unwrap(),\n            expected[\"startByte\"].as_u64().unwrap()\n        );\n        assert_eq!(\n            u64::try_from(range.end()).unwrap(),\n            expected[\"endByte\"].as_u64().unwrap()\n        );\n        for (point, expected) in [\n            (span.start_point(), &expected[\"startPoint\"]),\n            (span.end_point(), &expected[\"endPoint\"]),\n        ] {\n            assert_eq!(\n                json!({ \"row\": point.row(), \"column\": point.column() }),\n                *expected\n            );\n        }\n        let region_source = expected[\"source\"].as_str().unwrap();\n        assert_eq!(&source[range.start()..range.end()], region_source);\n        let expected_parent = expected[\"parent\"].as_i64().unwrap();\n        let parent = if expected_parent < 0 {\n            region_document(network).id()\n        } else {\n            regions[usize::try_from(expected_parent).unwrap()].id()\n        };\n        assert_eq!(\n            region.references()[0],\n            parent,\n            \"descendants name their containing Region\"\n        );\n        let direct = LinkNetwork::parse(region_source, language, configuration);\n        let document = region_document(&direct);\n        let actual = projection.children(region.id(), span);\n        assert!(\n            !actual.as_array().unwrap().is_empty(),\n            \"accepted regions own their complete CST\"\n        );\n        assert_eq!(\n            actual,\n            RecursiveConcreteProjection::new(&direct)\n                .children(document.id(), document.metadata().span().unwrap()),\n            \"every child node, token, flag, ordered field and coordinate survives one absolute offset\"\n        );\n    }\n    let direct = LinkNetwork::parse(source, host, configuration);\n    let document = region_document(network);\n    let direct_document = region_document(&direct);\n    assert_eq!(\n        projection.children(document.id(), document.metadata().span().unwrap()),\n        RecursiveConcreteProjection::new(&direct).children(\n            direct_document.id(),\n            direct_document.metadata().span().unwrap()\n        ),\n        \"descendant Regions preserve the complete original host CST\"\n    );\n    assert_eq!(network.reconstruct_text(), source);\n    assert_eq!(network.render_source(host), source);\n    assert!(network.verify_full_match(None).is_clean());\n}"
+  },
+  {
+    "id": "repository.read-native-region-diagnostic-fields",
+    "source": "rust/tests/unit/recursive_embedded_regions.rs",
+    "name": "embedded_diagnostic_fields",
+    "inventoryName": "read native region diagnostic fields",
+    "sourceText": "fn embedded_diagnostic_fields(\n    network: &LinkNetwork,\n    diagnostic: LinkId,\n) -> BTreeMap<String, String> {\n    network\n        .links()\n        .filter(|link| link.metadata().link_type() == Some(LinkType::Field))\n        .filter_map(|link| {\n            let [parent, label, child] = link.references() else {\n                return None;\n            };\n            (*parent == diagnostic).then(|| {\n                (\n                    network\n                        .link(*label)\n                        .unwrap()\n                        .metadata()\n                        .term()\n                        .unwrap()\n                        .to_owned(),\n                    network\n                        .link(*child)\n                        .unwrap()\n                        .metadata()\n                        .term()\n                        .unwrap()\n                        .to_owned(),\n                )\n            })\n        })\n        .collect()\n}"
+  },
+  {
+    "id": "repository.create-native-recursive-concrete-projection",
+    "source": "rust/tests/unit/recursive_embedded_regions.rs",
+    "name": "RecursiveConcreteProjection::new",
+    "inventoryName": "create native recursive concrete projection",
+    "sourceText": "    fn new(network: &'a LinkNetwork) -> Self {\n        let mut projection = Self {\n            network,\n            children: HashMap::new(),\n            fields: HashMap::new(),\n        };\n        for link in network.links() {\n            match (link.metadata().link_type(), link.references()) {\n                (Some(LinkType::Syntax | LinkType::Token), [parent]) => {\n                    projection\n                        .children\n                        .entry(*parent)\n                        .or_default()\n                        .push(link.id());\n                }\n                (Some(LinkType::Field), [parent, label, child]) => {\n                    let label = network\n                        .link(*label)\n                        .unwrap()\n                        .metadata()\n                        .term()\n                        .unwrap()\n                        .to_owned();\n                    projection\n                        .fields\n                        .entry(*parent)\n                        .or_default()\n                        .push((label, *child));\n                }\n                _ => {}\n            }\n        }\n        projection\n    }",
+    "ownerContexts": [
+      "impl<'a> RecursiveConcreteProjection<'a> {"
+    ]
+  },
+  {
+    "id": "repository.project-native-recursive-concrete-children",
+    "source": "rust/tests/unit/recursive_embedded_regions.rs",
+    "name": "RecursiveConcreteProjection::children",
+    "inventoryName": "project native recursive concrete children",
+    "sourceText": "    fn children(&self, parent: LinkId, origin: SourceSpan) -> Value {\n        Value::Array(\n            self.children\n                .get(&parent)\n                .into_iter()\n                .flatten()\n                .map(|child| self.node(*child, origin))\n                .collect(),\n        )\n    }",
+    "ownerContexts": [
+      "impl<'a> RecursiveConcreteProjection<'a> {"
+    ]
+  },
+  {
+    "id": "repository.project-native-recursive-concrete-node",
+    "source": "rust/tests/unit/recursive_embedded_regions.rs",
+    "name": "RecursiveConcreteProjection::node",
+    "inventoryName": "project native recursive concrete node",
+    "sourceText": "    fn node(&self, id: LinkId, origin: SourceSpan) -> Value {\n        let link = self\n            .network\n            .link(id)\n            .expect(\"every retained CST reference resolves\");\n        let metadata = link.metadata();\n        assert!(matches!(\n            metadata.link_type(),\n            Some(LinkType::Syntax | LinkType::Token)\n        ));\n        let span = metadata\n            .span()\n            .expect(\"a parsed CST node retains its source coordinates\");\n        let range = span.byte_range();\n        let flags = metadata.flags();\n        let children = self.children.get(&id).map_or(&[][..], Vec::as_slice);\n        let fields: Vec<_> = self.fields.get(&id).into_iter().flatten().map(|(label, child)| {\n            json!({ \"label\": label, \"child\": children.iter().position(|candidate| candidate == child)\n                .expect(\"every field references an actual ordered child\") })\n        }).collect();\n        json!({\n            \"type\": metadata.link_type().unwrap().to_string(), \"term\": metadata.term(),\n            \"language\": metadata.language(), \"named\": metadata.is_named(),\n            \"flags\": [flags.is_error(), flags.has_error(), flags.is_missing(), flags.is_extra()],\n            \"span\": { \"start\": range.start() - origin.byte_range().start(),\n                \"end\": range.end() - origin.byte_range().start(),\n                \"startPoint\": relative_region_point(span.start_point(), origin.start_point()),\n                \"endPoint\": relative_region_point(span.end_point(), origin.start_point()) },\n            \"fields\": fields, \"children\": self.children(id, origin),\n        })\n    }",
+    "ownerContexts": [
+      "impl<'a> RecursiveConcreteProjection<'a> {"
+    ]
+  },
+  {
+    "id": "repository.check-native-shared-recursive-region-trees",
+    "source": "rust/tests/unit/recursive_embedded_regions.rs",
+    "name": "default_recursive_csts_preserve_all_shared_sources_absolute_boundaries_and_reloaded_children",
+    "inventoryName": "check native shared recursive region trees",
+    "sourceText": "fn default_recursive_csts_preserve_all_shared_sources_absolute_boundaries_and_reloaded_children() {\n    let fixture = recursive_default_region_fixture();\n    assert_eq!(fixture[\"schemaVersion\"], 1);\n    assert_eq!(fixture[\"id\"], \"recursive-default-embedded-regions\");\n    assert_eq!(fixture[\"cases\"].as_array().unwrap().len(), 4);\n    for fixture in fixture[\"cases\"].as_array().unwrap() {\n        let source = fixture[\"source\"].as_str().unwrap();\n        let host = fixture[\"host\"].as_str().unwrap();\n        let policy = fixture[\"policy\"].as_str().unwrap();\n        let configuration = recursive_region_configuration(policy);\n        let expected: Vec<_> = fixture[\"regions\"]\n            .as_array()\n            .unwrap()\n            .iter()\n            .filter(|region| region[\"parent\"] == -1)\n            .map(|region| {\n                (\n                    region[\"language\"].as_str().unwrap().to_owned(),\n                    region[\"startByte\"].as_u64().unwrap(),\n                    region[\"endByte\"].as_u64().unwrap(),\n                )\n            })\n            .collect();\n        let direct: Vec<_> =\n            detect_embedded_regions(source, host, configuration.region_detection_policy())\n                .into_iter()\n                .map(|region| {\n                    let range = region.span().byte_range();\n                    (\n                        region.language().to_owned(),\n                        u64::try_from(range.start()).unwrap(),\n                        u64::try_from(range.end()).unwrap(),\n                    )\n                })\n                .collect();\n        assert_eq!(\n            direct, expected,\n            \"the original direct detector is unchanged\"\n        );\n        let network = LinkNetwork::parse(source, host, configuration);\n        assert_recursive_default_regions(&network, fixture);\n        let text = network.to_lino();\n        let restored = LinkNetwork::from_lino(&text).unwrap();\n        assert_eq!(restored.to_lino(), text);\n        assert_recursive_default_regions(&restored, fixture);\n    }\n}"
+  },
+  {
+    "id": "repository.check-native-recursive-region-limits",
+    "source": "rust/tests/unit/recursive_embedded_regions.rs",
+    "name": "default_recursive_limits_preserve_refused_boundaries_counters_and_source_after_reload",
+    "inventoryName": "check native recursive region limits",
+    "sourceText": "fn default_recursive_limits_preserve_refused_boundaries_counters_and_source_after_reload() {\n    let child = \"const value = \\\"π\\\";\";\n    let html = format!(\"<script>{child}</script>\\n\");\n    let source = format!(\"```html\\n{html}```\\n\");\n    for (depth, count, bytes, reason, observed, limit) in [\n        (1, 4096, 16_777_216, \"embeddedRegionDepthLimit\", 2, 1),\n        (128, 1, 16_777_216, \"embeddedRegionCountLimit\", 2, 1),\n        (\n            128,\n            4096,\n            html.len(),\n            \"embeddedRegionByteLimit\",\n            html.len() + child.len(),\n            html.len(),\n        ),\n    ] {\n        let configuration = ParseConfiguration::default()\n            .with_embedded_region_limits(depth, count, bytes)\n            .unwrap();\n        let network = LinkNetwork::parse(&source, \"Markdown\", configuration);\n        let restored = LinkNetwork::from_lino(&network.to_lino()).unwrap();\n        for current in [&network, &restored] {\n            let regions = recursive_default_region_links(current);\n            assert_eq!(\n                regions\n                    .iter()\n                    .map(|region| region.metadata().language().unwrap())\n                    .collect::<Vec<_>>(),\n                [\"HTML\", \"JavaScript\"]\n            );\n            let projection = RecursiveConcreteProjection::new(current);\n            assert!(projection.children.contains_key(&regions[0].id()));\n            assert!(!projection.children.contains_key(&regions[1].id()));\n            assert_eq!(regions[1].references()[0], regions[0].id());\n            let diagnostics: Vec<_> = current\n                .links()\n                .filter(|link| link.metadata().term() == Some(\"embedded region diagnostic\"))\n                .collect();\n            assert_eq!(diagnostics.len(), 1);\n            let diagnostic = diagnostics[0];\n            assert_eq!(diagnostic.metadata().definition(), Some(reason));\n            assert_eq!(diagnostic.references(), [regions[1].id()]);\n            assert_eq!(\n                embedded_diagnostic_fields(current, diagnostic.id()),\n                BTreeMap::from([\n                    (\"depth\".to_owned(), \"2\".to_owned()),\n                    (\"region count\".to_owned(), \"1\".to_owned()),\n                    (\"child parse bytes\".to_owned(), html.len().to_string()),\n                    (\"observed\".to_owned(), observed.to_string()),\n                    (\"limit\".to_owned(), limit.to_string()),\n                ])\n            );\n            assert!(!current.verify_full_match(None).is_clean());\n            assert_eq!(current.reconstruct_text(), source);\n            assert_eq!(current.render_source(\"Markdown\"), source);\n        }\n    }\n    let admitted = LinkNetwork::parse(\n        &source,\n        \"Markdown\",\n        ParseConfiguration::default()\n            .with_embedded_region_limits(2, 2, html.len() + child.len())\n            .unwrap(),\n    );\n    assert!(admitted.verify_full_match(None).is_clean());\n    assert!(\n        RecursiveConcreteProjection::new(&admitted)\n            .children\n            .contains_key(&recursive_default_region_links(&admitted)[1].id())\n    );\n    let root_only = LinkNetwork::parse(\n        \"plain café\",\n        \"txt\",\n        ParseConfiguration::default()\n            .with_embedded_region_limits(0, 0, 0)\n            .unwrap(),\n    );\n    assert_eq!(recursive_default_region_links(&root_only).len(), 1);\n    assert!(root_only.verify_full_match(None).is_clean());\n    assert_eq!(root_only.reconstruct_text(), \"plain café\");\n}"
+  },
+  {
+    "id": "repository.check-native-recursive-sibling-counter-order",
+    "source": "rust/tests/unit/recursive_embedded_regions.rs",
+    "name": "recursive_default_siblings_share_counters_and_preserve_original_direct_link_id_order",
+    "inventoryName": "check native recursive sibling counter order",
+    "sourceText": "fn recursive_default_siblings_share_counters_and_preserve_original_direct_link_id_order() {\n    let child = \"const nested = 1;\";\n    let sibling = \"const sibling = 2;\\n\";\n    let source = format!(\"```html\\n<script>{child}</script>\\n```\\n\\n```JavaScript\\n{sibling}```\\n\");\n    let configuration = ParseConfiguration::default()\n        .with_embedded_region_limits(128, 2, 16_777_216)\n        .unwrap();\n    let network = LinkNetwork::parse(&source, \"Markdown\", configuration);\n    let regions = recursive_default_region_links(&network);\n    assert_eq!(\n        regions\n            .iter()\n            .map(|region| region.metadata().language().unwrap())\n            .collect::<Vec<_>>(),\n        [\"HTML\", \"JavaScript\", \"JavaScript\"]\n    );\n    let projection = RecursiveConcreteProjection::new(&network);\n    assert!(projection.children.contains_key(&regions[0].id()));\n    assert!(projection.children.contains_key(&regions[1].id()));\n    assert!(!projection.children.contains_key(&regions[2].id()));\n    let diagnostic = network\n        .links()\n        .find(|link| link.metadata().definition() == Some(\"embeddedRegionCountLimit\"))\n        .unwrap();\n    assert_eq!(\n        embedded_diagnostic_fields(&network, diagnostic.id())[\"observed\"],\n        \"3\"\n    );\n    let direct_only = LinkNetwork::parse(\n        &source,\n        \"Markdown\",\n        ParseConfiguration::default()\n            .with_embedded_region_limits(1, 4096, 16_777_216)\n            .unwrap(),\n    );\n    let direct_regions = recursive_default_region_links(&direct_only);\n    assert_eq!(regions[0].id(), direct_regions[0].id());\n    assert_eq!(regions[1].id(), direct_regions[1].id());\n    let descendant_id = regions[2].id();\n    assert_eq!(\n        network\n            .links()\n            .take_while(|link| link.id() < descendant_id)\n            .collect::<Vec<_>>(),\n        direct_only\n            .links()\n            .take_while(|link| link.id() < descendant_id)\n            .collect::<Vec<_>>(),\n        \"every original direct link precedes descendants with its original identity and value\"\n    );\n    assert_eq!(network.render_source(\"Markdown\"), source);\n    assert_eq!(network.render_source(\"JavaScript\"), sibling);\n    assert_eq!(network.reconstruct_text(), source);\n    let mut constructed = LinkNetwork::new();\n    let _ = constructed.insert_source_token(\"fragment\", \"first\");\n    let _ = constructed.insert_source_token(\"fragment\", \"second\");\n    assert_eq!(constructed.render_source(\"fragment\"), \"firstsecond\");\n}"
+  },
+  {
+    "id": "repository.check-native-source-fragment-render-order",
+    "source": "rust/tests/unit/recursive_embedded_regions.rs",
+    "name": "parsed_source_rendering_keeps_unspanned_fragments_and_constructed_reference_order",
+    "inventoryName": "check native source fragment render order",
+    "sourceText": "fn parsed_source_rendering_keeps_unspanned_fragments_and_constructed_reference_order() {\n    let source = \"# Root\\n\\n```markdown\\n# Inner\\n```\\n\";\n    let mut network = LinkNetwork::parse(source, \"Markdown\", ParseConfiguration::default());\n    assert_eq!(\n        network.render_source(\"Markdown\"),\n        source,\n        \"same-language descendants cover physical source once\"\n    );\n    let _ = network.insert_source_token(\"Markdown\", \"tail\");\n    assert_eq!(network.render_source(\"Markdown\"), format!(\"{source}tail\"));\n    assert_eq!(\n        network.render_source_from_document(\"Markdown\"),\n        Some(source.to_owned()),\n        \"the document-owned rendering API retains its original ownership contract\"\n    );\n    let mut constructed = LinkNetwork::new();\n    let first = constructed.insert_source_token(\"fragment\", \"first\");\n    let second = constructed.insert_source_token(\"fragment\", \"second\");\n    let root = constructed.insert_syntax_node(\"fragment\", \"root\", [second, first]);\n    assert_eq!(constructed.render_source(\"fragment\"), \"secondfirst\");\n    assert_eq!(\n        constructed.render_source_from(root, \"fragment\"),\n        \"secondfirst\"\n    );\n    for entries in [\n        [(\"tail\", None), (\"B\", Some(1)), (\"A\", Some(0))],\n        [(\"B\", Some(1)), (\"tail\", None), (\"A\", Some(0))],\n    ] {\n        let mut mixed = LinkNetwork::new();\n        for (term, start) in entries {\n            let token = mixed.insert_source_token(\"fragment\", term);\n            if let Some(start) = start {\n                assert!(mixed.set_span(\n                    token,\n                    SourceSpan::new(\n                        ByteRange::new(start, start + 1),\n                        Point::new(0, start),\n                        Point::new(0, start + 1)\n                    )\n                ));\n            }\n        }\n        assert_eq!(\n            mixed.render_source(\"fragment\"),\n            \"ABtail\",\n            \"physical source precedes unspanned fragments independently of their IDs\"\n        );\n        let restored = LinkNetwork::from_lino(&mixed.to_lino()).unwrap();\n        assert_eq!(restored.render_source(\"fragment\"), \"ABtail\");\n    }\n}"
+  },
+  {
+    "id": "repository.check-native-region-configuration-safe-limits",
+    "source": "rust/tests/unit/recursive_embedded_regions.rs",
+    "name": "recursive_default_configuration_preserves_const_defaults_and_refuses_unsafe_native_limits",
+    "inventoryName": "check native region configuration safe limits",
+    "sourceText": "fn recursive_default_configuration_preserves_const_defaults_and_refuses_unsafe_native_limits() {\n    const DEFAULTS: ParseConfiguration = ParseConfiguration::new(TriviaAttachmentPolicy::Both);\n    assert_eq!(\n        (\n            DEFAULTS.embedded_region_depth_limit(),\n            DEFAULTS.embedded_region_count_limit(),\n            DEFAULTS.embedded_region_byte_limit()\n        ),\n        (128, 4096, 16_777_216)\n    );\n    let limited = ParseConfiguration::new(TriviaAttachmentPolicy::TokenLink)\n        .with_embedded_region_limits(3, 4, 20)\n        .unwrap()\n        .with_region_detection_policy(RegionDetectionPolicy::NameDriven)\n        .with_access_mode(AccessMode::ReadOnly);\n    assert_eq!(\n        limited.trivia_attachment_policy(),\n        TriviaAttachmentPolicy::TokenLink\n    );\n    assert_eq!(\n        (\n            limited.embedded_region_depth_limit(),\n            limited.embedded_region_count_limit(),\n            limited.embedded_region_byte_limit()\n        ),\n        (3, 4, 20)\n    );\n    assert_eq!(DEFAULTS.embedded_region_depth_limit(), 128);\n    assert!(limited.with_embedded_region_limits(0, 0, 0).is_ok());\n    if let Ok(maximum) = usize::try_from(9_007_199_254_740_991_u64) {\n        assert!(\n            DEFAULTS\n                .with_embedded_region_limits(maximum, maximum, maximum)\n                .is_ok()\n        );\n    }\n    for invalid in [9_007_199_254_740_992_u64, u64::MAX] {\n        if let Ok(invalid) = usize::try_from(invalid) {\n            for limits in [[invalid, 0, 0], [0, invalid, 0], [0, 0, invalid]] {\n                assert_eq!(\n                    DEFAULTS.with_embedded_region_limits(limits[0], limits[1], limits[2]),\n                    Err(\"embedded region limits must be nonnegative safe integers\")\n                );\n            }\n        }\n    }\n}"
+  },
+  {
+    "id": "repository.check-native-original-root-alias-views",
+    "source": "rust/tests/unit/recursive_embedded_regions.rs",
+    "name": "recursive_default_root_aliases_retain_one_boundary_and_the_existing_direct_cst_views",
+    "inventoryName": "check native original root alias views",
+    "sourceText": "fn recursive_default_root_aliases_retain_one_boundary_and_the_existing_direct_cst_views() {\n    let source = \"plain café\\n\";\n    for language in [\"txt\", \"TXT\", \"text\", \"TeXt\", \"plain text\", \"PLAIN TEXT\"] {\n        let network = LinkNetwork::parse(source, language, ParseConfiguration::default());\n        let regions = recursive_default_region_links(&network);\n        assert_eq!(regions.len(), 1);\n        let region = regions[0];\n        assert_eq!(region.metadata().language(), Some(\"txt\"));\n        assert_eq!(region.references()[0], region_document(&network).id());\n        assert_eq!(\n            region.metadata().span(),\n            region_document(&network).metadata().span()\n        );\n        let projection = RecursiveConcreteProjection::new(&network);\n        assert_eq!(\n            projection.children.contains_key(&region.id()),\n            !language.eq_ignore_ascii_case(\"txt\")\n        );\n        let baseline = LinkNetwork::parse(\n            source,\n            language,\n            ParseConfiguration::default()\n                .with_embedded_region_limits(0, 0, 0)\n                .unwrap(),\n        );\n        let baseline_document = region_document(&baseline);\n        let document = region_document(&network);\n        assert_eq!(\n            projection.children(document.id(), document.metadata().span().unwrap()),\n            RecursiveConcreteProjection::new(&baseline).children(\n                baseline_document.id(),\n                baseline_document.metadata().span().unwrap()\n            )\n        );\n        assert_eq!(network.reconstruct_text(), source);\n        assert_eq!(network.render_source(language), source);\n        assert!(network.verify_full_match(None).is_clean());\n        assert_eq!(\n            LinkNetwork::from_lino(&network.to_lino())\n                .unwrap()\n                .to_lino(),\n            network.to_lino()\n        );\n    }\n}"
+  },
+  {
+    "id": "repository.check-native-cycle-ancestor-diagnostic-reload",
+    "source": "rust/tests/unit/recursive_embedded_regions.rs",
+    "name": "synthetic_embedding_cycles_keep_the_actual_ancestor_and_error_after_reload",
+    "inventoryName": "check native cycle ancestor diagnostic reload",
+    "sourceText": "fn synthetic_embedding_cycles_keep_the_actual_ancestor_and_error_after_reload() {\n    let mut network = LinkNetwork::new();\n    let span = SourceSpan::new(ByteRange::new(0, 2), Point::new(0, 0), Point::new(0, 2));\n    let outer = network.insert_link(\n        [],\n        LinkMetadata::new()\n            .with_link_type(LinkType::Region)\n            .with_language(\"Markdown\")\n            .with_span(span),\n    );\n    let inner = network.insert_link(\n        [outer],\n        LinkMetadata::new()\n            .with_link_type(LinkType::Region)\n            .with_language(\"HTML\")\n            .with_span(span),\n    );\n    let rejected = network.insert_link(\n        [inner],\n        LinkMetadata::new()\n            .with_link_type(LinkType::Region)\n            .with_language(\"Markdown\")\n            .with_span(span),\n    );\n    let ancestor = rules::read_embedded_region_ancestor(\n        &[-1.0, 0.0],\n        &[0.0, 1.0],\n        &[0.0, 0.0],\n        &[2.0, 2.0],\n        1.0,\n        0.0,\n        0.0,\n        2.0,\n    );\n    assert_eq!(rules::ml_array::number_index(ancestor), Some(0));\n    let reason = rules::read_embedded_region_disposition(\n        0.0,\n        2.0,\n        1.0,\n        0.0,\n        0.0,\n        2.0,\n        ancestor,\n        2.0,\n        1.0,\n        2.0,\n        128.0,\n        4096.0,\n        16_777_216.0,\n        true,\n    );\n    assert_eq!(reason, \"nonConsumingEmbeddingCycle\");\n    let diagnostic = insert_embedded_region_diagnostic(\n        &mut network,\n        rejected,\n        \"Markdown\",\n        span,\n        &EmbeddedRegionDiagnostic {\n            reason: &reason,\n            depth: 2.0,\n            count: 1.0,\n            bytes: 2.0,\n            observed: -1.0,\n            limit: -1.0,\n            ancestor: Some(outer),\n        },\n    );\n    network.insert_link(\n        [],\n        LinkMetadata::new()\n            .with_link_type(LinkType::Token)\n            .with_term(\"π\")\n            .with_language(\"Markdown\")\n            .with_span(span),\n    );\n    let restored = LinkNetwork::from_lino(&network.to_lino()).unwrap();\n    for current in [&network, &restored] {\n        assert!(!current.verify_full_match(None).is_clean());\n        assert_eq!(\n            current.link(diagnostic).unwrap().metadata().definition(),\n            Some(reason.as_str())\n        );\n        let mut fields = current\n            .links()\n            .filter(|link| link.metadata().link_type() == Some(LinkType::Field))\n            .filter(|link| link.references().first() == Some(&diagnostic));\n        assert!(fields.any(|field| {\n            let references = field.references();\n            current.link(references[1]).unwrap().metadata().term() == Some(\"ancestor\")\n                && references[2] == outer\n        }));\n        assert!(\n            !current\n                .links()\n                .filter(|link| link.metadata().link_type() == Some(LinkType::Field))\n                .filter(|link| link.references().first() == Some(&diagnostic))\n                .any(|field| current\n                    .link(field.references()[1])\n                    .unwrap()\n                    .metadata()\n                    .term()\n                    == Some(\"observed\"))\n        );\n        assert_eq!(current.reconstruct_text(), \"π\");\n    }\n}"
+  },
+  {
+    "id": "repository.check-native-region-ancestry-and-reuse-policy",
+    "source": "rust/tests/unit/recursive_embedded_regions.rs",
+    "name": "generated_region_policy_keeps_malformed_ancestry_zero_width_and_current_host_reuse_distinct",
+    "inventoryName": "check native region ancestry and reuse policy",
+    "sourceText": "fn generated_region_policy_keeps_malformed_ancestry_zero_width_and_current_host_reuse_distinct() {\n    assert!(rules::accept_embedded_region_bounds(10.0, 20.0, 20.0, 20.0));\n    assert!(!rules::accept_embedded_region_bounds(10.0, 20.0, 9.0, 20.0));\n    assert!(!rules::accept_embedded_region_limit(f64::NAN));\n    assert!(!rules::accept_embedded_region_limit(f64::INFINITY));\n    assert!(!rules::accept_embedded_region_limit(-1.0));\n    assert!(!rules::accept_embedded_region_limit(0.5));\n    let invalid =\n        rules::read_embedded_region_ancestor(&[0.0], &[0.0], &[0.0], &[2.0], 0.0, 0.0, 0.0, 2.0);\n    assert_eq!(invalid.to_bits(), (-2.0_f64).to_bits());\n    assert_eq!(\n        rules::read_embedded_region_disposition(\n            0.0, 2.0, 0.0, 0.0, 0.0, 2.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, true\n        ),\n        \"reuseAttached\"\n    );\n    assert_eq!(\n        rules::read_embedded_region_disposition(\n            0.0, 2.0, 0.0, 0.0, 0.0, 2.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, true\n        ),\n        \"reuse\"\n    );\n    assert_eq!(\n        rules::read_embedded_region_disposition(\n            0.0,\n            2.0,\n            0.0,\n            0.0,\n            0.0,\n            2.0,\n            0.0,\n            1.0,\n            0.0,\n            0.0,\n            128.0,\n            4096.0,\n            16_777_216.0,\n            false\n        ),\n        \"parse\"\n    );\n}"
+  },
+  {
+    "id": "repository.check-optional-tuple-context-refusals",
+    "source": "rust/tests/unit/translation_optional_values.rs",
+    "name": "optional_tuple_context_keeps_arity_spread_heterogeneous_array_and_unknown_type_refusals",
+    "inventoryName": "check optional tuple context refusals",
+    "sourceText": "fn optional_tuple_context_keeps_arity_spread_heterogeneous_array_and_unknown_type_refusals() {\n    let optional = \"/** @param {[number,number]|null|undefined} pair @returns {string} */function describe(pair){return typeof pair;}\";\n    check_runtime(\n        &format!(\"{optional}console.log('%s',describe([2,3]),describe(null),describe(undefined));\"),\n        b\"object object undefined\\n\",\n    );\n    let wrong_arity =\n        parse_javascript(&format!(\"{optional}console.log('%s',describe([2]));\")).unwrap_err();\n    assert!(wrong_arity.message().contains(\"two different lengths\"));\n    let spread = parse_javascript(&format!(\n        \"{optional}console.log('%s',describe([...[2,3]]));\"\n    ))\n    .unwrap_err();\n    assert_eq!(\n        spread.kind,\n        meta_language::translation::diagnostics::ErrorKind::Type\n    );\n    assert!(spread.message().contains(\"array\") && spread.message().contains(\"tuple\"));\n    let array = optional.replace(\"[number,number]\", \"number[]\");\n    let mixed =\n        parse_javascript(&format!(\"{array}console.log('%s',describe([2,'kept']));\")).unwrap_err();\n    assert_eq!(\n        mixed.kind,\n        meta_language::translation::diagnostics::ErrorKind::Type\n    );\n    assert!(mixed.message().contains(\"number\") && mixed.message().contains(\"string\"));\n    let unresolved: meta_language::translation::surface::SProgram = serde_json::from_value(serde_json::json!({\n        \"language\":\"JavaScript\", \"items\":[{\"k\":\"fn\", \"name\":\"unknownType\",\n        \"params\":[{\"name\":\"value\", \"type\":{\"kind\":\"option\", \"element\":{\"kind\":\"union\", \"alternatives\":[{\"kind\":\"float\"},{\"kind\":\"string\"}]}, \"absence\":\"both\"}}],\n        \"ret\":{\"kind\":\"string\"}, \"body\":{\"k\":\"typeOf\", \"arg\":{\"k\":\"name\", \"path\":[\"value\"]}}}], \"main\":null,\n    })).unwrap();\n    let expected = Type::Option {\n        element: Box::new(Type::Union {\n            alternatives: vec![Type::Float, Type::String],\n        }),\n        absence: \"both\".to_owned(),\n    };\n    let error = check_program(&unresolved).unwrap_err();\n    assert_eq!(\n        error.kind,\n        meta_language::translation::diagnostics::ErrorKind::Unsupported\n    );\n    assert_eq!(error.construct, Some(format!(\"typeof {}\", expected.key())));\n    assert!(\n        error\n            .message()\n            .contains(\"type queries require a known JavaScript value type\")\n    );\n}"
+  },
+  {
+    "id": "repository.check-structural-optional-type-query-archives",
+    "source": "rust/tests/unit/translation_optional_values.rs",
+    "name": "structural_optional_type_queries_round_trip_and_execute_as_one_complete_rust_program",
+    "inventoryName": "check structural optional type query archives",
+    "sourceText": "fn structural_optional_type_queries_round_trip_and_execute_as_one_complete_rust_program() {\n    use super::issue_195_translation_pairs::{TemporaryDirectory, run};\n    use meta_language::translation::emit_rust::emit_rust;\n    use meta_language::{\n        BinaryLinksOptions, LinkNetwork, decode_link_network_binary, decode_typed_program_links,\n        encode_link_network_binary, encode_typed_program_links,\n    };\n    let source = \"/** @param {{item:number}|null|undefined} value @returns {string} */function recordType(value){return typeof value;}\\n/** @param {[number,string]|null|undefined} value @returns {string} */function tupleType(value){return typeof value;}\\n/** @param {Map<string,number>|null|undefined} value @returns {string} */function mapType(value){return typeof value;}\\n/** @param {Set<number>|null|undefined} value @returns {string} */function setType(value){return typeof value;}\\nconsole.log('%s',recordType(null),recordType(undefined),recordType({item:2}));\\nconsole.log('%s',tupleType(null),tupleType(undefined),tupleType([2,'kept']));\\nconsole.log('%s',mapType(null),mapType(undefined),mapType(new Map([['kept',2]])));\\nconsole.log('%s',setType(null),setType(undefined),setType(new Set([2])));\\nfunction read(value){console.log('read');const n=value?.item??0;return value;}function describe(value){return typeof read(value);}console.log('%s',describe(null));console.log('%s',describe(undefined));console.log('%s',describe({item:2}));\";\n    let expected: &[u8] = b\"object undefined object\\nobject undefined object\\nobject undefined object\\nobject undefined object\\nread\\nobject\\nread\\nundefined\\nread\\nobject\\n\";\n    let original = observe(source);\n    assert!(\n        original.status.success(),\n        \"{}\",\n        String::from_utf8_lossy(&original.stderr)\n    );\n    assert_eq!(original.stdout, expected);\n    let program = check_program(&parse_javascript(source).unwrap()).unwrap();\n    let javascript = emit_javascript(&program).unwrap().text;\n    let observed = observe(&javascript);\n    assert_eq!(observed.status.code(), original.status.code());\n    assert_eq!(observed.stdout, original.stdout);\n    assert_eq!(observed.stderr, original.stderr);\n    let rust = emit_rust(&program).unwrap().text;\n    let archive = encode_typed_program_links(&program).unwrap();\n    for network in [\n        LinkNetwork::from_lino(&archive.network.to_lino()).unwrap(),\n        decode_link_network_binary(\n            &encode_link_network_binary(&archive.network, BinaryLinksOptions::default()).unwrap(),\n            BinaryLinksOptions::default(),\n        )\n        .unwrap(),\n    ] {\n        let restored = decode_typed_program_links(&network, archive.root).unwrap();\n        assert_eq!(restored, program);\n        assert_eq!(emit_javascript(&restored).unwrap().text, javascript);\n        assert_eq!(emit_rust(&restored).unwrap().text, rust);\n    }\n    let directory = TemporaryDirectory::new(\"structural_optional_type_queries\");\n    let file = directory.0.join(\"program.rs\");\n    let executable = directory\n        .0\n        .join(format!(\"program{}\", std::env::consts::EXE_SUFFIX));\n    std::fs::write(&file, rust).unwrap();\n    let compiled = run(Command::new(\"rustc\")\n        .arg(\"--edition=2024\")\n        .arg(&file)\n        .arg(\"-o\")\n        .arg(&executable));\n    assert!(compiled.ok, \"{}\", compiled.stderr);\n    let result = run(&mut Command::new(&executable));\n    assert!(result.ok, \"{}\", result.stderr);\n    assert_eq!(result.stdout.as_bytes(), original.stdout);\n    assert_eq!(result.stderr.as_bytes(), original.stderr);\n}"
+  },
+  {
+    "id": "translation.embedded-region-native-library-part-one",
+    "source": "rust/src/translation/embedded_region_rules.rs",
+    "name": "part_1",
+    "inventoryName": "embedded region native library part one",
+    "sourceText": "mod part_1;"
+  },
+  {
+    "id": "repository.check-standard-string-argument-borrowing",
+    "source": "js/tests/translation-portable-library-style.test.js",
+    "name": "existing borrowed string arguments normalize only proved same-module leaf reborrows when explicitly selected",
+    "inventoryName": "check standard string argument borrowing",
+    "sourceText": "test('existing borrowed string arguments normalize only proved same-module leaf reborrows when explicitly selected', () => {\n  const source = 'pub fn maximum(receiver:&str,operation:&str)->f64{if receiver==\"string\"{if operation==\"slice\"{2f64}else{-1f64}}else{-1f64}}\\n'\n    + 'pub fn count(receiver:&str,operation:&str)->f64{self::maximum(&(receiver),&((operation)))}';\n  const options = {normalizeBorrowedArguments: true};\n  assert.deepEqual(readPortableSourceParameterStyles(source), {source, actions: []}, 'the historical default keeps its exact source and action bytes');\n  const styled = readPortableSourceParameterStyles(source, options);\n  assert.equal(styled.actions.length, 1);\n  assert.ok(styled.source.includes('self::maximum(receiver,operation)'));\n  const decorators = new DecoratorSet([{id: 'borrowed-string-leaf-control', level: 'emitter', order: 0,\n    when: [['format', 'Rust']], actions: styled.actions}]);\n  assert.equal(decorators.decorate('emitter', {format: 'Rust', source}).source, styled.source);\n  assert.deepEqual(readPortableSourceParameterStyles(styled.source, options), {source: styled.source, actions: []});\n  assert.throws(() => checkProgram(parseRust(source + '\\nfn main() {}')), error => {\n    assert.ok(error instanceof TranslationError);\n    assert.equal(error.kind, 'unsupported');\n    assert.equal(error.reason, 'source indirection: source ownership requires an explicit dereference or matching immutable reference or Box type');\n    assert.deepEqual(error.span, {start: 172, end: 213});\n    return true;\n  }, 'raw redundant reborrows remain outside the existing Rust source-indirection model');\n  const selected = {};\n  runInNewContext(emitJavaScript(checkProgram(parseRust(styled.source + '\\nfn main() {}'))).text, selected, {timeout: 1000});\n  for (const receiver of ['string', 'array', 'unknown', '']) for (const operation of ['slice', 'repeat', 'unknown', '']) {\n    assert.equal(selected.count(receiver, operation), receiver === 'string' && operation === 'slice' ? 2 : -1);\n  }\n  const generated = readFileSync(new URL('../../rust/src/translation/primitive_method_rules.rs', import.meta.url), 'utf8');\n  const actual = ['read_primitive_method_maximum_arguments', 'read_primitive_method_argument_count']\n    .map(name => readSourceTextRustBlock(generated, 'fn', name)).join('\\n\\n');\n  const normalized = readPortableSourceParameterStyles(actual, options);\n  assert.doesNotMatch(readSourceTextRustBlock(normalized.source, 'fn', 'read_primitive_method_argument_count'), /&\\s*\\(\\s*(?:receiver|operation)\\s*\\)/u,\n    'the actual generated primitive wrapper loses both reported needless borrows');\n  const originalWrapper = readSourceTextRustBlock(actual, 'fn', 'read_primitive_method_argument_count');\n  const candidates = [normalized.source];\n  const provider = readFileSync(new URL('../src/translation/primitive-method-rules.js', import.meta.url), 'utf8');\n  const emitted = emitRust(checkProgram(parseJavaScript(provider, {referenceSemantics: false})), {arrayConsumption: true});\n  assert.equal(emitted.preludes.length, 0, 'the actual primitive generator remains a closed scalar module');\n  const header = emitted.text.split('\\n').find(line => line.startsWith('#![allow('));\n  assert.ok(header);\n  const generatorSource = header + '\\n\\n' + emitted.definitions.join('\\n\\n').replace(/^pub fn /gmu, '#[must_use]\\npub fn ');\n  const document = readFileSync(new URL('../../parity/self-translation/primitive-method-rules-decorators.lino', import.meta.url), 'utf8');\n  const base = DecoratorSet.fromLino(document).decorate('emitter', {format: 'Rust', source: generatorSource}).source;\n  const pipelineOptions = {family: 'primitive-method', parameterLoans: options, format: formatProductRuleSource,\n    baseRecordHashes: ['1d9aa8f1081ca8778572c8c33a29eb58d8c121125d6bf7dcab1a11f04dac168a']};\n  const pipeline = applyRecordedFamilyLibraryStyles(document, formatProductRuleSource(base), {...pipelineOptions, update: true});\n  assert.ok(pipeline.document.startsWith(document), 'the complete generator preserves every historical decorator byte');\n  const generatedWrapper = readSourceTextRustBlock(pipeline.source, 'fn', 'read_primitive_method_argument_count');\n  assert.equal((generatedWrapper.match(/&\\s*\\(\\s*(?:receiver|operation)\\s*\\)/gu) ?? []).length, 0,\n    'complete checked emission and actual base-style composition must remove both CI reborrows');\n  const notice = '// Generated from js/src/translation/primitive-method-rules.js. Do not edit.\\n';\n  assert.ok(generated.startsWith(notice));\n  assert.equal(pipeline.source, generated.slice(notice.length).replace(originalWrapper, generatedWrapper),\n    'every declaration outside the actual argument-count wrapper remains byte-identical');\n  assert.equal(applyRecordedFamilyLibraryStyles(pipeline.document, formatProductRuleSource(base), pipelineOptions).source,\n    pipeline.source, 'the actual generator pipeline replays its exact appended correction');\n  candidates.push(['read_primitive_method_maximum_arguments', 'read_primitive_method_argument_count']\n    .map(name => readSourceTextRustBlock(pipeline.source, 'fn', name)).join('\\n\\n'));\n  if (/&\\s*\\(\\s*(?:receiver|operation)\\s*\\)/u.test(originalWrapper)) {\n    assert.throws(() => checkProgram(parseRust(actual + '\\nfn main() {}')), error => error instanceof TranslationError\n      && error.kind === 'unsupported' && error.details.construct === 'source indirection',\n    'an older generated reborrow wrapper retains its explicit source-model refusal');\n  } else candidates.push(actual);\n  for (const candidate of candidates) {\n    const context = {};\n    runInNewContext(emitJavaScript(checkProgram(parseRust(candidate + '\\nfn main() {}'))).text, context, {timeout: 1000});\n    for (const receiver of ['string', 'array', 'unknown']) for (const operation of ['slice', 'repeat', 'charCodeAt', 'codePointAt', 'includes', 'indexOf', 'lastIndexOf', 'split', 'replace', 'padStart', 'unknown']) {\n      const expected = receiver === 'array' ? ['slice', 'includes', 'indexOf', 'lastIndexOf'].includes(operation) ? 2 : -1\n        : receiver === 'string' ? ['repeat', 'charCodeAt', 'codePointAt'].includes(operation) ? 1\n          : ['split', 'slice', 'indexOf', 'lastIndexOf', 'replace', 'padStart'].includes(operation) ? 2 : -1 : -1;\n      assert.equal(readPrimitiveMethodMaximumArguments(receiver, operation), expected);\n      assert.equal(readPrimitiveMethodArgumentCount(receiver, operation), expected);\n      assert.equal(context.read_primitive_method_maximum_arguments(receiver, operation), expected);\n      assert.equal(context.read_primitive_method_argument_count(receiver, operation), expected);\n    }\n  }\n  const callee = 'pub fn inspected(value:&str)->f64{1f64}\\n';\n  for (const caller of [\n    'pub fn selected(value:String)->f64{self::inspected(&(value))}',\n    'pub fn selected(value:&String)->f64{self::inspected(&(value))}',\n    'pub fn selected(value:&str)->f64{self::inspected(&(value.to_owned()))}',\n    'pub fn selected(value:&str)->f64{self::inspected(&(self::read(value)))}',\n    'pub fn selected(value:&str)->f64{external::inspected(&(value))}',\n    'pub fn selected(value:&str)->f64{inspected(&(value))}',\n    'pub fn selected(value:&str)->f64{let value=String::from(\"owned\");self::inspected(&(value))}',\n    'pub fn selected(value:&str)->f64{match self::read(){value=>self::inspected(&(value))}}',\n    'pub fn selected(mut value:&str)->f64{value=\"changed\";self::inspected(&(value))}',\n    'pub fn selected(value:&str)->f64{self::inspected(&(/* retain */value))}',\n    'pub fn selected(value:&str)->f64{self::inspected(&mut(value))}',\n    'pub fn selected(value:&str)->f64{let captured=||value;self::inspected(&(value))}',\n    'pub fn selected(value:&str)->f64{unknown!();self::inspected(&(value))}',\n  ]) {\n    const input = callee + caller;\n    assert.deepEqual(readPortableSourceParameterStyles(input, options), readPortableSourceParameterStyles(input),\n      'an unproved reborrow retains every historical default transformation');\n  }\n  const doubled = 'pub fn inspected(value:&&str)->f64{1f64}\\npub fn selected(value:&str)->f64{self::inspected(&(value))}';\n  assert.deepEqual(readPortableSourceParameterStyles(doubled, options), readPortableSourceParameterStyles(doubled), 'an extra required reference level stays intact');\n  const caller = 'pub fn selected(value:&str)->f64{self::inspected(&(value))}';\n  const opaque = callee + caller + '\\npub fn literal()->&\\'static str{r#\"' + caller + '\"#}';\n  assert.deepEqual(readPortableSourceParameterStyles(opaque, options), readPortableSourceParameterStyles(opaque), 'a repeated complete source context cannot modify an opaque literal');\n})"
+  },
+  {
+    "id": "translation.read-type-query-result",
+    "source": "js/src/translation/frontend-rules.js",
+    "name": "readTypeQueryResult",
+    "inventoryName": "read type query result",
+    "sourceText": "export function readTypeQueryResult(kind) {\n  if (kind === 'float') return 'number';\n  if (kind === 'nat' || kind === 'int') return 'bigint';\n  if (kind === 'bool') return 'boolean';\n  if (kind === 'string') return 'string';\n  if (kind === 'function') return 'function';\n  if (kind === 'array' || kind === 'data' || kind === 'record' || kind === 'tuple' || kind === 'map' || kind === 'set') return 'object';\n  return '';\n}"
+  },
+  {
+    "id": "translation.read-type-query-result",
+    "source": "rust/src/translation/frontend_rules.rs",
+    "name": "read_type_query_result",
+    "inventoryName": "read type query result",
+    "sourceText": "pub fn read_type_query_result(kind: &str) -> String {\n    if kind == \"float\" {\n        String::from(\"number\")\n    } else if (kind == \"nat\") || (kind == \"int\") {\n        String::from(\"bigint\")\n    } else if kind == \"bool\" {\n        String::from(\"boolean\")\n    } else if kind == \"string\" {\n        String::from(\"string\")\n    } else if kind == \"function\" {\n        String::from(\"function\")\n    } else if (((((kind == \"array\") || (kind == \"data\")) || (kind == \"record\"))\n        || (kind == \"tuple\"))\n        || (kind == \"map\"))\n        || (kind == \"set\")\n    {\n        String::from(\"object\")\n    } else {\n        String::from(\"\")\n    }\n}"
+  },
+  {
+    "id": "grammar.current-parser-production-flag",
+    "source": "rust/src/grammar/import/antlr.rs",
+    "name": "Parser::syntactic_production",
+    "inventoryName": "current parser production flag",
+    "sourceText": "    syntactic_production: bool,",
+    "ownerContexts": [
+      "struct Parser {"
+    ]
+  },
+  {
+    "id": "repository.check-explicit-container-alias-identity-retention",
+    "source": "rust/tests/structured_data_container_aliases.rs",
+    "name": "explicit_container_aliases_preserve_owned_sharing_without_merging_equal_values",
+    "inventoryName": "check explicit container alias identity retention",
+    "sourceText": "fn explicit_container_aliases_preserve_owned_sharing_without_merging_equal_values() {\n    let container = StructuredDataValue::Object(vec![\n        (\n            \"value\".encode_utf16().collect(),\n            StructuredDataValue::Number(-0.0),\n        ),\n        (\n            \"units\".encode_utf16().collect(),\n            StructuredDataValue::String(vec![0xd800]),\n        ),\n    ]);\n    let value = StructuredDataValue::Array(vec![container.clone(), container.clone(), container]);\n    let StructuredDataValue::Array(children) = &value else {\n        unreachable!();\n    };\n    let independent = encode_structured_data_links_ordered(&value).unwrap();\n    let unchanged =\n        encode_structured_data_links_ordered_with_container_aliases(&value, &[]).unwrap();\n    assert_eq!(independent.network.to_lino(), unchanged.network.to_lino());\n    let body = independent\n        .network\n        .link(independent.root)\n        .unwrap()\n        .references()[0];\n    let references = independent.network.link(body).unwrap().references();\n    assert_ne!(references[0], references[1]);\n    assert_ne!(references[0], references[2]);\n    let shared = encode_structured_data_links_ordered_with_container_aliases(\n        &value,\n        &[(&children[1], &children[0])],\n    )\n    .unwrap();\n    let body = shared.network.link(shared.root).unwrap().references()[0];\n    let references = shared.network.link(body).unwrap().references();\n    assert_eq!(references[0], references[1]);\n    assert_ne!(references[0], references[2]);\n    assert_eq!(shared.network.len() + 3, independent.network.len());\n\n    let arrays = StructuredDataValue::Array(vec![\n        StructuredDataValue::Array(vec![]),\n        StructuredDataValue::Array(vec![]),\n        StructuredDataValue::Array(vec![]),\n    ]);\n    let StructuredDataValue::Array(children) = &arrays else {\n        unreachable!();\n    };\n    let shared = encode_structured_data_links_ordered_with_container_aliases(\n        &arrays,\n        &[(&children[1], &children[0])],\n    )\n    .unwrap();\n    let body = shared.network.link(shared.root).unwrap().references()[0];\n    let references = shared.network.link(body).unwrap().references();\n    assert_eq!(references[0], references[1]);\n    assert_ne!(references[0], references[2]);\n}"
+  },
+  {
+    "id": "repository.check-explicit-container-alias-forgery-and-depth-refusals",
+    "source": "rust/tests/structured_data_container_aliases.rs",
+    "name": "container_aliases_refuse_unowned_changed_or_incomplete_targets",
+    "inventoryName": "check explicit container alias forgery and depth refusals",
+    "sourceText": "fn container_aliases_refuse_unowned_changed_or_incomplete_targets() {\n    let value = StructuredDataValue::Array(vec![\n        StructuredDataValue::Array(vec![]),\n        StructuredDataValue::Array(vec![]),\n        StructuredDataValue::Array(vec![]),\n    ]);\n    let StructuredDataValue::Array(children) = &value else {\n        unreachable!();\n    };\n    let foreign = StructuredDataValue::Array(vec![]);\n    let scalar = StructuredDataValue::Null;\n    for aliases in [\n        vec![(&foreign, &children[0])],\n        vec![(&children[1], &foreign)],\n        vec![(&children[0], &children[1])],\n        vec![(&children[1], &children[0]), (&children[1], &children[2])],\n        vec![(&children[0], &children[0])],\n        vec![(&children[1], &scalar)],\n        vec![(&scalar, &children[0])],\n    ] {\n        assert!(\n            encode_structured_data_links_ordered_with_container_aliases(&value, &aliases).is_err()\n        );\n    }\n\n    let negative_zero = StructuredDataValue::Array(vec![StructuredDataValue::Number(-0.0)]);\n    let positive_zero = StructuredDataValue::Array(vec![StructuredDataValue::Number(0.0)]);\n    let first_order = StructuredDataValue::Object(vec![\n        (vec![97], StructuredDataValue::Null),\n        (vec![98], StructuredDataValue::Null),\n    ]);\n    let second_order = StructuredDataValue::Object(vec![\n        (vec![98], StructuredDataValue::Null),\n        (vec![97], StructuredDataValue::Null),\n    ]);\n    let first_units = StructuredDataValue::Array(vec![StructuredDataValue::String(vec![0xd800])]);\n    let second_units = StructuredDataValue::Array(vec![StructuredDataValue::String(vec![0xd801])]);\n    let infinite = StructuredDataValue::Array(vec![StructuredDataValue::Number(f64::INFINITY)]);\n    for (target, alias) in [\n        (negative_zero, positive_zero),\n        (first_order, second_order),\n        (first_units, second_units),\n        (infinite.clone(), infinite),\n    ] {\n        let value = StructuredDataValue::Array(vec![target, alias]);\n        let StructuredDataValue::Array(children) = &value else {\n            unreachable!();\n        };\n        assert!(\n            encode_structured_data_links_ordered_with_container_aliases(\n                &value,\n                &[(&children[1], &children[0])],\n            )\n            .is_err()\n        );\n    }\n\n    let target = StructuredDataValue::Array(vec![StructuredDataValue::Null]);\n    let mut nested = target.clone();\n    for _ in 0..254 {\n        nested = StructuredDataValue::Array(vec![nested]);\n    }\n    let value = StructuredDataValue::Array(vec![target, nested]);\n    let StructuredDataValue::Array(children) = &value else {\n        unreachable!();\n    };\n    let mut alias = &children[1];\n    for _ in 0..254 {\n        let StructuredDataValue::Array(children) = alias else {\n            unreachable!();\n        };\n        alias = &children[0];\n    }\n    assert!(encode_structured_data_links_ordered(&value).is_err());\n    assert!(\n        encode_structured_data_links_ordered_with_container_aliases(\n            &value,\n            &[(alias, &children[0])],\n        )\n        .is_err()\n    );\n}"
+  }
+];
+const EMBEDDED_REGION_NAME_INVENTORIES=[...new Set(EMBEDDED_REGION_SOURCE_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B60 recursive default region source names for "+source,files:[source],extract:raw=>EMBEDDED_REGION_SOURCE_BINDINGS.filter(row=>{if(row.source!==source)return false;const text=row.sourceField?readStructuredDataLino(raw)[row.sourceField]:raw;return typeof text==="string"&&text.includes(row.sourceText)&&(!row.sourceContext||text.includes(row.sourceContext))&&(row.ownerContexts??[]).every(context=>text.includes(context))&&(!row.caseSource||inventoryText(repositoryRoot,row.caseSource).includes(row.caseSourceText));}).map(row=>row.inventoryName),recordOf:name=>EMBEDDED_REGION_SOURCE_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));
+const EMBEDDED_REGION_CURRENT_WITNESSES=[
+  {
+    "id": "repository.check-actual-null-capable-type-flow",
+    "source": "js/tests/translation-optional-inference.test.js",
+    "name": "actual nullable inference preserves falsy values field shapes and recursive return joins",
+    "inventoryName": "actual-null-capable-inference-preserves-false-valued-values-field-shapes-and-recursive-return-joins",
+    "inventory": "B45 exact source controls for js/tests/translation-optional-inference.test.js",
+    "sourceText": "test('actual nullable inference preserves falsy values field shapes and recursive return joins', () => {\n  const cases = [\n    [\"function choose(value){return value??'fallback';} console.log(`${choose(undefined)} ${choose(null)} ${choose('')} ${choose('kept')}`);\", 'fallback fallback  kept\\n'],\n    [\"function length(value){return value?.length??0;} console.log(length(undefined),length(null),length(''),length('abc'));\", '0 0 0 3\\n'],\n    [\"function field(value){return value?.item??'missing';} console.log(`${field(undefined)} ${field(null)} ${field({item:''})} ${field({item:'kept'})}`);\", 'missing missing  kept\\n'],\n    [\"function f(value){return value?g(false):undefined;} function g(value){return value?f(false):1;} console.log(f(false),f(true),g(false),g(true));\", 'undefined 1 1 undefined\\n'],\n    [\"function inspect(value){console.log(`${value===null} ${value===undefined} ${!!value} ${typeof value} ${value+1}`);return value||5;}console.log(inspect(null));console.log(inspect(undefined));console.log(inspect(0));console.log(inspect(2));\", 'true false false object 1\\n5\\nfalse true false undefined NaN\\n5\\nfalse false false number 1\\n5\\nfalse false true number 3\\n2\\n'],\n    [\"/** @param {{item:number}|null|undefined} value @returns {string} */function inspect(value){return typeof value;}console.log('%s',inspect(null),inspect(undefined),inspect({item:2}));\", 'object undefined object\\n', 'record'],\n    [\"/** @param {[number,string]|null|undefined} value @returns {string} */function inspect(value){return typeof value;}console.log('%s',inspect(null),inspect(undefined),inspect([2,'kept']));\", 'object undefined object\\n', 'tuple'],\n    [\"/** @param {Map<string,number>|null|undefined} value @returns {string} */function inspect(value){return typeof value;}console.log('%s',inspect(null),inspect(undefined),inspect(new Map([['kept',2]])));\", 'object undefined object\\n', 'map'],\n    [\"/** @param {Set<number>|null|undefined} value @returns {string} */function inspect(value){return typeof value;}console.log('%s',inspect(null),inspect(undefined),inspect(new Set([2])));\", 'object undefined object\\n', 'set'],\n    [\"function read(value){console.log('read');const n=value?.item??0;return value;}function describe(value){return typeof read(value);}console.log('%s',describe(null));console.log('%s',describe(undefined));console.log('%s',describe({item:2}));\", 'read\\nobject\\nread\\nundefined\\nread\\nobject\\n'],\n  ];\n  for (const [source, expected, kind] of cases) {\n    assert.equal(observations(source), expected, 'the original JavaScript supplies the observable oracle');\n    const surface = parseJavaScript(source);\n    const checked = checkProgram(surface);\n    assert.equal(observations(emitJavaScript(checked).text), expected);\n    if (kind) {\n      const entry = checked.declarations.get('inspect');\n      assert.equal(entry.params[0].type.kind, 'option');\n      assert.equal(entry.params[0].type.element.kind, kind);\n      assert.equal(entry.params[0].type.absence, 'both');\n      assert.equal(entry.body.k, 'optionalTypeOf');\n      assert.equal(entry.body.present, 'object');\n      for (const [target, emit] of [['Rust',emitRust], ['Lean',emitLean], ['Rocq',emitRocq]]) {\n        const emitted = emit(checked);\n        assert.equal(emitted.mappings.filter(mapping => mapping.kind === 'function' && mapping.source === 'inspect').length, 1, target);\n        if (target === 'Rust') assert.match(emitted.text, /Value\\(ml_present\\) => \\{ let _ = ml_present; [^}]*\"object\"/u, kind);\n        else if (target === 'Lean') assert.match(emitted.text, /some \\(some ml_present\\) => \"object\"/u, kind);\n        else assert.match(emitted.text, /Some \\(Some ml_present\\) => \"object\"%string/u, kind);\n        assert.match(emitted.text, /\"undefined\"/u, `${target}: the undefined alternative remains represented`);\n      }\n    }\n  }\n  const inferred = parseJavaScript(cases[0][0]).items.find(item => item.name === 'choose');\n  assert.deepEqual(inferred.params[0].type, { kind: 'option', element: text, absence: 'both' });\n  assert.deepEqual(inferred.ret, text);\n})"
+  },
+  {
+    "id": "repository.check-optional-inference-refusals",
+    "source": "js/tests/translation-optional-inference.test.js",
+    "name": "optional inference keeps incompatible values and recursive types as checked failures",
+    "inventoryName": "optional-inference-keeps-incompatible-values-and-recursive-types-as-checked-failures",
+    "inventory": "B45 exact source controls for js/tests/translation-optional-inference.test.js",
+    "sourceText": "test('optional inference keeps incompatible values and recursive types as checked failures', () => {\n  assert.throws(() => parseJavaScript(\"function choose(value){return value??'fallback';} choose(1);\"),\n    error => error.kind === 'type' && /number.*string|string.*number/u.test(error.message));\n  assert.throws(() => parseJavaScript('function recursive(value){return value??[value];}'),\n    error => error.kind === 'type' && /recursive inferred type/u.test(error.message));\n  const unresolved = {\n    language: 'JavaScript',\n    items: [{ k: 'fn', name: 'unknownType', params: [{ name: 'value', type: {\n      kind: 'option', element: { kind: 'union', alternatives: [number, text] }, absence: 'both',\n    } }], ret: text, body: { k: 'typeOf', arg: { k: 'name', path: ['value'] } } }],\n    main: null,\n  };\n  assert.throws(() => checkProgram(unresolved), error => error.kind === 'unsupported'\n    && error.details.construct === `typeof ${typeKey(unresolved.items[0].params[0].type)}`\n    && /type queries require a known JavaScript value type/u.test(error.message));\n})"
+  },
+  {
+    "id": "repository.apply-authenticated-family-library-style-history",
+    "source": "js/scripts/recorded-family-library-style.mjs",
+    "name": "applyRecordedFamilyLibraryStyles",
+    "inventoryName": "apply-recorded-family-library-styles",
+    "inventory": "B50 reviewed library and source oracle contracts for js/scripts/recorded-family-library-style.mjs",
+    "sourceText": "export function applyRecordedFamilyLibraryStyles(document, source, {\n  family, update = false, format = value => value, parameterLoans = false, baseRecordHashes = [],\n} = {}) {\n  assert.match(family, /^[a-z][a-z0-9-]*$/u, 'a recorded library has an explicit family');\n  const lines = document.match(/[^\\n]*\\n|[^\\n]+$/gu) ?? [];\n  for (const [index, expected] of baseRecordHashes.entries()) {\n    assert.equal(createHash('sha256').update(lines[index] ?? '').digest('hex'), expected,\n      'the complete historical family style record retains every original byte');\n  }\n  const scope = 'reviewed-library-' + family;\n  const definitions = DecoratorSet.fromLino(document).decorators;\n  const scoped = new DecoratorSet(definitions.filter(({when}) => when.some(([field, value]) => field === 'scope' && value === scope)));\n  const original = format(source);\n  for (let pass = 0; pass < 10; pass += 1) {\n    const replayed = format(scoped.decorate('emitter', {format: 'Rust', scope, source}).source);\n    if (replayed === source) break;\n    source = replayed;\n    assert.ok(pass < 9, 'recorded family styles converge');\n  }\n  // Derive the target from actual emitted/base output, independently of any\n  // later recorded replacement. A forged replacement cannot certify itself.\n  let corrected = parameterLoans ? readPortableSourceParameterStyles(original,\n    typeof parameterLoans === 'object' ? parameterLoans : undefined).source : original;\n  if (parameterLoans && typeof parameterLoans === 'object' && parameterLoans.normalizeBorrowedArguments) {\n    // Re-read the first pass's actual interfaces: a converted String becomes\n    // an &str fact only after its source declaration has really changed.\n    corrected = readPortableSourceParameterStyles(corrected, parameterLoans).source;\n  }\n  corrected = liftFamilyLibraryTruthinessConditions(corrected);\n  corrected = flattenFamilyLibraryElseIf(corrected);\n  corrected = mergeFamilyLibraryIdenticalBranches(corrected);\n  corrected = simplifyFamilyLibraryNegatedConjunctions(corrected);\n  corrected = invertFamilyLibraryInequalityBranches(corrected);\n  corrected = bindFamilyLibraryInequalityConditions(corrected);\n  // These families retain their original module attributes. Apply mechanical\n  // function styles without adding the older common Number-model allowances.\n  const header = /^#!\\[allow\\([\\s\\S]*?\\)\\]/mu.exec(corrected);\n  if (header) {\n    const end = header.index + header[0].length;\n    corrected = corrected.slice(0, end) + readPortableSourceLintStyles(corrected.slice(end)).source;\n  } else corrected = readPortableSourceLintStyles(corrected).source;\n  corrected = qualifyFamilyLibraryBooleanFunctions(corrected);\n  corrected = format(corrected);\n  if (corrected === source) return {document, source};\n  assert.ok(update, 'recorded family library styles are stale; run --update-library-lint-styles');\n  const id = 'reviewed-b50-' + family + '-' + createHash('sha256').update(source).digest('hex').slice(0, 16);\n  assert.ok(!definitions.some(definition => definition.id === id), 'a recorded family correction remains applicable');\n  const addition = new DecoratorSet([{id, level: 'emitter', order: 5000,\n    when: [['format', 'Rust'], ['scope', scope]],\n    actions: [{op: 'replace', field: 'source', from: source, to: corrected}],\n  }]).toLino();\n  const updated = document + (document && !document.endsWith('\\n') ? '\\n' : '') + addition;\n  const replayed = applyRecordedFamilyLibraryStyles(updated, original, {family, format, parameterLoans, baseRecordHashes});\n  assert.equal(replayed.source, corrected, 'the appended family library style replays exactly');\n  return {document: updated, source: corrected};\n}"
+  },
+  {
+    "id": "repository.read-portable-source-parameter-styles",
+    "source": "js/scripts/portable-source-library-style.mjs",
+    "name": "readPortableSourceParameterStyles",
+    "inventoryName": "read-portable-source-parameter-styles",
+    "inventory": "B45 exact source controls for js/scripts/portable-source-library-style.mjs",
+    "sourceText": "export function readPortableSourceParameterStyles(source, {publicNames = [], ownedParameters = {}, normalizeBorrowedArguments = false} = {}) {\n  const declarations = new Map();\n  for (const [, name] of source.matchAll(/^pub fn (\\w+)\\(/gmu)) {\n    const block = readSourceTextRustBlock(source, 'fn', name);\n    const header = /^pub fn \\w+\\(([^)]*)\\)/u.exec(block);\n    assert.ok(header, 'a generated library function retains its complete signature');\n    const body = tokenize(block.slice(header[0].length), 'Rust').tokens;\n    const assigned = new Set();\n    for (let index = 0; index < body.length; index += 1) {\n      if (body[index].kind !== 'punct' || !['=', '+=', '-=', '*=', '/=', '%=', '&=', '|=', '^=', '<<=', '>>='].includes(body[index].value)) continue;\n      const previous = body[index - 1];\n      if (previous?.kind === 'identifier') assigned.add(previous.value);\n      else if (previous?.value === ')') {\n        let start = index - 2, depth = 1;\n        while (start >= 0 && depth > 0) {\n          if (body[start].kind === 'punct' && body[start].value === ')') depth += 1;\n          else if (body[start].kind === 'punct' && body[start].value === '(') depth -= 1;\n          if (depth > 0 && body[start].kind === 'identifier') assigned.add(body[start].value);\n          start -= 1;\n        }\n        assert.equal(depth, 0, 'an emitted tuple assignment has its complete left-hand side');\n      }\n    }\n    const params = header[1].split(',').map(value => /^\\s*(?:mut )?(\\w+):\\s*(.+?)\\s*$/u.exec(value)).filter(Boolean)\n      .map(([, parameter, type]) => ({name: parameter, type}));\n    for (const param of params) {\n      let element = param.type;\n      let depth = 0;\n      while (element.startsWith('Vec<') && element.endsWith('>')) {\n        element = element.slice(4, -1);\n        depth += 1;\n      }\n      const textLeaf = /^(?:[A-Za-z_][A-Za-z_0-9]*::)*ml_string::Text$/u.test(element);\n      param.text = depth === 0 && textLeaf;\n      param.borrow = (param.type === 'String' || param.text || depth > 0 && (['String', 'f64', 'bool'].includes(element) || textLeaf))\n        && !assigned.has(param.name)\n        && !(Object.hasOwn(ownedParameters, name) && ownedParameters[name].includes(param.name));\n    }\n    declarations.set(name, {block, params, assigned, unique: !declarations.has(name)});\n  }\n  let adapted = source;\n  const actions = [];\n  for (const [name, declaration] of declarations) {\n    let block = declaration.block;\n    for (const param of declaration.params) if (param.borrow) {\n      const type = param.type === 'String' ? '&str' : param.text ? '&' + param.type : '&[' + param.type.slice(4, -1) + ']';\n      block = block.replace(new RegExp('(?:mut )?' + param.name + ': ' + param.type.replace(/[.*+?^${}()|[\\]\\\\]/gu, '\\\\$&'), 'u'), param.name + ': ' + type);\n    }\n    // Edit actual parameter occurrences only. A target-source string or a\n    // longer identifier containing the parameter name retains its bytes.\n    const copies = [];\n    const before = tokenize(block, 'Rust').tokens;\n    const bodyStart = before.findIndex(token => token.kind === 'punct' && token.value === '{');\n    const parentheses = new Map(), openings = [];\n    for (let index = bodyStart; index < before.length; index += 1) {\n      if (before[index].kind !== 'punct') continue;\n      if (['(', '[', '{'].includes(before[index].value)) openings.push(index);\n      else if ([')', ']', '}'].includes(before[index].value)) {\n        const opening = openings.pop();\n        parentheses.set(opening, index);\n      }\n    }\n    for (let index = 0; index < before.length; index += 1) {\n      const token = before[index];\n      const parameter = declaration.params.find(value => value.borrow && value.name === token.value);\n      if (token.kind !== 'identifier' || !parameter || before[index - 1]?.value === '.') continue;\n      const copy = parameter.type === 'String' ? '.to_owned()' : parameter.text ? '.clone()' : '.to_vec()';\n      let left = index, right = index;\n      while (before[left - 1]?.value === '(' && parentheses.get(left - 1) === right + 1) {\n        const previous = before[left - 2];\n        if (previous?.kind === 'macro' || previous?.kind === 'identifier'\n          && !['if', 'while', 'return', 'match', 'break'].includes(previous.value)\n          || [')', ']', '?'].includes(previous?.value)) break;\n        left -= 1; right += 1;\n      }\n      // Text has value equality/ordering with Text, not with &Text. Comparing\n      // borrowed parameters dereferences their actual value; comparison still\n      // borrows its operands and never moves a Text out of the parameter.\n      if (parameter.text && (['==', '!=', '<', '<=', '>', '>='].includes(before[left - 1]?.value)\n        || ['==', '!=', '<', '<=', '>', '>='].includes(before[right + 1]?.value))) {\n        copies.push([token.start, token.end, '(*' + token.value + ')']);\n        continue;\n      }\n      if (before[index + 1]?.value === '.' && before[index + 2]?.value === 'clone'\n        && before[index + 3]?.value === '(' && before[index + 4]?.value === ')') {\n        if (parameter.type !== 'String' && before[index - 1]?.value === '&') {\n          copies.push([before[index - 1].start, before[index + 4].end, token.value]);\n        } else {\n          copies.push([token.start, before[index + 4].end, token.value + copy]);\n        }\n        index += 4;\n      } else if (parameter.text && before[left - 1]?.kind === 'punct' && before[left - 1].value === '&'\n        && [',', ')', ']', '}', ';'].includes(before[right + 1]?.value)) {\n        // A parenthesized leaf remains that same borrowed Text. Keep its\n        // grouping and remove only the redundant outer loan, never a loan of\n        // a compound operand such as &(text.slice(...)).\n        copies.push([before[left - 1].start, before[left - 1].end, '']);\n      } else if (before[index - 1]?.value === '&' && [',', ')'].includes(before[index + 1]?.value)) {\n        copies.push([before[index - 1].start, before[index - 1].end, '']);\n      } else if (index > bodyStart && ['return', '=', ',', '(', '[', '{', '=>'].includes(before[index - 1]?.value)\n        && [',', ';', ')', ']', '}'].includes(before[index + 1]?.value)) {\n        // Final-use emission may transfer an owned parameter directly in a\n        // return, binding, tuple/array slot or owned call. Once its interface\n        // is borrowed, retain that original owned value with one copy here.\n        // Actual borrowed callees remove these leaf copies below, and an\n        // explicit reference (including parenthesized ones) stays borrowed.\n        if (before[left - 1]?.value !== '&') {\n          copies.push([token.start, token.end, token.value + copy]);\n        }\n      }\n    }\n    for (const [start, end, text] of copies.sort((left, right) => right[0] - left[0])) {\n      block = block.slice(0, start) + text + block.slice(end);\n    }\n    const {tokens, comments} = tokenize(block, 'Rust');\n    const body = tokens.findIndex(token => token.kind === 'punct' && token.value === '{');\n    const existingLoans = normalizeBorrowedArguments && declaration.unique && source.split(declaration.block).length === 2\n      && !tokens.slice(body + 1).some(token => token.kind === 'macro'\n        || token.kind === 'identifier' && ['let', 'match', 'for', 'fn', 'move', 'ref', 'unsafe', 'use'].includes(token.value)\n        || token.kind === 'punct' && ['|', '||'].includes(token.value));\n    const matching = new Map(), stack = [];\n    for (let index = 0; index < tokens.length; index += 1) {\n      if (['(', '[', '{'].includes(tokens[index].value) && tokens[index].kind === 'punct') stack.push(index);\n      else if ([')', ']', '}'].includes(tokens[index].value) && tokens[index].kind === 'punct') matching.set(stack.pop(), index);\n    }\n    const edits = [];\n    for (let index = 0; index < tokens.length; index += 1) {\n      const target = declarations.get(tokens[index].value);\n      if (!target || tokens[index + 1]?.value !== '(' || tokens[index - 1]?.value === 'fn') continue;\n      const closing = matching.get(index + 1);\n      assert.notEqual(closing, undefined, 'a generated library call has a closing delimiter');\n      const arguments_ = [];\n      let begin = index + 2;\n      for (let at = begin; at <= closing; at += 1) {\n        if (at === closing || tokens[at].value === ',') { arguments_.push([begin, at]); begin = at + 1; }\n        else if (matching.has(at)) at = matching.get(at);\n      }\n      for (const [position, [from, end]] of arguments_.entries()) {\n        if (from === end || !target.params[position]) continue;\n        const targetParameter = target.params[position];\n        if (existingLoans && target.unique && (targetParameter.type === '&str'\n          || targetParameter.borrow && targetParameter.type === 'String')\n          && tokens[index - 1]?.value === '::' && ['self', 'crate'].includes(tokens[index - 2]?.value)\n          && tokens[index - 3]?.value !== '::') {\n          let first = from, last = end;\n          while (tokens[first]?.value === '(' && matching.get(first) === last - 1) { first += 1; last -= 1; }\n          if (tokens[first]?.value === '&') {\n            first += 1;\n            while (tokens[first]?.value === '(' && matching.get(first) === last - 1) { first += 1; last -= 1; }\n            const name = tokens[first]?.value;\n            if (last === first + 1 && tokens[first]?.kind === 'identifier'\n              && declaration.params.filter(parameter => parameter.name === name && parameter.type === '&str').length === 1\n              && !declaration.assigned.has(name)\n              && !comments.some(comment => comment.start >= tokens[from].start && comment.end <= tokens[end - 1].end)) {\n              edits.push([tokens[from].start, tokens[end - 1].end, name]);\n              continue;\n            }\n          }\n        }\n        if (!targetParameter.borrow) continue;\n        const text = block.slice(tokens[from].start, tokens[end - 1].end);\n        let first = from, last = end;\n        while (tokens[first]?.value === '(' && matching.get(first) === last - 1) { first += 1; last -= 1; }\n        const grouped = block.slice(tokens[first].start, tokens[last - 1].end);\n        const leaf = /^\\w+(?:\\.(?:to_vec|to_owned|clone)\\(\\))?$/u.test(grouped)\n          || /^String::from\\(\"[^\"\\\\]*\"\\)$/u.test(grouped);\n        const borrowed = (leaf ? grouped : text).replace(/^(\\w+)\\.(?:to_vec|to_owned|clone)\\(\\)$/u, '$1');\n        const parameter = declaration.params.find(value => value.name === borrowed);\n        const literal = target.params[position].type === 'String' && /^String::from\\((\"[^\"\\\\]*\")\\)$/u.exec(borrowed);\n        if (literal) edits.push([tokens[from].start, tokens[end - 1].end, literal[1]]);\n        else {\n          // Leaf-copy replacements cannot overlap nested argument calls. Loan\n          // markers are zero-width edits around each original compound span.\n          if (borrowed !== text) edits.push([tokens[from].start, tokens[end - 1].end, borrowed]);\n          if (!parameter?.borrow && !borrowed.startsWith('&') && !/^\"/u.test(borrowed)) {\n            edits.push([tokens[from].start, tokens[from].start, '&(']);\n            edits.push([tokens[end - 1].end, tokens[end - 1].end, ')']);\n          }\n        }\n      }\n    }\n    for (const [start, end, text] of edits.sort((left, right) => right[0] - left[0] || right[1] - left[1])) {\n      block = block.slice(0, start) + text + block.slice(end);\n    }\n    if (publicNames.includes(name)) block = '/// Execute the checked shared source algorithm.\\n#[must_use]\\n' + block;\n    if (block !== declaration.block) {\n      actions.push({op: 'replace', field: 'source', from: declaration.block, to: block});\n      adapted = adapted.split(declaration.block).join(block);\n    }\n  }\n  return {source: adapted, actions};\n}"
+  },
+  {
+    "id": "repository.check-local-module-string-return-proofs",
+    "source": "js/tests/translation-portable-library-style.test.js",
+    "name": "qualified String return proofs require the declared local module namespace",
+    "inventoryName": "check local module string return proofs",
+    "inventory": "B55 current library style operation names for js/tests/translation-portable-library-style.test.js",
+    "sourceText": "test('qualified String return proofs require the declared local module namespace', () => {\n  const source = readFileSync(new URL('../src/translation/fact-column-rules.js', import.meta.url), 'utf8')\n    + '/** @param {string[]} columns @param {number} size @param {number} node @returns {boolean} */ function present(columns,size,node){return readRequiredTextFact(columns,size+node)!==\"\";}';\n  const checked = checkProgram(parseJavaScript(source, {referenceSemantics: false}));\n  const modulePath = 'crate::translation::surface_reference_analysis_rules';\n  const raw = emitRust(checked, {arrayConsumption: true}).definitions.join('\\n\\n')\n    .replaceAll('crate::read_required_text_fact', modulePath + '::read_required_text_fact');\n  const loaned = readPortableSourceParameterStyles(raw).source;\n  const defaultResult = readPortableSourceLintStyles(loaned).source;\n  assert.equal(readSourceTextRustBlock(defaultResult, 'fn', 'present').includes('.is_empty()'), false);\n  const reviewed = readPortableSourceLintStyles(loaned, {modulePath});\n  const present = readSourceTextRustBlock(reviewed.source, 'fn', 'present');\n  assert.ok(present.includes('.is_empty()'));\n  assert.ok(present.includes('!(' + modulePath + '::read_required_text_fact('));\n  assert.equal(present.includes('!((' + modulePath + '::read_required_text_fact('), false, 'the actual qualified fact read does not reproduce the Clippy double_parens receiver');\n  assert.equal((present.match(/::read_required_text_fact\\(/gu) ?? []).length, 1, 'the effectful call and its arithmetic argument remain single evaluations');\n  assert.ok(present.includes('size + node'));\n  const unrelated = loaned.replaceAll(modulePath + '::read_required_text_fact', 'crate::unrelated::read_required_text_fact');\n  assert.equal(readSourceTextRustBlock(readPortableSourceLintStyles(unrelated, {modulePath}).source, 'fn', 'present').includes('.is_empty()'), false);\n  const unknown = 'pub fn value() -> Custom { self::make() }\\npub fn present() -> bool { (' + modulePath + '::value()) != \"\" }';\n  assert.equal(readPortableSourceLintStyles(unknown, {modulePath}).source.includes('.is_empty()'), false);\n  const styles = new DecoratorSet([{id: 'qualified-string-return-control', level: 'emitter', order: 0,\n    when: [['format', 'Rust']], actions: reviewed.actions}]);\n  assert.equal(styles.decorate('emitter', {format: 'Rust', source: loaned}).source, reviewed.source);\n  const call = modulePath + '::value()';\n  for (const receiver of [call, '(' + call + ')']) for (const comparison of ['==', '!=']) {\n    const candidate = 'pub fn value() -> String { String::from(\"text\") }\\npub fn present() -> bool { ' + receiver + ' ' + comparison + ' \"\" }';\n    const styled = readPortableSourceLintStyles(candidate, {modulePath});\n    const body = readSourceTextRustBlock(styled.source, 'fn', 'present');\n    assert.ok(body.includes((comparison === '!=' ? '!' : '') + '(' + call + ').is_empty()'), 'both grouped and ungrouped receivers keep one complete method-receiver group');\n    assert.equal(body.includes('((' + call + '))'), false);\n    assert.equal((body.match(/::value\\(/gu) ?? []).length, 1, 'String comparison styling preserves one receiver evaluation');\n    assert.equal(readPortableSourceLintStyles(styled.source, {modulePath}).source, styled.source, 'receiver grouping is idempotent');\n    const receiverStyles = new DecoratorSet([{id: 'grouped-empty-string-control', level: 'emitter', order: 0,\n      when: [['format', 'Rust']], actions: styled.actions}]);\n    assert.equal(receiverStyles.decorate('emitter', {format: 'Rust', source: candidate}).source, styled.source);\n  }\n})"
+  },
+  {
+    "id": "grammar.read-lexical-declaration-emission-facts",
+    "source": "rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "name": "declaration_emission_facts",
+    "inventoryName": "read lexical declaration emission facts",
+    "inventory": "B59 parser token exclusion source names for rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "sourceText": "pub fn declaration_emission_facts(\n    declaration: &crate::grammar::GrammarLexer,\n) -> Result<DeclarationEmissionFacts, String> {\n    let forms =\n        super::lexical_plan::read_declaration_forms(declaration).map_err(|error| error.message)?;\n    let mut obligations = Vec::new();\n    let mut modes = vec![\"default\".to_owned()];\n    let mut channels = vec![\"default\".to_owned(), \"HIDDEN\".to_owned()];\n    let mut types = Vec::new();\n    for entry in forms {\n        let name = entry.text(\"name\").unwrap_or_default();\n        match entry_form(&entry.head) {\n            4 => {\n                if !modes.iter().any(|mode| mode == name) {\n                    modes.push(name.to_owned());\n                }\n            }\n            5 => {\n                if !channels.iter().any(|channel| channel == name) {\n                    channels.push(name.to_owned());\n                }\n            }\n            6 => obligations.push(super::lexical_plan::LexicalObligation {\n                name: name.to_owned(),\n                category: entry.text(\"category\").unwrap_or_default().to_owned(),\n                source: entry.text(\"source\").unwrap_or_default().to_owned(),\n            }),\n            7 | 8 => {\n                let item = entry\n                    .expression(\"item\")\n                    .ok_or_else(|| \"invalid lexical declaration descriptors\".to_owned())?;\n                super::lexical_plan::lower_expression(item, name, &mut obligations)\n                    .map_err(|error| error.message)?;\n            }\n            9 if !types.iter().any(|token_type| token_type == name) => types.push(name.to_owned()),\n            _ => {}\n        }\n    }\n    Ok(DeclarationEmissionFacts {\n        obligations: obligations.len(),\n        modes,\n        channels,\n        types: types.len(),\n    })\n}"
+  },
+  {
+    "id": "repository.write-complete-record-rule-library",
+    "source": "js/scripts/record-rule-library.mjs",
+    "name": "writeRecordRuleLibrary",
+    "inventoryName": "write-record-rule-library",
+    "inventory": "B45 exact source controls for js/scripts/record-rule-library.mjs",
+    "sourceText": "export function writeRecordRuleLibrary(emitted, name, { check = false, sourceStyles = null } = {}) {\n  assert.match(name, /^[a-z][a-z_0-9]*$/u);\n  const header = emitted.text.split('\\n').find(line => line.startsWith('#![allow('));\n  assert.ok(header, 'the complete checked output retains its existing generated module header');\n  const raw = [header, ...emitted.preludes, ...emitted.definitions].join('\\n\\n');\n  const declarations = new Set([...raw.matchAll(/^pub (?:fn|enum|struct|mod) ([A-Za-z_][A-Za-z_0-9]*)\\b/gmu)].map(match => match[1]));\n  const relocation = [...declarations].filter(declaration => raw.includes('crate::' + declaration))\n    .map(declaration => ({ op: 'replace', field: 'source', from: 'crate::' + declaration, to: 'self::' + declaration }));\n  const relocated = new DecoratorSet(relocation.length ? [{ id: name + '-library-owner', level: 'emitter', order: 0, when: [['format', 'Rust']], actions: relocation }] : [])\n    .decorate('emitter', { format: 'Rust', source: raw }).source;\n  const publicNames = [...relocated.matchAll(/^pub fn (\\w+)\\(/gmu)].map(match => match[1]);\n  const loans = readPortableSourceParameterStyles(relocated, { publicNames });\n  const reviewed = readPortableSourceLintStyles(loans.source);\n  assert.ok(sourceStyles === null || typeof sourceStyles === 'function', 'an optional family style is an actual source proof producer');\n  const additional = sourceStyles === null ? {source: reviewed.source, actions: []} : sourceStyles(reviewed.source);\n  const actions = [...relocation, ...loans.actions, ...reviewed.actions, ...additional.actions];\n  const styles = new DecoratorSet(actions.length ? [{ id: name + '-library-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }] : []);\n  const styleFile = new URL('../../parity/self-translation/' + name.replaceAll('_', '-') + '-decorators.lino', import.meta.url);\n  if (check) assert.equal(readFileSync(styleFile, 'utf8'), styles.toLino(), 'record family library styles retain every actual declaration');\n  else writeFileSync(styleFile, styles.toLino());\n  const decorated = DecoratorSet.fromLino(readFileSync(styleFile, 'utf8')).decorate('emitter', { format: 'Rust', source: raw }).source;\n  assert.equal(decorated, additional.source, 'the recorded ownership, loan and lint styles replay exactly');\n  const formatted = formatProductRuleSource(decorated);\n  const files = partitionPortableRustLibrary(formatted, {\n    notice: '// Generated from the complete checked JavaScript source and recorded dependencies.\\n// Do not edit by hand.\\n',\n    directory: name,\n  });\n  for (const file of files) {\n    const output = new URL('../../rust/src/translation/' + (file.path ?? name + '.rs'), import.meta.url);\n    if (check) assert.equal(readFileSync(output, 'utf8'), file.source, 'complete native record family library is fresh');\n    else {\n      mkdirSync(new URL('.', output), { recursive: true });\n      writeFileSync(output, file.source);\n    }\n  }\n  return files;\n}"
+  },
+  {
+    "id": "grammar.current-parser-production-flag",
+    "source": "rust/src/grammar/import/antlr.rs",
+    "name": "Parser::syntactic_production",
+    "inventoryName": "current parser production flag",
+    "inventory": "B59 parser token exclusion source names for rust/src/grammar/import/antlr.rs",
+    "sourceText": "    syntactic_production: bool,",
+    "ownerContexts": [
+      "struct Parser {"
+    ]
+  }
+];
+const EMBEDDED_REGION_CURRENT_WITNESS_INVENTORIES=EMBEDDED_REGION_CURRENT_WITNESSES.map(row=>({inventory:row.inventory,files:[row.source],extract:text=>text.includes(row.sourceText)&&(row.ownerContexts??[]).every(context=>text.includes(context))?[row.inventoryName]:[],recordOf:()=>row.id}));
+// END B60 recursive default region source names.
+// BEGIN B60 current native token exclusion test witness.
+const B60_NATIVE_TOKEN_EXCLUSION_CURRENT_WITNESS={
+  "id": "repository.check-native-token-exclusion-emission-and-wildcard-boundaries",
+  "source": "rust/tests/unit/grammar_lexer_transport.rs",
+  "name": "parser_token_exclusion_emission_reimports_the_same_tokens_eof_and_following_wildcard",
+  "inventoryName": "check native token exclusion emission and wildcard boundaries",
+  "sourceText": "fn parser_token_exclusion_emission_reimports_the_same_tokens_eof_and_following_wildcard() {\n    use meta_language::grammar::{FeatureExpr, FieldValue};\n    use meta_language::{GrammarEmitError, GrammarExpr, GrammarFormat};\n    token_negation_reference();\n    for excluded in [\"~(STOP | ALT)\", \"~('stop' | 'a')\", \"~(EOF | STOP | ALT)\"] {\n        let grammar = import_antlr(&token_negation_declaration(excluded)).unwrap();\n        for candidate in token_negation_replays(&grammar) {\n            let (source, _) =\n                meta_language::emit_antlr(&candidate).expect(\"the exact supported exclusion emits\");\n            let reimported = import_antlr(&source).expect(\"emitted ANTLR reimports\");\n            token_negation_assert_inputs(\n                &reimported,\n                &[\n                    \"alpha\",\n                    \" alpha beta é \",\n                    \"\",\n                    \" \",\n                    \"stop\",\n                    \"x\",\n                    \"a\",\n                    \"stopper\",\n                    \"@\",\n                ],\n            );\n        }\n    }\n    for (source, accepted, refused) in [\n        (\n            \"grammar End; start: ~EOF A EOF; A:'a';\",\n            vec![\"aa\"],\n            vec![\"\", \"a\", \"aaa\"],\n        ),\n        (\n            \"grammar Pair; start: ~BLOCK . EOF; BLOCK:'x'; A:'a';\",\n            vec![\"aa\", \"ax\"],\n            vec![\"\", \"a\", \"xa\", \"aaa\"],\n        ),\n    ] {\n        let grammar = import_antlr(source).unwrap();\n        for candidate in token_negation_replays(&grammar) {\n            let (source, _) = meta_language::emit_antlr(&candidate).unwrap();\n            let parser = imported(&source);\n            for input in &accepted {\n                let result = parser\n                    .parse_tree(input.as_bytes(), &FeatureParseOptions::default())\n                    .unwrap();\n                assert!(result.ok, \"{input}\");\n                let tree = result.tree.unwrap();\n                assert_eq!(source_text(&tree), *input);\n                assert_eq!(\n                    lexical_leaves(&tree).len(),\n                    2,\n                    \"the extra wildcard remains a separate terminal\"\n                );\n            }\n            for input in &refused {\n                assert!(\n                    !parser\n                        .parse_tree(input.as_bytes(), &FeatureParseOptions::default())\n                        .unwrap()\n                        .ok,\n                    \"{input}\"\n                );\n            }\n        }\n    }\n    let raw = import_antlr(&token_negation_declaration(\"~(STOP | ALT)\")).unwrap();\n    let normalized = deserialize_grammar(&serialize_grammar(&raw)).unwrap();\n    for mut grammar in [raw, normalized] {\n        let mut declarations = grammar.declarations().clone();\n        let GrammarExpr::Sequence(entries) = &mut declarations.lexers[0].expression else {\n            panic!(\"the authored lexer has its actual ordered declaration list\")\n        };\n        let first = entries\n            .iter_mut()\n            .find_map(|entry| match entry {\n                GrammarExpr::Feature(feature) => match feature.as_mut() {\n                    FeatureExpr::Form(form) if form.head == \"lexicalRule\" => Some(form),\n                    _ => None,\n                },\n                _ => None,\n            })\n            .expect(\"the authored first token has a real feature form\");\n        let item = first\n            .spec()\n            .iter()\n            .position(|(name, _)| *name == \"item\")\n            .unwrap();\n        first.fields[item] = FieldValue::Text(\"not an expression\".to_owned());\n        assert!(first.expression(\"item\").is_none());\n        grammar.set_declarations(declarations);\n        assert_eq!(\n            meta_language::emit_antlr(&grammar).unwrap_err(),\n            GrammarEmitError::Unsupported {\n                format: GrammarFormat::Antlr,\n                construct: \"source-free lexical commands: invalid lexical declaration descriptors\"\n                    .to_owned(),\n            }\n        );\n    }\n}"
+};
+const B60_NATIVE_TOKEN_EXCLUSION_CURRENT_WITNESS_INVENTORIES=[{inventory:"B59 parser token exclusion source names for rust/tests/unit/grammar_lexer_transport.rs",files:["rust/tests/unit/grammar_lexer_transport.rs"],extract:text=>text.includes(B60_NATIVE_TOKEN_EXCLUSION_CURRENT_WITNESS.sourceText)?[B60_NATIVE_TOKEN_EXCLUSION_CURRENT_WITNESS.inventoryName]:[],recordOf:()=>B60_NATIVE_TOKEN_EXCLUSION_CURRENT_WITNESS.id}];
+// END B60 current native token exclusion test witness.
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory).map(reconcileBulkFortySevenNativeInventory).map(reconcileBulkFiftyHistoricalInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES, ...BULK_FORTY_SEVEN_NAME_INVENTORIES, ...BULK_FORTY_EIGHT_NAME_INVENTORIES, ...BULK_FORTY_NINE_NAME_INVENTORIES, ...BULK_FIFTY_NAME_INVENTORIES, ...BULK_FIFTY_ONE_NAME_INVENTORIES.map(reconcileB57MovedSourceInventory), ...VERSION_RANGE_EVIDENCE_NAME_INVENTORIES, ...FORMAT_RETRY_SOURCE_NAME_INVENTORIES, ...DISCOVERY_CERTIFICATE_NAME_INVENTORIES, ...SELECTED_NATIVE_GRAMMAR_PROJECTION_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_WITNESS_INVENTORIES, ...BULK_FIFTY_FIVE_CONST_ARCHIVE_ERROR_NAME_INVENTORIES, ...AUXILIARY_GRAMMAR_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_CURRENT_WITNESS_INVENTORIES, ...CHILD_CHAIN_NAME_INVENTORIES, ...PARSER_TOKEN_EXCLUSION_NAME_INVENTORIES, ...PARSER_TOKEN_EXCLUSION_CURRENT_WITNESS_INVENTORIES, ...PARSER_TOKEN_COVERING_CURRENT_WITNESS_INVENTORIES, ...EMBEDDED_REGION_NAME_INVENTORIES, ...EMBEDDED_REGION_CURRENT_WITNESS_INVENTORIES, ...B60_NATIVE_TOKEN_EXCLUSION_CURRENT_WITNESS_INVENTORIES].map(entry=>entry.inventory!=="grammar link terms"?entry:{...entry,extract:(text,file)=>entry.extract(text,file).map(name=>file==="rust/src/grammar/links.rs"&&name==="grammar::lexer"?"grammar::native-source-lexical-analyser-declaration":name),recordOf:name=>name==="grammar::native-source-lexical-analyser-declaration"?"repository.native-source-lexical-analyser-declaration":entry.recordOf(name)}));
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
