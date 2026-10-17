@@ -213,7 +213,7 @@ pub(super) fn lower_expression(
     Ok(materialize(0, &projection, &replacements))
 }
 
-pub(super) fn read_source(declaration: &GrammarLexer) -> LoadResult<LexicalSource> {
+pub(super) fn read_declaration_forms(declaration: &GrammarLexer) -> LoadResult<Vec<FeatureForm>> {
     let GrammarExpr::Sequence(entries) = &declaration.expression else {
         return refuse(
             "declaration",
@@ -261,6 +261,11 @@ pub(super) fn read_source(declaration: &GrammarLexer) -> LoadResult<LexicalSourc
             ),
         );
     }
+    Ok(forms)
+}
+
+pub(super) fn read_source(declaration: &GrammarLexer) -> LoadResult<LexicalSource> {
+    let forms = read_declaration_forms(declaration)?;
     let mut plan = LexicalPlan {
         name: Name::from(declaration.name.as_str()),
         rules: Vec::new(),

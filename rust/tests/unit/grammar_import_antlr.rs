@@ -143,10 +143,10 @@ fn lowers_covering_antlr_constructs() {
                     negated: true,
                     items: vec![CharClassItem::Char(';')],
                 },
-                GrammarExpr::CharClass {
-                    negated: true,
-                    items: vec![CharClassItem::Char('x')],
-                },
+                GrammarExpr::Sequence(vec![
+                    GrammarExpr::Not(Box::new(GrammarExpr::Terminal("x".to_owned()))),
+                    GrammarExpr::AnyChar,
+                ]),
             ],
         }
     );

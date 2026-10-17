@@ -10,6 +10,7 @@ use lexer::{Lexer, Token, TokenKind};
 
 use super::{GrammarImportError, parse_error, unsupported_error};
 use crate::grammar::feature::{FeatureExpr, FeatureForm, FieldValue, class_expression};
+use crate::grammar::feature_runtime::lexical_kernel;
 use crate::grammar::{
     Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleAttributes, RuleKind, UnicodeClassItem,
 };
@@ -44,6 +45,7 @@ struct Parser {
     // the current rule, which may override it.
     case_insensitive: bool,
     rule_case_insensitive: bool,
+    parser_production: bool,
     sections: Vec<lexical::Section>,
     section: Option<usize>,
     mode: Option<String>,
@@ -59,6 +61,7 @@ impl Parser {
             pending_comments: Vec::new(),
             case_insensitive: false,
             rule_case_insensitive: false,
+            parser_production: false,
             sections: Vec::new(),
             section: None,
             mode: None,
@@ -110,6 +113,7 @@ impl Parser {
         let comments = std::mem::take(&mut self.pending_comments);
         let fragment = self.try_consume_keyword("fragment");
         let name = self.expect_ident("rule name")?;
+        self.parser_production = !fragment && !name.chars().next().is_some_and(char::is_uppercase);
         // A comment between the name and its ':' documents the rule too.
         self.collect_comments();
         let mut comments = comments;
@@ -352,10 +356,36 @@ impl Parser {
         notes: &mut Vec<String>,
     ) -> Result<GrammarExpr, GrammarImportError> {
         self.skip_inline_comments();
-        let expr = if self.try_consume_tilde() {
-            negate_expr(self.parse_atom(notes)?)
+        let negated = self.try_consume_tilde();
+        let atom = self.parse_atom(notes)?;
+        let operands = match &atom {
+            GrammarExpr::Choice { alternatives, .. } => alternatives.as_slice(),
+            _ => std::slice::from_ref(&atom),
+        };
+        // Project only fields selected by the generated shared classifier.
+        // Every other operand kind is outside that classifier's closed set.
+        let (kinds, values): (Vec<_>, Vec<_>) = operands
+            .iter()
+            .map(|operand| {
+                let (kind, value) = match operand {
+                    GrammarExpr::Terminal(value) => ("literal", value.as_str()),
+                    GrammarExpr::NonTerminal(name) => ("ref", name.as_str()),
+                    GrammarExpr::Not(inner) if matches!(inner.as_ref(), GrammarExpr::AnyChar) => {
+                        ("not", "any")
+                    }
+                    _ => ("unsupported", ""),
+                };
+                (kind.to_owned(), value.to_owned())
+            })
+            .unzip();
+        let token_negation = negated
+            && lexical_kernel::parser_token_negation(self.parser_production, &kinds, &values);
+        let expr = if !negated {
+            atom
+        } else if token_negation {
+            GrammarExpr::Sequence(vec![GrammarExpr::Not(Box::new(atom)), GrammarExpr::AnyChar])
         } else {
-            self.parse_atom(notes)?
+            negate_expr(atom)
         };
         self.parse_suffixes(expr)
     }

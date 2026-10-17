@@ -224,11 +224,15 @@ fn antlr_emits_native_constructs_verbatim() {
          fragment DIGIT : [0-9] -> skip ;\n"
     );
     assert!(report.lossy.is_empty(), "{:#?}", report.lossy);
-    // ANTLR's `~'x'` complements the one-character set {x}, so it comes back
-    // as the class that matches one character other than x.
+    // The emitted parser complements consume complete tokens. Keep the
+    // original authored graph and check the actual reimported token forms.
     let mut expected = structure(&g);
     if let GrammarExpr::Choice { alternatives, .. } = &mut expected[1].2 {
-        alternatives[0] = class(true, vec![CharClassItem::Char('x')]);
+        alternatives[0] = seq(vec![GrammarExpr::not(t("x")), GrammarExpr::AnyChar]);
+        alternatives[1] = GrammarExpr::ZeroOrMore(Box::new(seq(vec![
+            GrammarExpr::not(nt("ID")),
+            GrammarExpr::AnyChar,
+        ])));
     }
     assert_eq!(structure(&reimported), expected);
     assert_eq!(reimported.start(), Some("entry"));
