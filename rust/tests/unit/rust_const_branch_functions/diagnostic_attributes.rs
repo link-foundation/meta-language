@@ -2,7 +2,6 @@
 
 use super::*;
 use meta_language::translation::lexer::Source;
-use std::fmt::Write as _;
 
 const DIAGNOSTIC_MODELS: [&str; 2] = [
     "closed pure Rust const predicates 1",
