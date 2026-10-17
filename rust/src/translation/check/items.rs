@@ -86,6 +86,7 @@ impl Checker {
                     name: name.clone(),
                     params: Vec::new(),
                     ret: UNIT,
+                    semantic_ret: None,
                     annotated_ret: None,
                     body: Expr::new(Node::Unit, UNIT),
                     span,
@@ -240,6 +241,7 @@ impl Checker {
                 entry.source_signature = source_signature;
                 entry.params = params;
                 entry.ret = ret;
+                entry.semantic_ret.clone_from(&item.semantic_ret);
                 entry.annotated_ret = annotated_ret;
             }
             self.signatures.insert(name);

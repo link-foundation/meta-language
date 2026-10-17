@@ -17,12 +17,13 @@ use meta_language::translation::emit_javascript::emit_javascript;
 use meta_language::translation::emit_lean::emit_lean;
 use meta_language::translation::emit_rocq::emit_rocq;
 use meta_language::translation::emit_rust::emit_rust;
-use meta_language::translation::ir::Program;
+use meta_language::translation::ir::{Decl, FnDecl, Program};
 use meta_language::translation::javascript::parse_javascript;
 use meta_language::translation::lean::parse_lean;
 use meta_language::translation::rocq::parse_rocq;
 use meta_language::translation::rust::parse_rust;
-use meta_language::translation::surface::SProgram;
+use meta_language::translation::surface::{SItem, SProgram};
+use meta_language::translation::types::Type;
 use serde::Serialize;
 use serde_json::Value;
 use sha2::{Digest, Sha256};
@@ -148,6 +149,66 @@ fn stage_metadata_retains_constant_bindings_and_absent_parameter_defaults() {
     assert_eq!(checked["main"]["effects"][0]["constant"], true);
     let parameter = &checked["declarations"][0]["params"][0];
     assert_eq!(parameter.get("default"), Some(&Value::Null));
+    assert!(checked["declarations"][0].get("semanticRet").is_none());
+}
+
+#[test]
+fn checked_additional_absence_retains_the_original_surface_return_metadata() {
+    let fixtures = meta_language::read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/translation-stages.lino"
+    ))
+    .expect("the original stage fixtures decode");
+    for (name, absence) in [
+        (
+            "frontend-javascript/frontend-javascript-negative-nullValue",
+            "null",
+        ),
+        (
+            "frontend-javascript/frontend-javascript-error-undefined-value",
+            "undefined",
+        ),
+    ] {
+        let fixture = fixtures["programs"]
+            .as_array()
+            .expect("the original stage programs remain an array")
+            .iter()
+            .find(|entry| entry["name"] == name)
+            .expect("the exact original source remains registered");
+        let surface = parse_javascript(fixture["source"].as_str().expect("the original source"))
+            .expect("the original optional-return source parses");
+        let SItem::Fn(original) = &surface.items[0] else {
+            panic!("the original source owns the function")
+        };
+        let expected = Type::Option {
+            element: Box::new(Type::Int),
+            absence: absence.to_owned(),
+        };
+        assert_eq!(original.semantic_ret, Some(expected.clone()));
+        let program = check_program(&surface).expect("the original source checks");
+        let Some(Decl::Fn(function)) = program.declaration("f") else {
+            panic!("the checked function keeps its declaration identity")
+        };
+        assert_eq!(function.semantic_ret, original.semantic_ret);
+        assert_eq!(function.ret, expected);
+        assert_eq!(function.annotated_ret, Some(Type::Int));
+        let mut serialized = serde_json::to_value(function).expect("the function serializes");
+        assert_eq!(
+            serialized["semanticRet"],
+            serde_json::to_value(original.semantic_ret.as_ref().unwrap()).unwrap()
+        );
+        assert_eq!(
+            digest(&program),
+            fixture["check"]["sha256"]
+                .as_str()
+                .expect("the retained JavaScript check hash"),
+            "{name}: all original stage fields retain their recorded hash"
+        );
+        serialized["semanticRet"] = Value::Null;
+        assert!(
+            serde_json::from_value::<FnDecl>(serialized).is_err(),
+            "a present null cannot erase {name}'s original return metadata"
+        );
+    }
 }
 
 #[test]

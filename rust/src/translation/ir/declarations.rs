@@ -75,6 +75,13 @@ pub struct FnDecl {
     pub name: String,
     pub params: Vec<Param>,
     pub ret: Type,
+    /// The original inferred Surface return type, before checked resolution.
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::translation::present_type::read_present_type"
+    )]
+    pub semantic_ret: Option<Type>,
     /// The retained source annotation before additional absence is inferred.
     #[serde(
         default,

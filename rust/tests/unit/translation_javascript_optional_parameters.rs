@@ -71,6 +71,11 @@ fn documented_optional_string_retains_its_type_default_and_presence_metadata() {
     assert_eq!(function.params[0].default_value, parameter.default_value);
     assert_eq!(function.ret, function.params[0].ty);
     assert_eq!(function.annotated_ret, Some(Type::String));
+    assert_eq!(function.semantic_ret.as_ref(), Some(&function.ret));
+    assert_eq!(
+        serde_json::to_value(function).unwrap()["semanticRet"],
+        serde_json::to_value(&surface).unwrap()["items"][0]["semanticRet"]
+    );
     assert_eq!(serde_json::to_value(parameter).unwrap()["optional"], true);
     assert_eq!(
         serde_json::to_value(&function.params[0]).unwrap()["optional"],
