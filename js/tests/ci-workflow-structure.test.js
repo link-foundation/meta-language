@@ -1223,6 +1223,9 @@ const NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS = [
   ['Check generated grammar rule composition rules against JavaScript',
     'node js/scripts/generate-grammar-rule-composition-rules.mjs --native --check',
     '94f4fce8863c6b1b31c4737c2d3d483f1b8e1eb7ba23fc9d7b218bf7702b1085', 'generated'],
+  ['Check generated guarded private array write rules against JavaScript',
+    'node js/scripts/generate-guarded-private-array-write-rules.mjs --native --check',
+    '6fde5783c39a4f58492a145e0c66b21fb939589da17c72f61f0cc849756758a6', 'generated'],
 ];
 
 // Parameter-default generation adds one exact gate without changing an earlier freeze.
