@@ -2,7 +2,7 @@
 // This verifier never replaces a producer snapshot or manufactures Rust text.
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readStructuredDataLino } from '../../js/src/structured-data-links.js';
+import { readStructuredDataLino, structuredDataToLino } from '../../js/src/structured-data-links.js';
 
 const applicabilityDigest = value => createHash('sha256').update(value).digest('hex');
 const freezeApplicability = value => {
@@ -65,12 +65,46 @@ export const ORIGINAL_LINK_RAW_COLLECTION_EXTRACTION_APPLICABILITY = freezeAppli
   ],
 });
 
+// Only the two complete checked-archive digests changed with the reviewed
+// constant-declaration source spans. This does not repin any causal producer.
+export const ORIGINAL_LINK_RAW_COLLECTION_ARCHIVE_RECEIPT_REFRESH = freezeApplicability({
+  version: 1,
+  revision: 'collection construction checked archive caller spans 1',
+  introducingCommit: '41109ef24a0441b87107f572123ab8f9b6626e62',
+  originalRevision: '858665058648a3f1f9ce05ff3b0668b9ccfd66eb',
+  previous: { file: 'parity/self-translation/collection-construction-rules-native.lino',
+    bytes: 231610, sha256: '718edf73bc046371c6e5524fc1f9956e2ef89bf6d9d5c933c2fcba54a2eaee96' },
+  current: { file: 'parity/self-translation/collection-construction-rules-native.lino',
+    bytes: 231610, sha256: 'ab9c395b5fd388564ff23801bf4c07b114fb206bd5895b7d619a07653a231dc9' },
+  changes: [
+    { field: 'textSha256', before: '931e56cc8ffe201d74db2a9154ee8d0beb7ba8e1560140bbdba63ab4a5812887',
+      after: '0a191c72fee0db6db444335e729366e4c9f6fd9d9764aecb27b8135b8687b114' },
+    { field: 'binarySha256', before: 'dde6292a58a87f4eb43c1109919582e4f99544d0a633377e7813037c80ebc758',
+      after: 'f460be77aa8316195e37a9612f9fb64605cac5b0644bb2040e64916e40ece8cd' },
+  ],
+});
+
 function verifyApplicabilitySource(sources, descriptor) {
   const bytes = sources[descriptor.file];
   assert.ok(Buffer.isBuffer(bytes), 'actual complete applicability input bytes are supplied: ' + descriptor.file);
   assert.equal(bytes.length, descriptor.bytes, 'applicability input byte count changed: ' + descriptor.file);
   assert.equal(applicabilityDigest(bytes), descriptor.sha256, 'applicability input changed: ' + descriptor.file);
   return { ...descriptor };
+}
+
+function verifyCollectionArchiveReceiptRefresh(sources, descriptor) {
+  const refresh = ORIGINAL_LINK_RAW_COLLECTION_ARCHIVE_RECEIPT_REFRESH;
+  assert.deepEqual(descriptor, refresh.previous, 'only the exact recorded artifact has a receipt successor');
+  const source = verifyApplicabilitySource(sources, refresh.current);
+  const artifact = readStructuredDataLino(sources[source.file].toString('utf8'));
+  const inverse = structuredClone(artifact);
+  for (const change of refresh.changes) {
+    assert.equal(inverse.archive[change.field], change.after, 'the exact new archive digest is recorded');
+    inverse.archive[change.field] = change.before;
+  }
+  const previous = Buffer.from(structuredDataToLino(inverse));
+  verifyApplicabilitySource({ [descriptor.file]: previous }, descriptor);
+  return { source, receiptRefresh: refresh };
 }
 
 function restoreRawEmissionInferenceSource(source) {
@@ -146,7 +180,17 @@ export function verifyOriginalLinkRawEmissionProducerApplicability(producerSourc
   assert.deepEqual(suppliedFiles, [...originalFiles, ...revision.dependencies.map(row => row.file)],
     'only the reviewed complete extraction input inventory is admitted');
   const currentDescriptors = [originalProducerDescriptors[0], revision.inference, ...revision.dependencies];
-  const sources = currentDescriptors.map(row => verifyApplicabilitySource(producerSources, row));
+  let receiptRefresh;
+  const sources = currentDescriptors.map(row => {
+    const bytes = producerSources[row.file];
+    if (row.file === ORIGINAL_LINK_RAW_COLLECTION_ARCHIVE_RECEIPT_REFRESH.current.file
+      && Buffer.isBuffer(bytes) && applicabilityDigest(bytes) !== row.sha256) {
+      const successor = verifyCollectionArchiveReceiptRefresh(producerSources, row);
+      receiptRefresh = successor.receiptRefresh;
+      return successor.source;
+    }
+    return verifyApplicabilitySource(producerSources, row);
+  });
   const restored = restoreRawEmissionInferenceSource(producerSources[revision.inference.file].toString('utf8'));
   const original = originalProducerDescriptors[1];
   assert.equal(Buffer.byteLength(restored), original.bytes, 'the whole original inference source length is restored');
@@ -154,5 +198,5 @@ export function verifyOriginalLinkRawEmissionProducerApplicability(producerSourc
   const sourceClosure = verifyCollectionApplicabilityClosure(producerSources);
   return freezeApplicability({ version: 1, revision: revision.revision, introducingCommit: revision.introducingCommit,
     causalProducers: originalProducerDescriptors.map(row => ({ ...row })), sources,
-    inverse: { ...original }, sourceClosure });
+    inverse: { ...original }, sourceClosure, ...(receiptRefresh ? { receiptRefresh } : {}) });
 }

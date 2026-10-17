@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 import { readProjectData } from '../../js/scripts/project-data.mjs';
+import { readStructuredDataLino, structuredDataToLino } from '../../js/src/structured-data-links.js';
 import { LinkNetwork } from '../../js/src/network.js';
 import { encodeLinkNetworkBinary, decodeLinkNetworkBinary } from '../../js/src/link-network-binary.js';
 import { encodeTypedProgramLinks, decodeTypedProgramLinks } from '../../js/src/typed-program-links.js';
@@ -22,6 +23,7 @@ import {
 } from './raw-emission-profiles.mjs';
 import {
   ORIGINAL_LINK_RAW_COLLECTION_EXTRACTION_APPLICABILITY,
+  ORIGINAL_LINK_RAW_COLLECTION_ARCHIVE_RECEIPT_REFRESH,
   verifyOriginalLinkRawEmissionProducerApplicability,
 } from './raw-emission-producer-applicability.mjs';
 
@@ -332,4 +334,90 @@ test('authored extraction applicability refuses altered bodies incomplete depend
   const input = rawEmissionFixture(), original = originalRawProducerSnapshots(input);
   original[ORIGINAL_LINK_RAW_EMISSION_PRODUCERS[1].file][0] ^= 1;
   assert.throws(() => verifyOriginalLinkRawEmissionProducerApplicability(original), assert.AssertionError);
+});
+
+function originalRawArchiveReceiptInput(input) {
+  const refresh = ORIGINAL_LINK_RAW_COLLECTION_ARCHIVE_RECEIPT_REFRESH;
+  const inverse = readStructuredDataLino(input.producerSources[refresh.current.file].toString('utf8'));
+  for (const change of refresh.changes) {
+    assert.equal(inverse.archive[change.field], change.after);
+    inverse.archive[change.field] = change.before;
+  }
+  const bytes = Buffer.from(structuredDataToLino(inverse));
+  assert.equal(bytes.length, refresh.previous.bytes);
+  assert.equal(rawEmissionDigest(bytes), refresh.previous.sha256,
+    'the complete original canonical artifact is reconstructed, not a selected metadata projection');
+  return { ...input, producerSources: Object.fromEntries(Object.entries(input.producerSources)
+    .map(([file, source]) => [file, file === refresh.previous.file ? bytes : Buffer.from(source)])) };
+}
+
+test('the archive receipt successor retains every original producer pin and complete raw emission artifact', () => {
+  const current = rawEmissionFixture(), refresh = ORIGINAL_LINK_RAW_COLLECTION_ARCHIVE_RECEIPT_REFRESH;
+  const historical = originalRawArchiveReceiptInput(current);
+  const before = verifyOriginalLinkRawEmissionProfile(historical);
+  const after = verifyOriginalLinkRawEmissionProfile(current);
+  assert.equal(before.producerApplicability.sources.length, 14);
+  assert.equal(after.producerApplicability.sources.length, 14);
+  assert.equal(Object.hasOwn(before.producerApplicability, 'receiptRefresh'), false);
+  assert.deepEqual(after.producerApplicability.receiptRefresh, refresh);
+  assert.ok(Object.isFrozen(after.producerApplicability.receiptRefresh));
+  const oldDescriptor = ORIGINAL_LINK_RAW_COLLECTION_EXTRACTION_APPLICABILITY.dependencies
+    .find(row => row.file === refresh.previous.file);
+  assert.deepEqual(oldDescriptor, refresh.previous, 'the exact original source pin is unchanged');
+  assert.deepEqual(before.producerApplicability.sources, [ORIGINAL_LINK_RAW_EMISSION_PRODUCERS[0],
+    ORIGINAL_LINK_RAW_COLLECTION_EXTRACTION_APPLICABILITY.inference,
+    ...ORIGINAL_LINK_RAW_COLLECTION_EXTRACTION_APPLICABILITY.dependencies]);
+  assert.deepEqual(after.producerApplicability.sources, before.producerApplicability.sources.map(row =>
+    row.file === refresh.current.file ? refresh.current : row), 'actual current bytes have their actual descriptor');
+  assert.deepEqual(before.producerApplicability.sourceClosure, after.producerApplicability.sourceClosure);
+  assert.deepEqual(before.producerApplicability.causalProducers, after.producerApplicability.causalProducers);
+  assert.deepEqual(before.producerApplicability.inverse, after.producerApplicability.inverse);
+  assert.deepEqual(current.currentArtifact, historical.currentArtifact);
+  assert.deepEqual(current.historicalArtifact, historical.historicalArtifact);
+  for (const profile of ['historical', 'current']) {
+    const original = readOriginalLinkRawEmissionProfile(profile, historical);
+    const successor = readOriginalLinkRawEmissionProfile(profile, current);
+    for (const field of ['source', 'sourceBytes', 'sourceSha256', 'declarationNames', 'definitionCount']) {
+      assert.deepEqual(successor[field], original[field], profile + ': complete emission and ABI remain exact');
+    }
+  }
+  const originalCausal = { ...current, producerSources: originalRawProducerSnapshots(current) };
+  assert.equal(verifyOriginalLinkRawEmissionProfile(originalCausal).producerApplicability.sources.length, 2,
+    'the entire original two-producer branch remains admitted');
+});
+
+test('archive receipt successors refuse unknown digests changed owners third fields and caller repins', () => {
+  const refresh = ORIGINAL_LINK_RAW_COLLECTION_ARCHIVE_RECEIPT_REFRESH;
+  for (const mutate of [
+    artifact => { artifact.archive.textSha256 = artifact.archive.textSha256 === refresh.changes[0].before ? refresh.changes[0].after : refresh.changes[0].before; },
+    artifact => { artifact.archive.binarySha256 = '0'.repeat(64); },
+    artifact => { artifact.archive.textBytes += 1; },
+    artifact => { artifact.emitted.text += '\n'; },
+    artifact => { artifact.inventory[0].name += '_changed'; },
+    artifact => { artifact.replays[0].emittedTextSha256 = '0'.repeat(64); },
+  ]) {
+    for (const original of [false, true]) {
+      const input = original ? originalRawArchiveReceiptInput(rawEmissionFixture()) : rawEmissionFixture();
+      const artifact = readStructuredDataLino(input.producerSources[refresh.current.file].toString('utf8'));
+      mutate(artifact);
+      const bytes = Buffer.from(structuredDataToLino(artifact));
+      assert.notEqual(rawEmissionDigest(bytes), rawEmissionDigest(input.producerSources[refresh.current.file]));
+      input.producerSources[refresh.current.file] = bytes;
+      input.currentArtifact.profile.producerSources.push({ file: refresh.current.file,
+        bytes: bytes.length, sha256: rawEmissionDigest(bytes) });
+      assert.throws(() => verifyOriginalLinkRawEmissionProducerApplicability(input.producerSources), assert.AssertionError);
+      assert.throws(() => verifyOriginalLinkRawEmissionProfile(input), assert.AssertionError);
+    }
+  }
+  for (const mutate of [
+    input => { delete input.producerSources[refresh.current.file]; },
+    input => { input.producerSources = Object.fromEntries(Object.entries(input.producerSources).reverse()); },
+    input => { input.currentArtifact.receiptRefresh = structuredClone(refresh); },
+    input => { input.producerSources[refresh.current.file] = Buffer.concat([
+      input.producerSources[refresh.current.file], Buffer.from('\n')]); },
+  ]) {
+    const input = rawEmissionFixture();
+    mutate(input);
+    assert.throws(() => verifyOriginalLinkRawEmissionProfile(input), assert.AssertionError);
+  }
 });
