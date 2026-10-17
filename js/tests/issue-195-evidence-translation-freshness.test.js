@@ -38,9 +38,13 @@ test('bulk translation freshness includes every new native family without repeat
   assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(19, 20), [
     { script: 'js/scripts/generate-string-code-unit-template.mjs', arguments: ['--check'] },
   ], 'the complete code-unit template appends after every retained nineteen-command scope');
-  assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(20), [
+  assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(20, 21), [
     { script: 'js/scripts/extend-typed-program-schema-third-stage.mjs', arguments: ['--check'] },
   ], 'the strict equality schema successor appends after every retained twenty-command scope');
+  assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(21), [
+    { script: 'js/scripts/generate-grammar-selection-mapping-rules.mjs', arguments: ['--native', '--check'] },
+    { script: 'js/scripts/generate-grammar-selection-mapping-fixtures.mjs', arguments: ['--check'] },
+  ], 'mapped selection appends source and fixture checks after every retained predecessor scope');
   for (const family of defaultNative) assert.deepEqual(checks.get(`generate-${family}-rules.mjs`), ['--check']);
   for (const family of explicitNative) assert.deepEqual(checks.get(`generate-${family}-rules.mjs`), ['--native', '--check']);
   for (const name of ['generate-grammar-selection-fixtures.mjs', 'generate-private-output-test-model.mjs', 'extend-typed-program-schema-second-stage.mjs']) {
