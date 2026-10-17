@@ -4,6 +4,10 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {structuredDataToLino} from '../../js/src/structured-data-links.js';
+import {
+  ORIGINAL_LINK_RAW_COLLECTION_EXTRACTION_APPLICABILITY,
+  verifyOriginalLinkRawEmissionProducerApplicability,
+} from './raw-emission-producer-applicability.mjs';
 
 const sha256 = value => createHash('sha256').update(value).digest('hex');
 const freeze = value => { if(value && typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value; };
@@ -60,15 +64,12 @@ export const ORIGINAL_LINK_RAW_EMISSION_CHANGES = freeze([
 ] );
 
 export function readOriginalLinkRawEmissionProducerSources(read=readFileSync) {
-  return Object.fromEntries(ORIGINAL_LINK_RAW_EMISSION_PRODUCERS.map(row=>[row.file,read(new URL('../../'+row.file,import.meta.url))]));
+  const inputs=[...ORIGINAL_LINK_RAW_EMISSION_PRODUCERS,...ORIGINAL_LINK_RAW_COLLECTION_EXTRACTION_APPLICABILITY.dependencies];
+  return Object.fromEntries(inputs.map(row=>[row.file,read(new URL('../../'+row.file,import.meta.url))]));
 }
-function producerDescriptors(producerSources) {
-  assert.deepEqual(Object.keys(producerSources),ORIGINAL_LINK_RAW_EMISSION_PRODUCERS.map(row=>row.file),'exact inference producer inventory');
-  return ORIGINAL_LINK_RAW_EMISSION_PRODUCERS.map(row=>{
-    const bytes=producerSources[row.file];assert.ok(Buffer.isBuffer(bytes),'actual producer bytes are supplied');
-    assert.equal(bytes.length,row.bytes,'inference producer byte count changed');
-    assert.equal(sha256(bytes),row.sha256,'the selected inference producer changed');return {...row};
-  });
+function producerDescriptors(producerSources,applicability=verifyOriginalLinkRawEmissionProducerApplicability(producerSources)) {
+  assert.deepEqual(applicability.causalProducers,ORIGINAL_LINK_RAW_EMISSION_PRODUCERS,'the original causal descriptors stay exact');
+  return ORIGINAL_LINK_RAW_EMISSION_PRODUCERS.map(row=>({...row}));
 }
 function replaceExactlyOnce(source,from,to) {
   assert.equal(source.split(from).length,2,'each exact emitted line has one original owner');
@@ -88,21 +89,22 @@ function verifyHistorical(historicalArtifact,source) {
   assert.equal(sha256(historicalArtifact.completeRust),baseline.historicalSha256);
   assert.equal(historicalArtifact.completeRust.split(baseline.rootHeader).length,2,'the historical public root ABI stays exact');
 }
-function profileDescriptor(producerSources) {
+function profileDescriptor(producerSources,applicability) {
   const baseline=ORIGINAL_LINK_RAW_EMISSION_BASELINE;
   return {version:1,name:'current',interpretation:baseline.interpretation,introducingCommit:baseline.introducingCommit,
     historicalArtifactSha256:baseline.artifactSha256,historicalSourceBytes:baseline.historicalBytes,historicalSourceSha256:baseline.historicalSha256,
     currentSourceBytes:baseline.currentBytes,currentSourceSha256:baseline.currentSha256,
-    concreteFacetPremise:baseline.concreteFacetPremise,producerSources:producerDescriptors(producerSources),
+    concreteFacetPremise:baseline.concreteFacetPremise,producerSources:producerDescriptors(producerSources,applicability),
     changedOwners:[...new Set(ORIGINAL_LINK_RAW_EMISSION_CHANGES.map(row=>row.owner))],changedLines:ORIGINAL_LINK_RAW_EMISSION_CHANGES.length,
     unchangedDefinitions:baseline.unchangedDefinitionCount,definitionCount:baseline.definitionCount,
     scope:'Complete automatic current emission with a finite historical inverse; no native execution or new graph capability evidence.'};
 }
 export function verifyOriginalLinkRawEmissionProfile({historicalArtifact,currentArtifact,source,producerSources}) {
   verifyHistorical(historicalArtifact,source);
+  const producerApplicability=verifyOriginalLinkRawEmissionProducerApplicability(producerSources);
   const baseline=ORIGINAL_LINK_RAW_EMISSION_BASELINE;
   assert.deepEqual(Object.keys(currentArtifact),[...Object.keys(historicalArtifact),'profile'],'only the explicit emission profile is added');
-  assert.deepEqual(currentArtifact.profile,profileDescriptor(producerSources),'the current profile and causal source applicability are exact');
+  assert.deepEqual(currentArtifact.profile,profileDescriptor(producerSources,producerApplicability),'the current profile and causal source applicability are exact');
   for(const field of ['version','model','sourceSha256','declarationNames'])assert.deepEqual(currentArtifact[field],historicalArtifact[field],'original artifact metadata/order is conserved: '+field);
   assert.equal(currentArtifact.declarations.length,baseline.definitionCount);
   let unchanged=0;
@@ -126,7 +128,7 @@ export function verifyOriginalLinkRawEmissionProfile({historicalArtifact,current
   return freeze({profile:'current',interpretation:baseline.interpretation,introducingCommit:baseline.introducingCommit,
     historicalArtifactSha256:baseline.artifactSha256,historicalSourceSha256:baseline.historicalSha256,currentSourceSha256:baseline.currentSha256,
     changedOwners:currentArtifact.profile.changedOwners,changedLines:5,unchangedDefinitions:unchanged,definitionCount:baseline.definitionCount,
-    producerSources:currentArtifact.profile.producerSources});
+    producerSources:currentArtifact.profile.producerSources,producerApplicability});
 }
 export function createOriginalLinkRawCurrentArtifact({historicalArtifact,source,emission,declarationNames,producerSources}) {
   verifyHistorical(historicalArtifact,source);

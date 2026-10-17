@@ -16,10 +16,14 @@ import { emitJavaScript } from '../../js/src/translation/emit-javascript.js';
 import { emitRust } from '../../js/src/translation/emit-rust.js';
 import {
   ORIGINAL_LINK_RAW_CURRENT_ARTIFACT, ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT,
-  ORIGINAL_LINK_RAW_EMISSION_BASELINE, ORIGINAL_LINK_RAW_EMISSION_CHANGES,
+  ORIGINAL_LINK_RAW_EMISSION_BASELINE, ORIGINAL_LINK_RAW_EMISSION_CHANGES, ORIGINAL_LINK_RAW_EMISSION_PRODUCERS,
   readOriginalLinkRawEmissionProducerSources, readOriginalLinkRawEmissionProfile,
   verifyOriginalLinkRawEmissionProfile,
 } from './raw-emission-profiles.mjs';
+import {
+  ORIGINAL_LINK_RAW_COLLECTION_EXTRACTION_APPLICABILITY,
+  verifyOriginalLinkRawEmissionProducerApplicability,
+} from './raw-emission-producer-applicability.mjs';
 
 const rawEmissionDigest = value => createHash('sha256').update(value).digest('hex');
 let originalRawEmissionInputs;
@@ -212,4 +216,120 @@ test('a coalesced Number captured by a lifted loop preserves absent reads NaN an
     assert.equal(emitRust(restored).text, rust);
     observe(emitJavaScript(restored).text);
   }
+});
+
+function originalRawProducerSnapshots(input) {
+  const revision = ORIGINAL_LINK_RAW_COLLECTION_EXTRACTION_APPLICABILITY;
+  const current = input.producerSources[revision.inference.file].toString('utf8');
+  assert.equal(current.split(revision.addedImport).length, 2);
+  assert.equal(current.split(revision.currentBranches).length, 2);
+  const original = current.replace(revision.addedImport, '').replace(revision.currentBranches, () => revision.originalBranches);
+  return Object.fromEntries(ORIGINAL_LINK_RAW_EMISSION_PRODUCERS.map(row => [row.file,
+    row.file === revision.inference.file ? Buffer.from(original) : Buffer.from(input.producerSources[row.file])]));
+}
+
+test('the collection extraction restores the complete original producer without changing either raw emission artifact', () => {
+  const input = rawEmissionFixture(), revision = ORIGINAL_LINK_RAW_COLLECTION_EXTRACTION_APPLICABILITY;
+  const before = structuredClone(input.currentArtifact.profile);
+  const proof = verifyOriginalLinkRawEmissionProfile(input);
+  assert.equal(proof.producerApplicability.revision, 'collection construction extraction 1');
+  assert.equal(proof.producerApplicability.introducingCommit, 'b51d48140220bf2ac071334d79d28aa77273c00e');
+  assert.deepEqual(proof.producerApplicability.causalProducers, ORIGINAL_LINK_RAW_EMISSION_PRODUCERS);
+  assert.deepEqual(proof.producerApplicability.sources.map(row => row.file), Object.keys(input.producerSources));
+  assert.equal(proof.producerApplicability.sources.length, 14);
+  assert.deepEqual(proof.producerApplicability.inverse, ORIGINAL_LINK_RAW_EMISSION_PRODUCERS[1]);
+  const historicalSources = originalRawProducerSnapshots(input);
+  for (const descriptor of ORIGINAL_LINK_RAW_EMISSION_PRODUCERS) {
+    assert.equal(historicalSources[descriptor.file].length, descriptor.bytes);
+    assert.equal(rawEmissionDigest(historicalSources[descriptor.file]), descriptor.sha256);
+  }
+  const historicalInputs = { ...input, producerSources: historicalSources };
+  const historicalProof = verifyOriginalLinkRawEmissionProfile(historicalInputs);
+  assert.equal(historicalProof.producerApplicability.revision, 'original causal inference producers');
+  assert.equal(historicalProof.producerApplicability.sources.length, 2);
+  assert.equal(historicalProof.producerApplicability.inverse, null);
+  assert.equal(historicalProof.producerApplicability.sourceClosure, null);
+  for (const profile of ['historical', 'current']) {
+    const actual = readOriginalLinkRawEmissionProfile(profile, input);
+    const original = readOriginalLinkRawEmissionProfile(profile, historicalInputs);
+    assert.equal(actual.source, original.source);
+    assert.equal(actual.sourceBytes, original.sourceBytes);
+    assert.equal(actual.sourceSha256, original.sourceSha256);
+    assert.deepEqual(actual.declarationNames, original.declarationNames);
+    assert.deepEqual(actual.proof.producerSources, original.proof.producerSources);
+  }
+  assert.deepEqual(input.currentArtifact.profile, before);
+  assert.deepEqual(input.currentArtifact.profile, readProjectData(ORIGINAL_LINK_RAW_CURRENT_ARTIFACT).profile);
+  assert.equal(rawEmissionDigest(readFileSync(ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT)), 'd4b2a0c42bba5ae8f29137ead5bc264b633fcb6fad953b13d2adb5fed2d9d6cd');
+  assert.equal(rawEmissionDigest(readFileSync(ORIGINAL_LINK_RAW_CURRENT_ARTIFACT)), '7d77b7c1261c4125a9bce247c43bab75a23262e2a8c5d849d4e9f10951c51f6b');
+  assert.ok(Object.isFrozen(proof.producerApplicability));
+  assert.ok(Object.isFrozen(revision.dependencies));
+});
+
+test('the complete collection applicability closure retains sixteen functions eighteen checked owners and both source free replays', () => {
+  const input = rawEmissionFixture(), revision = ORIGINAL_LINK_RAW_COLLECTION_EXTRACTION_APPLICABILITY;
+  const proof = verifyOriginalLinkRawEmissionProducerApplicability(input.producerSources);
+  const text = file => input.producerSources[file].toString('utf8');
+  const [factPath, kernelPath] = revision.sourceClosure.inputs;
+  const source = text(factPath) + '\n' + text(kernelPath).replace(revision.sourceClosure.removedImport, '');
+  assert.equal(Buffer.byteLength(source), 10257);
+  assert.equal(rawEmissionDigest(source), '53a5bb4cdeec63423be142da305f494d0bb4a669bbbf5025b7b7ab6f34fc86f3');
+  const names = [...source.matchAll(/^(?:export )?function ([A-Za-z_$][\w$]*)\(/gmu)].map(match => match[1]);
+  assert.deepEqual(names, ['refuseRequiredNumberFact', 'refuseRequiredTextFact', 'refuseRequiredBooleanFact',
+    'readRequiredNumberFact', 'readRequiredTextFact', 'readRequiredBooleanFact',
+    'readCollectionConstructionField', 'readCollectionConstructionElement', 'readCollectionConstructionKind',
+    'planCollectionConstructionInference', 'planCollectionConstructionChecked', 'readCollectionConstructionKeyAdmission',
+    'readCollectionConstructionDiagnostic', 'readCollectionConstructionBinding', 'renderCollectionConstructionType', 'renderCollectionConstruction']);
+  assert.equal(proof.sourceClosure.originalFunctions, 16);
+  assert.equal(proof.sourceClosure.checkedOwners, 18);
+  const policy = readProjectData(new URL('../../js/src/translation/data/collection-construction-rules.lino', import.meta.url));
+  const native = readProjectData(new URL('../../parity/self-translation/collection-construction-rules-native.lino', import.meta.url));
+  assert.equal(policy.sourceClosure.source, source);
+  assert.deepEqual(native.sourceClosure, policy.sourceClosure);
+  assert.deepEqual(native.inventory.filter(row => row.kind === 'fn' && !row.generated).map(row => row.name), names);
+  assert.equal(native.inventory.length, 18);
+  assert.equal(new Set(native.checkedNamedSourceInventory.map(row => row.fullName)).size, 18);
+  assert.deepEqual(native.replays.map(row => row.format), ['text', 'binary']);
+  for (const replay of native.replays) {
+    assert.deepEqual(replay.checkedNamedSourceInventory, native.checkedNamedSourceInventory);
+    assert.equal(replay.emittedTextBytes, Buffer.byteLength(native.emitted.text));
+    assert.equal(replay.emittedTextSha256, rawEmissionDigest(native.emitted.text));
+  }
+  assert.deepEqual(proof.sourceClosure.replayFormats, ['text', 'binary']);
+  assert.equal(proof.sourceClosure.emittedTextSha256, rawEmissionDigest(native.emitted.text));
+  assert.equal(text('js/src/translation/data/collection-construction-rules.lino'), text('rust/src/data/collection-construction-rules.lino'));
+});
+
+test('authored extraction applicability refuses altered bodies incomplete dependencies and coherent caller supplied pins', () => {
+  const revision = ORIGINAL_LINK_RAW_COLLECTION_EXTRACTION_APPLICABILITY;
+  const mutations = [
+    ['extraction import', input => { input.producerSources[revision.inference.file] = Buffer.from(input.producerSources[revision.inference.file].toString('utf8')
+      .replace(revision.addedImport, revision.addedImport.replace('inferCollectionConstruction }', 'inferCollectionConstruction as renamed }'))); }],
+    ['constructor dispatch', input => { input.producerSources[revision.inference.file] = Buffer.from(input.producerSources[revision.inference.file].toString('utf8')
+      .replace('inferCollectionConstruction(this, node, env, expected)', 'inferCollectionConstruction(this, node, env, undefined)')); }],
+    ['unrelated inference source', input => { input.producerSources[revision.inference.file] = Buffer.concat([input.producerSources[revision.inference.file], Buffer.from('\n')]); }],
+    ['missing dependency', input => { delete input.producerSources[revision.dependencies[0].file]; }],
+    ['extra dependency', input => { input.producerSources['unregistered.js'] = Buffer.from(''); }],
+    ['dependency order', input => { const rows = Object.entries(input.producerSources); [rows[2], rows[3]] = [rows[3], rows[2]]; input.producerSources = Object.fromEntries(rows); }],
+    ['current source without its complete closure', input => { input.producerSources = Object.fromEntries(ORIGINAL_LINK_RAW_EMISSION_PRODUCERS.map(row => [row.file, input.producerSources[row.file]])); }],
+    ['old source under the new closure', input => { input.producerSources[revision.inference.file] = originalRawProducerSnapshots(input)[revision.inference.file]; }],
+    ['causal profile repin', input => { const descriptor = input.currentArtifact.profile.producerSources[1];
+      descriptor.bytes = input.producerSources[descriptor.file].length; descriptor.sha256 = rawEmissionDigest(input.producerSources[descriptor.file]); }],
+    ['caller applicability authority', input => { input.currentArtifact.producerApplicability = structuredClone(revision); }],
+  ];
+  for (const descriptor of revision.dependencies) {
+    mutations.push(['changed complete dependency ' + descriptor.file, input => {
+      input.producerSources[descriptor.file] = Buffer.concat([input.producerSources[descriptor.file], Buffer.from('\n')]);
+      input.currentArtifact.profile.producerSources.push({ file: descriptor.file, bytes: input.producerSources[descriptor.file].length,
+        sha256: rawEmissionDigest(input.producerSources[descriptor.file]) });
+    }]);
+  }
+  for (const [label, mutate] of mutations) {
+    const input = rawEmissionFixture();
+    mutate(input);
+    assert.throws(() => verifyOriginalLinkRawEmissionProfile(input), assert.AssertionError, label);
+  }
+  const input = rawEmissionFixture(), original = originalRawProducerSnapshots(input);
+  original[ORIGINAL_LINK_RAW_EMISSION_PRODUCERS[1].file][0] ^= 1;
+  assert.throws(() => verifyOriginalLinkRawEmissionProducerApplicability(original), assert.AssertionError);
 });
