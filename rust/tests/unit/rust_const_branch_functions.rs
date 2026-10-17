@@ -272,7 +272,23 @@ fn source_free_condition_and_branch_edits_change_results_without_replaying_sourc
 
 fn relation(network: &LinkNetwork, parent: LinkId, label: &str) -> [LinkId; 3] {
     let schema = meta_language::typed_program_links_schema();
-    let label = schema["fields"][label].as_str().unwrap_or(label);
+    // The public schema has explicit aliases and the codec's English fallback.
+    // In particular, diagnostic facets are stored as "source diagnostic attributes".
+    let label = schema["fields"][label].as_str().map_or_else(
+        || {
+            let mut result = String::new();
+            for character in label.chars() {
+                if character.is_ascii_uppercase() {
+                    result.push(' ');
+                    result.push(character.to_ascii_lowercase());
+                } else {
+                    result.push(character);
+                }
+            }
+            result
+        },
+        str::to_owned,
+    );
     network
         .links()
         .find_map(|link| match link.references() {
@@ -281,7 +297,7 @@ fn relation(network: &LinkNetwork, parent: LinkId, label: &str) -> [LinkId; 3] {
                     && network
                         .link(*field)
                         .and_then(|field| field.metadata().term())
-                        == Some(label) =>
+                        == Some(label.as_str()) =>
             {
                 Some([*owner, *field, *child])
             }
@@ -359,13 +375,45 @@ fn raw_unknown_models_kinds_domains_and_unrepresented_branches_refuse_both_emitt
             }
             _ => {
                 let condition = relation(&archive.network, expression, "cond")[2];
-                replace(
-                    &mut archive.network,
+                let schema = meta_language::typed_program_links_schema();
+                let binding = relation(
+                    &archive.network,
                     condition,
-                    "name",
-                    "string value",
-                    "foreign",
+                    schema["references"]["binding"].as_str().unwrap(),
                 );
+                let parameters = relation(&archive.network, function, "params")[2];
+                assert_eq!(
+                    binding[2],
+                    archive.network.link(parameters).unwrap().references()[0],
+                    "the actual condition owns its first parameter through the binding edge"
+                );
+                let name = schema["fields"]["name"].as_str().unwrap_or("name");
+                assert!(!archive.network.links().any(|link| {
+                    matches!(link.references(), [owner, field, _]
+                        if *owner == condition
+                            && archive.network.link(*field).and_then(|field| field.metadata().term())
+                                == Some(name))
+                }), "a linked variable has a binding edge instead of a raw name");
+                assert_eq!(
+                    archive
+                        .network
+                        .apply_substitution(&SubstitutionRule::delete(binding))
+                        .deleted()
+                        .len(),
+                    1,
+                    "the foreign-name forgery removes exactly the original binding relation"
+                );
+                let foreign = archive.network.insert_link(
+                    [],
+                    LinkMetadata::new()
+                        .with_link_type(LinkType::Semantic)
+                        .with_language(schema["language"].as_str().unwrap())
+                        .with_named(true)
+                        .with_term(schema["scalars"]["string"].as_str().unwrap())
+                        .with_definition("foreign"),
+                );
+                archive.network.insert_field(condition, name, foreign);
+                assert_eq!(relation(&archive.network, condition, "name")[2], foreign);
             }
         }
         for network in archives(&archive) {
@@ -567,6 +615,11 @@ fn diagnostic_raw_archive_null_misplacement_and_const_boundary_forgeries_refuse(
             let pair = packet.network.link(directory).unwrap().references()[0];
             let function = packet.network.link(pair).unwrap().references()[1];
             let field = relation(&packet.network, function, "sourceDiagnosticAttributes");
+            assert_eq!(
+                packet.network.link(field[1]).unwrap().metadata().term(),
+                Some("source diagnostic attributes"),
+                "the forgery targets the codec's actual owned diagnostic facet label"
+            );
             let facet = field[2];
             let expected = if edit >= 5 {
                 let raw = if edit == 5 {

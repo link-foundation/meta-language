@@ -31,6 +31,10 @@ pub(in crate::translation::javascript) fn children(expr: &SExpr) -> Vec<&SExpr> 
             out.push(value);
             out.push(body);
         }
+        SNode::Print { expr, body, .. } => {
+            out.push(expr);
+            out.push(body);
+        }
         SNode::Method { object, args, .. } => {
             out.push(object);
             out.extend(args.iter().flatten());
@@ -155,6 +159,10 @@ pub(in crate::translation::javascript) fn children_mut(expr: &mut SExpr) -> Vec<
         SNode::CellWrite { cell, value, body } => {
             out.push(cell);
             out.push(value);
+            out.push(body);
+        }
+        SNode::Print { expr, body, .. } => {
+            out.push(expr);
             out.push(body);
         }
         SNode::Method { object, args, .. } => {
