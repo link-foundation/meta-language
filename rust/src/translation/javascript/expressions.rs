@@ -617,6 +617,7 @@ impl JavaScriptParser {
                     let SNode::Index { object, index, .. } = expr.node else {
                         unreachable!("an indexed assignment retains its actual target");
                     };
+                    self.indexed_reference_writes += 1;
                     expr = node(
                         SNode::ReferenceWrite {
                             object,

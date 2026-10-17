@@ -36,6 +36,7 @@ pub(crate) mod grammar_selection_field_range_rules;
 pub(crate) mod grammar_selection_included_range_rules;
 pub(crate) mod grammar_selection_mapping_rules;
 pub(crate) mod grammar_selection_rules;
+pub(crate) mod guarded_private_array_write_rules;
 pub mod ir;
 pub mod javascript;
 mod javascript_line_terminator_rules;

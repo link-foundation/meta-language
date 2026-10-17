@@ -28,6 +28,7 @@ import {acceptRustScalarLoopModel} from './rust-scalar-loops.js';
 import {isJavaScriptScalarLoop, readJavaScriptScalarLoop, finishJavaScriptScalarLoops} from './javascript-scalar-loops.js';
 import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
 import { lowerOwnedArrayAppends, readOwnedArrayReaderParameters } from './owned-array-append.js';
+import { lowerGuardedPrivateArrayWrites } from './guarded-private-array-writes.js';
 import { acceptJavaScriptFunctionStart, acceptJavaScriptNamespaceMethod,
   readJavaScriptCollectionConstruction, readJavaScriptConstructionObligation,
   readJavaScriptDocumentationTypeForm, readJavaScriptValueCaseForm,
@@ -130,6 +131,7 @@ class JavaScriptParser {
     // Functions and data types that loops and joins of statements lower to, and their count.
     this.generated = [];
     this.generatedCount = 0;
+    this.indexedReferenceWrites = 0;
     this.ownedArrayReaders = new Map();
     this.ownedArrayReaderNamespace = 0;
     this.assertion = null;
@@ -636,6 +638,7 @@ class JavaScriptParser {
       finally { this.scope = outer; this.inAsync = outerAsync; this.jumps = outerJumps; this.topLevel = outerTopLevel; }
       return {k: 'fn', name, params, ret, body: loop.body, sourceLoop: loop.proof, span: span(docToken, c.peek())};
     }
+    const indexedWritesBefore = this.indexedReferenceWrites;
     const statements = this.withLexicalScope(names, () => {
       for (const parameter of params) this.rememberTagBinding(parameter.name, { type: parameter.type });
       return statementsOf();
@@ -646,6 +649,13 @@ class JavaScriptParser {
     if (!selectSurfaceReferenceSemantics(this.referenceSemanticsOverride === true, this.referenceSemanticsForced, true)) {
       for (const proof of lowerOwnedArrayAppends(statements, params, this.ownedArrayReaders)) {
         if (proof.operationSpan) this.eliminatedOwnedArrayAppendOperations.push(proof.operationSpan);
+      }
+      // This observed parse count avoids building duplicate fact columns when
+      // no indexed write exists. Only the shared whole-body plan admits one.
+      if (this.indexedReferenceWrites !== indexedWritesBefore) {
+        for (const proof of lowerGuardedPrivateArrayWrites(statements, params, this)) {
+          this.eliminatedOwnedArrayAppendOperations.push(proof.operationSpan);
+        }
       }
     }
     this.scope = outer;
@@ -1062,6 +1072,7 @@ class JavaScriptParser {
       object = field === null ? { k: 'index', object, index, span: span(start, c.peek()) } : { k: 'field', object, field, span: span(start, c.peek()) };
     }
     const op = prefix ? prefix.value : c.next().value;
+    if (field === null) this.indexedReferenceWrites += 1;
     const where = span(start, c.peek());
     const target = { object, ...(field === null ? { index } : { field }) };
     if (op === '++' || op === '--') return { s: 'assignReference', ...target, op, span: where };

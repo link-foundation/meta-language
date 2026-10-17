@@ -601,6 +601,7 @@ impl JavaScriptParser {
             .iter()
             .map(|param| param.name.clone())
             .collect::<Vec<_>>();
+        let indexed_writes_before = self.indexed_reference_writes;
         let statements = self.with_lexical_scope(&names, 2, |parser| {
             for parameter in &params {
                 parser.lexical.tag_binding(
@@ -645,6 +646,15 @@ impl JavaScriptParser {
                     &self.owned_array_readers,
                 ),
             );
+            if self.indexed_reference_writes != indexed_writes_before {
+                self.eliminated_owned_array_append_operations.extend(
+                    super::guarded_private_array_writes::lower_guarded_private_array_writes(
+                        &mut statements,
+                        &params,
+                        &mut self.generated_count,
+                    ),
+                );
+            }
         }
         // `if (n < 0n) throw …` as a leading statement makes `n` a natural number,
         // unless the body assigns it another value.

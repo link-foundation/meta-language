@@ -35,6 +35,7 @@ mod console;
 mod declarations;
 mod expressions;
 mod flow;
+mod guarded_private_array_writes;
 mod imperative;
 mod imports;
 mod infer;
@@ -393,6 +394,7 @@ struct JavaScriptParser {
     /// Functions and data types that loops and joins of statements lower to, and their count.
     generated: Vec<SItem>,
     generated_count: usize,
+    indexed_reference_writes: usize,
     /// The other items of the module an item may call and read.
     externals: Vec<External>,
     /// The module's directory inside its crate, which makes relative imports items of the crate.
@@ -439,6 +441,7 @@ impl JavaScriptParser {
             scalar_loop_model: String::new(),
             generated: Vec::new(),
             generated_count: 0,
+            indexed_reference_writes: 0,
             externals: Vec::new(),
             module_directory: None,
             imports: Vec::new(),

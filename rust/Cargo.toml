@@ -97,6 +97,8 @@ include = [
     "src/data/rust-character-literals.lino",
     "src/data/javascript-tag-context-rules.lino",
     "src/data/collection-construction-rules.lino",
+    "src/data/guarded-private-array-write-rules.lino",
+    "src/data/guarded-private-array-write-program.lino",
 ]
 
 [lib]

@@ -2209,6 +2209,16 @@ Indexed writes still require faithful bounds, sparse-property and evaluation
 semantics; a planner using them must pass automatic translation before native
 integration or performance is claimed.
 
+A bounded guarded-write profile selects a nonempty dense primitive literal and
+a direct single-write conditional with explicit integer and bounds checks. The
+complete shared planner checks every incoming ownership edge; aliases, captures,
+blocks, loops and unknown calls remain outside this profile. Hosts retain the
+actual guard and evaluate the index and replacement once before immutable map
+rebinding. Both statement representations preserve the selected source owners.
+The whole planner translates automatically, ships as an inspectable linked
+program, and rechecks after text and binary reload. Native execution remains a
+CI obligation; sparse writes and loop-carried mutation remain required gaps.
+
 The port is done by meta-language itself. A self-translation tool, a library
 API and a CLI command in both packages, reads JavaScript or TypeScript into
 meta-language links and writes Rust, and reads Rust and writes JavaScript or
