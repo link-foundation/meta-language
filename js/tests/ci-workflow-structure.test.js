@@ -1118,6 +1118,13 @@ const NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS = [
     '01500ebbbb6c7be69806154faf0d1e6d5a9ad414ce24b99d6f8f05339659c09a', 'generated'],
 ];
 
+// Parameter-default generation adds one exact gate without changing an earlier freeze.
+const PARAMETER_DEFAULT_PACKAGE_STEPS = [
+  ['Check generated parameter default rules against JavaScript',
+    'node js/scripts/generate-parameter-default-rules.mjs --native --check',
+    '47ab944e92bf99e95fe3333a9dfd8bd5a2201fa28706f4a33944f24cd3dbf33e', 'generated'],
+];
+
 // Exact physical owners of the unchanged generated checks. Shared Rust setup is
 // per runner; both compiler feedback producers and their upload remain together.
 const GENERATED_PACKAGE_SLICES = ['first', 'second'];
@@ -1131,6 +1138,7 @@ const GENERATED_PACKAGE_SLICE_STEPS = {
   second: [
     'Check the generated Rust frontend rules against JavaScript',
     'Check the generated global concept rules against JavaScript',
+    ...PARAMETER_DEFAULT_PACKAGE_STEPS.map(([name]) => name),
     'Check the generated discovery integration rules',
     'Check shared discovered concept graph fixtures',
     'Check generated concept view admission rules',
@@ -1329,6 +1337,7 @@ function checkGeneratedPackageSlices(parsed) {
   }
   const registered = GENERATED_PACKAGE_SLICES.flatMap(slice => GENERATED_PACKAGE_SLICE_STEPS[slice]);
   const repairNames = new Set([...NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS.map(([name]) => name),
+    ...PARAMETER_DEFAULT_PACKAGE_STEPS.map(([name]) => name),
     'Check generated Boolean Rust const decision rules', 'Check Boolean Rust const decision fixtures',
     'Run Boolean Rust const decision prototype checks']);
   assert.equal(registered.filter(name => !repairNames.has(name)).length, 126);
@@ -2194,7 +2203,7 @@ function checkPackageStepConservation(parsed) {
     ...RUST_TEXT_CERTIFICATE_GENERATOR_STEPS, ...RUST_TEXT_CERTIFICATE_EXPERIMENT_STEPS,
     ...OWNED_SOURCE_ADAPTER_PACKAGE_STEPS, ...ORIGINAL_LINK_PROJECTION_PACKAGE_STEPS, ...ORIGINAL_LINK_SYMBOL_ORACLE_PACKAGE_STEPS,
     ...COMPLETE_TABLE_PACKAGE_STEPS, ...BINARY_METADATA_PACKAGE_STEPS, ...RAW_SOURCE_PACKAGE_STEPS,
-    ...NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS, ...BINARY_RECORD_PACKAGE_STEPS];
+    ...NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS, ...PARAMETER_DEFAULT_PACKAGE_STEPS, ...BINARY_RECORD_PACKAGE_STEPS];
   const expected = new Map([
     ...ORIGINAL_PACKAGE_STEPS.map(([name, hash, owner]) => [name, { hash, owner }]),
     ...additions.map(([name, command, hash, owner]) => [name, { hash, owner, command, addition: true }]),
@@ -2278,6 +2287,7 @@ test('generated package slices preserve six logical groups and execute every che
     'Run generated owned Rust literal value edit experiment',
   ]);
   const repairNames = new Set([...NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS.map(([name]) => name),
+    ...PARAMETER_DEFAULT_PACKAGE_STEPS.map(([name]) => name),
     'Check generated Boolean Rust const decision rules', 'Check Boolean Rust const decision fixtures',
     'Run Boolean Rust const decision prototype checks']);
   assert.equal(GENERATED_PACKAGE_SLICE_STEPS.second.filter(name => !repairNames.has(name)).length, 123);
@@ -2519,17 +2529,21 @@ test('every frozen generator addition rejects omission, duplication, condition, 
     ...OWNED_TUPLE_CALL_GENERATOR_PACKAGE_STEPS, ...RUST_LEXICAL_AND_OWNED_MODULE_GENERATOR_STEPS,
     ...RUST_RAW_STRING_AND_LITERAL_EDIT_GENERATOR_STEPS, ...RUST_TEXT_VALUE_PROJECTION_GENERATOR_STEPS,
     ...RUST_RAW_BINDING_IDENTIFIER_GENERATOR_STEPS, ...RUST_TEXT_CERTIFICATE_GENERATOR_STEPS,
-    ...NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS, ...BINARY_RECORD_PACKAGE_STEPS]) {
+    ...NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS, ...PARAMETER_DEFAULT_PACKAGE_STEPS, ...BINARY_RECORD_PACKAGE_STEPS]) {
     mutate(name, (steps, index) => steps.splice(index, 1));
     mutate(name, (steps, index) => steps.push({ ...steps[index] }));
+    const step = jobs('js.yml').get('package-checks').steps.find(step => step.name === name);
+    assert.ok(step, `required additive gate missing: ${name}`);
+    const directory = step.text.includes('working-directory: js');
     for (const [before, after] of [
       ['!cancelled()', 'success()'],
       ['--check', '--javascript-only'],
-      ['working-directory: js', 'working-directory: .'],
+      directory ? ['working-directory: js', 'working-directory: .'] : ['run:', 'working-directory: js\n        run:'],
       [`matrix.group == '${owner}'`, "matrix.group == 'contracts'"],
-      ['working-directory: js', 'continue-on-error: true\n        working-directory: js'],
+      directory ? ['working-directory: js', 'continue-on-error: true\n        working-directory: js'] : ['run:', 'continue-on-error: true\n        run:'],
     ]) {
       mutate(name, (steps, index) => {
+        assert.ok(steps[index].text.includes(before), `negative control must change the actual gate: ${name}`);
         steps[index].text = steps[index].text.replace(before, after);
       });
     }
