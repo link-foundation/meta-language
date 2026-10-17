@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 170 | 169 | 1 | 0 |
+| Generators | 171 | 170 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 79 | 0 | 0 | 79 |
+| Published artifact contents | 80 | 0 | 0 | 80 |
 
 ## JavaScript engines
 
@@ -595,6 +595,7 @@ they are.
 | `js/scripts/generate-grammar-merge-decisions.mjs` | `js/scripts/generate-grammar-merge-decisions.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-prefix-operand-fixtures.mjs` | `js/scripts/generate-grammar-prefix-operand-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-selection-fixtures.mjs` | `js/scripts/generate-grammar-selection-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-grammar-selection-included-range-rules.mjs` | `js/scripts/generate-grammar-selection-included-range-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-selection-mapping-fixtures.mjs` | `js/scripts/generate-grammar-selection-mapping-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-selection-mapping-rules.mjs` | `js/scripts/generate-grammar-selection-mapping-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-selection-rules.mjs` | `js/scripts/generate-grammar-selection-rules.mjs` | `script` |  | derived | current |  |
@@ -801,6 +802,7 @@ they are.
 | `src/data/foundation-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/grammar-lexer-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/grammar-lock.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-selection-included-range-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/grammar-selection-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-line-terminators.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-scoped-binding-emission.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
