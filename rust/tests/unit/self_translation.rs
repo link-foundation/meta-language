@@ -851,30 +851,7 @@ fn a_translated_item_whose_definitions_carry_attributes_translates_back_to_its_s
     assert_eq!(back.code, source);
 }
 
-#[test]
-fn a_sibling_that_does_not_translate_leaves_its_callers_carried() {
-    let source = "/** @param {bigint} n @returns {boolean} */\nfunction isEven(n) {\n  return n === 0n ? true : isOdd(n - 1n);\n}\n\n/** @param {bigint} n @returns {boolean} */\nfunction isOdd(n) {\n  return n === 0n ? false : isEven(n - 1n);\n}\n\n/** @param {number} x @returns {number} */\nfunction opaque(x) {\n  return [x].map((y) => y)[0];\n}\n\n/** @param {number} x @returns {number} */\nfunction caller(x) {\n  return opaque(x) + 1;\n}\n";
-    let translation = self_translate(source, "JavaScript", "Rust").expect("translates");
-    // Mutually recursive siblings are a cycle, which stays unbound.
-    for needle in [
-        "function isEven",
-        "function isOdd",
-        "function opaque",
-        "function caller",
-    ] {
-        assert_eq!(
-            status_of(&translation, source, needle),
-            "carried",
-            "{needle}"
-        );
-    }
-    let caller = translation
-        .items
-        .iter()
-        .find(|item| source[item.start..].starts_with("function caller"))
-        .expect("the caller is an item");
-    assert_eq!(caller.reason.as_deref(), Some("type"));
-}
+include!("self_translation_siblings.rs");
 
 #[test]
 fn a_relative_import_of_items_of_the_crate_translates_as_a_use_declaration() {
