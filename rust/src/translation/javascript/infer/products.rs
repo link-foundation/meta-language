@@ -340,30 +340,9 @@ impl Inference {
                     }
                     progress = true;
                 }
-                object @ Term::Known(_) => {
-                    let element = self.fresh(false);
-                    self.unify(
-                        &object,
-                        &Term::Array(Box::new(element.clone())),
-                        constraint.place,
-                    )?;
-                    let value = if crate::translation::array_value_rules::select_optional_array_read(
-                        "JavaScript",
-                        constraint.optional,
-                        constraint.proven_in_bounds,
-                        false,
-                    ) {
-                        super::optional_values::optional(element, "undefined")
-                    } else {
-                        element
-                    };
-                    self.unify(&constraint.result, &value, constraint.place)?;
-                    if let Term::Var(variable) = constraint.result {
-                        self.bindings[variable] = Some(value);
-                    }
-                    progress = true;
-                }
                 _ => {
+                    // A known nonarray receiver reaches the ordinary checker;
+                    // inference does not claim it has an array layout.
                     progress = true;
                 }
             }

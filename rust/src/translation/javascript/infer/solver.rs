@@ -194,12 +194,18 @@ impl Inference {
                     progress = true;
                 }
             }
-            if !progress && !self.indices.is_empty() {
-                let object = self.indices[0].object.clone();
-                let place = self.indices[0].place;
-                let element = self.fresh(false);
-                self.unify(&object, &Term::Array(Box::new(element)), place)?;
-                progress = true;
+            if !progress {
+                let unknown = self
+                    .indices
+                    .iter()
+                    .find(|constraint| matches!(self.resolve(&constraint.object), Term::Var(_)));
+                if let Some(indexed) = unknown {
+                    let object = indexed.object.clone();
+                    let place = indexed.place;
+                    let element = self.fresh(false);
+                    self.unify(&object, &Term::Array(Box::new(element)), place)?;
+                    progress = true;
+                }
             }
             if !progress && !self.plus.is_empty() {
                 let first = self.plus.remove(0);
