@@ -528,7 +528,7 @@ fn strict_equality_raw_flags_are_mandatory_booleans_in_both_graph_archives() {
         if kind == "missing" {
             let result = network.apply_substitution(&SubstitutionRule::delete(field));
             assert_eq!(
-                result.deleted.len(),
+                result.deleted().len(),
                 1,
                 "only the actual negate relation is removed"
             );
@@ -545,7 +545,7 @@ fn strict_equality_raw_flags_are_mandatory_booleans_in_both_graph_archives() {
             let result = network
                 .apply_substitution(&SubstitutionRule::new(field, [field[0], field[1], scalar]));
             assert_eq!(
-                result.updated.len(),
+                result.updated().len(),
                 1,
                 "only the actual negate relation is retargeted"
             );
