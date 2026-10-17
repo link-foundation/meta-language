@@ -459,6 +459,22 @@ fn coordinated_valid_child_and_range_forgeries_cannot_retarget_the_selected_json
     );
     assert!(original.ok, "{:?}", original.rejection);
     let original = included_range_bundle(&original);
+    let original_path = field_range_embedding_path(&original["tree"], "").unwrap();
+    let original_children = &original["tree"].pointer(&original_path).unwrap()["sourceChildren"];
+    assert!(
+        original_children[0].get("field").is_none(),
+        "an absent native field stays absent, rather than becoming an explicit null"
+    );
+    assert_eq!(
+        original_children[0]["children"][1]["children"][2]["field"], "value",
+        "an actual captured field remains present"
+    );
+    assert!(original_children[0].get("trivia").is_none());
+    assert!(original_children[0].get("attributes").is_none());
+    for stored in included_range_stored(&original) {
+        check_grammar_selection_mapped_tree(&stored, &FeatureParseOptions::default())
+            .expect("the untouched public CST and full witness correspond before any mutation");
+    }
     let donor = included_range_parse(
         &included_range_grammar(source, &[[11, 12]], &["Json"], "any-grammar", "", ""),
         &grammars,
@@ -485,7 +501,7 @@ fn coordinated_valid_child_and_range_forgeries_cannot_retarget_the_selected_json
             check_grammar_selection_mapped_tree(&stored, &FeatureParseOptions::default()).is_err()
         );
     }
-    for mutation in 0..3 {
+    for mutation in 0..4 {
         let mut forged = original.clone();
         let path = field_range_embedding_path(&forged["tree"], "").unwrap();
         match mutation {
@@ -497,9 +513,15 @@ fn coordinated_valid_child_and_range_forgeries_cannot_retarget_the_selected_json
                 forged["tree"].pointer_mut(&path).unwrap()["sourceChildren"][0]["attributes"] =
                     json!({"note":"forged"});
             }
-            _ => {
+            2 => {
                 forged["sourcePlanes"][1]["derivation"]["witness"]["children"][0]["unrepresented"] =
                     json!(true);
+            }
+            _ => {
+                // SyntaxTree.field is Option<String>; actual absence cannot
+                // express null. A forged present null must still be compared.
+                forged["tree"].pointer_mut(&path).unwrap()["sourceChildren"][0]["field"] =
+                    Value::Null;
             }
         }
         for stored in included_range_stored(&forged) {

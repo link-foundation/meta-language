@@ -25,8 +25,24 @@ fn included_range_attributes(attributes: Option<&SyntaxAttributes>) -> Value {
     })
 }
 
+fn included_range_field_header(
+    tree: &SyntaxTree,
+    value: &mut Value,
+    field: Option<&str>,
+    trivia: bool,
+) {
+    if let Some(field) = field {
+        value["field"] = json!(field);
+    }
+    if trivia {
+        value["trivia"] = json!(true);
+    }
+    value["start"] = json!(tree.start());
+    value["end"] = json!(tree.end());
+}
+
 pub(super) fn included_range_tree_data(tree: &SyntaxTree) -> Value {
-    let mut value = json!({"start":tree.start(),"end":tree.end()});
+    let mut value = json!({});
     match tree {
         SyntaxTree::Node {
             kind,
@@ -38,15 +54,16 @@ pub(super) fn included_range_tree_data(tree: &SyntaxTree) -> Value {
         } => {
             value["type"] = json!("node");
             value["kind"] = json!(kind);
-            value["field"] = json!(field);
-            value["trivia"] = json!(trivia);
-            value["attributes"] = included_range_attributes(attributes.as_ref());
+            included_range_field_header(tree, &mut value, field.as_deref(), *trivia);
             value["children"] = json!(
                 children
                     .iter()
                     .map(included_range_tree_data)
                     .collect::<Vec<_>>()
             );
+            if attributes.is_some() {
+                value["attributes"] = included_range_attributes(attributes.as_ref());
+            }
         }
         SyntaxTree::Token {
             kind,
@@ -58,19 +75,27 @@ pub(super) fn included_range_tree_data(tree: &SyntaxTree) -> Value {
         } => {
             value["type"] = json!("token");
             value["kind"] = json!(kind);
-            value["field"] = json!(field);
-            value["trivia"] = json!(trivia);
-            value["attributes"] = included_range_attributes(attributes.as_ref());
-            value["lexical"] = json!(lexical);
+            included_range_field_header(tree, &mut value, field.as_deref(), *trivia);
+            if attributes.is_some() {
+                value["attributes"] = included_range_attributes(attributes.as_ref());
+            }
+            if let Some(lexical) = lexical {
+                value["lexical"] = lexical.clone();
+            }
         }
-        SyntaxTree::Error { reason, .. } => {
+        SyntaxTree::Error { .. } => {
             value["type"] = json!("error");
-            value["reason"] = json!(reason);
+            value["start"] = json!(tree.start());
+            value["end"] = json!(tree.end());
         }
         SyntaxTree::Missing { kind, literal, .. } => {
             value["type"] = json!("missing");
             value["kind"] = json!(kind);
-            value["literal"] = json!(literal);
+            value["start"] = json!(tree.start());
+            value["end"] = json!(tree.end());
+            if *literal {
+                value["literal"] = json!(true);
+            }
         }
         SyntaxTree::Embed {
             language,
@@ -81,6 +106,8 @@ pub(super) fn included_range_tree_data(tree: &SyntaxTree) -> Value {
         } => {
             value["type"] = json!("embed");
             value["language"] = json!(language);
+            value["start"] = json!(tree.start());
+            value["end"] = json!(tree.end());
             value["root"] = included_range_tree_data(root);
             if let Some(children) = source_children {
                 value["sourceChildren"] = json!(
@@ -90,16 +117,18 @@ pub(super) fn included_range_tree_data(tree: &SyntaxTree) -> Value {
                         .collect::<Vec<_>>()
                 );
             }
-            value["selection"] = selection.as_ref().map_or(Value::Null, |selected| {
+            if let Some(selected) = selection {
                 let mut data = json!({"mode":selected.mode,"mapping":selected.mapping,
                     "start":selected.start,"end":selected.end,"candidates":selected.candidates,
                     "provenance":selected.provenance,"ambiguous":selected.ambiguous,
                     "alternatives":selected.alternatives.iter().map(|item| json!({
                         "language":item.language,"root":included_range_tree_data(&item.root),"provenance":item.provenance,
                     })).collect::<Vec<_>>()});
-                if let Some(mapping) = &selected.source_mapping { data["sourceMapping"].clone_from(mapping); }
-                data
-            });
+                if let Some(mapping) = &selected.source_mapping {
+                    data["sourceMapping"].clone_from(mapping);
+                }
+                value["selection"] = data;
+            }
         }
     }
     if let SyntaxTree::Token { text, .. } | SyntaxTree::Error { text, .. } = tree {
@@ -110,6 +139,14 @@ pub(super) fn included_range_tree_data(tree: &SyntaxTree) -> Value {
                 value["hex"] = json!(hex);
             }
         }
+    }
+    if let SyntaxTree::Error {
+        reason: Some(reason),
+        ..
+    } = tree
+        && !reason.is_empty()
+    {
+        value["reason"] = json!(reason);
     }
     value
 }
