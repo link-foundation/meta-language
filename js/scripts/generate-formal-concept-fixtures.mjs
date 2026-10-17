@@ -122,7 +122,9 @@ const negativeEquivalences = [[0, 1], [2, 8], [13, 14], [15, 16], [17, 18]].map(
   return { name: `${definitions[first].name} differs from ${definitions[second].name}`, first, second };
 });
 const fixture = { schemaVersion: 1, definitions, proofs, rejections, invalidCertificates, negativeEquivalences };
-const path = new URL('../../parity/fixtures/formal-concept-definitions.json', import.meta.url);
+// The original corpus remains an immutable migration and replay oracle.
+// Current parser metadata is generated separately without replacing its graphs.
+const path = new URL('../../parity/fixtures/formal-concept-definitions-current.lino', import.meta.url);
 if (process.argv.includes('--check')) checkProjectData(path, fixture);
 else writeProjectData(path, fixture);
 assert.equal(readFileSync(new URL('../src/data/formal-concept-models.lino', import.meta.url), 'utf8'), readFileSync(new URL('../../rust/src/data/formal-concept-models.lino', import.meta.url), 'utf8'), 'formal primitive declarations differ between runtimes');

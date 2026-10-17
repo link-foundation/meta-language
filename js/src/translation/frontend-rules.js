@@ -700,3 +700,16 @@ export function readJavaScriptLexicalDeclarationStep(kind, value, depth, declara
 export function requireJavaScriptBranchContinuation(thenTerminates, hasOtherwise, otherwiseTerminates) {
   return !thenTerminates || hasOtherwise && !otherwiseTerminates;
 }
+
+/**
+ * Preserve lexical shadowing while projecting a known constructor's fields.
+ * Zero keeps a shadowed body, one rewrites the subject, and two also follows
+ * an actual direct alias initialized from that same subject binding.
+ * @param {string} bindingName @param {string} subject @param {string} valueKind
+ * @param {number} pathLength @param {string} valueName @returns {number}
+ */
+export function readJavaScriptFieldSubstitutionPlan(bindingName, subject, valueKind, pathLength, valueName) {
+  if (bindingName === subject) return 0;
+  if (valueKind === 'name' && pathLength === 1 && valueName === subject) return 2;
+  return 1;
+}

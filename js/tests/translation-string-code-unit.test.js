@@ -15,6 +15,7 @@ import { emitJavaScript } from '../src/translation/emit-javascript.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { STRING_PRELUDE } from '../src/translation/string-runtime.js';
 import { readStringCodeUnit } from '../src/translation/string-code-unit-rules.js';
+import { createStringCodeUnitTemplateExpression } from '../src/translation/string-code-unit-template.js';
 import { readPrimitiveMethodMinimumArguments, readPrimitiveMethodMaximumArguments,
   readPrimitiveMethodDefaultForm, readPrimitiveMethodDefaultValue,
   readPrimitiveMethodCheckedArgumentKind, readPrimitiveMethodCheckedResultForm,
@@ -209,4 +210,89 @@ test('charCodeAt Rust emission reuses only existing operations and refuses unpro
     assert.throws(() => checkProgram(parseRust(rust)), error => error.kind === 'type' || error.kind === 'unsupported');
     assert.ok(translateProgram(rust, 'Rust', 'JavaScript').diagnostic, 'a helper name never substitutes for its actual Rust semantics');
   }
+});
+
+function instantiateCapturedCodeUnitTemplate(policy, span) {
+  // Execute the actual production instantiator. Only its module-loader edges
+  // are supplied by this test; its recursive field/span decisions stay intact.
+  const moduleUrl = new URL('../src/translation/string-code-unit-template.js', import.meta.url);
+  const source = readFileSync(moduleUrl, 'utf8');
+  const imported = "import { readRuntimeProjectData } from '../project-data-loader.js';";
+  const declared = 'export function createStringCodeUnitTemplateExpression(span) {';
+  for (const fragment of [imported, declared, 'import.meta.url']) {
+    assert.equal(source.split(fragment).length, 2, 'one exact production module transport edge');
+  }
+  const executable = source.replace(imported, '').replace(declared,
+    'function createStringCodeUnitTemplateExpression(span) {').replace('import.meta.url', 'moduleUrl');
+  let reads = 0;
+  const result = vm.runInNewContext(executable + '\ncreateStringCodeUnitTemplateExpression(callerSpan);', {
+    URL, moduleUrl: moduleUrl.href, callerSpan: span,
+    readRuntimeProjectData(address) {
+      reads++;
+      assert.equal(address.href, new URL('../src/translation/data/string-code-unit-template.lino', import.meta.url).href);
+      return policy;
+    },
+  }, { timeout: 1000 });
+  assert.equal(reads, 1, 'the complete captured template is the only supplied data');
+  return structuredClone(result);
+}
+
+test('historical code unit templates preserve complete metadata and agree through actual caller span instantiation', () => {
+  const historicalPath = new URL('../../parity/fixtures/historical/frontend-const-lists/string-code-unit-template.lino', import.meta.url);
+  const historicalBytes = readFileSync(historicalPath);
+  const digest = value => createHash('sha256').update(value).digest('hex');
+  // Exact complete Git blob extracted from this original revision; this is
+  // retained independently of the newly generated runtime copies.
+  const originalRevision = '858665058648a3f1f9ce05ff3b0668b9ccfd66eb';
+  assert.equal(historicalBytes.length, 110810);
+  assert.equal(digest(historicalBytes), '549da9c740846c976a077aed192918e62a1f8ecd9b63109739763b196b553c4f',
+    'the whole original template at ' + originalRevision);
+  const historical = readProjectData(historicalPath);
+  const current = readStringCodeUnitTemplateGeneration();
+  const sourceSha256 = '171561add319a13fc6b28af7c9121db192e9983f53fca209ff3bbb0c17c35d9d';
+  const basePreludeSha256 = 'dcc6da567430fa71a318f5d5d9beb873f23e009dfc7d9a7c1bfb66a0e9231ea5';
+  assert.equal(digest(historical.source), sourceSha256);
+  assert.equal(historical.sourceSha256, sourceSha256);
+  assert.equal(current.sourceSha256, sourceSha256);
+  assert.equal(readFileSync(new URL('../src/translation/string-code-unit-rules.js', import.meta.url), 'utf8'), historical.source);
+  assert.equal(historical.basePreludeSha256, basePreludeSha256);
+  assert.equal(current.basePreludeSha256, basePreludeSha256);
+  assert.equal(digest(STRING_PRELUDE), basePreludeSha256);
+  assert.deepEqual(historical.inventory, [{ kind: 'fn', name: 'readStringCodeUnit', span: { start: 227, end: 233 } }]);
+  assert.deepEqual(current.inventory, historical.inventory);
+  assert.equal(historical.source[345], ';');
+  assert.equal(historical.source.slice(345, 349), ';\n  ');
+  assert.equal(historical.source.slice(349, 351), 'if');
+  const expectedCurrent = structuredClone(historical);
+  for (const field of ['originalDeclaration', 'checkedDeclaration', 'template']) {
+    assert.deepEqual(historical[field].body.span, { start: 282, end: 349 });
+    assert.deepEqual(current[field].body.span, { start: 282, end: 345 });
+    expectedCurrent[field].body.span.end = 345;
+  }
+  assert.deepEqual(current, expectedCurrent,
+    'every source, declaration, operation, binder, type and metadata field is retained except exactly three authenticated endpoints');
+  const caller = parseJavaScript(source, { referenceSemantics: false }).items[0].body;
+  assert.equal(caller.k, 'method');
+  assert.equal(caller.op, 'charCodeAt');
+  assert.ok(caller.span.end > caller.span.start);
+  const oldExpression = instantiateCapturedCodeUnitTemplate(historical, caller.span);
+  const currentExpression = instantiateCapturedCodeUnitTemplate(current, caller.span);
+  assert.deepEqual(currentExpression, oldExpression,
+    'the actual production instantiator sets caller spans without deleting or changing any executable field');
+  assert.deepEqual(currentExpression, createStringCodeUnitTemplateExpression(caller.span));
+  assert.deepEqual(oldExpression.span, caller.span);
+  assert.deepEqual(oldExpression.body.span, caller.span);
+  const emitted = [oldExpression, currentExpression].map(template => {
+    const surface = parseJavaScript(historical.source, { referenceSemantics: false });
+    surface.items[0] = { ...surface.items[0], params: template.params, body: template.body, ret: template.ret };
+    return emitJavaScript(checkProgram(surface));
+  });
+  assert.deepEqual(emitted[0], emitted[1], 'both complete instantiated templates emit identical programs and provenance');
+  const original = vm.runInNewContext(emitted[0].text + ';readStringCodeUnit;');
+  const translated = vm.runInNewContext(emitted[1].text + ';readStringCodeUnit;');
+  for (const text of ['', 'ABC', 'A😀B', '\ud800x\udfff']) for (const position of [-Infinity, -0.9, 0, 1.9, 2, Infinity, NaN]) {
+    assert.equal(original(text, position), text.charCodeAt(position));
+    assert.equal(translated(text, position), text.charCodeAt(position));
+  }
+  assert.deepEqual(historical.template.body.span, { start: 282, end: 349 }, 'the historical template was not rewritten');
 });

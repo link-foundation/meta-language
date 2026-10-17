@@ -1,5 +1,7 @@
 import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 
 import test from 'node:test';
 import vm from 'node:vm';
@@ -173,53 +175,79 @@ test('a certificate refuses removed, duplicated, retargeted or stale corresponde
 
 test('shared formal archives preserve primitives, recursive references and checked correspondence premises', () => {
   const fixtureFile = 'parity/fixtures/formal-concept-definitions.json';
-  const fixture = readProjectData(new URL(`../../${fixtureFile}`, import.meta.url));
-  let recursive = 0;
-  const hasCycle = (graph) => {
-    const active = new Set();
-    const visited = new Set();
-    function visit(node) {
-      if (active.has(node)) return true;
-      if (visited.has(node)) return false;
-      active.add(node);
-      for (let edge = graph.offsets[node]; edge < graph.offsets[node + 1]; edge += 1) if (visit(graph.edges[edge])) return true;
-      active.delete(node); visited.add(node);
-      return false;
-    }
-    return visit(0);
-  };
-  for (const definition of fixture.definitions) {
-    const value = { network: LinkNetwork.fromLino(definition.archive.links), root: definition.archive.root };
-    const wrapper = value.network.link(value.root);
-    assert.equal(wrapper.metadata().term, 'formal concept definition');
-    assert.equal(wrapper.references().length, 2);
-    assert.equal(value.network.link(wrapper.references()[1]).metadata().term, 'formal primitive model');
-    assert.deepEqual(readFormalConceptDefinition(value), definition.prepared, definition.name);
-    assert.deepEqual(readFormalConceptDefinition(definition.archive), definition.prepared, 'primitive assumptions and shared references survive source-free reload');
-    if (definition.name.startsWith('recursive factorial')) {
-      recursive += 1;
-      assert.equal(hasCycle(definition.prepared), true, 'actual declaration references remain cyclic');
-      const incoming = Array(definition.prepared.shapes.length).fill(0);
-      for (const target of definition.prepared.edges) incoming[target] += 1;
-      assert.ok(incoming.some((count) => count > 1), 'actual shared references retain one identity');
+  const originalPath = new URL(`../../${fixtureFile}`, import.meta.url);
+  assert.equal(createHash('sha256').update(readFileSync(new URL('../../parity/fixtures/formal-concept-definitions.lino', import.meta.url))).digest('hex'),
+    '3ec8709562497d008340e309ec2850986c6c6c1cc8f6101e7824a468e71b1ada',
+    'the canonical fixture remains the exact immutable original, not its generated successor');
+  const fixtures = [readProjectData(originalPath),
+    readProjectData(new URL('../../parity/fixtures/formal-concept-definitions-current.lino', import.meta.url))];
+  assert.deepEqual(Object.keys(fixtures[1]), Object.keys(fixtures[0]));
+  assert.equal(fixtures[1].schemaVersion, fixtures[0].schemaVersion);
+  for (const field of ['definitions', 'proofs', 'rejections', 'invalidCertificates', 'negativeEquivalences']) {
+    assert.equal(fixtures[1][field].length, fixtures[0][field].length, field + ' retain every original case');
+    for (let index = 0; index < fixtures[0][field].length; index++) {
+      assert.deepEqual(Object.keys(fixtures[1][field][index]), Object.keys(fixtures[0][field][index]));
     }
   }
-  assert.equal(recursive, 2);
-  for (const proof of fixture.proofs) {
-    const first = fixture.definitions[proof.first].archive;
-    const second = fixture.definitions[proof.second].archive;
-    assert.equal(verifyFormalConceptEquivalence(first, second, proof.certificate), true, proof.name);
-    const recomputed = proveFormalConceptEquivalence(first, second);
-    assert.ok(recomputed, proof.name);
-    assert.equal(recomputed.network.toLino(), proof.certificate.links);
-    assert.equal(recomputed.root.asU64(), proof.certificate.root);
+  assert.deepEqual(fixtures[1].definitions.map(({ archive, ...fields }) => fields),
+    fixtures[0].definitions.map(({ archive, ...fields }) => fields),
+    'every original name and complete prepared semantic graph remain unchanged');
+  for (const field of ['proofs', 'invalidCertificates']) {
+    assert.deepEqual(fixtures[1][field].map(({ certificate, ...fields }) => fields),
+      fixtures[0][field].map(({ certificate, ...fields }) => fields),
+      field + ' retain exact names and definition endpoints; each full certificate is independently checked below');
   }
-  for (const rejection of fixture.rejections) {
-    assert.throws(() => readFormalConceptDefinition(rejection.archive), undefined, rejection.name);
-    assert.equal(proveFormalConceptEquivalence(fixture.definitions[0].archive, rejection.archive), null, rejection.name);
+  assert.deepEqual(fixtures[1].rejections.map(({ archive, ...fields }) => fields),
+    fixtures[0].rejections.map(({ archive, ...fields }) => fields));
+  assert.deepEqual(fixtures[1].negativeEquivalences, fixtures[0].negativeEquivalences);
+  for (const fixture of fixtures) {
+    let recursive = 0;
+    const hasCycle = (graph) => {
+      const active = new Set();
+      const visited = new Set();
+      function visit(node) {
+        if (active.has(node)) return true;
+        if (visited.has(node)) return false;
+        active.add(node);
+        for (let edge = graph.offsets[node]; edge < graph.offsets[node + 1]; edge += 1) if (visit(graph.edges[edge])) return true;
+        active.delete(node); visited.add(node);
+        return false;
+      }
+      return visit(0);
+    };
+    for (const definition of fixture.definitions) {
+      const value = { network: LinkNetwork.fromLino(definition.archive.links), root: definition.archive.root };
+      const wrapper = value.network.link(value.root);
+      assert.equal(wrapper.metadata().term, 'formal concept definition');
+      assert.equal(wrapper.references().length, 2);
+      assert.equal(value.network.link(wrapper.references()[1]).metadata().term, 'formal primitive model');
+      assert.deepEqual(readFormalConceptDefinition(value), definition.prepared, definition.name);
+      assert.deepEqual(readFormalConceptDefinition(definition.archive), definition.prepared, 'primitive assumptions and shared references survive source-free reload');
+      if (definition.name.startsWith('recursive factorial')) {
+        recursive += 1;
+        assert.equal(hasCycle(definition.prepared), true, 'actual declaration references remain cyclic');
+        const incoming = Array(definition.prepared.shapes.length).fill(0);
+        for (const target of definition.prepared.edges) incoming[target] += 1;
+        assert.ok(incoming.some((count) => count > 1), 'actual shared references retain one identity');
+      }
+    }
+    assert.equal(recursive, 2);
+    for (const proof of fixture.proofs) {
+      const first = fixture.definitions[proof.first].archive;
+      const second = fixture.definitions[proof.second].archive;
+      assert.equal(verifyFormalConceptEquivalence(first, second, proof.certificate), true, proof.name);
+      const recomputed = proveFormalConceptEquivalence(first, second);
+      assert.ok(recomputed, proof.name);
+      assert.equal(recomputed.network.toLino(), proof.certificate.links);
+      assert.equal(recomputed.root.asU64(), proof.certificate.root);
+    }
+    for (const rejection of fixture.rejections) {
+      assert.throws(() => readFormalConceptDefinition(rejection.archive), undefined, rejection.name);
+      assert.equal(proveFormalConceptEquivalence(fixture.definitions[0].archive, rejection.archive), null, rejection.name);
+    }
+    for (const certificate of fixture.invalidCertificates) assert.equal(verifyFormalConceptEquivalence(fixture.definitions[certificate.first].archive, fixture.definitions[certificate.second].archive, certificate.certificate), false, certificate.name);
+    for (const pair of fixture.negativeEquivalences ?? []) assert.equal(proveFormalConceptEquivalence(fixture.definitions[pair.first].archive, fixture.definitions[pair.second].archive), null, pair.name);
   }
-  for (const certificate of fixture.invalidCertificates) assert.equal(verifyFormalConceptEquivalence(fixture.definitions[certificate.first].archive, fixture.definitions[certificate.second].archive, certificate.certificate), false, certificate.name);
-  for (const pair of fixture.negativeEquivalences ?? []) assert.equal(proveFormalConceptEquivalence(fixture.definitions[pair.first].archive, fixture.definitions[pair.second].archive), null, pair.name);
   const assertions = {
     'I195-FORMAL-CONCEPT-DEFINITIONS': ['definitionsAreInspectableLinks', 'foundationalPrimitivesExplicit'],
     'I195-FORMAL-CONCEPT-REFERENCES': ['recursiveConceptReferencesPreserved', 'sharedAndCyclicDefinitionsReloaded', 'definitionAssumptionsPreserved'],

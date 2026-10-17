@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 import { LinkNetwork } from '../src/network.js';
@@ -140,18 +141,29 @@ test('the complete portable numeric projection module checks and reloads without
 });
 
 test('the shared native control retains its actual JavaScript source archive and executable value edit', () => {
-  const shared = readProjectData(new URL('../../parity/fixtures/program-number-projection.lino', import.meta.url));
-  assert.equal(shared.source, source);
-  assert.equal(shared.sourceSha256, createHash('sha256').update(source).digest('hex'));
-  assert.deepEqual(observe(source), shared.output);
-  const network = LinkNetwork.fromLino(shared.links);
-  const program = decodeTypedProgramLinks(network, shared.root);
-  assert.equal(recheckLinkedTypedProgram(program, { wholeProgram: true }), program);
-  assert.deepEqual(observe(emitTypedProgramLinks(network, shared.root, 'JavaScript').code), shared.output);
-  const operation = arithmetic(program);
-  assert.equal(operation.right.value, shared.edit.original);
-  operation.right.value = shared.edit.replacement;
-  recheckLinkedTypedProgram(program, { wholeProgram: true });
-  const edited = encodeTypedProgramLinks(program);
-  assert.deepEqual(observe(emitTypedProgramLinks(edited.network, edited.root, 'JavaScript').code), shared.editedOutput);
+  const historicalPath = new URL('../../parity/fixtures/historical/frontend-const-lists/program-number-projection.lino', import.meta.url);
+  assert.equal(createHash('sha256').update(readFileSync(historicalPath)).digest('hex'),
+    '2a6b5baeaaf817500a9b5592e690bf8dd7ad4a7e33b7f1da5a20bc80d02847f5',
+    'the complete original archive from 858665058648a3f1f9ce05ff3b0668b9ccfd66eb is retained');
+  const fixtures = [readProjectData(historicalPath),
+    readProjectData(new URL('../../parity/fixtures/program-number-projection.lino', import.meta.url))];
+  assert.deepEqual(Object.keys(fixtures[1]), Object.keys(fixtures[0]));
+  const metadata = fixtures.map(({ links, root, ...fields }) => fields);
+  assert.deepEqual(metadata[1], metadata[0],
+    'source, source hash, language, schema, outputs and the actual value-edit contract are unchanged');
+  for (const shared of fixtures) {
+    assert.equal(shared.source, source);
+    assert.equal(shared.sourceSha256, createHash('sha256').update(source).digest('hex'));
+    assert.deepEqual(observe(source), shared.output);
+    const network = LinkNetwork.fromLino(shared.links);
+    const program = decodeTypedProgramLinks(network, shared.root);
+    assert.equal(recheckLinkedTypedProgram(program, { wholeProgram: true }), program);
+    assert.deepEqual(observe(emitTypedProgramLinks(network, shared.root, 'JavaScript').code), shared.output);
+    const operation = arithmetic(program);
+    assert.equal(operation.right.value, shared.edit.original);
+    operation.right.value = shared.edit.replacement;
+    recheckLinkedTypedProgram(program, { wholeProgram: true });
+    const edited = encodeTypedProgramLinks(program);
+    assert.deepEqual(observe(emitTypedProgramLinks(edited.network, edited.root, 'JavaScript').code), shared.editedOutput);
+  }
 });

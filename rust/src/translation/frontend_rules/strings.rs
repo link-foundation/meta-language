@@ -459,3 +459,21 @@ pub const fn require_java_script_branch_continuation(
 ) -> bool {
     !then_terminates || (has_otherwise && !otherwise_terminates)
 }
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+pub fn read_java_script_field_substitution_plan(
+    binding_name: &str,
+    subject: &str,
+    value_kind: &str,
+    path_length: f64,
+    value_name: &str,
+) -> f64 {
+    if binding_name == subject {
+        0f64
+    } else if ((value_kind == "name") && (path_length == 1f64)) && (value_name == subject) {
+        2f64
+    } else {
+        1f64
+    }
+}

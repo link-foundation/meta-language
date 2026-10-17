@@ -14,9 +14,10 @@ export const frontendCurrentBooleanNativeStyleId='reviewed-frontend-current-bool
 export const frontendTemporalBindingNativeStyleId='reviewed-frontend-temporal-binding-styles';
 export const frontendLexicalDeclarationNativeStyleId='reviewed-frontend-lexical-declaration-styles';
 
-/** Borrow the scalar token columns without changing the generated scan decisions. */
+/** Borrow scalar inputs without changing the generated frontend decisions. */
 export function readFrontendLexicalDeclarationStyleCorrections(source) {
-  const names=['read_java_script_lexical_declaration_step','require_java_script_branch_continuation'];
+  const names=['read_java_script_lexical_declaration_step','require_java_script_branch_continuation',
+    'read_java_script_field_substitution_plan'];
   const inventory=readRustLibraryItems(source).items;
   assert.ok(!inventory.some(item=>item.kind==='use'||['f64','bool','Option','Vec','String'].includes(item.name)),
     'the generated lexical declaration source retains primitive type ownership');

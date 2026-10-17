@@ -2194,6 +2194,12 @@ zone. Partially returning nested branches retain their enclosing continuation.
 Declaration discovery reads actual cursor tokens through shared scalar decisions;
 it does not allocate whole-file token columns for every block. Both Links
 transports retain the checked program and its complete target emission.
+Constructor field projection follows direct aliases of the matched subject,
+including single-evaluation destructuring temporaries, while lexical rebinding
+ends the affected subject's scope. The shared scalar decision is translated
+with the complete frontend module. Regenerated source spans retain complete
+historical archive corpora and immutable migration oracles alongside current
+successors; metadata freshness does not authorize semantic regressions.
 
 Discarded, zero-argument array removals may become immutable slice rebinding
 only after the existing fresh-allocation and escape proof succeeds. Observed

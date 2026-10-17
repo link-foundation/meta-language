@@ -789,9 +789,25 @@ pub(super) fn substitute_fields(
         SNode::Let {
             name, value, body, ..
         } => {
+            let (kind, length, value_name) = match &value.node {
+                SNode::Name { path } => (
+                    "name",
+                    super::callables::number(path.len()),
+                    path.first().map_or("", String::as_str),
+                ),
+                _ => ("other", 0.0, ""),
+            };
+            let plan = crate::translation::frontend_rules::ml_array::number_index(
+                crate::translation::frontend_rules::read_java_script_field_substitution_plan(
+                    name, subject, kind, length, value_name,
+                ),
+            );
             substitute_fields(value, subject, binder_for)?;
-            if name != subject {
+            if plan != Some(0) {
                 substitute_fields(body, subject, binder_for)?;
+            }
+            if plan == Some(2) {
+                substitute_fields(body, name, binder_for)?;
             }
         }
         SNode::Match { scrutinees, rows } => {

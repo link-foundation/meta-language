@@ -227,38 +227,75 @@ fn const_declaration_lists_keep_mixed_binding_order_and_complete_source_free_rep
             json!({"lines":["3"],"error":null}),
         ),
     ] {
-        let surface = parse_javascript(source)
-            .unwrap_or_else(|error| panic!("{source}: {}", error.message()));
-        let program = check_program(&surface).unwrap();
-        let javascript = emit_javascript(&program).unwrap().text;
-        let rust = emit_rust(&program).unwrap().text;
-        let original = declaration_list_contract(source, &javascript);
-        assert_eq!(
-            serde_json::to_value(&surface).unwrap(),
-            original["surface"],
-            "{source}"
-        );
-        assert_eq!(rust, original["rust"].as_str().unwrap(), "{source}");
-        assert_eq!(
-            original["original"], expected,
-            "unchanged independent source: {source}"
-        );
-        assert_eq!(original["emitted"], expected, "{source}");
-        let saved = encode_typed_program_links(&program).unwrap();
-        for network in [
-            LinkNetwork::from_lino(&saved.network.to_lino()).unwrap(),
-            decode_link_network_binary(
-                &encode_link_network_binary(&saved.network, BinaryLinksOptions::default()).unwrap(),
-                BinaryLinksOptions::default(),
-            )
-            .unwrap(),
-        ] {
-            let restored = decode_typed_program_links(&network, saved.root).unwrap();
-            encode_typed_program_links(&restored).unwrap();
-            assert_eq!(restored, program);
-            assert_eq!(emit_javascript(&restored).unwrap().text, javascript);
-            assert_eq!(emit_rust(&restored).unwrap().text, rust);
-        }
+        require_declaration_list_equivalent(source, &expected);
+    }
+}
+
+fn require_declaration_list_equivalent(source: &str, expected: &Value) {
+    let surface =
+        parse_javascript(source).unwrap_or_else(|error| panic!("{source}: {}", error.message()));
+    let program = check_program(&surface).unwrap();
+    let javascript = emit_javascript(&program).unwrap().text;
+    let rust = emit_rust(&program).unwrap().text;
+    let original = declaration_list_contract(source, &javascript);
+    assert_eq!(
+        serde_json::to_value(&surface).unwrap(),
+        original["surface"],
+        "{source}"
+    );
+    assert_eq!(rust, original["rust"].as_str().unwrap(), "{source}");
+    assert_eq!(
+        &original["original"], expected,
+        "unchanged independent source: {source}"
+    );
+    assert_eq!(&original["emitted"], expected, "{source}");
+    let saved = encode_typed_program_links(&program).unwrap();
+    for network in [
+        LinkNetwork::from_lino(&saved.network.to_lino()).unwrap(),
+        decode_link_network_binary(
+            &encode_link_network_binary(&saved.network, BinaryLinksOptions::default()).unwrap(),
+            BinaryLinksOptions::default(),
+        )
+        .unwrap(),
+    ] {
+        let restored = decode_typed_program_links(&network, saved.root).unwrap();
+        encode_typed_program_links(&restored).unwrap();
+        assert_eq!(restored, program);
+        assert_eq!(emit_javascript(&restored).unwrap().text, javascript);
+        assert_eq!(emit_rust(&restored).unwrap().text, rust);
+    }
+}
+
+#[test]
+fn constructor_fields_follow_single_evaluation_aliases_and_lexical_shadows() {
+    for (body, expected) in [
+        ("const {left,right}=value;return left+right;", "5"),
+        (
+            "const {left,right}=value,total=left+right;return total;",
+            "5",
+        ),
+        (
+            "const original=value,again=original;const {left,right}=again;return left+right;",
+            "5",
+        ),
+        (
+            "const original=value;{const value=7;const {left,right}=original;return left+right+value;}",
+            "12",
+        ),
+        (
+            "const {left,right}=value;let total=left+right;total=total+1;return total;",
+            "6",
+        ),
+    ] {
+        let source = concat!(
+            "/** @typedef {{ $: 'none' } | { $: 'pair', left: number, right: number }} Item */\n",
+            "/** @param {Item} value @returns {number} */\n",
+        )
+        .to_owned()
+            + &format!(
+                "function selected(value){{switch(value.$){{case 'pair':{{{body}}}default:return 0;}}}}\nconsole.log(selected({{$:'pair',left:2,right:3}}));console.log(selected({{$:'none'}}));"
+            );
+        require_declaration_list_equivalent(&source, &json!({"lines":[expected,"0"],"error":null}));
     }
 }
 

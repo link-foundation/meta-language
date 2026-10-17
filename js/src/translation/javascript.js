@@ -11,7 +11,7 @@
 // obligation.
 
 import { TranslationError, typeError, unsupported } from './diagnostics.js';
-import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation, readJavaScriptTemporalBindingRead, readJavaScriptLexicalDeclarationStep } from './frontend-rules.js';
+import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation, readJavaScriptTemporalBindingRead, readJavaScriptLexicalDeclarationStep, readJavaScriptFieldSubstitutionPlan } from './frontend-rules.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
 import { readJavaScriptTagOwnerPosition, readJavaScriptTagReceiverForm, readJavaScriptTagBindingStep, acceptJavaScriptTagHeaderFact, readJavaScriptTagDeclaredOwner } from './javascript-tag-context-rules.js';
 import { readCallableReferenceConstruct, readCallableReferenceObligation, readCallableSurfaceConstructor } from './callable-source-rules.js';
@@ -2532,8 +2532,11 @@ function substituteFields(node, subject, binderFor) {
     return { k: 'name', path: [binderFor(node.field)], span: node.span };
   }
   if (node.k === 'let') {
+    const plan = readJavaScriptFieldSubstitutionPlan(node.name, subject, node.value.k,
+      node.value.path?.length ?? 0, node.value.path?.[0] ?? '');
     const value = substituteFields(node.value, subject, binderFor);
-    return { ...node, value, body: node.name === subject ? node.body : substituteFields(node.body, subject, binderFor) };
+    const body = plan === 0 ? node.body : substituteFields(node.body, subject, binderFor);
+    return { ...node, value, body: plan === 2 ? substituteFields(body, node.name, binderFor) : body };
   }
   if (node.k === 'match') {
     const scrutinees = substituteFields(node.scrutinees, subject, binderFor);

@@ -52,6 +52,22 @@ function selected() { const [first, next = first + 1] = values(), {left, right: 
 console.log(selected());`, { lines: ['array', 'record', '13'], error: null });
 });
 
+test('constructor field projections follow single-evaluation temporaries aliases and lexical shadows', () => {
+  const declaration = "/** @typedef {{ $: 'none' } | { $: 'pair', left: number, right: number }} Item */\n";
+  for (const [body, expected] of [
+    ['const {left,right}=value;return left+right;', '5'],
+    ['const {left,right}=value,total=left+right;return total;', '5'],
+    ['const original=value,again=original;const {left,right}=again;return left+right;', '5'],
+    ['const original=value;{const value=7;const {left,right}=original;return left+right+value;}', '12'],
+    ['const {left,right}=value;let total=left+right;total=total+1;return total;', '6'],
+  ]) {
+    const source = declaration + '/** @param {Item} value @returns {number} */\n'
+      + "function selected(value){switch(value.$){case 'pair':{" + body + "}default:return 0;}}\n"
+      + "console.log(selected({$:'pair',left:2,right:3}));console.log(selected({$:'none'}));";
+    equivalent(source, { lines: [expected, '0'], error: null });
+  }
+});
+
 test('an initializer abort prevents subsequent declarators from executing', () => {
   equivalent(`/** @returns {number} */ function stop() { console.log('stop'); throw new Error('halt'); }
 function later() { console.log('later'); return 9; }
