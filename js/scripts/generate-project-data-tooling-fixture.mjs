@@ -28,8 +28,8 @@ export const projectDataToolingContract = Object.freeze({
   migrationBaselineCount: 167,
   currentFreshnessChecks: [
     { logicalPaths: ['parity/fixtures/native-default-cst-expected.json'],
-      providerReceiptRefresh: [{ language: 'R', provider: 'native-r' }],
-      command: ['node', 'js/scripts/generate-native-grammar-fixtures.mjs', '--language', 'r', '--refresh-provenance', '--check'] },
+      providerReceiptRefresh: [{ language: 'R', provider: 'native-r' }, { language: 'Python', provider: 'native-python' }],
+      command: ['node', 'js/scripts/generate-native-grammar-fixtures.mjs', '--language', 'r', '--refresh-provenance', '--check', '--language', 'python'] },
     { logicalPaths: ['parity/fixtures/native-grammar-concept-reuse.json'],
       command: ['node', 'js/scripts/build-native-grammar-concept-reuse.mjs', '--check'] },
     { logicalPaths: ['parity/fixtures/translation-stages.json'],
