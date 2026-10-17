@@ -461,6 +461,9 @@ impl Checker {
             SNode::Index { .. } => self.index(node, env, path, expected),
             SNode::ForOfIterable { object, .. } => self.for_of_iterable(object, span, env, path),
             SNode::ArrayFrom { args, .. } => self.array_from(args, env, path, expected, span),
+            SNode::Set { .. } | SNode::Map { .. } => {
+                self.collection_construction(node, env, path, expected)
+            }
             SNode::StringPoints { object } => {
                 let value = self.expr(object, env, path, Some(&STRING), false)?;
                 let object = self.coerce(value, &STRING, span)?;

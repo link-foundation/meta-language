@@ -30,6 +30,7 @@ mod array_bindings;
 mod array_from;
 mod arrays;
 mod callables;
+mod collections;
 mod expectation;
 mod expressions;
 mod externals;

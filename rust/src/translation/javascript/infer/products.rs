@@ -174,6 +174,9 @@ impl Inference {
             (SNode::ArrayFrom { args, .. }, _) => {
                 self.array_from(node, args, env, Some(&expected))?
             }
+            (SNode::Set { items, .. } | SNode::Map { entries: items, .. }, _) => {
+                self.collection_construction(node, items, env, Some(&expected))?
+            }
             (SNode::Record { entries, .. }, _) => {
                 self.record_expr(node, entries, env, Some(&expected))?
             }
@@ -196,6 +199,40 @@ impl Inference {
                         })
                         .collect::<Result<Vec<_>>>()?,
                 )
+            }
+            (SNode::Array { items, .. }, Term::Array(wanted_element)) => {
+                let element = self.fresh(false);
+                self.empty_arrays
+                    .insert(std::ptr::from_ref(node), (element.clone(), node.span));
+                for item in items {
+                    let wanted = if item.spread {
+                        &expected
+                    } else {
+                        wanted_element.as_ref()
+                    };
+                    let value = self.expr_expected(&item.value, env, Some(wanted))?;
+                    let want = if item.spread {
+                        Term::Array(Box::new(element.clone()))
+                    } else {
+                        element.clone()
+                    };
+                    self.unify(&value, &want, item.value.span.or(node.span))?;
+                    let contained = if item.spread {
+                        match self.resolve(&value) {
+                            Term::Array(element) => Some(*element),
+                            _ => None,
+                        }
+                    } else {
+                        Some(self.resolve(&value))
+                    };
+                    if let Some(contained) = contained
+                        && matches!(self.resolve(&contained), Term::Option { .. })
+                        && let Term::Var(variable) = &element
+                    {
+                        self.bindings[*variable] = Some(self.resolve(&contained));
+                    }
+                }
+                Term::Array(Box::new(element))
             }
             (
                 SNode::Let {
